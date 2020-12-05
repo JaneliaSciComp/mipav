@@ -6718,8 +6718,8 @@ public abstract class CeresSolver {
 			      DoLineSearch(x_, gradient_, x_cost_[0], delta_);
 			    }
 
-			    /*ComputeCandidatePointAndEvaluateCost();
-			    DoInnerIterationsIfNeeded();
+			    ComputeCandidatePointAndEvaluateCost();
+			    /*DoInnerIterationsIfNeeded();
 
 			    if (ParameterToleranceReached()) {
 			      return;
@@ -7366,11 +7366,52 @@ public abstract class CeresSolver {
 			}
 		  }
 		}
+		
+		// Compute candidate_x_ = Plus(x_, delta_)
+		// Evaluate the cost of candidate_x_ as candidate_cost_.
+		//
+		// Failure to compute the step or the cost mean that candidate_cost_
+		// is set to std::numeric_limits<double>::max(). Unlike
+		// EvaluateGradientAndJacobian, failure in this function is not fatal
+		// as we are only computing and evaluating a candidate point, and if
+		// for some reason we are unable to evaluate it, we consider it to be
+		// a point with very high cost. This allows the user to deal with edge
+		// cases/constraints as part of the LocalParameterization and
+		// CostFunction objects.
+		private void ComputeCandidatePointAndEvaluateCost() {
+		  int i;
+		  boolean status;
+		  if (!evaluator_.Plus(x_, delta_, candidate_x_)) {
+			if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent_) {
+		        Preferences.debug("x_plus_delta = Plus(x, delta) failed. \n" +
+		        "Treating it as a step with infinite cost\n", Preferences.DEBUG_ALGORITHM);
+			}
+		    candidate_cost_ = Double.MAX_VALUE;
+		    return;
+		  }
+
+		  double candidate_x_array[] = new double[candidate_x_.size()];
+		  for (i = 0; i < candidate_x_.size(); i++) {
+			  candidate_x_array[i] = candidate_x_.get(i);
+		  }
+		  double candidate_cost_array[] = new double[] {candidate_cost_};
+		  status = evaluator_.Evaluate(
+		          candidate_x_array, candidate_cost_array, null, null, null);
+		  for (i = 0; i < candidate_x_.size(); i++) {
+			  candidate_x_.set(i,candidate_x_array[i]);
+		  }
+		  candidate_cost_ = candidate_cost_array[0];
+		  if (!status) {
+			  if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent_) {
+		        Preferences.debug("Step failed to evaluate. \n" +
+		        "Treating it as a step with infinite cost\n", Preferences.DEBUG_ALGORITHM);
+			  }
+		    candidate_cost_ = Double.MAX_VALUE;
+		  }
+		}
 
 
 		  /*private:
-
-		  void ComputeCandidatePointAndEvaluateCost();
 
 		  
 		  void DoInnerIterationsIfNeeded();
@@ -7390,20 +7431,561 @@ public abstract class CeresSolver {
             String[] error) {
 			LineSearch line_search = null;
 			switch (line_search_type) {
-			/*case ARMIJO:
+			case ARMIJO:
 			line_search = new ArmijoLineSearch(options);
 			break;
 			case WOLFE:
 			line_search = new WolfeLineSearch(options);
-			break;*/
+			break;
 			default:
 			error[0] = "Invalid line search algorithm type: " +
 			LineSearchTypeToString(line_search_type) +
 			", unable to create line search.";
 			return null;
 			}
-			//return line_search;
+			return line_search;
 	}
+	
+	// Bracketing / Zoom Strong Wolfe condition line search.  This implementation
+	// is based on the pseudo-code algorithm presented in Nocedal & Wright [1]
+	// (p60-61) with inspiration from the WolfeLineSearch which ships with the
+	// minFunc package by Mark Schmidt [2].
+	//
+	// [1] Nocedal J., Wright S., Numerical Optimization, 2nd Ed., Springer, 1999.
+	// [2] http://www.di.ens.fr/~mschmidt/Software/minFunc.html.
+	class WolfeLineSearch extends LineSearch {
+		  public WolfeLineSearch(LineSearchOptions options) {
+			  super(options);  
+		  }
+		  
+		  // Returns true iff either a valid point, or valid bracket are found.
+		  public boolean BracketingPhase(FunctionSample initial_position,
+		                       double step_size_estimate,
+		                       FunctionSample bracket_low,
+		                       FunctionSample bracket_high,
+		                       boolean do_zoom_search[],
+		                       LineSearchSummary summary) {
+			  LineSearchFunction function = options().function;
+
+			  FunctionSample previous = initial_position;
+			  FunctionSample current = new FunctionSample();
+
+			  double descent_direction_max_norm =
+			      function.DirectionInfinityNorm();
+
+			  do_zoom_search[0] = false;
+			  bracket_low = initial_position;
+
+			  // As we require the gradient to evaluate the Wolfe condition, we always
+			  // calculate it together with the value, irrespective of the interpolation
+			  // type.  As opposed to only calculating the gradient after the Armijo
+			  // condition is satisifed, as the computational saving from this approach
+			  // would be slight (perhaps even negative due to the extra call).  Also,
+			  // always calculating the value & gradient together protects against us
+			  // reporting invalid solutions if the cost function returns slightly different
+			  // function values when evaluated with / without gradients (due to numerical
+			  // issues).
+			  ++summary.num_function_evaluations;
+			  ++summary.num_gradient_evaluations;
+			  boolean kEvaluateGradient = true;
+			  function.Evaluate(step_size_estimate, kEvaluateGradient, current);
+			  while (true) {
+			    ++summary.num_iterations;
+
+			    if (current.value_is_valid &&
+			        (current.value[0] > (initial_position.value[0]
+			                          + options().sufficient_decrease
+			                          * initial_position.gradient
+			                          * current.x) ||
+			         (previous.value_is_valid && current.value[0] > previous.value[0]))) {
+			      // Bracket found: current step size violates Armijo sufficient decrease
+			      // condition, or has stepped past an inflection point of f() relative to
+			      // previous step size.
+			      do_zoom_search[0] = true;
+			      bracket_low = previous;
+			      bracket_high = current;
+			      if (3 <= MAX_LOG_LEVEL) {
+			              Preferences.debug("Bracket found: current step (" + current.x
+			              + ")\n violates Armijo sufficient condition, or has passed an \n" +
+			              "inflection point of f() based on value.\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      break;
+			    }
+
+			    if (current.value_is_valid &&
+			        Math.abs(current.gradient) <=
+			        -options().sufficient_curvature_decrease * initial_position.gradient) {
+			      // Current step size satisfies the strong Wolfe conditions, and is thus a
+			      // valid termination point, therefore a Zoom not required.
+			      bracket_low = current;
+			      bracket_high = current;
+			              if (3 <= MAX_LOG_LEVEL) {
+				              Preferences.debug("Bracketing phase found step size: " + current.x +
+			                  "\n satisfying strong Wolfe conditions, initial_position: "  +
+			                  initial_position + "\n current: \n" + current.ToDebugString() + "\n",
+			                  Preferences.DEBUG_ALGORITHM);
+			              }
+			      break;
+
+			    } else if (current.value_is_valid && current.gradient >= 0) {
+			      // Bracket found: current step size has stepped past an inflection point
+			      // of f(), but Armijo sufficient decrease is still satisfied and
+			      // f(current) is our best minimum thus far.  Remember step size
+			      // monotonically increases, thus previous_step_size < current_step_size
+			      // even though f(previous) > f(current).
+			      do_zoom_search[0] = true;
+			      // Note inverse ordering from first bracket case.
+			      bracket_low = current;
+			      bracket_high = previous;
+			      if (3 <= MAX_LOG_LEVEL) {
+		              Preferences.debug("Bracket found: current sep (" + current.x
+			              + ")\nsatisfies Armijo, but has gradient >= 0, thus have passed \n"
+			              + "an inflection point of f().",Preferences.DEBUG_ALGORITHM);
+			      }
+			      break;
+
+			    } else if (current.value_is_valid &&
+			               Math.abs(current.x - previous.x) * descent_direction_max_norm
+			               < options().min_step_size) {
+			      // We have shrunk the search bracket to a width less than our tolerance,
+			      // and still not found either a point satisfying the strong Wolfe
+			      // conditions, or a valid bracket containing such a point. Stop searching
+			      // and set bracket_low to the size size amongst all those tested which
+			      // minimizes f() and satisfies the Armijo condition.
+			      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+		              Preferences.debug("Line search failed: Wolfe bracketing phase shrank " + 
+			          "bracket width: " + Math.abs(current.x - previous.x) + 
+			          "\n to < tolerance: " + options().min_step_size
+			          + "\n with descent_direction_max_norm: "
+			          + descent_direction_max_norm + "\n and failed to find "
+			          + "a point satisfying the strong Wolfe conditions or a " +
+			          "\nbracketing containing such a point. Accepting "
+			          + "\npoint found satisfying Armijo condition only, to "
+			          + "\nallow continuation.\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      bracket_low = current;
+			      break;
+
+			    } else if (summary.num_iterations >= options().max_num_iterations) {
+			      // Check num iterations bound here so that we always evaluate the
+			      // max_num_iterations-th iteration against all conditions, and
+			      // then perform no additional (unused) evaluations.
+			      summary.error =
+			          String.format("Line search failed: Wolfe bracketing phase failed to \n" +
+			                       "find a point satisfying strong Wolfe conditions, or a \n" +
+			                       "bracket containing such a point within specified \n" +
+			                       "max_num_iterations: %d", options().max_num_iterations);
+			      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+			    	  Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      // Ensure that bracket_low is always set to the step size amongst all
+			      // those tested which minimizes f() and satisfies the Armijo condition
+			      // when we terminate due to the 'artificial' max_num_iterations condition.
+			      bracket_low =
+			          current.value_is_valid && current.value[0] < bracket_low.value[0]
+			          ? current : bracket_low;
+			      break;
+			    }
+			    // Either: f(current) is invalid; or, f(current) is valid, but does not
+			    // satisfy the strong Wolfe conditions itself, or the conditions for
+			    // being a boundary of a bracket.
+
+			    // If f(current) is valid, (but meets no criteria) expand the search by
+			    // increasing the step size.
+			    double max_step_size =
+			        current.value_is_valid
+			        ? (current.x * options().max_step_expansion) : current.x;
+
+			    // We are performing 2-point interpolation only here, but the API of
+			    // InterpolatingPolynomialMinimizingStepSize() allows for up to
+			    // 3-point interpolation, so pad call with a sample with an invalid
+			    // value that will therefore be ignored.
+			    FunctionSample unused_previous = new FunctionSample();
+			    if(unused_previous.value_is_valid) {
+			    	System.err.println("unused_previous.value_is_valid = true in WolfeLineSearch BracketingPhase");
+			    	return false;
+			    }
+			    // Contracts step size if f(current) is not valid.
+			    double polynomial_minimization_start_time = 1.0E-3 * System.currentTimeMillis();
+			    double step_size =
+			        this.InterpolatingPolynomialMinimizingStepSize(
+			            options().interpolation_type,
+			            previous,
+			            unused_previous,
+			            current,
+			            previous.x,
+			            max_step_size);
+			    summary.polynomial_minimization_time_in_seconds +=
+			        (1.0E-3 * System.currentTimeMillis() - polynomial_minimization_start_time);
+			    if (step_size * descent_direction_max_norm < options().min_step_size) {
+			      summary.error =
+			          String.format("Line search failed: step_size too small: %.5e \n" +
+			                       "with descent_direction_max_norm: %.5e", step_size,
+			                       descent_direction_max_norm);
+			      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+			    	  Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      return false;
+			    }
+
+			    previous = current.value_is_valid ? current : previous;
+			    ++summary.num_function_evaluations;
+			    ++summary.num_gradient_evaluations;
+			    function.Evaluate(step_size, kEvaluateGradient, current);
+			  }
+
+			  // Ensure that even if a valid bracket was found, we will only mark a zoom
+			  // as required if the bracket's width is greater than our minimum tolerance.
+			  if (do_zoom_search[0] &&
+			      Math.abs(bracket_high.x - bracket_low.x) * descent_direction_max_norm
+			      < options().min_step_size) {
+			    do_zoom_search[0] = false;
+			  }
+
+			  return true;
+			} // public boolean BracketingPhase
+
+			// Returns true iff solution satisfies the strong Wolfe conditions. Otherwise,
+			// on return false, if we stopped searching due to the 'artificial' condition of
+			// reaching max_num_iterations, solution is the step size amongst all those
+			// tested, which satisfied the Armijo decrease condition and minimized f().
+			public boolean ZoomPhase(FunctionSample initial_position,
+			                                FunctionSample bracket_low,
+			                                FunctionSample bracket_high,
+			                                FunctionSample solution,
+			                                LineSearchSummary summary) {
+			  LineSearchFunction function = options().function;
+
+			  if(!(bracket_low.value_is_valid && bracket_low.gradient_is_valid)) {
+			      System.err.println("Ceres bug: f_low input to Wolfe Zoom invalid, please contact \n" +
+			      "the developers!, initial_position: \n" +
+			      initial_position.ToDebugString() + "\n" +
+			      "bracket_low: \n" +
+			      bracket_low.ToDebugString() +
+			      "\n bracket_high: \n" +
+			      bracket_high.ToDebugString());
+			  }
+			  // We do not require bracket_high.gradient_is_valid as the gradient condition
+			  // for a valid bracket is only dependent upon bracket_low.gradient, and
+			  // in order to minimize jacobian evaluations, bracket_high.gradient may
+			  // not have been calculated (if bracket_high.value does not satisfy the
+			  // Armijo sufficient decrease condition and interpolation method does not
+			  // require it).
+			  //
+			  // We also do not require that: bracket_low.value < bracket_high.value,
+			  // although this is typical. This is to deal with the case when
+			  // bracket_low = initial_position, bracket_high is the first sample,
+			  // and bracket_high does not satisfy the Armijo condition, but still has
+			  // bracket_high.value < initial_position.value.
+			  if(!bracket_high.value_is_valid) {
+			      System.err.println("Ceres bug: f_high input to Wolfe Zoom invalid, please \n" +
+			      "contact the developers!, initial_position: \n" +
+			      initial_position.ToDebugString() + "\n" +
+			      "bracket_low: \n" +
+			      bracket_low.ToDebugString() + "\n" +
+			      "bracket_high: \n" +
+			      bracket_high.ToDebugString());
+			  }
+
+			  if (bracket_low.gradient * (bracket_high.x - bracket_low.x) >= 0) {
+			    // The third condition for a valid initial bracket:
+			    //
+			    //   3. bracket_high is chosen after bracket_low, s.t.
+			    //      bracket_low.gradient * (bracket_high.x - bracket_low.x) < 0.
+			    //
+			    // is not satisfied.  As this can happen when the users' cost function
+			    // returns inconsistent gradient values relative to the function values,
+			    // we do not CHECK_LT(), but we do stop processing and return an invalid
+			    // value.
+			    summary.error =
+			        String.format("Line search failed: Wolfe zoom phase passed a bracket \n" +
+			                     "which does not satisfy: bracket_low.gradient * \n" +
+			                     "(bracket_high.x - bracket_low.x) < 0 [%.8e !< 0] \n" +
+			                     "with initial_position: %s, bracket_low: %s, bracket_high:\n" +
+			                     " %s, the most likely cause of which is the cost function \n" +
+			                     "returning inconsistent gradient & function values.",
+			                     bracket_low.gradient * (bracket_high.x - bracket_low.x),
+			                     initial_position.ToDebugString(),
+			                     bracket_low.ToDebugString(),
+			                     bracket_high.ToDebugString());
+			    if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+			    	  Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+			    }
+			    solution.value_is_valid = false;
+			    return false;
+			  }
+
+			  int num_bracketing_iterations = summary.num_iterations;
+			  double descent_direction_max_norm = function.DirectionInfinityNorm();
+
+			  while (true) {
+			    // Set solution to bracket_low, as it is our best step size (smallest f())
+			    // found thus far and satisfies the Armijo condition, even though it does
+			    // not satisfy the Wolfe condition.
+			    solution = bracket_low;
+			    if (summary.num_iterations >= options().max_num_iterations) {
+			      summary.error =
+			          String.format("Line search failed: Wolfe zoom phase failed to \n" +
+			                       "find a point satisfying strong Wolfe conditions \n" +
+			                       "within specified max_num_iterations: %d, \n" +
+			                       "(num iterations taken for bracketing: %d).",
+			                       options().max_num_iterations, num_bracketing_iterations);
+			      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+			    	  Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      return false;
+			    }
+			    if (Math.abs(bracket_high.x - bracket_low.x) * descent_direction_max_norm
+			        < options().min_step_size) {
+			      // Bracket width has been reduced below tolerance, and no point satisfying
+			      // the strong Wolfe conditions has been found.
+			      summary.error =
+			          String.format("Line search failed: Wolfe zoom bracket width: %.5e \n" +
+			                       "too small with descent_direction_max_norm: %.5e.",
+			                       Math.abs(bracket_high.x - bracket_low.x),
+			                       descent_direction_max_norm);
+			      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+			    	  Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      return false;
+			    }
+
+			    ++summary.num_iterations;
+			    // Polynomial interpolation requires inputs ordered according to step size,
+			    // not f(step size).
+			    FunctionSample lower_bound_step =
+			        bracket_low.x < bracket_high.x ? bracket_low : bracket_high;
+			    FunctionSample upper_bound_step =
+			        bracket_low.x < bracket_high.x ? bracket_high : bracket_low;
+			    // We are performing 2-point interpolation only here, but the API of
+			    // InterpolatingPolynomialMinimizingStepSize() allows for up to
+			    // 3-point interpolation, so pad call with a sample with an invalid
+			    // value that will therefore be ignored.
+			    FunctionSample unused_previous = new FunctionSample();
+			    if(unused_previous.value_is_valid) {
+			    	System.err.println("unused_previous.value_is_valid = true in WolfeLineSearch ZoomPhase");
+			    	return false;
+			    }
+			    double polynomial_minimization_start_time = 1.0E-3 * System.currentTimeMillis();
+			    double step_size =
+			        this.InterpolatingPolynomialMinimizingStepSize(
+			            options().interpolation_type,
+			            lower_bound_step,
+			            unused_previous,
+			            upper_bound_step,
+			            lower_bound_step.x,
+			            upper_bound_step.x);
+			    summary.polynomial_minimization_time_in_seconds +=
+			        (1.0E-3 * System.currentTimeMillis() - polynomial_minimization_start_time);
+			    // No check on magnitude of step size being too small here as it is
+			    // lower-bounded by the initial bracket start point, which was valid.
+			    //
+			    // As we require the gradient to evaluate the Wolfe condition, we always
+			    // calculate it together with the value, irrespective of the interpolation
+			    // type.  As opposed to only calculating the gradient after the Armijo
+			    // condition is satisifed, as the computational saving from this approach
+			    // would be slight (perhaps even negative due to the extra call).  Also,
+			    // always calculating the value & gradient together protects against us
+			    // reporting invalid solutions if the cost function returns slightly
+			    // different function values when evaluated with / without gradients (due
+			    // to numerical issues).
+			    ++summary.num_function_evaluations;
+			    ++summary.num_gradient_evaluations;
+			    boolean kEvaluateGradient = true;
+			    function.Evaluate(step_size, kEvaluateGradient, solution);
+			    if (!solution.value_is_valid || !solution.gradient_is_valid) {
+			      summary.error =
+			          String.format("Line search failed: Wolfe Zoom phase found \n" +
+			                       "step_size: %.5e, for which function is invalid, \n" +
+			                       "between low_step: %.5e and high_step: %.5e \n" +
+			                       "at which function is valid.",
+			                       solution.x, bracket_low.x, bracket_high.x);
+			      if ((WARNING <= MAX_LOG_LEVEL) && !options().is_silent) {
+			    	  Preferences.debug(summary.error + "\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      return false;
+			    }
+
+			    if (3 <= MAX_LOG_LEVEL) {
+			               Preferences.debug("Zoom iteration: " + (summary.num_iterations - num_bracketing_iterations) + "\n" +
+			               "bracket_low: \n" + 
+			                bracket_low.ToDebugString() + "\n" +
+			                "bracket_high: \n" +
+			                bracket_high.ToDebugString() + "\n" +
+			                "minimizing solution: \n" +
+			                solution.ToDebugString() + "\n", Preferences.DEBUG_ALGORITHM);
+			    }
+
+			    if ((solution.value[0] > (initial_position.value[0]
+			                            + options().sufficient_decrease
+			                            * initial_position.gradient
+			                            * solution.x)) ||
+			        (solution.value[0] >= bracket_low.value[0])) {
+			      // Armijo sufficient decrease not satisfied, or not better
+			      // than current lowest sample, use as new upper bound.
+			      bracket_high = solution;
+			      continue;
+			    }
+
+			    // Armijo sufficient decrease satisfied, check strong Wolfe condition.
+			    if (Math.abs(solution.gradient) <=
+			        -options().sufficient_curvature_decrease * initial_position.gradient) {
+			      // Found a valid termination point satisfying strong Wolfe conditions.
+			      if (3 <= MAX_LOG_LEVEL) {
+			              Preferences.debug("Zoom phase found step size: " + solution.x + "\n" +
+			              ", satisfying strong Wolfe conditions.\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      break;
+
+			    } else if (solution.gradient * (bracket_high.x - bracket_low.x) >= 0) {
+			      bracket_high = bracket_low;
+			    }
+
+			    bracket_low = solution;
+			  }
+			  // Solution contains a valid point which satisfies the strong Wolfe
+			  // conditions.
+			  return true;
+
+		  }
+		 
+
+		 public void DoSearch(double step_size_estimate,
+		                        double initial_cost,
+		                        double initial_gradient,
+		                        LineSearchSummary summary) {
+
+			  // All parameters should have been validated by the Solver, but as
+			  // invalid values would produce crazy nonsense, hard check them here.
+			  if (step_size_estimate < 0.0) {
+				  System.err.println("step_size_estimate < 0.0 in WolfeLineSearch DoSearch");
+				  return;
+			  }
+			  if (options().sufficient_decrease <= 0.0) {
+				  System.err.println("options().sufficient_decrease <= 0.0 in WolfeLineSearch DoSearch");
+				  return;
+			  }
+			  if (options().sufficient_curvature_decrease <= options().sufficient_decrease) {
+				  System.err.println("options().sufficient_curvature_decrease <= options().sufficient_decrease in WolfeLineSearch DoSearch");
+				  return;
+			  }
+			  if (options().sufficient_curvature_decrease >= 1.0) {
+				  System.err.println("options().sufficient_curvature_decrease >= 1.0 in WolfeLineSearch DoSearch");
+				  return;
+			  }
+			  if (options().max_step_expansion <= 1.0) {
+				  System.err.println("options().max_step_expansion <= 1.0 in WolfeLineSearch DoSearch");
+				  return;
+			  }
+
+			  // Note initial_cost & initial_gradient are evaluated at step_size = 0,
+			  // not step_size_estimate, which is our starting guess.
+			  FunctionSample initial_position = new FunctionSample(0.0, initial_cost, initial_gradient);
+			  initial_position.vector_x = options().function.position();
+			  initial_position.vector_x_is_valid = true;
+			  boolean do_zoom_search[] = new boolean[] {false};
+			  // Important: The high/low in bracket_high & bracket_low refer to their
+			  // _function_ values, not their step sizes i.e. it is _not_ required that
+			  // bracket_low.x < bracket_high.x.
+			  FunctionSample solution = new FunctionSample();
+			  FunctionSample bracket_low = new FunctionSample();
+			  FunctionSample bracket_high = new FunctionSample();
+
+			  // Wolfe bracketing phase: Increases step_size until either it finds a point
+			  // that satisfies the (strong) Wolfe conditions, or an interval that brackets
+			  // step sizes which satisfy the conditions.  From Nocedal & Wright [1] p61 the
+			  // interval: (step_size_{k-1}, step_size_{k}) contains step lengths satisfying
+			  // the strong Wolfe conditions if one of the following conditions are met:
+			  //
+			  //   1. step_size_{k} violates the sufficient decrease (Armijo) condition.
+			  //   2. f(step_size_{k}) >= f(step_size_{k-1}).
+			  //   3. f'(step_size_{k}) >= 0.
+			  //
+			  // Caveat: If f(step_size_{k}) is invalid, then step_size is reduced, ignoring
+			  // this special case, step_size monotonically increases during bracketing.
+			  if (!this.BracketingPhase(initial_position,
+			                             step_size_estimate,
+			                             bracket_low,
+			                             bracket_high,
+			                             do_zoom_search,
+			                             summary)) {
+			    // Failed to find either a valid point, a valid bracket satisfying the Wolfe
+			    // conditions, or even a step size > minimum tolerance satisfying the Armijo
+			    // condition.
+			    return;
+			  }
+
+			  if (!do_zoom_search[0]) {
+			    // Either: Bracketing phase already found a point satisfying the strong
+			    // Wolfe conditions, thus no Zoom required.
+			    //
+			    // Or: Bracketing failed to find a valid bracket or a point satisfying the
+			    // strong Wolfe conditions within max_num_iterations, or whilst searching
+			    // shrank the bracket width until it was below our minimum tolerance.
+			    // As these are 'artificial' constraints, and we would otherwise fail to
+			    // produce a valid point when ArmijoLineSearch would succeed, we return the
+			    // point with the lowest cost found thus far which satsifies the Armijo
+			    // condition (but not the Wolfe conditions).
+			    summary.optimal_point = bracket_low;
+			    summary.success = true;
+			    return;
+			  }
+
+			  //VLOG(3) << std::scientific << std::setprecision(kErrorMessageNumericPrecision)
+			  if (3 <= MAX_LOG_LEVEL) {
+			          Preferences.debug("Starting line search zoom phase with bracket_low: \n" +
+			          bracket_low.ToDebugString() + "\nbracket_high: \n" + bracket_high.ToDebugString() 
+			          + "\nbracket width: " + Math.abs(bracket_low.x - bracket_high.x)
+			          + "\nbracket abs delta cost: " + Math.abs(bracket_low.value[0] - bracket_high.value[0]) + "\n",
+			          Preferences.DEBUG_ALGORITHM);
+			  }
+
+			  // Wolfe Zoom phase: Called when the Bracketing phase finds an interval of
+			  // non-zero, finite width that should bracket step sizes which satisfy the
+			  // (strong) Wolfe conditions (before finding a step size that satisfies the
+			  // conditions).  Zoom successively decreases the size of the interval until a
+			  // step size which satisfies the Wolfe conditions is found.  The interval is
+			  // defined by bracket_low & bracket_high, which satisfy:
+			  //
+			  //   1. The interval bounded by step sizes: bracket_low.x & bracket_high.x
+			  //      contains step sizes that satsify the strong Wolfe conditions.
+			  //   2. bracket_low.x is of all the step sizes evaluated *which satisifed the
+			  //      Armijo sufficient decrease condition*, the one which generated the
+			  //      smallest function value, i.e. bracket_low.value <
+			  //      f(all other steps satisfying Armijo).
+			  //        - Note that this does _not_ (necessarily) mean that initially
+			  //          bracket_low.value < bracket_high.value (although this is typical)
+			  //          e.g. when bracket_low = initial_position, and bracket_high is the
+			  //          first sample, and which does not satisfy the Armijo condition,
+			  //          but still has bracket_high.value < initial_position.value.
+			  //   3. bracket_high is chosen after bracket_low, s.t.
+			  //      bracket_low.gradient * (bracket_high.x - bracket_low.x) < 0.
+			  if (!this.ZoomPhase(initial_position,
+			                       bracket_low,
+			                       bracket_high,
+			                       solution,
+			                       summary) && !solution.value_is_valid) {
+			    // Failed to find a valid point (given the specified decrease parameters)
+			    // within the specified bracket.
+			    return;
+			  }
+			  // Ensure that if we ran out of iterations whilst zooming the bracket, or
+			  // shrank the bracket width to < tolerance and failed to find a point which
+			  // satisfies the strong Wolfe curvature condition, that we return the point
+			  // amongst those found thus far, which minimizes f() and satisfies the Armijo
+			  // condition.
+
+			  if (!solution.value_is_valid || solution.value[0] > bracket_low.value[0]) {
+			    summary.optimal_point = bracket_low;
+			  } else {
+			    summary.optimal_point = solution;
+			  }
+
+			  summary.success = true;
+	 
+		 }
+		 
+	} // class WolfeLineSearch
 	
 	// Backtracking and interpolation based Armijo line search. This
 	// implementation is based on the Armijo line search that ships in the
@@ -9319,93 +9901,15 @@ public abstract class CeresSolver {
 
 		    // Find the real parts y_i of its roots (not only the real roots).
 		    Vector<Double> roots_real = new Vector<Double>();
+		    Vector<Double> roots_imag = null;
 		    // FindPolynomialRoots calls Eigen::EigenSolver<Matrix> solver(companion_matrix, false);
-		    //if (!FindPolynomialRoots(polynomial, roots_real, null)) {
+		    if (!FindPolynomialRoots(polynomial, roots_real, roots_imag)) {
 		      // Failed to find the roots of the polynomial, i.e. the candidate
 		      // solutions of the constrained problem. Report this back to the caller.
-		      //return false;
-		    //}
-		    if (polynomial.size() == 0) {
-		        System.err.println("Invalid polynomial of size 0 passed to FindPolynomialRoots");
-		        return false;
-		      }
-
-		    Vector<Double>polynomial_leading_zeros_stripped = RemoveLeadingZeros(polynomial);
-		    int degree = polynomial_leading_zeros_stripped.size() - 1;
-		    
-		    if (3 <= MAX_LOG_LEVEL) {
-		        Preferences.debug("Input polynomial: \n", Preferences.DEBUG_ALGORITHM);
-		        for (i = 0; i < polynomial.size(); i++) {
-		        	Preferences.debug(polynomial.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
-		        }
-		        if (polynomial.size() != polynomial_leading_zeros_stripped.size()) {
-		            Preferences.debug("Trimmed polynomial: \n", Preferences.DEBUG_ALGORITHM);
-		            	for (i = 0; i < polynomial_leading_zeros_stripped.size(); i++) {
-				        	Preferences.debug(polynomial_leading_zeros_stripped.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
-				        }
-		        }
+		      return false;
 		    }
 		    
-		    // Is the polynomial constant?
-		    if (degree == 0) {
-		      Preferences.debug("Trying to extract roots from a constant polynomial\n",
-		    		  Preferences.DEBUG_ALGORITHM);
-		      // We return true with no roots, not false, as if the polynomial is constant
-		      // it is correct that there are no roots. It is not the case that they were
-		      // there, but that we have failed to extract them.
-		    }
-		    else if (degree == 1) {
-		    	FindLinearPolynomialRoots(polynomial_leading_zeros_stripped, roots_real, null);
-		    }
-		    else if (degree == 2) {
-		    	FindQuadraticPolynomialRoots(polynomial_leading_zeros_stripped, roots_real, null);
-		    }
-		    else {
-		    	// The degree is now known to be at least 3.
-		    	// Divide by leading term
-		    	double leading_term = polynomial_leading_zeros_stripped.get(0);
-		    	for (i = 0; i < polynomial_leading_zeros_stripped.size(); i++) {
-		    	  polynomial_leading_zeros_stripped.set(i, polynomial_leading_zeros_stripped.get(i)/leading_term);
-		    	}
-		    	double areal, aimag, breal, bimag, creal, cimag, dreal, dimag, ereal, eimag;
-		    	int num_sols[] = new int[1];
-		    	double solsreal[] = null;
-		    	double solsimag[] = null;
-		    	if (degree == 3) {
-		    		areal = 0.0;
-					aimag = 0.0;
-					breal = 1.0;
-					bimag = 0.0;
-					creal = polynomial_leading_zeros_stripped.get(1);
-					cimag = 0.0;
-					dreal = polynomial_leading_zeros_stripped.get(2);
-					dimag = 0.0;
-					ereal = polynomial_leading_zeros_stripped.get(3);
-					eimag = 0.0;
-					solsreal = new double[3];
-					solsimag = new double[3];	
-		    	}
-		    	else {
-			    	areal = 1.0;
-					aimag = 0.0;
-					breal = polynomial_leading_zeros_stripped.get(1);
-					bimag = 0.0;
-					creal = polynomial_leading_zeros_stripped.get(2);
-					cimag = 0.0;
-					dreal = polynomial_leading_zeros_stripped.get(3);
-					dimag = 0.0;
-					ereal = polynomial_leading_zeros_stripped.get(4);
-					eimag = 0.0;
-					solsreal = new double[4];
-					solsimag = new double[4];
-		    	}
-				QuarticEquation qe = new QuarticEquation(degree, areal, aimag, breal, bimag, creal, cimag,
-						dreal, dimag, ereal, eimag, num_sols, solsreal, solsimag);
-				qe.run();
-				for (i = 0; i < num_sols[0]; i++) {
-					roots_real.add(solsreal[i]);
-				}
-		    }
+		    
 
 
 		    // For each root y, compute B x(y) and check for feasibility.
@@ -13955,20 +14459,110 @@ public abstract class CeresSolver {
             double[] optimal_x,
             double[] optimal_value) {
 			Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
-			/*MinimizePolynomial(polynomial, x_min, x_max, optimal_x, optimal_value);
+			MinimizePolynomial(polynomial, x_min, x_max, optimal_x, optimal_value);
 			for (int i = 0; i < samples.size(); ++i) {
-			const FunctionSample& sample = samples[i];
-			if ((sample.x < x_min) || (sample.x > x_max)) {
-			continue;
+			    FunctionSample sample = samples.get(i);
+			    if ((sample.x < x_min) || (sample.x > x_max)) {
+			        continue;
+			    }
+			
+			    double value = EvaluatePolynomial(polynomial, sample.x);
+			    if (value < optimal_value[0]) {
+			        optimal_x[0] = sample.x;
+			        optimal_value[0] = value;
+			    }
+			}
+	} // public void MinimizeInterpolatingPolynomial
+	
+	public void MinimizePolynomial(Vector<Double> polynomial,
+            double x_min,
+            double x_max,
+            double[] optimal_x,
+            double[] optimal_value) {
+			// Find the minimum of the polynomial at the two ends.
+			//
+			// We start by inspecting the middle of the interval. Technically
+			// this is not needed, but we do this to make this code as close to
+			// the minFunc package as possible.
+			optimal_x[0] = (x_min + x_max) / 2.0;
+			optimal_value[0] = EvaluatePolynomial(polynomial, optimal_x[0]);
+			
+			double x_min_value = EvaluatePolynomial(polynomial, x_min);
+			if (x_min_value < optimal_value[0]) {
+			    optimal_value[0] = x_min_value;
+			    optimal_x[0] = x_min;
 			}
 			
-			const double value = EvaluatePolynomial(polynomial, sample.x);
-			if (value < *optimal_value) {
-			*optimal_x = sample.x;
-			*optimal_value = value;
+			double x_max_value = EvaluatePolynomial(polynomial, x_max);
+			if (x_max_value < optimal_value[0]) {
+			    optimal_value[0] = x_max_value;
+			    optimal_x[0] = x_max;
 			}
-			}*/
-	} // public void MinimizeInterpolatingPolynomial
+			
+			// If the polynomial is linear or constant, we are done.
+			if (polynomial.size() <= 2) {
+			return;
+			}
+			
+			Vector<Double> derivative = DifferentiatePolynomial(polynomial);
+			Vector<Double> roots_real = new Vector<Double>();
+			if (!FindPolynomialRoots(derivative, roots_real, null)) {
+		    if (WARNING <= MAX_LOG_LEVEL) {
+			    Preferences.debug("Unable to find the critical points of \n" +
+			     "the interpolating polynomial.\n",Preferences.DEBUG_ALGORITHM);
+		    }
+			return;
+			}
+
+			// This is a bit of an overkill, as some of the roots may actually
+			// have a complex part, but its simpler to just check these values.
+			for (int i = 0; i < roots_real.size(); ++i) {
+			    double root = roots_real.get(i);
+			    if ((root < x_min) || (root > x_max)) {
+			        continue;
+			    }
+			
+			    double value = EvaluatePolynomial(polynomial, root);
+			    if (value < optimal_value[0]) {
+			        optimal_value[0] = value;
+			        optimal_x[0] = root;
+			    }
+			}
+	} // public void MinimizePolynomial
+	
+	
+	Vector<Double> DifferentiatePolynomial(Vector<Double> polynomial) {
+		  int degree = polynomial.size() - 1;
+		  if (degree < 0) {
+			  System.err.println("degree < 0 in DifferentiatePolynomial");
+			  return null;
+		  }
+		  
+		  Vector<Double> derivative = new Vector<Double>();
+
+		  // Degree zero polynomials are constants, and their derivative does
+		  // not result in a smaller degree polynomial, just a degree zero
+		  // polynomial with value zero.
+		  if (degree == 0) {
+			derivative.add(0.0);
+		    return derivative;
+		  }
+
+		  for (int i = 0; i < degree; ++i) {
+		    derivative.add((degree - i) * polynomial.get(i));
+		  }
+
+		  return derivative;
+		}
+	
+	// Evaluate the polynomial at x using the Horner scheme.
+	double EvaluatePolynomial(Vector<Double> polynomial, double x) {
+	  double v = 0.0;
+	  for (int i = 0; i < polynomial.size(); ++i) {
+	    v = v * x + polynomial.get(i);
+	  }
+	  return v;
+	}
 
 	
 	Vector<Double> FindInterpolatingPolynomial(Vector<FunctionSample> samples) {
@@ -14053,6 +14647,100 @@ public abstract class CeresSolver {
 		  //Eigen::FullPivLU<Matrix> lu(lhs);
 		  //return lu.setThreshold(0.0).solve(rhs);
 		}
+	
+	public boolean FindPolynomialRoots(Vector<Double> polynomial, Vector<Double> roots_real, Vector<Double> roots_imag) {
+		int i;
+	    if (polynomial.size() == 0) {
+	        System.err.println("Invalid polynomial of size 0 passed to FindPolynomialRoots");
+	        return false;
+	      }
+
+	    Vector<Double>polynomial_leading_zeros_stripped = RemoveLeadingZeros(polynomial);
+	    int degree = polynomial_leading_zeros_stripped.size() - 1;
+	    
+	    if (3 <= MAX_LOG_LEVEL) {
+	        Preferences.debug("Input polynomial: \n", Preferences.DEBUG_ALGORITHM);
+	        for (i = 0; i < polynomial.size(); i++) {
+	        	Preferences.debug(polynomial.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
+	        }
+	        if (polynomial.size() != polynomial_leading_zeros_stripped.size()) {
+	            Preferences.debug("Trimmed polynomial: \n", Preferences.DEBUG_ALGORITHM);
+	            	for (i = 0; i < polynomial_leading_zeros_stripped.size(); i++) {
+			        	Preferences.debug(polynomial_leading_zeros_stripped.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
+			        }
+	        }
+	    }
+	    
+	    // Is the polynomial constant?
+	    if (degree == 0) {
+	      Preferences.debug("Trying to extract roots from a constant polynomial\n",
+	    		  Preferences.DEBUG_ALGORITHM);
+	      // We return true with no roots, not false, as if the polynomial is constant
+	      // it is correct that there are no roots. It is not the case that they were
+	      // there, but that we have failed to extract them.
+	    }
+	    else if (degree == 1) {
+	    	FindLinearPolynomialRoots(polynomial_leading_zeros_stripped, roots_real, roots_imag);
+	    }
+	    else if (degree == 2) {
+	    	FindQuadraticPolynomialRoots(polynomial_leading_zeros_stripped, roots_real, roots_imag);
+	    }
+	    else {
+	    	// The degree is now known to be at least 3.
+	    	// Divide by leading term
+	    	double leading_term = polynomial_leading_zeros_stripped.get(0);
+	    	for (i = 0; i < polynomial_leading_zeros_stripped.size(); i++) {
+	    	  polynomial_leading_zeros_stripped.set(i, polynomial_leading_zeros_stripped.get(i)/leading_term);
+	    	}
+	    	double areal, aimag, breal, bimag, creal, cimag, dreal, dimag, ereal, eimag;
+	    	int num_sols[] = new int[1];
+	    	double solsreal[] = null;
+	    	double solsimag[] = null;
+	    	if (degree == 3) {
+	    		areal = 0.0;
+				aimag = 0.0;
+				breal = 1.0;
+				bimag = 0.0;
+				creal = polynomial_leading_zeros_stripped.get(1);
+				cimag = 0.0;
+				dreal = polynomial_leading_zeros_stripped.get(2);
+				dimag = 0.0;
+				ereal = polynomial_leading_zeros_stripped.get(3);
+				eimag = 0.0;
+				solsreal = new double[3];
+				solsimag = new double[3];	
+	    	}
+	    	else {
+		    	areal = 1.0;
+				aimag = 0.0;
+				breal = polynomial_leading_zeros_stripped.get(1);
+				bimag = 0.0;
+				creal = polynomial_leading_zeros_stripped.get(2);
+				cimag = 0.0;
+				dreal = polynomial_leading_zeros_stripped.get(3);
+				dimag = 0.0;
+				ereal = polynomial_leading_zeros_stripped.get(4);
+				eimag = 0.0;
+				solsreal = new double[4];
+				solsimag = new double[4];
+	    	}
+			QuarticEquation qe = new QuarticEquation(degree, areal, aimag, breal, bimag, creal, cimag,
+					dreal, dimag, ereal, eimag, num_sols, solsreal, solsimag);
+			qe.run();
+			if (roots_real != null) {
+				for (i = 0; i < num_sols[0]; i++) {
+					roots_real.add(solsreal[i]);
+				}
+			}
+			if (roots_imag != null) {
+				for (i = 0; i < num_sols[0]; i++) {
+					roots_imag.add(solsimag[i]);
+				}
+			}
+	    }
+	    return true;
+	    }
+
 
 
 } // public abstract class CeresSolver
