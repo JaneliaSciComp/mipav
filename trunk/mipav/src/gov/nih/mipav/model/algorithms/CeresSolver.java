@@ -749,13 +749,13 @@ public abstract class CeresSolver {
 		}
 	}
 
-	public void Solve(Solver.Options options, ProblemImpl problem, Solver.Summary summary) {
+	public void Solve(Solver.Options options, ProblemImpl problem, SolverSummary summary) {
 		if (problem == null) {
 			System.err.println("ProblemImpl problem is null in Solve");
 			return;
 		}
 		if (summary == null) {
-			System.err.println("Solver.Summary summary is null in Solve");
+			System.err.println("SolverSummary summary is null in Solve");
 			return;
 		}
 		double start_time = 1.0E-3 * System.currentTimeMillis();
@@ -860,7 +860,7 @@ public abstract class CeresSolver {
 		// System.err.println("I finish");
 	} // public void Solve
 
-	public void PostSolveSummarize(PreprocessedProblem pp, Solver.Summary summary) {
+	public void PostSolveSummarize(PreprocessedProblem pp, SolverSummary summary) {
 		OrderingToGroupSizes(pp.options.linear_solver_ordering, summary.linear_solver_ordering_used);
 		OrderingToGroupSizes(pp.options.inner_iteration_ordering, summary.inner_iteration_ordering_used);
 
@@ -905,7 +905,7 @@ public abstract class CeresSolver {
 		 */
 	}
 
-	public void Minimize(PreprocessedProblem pp, Solver.Summary summary) {
+	public void Minimize(PreprocessedProblem pp, SolverSummary summary) {
 		int i;
 		Program program = pp.reduced_program;
 		if (pp.reduced_program.NumParameterBlocks() == 0) {
@@ -6445,8 +6445,24 @@ public abstract class CeresSolver {
 		
 		public void Minimize(
 			    Minimizer.Options options,
+			    Vector<Double> parameters,
+			    SolverSummary summary) {
+			int i;
+			double parameters_array[] = new double[parameters.size()];
+			for (i = 0; i < parameters.size(); i++) {
+				parameters_array[i] = parameters.get(i);
+			}
+			Minimize(options, parameters_array, summary);
+			for (i = 0; i < parameters.size(); i++) {
+				parameters.set(i, parameters_array[i]);
+			}
+		}
+		
+		
+		public void Minimize(
+			    Minimizer.Options options,
 			    double[] parameters,
-			    Solver.Summary summary) {
+			    SolverSummary summary) {
 			  int i, j;
 			  // Set the state and mark all parameter blocks constant.
 			  for (i = 0; i < parameter_blocks_.size(); ++i) {
@@ -6522,8 +6538,7 @@ public abstract class CeresSolver {
 			      // On the other hand, if the optimization is a failure, that in
 			      // some ways is fine, since it won't change the parameters and
 			      // we are fine.
-			      Solver solver = new Solver();
-			      Solver.Summary inner_summary = solver.summary;
+			      SolverSummary inner_summary = new SolverSummary();
 			      Solve(inner_program,
 			            linear_solvers[thread_id],
 			            parameters, parameter_block.state_offset(),
@@ -6553,7 +6568,7 @@ public abstract class CeresSolver {
 		                                       LinearSolver linear_solver,
 		                                       double[] parameter,
 		                                       int parameter_start,
-		                                       Solver.Summary summary) {
+		                                       SolverSummary summary) {
 		  summary.initial_cost = 0.0;
 		  summary.fixed_cost = 0.0;
 		  summary.final_cost = 0.0;
@@ -6596,7 +6611,7 @@ public abstract class CeresSolver {
 		  // These pointers are shortcuts to objects passed to the
 		  // TrustRegionMinimizer. The TrustRegionMinimizer does not own them.
 		  private double[] parameters_;
-		  private Solver.Summary solver_summary_;
+		  private SolverSummary solver_summary_;
 		  private Evaluator evaluator_;
 		  private SparseMatrix jacobian_;
 		  private TrustRegionStrategy strategy_;
@@ -6674,7 +6689,7 @@ public abstract class CeresSolver {
 		  // This method is not thread safe.
 		  public void Minimize(Minimizer.Options options,
 		                        double[] parameters,
-		                        Solver.Summary solver_summary) {
+		                        SolverSummary solver_summary) {
 			  start_time_in_secs_ = 1.0E-3 * System.currentTimeMillis();
 			  iteration_start_time_in_secs_ = start_time_in_secs_;
 			  Init(options, parameters, solver_summary);
@@ -6719,7 +6734,7 @@ public abstract class CeresSolver {
 			    }
 
 			    ComputeCandidatePointAndEvaluateCost();
-			    /*DoInnerIterationsIfNeeded();
+			    DoInnerIterationsIfNeeded();
 
 			    if (ParameterToleranceReached()) {
 			      return;
@@ -6737,7 +6752,7 @@ public abstract class CeresSolver {
 			      continue;
 			    }
 
-			    HandleUnsuccessfulStep();*/
+			    HandleUnsuccessfulStep();
 			  }
 	  
 		  }
@@ -6747,7 +6762,7 @@ public abstract class CeresSolver {
 		// the fields in the solver_summary.
 		private void Init(Minimizer.Options options,
 		                                double[] parameters,
-		                                Solver.Summary solver_summary) {
+		                                SolverSummary solver_summary) {
 		  int i;
 		  options_ = options;
 		  Collections.sort(options_.trust_region_minimizer_iterations_to_dump);
@@ -7409,22 +7424,210 @@ public abstract class CeresSolver {
 		    candidate_cost_ = Double.MAX_VALUE;
 		  }
 		}
+		
+		// Use the supplied coordinate descent minimizer to perform inner
+		// iterations and compute the improvement due to it. Returns the cost
+		// after performing the inner iterations.
+		//
+		// The optimization is performed with candidate_x_ as the starting
+		// point, and if the optimization is successful, candidate_x_ will be
+		// updated with the optimized parameters.
+		private void DoInnerIterationsIfNeeded() {
+		  int i;
+		  boolean status;
+		  inner_iterations_were_useful_ = false;
+		  if (!inner_iterations_are_enabled_ ||
+		      candidate_cost_ >= Double.MAX_VALUE) {
+		    return;
+		  }
 
+		  double inner_iteration_start_time = 1.0E-3 * System.currentTimeMillis();
+		  ++solver_summary_.num_inner_iteration_steps;
+		  inner_iteration_x_ = candidate_x_;
+		  SolverSummary inner_iteration_summary = new SolverSummary();
+		  options_.inner_iteration_minimizer.Minimize(
+		      options_, inner_iteration_x_, inner_iteration_summary);
+		  double inner_iteration_cost[] = new double[1];
+		  double inner_iteration_x_array[] = new double[inner_iteration_x_.size()];
+		  for (i = 0; i < inner_iteration_x_.size(); i++) {
+			  inner_iteration_x_array[i] = inner_iteration_x_.get(i);
+		  }
+		  status = evaluator_.Evaluate(
+		          inner_iteration_x_array, inner_iteration_cost, null, null, null);
+		  for (i = 0; i < inner_iteration_x_.size(); i++) {
+			  inner_iteration_x_.set(i, inner_iteration_x_array[i]);
+		  }
+		  if (!status) {
+			if ((2 <= MAX_LOG_LEVEL) && is_not_silent_) {
+				Preferences.debug("Inner iteration failed\n", Preferences.DEBUG_ALGORITHM);
+			}
+		    return;
+		  }
 
-		  /*private:
+		  if ((2 <= MAX_LOG_LEVEL) && is_not_silent_) {
+		      Preferences.debug("Inner iteration succeeded; Current cost: " + x_cost_[0] + "\n" +
+		      "Trust region step cost: " + candidate_cost_ + "\n" +
+		      "Inner iteration cost: " + inner_iteration_cost[0] + "\n", Preferences.DEBUG_ALGORITHM);
+		  }
 
-		  
-		  void DoInnerIterationsIfNeeded();
+		  candidate_x_ = inner_iteration_x_;
 
-		  bool ParameterToleranceReached();
-		  bool FunctionToleranceReached();
+		  // Normally, the quality of a trust region step is measured by
+		  // the ratio
+		  //
+		  //              cost_change
+		  //    r =    -----------------
+		  //           model_cost_change
+		  //
+		  // All the change in the nonlinear objective is due to the trust
+		  // region step so this ratio is a good measure of the quality of
+		  // the trust region radius. However, when inner iterations are
+		  // being used, cost_change includes the contribution of the
+		  // inner iterations and its not fair to credit it all to the
+		  // trust region algorithm. So we change the ratio to be
+		  //
+		  //                              cost_change
+		  //    r =    ------------------------------------------------
+		  //           (model_cost_change + inner_iteration_cost_change)
+		  //
+		  // Practically we do this by increasing model_cost_change by
+		  // inner_iteration_cost_change.
 
-		  bool IsStepSuccessful();
-		  void HandleUnsuccessfulStep();
-		  bool HandleSuccessfulStep();*/
+		  double inner_iteration_cost_change =
+		      candidate_cost_ - inner_iteration_cost[0];
+		  model_cost_change_ += inner_iteration_cost_change;
+		  inner_iterations_were_useful_ = inner_iteration_cost[0] < x_cost_[0];
+		  double inner_iteration_relative_progress =
+		      1.0 - inner_iteration_cost[0] / candidate_cost_;
 
-		  
-		} // TrustRegionMinimizer
+		  // Disable inner iterations once the relative improvement
+		  // drops below tolerance.
+		  inner_iterations_are_enabled_ =
+		      (inner_iteration_relative_progress > options_.inner_iteration_tolerance);
+		  if ((2 <= MAX_LOG_LEVEL) && is_not_silent_ && !inner_iterations_are_enabled_) {
+		      Preferences.debug("Disabling inner iterations. Progress : " + inner_iteration_relative_progress + "\n",
+		    		  Preferences.DEBUG_ALGORITHM);
+		  }
+		  candidate_cost_ = inner_iteration_cost[0];
+
+		  solver_summary_.inner_iteration_time_in_seconds +=
+		      1.0E-3 * System.currentTimeMillis() - inner_iteration_start_time;
+		}
+		
+		// Solver::Options::parameter_tolerance based convergence check.
+		private boolean ParameterToleranceReached() {
+		  // Compute the norm of the step in the ambient space.
+		  int i;
+		  double norm = 0.0;
+		  double diff;
+		  for (i = 0; i < x_.size(); i++) {
+			  diff = x_.get(i) - candidate_x_.get(i);
+			  norm += diff * diff;
+		  }
+		  iteration_summary_.step_norm = Math.sqrt(norm);
+		  double step_size_tolerance =
+		      options_.parameter_tolerance * (x_norm_ + options_.parameter_tolerance);
+
+		  if (iteration_summary_.step_norm > step_size_tolerance) {
+		    return false;
+		  }
+
+		  solver_summary_.message[0] = String.format(
+		      "Parameter tolerance reached. \n" +
+		      "Relative step_norm: %e <= %e.",
+		      (iteration_summary_.step_norm / (x_norm_ + options_.parameter_tolerance)),
+		      options_.parameter_tolerance);
+		  solver_summary_.termination_type = TerminationType.CONVERGENCE;
+		  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_) {
+			  Preferences.debug("Terminating: " + solver_summary_.message[0] + "\n",
+					  Preferences.DEBUG_ALGORITHM);
+		  }
+		  return true;
+		}
+
+		// Solver::Options::function_tolerance based convergence check.
+		private boolean FunctionToleranceReached() {
+		  iteration_summary_.cost_change = x_cost_[0] - candidate_cost_;
+		  double absolute_function_tolerance =
+		      options_.function_tolerance * x_cost_[0];
+
+		  if (Math.abs(iteration_summary_.cost_change) > absolute_function_tolerance) {
+		    return false;
+		  }
+
+		  solver_summary_.message[0] = String.format(
+		      "Function tolerance reached. \n" +
+		      "|cost_change|/cost: %e <= %e",
+		      Math.abs(iteration_summary_.cost_change) / x_cost_[0],
+		      options_.function_tolerance);
+		  solver_summary_.termination_type = TerminationType.CONVERGENCE;
+		  if ((1 <= MAX_LOG_LEVEL) && is_not_silent_) {
+			  Preferences.debug("Terminating: " + solver_summary_.message[0] + "\n",
+					  Preferences.DEBUG_ALGORITHM);
+		  }
+		  return true;
+		}
+
+		private boolean IsStepSuccessful() {
+			  iteration_summary_.relative_decrease =
+			      step_evaluator_.StepQuality(candidate_cost_, model_cost_change_);
+
+			  // In most cases, boosting the model_cost_change by the
+			  // improvement caused by the inner iterations is fine, but it can
+			  // be the case that the original trust region step was so bad that
+			  // the resulting improvement in the cost was negative, and the
+			  // change caused by the inner iterations was large enough to
+			  // improve the step, but also to make relative decrease quite
+			  // small.
+			  //
+			  // This can cause the trust region loop to reject this step. To
+			  // get around this, we expicitly check if the inner iterations
+			  // led to a net decrease in the objective function value. If
+			  // they did, we accept the step even if the trust region ratio
+			  // is small.
+			  //
+			  // Notice that we do not just check that cost_change is positive
+			  // which is a weaker condition and would render the
+			  // min_relative_decrease threshold useless. Instead, we keep
+			  // track of inner_iterations_were_useful, which is true only
+			  // when inner iterations lead to a net decrease in the cost.
+			  return (inner_iterations_were_useful_ ||
+			          iteration_summary_.relative_decrease >
+			              options_.min_relative_decrease);
+			}
+
+		// Declare the step successful, move to candidate_x, update the
+		// derivatives and let the trust region strategy and the step
+		// evaluator know that the step has been accepted.
+		private boolean HandleSuccessfulStep() {
+		  int i;
+		  x_ = candidate_x_;
+		  x_norm_ = 0.0;
+		  for (i = 0; i < x_.size(); i++) {
+			  x_norm_ += x_.get(i)*x_.get(i);
+		  }
+		  x_norm_ = Math.sqrt(x_norm_);
+
+		  // Since the step was successful, this point has already had the residual
+		  // evaluated (but not the jacobian). So indicate that to the evaluator.
+		  if (!EvaluateGradientAndJacobian(false)) {
+		    return false;
+		  }
+
+		  iteration_summary_.step_is_successful = true;
+		  strategy_.StepAccepted(iteration_summary_.relative_decrease);
+		  step_evaluator_.StepAccepted(candidate_cost_, model_cost_change_);
+		  return true;
+		}
+		
+		// Declare the step unsuccessful and inform the trust region strategy.
+		private void HandleUnsuccessfulStep() {
+		  iteration_summary_.step_is_successful = false;
+		  strategy_.StepRejected(iteration_summary_.relative_decrease);
+		  iteration_summary_.cost = candidate_cost_ + solver_summary_.fixed_cost;
+		}
+
+	} // TrustRegionMinimizer
 	
 	public LineSearch Create(LineSearchType line_search_type,
             LineSearchOptions options,
@@ -10950,13 +11153,520 @@ public abstract class CeresSolver {
 			    return new TrustRegionMinimizer();
 			  }
 
-			  /*if (minimizer_type == MinimizerType.LINE_SEARCH) {
+			  if (minimizer_type == MinimizerType.LINE_SEARCH) {
 			    return new LineSearchMinimizer();
-			  }*/
+			  }
 
 			  System.err.println("Unknown minimizer_type: " + minimizer_type);
 			  return null;
+	}
+		
+		class LineSearchDirectionOptions {
+			public int num_parameters;
+		    public LineSearchDirectionType type;
+		    public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
+		    public double function_tolerance;
+		    public int max_lbfgs_rank;
+		    public boolean use_approximate_eigenvalue_bfgs_scaling;
+		    
+		    public LineSearchDirectionOptions() {
+		          num_parameters = 0;
+		          type = LineSearchDirectionType.LBFGS;
+		          nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+		          function_tolerance = 1e-12;
+		          max_lbfgs_rank = 20;
+		          use_approximate_eigenvalue_bfgs_scaling = true;
+		    }
+		}
+		
+		class LineSearchDirection {
+			
+			 public LineSearchDirectionOptions options;
+			 
+			 public LineSearchDirection() {
+				 options = new LineSearchDirectionOptions();
+			 }
+
+			  /*static LineSearchDirection* Create(const Options& options);
+
+			  virtual bool NextDirection(const LineSearchMinimizer::State& previous,
+			                             const LineSearchMinimizer::State& current,
+			                             Vector* search_direction) = 0;*/
+		} // class LineSearchDirection
+		
+		// Generic line search minimization algorithm.
+		//
+		// For example usage, see SolverImpl::Minimize.
+		class LineSearchMinimizer extends Minimizer {
+			public LineSearchMinimizer() {
+				super();
 			}
+		
+		  class State {
+			  public double cost[] = new double[1];
+			  public Vector<Double> gradient;
+			  public double gradient_squared_norm;
+			  public double gradient_max_norm;
+			  public Vector<Double> search_direction;
+			  public double directional_derivative;
+			  public double step_size;
+		      public State(int num_parameters,
+		          int num_effective_parameters) {
+		          cost[0] = 0.0;
+		          gradient = new Vector<Double>(num_effective_parameters);
+		          gradient_squared_norm = 0.0;
+		          search_direction = new Vector<Double>(num_effective_parameters);
+		          directional_derivative = 0.0;
+		          step_size = 0.0; 
+		    }
+
+		    
+		  }
+		  
+		  private boolean EvaluateGradientNorms(Evaluator evaluator,
+                  double[] x,
+                  LineSearchMinimizer.State state,
+                  String[] message) {
+			  int  i;
+			  boolean status;
+		      Vector<Double> xvec = new Vector<Double>(x.length);  
+		      for (i = 0; i < x.length; i++) {
+		    	  xvec.add(x[i]);
+		      }
+		      status = EvaluateGradientNorms(evaluator, xvec, state, message);
+		      for (i = 0; i < x.length; i++) {
+		    	  x[i] = xvec.get(i);
+		      }
+		      return status;
+		  }
+		  
+		  private boolean EvaluateGradientNorms(Evaluator evaluator,
+                  Vector<Double> x,
+                  LineSearchMinimizer.State state,
+                  String[] message) {
+			int i;
+			Vector<Double>negative_gradient = new Vector<Double>(state.gradient.size());
+			for (i = 0; i < state.gradient.size(); i++) {
+				negative_gradient.add(-state.gradient.get(i));
+			}
+			Vector<Double> projected_gradient_step = new Vector<Double>(x.size());
+			if (!evaluator.Plus(
+			 x, negative_gradient, projected_gradient_step)) {
+			message[0] = "projected_gradient_step = Plus(x, -gradient) failed.";
+			return false;
+			}
+			
+			double squaredNorm = 0.0;
+			double lpNorm = 0.0;
+			double diff;
+			for (i = 0; i < x.size(); i++) {
+				diff = x.get(i) - projected_gradient_step.get(i);
+				squaredNorm += diff * diff;
+				if (Math.abs(diff) > lpNorm) {
+					lpNorm = Math.abs(diff);
+				}
+			}
+			state.gradient_squared_norm = squaredNorm;
+			state.gradient_max_norm = lpNorm;
+			return true;
+		}
+
+
+		  public void Minimize(Minimizer.Options options,
+		                        double[] parameters,
+		                        SolverSummary summary) {
+			  int i;
+			  boolean status;
+			  boolean is_not_silent = !options.is_silent;
+			  double start_time = 1.0E-3 * System.currentTimeMillis();
+			  double iteration_start_time =  start_time;
+
+			  if (options.evaluator == null) {
+				  System.err.println("options.evaluator == null in LineSearchMinimizer Minimize");
+				  return;
+			  }
+			  Evaluator evaluator = options.evaluator;
+			  int num_parameters = evaluator.NumParameters();
+			  int num_effective_parameters = evaluator.NumEffectiveParameters();
+
+			  summary.termination_type = TerminationType.NO_CONVERGENCE;
+			  summary.num_successful_steps = 0;
+			  summary.num_unsuccessful_steps = 0;
+
+			  //VectorRef x(parameters, num_parameters);
+			  double x[] = new double[num_parameters];
+			  for (i = 0; i < num_parameters; i++) {
+				  x[i] = parameters[i];
+			  }
+
+			  State current_state = new State(num_parameters, num_effective_parameters);
+			  State previous_state = new State(num_parameters, num_effective_parameters);
+
+			  IterationSummary iteration_summary = new IterationSummary();
+			  iteration_summary.iteration = 0;
+			  iteration_summary.step_is_valid = false;
+			  iteration_summary.step_is_successful = false;
+			  iteration_summary.cost_change = 0.0;
+			  iteration_summary.gradient_max_norm = 0.0;
+			  iteration_summary.gradient_norm = 0.0;
+			  iteration_summary.step_norm = 0.0;
+			  iteration_summary.linear_solver_iterations = 0;
+			  iteration_summary.step_solver_time_in_seconds = 0;
+
+			  // Do initial cost and gradient evaluation.
+			  double gradient_array[] = new double[current_state.gradient.size()];
+			  for (i = 0; i < current_state.gradient.size(); i++) {
+				  gradient_array[i] = current_state.gradient.get(i);
+			  }
+			  status = evaluator.Evaluate(x,
+			                           current_state.cost,
+			                           null,
+			                           gradient_array,
+			                           null);
+			  for (i = 0; i < num_parameters; i++) {
+				  parameters[i] = x[i];
+			  }
+			  for (i = 0; i < current_state.gradient.size(); i++) {
+				  current_state.gradient.set(i,gradient_array[i]);
+			  }
+			  if (!status) {
+			    summary.termination_type = TerminationType.FAILURE;
+			    summary.message[0] = "Initial cost and jacobian evaluation failed.";
+			    if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+			        Preferences.debug("Terminating: " + summary.message[0] + "\n",
+			        		Preferences.DEBUG_ALGORITHM);
+			    }
+			    return;
+			  }
+  
+			    status = EvaluateGradientNorms(evaluator, x, current_state, summary.message);
+			    for (i = 0; i < num_parameters; i++) {
+					  parameters[i] = x[i];
+				  }
+			    if (!status) {
+			    summary.termination_type = TerminationType.FAILURE;
+			    summary.message[0] = "Initial cost and jacobian evaluation failed. \n" +
+			        "More details: " + summary.message[0];
+			    if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+			        Preferences.debug("Terminating: " + summary.message[0] + "\n",
+			        		Preferences.DEBUG_ALGORITHM);
+			    }
+			    return;
+			  }
+
+			  summary.initial_cost = current_state.cost[0] + summary.fixed_cost;
+			  iteration_summary.cost = current_state.cost[0] + summary.fixed_cost;
+
+			  iteration_summary.gradient_norm = Math.sqrt(current_state.gradient_squared_norm);
+			  iteration_summary.gradient_max_norm = current_state.gradient_max_norm;
+			  if (iteration_summary.gradient_max_norm <= options.gradient_tolerance) {
+			    summary.message[0] = String.format("Gradient tolerance reached. \n" +
+			                                    "Gradient max norm: %e <= %e",
+			                                    iteration_summary.gradient_max_norm,
+			                                    options.gradient_tolerance);
+			    summary.termination_type = TerminationType.CONVERGENCE;
+			    if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+			        Preferences.debug("Terminating: " + summary.message[0] + "\n",
+			        		Preferences.DEBUG_ALGORITHM);
+			    }
+			    return;
+			  }
+
+			  iteration_summary.iteration_time_in_seconds =
+			      1.0E-3 * System.currentTimeMillis() - iteration_start_time;
+			  iteration_summary.cumulative_time_in_seconds =
+			      1.0E-3 * System.currentTimeMillis() - start_time
+			      + summary.preprocessor_time_in_seconds;
+			  summary.iterations.add(iteration_summary);
+
+			  LineSearchDirectionOptions line_search_direction_options = new LineSearchDirectionOptions();
+			  line_search_direction_options.num_parameters = num_effective_parameters;
+			  line_search_direction_options.type = options.line_search_direction_type;
+			  line_search_direction_options.nonlinear_conjugate_gradient_type =
+			      options.nonlinear_conjugate_gradient_type;
+			  line_search_direction_options.max_lbfgs_rank = options.max_lbfgs_rank;
+			  line_search_direction_options.use_approximate_eigenvalue_bfgs_scaling =
+			      options.use_approximate_eigenvalue_bfgs_scaling;
+			  /*scoped_ptr<LineSearchDirection> line_search_direction(
+			      LineSearchDirection::Create(line_search_direction_options));
+
+			  LineSearchFunction line_search_function(evaluator);
+
+			  LineSearch::Options line_search_options;
+			  line_search_options.interpolation_type =
+			      options.line_search_interpolation_type;
+			  line_search_options.min_step_size = options.min_line_search_step_size;
+			  line_search_options.sufficient_decrease =
+			      options.line_search_sufficient_function_decrease;
+			  line_search_options.max_step_contraction =
+			      options.max_line_search_step_contraction;
+			  line_search_options.min_step_contraction =
+			      options.min_line_search_step_contraction;
+			  line_search_options.max_num_iterations =
+			      options.max_num_line_search_step_size_iterations;
+			  line_search_options.sufficient_curvature_decrease =
+			      options.line_search_sufficient_curvature_decrease;
+			  line_search_options.max_step_expansion =
+			      options.max_line_search_step_expansion;
+			  line_search_options.is_silent = options.is_silent;
+			  line_search_options.function = &line_search_function;
+
+			  scoped_ptr<LineSearch>
+			      line_search(LineSearch::Create(options.line_search_type,
+			                                     line_search_options,
+			                                     &summary->message));
+			  if (line_search.get() == NULL) {
+			    summary->termination_type = FAILURE;
+			    LOG_IF(ERROR, is_not_silent) << "Terminating: " << summary->message;
+			    return;
+			  }
+
+			  LineSearch::Summary line_search_summary;
+			  int num_line_search_direction_restarts = 0;
+
+			  while (true) {
+			    if (!RunCallbacks(options, iteration_summary, summary)) {
+			      break;
+			    }
+
+			    iteration_start_time = WallTimeInSeconds();
+			    if (iteration_summary.iteration >= options.max_num_iterations) {
+			      summary->message = "Maximum number of iterations reached.";
+			      summary->termination_type = NO_CONVERGENCE;
+			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    }
+
+			    const double total_solver_time = iteration_start_time - start_time +
+			        summary->preprocessor_time_in_seconds;
+			    if (total_solver_time >= options.max_solver_time_in_seconds) {
+			      summary->message = "Maximum solver time reached.";
+			      summary->termination_type = NO_CONVERGENCE;
+			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    }
+
+			    iteration_summary = IterationSummary();
+			    iteration_summary.iteration = summary->iterations.back().iteration + 1;
+			    iteration_summary.step_is_valid = false;
+			    iteration_summary.step_is_successful = false;
+
+			    bool line_search_status = true;
+			    if (iteration_summary.iteration == 1) {
+			      current_state.search_direction = -current_state.gradient;
+			    } else {
+			      line_search_status = line_search_direction->NextDirection(
+			          previous_state,
+			          current_state,
+			          &current_state.search_direction);
+			    }
+
+			    if (!line_search_status &&
+			        num_line_search_direction_restarts >=
+			        options.max_num_line_search_direction_restarts) {
+			      // Line search direction failed to generate a new direction, and we
+			      // have already reached our specified maximum number of restarts,
+			      // terminate optimization.
+			      summary->message =
+			          StringPrintf("Line search direction failure: specified "
+			                       "max_num_line_search_direction_restarts: %d reached.",
+			                       options.max_num_line_search_direction_restarts);
+			      summary->termination_type = FAILURE;
+			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    } else if (!line_search_status) {
+			      // Restart line search direction with gradient descent on first iteration
+			      // as we have not yet reached our maximum number of restarts.
+			      CHECK_LT(num_line_search_direction_restarts,
+			               options.max_num_line_search_direction_restarts);
+
+			      ++num_line_search_direction_restarts;
+			      LOG_IF(WARNING, is_not_silent)
+			          << "Line search direction algorithm: "
+			          << LineSearchDirectionTypeToString(
+			              options.line_search_direction_type)
+			          << ", failed to produce a valid new direction at "
+			          << "iteration: " << iteration_summary.iteration
+			          << ". Restarting, number of restarts: "
+			          << num_line_search_direction_restarts << " / "
+			          << options.max_num_line_search_direction_restarts
+			          << " [max].";
+			      line_search_direction.reset(
+			          LineSearchDirection::Create(line_search_direction_options));
+			      current_state.search_direction = -current_state.gradient;
+			    }
+
+			    line_search_function.Init(x, current_state.search_direction);
+			    current_state.directional_derivative =
+			        current_state.gradient.dot(current_state.search_direction);
+
+			    // TODO(sameeragarwal): Refactor this into its own object and add
+			    // explanations for the various choices.
+			    //
+			    // Note that we use !line_search_status to ensure that we treat cases when
+			    // we restarted the line search direction equivalently to the first
+			    // iteration.
+			    const double initial_step_size =
+			        (iteration_summary.iteration == 1 || !line_search_status)
+			        ? std::min(1.0, 1.0 / current_state.gradient_max_norm)
+			        : std::min(1.0, 2.0 * (current_state.cost - previous_state.cost) /
+			                   current_state.directional_derivative);
+			    // By definition, we should only ever go forwards along the specified search
+			    // direction in a line search, most likely cause for this being violated
+			    // would be a numerical failure in the line search direction calculation.
+			    if (initial_step_size < 0.0) {
+			      summary->message =
+			          StringPrintf("Numerical failure in line search, initial_step_size is "
+			                       "negative: %.5e, directional_derivative: %.5e, "
+			                       "(current_cost - previous_cost): %.5e",
+			                       initial_step_size, current_state.directional_derivative,
+			                       (current_state.cost - previous_state.cost));
+			      summary->termination_type = FAILURE;
+			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    }
+
+			    line_search->Search(initial_step_size,
+			                        current_state.cost,
+			                        current_state.directional_derivative,
+			                        &line_search_summary);
+			    if (!line_search_summary.success) {
+			      summary->message =
+			          StringPrintf("Numerical failure in line search, failed to find "
+			                       "a valid step size, (did not run out of iterations) "
+			                       "using initial_step_size: %.5e, initial_cost: %.5e, "
+			                       "initial_gradient: %.5e.",
+			                       initial_step_size, current_state.cost,
+			                       current_state.directional_derivative);
+			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			      summary->termination_type = FAILURE;
+			      break;
+			    }
+
+			    const FunctionSample& optimal_point = line_search_summary.optimal_point;
+			    CHECK(optimal_point.vector_x_is_valid)
+			        << "Congratulations, you found a bug in Ceres. Please report it.";
+			    current_state.step_size = optimal_point.x;
+			    previous_state = current_state;
+			    iteration_summary.step_solver_time_in_seconds =
+			        WallTimeInSeconds() - iteration_start_time;
+
+			    if (optimal_point.vector_gradient_is_valid) {
+			      current_state.cost = optimal_point.value;
+			      current_state.gradient = optimal_point.vector_gradient;
+			    } else {
+			      Evaluator::EvaluateOptions evaluate_options;
+			      evaluate_options.new_evaluation_point = false;
+			      if (!evaluator->Evaluate(evaluate_options,
+			                               optimal_point.vector_x.data(),
+			                               &(current_state.cost),
+			                               NULL,
+			                               current_state.gradient.data(),
+			                               NULL)) {
+			        summary->termination_type = FAILURE;
+			        summary->message = "Cost and jacobian evaluation failed.";
+			        LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			        return;
+			      }
+			    }
+
+			    if (!EvaluateGradientNorms(evaluator,
+			                               optimal_point.vector_x,
+			                               &current_state,
+			                               &summary->message)) {
+			      summary->termination_type = FAILURE;
+			      summary->message =
+			          "Step failed to evaluate. This should not happen as the step was "
+			          "valid when it was selected by the line search. More details: " +
+			          summary->message;
+			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    }
+
+			    // Compute the norm of the step in the ambient space.
+			    iteration_summary.step_norm = (optimal_point.vector_x - x).norm();
+			    const double x_norm = x.norm();
+			    x = optimal_point.vector_x;
+
+			    iteration_summary.gradient_max_norm = current_state.gradient_max_norm;
+			    iteration_summary.gradient_norm = sqrt(current_state.gradient_squared_norm);
+			    iteration_summary.cost_change = previous_state.cost - current_state.cost;
+			    iteration_summary.cost = current_state.cost + summary->fixed_cost;
+
+			    iteration_summary.step_is_valid = true;
+			    iteration_summary.step_is_successful = true;
+			    iteration_summary.step_size =  current_state.step_size;
+			    iteration_summary.line_search_function_evaluations =
+			        line_search_summary.num_function_evaluations;
+			    iteration_summary.line_search_gradient_evaluations =
+			        line_search_summary.num_gradient_evaluations;
+			    iteration_summary.line_search_iterations =
+			        line_search_summary.num_iterations;
+			    iteration_summary.iteration_time_in_seconds =
+			        WallTimeInSeconds() - iteration_start_time;
+			    iteration_summary.cumulative_time_in_seconds =
+			        WallTimeInSeconds() - start_time
+			        + summary->preprocessor_time_in_seconds;
+			    summary->iterations.push_back(iteration_summary);
+
+			    // Iterations inside the line search algorithm are considered
+			    // 'steps' in the broader context, to distinguish these inner
+			    // iterations from from the outer iterations of the line search
+			    // minimizer. The number of line search steps is the total number
+			    // of inner line search iterations (or steps) across the entire
+			    // minimization.
+			    summary->num_line_search_steps +=  line_search_summary.num_iterations;
+			    summary->line_search_cost_evaluation_time_in_seconds +=
+			        line_search_summary.cost_evaluation_time_in_seconds;
+			    summary->line_search_gradient_evaluation_time_in_seconds +=
+			        line_search_summary.gradient_evaluation_time_in_seconds;
+			    summary->line_search_polynomial_minimization_time_in_seconds +=
+			        line_search_summary.polynomial_minimization_time_in_seconds;
+			    summary->line_search_total_time_in_seconds +=
+			        line_search_summary.total_time_in_seconds;
+			    ++summary->num_successful_steps;
+
+			    const double step_size_tolerance = options.parameter_tolerance *
+			                                       (x_norm + options.parameter_tolerance);
+			    if (iteration_summary.step_norm <= step_size_tolerance) {
+			      summary->message =
+			          StringPrintf("Parameter tolerance reached. "
+			                       "Relative step_norm: %e <= %e.",
+			                       (iteration_summary.step_norm /
+			                        (x_norm + options.parameter_tolerance)),
+			                       options.parameter_tolerance);
+			      summary->termination_type = CONVERGENCE;
+			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      return;
+			    }
+
+			    if (iteration_summary.gradient_max_norm <= options.gradient_tolerance) {
+			      summary->message = StringPrintf("Gradient tolerance reached. "
+			                                      "Gradient max norm: %e <= %e",
+			                                      iteration_summary.gradient_max_norm,
+			                                      options.gradient_tolerance);
+			      summary->termination_type = CONVERGENCE;
+			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    }
+
+			    const double absolute_function_tolerance =
+			        options.function_tolerance * previous_state.cost;
+			    if (fabs(iteration_summary.cost_change) <= absolute_function_tolerance) {
+			      summary->message =
+			          StringPrintf("Function tolerance reached. "
+			                       "|cost_change|/cost: %e <= %e",
+			                       fabs(iteration_summary.cost_change) /
+			                       previous_state.cost,
+			                       options.function_tolerance);
+			      summary->termination_type = CONVERGENCE;
+			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      break;
+			    }
+			  }*/
+  
+		  }
+		} // class LineSearchMinimizer
  
 
 	// Interface for non-linear least squares solvers.
@@ -11097,7 +11807,7 @@ public abstract class CeresSolver {
 		
 		public boolean RunCallbacks(Minimizer.Options options,
                 IterationSummary iteration_summary,
-                Solver.Summary summary) {
+                SolverSummary summary) {
 			boolean is_not_silent = !options.is_silent;
 			CallbackReturnType status = CallbackReturnType.SOLVER_CONTINUE;
 			int i = 0;
@@ -11218,7 +11928,7 @@ public abstract class CeresSolver {
 		return gradient_checking_problem_impl;
 	}
 
-	private void PreSolveSummarize(Solver.Options options, ProblemImpl problem, Solver.Summary summary) {
+	private void PreSolveSummarize(Solver.Options options, ProblemImpl problem, SolverSummary summary) {
 		SummarizeGivenProgram(problem.program(), summary);
 		OrderingToGroupSizes(options.linear_solver_ordering, summary.linear_solver_ordering_given);
 		OrderingToGroupSizes(options.inner_iteration_ordering, summary.inner_iteration_ordering_given);
@@ -11269,7 +11979,7 @@ public abstract class CeresSolver {
 		}
 	}
 
-	private void SummarizeGivenProgram(Program program, Solver.Summary summary) {
+	private void SummarizeGivenProgram(Program program, SolverSummary summary) {
 		summary.num_parameter_blocks = program.NumParameterBlocks();
 		summary.num_parameters = program.NumParameters();
 		summary.num_effective_parameters = program.NumEffectiveParameters();
@@ -13222,19 +13932,228 @@ public abstract class CeresSolver {
                 Vector<Double> x_plus_delta, int x_plus_delta_index);
 	}
 	
-	public boolean IsSolutionUsable(Solver.Summary  sum) {
+	public boolean IsSolutionUsable(SolverSummary  sum) {
 		  return (sum.termination_type == TerminationType.CONVERGENCE ||
 		          sum.termination_type == TerminationType.NO_CONVERGENCE ||
 		          sum.termination_type == TerminationType.USER_SUCCESS);
 		}
+	
+	class SolverSummary {
+		public MinimizerType minimizer_type;
+		public TerminationType termination_type;
+		// Reason why the solver terminated.
+		public String message[];
+		// Cost of the problem (value of the objective function) before
+		// the optimization.
+		public double initial_cost;
+		// Cost of the problem (value of the objective function) after the
+		// optimization.
+		public double final_cost;
+		public double fixed_cost;
+		// IterationSummary for each minimizer iteration in order.
+		public Vector<IterationSummary> iterations;
+		public int num_successful_steps;
+		public int num_unsuccessful_steps;
+		// Number of times inner iterations were performed.
+		public int num_inner_iteration_steps;
+		public int num_line_search_steps;
+		public double preprocessor_time_in_seconds;
+		// Time spent in the TrustRegionMinimizer.
+		public double minimizer_time_in_seconds;
+		public double postprocessor_time_in_seconds;
+		// Some total of all time spent inside Ceres when Solve is called.
+		public double total_time_in_seconds;
+		// Time (in seconds) spent in the linear solver computing the
+		// trust region step.
+		public double linear_solver_time_in_seconds;
+		public int num_linear_solves;
+		// Time (in seconds) spent evaluating the residual vector.
+		public double residual_evaluation_time_in_seconds;
+		// Number of residual only evaluations.
+		public int num_residual_evaluations;
+		// Time (in seconds) spent evaluating the jacobian matrix.
+		public double jacobian_evaluation_time_in_seconds;
+		// Number of Jacobian (and residual) evaluations.
+		int num_jacobian_evaluations;
+		// Time (in seconds) spent doing inner iterations.
+		public double inner_iteration_time_in_seconds;
+		// Time (in seconds) spent evaluating the univariate cost function as part
+		// of a line search.
+		public double line_search_cost_evaluation_time_in_seconds;
+		// Time (in seconds) spent evaluating the gradient of the univariate cost
+		// function as part of a line search.
+		public double line_search_gradient_evaluation_time_in_seconds;
+		// Time (in seconds) spent minimizing the interpolating polynomial
+		// to compute the next candidate step size as part of a line search.
+		public double line_search_polynomial_minimization_time_in_seconds;
+		// Total time (in seconds) spent performing line searches.
+		public double line_search_total_time_in_seconds;
+		// Number of parameter blocks in the problem.
+		public int num_parameter_blocks;
+		// Number of parameters in the probem.
+		public int num_parameters;
+		public int num_effective_parameters;
+		// Number of residual blocks in the problem.
+		public int num_residual_blocks;
+		// Number of residuals in the problem.
+		public int num_residuals;
+		public int num_parameter_blocks_reduced;
+		// Number of parameters in the reduced problem.
+		public int num_parameters_reduced;
+		public int num_effective_parameters_reduced;
+		// Number of residual blocks in the reduced problem.
+		public int num_residual_blocks_reduced;
+		// Number of residuals in the reduced problem.
+		public int num_residuals_reduced;
+		// Is the reduced problem bounds constrained.
+		public boolean is_constrained;
+		// Number of threads specified by the user for Jacobian and
+		// residual evaluation.
+		public int num_threads_given;
+		public int num_threads_used;
+		// NOTE: This field is deprecated,
+		// Solver::Summary::num_threads_given should be used instead.
+		//
+		// This field is scheduled to be removed in 1.15.0. In the interim
+		// the value of this field will always be equal to
+		// num_threads_given.
+		//
+		// Number of threads specified by the user for solving the trust
+		// region problem.
+		public int num_linear_solver_threads_given;
+		// NOTE: This field is deprecated,
+		// Solver::Summary::num_threads_used should be used instead.
+		//
+		// This field is scheduled to be removed in 1.15.0. In the interim
+		// the value of this field will always be equal to
+		// num_threads_used.
+		//
+		// Number of threads actually used by the solver for solving the
+		// trust region problem. This number is not equal to
+		// num_threads_given if OpenMP is not available.
+		public int num_linear_solver_threads_used;
+		// Type of the linear solver requested by the user.
+		public LinearSolverType linear_solver_type_given;
+		// Type of the linear solver actually used. This may be different
+		// from linear_solver_type_given if Ceres determines that the
+		// problem structure is not compatible with the linear solver
+		// requested or if the linear solver requested by the user is not
+		// available, e.g. The user requested SPARSE_NORMAL_CHOLESKY but
+		// no sparse linear algebra library was available.
+		public LinearSolverType linear_solver_type_used;
+		// Size of the elimination groups given by the user as hints to
+		// the linear solver.
+		public Vector<Integer> linear_solver_ordering_given;
+		public Vector<Integer> linear_solver_ordering_used;
+		public String schur_structure_given;
+		public String schur_structure_used;
+		// True if the user asked for inner iterations to be used as part
+		// of the optimization.
+		public boolean inner_iterations_given;
+		public boolean inner_iterations_used;
+		// Size of the parameter groups given by the user for performing
+		// inner iterations.
+		public Vector<Integer> inner_iteration_ordering_given;
+		public Vector<Integer> inner_iteration_ordering_used;
+		// Type of the preconditioner requested by the user.
+		public PreconditionerType preconditioner_type_given;
+		public PreconditionerType preconditioner_type_used;
+		public VisibilityClusteringType visibility_clustering_type;
+		// Type of trust region strategy.
+		public TrustRegionStrategyType trust_region_strategy_type;
+		// Type of dogleg strategy used for solving the trust region
+		// problem.
+		public DoglegType dogleg_type;
+		// Type of the dense linear algebra library used.
+		public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
+		// Type of the sparse linear algebra library used.
+		public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+		// Type of line search direction used.
+		public LineSearchDirectionType line_search_direction_type;
+		// Type of the line search algorithm used.
+		public LineSearchType line_search_type;
+		// When performing line search, the degree of the polynomial used
+		// to approximate the objective function.
+		public LineSearchInterpolationType line_search_interpolation_type;
+		public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
+		// If the type of the line search direction is LBFGS, then this
+		// indicates the rank of the Hessian approximation.
+		public int max_lbfgs_rank;
+
+		public SolverSummary() {
+			// Invalid values for most fields, to ensure that we are not
+			// accidentally reporting default values.
+			minimizer_type = MinimizerType.TRUST_REGION;
+			termination_type = TerminationType.FAILURE;
+			message = new String[] { "ceres::Solve was not called." };
+			initial_cost = -1.0;
+			final_cost = -1.0;
+			fixed_cost = -1.0;
+			num_successful_steps = -1;
+			num_unsuccessful_steps = -1;
+			num_inner_iteration_steps = -1;
+			num_line_search_steps = -1;
+			preprocessor_time_in_seconds = -1.0;
+			minimizer_time_in_seconds = -1.0;
+			postprocessor_time_in_seconds = -1.0;
+			total_time_in_seconds = -1.0;
+			linear_solver_time_in_seconds = -1.0;
+			num_linear_solves = -1;
+			residual_evaluation_time_in_seconds = -1.0;
+			num_residual_evaluations = -1;
+			jacobian_evaluation_time_in_seconds = -1.0;
+			num_jacobian_evaluations = -1;
+			inner_iteration_time_in_seconds = -1.0;
+			line_search_cost_evaluation_time_in_seconds = -1.0;
+			line_search_gradient_evaluation_time_in_seconds = -1.0;
+			line_search_polynomial_minimization_time_in_seconds = -1.0;
+			line_search_total_time_in_seconds = -1.0;
+			num_parameter_blocks = -1;
+			num_parameters = -1;
+			num_effective_parameters = -1;
+			num_residual_blocks = -1;
+			num_residuals = -1;
+			num_parameter_blocks_reduced = -1;
+			num_parameters_reduced = -1;
+			num_effective_parameters_reduced = -1;
+			num_residual_blocks_reduced = -1;
+			num_residuals_reduced = -1;
+			is_constrained = false;
+			num_threads_given = -1;
+			num_threads_used = -1;
+			num_linear_solver_threads_given = -1;
+			num_linear_solver_threads_used = -1;
+			linear_solver_type_given = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+			linear_solver_type_used = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+			inner_iterations_given = false;
+			inner_iterations_used = false;
+			preconditioner_type_given = PreconditionerType.IDENTITY;
+			preconditioner_type_used = PreconditionerType.IDENTITY;
+			visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+			trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+			//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
+			dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
+			sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
+			line_search_direction_type = LineSearchDirectionType.LBFGS;
+			line_search_type = LineSearchType.ARMIJO;
+			line_search_interpolation_type = LineSearchInterpolationType.BISECTION;
+			nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+			max_lbfgs_rank = -1;
+			linear_solver_ordering_given = new Vector<Integer>();
+			inner_iteration_ordering_given = new Vector<Integer>();
+			linear_solver_ordering_used = new Vector<Integer>();
+			inner_iteration_ordering_used = new Vector<Integer>();
+			iterations = new Vector<IterationSummary>();
+		}
+	} // class SolverSummary
 
 	class Solver {
 		public Options options;
-		public Summary summary;
+		public SolverSummary summary;
 
 		public Solver() {
 			options = new Options();
-			summary = new Summary();
+			summary = new SolverSummary();
 		}
 
 		class Options {
@@ -13456,7 +14375,7 @@ public abstract class CeresSolver {
 				evaluation_callback = null;
 			}
 
-			public boolean IsValid(Solver.Summary summary) {
+			public boolean IsValid(SolverSummary summary) {
 				if (!CommonOptionsAreValid(summary)) {
 					return false;
 				}
@@ -13473,7 +14392,7 @@ public abstract class CeresSolver {
 				return LineSearchOptionsAreValid(summary);
 			}
 
-			private boolean CommonOptionsAreValid(Solver.Summary summary) {
+			private boolean CommonOptionsAreValid(SolverSummary summary) {
 				if (max_num_iterations < 0) {
 					summary.message[0] = "max_num_iterations incorrectly < 0";
 					return false;
@@ -13511,7 +14430,7 @@ public abstract class CeresSolver {
 				return true;
 			}
 
-			public boolean TrustRegionOptionsAreValid(Solver.Summary summary) {
+			public boolean TrustRegionOptionsAreValid(SolverSummary summary) {
 				if (initial_trust_region_radius <= 0.0) {
 					summary.message[0] = "initial_trust_region_radius incorrectly <= 0.0";
 					return false;
@@ -13693,7 +14612,7 @@ public abstract class CeresSolver {
 				return true;
 			}
 
-			public boolean LineSearchOptionsAreValid(Solver.Summary summary) {
+			public boolean LineSearchOptionsAreValid(SolverSummary summary) {
 				if (max_lbfgs_rank <= 0) {
 					summary.message[0] = "max_lbfgs_rank incorrectly <= 0";
 					return false;
@@ -13769,214 +14688,7 @@ public abstract class CeresSolver {
 
 		}
 
-		class Summary {
-			public MinimizerType minimizer_type;
-			public TerminationType termination_type;
-			// Reason why the solver terminated.
-			public String message[];
-			// Cost of the problem (value of the objective function) before
-			// the optimization.
-			public double initial_cost;
-			// Cost of the problem (value of the objective function) after the
-			// optimization.
-			public double final_cost;
-			public double fixed_cost;
-			// IterationSummary for each minimizer iteration in order.
-			public Vector<IterationSummary> iterations;
-			public int num_successful_steps;
-			public int num_unsuccessful_steps;
-			// Number of times inner iterations were performed.
-			public int num_inner_iteration_steps;
-			public int num_line_search_steps;
-			public double preprocessor_time_in_seconds;
-			// Time spent in the TrustRegionMinimizer.
-			public double minimizer_time_in_seconds;
-			public double postprocessor_time_in_seconds;
-			// Some total of all time spent inside Ceres when Solve is called.
-			public double total_time_in_seconds;
-			// Time (in seconds) spent in the linear solver computing the
-			// trust region step.
-			public double linear_solver_time_in_seconds;
-			public int num_linear_solves;
-			// Time (in seconds) spent evaluating the residual vector.
-			public double residual_evaluation_time_in_seconds;
-			// Number of residual only evaluations.
-			public int num_residual_evaluations;
-			// Time (in seconds) spent evaluating the jacobian matrix.
-			public double jacobian_evaluation_time_in_seconds;
-			// Number of Jacobian (and residual) evaluations.
-			int num_jacobian_evaluations;
-			// Time (in seconds) spent doing inner iterations.
-			public double inner_iteration_time_in_seconds;
-			// Time (in seconds) spent evaluating the univariate cost function as part
-			// of a line search.
-			public double line_search_cost_evaluation_time_in_seconds;
-			// Time (in seconds) spent evaluating the gradient of the univariate cost
-			// function as part of a line search.
-			public double line_search_gradient_evaluation_time_in_seconds;
-			// Time (in seconds) spent minimizing the interpolating polynomial
-			// to compute the next candidate step size as part of a line search.
-			public double line_search_polynomial_minimization_time_in_seconds;
-			// Total time (in seconds) spent performing line searches.
-			public double line_search_total_time_in_seconds;
-			// Number of parameter blocks in the problem.
-			public int num_parameter_blocks;
-			// Number of parameters in the probem.
-			public int num_parameters;
-			public int num_effective_parameters;
-			// Number of residual blocks in the problem.
-			public int num_residual_blocks;
-			// Number of residuals in the problem.
-			public int num_residuals;
-			public int num_parameter_blocks_reduced;
-			// Number of parameters in the reduced problem.
-			public int num_parameters_reduced;
-			public int num_effective_parameters_reduced;
-			// Number of residual blocks in the reduced problem.
-			public int num_residual_blocks_reduced;
-			// Number of residuals in the reduced problem.
-			public int num_residuals_reduced;
-			// Is the reduced problem bounds constrained.
-			public boolean is_constrained;
-			// Number of threads specified by the user for Jacobian and
-			// residual evaluation.
-			public int num_threads_given;
-			public int num_threads_used;
-			// NOTE: This field is deprecated,
-			// Solver::Summary::num_threads_given should be used instead.
-			//
-			// This field is scheduled to be removed in 1.15.0. In the interim
-			// the value of this field will always be equal to
-			// num_threads_given.
-			//
-			// Number of threads specified by the user for solving the trust
-			// region problem.
-			public int num_linear_solver_threads_given;
-			// NOTE: This field is deprecated,
-			// Solver::Summary::num_threads_used should be used instead.
-			//
-			// This field is scheduled to be removed in 1.15.0. In the interim
-			// the value of this field will always be equal to
-			// num_threads_used.
-			//
-			// Number of threads actually used by the solver for solving the
-			// trust region problem. This number is not equal to
-			// num_threads_given if OpenMP is not available.
-			public int num_linear_solver_threads_used;
-			// Type of the linear solver requested by the user.
-			public LinearSolverType linear_solver_type_given;
-			// Type of the linear solver actually used. This may be different
-			// from linear_solver_type_given if Ceres determines that the
-			// problem structure is not compatible with the linear solver
-			// requested or if the linear solver requested by the user is not
-			// available, e.g. The user requested SPARSE_NORMAL_CHOLESKY but
-			// no sparse linear algebra library was available.
-			public LinearSolverType linear_solver_type_used;
-			// Size of the elimination groups given by the user as hints to
-			// the linear solver.
-			public Vector<Integer> linear_solver_ordering_given;
-			public Vector<Integer> linear_solver_ordering_used;
-			public String schur_structure_given;
-			public String schur_structure_used;
-			// True if the user asked for inner iterations to be used as part
-			// of the optimization.
-			public boolean inner_iterations_given;
-			public boolean inner_iterations_used;
-			// Size of the parameter groups given by the user for performing
-			// inner iterations.
-			public Vector<Integer> inner_iteration_ordering_given;
-			public Vector<Integer> inner_iteration_ordering_used;
-			// Type of the preconditioner requested by the user.
-			public PreconditionerType preconditioner_type_given;
-			public PreconditionerType preconditioner_type_used;
-			public VisibilityClusteringType visibility_clustering_type;
-			// Type of trust region strategy.
-			public TrustRegionStrategyType trust_region_strategy_type;
-			// Type of dogleg strategy used for solving the trust region
-			// problem.
-			public DoglegType dogleg_type;
-			// Type of the dense linear algebra library used.
-			public DenseLinearAlgebraLibraryType dense_linear_algebra_library_type;
-			// Type of the sparse linear algebra library used.
-			public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
-			// Type of line search direction used.
-			public LineSearchDirectionType line_search_direction_type;
-			// Type of the line search algorithm used.
-			public LineSearchType line_search_type;
-			// When performing line search, the degree of the polynomial used
-			// to approximate the objective function.
-			public LineSearchInterpolationType line_search_interpolation_type;
-			public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
-			// If the type of the line search direction is LBFGS, then this
-			// indicates the rank of the Hessian approximation.
-			public int max_lbfgs_rank;
-
-			public Summary() {
-				// Invalid values for most fields, to ensure that we are not
-				// accidentally reporting default values.
-				minimizer_type = MinimizerType.TRUST_REGION;
-				termination_type = TerminationType.FAILURE;
-				message = new String[] { "ceres::Solve was not called." };
-				initial_cost = -1.0;
-				final_cost = -1.0;
-				fixed_cost = -1.0;
-				num_successful_steps = -1;
-				num_unsuccessful_steps = -1;
-				num_inner_iteration_steps = -1;
-				num_line_search_steps = -1;
-				preprocessor_time_in_seconds = -1.0;
-				minimizer_time_in_seconds = -1.0;
-				postprocessor_time_in_seconds = -1.0;
-				total_time_in_seconds = -1.0;
-				linear_solver_time_in_seconds = -1.0;
-				num_linear_solves = -1;
-				residual_evaluation_time_in_seconds = -1.0;
-				num_residual_evaluations = -1;
-				jacobian_evaluation_time_in_seconds = -1.0;
-				num_jacobian_evaluations = -1;
-				inner_iteration_time_in_seconds = -1.0;
-				line_search_cost_evaluation_time_in_seconds = -1.0;
-				line_search_gradient_evaluation_time_in_seconds = -1.0;
-				line_search_polynomial_minimization_time_in_seconds = -1.0;
-				line_search_total_time_in_seconds = -1.0;
-				num_parameter_blocks = -1;
-				num_parameters = -1;
-				num_effective_parameters = -1;
-				num_residual_blocks = -1;
-				num_residuals = -1;
-				num_parameter_blocks_reduced = -1;
-				num_parameters_reduced = -1;
-				num_effective_parameters_reduced = -1;
-				num_residual_blocks_reduced = -1;
-				num_residuals_reduced = -1;
-				is_constrained = false;
-				num_threads_given = -1;
-				num_threads_used = -1;
-				num_linear_solver_threads_given = -1;
-				num_linear_solver_threads_used = -1;
-				linear_solver_type_given = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
-				linear_solver_type_used = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
-				inner_iterations_given = false;
-				inner_iterations_used = false;
-				preconditioner_type_given = PreconditionerType.IDENTITY;
-				preconditioner_type_used = PreconditionerType.IDENTITY;
-				visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
-				trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
-				//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
-				dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
-				sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.SUITE_SPARSE;
-				line_search_direction_type = LineSearchDirectionType.LBFGS;
-				line_search_type = LineSearchType.ARMIJO;
-				line_search_interpolation_type = LineSearchInterpolationType.BISECTION;
-				nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
-				max_lbfgs_rank = -1;
-				linear_solver_ordering_given = new Vector<Integer>();
-				inner_iteration_ordering_given = new Vector<Integer>();
-				linear_solver_ordering_used = new Vector<Integer>();
-				inner_iteration_ordering_used = new Vector<Integer>();
-				iterations = new Vector<IterationSummary>();
-			}
-		}
+		
 	} // class Solver
 
 	class GradientCheckingIterationCallback extends IterationCallback {
