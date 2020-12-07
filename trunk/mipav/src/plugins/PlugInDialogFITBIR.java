@@ -7748,9 +7748,11 @@ public class PlugInDialogFITBIR extends JFrame
                     final float ageInMonths = Float.parseFloat(ageStr);
                     if (ageInMonths != 0) {
                         final String ageInYears = String.valueOf(ageInMonths / 12);
-
-                        extractedFields.put("AgeVal", String.valueOf(ageInMonths));
-                        extractedFields.put("AgeYrs", ageInYears);
+                        
+                        if ((ageInMonths / 12) < 150) {
+                            extractedFields.put("AgeVal", String.valueOf(ageInMonths));
+                            extractedFields.put("AgeYrs", ageInYears);
+                        }
                     }
                 }
             }
