@@ -287,7 +287,7 @@ public class PlugInDialogFITBIR extends JFrame
             "University of Florida (Gainesville)", "University of Michigan", "University of North Carolina", "University of Pennsylvania", "University of Pittsburgh",
             "University of Washington", "UT-Southwestern Medical Center", "VA-Pugent Sound Health Care System/University of Washington",};
 
-    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI", "NTI", "NIA", "NINDS", "NIH"};
+    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI", "NTI", "NIA", "NINDS", "NIH", "NINR"};
 
     private static final String[] imagingStructurePrefixes;
     static {
@@ -9774,7 +9774,7 @@ public class PlugInDialogFITBIR extends JFrame
                 MipavUtil.displayError("Record " + (i + 1) + ": No GUID specified");
                 return false;
             } else {
-                final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length() - 1);
+                final String guidTester = struct.substring(struct.lastIndexOf(STRUCT_GUID_SEPERATOR) + 3, struct.length());
                 if ( !isGuid(guidTester)) {
                     MipavUtil.displayError("Record " + (i + 1) + ": GUID value does not match the allow GUID format (" + guidTester + ")");
                     return false;
