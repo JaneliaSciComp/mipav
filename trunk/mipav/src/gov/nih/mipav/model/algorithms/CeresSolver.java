@@ -11161,6 +11161,111 @@ public abstract class CeresSolver {
 			  return null;
 	}
 		
+		class SteepestDescent extends LineSearchDirection {
+			 public SteepestDescent() {
+				 super();
+			 }
+			 
+			 public boolean NextDirection(LineSearchMinimizer.State previous,
+			                     LineSearchMinimizer.State current,
+			                     Vector<Double> search_direction) {
+				int i;
+				search_direction.clear();
+				for (i = 0; i < current.gradient.size(); i++) {
+					search_direction.add(-current.gradient.get(i));
+				}
+			    return true;
+			  }
+		} // class SteepestDescent
+		
+		public String NonlinearConjugateGradientTypeToString(
+			    NonlinearConjugateGradientType type) {
+			  switch (type) {
+			  case FLETCHER_REEVES:
+				  return "FLETCHER_REEVES";
+			  case POLAK_RIBIERE:
+				  return "POLAK_RIBIERE";
+			  case HESTENES_STIEFEL:
+				  return "HESTENES_STIEFEL";
+			    default:
+			      return "UNKNOWN";
+			  }
+			}
+
+		
+		class NonlinearConjugateGradient extends LineSearchDirection {
+			private NonlinearConjugateGradientType type_;
+		    private double function_tolerance_;
+			 public NonlinearConjugateGradient(NonlinearConjugateGradientType type,
+			                            double function_tolerance) {
+			        type_ = type;
+			        function_tolerance_ = function_tolerance;
+			  }
+
+			  public boolean NextDirection(LineSearchMinimizer.State previous,
+			                     LineSearchMinimizer.State current,
+			                     Vector<Double> search_direction) {
+				int i;
+			    double beta = 0.0;
+			    Vector<Double> gradient_change = new Vector<Double>();
+			    double dotProduct = 0.0;
+			    switch (type_) {
+			      case FLETCHER_REEVES:
+			        beta = current.gradient_squared_norm / previous.gradient_squared_norm;
+			        break;
+			      case POLAK_RIBIERE:
+			    	for (i = 0; i < current.gradient.size(); i++) {
+			    		gradient_change.add(current.gradient.get(i) - previous.gradient.get(i));
+			    	}
+			        for (i = 0; i < current.gradient.size(); i++) {
+			        	dotProduct += (current.gradient.get(i) * gradient_change.get(i));
+			        }
+			        beta = (dotProduct /
+			                previous.gradient_squared_norm);
+			        break;
+			      case HESTENES_STIEFEL:
+			    	for (i = 0; i < current.gradient.size(); i++) {
+				    	gradient_change.add(current.gradient.get(i) - previous.gradient.get(i));
+				    }
+			        for (i = 0; i < current.gradient.size(); i++) {
+			        	dotProduct += (current.gradient.get(i) * gradient_change.get(i));
+			        }
+			        double dotProduct2 = 0.0;
+			        for (i = 0; i < previous.search_direction.size(); i++) {
+			        	dotProduct2 += (previous.search_direction.get(i) * gradient_change.get(i));
+			        }
+			        beta =  (dotProduct / dotProduct2);
+			        break;
+			      default:
+			        System.err.println("Unknown nonlinear conjugate gradient type: " + NonlinearConjugateGradientTypeToString(type_));
+			    }
+
+			    search_direction.clear();
+			    for (i = 0; i < current.gradient.size(); i++) {
+			    	search_direction.add(-current.gradient.get(i) + beta * previous.search_direction.get(i));
+			    }
+			    double directional_derivative = 0.0;
+			    for (i = 0; i < current.gradient.size(); i++) {
+			    	directional_derivative += (current.gradient.get(i) * search_direction.get(i));
+			    }
+			    if (directional_derivative > -function_tolerance_) {
+			      if (WARNING <= MAX_LOG_LEVEL) {
+			      Preferences.debug("Restarting non-linear conjugate gradients: \n" +
+			                   "directional_derivative = " + directional_derivative + "\n", Preferences.DEBUG_ALGORITHM);
+			      }
+			      search_direction.clear();
+					for (i = 0; i < current.gradient.size(); i++) {
+						search_direction.add(-current.gradient.get(i));
+					}
+			    }
+
+			    return true;
+			  }
+
+			 
+			};
+
+		
 		class LineSearchDirectionOptions {
 			public int num_parameters;
 		    public LineSearchDirectionType type;
