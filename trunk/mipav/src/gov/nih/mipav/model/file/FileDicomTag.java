@@ -1323,80 +1323,84 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
         final StringBuffer newTime = new StringBuffer();
         String timeField = new String();
 
-        while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
-            String temp = backslashTok.nextToken();
-            final StringTokenizer dotTok = new StringTokenizer(temp, ".");
-
-            if (dotTok.countTokens() == 2) {
-                temp = dotTok.nextToken();
-                frac = dotTok.nextToken();
-
-                if (frac.length() > 6) {
-                    frac = frac.substring(0, 6);
-                }
-
-                containsFrac = true;
-            } else {
-                frac = null;
-                containsFrac = false;
-            }
-
-            int k = 0; // index offset from 0 because contains colons
-
-            if (temp.length() >= 2) {
-                timeField = temp.substring(0, 2);
-
-                if ( (Integer.parseInt(timeField.toString()) < 0) || (Integer.parseInt(timeField.toString()) >= 24)) {
-                    return "";
-                }
-
-                newTime.append(timeField);
-
-                if (temp.length() > 2) {
-
-                    if (temp.charAt(2) == ':') {
-                        k = 1;
+        try {
+            while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
+                String temp = backslashTok.nextToken();
+                final StringTokenizer dotTok = new StringTokenizer(temp, ".");
+    
+                if (dotTok.countTokens() == 2) {
+                    temp = dotTok.nextToken();
+                    frac = dotTok.nextToken();
+    
+                    if (frac.length() > 6) {
+                        frac = frac.substring(0, 6);
                     }
+    
+                    containsFrac = true;
+                } else {
+                    frac = null;
+                    containsFrac = false;
                 }
-
-                if (temp.length() >= (4 + k)) {
-                    timeField = temp.substring(2 + k, 4 + k);
-
-                    if ( (Integer.parseInt(timeField.toString()) < 0) || (Integer.parseInt(timeField.toString()) >= 60)) {
-                        return newTime.toString();
+    
+                int k = 0; // index offset from 0 because contains colons
+    
+                if (temp.length() >= 2) {
+                    timeField = temp.substring(0, 2);
+    
+                    if ( (Integer.parseInt(timeField.toString()) < 0) || (Integer.parseInt(timeField.toString()) >= 24)) {
+                        return "";
                     }
-
+    
                     newTime.append(timeField);
-
-                    if (temp.length() > (4 + k)) {
-
-                        if (temp.charAt(4 + k) == ':') {
-                            k += 1;
+    
+                    if (temp.length() > 2) {
+    
+                        if (temp.charAt(2) == ':') {
+                            k = 1;
                         }
                     }
-
-                    if (temp.length() == (6 + k)) {
-                        timeField = temp.substring(4 + k, 6 + k);
-
+    
+                    if (temp.length() >= (4 + k)) {
+                        timeField = temp.substring(2 + k, 4 + k);
+    
                         if ( (Integer.parseInt(timeField.toString()) < 0) || (Integer.parseInt(timeField.toString()) >= 60)) {
                             return newTime.toString();
                         }
-
+    
                         newTime.append(timeField);
+    
+                        if (temp.length() > (4 + k)) {
+    
+                            if (temp.charAt(4 + k) == ':') {
+                                k += 1;
+                            }
+                        }
+    
+                        if (temp.length() == (6 + k)) {
+                            timeField = temp.substring(4 + k, 6 + k);
+    
+                            if ( (Integer.parseInt(timeField.toString()) < 0) || (Integer.parseInt(timeField.toString()) >= 60)) {
+                                return newTime.toString();
+                            }
+    
+                            newTime.append(timeField);
+                        }
                     }
                 }
+    
+                if (containsFrac) {
+                    newTime.append('.');
+                    newTime.append(frac);
+                }
+    
+                if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
+                    newTime.append("\\");
+                }
+    
+                multiple++;
             }
-
-            if (containsFrac) {
-                newTime.append('.');
-                newTime.append(frac);
-            }
-
-            if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
-                newTime.append("\\");
-            }
-
-            multiple++;
+        } catch (NumberFormatException e) {
+            return newTime.toString();
         }
 
         return newTime.toString();
