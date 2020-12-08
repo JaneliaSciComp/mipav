@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -160,6 +161,8 @@ public abstract class CeresSolver {
 	// enum DimensionType {
 	private int DYNAMIC = -1;
 	// };
+	private final double kLBFGSSecantConditionHessianUpdateTolerance = 1e-14;
+
 
 	// Argument type used in interfaces that can optionally take ownership
 	// of a passed in argument. If TAKE_OWNERSHIP is passed, the called
@@ -11264,6 +11267,499 @@ public abstract class CeresSolver {
 
 			 
 			};
+			
+			// LowRankInverseHessian is a positive definite approximation to the
+			// Hessian using the limited memory variant of the
+			// Broyden-Fletcher-Goldfarb-Shanno (BFGS)secant formula for
+			// approximating the Hessian.
+			//
+			// Other update rules like the Davidon-Fletcher-Powell (DFP) are
+			// possible, but the BFGS rule is considered the best performing one.
+			//
+			// The limited memory variant was developed by Nocedal and further
+			// enhanced with scaling rule by Byrd, Nocedal and Schanbel.
+			//
+			// Nocedal, J. (1980). "Updating Quasi-Newton Matrices with Limited
+			// Storage". Mathematics of Computation 35 (151): 773–782.
+			//
+			// Byrd, R. H.; Nocedal, J.; Schnabel, R. B. (1994).
+			// "Representations of Quasi-Newton Matrices and their use in
+			// Limited Memory Methods". Mathematical Programming 63 (4):
+			class LowRankInverseHessian extends LinearOperator {
+				 private int num_parameters_;
+				 private int max_num_corrections_;
+			     private boolean use_approximate_eigenvalue_scaling_;
+			     private double approximate_eigenvalue_scale_;
+			     // ColMajorMatrix delta_x_history_;
+			     private Matrix delta_x_history_;
+			     // ColMajorMatrix delta_gradient_history_;
+			     private Matrix delta_gradient_history_;
+			     private Vector<Double> delta_x_dot_delta_gradient_;
+			     private LinkedList<Integer> indices_ = new LinkedList<Integer>();
+			  // num_parameters is the row/column size of the Hessian.
+			  // max_num_corrections is the rank of the Hessian approximation.
+			  // use_approximate_eigenvalue_scaling controls whether the initial
+			  // inverse Hessian used during Right/LeftMultiply() is scaled by
+			  // the approximate eigenvalue of the true inverse Hessian at the
+			  // current operating point.
+			  // The approximation uses:
+			  // 2 * max_num_corrections * num_parameters + max_num_corrections
+			  // doubles.
+			  public LowRankInverseHessian(int num_parameters,
+			                        int max_num_corrections,
+			                        boolean use_approximate_eigenvalue_scaling) {
+				  num_parameters_ = num_parameters;
+			      max_num_corrections_ = max_num_corrections;
+			      use_approximate_eigenvalue_scaling_ = use_approximate_eigenvalue_scaling;
+			      approximate_eigenvalue_scale_ = 1.0;
+			      delta_x_history_ = new Matrix(num_parameters, max_num_corrections);
+			      delta_gradient_history_ = new Matrix(num_parameters, max_num_corrections);
+			      delta_x_dot_delta_gradient_ = new Vector<Double>(max_num_corrections);		  
+			  }
+
+			  // Update the low rank approximation. delta_x is the change in the
+			  // domain of Hessian, and delta_gradient is the change in the
+			  // gradient.  The update copies the delta_x and delta_gradient
+			  // vectors, and gets rid of the oldest delta_x and delta_gradient
+			  // vectors if the number of corrections is already equal to
+			  // max_num_corrections.
+			  public boolean Update(Vector<Double> delta_x, Vector<Double> delta_gradient) {
+				  int i;
+				  double delta_x_dot_delta_gradient = 0.0;
+				  for (i = 0; i < delta_x.size(); i++) {
+					  delta_x_dot_delta_gradient += (delta_x.get(i) * delta_gradient.get(i));
+				  }
+				  if (delta_x_dot_delta_gradient <=
+				      kLBFGSSecantConditionHessianUpdateTolerance) {
+					if (2 <= MAX_LOG_LEVEL) {
+				            Preferences.debug("Skipping L-BFGS Update, delta_x_dot_delta_gradient too \n" +
+				                              "small: " + delta_x_dot_delta_gradient + ", tolerance: " +
+				                              kLBFGSSecantConditionHessianUpdateTolerance + "\n" +
+				                              " (Secant condition).\n", Preferences.DEBUG_ALGORITHM);
+					}
+				    return false;
+				  }
+
+
+				  int next = indices_.size();
+				  // Once the size of the list reaches max_num_corrections_, simulate
+				  // a circular buffer by removing the first element of the list and
+				  // making it the next position where the LBFGS history is stored.
+				  if (next == max_num_corrections_) {
+				    next = indices_.getFirst();
+				    indices_.removeFirst();
+				  }
+
+				  indices_.add(next);
+				  for (i = 0; i < num_parameters_; i++) {
+				      delta_x_history_.set(i,next,delta_x.get(i));
+				      delta_gradient_history_.set(i,next,delta_gradient.get(i));
+				  }
+				  delta_x_dot_delta_gradient_.set(next,delta_x_dot_delta_gradient);
+				  double squaredNorm = 0.0;
+				  for (i = 0; i < delta_gradient.size(); i++) {
+					  squaredNorm += (delta_gradient.get(i) * delta_gradient.get(i));
+				  }
+				  approximate_eigenvalue_scale_ =
+				      delta_x_dot_delta_gradient / squaredNorm;
+				  return true;
+
+			  }
+			  
+			  public void RightMultiply(Vector<Double>x, Vector<Double> y) {
+				  int i;
+				  double x_ptr[] = new double[x.size()];
+				  for (i = 0; i < x.size(); i++) {
+					  x_ptr[i] = x.get(i);
+				  }
+				  double y_ptr[] = new double[y.size()];
+				  for (i = 0; i < y.size(); i++) {
+					  y_ptr[i] = y.get(i);
+				  }
+				  RightMultiply(x_ptr, y_ptr);
+				  for (i = 0; i < y.size(); i++) {
+					  y.set(i, y_ptr[i]);
+				  }
+			  }
+
+			  // LinearOperator interface
+			  public  void RightMultiply(double[] x_ptr, double[] y_ptr) {
+				  //ConstVectorRef gradient(x_ptr, num_parameters_);
+				  //VectorRef search_direction(y_ptr, num_parameters_);
+                  int i,it,j;
+                  for (i = 0; i < num_parameters_; i++) {
+                	  y_ptr[i] = x_ptr[i];
+                  }
+
+				  int num_corrections = indices_.size();
+				  Vector<Double> alpha = new Vector<Double>(num_corrections);
+				  for (i = 0; i < num_corrections; i++) {
+					  alpha.add(0.0);
+				  }
+
+				    for (i = 0; i < indices_.size(); i++) {
+				        it = indices_.get(i);
+				        double num = 0.0;
+				        for (j = 0; j < num_parameters_; j++) {
+				        	num += delta_x_history_.get(j,it)*y_ptr[j];
+				        }
+				        double alpha_i = num /
+				        delta_x_dot_delta_gradient_.get(it);
+				        for (j = 0; j < num_parameters_; j++) {
+				            y_ptr[j] -= alpha_i * delta_gradient_history_.get(j,it);
+				        }
+				        alpha.set(it,alpha_i);
+				  }
+
+				  if (use_approximate_eigenvalue_scaling_) {
+				    // Rescale the initial inverse Hessian approximation (H_0) to be iteratively
+				    // updated so that it is of similar 'size' to the true inverse Hessian along
+				    // the most recent search direction.  As shown in [1]:
+				    //
+				    //   \gamma_k = (delta_gradient_{k-1}' * delta_x_{k-1}) /
+				    //              (delta_gradient_{k-1}' * delta_gradient_{k-1})
+				    //
+				    // Satisfies:
+				    //
+				    //   (1 / \lambda_m) <= \gamma_k <= (1 / \lambda_1)
+				    //
+				    // Where \lambda_1 & \lambda_m are the smallest and largest eigenvalues of
+				    // the true Hessian (not the inverse) along the most recent search direction
+				    // respectively.  Thus \gamma is an approximate eigenvalue of the true
+				    // inverse Hessian, and choosing: H_0 = I * \gamma will yield a starting
+				    // point that has a similar scale to the true inverse Hessian.  This
+				    // technique is widely reported to often improve convergence, however this
+				    // is not universally true, particularly if there are errors in the initial
+				    // jacobians, or if there are significant differences in the sensitivity
+				    // of the problem to the parameters (i.e. the range of the magnitudes of
+				    // the components of the gradient is large).
+				    //
+				    // The original origin of this rescaling trick is somewhat unclear, the
+				    // earliest reference appears to be Oren [1], however it is widely discussed
+				    // without specific attributation in various texts including [2] (p143/178).
+				    //
+				    // [1] Oren S.S., Self-scaling variable metric (SSVM) algorithms Part II:
+				    //     Implementation and experiments, Management Science,
+				    //     20(5), 863-874, 1974.
+				    // [2] Nocedal J., Wright S., Numerical Optimization, Springer, 1999.
+					  for (i = 0; i < num_parameters_; i++) {
+						  y_ptr[i] *= approximate_eigenvalue_scale_;
+					  }
+
+				    if (4 <= MAX_LOG_LEVEL) {
+					  Preferences.debug("Applying approximate_eigenvalue_scale: " + approximate_eigenvalue_scale_ +
+							  "\nto initial inverse Hessian approximation\n.", Preferences.DEBUG_ALGORITHM);
+				    }
+				  }
+
+					  for (i = 0; i < indices_.size(); i++) {
+					        it = indices_.get(i);
+					        double num = 0.0;
+					        for (j = 0; j < num_parameters_; j++) {
+					        	num += delta_gradient_history_.get(j,it)*y_ptr[j];
+					        }
+				            double beta = num /
+				        delta_x_dot_delta_gradient_.get(it);
+				        for (j = 0; j < num_parameters_; j++) {
+				            y_ptr[j] += delta_x_history_.get(j,it) * (alpha.get(it) - beta);
+				        }
+				  }
+  
+			  }
+			  public void LeftMultiply(double[] x, double[] y) {
+			    RightMultiply(x, y);
+			  }
+			  public int num_rows() { return num_parameters_; }
+			  public int num_cols() { return num_parameters_; }
+
+			
+			} // class LowRankInverseHessian
+			
+			class LBFGS extends LineSearchDirection {
+				 private LowRankInverseHessian low_rank_inverse_hessian_;
+			     private boolean is_positive_definite_;
+				 public LBFGS(int num_parameters,
+				        int max_lbfgs_rank,
+				        boolean use_approximate_eigenvalue_bfgs_scaling) {
+				        low_rank_inverse_hessian_ = new LowRankInverseHessian(num_parameters,
+				                                  max_lbfgs_rank,
+				                                  use_approximate_eigenvalue_bfgs_scaling);
+				        is_positive_definite_ = true;
+				 }
+
+				  public boolean NextDirection(LineSearchMinimizer.State previous,
+				                     LineSearchMinimizer.State current,
+				                     Vector<Double> search_direction) {
+					int i;
+				    if (!is_positive_definite_) {
+				        System.err.println("Ceres bug: NextDirection() called on L-BFGS after inverse Hessian \n" +
+				        "approximation has become indefinite, please contact the developers!");
+				        return false;
+				    }
+
+				    Vector<Double> delta_x = new Vector<Double>();
+				    for (i = 0; i < previous.search_direction.size(); i++) {
+				    	delta_x.add(previous.search_direction.get(i) * previous.step_size);
+				    }
+				    Vector<Double> delta_gradient = new Vector<Double>();
+				    for (i = 0; i < current.gradient.size(); i++) {
+				    	delta_gradient.add(current.gradient.get(i) - previous.gradient.get(i));
+				    }
+				    low_rank_inverse_hessian_.Update(
+				        delta_x,
+				        delta_gradient);
+
+				    for (i = 0; i < search_direction.size(); i++) {
+				    	search_direction.set(i,0.0);
+				    }
+				    low_rank_inverse_hessian_.RightMultiply(current.gradient,
+				                                            search_direction);
+				    for (i = 0; i < search_direction.size(); i++) {
+				    	search_direction.set(i,-search_direction.get(i));
+				    }
+
+				    double dotProduct = 0.0;
+				    for (i = 0; i < search_direction.size(); i++) {
+				    	dotProduct += (search_direction.get(i) * current.gradient.get(i));
+				    }
+				    if (dotProduct >= 0.0) {
+				      if (WARNING <= MAX_LOG_LEVEL) {
+				                      Preferences.debug("Numerical failure in L-BFGS update: inverse Hessian \n" +
+				                      "approximation is not positive definite, and thus \n" +
+				                      "initial gradient for search direction is positive: " + dotProduct + "\n",
+				                      Preferences.DEBUG_ALGORITHM);
+				      }
+				      is_positive_definite_ = false;
+				      return false;
+				    }
+
+				    return true;
+				  }
+
+				
+				} // class LBFGS
+			
+			class BFGS extends LineSearchDirection {
+				private int num_parameters_;
+			    private boolean use_approximate_eigenvalue_scaling_;
+			    private Matrix inverse_hessian_;
+			    private boolean initialized_;
+			    private boolean is_positive_definite_;
+			    
+				 public BFGS(int num_parameters,
+				       boolean use_approximate_eigenvalue_scaling) {
+				        num_parameters_ = num_parameters;
+				        use_approximate_eigenvalue_scaling_ = use_approximate_eigenvalue_scaling;
+				        initialized_ = false;
+				        is_positive_definite_ = true;
+				        if ((WARNING <= MAX_LOG_LEVEL) && (num_parameters >= 1000)) {
+				            Preferences.debug("BFGS line search being created with: " + num_parameters_ + "\n" +
+				            " parameters, this will allocate a dense approximate inverse Hessian\n" +
+				            " of size: " + num_parameters_ + " x "  + num_parameters_ + "\n" +
+				            ", consider using the L-BFGS memory-efficient line search direction instead.\n",
+				            Preferences.DEBUG_ALGORITHM);
+				        }
+				    // Construct inverse_hessian_ after logging warning about size s.t. if the
+				    // allocation crashes us, the log will highlight what the issue likely was.
+				    inverse_hessian_ = Matrix.identity(num_parameters, num_parameters);
+				  }
+
+
+				  public boolean NextDirection(LineSearchMinimizer.State previous,
+				                     LineSearchMinimizer.State current,
+				                     Vector<Double> search_direction) {
+					int i,j;
+				    if (!is_positive_definite_) {
+				        System.err.println("Ceres bug: NextDirection() called on BFGS after inverse Hessian \n" +
+				        "approximation has become indefinite, please contact the developers!");
+				        return false;
+				    }
+
+				    Vector<Double>delta_x = new Vector<Double>(previous.search_direction.size()); 
+				    for (i = 0; i < previous.search_direction.size(); i++) {
+				    	delta_x.add(previous.search_direction.get(i) * previous.step_size);
+				    }
+				    Vector<Double> delta_gradient = new Vector<Double>(current.gradient.size());
+				    for (i = 0; i < current.gradient.size(); i++) {
+				    	delta_gradient.add(current.gradient.get(i) - previous.gradient.get(i));
+				    }
+				    double delta_x_dot_delta_gradient = 0.0;
+				    for (i = 0; i < delta_x.size(); i++) {
+				    	delta_x_dot_delta_gradient += (delta_x.get(i) * delta_gradient.get(i));
+				    }
+
+				    // The (L)BFGS algorithm explicitly requires that the secant equation:
+				    //
+				    //   B_{k+1} * s_k = y_k
+				    //
+				    // Is satisfied at each iteration, where B_{k+1} is the approximated
+				    // Hessian at the k+1-th iteration, s_k = (x_{k+1} - x_{k}) and
+				    // y_k = (grad_{k+1} - grad_{k}). As the approximated Hessian must be
+				    // positive definite, this is equivalent to the condition:
+				    //
+				    //   s_k^T * y_k > 0     [s_k^T * B_{k+1} * s_k = s_k^T * y_k > 0]
+				    //
+				    // This condition would always be satisfied if the function was strictly
+				    // convex, alternatively, it is always satisfied provided that a Wolfe line
+				    // search is used (even if the function is not strictly convex).  See [1]
+				    // (p138) for a proof.
+				    //
+				    // Although Ceres will always use a Wolfe line search when using (L)BFGS,
+				    // practical implementation considerations mean that the line search
+				    // may return a point that satisfies only the Armijo condition, and thus
+				    // could violate the Secant equation.  As such, we will only use a step
+				    // to update the Hessian approximation if:
+				    //
+				    //   s_k^T * y_k > tolerance
+				    //
+				    // It is important that tolerance is very small (and >=0), as otherwise we
+				    // might skip the update too often and fail to capture important curvature
+				    // information in the Hessian.  For example going from 1e-10 -> 1e-14
+				    // improves the NIST benchmark score from 43/54 to 53/54.
+				    //
+				    // [1] Nocedal J, Wright S, Numerical Optimization, 2nd Ed. Springer, 1999.
+				    //
+				    // TODO(alexs.mac): Consider using Damped BFGS update instead of
+				    // skipping update.
+				    final double kBFGSSecantConditionHessianUpdateTolerance = 1e-14;
+
+				    if (delta_x_dot_delta_gradient <=
+				        kBFGSSecantConditionHessianUpdateTolerance) {
+				      if (2 <= MAX_LOG_LEVEL) {
+				              Preferences.debug("Skipping BFGS Update, delta_x_dot_delta_gradient too \n" +
+				              "small: " + delta_x_dot_delta_gradient + ", tolerance: " + kBFGSSecantConditionHessianUpdateTolerance + "\n" +
+				              " (Secant condition).\n", Preferences.DEBUG_ALGORITHM);
+				      }
+				    } else {
+				      // Update dense inverse Hessian approximation.
+
+				      if (!initialized_ && use_approximate_eigenvalue_scaling_) {
+				        // Rescale the initial inverse Hessian approximation (H_0) to be
+				        // iteratively updated so that it is of similar 'size' to the true
+				        // inverse Hessian at the start point.  As shown in [1]:
+				        //
+				        //   \gamma = (delta_gradient_{0}' * delta_x_{0}) /
+				        //            (delta_gradient_{0}' * delta_gradient_{0})
+				        //
+				        // Satisfies:
+				        //
+				        //   (1 / \lambda_m) <= \gamma <= (1 / \lambda_1)
+				        //
+				        // Where \lambda_1 & \lambda_m are the smallest and largest eigenvalues
+				        // of the true initial Hessian (not the inverse) respectively. Thus,
+				        // \gamma is an approximate eigenvalue of the true inverse Hessian, and
+				        // choosing: H_0 = I * \gamma will yield a starting point that has a
+				        // similar scale to the true inverse Hessian.  This technique is widely
+				        // reported to often improve convergence, however this is not
+				        // universally true, particularly if there are errors in the initial
+				        // gradients, or if there are significant differences in the sensitivity
+				        // of the problem to the parameters (i.e. the range of the magnitudes of
+				        // the components of the gradient is large).
+				        //
+				        // The original origin of this rescaling trick is somewhat unclear, the
+				        // earliest reference appears to be Oren [1], however it is widely
+				        // discussed without specific attributation in various texts including
+				        // [2] (p143).
+				        //
+				        // [1] Oren S.S., Self-scaling variable metric (SSVM) algorithms
+				        //     Part II: Implementation and experiments, Management Science,
+				        //     20(5), 863-874, 1974.
+				        // [2] Nocedal J., Wright S., Numerical Optimization, Springer, 1999.
+				    	double dotProduct = 0.0;
+				    	for (i = 0; i < delta_gradient.size(); i++) {
+				    		dotProduct += (delta_gradient.get(i) * delta_gradient.get(i));
+				    	}
+				        double approximate_eigenvalue_scale =
+				            delta_x_dot_delta_gradient / dotProduct;
+				        
+				        for (i = 0; i < inverse_hessian_.getRowDimension(); i++) {
+				        	for (j = 0; j < inverse_hessian_.getColumnDimension(); j++) {
+				        		inverse_hessian_.set(i, j, inverse_hessian_.get(i,j) * approximate_eigenvalue_scale);
+				        	}
+				        	
+				        }
+                           if (4 <= MAX_LOG_LEVEL) {
+				                Preferences.debug("Applying approximate_eigenvalue_scale: " + approximate_eigenvalue_scale +
+				                "\nto initial inverse Hessian approximation.\n", Preferences.DEBUG_ALGORITHM);
+                           }
+				      }
+				      initialized_ = true;
+
+				      // Efficient O(num_parameters^2) BFGS update [2].
+				      //
+				      // Starting from dense BFGS update detailed in Nocedal [2] p140/177 and
+				      // using: y_k = delta_gradient, s_k = delta_x:
+				      //
+				      //   \rho_k = 1.0 / (s_k' * y_k)
+				      //   V_k = I - \rho_k * y_k * s_k'
+				      //   H_k = (V_k' * H_{k-1} * V_k) + (\rho_k * s_k * s_k')
+				      //
+				      // This update involves matrix, matrix products which naively O(N^3),
+				      // however we can exploit our knowledge that H_k is positive definite
+				      // and thus by defn. symmetric to reduce the cost of the update:
+				      //
+				      // Expanding the update above yields:
+				      //
+				      //   H_k = H_{k-1} +
+				      //         \rho_k * ( (1.0 + \rho_k * y_k' * H_k * y_k) * s_k * s_k' -
+				      //                    (s_k * y_k' * H_k + H_k * y_k * s_k') )
+				      //
+				      // Using: A = (s_k * y_k' * H_k), and the knowledge that H_k = H_k', the
+				      // last term simplifies to (A + A'). Note that although A is not symmetric
+				      // (A + A') is symmetric. For ease of construction we also define
+				      // B = (1 + \rho_k * y_k' * H_k * y_k) * s_k * s_k', which is by defn
+				      // symmetric due to construction from: s_k * s_k'.
+				      //
+				      // Now we can write the BFGS update as:
+				      //
+				      //   H_k = H_{k-1} + \rho_k * (B - (A + A'))
+
+				      // For efficiency, as H_k is by defn. symmetric, we will only maintain the
+				      // *lower* triangle of H_k (and all intermediary terms).
+
+				      double rho_k = 1.0 / delta_x_dot_delta_gradient;
+
+				      // Calculate: A = s_k * y_k' * H_k
+				      /*Matrix A = delta_x * (delta_gradient.transpose() *
+				                            inverse_hessian_.selfadjointView<Eigen::Lower>());
+
+				      // Calculate scalar: (1 + \rho_k * y_k' * H_k * y_k)
+				      const double delta_x_times_delta_x_transpose_scale_factor =
+				          (1.0 + (rho_k * delta_gradient.transpose() *
+				                  inverse_hessian_.selfadjointView<Eigen::Lower>() *
+				                  delta_gradient));
+				      // Calculate: B = (1 + \rho_k * y_k' * H_k * y_k) * s_k * s_k'
+				      Matrix B = Matrix::Zero(num_parameters_, num_parameters_);
+				      B.selfadjointView<Eigen::Lower>().
+				          rankUpdate(delta_x, delta_x_times_delta_x_transpose_scale_factor);
+
+				      // Finally, update inverse Hessian approximation according to:
+				      // H_k = H_{k-1} + \rho_k * (B - (A + A')).  Note that (A + A') is
+				      // symmetric, even though A is not.
+				      inverse_hessian_.triangularView<Eigen::Lower>() +=
+				          rho_k * (B - A - A.transpose());*/
+				    }
+
+				    /**search_direction =
+				        inverse_hessian_.selfadjointView<Eigen::Lower>() *
+				        (-1.0 * current.gradient);
+
+				    if (search_direction->dot(current.gradient) >= 0.0) {
+				      LOG(WARNING) << "Numerical failure in BFGS update: inverse Hessian "
+				                   << "approximation is not positive definite, and thus "
+				                   << "initial gradient for search direction is positive: "
+				                   << search_direction->dot(current.gradient);
+				      is_positive_definite_ = false;
+				      return false;
+				    }*/
+
+				    return true;
+				  }
+
+				 
+				};
+		
+
 
 		
 		class LineSearchDirectionOptions {
