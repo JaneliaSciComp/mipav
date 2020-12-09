@@ -11738,27 +11738,107 @@ public abstract class CeresSolver {
 				      // symmetric, even though A is not.
 				      inverse_hessian_.triangularView<Eigen::Lower>() +=
 				          rho_k * (B - A - A.transpose());*/
+				      
+				      // Just use the whole matrix rather than only the lower triangle
+				      // Produce 1 by num_parameters_ array
+				      double di[] = new double[num_parameters_];
+				      for (i = 0; i < num_parameters_; i++) {
+				    	  for (j = 0; j < num_parameters_; j++) {
+				    		  di[i] += (delta_gradient.get(j) * inverse_hessian_.get(j,i));
+				    	  }
+				      }
+				      // A is num_parameters_ by num_parameters_
+				      double A[][] = new double[num_parameters_][num_parameters_];
+				      for (i = 0; i < num_parameters_; i++) {
+				    	  for (j = 0; j < num_parameters_; j++) {
+				    		  A[i][j] = delta_x.get(i) * di[j];
+				    	  }
+				      }
+				      
+				      // Produce a num_parameters_ by 1 array
+				      double id[] = new double[num_parameters_];
+				      for (i = 0; i < num_parameters_; i++) {
+				    	  for (j = 0; j < num_parameters_; j++) {
+				    		  id[i] += (inverse_hessian_.get(i,j) * delta_gradient.get(j));
+				    	  }
+				      }
+				      double delta_x_times_delta_x_transpose_scale_factor = 1.0;
+				      for (i = 0; i < num_parameters_; i++) {
+				    	  delta_x_times_delta_x_transpose_scale_factor += (rho_k * delta_gradient.get(i) * id[i]);
+				      }
+				      
+				      double B[][] = new double[num_parameters_][num_parameters_];
+				      for (i = 0; i < num_parameters_; i++) {
+				    	  for (j = 0; j < num_parameters_; j++) {
+				    		  B[i][j] = delta_x_times_delta_x_transpose_scale_factor * delta_x.get(i) * delta_x.get(j);
+				    	  }
+				      }
+				      
+				      for (i = 0; i < num_parameters_; i++) {
+				    	  for (j = 0; j < num_parameters_; j++) {
+				    		  inverse_hessian_.set(i, j, inverse_hessian_.get(i,j) + rho_k*(B[i][j] - A[i][j] - A[j][i]));
+				    	  }
+				      }
 				    }
 
-				    /**search_direction =
-				        inverse_hessian_.selfadjointView<Eigen::Lower>() *
-				        (-1.0 * current.gradient);
+				    //*search_direction =
+				        //inverse_hessian_.selfadjointView<Eigen::Lower>() *
+				       // (-1.0 * current.gradient);
+				    for (i = 0; i < num_parameters_; i++) {
+				    	search_direction.set(i,0.0);
+				    	for (j = 0; j < num_parameters_; j++) {
+				    		search_direction.set(i, search_direction.get(i) - inverse_hessian_.get(i,j)*current.gradient.get(j));
+				    	}
+				    }
 
-				    if (search_direction->dot(current.gradient) >= 0.0) {
-				      LOG(WARNING) << "Numerical failure in BFGS update: inverse Hessian "
-				                   << "approximation is not positive definite, and thus "
-				                   << "initial gradient for search direction is positive: "
-				                   << search_direction->dot(current.gradient);
+				    double dotProduct = 0.0;
+				    for (i = 0; i < num_parameters_; i++) {
+				    	dotProduct += (search_direction.get(i) * current.gradient.get(i));
+				    }
+				    if (dotProduct >= 0.0) {
+				      if (WARNING <= MAX_LOG_LEVEL) {
+				                   Preferences.debug("Numerical failure in BFGS update: inverse Hessian \n" +
+				                   "approximation is not positive definite, and thus \n" +
+				                   "initial gradient for search direction is positive: " + dotProduct + "\n",
+				                   Preferences.DEBUG_ALGORITHM);
+				      }
 				      is_positive_definite_ = false;
 				      return false;
-				    }*/
+				    }
 
 				    return true;
 				  }
 
 				 
-				};
+				} // class BFGS
 		
+				public LineSearchDirection  Create(LineSearchDirectionOptions options) {
+				  if (options.type == LineSearchDirectionType.STEEPEST_DESCENT) {
+				    return new SteepestDescent();
+				  }
+
+				  if (options.type == LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT) {
+				    return new NonlinearConjugateGradient(
+				        options.nonlinear_conjugate_gradient_type,
+				        options.function_tolerance);
+				  }
+
+				  if (options.type == LineSearchDirectionType.LBFGS) {
+				    return new LBFGS(
+				        options.num_parameters,
+				        options.max_lbfgs_rank,
+				        options.use_approximate_eigenvalue_bfgs_scaling);
+				  }
+
+				  if (options.type == LineSearchDirectionType.BFGS) {
+				    return new BFGS(
+				        options.num_parameters,
+				        options.use_approximate_eigenvalue_bfgs_scaling);
+				  }
+
+				  System.err.println("Unknown line search direction type: " + options.type);
+				  return null;
+				}
 
 
 		
@@ -11774,13 +11854,13 @@ public abstract class CeresSolver {
 		          num_parameters = 0;
 		          type = LineSearchDirectionType.LBFGS;
 		          nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
-		          function_tolerance = 1e-12;
+		          function_tolerance = 1e-12; 
 		          max_lbfgs_rank = 20;
 		          use_approximate_eigenvalue_bfgs_scaling = true;
 		    }
 		}
 		
-		class LineSearchDirection {
+		abstract class LineSearchDirection {
 			
 			 public LineSearchDirectionOptions options;
 			 
@@ -11788,11 +11868,10 @@ public abstract class CeresSolver {
 				 options = new LineSearchDirectionOptions();
 			 }
 
-			  /*static LineSearchDirection* Create(const Options& options);
 
-			  virtual bool NextDirection(const LineSearchMinimizer::State& previous,
-			                             const LineSearchMinimizer::State& current,
-			                             Vector* search_direction) = 0;*/
+			 public abstract boolean NextDirection(LineSearchMinimizer.State previous,
+			                             LineSearchMinimizer.State current,
+			                             Vector<Double> search_direction);
 		} // class LineSearchDirection
 		
 		// Generic line search minimization algorithm.
@@ -11988,12 +12067,11 @@ public abstract class CeresSolver {
 			  line_search_direction_options.max_lbfgs_rank = options.max_lbfgs_rank;
 			  line_search_direction_options.use_approximate_eigenvalue_bfgs_scaling =
 			      options.use_approximate_eigenvalue_bfgs_scaling;
-			  /*scoped_ptr<LineSearchDirection> line_search_direction(
-			      LineSearchDirection::Create(line_search_direction_options));
+			  LineSearchDirection line_search_direction = Create(line_search_direction_options);
 
-			  LineSearchFunction line_search_function(evaluator);
+			  LineSearchFunction line_search_function = new LineSearchFunction(evaluator);
 
-			  LineSearch::Options line_search_options;
+			  LineSearchOptions line_search_options = new LineSearchOptions();
 			  line_search_options.interpolation_type =
 			      options.line_search_interpolation_type;
 			  line_search_options.min_step_size = options.min_line_search_step_size;
@@ -12010,19 +12088,20 @@ public abstract class CeresSolver {
 			  line_search_options.max_step_expansion =
 			      options.max_line_search_step_expansion;
 			  line_search_options.is_silent = options.is_silent;
-			  line_search_options.function = &line_search_function;
+			  line_search_options.function = line_search_function;
 
-			  scoped_ptr<LineSearch>
-			      line_search(LineSearch::Create(options.line_search_type,
+			  LineSearch line_search = Create(options.line_search_type,
 			                                     line_search_options,
-			                                     &summary->message));
-			  if (line_search.get() == NULL) {
-			    summary->termination_type = FAILURE;
-			    LOG_IF(ERROR, is_not_silent) << "Terminating: " << summary->message;
+			                                     summary.message);
+			  if (line_search == null) {
+			    summary.termination_type = TerminationType.FAILURE;
+			    if ((ERROR <= MAX_LOG_LEVEL) && is_not_silent) {
+			        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			    }
 			    return;
 			  }
 
-			  LineSearch::Summary line_search_summary;
+			  /*LineSearch::Summary line_search_summary;
 			  int num_line_search_direction_restarts = 0;
 
 			  while (true) {
