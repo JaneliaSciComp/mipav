@@ -1049,10 +1049,10 @@ public abstract class CeresSolver {
 		    }
 
 		    // Validate the reduced ordering.
-		    if (!CoordinateDescentMinimizer::IsOrderingValid(
-		            *pp->reduced_program,
-		            *options.inner_iteration_ordering,
-		            &pp->error)) {
+		    if (!IsOrderingValid(
+		            pp.reduced_program,
+		            options.inner_iteration_ordering,
+		            pp.error)) {
 		      return false;
 		    }
 		  } else {
@@ -1067,7 +1067,7 @@ public abstract class CeresSolver {
 		                                             pp->problem->parameter_map(),
 		                                             *options.inner_iteration_ordering,
 		                                             &pp->error);*/
-		    return false;
+		  return false;
 		}
 
 		
@@ -6357,6 +6357,48 @@ public abstract class CeresSolver {
 			  return CallbackReturnType.SOLVER_CONTINUE;
 	 }
 	 }
+	
+	public boolean IsOrderingValid(
+		    Program program,
+		    OrderedGroups<double[]> ordering,
+		    String[] message) {
+		  HashMap<Integer, Set<double[]> > group_to_elements =
+		      ordering.group_to_elements();
+
+		  // Verify that each group is an independent set
+		    Collection<Set<double[]>> col = group_to_elements.values();
+			Iterator<Set<double[]>> group_it = col.iterator();
+			Set<Integer> groupNumSet = group_to_elements.keySet();
+			Iterator<Integer> num_iterator = groupNumSet.iterator();
+			while (group_it.hasNext()) {
+				Set<double[]> group = group_it.next();
+				int groupNum = num_iterator.next();
+				
+		    if (!program.IsParameterBlockSetIndependent(group)) {
+		      message[0] =
+		          String.format("The user-provided \n" +
+		                       "parameter_blocks_for_inner_iterations does not \n" +
+		                       "form an independent set. Group Id: %d", groupNum);
+		      return false;
+		    }
+		  }
+		  return true;
+		}
+	
+	// Find a recursive decomposition of the Hessian matrix as a set
+	// of independent sets of decreasing size and invert it. This
+	// seems to work better in practice, i.e., Cameras before
+	// points.
+	OrderedGroups<double[]> CreateOrdering(
+	    Program program) {
+		OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+	    /*ComputeRecursiveIndependentSetOrdering(program, ordering);
+	    ordering.Reverse();
+	    return ordering.release();*/
+		return null;
+	}
+
+
 
 	class CoordinateDescentMinimizer extends Minimizer {
 		Vector<ParameterBlock> parameter_blocks_;
@@ -8671,6 +8713,14 @@ public abstract class CeresSolver {
 			  position_ = position;
 			  direction_ = direction;
 			}
+			
+			public void Init(double[] position, Vector<Double> direction) {
+				position_ = new Vector<Double>(position.length);
+				for (int i = 0; i < position.length; i++) {
+					position_.add(position[i]);
+				}
+				direction_ = direction;
+			}
 
 	  // Evaluate the line search objective
 	  //
@@ -8802,14 +8852,6 @@ public abstract class CeresSolver {
 			      initial_evaluator_jacobian_time_in_seconds;
 			}
 
-
-
-
-	  /*
-
-	  
-	  void TimeStatistics(double* cost_evaluation_time_in_seconds,
-	                      double* gradient_evaluation_time_in_seconds) const;*/
 	  public Vector<Double> position() { return position_; }
 	  public Vector<Double> direction() { return direction_; }
 
@@ -11874,6 +11916,22 @@ public abstract class CeresSolver {
 			                             Vector<Double> search_direction);
 		} // class LineSearchDirection
 		
+		public String LineSearchDirectionTypeToString(LineSearchDirectionType type) {
+			  switch (type) {
+			  case STEEPEST_DESCENT:
+				  return "STEEPEST_DESCENT";
+			  case NONLINEAR_CONJUGATE_GRADIENT:
+				  return "NONLINEAR_CONJUGATE_GRADIENT";
+			  case LBFGS:
+				  return "LBFGS";
+			  case BFGS:
+				  return "BFGS";
+			    default:
+			      return "UNKNOWN";
+			  }
+			}
+
+		
 		// Generic line search minimization algorithm.
 		//
 		// For example usage, see SolverImpl::Minimize.
@@ -11957,6 +12015,8 @@ public abstract class CeresSolver {
 		                        SolverSummary summary) {
 			  int i;
 			  boolean status;
+			  double diff;
+			  double norm;
 			  boolean is_not_silent = !options.is_silent;
 			  double start_time = 1.0E-3 * System.currentTimeMillis();
 			  double iteration_start_time =  start_time;
@@ -12101,7 +12161,7 @@ public abstract class CeresSolver {
 			    return;
 			  }
 
-			  /*LineSearch::Summary line_search_summary;
+			  LineSearchSummary line_search_summary = new LineSearchSummary();
 			  int num_line_search_direction_restarts = 0;
 
 			  while (true) {
@@ -12109,36 +12169,43 @@ public abstract class CeresSolver {
 			      break;
 			    }
 
-			    iteration_start_time = WallTimeInSeconds();
+			    iteration_start_time = 1.0E-3 * System.currentTimeMillis();
 			    if (iteration_summary.iteration >= options.max_num_iterations) {
-			      summary->message = "Maximum number of iterations reached.";
-			      summary->termination_type = NO_CONVERGENCE;
-			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      summary.message[0] = "Maximum number of iterations reached.";
+			      summary.termination_type = TerminationType.NO_CONVERGENCE;
+			      if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    }
 
-			    const double total_solver_time = iteration_start_time - start_time +
-			        summary->preprocessor_time_in_seconds;
+			    double total_solver_time = iteration_start_time - start_time +
+			        summary.preprocessor_time_in_seconds;
 			    if (total_solver_time >= options.max_solver_time_in_seconds) {
-			      summary->message = "Maximum solver time reached.";
-			      summary->termination_type = NO_CONVERGENCE;
-			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      summary.message[0] = "Maximum solver time reached.";
+			      summary.termination_type = TerminationType.NO_CONVERGENCE;
+			      if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    }
 
-			    iteration_summary = IterationSummary();
-			    iteration_summary.iteration = summary->iterations.back().iteration + 1;
+			    iteration_summary = new IterationSummary();
+			    iteration_summary.iteration = summary.iterations.get(summary.iterations.size()-1).iteration + 1;
 			    iteration_summary.step_is_valid = false;
 			    iteration_summary.step_is_successful = false;
 
-			    bool line_search_status = true;
+			    boolean line_search_status = true;
 			    if (iteration_summary.iteration == 1) {
-			      current_state.search_direction = -current_state.gradient;
+			      current_state.search_direction.clear();
+			      for (i = 0; i < current_state.gradient.size(); i++) {
+			    	  current_state.search_direction.add(-current_state.gradient.get(i));
+			      }
 			    } else {
-			      line_search_status = line_search_direction->NextDirection(
+			      line_search_status = line_search_direction.NextDirection(
 			          previous_state,
 			          current_state,
-			          &current_state.search_direction);
+			          current_state.search_direction);
 			    }
 
 			    if (!line_search_status &&
@@ -12147,38 +12214,48 @@ public abstract class CeresSolver {
 			      // Line search direction failed to generate a new direction, and we
 			      // have already reached our specified maximum number of restarts,
 			      // terminate optimization.
-			      summary->message =
-			          StringPrintf("Line search direction failure: specified "
+			      summary.message[0] =
+			          String.format("Line search direction failure: specified \n" +
 			                       "max_num_line_search_direction_restarts: %d reached.",
 			                       options.max_num_line_search_direction_restarts);
-			      summary->termination_type = FAILURE;
-			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			      summary.termination_type = TerminationType.FAILURE;
+			      if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    } else if (!line_search_status) {
 			      // Restart line search direction with gradient descent on first iteration
 			      // as we have not yet reached our maximum number of restarts.
-			      CHECK_LT(num_line_search_direction_restarts,
-			               options.max_num_line_search_direction_restarts);
+			      if (num_line_search_direction_restarts >=
+			               options.max_num_line_search_direction_restarts) {
+			          System.err.println("num_line_search_direction_restarts >=\n" + 
+			          "options.max_num_line_search_direction_restarts in LineSearchMinimizer Minimize");
+			          return;
+			      }
 
 			      ++num_line_search_direction_restarts;
-			      LOG_IF(WARNING, is_not_silent)
-			          << "Line search direction algorithm: "
-			          << LineSearchDirectionTypeToString(
-			              options.line_search_direction_type)
-			          << ", failed to produce a valid new direction at "
-			          << "iteration: " << iteration_summary.iteration
-			          << ". Restarting, number of restarts: "
-			          << num_line_search_direction_restarts << " / "
-			          << options.max_num_line_search_direction_restarts
-			          << " [max].";
-			      line_search_direction.reset(
-			          LineSearchDirection::Create(line_search_direction_options));
-			      current_state.search_direction = -current_state.gradient;
+			      if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+			          Preferences.debug("Line search direction algorithm: " +
+			          LineSearchDirectionTypeToString(options.line_search_direction_type) + "\n" +
+			          ", failed to produce a valid new direction at " +
+			          "iteration: " + iteration_summary.iteration + "\n" +
+			          ". Restarting, number of restarts: \n" +
+			          num_line_search_direction_restarts + " / " +
+			          options.max_num_line_search_direction_restarts +
+			           " [max].\n",Preferences.DEBUG_ALGORITHM);
+			      }
+			      line_search_direction = Create(line_search_direction_options);
+			      current_state.search_direction.clear();
+			      for (i = 0; i < current_state.gradient.size(); i++) {
+			    	  current_state.search_direction.add(-current_state.gradient.get(i));
+			      }
 			    }
 
 			    line_search_function.Init(x, current_state.search_direction);
-			    current_state.directional_derivative =
-			        current_state.gradient.dot(current_state.search_direction);
+			    current_state.directional_derivative = 0.0;
+			    for (i = 0; i < current_state.gradient.size(); i++) {
+			    	current_state.directional_derivative += (current_state.gradient.get(i) * current_state.search_direction.get(i));
+			    }
 
 			    // TODO(sameeragarwal): Refactor this into its own object and add
 			    // explanations for the various choices.
@@ -12186,92 +12263,124 @@ public abstract class CeresSolver {
 			    // Note that we use !line_search_status to ensure that we treat cases when
 			    // we restarted the line search direction equivalently to the first
 			    // iteration.
-			    const double initial_step_size =
+			    double initial_step_size =
 			        (iteration_summary.iteration == 1 || !line_search_status)
-			        ? std::min(1.0, 1.0 / current_state.gradient_max_norm)
-			        : std::min(1.0, 2.0 * (current_state.cost - previous_state.cost) /
+			        ? Math.min(1.0, 1.0 / current_state.gradient_max_norm)
+			        : Math.min(1.0, 2.0 * (current_state.cost[0] - previous_state.cost[0]) /
 			                   current_state.directional_derivative);
 			    // By definition, we should only ever go forwards along the specified search
 			    // direction in a line search, most likely cause for this being violated
 			    // would be a numerical failure in the line search direction calculation.
 			    if (initial_step_size < 0.0) {
-			      summary->message =
-			          StringPrintf("Numerical failure in line search, initial_step_size is "
-			                       "negative: %.5e, directional_derivative: %.5e, "
+			      summary.message[0] =
+			          String.format("Numerical failure in line search, initial_step_size is \n" +
+			                       "negative: %.5e, directional_derivative: %.5e, \n" +
 			                       "(current_cost - previous_cost): %.5e",
 			                       initial_step_size, current_state.directional_derivative,
-			                       (current_state.cost - previous_state.cost));
-			      summary->termination_type = FAILURE;
-			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			                       (current_state.cost[0] - previous_state.cost[0]));
+			      summary.termination_type = TerminationType.FAILURE;
+			      if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    }
 
-			    line_search->Search(initial_step_size,
-			                        current_state.cost,
+			    line_search.Search(initial_step_size,
+			                        current_state.cost[0],
 			                        current_state.directional_derivative,
-			                        &line_search_summary);
+			                        line_search_summary);
 			    if (!line_search_summary.success) {
-			      summary->message =
-			          StringPrintf("Numerical failure in line search, failed to find "
-			                       "a valid step size, (did not run out of iterations) "
-			                       "using initial_step_size: %.5e, initial_cost: %.5e, "
+			      summary.message[0] =
+			          String.format("Numerical failure in line search, failed to find \n" +
+			                       "a valid step size, (did not run out of iterations) \n" +
+			                       "using initial_step_size: %.5e, initial_cost: %.5e, \n" +
 			                       "initial_gradient: %.5e.",
 			                       initial_step_size, current_state.cost,
 			                       current_state.directional_derivative);
-			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
-			      summary->termination_type = FAILURE;
+			      if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
+			      summary.termination_type = TerminationType.FAILURE;
 			      break;
 			    }
 
-			    const FunctionSample& optimal_point = line_search_summary.optimal_point;
-			    CHECK(optimal_point.vector_x_is_valid)
-			        << "Congratulations, you found a bug in Ceres. Please report it.";
+			    FunctionSample optimal_point = line_search_summary.optimal_point;
+			    if (!optimal_point.vector_x_is_valid) {
+			        System.err.println("Congratulations, you found a bug in Ceres. Please report it.");
+			        System.err.println("!optimal_point.vector_x_is_valid in LineSearchMinimizer Minimize");
+			        return;
+			    }
 			    current_state.step_size = optimal_point.x;
 			    previous_state = current_state;
 			    iteration_summary.step_solver_time_in_seconds =
-			        WallTimeInSeconds() - iteration_start_time;
+			        1.0E-3 * System.currentTimeMillis() - iteration_start_time;
 
 			    if (optimal_point.vector_gradient_is_valid) {
 			      current_state.cost = optimal_point.value;
 			      current_state.gradient = optimal_point.vector_gradient;
 			    } else {
-			      Evaluator::EvaluateOptions evaluate_options;
+			      EvaluateOptions evaluate_options = new EvaluateOptions();
 			      evaluate_options.new_evaluation_point = false;
-			      if (!evaluator->Evaluate(evaluate_options,
-			                               optimal_point.vector_x.data(),
-			                               &(current_state.cost),
-			                               NULL,
-			                               current_state.gradient.data(),
-			                               NULL)) {
-			        summary->termination_type = FAILURE;
-			        summary->message = "Cost and jacobian evaluation failed.";
-			        LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			      double evx[] = new double[optimal_point.vector_x.size()];
+			      for (i = 0; i < evx.length; i++) {
+			    	  evx[i] = optimal_point.vector_x.get(i);
+			      }
+			      double evg[] = new double[current_state.gradient.size()];
+			      for (i = 0; i < evg.length; i++) {
+			    	  evg[i] = current_state.gradient.get(i);
+			      }
+			      status = evaluator.Evaluate(evaluate_options, evx, current_state.cost, null, evg, null);
+			      for (i = 0; i < evx.length; i++) {
+			    	  optimal_point.vector_x.set(i,evx[i]);
+			      }
+			      for (i = 0; i < evg.length; i++) {
+			    	  current_state.gradient.set(i,evg[i]);
+			      }
+			      if (!status) {
+			        summary.termination_type = TerminationType.FAILURE;
+			        summary.message[0] = "Cost and jacobian evaluation failed.";
+			        if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				    }
 			        return;
 			      }
 			    }
 
 			    if (!EvaluateGradientNorms(evaluator,
 			                               optimal_point.vector_x,
-			                               &current_state,
-			                               &summary->message)) {
-			      summary->termination_type = FAILURE;
-			      summary->message =
-			          "Step failed to evaluate. This should not happen as the step was "
-			          "valid when it was selected by the line search. More details: " +
-			          summary->message;
-			      LOG_IF(WARNING, is_not_silent) << "Terminating: " << summary->message;
+			                               current_state,
+			                               summary.message)) {
+			      summary.termination_type = TerminationType.FAILURE;
+			      summary.message[0] =
+			          "Step failed to evaluate. This should not happen as the step was \n" +
+			          "valid when it was selected by the line search. More details: \n" +
+			          summary.message[0];
+			      if ((WARNING <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    }
 
 			    // Compute the norm of the step in the ambient space.
-			    iteration_summary.step_norm = (optimal_point.vector_x - x).norm();
-			    const double x_norm = x.norm();
-			    x = optimal_point.vector_x;
+			    norm = 0.0;
+			    for (i = 0; i < x.length; i++) {
+			        diff = optimal_point.vector_x.get(i) - x[i];
+			        norm += (diff * diff);
+			    }
+			    iteration_summary.step_norm = Math.sqrt(norm);
+			    norm = 0.0;
+			    for (i = 0; i < x.length; i++) {
+			    	norm += (x[i]*x[i]);
+			    }
+			    double x_norm = Math.sqrt(norm);
+			    for (i = 0; i < x.length; i++) {
+			    	x[i] = optimal_point.vector_x.get(i);
+			    }
 
 			    iteration_summary.gradient_max_norm = current_state.gradient_max_norm;
-			    iteration_summary.gradient_norm = sqrt(current_state.gradient_squared_norm);
-			    iteration_summary.cost_change = previous_state.cost - current_state.cost;
-			    iteration_summary.cost = current_state.cost + summary->fixed_cost;
+			    iteration_summary.gradient_norm = Math.sqrt(current_state.gradient_squared_norm);
+			    iteration_summary.cost_change = previous_state.cost[0] - current_state.cost[0];
+			    iteration_summary.cost = current_state.cost[0] + summary.fixed_cost;
 
 			    iteration_summary.step_is_valid = true;
 			    iteration_summary.step_is_successful = true;
@@ -12283,11 +12392,11 @@ public abstract class CeresSolver {
 			    iteration_summary.line_search_iterations =
 			        line_search_summary.num_iterations;
 			    iteration_summary.iteration_time_in_seconds =
-			        WallTimeInSeconds() - iteration_start_time;
+			        1.0E-3 * System.currentTimeMillis() - iteration_start_time;
 			    iteration_summary.cumulative_time_in_seconds =
-			        WallTimeInSeconds() - start_time
-			        + summary->preprocessor_time_in_seconds;
-			    summary->iterations.push_back(iteration_summary);
+			    		1.0E-3 * System.currentTimeMillis() - start_time
+			        + summary.preprocessor_time_in_seconds;
+			    summary.iterations.add(iteration_summary);
 
 			    // Iterations inside the line search algorithm are considered
 			    // 'steps' in the broader context, to distinguish these inner
@@ -12295,55 +12404,61 @@ public abstract class CeresSolver {
 			    // minimizer. The number of line search steps is the total number
 			    // of inner line search iterations (or steps) across the entire
 			    // minimization.
-			    summary->num_line_search_steps +=  line_search_summary.num_iterations;
-			    summary->line_search_cost_evaluation_time_in_seconds +=
-			        line_search_summary.cost_evaluation_time_in_seconds;
-			    summary->line_search_gradient_evaluation_time_in_seconds +=
-			        line_search_summary.gradient_evaluation_time_in_seconds;
-			    summary->line_search_polynomial_minimization_time_in_seconds +=
+			    summary.num_line_search_steps +=  line_search_summary.num_iterations;
+			    summary.line_search_cost_evaluation_time_in_seconds +=
+			        line_search_summary.cost_evaluation_time_in_seconds[0];
+			    summary.line_search_gradient_evaluation_time_in_seconds +=
+			        line_search_summary.gradient_evaluation_time_in_seconds[0];
+			    summary.line_search_polynomial_minimization_time_in_seconds +=
 			        line_search_summary.polynomial_minimization_time_in_seconds;
-			    summary->line_search_total_time_in_seconds +=
+			    summary.line_search_total_time_in_seconds +=
 			        line_search_summary.total_time_in_seconds;
-			    ++summary->num_successful_steps;
+			    ++summary.num_successful_steps;
 
-			    const double step_size_tolerance = options.parameter_tolerance *
+			    double step_size_tolerance = options.parameter_tolerance *
 			                                       (x_norm + options.parameter_tolerance);
 			    if (iteration_summary.step_norm <= step_size_tolerance) {
-			      summary->message =
-			          StringPrintf("Parameter tolerance reached. "
+			      summary.message[0] =
+			          String.format("Parameter tolerance reached. \n" +
 			                       "Relative step_norm: %e <= %e.",
 			                       (iteration_summary.step_norm /
 			                        (x_norm + options.parameter_tolerance)),
 			                       options.parameter_tolerance);
-			      summary->termination_type = CONVERGENCE;
-			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      summary.termination_type = TerminationType.CONVERGENCE;
+			      if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      return;
 			    }
 
 			    if (iteration_summary.gradient_max_norm <= options.gradient_tolerance) {
-			      summary->message = StringPrintf("Gradient tolerance reached. "
+			      summary.message[0] = String.format("Gradient tolerance reached. \n" +
 			                                      "Gradient max norm: %e <= %e",
 			                                      iteration_summary.gradient_max_norm,
 			                                      options.gradient_tolerance);
-			      summary->termination_type = CONVERGENCE;
-			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      summary.termination_type = TerminationType.CONVERGENCE;
+			      if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    }
 
-			    const double absolute_function_tolerance =
-			        options.function_tolerance * previous_state.cost;
-			    if (fabs(iteration_summary.cost_change) <= absolute_function_tolerance) {
-			      summary->message =
-			          StringPrintf("Function tolerance reached. "
+			    double absolute_function_tolerance =
+			        options.function_tolerance * previous_state.cost[0];
+			    if (Math.abs(iteration_summary.cost_change) <= absolute_function_tolerance) {
+			      summary.message[0] =
+			          String.format("Function tolerance reached. \n" +
 			                       "|cost_change|/cost: %e <= %e",
-			                       fabs(iteration_summary.cost_change) /
-			                       previous_state.cost,
+			                       Math.abs(iteration_summary.cost_change) /
+			                       previous_state.cost[0],
 			                       options.function_tolerance);
-			      summary->termination_type = CONVERGENCE;
-			      VLOG_IF(1, is_not_silent) << "Terminating: " << summary->message;
+			      summary.termination_type = TerminationType.CONVERGENCE;
+			      if ((1 <= MAX_LOG_LEVEL) && is_not_silent) {
+				        Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
 			      break;
 			    }
-			  }*/
+			  }
   
 		  }
 		} // class LineSearchMinimizer
