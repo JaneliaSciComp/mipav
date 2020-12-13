@@ -1006,12 +1006,12 @@ public abstract class CeresSolver {
 				return true;
 			}
 
-			/*
-			 * if (!SetupLinearSolver(pp) || !SetupEvaluator(pp) ||
-			 * !SetupInnerIterationMinimizer(pp)) { return false; }
-			 * 
-			 * SetupMinimizerOptions(pp);
-			 */
+			
+			if (!SetupLinearSolver(pp) || !SetupEvaluator(pp) ||
+			    !SetupInnerIterationMinimizer(pp)) { return false; }
+			  
+			 //SetupMinimizerOptions(pp);
+			 
 			return true;
 		}
 
@@ -1039,7 +1039,7 @@ public abstract class CeresSolver {
 		    return true;
 		  }
 
-		  /*if (options.inner_iteration_ordering != null) {
+		  if (options.inner_iteration_ordering != null) {
 		    // If the user supplied an ordering, then remove the set of
 		    // inactive parameter blocks from it
 		    options.inner_iteration_ordering.Remove(pp.removed_parameter_blocks);
@@ -1057,17 +1057,15 @@ public abstract class CeresSolver {
 		    }
 		  } else {
 		    // The user did not supply an ordering, so create one.
-		    options.inner_iteration_ordering.reset(
-		        CoordinateDescentMinimizer::CreateOrdering(*pp->reduced_program));
+		    options.inner_iteration_ordering = CreateOrdering(pp.reduced_program);
 		  }
 
-		  pp->inner_iteration_minimizer.reset(
-		      new CoordinateDescentMinimizer(pp->problem->context()));
-		  return pp->inner_iteration_minimizer->Init(*pp->reduced_program,
-		                                             pp->problem->parameter_map(),
-		                                             *options.inner_iteration_ordering,
-		                                             &pp->error);*/
-		  return false;
+		  pp.inner_iteration_minimizer = 
+		      new CoordinateDescentMinimizer(pp.problem.context());
+		  return pp.inner_iteration_minimizer.Init(pp.reduced_program,
+		                                             pp.problem.parameter_map(),
+		                                             options.inner_iteration_ordering,
+		                                             pp.error);
 		}
 
 		
@@ -1610,6 +1608,21 @@ public abstract class CeresSolver {
 				edges_.put(vertex, new HashSet<Vertex>());
 			}
 		}
+		
+		public boolean RemoveVertex(Vertex vertex) {
+		    if (!vertices_.contains(vertex)) {
+		      return false;
+		    }
+
+		    vertices_.remove(vertex);
+		    HashSet<Vertex> sinks = edges_.get(vertex);
+		    for (Vertex v: sinks) {
+		    	edges_.get(v).remove(vertex);
+		    }
+
+		    edges_.remove(vertex);
+		    return true;
+		}
 
 		// Add an edge between the vertex1 and vertex2. Calling AddEdge on a
 		// pair of vertices which do not exist in the graph yet will result
@@ -1647,7 +1660,27 @@ public abstract class CeresSolver {
 			return value;
 		}
 	} // class Graph<Vertex>
-
+	
+	class indexValueItem<Vertex> {
+		private int index;
+		private Vertex value;
+		
+		public indexValueItem(int index, Vertex value) {
+			this.index = index;
+			this.value = value;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public Vertex getValue() {
+			return value;
+		}
+		
+	} 
+	
+	
 	class VertexDegreeLessThan<Vertex> implements Comparator<Vertex> {
 		private Graph<Vertex> graph_;
 
@@ -1660,6 +1693,25 @@ public abstract class CeresSolver {
 			return (graph_.Neighbors(lhs).size() - graph_.Neighbors(rhs).size());
 		}
 	} // class VertexDegreesLessThan
+	
+	// Compare two vertices of a graph by their degrees, if the degrees
+	// are equal then order them by their ids.
+	class VertexTotalOrdering<Vertex> implements Comparator<indexValueItem<Vertex>> { 
+		private Graph<Vertex> graph_;
+		
+	 public VertexTotalOrdering(Graph<Vertex> graph) {
+	      graph_ = graph;
+	 }
+
+	 public int compare(indexValueItem<Vertex> lhs, indexValueItem<Vertex> rhs) {
+	    if (graph_.Neighbors(lhs.getValue()).size() == graph_.Neighbors(rhs.getValue()).size()) {
+	      return (lhs.getIndex() - rhs.getIndex());
+	    }
+	    return (graph_.Neighbors(lhs.getValue()).size() - graph_.Neighbors(rhs.getValue()).size());
+	  }
+
+	 
+	};
 
 	public Graph<ParameterBlock> CreateHessianGraph(Program program) {
 		Graph<ParameterBlock> graph = new Graph<ParameterBlock>();
@@ -1727,6 +1779,79 @@ public abstract class CeresSolver {
 		event_logger.AddEvent("ConstantParameterBlocks");
 
 		return independent_set_size;
+	}
+	
+	public <Vertex> int IndependentSetOrdering(Graph<Vertex> graph,
+	                           Vector<Vertex> ordering) {
+	  int i;
+	  HashSet<Vertex> vertices = graph.vertices();
+	  int num_vertices = vertices.size();
+
+	  if (ordering == null) {
+			System.err.println("Vector<Vertex> ordering == null in IndependentSetOrdering");
+			return -1;
+      }
+	  ordering.clear();
+	  ordering.ensureCapacity(num_vertices);
+
+	  // Colors for labeling the graph during the BFS.
+	  final byte kWhite = 0;
+	  final byte kGrey = 1;
+	  final byte kBlack = 2;
+
+	  // Mark all vertices white.
+	  HashMap<Vertex, Byte> vertex_color = new HashMap<Vertex, Byte>();
+	  Vector<Vertex> vertex_queue = new Vector<Vertex>();
+	  Vector<indexValueItem<Vertex>> vector_index = new Vector<indexValueItem<Vertex>>();
+	  int index = 0;
+	  for (Vertex v : vertices) {
+			vertex_color.put(v, kWhite);
+			vector_index.add(new indexValueItem<Vertex>(index++,v));
+		}
+	  
+
+	  VertexTotalOrdering<Vertex> VT = new VertexTotalOrdering<Vertex>(graph);
+	  Collections.sort(vector_index, VT);
+	  for (i = 0; i < vector_index.size(); i++) {
+		  vertex_queue.add(vector_index.get(i).getValue());
+	  }
+
+	  // Iterate over vertex_queue. Pick the first white vertex, add it
+	  // to the independent set. Mark it black and its neighbors grey.
+	  for (Vertex vertex : vertex_queue) {
+			if (vertex_color.get(vertex) != kWhite) {
+				continue;
+			}
+			
+			ordering.add(vertex);
+			vertex_color.put(vertex, kBlack);
+			HashSet<Vertex> neighbors = graph.Neighbors(vertex);
+			for (Vertex it : neighbors) {
+				vertex_color.put(it, kGrey);
+			}
+	  }
+
+	  int independent_set_size = ordering.size();
+
+	  // Iterate over the vertices and add all the grey vertices to the
+	  // ordering. At this stage there should only be black or grey
+	  // vertices in the graph.
+	  for (Vertex vertex : vertex_queue) {
+			if (vertex_color.get(vertex) == kWhite) {
+				System.err.println("Unexpected kWhite found in vertex_color in IndependentSetOrdering");
+				return -1;
+			}
+			if (vertex_color.get(vertex) != kBlack) {
+				ordering.add(vertex);
+			}
+	  }
+	  
+
+	  if (ordering.size() != num_vertices) {
+			System.err.println("ordering.size() != num_vertices in IndependentSetOrdering");
+			return -1;
+	  }
+	  return independent_set_size;
 	}
 
 	// Same as above with one important difference. The ordering parameter
@@ -6389,14 +6514,39 @@ public abstract class CeresSolver {
 	// of independent sets of decreasing size and invert it. This
 	// seems to work better in practice, i.e., Cameras before
 	// points.
-	OrderedGroups<double[]> CreateOrdering(
+	public OrderedGroups<double[]> CreateOrdering(
 	    Program program) {
 		OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
-	    /*ComputeRecursiveIndependentSetOrdering(program, ordering);
+	    ComputeRecursiveIndependentSetOrdering(program, ordering);
 	    ordering.Reverse();
-	    return ordering.release();*/
-		return null;
+	    return ordering;
 	}
+	
+	public void ComputeRecursiveIndependentSetOrdering(Program program,
+            OrderedGroups<double[]> ordering) {
+		    if (ordering == null) {
+		    	System.err.println("OrderedGroups<double[]> ordering == null in ComputeRecursiveIndependentSetOrdering");
+		    	return;
+		    }
+			ordering.Clear();
+			Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+			Graph<ParameterBlock> graph = CreateHessianGraph(program);
+			
+			int num_covered = 0;
+			int round = 0;
+			while (num_covered < parameter_blocks.size()) {
+			     Vector<ParameterBlock> independent_set_ordering = new Vector<ParameterBlock>();
+			     int independent_set_size = IndependentSetOrdering(graph, independent_set_ordering);
+			for (int i = 0; i < independent_set_size; ++i) {
+			    ParameterBlock parameter_block = independent_set_ordering.get(i);
+			    ordering.AddElementToGroup(parameter_block.mutable_user_state(), round);
+			    graph.RemoveVertex(parameter_block);
+			}
+			num_covered += independent_set_size;
+			++round;
+			}
+	}
+
 
 
 
@@ -11439,7 +11589,7 @@ public abstract class CeresSolver {
 					  alpha.add(0.0);
 				  }
 
-				    for (i = 0; i < indices_.size(); i++) {
+				    for (i = indices_.size()-1; i >= 0; i--) {
 				        it = indices_.get(i);
 				        double num = 0.0;
 				        for (j = 0; j < num_parameters_; j++) {
@@ -13877,8 +14027,49 @@ public abstract class CeresSolver {
 		public boolean IsMember(T element) {
 			return(element_to_group_.containsKey(element));
 		}
+		
+		public void Clear() {
+		    group_to_elements_.clear();
+		    element_to_group_.clear();
+		}
+		
+		// Reverse the order of the groups in place.
+		  void Reverse() {
+		    if (NumGroups() == 0) {
+		      return;
+		    }
 
-	}
+		    HashMap<Integer, Set<T>> new_group_to_elements = new HashMap<Integer, Set<T>>();
+		    Set<Map.Entry<Integer, Set<T>>> entrySet = group_to_elements_.entrySet();
+		    Iterator<Map.Entry<Integer, Set<T>>> entry_it = entrySet.iterator();
+		    Vector<Map.Entry<Integer, Set<T>>> vec = new Vector<Map.Entry<Integer, Set<T>>>();
+		    Map.Entry<Integer, Set<T>> firstEntry;
+		    while (entry_it.hasNext()) {
+		    	vec.add(entry_it.next());
+		    }
+		    Collections.reverse(vec);
+		    firstEntry = vec.get(0);
+		    new_group_to_elements.put(firstEntry.getKey(), firstEntry.getValue());
+		    
+		    int new_group_id = firstEntry.getKey() + 1;
+		    for (int it = 1; it < vec.size(); it++) {
+		    	for (T element_it: vec.get(it).getValue()) {
+		    		element_to_group_.put(element_it, new_group_id);
+		    	}
+		    	new_group_to_elements.put(new_group_id, vec.get(it).getValue());
+		    	new_group_id++;
+		    }
+
+		    group_to_elements_.clear();
+		    Set<Map.Entry<Integer, Set<T>>> entrySet2 = new_group_to_elements.entrySet();
+		    Iterator<Map.Entry<Integer, Set<T>>> entry_it2 = entrySet2.iterator();
+		    while (entry_it2.hasNext()) {
+		        Map.Entry<Integer, Set<T>> currentEntry = entry_it2.next();
+		    	group_to_elements_.put(currentEntry.getKey(), currentEntry.getValue());
+		    }
+		  }
+
+	} // class OrderedGroups
 
 	class Context {
 		public Context() {
