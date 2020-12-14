@@ -129,9 +129,9 @@ public abstract class CeresSolver {
 	// which is a simple weak copyleft license. Common questions about the MPL2 are
 	// answered in the official MPL2 FAQ.
 	// Earlier versions were licensed under the LGPL3+.
-	// Note that currently, a few features rely on third-party code licensed under
-	// the LGPL: SimplicialCholesky,
-	// AMD ordering, and constrained_cg. Such features can be explicitly disabled by
+	// Note that currently, one feature relies on third-party code licensed under
+	// the LGPL: SimplicialCholesky, constrained_cg, which is not used by CeresSolver. 
+	// Such features can be explicitly disabled by
 	// compiling with the EIGEN_MPL2_ONLY
 	// preprocessor symbol defined. Furthermore, Eigen provides interface classes
 	// for various third-party libraries
@@ -621,137 +621,6 @@ public abstract class CeresSolver {
 
 	}
 
-	// A templated cost functor that implements the residual r = 10 -
-	// x. The method operator() is templated so that we can then use an
-	// automatic differentiation wrapper around it to generate its
-	// derivatives.
-	public abstract void fitToFunction(double[] x, double[] residuals);
-
-	public abstract void fitToJacobian(double[] x, double[][] jacobian);
-
-	public abstract void fitToHessian(double[] x, double[][][] hessian);
-
-	public void fitToTestFunction(double[] x, double[] residuals) {
-
-	}
-
-	private void fitToTestJacobian(double x[], double J[][]) {
-
-	}
-
-	private void fitToTestHessian(double x[], double hessian[][][]) {
-
-	}
-
-	private void fitToNumericalJacobian(double xinit[], double[][] jacobian) {
-		int i, j;
-		double relstep = default_relstep;
-		double absstep = relstep;
-		double residualsplus[] = new double[num_residuals_];
-		double residualsminus[] = new double[num_residuals_];
-		double eps;
-		double x[] = new double[xinit.length];
-		for (i = 0; i < N0; i++) {
-			x[i] = xinit[i];
-		}
-		for (j = 0; j < N0; j++) {
-			eps = Math.max(relstep * Math.abs(x[j]), absstep);
-			x[j] = xinit[j] + eps;
-			if (testMode) {
-				fitToTestFunction(x, residualsplus);
-			} else {
-				fitToFunction(x, residualsplus);
-			}
-			x[j] = xinit[j] - eps;
-			if (testMode) {
-				fitToTestFunction(x, residualsminus);
-			} else {
-				fitToFunction(x, residualsminus);
-			}
-			x[j] = xinit[j];
-			for (i = 0; i < num_residuals_; i++) {
-				jacobian[i][j] = (residualsplus[i] - residualsminus[i]) / (2.0 * eps);
-			}
-		}
-
-	}
-
-	private void fitToNumericalHessian(double xinit[], double hessian[][][]) {
-		int i, j, k;
-		double relstep = default_relstep;
-		double absstep = relstep;
-		double residualsxpp[] = new double[num_residuals_];
-		double residualsxpm[] = new double[num_residuals_];
-		double residualsxmm[] = new double[num_residuals_];
-		double residualsxmp[] = new double[num_residuals_];
-		double residualsx[] = new double[num_residuals_];
-		double epsi;
-		double epsj;
-		double x[] = new double[xinit.length];
-		for (i = 0; i < N0; i++) {
-			x[i] = xinit[i];
-		}
-		for (i = 0; i < N0; i++) {
-			epsi = Math.max(relstep * Math.abs(x[i]), absstep);
-			x[i] = xinit[i] + epsi;
-			if (testMode) {
-				fitToTestFunction(x, residualsxpp);
-			} else {
-				fitToFunction(x, residualsxpp);
-			}
-			x[i] = xinit[i] - epsi;
-			if (testMode) {
-				fitToTestFunction(x, residualsxmm);
-			} else {
-				fitToFunction(x, residualsxmm);
-			}
-			x[i] = xinit[i];
-			if (testMode) {
-				fitToTestFunction(x, residualsx);
-			} else {
-				fitToFunction(x, residualsx);
-			}
-			for (k = 0; k < num_residuals_; k++) {
-				hessian[i][i][k] = (residualsxpp[k] - 2.0 * residualsx[k] + residualsxmm[k]) / (epsi * epsi);
-			}
-			for (j = i + 1; j < N0; j++) {
-				epsj = Math.max(relstep * Math.abs(x[j]), absstep);
-				x[i] = xinit[i] + epsi;
-				x[j] = xinit[j] + epsj;
-				if (testMode) {
-					fitToTestFunction(x, residualsxpp);
-				} else {
-					fitToFunction(x, residualsxpp);
-				}
-				x[j] = xinit[j] - epsj;
-				if (testMode) {
-					fitToTestFunction(x, residualsxpm);
-				} else {
-					fitToFunction(x, residualsxpm);
-				}
-				x[i] = xinit[i] - epsi;
-				if (testMode) {
-					fitToTestFunction(x, residualsxmm);
-				} else {
-					fitToFunction(x, residualsxmm);
-				}
-				x[j] = xinit[j] + epsj;
-				if (testMode) {
-					fitToTestFunction(x, residualsxmp);
-				} else {
-					fitToFunction(x, residualsxmp);
-				}
-				x[i] = xinit[i];
-				x[j] = xinit[j];
-				for (k = 0; k < num_residuals_; k++) {
-					hessian[i][j][k] = (residualsxpp[k] - residualsxpm[k] + -residualsxmp[k] + residualsxmm[k])
-							/ (4.0 * epsi * epsj);
-					hessian[j][i][k] = hessian[i][j][k];
-				}
-			}
-		}
-	}
-
 	public void Solve(Solver.Options options, ProblemImpl problem, SolverSummary summary) {
 		if (problem == null) {
 			System.err.println("ProblemImpl problem is null in Solve");
@@ -817,16 +686,23 @@ public abstract class CeresSolver {
 			int row_block_size[] = new int[1];
 			int e_block_size[] = new int[1];
 			int f_block_size[] = new int[1];
-			/*
-			 * DetectStructure(*static_cast<internal::BlockSparseMatrix*>(
-			 * pp.minimizer_options.jacobian.get()) ->block_structure(),
-			 * pp.linear_solver_options.elimination_groups[0], &row_block_size,
-			 * &e_block_size, &f_block_size); summary.schur_structure_given =
-			 * SchurStructureToString(row_block_size, e_block_size, f_block_size);
-			 * internal::GetBestSchurTemplateSpecialization(&row_block_size, &e_block_size,
-			 * &f_block_size); summary.schur_structure_used =
-			 * SchurStructureToString(row_block_size, e_block_size, f_block_size);
-			 */
+			
+			DetectStructure(((BlockSparseMatrix)(
+                    pp.minimizer_options.jacobian))
+                .block_structure(),
+                pp.linear_solver_options.elimination_groups.get(0),
+                row_block_size,
+                e_block_size,
+                f_block_size);
+			summary.schur_structure_given =
+			    SchurStructureToString(row_block_size[0], e_block_size[0], f_block_size[0]);
+			GetBestSchurTemplateSpecialization(row_block_size,
+			                                             e_block_size,
+			                                             f_block_size);
+			summary.schur_structure_used =
+			    SchurStructureToString(row_block_size[0], e_block_size[0], f_block_size[0]);
+
+			
 		}
 
 		summary.fixed_cost = pp.fixed_cost[0];
@@ -862,6 +738,294 @@ public abstract class CeresSolver {
 
 		// System.err.println("I finish");
 	} // public void Solve
+	
+	public void GetBestSchurTemplateSpecialization(int[] row_block_size,
+            int[] e_block_size,
+            int[] f_block_size) {
+			LinearSolverOptions options = new LinearSolverOptions();
+			options.row_block_size = row_block_size[0];
+			options.e_block_size = e_block_size[0];
+			options.f_block_size = f_block_size[0];
+			row_block_size[0] = DYNAMIC;
+			e_block_size[0] = DYNAMIC;
+			f_block_size[0] = DYNAMIC;
+			// Template specializations for the Schur complement based solvers. If
+			// compile time, binary size or compiler performance is an issue, you
+			// may consider disabling this.
+			// Disabling Schur specializations (faster compiles)
+			//#ifndef CERES_RESTRICT_SCHUR_SPECIALIZATION
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 2) &&
+			(options.f_block_size == 2)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 2;
+			f_block_size[0] = 2;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 2) &&
+			(options.f_block_size == 3)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 2;
+			f_block_size[0] = 3;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 2) &&
+			(options.f_block_size == 4)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 2;
+			f_block_size[0] = 4;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 2)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 2;
+			f_block_size[0] = DYNAMIC;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 3) &&
+			(options.f_block_size == 3)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 3;
+			f_block_size[0] = 3;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 3) &&
+			(options.f_block_size == 4)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 3;
+			f_block_size[0] = 4;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 3) &&
+			(options.f_block_size == 6)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 3;
+			f_block_size[0] = 6;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 3) &&
+			(options.f_block_size == 9)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 3;
+			f_block_size[0] = 9;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 3)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 3;
+			f_block_size[0] = DYNAMIC;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 3)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 4;
+			f_block_size[0] = 3;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 4)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 4;
+			f_block_size[0] = 4;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 6)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 4;
+			f_block_size[0] = 6;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 8)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 4;
+			f_block_size[0] = 8;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 9)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 4;
+			f_block_size[0] = 9;
+			return;
+			}
+			if ((options.row_block_size == 2) &&
+			(options.e_block_size == 4)) {
+			row_block_size[0] = 2;
+			e_block_size[0] = 4;
+			f_block_size[0] = DYNAMIC;
+			return;
+			}
+			if (options.row_block_size == 2){
+			row_block_size[0] = 2;
+			e_block_size[0] = DYNAMIC;
+			f_block_size[0] = DYNAMIC;
+			return;
+			}
+			if ((options.row_block_size == 4) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 2)) {
+			row_block_size[0] = 4;
+			e_block_size[0] = 4;
+			f_block_size[0] = 2;
+			return;
+			}
+			if ((options.row_block_size == 4) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 3)) {
+			row_block_size[0] = 4;
+			e_block_size[0] = 4;
+			f_block_size[0] = 3;
+			return;
+			}
+			if ((options.row_block_size == 4) &&
+			(options.e_block_size == 4) &&
+			(options.f_block_size == 4)) {
+			row_block_size[0] = 4;
+			e_block_size[0] = 4;
+			f_block_size[0] = 4;
+			return;
+			}
+			if ((options.row_block_size == 4) &&
+			(options.e_block_size == 4)) {
+			row_block_size[0] = 4;
+			e_block_size[0] = 4;
+			f_block_size[0] = DYNAMIC;
+			return;
+			}
+			
+			//#endif
+			return;
+	}
+
+	
+	public String SchurStructureToString(int row_block_size,
+            int e_block_size,
+            int f_block_size) {
+			String row =
+			(row_block_size == DYNAMIC)
+			? "d" : String.format("%d", row_block_size);
+			
+			String e =
+			(e_block_size == DYNAMIC)
+			? "d" : String.format("%d", e_block_size);
+			
+			String f =
+			(f_block_size == DYNAMIC)
+			? "d" : String.format("%d", f_block_size);
+			
+			return String.format("%s,%s,%s", row, e, f);
+	}
+
+	
+	public void DetectStructure(CompressedRowBlockStructure bs,
+            int num_eliminate_blocks,
+            int[] row_block_size,
+            int[] e_block_size,
+            int[] f_block_size) {
+			int num_row_blocks = bs.rows.size();
+			row_block_size[0] = 0;
+			e_block_size[0] = 0;
+			f_block_size[0] = 0;
+			
+			// Iterate over row blocks of the matrix, checking if row_block,
+			// e_block or f_block sizes remain constant.
+			for (int r = 0; r < num_row_blocks; ++r) {
+			CompressedList row = bs.rows.get(r);
+			// We do not care about the sizes of the blocks in rows which do
+			// not contain e_blocks.
+			if (row.cells.get(0).block_id >= num_eliminate_blocks) {
+			break;
+			}
+			
+			// Detect fixed or dynamic row block size.
+			if (row_block_size[0] == 0) {
+			    row_block_size[0] = row.block.size;
+			} else if (row_block_size[0] != DYNAMIC &&
+			      row_block_size[0] != row.block.size) {
+				if (2 <= MAX_LOG_LEVEL) {
+			        Preferences.debug("Dynamic row block size because the block size changed from "
+			        + row_block_size[0] + " to " + row.block.size + "\n", Preferences.DEBUG_ALGORITHM);
+				}
+			row_block_size[0] = DYNAMIC;
+			}
+			
+			// Detect fixed or dynamic e-block size.
+			int e_block_id = row.cells.get(0).block_id;
+			if (e_block_size[0] == 0) {
+			e_block_size[0] = bs.cols.get(e_block_id).size;
+			} else if (e_block_size[0] != DYNAMIC &&
+			      e_block_size[0] != bs.cols.get(e_block_id).size) {
+				if (2 <= MAX_LOG_LEVEL) {
+			        Preferences.debug("Dynamic e block size because the block size changed from "
+			     + e_block_size[0] + " to " + bs.cols.get(e_block_id).size + "\n", Preferences.DEBUG_ALGORITHM);
+				}
+			e_block_size[0] = DYNAMIC;
+			}
+			
+			// Detect fixed or dynamic f-block size. We are only interested in
+			// rows with e-blocks, and the e-block is always the first block,
+			// so only rows of size greater than 1 are of interest.
+			if (row.cells.size() > 1) {
+			if (f_block_size[0] == 0) {
+			    int f_block_id = row.cells.get(1).block_id;
+			    f_block_size[0] = bs.cols.get(f_block_id).size;
+			}
+			
+			for (int c = 1;
+			  (c < row.cells.size()) && (f_block_size[0] != DYNAMIC);
+			  ++c) {
+		        int f_block_id = row.cells.get(c).block_id;
+			if (f_block_size[0] != bs.cols.get(f_block_id).size) {
+				if (2 <= MAX_LOG_LEVEL) {
+			       Preferences.debug("Dynamic f block size because the block size "
+			         + "changed from " + f_block_size[0] + " to "
+			         + bs.cols.get(f_block_id).size + "\n", Preferences.DEBUG_ALGORITHM);
+				}
+			 f_block_size[0] = DYNAMIC;
+			}
+			}
+			}
+			
+			boolean is_everything_dynamic = (row_block_size[0] == DYNAMIC &&
+			                               e_block_size[0] == DYNAMIC &&
+			                               f_block_size[0] == DYNAMIC);
+			if (is_everything_dynamic) {
+			break;
+			}
+			}
+			
+		    if (row_block_size[0] == 0) {
+		    	System.err.println("No rows found in DetectStructure");
+		    	return;
+		    }
+			if (e_block_size[0] == 0) {
+				System.err.println("No e type blocks found in DetectStructure");
+				return;
+			}
+			if (1 <= MAX_LOG_LEVEL) {
+			    Preferences.debug("Schur complement static structure \n" +
+			    "row_block_size[0] = " + row_block_size[0] + "\n" +
+			    "e_block_size[0] = " + e_block_size[0] + "\n" +
+			    "f_block_size[0] = " + f_block_size[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+	}
+
 
 	public void PostSolveSummarize(PreprocessedProblem pp, SolverSummary summary) {
 		OrderingToGroupSizes(pp.options.linear_solver_ordering, summary.linear_solver_ordering_used);
@@ -873,39 +1037,69 @@ public abstract class CeresSolver {
 		summary.num_threads_used = pp.options.num_threads;
 		summary.preconditioner_type_used = pp.options.preconditioner_type;
 
-		/*
-		 * internal::SetSummaryFinalCost(summary);
-		 * 
-		 * if (pp.reduced_program.get() != NULL) {
-		 * SummarizeReducedProgram(*pp.reduced_program, summary); }
-		 * 
-		 * using internal::CallStatistics;
-		 * 
-		 * // It is possible that no evaluator was created. This would be the // case if
-		 * the preprocessor failed, or if the reduced problem did // not contain any
-		 * parameter blocks. Thus, only extract the // evaluator statistics if one
-		 * exists. if (pp.evaluator.get() != NULL) { const map<string, CallStatistics>&
-		 * evaluator_statistics = pp.evaluator->Statistics(); { const CallStatistics&
-		 * call_stats = FindWithDefault( evaluator_statistics, "Evaluator::Residual",
-		 * CallStatistics());
-		 * 
-		 * summary->residual_evaluation_time_in_seconds = call_stats.time;
-		 * summary->num_residual_evaluations = call_stats.calls; } { const
-		 * CallStatistics& call_stats = FindWithDefault( evaluator_statistics,
-		 * "Evaluator::Jacobian", CallStatistics());
-		 * 
-		 * summary->jacobian_evaluation_time_in_seconds = call_stats.time;
-		 * summary->num_jacobian_evaluations = call_stats.calls; } }
-		 * 
-		 * // Again, like the evaluator, there may or may not be a linear // solver from
-		 * which we can extract run time statistics. In // particular the line search
-		 * solver does not use a linear solver. if (pp.linear_solver.get() != NULL) {
-		 * const map<string, CallStatistics>& linear_solver_statistics =
-		 * pp.linear_solver->Statistics(); const CallStatistics& call_stats =
-		 * FindWithDefault( linear_solver_statistics, "LinearSolver::Solve",
-		 * CallStatistics()); summary->num_linear_solves = call_stats.calls;
-		 * summary->linear_solver_time_in_seconds = call_stats.time; }
-		 */
+	
+		SetSummaryFinalCost(summary);
+		 
+		 if (pp.reduced_program != null) {
+		     SummarizeReducedProgram(pp.reduced_program, summary); 
+		 }
+		 
+		  // It is possible that no evaluator was created. This would be the
+		  // case if the preprocessor failed, or if the reduced problem did
+		  // not contain any parameter blocks. Thus, only extract the
+		  // evaluator statistics if one exists.
+		  if (pp.evaluator != null) {
+		    HashMap<String, CallStatistics> evaluator_statistics =
+		        pp.evaluator.Statistics();
+		    {
+		      CallStatistics call_stats = FindWithDefault(
+		          evaluator_statistics, "Evaluator::Residual", new CallStatistics());
+
+		      summary.residual_evaluation_time_in_seconds = call_stats.time;
+		      summary.num_residual_evaluations = call_stats.calls;
+		    }
+		    {
+		      CallStatistics call_stats = FindWithDefault(
+		          evaluator_statistics, "Evaluator::Jacobian", new CallStatistics());
+
+		      summary.jacobian_evaluation_time_in_seconds = call_stats.time;
+		      summary.num_jacobian_evaluations = call_stats.calls;
+		    }
+		  }
+
+		  // Again, like the evaluator, there may or may not be a linear
+		  // solver from which we can extract run time statistics. In
+		  // particular the line search solver does not use a linear solver.
+		  if (pp.linear_solver != null) {
+		    HashMap<String, CallStatistics> linear_solver_statistics =
+		        pp.linear_solver.Statistics();
+		    CallStatistics call_stats = FindWithDefault(
+		        linear_solver_statistics, "LinearSolver::Solve", new CallStatistics());
+		    summary.num_linear_solves = call_stats.calls;
+		    summary.linear_solver_time_in_seconds = call_stats.time;
+		  }
+
+		
+	}
+	
+	public void SummarizeReducedProgram(Program program,
+            SolverSummary summary) {
+			summary.num_parameter_blocks_reduced     = program.NumParameterBlocks();
+			summary.num_parameters_reduced           = program.NumParameters();
+			summary.num_effective_parameters_reduced = program.NumEffectiveParameters();
+			summary.num_residual_blocks_reduced      = program.NumResidualBlocks();
+			summary.num_residuals_reduced            = program.NumResiduals();
+    }
+
+	
+	public void SetSummaryFinalCost(SolverSummary summary) {
+	  summary.final_cost = summary.initial_cost;
+	  // We need the loop here, instead of just looking at the last
+	  // iteration because the minimizer maybe making non-monotonic steps.
+	  for (int i = 0; i < summary.iterations.size(); ++i) {
+	    IterationSummary iteration_summary = summary.iterations.get(i);
+	    summary.final_cost = Math.min(iteration_summary.cost, summary.final_cost);
+	  }
 	}
 
 	public void Minimize(PreprocessedProblem pp, SolverSummary summary) {
@@ -1010,10 +1204,38 @@ public abstract class CeresSolver {
 			if (!SetupLinearSolver(pp) || !SetupEvaluator(pp) ||
 			    !SetupInnerIterationMinimizer(pp)) { return false; }
 			  
-			 //SetupMinimizerOptions(pp);
+			 SetupMinimizerOptions(pp);
 			 
 			return true;
 		}
+		
+		// Configure and create a TrustRegionMinimizer object.
+		public void SetupMinimizerOptions(PreprocessedProblem pp) {
+		  Solver.Options options = pp.options;
+
+		  SetupCommonMinimizerOptions(pp);
+		  pp.minimizer_options.is_constrained =
+		      pp.reduced_program.IsBoundsConstrained();
+		  pp.minimizer_options.jacobian = pp.evaluator.CreateJacobian();
+		  pp.minimizer_options.inner_iteration_minimizer =
+		      pp.inner_iteration_minimizer;
+
+		  TrustRegionStrategyOptions strategy_options = new TrustRegionStrategyOptions();
+		  strategy_options.linear_solver = pp.linear_solver;
+		  strategy_options.initial_radius =
+		      options.initial_trust_region_radius;
+		  strategy_options.max_radius = options.max_trust_region_radius;
+		  strategy_options.min_lm_diagonal = options.min_lm_diagonal;
+		  strategy_options.max_lm_diagonal = options.max_lm_diagonal;
+		  strategy_options.trust_region_strategy_type =
+		      options.trust_region_strategy_type;
+		  strategy_options.dogleg_type = options.dogleg_type;
+		  pp.minimizer_options.trust_region_strategy = Create(strategy_options);
+		  if (pp.minimizer_options.trust_region_strategy == null) {
+			  System.err.println("Create(strategy_options) returned null in SetupMinimizerOptions");
+		  }
+		}
+
 
 		// Check if all the user supplied values in the parameter blocks are
 		// sane or not, and if the program is feasible or not.
@@ -3763,6 +3985,14 @@ public abstract class CeresSolver {
 			summary = new LinearSolverSummary();
 			perSolveOptions = new LinearSolverPerSolveOptions();
 		}
+		
+		  // This method returns copies instead of references so that the base
+		  // class implementation does not have to worry about life time
+		  // issues. Further, this calls are not expected to be frequent or
+		  // performance sensitive.
+		  public HashMap<String, CallStatistics> Statistics() {
+		    return new HashMap<String, CallStatistics>();
+		  }
 
 	} // class LinearSolver
 
@@ -5368,7 +5598,7 @@ public abstract class CeresSolver {
 		// the jacobian for use with CHOLMOD, where as BlockOptimizationProblem
 		// creates a BlockSparseMatrix representation of the jacobian for use in the
 		// Schur complement based methods.
-		//public abstract SparseMatrix CreateJacobian();
+		public abstract SparseMatrix CreateJacobian();
 
 
 	} // class Evaluator
