@@ -2299,7 +2299,7 @@ public abstract class CeresSolver {
 		Solver.Options options;
 		LinearSolverOptions linear_solver_options;
 		EvaluatorOptions evaluator_options;
-		Minimizer.Options minimizer_options;
+		MinimizerOptions minimizer_options;
 
 		ProblemImpl problem;
 		// scoped_ptr<ProblemImpl> gradient_checking_problem;
@@ -2328,6 +2328,7 @@ public abstract class CeresSolver {
 			removed_parameter_blocks = new Vector<double[]>();
 			reduced_parameters = new Vector<Double>();
 			linear_solver_options = new LinearSolverOptions();
+			minimizer_options = new MinimizerOptions();
 		}
 
 	} // class Preprocessed
@@ -2341,25 +2342,25 @@ public abstract class CeresSolver {
 		while (pp.reduced_parameters.size() > program.NumParameters()) {
 			pp.reduced_parameters.removeElementAt(pp.reduced_parameters.size() - 1);
 		}
-		// pp.reduced_parameters.resize(program.NumParameters());
+		while (pp.reduced_parameters.size() < program.NumParameters()) {
+			pp.reduced_parameters.add(0.0);
+		}
 		Vector<Double> reduced_parameters = pp.reduced_parameters;
 		program.ParameterBlocksToStateVector(reduced_parameters);
 
-		Minimizer.Options minimizer_options = pp.minimizer_options;
-		Minimizer min = new Minimizer(options);
-		minimizer_options = min.options_;
-		minimizer_options.evaluator = pp.evaluator;
+		pp.minimizer_options = new MinimizerOptions(options);
+		pp.minimizer_options.evaluator = pp.evaluator;
 
 		if (options.logging_type != LoggingType.SILENT) {
 			pp.logging_callback = new LoggingCallback(options.minimizer_type, options.minimizer_progress_to_stdout);
-			minimizer_options.callbacks.add(0, pp.logging_callback);
+			pp.minimizer_options.callbacks.add(0, pp.logging_callback);
 		}
 
 		if (options.update_state_every_iteration) {
 			pp.state_updating_callback = new StateUpdatingCallback(program, reduced_parameters);
 			// This must get pushed to the front of the callbacks so that it
 			// is run before any of the user callbacks.
-			minimizer_options.callbacks.add(0, pp.state_updating_callback);
+			pp.minimizer_options.callbacks.add(0, pp.state_updating_callback);
 		}
 	}
 
@@ -6099,6 +6100,7 @@ public abstract class CeresSolver {
 
 	} // class ScopedExecutionTimer
 
+
 	/*
 	 * template<typename EvaluatePreparer, typename JacobianWriter, typename
 	 * JacobianFinalizer = NullJacobianFinalizer>
@@ -6120,7 +6122,13 @@ public abstract class CeresSolver {
 			options_ = options;
 			program_ = program;
 			jacobian_writer_ = jw;
-			evaluate_scratch_ = CreateEvaluatorScratch(program, options.num_threads);
+			if ((options_.linear_solver_type == LinearSolverType.DENSE_QR) ||
+					(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+					evaluate_preparers_ = (EvaluatePreparer[])((DenseJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
+				}
+				else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+					evaluate_preparers_ = (EvaluatePreparer[])((BlockJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
+				}
 			/*
 			 * #ifdef CERES_NO_THREADS if (options_.num_threads > 1) { LOG(WARNING) <<
 			 * "Neither OpenMP nor TBB support is compiled into this binary; " <<
@@ -6461,6 +6469,7 @@ public abstract class CeresSolver {
 
 		EvaluateScratch evaluate_scratch[] = new EvaluateScratch[num_threads];
 		for (int i = 0; i < num_threads; i++) {
+			evaluate_scratch[i] = new EvaluateScratch();
 			evaluate_scratch[i].Init(max_parameters_per_residual_block, max_scratch_doubles_needed_for_evaluate,
 					max_residuals_per_residual_block, num_parameters);
 		}
@@ -6869,7 +6878,7 @@ public abstract class CeresSolver {
 			}
 		
 		public void Minimize(
-			    Minimizer.Options options,
+			    MinimizerOptions options,
 			    Vector<Double> parameters,
 			    SolverSummary summary) {
 			int i;
@@ -6885,7 +6894,7 @@ public abstract class CeresSolver {
 		
 		
 		public void Minimize(
-			    Minimizer.Options options,
+			    MinimizerOptions options,
 			    double[] parameters,
 			    SolverSummary summary) {
 			  int i, j;
@@ -7005,7 +7014,7 @@ public abstract class CeresSolver {
 			  return;
 		  }
 		  Minimizer min = new Minimizer();
-		  Minimizer.Options minimizer_options = min.options_;
+		  MinimizerOptions minimizer_options = min.options_;
 		  minimizer_options.evaluator = ev;
 		  minimizer_options.jacobian = ((ProgramEvaluator)ev).CreateJacobian();
 		  if (minimizer_options.jacobian == null) {
@@ -7031,7 +7040,7 @@ public abstract class CeresSolver {
 	} // class CoordinateDescentMinimizer
 	
 	class TrustRegionMinimizer extends Minimizer {
-		  private Minimizer.Options options_;
+		  private MinimizerOptions options_;
 
 		  // These pointers are shortcuts to objects passed to the
 		  // TrustRegionMinimizer. The TrustRegionMinimizer does not own them.
@@ -7112,7 +7121,7 @@ public abstract class CeresSolver {
 		 
 
 		  // This method is not thread safe.
-		  public void Minimize(Minimizer.Options options,
+		  public void Minimize(MinimizerOptions options,
 		                        double[] parameters,
 		                        SolverSummary solver_summary) {
 			  start_time_in_secs_ = 1.0E-3 * System.currentTimeMillis();
@@ -7185,7 +7194,7 @@ public abstract class CeresSolver {
 
 		// Initialize the minimizer, allocate working space and set some of
 		// the fields in the solver_summary.
-		private void Init(Minimizer.Options options,
+		private void Init(MinimizerOptions options,
 		                                double[] parameters,
 		                                SolverSummary solver_summary) {
 		  int i;
@@ -7226,7 +7235,11 @@ public abstract class CeresSolver {
 		  num_residuals_ = ((ProgramEvaluator)evaluator_).NumResiduals();
 		  num_consecutive_invalid_steps_ = 0;
 
-		  //x_ = ConstVectorRef(parameters_, num_parameters_);
+		  
+		  x_ = new Vector<Double>(num_parameters_);
+		  for (i = 0; i < num_parameters_; i++) {
+			  x_.add(parameters_[i]);
+		  }
 		  //x_norm_ set to -1 later in routine
 		  //x_norm_ = 0.0;
 		  //for (i = 0; i < num_parameters_; i++) {
@@ -12390,7 +12403,7 @@ public abstract class CeresSolver {
 		}
 
 
-		  public void Minimize(Minimizer.Options options,
+		  public void Minimize(MinimizerOptions options,
 		                        double[] parameters,
 		                        SolverSummary summary) {
 			  int i;
@@ -12842,145 +12855,147 @@ public abstract class CeresSolver {
   
 		  }
 		} // class LineSearchMinimizer
+		
+		// Options struct to control the behaviour of the Minimizer. Please
+				// see solver.h for detailed information about the meaning and
+				// default values of each of these parameters.
+				class MinimizerOptions {
+					public int max_num_iterations;
+					public double max_solver_time_in_seconds;
+					public int num_threads;
+
+					// Number of times the linear solver should be retried in case of
+					// numerical failure. The retries are done by exponentially scaling up
+					// mu at each retry. This leads to stronger and stronger
+					// regularization making the linear least squares problem better
+					// conditioned at each retry.
+					public int max_step_solver_retries;
+					public double gradient_tolerance;
+					public double parameter_tolerance;
+					public double function_tolerance;
+					public double min_relative_decrease;
+					public double eta;
+					public boolean jacobi_scaling;
+					public boolean use_nonmonotonic_steps;
+					public int max_consecutive_nonmonotonic_steps;
+					public Vector<Integer> trust_region_minimizer_iterations_to_dump;
+					public DumpFormatType trust_region_problem_dump_format_type;
+					public String trust_region_problem_dump_directory;
+					public int max_num_consecutive_invalid_steps;
+					public double min_trust_region_radius;
+					public LineSearchDirectionType line_search_direction_type;
+					public LineSearchType line_search_type;
+					public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
+					public int max_lbfgs_rank;
+					public boolean use_approximate_eigenvalue_bfgs_scaling;
+					public LineSearchInterpolationType line_search_interpolation_type;
+					public double min_line_search_step_size;
+					public double line_search_sufficient_function_decrease;
+					public double max_line_search_step_contraction;
+					public double min_line_search_step_contraction;
+					public int max_num_line_search_step_size_iterations;
+					public int max_num_line_search_direction_restarts;
+					public double line_search_sufficient_curvature_decrease;
+					public double max_line_search_step_expansion;
+					public double inner_iteration_tolerance;
+
+					// If true, then all logging is disabled.
+					public boolean is_silent;
+
+					// Use a bounds constrained optimization algorithm.
+					public boolean is_constrained;
+
+					// List of callbacks that are executed by the Minimizer at the end
+					// of each iteration.
+					//
+					// The Options struct does not own these pointers.
+					Vector<IterationCallback> callbacks;
+
+					// Object responsible for evaluating the cost, residuals and
+					// Jacobian matrix.
+					// shared_ptr<Evaluator> evaluator;
+					Evaluator evaluator;
+
+					// Object responsible for actually computing the trust region
+					// step, and sizing the trust region radius.
+					// shared_ptr<TrustRegionStrategy> trust_region_strategy;
+					TrustRegionStrategy trust_region_strategy;
+
+					// Object holding the Jacobian matrix. It is assumed that the
+					// sparsity structure of the matrix has already been initialized
+					// and will remain constant for the life time of the
+					// optimization.
+					// shared_ptr<SparseMatrix> jacobian;
+					SparseMatrix jacobian;
+
+					// shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
+					CoordinateDescentMinimizer inner_iteration_minimizer;
+
+					public MinimizerOptions() {
+						Solver solver = new Solver();
+						Init(solver.options);
+					}
+
+					public MinimizerOptions(Solver.Options options) {
+						Init(options);
+					}
+
+					public void Init(Solver.Options options) {
+						num_threads = options.num_threads;
+						max_num_iterations = options.max_num_iterations;
+						max_solver_time_in_seconds = options.max_solver_time_in_seconds;
+						max_step_solver_retries = 5;
+						gradient_tolerance = options.gradient_tolerance;
+						parameter_tolerance = options.parameter_tolerance;
+						function_tolerance = options.function_tolerance;
+						min_relative_decrease = options.min_relative_decrease;
+						eta = options.eta;
+						jacobi_scaling = options.jacobi_scaling;
+						use_nonmonotonic_steps = options.use_nonmonotonic_steps;
+						max_consecutive_nonmonotonic_steps = options.max_consecutive_nonmonotonic_steps;
+						trust_region_problem_dump_directory = options.trust_region_problem_dump_directory;
+						trust_region_minimizer_iterations_to_dump = options.trust_region_minimizer_iterations_to_dump;
+						trust_region_problem_dump_format_type = options.trust_region_problem_dump_format_type;
+						max_num_consecutive_invalid_steps = options.max_num_consecutive_invalid_steps;
+						min_trust_region_radius = options.min_trust_region_radius;
+						line_search_direction_type = options.line_search_direction_type;
+						line_search_type = options.line_search_type;
+						nonlinear_conjugate_gradient_type = options.nonlinear_conjugate_gradient_type;
+						max_lbfgs_rank = options.max_lbfgs_rank;
+						use_approximate_eigenvalue_bfgs_scaling = options.use_approximate_eigenvalue_bfgs_scaling;
+						line_search_interpolation_type = options.line_search_interpolation_type;
+						min_line_search_step_size = options.min_line_search_step_size;
+						line_search_sufficient_function_decrease = options.line_search_sufficient_function_decrease;
+						max_line_search_step_contraction = options.max_line_search_step_contraction;
+						min_line_search_step_contraction = options.min_line_search_step_contraction;
+						max_num_line_search_step_size_iterations = options.max_num_line_search_step_size_iterations;
+						max_num_line_search_direction_restarts = options.max_num_line_search_direction_restarts;
+						line_search_sufficient_curvature_decrease = options.line_search_sufficient_curvature_decrease;
+						max_line_search_step_expansion = options.max_line_search_step_expansion;
+						inner_iteration_tolerance = options.inner_iteration_tolerance;
+						is_silent = (options.logging_type == LoggingType.SILENT);
+						is_constrained = false;
+						callbacks = options.callbacks;
+					}
+
+				} // class MinimizerOptions
  
 
 	// Interface for non-linear least squares solvers.
 	class Minimizer {
-		public Options options_;
+		public MinimizerOptions options_;
 
 		public Minimizer() {
-			options_ = new Options();
+			options_ = new MinimizerOptions();
 		}
 
 		public Minimizer(Solver.Options options) {
-			options_ = new Options(options);
+			options_ = new MinimizerOptions(options);
 		}
 
-		// Options struct to control the behaviour of the Minimizer. Please
-		// see solver.h for detailed information about the meaning and
-		// default values of each of these parameters.
-		class Options {
-			public int max_num_iterations;
-			public double max_solver_time_in_seconds;
-			public int num_threads;
-
-			// Number of times the linear solver should be retried in case of
-			// numerical failure. The retries are done by exponentially scaling up
-			// mu at each retry. This leads to stronger and stronger
-			// regularization making the linear least squares problem better
-			// conditioned at each retry.
-			public int max_step_solver_retries;
-			public double gradient_tolerance;
-			public double parameter_tolerance;
-			public double function_tolerance;
-			public double min_relative_decrease;
-			public double eta;
-			public boolean jacobi_scaling;
-			public boolean use_nonmonotonic_steps;
-			public int max_consecutive_nonmonotonic_steps;
-			public Vector<Integer> trust_region_minimizer_iterations_to_dump;
-			public DumpFormatType trust_region_problem_dump_format_type;
-			public String trust_region_problem_dump_directory;
-			public int max_num_consecutive_invalid_steps;
-			public double min_trust_region_radius;
-			public LineSearchDirectionType line_search_direction_type;
-			public LineSearchType line_search_type;
-			public NonlinearConjugateGradientType nonlinear_conjugate_gradient_type;
-			public int max_lbfgs_rank;
-			public boolean use_approximate_eigenvalue_bfgs_scaling;
-			public LineSearchInterpolationType line_search_interpolation_type;
-			public double min_line_search_step_size;
-			public double line_search_sufficient_function_decrease;
-			public double max_line_search_step_contraction;
-			public double min_line_search_step_contraction;
-			public int max_num_line_search_step_size_iterations;
-			public int max_num_line_search_direction_restarts;
-			public double line_search_sufficient_curvature_decrease;
-			public double max_line_search_step_expansion;
-			public double inner_iteration_tolerance;
-
-			// If true, then all logging is disabled.
-			public boolean is_silent;
-
-			// Use a bounds constrained optimization algorithm.
-			public boolean is_constrained;
-
-			// List of callbacks that are executed by the Minimizer at the end
-			// of each iteration.
-			//
-			// The Options struct does not own these pointers.
-			Vector<IterationCallback> callbacks;
-
-			// Object responsible for evaluating the cost, residuals and
-			// Jacobian matrix.
-			// shared_ptr<Evaluator> evaluator;
-			Evaluator evaluator;
-
-			// Object responsible for actually computing the trust region
-			// step, and sizing the trust region radius.
-			// shared_ptr<TrustRegionStrategy> trust_region_strategy;
-			TrustRegionStrategy trust_region_strategy;
-
-			// Object holding the Jacobian matrix. It is assumed that the
-			// sparsity structure of the matrix has already been initialized
-			// and will remain constant for the life time of the
-			// optimization.
-			// shared_ptr<SparseMatrix> jacobian;
-			SparseMatrix jacobian;
-
-			// shared_ptr<CoordinateDescentMinimizer> inner_iteration_minimizer;
-			CoordinateDescentMinimizer inner_iteration_minimizer;
-
-			public Options() {
-				Solver solver = new Solver();
-				Init(solver.options);
-			}
-
-			public Options(Solver.Options options) {
-				Init(options);
-			}
-
-			public void Init(Solver.Options options) {
-				num_threads = options.num_threads;
-				max_num_iterations = options.max_num_iterations;
-				max_solver_time_in_seconds = options.max_solver_time_in_seconds;
-				max_step_solver_retries = 5;
-				gradient_tolerance = options.gradient_tolerance;
-				parameter_tolerance = options.parameter_tolerance;
-				function_tolerance = options.function_tolerance;
-				min_relative_decrease = options.min_relative_decrease;
-				eta = options.eta;
-				jacobi_scaling = options.jacobi_scaling;
-				use_nonmonotonic_steps = options.use_nonmonotonic_steps;
-				max_consecutive_nonmonotonic_steps = options.max_consecutive_nonmonotonic_steps;
-				trust_region_problem_dump_directory = options.trust_region_problem_dump_directory;
-				trust_region_minimizer_iterations_to_dump = options.trust_region_minimizer_iterations_to_dump;
-				trust_region_problem_dump_format_type = options.trust_region_problem_dump_format_type;
-				max_num_consecutive_invalid_steps = options.max_num_consecutive_invalid_steps;
-				min_trust_region_radius = options.min_trust_region_radius;
-				line_search_direction_type = options.line_search_direction_type;
-				line_search_type = options.line_search_type;
-				nonlinear_conjugate_gradient_type = options.nonlinear_conjugate_gradient_type;
-				max_lbfgs_rank = options.max_lbfgs_rank;
-				use_approximate_eigenvalue_bfgs_scaling = options.use_approximate_eigenvalue_bfgs_scaling;
-				line_search_interpolation_type = options.line_search_interpolation_type;
-				min_line_search_step_size = options.min_line_search_step_size;
-				line_search_sufficient_function_decrease = options.line_search_sufficient_function_decrease;
-				max_line_search_step_contraction = options.max_line_search_step_contraction;
-				min_line_search_step_contraction = options.min_line_search_step_contraction;
-				max_num_line_search_step_size_iterations = options.max_num_line_search_step_size_iterations;
-				max_num_line_search_direction_restarts = options.max_num_line_search_direction_restarts;
-				line_search_sufficient_curvature_decrease = options.line_search_sufficient_curvature_decrease;
-				max_line_search_step_expansion = options.max_line_search_step_expansion;
-				inner_iteration_tolerance = options.inner_iteration_tolerance;
-				is_silent = (options.logging_type == LoggingType.SILENT);
-				is_constrained = false;
-				callbacks = options.callbacks;
-			}
-
-		} // class Options
 		
-		public boolean RunCallbacks(Minimizer.Options options,
+		
+		public boolean RunCallbacks(MinimizerOptions options,
                 IterationSummary iteration_summary,
                 SolverSummary summary) {
 			boolean is_not_silent = !options.is_silent;
@@ -15564,6 +15579,7 @@ public abstract class CeresSolver {
 				inner_iteration_tolerance = 1e-3;
 				logging_type = LoggingType.PER_MINIMIZER_ITERATION;
 				minimizer_progress_to_stdout = false;
+				trust_region_minimizer_iterations_to_dump = new Vector<Integer>();
 				trust_region_problem_dump_directory = "/tmp";
 				trust_region_problem_dump_format_type = DumpFormatType.TEXTFILE;
 				check_gradients = false;
