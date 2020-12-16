@@ -3971,6 +3971,7 @@ public abstract class CeresSolver {
 					residual_norm = 0.0;
 					num_iterations = -1;
 					termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+					message = new String[1];
 				}
 
 			} // class LinearSolverSummmary
@@ -4320,7 +4321,7 @@ public abstract class CeresSolver {
 		  }
 
 		  // rhs = [b;0] to account for the additional rows in the lhs.
-		  if (rhs_.length != lhs_.getRowDimension()) {
+		  if ((rhs_ == null) || (rhs_.length != lhs_.getRowDimension())) {
 		    rhs_ = new double[lhs_.getRowDimension()];
 		  }
 		  for (int i = 0; i < num_rows; i++) {
@@ -5443,6 +5444,10 @@ public abstract class CeresSolver {
 	// NOLINT
 	abstract class TypedLinearSolver<MatrixType> extends LinearSolver {
 		public ExecutionSummary execution_summary_;
+		
+		public TypedLinearSolver() {
+		    execution_summary_ = new ExecutionSummary();	
+		}
 
 		// public:
 		// virtual LinearSolver::Summary Solve(
@@ -5687,6 +5692,7 @@ public abstract class CeresSolver {
 		    if (parameter_block.IsConstant()) {
 		      jacobians[j] = null;
 		    } else {
+		      jacobians[j] = new double[num_residuals * parameter_block.LocalSize()];
 		      for (i = 0; i < num_residuals * parameter_block.LocalSize(); i++) {
 		          jacobians[j][i] = jacobian_block_cursor[jacobian_block_cursor_index + i];
 		      }
@@ -6068,6 +6074,10 @@ public abstract class CeresSolver {
 	class ExecutionSummary {
 		private Lock mutex_;
 		private HashMap<String, CallStatistics> statistics_;
+		
+		public ExecutionSummary() {
+			statistics_ = new HashMap<String, CallStatistics>();
+		}
 
 		public void IncrementTimeBy(String name, double value) {
 			mutex_.lock();
@@ -6639,9 +6649,22 @@ public abstract class CeresSolver {
 			                          summary.cumulative_time_in_seconds);
 			  } else if (minimizer_type == MinimizerType.TRUST_REGION) {
 			    if (summary.iteration == 0) {
-			      output = "iter      cost      cost_change  |gradient|   |step|    tr_ratio  tr_radius  ls_iter  iter_time  total_time\n";
+			      output = "iter      cost      cost_change  |gradient|   |step|    tr_ratio  tr_radius  ls_iter  iter_time  total_time\n" +
+			    		  String.format(
+			  			        "% 4d % 8e   % 3.2e   % 3.2e  % 3.2e  % 3.2e % 3.2e     % 4d   % 3.2e   % 3.2e",
+			  			                           summary.iteration,
+			  			                           summary.cost,
+			  			                           summary.cost_change,
+			  			                           summary.gradient_max_norm,
+			  			                           summary.step_norm,
+			  			                           summary.relative_decrease,
+			  			                           summary.trust_region_radius,
+			  			                           summary.linear_solver_iterations,
+			  			                           summary.iteration_time_in_seconds,
+			  			                           summary.cumulative_time_in_seconds);;
 			    }
-			    String output2  = String.format(
+			    else {
+			      output  = String.format(
 			        "% 4d % 8e   % 3.2e   % 3.2e  % 3.2e  % 3.2e % 3.2e     % 4d   % 3.2e   % 3.2e",
 			                           summary.iteration,
 			                           summary.cost,
@@ -6653,7 +6676,7 @@ public abstract class CeresSolver {
 			                           summary.linear_solver_iterations,
 			                           summary.iteration_time_in_seconds,
 			                           summary.cumulative_time_in_seconds);
-			    output = output + output2;
+			    }
 			  } else {
 			    System.err.println("Unknown minimizer type.");
 			  }
@@ -9625,6 +9648,7 @@ public abstract class CeresSolver {
 
 		  if (per_solve_options.dump_format_type == DumpFormatType.CONSOLE ||
 		      (per_solve_options.dump_format_type != DumpFormatType.CONSOLE &&
+		       per_solve_options.dump_filename_base != null &&
 		       !per_solve_options.dump_filename_base.isEmpty())) {
 		    if (!DumpLinearLeastSquaresProblem(per_solve_options.dump_filename_base,
 		                                       per_solve_options.dump_format_type,
