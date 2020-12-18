@@ -3143,20 +3143,27 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	private void loadPredicted(IntegratedWormData data) {
-
+		// load and save the straightened predicted values:
+		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(data.wormData.getOutputDirectory() + File.separator + 
+				"prediction" + File.separator + "predicted_straightened_annotations.csv");
+		if ( markerAnnotations != null ) {
+			LatticeModel.saveAnnotationsAsCSV(data.wormData.getOutputDirectory() + File.separator + "straightened_annotations", "straightened_annotations.csv", markerAnnotations);
+		}
+		// load, save and display the predicted annotations:
 		if ( data.annotations != null )
 		{
 			data.annotations.clear();
 			data.annotations = null;
 		}
 		data.annotations = new VOIVector();
-		VOI markerAnnotations = LatticeModel.readAnnotationsCSV(data.wormData.getOutputDirectory() + File.separator + 
+		markerAnnotations = LatticeModel.readAnnotationsCSV(data.wormData.getOutputDirectory() + File.separator + 
 				"prediction" + File.separator + "predicted_annotations.csv");
 		if ( markerAnnotations != null ) {
 			data.voiManager.deleteAnnotations();
 			System.err.println( markerAnnotations + "  " + markerAnnotations.getCurves().size() );
 			data.annotations.add( markerAnnotations );
 			data.voiManager.addAnnotations(data.annotations);
+			data.wormData.saveIntegratedMarkerAnnotations(data.voiManager.getAnnotations());
 			data.annotations = null;
 
 			VOI annotations = data.voiManager.getAnnotations();
