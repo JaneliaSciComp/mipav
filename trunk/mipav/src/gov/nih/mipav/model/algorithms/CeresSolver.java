@@ -1203,8 +1203,8 @@ public abstract class CeresSolver {
 			
 			if (!SetupLinearSolver(pp) || !SetupEvaluator(pp) ||
 			    !SetupInnerIterationMinimizer(pp)) { return false; }
-			  
-			 SetupMinimizerOptions(pp);
+ 
+			SetupMinimizerOptions(pp);
 			 
 			return true;
 		}
@@ -2336,7 +2336,6 @@ public abstract class CeresSolver {
 	public void SetupCommonMinimizerOptions(PreprocessedProblem pp) {
 		Solver.Options options = pp.options;
 		Program program = pp.reduced_program;
-
 		// Assuming that the parameter blocks in the program have been
 		// reordered as needed, extract them into a contiguous vector.
 		while (pp.reduced_parameters.size() > program.NumParameters()) {
@@ -7389,6 +7388,9 @@ public abstract class CeresSolver {
 		    }
 
 		    x_ = candidate_x_;
+		    for (i = 0; i < x_.size(); i++) {
+		    	parameters_[i] = x_.get(i);
+		    }
 		    x_norm_ = 0.0;
 		    for (i = 0; i < x_.size(); i++) {
 		    	x_norm_ += (x_.get(i)*x_.get(i));
@@ -8063,6 +8065,9 @@ public abstract class CeresSolver {
 		private boolean HandleSuccessfulStep() {
 		  int i;
 		  x_ = candidate_x_;
+		  for (i = 0; i < x_.size(); i++) {
+			  parameters_[i] = x_.get(i);
+		  }
 		  x_norm_ = 0.0;
 		  for (i = 0; i < x_.size(); i++) {
 			  x_norm_ += x_.get(i)*x_.get(i);
