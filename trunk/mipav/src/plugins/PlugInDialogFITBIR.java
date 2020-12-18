@@ -3358,8 +3358,9 @@ public class PlugInDialogFITBIR extends JFrame
             final String outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
 
             // create subdir where attached files will be created/copied
-            final String outputSubDir = outputDirBase + File.separator + structOutputBaseNameList.get(dsName.toLowerCase()) + File.separator;
-            final File outputSubDirFile = new File(outputSubDir);
+            final String structSubDirName = structOutputBaseNameList.get(dsName.toLowerCase());
+            final String outputSubDirFull = outputDirBase + File.separator + structSubDirName + File.separator;
+            final File outputSubDirFile = new File(outputSubDirFull);
             if ( !outputSubDirFile.exists()) {
                 outputSubDirFile.mkdirs();
             }
@@ -3383,13 +3384,13 @@ public class PlugInDialogFITBIR extends JFrame
                 final List<String> origFiles = imgFileInfo.getOrigFiles();
 
                 if (imgFileInfo.getThumbnailImgData() != null) {
-                    printlnToLog("Creating thumbnail image:\t" + outputSubDir + outputFileNameBase + ".jpg");
+                    printlnToLog("Creating thumbnail image:\t" + outputSubDirFull + outputFileNameBase + ".jpg");
                     progressBar.setMessage("Creating thumbnail for record #" + (i + 1));
 
                     MemoryImageSource thumbnailImageData = getThumbnailSource(imgFileInfo.getThumbnailImgData());
 
                     if (thumbnailImageData != null) {
-                        final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputSubDir, true);
+                        final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputSubDirFull, true);
                         writeThumbnailJIMI(thumbnailImageData, opts);
                     }
                 }
@@ -3399,11 +3400,12 @@ public class PlugInDialogFITBIR extends JFrame
                     // the files were already zipped - so don't zip again. copy to output dir
                     try {
                         final File srcFile = new File(imgFileInfo.getImgFilePath());
-                        final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                        final File destFile = new File(outputSubDirFull + outputFileNameBase + "_" + srcFile.getName());
                         printlnToLog("Copying original image zip file into output directory:\t" + destFile.getAbsolutePath());
                         progressBar.setMessage("Copying zip file for record #" + (i + 1));
                         FileUtils.copyFile(srcFile, destFile);
-                        imagePath = destFile.getAbsolutePath();
+                        //imagePath = destFile.getAbsolutePath();
+                        imagePath = structSubDirName + File.separator + destFile.getName();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy image zip file into output directory");
                         e.printStackTrace();
@@ -3413,11 +3415,12 @@ public class PlugInDialogFITBIR extends JFrame
                     // the files were already tarballed - so don't zip again. copy to output dir
                     try {
                         final File srcFile = new File(imgFileInfo.getImgFilePath());
-                        final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                        final File destFile = new File(outputSubDirFull + outputFileNameBase + "_" + srcFile.getName());
                         printlnToLog("Copying original image tarball file into output directory:\t" + destFile.getAbsolutePath());
                         progressBar.setMessage("Copying tarball file for record #" + (i + 1));
                         FileUtils.copyFile(srcFile, destFile);
-                        imagePath = destFile.getAbsolutePath();
+                        //imagePath = destFile.getAbsolutePath();
+                        imagePath = structSubDirName + File.separator + destFile.getName();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy image tarball file into output directory");
                         e.printStackTrace();
@@ -3436,15 +3439,16 @@ public class PlugInDialogFITBIR extends JFrame
                                 ext = ".ima";
                             }
 
-                            destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName() + ext);
+                            destFile = new File(outputSubDirFull + outputFileNameBase + "_" + srcFile.getName() + ext);
                         } else {
-                            destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                            destFile = new File(outputSubDirFull + outputFileNameBase + "_" + srcFile.getName());
                         }
 
                         printlnToLog("Copying original image file into output directory:\t" + destFile.getAbsolutePath());
                         progressBar.setMessage("Copying image file for record #" + (i + 1));
                         FileUtils.copyFile(srcFile, destFile);
-                        imagePath = destFile.getAbsolutePath();
+                        //imagePath = destFile.getAbsolutePath();
+                        imagePath = structSubDirName + File.separator + destFile.getName();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy original image file into output directory");
                         e.printStackTrace();
@@ -3452,7 +3456,7 @@ public class PlugInDialogFITBIR extends JFrame
                 } else {
                     // need to create a zip file with the original image files
                     try {
-                        String zipFilePath = outputSubDir + outputFileNameBase + ".zip";
+                        String zipFilePath = outputSubDirFull + outputFileNameBase + ".zip";
 
                         // if MR, try to put the pulse sequence type into the zip name
                         if (isMRImagingStructure(dsName)) {
@@ -3479,7 +3483,7 @@ public class PlugInDialogFITBIR extends JFrame
                                 }
                             }
 
-                            zipFilePath = outputSubDir + outputFileNameBase + pulseSeq + ".zip";
+                            zipFilePath = outputSubDirFull + outputFileNameBase + pulseSeq + ".zip";
                         }
 
                         printlnToLog("Creating ZIP file (" + origFiles.size() + " files):\t" + zipFilePath);
@@ -3489,7 +3493,8 @@ public class PlugInDialogFITBIR extends JFrame
 //                        }
 
                         makeZipFile(zipFilePath, origFiles);
-                        imagePath = zipFilePath;
+                        //imagePath = zipFilePath;
+                        imagePath = structSubDirName + File.separator + (new File(zipFilePath)).getName();
                     } catch (final IOException ioe) {
                         ioe.printStackTrace();
                         MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n" + ioe.getMessage());
@@ -3523,7 +3528,7 @@ public class PlugInDialogFITBIR extends JFrame
                                 deVal.setValue(imagePath);
                             } else if (deVal.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                                 if (imgFileInfo.getThumbnailImgData() != null) {
-                                    deVal.setValue(structOutputBaseNameList.get(dsName.toLowerCase()) + File.separator + outputFileNameBase + ".jpg");
+                                    deVal.setValue(structSubDirName + File.separator + outputFileNameBase + ".jpg");
                                 } else {
                                     // if no preview is generated, set it to blank to avoid the "Automatically
                                     // generated..." message from being written - ie for spectroscopy
@@ -3540,7 +3545,7 @@ public class PlugInDialogFITBIR extends JFrame
                                     try {
                                         final String[] filePaths = srcFileValue.split(BROWSE_NONIMG_DELIM);
 
-                                        String newZipPath = outputSubDir + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber() + "_" + deVal.getName()
+                                        String newZipPath = outputSubDirFull + outputFileNameBase + "_" + group.getName() + "_" + repeat.getRepeatNumber() + "_" + deVal.getName()
                                                 + ".zip";
 
                                         // if MR, try to put the pulse sequence type into the zip name
@@ -3556,7 +3561,7 @@ public class PlugInDialogFITBIR extends JFrame
                                                 }
                                             }
 
-                                            newZipPath = outputSubDir + outputFileNameBase + pulseSeq + ".zip";
+                                            newZipPath = outputSubDirFull + outputFileNameBase + pulseSeq + ".zip";
                                         }
 
                                         final List<String> filePathList = new ArrayList<String>();
@@ -3569,7 +3574,8 @@ public class PlugInDialogFITBIR extends JFrame
                                         makeZipFile(newZipPath, filePathList);
 
                                         // now that the zip file is created, set the de value to the zip file path
-                                        deVal.setValue(newZipPath);
+                                        //deVal.setValue(newZipPath);
+                                        deVal.setValue(structSubDirName + File.separator + (new File(newZipPath)).getName());
                                     } catch (final IOException ioe) {
                                         ioe.printStackTrace();
                                         MipavUtil.displayError("Unable to write files to ZIP package:\n" + ioe.getMessage());
@@ -3579,11 +3585,12 @@ public class PlugInDialogFITBIR extends JFrame
                                     // only one file selected; copy it
                                     final File srcFile = new File(srcFileValue);
                                     try {
-                                        final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                                        final File destFile = new File(outputSubDirFull + outputFileNameBase + "_" + srcFile.getName());
                                         printlnToLog("Copying attached file into output directory:\t" + destFile.getAbsolutePath());
                                         progressBar.setMessage("Copying attached file for record #" + (i + 1));
                                         FileUtils.copyFile(srcFile, destFile);
-                                        deVal.setValue(destFile.getAbsolutePath());
+                                        //deVal.setValue(destFile.getAbsolutePath());
+                                        imagePath = structSubDirName + File.separator + destFile.getName();
                                     } catch (final IOException e) {
                                         MipavUtil.displayError("Unable to copy file into output directory");
                                         e.printStackTrace();
@@ -3599,7 +3606,7 @@ public class PlugInDialogFITBIR extends JFrame
                 }
 
                 for (int curRepeat = 0; curRepeat < maxRepeatNum; curRepeat++) {
-                    final String newRow = getCSVDataRow(outputSubDir, outputFileNameBase, fsData, curRepeat);
+                    final String newRow = getCSVDataRow(outputSubDirFull, outputFileNameBase, fsData, curRepeat);
                     if ( !newRow.equals("")) {
                         final String lowerName = dsName.toLowerCase();
                         String data = csvStructRowData.get(lowerName);
@@ -3614,6 +3621,8 @@ public class PlugInDialogFITBIR extends JFrame
 
                 printlnToLog("");
             } else {
+                
+                // TODO this needs testing (esp. around collision detection) and conversion to relative paths
 
                 // this means that this is another data structure besides image
 
