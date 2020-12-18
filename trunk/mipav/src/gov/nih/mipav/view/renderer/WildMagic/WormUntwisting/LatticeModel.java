@@ -394,8 +394,11 @@ public class LatticeModel {
 			if ( originalAnnotation.getCurves().size() == annotations.getCurves().size() ) {
 				// look for changes in annotations - build list to untwist:
 				VOI changed = annotationChanged( annotations, originalAnnotation );
-				System.err.println("saveAnnotationsAsCSV no changes - no save required");
-				if ( changed.getCurves().size() == 0 ) return;
+				if ( changed.getCurves().size() == 0 ) 
+				{
+					System.err.println("saveAnnotationsAsCSV no changes - no save required");
+					return;
+				}
 			}
 		}
 		
