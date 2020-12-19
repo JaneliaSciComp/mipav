@@ -2344,8 +2344,7 @@ public abstract class CeresSolver {
 		while (pp.reduced_parameters.size() < program.NumParameters()) {
 			pp.reduced_parameters.add(0.0);
 		}
-		Vector<Double> reduced_parameters = pp.reduced_parameters;
-		program.ParameterBlocksToStateVector(reduced_parameters);
+		program.ParameterBlocksToStateVector(pp.reduced_parameters);
 
 		pp.minimizer_options = new MinimizerOptions(options);
 		pp.minimizer_options.evaluator = pp.evaluator;
@@ -2356,7 +2355,7 @@ public abstract class CeresSolver {
 		}
 
 		if (options.update_state_every_iteration) {
-			pp.state_updating_callback = new StateUpdatingCallback(program, reduced_parameters);
+			pp.state_updating_callback = new StateUpdatingCallback(program, pp.reduced_parameters);
 			// This must get pushed to the front of the callbacks so that it
 			// is run before any of the user callbacks.
 			pp.minimizer_options.callbacks.add(0, pp.state_updating_callback);
@@ -13792,6 +13791,9 @@ public abstract class CeresSolver {
 				state_array[i] = state.get(i);
 			}
 			ParameterBlocksToStateVector(state_array);
+			for (i = 0; i < state.size(); i++) {
+				state.set(i, state_array[i]);
+			}
 		}
 		
 		public void ParameterBlocksToStateVector(double[] state) {
