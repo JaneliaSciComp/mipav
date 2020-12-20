@@ -6402,9 +6402,18 @@ public abstract class CeresSolver {
 	              parameter_block.LocalSize(),
 	              block_residuals, 0,
 	              scratch.gradient,parameter_block.delta_offset());
-	        }
-	      }
-	    }
+	        } // for (j = 0; j < num_parameter_blocks; ++j)
+	      } // if (gradient != null)
+	      if (residuals != null) {
+		    	for (j = residual_layout_.get(i); j < residuals.size(); j++) {
+		    		residuals.set(j,block_residuals[j-residual_layout_.get(i)]);
+		    	}
+		      } else if (gradient != null) {
+		    	for (j = 0; j < scratch.residual_block_residuals.length; j++) {
+		    	    scratch.residual_block_residuals[j] = block_residuals[j];	
+		    	}
+		      }
+	    } // for (i = 0; i < num_residual_blocks; ++i)
 	//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 	 //   );
 	//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
