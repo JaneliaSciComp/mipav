@@ -1127,6 +1127,9 @@ public abstract class CeresSolver {
 		 if (pp.options.minimizer_type == MinimizerType.TRUST_REGION) {
 		     ((TrustRegionMinimizer)minimizer).Minimize(pp.minimizer_options, reduced_parameters_array,summary);
 		 }
+		 else if (pp.options.minimizer_type == MinimizerType.LINE_SEARCH) {
+		     ((LineSearchMinimizer)minimizer).Minimize(pp.minimizer_options, reduced_parameters_array,summary);
+		 }
 		 for (i = 0; i < reduced_parameters_array.length; i++) {
 			 pp.reduced_parameters.set(i,reduced_parameters_array[i]);
 		 }
