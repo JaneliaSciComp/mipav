@@ -607,7 +607,7 @@ public abstract class CeresSolver {
 	}
 
 	public void runSizedCostFunctionExample() {
-
+        // Solved answer = 9.999050094990503
 		double x[] = new double[] { 0.5 };
 		CostFunction cost_function = new QuadraticCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -618,7 +618,8 @@ public abstract class CeresSolver {
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
 		Solve(solver.options, problem, solver.summary);
-
+		System.out.println("Solved answer = " + x[0]);
+		System.out.println("Actual answer = 10.0");
 	}
 
 	public void Solve(Solver.Options options, ProblemImpl problem, SolverSummary summary) {
@@ -4544,6 +4545,10 @@ public abstract class CeresSolver {
 		      }
 		      m_ = new Matrix(array);
 		  }
+		  
+		  public void setMatrix(int r, int c, double val) {
+			  m_.set(r,c,val);
+		  }
 
 		  // SparseMatrix interface.
 		  public void SetZero() {
@@ -5812,10 +5817,10 @@ public abstract class CeresSolver {
 	      }
 
 	      int parameter_block_size = parameter_block.LocalSize();
-	      double parameter_jacobian[][] = new double[num_residuals][parameter_block_size];
+	      //double parameter_jacobian[][] = new double[num_residuals][parameter_block_size];
 	      for (r = 0; r < num_residuals; r++) {
 	    	  for (c = 0; c < parameter_block_size; c++) {
-	    		  dense_jacobian.mutable_matrix().set(r + residual_offset,
+	    		  dense_jacobian.setMatrix(r + residual_offset,
 	    				  c + parameter_block.delta_offset(),jacobians[j+r][c]);
 	    	  }
 	      }
@@ -6191,27 +6196,37 @@ public abstract class CeresSolver {
 				  double[] state_array, double[] cost, double residuals_array[], double[] gradient_array, SparseMatrix jacobian) {
 			  int i;
 			  boolean status;
+			  Vector<Double>residuals = null;
+			  Vector<Double>gradient = null;
 			  Vector<Double>state = new Vector<Double>();
 			  for (i = 0; i < state_array.length; i++) {
 				  state.add(state_array[i]);
 			  }
-			  Vector<Double>residuals = new Vector<Double>();
-			  for (i = 0; i < residuals_array.length; i++) {
-				  residuals.add(residuals_array[i]);
+			  if (residuals_array != null) {
+				  residuals = new Vector<Double>();
+				  for (i = 0; i < residuals_array.length; i++) {
+					  residuals.add(residuals_array[i]);
+				  }
 			  }
-			  Vector<Double>gradient = new Vector<Double>();
-			  for (i = 0; i < gradient_array.length; i++) {
-				  gradient.add(gradient_array[i]);
+			  if (gradient_array != null) {
+				  gradient = new Vector<Double>();
+				  for (i = 0; i < gradient_array.length; i++) {
+					  gradient.add(gradient_array[i]);
+				  }
 			  }
 			  status = Evaluate(evaluate_options, state, cost, residuals, gradient, jacobian);
 			  for (i = 0; i < state_array.length; i++) {
 				  state_array[i] = state.get(i);
 			  }
-			  for (i = 0; i < residuals_array.length; i++) {
-				  residuals_array[i] = residuals.get(i);
+			  if (residuals_array != null) {
+				  for (i = 0; i < residuals_array.length; i++) {
+					  residuals_array[i] = residuals.get(i);
+				  }
 			  }
-			  for (i = 0; i < gradient_array.length; i++) {
-				  gradient_array[i] = gradient.get(i);
+			  if (gradient_array != null) {
+				  for (i = 0; i < gradient_array.length; i++) {
+					  gradient_array[i] = gradient.get(i);
+				  }
 			  }
 			  return status;
 		  }
