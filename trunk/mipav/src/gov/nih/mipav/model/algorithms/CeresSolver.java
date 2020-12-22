@@ -542,6 +542,9 @@ public abstract class CeresSolver {
 		// the wrong arguments.
 		LINEAR_SOLVER_FATAL_ERROR
 	};
+	
+	private int testCase;
+	private final int COST_FUNCTOR_EXAMPLE = 1;
 
 	class CostFunctorExample {
 		public CostFunctorExample() {
@@ -564,6 +567,7 @@ public abstract class CeresSolver {
 		}
 
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
 
 			// f(x) = 10 - x.
@@ -588,9 +592,32 @@ public abstract class CeresSolver {
 			return true;
 		}
 	};
+	
+	public void runNumericDiffCostFunctionExample() {
+		// From hello_world_numeric_diff.cc
+		double x[] = new double[] {0.5};
+		testCase = COST_FUNCTOR_EXAMPLE;
+		CostFunctorExample cf = new CostFunctorExample();
+		NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		NumericDiffOptions options = new NumericDiffOptions();
+		CostFunction cost_function = new NumericDiffCostFunction<CostFunctorExample>(cf, method, ownership, options, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		Solver solver = new Solver();
+		solver.options.minimizer_progress_to_stdout = true;
+		// Solver::Summary summary;
+		Solve(solver.options, problem, solver.summary);
+		System.out.println(solver.summary.BriefReport());
+		System.out.println("Solved answer = " + x[0]);
+		System.out.println("Actual answer = 10.0");
+	}
 
 	public void runAutoDiffCostFunctionExample() {
-
+        // From hello_world.cc
+		// Will not implement automatic differentiation wrapper so don't run this
 		double x[] = new double[] { 0.5 };
 		// auto-differentiation to obtain the derivative (jacobian).
 		CostFunctorExample cf = new CostFunctorExample();
@@ -603,10 +630,12 @@ public abstract class CeresSolver {
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
 		Solve(solver.options, problem, solver.summary);
-
+		System.out.println("Solved answer = " + x[0]);
+		System.out.println("Actual answer = 10.0");
 	}
 
 	public void runSizedCostFunctionExample() {
+		// From hello_world_analytic_diff.cc
         // Solved answer = 9.999050094990503
 		double x[] = new double[] { 0.5 };
 		CostFunction cost_function = new QuadraticCostFunction();
@@ -618,6 +647,7 @@ public abstract class CeresSolver {
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
 		Solve(solver.options, problem, solver.summary);
+		System.out.println(solver.summary.BriefReport());
 		System.out.println("Solved answer = " + x[0]);
 		System.out.println("Actual answer = 10.0");
 	}
@@ -739,6 +769,7 @@ public abstract class CeresSolver {
 
 		// System.err.println("I finish");
 	} // public void Solve
+
 	
 	public void GetBestSchurTemplateSpecialization(int[] row_block_size,
             int[] e_block_size,
@@ -2225,6 +2256,47 @@ public abstract class CeresSolver {
 			return "UNKNOWN";
 		}
 	}
+	
+	// Options pertaining to numeric differentiation (e.g., convergence criteria,
+	// step sizes).
+     class NumericDiffOptions {
+	    	// Numeric differentiation step size (multiplied by parameter block's
+	   	  // order of magnitude). If parameters are close to zero, the step size
+	   	  // is set to sqrt(machine_epsilon).
+	   	  public double relative_step_size;
+	
+	   	  // Initial step size for Ridders adaptive numeric differentiation (multiplied
+	   	  // by parameter block's order of magnitude).
+	   	  // If parameters are close to zero, Ridders' method sets the step size
+	   	  // directly to this value. This parameter is separate from
+	   	  // "relative_step_size" in order to set a different default value.
+	   	  //
+	   	  // Note: For Ridders' method to converge, the step size should be initialized
+	   	  // to a value that is large enough to produce a significant change in the
+	   	  // function. As the derivative is estimated, the step size decreases.
+	   	  public double ridders_relative_initial_step_size;
+	
+	   	  // Maximal number of adaptive extrapolations (sampling) in Ridders' method.
+	   	  public int max_num_ridders_extrapolations;
+	
+	   	  // Convergence criterion on extrapolation error for Ridders adaptive
+	   	  // differentiation. The available error estimation methods are defined in
+	   	  // NumericDiffErrorType and set in the "ridders_error_method" field.
+	   	  public double ridders_epsilon;
+	
+	   	  // The factor in which to shrink the step size with each extrapolation in
+	   	  // Ridders' method.
+	   	  public double ridders_step_shrink_factor;
+		  public NumericDiffOptions() {
+		    relative_step_size = 1e-6;
+		    ridders_relative_initial_step_size = 1e-2;
+		    max_num_ridders_extrapolations = 10;
+		    ridders_epsilon = 1e-12;
+		    ridders_step_shrink_factor = 2.0;
+		  }
+
+	  
+	};
 
 	public PreconditionerType PreconditionerForZeroEBlocks(PreconditionerType preconditioner_type) {
 		if (preconditioner_type == PreconditionerType.SCHUR_JACOBI
@@ -13269,6 +13341,7 @@ public abstract class CeresSolver {
 			num_residuals_ = num_residuals;
 		}
 
+		// Overriden by something like class QuadraticCostFunction extends SizedCostFunction
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			return true;
 		}
@@ -13393,6 +13466,153 @@ public abstract class CeresSolver {
 			if (N9 > 0)
 				mutable_parameter_block_sizes().add(N9);
 		}
+	}
+	
+	class NumericDiffCostFunction<CostFunctor> extends SizedCostFunction {
+		private CostFunctor functor_;
+		private NumericDiffMethodType method;
+		private Ownership ownership_;
+		private NumericDiffOptions options_;
+		private int kNumResiduals;
+		private int num_residuals;
+		private int N0;
+		private int N1;
+		private int N2;
+		private int N3;
+		private int N4;
+		private int N5;
+		private int N6;
+		private int N7;
+		private int N8;
+		private int N9;
+		
+		// Takes ownership of functor. Uses the template-provided value for the
+		// number of residuals ("kNumResiduals").
+		// NumericDiffMethodType method = CENTRAL
+		// Ownership ownership = TAKE_OWNERSHIP
+		// NumericDiffOptions& options = NumericDiffOptions()
+		public NumericDiffCostFunction(CostFunctor functor, NumericDiffMethodType method, Ownership ownership,
+				NumericDiffOptions options, int kNumResiduals, 
+				int N0, int N1, int N2, int N3, int N4,
+				int N5, int N6, int N7, int N8, int N9) {
+			super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9);
+			functor_ = functor;
+			this.method = method;
+			ownership_ = ownership;
+			options_ = options;
+			this.kNumResiduals = kNumResiduals;
+			if (kNumResiduals == DYNAMIC) {
+				System.err
+						.println("Can't run the fixed-size constructor if the number of residuals is set to DYNAMIC.");
+			}
+			this.N0 = N0;
+			this.N1 = N1;
+			this.N2 = N2;
+			this.N3 = N3;
+			this.N4 = N4;
+			this.N5 = N5;
+			this.N6 = N6;
+			this.N7 = N7;
+			this.N8 = N8;
+			this.N9 = N9;
+		}
+		
+		// Takes ownership of functor. Ignores the template-provided
+		// kNumResiduals in favor of the "num_residuals" argument provided.
+		//
+		// This allows for having autodiff cost functions which return varying
+		// numbers of residuals at runtime.
+		public NumericDiffCostFunction(CostFunctor functor,  NumericDiffMethodType method, Ownership ownership,
+				NumericDiffOptions options, int kNumResiduals, int N0, int N1, int N2, int N3, int N4,
+				int N5, int N6, int N7, int N8, int N9, int num_residuals) {
+			super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, num_residuals);
+			functor_ = functor;
+			this.method = method;
+			ownership_ = ownership;
+			options_ = options;
+			this.kNumResiduals = kNumResiduals;
+			this.num_residuals = num_residuals;
+			if (kNumResiduals != DYNAMIC) {
+				System.err.println("Can't run the dynamic-size constructor if the number of residuals is not DYNAMIC.");
+				return;
+			}
+			this.N0 = N0;
+			this.N1 = N1;
+			this.N2 = N2;
+			this.N3 = N3;
+			this.N4 = N4;
+			this.N5 = N5;
+			this.N6 = N6;
+			this.N7 = N7;
+			this.N8 = N8;
+			this.N9 = N9;
+
+		}
+		
+		// There is no Java equivalent to release() because Java allocates objects from a managed heap,
+		// C++ allocates them in unmanaged memory
+		//public void finalize() {
+			//if (ownership_ != Ownership.TAKE_OWNERSHIP) {
+			    //functor_.release();
+			//}	
+		//}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int kNumParameters = N0 + N1 + N2 + N3 + N4 + N5 + N6 + N7 + N8 + N9;	
+			int kNumParameterBlocks = 0;
+			if (N0 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N1 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N2 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N3 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N4 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N5 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N6 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N7 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N8 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N9 > 0) {
+				kNumParameterBlocks++;
+			}
+			
+			// Get the function value (residuals) at the the point to evaluate.
+			switch (testCase) {
+			case COST_FUNCTOR_EXAMPLE:
+				double x[] = parameters.get(0);
+			    if (!((CostFunctorExample) functor_).operator(x, residuals)) {
+			    	return false;
+			    }
+			
+		    } // switch(testCase)
+			
+			if (jacobians == null) {
+			      return true;
+			}
+			
+			// Create a copy of the parameters which will get mutated.
+		    double parameters_copy[] = new double[kNumParameters];
+		    double parameters_reference_copy[][] = new double[kNumParameterBlocks][];
+		    parameters_reference_copy[0] = parameters_copy;
+			return false;
+		} // public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][])
+		
+		
 	}
 
 	class AutoDiffCostFunction<CostFunctor> extends SizedCostFunction {
@@ -15227,6 +15447,24 @@ public abstract class CeresSolver {
 		          sum.termination_type == TerminationType.USER_SUCCESS);
 		}
 	
+	public String TerminationTypeToString(TerminationType type) {
+		  switch (type) {
+		  case CONVERGENCE:
+			  return "CONVERGENCE";
+		  case NO_CONVERGENCE:
+			  return "NO_CONVERGENCE";
+		  case FAILURE:
+			  return "FAILURE";
+		  case USER_SUCCESS:
+			  return "USER_SUCCESS";
+		  case USER_FAILURE:
+			  return "USER_FAILURE";
+		    default:
+		      return "UNKNOWN";
+		  }
+		}
+
+	
 	class SolverSummary {
 		public MinimizerType minimizer_type;
 		public TerminationType termination_type;
@@ -15434,6 +15672,18 @@ public abstract class CeresSolver {
 			inner_iteration_ordering_used = new Vector<Integer>();
 			iterations = new Vector<IterationSummary>();
 		}
+		
+		public String BriefReport() {
+			  return String.format("Ceres Solver Report: " +
+			                      "Iterations: %d, " +
+			                      "Initial cost: %e, " +
+			                      "Final cost: %e, " +
+			                      "Termination: %s",
+			                      num_successful_steps + num_unsuccessful_steps,
+			                      initial_cost,
+			                      final_cost,
+			                      TerminationTypeToString(termination_type));
+			}
 	} // class SolverSummary
 
 	class Solver {
@@ -16032,46 +16282,6 @@ public abstract class CeresSolver {
 		}
 		
 		public abstract CallbackReturnType operator(IterationSummary summary);
-	}
-
-	// Options pertaining to numeric differentiation (e.g., convergence criteria,
-	// step sizes).
-	class NumericDiffOptions {
-		public NumericDiffOptions() {
-			relative_step_size = 1e-6;
-			ridders_relative_initial_step_size = 1e-2;
-			max_num_ridders_extrapolations = 10;
-			ridders_epsilon = 1e-12;
-			ridders_step_shrink_factor = 2.0;
-		}
-
-		// Numeric differentiation step size (multiplied by parameter block's
-		// order of magnitude). If parameters are close to zero, the step size
-		// is set to sqrt(machine_epsilon).
-		public double relative_step_size;
-
-		// Initial step size for Ridders adaptive numeric differentiation (multiplied
-		// by parameter block's order of magnitude).
-		// If parameters are close to zero, Ridders' method sets the step size
-		// directly to this value. This parameter is separate from
-		// "relative_step_size" in order to set a different default value.
-		//
-		// Note: For Ridders' method to converge, the step size should be initialized
-		// to a value that is large enough to produce a significant change in the
-		// function. As the derivative is estimated, the step size decreases.
-		public double ridders_relative_initial_step_size;
-
-		// Maximal number of adaptive extrapolations (sampling) in Ridders' method.
-		public int max_num_ridders_extrapolations;
-
-		// Convergence criterion on extrapolation error for Ridders adaptive
-		// differentiation. The available error estimation methods are defined in
-		// NumericDiffErrorType and set in the "ridders_error_method" field.
-		public double ridders_epsilon;
-
-		// The factor in which to shrink the step size with each extrapolation in
-		// Ridders' method.
-		public double ridders_step_shrink_factor;
 	}
 
 	class GradientCheckingCostFunction extends CostFunction {
