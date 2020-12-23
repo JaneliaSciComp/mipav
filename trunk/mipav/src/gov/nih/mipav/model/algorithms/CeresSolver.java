@@ -595,6 +595,9 @@ public abstract class CeresSolver {
 	
 	public void runNumericDiffCostFunctionExample() {
 		// From hello_world_numeric_diff.cc
+		// Ceres Solver Report: Iterations: 2, Initial cost: 4.512500e+01, Final cost: 4.511690e-07, Termination: CONVERGENCE
+		// Solved answer = 9.999050085225893
+		// Actual answer = 10.0
 		double x[] = new double[] {0.5};
 		testCase = COST_FUNCTOR_EXAMPLE;
 		CostFunctorExample cf = new CostFunctorExample();
@@ -13671,7 +13674,7 @@ public abstract class CeresSolver {
 		    int new_num_residuals = new SizedCostFunction(kNumResiduals,              
                     N0, N1, N2, N3, N4,                          
                     N5, N6, N7, N8, N9).num_residuals();  
-		    if ((N0 > 0) && (jacobians[0] != null)) {                       
+		    if ((N0 > 0) && (jacobians[0] != null)) { 
 		        if (!EvaluateJacobianForParameterBlock(
 		                        		  method,                                          
 		 		                         kNumResiduals,                                   
@@ -13687,7 +13690,7 @@ public abstract class CeresSolver {
 		                             parameters_reference_copy,             
 		                             jacobians[0])) {                         
 		          return false;                                                   
-		        }                                                                 
+		        }
 		      }
 		    
 		    if ((N1 > 0) && (jacobians[1] != null)) {                       
@@ -13860,6 +13863,56 @@ public abstract class CeresSolver {
 		          return false;                                                   
 		        }                                                                 
 		      }
+		    if (N0 > 0) {
+		    	for (i = 0; i < N0; i++) {
+		    		parameters.get(0)[i] = parameters_reference_copy[0][i]; 
+		    	}
+		    }
+		    if (N1 > 0) {
+		    	for (i = 0; i < N1; i++) {
+		    		parameters.get(1)[i] = parameters_reference_copy[1][i]; 
+		    	}
+		    }
+		    if (N2 > 0) {
+		    	for (i = 0; i < N2; i++) {
+		    		parameters.get(2)[i] = parameters_reference_copy[2][i]; 
+		    	}
+		    }
+		    if (N3 > 0) {
+		    	for (i = 0; i < N3; i++) {
+		    		parameters.get(3)[i] = parameters_reference_copy[3][i]; 
+		    	}
+		    }
+		    if (N4 > 0) {
+		    	for (i = 0; i < N4; i++) {
+		    		parameters.get(4)[i] = parameters_reference_copy[4][i]; 
+		    	}
+		    }
+		    if (N5 > 0) {
+		    	for (i = 0; i < N5; i++) {
+		    		parameters.get(5)[i] = parameters_reference_copy[5][i];  
+		    	}
+		    }
+		    if (N6 > 0) {
+		    	for (i = 0; i < N6; i++) {
+		    		parameters.get(6)[i] = parameters_reference_copy[6][i]; 
+		    	}
+		    }
+		    if (N7 > 0) {
+		    	for (i = 0; i < N7; i++) {
+		    		parameters.get(7)[i] = parameters_reference_copy[7][i]; 
+		    	}
+		    }
+		    if (N8 > 0) {
+		    	for (i = 0; i < N8; i++) {
+		    		parameters.get(8)[i] = parameters_reference_copy[8][i]; 
+		    	}
+		    }
+		    if (N9 > 0) {
+		    	for (i = 0; i < N9; i++) {
+		    		parameters.get(9)[i] = parameters_reference_copy[9][i]; 
+		    	}
+		    }
 			return true;
 		} // public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][])
 		
@@ -13953,9 +14006,11 @@ public abstract class CeresSolver {
 	        double delta = Math.max(min_step_size, step_size[j]);
 
 	        if (kMethod == NumericDiffMethodType.RIDDERS) {
-	          /*if (!EvaluateRiddersJacobianColumn(functor, j, delta,
+	          if (!EvaluateRiddersJacobianColumn(kMethod, kNumResiduals,
+	        		                             kParameterBlockSize,functor, j, delta,
 	                                             options,
 	                                             num_residuals_internal,
+	                                             parameter_block_index_internal,
 	                                             parameter_block_size_internal,
 	                                             x,
 	                                             residuals_at_eval_point,
@@ -13964,10 +14019,13 @@ public abstract class CeresSolver {
 	                                             temp_residual_array,
 	                                             residual_array)) {
 	            return false;
-	          }*/
+	          }
 	        } else {
-	          /*if (!EvaluateJacobianColumn(functor, j, delta,
+	          if (!EvaluateJacobianColumn(kMethod,kNumResiduals,
+	        		                      kParameterBlockSize,
+	        		                      functor, j, delta,
 	                                      num_residuals_internal,
+	                                      parameter_block_index_internal,
 	                                      parameter_block_size_internal,
 	                                      x,
 	                                      residuals_at_eval_point,
@@ -13976,13 +14034,13 @@ public abstract class CeresSolver {
 	                                      temp_residual_array,
 	                                      residual_array)) {
 	            return false;
-	          }*/
+	          }
 	        }
 
 	        for (i = 0; i < num_residuals_internal; i++) {
 	        	residuals[i] = residual_array[i];
 	        }
-	        for (i = 0; i < residuals.length; i++) {
+	        for (i = 0; i < num_residuals_internal; i++) {
 	        	parameter_jacobian[i][j] = residuals[i];
 	        }
 	        for (r = 0; r < num_residuals_internal; r++) {
@@ -13994,6 +14052,332 @@ public abstract class CeresSolver {
 	      }
 		return true;
 	}
+	
+	public <CostFunctor> boolean EvaluateJacobianColumn(NumericDiffMethodType kMethod, int kNumResiduals, int kParameterBlockSize,
+			CostFunctor functor,
+            int parameter_index,
+            double delta,
+            int num_residuals,
+            int parameter_block_index,
+            int parameter_block_size,
+            double[] x_ptr,
+            double[] residuals_at_eval_point,
+            double[][] parameters,
+            double[] x_plus_delta_ptr,
+            double[] temp_residuals_ptr,
+            double[] residuals_ptr) {
+		    int i;
+			//using Eigen::Map;
+			// using Eigen::Matrix;
+			
+			//typedef Matrix<double, kNumResiduals, 1> ResidualVector;
+			//typedef Matrix<double, kParameterBlockSize, 1> ParameterVector;
+			
+			//Map<const ParameterVector> x(x_ptr, parameter_block_size);
+		    double x[] = new double[kParameterBlockSize];
+		    for (i = 0; i < parameter_block_size; i++) {
+		    	x[i] = x_ptr[i];
+		    }
+			//Map<ParameterVector> x_plus_delta(x_plus_delta_ptr,
+			            // parameter_block_size);
+		    double x_plus_delta[] = new double[kParameterBlockSize];
+		    for (i = 0; i < parameter_block_size; i++) {
+		    	x_plus_delta[i] = x_plus_delta_ptr[i];
+		    }
+			
+			//Map<ResidualVector> residuals(residuals_ptr, num_residuals);
+		    double residuals[] = new double[kNumResiduals];
+		    for (i = 0; i < num_residuals; i++) {
+		    	residuals[i] = residuals_ptr[i];
+		    }
+			//Map<ResidualVector> temp_residuals(temp_residuals_ptr, num_residuals);
+		    double temp_residuals[] = new double[kNumResiduals];
+		    for (i = 0; i < num_residuals; i++) {
+		    	temp_residuals[i] = temp_residuals_ptr[i];
+		    }
+			
+			// Mutate 1 element at a time and then restore.
+			x_plus_delta[parameter_index] = x[parameter_index] + delta;
+		    parameters[parameter_block_index][parameter_index] = x_plus_delta[parameter_index];   
+			
+			switch (testCase) {
+			case COST_FUNCTOR_EXAMPLE:
+				double xp[] = parameters[0];
+			    if (!((CostFunctorExample) functor).operator(xp, residuals)) {
+			    	return false;
+			    }
+			
+		    } // switch(testCase)
+			
+			
+			
+			// Compute this column of the jacobian in 3 steps:
+			// 1. Store residuals for the forward part.
+			// 2. Subtract residuals for the backward (or 0) part.
+			// 3. Divide out the run.
+			double one_over_delta = 1.0 / delta;
+			if (kMethod == NumericDiffMethodType.CENTRAL || kMethod == NumericDiffMethodType.RIDDERS) {
+			// Compute the function on the other side of x(parameter_index).
+			x_plus_delta[parameter_index] = x[parameter_index] - delta;
+			parameters[parameter_block_index][parameter_index] = x_plus_delta[parameter_index];
+			
+			
+			switch (testCase) {
+			case COST_FUNCTOR_EXAMPLE:
+				double xp[] = parameters[0];
+			    if (!((CostFunctorExample) functor).operator(xp, temp_residuals)) {
+			    	return false;
+			    }
+			
+		    } // switch(testCase)
+			
+			for (i = 0; i < residuals.length; i++) {
+				residuals[i] -= temp_residuals[i];
+			}
+			one_over_delta /= 2;
+			} else {
+			// Forward difference only; reuse existing residuals evaluation.
+		    for (i = 0; i < num_residuals; i++) {
+		    	residuals[i] -= residuals_at_eval_point[i];
+		    }
+			}
+			
+			// Restore x_plus_delta.
+			x_plus_delta[parameter_index] = x[parameter_index];
+			parameters[parameter_block_index][parameter_index] = x_plus_delta[parameter_index];
+			
+			// Divide out the run to get slope.
+			for (i = 0; i < residuals.length; i++) {
+				residuals[i] *= one_over_delta;
+			}
+			
+			for (i = 0; i < parameter_block_size; i++) {
+		    	x_plus_delta_ptr[i] = x_plus_delta[i];
+		    }
+			
+			for (i = 0; i < num_residuals; i++) {
+		    	residuals_ptr[i] = residuals[i];
+		    }
+			
+			for (i = 0; i < num_residuals; i++) {
+		    	temp_residuals_ptr[i] = temp_residuals[i];
+		    }
+			
+			return true;
+		}
+	
+	  // This numeric difference implementation uses adaptive differentiation
+	  // on the parameters to obtain the Jacobian matrix. The adaptive algorithm
+	  // is based on Ridders' method for adaptive differentiation, which creates
+	  // a Romberg tableau from varying step sizes and extrapolates the
+	  // intermediate results to obtain the current computational error.
+	  //
+	  // References:
+	  // C.J.F. Ridders, Accurate computation of F'(x) and F'(x) F"(x), Advances
+	  // in Engineering Software (1978), Volume 4, Issue 2, April 1982,
+	  // Pages 75-76, ISSN 0141-1195,
+	  // http://dx.doi.org/10.1016/S0141-1195(82)80057-0.
+	  public <CostFunctor> boolean EvaluateRiddersJacobianColumn(NumericDiffMethodType kMethod, int kNumResiduals, int kParameterBlockSize,
+	      CostFunctor functor,
+	      int parameter_index,
+	      double delta,
+	      NumericDiffOptions options,
+	      int num_residuals,
+	      int parameter_block_index,
+	      int parameter_block_size,
+	      double[] x_ptr,
+	      double[] residuals_at_eval_point,
+	      double[][] parameters,
+	      double[] x_plus_delta_ptr,
+	      double[] temp_residuals_ptr,
+	      double[] residuals_ptr) {
+		  int i, r, c;
+		  double diff;
+		  double temp;
+	    //using Eigen::Map;
+	    //using Eigen::Matrix;
+	    //using Eigen::aligned_allocator;
+
+	    //typedef Matrix<double, kNumResiduals, 1> ResidualVector;
+	    //typedef Matrix<double, kNumResiduals, Eigen::Dynamic> ResidualCandidateMatrix;
+	    //typedef Matrix<double, kParameterBlockSize, 1> ParameterVector;
+
+	    //Map<const ParameterVector> x(x_ptr, parameter_block_size);
+		  double x[] = new double[kParameterBlockSize];
+		    for (i = 0; i < parameter_block_size; i++) {
+		    	x[i] = x_ptr[i];
+		    }
+	    //Map<ParameterVector> x_plus_delta(x_plus_delta_ptr,
+	                                      //parameter_block_size);
+		    double x_plus_delta[] = new double[kParameterBlockSize];
+		    for (i = 0; i < parameter_block_size; i++) {
+		    	x_plus_delta[i] = x_plus_delta_ptr[i];
+		    }
+
+	    //Map<ResidualVector> residuals(residuals_ptr, num_residuals);
+		    double residuals[] = new double[kNumResiduals];
+		    for (i = 0; i < num_residuals; i++) {
+		    	residuals[i] = residuals_ptr[i];
+		    }
+	    //Map<ResidualVector> temp_residuals(temp_residuals_ptr, num_residuals);
+		    double temp_residuals[] = new double[kNumResiduals];
+		    for (i = 0; i < num_residuals; i++) {
+		    	temp_residuals[i] = temp_residuals_ptr[i];
+		    }
+
+	    // In order for the algorithm to converge, the step size should be
+	    // initialized to a value that is large enough to produce a significant
+	    // change in the function.
+	    // As the derivative is estimated, the step size decreases.
+	    // By default, the step sizes are chosen so that the middle column
+	    // of the Romberg tableau uses the input delta.
+	    double current_step_size = delta *
+	        Math.pow(options.ridders_step_shrink_factor,
+	            options.max_num_ridders_extrapolations / 2);
+
+	    // Double-buffering temporary differential candidate vectors
+	    // from previous step size.
+	    //ResidualCandidateMatrix stepsize_candidates_a(
+	        //num_residuals,
+	        //options.max_num_ridders_extrapolations);
+	    double stepsize_candidates_a[][] = new double[num_residuals][options.max_num_ridders_extrapolations];
+	    //ResidualCandidateMatrix stepsize_candidates_b(
+	        //num_residuals,
+	        //options.max_num_ridders_extrapolations);
+	    double stepsize_candidates_b[][] = new double[num_residuals][options.max_num_ridders_extrapolations];
+	    double[][] current_candidates = stepsize_candidates_a;
+	    double[][] current_candidates_col = new double[options.max_num_ridders_extrapolations][num_residuals];
+	    double[][] previous_candidates = stepsize_candidates_b;
+	    double[][] previous_candidates_col = new double[options.max_num_ridders_extrapolations][num_residuals];
+
+	    // Represents the computational error of the derivative. This variable is
+	    // initially set to a large value, and is set to the difference between
+	    // current and previous finite difference extrapolations.
+	    // norm_error is supposed to decrease as the finite difference tableau
+	    // generation progresses, serving both as an estimate for differentiation
+	    // error and as a measure of differentiation numerical stability.
+	    double norm_error = Double.MAX_VALUE;
+
+	    // Loop over decreasing step sizes until:
+	    //  1. Error is smaller than a given value (ridders_epsilon),
+	    //  2. Maximal order of extrapolation reached, or
+	    //  3. Extrapolation becomes numerically unstable.
+	    for (i = 0; i < options.max_num_ridders_extrapolations; ++i) {
+	      // Compute the numerical derivative at this step size.
+	      if (!EvaluateJacobianColumn(kMethod, kNumResiduals, kParameterBlockSize,
+	    		                      functor, parameter_index, current_step_size,
+	                                  num_residuals,
+	                                  parameter_block_index,
+	                                  parameter_block_size,
+	                                  x,
+	                                  residuals_at_eval_point,
+	                                  parameters,
+	                                  x_plus_delta,
+	                                  temp_residuals,
+	                                  current_candidates_col[0])) {
+	        // Something went wrong; bail.
+	        return false;
+	      }
+	      for (r = 0; r < num_residuals; r++) {
+	    	  current_candidates[r][0] = current_candidates_col[0][r];
+	      }
+	      
+
+	      // Store initial results.
+	      if (i == 0) {
+	        residuals = current_candidates_col[0];
+	      }
+
+	      // Shrink differentiation step size.
+	      current_step_size /= options.ridders_step_shrink_factor;
+
+	      // Extrapolation factor for Richardson acceleration method (see below).
+	      double richardson_factor = options.ridders_step_shrink_factor *
+	          options.ridders_step_shrink_factor;
+	      for (int k = 1; k <= i; ++k) {
+	        // Extrapolate the various orders of finite differences using
+	        // the Richardson acceleration method.
+	    	for (r = 0; r < num_residuals; r++) {
+	        current_candidates_col[k][r] =
+	            (richardson_factor * current_candidates_col[k - 1][r] -
+	             previous_candidates_col[k - 1][r]) / (richardson_factor - 1.0);
+	        current_candidates[r][k] = current_candidates_col[k][r];
+	    	}
+
+	        richardson_factor *= options.ridders_step_shrink_factor *
+	            options.ridders_step_shrink_factor;
+
+	        // Compute the difference between the previous value and the current.
+	        double currentNorm = 0.0;
+	        for (r = 0; r < num_residuals; r++) {
+	            diff = current_candidates_col[k][r] - current_candidates_col[k-1][r];
+	            currentNorm += (diff * diff);
+	        }
+	        currentNorm = Math.sqrt(currentNorm);
+	        double previousNorm = 0.0;
+	        for (r = 0; r < num_residuals; r++) {
+	        	diff = current_candidates_col[k][r] - previous_candidates_col[k-1][r];
+	        	previousNorm += (diff * diff);
+	        }
+	        previousNorm = Math.sqrt(previousNorm);
+	        double candidate_error = Math.max(currentNorm, previousNorm);
+
+	        // If the error has decreased, update results.
+	        if (candidate_error <= norm_error) {
+	          norm_error = candidate_error;
+	          residuals = current_candidates_col[k];
+
+	          // If the error is small enough, stop.
+	          if (norm_error < options.ridders_epsilon) {
+	            break;
+	          }
+	        }
+	      }
+
+	      // After breaking out of the inner loop, declare convergence.
+	      if (norm_error < options.ridders_epsilon) {
+	        break;
+	      }
+
+	      // Check to see if the current gradient estimate is numerically unstable.
+	      // If so, bail out and return the last stable result.
+	      if (i > 0) {
+	    	double tableau_error = 0.0;
+	    	for (r = 0; r < num_residuals; r++) {
+	    		diff = current_candidates_col[i][r] - previous_candidates_col[i-1][r];
+	    		tableau_error += (diff * diff);
+	    	}
+	    	tableau_error = Math.sqrt(tableau_error);
+
+	        // Compare current error to the chosen candidate's error.
+	        if (tableau_error >= 2 * norm_error) {
+	          break;
+	        }
+	      }
+
+	      for (r = 0; r < num_residuals; r++) {
+	    	  for (c = 0; c < options.max_num_ridders_extrapolations; c++) {
+	    		  temp = current_candidates[r][c];
+	    		  current_candidates[r][c] = previous_candidates[r][c];
+	    		  previous_candidates[r][c] = temp;
+	    		  current_candidates_col[c][r] = current_candidates[r][c];
+	    		  previous_candidates_col[c][r] = previous_candidates[r][c];
+	    	  }
+	      }
+	    }
+	    for (i = 0; i < parameter_block_size; i++) {
+	    	x_plus_delta_ptr[i] = x_plus_delta[i];
+	    }
+		
+		for (i = 0; i < num_residuals; i++) {
+	    	residuals_ptr[i] = residuals[i];
+	    }
+		
+		for (i = 0; i < num_residuals; i++) {
+	    	temp_residuals_ptr[i] = temp_residuals[i];
+	    }
+	    return true;
+	  }
 
 	class AutoDiffCostFunction<CostFunctor> extends SizedCostFunction {
 		private CostFunctor functor_;
