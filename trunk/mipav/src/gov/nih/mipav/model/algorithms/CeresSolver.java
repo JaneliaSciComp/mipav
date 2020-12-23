@@ -13882,6 +13882,8 @@ public abstract class CeresSolver {
 		      double [][]parameters,
 		      double []jacobian) {
 		      int i;
+		      int r; 
+		      int c;
 		   final int num_residuals_internal =
 		        (kNumResiduals != DYNAMIC ? kNumResiduals : num_residuals);
 		   final int parameter_block_index_internal =
@@ -13893,6 +13895,103 @@ public abstract class CeresSolver {
 		   
 		   double ResidualVector[] = new double[kNumResiduals];
 		   double ParameterVector[] = new double[kParameterBlockSize];
+		   //Map<JacobianMatrix> parameter_jacobian(jacobian,
+                   //num_residuals_internal,
+                   //parameter_block_size_internal);
+
+			//Map<ParameterVector> x_plus_delta(
+			//parameters[parameter_block_index_internal],
+			//parameter_block_size_internal);
+		   double parameter_jacobian[][] = new double[kNumResiduals][kParameterBlockSize];
+		   for (r = 0; r < num_residuals_internal; r++) {
+			   for (c = 0; c < parameter_block_size_internal; c++) {
+			       parameter_jacobian[r][c] = jacobian[r*parameter_block_size_internal + c];   
+			   }
+		   }
+		   double x_plus_delta[] = new double[kParameterBlockSize];
+		   for (i = 0; i < parameter_block_size_internal; i++) {
+			   x_plus_delta[i] = parameters[parameter_block_index_internal][i];   
+		   }
+		   double x[] = new double[kParameterBlockSize];
+		   for (i = 0; i < parameter_block_size_internal; i++) {
+			   x[i] = x_plus_delta[i];   
+		   }
+		   double step_size[] = new double[kParameterBlockSize];
+		   if (kMethod == NumericDiffMethodType.RIDDERS) {
+		       for (i = 0; i < parameter_block_size_internal; i++) {
+		    	   step_size[i] = Math.abs(x[i]) * options.ridders_relative_initial_step_size;
+		       }
+		   }
+		   else {
+			   for (i = 0; i < parameter_block_size_internal; i++) {
+		    	   step_size[i] = Math.abs(x[i]) * options.relative_step_size;
+		       }   
+		   }
+		   
+		// It is not a good idea to make the step size arbitrarily
+		// small. This will lead to problems with round off and numerical
+		// instability when dividing by the step size. The general
+		// recommendation is to not go down below sqrt(epsilon).
+		double min_step_size = Math.sqrt(epsilon);
+		
+		// For Ridders' method, the initial step size is required to be large,
+	    // thus ridders_relative_initial_step_size is used.
+	    if (kMethod == NumericDiffMethodType.RIDDERS) {
+	      min_step_size = Math.max(min_step_size,
+	                               options.ridders_relative_initial_step_size);
+	    }
+	    
+
+	    // For each parameter in the parameter block, use finite differences to
+	    // compute the derivative for that parameter.
+	    double temp_residual_array[] = new double[num_residuals_internal];
+	    double residual_array[] = new double[num_residuals_internal];
+	    //Map<ResidualVector> residuals(residual_array.get(),
+        //        num_residuals_internal);
+	    double residuals[] = new double[kNumResiduals];
+	    for (int j = 0; j < parameter_block_size_internal; ++j) {
+	        double delta = Math.max(min_step_size, step_size[j]);
+
+	        if (kMethod == NumericDiffMethodType.RIDDERS) {
+	          /*if (!EvaluateRiddersJacobianColumn(functor, j, delta,
+	                                             options,
+	                                             num_residuals_internal,
+	                                             parameter_block_size_internal,
+	                                             x,
+	                                             residuals_at_eval_point,
+	                                             parameters,
+	                                             x_plus_delta,
+	                                             temp_residual_array,
+	                                             residual_array)) {
+	            return false;
+	          }*/
+	        } else {
+	          /*if (!EvaluateJacobianColumn(functor, j, delta,
+	                                      num_residuals_internal,
+	                                      parameter_block_size_internal,
+	                                      x,
+	                                      residuals_at_eval_point,
+	                                      parameters,
+	                                      x_plus_delta,
+	                                      temp_residual_array,
+	                                      residual_array)) {
+	            return false;
+	          }*/
+	        }
+
+	        for (i = 0; i < num_residuals_internal; i++) {
+	        	residuals[i] = residual_array[i];
+	        }
+	        for (i = 0; i < residuals.length; i++) {
+	        	parameter_jacobian[i][j] = residuals[i];
+	        }
+	        for (r = 0; r < num_residuals_internal; r++) {
+		        jacobian[r*parameter_block_size_internal + j] = parameter_jacobian[r][j];   
+		    }
+	        for (i = 0; i < parameter_block_size_internal; i++) {
+				   parameters[parameter_block_index_internal][i] = x_plus_delta[i];   
+			   }
+	      }
 		return true;
 	}
 
