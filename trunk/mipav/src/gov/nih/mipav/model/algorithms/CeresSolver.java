@@ -16190,6 +16190,35 @@ public abstract class CeresSolver {
 			local_matrix = (new Matrix(global_matrix).times(new Matrix(jacobian))).getArray();
 			return true;
 		}
+		
+		public boolean MultiplyByJacobian(double x[],
+                int num_rows,
+                double[] global_matrix,
+                double[] local_matrix) {
+			int r, c, index;
+			//Matrix jacobian(GlobalSize(), LocalSize());
+			double jacobian[][] = new double[GlobalSize()][LocalSize()];
+			if (!ComputeJacobian(x, 0, jacobian)) {
+			return false;
+			}
+			
+			//MatrixRef(local_matrix, num_rows, LocalSize()) =
+			//ConstMatrixRef(global_matrix, num_rows, GlobalSize()) * jacobian;
+			double global_array[][] = new double[num_rows][GlobalSize()];
+			for (index = 0, r = 0; r < num_rows; r++) {
+				for (c = 0; c < GlobalSize(); c++, index++) {
+					global_array[r][c] = global_matrix[index];
+				}
+			}
+			double local_array[][] = (new Matrix(global_array).times(new Matrix(jacobian))).getArray();
+			for (index = 0, r = 0; r < num_rows; r++) {
+				for (c = 0; c < LocalSize(); c++, index++) {
+					local_matrix[index] = local_array[r][c];
+				}
+			}
+			return true;
+		}
+
 
 		// jacobian is a row-major GlobalSize() x LocalSize() matrix.
 		public abstract boolean ComputeJacobian(double x[], int x_start, double jacobian[][]);
@@ -16203,6 +16232,8 @@ public abstract class CeresSolver {
 		public abstract boolean Plus(Vector<Double> x, int x_index,
                 Vector<Double> delta, int delta_index,
                 Vector<Double> x_plus_delta, int x_plus_delta_index);
+		
+		public abstract boolean Plus(double[] x, double[] delta, double[] x_plus_delta);
 	}
 	
 	public boolean IsSolutionUsable(SolverSummary  sum) {
@@ -17716,8 +17747,136 @@ public abstract class CeresSolver {
 	    }
 	    return true;
 	    }
+	
+	class GradientProblem {
+	    private FirstOrderFunction function_;
+	    private LocalParameterization parameterization_;
+	    private double[] scratch_;
+	    
+	    public GradientProblem(FirstOrderFunction function) {
+	        function_ = function;
+	      parameterization_ = new IdentityParameterization(function_.NumParameters());
+	      scratch_ = new double[function_.NumParameters()];
+	    }
+	    
+	    public GradientProblem(FirstOrderFunction function,
+                LocalParameterization parameterization) {
+	    	function_ = function;
+	        parameterization_ = parameterization;
+            scratch_ = new double[function_.NumParameters()];
+            if (function_.NumParameters() != parameterization.GlobalSize()) {
+            	System.err.println("function_.NumParameters() != parameterization.GlobalSize() in public GradientProblem");
+            }
+        }
+
+	    public int NumParameters() {
+	        return function_.NumParameters();
+	    }
+
+	    public int NumLocalParameters() {
+	        return parameterization_.LocalSize();
+	    }
 
 
+	    public boolean Evaluate(double[] parameters, double[] cost, double[] gradient) {
+	    	  if (gradient == null) {
+	    	    return function_.Evaluate(parameters, cost, null);
+	    	  }
+
+	    	  return (function_.Evaluate(parameters, cost, scratch_) &&
+	    	          parameterization_.MultiplyByJacobian(parameters,
+	    	                                                1,
+	    	                                                scratch_,
+	    	                                                gradient));
+	    	}
+
+	    public boolean Plus(double[] x, double[] delta, double[] x_plus_delta) {
+	        return parameterization_.Plus(x, delta, x_plus_delta);
+	    }
+
+	}
+	
+	class IdentityParameterization extends LocalParameterization {
+		private int size_;
+		
+		public IdentityParameterization(int size) {
+			super();
+	        size_ = size;
+	        if (size <= 0) {
+	        	System.err.println("size must be > 0 in public IdentityParameterization(int size)");
+	        }
+	    }
+		
+		public boolean Plus(Vector<Double> x, int x_index,Vector<Double> delta, int delta_index,
+				  Vector<Double> x_plus_delta, int x_plus_delta_index) {
+			int i;
+		      for (i = 0; i < size_; i++) {
+		    	  x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i) + delta.get(delta_index + i));
+		      }
+		      return true;
+		    }
+		
+		public boolean Plus(double[] x, double[] delta, double[] x_plus_delta) {
+			int i;
+			for (i = 0; i < size_; i++) {
+				x_plus_delta[i] = x[i] + delta[i];
+			}
+            return true;
+        }
+		
+		public boolean ComputeJacobian(double[] x, double[] jacobian) {
+			int i;
+			int length = size_* size_;
+			for (i = 0; i < length; i++) {
+				jacobian[i] = 0;
+			}
+			for (i = 0; i < length; i+= (size_+1)) {
+				jacobian[i] = 1.0;
+			}
+            return true;
+        }
+		
+		public boolean ComputeJacobian(double[] x, int x_start, double[][] jacobian) {
+			int r,c;
+			for (r = 0; r < size_; r++) {
+				for (c = 0; c < size_; c++) {
+					if (r == c) {
+						jacobian[r][c] = 1.0;
+					}
+					else {
+						jacobian[r][c] = 0.0;
+					}
+				}
+			}
+            return true;
+        }
+
+
+		public boolean MultiplyByJacobian(double[] x, int num_cols, double[] global_matrix,
+                double[] local_matrix) {
+			    int i;
+			    int length = num_cols * GlobalSize();
+			    for (i = 0; i < length; i++) {
+			    	local_matrix[i] = global_matrix[i];
+			    }
+                return true;
+        }
+
+	    public int GlobalSize() { return size_; }
+		public int LocalSize() { return size_; }
+
+	}
+
+	// A FirstOrderFunction object implements the evaluation of a function
+	// and its gradient.
+	abstract class FirstOrderFunction {
+	  public FirstOrderFunction() {
+		  
+	  }
+	  // cost is never NULL. gradient may be null.
+	  public abstract boolean Evaluate(double[] parameters, double[] cost, double[] gradient);
+	  public abstract int NumParameters();
+	};
 
 } // public abstract class CeresSolver
 
