@@ -8311,7 +8311,7 @@ public abstract class CeresSolver {
 			      function.DirectionInfinityNorm();
 
 			  do_zoom_search[0] = false;
-			  bracket_low = initial_position;
+			  copyFunctionSample(bracket_low,initial_position);
 
 			  // As we require the gradient to evaluate the Wolfe condition, we always
 			  // calculate it together with the value, irrespective of the interpolation
@@ -8339,8 +8339,8 @@ public abstract class CeresSolver {
 			      // condition, or has stepped past an inflection point of f() relative to
 			      // previous step size.
 			      do_zoom_search[0] = true;
-			      bracket_low = previous;
-			      bracket_high = current;
+			      copyFunctionSample(bracket_low,previous);
+			      copyFunctionSample(bracket_high,current);
 			      if (3 <= MAX_LOG_LEVEL) {
 			              Preferences.debug("Bracket found: current step (" + current.x
 			              + ")\n violates Armijo sufficient condition, or has passed an \n" +
@@ -8354,8 +8354,8 @@ public abstract class CeresSolver {
 			        -options().sufficient_curvature_decrease * initial_position.gradient) {
 			      // Current step size satisfies the strong Wolfe conditions, and is thus a
 			      // valid termination point, therefore a Zoom not required.
-			      bracket_low = current;
-			      bracket_high = current;
+			      copyFunctionSample(bracket_low,current);
+			      copyFunctionSample(bracket_high,current);
 			              if (3 <= MAX_LOG_LEVEL) {
 				              Preferences.debug("Bracketing phase found step size: " + current.x +
 			                  "\n satisfying strong Wolfe conditions, initial_position: "  +
@@ -8372,8 +8372,8 @@ public abstract class CeresSolver {
 			      // even though f(previous) > f(current).
 			      do_zoom_search[0] = true;
 			      // Note inverse ordering from first bracket case.
-			      bracket_low = current;
-			      bracket_high = previous;
+			      copyFunctionSample(bracket_low,current);
+			      copyFunctionSample(bracket_high,previous);
 			      if (3 <= MAX_LOG_LEVEL) {
 		              Preferences.debug("Bracket found: current sep (" + current.x
 			              + ")\nsatisfies Armijo, but has gradient >= 0, thus have passed \n"
@@ -8400,7 +8400,7 @@ public abstract class CeresSolver {
 			          + "\npoint found satisfying Armijo condition only, to "
 			          + "\nallow continuation.\n", Preferences.DEBUG_ALGORITHM);
 			      }
-			      bracket_low = current;
+			      copyFunctionSample(bracket_low,current);
 			      break;
 
 			    } else if (summary.num_iterations >= options().max_num_iterations) {
@@ -8418,9 +8418,9 @@ public abstract class CeresSolver {
 			      // Ensure that bracket_low is always set to the step size amongst all
 			      // those tested which minimizes f() and satisfies the Armijo condition
 			      // when we terminate due to the 'artificial' max_num_iterations condition.
-			      bracket_low =
-			          current.value_is_valid && current.value[0] < bracket_low.value[0]
-			          ? current : bracket_low;
+			      if (current.value_is_valid && current.value[0] < bracket_low.value[0]) {
+			    	  copyFunctionSample(bracket_low,current);
+			      }
 			      break;
 			    }
 			    // Either: f(current) is invalid; or, f(current) is valid, but does not
@@ -8559,7 +8559,7 @@ public abstract class CeresSolver {
 			    // Set solution to bracket_low, as it is our best step size (smallest f())
 			    // found thus far and satisfies the Armijo condition, even though it does
 			    // not satisfy the Wolfe condition.
-			    solution = bracket_low;
+			    copyFunctionSample(solution,bracket_low);
 			    if (summary.num_iterations >= options().max_num_iterations) {
 			      summary.error =
 			          String.format("Line search failed: Wolfe zoom phase failed to \n" +
@@ -8660,7 +8660,7 @@ public abstract class CeresSolver {
 			        (solution.value[0] >= bracket_low.value[0])) {
 			      // Armijo sufficient decrease not satisfied, or not better
 			      // than current lowest sample, use as new upper bound.
-			      bracket_high = solution;
+			      copyFunctionSample(bracket_high,solution);
 			      continue;
 			    }
 
@@ -8678,13 +8678,13 @@ public abstract class CeresSolver {
 			      bracket_high = bracket_low;
 			    }
 
-			    bracket_low = solution;
+			    copyFunctionSample(bracket_low,solution);
 			  }
 			  // Solution contains a valid point which satisfies the strong Wolfe
 			  // conditions.
 			  return true;
 
-		  }
+		  } // ZoomPhase
 		 
 
 		 public void DoSearch(double step_size_estimate,
@@ -8751,11 +8751,6 @@ public abstract class CeresSolver {
 			    // condition.
 			    return;
 			  }
-			  System.out.println("bracket_low.value_is_valid = " + bracket_low.value_is_valid);
-			  System.out.println("bracket_low.gradient_is_valid = " + bracket_low.gradient_is_valid);
-			  System.out.println("bracket_low.x = " + bracket_low.x);
-			  System.out.println("bracket_low.gradient = " + bracket_low.gradient);
-			  System.out.println("bracket_low.value[0] = " + bracket_low.value[0]);
 
 			  if (!do_zoom_search[0]) {
 			    // Either: Bracketing phase already found a point satisfying the strong
@@ -9068,6 +9063,20 @@ public abstract class CeresSolver {
 
 
 	} // abstract class LineSearch
+	
+	public void copyFunctionSample(FunctionSample dst, FunctionSample src) {
+		dst.x = src.x;
+		dst.vector_x.clear();
+		dst.vector_x.addAll(src.vector_x);
+		dst.vector_x_is_valid = src.vector_x_is_valid;
+		dst.value[0] = src.value[0];
+		dst.value_is_valid = src.value_is_valid;
+		dst.vector_gradient.clear();
+		dst.vector_gradient.addAll(src.vector_gradient);
+		dst.vector_gradient_is_valid = src.vector_gradient_is_valid;
+		dst.gradient = src.gradient;
+		dst.gradient_is_valid = src.gradient_is_valid;
+	}
 	
 	// FunctionSample is used by the line search routines to store and
 	// communicate the value and (optionally) the gradient of the function
@@ -9382,6 +9391,9 @@ public abstract class CeresSolver {
 			vector_x_array, (output.value), null, gradient, null);
 			for (i = 0; i < output.vector_x.size(); i++) {
 				output.vector_x.set(i,vector_x_array[i]);
+			}
+			for (i = 0; i <output.vector_gradient.size(); i++) {
+				output.vector_gradient.set(i,gradient[i]);
 			}
 			if (!eval_status || !Double.isFinite(output.value[0])) {
 			return;
