@@ -12010,7 +12010,12 @@ public abstract class CeresSolver {
 				      delta_x_history_.set(i,next,delta_x.get(i));
 				      delta_gradient_history_.set(i,next,delta_gradient.get(i));
 				  }
-				  delta_x_dot_delta_gradient_.set(next,delta_x_dot_delta_gradient);
+				  if (next < delta_x_dot_delta_gradient_.size()) {
+				      delta_x_dot_delta_gradient_.set(next,delta_x_dot_delta_gradient);
+				  }
+				  else {
+					  delta_x_dot_delta_gradient_.add(delta_x_dot_delta_gradient);
+				  }
 				  double squaredNorm = 0.0;
 				  for (i = 0; i < delta_gradient.size(); i++) {
 					  squaredNorm += (delta_gradient.get(i) * delta_gradient.get(i));
@@ -12581,6 +12586,17 @@ public abstract class CeresSolver {
 		    
 		  }
 		  
+		  public void copyState(State dst, State src) {
+			  dst.cost[0] = src.cost[0];
+			  dst.gradient.clear();
+			  dst.gradient.addAll(src.gradient);
+			  dst.gradient_max_norm = src.gradient_max_norm;
+			  dst.search_direction.clear();
+			  dst.search_direction.addAll(src.search_direction);
+			  dst.directional_derivative = src.directional_derivative;
+			  dst.step_size = src.step_size;
+		  }
+		  
 		  private boolean EvaluateGradientNorms(Evaluator evaluator,
                   double[] x,
                   LineSearchMinimizer.State state,
@@ -12934,7 +12950,7 @@ public abstract class CeresSolver {
 			        return;
 			    }
 			    current_state.step_size = optimal_point.x;
-			    previous_state = current_state;
+			    copyState(previous_state,current_state);
 			    iteration_summary.step_solver_time_in_seconds =
 			        1.0E-3 * System.currentTimeMillis() - iteration_start_time;
 
@@ -12998,6 +13014,7 @@ public abstract class CeresSolver {
 			    double x_norm = Math.sqrt(norm);
 			    for (i = 0; i < x.length; i++) {
 			    	x[i] = optimal_point.vector_x.get(i);
+			    	parameters[i] = x[i];
 			    }
 
 			    iteration_summary.gradient_max_norm = current_state.gradient_max_norm;
@@ -18398,6 +18415,7 @@ public abstract class CeresSolver {
 				parameters.clear();
 				for (i = 0; i < solution.length; i++) {
 					parameters.add(solution[i]);
+					parameters_ptr[i] = solution[i];
 				}
 			    SetSummaryFinalCost(summary);
 			}
