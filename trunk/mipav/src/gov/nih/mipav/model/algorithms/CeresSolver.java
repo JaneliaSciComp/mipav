@@ -679,6 +679,10 @@ public abstract class CeresSolver {
 	} // class Rosenbrock
 	
 	public void runRosenbrockExample() {
+		//Ceres GradientProblemSolver Report: Iterations: 36, Initial cost: 2.420000e+01, Final cost: 1.955192e-27, Termination: CONVERGENCE
+		//Initial x: -1.2 y: 1.0
+		//Final calculation x: 1.0000000000000369 y: 1.0000000000000762
+
 		double parameters[] = new double[]{-1.2, 1.0};
 
 		  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
@@ -9278,7 +9282,7 @@ public abstract class CeresSolver {
 	          max_step_contraction = 1e-3;
 	          min_step_contraction = 0.9;
 	          min_step_size = 1e-9;
-	          max_num_iterations = 20;
+	          max_num_iterations = 200;
 	          sufficient_curvature_decrease = 0.9;
 	          max_step_expansion = 10.0;
 	          is_silent = false;
@@ -16732,7 +16736,7 @@ public abstract class CeresSolver {
 			line_search_sufficient_function_decrease = 1e-4;
 			max_line_search_step_contraction = 1e-3;
 			min_line_search_step_contraction = 0.6;
-			max_num_line_search_step_size_iterations = 20;
+			max_num_line_search_step_size_iterations = 200;
 			max_num_line_search_direction_restarts = 5;
 			line_search_sufficient_curvature_decrease = 0.9;
 			max_line_search_step_expansion = 10.0;
@@ -18075,7 +18079,7 @@ public abstract class CeresSolver {
 		      line_search_sufficient_function_decrease = 1e-4;
 		      max_line_search_step_contraction = 1e-3;
 		      min_line_search_step_contraction = 0.6;
-		      max_num_line_search_step_size_iterations = 20;
+		      max_num_line_search_step_size_iterations = 200;
 		      max_num_line_search_direction_restarts = 5;
 		      line_search_sufficient_curvature_decrease = 0.9;
 		      max_line_search_step_expansion = 10.0;
