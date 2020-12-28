@@ -545,6 +545,7 @@ public abstract class CeresSolver {
 	private int testCase;
 	private final int COST_FUNCTOR_EXAMPLE = 1;
 	private final int CURVE_FITTING_EXAMPLE = 2;
+	private boolean optionsValid = true;
 
 	class CostFunctorExample {
 		public CostFunctorExample() {
@@ -612,10 +613,13 @@ public abstract class CeresSolver {
 		Solver solver = new Solver();
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
+		optionsValid = true;
 		Solve(solver.options, problem, solver.summary);
-		System.out.println(solver.summary.BriefReport());
-		System.out.println("Solved answer = " + x[0]);
-		System.out.println("Actual answer = 10.0");
+		if (optionsValid) {
+			System.out.println(solver.summary.BriefReport());
+			System.out.println("Solved answer = " + x[0]);
+			System.out.println("Actual answer = 10.0");
+		}
 	}
 
 	public void runAutoDiffCostFunctionExample() {
@@ -632,9 +636,12 @@ public abstract class CeresSolver {
 		Solver solver = new Solver();
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
+		optionsValid = true;
 		Solve(solver.options, problem, solver.summary);
-		System.out.println("Solved answer = " + x[0]);
-		System.out.println("Actual answer = 10.0");
+		if (optionsValid) {
+		    System.out.println("Solved answer = " + x[0]);
+		    System.out.println("Actual answer = 10.0");
+		}
 	}
 
 	public void runSizedCostFunctionExample() {
@@ -649,10 +656,13 @@ public abstract class CeresSolver {
 		Solver solver = new Solver();
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
+		optionsValid = true;
 		Solve(solver.options, problem, solver.summary);
-		System.out.println(solver.summary.BriefReport());
-		System.out.println("Solved answer = " + x[0]);
-		System.out.println("Actual answer = 10.0");
+		if (optionsValid) {
+			System.out.println(solver.summary.BriefReport());
+			System.out.println("Solved answer = " + x[0]);
+			System.out.println("Actual answer = 10.0");
+		}
 	}
 	
 	// f(x,y) = (1-x)^2 + 100(y - x^2)^2;
@@ -680,9 +690,18 @@ public abstract class CeresSolver {
 	} // class Rosenbrock
 	
 	public void runRosenbrockExample() {
+		// For default LBFGS and WOLFE:   
+	    //line_search_direction_type = LineSearchDirectionType.LBFGS;
+	    //line_search_type = LineSearchType.WOLFE;
 		//Ceres GradientProblemSolver Report: Iterations: 36, Initial cost: 2.420000e+01, Final cost: 1.955192e-27, Termination: CONVERGENCE
 		//Initial x: -1.2 y: 1.0
 		//Final calculation x: 1.0000000000000369 y: 1.0000000000000762
+		
+	    //line_search_direction_type = LineSearchDirectionType.STEEPEST_DESCENT;
+	    //line_search_type = LineSearchType.ARMIJO;
+	    //Ceres GradientProblemSolver Report: Iterations: 12231, Initial cost: 2.420000e+01, Final cost: 3.699585e-11, Termination: CONVERGENCE
+		//Initial x: -1.2 y: 1.0
+		//Final calculation x: 0.9999939267782262 y: 0.9999878201526412
 
 		double parameters[] = new double[]{-1.2, 1.0};
 
@@ -691,13 +710,16 @@ public abstract class CeresSolver {
 
 		  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
 		  GradientProblem problem = new GradientProblem(new Rosenbrock());
+		  optionsValid = true;
 		  Solve(options, problem, parameters, summary);
 
 		  //std::cout << summary.FullReport() << "\n";
-		  System.out.println(summary.BriefReport());
-		  System.out.println("Initial x: " + -1.2 + " y: " + 1.0);
-		  System.out.println("Final calculation x: " + parameters[0]
-		            + " y: " + parameters[1]);
+		  if (optionsValid) {
+			  System.out.println(summary.BriefReport());
+			  System.out.println("Initial x: " + -1.2 + " y: " + 1.0);
+			  System.out.println("Final calculation x: " + parameters[0]
+			            + " y: " + parameters[1]);
+		  }
 	
 	}
 	
@@ -817,10 +839,13 @@ public abstract class CeresSolver {
 		Solver solver = new Solver();
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
+		optionsValid = true;
 		Solve(solver.options, problem, solver.summary);
-		System.out.println(solver.summary.BriefReport());
-		System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
-		System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
+		if (optionsValid) {
+			System.out.println(solver.summary.BriefReport());
+			System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
+			System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
+		}
 	}
 	
 	class CurveFittingFunctorExample {
@@ -857,10 +882,13 @@ public abstract class CeresSolver {
 		Solver solver = new Solver();
 		solver.options.minimizer_progress_to_stdout = true;
 		// Solver::Summary summary;
+		optionsValid = true;
 		Solve(solver.options, problem, solver.summary);
-		System.out.println(solver.summary.BriefReport());
-		System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
-		System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
+		if (optionsValid) {
+			System.out.println(solver.summary.BriefReport());
+			System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
+			System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
+		}
 	}
 
 
@@ -878,6 +906,7 @@ public abstract class CeresSolver {
 		//Summary();
 		if (!options.IsValid(summary.message)) {
 			System.err.println("Terminating: " + summary.message[0]);
+			optionsValid = false;
 			return;
 		}
 
@@ -16930,7 +16959,7 @@ public abstract class CeresSolver {
 			dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
 			use_nonmonotonic_steps = false;
 			max_consecutive_nonmonotonic_steps = 5;
-			max_num_iterations = 50;
+			max_num_iterations = 50000;
 			max_solver_time_in_seconds = 1e9;
 			num_threads = 1;
 			initial_trust_region_radius = 1e4;
@@ -18269,7 +18298,7 @@ public abstract class CeresSolver {
 		      max_num_line_search_direction_restarts = 5;
 		      line_search_sufficient_curvature_decrease = 0.9;
 		      max_line_search_step_expansion = 10.0;
-		      max_num_iterations = 50;
+		      max_num_iterations = 50000;
 		      max_solver_time_in_seconds = 1e9;
 		      function_tolerance = 1e-6;
 		      gradient_tolerance = 1e-10;
@@ -18549,6 +18578,7 @@ public abstract class CeresSolver {
 			// Check validity
 			if (!options.IsValid(summary.message)) {
 			    System.err.println("Terminating: " + summary.message[0]);
+			    optionsValid = false;
 			    return;
 			}
 			
