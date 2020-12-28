@@ -544,6 +544,7 @@ public abstract class CeresSolver {
 	
 	private int testCase;
 	private final int COST_FUNCTOR_EXAMPLE = 1;
+	private final int CURVE_FITTING_EXAMPLE = 2;
 
 	class CostFunctorExample {
 		public CostFunctorExample() {
@@ -805,9 +806,50 @@ public abstract class CeresSolver {
 
 	public void runCurveFittingSizedCostFunctionExample() {
 		// From curve_fitting.cc
-        // Solved answer c = 0.1314013888081673 m = 0.29187119399433387
+        // Solved ELSUNC port answer c = 0.1314013888081673 m = 0.29187119399433387
+		// Solved CeresSolver answer Solved answer c = 0.13151752053358823 m = 0.29183474506178536
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		Solver solver = new Solver();
+		solver.options.minimizer_progress_to_stdout = true;
+		// Solver::Summary summary;
+		Solve(solver.options, problem, solver.summary);
+		System.out.println(solver.summary.BriefReport());
+		System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
+		System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
+	}
+	
+	class CurveFittingFunctorExample {
+		public CurveFittingFunctorExample() {
+
+		}
+
+		public boolean operator(double x[], double residual[]) {
+			int i;
+			for (i = 0; i < curveFittingObservations; i++) {
+				double exp = Math.exp(x[1] * curveFittingData[2*i] + x[0]);
+			    residual[i] = curveFittingData[2*i+1] - exp;
+			}
+
+			return true;
+		}
+	};
+	
+	public void runCurveFittingNumericDiffCostFunctionExample() {
+		// From curve_fitting.cc
+        // Solved ELSUNC port answer c = 0.1314013888081673 m = 0.29187119399433387
+		// Solved CeresSolver answer Solved answer c = 0.13151752052574492 m = 0.2918347450638119
+		double x[] = new double[] {0.0,0.0};
+		testCase = CURVE_FITTING_EXAMPLE;
+		CurveFittingFunctorExample cf = new CurveFittingFunctorExample();
+		NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		NumericDiffOptions options = new NumericDiffOptions();
+		CostFunction cost_function = new NumericDiffCostFunction<CurveFittingFunctorExample>(cf, method, ownership, options, 67, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, x);
 
@@ -13842,13 +13884,20 @@ public abstract class CeresSolver {
 			}
 			
 			// Get the function value (residuals) at the the point to evaluate.
+			double x[];
 			switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
-				double x[] = parameters.get(0);
+				x = parameters.get(0);
 			    if (!((CostFunctorExample) functor_).operator(x, residuals)) {
 			    	return false;
 			    }
-			
+			    break;
+			case CURVE_FITTING_EXAMPLE:
+				x = parameters.get(0);
+			    if (!((CurveFittingFunctorExample) functor_).operator(x, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -14346,15 +14395,21 @@ public abstract class CeresSolver {
 			x_plus_delta[parameter_index] = x[parameter_index] + delta;
 		    parameters[parameter_block_index][parameter_index] = x_plus_delta[parameter_index];   
 			
-			switch (testCase) {
+		    double xp[];
+		    switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
-				double xp[] = parameters[0];
+				xp = parameters[0];
 			    if (!((CostFunctorExample) functor).operator(xp, residuals)) {
 			    	return false;
 			    }
-			
+			    break;
+			case CURVE_FITTING_EXAMPLE:
+				xp = parameters[0];
+			    if (!((CurveFittingFunctorExample) functor).operator(xp, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
-			
 			
 			
 			// Compute this column of the jacobian in 3 steps:
@@ -14370,11 +14425,17 @@ public abstract class CeresSolver {
 			
 			switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
-				double xp[] = parameters[0];
+				xp = parameters[0];
 			    if (!((CostFunctorExample) functor).operator(xp, temp_residuals)) {
 			    	return false;
 			    }
-			
+			    break;
+			case CURVE_FITTING_EXAMPLE:
+				xp = parameters[0];
+			    if (!((CurveFittingFunctorExample) functor).operator(xp, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			for (i = 0; i < residuals.length; i++) {
