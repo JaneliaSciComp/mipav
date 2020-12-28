@@ -699,6 +699,128 @@ public abstract class CeresSolver {
 		            + " y: " + parameters[1]);
 	
 	}
+	
+	// NLConstrainedEngine, MIPAV port of ELSUNC, gave the following for curve_fitting.cc
+	//Number of iterations: 4
+	//Chi-squared: 2.113502580804931
+	//c = 0.1314013888081673
+    //m = 0.29187119399433387
+	
+    final int curveFittingObservations = 67;
+	double curveFittingData[] = {
+	  0.000000e+00, 1.133898e+00,
+	  7.500000e-02, 1.334902e+00,
+	  1.500000e-01, 1.213546e+00,
+	  2.250000e-01, 1.252016e+00,
+	  3.000000e-01, 1.392265e+00,
+	  3.750000e-01, 1.314458e+00,
+	  4.500000e-01, 1.472541e+00,
+	  5.250000e-01, 1.536218e+00,
+	  6.000000e-01, 1.355679e+00,
+	  6.750000e-01, 1.463566e+00,
+	  7.500000e-01, 1.490201e+00,
+	  8.250000e-01, 1.658699e+00,
+	  9.000000e-01, 1.067574e+00,
+	  9.750000e-01, 1.464629e+00,
+	  1.050000e+00, 1.402653e+00,
+	  1.125000e+00, 1.713141e+00,
+	  1.200000e+00, 1.527021e+00,
+	  1.275000e+00, 1.702632e+00,
+	  1.350000e+00, 1.423899e+00,
+	  1.425000e+00, 1.543078e+00,
+	  1.500000e+00, 1.664015e+00,
+	  1.575000e+00, 1.732484e+00,
+	  1.650000e+00, 1.543296e+00,
+	  1.725000e+00, 1.959523e+00,
+	  1.800000e+00, 1.685132e+00,
+	  1.875000e+00, 1.951791e+00,
+	  1.950000e+00, 2.095346e+00,
+	  2.025000e+00, 2.361460e+00,
+	  2.100000e+00, 2.169119e+00,
+	  2.175000e+00, 2.061745e+00,
+	  2.250000e+00, 2.178641e+00,
+	  2.325000e+00, 2.104346e+00,
+	  2.400000e+00, 2.584470e+00,
+	  2.475000e+00, 1.914158e+00,
+	  2.550000e+00, 2.368375e+00,
+	  2.625000e+00, 2.686125e+00,
+	  2.700000e+00, 2.712395e+00,
+	  2.775000e+00, 2.499511e+00,
+	  2.850000e+00, 2.558897e+00,
+	  2.925000e+00, 2.309154e+00,
+	  3.000000e+00, 2.869503e+00,
+	  3.075000e+00, 3.116645e+00,
+	  3.150000e+00, 3.094907e+00,
+	  3.225000e+00, 2.471759e+00,
+	  3.300000e+00, 3.017131e+00,
+	  3.375000e+00, 3.232381e+00,
+	  3.450000e+00, 2.944596e+00,
+	  3.525000e+00, 3.385343e+00,
+	  3.600000e+00, 3.199826e+00,
+	  3.675000e+00, 3.423039e+00,
+	  3.750000e+00, 3.621552e+00,
+	  3.825000e+00, 3.559255e+00,
+	  3.900000e+00, 3.530713e+00,
+	  3.975000e+00, 3.561766e+00,
+	  4.050000e+00, 3.544574e+00,
+	  4.125000e+00, 3.867945e+00,
+	  4.200000e+00, 4.049776e+00,
+	  4.275000e+00, 3.885601e+00,
+	  4.350000e+00, 4.110505e+00,
+	  4.425000e+00, 4.345320e+00,
+	  4.500000e+00, 4.161241e+00,
+	  4.575000e+00, 4.363407e+00,
+	  4.650000e+00, 4.161576e+00,
+	  4.725000e+00, 4.619728e+00,
+	  4.800000e+00, 4.737410e+00,
+	  4.875000e+00, 4.727863e+00,
+	  4.950000e+00, 4.669206e+00,
+	};
+	
+	class CurveFittingCostFunction extends SizedCostFunction {
+		public CurveFittingCostFunction() {
+			// number of resdiuals
+			// size of first parameter
+			super(67, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < curveFittingObservations; i++) {
+				double exp = Math.exp(x[1] * curveFittingData[2*i] + x[0]);
+			    residuals[i] = curveFittingData[2*i+1] - exp;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][2*i] = -exp;
+					jacobians[0][2*i+1] = -curveFittingData[2*i]*exp;
+			    }
+			}
+
+			return true;
+		
+	  }
+	} // class CurveFittingCostFunction
+
+	public void runCurveFittingSizedCostFunctionExample() {
+		// From curve_fitting.cc
+        // Solved answer c = 0.1314013888081673 m = 0.29187119399433387
+		double x[] = new double[] {0.0, 0.0 };
+		CostFunction cost_function = new CurveFittingCostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		Solver solver = new Solver();
+		solver.options.minimizer_progress_to_stdout = true;
+		// Solver::Summary summary;
+		Solve(solver.options, problem, solver.summary);
+		System.out.println(solver.summary.BriefReport());
+		System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
+		System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
+	}
+
 
 
 	public void Solve(SolverOptions options, ProblemImpl problem, SolverSummary summary) {
@@ -5952,7 +6074,7 @@ public abstract class CeresSolver {
 	      for (r = 0; r < num_residuals; r++) {
 	    	  for (c = 0; c < parameter_block_size; c++) {
 	    		  dense_jacobian.setMatrix(r + residual_offset,
-	    				  c + parameter_block.delta_offset(),jacobians[j+r][c]);
+	    				  c + parameter_block.delta_offset(),jacobians[j][r*parameter_block_size+c]);
 	    	  }
 	      }
 	    }
@@ -7559,8 +7681,9 @@ public abstract class CeresSolver {
 		      return false;
 		    }
 
-		    x_ = candidate_x_;
+		    
 		    for (i = 0; i < x_.size(); i++) {
+		    	x_.set(i, candidate_x_.get(i));
 		    	parameters_[i] = x_.get(i);
 		    }
 		    x_norm_ = 0.0;
@@ -8039,6 +8162,7 @@ public abstract class CeresSolver {
 		    candidate_cost_ = Double.MAX_VALUE;
 		    return;
 		  }
+		  
 
 		  double candidate_x_array[] = new double[candidate_x_.size()];
 		  for (i = 0; i < candidate_x_.size(); i++) {
@@ -8236,10 +8360,11 @@ public abstract class CeresSolver {
 		// evaluator know that the step has been accepted.
 		private boolean HandleSuccessfulStep() {
 		  int i;
-		  x_ = candidate_x_;
 		  for (i = 0; i < x_.size(); i++) {
-			  parameters_[i] = x_.get(i);
-		  }
+		    	x_.set(i, candidate_x_.get(i));
+		    	parameters_[i] = x_.get(i);
+		    }
+		  
 		  x_norm_ = 0.0;
 		  for (i = 0; i < x_.size(); i++) {
 			  x_norm_ += x_.get(i)*x_.get(i);
