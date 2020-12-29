@@ -692,6 +692,8 @@ public abstract class CeresSolver {
 	public void runRosenbrockExample() {
 		// For default LBFGS and WOLFE:   
 	    //line_search_direction_type = LineSearchDirectionType.LBFGS;
+		// and
+		//line_search_direction_type = LineSearchDirectionType.BFGS;
 	    //line_search_type = LineSearchType.WOLFE;
 		//Ceres GradientProblemSolver Report: Iterations: 36, Initial cost: 2.420000e+01, Final cost: 1.955192e-27, Termination: CONVERGENCE
 		//Initial x: -1.2 y: 1.0
@@ -702,6 +704,27 @@ public abstract class CeresSolver {
 	    //Ceres GradientProblemSolver Report: Iterations: 12231, Initial cost: 2.420000e+01, Final cost: 3.699585e-11, Termination: CONVERGENCE
 		//Initial x: -1.2 y: 1.0
 		//Final calculation x: 0.9999939267782262 y: 0.9999878201526412
+		
+		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
+	    //line_search_type = LineSearchType.WOLFE;
+	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+		// Ceres GradientProblemSolver Report: Iterations: 143, Initial cost: 2.420000e+01, Final cost: 3.699553e-15, Termination: CONVERGENCE
+		// Initial x: -1.2 y: 1.0
+		// Final calculation x: 0.9999999392217175 y: 0.9999998782077771
+		
+		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
+	    //line_search_type = LineSearchType.WOLFE;
+	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.POLAK_RIBIERE;
+		//Terminating: Numerical failure in line search, initial_step_size is 
+		//negative: -4.62953e-03, directional_derivative: -1.74860e+04, 
+		//(current_cost - previous_cost): 4.04760e+01
+		
+		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
+	    //line_search_type = LineSearchType.WOLFE;
+	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.HESTENES_STIEFEL;
+		//Ceres GradientProblemSolver Report: Iterations: 74, Initial cost: 2.420000e+01, Final cost: 2.580084e-09, Termination: CONVERGENCE
+		//Initial x: -1.2 y: 1.0
+		//Final calculation x: 0.9999497866191307 y: 0.999898809596179
 
 		double parameters[] = new double[]{-1.2, 1.0};
 
@@ -12068,7 +12091,7 @@ public abstract class CeresSolver {
 			    Vector<Double> gradient_change = new Vector<Double>();
 			    double dotProduct = 0.0;
 			    switch (type_) {
-			      case FLETCHER_REEVES:
+ 			      case FLETCHER_REEVES:
 			        beta = current.gradient_squared_norm / previous.gradient_squared_norm;
 			        break;
 			      case POLAK_RIBIERE:
@@ -12790,6 +12813,7 @@ public abstract class CeresSolver {
 			  dst.cost[0] = src.cost[0];
 			  dst.gradient.clear();
 			  dst.gradient.addAll(src.gradient);
+			  dst.gradient_squared_norm = src.gradient_squared_norm;
 			  dst.gradient_max_norm = src.gradient_max_norm;
 			  dst.search_direction.clear();
 			  dst.search_direction.addAll(src.search_direction);
@@ -16951,7 +16975,7 @@ public abstract class CeresSolver {
 			line_search_sufficient_function_decrease = 1e-4;
 			max_line_search_step_contraction = 1e-3;
 			min_line_search_step_contraction = 0.6;
-			max_num_line_search_step_size_iterations = 200;
+			max_num_line_search_step_size_iterations = 2000;
 			max_num_line_search_direction_restarts = 5;
 			line_search_sufficient_curvature_decrease = 0.9;
 			max_line_search_step_expansion = 10.0;
@@ -18294,7 +18318,7 @@ public abstract class CeresSolver {
 		      line_search_sufficient_function_decrease = 1e-4;
 		      max_line_search_step_contraction = 1e-3;
 		      min_line_search_step_contraction = 0.6;
-		      max_num_line_search_step_size_iterations = 200;
+		      max_num_line_search_step_size_iterations = 2000;
 		      max_num_line_search_direction_restarts = 5;
 		      line_search_sufficient_curvature_decrease = 0.9;
 		      max_line_search_step_expansion = 10.0;
