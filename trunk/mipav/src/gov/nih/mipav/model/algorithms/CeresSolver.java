@@ -708,23 +708,27 @@ public abstract class CeresSolver {
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
 	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
-		// Ceres GradientProblemSolver Report: Iterations: 143, Initial cost: 2.420000e+01, Final cost: 3.699553e-15, Termination: CONVERGENCE
-		// Initial x: -1.2 y: 1.0
-		// Final calculation x: 0.9999999392217175 y: 0.9999998782077771
+		//Ceres GradientProblemSolver Report: Iterations: 100, Initial cost: 2.420000e+01, Final cost: 4.572754e-12, Termination: CONVERGENCE
+		//Initial x: -1.2 y: 1.0
+		//Final calculation x: 1.0000021376601098 y: 1.0000042809490068
 		
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
 	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.POLAK_RIBIERE;
-		//Terminating: Numerical failure in line search, initial_step_size is 
-		//negative: -4.62953e-03, directional_derivative: -1.74860e+04, 
-		//(current_cost - previous_cost): 4.04760e+01
+		//Does not work with:
+		//Terminating: Parameter tolerance reached. 
+		//Relative step_norm: 0.000000e+00 <= 1.000000e-08.
+		//Ceres GradientProblemSolver Report: Iterations: 24, Initial cost: 2.420000e+01, Final cost: 6.794325e-01, Termination: CONVERGENCE
+		//Initial x: -1.2 y: 1.0
+		//Final calculation x: 0.1883300765677482 y: 0.04982942249468986
 		
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
 	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.HESTENES_STIEFEL;
-		//Ceres GradientProblemSolver Report: Iterations: 74, Initial cost: 2.420000e+01, Final cost: 2.580084e-09, Termination: CONVERGENCE
+		//Ceres GradientProblemSolver Report: Iterations: 53, Initial cost: 2.420000e+01, Final cost: 5.120933e-20, Termination: CONVERGENCE
 		//Initial x: -1.2 y: 1.0
-		//Final calculation x: 0.9999497866191307 y: 0.999898809596179
+		//Final calculation x: 0.9999999997738941 y: 0.9999999995468638
+		
 
 		double parameters[] = new double[]{-1.2, 1.0};
 
@@ -8688,7 +8692,9 @@ public abstract class CeresSolver {
 			      return false;
 			    }
 
-			    previous = current.value_is_valid ? current : previous;
+			    if (current.value_is_valid) {
+			    	copyFunctionSample(previous, current);
+			    }
 			    ++summary.num_function_evaluations;
 			    ++summary.num_gradient_evaluations;
 			    function.Evaluate(step_size, kEvaluateGradient, current);
@@ -13179,7 +13185,7 @@ public abstract class CeresSolver {
 			        1.0E-3 * System.currentTimeMillis() - iteration_start_time;
 
 			    if (optimal_point.vector_gradient_is_valid) {
-			      current_state.cost = optimal_point.value;
+			      current_state.cost[0] = optimal_point.value[0];
 			      current_state.gradient = optimal_point.vector_gradient;
 			    } else {
 			      EvaluateOptions evaluate_options = new EvaluateOptions();
