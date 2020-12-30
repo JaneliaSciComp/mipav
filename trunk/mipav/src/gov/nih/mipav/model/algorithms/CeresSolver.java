@@ -715,9 +715,10 @@ public abstract class CeresSolver {
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
 	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.POLAK_RIBIERE;
-		//Ceres GradientProblemSolver Report: Iterations: 12171, Initial cost: 2.420000e+01, Final cost: 3.943980e-11, Termination: CONVERGENCE
+		//Does not give correct answer
+		//Ceres GradientProblemSolver Report: Iterations: 24, Initial cost: 2.420000e+01, Final cost: 6.794325e-01, Termination: CONVERGENCE
 		//Initial x: -1.2 y: 1.0
-		//Final calculation x: 0.9999937282400041 y: 0.9999874241431602
+		//Final calculation x: 0.1883300765677482 y: 0.04982942249468986
 		
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
@@ -13198,7 +13199,10 @@ public abstract class CeresSolver {
 
 			    if (optimal_point.vector_gradient_is_valid) {
 			      current_state.cost[0] = optimal_point.value[0];
-			      current_state.gradient = optimal_point.vector_gradient;
+			      current_state.gradient.clear();
+			      for (i = 0; i < optimal_point.vector_gradient.size(); i++) {
+			          current_state.gradient.add(optimal_point.vector_gradient.get(i));
+			      }
 			    } else {
 			      EvaluateOptions evaluate_options = new EvaluateOptions();
 			      evaluate_options.new_evaluation_point = false;
@@ -18328,7 +18332,7 @@ public abstract class CeresSolver {
 		      //line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 		      line_search_type = LineSearchType.WOLFE;
 		      nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
-		      //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.HESTENES_STIEFEL;
+		      //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.POLAK_RIBIERE;
 		      max_lbfgs_rank = 20;
 		      use_approximate_eigenvalue_bfgs_scaling = false;
 		      line_search_interpolation_type = LineSearchInterpolationType.CUBIC;
