@@ -715,12 +715,9 @@ public abstract class CeresSolver {
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
 	    //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.POLAK_RIBIERE;
-		//Does not work with:
-		//Terminating: Parameter tolerance reached. 
-		//Relative step_norm: 0.000000e+00 <= 1.000000e-08.
-		//Ceres GradientProblemSolver Report: Iterations: 24, Initial cost: 2.420000e+01, Final cost: 6.794325e-01, Termination: CONVERGENCE
+		//Ceres GradientProblemSolver Report: Iterations: 12171, Initial cost: 2.420000e+01, Final cost: 3.943980e-11, Termination: CONVERGENCE
 		//Initial x: -1.2 y: 1.0
-		//Final calculation x: 0.1883300765677482 y: 0.04982942249468986
+		//Final calculation x: 0.9999937282400041 y: 0.9999874241431602
 		
 		//line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 	    //line_search_type = LineSearchType.WOLFE;
@@ -8992,7 +8989,12 @@ public abstract class CeresSolver {
 			    // produce a valid point when ArmijoLineSearch would succeed, we return the
 			    // point with the lowest cost found thus far which satsifies the Armijo
 			    // condition (but not the Wolfe conditions).
-			    summary.optimal_point = bracket_low;
+				if (summary.optimal_point != null) {
+			        copyFunctionSample(summary.optimal_point,bracket_low);
+				}
+				else {
+					summary.optimal_point = bracket_low;
+				}
 			    summary.success = true;
 			    return;
 			  }
@@ -9042,9 +9044,19 @@ public abstract class CeresSolver {
 			  // condition.
 
 			  if (!solution.value_is_valid || solution.value[0] > bracket_low.value[0]) {
-			    summary.optimal_point = bracket_low;
+				if (summary.optimal_point != null) {
+			        copyFunctionSample(summary.optimal_point,bracket_low);
+				}
+				else {
+					summary.optimal_point = bracket_low;
+				}
 			  } else {
-			    summary.optimal_point = solution;
+				if (summary.optimal_point != null) {
+			        copyFunctionSample(summary.optimal_point,solution);
+				}
+				else {
+					summary.optimal_point = solution;
+				}
 			  }
 
 			  summary.success = true;
@@ -13194,16 +13206,14 @@ public abstract class CeresSolver {
 			      for (i = 0; i < evx.length; i++) {
 			    	  evx[i] = optimal_point.vector_x.get(i);
 			      }
-			      double evg[] = new double[current_state.gradient.size()];
-			      for (i = 0; i < evg.length; i++) {
-			    	  evg[i] = current_state.gradient.get(i);
-			      }
+			      double evg[] = new double[evx.length];
 			      status = evaluator.Evaluate(evaluate_options, evx, current_state.cost, null, evg, null);
 			      for (i = 0; i < evx.length; i++) {
 			    	  optimal_point.vector_x.set(i,evx[i]);
 			      }
+			      current_state.gradient.clear();
 			      for (i = 0; i < evg.length; i++) {
-			    	  current_state.gradient.set(i,evg[i]);
+			    	  current_state.gradient.add(evg[i]);
 			      }
 			      if (!status) {
 			        summary.termination_type = TerminationType.FAILURE;
@@ -18315,8 +18325,10 @@ public abstract class CeresSolver {
 	        // Default constructor that sets up a generic sparse problem.
 	      public GradientProblemSolverOptions() {
 		      line_search_direction_type = LineSearchDirectionType.LBFGS;
+		      //line_search_direction_type = LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT;
 		      line_search_type = LineSearchType.WOLFE;
 		      nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+		      //nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.HESTENES_STIEFEL;
 		      max_lbfgs_rank = 20;
 		      use_approximate_eigenvalue_bfgs_scaling = false;
 		      line_search_interpolation_type = LineSearchInterpolationType.CUBIC;
