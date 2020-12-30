@@ -854,7 +854,9 @@ public abstract class CeresSolver {
 	public void runCurveFittingSizedCostFunctionExample() {
 		// From curve_fitting.cc
         // Solved ELSUNC port answer c = 0.1314013888081673 m = 0.29187119399433387
-		// Solved CeresSolver answer Solved answer c = 0.13151752053358823 m = 0.29183474506178536
+		// With TrustRegionStrategyType.LEVENBERG_MARQUARDT:
+		//Ceres Solver Report: Iterations: 26, Initial cost: 1.211734e+02, Final cost: 1.056752e+00, Termination: CONVERGENCE
+		// Solved answer c = 0.13151752053358823 m = 0.29183474506178536
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -10748,6 +10750,7 @@ public abstract class CeresSolver {
 
 		    if (per_solve_options.dump_format_type == DumpFormatType.CONSOLE ||
 		        (per_solve_options.dump_format_type != DumpFormatType.CONSOLE &&
+		         per_solve_options.dump_filename_base != null &&
 		         !per_solve_options.dump_filename_base.isEmpty())) {
 		      if (!DumpLinearLeastSquaresProblem(per_solve_options.dump_filename_base,
 		                                         per_solve_options.dump_format_type,
@@ -17000,6 +17003,7 @@ public abstract class CeresSolver {
 			line_search_sufficient_curvature_decrease = 0.9;
 			max_line_search_step_expansion = 10.0;
 			trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		    //trust_region_strategy_type = TrustRegionStrategyType.DOGLEG;
 			dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
 			use_nonmonotonic_steps = false;
 			max_consecutive_nonmonotonic_steps = 5;
