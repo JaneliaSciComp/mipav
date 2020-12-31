@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.Preferences;
 
 /**
  * Copyright Yair Chuchem 2011.
@@ -165,7 +166,7 @@ public class QuarticEquation {
 	    } // if (degree >= 1)
 		num_sols[0] = solve_real_poly(degree, poly, solsreal);
 		for (i = 0; i < num_sols[0]; i++) {
-		    System.out.println(solsreal[i]);	
+		    Preferences.debug(solsreal[i] + "\n", Preferences.DEBUG_ALGORITHM);	
 		}
 	}
 	
@@ -413,7 +414,8 @@ public class QuarticEquation {
 		for (i = 0; i < num_sols[0]; i++) {
 			solsreal[i] = sols[i].real;
 			solsimag[i] = sols[i].imag;
-		    System.out.println(sols[i].real + " + i * " + sols[i].imag);	
+		    Preferences.debug(sols[i].real + " + i * " + sols[i].imag + "\n",
+		    		Preferences.DEBUG_ALGORITHM);	
 		}
 	}
 	
