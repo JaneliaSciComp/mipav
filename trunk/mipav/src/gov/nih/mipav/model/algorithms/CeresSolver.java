@@ -857,6 +857,17 @@ public abstract class CeresSolver {
 		// With TrustRegionStrategyType.LEVENBERG_MARQUARDT:
 		//Ceres Solver Report: Iterations: 26, Initial cost: 1.211734e+02, Final cost: 1.056752e+00, Termination: CONVERGENCE
 		// Solved answer c = 0.13151752053358823 m = 0.29183474506178536
+		
+		//With trust_region_strategy_type = TrustRegionStrategyType.DOGLEG;
+		//dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
+		//Ceres Solver Report: Iterations: 16, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		//Solved answer c = 0.13139880817309488 m = 0.2918721096498213
+		
+		//With trust_region_strategy_type = TrustRegionStrategyType.DOGLEG;
+	    //dogleg_type = DoglegType.SUBSPACE_DOGLEG
+		//Ceres Solver Report: Iterations: 16, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		//Solved answer c = 0.13139893189971505 m = 0.2918720583465281
+		
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -4690,6 +4701,7 @@ public abstract class CeresSolver {
 		    }
 		    work_ = new double[work_size];
 		  }
+		  
 
 		  summary.num_iterations = 1;
 		  summary.termination_type = SolveInPlaceUsingQR(lhs_.getRowDimension(),
@@ -10747,6 +10759,10 @@ public abstract class CeresSolver {
 				  linear_solver_summary =
 					      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);  
 			  }
+		    gauss_newton_step_.clear();
+		    for (i = 0; i < gauss_newton_step_array.length; i++) {
+		    	gauss_newton_step_.add(gauss_newton_step_array[i]);
+		    }
 
 		    if (per_solve_options.dump_format_type == DumpFormatType.CONSOLE ||
 		        (per_solve_options.dump_format_type != DumpFormatType.CONSOLE &&
@@ -17005,6 +17021,7 @@ public abstract class CeresSolver {
 			trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
 		    //trust_region_strategy_type = TrustRegionStrategyType.DOGLEG;
 			dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
+			//dogleg_type = DoglegType.SUBSPACE_DOGLEG;
 			use_nonmonotonic_steps = false;
 			max_consecutive_nonmonotonic_steps = 5;
 			max_num_iterations = 50000;
