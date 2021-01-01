@@ -868,6 +868,10 @@ public abstract class CeresSolver {
 		//Ceres Solver Report: Iterations: 16, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
 		//Solved answer c = 0.13139893189971505 m = 0.2918720583465281
 		
+		//DENSE_NORMAL_CHOLESKY
+		//Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		//Solved answer c = 0.13143858621916737 m = 0.29186127928969857
+		
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -4471,7 +4475,18 @@ public abstract class CeresSolver {
 		  //
 		  // Note: This is a bit delicate, it assumes that the stride on this
 		  // matrix is the same as the number of rows.
-		  SymmetricRankKUpdate(A.num_rows(), num_cols, A.values(), true, 1.0, 0.0, lhs.getArray());
+		  SymmetricRankUpdate(A.num_rows(), num_cols, A.values(), true, 1.0, 0.0, lhs.getArray());
+		  /*for (int row = 0; row < 2; row++) {
+			  for (int col = 0; col < 2; col++) {
+				  System.out.println("lhs["+row+"]["+col+"] = " + lhs.getArray()[row][col]);
+			  }
+		  }
+		  double lhs2[][] = ((A.m_).transpose().times(A.m_)).getArray();
+		  for (int row = 0; row < 2; row++) {
+			  for (int col = 0; col < 2; col++) {
+				  System.out.println("lhs2["+row+"]["+col+"] = " + lhs2[row][col]);
+			  }
+		  }*/
 
 		  if (per_solve_options.D != null) {
 		    // Undo the modifications to the matrix A.
@@ -4490,7 +4505,7 @@ public abstract class CeresSolver {
 
 		  summary.num_iterations = 1;
 		  summary.termination_type =
-		      SolveInPlaceUsingCholesky(num_cols,
+		      SolveInPlaceUsingCholesky(num_cols, //lhs2,
 		                                        lhs.getArray(),
 		                                        x,
 		                                        summary.message);
@@ -4743,7 +4758,7 @@ public abstract class CeresSolver {
 		  return (int)work[0];
 	}
 	
-	private void SymmetricRankKUpdate(int num_rows,
+	private void SymmetricRankUpdate(int num_rows,
             int num_cols,
             double a[],
             boolean transpose,
@@ -4757,11 +4772,20 @@ public abstract class CeresSolver {
 		int k = transpose ? num_rows : num_cols;
 		int lda = k;
 		int ldc = n;
-		double A[][] = new double[lda][1];
-		for (int i = 0; i < Math.min(lda,a.length); i++) {
-			A[i][0] = a[i];
+		double A[][] = new double[lda][n];
+		int i = 0;
+		for (int col = 0; col < n; col++) {
+		for (int r = 0; r < k; r++) {
+			    A[r][col] = a[i++];
+			}
 		}
 		ge.dsyrk(uplo, trans, n, k, alpha, A, lda, beta, c, ldc);
+		// Have only filled in lower triangle of n by n c
+		for (int r = 0; r < n; r++) {
+			for (int col = r+1; col < n; col++) {
+				c[r][col] = c[col][r];
+			}
+		}
 	}
 
 	
@@ -5900,6 +5924,7 @@ public abstract class CeresSolver {
 					num_threads = 1;
 					num_eliminate_blocks = -1;
 					linear_solver_type = LinearSolverType.DENSE_QR;
+					//linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
 					dynamic_sparsity = false;
 					context = new Context();
 					evaluation_callback = null;
@@ -7296,6 +7321,7 @@ public abstract class CeresSolver {
 			  }
 
 			  evaluator_options_.linear_solver_type = LinearSolverType.DENSE_QR;
+			  //evaluator_options_.linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
 			  evaluator_options_.num_eliminate_blocks = 0;
 			  evaluator_options_.num_threads = 1;
 			  evaluator_options_.context = context_;
@@ -7335,6 +7361,7 @@ public abstract class CeresSolver {
 			  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
 
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
+			  //linear_solver_options.type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
 			  linear_solver_options.context = context_;
 
 			  for (i = 0; i < options.num_threads; ++i) {
@@ -17041,6 +17068,7 @@ public abstract class CeresSolver {
 			// #if defined(CERES_NO_SUITESPARSE) && defined(CERES_NO_CXSPARSE) &&
 			// !defined(CERES_ENABLE_LGPL_CODE) // NOLINT
 			linear_solver_type = LinearSolverType.DENSE_QR;
+			//linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
 			// #else
 			// linear_solver_type = SPARSE_NORMAL_CHOLESKY;
 			// #endif
