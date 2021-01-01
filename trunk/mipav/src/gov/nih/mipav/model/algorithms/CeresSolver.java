@@ -699,6 +699,11 @@ public abstract class CeresSolver {
 		//Initial x: -1.2 y: 1.0
 		//Final calculation x: 1.0000000000000369 y: 1.0000000000000762
 		
+		//DENSE_NORMAL_CHOLESKY and CGNR
+		//Ceres GradientProblemSolver Report: Iterations: 36, Initial cost: 2.420000e+01, Final cost: 1.955192e-27, Termination: CONVERGENCE
+		//Initial x: -1.2 y: 1.0
+		//Final calculation x: 1.0000000000000369 y: 1.0000000000000762
+		
 	    //line_search_direction_type = LineSearchDirectionType.STEEPEST_DESCENT;
 	    //line_search_type = LineSearchType.ARMIJO;
 	    //Ceres GradientProblemSolver Report: Iterations: 12231, Initial cost: 2.420000e+01, Final cost: 3.699585e-11, Termination: CONVERGENCE
@@ -3880,6 +3885,7 @@ public abstract class CeresSolver {
 	  // blocks is an array of block sizes.
 	  public BlockRandomAccessDiagonalMatrix(Vector<Integer> blocks) {
 		      blocks_ = blocks;
+		      layout_ = new Vector<CellInfo>();
 			  // Build the row/column layout vector and count the number of scalar
 			  // rows/columns.
 			  int num_cols = 0;
@@ -3965,10 +3971,25 @@ public abstract class CeresSolver {
 	  // Invert the matrix assuming that each block is positive definite.
 	  // Need to port Eigen sparse library before implementing
 	  public void Invert() {
+		  int i,r,c;
 		  double values[] = tsm_.mutable_values();
 		  int values_index = 0;
-		  for (int i = 0; i < blocks_.size(); ++i) {
+		  for (i = 0; i < blocks_.size(); ++i) {
 		    int block_size = blocks_.get(i);
+		    double arr[][] = new double[block_size][block_size];
+		    for (r = 0; r < block_size; r++) {
+		    	for (c = 0; c < block_size; c++) {
+		    		arr[r][c] = values[values_index + r*block_size + c];
+		    	}
+		    }
+		    Matrix block = new Matrix(arr);
+		    block = block.inverse();
+		    double arrinv[][] = block.getArray();
+		    for (r = 0; r < block_size; r++) {
+		    	for (c = 0; c < block_size; c++) {
+		    		values[values_index + r*block_size + c] = arrinv[r][c];
+		    	}
+		    }
 		    //MatrixRef block(values, block_size, block_size);
 		    //block =
 		    //    block
@@ -3977,7 +3998,6 @@ public abstract class CeresSolver {
 		    //    .solve(Matrix::Identity(block_size, block_size));
 		    values_index += block_size * block_size;
 		  }
-
 	  }
 
 	  // y += S * x
@@ -5586,7 +5606,7 @@ public abstract class CeresSolver {
 	  public  BlockJacobiPreconditioner(BlockSparseMatrix A) {
 		  CompressedRowBlockStructure bs = A.block_structure();
 		  Vector<Integer> blocks = new Vector<Integer>(bs.cols.size());
-		  for (int i = 0; i < blocks.size(); ++i) {
+		  for (int i = 0; i < bs.cols.size(); ++i) {
 		    blocks.add(bs.cols.get(i).size);
 		  }
 
@@ -5924,7 +5944,7 @@ public abstract class CeresSolver {
 					num_threads = 1;
 					num_eliminate_blocks = -1;
 					linear_solver_type = LinearSolverType.DENSE_QR;
-					//linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
+					//linear_solver_type = LinearSolverType.CGNR;
 					dynamic_sparsity = false;
 					context = new Context();
 					evaluation_callback = null;
@@ -6112,7 +6132,12 @@ public abstract class CeresSolver {
 
 		public void Init(int jacobian_layout[], int max_derivatives_per_residual_block) {
 			jacobian_layout_ = jacobian_layout;
+			scratch_evaluate_preparer_ = new ScratchEvaluatePreparer();
 			scratch_evaluate_preparer_.Init(max_derivatives_per_residual_block);
+		}
+		
+		public int[] getJacobianLayout() {
+			return jacobian_layout_;
 		}
 		
 		// Point the jacobian blocks directly into the block sparse matrix.
@@ -6147,9 +6172,8 @@ public abstract class CeresSolver {
 		    		  jacobian_transfer_size = jacobian_values.length - 
 		    				  jacobian_layout_[jacobian_block_offset];
 		    	  }
-		          for (i = 0; i < jacobian_transfer_size; i++) {
-		        	  jacobians[j][i] = jacobian_values[jacobian_layout_[jacobian_block_offset] + i];
-		          }
+		    	  jacobians[j] = new double[jacobian_transfer_size];
+		          
 
 		      // The jacobian_block_offset can't be indexed with 'j' since the code
 		      // that creates the layout strips out any blocks for inactive
@@ -6160,7 +6184,6 @@ public abstract class CeresSolver {
 		    }
 		  }
 		}
-
 
 	}
 
@@ -6246,6 +6269,8 @@ public abstract class CeresSolver {
 				System.err.println("num_eliminate_blocks must be >= 0 in public BlockJacobian.");
 				return;
 			}
+			jacobian_layout_ = new Vector<int[]>();
+			jacobian_layout_storage_ = new Vector<Integer>();
 			BuildJacobianLayout(program, options.num_eliminate_blocks, jacobian_layout_, jacobian_layout_storage_);
 		}
 
@@ -6298,8 +6323,24 @@ public abstract class CeresSolver {
 				ResidualBlock residual_block = residual_blocks.get(i);
 				int num_residuals = residual_block.NumResiduals();
 				int num_parameter_blocks = residual_block.NumParameterBlocks();
+				
+				int k = 0;
+				for (int j = 0; j < num_parameter_blocks; ++j) {
+					ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+					if (parameter_block.IsConstant()) {
+						continue;
+					}
+					k++;
+				}
+				if (i < jacobian_layout_.size()) {
+					jacobian_layout_.setElementAt(new int[k],i);
+				}
+				else {
+					jacobian_layout_.add(new int[k]);
+				}
 
-				for (int j = 0, k = 0; j < num_parameter_blocks; ++j) {
+				k = 0;
+				for (int j = 0; j < num_parameter_blocks; ++j) {
 					ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
 					int parameter_block_index = parameter_block.index();
 					if (parameter_block.IsConstant()) {
@@ -6371,6 +6412,9 @@ public abstract class CeresSolver {
 			    ResidualBlock residual_block = residual_blocks.get(i);
 			    CompressedList row = bs.rows.get(i);
 
+			    if (row.block == null) {
+			    	row.block = new Block();
+			    }
 			    row.block.size = residual_block.NumResiduals();
 			    row.block.position = row_block_position;
 			    row_block_position += row.block.size;
@@ -6785,7 +6829,28 @@ public abstract class CeresSolver {
 	                               block_jacobians,
 	                               jacobian);
 	    	  }
-	    	  // Write is a NOOP for BlockJacobianWriter
+	    	  // Write is a noop for BlockJacobianWriter since the blocks were written directly into their final
+	    	    // position by the outside evaluate call, thanks to the jacobians array
+	    	    // prepared by the BlockEvaluatePreparers.
+	    	  else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+	    		  double[] jacobian_values =
+	    			      ((BlockSparseMatrix)jacobian).mutable_values();
+	    		   int values_index = 0;
+	    		      
+	    			  int num_parameter_blocks = residual_block.NumParameterBlocks();
+	    			  for (j = 0; j < num_parameter_blocks; ++j) {
+	    			    if (!residual_block.parameter_blocks()[j].IsConstant()) {
+	    			    	  
+	    			    	  
+	    			          if (block_jacobians[j] != null) {
+	    			              for (int k = 0; k < block_jacobians[j].length; k++) {
+	    			            	  jacobian_values[values_index++] = block_jacobians[j][k];
+	    			              }
+	    			          }
+	    			  }
+	    			}
+	    	  }
+
 	      }
 
 	      // Compute and store the gradient, if it was requested.
@@ -7321,7 +7386,7 @@ public abstract class CeresSolver {
 			  }
 
 			  evaluator_options_.linear_solver_type = LinearSolverType.DENSE_QR;
-			  //evaluator_options_.linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
+			  //evaluator_options_.linear_solver_type = LinearSolverType.CGNR;
 			  evaluator_options_.num_eliminate_blocks = 0;
 			  evaluator_options_.num_threads = 1;
 			  evaluator_options_.context = context_;
@@ -7361,7 +7426,7 @@ public abstract class CeresSolver {
 			  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
 
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
-			  //linear_solver_options.type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
+			  //linear_solver_options.type = LinearSolverType.CGNR;
 			  linear_solver_options.context = context_;
 
 			  for (i = 0; i < options.num_threads; ++i) {
@@ -17068,7 +17133,7 @@ public abstract class CeresSolver {
 			// #if defined(CERES_NO_SUITESPARSE) && defined(CERES_NO_CXSPARSE) &&
 			// !defined(CERES_ENABLE_LGPL_CODE) // NOLINT
 			linear_solver_type = LinearSolverType.DENSE_QR;
-			//linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
+			//linear_solver_type = LinearSolverType.CGNR;
 			// #else
 			// linear_solver_type = SPARSE_NORMAL_CHOLESKY;
 			// #endif
