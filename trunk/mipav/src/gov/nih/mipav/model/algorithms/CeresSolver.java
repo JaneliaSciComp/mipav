@@ -877,6 +877,11 @@ public abstract class CeresSolver {
 		//Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
 		//Solved answer c = 0.13143858621916737 m = 0.29186127928969857
 		
+		//CGNR
+		//Ceres Solver Report: Iterations: 11, Initial cost: 1.211734e+02, Final cost: 1.056752e+00, Termination: CONVERGENCE
+		//Solved answer c = 0.13137496516116404 m = 0.29186394887804623
+		//Actual answer = c = 0.1314013888081673 m = 0.29187119399433387
+		
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -4028,7 +4033,7 @@ public abstract class CeresSolver {
 		    	}
 		    }
 		    for (int row = 0; row < block_size; row++) {
-		    	y[xy_index + row++] += block_times_x[row++];
+		    	y[xy_index + row] += block_times_x[row];
 		    }
 		    xy_index += block_size;
 		  }
@@ -10170,7 +10175,7 @@ public abstract class CeresSolver {
 		  // Invalidate the output array lm_step, so that we can detect if
 		  // the linear solver generated numerical garbage.  This is known
 		  // to happen for the DENSE_QR and then DENSE_SCHUR solver when
-		  // the Jacobin is severly rank deficient and mu is too small.
+		  // the Jacobian is severly rank deficient and mu is too small.
 		  InvalidateArray(num_parameters, step);
 
 		  // Instead of solving Jx = -r, solve Jy = r.
