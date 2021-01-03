@@ -5382,7 +5382,9 @@ public abstract class CeresSolver {
 		    	      }
 		    	      per_solve_options.preconditioner.RightMultiply(r, z);
 		    	    } else {
-		    	      z = r;
+		    	      for (i = 0; i < num_cols; i++) {
+		    	          z[i] = r[i];
+		    	      }
 		    	    }
 
 		    	    double last_rho = rho;
@@ -5397,7 +5399,9 @@ public abstract class CeresSolver {
 		    	    }
 
 		    	    if (summary.num_iterations == 1) {
-		    	      p = z;
+		    	      for (i = 0; i < num_cols; i++) {
+				          p[i] = z[i];
+				      }
 		    	    } else {
 		    	      double beta = rho / last_rho;
 		    	      if ((Double.isInfinite(beta)) || (beta == 0.0)) {
@@ -10175,10 +10179,10 @@ public abstract class CeresSolver {
 		  }
 
 		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
-		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message + "\n",
+		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message[0] + "\n",
 		    		Preferences.DEBUG_ALGORITHM);
 		  } else if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE)  {
-		    Preferences.debug("Linear solver failure. Failed to compute a step: " + linear_solver_summary.message + "\n",
+		    Preferences.debug("Linear solver failure. Failed to compute a step: " + linear_solver_summary.message[0] + "\n",
 		    		Preferences.DEBUG_ALGORITHM);
 		  } else if (!IsArrayValid(num_parameters, step)) {
 		    Preferences.debug("Linear solver failure. Failed to compute a finite step.\n", Preferences.DEBUG_ALGORITHM);
