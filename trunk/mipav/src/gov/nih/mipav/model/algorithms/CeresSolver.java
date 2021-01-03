@@ -5579,8 +5579,20 @@ public abstract class CeresSolver {
 	     // y = y + DtDx
 	     if (D_ != null) {
 	       int n = A_.num_cols();
+	       double Dt[][] = new double[n][1];
+	       double D[][] = new double[1][n];
 	       for (i = 0; i < n; i++) {
-	    	   y[i] += (D_[i]*D_[i]*x[i]);
+	    	   Dt[i][0] = D_[i];
+	    	   D[0][i] = D_[i];
+	       }
+	       Matrix DtD = (new Matrix(Dt)).times(new Matrix(D));
+	       double xm[][] = new double[n][1];
+	       for (i = 0; i < n; i++) {
+	    	   xm[i][0] = x[i];
+	       }
+	       double DtDx[][] = (DtD).times(new Matrix(xm)).getArray();
+	       for (i = 0; i < n; i++) {
+	    	   y[i] = y[i] + DtDx[i][0];
 	       }
 	     }
 	   }
@@ -17803,7 +17815,7 @@ public abstract class CeresSolver {
 
 	public void MatrixVectorMultiply(int kRowA, int kColA, int kOperation, double[] A, int Astart, int num_row_a,
 			int num_col_a, double[] b, int bstart, double[] c, int cstart) {
-		if (num_row_a <= 0) {
+		if (num_row_a <= 0) { 
 			System.err.println("In MatrixVectorMultiply num_row_a <= 0");
 			return;
 		}
