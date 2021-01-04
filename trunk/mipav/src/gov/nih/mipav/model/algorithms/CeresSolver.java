@@ -878,9 +878,8 @@ public abstract class CeresSolver {
 		//Solved answer c = 0.13143858621916737 m = 0.29186127928969857
 		
 		//CGNR
-		//Ceres Solver Report: Iterations: 11, Initial cost: 1.211734e+02, Final cost: 1.056752e+00, Termination: CONVERGENCE
-		//Solved answer c = 0.13137496516116404 m = 0.29186394887804623
-		//Actual answer = c = 0.1314013888081673 m = 0.29187119399433387
+		//Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		//Solved answer c = 0.13140547008473807 m = 0.29187016268214566
 		
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
@@ -5570,7 +5569,7 @@ public abstract class CeresSolver {
 	   }
 
 	   public void RightMultiply(double x[], double y[]) {
-		 int i;
+		 int i,j;
 		 for (i = 0; i < A_.num_rows(); i++) {
 			 z_[i] = 0.0;
 		 }
@@ -5584,20 +5583,23 @@ public abstract class CeresSolver {
 	     // y = y + DtDx
 	     if (D_ != null) {
 	       int n = A_.num_cols();
-	       double Dt[][] = new double[n][1];
-	       double D[][] = new double[1][n];
+	       double DtD[][] = new double[n][n];
 	       for (i = 0; i < n; i++) {
-	    	   Dt[i][0] = D_[i];
-	    	   D[0][i] = D_[i];
+	    	   for (j = 0; j <= i; j++) {
+	    		   DtD[i][j] = D_[i]*D_[j];
+	    	   }
+	    	   for (j = i+1; j < n; j++) {
+	    		   DtD[i][j] = DtD[j][i];
+	    	   }
 	       }
-	       Matrix DtD = (new Matrix(Dt)).times(new Matrix(D));
-	       double xm[][] = new double[n][1];
+	       double DtDx[] = new double[n];
 	       for (i = 0; i < n; i++) {
-	    	   xm[i][0] = x[i];
+	    	   for (j = 0; j < n; j++) {
+	    		   DtDx[i] += DtD[i][j]*x[j];
+	    	   }
 	       }
-	       double DtDx[][] = (DtD).times(new Matrix(xm)).getArray();
 	       for (i = 0; i < n; i++) {
-	    	   y[i] = y[i] + DtDx[i][0];
+	    	   y[i] = y[i] + DtDx[i];
 	       }
 	     }
 	   }
