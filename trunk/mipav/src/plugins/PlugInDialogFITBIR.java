@@ -5111,14 +5111,18 @@ public class PlugInDialogFITBIR extends JFrame
         final String num = dicomAge.substring(0, dicomAge.length() - 1);
         final String type = dicomAge.substring(dicomAge.length() - 1, dicomAge.length());
 
-        if (type.equalsIgnoreCase("D")) {
-            return Integer.toString((int) (Integer.parseInt(num) / 30.4166666667));
-        } else if (type.equalsIgnoreCase("W")) {
-            return Integer.toString((int) (Integer.parseInt(num) / 4.34523809524));
-        } else if (type.equalsIgnoreCase("M")) {
-            return Integer.valueOf(num).toString();
-        } else if (type.equalsIgnoreCase("Y")) {
-            return Integer.toString(Integer.parseInt(num) * 12);
+        try {
+            if (type.equalsIgnoreCase("D")) {
+                return Integer.toString((int) (Integer.parseInt(num) / 30.4166666667));
+            } else if (type.equalsIgnoreCase("W")) {
+                return Integer.toString((int) (Integer.parseInt(num) / 4.34523809524));
+            } else if (type.equalsIgnoreCase("M")) {
+                return Integer.valueOf(num).toString();
+            } else if (type.equalsIgnoreCase("Y")) {
+                return Integer.toString(Integer.parseInt(num) * 12);
+            }
+        } catch (NumberFormatException e) {
+            return "";
         }
 
         return "";
