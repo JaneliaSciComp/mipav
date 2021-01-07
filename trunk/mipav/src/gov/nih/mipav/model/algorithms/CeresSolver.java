@@ -3973,7 +3973,6 @@ public abstract class CeresSolver {
 
 
 	  // Invert the matrix assuming that each block is positive definite.
-	  // Need to port Eigen sparse library before implementing
 	  public void Invert() {
 		  int i,r,c;
 		  double values[] = tsm_.mutable_values();
@@ -4414,7 +4413,8 @@ public abstract class CeresSolver {
 		 * else { return new SparseSchurComplementSolver(options); }
 		 * 
 		 * case DENSE_SCHUR: return new DenseSchurComplementSolver(options);
-		 * 
+		 // SparseSchurComplementServer requires either SuiteSparse, Eigen's sparse Cholesky factorization,
+		 // or CXSparse.
 		 * case ITERATIVE_SCHUR: if (options.use_explicit_schur_complement) { return new
 		 * SparseSchurComplementSolver(options); } else { return new
 		 * IterativeSchurComplementSolver(options); }
@@ -5868,16 +5868,223 @@ public abstract class CeresSolver {
 		    return num_rows();
 		  }
 		} // abstract class Preconditioner
+	 
+	 
+	 
+	 //template <int kRowBlockSize = Eigen::Dynamic,
+	          //int kEBlockSize = Eigen::Dynamic,
+	          //int kFBlockSize = Eigen::Dynamic >
+	class PartitionedMatrixView {
+		private int kRowBlockSize;
+		private int kEBlockSize;
+		private int kFBlockSize;
+		private BlockSparseMatrix matrix_;
+		private int num_row_blocks_e_;
+		private int num_col_blocks_e_;
+		private int num_col_blocks_f_;
+		private int num_cols_e_;
+		private int num_cols_f_;
+	  // matrix = [E F], where the matrix E contains the first
+	  // num_col_blocks_a column blocks.
+	  public PartitionedMatrixView(int kRowBlockSize, int kEBlockSize, int kFBlockSize,
+			  BlockSparseMatrix matrix, int num_col_blocks_e) {
+		   this.kRowBlockSize = kRowBlockSize;
+		   this.kEBlockSize = kEBlockSize;
+		   this.kFBlockSize = kFBlockSize;
+		   matrix_ = matrix;
+		   num_col_blocks_e_ = num_col_blocks_e;
+		   CompressedRowBlockStructure bs = matrix_.block_structure();
+		   if (bs == null) {
+			   System.err.println("bs == null in public PartitionedMatrixView");
+			   return;
+		   }
+		   num_col_blocks_f_ = bs.cols.size() - num_col_blocks_e_;
+		   
+		   // Compute the number of row blocks in E. The number of row blocks
+		   // in E maybe less than the number of row blocks in the input matrix
+		   // as some of the row blocks at the bottom may not have any
+		   // e_blocks. For a definition of what an e_block is, please see
+		   // explicit_schur_complement_solver.h
+		   num_row_blocks_e_ = 0;
+		   for (int r = 0; r < bs.rows.size(); ++r) {
+		     Vector<Cell> cells = bs.rows.get(r).cells;
+		     if (cells.get(0).block_id < num_col_blocks_e_) {
+		       ++num_row_blocks_e_;
+		     }
+		   }
+
+		   // Compute the number of columns in E and F.
+		   num_cols_e_ = 0;
+		   num_cols_f_ = 0;
+
+		   for (int c = 0; c < bs.cols.size(); ++c) {
+		     Block block = bs.cols.get(c);
+		     if (c < num_col_blocks_e_) {
+		       num_cols_e_ += block.size;
+		     } else {
+		       num_cols_f_ += block.size;
+		     }
+		   }
+
+		  if ((num_cols_e_ + num_cols_f_) != matrix_.num_cols()) {
+			  System.err.println("In public PartitionedMatrixView (num_cols_e_ + num_cols_f_) != matrix_.num_cols()");
+		  }
+	  }
+
+	  public void LeftMultiplyE(double[] x, double[] y) {
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+
+		  // Iterate over the first num_row_blocks_e_ row blocks, and multiply
+		  // by the first cell in each row block.
+		  double[] values = matrix_.values();
+		  for (int r = 0; r < num_row_blocks_e_; ++r) {
+		    Cell cell = bs.rows.get(r).cells.get(0);
+		    int row_block_pos = bs.rows.get(r).block.position;
+		    int row_block_size = bs.rows.get(r).block.size;
+		    int col_block_id = cell.block_id;
+		    int col_block_pos = bs.cols.get(col_block_id).position;
+		    int col_block_size = bs.cols.get(col_block_id).size;
+		    MatrixTransposeVectorMultiply(kRowBlockSize, kEBlockSize, 1,
+		        values, cell.position, row_block_size, col_block_size,
+		        x, row_block_pos,
+		        y, col_block_pos);
+		  }	  
+	  }
+	  
+	  public void LeftMultiplyF(double[] x, double[] y) {
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+
+		  // Iterate over row blocks, and if the row block is in E, then
+		  // multiply by all the cells except the first one which is of type
+		  // E. If the row block is not in E (i.e its in the bottom
+		  // num_row_blocks - num_row_blocks_e row blocks), then all the cells
+		  // are of type F and multiply by them all.
+		  double[] values = matrix_.values();
+		  for (int r = 0; r < num_row_blocks_e_; ++r) {
+		    int row_block_pos = bs.rows.get(r).block.position;
+		    int row_block_size = bs.rows.get(r).block.size;
+		    Vector<Cell> cells = bs.rows.get(r).cells;
+		    for (int c = 1; c < cells.size(); ++c) {
+		      int col_block_id = cells.get(c).block_id;
+		      int col_block_pos = bs.cols.get(col_block_id).position;
+		      int col_block_size = bs.cols.get(col_block_id).size;
+		      MatrixTransposeVectorMultiply(kRowBlockSize, kFBlockSize, 1,
+		        values, cells.get(c).position, row_block_size, col_block_size,
+		        x, row_block_pos,
+		        y, col_block_pos - num_cols_e_);
+		    }
+		  }
+
+		  for (int r = num_row_blocks_e_; r < bs.rows.size(); ++r) {
+		    int row_block_pos = bs.rows.get(r).block.position;
+		    int row_block_size = bs.rows.get(r).block.size;
+		    Vector<Cell> cells = bs.rows.get(r).cells;
+		    for (int c = 0; c < cells.size(); ++c) {
+		      int col_block_id = cells.get(c).block_id;
+		      int col_block_pos = bs.cols.get(col_block_id).position;
+		      int col_block_size = bs.cols.get(col_block_id).size;
+		      MatrixTransposeVectorMultiply(DYNAMIC, DYNAMIC, 1,
+		        values, cells.get(c).position, row_block_size, col_block_size,
+		        x, row_block_pos,
+		        y, col_block_pos - num_cols_e_);
+		    }
+		  }  
+	  }
+	  
+	  public void RightMultiplyE(double[] x, double[] y) {
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+
+		  // Iterate over the first num_row_blocks_e_ row blocks, and multiply
+		  // by the first cell in each row block.
+		  double[] values = matrix_.values();
+		  for (int r = 0; r < num_row_blocks_e_; ++r) {
+		    Cell cell = bs.rows.get(r).cells.get(0);
+		    int row_block_pos = bs.rows.get(r).block.position;
+		    int row_block_size = bs.rows.get(r).block.size;
+		    int col_block_id = cell.block_id;
+		    int col_block_pos = bs.cols.get(col_block_id).position;
+		    int col_block_size = bs.cols.get(col_block_id).size;
+		    MatrixVectorMultiply(kRowBlockSize, kEBlockSize, 1,
+		        values,cell.position, row_block_size, col_block_size,
+		        x, col_block_pos,
+		        y, row_block_pos);
+		  }  
+	  }
+	  
+	  
+	  public void RightMultiplyF(double[] x, double[] y) {
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+
+		  // Iterate over row blocks, and if the row block is in E, then
+		  // multiply by all the cells except the first one which is of type
+		  // E. If the row block is not in E (i.e its in the bottom
+		  // num_row_blocks - num_row_blocks_e row blocks), then all the cells
+		  // are of type F and multiply by them all.
+		  double[] values = matrix_.values();
+		  for (int r = 0; r < num_row_blocks_e_; ++r) {
+		    int row_block_pos = bs.rows.get(r).block.position;
+		    int row_block_size = bs.rows.get(r).block.size;
+		    Vector<Cell> cells = bs.rows.get(r).cells;
+		    for (int c = 1; c < cells.size(); ++c) {
+		      int col_block_id = cells.get(c).block_id;
+		      int col_block_pos = bs.cols.get(col_block_id).position;
+		      int col_block_size = bs.cols.get(col_block_id).size;
+		      MatrixVectorMultiply(kRowBlockSize, kFBlockSize, 1,
+		          values, cells.get(c).position, row_block_size, col_block_size,
+		          x, col_block_pos - num_cols_e_,
+		          y, row_block_pos);
+		    }
+		  }
+
+		  for (int r = num_row_blocks_e_; r < bs.rows.size(); ++r) {
+		    int row_block_pos = bs.rows.get(r).block.position;
+		    int row_block_size = bs.rows.get(r).block.size;
+		    Vector<Cell> cells = bs.rows.get(r).cells;
+		    for (int c = 0; c < cells.size(); ++c) {
+		      int col_block_id = cells.get(c).block_id;
+		      int col_block_pos = bs.cols.get(col_block_id).position;
+		      int col_block_size = bs.cols.get(col_block_id).size;
+		      MatrixVectorMultiply(DYNAMIC, DYNAMIC, 1,
+		          values, cells.get(c).position, row_block_size, col_block_size,
+		          x, col_block_pos - num_cols_e_,
+		          y, row_block_pos);
+		    }
+		  }  
+	  }
+	  /*virtual BlockSparseMatrix* CreateBlockDiagonalEtE() const;
+	  virtual BlockSparseMatrix* CreateBlockDiagonalFtF() const;
+	  virtual void UpdateBlockDiagonalEtE(BlockSparseMatrix* block_diagonal) const;
+	  virtual void UpdateBlockDiagonalFtF(BlockSparseMatrix* block_diagonal) const;
+	  virtual int num_col_blocks_e() const { return num_col_blocks_e_;  }
+	  virtual int num_col_blocks_f() const { return num_col_blocks_f_;  }
+	  virtual int num_cols_e()       const { return num_cols_e_;        }
+	  virtual int num_cols_f()       const { return num_cols_f_;        }
+	  virtual int num_rows()         const { return matrix_.num_rows(); }
+	  virtual int num_cols()         const { return matrix_.num_cols(); }*/
+
+	 //private:
+	  //BlockSparseMatrix* CreateBlockDiagonalMatrixLayout(int start_col_block,
+	                                                     //int end_col_block) const;
+
+	  
+	};
+	 
+	 /*class IterativeSchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
+		  private LinearSolverOptions options_;
+		  //scoped_ptr<internal::ImplicitSchurComplement> schur_complement_;
+		  //private ImplicitSchurComplement schur_complement_;
+		  //scoped_ptr<Preconditioner> preconditioner_;
+		  private Preconditioner preconditioner_;
+		  private Vector reduced_linear_system_solution_;
+		 
+	 }*/
 	// Linear solvers that depend on acccess to the low level structure of
 	// a SparseMatrix.
-	// typedef TypedLinearSolver<BlockSparseMatrix> BlockSparseMatrixSolver; //
-	// NOLINT
+	// typedef TypedLinearSolver<BlockSparseMatrix> BlockSparseMatrixSolver; 
 	// typedef TypedLinearSolver<CompressedRowSparseMatrix>
-	// CompressedRowSparseMatrixSolver; // NOLINT
-	// typedef TypedLinearSolver<DenseSparseMatrix> DenseSparseMatrixSolver; //
-	// NOLINT
-	// typedef TypedLinearSolver<TripletSparseMatrix> TripletSparseMatrixSolver; //
-	// NOLINT
+	// CompressedRowSparseMatrixSolver;
+	// typedef TypedLinearSolver<DenseSparseMatrix> DenseSparseMatrixSolver;
+	// typedef TypedLinearSolver<TripletSparseMatrix> TripletSparseMatrixSolver;
 	abstract class TypedLinearSolver<MatrixType> extends LinearSolver {
 		public ExecutionSummary execution_summary_;
 		
