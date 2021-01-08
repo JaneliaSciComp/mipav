@@ -6051,23 +6051,579 @@ public abstract class CeresSolver {
 		    }
 		  }  
 	  }
-	  /*virtual BlockSparseMatrix* CreateBlockDiagonalEtE() const;
-	  virtual BlockSparseMatrix* CreateBlockDiagonalFtF() const;
-	  virtual void UpdateBlockDiagonalEtE(BlockSparseMatrix* block_diagonal) const;
-	  virtual void UpdateBlockDiagonalFtF(BlockSparseMatrix* block_diagonal) const;
-	  virtual int num_col_blocks_e() const { return num_col_blocks_e_;  }
-	  virtual int num_col_blocks_f() const { return num_col_blocks_f_;  }
-	  virtual int num_cols_e()       const { return num_cols_e_;        }
-	  virtual int num_cols_f()       const { return num_cols_f_;        }
-	  virtual int num_rows()         const { return matrix_.num_rows(); }
-	  virtual int num_cols()         const { return matrix_.num_cols(); }*/
-
-	 //private:
-	  //BlockSparseMatrix* CreateBlockDiagonalMatrixLayout(int start_col_block,
-	                                                     //int end_col_block) const;
-
 	  
-	};
+	  public BlockSparseMatrix CreateBlockDiagonalEtE() {
+		  BlockSparseMatrix block_diagonal =
+			      CreateBlockDiagonalMatrixLayout(0, num_col_blocks_e_);
+			  UpdateBlockDiagonalEtE(block_diagonal);
+			  return block_diagonal;	  
+	  }
+	  
+	  public BlockSparseMatrix CreateBlockDiagonalFtF() {
+		  BlockSparseMatrix block_diagonal =
+			      CreateBlockDiagonalMatrixLayout(
+			          num_col_blocks_e_, num_col_blocks_e_ + num_col_blocks_f_);
+			  UpdateBlockDiagonalFtF(block_diagonal);
+			  return block_diagonal;  
+	  }
+	  
+	  public void UpdateBlockDiagonalEtE(BlockSparseMatrix block_diagonal) {
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+		  CompressedRowBlockStructure block_diagonal_structure =
+		      block_diagonal.block_structure();
+
+		  block_diagonal.SetZero();
+		  double[] values = matrix_.values();
+		  for (int r = 0; r < num_row_blocks_e_ ; ++r) {
+		    Cell cell = bs.rows.get(r).cells.get(0);
+		    int row_block_size = bs.rows.get(r).block.size;
+		    int block_id = cell.block_id;
+		    int col_block_size = bs.cols.get(block_id).size;
+		    int cell_position =
+		        block_diagonal_structure.rows.get(block_id).cells.get(0).position;
+
+		    MatrixTransposeMatrixMultiply
+		        (kRowBlockSize, kEBlockSize, kRowBlockSize, kEBlockSize, 1,
+		            values, cell.position, row_block_size, col_block_size,
+		            values, cell.position, row_block_size, col_block_size,
+		            block_diagonal.mutable_values(), cell_position,
+		            0, 0, col_block_size, col_block_size);
+		  }  
+	  }
+	  
+	  public void UpdateBlockDiagonalFtF(BlockSparseMatrix block_diagonal) {
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+		  CompressedRowBlockStructure block_diagonal_structure =
+		      block_diagonal.block_structure();
+
+		  block_diagonal.SetZero();
+		  double[] values = matrix_.values();
+		  for (int r = 0; r < num_row_blocks_e_; ++r) {
+		    int row_block_size = bs.rows.get(r).block.size;
+		    Vector<Cell> cells = bs.rows.get(r).cells;
+		    for (int c = 1; c < cells.size(); ++c) {
+		      int col_block_id = cells.get(c).block_id;
+		      int col_block_size = bs.cols.get(col_block_id).size;
+		      int diagonal_block_id = col_block_id - num_col_blocks_e_;
+		      int cell_position =
+		          block_diagonal_structure.rows.get(diagonal_block_id).cells.get(0).position;
+
+		      MatrixTransposeMatrixMultiply
+		          (kRowBlockSize, kFBlockSize, kRowBlockSize, kFBlockSize, 1,
+		              values, cells.get(c).position, row_block_size, col_block_size,
+		              values, cells.get(c).position, row_block_size, col_block_size,
+		              block_diagonal.mutable_values(), cell_position,
+		              0, 0, col_block_size, col_block_size);
+		    }
+		  }
+
+		  for (int r = num_row_blocks_e_; r < bs.rows.size(); ++r) {
+		    int row_block_size = bs.rows.get(r).block.size;
+		    Vector<Cell> cells = bs.rows.get(r).cells;
+		    for (int c = 0; c < cells.size(); ++c) {
+		      int col_block_id = cells.get(c).block_id;
+		      int col_block_size = bs.cols.get(col_block_id).size;
+		      int diagonal_block_id = col_block_id - num_col_blocks_e_;
+		      int cell_position =
+		          block_diagonal_structure.rows.get(diagonal_block_id).cells.get(0).position;
+
+		      MatrixTransposeMatrixMultiply
+		          (DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, 1,
+		              values, cells.get(c).position, row_block_size, col_block_size,
+		              values, cells.get(c).position, row_block_size, col_block_size,
+		              block_diagonal.mutable_values(), cell_position,
+		              0, 0, col_block_size, col_block_size);
+		    }
+		  }  
+	  }
+	  
+	  public int num_col_blocks_e() { return num_col_blocks_e_;  }
+	  public int num_col_blocks_f() { return num_col_blocks_f_;  }
+	  public int num_cols_e()       { return num_cols_e_;        }
+	  public int num_cols_f()       { return num_cols_f_;        }
+	  public int num_rows()         { return matrix_.num_rows(); }
+	  public int num_cols()         { return matrix_.num_cols(); }
+
+	 private BlockSparseMatrix CreateBlockDiagonalMatrixLayout(int start_col_block,
+	                                                     int end_col_block) {
+
+		  CompressedRowBlockStructure bs = matrix_.block_structure();
+		  CompressedRowBlockStructure block_diagonal_structure =
+		      new CompressedRowBlockStructure();
+
+		  int block_position = 0;
+		  int diagonal_cell_position = 0;
+
+		  // Iterate over the column blocks, creating a new diagonal block for
+		  // each column block.
+		  for (int c = start_col_block; c < end_col_block; ++c) {
+		    Block block = bs.cols.get(c);
+		    block_diagonal_structure.cols.add(new Block());
+		    Block diagonal_block = block_diagonal_structure.cols.get(block_diagonal_structure.cols.size()-1);
+		    diagonal_block.size = block.size;
+		    diagonal_block.position = block_position;
+
+		    block_diagonal_structure.rows.add(new CompressedList());
+		    CompressedList row = block_diagonal_structure.rows.get(block_diagonal_structure.rows.size()-1);
+		    row.block = diagonal_block;
+
+		    row.cells.add(new Cell());
+		    Cell cell = row.cells.get(row.cells.size()-1);
+		    cell.block_id = c - start_col_block;
+		    cell.position = diagonal_cell_position;
+
+		    block_position += block.size;
+		    diagonal_cell_position += block.size * block.size;
+		  }
+
+		  // Build a BlockSparseMatrix with the just computed block
+		  // structure.
+		  return new BlockSparseMatrix(block_diagonal_structure);	 
+	 }
+	  
+	} // class PartitionedMatrixView
+	
+	public PartitionedMatrixView createPartitionedMatrixView(LinearSolverOptions options, BlockSparseMatrix matrix) {
+		if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 2) &&
+			     (options.f_block_size == 2)) {
+			   return new PartitionedMatrixView(2, 2, 2, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 2) &&
+			     (options.f_block_size == 3)) {
+			   return new PartitionedMatrixView(2, 2, 3,matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 2) &&
+			     (options.f_block_size == 4)) {
+			   return new PartitionedMatrixView(2, 2, 4,matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 2)) {
+			   return new PartitionedMatrixView(2, 2, DYNAMIC, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 3) &&
+			     (options.f_block_size == 3)) {
+			   return new PartitionedMatrixView(2, 3, 3,matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 3) &&
+			     (options.f_block_size == 4)) {
+			   return new PartitionedMatrixView(2, 3, 4, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 3) &&
+			     (options.f_block_size == 6)) {
+			   return new PartitionedMatrixView(2, 3, 6, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 3) &&
+			     (options.f_block_size == 9)) {
+			   return new PartitionedMatrixView(2, 3, 9, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 3)) {
+			   return new PartitionedMatrixView(2, 3, DYNAMIC, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 3)) {
+			   return new PartitionedMatrixView(2, 4, 3, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 4)) {
+			   return new PartitionedMatrixView(2, 4, 4, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 6)) {
+			   return new PartitionedMatrixView(2, 4, 6, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 8)) {
+			   return new PartitionedMatrixView(2, 4, 8, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 9)) {
+			   return new PartitionedMatrixView(2, 4, 9, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 2) &&
+			     (options.e_block_size == 4)) {
+			   return new PartitionedMatrixView(2, 4, DYNAMIC, matrix, options.elimination_groups.get(0));
+			 }
+			 if (options.row_block_size == 2){
+			   return new PartitionedMatrixView(2, DYNAMIC, DYNAMIC, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 4) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 2)) {
+			   return new PartitionedMatrixView(4, 4, 2, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 4) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 3)) {
+			   return new PartitionedMatrixView(4, 4, 3, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 4) &&
+			     (options.e_block_size == 4) &&
+			     (options.f_block_size == 4)) {
+			   return new PartitionedMatrixView(4, 4, 4, matrix, options.elimination_groups.get(0));
+			 }
+			 if ((options.row_block_size == 4) &&
+			     (options.e_block_size == 4)) {
+			   return new PartitionedMatrixView(4, 4, DYNAMIC, matrix, options.elimination_groups.get(0));
+			 }
+			 if (1 <= MAX_LOG_LEVEL) {
+			  Preferences.debug("Template specializations not found for "
+			          + options.row_block_size + ","
+			          + options.e_block_size + ","
+			          + options.f_block_size + "\n", Preferences.DEBUG_ALGORITHM);
+			 }
+			  return new PartitionedMatrixView(DYNAMIC, DYNAMIC, DYNAMIC,
+			               matrix, options.elimination_groups.get(0));
+	
+	}
+	
+	class ImplicitSchurComplement extends LinearOperator {
+		 private LinearSolverOptions options_;
+
+		 private PartitionedMatrixView A_;
+		 private double[] D_;
+		 private double[] b_;
+
+		 private BlockSparseMatrix block_diagonal_EtE_inverse_;
+		 private BlockSparseMatrix block_diagonal_FtF_inverse_;
+
+		 private Vector<Double> rhs_;
+
+		  // Temporary storage vectors used to implement RightMultiply.
+		 private Vector<Double> tmp_rows_;
+		 private Vector<Double> tmp_e_cols_;
+		 private Vector<Double> tmp_e_cols_2_;
+		 private Vector<Double> tmp_f_cols_;
+		  // num_eliminate_blocks is the number of E blocks in the matrix
+		  // A.
+		  //
+		  // preconditioner indicates whether the inverse of the matrix F'F
+		  // should be computed or not as a preconditioner for the Schur
+		  // Complement.
+		  //
+		  // TODO(sameeragarwal): Get rid of the two bools below and replace
+		  // them with enums.
+		  public ImplicitSchurComplement(LinearSolverOptions options) {
+			  super();
+			  options_ = options;
+			  D_ = null;
+			  b_ = null;
+		  }
+
+		  // Initialize the Schur complement for a linear least squares
+		  // problem of the form
+		  //
+		  //   |A      | x = |b|
+		  //   |diag(D)|     |0|
+		  //
+		  // If D is null, then it is treated as a zero dimensional matrix. It
+		  // is important that the matrix A have a BlockStructure object
+		  // associated with it and has a block structure that is compatible
+		  // with the SchurComplement solver.
+		  public void Init(BlockSparseMatrix A, double[] D, double[] b) {
+			  int i;
+			// Since initialization is reasonably heavy, perhaps we can save on
+			  // constructing a new object everytime.
+			  if (A_ == null) {
+			    A_ = createPartitionedMatrixView(options_, A);
+			  }
+
+			  D_ = D;
+			  b_ = b;
+
+			  // Initialize temporary storage and compute the block diagonals of
+			  // E'E and F'E.
+			  if (block_diagonal_EtE_inverse_ == null) {
+			    block_diagonal_EtE_inverse_ = A_.CreateBlockDiagonalEtE();
+			    if (options_.preconditioner_type == PreconditionerType.JACOBI) {
+			      block_diagonal_FtF_inverse_ = A_.CreateBlockDiagonalFtF();
+			    }
+			    rhs_.clear();
+			    for (i = 0; i < A_.num_cols_f(); i++) {
+			    	rhs_.add(0.0);
+			    }
+			    while (tmp_rows_.size() > A_.num_rows()) {
+			    	tmp_rows_.removeElementAt(tmp_rows_.size()-1);
+			    }
+			    while (tmp_rows_.size() < A_.num_rows()) {
+			    	tmp_rows_.add(0.0);
+			    }
+			    while (tmp_e_cols_.size() > A_.num_cols_e()) {
+			    	tmp_e_cols_.removeElementAt(tmp_e_cols_.size()-1);
+			    }
+			    while (tmp_e_cols_.size() < A_.num_cols_e()) {
+			    	tmp_e_cols_.add(0.0);
+			    }
+			    while (tmp_e_cols_2_.size() > A_.num_cols_e()) {
+			    	tmp_e_cols_2_.removeElementAt(tmp_e_cols_2_.size()-1);
+			    }
+			    while (tmp_e_cols_2_.size() < A_.num_cols_e()) {
+			    	tmp_e_cols_2_.add(0.0);
+			    }
+			    while (tmp_f_cols_.size() > A_.num_cols_f()) {
+			    	tmp_f_cols_.removeElementAt(tmp_f_cols_.size()-1);
+			    }
+			    while (tmp_f_cols_.size() < A_.num_cols_f()) {
+			    	tmp_f_cols_.add(0.0);
+			    }
+			  } else {
+			    A_.UpdateBlockDiagonalEtE(block_diagonal_EtE_inverse_);
+			    if (options_.preconditioner_type == PreconditionerType.JACOBI) {
+			      A_.UpdateBlockDiagonalFtF(block_diagonal_FtF_inverse_);
+			    }
+			  }
+
+			  // The block diagonals of the augmented linear system contain
+			  // contributions from the diagonal D if it is non-null. Add that to
+			  // the block diagonals and invert them.
+			  AddDiagonalAndInvert(D_, 0, block_diagonal_EtE_inverse_);
+			  if (options_.preconditioner_type == PreconditionerType.JACOBI) {
+				if (D_ == null) {
+					AddDiagonalAndInvert(null, 0, block_diagonal_FtF_inverse_);
+				}
+				else {
+					AddDiagonalAndInvert(D_, A_.num_cols_e(), block_diagonal_FtF_inverse_);
+				}
+			  }
+
+			  // Compute the RHS of the Schur complement system.
+			  UpdateRhs();
+
+		  }
+
+		  // y += Sx, where S is the Schur complement.
+		  // Evaluate the product
+		  //
+		  //   Sx = [F'F - F'E (E'E)^-1 E'F]x
+		  //
+		  // By breaking it down into individual matrix vector products
+		  // involving the matrices E and F. This is implemented using a
+		  // PartitionedMatrixView of the input matrix A.
+
+		  public void RightMultiply(double[] x, double[] y) {
+			  int i;
+			  int row;
+			  int col;
+			// y1 = F x
+			  
+			  double tmp_rows_array[] = new double[tmp_rows_.size()];
+			  A_.RightMultiplyF(x, tmp_rows_array);
+			  for (i = 0; i < tmp_rows_.size(); i++) {
+				  tmp_rows_.setElementAt(tmp_rows_array[i],i);
+			  }
+
+			  // y2 = E' y1
+			  double tmp_e_cols_array[] = new double[tmp_e_cols_.size()];
+			  A_.LeftMultiplyE(tmp_rows_array, tmp_e_cols_array);
+			  for (i = 0; i < tmp_e_cols_.size(); i++) {
+				  tmp_e_cols_.setElementAt(tmp_e_cols_array[i],i);
+			  }
+
+			  // y3 = -(E'E)^-1 y2
+			  double tmp_e_cols_2_array[] = new double[tmp_e_cols_2_.size()];
+			  block_diagonal_EtE_inverse_.RightMultiply(tmp_e_cols_array,
+			                                             tmp_e_cols_2_array);
+			  for (i = 0; i < tmp_e_cols_2_.size(); i++) {
+			      tmp_e_cols_2_array[i] *= -1.0;
+			      tmp_e_cols_2_.setElementAt(tmp_e_cols_2_array[i],i);
+			  }
+
+			  // y1 = y1 + E y3
+			  A_.RightMultiplyE(tmp_e_cols_2_array, tmp_rows_array);
+			  for (i = 0; i < tmp_rows_.size(); i++) {
+				  tmp_rows_.setElementAt(tmp_rows_array[i],i);
+			  }
+
+
+			  // y5 = D * x
+			  if (D_ != null) {
+				double Dsquare[][] = new double[num_cols()][num_cols()];
+				for (row = A_.num_cols_e(); row < A_.num_cols_e() + num_cols(); row++) {
+					for (col = A_.num_cols_e(); col < A_.num_cols_e() + num_cols(); col++) {
+						Dsquare[row-A_.num_cols_e()][col-A_.num_cols_e()] = D_[row]*D_[col];
+					}
+				}
+				for (row = 0; row < num_cols(); row++) {
+					y[row] = 0;
+					for (col = 0; col < num_cols(); col++) {
+						y[row] += (Dsquare[row][col] * x[col]);
+					}
+				}
+			  } else {
+				for (i = 0; i < num_cols(); i++) {
+					y[i] = 0.0;
+				}
+			  }
+
+			  // y = y5 + F' y1
+			  A_.LeftMultiplyF(tmp_rows_array, y);
+  
+		  }
+
+		  // The Schur complement is a symmetric positive definite matrix,
+		  // thus the left and right multiply operators are the same.
+		  public void LeftMultiply(double[] x, double[] y) {
+		    RightMultiply(x, y);
+		  }
+
+		  // y = (E'E)^-1 (E'b - E'F x). Given an estimate of the solution to
+		  // the Schur complement system, this method computes the value of
+		  // the e_block variables that were eliminated to form the Schur
+		  // complement.
+		  public void BackSubstitute(double[] x, double[] y) {
+			  int i;
+			  int num_cols_e = A_.num_cols_e();
+			  int num_cols_f = A_.num_cols_f();
+			  int num_cols =  A_.num_cols();
+			  int num_rows = A_.num_rows();
+
+			  // y1 = F x
+			  double tmp_rows_array[] = new double[tmp_rows_.size()];
+			  A_.RightMultiplyF(x, tmp_rows_array);
+
+			  // y2 = b - y1
+			  for (i = 0; i < num_rows; i++) {
+				  tmp_rows_array[i] = b_[i] - tmp_rows_array[i];
+			  }
+			  for (i = 0; i < tmp_rows_.size(); i++) {
+				  tmp_rows_.setElementAt(tmp_rows_array[i],i);
+			  }
+
+			  // y3 = E' y2
+			  double tmp_e_cols_array[] = new double[tmp_e_cols_.size()];
+			  A_.LeftMultiplyE(tmp_rows_array, tmp_e_cols_array);
+			  for (i = 0; i < tmp_e_cols_.size(); i++) {
+				  tmp_e_cols_.setElementAt(tmp_e_cols_array[i],i);
+			  }
+
+			  // y = (E'E)^-1 y3
+			  for (i = 0; i < num_cols; i++) {
+				  y[i] = 0;
+			  }
+			  block_diagonal_EtE_inverse_.RightMultiply(tmp_e_cols_array, y);
+
+			  // The full solution vector y has two blocks. The first block of
+			  // variables corresponds to the eliminated variables, which we just
+			  // computed via back substitution. The second block of variables
+			  // corresponds to the Schur complement system, so we just copy those
+			  // values from the solution to the Schur complement.
+			  for (i = 0; i < num_cols_f; i++) {
+				  y[num_cols_e + i] = x[i];
+			  }
+  
+		  }
+
+		  public int num_rows() { return A_.num_cols_f(); }
+		  public int num_cols() { return A_.num_cols_f(); }
+		  public Vector<Double> rhs()   { return rhs_;             }
+
+		  public BlockSparseMatrix block_diagonal_EtE_inverse() {
+		    return block_diagonal_EtE_inverse_;
+		  }
+
+		  public BlockSparseMatrix block_diagonal_FtF_inverse() {
+		    return block_diagonal_FtF_inverse_;
+		  }
+
+		 // Given a block diagonal matrix and an optional array of diagonal
+		 // entries D, add them to the diagonal of the matrix and compute the
+		 // inverse of each diagonal block.
+		  private void AddDiagonalAndInvert(double[] D, int D_start, BlockSparseMatrix block_diagonal) {
+			  int row;
+			  int col;
+			  int index;
+			  CompressedRowBlockStructure block_diagonal_structure =
+				      block_diagonal.block_structure();
+				  for (int r = 0; r < block_diagonal_structure.rows.size(); ++r) {
+				    int row_block_pos = block_diagonal_structure.rows.get(r).block.position;
+				    int row_block_size = block_diagonal_structure.rows.get(r).block.size;
+				    Cell cell = block_diagonal_structure.rows.get(r).cells.get(0);
+				    double marray[][] = new double[row_block_size][row_block_size];
+				    index = cell.position;
+				    for (row = 0; row < row_block_size; row++) {
+				    	for (col = 0; col < row_block_size; col++) {
+				    		marray[row][col] = block_diagonal.mutable_values()[index++];
+				    	}
+				    }
+				    //MatrixRef m(block_diagonal->mutable_values() + cell.position,
+				                //row_block_size, row_block_size);
+
+				    if (D != null) {
+				      index = row_block_pos;
+				      for (row = 0; row < row_block_size; row++) {
+				    	  marray[row][row] += (D[index]*D[index]);
+				    	  index++;
+				      }
+				    }
+
+				    Matrix m = new Matrix(marray);
+				    m = m.inverse();
+				    marray = m.getArray();
+				    index = cell.position;
+				    for (row = 0; row < row_block_size; row++) {
+				    	for (col = 0; col < row_block_size; col++) {
+				    		block_diagonal.mutable_values()[index++] = marray[row][col];
+				    	}
+				    }
+				  }
+  
+		  }
+		  
+		  // Compute the RHS of the Schur complement system.
+		  //
+		  // rhs = F'b - F'E (E'E)^-1 E'b
+		  //
+		  // Like BackSubstitute, we use the block structure of A to implement
+		  // this using a series of matrix vector products.
+		  private void UpdateRhs() {
+			  int i;
+			  // y1 = E'b
+			  double tmp_e_cols_array[] = new double[tmp_e_cols_.size()];
+			  A_.LeftMultiplyE(b_, tmp_e_cols_array);
+			  for (i = 0; i < tmp_e_cols_.size(); i++) {
+				  tmp_e_cols_.setElementAt(tmp_e_cols_array[i],i);
+			  }
+
+			  // y2 = (E'E)^-1 y1
+			  double y2[] = new double[A_.num_cols_e()];
+			  block_diagonal_EtE_inverse_.RightMultiply(tmp_e_cols_array, y2);
+
+			  // y3 = E y2
+			  double tmp_rows_array[] = new double[tmp_rows_.size()];
+			  A_.RightMultiplyE(y2, tmp_rows_array);
+
+			  // y3 = b - y3
+			  for (i = 0; i < A_.num_rows(); i++) {
+				  tmp_rows_array[i] = b_[i] - tmp_rows_array[i];
+			  }
+			  for (i = 0; i < tmp_rows_.size(); i++) {
+				  tmp_rows_.setElementAt(tmp_rows_array[i],i);
+			  }
+
+			  // rhs = F' y3
+			  double rhs_array[] = new double[rhs_.size()];
+			  A_.LeftMultiplyF(tmp_rows_array, rhs_array);
+			  for (i = 0; i < rhs_.size(); i++) {
+				  rhs_.setElementAt(rhs_array[i],i);
+			  }
+  
+		  }
+
+		  
+		};
+
 	 
 	 /*class IterativeSchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
 		  private LinearSolverOptions options_;
@@ -18064,6 +18620,96 @@ public abstract class CeresSolver {
 			}
 		}
 	}
+	
+	public void MatrixTransposeMatrixMultiply(int kRowA, int kColA, int kRowB, int kColB, int kOperation,
+	  double[] A, int A_start, int num_row_a, int num_col_a, double[] B, int B_start, int num_row_b, int num_col_b, double[] C,
+	  int C_start, int start_row_c, int start_col_c, int row_stride_c, int col_stride_c) {
+		  if (num_row_a <= 0) {
+			  System.err.println("num_row_a <= 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if (num_col_a <= 0) {
+			  System.err.println("num_col_a <= 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  }                                          
+		  if (num_row_b <= 0) {
+			  System.err.println("num_row_b <= 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if (num_col_b <= 0) {
+			  System.err.println("num_col_b <= 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  } 
+		  if (start_row_c < 0) {
+			  System.err.println("start_row_c < 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if (start_col_c < 0) {
+			  System.err.println("start_col_c < 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  } 
+		  if (row_stride_c <= 0) {
+			  System.err.println("row_stride_c <= 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if (col_stride_c <= 0) {
+			  System.err.println("col_stride_c <= 0 in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if ((kRowA != DYNAMIC) && (kRowA != num_row_a)) {
+			  System.err.println("(kRowA != DYNAMIC) && (kRowA != num_row_a) in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if ((kColA != DYNAMIC) && (kColA != num_col_a)) {
+			  System.err.println("(kColA != DYNAMIC) && (kColA != num_col_a) in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if ((kRowB != DYNAMIC) && (kRowB != num_row_b)) {
+			  System.err.println("(kRowB != DYNAMIC) && (kRowB != num_row_b) in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if ((kColB != DYNAMIC) && (kColB != num_col_b)) {
+			  System.err.println("(kColB != DYNAMIC) && (kColB != num_col_b) in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  int NUM_ROW_A = (kRowA != DYNAMIC ? kRowA : num_row_a);
+		  int NUM_COL_A = (kColA != DYNAMIC ? kColA : num_col_a);
+		  int NUM_ROW_B = (kRowB != DYNAMIC ? kRowB : num_row_b);
+		  int NUM_COL_B = (kColB != DYNAMIC ? kColB : num_col_b);
+		  if (NUM_ROW_A != NUM_ROW_B) {
+			  System.err.println("NUM_ROW_A != NUM_ROW_B in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+
+		  int NUM_ROW_C = NUM_COL_A;
+		  int NUM_COL_C = NUM_COL_B;
+		  if ((start_row_c + NUM_ROW_C) > row_stride_c) {
+			  System.err.println("(start_row_c + NUM_ROW_C) > row_stride_c in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+		  if ((start_col_c + NUM_COL_C) > col_stride_c) {
+			  System.err.println("(start_col_c + NUM_COL_C) > col_stride_c in MatrixTransposeMatrixMultiply");
+			  return;
+		  }
+
+		  for (int row = 0; row < NUM_ROW_C; ++row) {
+		    for (int col = 0; col < NUM_COL_C; ++col) {
+		      double tmp = 0.0;
+		      for (int k = 0; k < NUM_ROW_A; ++k) {
+		        tmp += A[A_start + k * NUM_COL_A + row] * B[B_start + k * NUM_COL_B + col];
+		      }
+
+		      int index = (row + start_row_c) * col_stride_c + start_col_c + col;
+		      if (kOperation > 0) {
+		        C[C_start + index]+= tmp;
+		      } else if (kOperation < 0) {
+		        C[C_start + index]-= tmp;
+		      } else {
+		        C[C_start + index]= tmp;
+		      }
+		    }
+		  }	
+	}
 
 	public void MatrixMatrixMultiply(int kOperation, double A[], int NUM_ROW_A, int NUM_COL_A, double B[],
 			int NUM_ROW_B, int NUM_COL_B, double C[], int start_row_c, int start_col_c, int row_stride_c,
@@ -18140,6 +18786,8 @@ public abstract class CeresSolver {
 			}
 		}
 	}
+	
+	
 
 	String LineSearchTypeToString(LineSearchType type) {
 		switch (type) {
