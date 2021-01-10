@@ -17,7 +17,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
-
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
@@ -1068,9 +1067,9 @@ public abstract class CeresSolver {
             int[] e_block_size,
             int[] f_block_size) {
 			LinearSolverOptions options = new LinearSolverOptions();
-			options.row_block_size = row_block_size[0];
-			options.e_block_size = e_block_size[0];
-			options.f_block_size = f_block_size[0];
+			options.row_block_size[0] = row_block_size[0];
+			options.e_block_size[0] = e_block_size[0];
+			options.f_block_size[0] = f_block_size[0];
 			row_block_size[0] = DYNAMIC;
 			e_block_size[0] = DYNAMIC;
 			f_block_size[0] = DYNAMIC;
@@ -1079,155 +1078,155 @@ public abstract class CeresSolver {
 			// may consider disabling this.
 			// Disabling Schur specializations (faster compiles)
 			//#ifndef CERES_RESTRICT_SCHUR_SPECIALIZATION
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 2) &&
-			(options.f_block_size == 2)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 2) &&
+			(options.f_block_size[0] == 2)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 2;
 			f_block_size[0] = 2;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 2) &&
-			(options.f_block_size == 3)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 2) &&
+			(options.f_block_size[0] == 3)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 2;
 			f_block_size[0] = 3;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 2) &&
-			(options.f_block_size == 4)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 2) &&
+			(options.f_block_size[0] == 4)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 2;
 			f_block_size[0] = 4;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 2)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 2)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 2;
 			f_block_size[0] = DYNAMIC;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 3) &&
-			(options.f_block_size == 3)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 3) &&
+			(options.f_block_size[0] == 3)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 3;
 			f_block_size[0] = 3;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 3) &&
-			(options.f_block_size == 4)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 3) &&
+			(options.f_block_size[0] == 4)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 3;
 			f_block_size[0] = 4;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 3) &&
-			(options.f_block_size == 6)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 3) &&
+			(options.f_block_size[0] == 6)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 3;
 			f_block_size[0] = 6;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 3) &&
-			(options.f_block_size == 9)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 3) &&
+			(options.f_block_size[0] == 9)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 3;
 			f_block_size[0] = 9;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 3)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 3)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 3;
 			f_block_size[0] = DYNAMIC;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 3)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 3)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 4;
 			f_block_size[0] = 3;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 4)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 4)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 4;
 			f_block_size[0] = 4;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 6)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 6)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 4;
 			f_block_size[0] = 6;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 8)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 8)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 4;
 			f_block_size[0] = 8;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 9)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 9)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 4;
 			f_block_size[0] = 9;
 			return;
 			}
-			if ((options.row_block_size == 2) &&
-			(options.e_block_size == 4)) {
+			if ((options.row_block_size[0] == 2) &&
+			(options.e_block_size[0] == 4)) {
 			row_block_size[0] = 2;
 			e_block_size[0] = 4;
 			f_block_size[0] = DYNAMIC;
 			return;
 			}
-			if (options.row_block_size == 2){
+			if (options.row_block_size[0] == 2){
 			row_block_size[0] = 2;
 			e_block_size[0] = DYNAMIC;
 			f_block_size[0] = DYNAMIC;
 			return;
 			}
-			if ((options.row_block_size == 4) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 2)) {
+			if ((options.row_block_size[0] == 4) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 2)) {
 			row_block_size[0] = 4;
 			e_block_size[0] = 4;
 			f_block_size[0] = 2;
 			return;
 			}
-			if ((options.row_block_size == 4) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 3)) {
+			if ((options.row_block_size[0] == 4) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 3)) {
 			row_block_size[0] = 4;
 			e_block_size[0] = 4;
 			f_block_size[0] = 3;
 			return;
 			}
-			if ((options.row_block_size == 4) &&
-			(options.e_block_size == 4) &&
-			(options.f_block_size == 4)) {
+			if ((options.row_block_size[0] == 4) &&
+			(options.e_block_size[0] == 4) &&
+			(options.f_block_size[0] == 4)) {
 			row_block_size[0] = 4;
 			e_block_size[0] = 4;
 			f_block_size[0] = 4;
 			return;
 			}
-			if ((options.row_block_size == 4) &&
-			(options.e_block_size == 4)) {
+			if ((options.row_block_size[0] == 4) &&
+			(options.e_block_size[0] == 4)) {
 			row_block_size[0] = 4;
 			e_block_size[0] = 4;
 			f_block_size[0] = DYNAMIC;
@@ -4229,9 +4228,9 @@ public abstract class CeresSolver {
 		//
 		// Please see schur_complement_solver.h and schur_eliminator.h for
 		// more details.
-		public int row_block_size;
-		public int e_block_size;
-		public int f_block_size;
+		public int row_block_size[] = new int[1];
+		public int e_block_size[] = new int[1];
+		public int f_block_size[] = new int[1];
 
 		public Context context;
 
@@ -4249,9 +4248,9 @@ public abstract class CeresSolver {
 			max_num_iterations = 1;
 			num_threads = 1;
 			residual_reset_period = 10;
-			row_block_size = DYNAMIC;
-			e_block_size = DYNAMIC;
-			f_block_size = DYNAMIC;
+			row_block_size[0] = DYNAMIC;
+			e_block_size[0] = DYNAMIC;
+			f_block_size[0] = DYNAMIC;
 			context = new Context();
 		}
 	} // class LinearSolverOptions
@@ -5305,6 +5304,24 @@ public abstract class CeresSolver {
 			   options_ = options;
 		   }
 		   
+		   public LinearSolverSummary Solve(LinearOperator A, Vector<Double> bvec, LinearSolverPerSolveOptions per_solve_options,
+				   Vector<Double> xvec) {
+			   int i;
+			   double b[] = new double[bvec.size()];
+			   for (i = 0; i < bvec.size(); i++) {
+				   b[i] = bvec.get(i);
+			   }
+			   double x[] = new double[xvec.size()];
+			   for (i = 0; i < xvec.size(); i++) {
+				   x[i] = xvec.get(i);
+			   }
+			   LinearSolverSummary ls = Solve(A, b, per_solve_options, x);
+			   for (i = 0; i < xvec.size(); i++) {
+				   xvec.setElementAt(x[i],i);
+			   }
+			   return ls;
+		   }
+		   
 		    public LinearSolverSummary Solve(LinearOperator A,
 		                          double b[],
 		                          LinearSolverPerSolveOptions per_solve_options,
@@ -5743,6 +5760,143 @@ public abstract class CeresSolver {
 	// This templated subclass of Preconditioner serves as a base class for
 	// other preconditioners that depend on the particular matrix layout of
 	// the underlying linear operator.
+	// Preconditioners that depend on acccess to the low level structure
+	// of a SparseMatrix.
+	//typedef TypedPreconditioner<SparseMatrix>              SparseMatrixPreconditioner; 
+	//typedef TypedPreconditioner<BlockSparseMatrix>         BlockSparseMatrixPreconditioner;
+	//typedef TypedPreconditioner<CompressedRowSparseMatrix> CompressedRowSparseMatrixPreconditioner;
+	
+	abstract class SchurEliminatorBase {
+
+		  // Initialize the eliminator. It is the user's responsibilty to call
+		  // this function before calling Eliminate or BackSubstitute. It is
+		  // also the caller's responsibilty to ensure that the
+		  // CompressedRowBlockStructure object passed to this method is the
+		  // same one (or is equivalent to) the one associated with the
+		  // BlockSparseMatrix objects below.
+		  //
+		  // assume_full_rank_ete controls how the eliminator inverts with the
+		  // diagonal blocks corresponding to e blocks in A'A. If
+		  // assume_full_rank_ete is true, then a Cholesky factorization is
+		  // used to compute the inverse, otherwise a singular value
+		  // decomposition is used to compute the pseudo inverse.
+		  public abstract void Init(int num_eliminate_blocks,
+		                    boolean assume_full_rank_ete,
+		                    CompressedRowBlockStructure bs);
+
+		  // Compute the Schur complement system from the augmented linear
+		  // least squares problem [A;D] x = [b;0]. The left hand side and the
+		  // right hand side of the reduced linear system are returned in lhs
+		  // and rhs respectively.
+		  //
+		  // It is the caller's responsibility to construct and initialize
+		  // lhs. Depending upon the structure of the lhs object passed here,
+		  // the full or a submatrix of the Schur complement will be computed.
+		  //
+		  // Since the Schur complement is a symmetric matrix, only the upper
+		  // triangular part of the Schur complement is computed.
+		  public abstract void Eliminate(BlockSparseMatrix A,
+		                         double[] b,
+		                         double[] D,
+		                         BlockRandomAccessMatrix lhs,
+		                         double[] rhs);
+
+		  // Given values for the variables z in the F block of A, solve for
+		  // the optimal values of the variables y corresponding to the E
+		  // block in A.
+		  public abstract void BackSubstitute(BlockSparseMatrix A,
+		                              double[] b,
+		                              double[] D,
+		                              double[] z,
+		                              double[] y);
+		  // Factory
+		  //static SchurEliminatorBase* Create(const LinearSolver::Options& options);
+		};
+	
+	class SchurJacobiPreconditioner extends TypedPreconditioner<BlockSparseMatrix> {
+		private PreconditionerOptions options_;
+		private SchurEliminatorBase eliminator_;
+		  // Preconditioner matrix.
+		private BlockRandomAccessDiagonalMatrix m_;
+		  // Initialize the symbolic structure of the preconditioner. bs is
+		  // the block structure of the linear system to be solved. It is used
+		  // to determine the sparsity structure of the preconditioner matrix.
+		  //
+		  // It has the same structural requirement as other Schur complement
+		  // based solvers. Please see schur_eliminator.h for more details.
+		  public SchurJacobiPreconditioner(CompressedRowBlockStructure bs,
+		                            PreconditionerOptions options) {
+			  super();
+		  }
+
+		  // Preconditioner interface.
+		  public void RightMultiply(double[] x, double[] y) {
+			  m_.RightMultiply(x, y);
+		  }
+		  
+		  public int num_rows() {
+			  return m_.num_rows();
+		  }
+
+		  private void InitEliminator(CompressedRowBlockStructure bs) {
+			  
+		  }
+		  
+		  public boolean UpdateImpl(BlockSparseMatrix A, double[] D) {
+			  int i;
+			  int num_rows = m_.num_rows();
+			  if (num_rows <= 0) {
+				  System.err.println("num_rows <= 0 in SchurJacobiPreconditioner UpdateImpl");
+				  return false;
+			  }
+
+			  // We need a dummy rhs vector and a dummy b vector since the Schur
+			  // eliminator combines the computation of the reduced camera matrix
+			  // with the computation of the right hand side of that linear
+			  // system.
+			  //
+			  // TODO(sameeragarwal): Perhaps its worth refactoring the
+			  // SchurEliminator::Eliminate function to allow NULL for the rhs. As
+			  // of now it does not seem to be worth the effort.
+			  double rhs[] = new double[m_.num_rows()];
+			  double b[] = new double[A.num_rows()]; 
+			  // Compute a subset of the entries of the Schur complement.
+			  eliminator_.Eliminate(A, b, D, m_, rhs);
+			  m_.Invert();
+			  return true;
+
+		  }
+
+		 
+		};
+	
+	// Wrap a SparseMatrix object as a preconditioner.
+	class SparseMatrixPreconditionerWrapper extends TypedPreconditioner<SparseMatrix> {
+	 private SparseMatrix matrix_;
+	
+	  // Wrapper does NOT take ownership of the matrix pointer.
+	  public SparseMatrixPreconditionerWrapper(SparseMatrix matrix) {
+		  super();
+		  matrix_ = matrix;
+		  if (matrix == null) {
+			  System.err.println("matrix == null in SparseMatrixPrconditionerWrapper");
+		  }
+	  }
+
+	  // Preconditioner interface
+	  public void RightMultiply(double[] x, double[] y) {
+		  matrix_.RightMultiply(x, y);
+	  }
+	  
+	  public int num_rows() {
+		  return matrix_.num_rows();
+	  }
+
+	 public boolean UpdateImpl(SparseMatrix A, double[] D) {
+		 return true;
+	 }
+	};
+
 	abstract class TypedPreconditioner<MatrixType> extends Preconditioner {
 	 public TypedPreconditioner() {
 		 super();
@@ -5753,83 +5907,90 @@ public abstract class CeresSolver {
 
 	  public abstract boolean UpdateImpl(MatrixType A, double D[]);
 	};
+	
+	 class PreconditionerOptions {
+		 
+		 public PreconditionerType type;
+		    public VisibilityClusteringType visibility_clustering_type;
+		    public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+
+		    // When using the subset preconditioner, all row blocks starting
+		    // from this row block are used to construct the preconditioner.
+		    //
+		    // i.e., the Jacobian matrix A is horizonatally partitioned as
+		    //
+		    // A = [P]
+		    //     [Q]
+		    //
+		    // where P has subset_preconditioner_start_row_block row blocks,
+		    // and the preconditioner is the inverse of the matrix Q'Q.
+		    public int subset_preconditioner_start_row_block;
+
+		    // See solver.h for information about these flags.
+		    public boolean use_postordering;
+
+		    // If possible, how many threads the preconditioner can use.
+		    public int num_threads;
+
+		    // Hints about the order in which the parameter blocks should be
+		    // eliminated by the linear solver.
+		    //
+		    // For example if elimination_groups is a vector of size k, then
+		    // the linear solver is informed that it should eliminate the
+		    // parameter blocks 0 ... elimination_groups[0] - 1 first, and
+		    // then elimination_groups[0] ... elimination_groups[1] - 1 and so
+		    // on. Within each elimination group, the linear solver is free to
+		    // choose how the parameter blocks are ordered. Different linear
+		    // solvers have differing requirements on elimination_groups.
+		    //
+		    // The most common use is for Schur type solvers, where there
+		    // should be at least two elimination groups and the first
+		    // elimination group must form an independent set in the normal
+		    // equations. The first elimination group corresponds to the
+		    // num_eliminate_blocks in the Schur type solvers.
+		    public Vector<Integer> elimination_groups;
+
+		    // If the block sizes in a BlockSparseMatrix are fixed, then in
+		    // some cases the Schur complement based solvers can detect and
+		    // specialize on them.
+		    //
+		    // It is expected that these parameters are set programmatically
+		    // rather than manually.
+		    //
+		    // Please see schur_complement_solver.h and schur_eliminator.h for
+		    // more details.
+		    public int row_block_size;
+		    public int e_block_size;
+		    public int f_block_size;
+
+		    public Context context;
+	    public PreconditionerOptions() {
+	        type = PreconditionerType.JACOBI;
+	        visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
+	        //sparse_linear_algebra_library_type(SUITE_SPARSE),
+	        sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.EIGEN_SPARSE;
+	        subset_preconditioner_start_row_block = -1;
+	        use_postordering = false;
+	        num_threads = 1;
+	        row_block_size = DYNAMIC;
+	        e_block_size = DYNAMIC;
+	        f_block_size = DYNAMIC;
+	        context = new Context(); 
+	    }
+
+	    
+		 
+	 }
 	 
 	 abstract class Preconditioner extends LinearOperator {
-		 public Options options;
+		 public PreconditionerOptions options;
 		  class Options {
-			    public PreconditionerType type;
-			    public VisibilityClusteringType visibility_clustering_type;
-			    public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
-
-			    // When using the subset preconditioner, all row blocks starting
-			    // from this row block are used to construct the preconditioner.
-			    //
-			    // i.e., the Jacobian matrix A is horizonatally partitioned as
-			    //
-			    // A = [P]
-			    //     [Q]
-			    //
-			    // where P has subset_preconditioner_start_row_block row blocks,
-			    // and the preconditioner is the inverse of the matrix Q'Q.
-			    public int subset_preconditioner_start_row_block;
-
-			    // See solver.h for information about these flags.
-			    public boolean use_postordering;
-
-			    // If possible, how many threads the preconditioner can use.
-			    public int num_threads;
-
-			    // Hints about the order in which the parameter blocks should be
-			    // eliminated by the linear solver.
-			    //
-			    // For example if elimination_groups is a vector of size k, then
-			    // the linear solver is informed that it should eliminate the
-			    // parameter blocks 0 ... elimination_groups[0] - 1 first, and
-			    // then elimination_groups[0] ... elimination_groups[1] - 1 and so
-			    // on. Within each elimination group, the linear solver is free to
-			    // choose how the parameter blocks are ordered. Different linear
-			    // solvers have differing requirements on elimination_groups.
-			    //
-			    // The most common use is for Schur type solvers, where there
-			    // should be at least two elimination groups and the first
-			    // elimination group must form an independent set in the normal
-			    // equations. The first elimination group corresponds to the
-			    // num_eliminate_blocks in the Schur type solvers.
-			    public Vector<Integer> elimination_groups;
-
-			    // If the block sizes in a BlockSparseMatrix are fixed, then in
-			    // some cases the Schur complement based solvers can detect and
-			    // specialize on them.
-			    //
-			    // It is expected that these parameters are set programmatically
-			    // rather than manually.
-			    //
-			    // Please see schur_complement_solver.h and schur_eliminator.h for
-			    // more details.
-			    public int row_block_size;
-			    public int e_block_size;
-			    public int f_block_size;
-
-			    public Context context;
-		    public Options() {
-		        type = PreconditionerType.JACOBI;
-		        visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
-		        //sparse_linear_algebra_library_type(SUITE_SPARSE),
-		        sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.EIGEN_SPARSE;
-		        subset_preconditioner_start_row_block = -1;
-		        use_postordering = false;
-		        num_threads = 1;
-		        row_block_size = DYNAMIC;
-		        e_block_size = DYNAMIC;
-		        f_block_size = DYNAMIC;
-		        context = new Context(); 
-		    }
-
-		    
+			    
 		  } // class Options
 		  
 		  public Preconditioner() {
-			  options = new Options();
+			  super();
+			  PreconditionerOptions options = new PreconditionerOptions();
 		  }
 
 		  // If the optimization problem is such that there are no remaining
@@ -5867,9 +6028,7 @@ public abstract class CeresSolver {
 		  public int num_cols() {
 		    return num_rows();
 		  }
-		} // abstract class Preconditioner
-	 
-	 
+		} // abstract class Preconditioner 
 	 
 	 //template <int kRowBlockSize = Eigen::Dynamic,
 	          //int kEBlockSize = Eigen::Dynamic,
@@ -6184,105 +6343,105 @@ public abstract class CeresSolver {
 	} // class PartitionedMatrixView
 	
 	public PartitionedMatrixView createPartitionedMatrixView(LinearSolverOptions options, BlockSparseMatrix matrix) {
-		if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 2) &&
-			     (options.f_block_size == 2)) {
+		if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2) &&
+			     (options.f_block_size[0] == 2)) {
 			   return new PartitionedMatrixView(2, 2, 2, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 2) &&
-			     (options.f_block_size == 3)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2) &&
+			     (options.f_block_size[0] == 3)) {
 			   return new PartitionedMatrixView(2, 2, 3,matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 2) &&
-			     (options.f_block_size == 4)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2) &&
+			     (options.f_block_size[0] == 4)) {
 			   return new PartitionedMatrixView(2, 2, 4,matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 2)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2)) {
 			   return new PartitionedMatrixView(2, 2, DYNAMIC, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 3) &&
-			     (options.f_block_size == 3)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 3)) {
 			   return new PartitionedMatrixView(2, 3, 3,matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 3) &&
-			     (options.f_block_size == 4)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 4)) {
 			   return new PartitionedMatrixView(2, 3, 4, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 3) &&
-			     (options.f_block_size == 6)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 6)) {
 			   return new PartitionedMatrixView(2, 3, 6, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 3) &&
-			     (options.f_block_size == 9)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 9)) {
 			   return new PartitionedMatrixView(2, 3, 9, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 3)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3)) {
 			   return new PartitionedMatrixView(2, 3, DYNAMIC, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 3)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 3)) {
 			   return new PartitionedMatrixView(2, 4, 3, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 4)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 4)) {
 			   return new PartitionedMatrixView(2, 4, 4, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 6)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 6)) {
 			   return new PartitionedMatrixView(2, 4, 6, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 8)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 8)) {
 			   return new PartitionedMatrixView(2, 4, 8, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 9)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 9)) {
 			   return new PartitionedMatrixView(2, 4, 9, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 2) &&
-			     (options.e_block_size == 4)) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4)) {
 			   return new PartitionedMatrixView(2, 4, DYNAMIC, matrix, options.elimination_groups.get(0));
 			 }
-			 if (options.row_block_size == 2){
+			 if (options.row_block_size[0] == 2){
 			   return new PartitionedMatrixView(2, DYNAMIC, DYNAMIC, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 4) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 2)) {
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 2)) {
 			   return new PartitionedMatrixView(4, 4, 2, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 4) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 3)) {
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 3)) {
 			   return new PartitionedMatrixView(4, 4, 3, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 4) &&
-			     (options.e_block_size == 4) &&
-			     (options.f_block_size == 4)) {
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 4)) {
 			   return new PartitionedMatrixView(4, 4, 4, matrix, options.elimination_groups.get(0));
 			 }
-			 if ((options.row_block_size == 4) &&
-			     (options.e_block_size == 4)) {
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4)) {
 			   return new PartitionedMatrixView(4, 4, DYNAMIC, matrix, options.elimination_groups.get(0));
 			 }
 			 if (1 <= MAX_LOG_LEVEL) {
 			  Preferences.debug("Template specializations not found for "
-			          + options.row_block_size + ","
-			          + options.e_block_size + ","
-			          + options.f_block_size + "\n", Preferences.DEBUG_ALGORITHM);
+			          + options.row_block_size[0] + ","
+			          + options.e_block_size[0] + ","
+			          + options.f_block_size[0] + "\n", Preferences.DEBUG_ALGORITHM);
 			 }
 			  return new PartitionedMatrixView(DYNAMIC, DYNAMIC, DYNAMIC,
 			               matrix, options.elimination_groups.get(0));
@@ -6625,15 +6784,146 @@ public abstract class CeresSolver {
 		};
 
 	 
-	 /*class IterativeSchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
+	 class IterativeSchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
 		  private LinearSolverOptions options_;
-		  //scoped_ptr<internal::ImplicitSchurComplement> schur_complement_;
-		  //private ImplicitSchurComplement schur_complement_;
-		  //scoped_ptr<Preconditioner> preconditioner_;
+		  private ImplicitSchurComplement schur_complement_;
 		  private Preconditioner preconditioner_;
-		  private Vector reduced_linear_system_solution_;
-		 
-	 }*/
+		  private Vector<Double> reduced_linear_system_solution_;
+		  
+		  public IterativeSchurComplementSolver(LinearSolverOptions options) {
+			  super();
+		      options_ = options;
+		      reduced_linear_system_solution_ = new Vector<Double>();
+		  }
+
+		  public LinearSolverSummary SolveImpl(
+				    BlockSparseMatrix A,
+				    double[] b,
+				    LinearSolverPerSolveOptions per_solve_options,
+				    double[] x) {
+			      int i;
+				  EventLogger event_logger = new EventLogger("IterativeSchurComplementSolver::Solve");
+
+				  if (A.block_structure() == null) {
+					  System.err.println("A.block_structure() == null in IterativeSchurComplementSolver SolveImpl");
+					  return null;
+				  }
+				  int num_eliminate_blocks = options_.elimination_groups.get(0);
+				  // Initialize a ImplicitSchurComplement object.
+				  if (schur_complement_ == null) {
+				    DetectStructure(A.block_structure(),
+				                    num_eliminate_blocks,
+				                    options_.row_block_size,
+				                    options_.e_block_size,
+				                    options_.f_block_size);
+				    schur_complement_ = new ImplicitSchurComplement(options_);
+				  }
+				  schur_complement_.Init(A, per_solve_options.D, b);
+
+				  int num_schur_complement_blocks =
+				      A.block_structure().cols.size() - num_eliminate_blocks;
+				  if (num_schur_complement_blocks == 0) {
+					if (2 <= MAX_LOG_LEVEL) {
+				        Preferences.debug("No parameter blocks left in the schur complement.\n", Preferences.DEBUG_ALGORITHM);
+					}
+				    LinearSolverSummary summary = new LinearSolverSummary();
+				    summary.num_iterations = 0;
+				    summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+				    schur_complement_.BackSubstitute(null, x);
+				    return summary;
+				  }
+
+				  // Initialize the solution to the Schur complement system to zero.
+				  reduced_linear_system_solution_.clear();
+				  for (i = 0; i < schur_complement_.num_rows(); i++) {
+					  reduced_linear_system_solution_.add(0.0);
+				  }
+
+				  LinearSolverOptions cg_options = new LinearSolverOptions();
+				  cg_options.min_num_iterations = options_.min_num_iterations;
+				  cg_options.max_num_iterations = options_.max_num_iterations;
+				  ConjugateGradientsSolver cg_solver = new ConjugateGradientsSolver(cg_options);
+
+				  LinearSolverPerSolveOptions cg_per_solve_options = new LinearSolverPerSolveOptions();
+				  cg_per_solve_options.r_tolerance = per_solve_options.r_tolerance;
+				  cg_per_solve_options.q_tolerance = per_solve_options.q_tolerance;
+
+				  CreatePreconditioner(A);
+				  if (preconditioner_ != null) {
+				    if (!preconditioner_.Update(A, per_solve_options.D)) {
+				      LinearSolverSummary summary = new LinearSolverSummary();
+				      summary.num_iterations = 0;
+				      summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+				      summary.message[0] = "Preconditioner update failed.";
+				      return summary;
+				    }
+
+				    cg_per_solve_options.preconditioner = preconditioner_;
+				  }
+
+				  event_logger.AddEvent("Setup");
+				  LinearSolverSummary summary =
+				      cg_solver.Solve(schur_complement_,
+				                      schur_complement_.rhs(),
+				                      cg_per_solve_options,
+				                      reduced_linear_system_solution_);
+				  if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE &&
+				      summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
+					double reduced_linear_system_solution_array[] = new double[reduced_linear_system_solution_.size()];
+					for (i = 0; i < reduced_linear_system_solution_.size(); i++) {
+						reduced_linear_system_solution_array[i] = reduced_linear_system_solution_.get(i);
+					}
+				    schur_complement_.BackSubstitute(reduced_linear_system_solution_array,x);
+				  }
+				  event_logger.AddEvent("Solve");
+				  return summary;
+				}
+
+				private void CreatePreconditioner(
+				    BlockSparseMatrix A) {
+				  if (options_.preconditioner_type == PreconditionerType.IDENTITY ||
+				      preconditioner_ != null) {
+				    return;
+				  }
+
+				  PreconditionerOptions preconditioner_options = new PreconditionerOptions();
+				  preconditioner_options.type = options_.preconditioner_type;
+				  preconditioner_options.visibility_clustering_type =
+				      options_.visibility_clustering_type;
+				  preconditioner_options.sparse_linear_algebra_library_type =
+				      options_.sparse_linear_algebra_library_type;
+				  preconditioner_options.num_threads = options_.num_threads;
+				  preconditioner_options.row_block_size = options_.row_block_size[0];
+				  preconditioner_options.e_block_size = options_.e_block_size[0];
+				  preconditioner_options.f_block_size = options_.f_block_size[0];
+				  preconditioner_options.elimination_groups = options_.elimination_groups;
+				  if (options_.context == null) {
+					  System.err.println("options_.context == null in IterativeSchurComplementSolver CreatePreconditioner");
+					  return;
+				  }
+				  preconditioner_options.context = options_.context;
+
+				  switch (options_.preconditioner_type) {
+				    case JACOBI:
+				      preconditioner_ = new SparseMatrixPreconditionerWrapper(
+				          schur_complement_.block_diagonal_FtF_inverse());
+				      break;
+				    /*case SCHUR_JACOBI:
+				      preconditioner_.reset(new SchurJacobiPreconditioner(
+				          *A->block_structure(), preconditioner_options));
+				      break;*/
+				    // Requires SuiteSparse
+				    //case CLUSTER_JACOBI:
+				    //case CLUSTER_TRIDIAGONAL:
+				    //  preconditioner_.reset(new VisibilityBasedPreconditioner(
+				    //      *A->block_structure(), preconditioner_options));
+				    //  break;
+				    default:
+				      System.err.println("Unknown Preconditioner Type");
+				  }
+				};
+	 }
+	 
 	// Linear solvers that depend on acccess to the low level structure of
 	// a SparseMatrix.
 	// typedef TypedLinearSolver<BlockSparseMatrix> BlockSparseMatrixSolver; 
