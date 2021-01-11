@@ -17,6 +17,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
@@ -3839,6 +3841,12 @@ public abstract class CeresSolver {
 	      values = ptr;
 	      values_index = index;
 	  }
+	  
+	  protected void finalize() {
+		  if (m != null) {
+			  m.unlock();
+		  }
+	  }
 	};
 	
 	abstract class BlockRandomAccessMatrix {
@@ -5812,6 +5820,700 @@ public abstract class CeresSolver {
 		  // Factory
 		  //static SchurEliminatorBase* Create(const LinearSolver::Options& options);
 		};
+		
+		//typedef std::map<int, int> BufferLayoutType;
+		  class Chunk {
+			  public int size;
+			  public int start;
+			  public HashMap<Integer, Integer> buffer_layout;
+		    public Chunk() {
+		    	size = 0;
+		    	buffer_layout = new HashMap<Integer, Integer>();
+		    }
+		    
+		  }
+		
+		//template <int kRowBlockSize = Eigen::Dynamic,
+		          //int kEBlockSize = Eigen::Dynamic,
+		          //int kFBlockSize = Eigen::Dynamic >
+		class SchurEliminator extends SchurEliminatorBase {
+			  private int kRowBlockSize;
+			  private int kEBlockSize;
+			  private int kFBlockSize;
+			  private int num_threads_;
+			  private Context context_;
+			  private int num_eliminate_blocks_;
+			  private boolean assume_full_rank_ete_;
+
+			  // Block layout of the columns of the reduced linear system. Since
+			  // the f blocks can be of varying size, this vector stores the
+			  // position of each f block in the row/col of the reduced linear
+			  // system. Thus lhs_row_layout_[i] is the row/col position of the
+			  // i^th f block.
+			  private Vector<Integer> lhs_row_layout_;
+
+			  // Combinatorial structure of the chunks in A. For more information
+			  // see the documentation of the Chunk object above.
+			  Vector<Chunk> chunks_;
+
+			  // TODO(sameeragarwal): The following two arrays contain per-thread
+			  // storage. They should be refactored into a per thread struct.
+
+			  // Buffer to store the products of the y and z blocks generated
+			  // during the elimination phase. buffer_ is of size num_threads *
+			  // buffer_size_. Each thread accesses the chunk
+			  //
+			  //   [thread_id * buffer_size_ , (thread_id + 1) * buffer_size_]
+			  //
+			  private double[] buffer_;
+
+			  // Buffer to store per thread matrix matrix products used by
+			  // ChunkOuterProduct. Like buffer_ it is of size num_threads *
+			  // buffer_size_. Each thread accesses the chunk
+			  //
+			  //   [thread_id * buffer_size_ , (thread_id + 1) * buffer_size_ -1]
+			  //
+			  private double[] chunk_outer_product_buffer_;
+
+			  int buffer_size_;
+			  int uneliminated_row_begins_;
+
+			  // Locks for the blocks in the right hand side of the reduced linear
+			  // system.
+			  private Vector<Lock> rhs_locks_;
+			 public SchurEliminator(int kRowBlockSize, int kEBlockSize, int kFBlockSize, LinearSolverOptions options) {
+				 super();
+				 this.kRowBlockSize = kRowBlockSize;
+				 this.kEBlockSize = kEBlockSize;
+				 this.kFBlockSize = kFBlockSize;
+			      num_threads_ = options.num_threads;
+			      context_ = options.context; 
+			      if (options.context == null) {
+			    	  System.out.println("options.context == null in public SchurEliminator");
+			    	  return;
+			      }
+			      lhs_row_layout_ = new Vector<Integer>();
+			      chunks_ = new Vector<Chunk>();
+			      rhs_locks_ = new Vector<Lock>();
+			 }
+			 
+			 public void Init(
+					    int num_eliminate_blocks,
+					    boolean assume_full_rank_ete,
+					    CompressedRowBlockStructure bs) {
+				      if (num_eliminate_blocks <= 0) {
+					      System.err.println("SchurComplementSolver cannot be initialized with num_eliminate_blocks <= 0.");
+					      return;
+				      }
+
+					  num_eliminate_blocks_ = num_eliminate_blocks;
+					  assume_full_rank_ete_ = assume_full_rank_ete;
+
+					  int num_col_blocks = bs.cols.size();
+					  int num_row_blocks = bs.rows.size();
+
+					  buffer_size_ = 1;
+					  chunks_.clear();
+					  lhs_row_layout_.clear();
+
+					  int lhs_num_rows = 0;
+					  // Add a map object for each block in the reduced linear system
+					  // and build the row/column block structure of the reduced linear
+					  // system.
+					  lhs_row_layout_ = new Vector<Integer>(num_col_blocks - num_eliminate_blocks_);
+					  for (int i = num_eliminate_blocks_; i < num_col_blocks; ++i) {
+					    lhs_row_layout_.add(lhs_num_rows);
+					    lhs_num_rows += bs.cols.get(i).size;
+					  }
+
+					  int r = 0;
+					  // Iterate over the row blocks of A, and detect the chunks. The
+					  // matrix should already have been ordered so that all rows
+					  // containing the same y block are vertically contiguous. Along
+					  // the way also compute the amount of space each chunk will need
+					  // to perform the elimination.
+					  while (r < num_row_blocks) {
+					    int chunk_block_id = bs.rows.get(r).cells.get(0).block_id;
+					    if (chunk_block_id >= num_eliminate_blocks_) {
+					      break;
+					    }
+
+					    chunks_.add(new Chunk());
+					    Chunk chunk = chunks_.get(chunks_.size()-1);
+					    chunk.size = 0;
+					    chunk.start = r;
+					    int buffer_size = 0;
+					    int e_block_size = bs.cols.get(chunk_block_id).size;
+
+					    // Add to the chunk until the first block in the row is
+					    // different than the one in the first row for the chunk.
+					    while (r + chunk.size < num_row_blocks) {
+					      CompressedList row = bs.rows.get(r + chunk.size);
+					      if (row.cells.get(0).block_id != chunk_block_id) {
+					        break;
+					      }
+
+					      // Iterate over the blocks in the row, ignoring the first
+					      // block since it is the one to be eliminated.
+					      for (int c = 1; c < row.cells.size(); ++c) {
+					        Cell cell = row.cells.get(c);
+					        if (!chunk.buffer_layout.containsKey(cell.block_id)) {
+					        	chunk.buffer_layout.put(cell.block_id, buffer_size);
+					        	buffer_size += e_block_size * bs.cols.get(cell.block_id).size;
+					        }
+					      }
+
+					      buffer_size_ = Math.max(buffer_size, buffer_size_);
+					      ++chunk.size;
+					    }
+
+					    if (chunk.size <= 0) {
+					    	System.err.println("chunk.size <= 0 in SchurEliminator Init");
+					    	return;
+					    }
+					    r += chunk.size;
+					  }
+					  Chunk chunk = chunks_.get(chunks_.size()-1);
+
+					  uneliminated_row_begins_ = chunk.start + chunk.size;
+					  if (num_threads_ > 1) {
+						Collections.shuffle(chunks_);
+					  }
+
+					  buffer_ = new double[buffer_size_ * num_threads_];
+
+					  // chunk_outer_product_buffer_ only needs to store e_block_size *
+					  // f_block_size, which is always less than buffer_size_, so we just
+					  // allocate buffer_size_ per thread.
+					  chunk_outer_product_buffer_ = new double[buffer_size_ * num_threads_];
+
+					  rhs_locks_.clear();
+					  rhs_locks_ = new Vector<Lock>(num_col_blocks - num_eliminate_blocks_);
+					  for (int i = 0; i < num_col_blocks - num_eliminate_blocks_; ++i) {
+					    rhs_locks_.add(new ReentrantLock());
+					  }
+					}
+			 
+			 public void Eliminate(BlockSparseMatrix A,
+			           double[] b,
+			           double[] D,
+			           BlockRandomAccessMatrix lhs,
+			           double[] rhs) {
+			   int i;
+			   int row;
+			   int col;
+			   int index;
+			   if (lhs.num_rows() > 0) {
+			     lhs.SetZero();
+			     for (i = 0; i < lhs.num_rows(); i++) {
+			    	 rhs[i] = 0.0;
+			     }
+			   }
+
+			   CompressedRowBlockStructure bs = A.block_structure();
+			   int num_col_blocks = bs.cols.size();
+
+			   // Add the diagonal to the schur complement.
+			   if (D != null) {
+			 //#ifdef CERES_USE_OPENMP
+			 //#pragma omp parallel for num_threads(num_threads_) schedule(dynamic)
+			 //#endif // CERES_USE_OPENMP
+
+			 //#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			     for (i = num_eliminate_blocks_; i < num_col_blocks; ++i) {
+			 //#else
+			     //ParallelFor(context_, num_eliminate_blocks_, num_col_blocks, num_threads_,
+			                 //[&](int i) {
+			 //#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+			       int block_id = i - num_eliminate_blocks_;
+			       int r[] = new int[1];
+			       int c[] = new int[1];
+			       int row_stride[] = new int[1];
+			       int col_stride[] = new int[1];
+			       CellInfo cell_info = lhs.GetCell(block_id, block_id,
+			                                          r, c,
+			                                          row_stride, col_stride);
+			       if (cell_info != null) {
+			         int block_size = bs.cols.get(i).size;
+			         double diag[] = new double[block_size];
+			         for (row = bs.cols.get(i).position; row < bs.cols.get(i).position + block_size; row++) {
+			             diag[row-bs.cols.get(i).position] = D[row];	 
+			         }
+
+			         //CeresMutexLock l(&cell_info->m);
+			         Lock l = cell_info.m;
+			         l.lock();
+			         double marr[][] = new double[row_stride[0]][col_stride[0]];
+			         for (index = 0, row = 0; row < row_stride[0]; row++) {
+			        	 for (col = 0; col < col_stride[0]; col++, index++) {
+			        		 marr[row][col] = cell_info.values[index];
+			        	 }
+			         }
+			         //MatrixRef m(cell_info->values, row_stride, col_stride);
+			         for (index = 0; index < block_size; index++) {
+			        	 marr[r[0]+index][c[0]+index] += (diag[index]*diag[index]);
+			         }
+			         for (index = 0, row = 0; row < row_stride[0]; row++) {
+			        	 for (col = 0; col < col_stride[0]; col++, index++) {
+			        		 cell_info.values[index] = marr[row][col];
+			        	 }
+			         }
+			         //m.block(r, c, block_size, block_size).diagonal()
+			             //+= diag.array().square().matrix();
+			       }
+			     }
+			 //#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			     //);
+			 //#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			   } // if (D != null)
+
+			 //#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			   //ThreadTokenProvider thread_token_provider(num_threads_);
+			 //#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+			 //#ifdef CERES_USE_OPENMP
+			   // Eliminate y blocks one chunk at a time.  For each chunk, compute
+			   // the entries of the normal equations and the gradient vector block
+			   // corresponding to the y block and then apply Gaussian elimination
+			   // to them. The matrix ete stores the normal matrix corresponding to
+			   // the block being eliminated and array buffer_ contains the
+			   // non-zero blocks in the row corresponding to this y block in the
+			   // normal equations. This computation is done in
+			   // ChunkDiagonalBlockAndGradient. UpdateRhs then applies gaussian
+			   // elimination to the rhs of the normal equations, updating the rhs
+			   // of the reduced linear system by modifying rhs blocks for all the
+			   // z blocks that share a row block/residual term with the y
+			   // block. EliminateRowOuterProduct does the corresponding operation
+			   // for the lhs of the reduced linear system.
+			 //#pragma omp parallel for num_threads(num_threads_) schedule(dynamic)
+			 //#endif // CERES_USE_OPENMP
+
+			 //#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			   for (i = 0; i < chunks_.size(); ++i) {
+			     //const ScopedThreadToken scoped_thread_token(&thread_token_provider);
+			     //const int thread_id = scoped_thread_token.token();
+				   int thread_id = 0;
+			 //#else
+			     //ParallelFor(context_,
+			                 //0,
+			                 //int(chunks_.size()),
+			                 //num_threads_,
+			                 //[&](int thread_id, int i) {
+			 //#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+			     //double* buffer = buffer_.get() + thread_id * buffer_size_;
+				 double[] buffer = buffer_;
+			     Chunk chunk = chunks_.get(i);
+			     int e_block_id = bs.rows.get(chunk.start).cells.get(0).block_id;
+			     int e_block_size = bs.cols.get(e_block_id).size;
+
+			     //VectorRef(buffer, buffer_size_).setZero();
+			     for (row = 0; row < buffer_size_; row++) {
+			    	 buffer[row] = 0.0;
+			     }
+
+			     //typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix
+			         //ete(e_block_size, e_block_size);
+			     double etearr[][] = new double[e_block_size][e_block_size];
+
+			     if (D != null) {
+			       double diag[] = new double[e_block_size];
+			       for (row = bs.cols.get(e_block_id).position; row < bs.cols.get(e_block_id).position + e_block_size; row++) {
+			    	   diag[row-bs.cols.get(e_block_id).position] = D[row];
+			       }
+			       for (row = 0; row < e_block_size; row++) {
+			    	   etearr[row][row] = diag[row]*diag[row];
+			       }
+			       //const typename EigenTypes<kEBlockSize>::ConstVectorRef
+			           //diag(D + bs->cols[e_block_id].position, e_block_size);
+			       //ete = diag.array().square().matrix().asDiagonal();
+			     } else {
+			       //ete.setZero();
+			     }
+
+			     //FixedArray<double, 8> g(e_block_size);
+			    // typename EigenTypes<kEBlockSize>::VectorRef gref(g.get(), e_block_size);
+			     //gref.setZero();
+			     double g[] = new double[e_block_size];
+
+			     // We are going to be computing
+			     //
+			     //   S += F'F - F'E(E'E)^{-1}E'F
+			     //
+			     // for each Chunk. The computation is broken down into a number of
+			     // function calls as below.
+
+			     // Compute the outer product of the e_blocks with themselves (ete
+			     // = E'E). Compute the product of the e_blocks with the
+			     // corresonding f_blocks (buffer = E'F), the gradient of the terms
+			     // in this chunk (g) and add the outer product of the f_blocks to
+			     // Schur complement (S += F'F).
+			     ChunkDiagonalBlockAndGradient(
+			         chunk, A, b, chunk.start, etearr, g, buffer, lhs);
+
+			     // Normally one wouldn't compute the inverse explicitly, but
+			     // e_block_size will typically be a small number like 3, in
+			     // which case its much faster to compute the inverse once and
+			     // use it to multiply other matrices/vectors instead of doing a
+			     // Solve call over and over again.
+			     /*typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix inverse_ete =
+			         InvertPSDMatrix<kEBlockSize>(assume_full_rank_ete_, ete);
+
+			     // For the current chunk compute and update the rhs of the reduced
+			     // linear system.
+			     //
+			     //   rhs = F'b - F'E(E'E)^(-1) E'b
+
+			     double inverse_ete_g[] = new double[e_block_size];
+			     MatrixVectorMultiply<kEBlockSize, kEBlockSize, 0>(
+			         inverse_ete.data(),
+			         e_block_size,
+			         e_block_size,
+			         g.get(),
+			         inverse_ete_g.get());
+
+			     UpdateRhs(chunk, A, b, chunk.start, inverse_ete_g.get(), rhs);
+
+			     // S -= F'E(E'E)^{-1}E'F
+			     ChunkOuterProduct(
+			         thread_id, bs, inverse_ete, buffer, chunk.buffer_layout, lhs);*/
+			   }
+			 /*//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			   //);
+			 //#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+
+			   // For rows with no e_blocks, the schur complement update reduces to
+			   // S += F'F.
+			   NoEBlockRowsUpdate(A, b,  uneliminated_row_begins_, lhs, rhs);*/
+			 }
+			 
+			 public void BackSubstitute(BlockSparseMatrix A,
+			                double[] b,
+			                double[] D,
+			                double[] z,
+			                double[] y) {
+			   /*CompressedRowBlockStructure bs = A.block_structure();
+
+			 #ifdef CERES_USE_OPENMP
+			 #pragma omp parallel for num_threads(num_threads_) schedule(dynamic)
+			 #endif // CERES_USE_OPENMP
+
+			 #if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			   for (int i = 0; i < chunks_.size(); ++i) {
+			 #else
+			   ParallelFor(context_, 0, int(chunks_.size()), num_threads_, [&](int i) {
+			 #endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+			     const Chunk& chunk = chunks_[i];
+			     const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
+			     const int e_block_size = bs->cols[e_block_id].size;
+
+			     double* y_ptr = y +  bs->cols[e_block_id].position;
+			     typename EigenTypes<kEBlockSize>::VectorRef y_block(y_ptr, e_block_size);
+
+			     typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix
+			         ete(e_block_size, e_block_size);
+			     if (D != NULL) {
+			       const typename EigenTypes<kEBlockSize>::ConstVectorRef
+			           diag(D + bs->cols[e_block_id].position, e_block_size);
+			       ete = diag.array().square().matrix().asDiagonal();
+			     } else {
+			       ete.setZero();
+			     }
+
+			     const double* values = A->values();
+			     for (int j = 0; j < chunk.size; ++j) {
+			       const CompressedRow& row = bs->rows[chunk.start + j];
+			       const Cell& e_cell = row.cells.front();
+			       DCHECK_EQ(e_block_id, e_cell.block_id);
+
+			       FixedArray<double, 8> sj(row.block.size);
+
+			       typename EigenTypes<kRowBlockSize>::VectorRef(sj.get(), row.block.size) =
+			           typename EigenTypes<kRowBlockSize>::ConstVectorRef
+			           (b + bs->rows[chunk.start + j].block.position, row.block.size);
+
+			       for (int c = 1; c < row.cells.size(); ++c) {
+			         const int f_block_id = row.cells[c].block_id;
+			         const int f_block_size = bs->cols[f_block_id].size;
+			         const int r_block = f_block_id - num_eliminate_blocks_;
+
+			         MatrixVectorMultiply<kRowBlockSize, kFBlockSize, -1>(
+			             values + row.cells[c].position, row.block.size, f_block_size,
+			             z + lhs_row_layout_[r_block],
+			             sj.get());
+			       }
+
+			       MatrixTransposeVectorMultiply<kRowBlockSize, kEBlockSize, 1>(
+			           values + e_cell.position, row.block.size, e_block_size,
+			           sj.get(),
+			           y_ptr);
+
+			       MatrixTransposeMatrixMultiply
+			           <kRowBlockSize, kEBlockSize, kRowBlockSize, kEBlockSize, 1>(
+			               values + e_cell.position, row.block.size, e_block_size,
+			               values + e_cell.position, row.block.size, e_block_size,
+			               ete.data(), 0, 0, e_block_size, e_block_size);
+			     }
+
+			     y_block = InvertPSDMatrix<kEBlockSize>(assume_full_rank_ete_, ete)
+			         * y_block;
+			   }
+			 #if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			   );
+			 #endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)*/
+			 }
+
+			 
+			 private void ChunkDiagonalBlockAndGradient(
+			     Chunk chunk,
+			     BlockSparseMatrix A,
+			     double[] b,
+			     int row_block_counter,
+			     //typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix* ete,
+			     double etearr[][],
+			     double[] g,
+			     double[] buffer,
+			     BlockRandomAccessMatrix lhs) {
+				 int r;
+				 int col;
+				 int index;
+			   CompressedRowBlockStructure bs = A.block_structure();
+
+			   int b_pos = bs.rows.get(row_block_counter).block.position;
+			   int e_block_size = etearr.length;
+
+			   // Iterate over the rows in this chunk, for each row, compute the
+			   // contribution of its F blocks to the Schur complement, the
+			   // contribution of its E block to the matrix EE' (ete), and the
+			   // corresponding block in the gradient vector.
+			   double[] values = A.values();
+			   for (int j = 0; j < chunk.size; ++j) {
+			     CompressedList row = bs.rows.get(row_block_counter + j);
+
+			     if (row.cells.size() > 1) {
+			       EBlockRowOuterProduct(A, row_block_counter + j, lhs);
+			     }
+
+			     // Extract the e_block, ETE += E_i' E_i
+			     Cell e_cell = row.cells.get(0);
+			     double etedata[] = new double[e_block_size * e_block_size];
+			     for (index = 0, r = 0; r < e_block_size; r++) {
+			    	 for (col = 0; col < e_block_size; col++, index++) {
+			    	     etedata[index] = etearr[r][col];	 
+			    	 }
+			     }
+			     MatrixTransposeMatrixMultiply
+			         (kRowBlockSize, kEBlockSize, kRowBlockSize, kEBlockSize, 1,
+			             values, e_cell.position, row.block.size, e_block_size,
+			             values, e_cell.position, row.block.size, e_block_size,
+			             etedata, 0, 0, 0, e_block_size, e_block_size);
+			     for (index = 0, r = 0; r < e_block_size; r++) {
+			    	 for (col = 0; col < e_block_size; col++, index++) {
+			    	     etearr[r][col] = etedata[index];	 
+			    	 }
+			     }
+
+			     // g += E_i' b_i
+			     MatrixTransposeVectorMultiply(kRowBlockSize, kEBlockSize, 1,
+			         values, e_cell.position, row.block.size, e_block_size,
+			         b, b_pos,
+			         g, 0);
+
+
+			     // buffer = E'F. This computation is done by iterating over the
+			     // f_blocks for each row in the chunk.
+			     for (int c = 1; c < row.cells.size(); ++c) {
+			       int f_block_id = row.cells.get(c).block_id;
+			       int f_block_size = bs.cols.get(f_block_id).size;
+			       int buffer_index = 0;
+			       if (!chunk.buffer_layout.containsKey(f_block_id)) {
+			    	   System.err.println("Map key not found in SchurEliminator ChunkDiagonalBlockAndGradient");
+			    	   return;
+			       }
+			       else {
+			    	   buffer_index = chunk.buffer_layout.get(f_block_id);   
+			       }
+			       MatrixTransposeMatrixMultiply
+			           (kRowBlockSize, kEBlockSize, kRowBlockSize, kFBlockSize, 1,
+			           values, e_cell.position, row.block.size, e_block_size,
+			           values, row.cells.get(c).position, row.block.size, f_block_size,
+			           buffer, buffer_index, 0, 0, e_block_size, f_block_size);
+			     }
+			     b_pos += row.block.size;
+			   }
+			 }
+			 
+			// For a row with an e_block, compute the contribition S += F'F. This
+			// function has the same structure as NoEBlockRowOuterProduct, except
+			// that this function uses the template parameters.
+			private void EBlockRowOuterProduct(BlockSparseMatrix A,
+			                      int row_block_index,
+			                      BlockRandomAccessMatrix lhs) {
+			  CompressedRowBlockStructure bs = A.block_structure();
+			  CompressedList row = bs.rows.get(row_block_index);
+			  double[] values = A.values();
+			  for (int i = 1; i < row.cells.size(); ++i) {
+			    int block1 = row.cells.get(i).block_id - num_eliminate_blocks_;
+			    if (block1 < 0) {
+			    	System.err.println("block1 < 0 in SchurEliminator EBlockRowOuterProduct");
+			    	return;
+			    }
+
+			    int block1_size = bs.cols.get(row.cells.get(i).block_id).size;
+			    int r[] = new int[1];
+			    int c[] = new int[1];
+			    int row_stride[] = new int[1];
+			    int col_stride[] = new int[1];
+			    CellInfo cell_info = lhs.GetCell(block1, block1,
+			                                       r, c,
+			                                       row_stride, col_stride);
+			    if (cell_info != null) {
+			      Lock l = cell_info.m;
+			      l.lock();
+			      // block += b1.transpose() * b1;
+			      MatrixTransposeMatrixMultiply
+			          (kRowBlockSize, kFBlockSize, kRowBlockSize, kFBlockSize, 1,
+			          values, row.cells.get(i).position, row.block.size, block1_size,
+			          values, row.cells.get(i).position, row.block.size, block1_size,
+			          cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			    }
+
+			    for (int j = i + 1; j < row.cells.size(); ++j) {
+			      int block2 = row.cells.get(j).block_id - num_eliminate_blocks_;
+			      if (block2 < 0) {
+			    	  System.err.println("block2 < 0 in SchurEliminator EBlockRowOuterProduct");
+			    	  return;
+			      }
+			      if (block1 >= block2) {
+			    	  System.err.println("block1 >= block2 in SchurEliminator EBlockRowOuterProduct");
+			    	  return;
+			      }
+			      int block2_size = bs.cols.get(row.cells.get(j).block_id).size;
+			      cell_info = lhs.GetCell(block1, block2,
+			                                         r, c,
+			                                         row_stride, col_stride);
+			      if (cell_info != null) {
+			        // block += b1.transpose() * b2;
+			        Lock l = cell_info.m;
+			        l.lock();
+			        MatrixTransposeMatrixMultiply
+			            (kRowBlockSize, kFBlockSize, kRowBlockSize, kFBlockSize, 1,
+			                values, row.cells.get(i).position, row.block.size, block1_size,
+			                values, row.cells.get(j).position, row.block.size, block2_size,
+			                cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			      }
+			    }
+			  }
+			}
+		} // class SchurEliminator
+
+		
+		public SchurEliminatorBase createSchurEliminatorBase(LinearSolverOptions options) {
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2) &&
+			     (options.f_block_size[0] == 2)) {
+			   return new SchurEliminator(2, 2, 2, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2) &&
+			     (options.f_block_size[0] == 3)) {
+			   return new SchurEliminator(2, 2, 3, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2) &&
+			     (options.f_block_size[0] == 4)) {
+			   return new SchurEliminator(2, 2, 4, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 2)) {
+			   return new SchurEliminator(2, 2, DYNAMIC, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 3)) {
+			   return new SchurEliminator(2, 3, 3, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 4)) {
+			   return new SchurEliminator(2, 3, 4, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 6)) {
+			   return new SchurEliminator(2, 3, 6, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3) &&
+			     (options.f_block_size[0] == 9)) {
+			   return new SchurEliminator(2, 3, 9, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 3)) {
+			   return new SchurEliminator(2, 3, DYNAMIC, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 3)) {
+			   return new SchurEliminator(2, 4, 3, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 4)) {
+			   return new SchurEliminator(2, 4, 4, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 6)) {
+			   return new SchurEliminator(2, 4, 6, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 8)) {
+			   return new SchurEliminator(2, 4, 8, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 9)) {
+			   return new SchurEliminator(2, 4, 9, options);
+			 }
+			 if ((options.row_block_size[0] == 2) &&
+			     (options.e_block_size[0] == 4)) {
+			   return new SchurEliminator(2, 4, DYNAMIC, options);
+			 }
+			 if (options.row_block_size[0] == 2){
+			   return new SchurEliminator(2, DYNAMIC, DYNAMIC, options);
+			 }
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 2)) {
+			   return new SchurEliminator(4, 4, 2, options);
+			 }
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 3)) {
+			   return new SchurEliminator(4, 4, 3, options);
+			 }
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4) &&
+			     (options.f_block_size[0] == 4)) {
+			   return new SchurEliminator(4, 4, 4, options);
+			 }
+			 if ((options.row_block_size[0] == 4) &&
+			     (options.e_block_size[0] == 4)) {
+			   return new SchurEliminator(4, 4, DYNAMIC, options);
+			 }
+			 if (1 <= MAX_LOG_LEVEL) {
+			  Preferences.debug("Template specializations not found for "
+			          + options.row_block_size[0] + ","
+			          + options.e_block_size[0] + ","
+			          + options.f_block_size[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			 }
+			  return new SchurEliminator(DYNAMIC, DYNAMIC, DYNAMIC, options);
+			}
+
 	
 	class SchurJacobiPreconditioner extends TypedPreconditioner<BlockSparseMatrix> {
 		private PreconditionerOptions options_;
@@ -5827,6 +6529,33 @@ public abstract class CeresSolver {
 		  public SchurJacobiPreconditioner(CompressedRowBlockStructure bs,
 		                            PreconditionerOptions options) {
 			  super();
+			  options_ = options;
+			  if (options_.elimination_groups.size() <= 1) {
+				  System.err.println("options_.elimination_groups.size() <= 1 in public SchurJacobiPreconditioner");
+				  return;
+			  }
+			  if (options_.elimination_groups.get(0) <= 0) {
+			      System.err.println("options_.elimination_groups.get(0) <= 0 in publicSchurJacobiPreConditioner");
+			      return;
+			  }
+			  int num_blocks = bs.cols.size() - options_.elimination_groups.get(0);
+			  if (num_blocks <= 0) {
+			      System.err.println("Jacobian should have atleast 1 f_block for SCHUR_JACOBI preconditioner.");
+			      return;
+			  }
+			  if (options_.context == null) {
+				  System.err.println("options_.context == null in public SchurJacobiPreconditioner");
+				  return;
+			  }
+
+			  Vector<Integer> blocks = new Vector<Integer>(num_blocks);
+			  for (int i = 0; i < num_blocks; ++i) {
+			    blocks.add(bs.cols.get(i + options_.elimination_groups.get(0)).size);
+			  }
+
+			  m_ = new BlockRandomAccessDiagonalMatrix(blocks);
+			  InitEliminator(bs);
+
 		  }
 
 		  // Preconditioner interface.
@@ -5839,7 +6568,17 @@ public abstract class CeresSolver {
 		  }
 
 		  private void InitEliminator(CompressedRowBlockStructure bs) {
-			  
+			  LinearSolverOptions eliminator_options = new LinearSolverOptions();
+			  eliminator_options.elimination_groups = options_.elimination_groups;
+			  eliminator_options.num_threads = options_.num_threads;
+			  eliminator_options.e_block_size[0] = options_.e_block_size;
+			  eliminator_options.f_block_size[0] = options_.f_block_size;
+			  eliminator_options.row_block_size[0] = options_.row_block_size;
+			  eliminator_options.context = options_.context;
+			  eliminator_ = createSchurEliminatorBase(eliminator_options);
+			  boolean kFullRankETE = true;
+			  eliminator_.Init(
+			      eliminator_options.elimination_groups.get(0), kFullRankETE, bs);  
 		  }
 		  
 		  public boolean UpdateImpl(BlockSparseMatrix A, double[] D) {
@@ -6908,10 +7647,10 @@ public abstract class CeresSolver {
 				      preconditioner_ = new SparseMatrixPreconditionerWrapper(
 				          schur_complement_.block_diagonal_FtF_inverse());
 				      break;
-				    /*case SCHUR_JACOBI:
-				      preconditioner_.reset(new SchurJacobiPreconditioner(
-				          *A->block_structure(), preconditioner_options));
-				      break;*/
+				    case SCHUR_JACOBI:
+				      preconditioner_ = new SchurJacobiPreconditioner(
+				          A.block_structure(), preconditioner_options);
+				      break;
 				    // Requires SuiteSparse
 				    //case CLUSTER_JACOBI:
 				    //case CLUSTER_TRIDIAGONAL:
