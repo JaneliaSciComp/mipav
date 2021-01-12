@@ -6193,76 +6193,140 @@ public abstract class CeresSolver {
 			                double[] D,
 			                double[] z,
 			                double[] y) {
-			   /*CompressedRowBlockStructure bs = A.block_structure();
+			   int r;
+			   int col;
+			   int index;
+			   CompressedRowBlockStructure bs = A.block_structure();
 
-			 #ifdef CERES_USE_OPENMP
-			 #pragma omp parallel for num_threads(num_threads_) schedule(dynamic)
-			 #endif // CERES_USE_OPENMP
+			 //#ifdef CERES_USE_OPENMP
+			 //#pragma omp parallel for num_threads(num_threads_) schedule(dynamic)
+			 //#endif // CERES_USE_OPENMP
 
-			 #if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			 //#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
 			   for (int i = 0; i < chunks_.size(); ++i) {
-			 #else
-			   ParallelFor(context_, 0, int(chunks_.size()), num_threads_, [&](int i) {
-			 #endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			 //#else
+			   //ParallelFor(context_, 0, int(chunks_.size()), num_threads_, [&](int i) {
+			 //#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
 
-			     const Chunk& chunk = chunks_[i];
-			     const int e_block_id = bs->rows[chunk.start].cells.front().block_id;
-			     const int e_block_size = bs->cols[e_block_id].size;
+			     Chunk chunk = chunks_.get(i);
+			     int e_block_id = bs.rows.get(chunk.start).cells.get(0).block_id;
+			     int e_block_size = bs.cols.get(e_block_id).size;
 
-			     double* y_ptr = y +  bs->cols[e_block_id].position;
-			     typename EigenTypes<kEBlockSize>::VectorRef y_block(y_ptr, e_block_size);
-
-			     typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix
-			         ete(e_block_size, e_block_size);
-			     if (D != NULL) {
-			       const typename EigenTypes<kEBlockSize>::ConstVectorRef
-			           diag(D + bs->cols[e_block_id].position, e_block_size);
-			       ete = diag.array().square().matrix().asDiagonal();
-			     } else {
-			       ete.setZero();
+			     //double* y_ptr = y +  bs->cols[e_block_id].position;
+			     //typename EigenTypes<kEBlockSize>::VectorRef y_block(y_ptr, e_block_size);
+			     double y_block[] = new double[e_block_size];
+			     for (r = bs.cols.get(e_block_id).position; r < bs.cols.get(e_block_id).position + e_block_size; r++) {
+			    	 y_block[r-bs.cols.get(e_block_id).position] = y[r];
 			     }
 
-			     const double* values = A->values();
+			     //typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix
+			         //ete(e_block_size, e_block_size);
+			     double etearr[][] = new double[e_block_size][e_block_size];
+			     if (D != null) {
+			       double diag[] = new double[e_block_size];
+			       for (r = bs.cols.get(e_block_id).position; r < bs.cols.get(e_block_id).position + e_block_size; r++) {
+				    	 diag[r-bs.cols.get(e_block_id).position] = D[r];
+				    }
+			        for (r = 0; r < e_block_size; r++) {
+			        	etearr[r][r] = diag[r]*diag[r];
+			        }
+			       //const typename EigenTypes<kEBlockSize>::ConstVectorRef
+			           //diag(D + bs->cols[e_block_id].position, e_block_size);
+			       //ete = diag.array().square().matrix().asDiagonal();
+			     } //else {
+			       //ete.setZero();
+			     //}
+
+			     double[] values = A.values();
 			     for (int j = 0; j < chunk.size; ++j) {
-			       const CompressedRow& row = bs->rows[chunk.start + j];
-			       const Cell& e_cell = row.cells.front();
-			       DCHECK_EQ(e_block_id, e_cell.block_id);
-
-			       FixedArray<double, 8> sj(row.block.size);
-
-			       typename EigenTypes<kRowBlockSize>::VectorRef(sj.get(), row.block.size) =
-			           typename EigenTypes<kRowBlockSize>::ConstVectorRef
-			           (b + bs->rows[chunk.start + j].block.position, row.block.size);
-
-			       for (int c = 1; c < row.cells.size(); ++c) {
-			         const int f_block_id = row.cells[c].block_id;
-			         const int f_block_size = bs->cols[f_block_id].size;
-			         const int r_block = f_block_id - num_eliminate_blocks_;
-
-			         MatrixVectorMultiply<kRowBlockSize, kFBlockSize, -1>(
-			             values + row.cells[c].position, row.block.size, f_block_size,
-			             z + lhs_row_layout_[r_block],
-			             sj.get());
+			       CompressedList row = bs.rows.get(chunk.start + j);
+			       Cell e_cell = row.cells.get(0);
+			       if (e_block_id != e_cell.block_id) {
+			    	   System.err.println("e_block_id != e_cell.block_id in SchurEliminator BackSubstitute");
+			    	   return;
 			       }
 
-			       MatrixTransposeVectorMultiply<kRowBlockSize, kEBlockSize, 1>(
-			           values + e_cell.position, row.block.size, e_block_size,
-			           sj.get(),
-			           y_ptr);
+			       double sj[] = new double[row.block.size];
+			       for (r = bs.rows.get(chunk.start+j).block.position; r < bs.rows.get(chunk.start+j).block.position + row.block.size; r++) {
+			    	   sj[r-bs.rows.get(chunk.start+j).block.position] = b[r];
+			       }
 
+			       //typename EigenTypes<kRowBlockSize>::VectorRef(sj.get(), row.block.size) =
+			           //typename EigenTypes<kRowBlockSize>::ConstVectorRef
+			           //(b + bs->rows[chunk.start + j].block.position, row.block.size);
+
+			       for (int c = 1; c < row.cells.size(); ++c) {
+			         int f_block_id = row.cells.get(c).block_id;
+			         int f_block_size = bs.cols.get(f_block_id).size;
+			         int r_block = f_block_id - num_eliminate_blocks_;
+
+			         MatrixVectorMultiply(kRowBlockSize, kFBlockSize, -1,
+			             values, row.cells.get(c).position, row.block.size, f_block_size,
+			             z, lhs_row_layout_.get(r_block),
+			             sj, 0);
+			       }
+
+			       MatrixTransposeVectorMultiply(kRowBlockSize, kEBlockSize, 1,
+			           values, e_cell.position, row.block.size, e_block_size,
+			           sj, 0,
+			           y_block, 0);
+
+			       double etedata[] = new double[e_block_size * e_block_size];
+			       for (index = 0, r = 0; r < e_block_size; r++) {
+			    	   for (col = 0; col < e_block_size; col++, index++) {
+			    		   etedata[index] = etearr[r][col];
+			    	   }
+			       }
 			       MatrixTransposeMatrixMultiply
-			           <kRowBlockSize, kEBlockSize, kRowBlockSize, kEBlockSize, 1>(
-			               values + e_cell.position, row.block.size, e_block_size,
-			               values + e_cell.position, row.block.size, e_block_size,
-			               ete.data(), 0, 0, e_block_size, e_block_size);
+			           (kRowBlockSize, kEBlockSize, kRowBlockSize, kEBlockSize, 1,
+			               values, e_cell.position, row.block.size, e_block_size,
+			               values, e_cell.position, row.block.size, e_block_size,
+			               etedata, 0, 0, 0, e_block_size, e_block_size);
+			       for (index = 0, r = 0; r < e_block_size; r++) {
+			    	   for (col = 0; col < e_block_size; col++, index++) {
+			    		   etearr[r][col] = etedata[index];
+			    	   }
+			       } 
 			     }
-
-			     y_block = InvertPSDMatrix<kEBlockSize>(assume_full_rank_ete_, ete)
-			         * y_block;
+			     
+			     // For a symmetric positive semi-definite matrix
+			     // If full rank invert with Cholesky factorization
+			     // Otherwise invert with singular value decomposition with tolerance = epsilon * number of matrix rows * singularValues[0]
+			     if (assume_full_rank_ete_) {
+		                int info[] = new int[1];
+		                le.dpotrf('U',e_block_size,etearr,e_block_size,info); // cholesky decomposition
+		                if (info[0] < 0) {
+		                	System.err.println("In le.dpotrf argument " + (-i) + " had an illegal value");
+		                	Preferences.debug("In le.dpotrf argument " + (-i) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+		                	return;
+		                }
+		                if (info[0] > 0) {
+		                	System.err.println("in le.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed");
+		                	Preferences.debug("in le.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed\n",
+		                			Preferences.DEBUG_ALGORITHM);
+		                	return;
+		                }
+		                le.dpotri('U',e_block_size,etearr,e_block_size,info);
+		                
+			    	 
+			     }
+                 double eteinv[][] = (new Matrix(etearr)).inverse().getArray();
+                 double yres[] = new double[e_block_size];
+                 for (r = 0; r < e_block_size; r++) {
+                	 for (col = 0; col < e_block_size; col++) {
+                		 yres[r] += eteinv[r][col] * y_block[col];
+                	 }
+                 }
+			     //y_block = InvertPSDMatrix<kEBlockSize>(assume_full_rank_ete_, etearr)
+			         //* y_block;
+			     
+			     for (r = bs.cols.get(e_block_id).position; r < bs.cols.get(e_block_id).position + e_block_size; r++) {
+			    	 y[r] = yres[r-bs.cols.get(e_block_id).position];
+			     }
 			   }
-			 #if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
-			   );
-			 #endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)*/
+			 //#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			   //);
+			 //#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 			 }
 
 			 
