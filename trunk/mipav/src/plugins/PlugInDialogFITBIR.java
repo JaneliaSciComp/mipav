@@ -3396,6 +3396,7 @@ public class PlugInDialogFITBIR extends JFrame
                 }
 
                 String imagePath = null;
+                String imageFileName = null;
                 if ( (imgFileInfo.getImgFilePath().endsWith(".zip") && new File(imgFileInfo.getImgFilePath()).exists())) {
                     // the files were already zipped - so don't zip again. copy to output dir
                     try {
@@ -3406,6 +3407,7 @@ public class PlugInDialogFITBIR extends JFrame
                         FileUtils.copyFile(srcFile, destFile);
                         //imagePath = destFile.getAbsolutePath();
                         imagePath = structSubDirName + File.separator + destFile.getName();
+                        imageFileName = destFile.getName();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy image zip file into output directory");
                         e.printStackTrace();
@@ -3421,6 +3423,7 @@ public class PlugInDialogFITBIR extends JFrame
                         FileUtils.copyFile(srcFile, destFile);
                         //imagePath = destFile.getAbsolutePath();
                         imagePath = structSubDirName + File.separator + destFile.getName();
+                        imageFileName = destFile.getName();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy image tarball file into output directory");
                         e.printStackTrace();
@@ -3449,6 +3452,7 @@ public class PlugInDialogFITBIR extends JFrame
                         FileUtils.copyFile(srcFile, destFile);
                         //imagePath = destFile.getAbsolutePath();
                         imagePath = structSubDirName + File.separator + destFile.getName();
+                        imageFileName = destFile.getName();
                     } catch (final IOException e) {
                         MipavUtil.displayError("Unable to copy original image file into output directory");
                         e.printStackTrace();
@@ -3495,6 +3499,7 @@ public class PlugInDialogFITBIR extends JFrame
                         makeZipFile(zipFilePath, origFiles);
                         //imagePath = zipFilePath;
                         imagePath = structSubDirName + File.separator + (new File(zipFilePath)).getName();
+                        imageFileName = (new File(zipFilePath)).getName();
                     } catch (final IOException ioe) {
                         ioe.printStackTrace();
                         MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n" + ioe.getMessage());
@@ -3506,7 +3511,7 @@ public class PlugInDialogFITBIR extends JFrame
                 // file hash code CDE (if it exists in the struct)
                 String hashCode = null;
                 try {
-                    hashCode = computeFileHash(imagePath);
+                    hashCode = computeFileHash(outputSubDirFull + imageFileName);
                 } catch (final IOException e) {
                     e.printStackTrace();
                     MipavUtil.displayError("Unable to calculate hash code of image file:\n" + e.getMessage());
