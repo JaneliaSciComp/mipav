@@ -3609,7 +3609,7 @@ public class LinearEquations implements java.io.Serializable {
                 positive definite, and the factorization could not be
                 completed.
      */
-    private void dpotrf(char uplo, int n, double[][] A, int lda, int info[]) {
+    public void dpotrf(char uplo, int n, double[][] A, int lda, int info[]) {
         boolean upper;
         int j;
         int jb;
@@ -4112,7 +4112,7 @@ public class LinearEquations implements java.io.Serializable {
            > 0: if info = i, the [i-1][i-1] element of the factor U or L is zero,
                 and the inverse could not be computed.
      */
-    private void dpotri(char uplo, int n, double[][] A, int lda, int info[]) {
+    public void dpotri(char uplo, int n, double[][] A, int lda, int info[]) {
      // Test the input parameters.
         
         info[0] = 0;
