@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
@@ -26,6 +27,7 @@ import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.model.structures.jama.SVD;
 import gov.nih.mipav.view.Preferences;
 
 /**
@@ -78,6 +80,7 @@ public abstract class CeresSolver {
 	private GeneralizedInverse2 gi2 = new GeneralizedInverse2();
 	private LinearEquations le = new LinearEquations();
 	private LinearEquations2 le2 = new LinearEquations2();
+	private SVD svd = new SVD();
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
@@ -4421,11 +4424,12 @@ public abstract class CeresSolver {
 		 * 
 		 * case DENSE_SCHUR: return new DenseSchurComplementSolver(options);
 		 // SparseSchurComplementServer requires either SuiteSparse, Eigen's sparse Cholesky factorization,
-		 // or CXSparse.
-		 * case ITERATIVE_SCHUR: if (options.use_explicit_schur_complement) { return new
-		 * SparseSchurComplementSolver(options); } else { return new
-		 * IterativeSchurComplementSolver(options); }
-		 */
+		 // or CXSparse.*/
+		 case ITERATIVE_SCHUR: {
+			 System.err.println("ITERATIVE_SCHUR");
+			 return new IterativeSchurComplementSolver(options);
+		 }
+		 
 		 case DENSE_QR: {
 			 System.out.println("DENSE_QR");
 			 return new DenseQRSolver(options);
@@ -6157,8 +6161,7 @@ public abstract class CeresSolver {
 			     // which case its much faster to compute the inverse once and
 			     // use it to multiply other matrices/vectors instead of doing a
 			     // Solve call over and over again.
-			     /*typename EigenTypes<kEBlockSize, kEBlockSize>::Matrix inverse_ete =
-			         InvertPSDMatrix<kEBlockSize>(assume_full_rank_ete_, ete);
+			     double inverse_ete[][] = InvertPSDMatrix(assume_full_rank_ete_, etearr);
 
 			     // For the current chunk compute and update the rhs of the reduced
 			     // linear system.
@@ -6166,26 +6169,32 @@ public abstract class CeresSolver {
 			     //   rhs = F'b - F'E(E'E)^(-1) E'b
 
 			     double inverse_ete_g[] = new double[e_block_size];
-			     MatrixVectorMultiply<kEBlockSize, kEBlockSize, 0>(
-			         inverse_ete.data(),
+			     double inverse_ete_data[] = new double[e_block_size*e_block_size];
+			     for (index = 0, row = 0; row < e_block_size; row++) {
+			    	 for (col = 0; col < e_block_size; col++, index++) {
+			    		 inverse_ete_data[index] = inverse_ete[row][col];
+			    	 }
+			     }
+			     MatrixVectorMultiply(kEBlockSize, kEBlockSize, 0,
+			         inverse_ete_data, 0,
 			         e_block_size,
 			         e_block_size,
-			         g.get(),
-			         inverse_ete_g.get());
+			         g, 0,
+			         inverse_ete_g, 0);
 
-			     UpdateRhs(chunk, A, b, chunk.start, inverse_ete_g.get(), rhs);
+			     UpdateRhs(chunk, A, b, chunk.start, inverse_ete_g, rhs);
 
 			     // S -= F'E(E'E)^{-1}E'F
 			     ChunkOuterProduct(
-			         thread_id, bs, inverse_ete, buffer, chunk.buffer_layout, lhs);*/
+			         thread_id, bs, inverse_ete, buffer, chunk.buffer_layout, lhs);
 			   }
-			 /*//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			 //#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 			   //);
 			 //#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 
 			   // For rows with no e_blocks, the schur complement update reduces to
 			   // S += F'F.
-			   NoEBlockRowsUpdate(A, b,  uneliminated_row_begins_, lhs, rhs);*/
+			   NoEBlockRowsUpdate(A, b,  uneliminated_row_begins_, lhs, rhs);
 			 }
 			 
 			 public void BackSubstitute(BlockSparseMatrix A,
@@ -6289,28 +6298,7 @@ public abstract class CeresSolver {
 			       } 
 			     }
 			     
-			     // For a symmetric positive semi-definite matrix
-			     // If full rank invert with Cholesky factorization
-			     // Otherwise invert with singular value decomposition with tolerance = epsilon * number of matrix rows * singularValues[0]
-			     if (assume_full_rank_ete_) {
-		                int info[] = new int[1];
-		                le.dpotrf('U',e_block_size,etearr,e_block_size,info); // cholesky decomposition
-		                if (info[0] < 0) {
-		                	System.err.println("In le.dpotrf argument " + (-i) + " had an illegal value");
-		                	Preferences.debug("In le.dpotrf argument " + (-i) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
-		                	return;
-		                }
-		                if (info[0] > 0) {
-		                	System.err.println("in le.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed");
-		                	Preferences.debug("in le.dpotrf the leading minor of order i is not positive definite, and the factorization could not be completed\n",
-		                			Preferences.DEBUG_ALGORITHM);
-		                	return;
-		                }
-		                le.dpotri('U',e_block_size,etearr,e_block_size,info);
-		                
-			    	 
-			     }
-                 double eteinv[][] = (new Matrix(etearr)).inverse().getArray();
+			     double eteinv[][] = InvertPSDMatrix(assume_full_rank_ete_, etearr);
                  double yres[] = new double[e_block_size];
                  for (r = 0; r < e_block_size; r++) {
                 	 for (col = 0; col < e_block_size; col++) {
@@ -6327,6 +6315,211 @@ public abstract class CeresSolver {
 			 //#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 			   //);
 			 //#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			 }
+			 
+			// For rows with no e_blocks, the schur complement update reduces to S
+			// += F'F. This function iterates over the rows of A with no e_block,
+			// and calls NoEBlockRowOuterProduct on each row.
+			private void NoEBlockRowsUpdate(BlockSparseMatrix A,
+			                   double[] b,
+			                   int row_block_counter,
+			                   BlockRandomAccessMatrix lhs,
+			                   double[] rhs) {
+			  CompressedRowBlockStructure bs = A.block_structure();
+			  double[] values = A.values();
+			  for (; row_block_counter < bs.rows.size(); ++row_block_counter) {
+			    CompressedList row = bs.rows.get(row_block_counter);
+			    for (int c = 0; c < row.cells.size(); ++c) {
+			      int block_id = row.cells.get(c).block_id;
+			      int block_size = bs.cols.get(block_id).size;
+			      int block = block_id - num_eliminate_blocks_;
+			      MatrixTransposeVectorMultiply(DYNAMIC, DYNAMIC, 1,
+			          values, row.cells.get(c).position, row.block.size, block_size,
+			          b, row.block.position,
+			          rhs, lhs_row_layout_.get(block));
+			    }
+			    NoEBlockRowOuterProduct(A, row_block_counter, lhs);
+			  }
+			}
+			
+			private void NoEBlockRowOuterProduct(BlockSparseMatrix A,
+                    int row_block_index,
+                    BlockRandomAccessMatrix lhs) {
+			CompressedRowBlockStructure bs = A.block_structure();
+			CompressedList row = bs.rows.get(row_block_index);
+			double[] values = A.values();
+			for (int i = 0; i < row.cells.size(); ++i) {
+			    int block1 = row.cells.get(i).block_id - num_eliminate_blocks_;
+			    if (block1 < 0) {
+			    	System.err.println("block1 < 0 in SchurEliminator NoEBlockRowOuterProduct");
+			    	return;
+			    }
+			
+			int block1_size = bs.cols.get(row.cells.get(i).block_id).size;
+			int r[] = new int[1];
+			int c[] = new int[1];
+			int row_stride[] = new int[1];
+			int col_stride[] = new int[1];
+			CellInfo cell_info = lhs.GetCell(block1, block1,
+			                                   r, c,
+			                                   row_stride, col_stride);
+			if (cell_info != null) {
+			  Lock l = cell_info.m;
+			  l.lock();
+			  // This multiply currently ignores the fact that this is a
+			  // symmetric outer product.
+			  MatrixTransposeMatrixMultiply
+			      (DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, 1,
+			          values, row.cells.get(i).position, row.block.size, block1_size,
+			          values, row.cells.get(i).position, row.block.size, block1_size,
+			          cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			}
+			
+			for (int j = i + 1; j < row.cells.size(); ++j) {
+			  int block2 = row.cells.get(j).block_id - num_eliminate_blocks_;
+			  if (block2 < 0) {
+				  System.err.println("block2 < 0 in SchurEliminator NoEBlockRowOuterProduct");
+				  return;
+			  }
+			  if (block1 >= block2) {
+				  System.err.println("block1 >= block2 in SchurEliminator NoEBlockRowOuterProduct");
+			  }
+			  cell_info = lhs.GetCell(block1, block2,
+			                                     r, c,
+			                                     row_stride, col_stride);
+			  if (cell_info != null) {
+			    int block2_size = bs.cols.get(row.cells.get(j).block_id).size;
+			    Lock l = cell_info.m;
+			    l.lock();
+			    MatrixTransposeMatrixMultiply
+			        (DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, 1,
+			            values, row.cells.get(i).position, row.block.size, block1_size,
+			            values, row.cells.get(j).position, row.block.size, block2_size,
+			            cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			  }
+			}
+			}
+			}
+			 
+			// Compute the outer product F'E(E'E)^{-1}E'F and subtract it from the
+			// Schur complement matrix, i.e
+			//
+			//  S -= F'E(E'E)^{-1}E'F.
+			private void ChunkOuterProduct(int thread_id,
+			                  CompressedRowBlockStructure bs,
+			                  double[][] inverse_ete,
+			                  double[] buffer,
+			                  HashMap<Integer, Integer> buffer_layout,
+			                  BlockRandomAccessMatrix lhs) {
+				int row;
+				int col;
+				int index;
+			  // This is the most computationally expensive part of this
+			  // code. Profiling experiments reveal that the bottleneck is not the
+			  // computation of the right-hand matrix product, but memory
+			  // references to the left hand side.
+			  int e_block_size = inverse_ete.length;
+			  int colSize = inverse_ete[0].length;
+			  double inverse_ete_data[] = new double[e_block_size * colSize];
+			  for (index = 0, row = 0; row < e_block_size; row++) {
+				  for (col = 0; col < colSize; col++, index++) {
+					  inverse_ete_data[index] = inverse_ete[row][col];
+				  }
+			  }
+			  Iterator<Entry<Integer, Integer>> it1 = buffer_layout.entrySet().iterator();
+		        
+
+			  //double* b1_transpose_inverse_ete =
+			      //chunk_outer_product_buffer_.get() + thread_id * buffer_size_;
+			  double[] b1_transpose_inverse_ete = chunk_outer_product_buffer_;
+
+			  // S(i,j) -= bi' * ete^{-1} b_j
+			  while (it1.hasNext()) {
+				Map.Entry<Integer, Integer> pair = (Map.Entry<Integer, Integer>) it1.next();
+				int key = pair.getKey();
+				int value = pair.getValue();
+			    int block1 = key - num_eliminate_blocks_;
+			    int block1_size = bs.cols.get(key).size;
+			    MatrixTransposeMatrixMultiply
+			        (kEBlockSize, kFBlockSize, kEBlockSize, kEBlockSize, 0,
+			        buffer, value, e_block_size, block1_size,
+			        inverse_ete_data, 0, e_block_size, e_block_size,
+			        b1_transpose_inverse_ete, 0, 0, 0, block1_size, e_block_size);
+
+			    Iterator<Entry<Integer, Integer>> it2 = it1;
+			    while (it2.hasNext()) {
+			    	Map.Entry<Integer, Integer> pair2 = (Map.Entry<Integer, Integer>) it2.next();
+					int key2 = pair2.getKey();
+					int value2 = pair2.getValue();
+			        int block2 = key2 - num_eliminate_blocks_;
+
+			        int r[] = new int[1];
+			        int c[] = new int[1];
+			        int row_stride[] = new int[1];
+			        int col_stride[] = new int[1];
+			        CellInfo cell_info = lhs.GetCell(block1, block2,
+			                                         r, c,
+			                                         row_stride, col_stride);
+			      if (cell_info != null) {
+			        int block2_size = bs.cols.get(key2).size;
+			        Lock l = cell_info.m;
+			        l.lock();
+			        MatrixMatrixMultiply
+			            (kFBlockSize, kEBlockSize, kEBlockSize, kFBlockSize, -1,
+			                b1_transpose_inverse_ete, 0, block1_size, e_block_size,
+			                buffer, value2, e_block_size, block2_size,
+			                cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			      }
+			    }
+			  }
+			}
+
+			  
+			// Update the rhs of the reduced linear system. Compute
+			 //
+			 //   F'b - F'E(E'E)^(-1) E'b
+			 private void UpdateRhs(Chunk chunk,
+			           BlockSparseMatrix A,
+			           double[] b,
+			           int row_block_counter,
+			           double[] inverse_ete_g,
+			           double[] rhs) {
+			   int i;
+			   CompressedRowBlockStructure bs = A.block_structure();
+			   int e_block_id = bs.rows.get(chunk.start).cells.get(0).block_id;
+			   int e_block_size = bs.cols.get(e_block_id).size;
+
+			   int b_pos = bs.rows.get(row_block_counter).block.position;
+			   double[] values = A.values();
+			   for (int j = 0; j < chunk.size; ++j) {
+			     CompressedList row = bs.rows.get(row_block_counter + j);
+			     Cell e_cell = row.cells.get(0);
+
+			     double sj[] = new double[row.block.size];
+			     for (i = b_pos; i < b_pos + row.block.size; i++) {
+			    	 sj[i-b_pos] = b[i];
+			     }
+			     //typename EigenTypes<kRowBlockSize>::Vector sj =
+			         //typename EigenTypes<kRowBlockSize>::ConstVectorRef
+			         //(b + b_pos, row.block.size);
+
+			     MatrixVectorMultiply(kRowBlockSize, kEBlockSize, -1,
+			         values, e_cell.position, row.block.size, e_block_size,
+			         inverse_ete_g, 0, sj, 0);
+
+			     for (int c = 1; c < row.cells.size(); ++c) {
+			       int block_id = row.cells.get(c).block_id;
+			       int block_size = bs.cols.get(block_id).size;
+			       int block = block_id - num_eliminate_blocks_;
+			       Lock l = rhs_locks_.get(block);
+			       l.lock();
+			       MatrixTransposeVectorMultiply(kRowBlockSize, kFBlockSize, 1,
+			           values, row.cells.get(c).position,
+			           row.block.size, block_size,
+			           sj, 0,rhs, lhs_row_layout_.get(block));
+			     }
+			     b_pos += row.block.size;
+			   }
 			 }
 
 			 
@@ -6472,6 +6665,99 @@ public abstract class CeresSolver {
 			  }
 			}
 		} // class SchurEliminator
+		
+		public double[][] InvertPSDMatrix(boolean assume_full_rank, double arr[][]) {
+			int row;
+			int col;
+			int i,j;
+			int m = arr.length;
+			int n = arr[0].length;
+			double arrin[][] = new double[m][n];
+			for (row = 0; row < m; row++) {
+				for (col = 0; col < n; col++) {
+					arrin[row][col] = arr[row][col];
+				}
+			}
+			// For a symmetric positive semi-definite matrix
+		     // If full rank invert with Cholesky factorization
+		     if (assume_full_rank) {
+	                int info[] = new int[1];
+		     // Otherwise invert with singular value decomposition with tolerance = epsilon * number of matrix rows * singularValues[0]
+	                le.dpotrf('U',m,arrin,m,info); // cholesky decomposition
+	                if (info[0] < 0) {
+	                	System.err.println("In le.dpotrf argument " + (-info[0]) + " had an illegal value");
+	                	Preferences.debug("In le.dpotrf argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+	                	return null;
+	                }
+	                if (info[0] > 0) {
+	                	System.err.println("in le.dpotrf the leading minor of order " + info[0] + " is not positive definite, and the factorization could not be completed");
+	                	Preferences.debug("in le.dpotrf the leading minor of order " + info[0] + " is not positive definite, and the factorization could not be completed\n",
+	                			Preferences.DEBUG_ALGORITHM);
+	                	return null;
+	                }
+	                le.dpotri('U',m,arrin,m,info);
+	                if (info[0] < 0) {
+	                	System.err.println("In le.dpotri argument " + (-info[0]) + " had an illegal value");
+	                	Preferences.debug("In le.dpotri argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+	                	return null;
+	                }
+	                if (info[0] > 0) {
+	                	System.err.println("in le.dpotri element ["+(info[0]-1)+"]["+(info[0]-1)+"] of the factor U is zero,and the inverse could not be computed.");
+	                	Preferences.debug("in le.dpotri  element ["+(info[0]-1)+"]["+(info[0]-1)+"] of the factor U is zero,and the inverse could not be computed.\n",
+	                			Preferences.DEBUG_ALGORITHM);
+	                	return null;
+	                }
+	                for (row = 0; row < n; row++) {
+	                	for (col = row+1; col < n; col++) {
+	                	    arrin[row][col] = arrin[col][row];
+	                	}
+	                }
+		    	    return arrin;
+		     }
+		     else {
+		    	 double s[] = new double[Math.min(m,n)];
+		    	 int ldu = m;
+		    	 double U[][] = new double[ldu][Math.min(m,n)];
+		    	 int ldvt = Math.min(m,n);
+		    	 double VT[][] = new double[ldvt][n];
+		    	 double work[] = new double[1];
+		    	 int lwork = -1;
+		    	 int info[] = new int[1];
+		         svd.dgesvd('S','S',m, n, arrin, m, s, U, ldu, VT, ldvt, work, lwork, info);
+		         lwork = (int)work[0];
+		         work = new double[lwork];
+		         svd.dgesvd('S','S',m, n, arrin, m, s, U, ldu, VT, ldvt, work, lwork, info);
+		         if (info[0] < 0) {
+	                	System.err.println("In svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+	                	Preferences.debug("In svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+	                	return null;
+	             }
+		         if (info[0] > 0) {
+	                	System.err.println("In svd.dgesvd dbdsqr did not converge.");
+	                	Preferences.debug("In svd.dgesvd dbdsqr did not converge.\n",
+	                			Preferences.DEBUG_ALGORITHM);
+	                	return null;
+	             }
+		         double tolerance = epsilon * m * s[0];
+		         double ss;
+		         for (i = 0; i < s.length; i++) {
+		        	 if(s[i] > tolerance) {
+		        		 ss=1.0/s[i];	 
+		        	 }
+		        	 else {
+		        			ss= 0.0;
+		        	 }
+		        	 for (j = 0; j < Math.min(m,n); j++) {
+		        		 U[i][j] = ss * U[i][j];
+		        	 } 
+		         }
+		         double alpha = 1.0;
+		         double beta = 0.0;
+		         double invarr[][] = new double[m][m];
+		         ge.dgemm('T','T',m, m, m, alpha, VT, ldvt, U, ldu, beta, invarr, m);
+		         return invarr;
+		     }
+		}
 
 		
 		public SchurEliminatorBase createSchurEliminatorBase(LinearSolverOptions options) {
@@ -8453,7 +8739,8 @@ public abstract class CeresSolver {
 					(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
 					evaluate_preparers_ = (EvaluatePreparer[])((DenseJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
 				}
-				else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+				else if ((options_.linear_solver_type == LinearSolverType.CGNR) || 
+						 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
 					evaluate_preparers_ = (EvaluatePreparer[])((BlockJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
 				}
 			/*
@@ -8475,7 +8762,8 @@ public abstract class CeresSolver {
 				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
 				return ((DenseJacobianWriter)jacobian_writer_).CreateJacobian();
 			}
-			else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+			else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
+					 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
 				return ((BlockJacobianWriter)jacobian_writer_).CreateJacobian();
 			}
 			else {
@@ -8665,7 +8953,8 @@ public abstract class CeresSolver {
 	                          jacobian,
 	                          scratch.jacobian_block_ptrs);
 	    	  }
-	    	  else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+	    	  else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
+	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
 	    		  ((BlockEvaluatePreparer)preparer).Prepare(residual_block,
                           i,
                           jacobian,
@@ -8711,7 +9000,8 @@ public abstract class CeresSolver {
 	    	  // Write is a noop for BlockJacobianWriter since the blocks were written directly into their final
 	    	    // position by the outside evaluate call, thanks to the jacobians array
 	    	    // prepared by the BlockEvaluatePreparers.
-	    	  else if (options_.linear_solver_type == LinearSolverType.CGNR) {
+	    	  else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
+	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
 	    		  double[] jacobian_values =
 	    			      ((BlockSparseMatrix)jacobian).mutable_values();
 	    		   int values_index = 0;
@@ -12052,6 +12342,9 @@ public abstract class CeresSolver {
 			  linear_solver_summary =
 				      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
 		  }
+		  else if (linear_solver_.options_.type == LinearSolverType.ITERATIVE_SCHUR) {
+			  linear_solver_summary = ((IterativeSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
+		  }
 
 		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
 		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message[0] + "\n",
@@ -12729,6 +13022,9 @@ public abstract class CeresSolver {
 			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
 				  linear_solver_summary =
 					      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);  
+			  }
+			  else if (linear_solver_.options_.type == LinearSolverType.ITERATIVE_SCHUR) {
+				  linear_solver_summary = ((IterativeSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
 			  }
 		    gauss_newton_step_.clear();
 		    for (i = 0; i < gauss_newton_step_array.length; i++) {
@@ -19803,6 +20099,96 @@ public abstract class CeresSolver {
 		    }
 		  }	
 	}
+	
+	public void MatrixMatrixMultiply(int kRowA, int kColA, int kRowB, int kColB, int kOperation,
+			  double[] A, int A_start, int num_row_a, int num_col_a, double[] B, int B_start, int num_row_b, int num_col_b, double[] C,
+			  int C_start, int start_row_c, int start_col_c, int row_stride_c, int col_stride_c) {
+				  if (num_row_a <= 0) {
+					  System.err.println("num_row_a <= 0 in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if (num_col_a <= 0) {
+					  System.err.println("num_col_a <= 0 in MatrixMatrixMultiply");
+					  return;
+				  }                                          
+				  if (num_row_b <= 0) {
+					  System.err.println("num_row_b <= 0 in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if (num_col_b <= 0) {
+					  System.err.println("num_col_b <= 0 in MatrixMatrixMultiply");
+					  return;
+				  } 
+				  if (start_row_c < 0) {
+					  System.err.println("start_row_c < 0 in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if (start_col_c < 0) {
+					  System.err.println("start_col_c < 0 in MatrixMatrixMultiply");
+					  return;
+				  } 
+				  if (row_stride_c <= 0) {
+					  System.err.println("row_stride_c <= 0 in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if (col_stride_c <= 0) {
+					  System.err.println("col_stride_c <= 0 in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if ((kRowA != DYNAMIC) && (kRowA != num_row_a)) {
+					  System.err.println("(kRowA != DYNAMIC) && (kRowA != num_row_a) in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if ((kColA != DYNAMIC) && (kColA != num_col_a)) {
+					  System.err.println("(kColA != DYNAMIC) && (kColA != num_col_a) in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if ((kRowB != DYNAMIC) && (kRowB != num_row_b)) {
+					  System.err.println("(kRowB != DYNAMIC) && (kRowB != num_row_b) in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if ((kColB != DYNAMIC) && (kColB != num_col_b)) {
+					  System.err.println("(kColB != DYNAMIC) && (kColB != num_col_b) in MatrixMatrixMultiply");
+					  return;
+				  }
+				  int NUM_ROW_A = (kRowA != DYNAMIC ? kRowA : num_row_a);
+				  int NUM_COL_A = (kColA != DYNAMIC ? kColA : num_col_a);
+				  int NUM_ROW_B = (kRowB != DYNAMIC ? kRowB : num_row_b);
+				  int NUM_COL_B = (kColB != DYNAMIC ? kColB : num_col_b);
+				  if (NUM_COL_A != NUM_ROW_B) {
+					  System.err.println("NUM_COL_A != NUM_ROW_B in MatrixMatrixMultiply");
+					  return;
+				  }
+
+				  int NUM_ROW_C = NUM_ROW_A;
+				  int NUM_COL_C = NUM_COL_B;
+				  if ((start_row_c + NUM_ROW_C) > row_stride_c) {
+					  System.err.println("(start_row_c + NUM_ROW_C) > row_stride_c in MatrixMatrixMultiply");
+					  return;
+				  }
+				  if ((start_col_c + NUM_COL_C) > col_stride_c) {
+					  System.err.println("(start_col_c + NUM_COL_C) > col_stride_c in MatrixMatrixMultiply");
+					  return;
+				  }
+
+				  for (int row = 0; row < NUM_ROW_C; ++row) {
+				    for (int col = 0; col < NUM_COL_C; ++col) {
+				      double tmp = 0.0;
+				      for (int k = 0; k < NUM_COL_A; ++k) {
+				        tmp += A[A_start + row * NUM_COL_A + k] * B[B_start + k * NUM_COL_B + col];
+				      }
+
+				      int index = (row + start_row_c) * col_stride_c + start_col_c + col;
+				      if (kOperation > 0) {
+				        C[C_start + index]+= tmp;
+				      } else if (kOperation < 0) {
+				        C[C_start + index]-= tmp;
+				      } else {
+				        C[C_start + index]= tmp;
+				      }
+				    }
+				  }	
+			}
 
 	public void MatrixMatrixMultiply(int kOperation, double A[], int NUM_ROW_A, int NUM_COL_A, double B[],
 			int NUM_ROW_B, int NUM_COL_B, double C[], int start_row_c, int start_col_c, int row_stride_c,
