@@ -885,6 +885,10 @@ public abstract class CeresSolver {
 		//Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
 		//Solved answer c = 0.13140547008473807 m = 0.29187016268214566
 		
+		//ITERATIVE_SCHUR
+		//Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		//Solved answer c = 0.13143858621916737 m = 0.29186127928969857
+		
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -1520,7 +1524,7 @@ public abstract class CeresSolver {
 				System.err.println("PreprocessedProblem pp == null in TrustRegionPreProcessor Preprocess");
 				return false;
 			}
-			pp.options = options;
+			pp.options = options; 
 			// ChangeNumThreadsIfNeeded(pp.options);
 
 			pp.problem = problem;
@@ -1554,7 +1558,6 @@ public abstract class CeresSolver {
 		// Configure and create a TrustRegionMinimizer object.
 		public void SetupMinimizerOptions(PreprocessedProblem pp) {
 		  SolverOptions options = pp.options;
-
 		  SetupCommonMinimizerOptions(pp);
 		  pp.minimizer_options.is_constrained =
 		      pp.reduced_program.IsBoundsConstrained();
@@ -1741,8 +1744,8 @@ public abstract class CeresSolver {
 					}
 				}
 			}
-
 			pp.linear_solver = Create(pp.linear_solver_options);
+			pp.linear_solver.options_.type = pp.linear_solver_options.type;
 			return (pp.linear_solver != null);
 		}
 
@@ -1924,6 +1927,8 @@ public abstract class CeresSolver {
 
 	public boolean LexicographicallyOrderResidualBlocks(int size_of_first_elimination_group, Program program,
 			String error[]) {
+		int i;
+		int value;
 		if (size_of_first_elimination_group < 1) {
 			System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
 			System.err.println("to the developers.");
@@ -1934,9 +1939,12 @@ public abstract class CeresSolver {
 		// Create a histogram of the number of residuals for each E block. There is an
 		// extra bucket at the end to catch all non-eliminated F blocks.
 		Vector<Integer> residual_blocks_per_e_block = new Vector<Integer>(size_of_first_elimination_group + 1);
+		for (i = 0; i < size_of_first_elimination_group + 1; i++) {
+			residual_blocks_per_e_block.add(0);
+		}
 		Vector<ResidualBlock> residual_blocks = program.mutable_residual_blocks();
 		Vector<Integer> min_position_per_residual = new Vector<Integer>(residual_blocks.size());
-		for (int i = 0; i < residual_blocks.size(); ++i) {
+		for (i = 0; i < residual_blocks.size(); ++i) {
 			ResidualBlock residual_block = residual_blocks.get(i);
 			int position = MinParameterBlock(residual_block, size_of_first_elimination_group);
 			min_position_per_residual.add(position);
@@ -1945,7 +1953,7 @@ public abstract class CeresSolver {
 						.println("In LexicographicallyOrderResidualBlocks position > size_of_first_elimination_group");
 				return false;
 			}
-			int value = residual_blocks_per_e_block.get(position);
+			value = residual_blocks_per_e_block.get(position);
 			residual_blocks_per_e_block.set(position, value + 1);
 		}
 
@@ -1954,7 +1962,7 @@ public abstract class CeresSolver {
 		// E-block).
 		int partial_sum = 0;
 		Vector<Integer> offsets = new Vector<Integer>(size_of_first_elimination_group + 1);
-		for (int i = 0; i < residual_blocks_per_e_block.size(); i++) {
+		for (i = 0; i < residual_blocks_per_e_block.size(); i++) {
 			partial_sum += residual_blocks_per_e_block.get(i);
 			offsets.add(partial_sum);
 		}
@@ -1967,14 +1975,34 @@ public abstract class CeresSolver {
 			return false;
 		}
 
-		int value = residual_blocks_per_e_block.indexOf(0);
-		if ((value == -1) || (value == residual_blocks_per_e_block.size() - 1)) {
+		/*
+		CHECK(find(residual_blocks_per_e_block.begin(),
+             residual_blocks_per_e_block.end() - 1, 0) !=
+        residual_blocks_per_e_block.end())
+      << "Congratulations, you found a Ceres bug! Please report this error "
+      << "to the developers.";
+        Original code can never return residual_blocks_per_e_block.end()
+        If it finds zero, it will return a value from residual_blocks_per_e_block.begin()
+        to residual_blocks_per_e_block.end()-2.  If it does not find zero,
+        it will return residual_blocks_per_e_block.end()-1.
+		boolean foundZero = true;
+		if (residual_blocks_per_e_block.size() >= 2) {
+			foundZero = false;
+			for (i = 0; i < residual_blocks_per_e_block.size()-1; i++) {
+				value = residual_blocks_per_e_block.get(i);
+				if (value == 0) {
+				    foundZero = true;
+				    break;
+				}
+			}
+		}
+		if (!foundZero) {
 			System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
 			System.err.println("to the developers.");
 			System.err.println(
-					"In LexicographicallyOrderResidualBlocks ((value == -1) || (value == residual_blocks_per_e_block.size()-1))");
+					"In LexicographicallyOrderResidualBlocks zero not found in residual_blocks_per_e_block");
 			return false;
-		}
+		}*/
 		// Fill in each bucket with the residual blocks for its corresponding E block.
 		// Each bucket is individually filled from the back of the bucket to the front
 		// of the bucket. The filling order among the buckets is dictated by the
@@ -1983,10 +2011,10 @@ public abstract class CeresSolver {
 		// filling is finished, the offset pointerts should have shifted down one
 		// entry (this is verified below).
 		Vector<ResidualBlock> reordered_residual_blocks = new Vector<ResidualBlock>(residual_blocks.size());
-		for (int i = 0; i < residual_blocks.size(); ++i) {
+		for (i = 0; i < residual_blocks.size(); ++i) {
 			reordered_residual_blocks.add(null);
 		}
-		for (int i = 0; i < residual_blocks.size(); ++i) {
+		for (i = 0; i < residual_blocks.size(); ++i) {
 			int bucket = min_position_per_residual.get(i);
 
 			// Decrement the cursor, which should now point at the next empty position.
@@ -2007,7 +2035,7 @@ public abstract class CeresSolver {
 
 		// Sanity check #1: The difference in bucket offsets should match the
 		// histogram sizes.
-		for (int i = 0; i < size_of_first_elimination_group; ++i) {
+		for (i = 0; i < size_of_first_elimination_group; ++i) {
 			if (residual_blocks_per_e_block.get(i) != (offsets.get(i + 1) - offsets.get(i))) {
 				System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
 				System.err.println("to the developers.");
@@ -2017,7 +2045,7 @@ public abstract class CeresSolver {
 			}
 		}
 		// Sanity check #2: No NULL's left behind.
-		for (int i = 0; i < reordered_residual_blocks.size(); ++i) {
+		for (i = 0; i < reordered_residual_blocks.size(); ++i) {
 			if (reordered_residual_blocks.get(i) == null) {
 				System.err.println("Congratulations, you found a Ceres bug! Please report this error ");
 				System.err.println("to the developers.");
@@ -2539,7 +2567,7 @@ public abstract class CeresSolver {
 		case SPARSE_SCHUR:
 			return "SPARSE_SCHUR";
 		case ITERATIVE_SCHUR:
-			return "ITERATIVR_SCHUR";
+			return "ITERATIVE_SCHUR";
 		case CGNR:
 			return "CGNR";
 		default:
@@ -4246,7 +4274,8 @@ public abstract class CeresSolver {
 		public Context context;
 
 		public LinearSolverOptions() {
-			type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+			//type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+			type = LinearSolverType.DENSE_QR;
 			preconditioner_type = PreconditionerType.JACOBI;
 			visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
 			//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
@@ -4263,6 +4292,7 @@ public abstract class CeresSolver {
 			e_block_size[0] = DYNAMIC;
 			f_block_size[0] = DYNAMIC;
 			context = new Context();
+			elimination_groups = new Vector<Integer>();
 		}
 	} // class LinearSolverOptions
 	
@@ -4454,7 +4484,8 @@ public abstract class CeresSolver {
 		
 	  public DenseNormalCholeskySolver(LinearSolverOptions options) {
 		  super();
-	      options_ = options;  
+	      options_ = options; 
+	      options_.type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
 	  }
 	  
 	  public LinearSolverSummary Solve(LinearOperator A, double b[], LinearSolverPerSolveOptions per_solve_options,
@@ -4624,6 +4655,7 @@ public abstract class CeresSolver {
 	    public DenseQRSolver(LinearSolverOptions options) {
 	    	super();
 	    	options_ = options;
+	    	options_.type = LinearSolverType.DENSE_QR;
 	        work_ = new double[1];
 	    }
 	    
@@ -5246,6 +5278,7 @@ public abstract class CeresSolver {
 	     public CgnrSolver(LinearSolverOptions options) {
 	       super();
 	       options_ = options;
+	       options_.type = LinearSolverType.CGNR;
 	       preconditioner_ = null;
 		     if (options_.preconditioner_type != PreconditionerType.JACOBI &&
 		         options_.preconditioner_type != PreconditionerType.IDENTITY) {
@@ -7568,6 +7601,11 @@ public abstract class CeresSolver {
 			  options_ = options;
 			  D_ = null;
 			  b_ = null;
+			  rhs_ = new Vector<Double>();
+			  tmp_rows_ = new Vector<Double>();
+			  tmp_e_cols_ = new Vector<Double>();
+			  tmp_e_cols_2_ = new Vector<Double>();
+			  tmp_f_cols_ = new Vector<Double>();
 		  }
 
 		  // Initialize the Schur complement for a linear least squares
@@ -7882,6 +7920,7 @@ public abstract class CeresSolver {
 		  public IterativeSchurComplementSolver(LinearSolverOptions options) {
 			  super();
 		      options_ = options;
+		      options_.type = LinearSolverType.ITERATIVE_SCHUR;
 		      reduced_linear_system_solution_ = new Vector<Double>();
 		  }
 
@@ -8109,7 +8148,7 @@ public abstract class CeresSolver {
 					num_threads = 1;
 					num_eliminate_blocks = -1;
 					linear_solver_type = LinearSolverType.DENSE_QR;
-					//linear_solver_type = LinearSolverType.CGNR;
+					//linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
 					dynamic_sparsity = false;
 					context = new Context();
 					evaluation_callback = null;
@@ -9555,7 +9594,7 @@ public abstract class CeresSolver {
 			  }
 
 			  evaluator_options_.linear_solver_type = LinearSolverType.DENSE_QR;
-			  //evaluator_options_.linear_solver_type = LinearSolverType.CGNR;
+			  //evaluator_options_.linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
 			  evaluator_options_.num_eliminate_blocks = 0;
 			  evaluator_options_.num_threads = 1;
 			  evaluator_options_.context = context_;
@@ -9595,7 +9634,7 @@ public abstract class CeresSolver {
 			  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
 
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
-			  //linear_solver_options.type = LinearSolverType.CGNR;
+			  //linear_solver_options.type = LinearSolverType.ITERATIVE_SCHUR;
 			  linear_solver_options.context = context_;
 
 			  for (i = 0; i < options.num_threads; ++i) {
@@ -19308,7 +19347,7 @@ public abstract class CeresSolver {
 			// #if defined(CERES_NO_SUITESPARSE) && defined(CERES_NO_CXSPARSE) &&
 			// !defined(CERES_ENABLE_LGPL_CODE) // NOLINT
 			linear_solver_type = LinearSolverType.DENSE_QR;
-			//linear_solver_type = LinearSolverType.CGNR;
+			//linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
 			// #else
 			// linear_solver_type = SPARSE_NORMAL_CHOLESKY;
 			// #endif
