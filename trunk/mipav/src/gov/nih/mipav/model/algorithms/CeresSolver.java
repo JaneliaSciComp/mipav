@@ -4451,10 +4451,13 @@ public abstract class CeresSolver {
 		 * (!CERES_USE_EIGEN_SPARSE)) { return null; }
 		 * 
 		 * else { return new SparseSchurComplementSolver(options); }
-		 * 
-		 * case DENSE_SCHUR: return new DenseSchurComplementSolver(options);
+		 */ 
+		 case DENSE_SCHUR: {
+			 System.out.println("DENSE_SCHUR");
+			 return new DenseSchurComplementSolver(options);
+		 }
 		 // SparseSchurComplementServer requires either SuiteSparse, Eigen's sparse Cholesky factorization,
-		 // or CXSparse.*/
+		 // or CXSparse.
 		 case ITERATIVE_SCHUR: {
 			 System.err.println("ITERATIVE_SCHUR");
 			 return new IterativeSchurComplementSolver(options);
@@ -7909,6 +7912,227 @@ public abstract class CeresSolver {
 
 		  
 		};
+		
+		// The two solvers can be instantiated by calling
+		// LinearSolver::CreateLinearSolver with LinearSolver::Options::type
+		// set to DENSE_SCHUR and SPARSE_SCHUR
+		// respectively. LinearSolver::Options::elimination_groups[0] should
+		// be at least 1.
+		abstract class SchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
+			  private LinearSolverOptions options_;
+
+			  SchurEliminatorBase eliminator_;
+			  BlockRandomAccessMatrix lhs_;
+			  double rhs_[];
+		 public SchurComplementSolver(LinearSolverOptions options) {
+			  super();
+		      options_ = options;
+		      if (options.elimination_groups.size() <= 1) {
+		    	  System.err.println("In public SchurComplmentSolver options.elimination_groups.size() <= 1");
+		    	  return;
+		      }
+		      if (options.elimination_groups.get(0) <= 0) {
+		    	  System.err.println("In public SchurComplmentSolver options.elimination_gourps.get(0) <= 0");
+		    	  return;
+		      }
+		      if (options.context == null) {
+		    	  System.err.println("in public SchurComplementSolver options.context == null");
+		    	  return;
+		      }
+		  }
+
+		  // LinearSolver methods
+		 public LinearSolverSummary SolveImpl(
+				    BlockSparseMatrix A,
+				    double[] b,
+				    LinearSolverPerSolveOptions per_solve_options,
+				    double[] x) {
+			      int i;
+				  EventLogger event_logger = new EventLogger("SchurComplementSolver::Solve");
+
+				  if (eliminator_ == null) {
+				    InitStorage(A.block_structure());
+				    DetectStructure(A.block_structure(),
+				                    options_.elimination_groups.get(0),
+				                    options_.row_block_size,
+				                    options_.e_block_size,
+				                    options_.f_block_size);
+				    eliminator_ = createSchurEliminatorBase(options_);
+				    if (eliminator_ == null) {
+				    	System.err.println("In SchurComplementSovler SolveImpl eliminator_ == null");
+				    	return null;
+				    }
+				    boolean kFullRankETE = true;
+				    eliminator_.Init(
+				        options_.elimination_groups.get(0), kFullRankETE, A.block_structure());
+				  };
+
+				  for (i = 0; i < A.num_cols(); i++) {
+					  x[i] = 0.0;
+				  }
+				  event_logger.AddEvent("Setup");
+
+				  eliminator_.Eliminate(A, b, per_solve_options.D, lhs_, rhs_);
+				  event_logger.AddEvent("Eliminate");
+
+				  int redlength = x.length - (A.num_cols() - lhs_.num_cols());
+				  double[] reduced_solution = new double[redlength];
+				  int offset = A.num_cols() - lhs_.num_cols();
+				  for (i = offset; i < x.length; i++) {
+					  reduced_solution[i-offset] = x[i];
+				  }
+				  //double[] reduced_solution = x + A->num_cols() - lhs_->num_cols();
+				  LinearSolverSummary summary =
+				      SolveReducedLinearSystem(per_solve_options, reduced_solution);
+				  event_logger.AddEvent("ReducedSolve");
+
+				  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
+				    eliminator_.BackSubstitute(A, b, per_solve_options.D, reduced_solution, x);
+				    event_logger.AddEvent("BackSubstitute");
+				  }
+
+				  return summary;
+				}
+
+		  
+
+		  protected LinearSolverOptions options() { return options_; }
+
+		  protected BlockRandomAccessMatrix lhs() { return lhs_; }
+		  protected void set_lhs(BlockRandomAccessMatrix lhs) { lhs_ = lhs; }
+		  protected double[] rhs() { return rhs_; }
+		  protected void set_rhs(double[] rhs) { rhs_ = rhs; }
+
+		  protected abstract void InitStorage(CompressedRowBlockStructure bs);
+		  protected abstract LinearSolverSummary SolveReducedLinearSystem(
+		      LinearSolverPerSolveOptions per_solve_options,
+		      double[] solution);
+		} // abstract class SchurComplementSolver
+		
+		// Dense Cholesky factorization based solver.
+		class DenseSchurComplementSolver extends SchurComplementSolver {
+		 public DenseSchurComplementSolver(LinearSolverOptions options) {
+		      super(options);
+		 }
+
+		 protected void InitStorage(CompressedRowBlockStructure bs) {
+			 int num_eliminate_blocks = options().elimination_groups.get(0);
+			 int num_col_blocks = bs.cols.size();
+
+			  Vector<Integer> blocks = new Vector<Integer>(num_col_blocks - num_eliminate_blocks);
+			  for (int i = num_eliminate_blocks, j = 0;
+			       i < num_col_blocks;
+			       ++i, ++j) {
+			    blocks.add(bs.cols.get(i).size);
+			  }
+
+			  set_lhs(new BlockRandomAccessDenseMatrix(blocks));
+			  set_rhs(new double[lhs().num_rows()]);
+	 
+		 }
+		 protected LinearSolverSummary SolveReducedLinearSystem(
+		      LinearSolverPerSolveOptions per_solve_options,
+		      double[] solution) {
+			  int i;
+
+			  LinearSolverSummary summary = new LinearSolverSummary();
+			  summary.num_iterations = 0;
+			  summary.termination_type = LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS;
+			  summary.message[0] = "Success.";
+
+			  BlockRandomAccessDenseMatrix m =
+			      (BlockRandomAccessDenseMatrix)(lhs());
+			  int num_rows = m.num_rows();
+
+			  // The case where there are no f blocks, and the system is block
+			  // diagonal.
+			  if (num_rows == 0) {
+			    return summary;
+			  }
+
+			  summary.num_iterations = 1;
+			  //VectorRef(solution, num_rows) = ConstVectorRef(rhs(), num_rows);
+			  for (i = 0; i < num_rows; i++) {
+				  solution[i] = rhs()[i];
+			  }
+			  double marr[][] = new double[m.values().length][1];
+			  for (i = 0; i < m.values().length; i++) {
+				  marr[i][0] = m.values()[i];
+			  }
+			    summary.termination_type =
+			        SolveInPlaceUsingCholesky(num_rows,
+			                                          marr,
+			                                          solution,
+			                                          summary.message);
+			    return summary;
+
+		 }
+		};
+		
+		class BlockRandomAccessDenseMatrix  extends BlockRandomAccessMatrix {
+			private int num_rows_;
+		    private Vector<Integer> block_layout_;
+		    private double[] values_;
+		    private CellInfo[] cell_infos_;
+			  // blocks is a vector of block sizes. The resulting matrix has
+			  // blocks.size() * blocks.size() cells.
+			  public BlockRandomAccessDenseMatrix(Vector<Integer> blocks) {
+				  int i;
+				  int num_blocks = blocks.size();
+				  block_layout_.clear();
+				  num_rows_ = 0;
+				  for (i = 0; i < num_blocks; ++i) {
+				    block_layout_.add(num_rows_);
+				    num_rows_ += blocks.get(i);
+				  }
+
+				  values_ = new double[num_rows_ * num_rows_];
+
+				  cell_infos_ = new CellInfo[num_blocks * num_blocks];
+				  for (i = 0; i < num_blocks * num_blocks; ++i) {
+				    cell_infos_[i].values = values_;
+				  }
+
+				  SetZero();
+  
+  
+			  }
+
+			  // BlockRandomAccessMatrix interface.
+			  public CellInfo GetCell(int row_block_id,
+			                            int col_block_id,
+			                            int[] row,
+			                            int[] col,
+			                            int[] row_stride,
+			                            int[] col_stride) {
+				  row[0] = block_layout_.get(row_block_id);
+				  col[0] = block_layout_.get(col_block_id);
+				  row_stride[0] = num_rows_;
+				  col_stride[0] = num_rows_;
+				  return cell_infos_[row_block_id * block_layout_.size() + col_block_id];  
+			  }
+
+			  // This is not a thread safe method, it assumes that no cell is
+			  // locked.
+			// Assume that the user does not hold any locks on any cell blocks
+			// when they are calling SetZero.
+			  public void SetZero() {
+				  int i;
+				  int length = num_rows_ * num_rows_;
+				  for (i = 0; i < length; i++) {
+					  values_[i] = 0.0;
+				  }
+			  }
+
+			  // Since the matrix is square with the same row and column block
+			  // structure, num_rows() = num_cols().
+			  public int num_rows() { return num_rows_; }
+			  public int num_cols() { return num_rows_; }
+
+			  // The underlying matrix storing the cells.
+			  public double[] values() { return values_; }
+			  public double[] mutable_values() { return values_; }
+			};
 
 	 
 	 class IterativeSchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
