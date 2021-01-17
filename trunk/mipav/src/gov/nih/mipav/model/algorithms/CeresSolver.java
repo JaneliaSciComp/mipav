@@ -4276,6 +4276,7 @@ public abstract class CeresSolver {
 		public LinearSolverOptions() {
 			//type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
 			type = LinearSolverType.DENSE_QR;
+			//type = LinearSolverType.DENSE_SCHUR;
 			preconditioner_type = PreconditionerType.JACOBI;
 			visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
 			//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
@@ -8079,7 +8080,12 @@ public abstract class CeresSolver {
 			  public BlockRandomAccessDenseMatrix(Vector<Integer> blocks) {
 				  int i;
 				  int num_blocks = blocks.size();
-				  block_layout_.clear();
+				  if (block_layout_ != null) {
+				      block_layout_.clear();
+				  }
+				  else {
+					  block_layout_ = new Vector<Integer>();
+				  }
 				  num_rows_ = 0;
 				  for (i = 0; i < num_blocks; ++i) {
 				    block_layout_.add(num_rows_);
@@ -8372,7 +8378,7 @@ public abstract class CeresSolver {
 					num_threads = 1;
 					num_eliminate_blocks = -1;
 					linear_solver_type = LinearSolverType.DENSE_QR;
-					//linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
+					//linear_solver_type = LinearSolverType.DENSE_SCHUR;
 					dynamic_sparsity = false;
 					context = new Context();
 					evaluation_callback = null;
@@ -9003,7 +9009,8 @@ public abstract class CeresSolver {
 					evaluate_preparers_ = (EvaluatePreparer[])((DenseJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
 				}
 				else if ((options_.linear_solver_type == LinearSolverType.CGNR) || 
-						 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
+						 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
+						 (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
 					evaluate_preparers_ = (EvaluatePreparer[])((BlockJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
 				}
 			/*
@@ -9026,7 +9033,8 @@ public abstract class CeresSolver {
 				return ((DenseJacobianWriter)jacobian_writer_).CreateJacobian();
 			}
 			else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
-					 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
+					 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
+					 (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
 				return ((BlockJacobianWriter)jacobian_writer_).CreateJacobian();
 			}
 			else {
@@ -9217,7 +9225,8 @@ public abstract class CeresSolver {
 	                          scratch.jacobian_block_ptrs);
 	    	  }
 	    	  else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
-	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
+	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
+	    			   (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
 	    		  ((BlockEvaluatePreparer)preparer).Prepare(residual_block,
                           i,
                           jacobian,
@@ -9264,7 +9273,8 @@ public abstract class CeresSolver {
 	    	    // position by the outside evaluate call, thanks to the jacobians array
 	    	    // prepared by the BlockEvaluatePreparers.
 	    	  else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
-	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR)) {
+	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
+	    			   (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
 	    		  double[] jacobian_values =
 	    			      ((BlockSparseMatrix)jacobian).mutable_values();
 	    		   int values_index = 0;
@@ -9818,7 +9828,7 @@ public abstract class CeresSolver {
 			  }
 
 			  evaluator_options_.linear_solver_type = LinearSolverType.DENSE_QR;
-			  //evaluator_options_.linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
+			  //evaluator_options_.linear_solver_type = LinearSolverType.DENSE_SCHUR;
 			  evaluator_options_.num_eliminate_blocks = 0;
 			  evaluator_options_.num_threads = 1;
 			  evaluator_options_.context = context_;
@@ -9858,7 +9868,7 @@ public abstract class CeresSolver {
 			  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
 
 			  linear_solver_options.type = LinearSolverType.DENSE_QR;
-			  //linear_solver_options.type = LinearSolverType.ITERATIVE_SCHUR;
+			  //linear_solver_options.type = LinearSolverType.DENSE_SCHUR;
 			  linear_solver_options.context = context_;
 
 			  for (i = 0; i < options.num_threads; ++i) {
@@ -12608,6 +12618,10 @@ public abstract class CeresSolver {
 		  else if (linear_solver_.options_.type == LinearSolverType.ITERATIVE_SCHUR) {
 			  linear_solver_summary = ((IterativeSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
 		  }
+		  else if (linear_solver_.options_.type == LinearSolverType.DENSE_SCHUR) {
+			  linear_solver_summary = ((DenseSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
+		  }
+
 
 		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
 		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message[0] + "\n",
@@ -13288,6 +13302,9 @@ public abstract class CeresSolver {
 			  }
 			  else if (linear_solver_.options_.type == LinearSolverType.ITERATIVE_SCHUR) {
 				  linear_solver_summary = ((IterativeSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
+			  }
+			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_SCHUR) {
+				  linear_solver_summary = ((DenseSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
 			  }
 		    gauss_newton_step_.clear();
 		    for (i = 0; i < gauss_newton_step_array.length; i++) {
@@ -19563,7 +19580,8 @@ public abstract class CeresSolver {
 			min_relative_decrease = 1e-3;
 			min_lm_diagonal = 1e-6;
 			max_lm_diagonal = 1e32;
-			max_num_consecutive_invalid_steps = 5;
+			//max_num_consecutive_invalid_steps = 5;
+			max_num_consecutive_invalid_steps = 10;
 			function_tolerance = 1e-6;
 			gradient_tolerance = 1e-10;
 			parameter_tolerance = 1e-8;
@@ -19571,7 +19589,7 @@ public abstract class CeresSolver {
 			// #if defined(CERES_NO_SUITESPARSE) && defined(CERES_NO_CXSPARSE) &&
 			// !defined(CERES_ENABLE_LGPL_CODE) // NOLINT
 			linear_solver_type = LinearSolverType.DENSE_QR;
-			//linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
+			//linear_solver_type = LinearSolverType.DENSE_SCHUR;
 			// #else
 			// linear_solver_type = SPARSE_NORMAL_CHOLESKY;
 			// #endif
