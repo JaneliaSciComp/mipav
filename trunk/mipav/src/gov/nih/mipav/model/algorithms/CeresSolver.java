@@ -7922,9 +7922,9 @@ public abstract class CeresSolver {
 		abstract class SchurComplementSolver extends TypedLinearSolver<BlockSparseMatrix> {
 			  private LinearSolverOptions options_;
 
-			  SchurEliminatorBase eliminator_;
-			  BlockRandomAccessMatrix lhs_;
-			  double rhs_[];
+			  private SchurEliminatorBase eliminator_;
+			  private BlockRandomAccessMatrix lhs_;
+			  private double rhs_[];
 		 public SchurComplementSolver(LinearSolverOptions options) {
 			  super();
 		      options_ = options;
@@ -7933,7 +7933,7 @@ public abstract class CeresSolver {
 		    	  return;
 		      }
 		      if (options.elimination_groups.get(0) <= 0) {
-		    	  System.err.println("In public SchurComplmentSolver options.elimination_gourps.get(0) <= 0");
+		    	  System.err.println("In public SchurComplmentSolver options.elimination_groups.get(0) <= 0");
 		    	  return;
 		      }
 		      if (options.context == null) {
@@ -7960,7 +7960,7 @@ public abstract class CeresSolver {
 				                    options_.f_block_size);
 				    eliminator_ = createSchurEliminatorBase(options_);
 				    if (eliminator_ == null) {
-				    	System.err.println("In SchurComplementSovler SolveImpl eliminator_ == null");
+				    	System.err.println("In SchurComplementSolver SolveImpl eliminator_ == null");
 				    	return null;
 				    }
 				    boolean kFullRankETE = true;
@@ -7982,9 +7982,12 @@ public abstract class CeresSolver {
 				  for (i = offset; i < x.length; i++) {
 					  reduced_solution[i-offset] = x[i];
 				  }
-				  //double[] reduced_solution = x + A->num_cols() - lhs_->num_cols();
+				  //double* reduced_solution = x + A->num_cols() - lhs_->num_cols();
 				  LinearSolverSummary summary =
 				      SolveReducedLinearSystem(per_solve_options, reduced_solution);
+				  for (i = offset; i < x.length; i++) {
+					  x[i] = reduced_solution[i-offset];
+				  }
 				  event_logger.AddEvent("ReducedSolve");
 
 				  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
@@ -8096,7 +8099,7 @@ public abstract class CeresSolver {
 
 				  cell_infos_ = new CellInfo[num_blocks * num_blocks];
 				  for (i = 0; i < num_blocks * num_blocks; ++i) {
-				    cell_infos_[i].values = values_;
+				      cell_infos_[i].values = values_;
 				  }
 
 				  SetZero();
