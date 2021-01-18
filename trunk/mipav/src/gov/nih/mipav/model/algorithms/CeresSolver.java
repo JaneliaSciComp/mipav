@@ -81,6 +81,7 @@ public abstract class CeresSolver {
 	private LinearEquations le = new LinearEquations();
 	private LinearEquations2 le2 = new LinearEquations2();
 	private SVD svd = new SVD();
+	private LinearSolverType requestedLinearSolverType = LinearSolverType.DENSE_QR;
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
@@ -4275,8 +4276,7 @@ public abstract class CeresSolver {
 
 		public LinearSolverOptions() {
 			//type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
-			type = LinearSolverType.DENSE_QR;
-			//type = LinearSolverType.DENSE_SCHUR;
+			type = requestedLinearSolverType;
 			preconditioner_type = PreconditionerType.JACOBI;
 			visibility_clustering_type = VisibilityClusteringType.CANONICAL_VIEWS;
 			//dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.EIGEN;
@@ -8340,6 +8340,7 @@ public abstract class CeresSolver {
 			// TODO(sameeragarwal): This is probably not a great choice.
 			// Ideally, we should have a DENSE_NORMAL_CHOLESKY, that can take
 			// a BlockSparseMatrix as input.
+			System.out.println("LinearSolverForZeroEBlocks becomes LinearSolverType.DENSE_QR");
 			return LinearSolverType.DENSE_QR;
 		}
 
@@ -8377,8 +8378,7 @@ public abstract class CeresSolver {
 				public EvaluatorOptions() {
 					num_threads = 1;
 					num_eliminate_blocks = -1;
-					linear_solver_type = LinearSolverType.DENSE_QR;
-					//linear_solver_type = LinearSolverType.DENSE_SCHUR;
+					linear_solver_type = requestedLinearSolverType;
 					dynamic_sparsity = false;
 					context = new Context();
 					evaluation_callback = null;
@@ -9827,8 +9827,7 @@ public abstract class CeresSolver {
 			    }
 			  }
 
-			  evaluator_options_.linear_solver_type = LinearSolverType.DENSE_QR;
-			  //evaluator_options_.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+			  evaluator_options_.linear_solver_type = requestedLinearSolverType;
 			  evaluator_options_.num_eliminate_blocks = 0;
 			  evaluator_options_.num_threads = 1;
 			  evaluator_options_.context = context_;
@@ -9867,8 +9866,7 @@ public abstract class CeresSolver {
 			  LinearSolver linear_solvers[] = new LinearSolver[options.num_threads];
 			  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
 
-			  linear_solver_options.type = LinearSolverType.DENSE_QR;
-			  //linear_solver_options.type = LinearSolverType.DENSE_SCHUR;
+			  linear_solver_options.type = requestedLinearSolverType;
 			  linear_solver_options.context = context_;
 
 			  for (i = 0; i < options.num_threads; ++i) {
@@ -19588,7 +19586,7 @@ public abstract class CeresSolver {
 
 			// #if defined(CERES_NO_SUITESPARSE) && defined(CERES_NO_CXSPARSE) &&
 			// !defined(CERES_ENABLE_LGPL_CODE) // NOLINT
-			linear_solver_type = LinearSolverType.DENSE_QR;
+			linear_solver_type = requestedLinearSolverType;
 			//linear_solver_type = LinearSolverType.DENSE_SCHUR;
 			// #else
 			// linear_solver_type = SPARSE_NORMAL_CHOLESKY;
