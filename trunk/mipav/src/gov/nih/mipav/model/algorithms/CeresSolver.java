@@ -950,6 +950,121 @@ public abstract class CeresSolver {
 			System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
 		}
 	}
+	
+	public void TESTBlockRandomAccessDenseMatrixGetCell () {
+		//TESTBlockRandomAccessDenseMatrixGetCell passed all tests
+		  boolean passed = true;
+		  Vector<Integer> blocks = new Vector<Integer>();
+		  blocks.add(3);
+		  blocks.add(4);
+		  blocks.add(5);
+		  final int num_rows = 3 + 4 + 5;
+		  BlockRandomAccessDenseMatrix m = new BlockRandomAccessDenseMatrix(blocks);
+		  if (m.num_rows() != num_rows) {
+			  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell m.num_rows() != num_rows");
+			  passed = false;
+		  }
+		  if (m.num_cols() != num_rows) {
+			  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell m.num_cols() != num_rows");
+			  passed = false;
+		  }
+
+		  int row_idx = 0;
+		  for (int i = 0; i < blocks.size(); ++i) {
+		    int col_idx = 0;
+		    for (int j = 0; j < blocks.size(); ++j) {
+		      int row[] = new int[1];
+		      int col[] = new int[1];
+		      int row_stride[] = new int[1];
+		      int col_stride[] = new int[1];
+		      CellInfo cell =
+		          m.GetCell(i, j, row, col, row_stride, col_stride);
+
+		      if (cell == null) {
+		    	  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell cell == null");
+				  passed = false;  
+		      }
+		      if (row[0] != row_idx) {
+		    	  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell row[0] != row_idx");
+				  passed = false;   
+		      }
+		      if (col[0] != col_idx) {
+		    	  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell col[0] != col_idx");
+				  passed = false;   
+		      }
+		      if (row_stride[0] != (3+4+5)) {
+		    	  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell row_stride[0] != (3+4+5)");
+				  passed = false;  
+		      }
+		      if (col_stride[0] != (3+4+5)) {
+		    	  System.err.println("In TESTBlockRandomAccessDenseMatrixGetCell col_stride[0] != (3+4+5)");
+				  passed = false;  
+		      }
+		      col_idx += blocks.get(j);
+		    }
+		    row_idx += blocks.get(i);
+		  }
+		  if (passed) {
+			  System.out.println("TESTBlockRandomAccessDenseMatrixGetCell passed all tests");
+		  }
+		}
+
+		public void TESTBlockRandomAccessDenseMatrixWriteCell () {
+			//TESTBlockRandomAccessDenseMatrixWriteCell passed all tests
+
+			boolean passed = true;
+			  Vector<Integer> blocks = new Vector<Integer>();
+			  blocks.add(3);
+			  blocks.add(4);
+			  blocks.add(5);
+			  final int num_rows = 3 + 4 + 5;
+			  BlockRandomAccessDenseMatrix m = new BlockRandomAccessDenseMatrix(blocks);
+
+		  // Fill the cell (i,j) with (i + 1) * (j + 1)
+		  for (int i = 0; i < blocks.size(); ++i) {
+		    for (int j = 0; j < blocks.size(); ++j) {
+		      int row[] = new int[1];
+		      int col[] = new int[1];
+		      int row_stride[] = new int[1];
+		      int col_stride[] = new int[1];
+		      CellInfo cell = m.GetCell(
+		          i, j, row, col, row_stride, col_stride);
+		      for (int r = row[0]; r < row[0] + blocks.get(i); r++) {
+		    	  for (int c = col[0]; c < col[0] + blocks.get(j); c++) {
+		    		  cell.values[r * col_stride[0] + c] = (i+1)*(j+1);
+		    	  }
+		      }
+		      //MatrixRef(cell->values, row_stride, col_stride).block(
+		          //row, col, blocks[i], blocks[j]) =
+		          //(i+1) * (j+1) * Matrix::Ones(blocks[i], blocks[j]);
+		    }
+		  }
+
+		  // Check the values in the array are correct by going over the
+		  // entries of each block manually.
+		  int row_idx = 0;
+		  for (int i = 0; i < blocks.size(); ++i) {
+		    int col_idx = 0;
+		    for (int j = 0; j < blocks.size(); ++j) {
+		      // Check the values of this block.
+		      for (int r = 0; r < blocks.get(i); ++r) {
+		        for (int c = 0; c < blocks.get(j); ++c) {
+		          int pos = row_idx * num_rows + col_idx;
+		          if (m.values()[pos] != (i + 1) * (j + 1)) {
+		        	  System.err.println("In TESTBlockRandomAccessDenseMatrixWriteCell m.values()["+pos+"] != " + ((i+1)*(j+1)));
+		        	  passed = false;
+		          }
+		        }
+		      }
+		      col_idx += blocks.get(j);
+		    }
+		    row_idx += blocks.get(i);
+		  }
+		  if (passed) {
+			  System.out.println("TESTBlockRandomAccessDenseMatrixWriteCell passed all tests");
+		  }
+		}
+
 
 
 
@@ -8099,6 +8214,7 @@ public abstract class CeresSolver {
 
 				  cell_infos_ = new CellInfo[num_blocks * num_blocks];
 				  for (i = 0; i < num_blocks * num_blocks; ++i) {
+					  cell_infos_[i] = new CellInfo();
 				      cell_infos_[i].values = values_;
 				  }
 
