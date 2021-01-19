@@ -1167,8 +1167,7 @@ public abstract class CeresSolver {
   	    	passed = false;	
 	    }
 
-	    Matrix denseInput = new Matrix(m_.num_rows(), m_.num_cols());
-	    Matrix dense = tsm.ToDenseMatrix(denseInput);
+	    Matrix dense = tsm.ToDenseMatrix();
 
 	    // (0,0)
 	    normSquared = 0.0;
@@ -1270,7 +1269,7 @@ public abstract class CeresSolver {
 	    Matrix expected_inverse = dense.inverse();
 
 	     m_.Invert();
-	     dense = tsm.ToDenseMatrix(denseInput);
+	     dense = tsm.ToDenseMatrix();
 	     normSquared = 0;
 	     for (r = 0; r < expected_inverse.getRowDimension(); r++) {
 	    	 for (c = 0; c < expected_inverse.getRowDimension(); c++) {
@@ -3382,13 +3381,9 @@ public abstract class CeresSolver {
 
 		}
 
-		// change return type from void to Matrix so that Matrix dimensions can be
-		// modified
-		public Matrix ToDenseMatrix(Matrix dense_matrix) {
-			if (dense_matrix == null) {
-				System.err.println("dense_matrix == null in ToDenseMatrix");
-				return null;
-			}
+		// change return type from void to Matrix so that an input matrix of the
+		// correct dimensions is no longer required
+		public Matrix ToDenseMatrix() {
 
 			double array[][] = new double[num_rows_][num_cols_];
 			
@@ -3951,7 +3946,7 @@ public abstract class CeresSolver {
 	  }
 	  
 	  //public void ToDenseMatrix(Matrix* dense_matrix) const;
-	  public Matrix ToDenseMatrix(Matrix dense_matrix) {
+	  public Matrix ToDenseMatrix() {
 		  double array[][] = new double[num_rows_][num_cols_];
 		  for (int i = 0; i < num_nonzeros_; ++i) {
 		    array[rows_[i]][cols_[i]] += values_[i];
@@ -4513,7 +4508,7 @@ public abstract class CeresSolver {
 		// Resize and populate dense_matrix with a dense version of the
 		// sparse matrix.
 		// Change from void to Matrix because Matrix dimensions can change
-		public abstract Matrix ToDenseMatrix(Matrix dense_matrix);
+		public abstract Matrix ToDenseMatrix();
 
 		// Write out the matrix as a sequence of (i,j,s) triplets. This
 		// format is useful for loading the matrix into MATLAB/octave as a
@@ -5405,12 +5400,11 @@ public abstract class CeresSolver {
               }
 		  }
 		  
-		  public Matrix ToDenseMatrix(Matrix dense_matrix) {
-			  double original_array[][] = dense_matrix.getArray();
+		  public Matrix ToDenseMatrix() {
 			  double new_array[][] = new double[num_rows()][num_cols()];
 			  for (int r = 0; r < num_rows(); r++) {
 				  for (int c = 0; c < num_cols(); c++) {
-					  new_array[r][c] = original_array[r][c];  
+					  new_array[r][c] = m_.getArray()[r][c];  
 				  }
 			  }
 			  return new Matrix(new_array);
@@ -14792,8 +14786,7 @@ public abstract class CeresSolver {
 		    System.err.println("A == null in DumpLinearLeastSquaresProblemToConsole");
 		    return false;
 		}
-		Matrix AA = new Matrix(A.num_rows(), A.num_cols());
-		A.ToDenseMatrix(AA);
+		Matrix AA = A.ToDenseMatrix();
 		Matrix AAT = AA.transpose();
 		Preferences.debug("A transpose: \n", Preferences.DEBUG_ALGORITHM);
 		for (int row = 0; row < AA.getRowDimension(); row++) {
