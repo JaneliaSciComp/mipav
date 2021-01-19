@@ -6065,18 +6065,18 @@ public abstract class CeresSolver {
 		                                        r, c,
 		                                        row_stride, col_stride);
 		      double m[][] = new double[row_stride[0]][col_stride[0]];
-		      int values_index = 0;
+		      int values_ptr = 0;
 		      for (int row = 0; row < row_stride[0]; row++) {
-		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
-		    		  m[row][col] = cell_info.values[values_index];
+		    	  for (int col = 0; col < col_stride[0]; col++, values_ptr++) {
+		    		  m[row][col] = cell_info.values[cell_info.values_index + values_ptr];
 		    	  }
 		      }
 		      double b[][] = new double[row_block_size][col_block_size];
 		      double bT[][] = new double[col_block_size][row_block_size];
-		      values_index = 0;
+		      values_ptr = 0;
 		      for (int row = 0; row < row_block_size; row++) {
-		    	  for (int col = 0; col < col_block_size; col++, values_index++) {
-		    		  b[row][col] = values[values_index + cells.get(j).position];
+		    	  for (int col = 0; col < col_block_size; col++, values_ptr++) {
+		    		  b[row][col] = values[values_ptr + cells.get(j).position];
 		    		  bT[col][row] = b[row][col];
 		    	  }
 		      }
@@ -6093,10 +6093,10 @@ public abstract class CeresSolver {
 		    		  m[r[0] + row][c[0] + col] += bTb[row][col];
 		    	  }
 		      }
-		      values_index = 0;
+		      values_ptr = 0;
 		      for (int row = 0; row < row_stride[0]; row++) {
-		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
-		    		  cell_info.values[values_index] = m[row][col];
+		    	  for (int col = 0; col < col_stride[0]; col++, values_ptr++) {
+		    		  cell_info.values[cell_info.values_index + values_ptr] = m[row][col];
 		    	  }
 		      }
 		    }
@@ -6115,20 +6115,20 @@ public abstract class CeresSolver {
 		                                        r, c,
 		                                        row_stride, col_stride);
 		      double m[][] = new double[row_stride[0]][col_stride[0]];
-		      int values_index = 0;
+		      int values_ptr = 0;
 		      for (int row = 0; row < row_stride[0]; row++) {
-		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
-		    		  m[row][col] = cell_info.values[values_index];
+		    	  for (int col = 0; col < col_stride[0]; col++, values_ptr++) {
+		    		  m[row][col] = cell_info.values[cell_info.values_index + values_ptr];
 		    	  }
 		      }
 		      for (int k = 0; k < block_size; k++) {
 		    	  m[r[0] + k][c[0] + k] += (D[k + position]*D[k + position]);
 		      }
 		      position += block_size;
-		      values_index = 0;
+		      values_ptr = 0;
 		      for (int row = 0; row < row_stride[0]; row++) {
-		    	  for (int col = 0; col < col_stride[0]; col++, values_index++) {
-		    		  cell_info.values[values_index] = m[row][col];
+		    	  for (int col = 0; col < col_stride[0]; col++, values_ptr++) {
+		    		  cell_info.values[cell_info.values_index + values_ptr] = m[row][col];
 		    	  }
 		      }
 		    }
@@ -6421,7 +6421,7 @@ public abstract class CeresSolver {
 			         double marr[][] = new double[row_stride[0]][col_stride[0]];
 			         for (index = 0, row = 0; row < row_stride[0]; row++) {
 			        	 for (col = 0; col < col_stride[0]; col++, index++) {
-			        		 marr[row][col] = cell_info.values[index];
+			        		 marr[row][col] = cell_info.values[cell_info.values_index + index];
 			        	 }
 			         }
 			         //MatrixRef m(cell_info->values, row_stride, col_stride);
@@ -6430,7 +6430,7 @@ public abstract class CeresSolver {
 			         }
 			         for (index = 0, row = 0; row < row_stride[0]; row++) {
 			        	 for (col = 0; col < col_stride[0]; col++, index++) {
-			        		 cell_info.values[index] = marr[row][col];
+			        		 cell_info.values[cell_info.values_index + index] = marr[row][col];
 			        	 }
 			         }
 			         //m.block(r, c, block_size, block_size).diagonal()
@@ -6742,7 +6742,7 @@ public abstract class CeresSolver {
 			      (DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, 1,
 			          values, row.cells.get(i).position, row.block.size, block1_size,
 			          values, row.cells.get(i).position, row.block.size, block1_size,
-			          cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			          cell_info.values, cell_info.values_index, r[0], c[0], row_stride[0], col_stride[0]);
 			}
 			
 			for (int j = i + 1; j < row.cells.size(); ++j) {
@@ -6765,7 +6765,7 @@ public abstract class CeresSolver {
 			        (DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, 1,
 			            values, row.cells.get(i).position, row.block.size, block1_size,
 			            values, row.cells.get(j).position, row.block.size, block2_size,
-			            cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			            cell_info.values, cell_info.values_index, r[0], c[0], row_stride[0], col_stride[0]);
 			  }
 			}
 			}
@@ -6838,7 +6838,7 @@ public abstract class CeresSolver {
 			            (kFBlockSize, kEBlockSize, kEBlockSize, kFBlockSize, -1,
 			                b1_transpose_inverse_ete, 0, block1_size, e_block_size,
 			                buffer, value2, e_block_size, block2_size,
-			                cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			                cell_info.values, cell_info.values_index, r[0], c[0], row_stride[0], col_stride[0]);
 			      }
 			    }
 			  }
@@ -7004,7 +7004,7 @@ public abstract class CeresSolver {
 			          (kRowBlockSize, kFBlockSize, kRowBlockSize, kFBlockSize, 1,
 			          values, row.cells.get(i).position, row.block.size, block1_size,
 			          values, row.cells.get(i).position, row.block.size, block1_size,
-			          cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			          cell_info.values, cell_info.values_index, r[0], c[0], row_stride[0], col_stride[0]);
 			    }
 
 			    for (int j = i + 1; j < row.cells.size(); ++j) {
@@ -7029,7 +7029,7 @@ public abstract class CeresSolver {
 			            (kRowBlockSize, kFBlockSize, kRowBlockSize, kFBlockSize, 1,
 			                values, row.cells.get(i).position, row.block.size, block1_size,
 			                values, row.cells.get(j).position, row.block.size, block2_size,
-			                cell_info.values, 0, r[0], c[0], row_stride[0], col_stride[0]);
+			                cell_info.values, cell_info.values_index, r[0], c[0], row_stride[0], col_stride[0]);
 			      }
 			    }
 			  }
@@ -8434,6 +8434,7 @@ public abstract class CeresSolver {
 				  for (i = 0; i < num_blocks * num_blocks; ++i) {
 					  cell_infos_[i] = new CellInfo();
 				      cell_infos_[i].values = values_;
+				      cell_infos_[i].values_index = 0;
 				  }
 
 				  SetZero();
