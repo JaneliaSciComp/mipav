@@ -1031,7 +1031,7 @@ public abstract class CeresSolver {
 		          i, j, row, col, row_stride, col_stride);
 		      for (int r = row[0]; r < row[0] + blocks.get(i); r++) {
 		    	  for (int c = col[0]; c < col[0] + blocks.get(j); c++) {
-		    		  cell.values[r * col_stride[0] + c] = (i+1)*(j+1);
+		    		  cell.values[cell.values_index + r * col_stride[0] + c] = (i+1)*(j+1);
 		    	  }
 		      }
 		      //MatrixRef(cell->values, row_stride, col_stride).block(
@@ -1065,7 +1065,231 @@ public abstract class CeresSolver {
 		  }
 		}
 
+   public void BlockRandomAccessDiagonalMatrixTest() {
+	    // BlockRandomAccessDiagonalMatrixTest passed all tests
+	    int i, r,c;
+	    double diff;
+	    double normSquared;
+	    double norm;
+	    double totalNormSquared = 0.0;
+	    double totalNorm;
+	    double actualNorm;
+	    int num_nonzeros_;
+	    double yel;
+	    BlockRandomAccessDiagonalMatrix m_;
+	    double kTolerance = 1e-14;
+	    boolean passed = true;
+	    Vector<Integer> blocks = new Vector<Integer>();
+	    blocks.add(3);
+	    blocks.add(4);
+	    blocks.add(5);
+	    final int num_rows = 3 + 4 + 5;
+	    num_nonzeros_ =  3 * 3 + 4 * 4 + 5 * 5;
 
+	    m_ = new BlockRandomAccessDiagonalMatrix(blocks);
+
+	    if (m_.num_rows() != num_rows) {
+	    	System.err.println("In BlockRandomDIagonalMatrixTest m_.num_rows() != num_rows");
+	    	passed = false;
+	    }
+	    if (m_.num_cols() != num_rows) {
+	    	System.err.println("In BlockRandomDIagonalMatrixTest m_.num_cols() != num_rows");
+	    	passed = false;
+	    }
+
+	    for (i = 0; i < blocks.size(); ++i) {
+	      final int row_block_id = i;
+	      int col_block_id;
+	      int row[] = new int[1];
+	      int col[] = new int[1];
+	      int row_stride[] = new int[1];
+	      int col_stride[] = new int[1];
+
+	      for (int j = 0; j < blocks.size(); ++j) {
+	        col_block_id = j;
+	        CellInfo cell =  m_.GetCell(row_block_id, col_block_id,
+	                                    row, col,
+	                                    row_stride, col_stride);
+	        // Off diagonal entries are not present.
+	        if (i != j) {
+	          if (cell != null) {
+	        	  System.err.println("In BlockRandomDiagonalMatrixTest cell != null for i != j");
+	  	    	  passed = false;	  
+	          }
+	          continue;
+	        }
+
+	        if (cell == null) {
+	        	  System.err.println("In BlockRandomDiagonalMatrixTest cell == null for i == j");
+	  	    	  passed = false;	  
+	        }
+	        if (row[0] != 0) {
+	        	System.err.println("In BlockRandomDiagonalMatrixTest row[0] != 0");
+	  	    	passed = false;		
+	        }
+	        if (col[0] != 0) {
+	        	System.err.println("In BlockRandomDiagonalMatrixTest col[0] != 0");
+	  	    	passed = false;		
+	        }
+	        if (row_stride[0] != blocks.get(row_block_id)) {
+	        	System.err.println("In BlockRandomDiagonalMatrixTest row_stride[0] != blocks.get(row_block_id)");
+	  	    	passed = false;			
+	        }
+	        if (col_stride[0] != blocks.get(col_block_id)) {
+	        	System.err.println("In BlockRandomDiagonalMatrixTest col_stride[0] != blocks.get(col_block_id)");
+	  	    	passed = false;			
+	        }
+
+	        // Write into the block
+	        for (r = row[0]; r < row[0] + blocks.get(row_block_id); r++) {
+		    	  for (c = col[0]; c < col[0] + blocks.get(col_block_id); c++) {
+		    		  cell.values[cell.values_index + r * col_stride[0] + c] = (row_block_id+1)*(col_block_id+1);
+		    		  if ((r-row[0]) == (c-col[0])) {
+		    			  cell.values[cell.values_index + r * col_stride[0] + c] += 1.0;
+		    		  }
+		    	  }
+		      }
+	        //MatrixRef(cell->values, row_stride, col_stride).block(
+	            //row, col, blocks[row_block_id], blocks[col_block_id]) =
+	            //(row_block_id + 1) * (col_block_id +1) *
+	            //Matrix::Ones(blocks[row_block_id], blocks[col_block_id])
+	            //+ Matrix::Identity(blocks[row_block_id], blocks[row_block_id]);
+	      }
+	    }
+	    
+	    final TripletSparseMatrix tsm = m_.matrix();
+	    if (tsm.num_nonzeros() != num_nonzeros_) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest tsm.num_nonzeros() != num_nonzeros_");
+  	    	passed = false;	
+	    }
+	    if (tsm.max_num_nonzeros() != num_nonzeros_) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest tsm.max_num_nonzeros() != num_nonzeros_");
+  	    	passed = false;	
+	    }
+
+	    Matrix denseInput = new Matrix(m_.num_rows(), m_.num_cols());
+	    Matrix dense = tsm.ToDenseMatrix(denseInput);
+
+	    // (0,0)
+	    normSquared = 0.0;
+	    for (r = 0; r < 3; r++) {
+	    	for (c = 0; c < 3; c++) {
+	    		if (r != c) {
+	    			diff = (dense.getArray()[r][c] - 1.0);   
+	    		}
+	    		else {
+	    			diff = (dense.getArray()[r][c] - 2.0);
+	    		}
+	    		normSquared += (diff*diff);
+	    		totalNormSquared += (dense.getArray()[r][c]*dense.getArray()[r][c]);
+	    	}
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest dense.block(0,0,3,3).norm() = " + norm);
+  	    	passed = false;	
+	    }
+	    
+
+	    // (1,1)
+	    normSquared = 0.0;
+	    for (r = 3; r < 7; r++) {
+	    	for (c = 3; c < 7; c++) {
+	    		if (r != c) {
+	    	        diff = (dense.getArray()[r][c] - 4.0);
+	    		}
+	    		else {
+	    			diff = (dense.getArray()[r][c] - 5.0);
+	    		}
+	    		normSquared += (diff * diff);
+	    		totalNormSquared += (dense.getArray()[r][c]*dense.getArray()[r][c]);
+	    	}
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest dense.block(3,3,4,4).norm() = " + norm);
+  	    	passed = false;	
+	    }
+	    
+
+	    // (1,1)
+	    normSquared = 0.0;
+	    for (r = 7; r < 12; r++) {
+	    	for (c = 7; c < 12; c++) {
+	    		if (r != c) {
+	    	        diff = (dense.getArray()[r][c] - 9.0);
+	    		}
+	    		else {
+	    			diff = (dense.getArray()[r][c] - 10.0);
+	    		}
+	    		normSquared += (diff * diff);
+	    		totalNormSquared += (dense.getArray()[r][c]*dense.getArray()[r][c]);
+	    	}
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest dense.block(7,7,5,5).norm() = " + norm);
+  	    	passed = false;	
+	    }
+	   
+
+	    // There is nothing else in the matrix besides these 3 blocks.
+	    totalNorm = Math.sqrt(totalNormSquared);
+	    actualNorm  = Math.sqrt(6 * 1.0 + 3 * 4.0 +
+	                     12 * 16.0 + 4 * 25.0 +
+	                     20 * 81.0 + 5 * 100.0);
+	    if (Math.abs(totalNorm - actualNorm) > kTolerance) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest totalNorm = " + totalNorm + " actualNorm = " + actualNorm);
+  	    	passed = false;	
+	    }
+	    
+	    double x[] = new double[dense.getRowDimension()];
+	    RandomNumberGen ran = new RandomNumberGen();
+	    for (i = 0; i < dense.getRowDimension(); i++) {
+	        x[i] = ran.genGaussianRandomNum(-1.0,1.0);	
+	    }
+	    double[] expected_y = new double[dense.getRowDimension()]; 
+	    for (r = 0; r < dense.getRowDimension(); r++) {
+	        for (c = 0; c < dense.getRowDimension(); c++) {
+	            expected_y[r] += (dense.getArray()[r][c]*x[c]); 	
+	        }
+	    }
+	    double[] actual_y = new double[dense.getRowDimension()];
+	    m_.RightMultiply(x,  actual_y);
+	    normSquared = 0.0;
+	    for (r = 0; r < dense.getRowDimension(); r++) {
+	        diff = expected_y[r] - actual_y[r];
+	        normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	System.err.println("In BlockRandomDiagonalMatrixTest (expected_y - actual_y).norm() = " + norm);
+  	    	passed = false;	
+	    }
+	    
+	    Matrix expected_inverse = dense.inverse();
+
+	     m_.Invert();
+	     dense = tsm.ToDenseMatrix(denseInput);
+	     normSquared = 0;
+	     for (r = 0; r < expected_inverse.getRowDimension(); r++) {
+	    	 for (c = 0; c < expected_inverse.getRowDimension(); c++) {
+	    		 diff = expected_inverse.getArray()[r][c] - dense.getArray()[r][c];
+	    		 normSquared += (diff * diff);
+	    	 }
+	     }
+	     norm = Math.sqrt(normSquared);
+		    if (norm > kTolerance) {
+		    	System.err.println("In BlockRandomDiagonalMatrixTest (expected_inverse - dense).norm() = " + norm);
+	  	    	passed = false;	
+		    }
+
+
+	  
+	    if (passed) {
+			  System.out.println("BlockRandomAccessDiagonalMatrixTest passed all tests");
+		  }
+   }
 
 
 	public void Solve(SolverOptions options, ProblemImpl problem, SolverSummary summary) {
