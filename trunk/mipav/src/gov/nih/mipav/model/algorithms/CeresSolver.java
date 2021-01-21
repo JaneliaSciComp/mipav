@@ -1289,6 +1289,311 @@ public abstract class CeresSolver {
 			  System.out.println("BlockRandomAccessDiagonalMatrixTest passed all tests");
 		  }
    }
+   
+   public void TestDetectStructure() {
+	   //TestDetectStructure passed all the tests
+
+       //TEST(DetectStructure, EverythingStatic) {
+	   boolean passed = true;
+	   int expected_row_block_size[] = new int[] {2};
+	   int expected_e_block_size[] =  new int[] {3};
+	   int expected_f_block_size[] = new int[] {4};
+
+	   CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 0;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 3;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 7;
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 0;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(1, 0));
+	   }
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 2;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(2, 0));
+	   }
+
+	   int row_block_size[] = new int[] {0};
+	   int e_block_size[] = new int[] {0};
+	   int f_block_size[] = new int[] {0};
+	   int num_eliminate_blocks = 1;
+	   DetectStructure(bs,
+	                   num_eliminate_blocks,
+	                   row_block_size,
+	                   e_block_size,
+	                   f_block_size);
+
+	   if (row_block_size[0] != expected_row_block_size[0]) {
+		   System.err.println("In DetectStructure EverythingStatic row_block_size[0] != expected_row_block_size[0]");
+		   passed = false;
+	   }
+	   if (e_block_size[0] != expected_e_block_size[0]) {
+		   System.err.println("In DetectStructure EverythingStatic e_block_size[0] != expected_e_block_size[0]");
+		   passed = false;
+	   }
+	   if (f_block_size[0] != expected_f_block_size[0]) {
+		   System.err.println("In DetectStructure EverythingStatic f_block_size[0] != expected_f_block_size[0]");
+		   passed = false;
+	   }
+	   
+
+	 //TEST(DetectStructure, DynamicRow) {
+	   expected_row_block_size[0] = DYNAMIC;
+	   expected_e_block_size[0] = 3;
+	   expected_f_block_size[0] = 4;
+
+	   bs = new CompressedRowBlockStructure();
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 0;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 3;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 7;
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 0;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(1, 0));
+	   }
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 1;
+	     row.block.position = 2;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(2, 0));
+	   }
+
+	   row_block_size[0] = 0;
+	   e_block_size[0] = 0;
+	   f_block_size[0] = 0;
+	   num_eliminate_blocks = 1;
+	   DetectStructure(bs,
+	                   num_eliminate_blocks,
+	                   row_block_size,
+	                   e_block_size,
+	                   f_block_size);
+
+	   if (row_block_size[0] != expected_row_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicRow row_block_size[0] != expected_row_block_size[0]");
+		   passed = false;
+	   }
+	   if (e_block_size[0] != expected_e_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicRow e_block_size[0] != expected_e_block_size[0]");
+		   passed = false;
+	   }
+	   if (f_block_size[0] != expected_f_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicRow f_block_size[0] != expected_f_block_size[0]");
+		   passed = false;
+	   }
+	   
+
+	 //TEST(DetectStructure, DynamicFBlockDifferentRows) {
+	   expected_row_block_size[0] = 2;
+	   expected_e_block_size[0] = 3;
+	   expected_f_block_size[0] = DYNAMIC;
+
+
+	   bs = new CompressedRowBlockStructure();
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 0;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 3;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 7;
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 0;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(1, 0));
+	   }
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 2;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(2, 0));
+	   }
+
+	   row_block_size[0] = 0;
+	   e_block_size[0] = 0;
+	   f_block_size[0] = 0;
+	   num_eliminate_blocks = 1;
+	   DetectStructure(bs,
+	                   num_eliminate_blocks,
+	                   row_block_size,
+	                   e_block_size,
+	                   f_block_size);
+	   if (row_block_size[0] != expected_row_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicFBlockDifferentRows row_block_size[0] != expected_row_block_size[0]");
+		   passed = false;
+	   }
+	   if (e_block_size[0] != expected_e_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicFBlockDifferentRows e_block_size[0] != expected_e_block_size[0]");
+		   passed = false;
+	   }
+	   if (f_block_size[0] != expected_f_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicFBlockDifferentRows f_block_size[0] != expected_f_block_size[0]");
+		   passed = false;
+	   }
+	  
+
+	 //TEST(DetectStructure, DynamicEBlock) {
+	   expected_row_block_size[0] = 2;
+	   expected_e_block_size[0] = DYNAMIC;
+	   expected_f_block_size[0] = 3;
+
+	   bs = new CompressedRowBlockStructure();
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 0;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 3;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 7;
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 0;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(2, 0));
+	   }
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 2;
+	     row.cells.add(new Cell(1, 0));
+	     row.cells.add(new Cell(2, 0));
+	   }
+
+	   row_block_size[0] = 0;
+	   e_block_size[0] = 0;
+	   f_block_size[0] = 0;
+	   num_eliminate_blocks = 2;
+	   DetectStructure(bs,
+	                   num_eliminate_blocks,
+	                   row_block_size,
+	                   e_block_size,
+	                   f_block_size);
+
+	   if (row_block_size[0] != expected_row_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicEBlock row_block_size[0] != expected_row_block_size[0]");
+		   passed = false;
+	   }
+	   if (e_block_size[0] != expected_e_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicEBlock e_block_size[0] != expected_e_block_size[0]");
+		   passed = false;
+	   }
+	   if (f_block_size[0] != expected_f_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicEBlock f_block_size[0] != expected_f_block_size[0]");
+		   passed = false;
+	   }
+	   
+
+	 //TEST(DetectStructure, DynamicFBlockSameRow) {
+	   expected_row_block_size[0] = 2;
+	   expected_e_block_size[0] = 3;
+	   expected_f_block_size[0] = DYNAMIC;
+
+	   bs = new CompressedRowBlockStructure();
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 0;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 4;
+	   bs.cols.lastElement().position = 3;
+
+	   bs.cols.add(new Block());
+	   bs.cols.lastElement().size = 3;
+	   bs.cols.lastElement().position = 7;
+
+	   {
+	     bs.rows.add(new CompressedList());
+	     CompressedList row = bs.rows.lastElement();
+	     row.block.size = 2;
+	     row.block.position = 0;
+	     row.cells.add(new Cell(0, 0));
+	     row.cells.add(new Cell(1, 0));
+	     row.cells.add(new Cell(2, 0));
+	   }
+
+	   row_block_size[0] = 0;
+	   e_block_size[0] = 0;
+	   f_block_size[0] = 0;
+	   num_eliminate_blocks = 1;
+	   DetectStructure(bs,
+	                   num_eliminate_blocks,
+	                   row_block_size,
+	                   e_block_size,
+	                   f_block_size);
+
+	   if (row_block_size[0] != expected_row_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicFBlockSameRow row_block_size[0] != expected_row_block_size[0]");
+		   passed = false;
+	   }
+	   if (e_block_size[0] != expected_e_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicFBlockSameRow e_block_size[0] != expected_e_block_size[0]");
+		   passed = false;
+	   }
+	   if (f_block_size[0] != expected_f_block_size[0]) {
+		   System.err.println("In DetectStructure DynamicFBlockSameRow f_block_size[0] != expected_f_block_size[0]");
+		   passed = false;
+	   }
+	   if (passed) {
+		   System.out.println("TestDetectStructure passed all the tests");
+	   }
+	 }
+
 
 
 	public void Solve(SolverOptions options, ProblemImpl problem, SolverSummary summary) {
@@ -3150,12 +3455,14 @@ public abstract class CeresSolver {
 		Vector<Cell> cells;
 
 		public CompressedList() {
+			block = new Block();
 			cells = new Vector<Cell>();
 		}
 
 		// Construct a CompressedList with the cells containing num_cells
 		// entries.
 		public CompressedList(int num_cells) {
+			block = new Block();
 			cells = new Vector<Cell>(num_cells);
 		}
 
