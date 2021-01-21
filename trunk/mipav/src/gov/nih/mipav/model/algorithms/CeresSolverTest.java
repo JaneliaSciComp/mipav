@@ -1008,6 +1008,121 @@ public class CeresSolverTest extends CeresSolver {
 		   System.out.println("TestDetectStructure passed all the tests");
 	   }
 	 }
+   
+   public void ConjugateGradientTest() {
+	   // ConjugateGradientTest passed all the tests.
+	   boolean passed = true;
+       //TEST(ConjugateGradientTest, Solves3x3IdentitySystem) {
+	   double diagonal[] = { 1.0, 1.0, 1.0 };
+	   TripletSparseMatrix A = CreateSparseDiagonalMatrix(diagonal, 3);
+	   double b[] = new double[] {1.0, 2.0, 3.0};
+	   double x[] = new double[] {1.0, 1.0, 1.0};
+
+	   LinearSolverOptions options = new LinearSolverOptions();
+	   options.max_num_iterations = 10;
+
+	   LinearSolverPerSolveOptions per_solve_options = new LinearSolverPerSolveOptions();
+	   per_solve_options.r_tolerance = 1e-9;
+
+	   ConjugateGradientsSolver solver = new ConjugateGradientsSolver(options);
+	   LinearSolverSummary summary =
+	       solver.Solve(A, b, per_solve_options, x);
+
+	   if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
+		   System.err.println("In ConjugateGradientTest Solves3x3IdentitySystem summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS");
+		   passed = false;
+	   }
+	   if (summary.num_iterations != 1) {
+		   System.err.println("In ConjugateGradientTest Solves3x3IdentitySystem summary.num_iterations != 1");
+		   passed = false;   
+	   }
+
+	   if (1 !=  x[0]) {
+		   System.err.println("In ConjugateGradientTest Solves3x3IdentitySystem x[0] != 1");
+		   passed = false;      
+	   }
+	   if (2 !=  x[1]) {
+		   System.err.println("In ConjugateGradientTest Solves3x3IdentitySystem x[1] != 2");
+		   passed = false;      
+	   }
+	   if (3 !=  x[2]) {
+		   System.err.println("In ConjugateGradientTest Solves3x3IdentitySystem x[2] != 3");
+		   passed = false;      
+	   }
+
+
+	 //TEST(ConjuateGradientTest, Solves3x3SymmetricSystem) {
+	   A = new TripletSparseMatrix(3, 3, 9);
+
+	   //      | 2  -1  0|
+	   //  A = |-1   2 -1| is symmetric positive definite.
+	   //      | 0  -1  2|
+	   int[] Ai = A.mutable_rows();
+	   int[] Aj = A.mutable_cols();
+	   double[] Ax = A.mutable_values();
+	   int counter = 0;
+	   for (int i = 0; i < 3; ++i) {
+	     for (int j = 0; j < 3; ++j) {
+	       Ai[counter] = i;
+	       Aj[counter] = j;
+	       ++counter;
+	     }
+	   }
+	   Ax[0] = 2.;
+	   Ax[1] = -1.;
+	   Ax[2] = 0;
+	   Ax[3] = -1.;
+	   Ax[4] = 2;
+	   Ax[5] = -1;
+	   Ax[6] = 0;
+	   Ax[7] = -1;
+	   Ax[8] = 2;
+	   A.set_num_nonzeros(9);
+
+	   b[0] = -1;
+	   b[1] = 0;
+	   b[2] = 3;
+
+	   x[0] = 1;
+	   x[1] = 1;
+	   x[2] = 1;
+
+	   options = new LinearSolverOptions();
+	   options.max_num_iterations = 10;
+
+	   per_solve_options = new LinearSolverPerSolveOptions();
+	   per_solve_options.r_tolerance = 1e-9;
+
+	   solver = new ConjugateGradientsSolver(options);
+	   summary =
+	       solver.Solve(A, b, per_solve_options, x);
+	   
+	   if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
+		   System.err.println("In ConjugateGradientTest Solves3x3SymmetricSystem summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS");
+		   passed = false;
+	   }
+	  
+
+	   if (0 !=  x[0]) {
+		   System.err.println("In ConjugateGradientTest Solves3x3SymmetricSystem x[0] != 0");
+		   passed = false;      
+	   }
+	   if (1 !=  x[1]) {
+		   System.err.println("In ConjugateGradientTest Solves3x3SymmetricSystem x[1] != 1");
+		   passed = false;      
+	   }
+	   if (2 !=  x[2]) {
+		   System.err.println("In ConjugateGradientTest Solves3x3SymmetricSystem x[2] != 2");
+		   passed = false;      
+	   }
+	   
+	   if (passed) {
+		   System.out.println("ConjugateGradientTest passed all the tests.");
+	   }
+
+	   
+	 }
+
 
 	
 }
