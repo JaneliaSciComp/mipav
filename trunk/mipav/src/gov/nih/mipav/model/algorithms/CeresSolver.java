@@ -4050,7 +4050,7 @@ public abstract class CeresSolver {
 				//
 				// This is the most commonly used termination criterion for
 				// iterative solvers.
-				private double r_tolerance;
+				protected double r_tolerance;
 
 				// For PSD matrices A, let
 				//
