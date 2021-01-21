@@ -239,6 +239,8 @@ public class WormData
 		VOI markerAnnotations = readMarkers(outputDirectory);
 		if ( markerAnnotations == null )
 		{
+			File file = new File( outputDirectory + File.separator + editAnnotationOutput + File.separator + "annotationVOIs.lbl" );
+			if ( file.exists() ) {
 			FileVOI fileVOI;
 			try {
 				fileVOI = new FileVOI( "annotationVOIs.lbl", outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
@@ -253,6 +255,7 @@ public class WormData
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}
 			}
 		}
 

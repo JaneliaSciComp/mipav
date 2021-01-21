@@ -773,7 +773,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public TriMesh generateTriMesh( int stepsize ) {
 		if ( latticeModel != null )
 		{
-			return latticeModel.generateTriMesh( true, stepsize);
+			return latticeModel.generateTriMesh( true, true, stepsize);
 		}		
 		return null;
 	}

@@ -24,6 +24,7 @@ import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Intersection.IntrSegment3Box3f;
 import WildMagic.LibFoundation.Mathematics.Box3f;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -31,14 +32,18 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
+import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
@@ -50,6 +55,9 @@ import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 
@@ -1417,10 +1425,35 @@ public class LatticeModel {
 //		return volMask;
 //	}
 
-	public TriMesh generateTriMesh( boolean returnMesh, int stepSize ) {
+	public TriMesh generateTriMesh( boolean returnMesh, boolean saveMesh, int stepSize ) {
+
+        if ( !latticeChanged() ) {
+        	// check if the lattice file is newer than the triangle mesh file
+        	// if it is recreate the mesh and save it, otherwise, load the stored mesh:
+    		File file = new File(outputDirectory + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
+			long latticeChanged = file.lastModified();
+
+			String imageName = JDialogBase.makeImageName(imageA.getImageFileName(), "");
+			file = new File(outputDirectory + File.separator + "model" + File.separator + imageName + "_mesh_" + stepSize + ".ply");	
+			long meshChanged = file.lastModified();
+			
+			if ( meshChanged > latticeChanged ) {
+				System.err.println("reading trimesh from file");
+				MaterialState material = new MaterialState();
+				material.Emissive = new ColorRGB(ColorRGB.BLACK);
+				material.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+				material.Diffuse = new ColorRGB(ColorRGB.WHITE);
+				material.Specular = new ColorRGB(ColorRGB.WHITE);
+				material.Shininess = 32f;
+				if ( saveMesh ) {
+					generateCurves(1, stepSize);
+				}
+				return FileSurface_WM.readSurface(imageA, file, material, true);
+			}
+        }
 
 		generateCurves(1, stepSize);
-
+		
 		ModelImage overlapImage = null;
 		//		if ( !returnMesh ) {
 		//			FileIO fileIO = new FileIO();
@@ -1665,15 +1698,114 @@ public class LatticeModel {
 			overlapImage = null;
 		}
 
-		if ( returnMesh ) {
+		if ( saveMesh || returnMesh ) {
 			int[] indexInput = new int[indexList.size()];
 			for ( int i = 0; i < indexList.size(); i++ ) {
 				indexInput[i] = indexList.elementAt(i);
 			}
 			IndexBuffer iBuf = new IndexBuffer(indexInput);
 			System.err.println("TriMesh " + vBuf.GetVertexQuantity() + " " + iBuf.GetIndexQuantity() );
-			return new TriMesh(vBuf, iBuf);		
+			TriMesh mesh = new TriMesh(vBuf, iBuf);		
+			
+			if ( saveMesh ) {
+				saveTriMesh( imageA, "model", "_mesh_" + stepSize, mesh );
+				
+				// save the surface and interior images:
+	        	SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
+	        	VolumeImage volImage = new VolumeImage(false, imageA, "", null, 0);
+				VolumeSurface volumeSurface = new VolumeSurface(volImage,
+						null, new Vector3f(), volImage.GetScaleX(), volImage.GetScaleY(), volImage.GetScaleZ(), surface, true);
+				BitSet surfaceMask = volumeSurface.computeSurfaceMask();
+				System.err.println("surfaceMask " + surfaceMask.cardinality() );
+				
+				ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_surface"));
+	            JDialogBase.updateFileInfo(imageA, surfaceMaskImage);
+
+	    		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+	    		int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;		
+	    		int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;		
+	    		for ( int z = 0; z < dimZ; z++ ) {
+	    			for ( int y = 0; y < dimY; y++ ) {
+	    				for ( int x = 0; x < dimX; x++ ) {
+	    					int index = x + (dimX * (y + (dimY * z)));
+	    					if ( surfaceMask.get(index) ) {
+								surfaceMaskImage.set(x, y, z, 1);
+								surfaceMaskImage.setMax(1);
+	    					}
+	    				}
+	    			}
+	    		}
+
+				surfaceMaskImage.setMin(0);
+				LatticeModel.saveImage(imageA, surfaceMaskImage, "model", "" );
+				//							new ViewJFrameImage(surfaceMaskImage);
+
+				ModelImage surfaceBlur = WormSegmentation.blur(surfaceMaskImage, 1);
+				VOIContour centerCurve = getCenter();
+				Vector3f pt = centerCurve.elementAt( centerCurve.size() / 2 );
+
+				try {
+					AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(surfaceBlur, 1.0f, 1.0f);
+
+					regionGrowAlgo.setRunningInSeparateThread(false);
+					CubeBounds regionGrowBounds= new CubeBounds(dimX, 0, dimY, 0, dimZ, 0);
+					BitSet seedPaintBitmap = new BitSet( dimX * dimY * dimZ );
+
+					int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D((int)pt.X, (int)pt.Y, (int)pt.Z), -1,
+							false, false, null, 0, 0, -1, -1,
+							false, 0, regionGrowBounds);
+
+
+
+					ModelImage volMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_interior"));
+					JDialogBase.updateFileInfo(imageA, volMaskImage);
+
+					for ( int z = 0; z < dimZ; z++ ) {
+						for ( int y = 0; y < dimY; y++ ) {
+							for ( int x = 0; x < dimX; x++ ) {
+								int index = x + (dimX * (y + (dimY * z)));
+								if ( seedPaintBitmap.get(index) ) {
+									volMaskImage.set(x, y, z, 1);
+									volMaskImage.setMax(1);
+								}
+							}
+						}
+					}
+
+					volMaskImage.setMin(0);
+					volMaskImage.setMax(1);
+					LatticeModel.saveImage(imageA, volMaskImage, "model", "" );
+					//									new ViewJFrameImage(volMaskImage);
+
+					if ( volMaskImage != null ) {
+						volMaskImage.disposeLocal(false);
+						volMaskImage = null;
+					}
+
+					regionGrowAlgo = null;
+
+
+				} catch (final OutOfMemoryError error) {
+		            System.gc();
+		            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
+		        }
+
+		        if ( surfaceMaskImage != null ) {
+		        	surfaceMaskImage.disposeLocal(false);
+		        	surfaceMaskImage = null;
+		        }
+
+		        if ( surfaceBlur != null ) {
+		        	surfaceBlur.disposeLocal(false);
+		        	surfaceBlur = null;
+		        }
+
+			}
+			if ( returnMesh ) {
+				return mesh;
+			}
 		}
+		
 		return null;
 	}
 
@@ -2685,7 +2817,7 @@ public class LatticeModel {
 		//		System.err.println( dimX + " " + dimY + " " + dimZ );
 
 		if ( !segmentLattice ) {
-			generateTriMesh( false, 1);
+			generateTriMesh( false, true, 1);
 		}
 		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
 		resultImage.registerVOI( latticeContours );
@@ -8572,7 +8704,7 @@ public class LatticeModel {
         	System.err.println(voiDir + imageName );
             FileSurface_WM.save( voiDir + imageName, mesh, 0, mesh.VBuffer, false, null, null, null, null);
         } catch (IOException error) {
-        	MipavUtil.displayError("Error while trying to save single mesh");
+        	MipavUtil.displayError("Error while trying to save single mesh " + error);
         }
     }
 
@@ -9174,6 +9306,9 @@ public class LatticeModel {
 			FileIO fileIO = new FileIO();
 			contourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 		}
+		
+		FileIO fileIO = new FileIO();
+		ModelImage insideImage = fileIO.readImage( outputDirectory + File.separator + "model" + File.separator + imageName + "_interior.tif" );
 
 		VOIContour[] contours = null;
 		if ( contourVector.size() > 0 ) {
@@ -9188,6 +9323,14 @@ public class LatticeModel {
 			}
 		}
 
+		
+//		Box3f[] clipBoxes = new Box3f[size];
+//		for ( int i = 0; i < size; i++ ) {
+//			Vector3f pos = getCenter(i);
+//			Vector3f[] axes = getBasisVectors(i);
+//			float diameter = getDiameter(i);
+//			clipBoxes[i] = new Box3f(pos, axes, new float[] {diameter,diameter,2});
+//		}
 
 		final Vector3f[] corners = new Vector3f[4];		
 		float[] minDistance = new float[1];
@@ -9201,7 +9344,16 @@ public class LatticeModel {
 				startIndex = splineRangeIndex[latticeSegment-1];
 				endIndex = splineRangeIndex[latticeSegment];
 			}
+//			System.err.println( markerNames.elementAt(i) + "  " + latticeSegment + "  " + startIndex + "  " + endIndex );
 
+//			for ( int j = 0; j < clipBoxes.length; j++ ) {
+//	    		if ( ContBox3f.InBox( markerCenters.elementAt(i), clipBoxes[j] ) ) {
+//	    			startIndex = Math.max(0, i - 2);
+//	    			endIndex = Math.min(size -1, i + 2);
+//	    			break;
+//	    		}
+//			}
+			
 			float minUntwist = Float.MAX_VALUE;
 			int minSlice = -1;
 			Vector3f minPt = new Vector3f();
@@ -9258,7 +9410,12 @@ public class LatticeModel {
 				tryCount++;
 			}
 			if ( minSlice == -1 && tryCount >= 3 ) {
-				System.err.println( "FAILED " + markerNames.elementAt(i) + "   " + minSlice + "   " + minUntwist );
+				Vector3f testInterior = markerCenters.elementAt(i);
+				System.err.println( "FAILED " + markerNames.elementAt(i) + "   " + startIndex + "  " + endIndex + "  " + markerCenters.elementAt(i) + "    " + minSlice + "   " + minUntwist );
+				if ( insideImage != null ) {
+					float insideValue = insideImage.getFloat( Math.round(testInterior.X), Math.round(testInterior.Y), Math.round(testInterior.Z));
+					System.err.println( "     " + insideValue );
+				}
 			}
 
 		}
@@ -9269,7 +9426,7 @@ public class LatticeModel {
 		}
 		
 		
-		System.err.println( "untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
+		System.err.println( "TEST 2021: untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
 
 	}
@@ -10511,7 +10668,9 @@ public class LatticeModel {
 	private boolean latticeChanged() {
 		
 		VOIVector finalLattice = readLatticeCSV(outputDirectory + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
-        if ( finalLattice.size() < 2 ) 
+        if ( finalLattice == null ) 
+        	return true;
+		if ( finalLattice.size() < 2 ) 
         	return true;
 
 		VOI leftOrig = (VOI) finalLattice.elementAt(0);

@@ -314,7 +314,7 @@ public class PlugInAlgorithmWormUntwisting
 						LatticeModel model = new LatticeModel(wormImage);
 						model.setPaddingFactor(paddingFactor);
 						model.setLattice(lattice);	
-						TriMesh mesh = model.generateTriMesh( true, 1);
+						TriMesh mesh = model.generateTriMesh( true, true, 1);
 
 						LatticeModel.saveContourAsCSV( wormImage, "model", "_leftLine", model.getLeftCurve() );
 						LatticeModel.saveContourAsCSV( wormImage, "model", "_rightLine", model.getRightCurve() );
@@ -324,97 +324,6 @@ public class PlugInAlgorithmWormUntwisting
 								model.getNormalVectors(), model.getRightVectors(), model.getUpVectors() );
 						
 						if ( mesh != null ) {
-							LatticeModel.saveTriMesh( wormImage, "model", "_mesh", mesh );
-							
-							
-				        	SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
-				        	VolumeImage volImage = new VolumeImage(false, wormImage, "", null, 0);
-							VolumeSurface volumeSurface = new VolumeSurface(volImage,
-									null, new Vector3f(), volImage.GetScaleX(), volImage.GetScaleY(), volImage.GetScaleZ(), surface, true);
-							BitSet surfaceMask = volumeSurface.computeSurfaceMask();
-							System.err.println("surfaceMask " + surfaceMask.cardinality() );
-							
-							ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, wormImage.getExtents(), JDialogBase.makeImageName(wormImage.getImageName(),  "_surface"));
-				            JDialogBase.updateFileInfo(wormImage, surfaceMaskImage);
-
-				    		int dimX = wormImage.getExtents().length > 0 ? wormImage.getExtents()[0] : 1;
-				    		int dimY = wormImage.getExtents().length > 1 ? wormImage.getExtents()[1] : 1;		
-				    		int dimZ = wormImage.getExtents().length > 2 ? wormImage.getExtents()[2] : 1;		
-				    		for ( int z = 0; z < dimZ; z++ ) {
-				    			for ( int y = 0; y < dimY; y++ ) {
-				    				for ( int x = 0; x < dimX; x++ ) {
-				    					int index = x + (dimX * (y + (dimY * z)));
-				    					if ( surfaceMask.get(index) ) {
-											surfaceMaskImage.set(x, y, z, 1);
-											surfaceMaskImage.setMax(1);
-				    					}
-				    				}
-				    			}
-				    		}
-
-							surfaceMaskImage.setMin(0);
-							LatticeModel.saveImage(wormImage, surfaceMaskImage, "model", "" );
-							//							new ViewJFrameImage(surfaceMaskImage);
-
-							ModelImage surfaceBlur = WormSegmentation.blur(surfaceMaskImage, 1);
-							VOIContour centerCurve = model.getCenter();
-							Vector3f pt = centerCurve.elementAt( centerCurve.size() / 2 );
-
-							try {
-								AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(surfaceBlur, 1.0f, 1.0f);
-
-								regionGrowAlgo.setRunningInSeparateThread(false);
-								CubeBounds regionGrowBounds= new CubeBounds(dimX, 0, dimY, 0, dimZ, 0);
-								BitSet seedPaintBitmap = new BitSet( dimX * dimY * dimZ );
-
-								int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D((int)pt.X, (int)pt.Y, (int)pt.Z), -1,
-										false, false, null, 0, 0, -1, -1,
-										false, 0, regionGrowBounds);
-
-
-
-								ModelImage volMaskImage = new ModelImage(ModelStorageBase.FLOAT, wormImage.getExtents(), JDialogBase.makeImageName(wormImage.getImageName(),  "_interior"));
-								JDialogBase.updateFileInfo(wormImage, volMaskImage);
-
-								for ( int z = 0; z < dimZ; z++ ) {
-									for ( int y = 0; y < dimY; y++ ) {
-										for ( int x = 0; x < dimX; x++ ) {
-											int index = x + (dimX * (y + (dimY * z)));
-											if ( seedPaintBitmap.get(index) ) {
-												volMaskImage.set(x, y, z, 1);
-												volMaskImage.setMax(1);
-											}
-										}
-									}
-								}
-
-								volMaskImage.setMin(0);
-								volMaskImage.setMax(1);
-								LatticeModel.saveImage(wormImage, volMaskImage, "model", "" );
-								//									new ViewJFrameImage(volMaskImage);
-
-								if ( volMaskImage != null ) {
-									volMaskImage.disposeLocal(false);
-									volMaskImage = null;
-								}
-
-								regionGrowAlgo = null;
-
-
-							} catch (final OutOfMemoryError error) {
-					            System.gc();
-					            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
-					        }
-
-					        if ( surfaceMaskImage != null ) {
-					        	surfaceMaskImage.disposeLocal(false);
-					        	surfaceMaskImage = null;
-					        }
-
-					        if ( surfaceBlur != null ) {
-					        	surfaceBlur.disposeLocal(false);
-					        	surfaceBlur = null;
-					        }
 					       
 							mesh.dispose();
 							mesh = null;
@@ -440,7 +349,7 @@ public class PlugInAlgorithmWormUntwisting
 			}
 				
 		}
-		MipavUtil.displayInfo( "Generated " + meshCount + " triangle mesh modelss." );
+		MipavUtil.displayInfo( "Generated " + meshCount + " triangle mesh models." );
 	}
 	
 	
