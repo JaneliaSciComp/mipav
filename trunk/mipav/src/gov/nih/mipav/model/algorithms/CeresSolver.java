@@ -81,7 +81,7 @@ public abstract class CeresSolver {
 	private LinearEquations le = new LinearEquations();
 	private LinearEquations2 le2 = new LinearEquations2();
 	private SVD svd = new SVD();
-	private LinearSolverType requestedLinearSolverType = LinearSolverType.DENSE_QR;
+	private LinearSolverType requestedLinearSolverType = LinearSolverType.ITERATIVE_SCHUR;
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
@@ -7551,7 +7551,7 @@ public abstract class CeresSolver {
 				                //row_block_size, row_block_size);
 
 				    if (D != null) {
-				      index = row_block_pos;
+				      index = D_start + row_block_pos;
 				      for (row = 0; row < row_block_size; row++) {
 				    	  marray[row][row] += (D[index]*D[index]);
 				    	  index++;
