@@ -13799,8 +13799,8 @@ public abstract class CeresSolver {
 
 		  for (int c = 0; c < num_cols; ++c) {
 		    bs.cols.add(new Block());
-		    bs.cols.get(bs.cols.size()-1).size = 1;
-		    bs.cols.get(bs.cols.size()-1).position = c;
+		    bs.cols.lastElement().size = 1;
+		    bs.cols.lastElement().position = c;
 		  }
 
 		  int nnz = 0;
@@ -13811,7 +13811,7 @@ public abstract class CeresSolver {
 		    values[nnz++] = 2;
 
 		    bs.rows.add(new CompressedList());
-		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    CompressedList row = bs.rows.lastElement();
 		    row.block.size = 1;
 		    row.block.position = 0;
 		    row.cells.add(new Cell(0, 0));
@@ -13824,7 +13824,7 @@ public abstract class CeresSolver {
 		    values[nnz++] = 4;
 
 		    bs.rows.add(new CompressedList());
-		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    CompressedList row = bs.rows.lastElement();
 		    row.block.size = 1;
 		    row.block.position = 1;
 		    row.cells.add(new Cell(0, 2));
@@ -13837,7 +13837,7 @@ public abstract class CeresSolver {
 		    values[nnz++] = 6;
 
 		    bs.rows.add(new CompressedList());
-		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    CompressedList row = bs.rows.lastElement();
 		    row.block.size = 1;
 		    row.block.position = 2;
 		    row.cells.add(new Cell(1, 4));
@@ -13850,7 +13850,7 @@ public abstract class CeresSolver {
 		    values[nnz++] = 8;
 
 		    bs.rows.add(new CompressedList());
-		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    CompressedList row = bs.rows.lastElement();
 		    row.block.size = 1;
 		    row.block.position = 3;
 		    row.cells.add(new Cell(1, 6));
@@ -13863,7 +13863,7 @@ public abstract class CeresSolver {
 		    values[nnz++] = 1;
 
 		    bs.rows.add(new CompressedList());
-		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    CompressedList row = bs.rows.lastElement();
 		    row.block.size = 1;
 		    row.block.position = 4;
 		    row.cells.add(new Cell(1, 8));
@@ -13877,7 +13877,7 @@ public abstract class CeresSolver {
 		    values[nnz++] = 1;
 
 		    bs.rows.add(new CompressedList());
-		    CompressedList row = bs.rows.get(bs.rows.size()-1);
+		    CompressedList row = bs.rows.lastElement();
 		    row.block.size = 1;
 		    row.block.position = 5;
 		    row.cells.add(new Cell(2, 10));
@@ -13886,9 +13886,7 @@ public abstract class CeresSolver {
 		  }
 
 		  BlockSparseMatrix A = new BlockSparseMatrix(bs);
-		  int values_to_transfer = nnz * A.values_.length;
-		  A.values_ = new double[values_to_transfer];
-		  for (int i = 0; i < values_to_transfer; i++) {
+		  for (int i = 0; i < nnz; i++) {
 			  A.values_[i] = values[i];
 		  }
 
@@ -13994,9 +13992,7 @@ public abstract class CeresSolver {
 	  }
 
 	  BlockSparseMatrix A = new BlockSparseMatrix(bs);
-	  int values_to_transfer = nnz * A.values_.length;
-	  A.values_ = new double[values_to_transfer];
-	  for (int i = 0; i < values_to_transfer; i++) {
+	  for (int i = 0; i < nnz; i++) {
 		  A.values_[i] = values[i];
 	  }
 
@@ -14099,9 +14095,7 @@ public abstract class CeresSolver {
 		}
 		
 		BlockSparseMatrix A = new BlockSparseMatrix(bs);
-		int values_to_transfer = nnz * A.values_.length;
-		  A.values_ = new double[values_to_transfer];
-		  for (int i = 0; i < values_to_transfer; i++) {
+		  for (int i = 0; i < nnz; i++) {
 			  A.values_[i] = values[i];
 		  }
 		
