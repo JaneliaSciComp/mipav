@@ -1122,6 +1122,119 @@ public class CeresSolverTest extends CeresSolver {
 
 	   
 	 }
+   
+   public void BlockJacobiPreconditionerTestSmallProblem() {
+	   // In BlockJacobiPreconditionerTest problem_id = 2 passed all tests
+		BlockJacobiPreconditionerTest BJP = new BlockJacobiPreconditionerTest();
+	    BJP.VerifyDiagonalBlocks(2);
+	  }
+
+	  public void BlockJacobiPreconditionerTestLargeProblem() {
+		  // In BlockJacobiPreconditionerTest problem_id = 3 passed all tests
+		  BlockJacobiPreconditionerTest BJP = new BlockJacobiPreconditionerTest();
+	      BJP.VerifyDiagonalBlocks(3);
+	  }
+   
+   class BlockJacobiPreconditionerTest  { 
+	   private BlockSparseMatrix A;
+	   private double[] D;
+	   private Matrix dense_ata;
+	   private boolean passed;
+	   public BlockJacobiPreconditionerTest() {
+		   passed = true;
+	   }
+   public void SetUpFromProblemId(int problem_id) {
+	      int i;
+	      LinearLeastSquaresProblem problem = 
+	          CreateLinearLeastSquaresProblemFromId(problem_id);
+
+	      if (problem == null) {
+	    	  System.err.println("In BlockJacobiPreconditionerTest problem_id = " + problem_id + " problem == null");
+	    	  passed = false;
+	      }
+	      A = (BlockSparseMatrix)(problem.A);
+	      D = problem.D;
+
+	      Matrix dense_a = A.ToDenseMatrix();
+	      dense_ata = (dense_a.transpose()).times(dense_a);
+	      for (i = 0; i < A.num_cols(); i++) {
+	    	  dense_ata.set(i, i, dense_ata.getArray()[i][i] + D[i]*D[i]);
+	      }
+	    }
+
+	    public void VerifyDiagonalBlocks(int problem_id) {
+	      int i, row, col, index;
+	      SetUpFromProblemId(problem_id);
+
+	      BlockJacobiPreconditioner pre = new BlockJacobiPreconditioner(A);
+	      pre.Update(A, D);
+	      BlockRandomAccessDiagonalMatrix m =
+	          (BlockRandomAccessDiagonalMatrix)(pre.matrix());
+	      if (m.num_rows() != A.num_cols()) {
+	    	  System.err.println("In BlockJacobiPreconditionerTest problem_id = " + problem_id + " m.num_rows() != A.num_cols()");
+	    	  passed = false;
+	      }
+	      if (m.num_cols() != A.num_cols()) {
+	    	  System.err.println("In BlockJacobiPreconditionerTest problem_id = " + problem_id + " m.num_cols() != A.num_cols()");
+	    	  passed = false;
+	      }
+
+	      final CompressedRowBlockStructure bs = A.block_structure();
+	      for (i = 0; i < bs.cols.size(); ++i) {
+	        final int block_size = bs.cols.get(i).size;
+	        int r[] = new int[1];
+	        int c[] = new int[1];
+	        int row_stride[] = new int[1];
+	        int col_stride[] = new int[1];
+	        CellInfo cell_info = m.GetCell(i, i,
+	                                         r, c,
+	                                         row_stride, col_stride);
+	        double marr[][] = new double[row_stride[0]][col_stride[0]];
+	        for (index = 0, row = 0; row < row_stride[0]; row++) {
+	        	for (col = 0; col < col_stride[0]; col++, index++) {
+	        	    marr[row][col] = cell_info.values[cell_info.values_index + index];	
+	        	}
+	        double inverse_arr[][] = new double[block_size][block_size];
+	        for (row = r[0]; row < r[0] + block_size; row++) {
+	        	for (col = c[0]; col < c[0] + block_size; col++) {
+	        		inverse_arr[row - r[0]][col - c[0]] = marr[row][col];
+	        	}
+	        }
+	        Matrix actual_block_inverse = new Matrix(inverse_arr);
+	        double expected_arr[][] = new double[block_size][block_size];
+	        for (row = bs.cols.get(i).position; row < bs.cols.get(i).position + block_size; row++) {
+	        	for (col = bs.cols.get(i).position; col < bs.cols.get(i).position + block_size; col++) {
+	        		expected_arr[row-bs.cols.get(i).position][col-bs.cols.get(i).position] = dense_ata.getArray()[row][col];
+	        	}
+	        }
+	        Matrix expected_block = new Matrix(expected_arr);
+	        double prod[][] = (actual_block_inverse.times(expected_block)).getArray();
+	        for (row = 0; row < block_size; row++) {
+	        	prod[row][row] -= 1.0;
+	        }
+	        double squaredResidual = 0.0;
+	        for (row = 0; row < prod.length; row++) {
+	        	for (col = 0; col < prod[0].length; col++) {
+	        		squaredResidual += (prod[row][col] * prod[row][col]);
+	        	}
+	        }
+	        double residual = Math.sqrt(squaredResidual);
+	        if (residual > 1.0E-12) {
+	        	System.err.println("In BlockJacobiPreconditionerTest problem_id = " + problem_id + " residual for Block " + i + " = " + residual);
+		    	  passed = false;    	
+	        }
+	        
+	      }
+	    }
+        if (passed) {
+        	System.out.println("In BlockJacobiPreconditionerTest problem_id = " + problem_id + " passed all tests");
+        }
+	    
+	  }
+
+	  
+   }
+
 
 
 	
