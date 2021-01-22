@@ -3562,11 +3562,13 @@ public abstract class CeresSolver {
 	  public CellInfo() {
 	      values = null;
 	      values_index = 0;
+	      m = new ReentrantLock();
 	  }
 
 	  public CellInfo(double ptr[], int index) {
 	      values = ptr;
 	      values_index = index;
+	      m = new ReentrantLock();
 	  }
 	  
 	  protected void finalize() {
@@ -3813,6 +3815,10 @@ public abstract class CeresSolver {
 
 	abstract class SparseMatrix extends LinearOperator {
 		
+		public SparseMatrix() {
+			super();
+		}
+		
 		public void RightMultiply(Vector<Double> x, Vector<Double>y) {
 			int i;
 			double x_array[] = new double[x.size()];
@@ -4017,7 +4023,7 @@ public abstract class CeresSolver {
 				// does not have full column rank, the results returned by the
 				// solver cannot be relied on. D, if it is not null is an array of
 				// size n. b is an array of size m and x is an array of size n.
-				private double D[];
+				protected double D[];
 
 				// This option only makes sense for iterative solvers.
 				//
