@@ -1234,6 +1234,135 @@ public class CeresSolverTest extends CeresSolver {
 
 	  
    }
+   
+   public void IterativeSchurComplementSolverTestNormalProblem() {
+	   IterativeSchurComplementSolverTest ISC = new IterativeSchurComplementSolverTest(); 
+	   ISC.IterativeSchurComplementSolverTestNormalProblem();  
+   }
+   
+   public void IterativeSchurComplementSolverTestProblemWithNoFBlocks() {
+	   IterativeSchurComplementSolverTest ISC = new IterativeSchurComplementSolverTest(); 
+	   ISC.IterativeSchurComplementSolverTestProblemWithNoFBlocks();  
+   }
+
+	   
+
+   class IterativeSchurComplementSolverTest {
+	   final double kEpsilon = 1e-14;
+	   private int num_rows_;
+	   private int num_cols_;
+	   private int num_eliminate_blocks_;
+	   private BlockSparseMatrix A_;
+	   private double[] b_;
+	   private double[] D_;
+	   
+	   public IterativeSchurComplementSolverTest() {
+		  
+	   }
+	   
+	   public void IterativeSchurComplementSolverTestNormalProblem() {
+		     boolean passed = true;
+		     SetUpProblem(2);
+		     if (!TestSolver(null)) {
+		    	 passed = false;
+		     }
+		     if (!TestSolver(D_)) {
+		    	 passed = false;
+		     }
+		     if (passed) {
+		    	 System.out.println("IterativeSchurComplementSolverTestNormalProblem() passed all the tests");
+		     }
+		   }
+	   
+	   public void IterativeSchurComplementSolverTestProblemWithNoFBlocks() {
+		     boolean passed = true;
+		     SetUpProblem(3);
+		     if (!TestSolver(null)) {
+		    	 passed = false;
+		     }
+		     if (!TestSolver(D_)) {
+		    	 passed = false;
+		     }
+		     if (passed) {
+		    	 System.out.println("IterativeSchurComplementSolverTestProblemWithNoFBlocks() passed all the tests");
+		     }
+		   }
+   
+     public void SetUpProblem(int problem_id) {
+       LinearLeastSquaresProblem problem = 
+           CreateLinearLeastSquaresProblemFromId(problem_id);
+
+           if (problem == null) {
+ 	    	  System.err.println("In IterativeSchurComplementSolverTest problem_id = " + problem_id + " problem == null");
+ 	      }
+       A_ = (BlockSparseMatrix)(problem.A);
+       b_ = problem.b;
+       D_ = problem.D;
+
+       num_cols_ = A_.num_cols();
+       num_rows_ = A_.num_rows();
+       num_eliminate_blocks_ = problem.num_eliminate_blocks;
+     }
+
+     public boolean TestSolver(double[] D) {
+       int i;
+       TripletSparseMatrix triplet_A = new TripletSparseMatrix(A_.num_rows(),
+                                     A_.num_cols(),
+                                     A_.num_nonzeros());
+       A_.ToTripletSparseMatrix(triplet_A);
+
+       DenseSparseMatrix dense_A = new DenseSparseMatrix(triplet_A);
+
+       LinearSolverOptions options = new LinearSolverOptions();
+       options.type = LinearSolverType.DENSE_QR;
+       Context context = new Context();
+       options.context = context;
+       DenseQRSolver qr = (DenseQRSolver)Create(options);
+
+       LinearSolverPerSolveOptions per_solve_options = new LinearSolverPerSolveOptions();
+       per_solve_options.D = D;
+       double[] reference_solution = new double[num_cols_];
+       qr.Solve(dense_A, b_, per_solve_options, reference_solution);
+
+       options.elimination_groups.add(num_eliminate_blocks_);
+       options.elimination_groups.add(0);
+       options.max_num_iterations = num_cols_;
+       options.preconditioner_type = PreconditionerType.SCHUR_JACOBI;
+       IterativeSchurComplementSolver isc = new IterativeSchurComplementSolver(options);
+
+       double[] isc_sol = new double[num_cols_];
+       per_solve_options.r_tolerance  = 1e-12;
+       isc.Solve(A_, b_, per_solve_options, isc_sol);
+       double squaredNorm = 0.0;
+       for (i = 0; i < isc_sol.length; i++) {
+    	   double diff = isc_sol[i] - reference_solution[i];
+    	   squaredNorm += (diff * diff);
+       }
+       double norm = Math.sqrt(squaredNorm);
+       if (norm < kEpsilon) {
+         return true;
+       } else {
+    	 System.err.println("In IterativeSchurComplementSolverTest the reference solution differs from the ITERATIVE_SCHUR"
+             + " solution by " + norm + " which is more than " + kEpsilon);
+    	 for (i = 0; i < isc_sol.length; i++) {
+    		 System.err.println("i = " + i + "reference_solution = " + reference_solution[i] + " isc_sol " + isc_sol[i]);
+    	 }
+    	 if (D == null) {
+    		 System.err.println("D is null");
+    	 }
+    	 else {
+    		 System.err.println("D is not null");
+    	 }
+         return false;
+             
+       }
+     }
+
+     
+   };
+
+   
+
 
 
 
