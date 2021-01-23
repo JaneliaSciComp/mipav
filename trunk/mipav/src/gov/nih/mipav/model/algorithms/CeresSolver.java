@@ -81,7 +81,7 @@ public abstract class CeresSolver {
 	private LinearEquations le = new LinearEquations();
 	private LinearEquations2 le2 = new LinearEquations2();
 	private SVD svd = new SVD();
-	private LinearSolverType requestedLinearSolverType = LinearSolverType.ITERATIVE_SCHUR;
+	private LinearSolverType requestedLinearSolverType = LinearSolverType.DENSE_QR;
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
@@ -7439,18 +7439,13 @@ public abstract class CeresSolver {
 
 			  // y5 = D * x
 			  if (D_ != null) {
-				double Dsquare[][] = new double[num_cols()][num_cols()];
-				for (row = A_.num_cols_e(); row < A_.num_cols_e() + num_cols(); row++) {
-					for (col = A_.num_cols_e(); col < A_.num_cols_e() + num_cols(); col++) {
-						Dsquare[row-A_.num_cols_e()][col-A_.num_cols_e()] = D_[row]*D_[col];
-					}
-				}
-				for (row = 0; row < num_cols(); row++) {
-					y[row] = 0;
-					for (col = 0; col < num_cols(); col++) {
-						y[row] += (Dsquare[row][col] * x[col]);
-					}
-				}
+				  double D[] = new double[num_cols()];
+				  for (row = A_.num_cols_e(); row < A_.num_cols_e() + num_cols(); row++) {
+					  D[row - A_.num_cols_e()] = D_[row];
+				  }
+				  for (row = 0; row < num_cols(); row++) {
+					  y[row] = D[row] * x[row];
+				  }
 			  } else {
 				for (i = 0; i < num_cols(); i++) {
 					y[i] = 0.0;
