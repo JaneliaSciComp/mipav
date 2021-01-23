@@ -1236,11 +1236,13 @@ public class CeresSolverTest extends CeresSolver {
    }
    
    public void IterativeSchurComplementSolverTestNormalProblem() {
+	   // IterativeSchurComplementSolverTestNormalProblem() passed all the tests
 	   IterativeSchurComplementSolverTest ISC = new IterativeSchurComplementSolverTest(); 
 	   ISC.IterativeSchurComplementSolverTestNormalProblem();  
    }
    
    public void IterativeSchurComplementSolverTestProblemWithNoFBlocks() {
+	   // IterativeSchurComplementSolverTestProblemWithNoFBlocks() passed all the tests
 	   IterativeSchurComplementSolverTest ISC = new IterativeSchurComplementSolverTest(); 
 	   ISC.IterativeSchurComplementSolverTestProblemWithNoFBlocks();  
    }
@@ -1344,15 +1346,6 @@ public class CeresSolverTest extends CeresSolver {
        } else {
     	 System.err.println("In IterativeSchurComplementSolverTest the reference solution differs from the ITERATIVE_SCHUR"
              + " solution by " + norm + " which is more than " + kEpsilon);
-    	 for (i = 0; i < isc_sol.length; i++) {
-    		 System.err.println("i = " + i + "reference_solution = " + reference_solution[i] + " isc_sol " + isc_sol[i]);
-    	 }
-    	 if (D == null) {
-    		 System.err.println("D is null");
-    	 }
-    	 else {
-    		 System.err.println("D is not null");
-    	 }
          return false;
              
        }
