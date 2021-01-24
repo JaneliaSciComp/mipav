@@ -1353,8 +1353,251 @@ public class CeresSolverTest extends CeresSolver {
 
      
    };
+   
+   public void ImplicitSchurComplementTestSchurMatrixValuesTest() {
+	   ImplicitSchurComplementTest ISC = new ImplicitSchurComplementTest();
+	   ISC.ImplicitSchurComplementTestSchurMatrixValuesTest();
+   }
+   
+
+   class ImplicitSchurComplementTest {
+	   private final double kEpsilon = 1e-14;
+	   private int num_rows_;
+	   private int num_cols_;
+	   private int num_eliminate_blocks_;
+
+	   private BlockSparseMatrix A_;
+	   private double[] b_;
+	   private double[] D_;
+	   
+	   public ImplicitSchurComplementTest() {
+		   
+	   }
+	   
+	   // Verify that the Schur Complement matrix implied by the
+	   // ImplicitSchurComplement class matches the one explicitly computed
+	   // by the SchurComplement solver.
+	   //
+	   // We do this with and without regularization to check that the
+	   // support for the LM diagonal is correct.
+	   public void ImplicitSchurComplementTestSchurMatrixValuesTest() {
+		 boolean passed = true;
+		 SetUp();
+	     if(!TestImplicitSchurComplement(null)) {
+	    	 passed = false;
+	     }
+	     if (!TestImplicitSchurComplement(D_)) {
+	    	 passed = false;
+	     }
+	     if (passed) {
+	    	 System.out.println("ImplicitSchurComplementTest passed all tests");
+	     }
+	   }
+	   
+    public void SetUp() {
+       LinearLeastSquaresProblem problem = 
+           CreateLinearLeastSquaresProblemFromId(2);
+
+       if (problem == null) {
+    	   System.err.println("In ImplicitSchurComplementTest in Setup() problem == null");
+    	   return;
+       }
+       A_ = (BlockSparseMatrix)(problem.A);
+       b_ = problem.b;
+       D_ = problem.D;
+
+       num_cols_ = A_.num_cols();
+       num_rows_ = A_.num_rows();
+       num_eliminate_blocks_ = problem.num_eliminate_blocks;
+     }
+
+     public Matrix ReducedLinearSystemAndSolution(double[] D,
+                                         Vector<Double> rhs,
+                                         Vector<Double> solution) {
+       int i, index, row, col;
+       final CompressedRowBlockStructure bs = A_.block_structure();
+       final int num_col_blocks = bs.cols.size();
+       Vector<Integer> blocks= new Vector<Integer>(num_col_blocks - num_eliminate_blocks_);
+       for (i = num_eliminate_blocks_; i < num_col_blocks; ++i) {
+         blocks.add(bs.cols.get(i).size);
+       }
+
+       BlockRandomAccessDenseMatrix blhs = new BlockRandomAccessDenseMatrix(blocks);
+       final int num_schur_rows = blhs.num_rows();
+
+       LinearSolverOptions options = new LinearSolverOptions();
+       options.elimination_groups.add(num_eliminate_blocks_);
+       options.type = LinearSolverType.DENSE_SCHUR;
+       Context context = new Context();
+       options.context = context;
+
+       SchurEliminatorBase eliminator = 
+           createSchurEliminatorBase(options);
+       if (eliminator == null) {
+    	   System.err.println("In ImplicitSchurComplementTest ReducedLinearSystemAndSolution eliminator == null");
+    	   return null;
+       }
+       final boolean kFullRankETE = true;
+       eliminator.Init(num_eliminate_blocks_, kFullRankETE, bs);
+
+       double rhs_array[] = new double[num_schur_rows];
+
+       eliminator.Eliminate(A_, b_, D, blhs, rhs_array);
+       Matrix rhsMat = new Matrix(num_schur_rows,1);
+       for (i = 0; i < num_schur_rows; i++) {
+    	   rhsMat.set(i, 0, rhs_array[i]);
+    	   rhs.add(rhs_array[i]);
+       }
+       
+       double lhs_ref_array[][] = new double[num_schur_rows][num_schur_rows];
+       for (index = 0, row = 0; row < num_schur_rows; row++) {
+    	   for (col = 0; col < num_schur_rows; col++, index++) {
+    		    lhs_ref_array[row][col] = blhs.mutable_values()[index]; 
+    	   }
+       }
+
+
+       // lhs_ref is an upper triangular matrix. Construct a full version
+       // of lhs_ref in lhs by transposing lhs_ref, choosing the strictly
+       // lower triangular part of the matrix and adding it to lhs_ref.
+       for (row = 0; row < num_schur_rows; row++) {
+    	   for (col = 0; col < row; col++) {
+    		   lhs_ref_array[row][col] = lhs_ref_array[col][row];
+    	   }
+       }
+       Matrix lhs = new Matrix(lhs_ref_array);
+
+       //solution->resize(num_cols_);
+       //solution->setZero();
+       //VectorRef schur_solution(solution->data() + num_cols_ - num_schur_rows,
+                                //num_schur_rows);
+       double solution_array[] = new double[num_cols_];
+       double schur_solution_array[] = new double[num_schur_rows];
+       //schur_solution = lhs->selfadjointView<Eigen::Upper>().llt().solve(*rhs);
+       Matrix schur_solution_mat = lhs.solve(rhsMat);
+       for (i = 0; i < num_schur_rows; i++) {
+    	   schur_solution_array[i] = schur_solution_mat.getArray()[i][0];   
+       }
+       eliminator.BackSubstitute(A_, b_, D,
+                                  schur_solution_array, solution_array);
+       for (i = 0; i < num_cols_; i++) {
+    	   solution.add(solution_array[i]);
+       }
+       return lhs;
+     }
+
+     public boolean TestImplicitSchurComplement(double[] D) {
+       int j;
+       double normSquared;
+       double norm;
+       double diff;
+       Matrix lhs;
+       Vector<Double> rhs = new Vector<Double>();
+       Vector<Double> reference_solution = new Vector<Double>();
+       lhs = ReducedLinearSystemAndSolution(D, rhs, reference_solution);
+
+       LinearSolverOptions options = new LinearSolverOptions();
+       options.elimination_groups.add(num_eliminate_blocks_);
+       options.preconditioner_type = PreconditionerType.JACOBI;
+       Context context = new Context();
+       options.context =context;
+       ImplicitSchurComplement isc = new ImplicitSchurComplement(options);
+       isc.Init(A_, D, b_);
+
+       int num_sc_cols = lhs.getColumnDimension();
+
+       for (int i = 0; i < num_sc_cols; ++i) {
+         double x[] = new double[num_sc_cols];
+         x[i] = 1.0;
+
+         double y[] = new double[num_sc_cols];
+         for (j = 0; j < num_sc_cols; j++) {
+        	 y[j] = lhs.getArray()[j][i];
+         }
+
+         double z[] = new double[num_sc_cols];
+         isc.RightMultiply(x, z);
+
+         // The i^th column of the implicit schur complement is the same as
+         // the explicit schur complement.
+         normSquared = 0.0;
+         for (j = 0; j < num_sc_cols; j++) {
+        	 diff = y[i] - z[i];
+        	 normSquared += (diff * diff);
+         }
+         norm = Math.sqrt(normSquared);
+         if (norm > kEpsilon) {
+        	 System.err.println("Explicit and Implicit SchurComplements differ in column " + i + ". explicit: ");
+        	 for (j = 0; j < num_sc_cols; j++) {
+        		 System.err.println("y["+j+"] = " + y[j]);
+        	 }
+             System.err.println("Implicit: ");
+             for (j = 0; j < num_sc_cols; j++) {
+            	 System.err.println("z["+j+"] = " + z[j]);
+             }
+           return false;
+         }
+       }
+
+       // Compare the rhs of the reduced linear system
+       normSquared = 0.0;
+       Matrix rhsMat = new Matrix(rhs.size(),1);
+       for (j = 0; j < rhs.size(); j++) {
+    	   diff = isc.rhs().get(j) - rhs.get(j);
+    	   normSquared += (diff * diff);
+    	   rhsMat.set(j, 0, rhs.get(j));
+       }
+       norm = Math.sqrt(normSquared);
+       if (norm > kEpsilon) {
+               System.err.println("Explicit and Implicit SchurComplements differ in rhs. explicit: ");
+               for (j = 0; j < rhs.size(); j++) {
+            	   System.err.println("rhs.get("+j+") = " + rhs.get(j));
+               }
+               System.err.println("Implicit: " );
+               for (j = 0; j < rhs.size(); j++) {
+            	   System.err.println("isc.rhs().get("+j+") = " + isc.rhs().get(j));
+               }
+               return false;
+       }
+
+       // Reference solution to the f_block.
+       Matrix reference_f_sol =
+           lhs.solve(rhsMat);
+       double reference_f_sol_array[] = new double[rhs.size()];
+       for (j = 0; j < rhs.size(); j++) {
+    	   reference_f_sol_array[j] = reference_f_sol.getArray()[j][0];
+       }
+
+       // Backsubstituted solution from the implicit schur solver using the
+       // reference solution to the f_block.
+       double sol[] = new double[num_cols_];
+       isc.BackSubstitute(reference_f_sol_array, sol);
+       normSquared = 0.0;
+       for (j = 0; j < num_cols_; j++) {
+    	   diff = sol[j] - reference_solution.get(j);
+    	   normSquared += (diff * diff);
+       }
+       norm = Math.sqrt(normSquared);
+       if (norm > kEpsilon) {
+             System.err.println("Explicit and Implicit SchurComplements solutions differ. explicit: ");
+             for (j = 0; j < num_cols_; j++) {
+            	 System.err.println("reference_solution.get("+j+") = " + reference_solution.get(j));
+             }
+             System.err.println("Implicit: ");
+             for (j = 0; j < num_cols_; j++) {
+            	 System.err.println("sol["+j+"] = " + sol[j]);
+             }
+             return false;
+       }
+
+       return true;
+     }
+
+     
+   };
 
    
+
 
 
 
