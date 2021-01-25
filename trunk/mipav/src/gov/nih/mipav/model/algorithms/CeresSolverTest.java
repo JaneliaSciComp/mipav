@@ -504,11 +504,11 @@ public class CeresSolverTest extends CeresSolver {
 	    m_ = new BlockRandomAccessDiagonalMatrix(blocks);
 
 	    if (m_.num_rows() != num_rows) {
-	    	System.err.println("In BlockRandomDIagonalMatrixTest m_.num_rows() != num_rows");
+	    	System.err.println("In BlockRandomDiagonalMatrixTest m_.num_rows() != num_rows");
 	    	passed = false;
 	    }
 	    if (m_.num_cols() != num_rows) {
-	    	System.err.println("In BlockRandomDIagonalMatrixTest m_.num_cols() != num_rows");
+	    	System.err.println("In BlockRandomDiagonalMatrixTest m_.num_cols() != num_rows");
 	    	passed = false;
 	    }
 
@@ -1350,6 +1350,279 @@ public class CeresSolverTest extends CeresSolver {
              
        }
      }
+
+     
+   };
+   
+   public void PartitionedMatrixViewTestDimensionsTest() {
+	   PartitionedMatrixViewTest PMV = new PartitionedMatrixViewTest();
+	   PMV.PartitionedMatrixViewTestDimensionsTest();
+   }
+   
+   public void PartitionedMatrixViewTestRightMultiplyE() {
+	   PartitionedMatrixViewTest PMV = new PartitionedMatrixViewTest();
+	   PMV.PartitionedMatrixViewTestRightMultiplyE();   
+   }
+   
+   public void PartitionedMatrixViewTestRightMultiplyF() {
+	   PartitionedMatrixViewTest PMV = new PartitionedMatrixViewTest();
+	   PMV.PartitionedMatrixViewTestRightMultiplyF();   
+   }
+   
+   public void PartitionedMatrixViewTestLeftMultiply() {
+	   PartitionedMatrixViewTest PMV = new PartitionedMatrixViewTest();
+	   PMV.PartitionedMatrixViewTestLeftMultiply();   
+   }
+   
+   public void PartitionedMatrixViewTestBlockDiagonalEtE() {
+	   PartitionedMatrixViewTest PMV = new PartitionedMatrixViewTest();
+	   PMV.PartitionedMatrixViewTestBlockDiagonalEtE();      
+   }
+   
+   public void PartitionedMatrixViewTestBlockDiagonalFtF() {
+	   PartitionedMatrixViewTest PMV = new PartitionedMatrixViewTest();
+	   PMV.PartitionedMatrixViewTestBlockDiagonalFtF();      
+   }
+
+   class PartitionedMatrixViewTest {
+	   // All PartitionMatrixViewTests pass
+	   private final double kEpsilon = 1e-14;
+	   private int num_rows_;
+	   private int num_cols_;
+	   private int num_eliminate_blocks_;
+	   private SparseMatrix A_;
+	   private PartitionedMatrixView pmv_;
+	   RandomNumberGen ran = new RandomNumberGen();
+	   
+	   public PartitionedMatrixViewTest() {
+		   
+	   }
+    
+	   public void SetUp() {
+       LinearLeastSquaresProblem problem =
+           CreateLinearLeastSquaresProblemFromId(2);
+       if (problem == null) {
+    	   System.err.println("In PartitionedMatrixViewTest SetUp problem == null");
+    	   return;
+       }
+       A_ = problem.A;
+
+       num_cols_ = A_.num_cols();
+       num_rows_ = A_.num_rows();
+       num_eliminate_blocks_ = problem.num_eliminate_blocks;
+       LinearSolverOptions options = new LinearSolverOptions();
+       options.elimination_groups.add(num_eliminate_blocks_);
+       pmv_= createPartitionedMatrixView(
+                      options,
+                      (BlockSparseMatrix)(A_));
+     }
+	   
+	   public void PartitionedMatrixViewTestDimensionsTest() {
+		     boolean passed = true;
+		     SetUp();
+		     if (pmv_.num_col_blocks_e() != num_eliminate_blocks_) {
+		    	 System.err.println("In PartitionedMatrixViewTestDimensionsTest() pmv_.num_col_blocks_e() != num_eliminate_blocks_");
+		    	 passed = false;
+		     }
+		     if (pmv_.num_col_blocks_f() != (num_cols_ - num_eliminate_blocks_)) {
+		    	 System.err.println("In PartitionedMatrixViewTestDimensionsTest() pmv_.num_col_blocks_f() != (num_cols_ - num_eliminate_blocks_)");
+		    	 passed = false;	 
+		     }
+		     if (pmv_.num_cols_e() != num_eliminate_blocks_) {
+		    	 System.err.println("In PartitionedMatrixViewTestDimensionsTest() pmv_.num_cols_e() != num_eliminate_blocks_");
+		    	 passed = false;	 
+		     }
+		     if (pmv_.num_cols_f() != (num_cols_ - num_eliminate_blocks_)) {
+		    	 System.err.println("In PartitionedMatrixViewTestDimensionsTest() pmv_.num_cols_f() != (num_cols_ - num_eliminate_blocks_)");
+		    	 passed = false;	 
+		     }
+		     if (pmv_.num_cols() != A_.num_cols()) {
+		    	 System.err.println("In PartitionedMatrixViewTestDimensionsTest() pmv_.num_cols() != A_.num_cols()");
+		    	 passed = false;		 
+		     }
+		     if (pmv_.num_rows() != A_.num_rows()) {
+		    	 System.err.println("In PartitionedMatrixViewTestDimensionsTest() pmv_.num_rows() != A_.num_rows()");
+		    	 passed = false;	 
+		     }
+		     if (passed) {
+		    	 System.out.println("PartitionedMatrixViewTestDimensionsTest() passed all tests");
+		     }
+		   }
+	   
+	   public void PartitionedMatrixViewTestRightMultiplyE() {
+		   boolean passed = true;
+		     SetUp();
+		     double x1[] = new double[pmv_.num_cols_e()];
+		     double x2[] = new double[pmv_.num_cols()];
+
+		     for (int i = 0; i < pmv_.num_cols_e(); ++i) {
+		       x1[i] = x2[i] = ran.genGaussianRandomNum(-1.0,1.0);
+		     }
+
+		     double y1[] = new double[pmv_.num_rows()];
+		     pmv_.RightMultiplyE(x1, y1);
+
+		     double y2[] = new double[pmv_.num_rows()];
+		     A_.RightMultiply(x2, y2);
+
+		     for (int i = 0; i < pmv_.num_rows(); ++i) {
+		       if (Math.abs(y1[i] - y2[i]) > kEpsilon) {
+		    	   passed = false;
+		    	   System.err.println("In PartitionedMatrixViewTestRightMultiplyE() y1["+i+"] = " + y1[i] + "y2["+i+"] = " + y2[i]);
+		    	   passed = false;
+		       }
+		     }
+		     
+		     if (passed) {
+		    	 System.out.println("PartitionedMatrixViewTestRightMultiplyE() passed all tests");
+		     }
+		   }
+	   
+	   public void PartitionedMatrixViewTestRightMultiplyF() {
+		   boolean passed = true;
+		     SetUp();
+		     double x1[] = new double[pmv_.num_cols_f()];
+		     double x2[] = new double[pmv_.num_cols()];
+
+		     for (int i = 0; i < pmv_.num_cols_f(); ++i) {
+		       x1[i] = ran.genGaussianRandomNum(-1.0,1.0);
+		       x2[i + pmv_.num_cols_e()] = x1[i];
+		     }
+  
+		     double y1[] = new double[pmv_.num_rows()];
+		     pmv_.RightMultiplyF(x1, y1);
+
+		     double y2[] = new double[pmv_.num_rows()];
+		     A_.RightMultiply(x2, y2);
+
+		     for (int i = 0; i < pmv_.num_rows(); ++i) {
+		    	 if (Math.abs(y1[i] - y2[i]) > kEpsilon) {
+			    	   passed = false;
+			    	   System.err.println("In PartitionedMatrixViewTestRightMultiplyF() y1["+i+"] = " + y1[i] + "y2["+i+"] = " + y2[i]);
+			    	   passed = false;
+			       }
+		     }
+		     
+		     if (passed) {
+		    	 System.out.println("PartitionedMatrixViewTestRightMultiplyF() passed all tests");
+		     }
+		   }
+	   
+	   public void PartitionedMatrixViewTestLeftMultiply() {
+		   boolean passed = true;
+		     SetUp();
+		     double x[] = new double[pmv_.num_rows()];
+		     for (int i = 0; i < pmv_.num_rows(); ++i) {
+		       x[i] = ran.genGaussianRandomNum(-1.0,1.0);
+		     }
+
+		     double y[] = new double[pmv_.num_cols()];
+		     double y1[] = new double[pmv_.num_cols_e()];
+		     double y2[] = new double[pmv_.num_cols_f()];
+
+		     A_.LeftMultiply(x, y);
+		     pmv_.LeftMultiplyE(x, y1);
+		     pmv_.LeftMultiplyF(x, y2);
+
+		     for (int i = 0; i < pmv_.num_cols(); ++i) {
+		    	 if (i < pmv_.num_cols_e()) {
+		    		 if (Math.abs(y[i] - y1[i]) > kEpsilon) {
+				    	   passed = false;
+				    	   System.err.println("In PartitionedMatrixViewTestLeftMultiply() y["+i+"] = " + y[i] + "y1["+i+"] = " + y1[i]);
+				    	   passed = false;
+				       }	 
+		    	 }
+		    	 else {
+		    		 if (Math.abs(y[i] - y2[i - pmv_.num_cols_e()]) > kEpsilon) {
+				    	   passed = false;
+				    	   System.err.println("In PartitionedMatrixViewTestLeftMultiply() y["+i+"] = " + y[i] + "y2["+(i-pmv_.num_cols_e())+"] = " + 
+				    	   y2[i - pmv_.num_cols_e()]);
+				    	   passed = false;
+				       }		 
+		    	 }
+		     }
+		     if (passed) {
+		    	 System.out.println("PartitionedMatrixViewTestLeftMultiply() passed all tests");
+		     }
+		   }
+	   
+	   public void PartitionedMatrixViewTestBlockDiagonalEtE() {
+		   boolean passed = true;
+		     SetUp();
+		     BlockSparseMatrix
+		         block_diagonal_ee = pmv_.CreateBlockDiagonalEtE();
+		     final CompressedRowBlockStructure bs  = block_diagonal_ee.block_structure();
+
+		     if (block_diagonal_ee.num_rows() != 2) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalEtE() block_diagonal_ee.num_rows() != 2");
+		    	 passed = false;
+		     }
+		     if (block_diagonal_ee.num_cols() != 2) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalEtE() block_diagonal_ee.num_cols() != 2");
+		    	 passed = false;	 
+		     }
+		     if (bs.cols.size() != 2) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalEtE() bs.cols.size() != 2");
+		    	 passed = false;
+		     }
+		     if (bs.rows.size() != 2) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalEtE() bs.rows.size() != 2");
+		    	 passed = false;
+		     }
+
+		     if (Math.abs(block_diagonal_ee.values()[0] - 10.0) > kEpsilon) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalEtE() Math.abs(block_diagonal_ee.values()[0] - 10.0) > kEpsilon");
+		    	 passed = false;	 
+		     }
+		     if (Math.abs(block_diagonal_ee.values()[1] - 155.0) > kEpsilon) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalEtE() Math.abs(block_diagonal_ee.values()[1] - 155.0) > kEpsilon");
+		    	 passed = false;		 
+		     }
+		     
+		     if (passed) {
+		    	 System.out.println("PartitionedMatrixViewTestBlockDiagonalEtE() passed all tests");
+		     }
+		   }
+	   
+	   public void PartitionedMatrixViewTestBlockDiagonalFtF() {
+		   boolean passed = true;
+		     SetUp();
+		     BlockSparseMatrix
+		         block_diagonal_ff = pmv_.CreateBlockDiagonalFtF();
+		     final CompressedRowBlockStructure bs  = block_diagonal_ff.block_structure();
+
+		     if (block_diagonal_ff.num_rows() != 3) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() block_diagonal_ff.num_rows() != 3");
+		    	 passed = false;
+		     }
+		     if (block_diagonal_ff.num_cols() !=  3) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() block_diagonal_ff.num_cols() != 3");
+		    	 passed = false;	 
+		     }
+		     if (bs.cols.size() != 3) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() bs.cols.size() != 3");
+		    	 passed = false;	 
+		     }
+		     if (bs.rows.size() != 3) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() bs.rows.size() != 3");
+		    	 passed = false;	 
+		     }
+		     if (Math.abs(block_diagonal_ff.values()[0] - 70.0) > kEpsilon) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() Math.abs(block_diagonal_ff.values()[0] - 70.0) > kEpsilon");
+		    	 passed = false;		 
+		     }
+		     if (Math.abs(block_diagonal_ff.values()[1] - 17.0) > kEpsilon) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() Math.abs(block_diagonal_ff.values()[1] - 17.0) > kEpsilon");
+		    	 passed = false;		 
+		     }
+		     if (Math.abs(block_diagonal_ff.values()[2] - 37.0) > kEpsilon) {
+		    	 System.err.println("In PartitionedMatrixViewTestBlockDiagonalFtF() Math.abs(block_diagonal_ff.values()[2] - 37.0) > kEpsilon");
+		    	 passed = false;		 
+		     }
+		     if (passed) {
+		         System.out.println("PartitionedMatrixViewTestBlockDiagonalFtF() passed all tests");	 
+		     }
+	   }
 
      
    };
