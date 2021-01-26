@@ -2032,23 +2032,184 @@ public class CeresSolverTest extends CeresSolver {
 		  }
 
 	  };
+	  
+	  /*class SchurEliminatorTest : public ::testing::Test {
+		  protected:
+		   void SetUpFromId(int id) {
+		     scoped_ptr<LinearLeastSquaresProblem>
+		         problem(CreateLinearLeastSquaresProblemFromId(id));
+		     CHECK_NOTNULL(problem.get());
+		     SetupHelper(problem.get());
+		   }
+
+		   void SetupHelper(LinearLeastSquaresProblem* problem) {
+		     A.reset(down_cast<BlockSparseMatrix*>(problem->A.release()));
+		     b.reset(problem->b.release());
+		     D.reset(problem->D.release());
+
+		     num_eliminate_blocks = problem->num_eliminate_blocks;
+		     num_eliminate_cols = 0;
+		     const CompressedRowBlockStructure* bs = A->block_structure();
+
+		     for (int i = 0; i < num_eliminate_blocks; ++i) {
+		       num_eliminate_cols += bs->cols[i].size;
+		     }
+		   }
+
+		   // Compute the golden values for the reduced linear system and the
+		   // solution to the linear least squares problem using dense linear
+		   // algebra.
+		   void ComputeReferenceSolution(const Vector& D) {
+		     Matrix J;
+		     A->ToDenseMatrix(&J);
+		     VectorRef f(b.get(), J.rows());
+
+		     Matrix H  =  (D.cwiseProduct(D)).asDiagonal();
+		     H.noalias() += J.transpose() * J;
+
+		     const Vector g = J.transpose() * f;
+		     const int schur_size = J.cols() - num_eliminate_cols;
+
+		     lhs_expected.resize(schur_size, schur_size);
+		     lhs_expected.setZero();
+
+		     rhs_expected.resize(schur_size);
+		     rhs_expected.setZero();
+
+		     sol_expected.resize(J.cols());
+		     sol_expected.setZero();
+
+		     Matrix P = H.block(0, 0, num_eliminate_cols, num_eliminate_cols);
+		     Matrix Q = H.block(0,
+		                        num_eliminate_cols,
+		                        num_eliminate_cols,
+		                        schur_size);
+		     Matrix R = H.block(num_eliminate_cols,
+		                        num_eliminate_cols,
+		                        schur_size,
+		                        schur_size);
+		     int row = 0;
+		     const CompressedRowBlockStructure* bs = A->block_structure();
+		     for (int i = 0; i < num_eliminate_blocks; ++i) {
+		       const int block_size =  bs->cols[i].size;
+		       P.block(row, row,  block_size, block_size) =
+		           P
+		           .block(row, row,  block_size, block_size)
+		           .llt()
+		           .solve(Matrix::Identity(block_size, block_size));
+		       row += block_size;
+		     }
+
+		     lhs_expected
+		         .triangularView<Eigen::Upper>() = R - Q.transpose() * P * Q;
+		     rhs_expected =
+		         g.tail(schur_size) - Q.transpose() * P * g.head(num_eliminate_cols);
+		     sol_expected = H.llt().solve(g);
+		   }
+
+		   void EliminateSolveAndCompare(const VectorRef& diagonal,
+		                                 bool use_static_structure,
+		                                 const double relative_tolerance) {
+		     const CompressedRowBlockStructure* bs = A->block_structure();
+		     const int num_col_blocks = bs->cols.size();
+		     std::vector<int> blocks(num_col_blocks - num_eliminate_blocks, 0);
+		     for (int i = num_eliminate_blocks; i < num_col_blocks; ++i) {
+		       blocks[i - num_eliminate_blocks] = bs->cols[i].size;
+		     }
+
+		     BlockRandomAccessDenseMatrix lhs(blocks);
+
+		     const int num_cols = A->num_cols();
+		     const int schur_size = lhs.num_rows();
+
+		     Vector rhs(schur_size);
+
+		     LinearSolver::Options options;
+		     ContextImpl context;
+		     options.context = &context;
+		     options.elimination_groups.push_back(num_eliminate_blocks);
+		     if (use_static_structure) {
+		       DetectStructure(*bs,
+		                       num_eliminate_blocks,
+		                       &options.row_block_size,
+		                       &options.e_block_size,
+		                       &options.f_block_size);
+		     }
+
+		     scoped_ptr<SchurEliminatorBase> eliminator;
+		     eliminator.reset(SchurEliminatorBase::Create(options));
+		     const bool kFullRankETE = true;
+		     eliminator->Init(num_eliminate_blocks, kFullRankETE, A->block_structure());
+		     eliminator->Eliminate(A.get(), b.get(), diagonal.data(), &lhs, rhs.data());
+
+		     MatrixRef lhs_ref(lhs.mutable_values(), lhs.num_rows(), lhs.num_cols());
+		     Vector reduced_sol  =
+		         lhs_ref
+		         .selfadjointView<Eigen::Upper>()
+		         .llt()
+		         .solve(rhs);
+
+		     // Solution to the linear least squares problem.
+		     Vector sol(num_cols);
+		     sol.setZero();
+		     sol.tail(schur_size) = reduced_sol;
+		     eliminator->BackSubstitute(A.get(),
+		                                b.get(),
+		                                diagonal.data(),
+		                                reduced_sol.data(),
+		                                sol.data());
+
+		     Matrix delta = (lhs_ref - lhs_expected).selfadjointView<Eigen::Upper>();
+		     double diff = delta.norm();
+		     EXPECT_NEAR(diff / lhs_expected.norm(), 0.0, relative_tolerance);
+		     EXPECT_NEAR((rhs - rhs_expected).norm() / rhs_expected.norm(), 0.0,
+		                 relative_tolerance);
+		     EXPECT_NEAR((sol - sol_expected).norm() / sol_expected.norm(), 0.0,
+		                 relative_tolerance);
+		   }
+
+		   scoped_ptr<BlockSparseMatrix> A;
+		   scoped_array<double> b;
+		   scoped_array<double> D;
+		   int num_eliminate_blocks;
+		   int num_eliminate_cols;
+
+		   Matrix lhs_expected;
+		   Vector rhs_expected;
+		   Vector sol_expected;
+		 };
+
+		 TEST_F(SchurEliminatorTest, ScalarProblemNoRegularization) {
+		   SetUpFromId(2);
+		   Vector zero(A->num_cols());
+		   zero.setZero();
+
+		   ComputeReferenceSolution(VectorRef(zero.data(), A->num_cols()));
+		   EliminateSolveAndCompare(VectorRef(zero.data(), A->num_cols()), true, 1e-14);
+		   EliminateSolveAndCompare(VectorRef(zero.data(), A->num_cols()), false, 1e-14);
+		 }
+
+		 TEST_F(SchurEliminatorTest, ScalarProblemWithRegularization) {
+		   SetUpFromId(2);
+		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
+		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), true, 1e-14);
+		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), false, 1e-14);
+		 }
+
+		 TEST_F(SchurEliminatorTest, VaryingFBlockSizeWithStaticStructure) {
+		   SetUpFromId(4);
+		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
+		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), true, 1e-14);
+		 }
+
+		 TEST_F(SchurEliminatorTest, VaryingFBlockSizeWithoutStaticStructure) {
+		   SetUpFromId(4);
+		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
+		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), false, 1e-14);
+		 }*/
+
 
 	  
-
-	  /*
-
-	  
-
-	  
-
-	  
-
-	  
-	  
-
-	  */
-
-   
    public void ImplicitSchurComplementTestSchurMatrixValuesTest() {
 	   ImplicitSchurComplementTest ISC = new ImplicitSchurComplementTest();
 	   ISC.ImplicitSchurComplementTestSchurMatrixValuesTest();
@@ -2147,7 +2308,7 @@ public class CeresSolverTest extends CeresSolver {
        double lhs_ref_array[][] = new double[num_schur_rows][num_schur_rows];
        for (index = 0, row = 0; row < num_schur_rows; row++) {
     	   for (col = 0; col < num_schur_rows; col++, index++) {
-    		    lhs_ref_array[row][col] = blhs.mutable_values()[index]; 
+    		    lhs_ref_array[row][col] = blhs.mutable_values()[index];
     	   }
        }
 
@@ -2171,7 +2332,8 @@ public class CeresSolverTest extends CeresSolver {
        //schur_solution = lhs->selfadjointView<Eigen::Upper>().llt().solve(*rhs);
        Matrix schur_solution_mat = lhs.solve(rhsMat);
        for (i = 0; i < num_schur_rows; i++) {
-    	   schur_solution_array[i] = schur_solution_mat.getArray()[i][0];   
+    	   schur_solution_array[i] = schur_solution_mat.getArray()[i][0]; 
+    	   solution_array[i + num_cols_ - num_schur_rows] = schur_solution_array[i];
        }
        eliminator.BackSubstitute(A_, b_, D,
                                   schur_solution_array, solution_array);
@@ -2217,7 +2379,7 @@ public class CeresSolverTest extends CeresSolver {
          // the explicit schur complement.
          normSquared = 0.0;
          for (j = 0; j < num_sc_cols; j++) {
-        	 diff = y[i] - z[i];
+        	 diff = y[j] - z[j];
         	 normSquared += (diff * diff);
          }
          norm = Math.sqrt(normSquared);
