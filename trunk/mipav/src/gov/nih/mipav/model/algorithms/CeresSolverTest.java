@@ -1657,7 +1657,25 @@ public class CeresSolverTest extends CeresSolver {
 	   BSM.BlockSparseMatrixTestAppendRows();   
    }
    
+   public void BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix() {
+	   BlockSparseMatrixTest BSM = new BlockSparseMatrixTest();
+	   BSM.BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix();   
+   }
+   
+   public void BlockSparseMatrixCreateDiagonalMatrix() {
+	   BlockSparseMatrixTest BSM = new BlockSparseMatrixTest();
+	   BSM.BlockSparseMatrixCreateDiagonalMatrix();   
+   }
+   
    class BlockSparseMatrixTest  {
+	   // BlockSparseMatrixTestSetZeroTest() passed all tests
+	   // BlockSparseMatrixTestRightMultiplyTest() passed all tests
+	   // BlockSparseMatrixTestLeftMultiplyTest() passed all tests
+	   // BlockSparseMatrixTestSquaredColumnNormTest() passed all tests
+	   // BlockSparseMatrixTestToDenseMatrixTest() passed all tests
+	   // BlockSparseMatrixTestAppendRows() passed all tests
+	   // BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix() passed all tests
+	   // BlockSparseMatrixCreateDiagonalMatrix() passed all tests
 	   private BlockSparseMatrix A_;
 	   private TripletSparseMatrix B_;
 	   
@@ -1855,6 +1873,163 @@ public class CeresSolverTest extends CeresSolver {
 		    	System.out.println("BlockSparseMatrixTestAppendRows() passed all tests");
 		    }
 		  }
+	   
+	   public void BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix() {
+		   int j, offset;
+		   double normSquared;
+		   double diff;
+		   double norm;
+		   boolean passed = true;
+			 SetUp();
+		    final Vector<Block> column_blocks = A_.block_structure().cols;
+		    final int num_cols =
+		        column_blocks.lastElement().size + column_blocks.lastElement().position;
+		    double diagonal[] = new double[num_cols];
+		    for (int i = 0; i < num_cols; ++i) {
+		      diagonal[i] = 2 * i * i + 1;
+		    }
+		    BlockSparseMatrix appendage =
+		        CreateDiagonalMatrix(diagonal, column_blocks);
+
+		    A_.AppendRows(appendage);
+		    double[] y_a, y_b;
+		    y_a = new double[A_.num_rows()];
+		    y_b = new double[A_.num_rows()];
+		    for (int i = 0; i < A_.num_cols(); ++i) {
+		      double x[] = new double[A_.num_cols()];
+		      x[i] = 1.0;
+		      for (j = 0; j < A_.num_rows(); j++) {
+		          y_a[j] = 0;
+		          y_b[j] = 0;
+		      }
+
+		      A_.RightMultiply(x, y_a);
+		      B_.RightMultiply(x, y_b);
+		      normSquared = 0.0;
+		      for (j = 0; j < B_.num_rows(); j++) {
+		    	  diff = y_a[j] - y_b[j];
+		    	  normSquared += (diff * diff);
+		      }
+		      norm = Math.sqrt(normSquared);
+		      if (norm >= 1.0E-12) {
+		    	  System.err.println("In BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix()\n" +
+		          "y_a.head(B_->num_rows()) - y_b.head(B_->num_rows())).norm() >= 1.0E-12");
+		    	  passed = false;
+		      }
+		      double expected_tail[] = new double[A_.num_cols()];
+		      expected_tail[i] = diagonal[i];
+		      normSquared = 0.0;
+		      double y_atail[] = new double[A_.num_cols()];
+		      offset = A_.num_rows() - A_.num_cols();
+		      for (j = offset; j < A_.num_rows(); j++) {
+		    	  y_atail[j-offset] = y_a[j];
+		      }
+		      for (j = 0; j < A_.num_cols(); j++) {
+		    	  diff = y_atail[j] - expected_tail[j];
+		    	  normSquared += (diff * diff);
+		      }
+		      norm = Math.sqrt(normSquared);
+		      if (norm >= 1.0E-12) {
+		    	  System.err.println("In BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix()\n" +
+		          "(y_a.tail(A_->num_cols()) - expected_tail).norm() >= 1e-12");
+		    	  passed = false;
+		      }
+		    }
+
+
+		    A_.DeleteRowBlocks(column_blocks.size());
+		    if (A_.num_rows() != B_.num_rows()) {
+		    	 System.err.println("In BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix()\n" +
+		         "A_.num_rows() != B_.num_rows()");
+		    	 passed = false;
+		    }
+		    if (A_.num_cols() != B_.num_cols()) {
+		    	System.err.println("In BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix()\n" +
+		        "A_.num_cols() != B_.num_cols()");
+		    	passed = false;
+		    }
+
+		    y_a = new double[A_.num_rows()];
+		    y_b = new double[A_.num_rows()];
+		    for (int i = 0; i < A_.num_cols(); ++i) {
+		      double x[] = new double[A_.num_cols()];
+		      x[i] = 1.0;
+		      for (j = 0; j < A_.num_rows(); j++) {
+		          y_a[j] = 0;
+		          y_b[j] = 0;
+		      }
+
+		      A_.RightMultiply(x, y_a);
+		      B_.RightMultiply(x, y_b);
+		      normSquared = 0.0;
+		      for (j = 0; j < A_.num_rows(); j++) {
+		    	  diff = y_a[j] - y_b[j];
+		    	  normSquared += (diff * diff);
+		      }
+		      norm = Math.sqrt(normSquared);
+		      if (norm >= 1.0E-12) {
+		    	  System.err.println("In BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix()\n" +
+		          "(y_a - y_b).norm() >= 1e-12");
+		    	  passed = false;
+		      }
+		    }
+		    if (passed) {
+		    	System.out.println("BlockSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix() passed all tests");
+		    }
+		  }
+	   
+	   public void BlockSparseMatrixCreateDiagonalMatrix() {
+		   int j;
+		   boolean passed = true;
+			 SetUp();
+		    Vector<Block> column_blocks = new Vector<Block>();
+		    column_blocks.add(new Block(2, 0));
+		    column_blocks.add(new Block(1, 2));
+		    column_blocks.add(new Block(3, 3));
+		    final int num_cols =
+		        column_blocks.lastElement().size + column_blocks.lastElement().position;
+		    double diagonal[] = new double[num_cols];
+		    for (int i = 0; i < num_cols; ++i) {
+		      diagonal[i] = 2 * i * i + 1;
+		    }
+
+		    BlockSparseMatrix m =
+		        CreateDiagonalMatrix(diagonal, column_blocks);
+		    final CompressedRowBlockStructure bs = m.block_structure();
+		    if (bs.cols.size() != column_blocks.size()) {
+		        System.err.println("In BlockSparseMatrixCreateDiagonalMatrix() bs.cols.size() != column_blocks.size()");
+		        passed = false;
+		    }
+		    for (int i = 0; i < column_blocks.size(); ++i) {
+		      if (bs.cols.get(i).size != column_blocks.get(i).size) {
+		    	  System.err.println("In BlockSparseMatrixCreateDiagonalMatrix() bs.cols.get(i).size != column_blocks.get(i).size");
+			        passed = false;  
+		      }
+		      if (bs.cols.get(i).position != column_blocks.get(i).position) {
+		    	  System.err.println("In BlockSparseMatrixCreateDiagonalMatrix() bs.cols.get(i).position != column_blocks.get(i).position");
+			        passed = false;  
+		      }
+		    }
+		    if (m.num_rows() != m.num_cols()) {
+		    	System.err.println("In BlockSparseMatrixCreateDiagonalMatrix() m.num_rows() != m.num_cols()");
+		        passed = false;	
+		    }
+		    double x[] = new double[num_cols];
+		    for (j = 0; j < num_cols; j++) {
+		    	x[j] = 1.0;
+		    }
+		    double y[] = new double[num_cols];
+		    m.RightMultiply(x, y);
+		    for (int i = 0; i < num_cols; ++i) {
+		      if (Math.abs(y[i] - diagonal[i]) > epsilon) {
+		    	  System.err.println("In BlockSparseMatrixCreateDiagonalMatrix() Math.abs(y[i] - diagonal[i]) > epsilon");
+		    	  passed = false;
+		      }
+		    }
+		    if (passed) {
+		    	System.out.println("BlockSparseMatrixCreateDiagonalMatrix() passed all tests");
+		    }
+		  }
 
 	  };
 
@@ -1869,82 +2044,9 @@ public class CeresSolverTest extends CeresSolver {
 	  
 
 	  
-	  TEST_F(BlockSparseMatrixTest, AppendAndDeleteBlockDiagonalMatrix) {
-	    const std::vector<Block>& column_blocks = A_->block_structure()->cols;
-	    const int num_cols =
-	        column_blocks.back().size + column_blocks.back().position;
-	    Vector diagonal(num_cols);
-	    for (int i = 0; i < num_cols; ++i) {
-	      diagonal(i) = 2 * i * i + 1;
-	    }
-	    scoped_ptr<BlockSparseMatrix> appendage(
-	        BlockSparseMatrix::CreateDiagonalMatrix(diagonal.data(), column_blocks));
+	  
 
-	    A_->AppendRows(*appendage);
-	    Vector y_a, y_b;
-	    y_a.resize(A_->num_rows());
-	    y_b.resize(A_->num_rows());
-	    for (int i = 0; i < A_->num_cols(); ++i) {
-	      Vector x = Vector::Zero(A_->num_cols());
-	      x[i] = 1.0;
-	      y_a.setZero();
-	      y_b.setZero();
-
-	      A_->RightMultiply(x.data(), y_a.data());
-	      B_->RightMultiply(x.data(), y_b.data());
-	      EXPECT_LT((y_a.head(B_->num_rows()) - y_b.head(B_->num_rows())).norm(), 1e-12);
-	      Vector expected_tail = Vector::Zero(A_->num_cols());
-	      expected_tail(i) = diagonal(i);
-	      EXPECT_LT((y_a.tail(A_->num_cols()) - expected_tail).norm(), 1e-12);
-	    }
-
-
-	    A_->DeleteRowBlocks(column_blocks.size());
-	    EXPECT_EQ(A_->num_rows(), B_->num_rows());
-	    EXPECT_EQ(A_->num_cols(), B_->num_cols());
-
-	    y_a.resize(A_->num_rows());
-	    y_b.resize(A_->num_rows());
-	    for (int i = 0; i < A_->num_cols(); ++i) {
-	      Vector x = Vector::Zero(A_->num_cols());
-	      x[i] = 1.0;
-	      y_a.setZero();
-	      y_b.setZero();
-
-	      A_->RightMultiply(x.data(), y_a.data());
-	      B_->RightMultiply(x.data(), y_b.data());
-	      EXPECT_LT((y_a - y_b).norm(), 1e-12);
-	    }
-	  }
-
-	  TEST(BlockSparseMatrix, CreateDiagonalMatrix) {
-	    std::vector<Block> column_blocks;
-	    column_blocks.push_back(Block(2, 0));
-	    column_blocks.push_back(Block(1, 2));
-	    column_blocks.push_back(Block(3, 3));
-	    const int num_cols =
-	        column_blocks.back().size + column_blocks.back().position;
-	    Vector diagonal(num_cols);
-	    for (int i = 0; i < num_cols; ++i) {
-	      diagonal(i) = 2 * i * i + 1;
-	    }
-
-	    scoped_ptr<BlockSparseMatrix> m(
-	        BlockSparseMatrix::CreateDiagonalMatrix(diagonal.data(), column_blocks));
-	    const CompressedRowBlockStructure* bs = m->block_structure();
-	    EXPECT_EQ(bs->cols.size(), column_blocks.size());
-	    for (int i = 0; i < column_blocks.size(); ++i) {
-	      EXPECT_EQ(bs->cols[i].size, column_blocks[i].size);
-	      EXPECT_EQ(bs->cols[i].position, column_blocks[i].position);
-	    }
-	    EXPECT_EQ(m->num_rows(), m->num_cols());
-	    Vector x = Vector::Ones(num_cols);
-	    Vector y = Vector::Zero(num_cols);
-	    m->RightMultiply(x.data(), y.data());
-	    for (int i = 0; i < num_cols; ++i) {
-	      EXPECT_NEAR(y[i], diagonal[i], std::numeric_limits<double>::epsilon());
-	    }
-	  }*/
+	  */
 
    
    public void ImplicitSchurComplementTestSchurMatrixValuesTest() {
