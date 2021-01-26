@@ -2516,8 +2516,12 @@ public abstract class CeresSolver {
 		// Construct a CompressedList with the cells containing num_cells
 		// entries.
 		public CompressedList(int num_cells) {
+			int i;
 			block = new Block();
 			cells = new Vector<Cell>(num_cells);
+			for (i = 0; i < num_cells; i++) {
+				cells.add(new Cell());
+			}
 		}
 
 	};
