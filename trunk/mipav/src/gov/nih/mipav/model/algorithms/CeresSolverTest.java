@@ -2033,163 +2033,289 @@ public class CeresSolverTest extends CeresSolver {
 
 	  };
 	  
-	  /*class SchurEliminatorTest : public ::testing::Test {
-		  protected:
-		   void SetUpFromId(int id) {
-		     scoped_ptr<LinearLeastSquaresProblem>
-		         problem(CreateLinearLeastSquaresProblemFromId(id));
-		     CHECK_NOTNULL(problem.get());
-		     SetupHelper(problem.get());
+	  public void SchurEliminatorTestScalarProblemNoRegularization() {
+		  SchurEliminatorTest SE = new SchurEliminatorTest();
+		  SE.SchurEliminatorTestScalarProblemNoRegularization();
+	  }
+	  
+	  class SchurEliminatorTest {
+		  private BlockSparseMatrix A;
+		  private double[] b;
+		  private double[] D;
+		  private int num_eliminate_blocks;
+		  private int num_eliminate_cols;
+
+		  private Matrix lhs_expected;
+		  private Vector<Double> rhs_expected;
+		  private Vector<Double> sol_expected;
+		  
+		  public SchurEliminatorTest() {
+			  
+		  }
+		  
+		  public void SchurEliminatorTestScalarProblemNoRegularization() {
+			   SetUpFromId(2);
+			   double zero[] = new double[A.num_cols()];
+			   String testName = "SchurEliminatorTestScalarProblemNoRegularization()";
+
+			   ComputeReferenceSolution(zero);
+			   EliminateSolveAndCompare(zero, true, 1e-14, testName);
+			   EliminateSolveAndCompare(zero, false, 1e-14, testName);
+			 }
+		  
+		  public void SetUpFromId(int id) {
+		     LinearLeastSquaresProblem
+		         problem = CreateLinearLeastSquaresProblemFromId(id);
+		     if (problem == null) {
+		    	 System.err.println("In SchurEliminatorTest SetUpFromId("+id+") problem == null");
+		    	 return;
+		     }
+		     SetupHelper(problem);
 		   }
 
-		   void SetupHelper(LinearLeastSquaresProblem* problem) {
-		     A.reset(down_cast<BlockSparseMatrix*>(problem->A.release()));
-		     b.reset(problem->b.release());
-		     D.reset(problem->D.release());
+		   public void SetupHelper(LinearLeastSquaresProblem problem) {
+		     A = (BlockSparseMatrix)(problem.A);
+		     b = problem.b;
+		     D = problem.D;
 
-		     num_eliminate_blocks = problem->num_eliminate_blocks;
+		     num_eliminate_blocks = problem.num_eliminate_blocks;
 		     num_eliminate_cols = 0;
-		     const CompressedRowBlockStructure* bs = A->block_structure();
+		     final CompressedRowBlockStructure bs = A.block_structure();
 
 		     for (int i = 0; i < num_eliminate_blocks; ++i) {
-		       num_eliminate_cols += bs->cols[i].size;
+		       num_eliminate_cols += bs.cols.get(i).size;
 		     }
 		   }
 
 		   // Compute the golden values for the reduced linear system and the
 		   // solution to the linear least squares problem using dense linear
 		   // algebra.
-		   void ComputeReferenceSolution(const Vector& D) {
-		     Matrix J;
-		     A->ToDenseMatrix(&J);
-		     VectorRef f(b.get(), J.rows());
+		   public void ComputeReferenceSolution(double[] D) {
+			 int i,r,c,offset;
+		     Matrix J = A.ToDenseMatrix();
+		     //VectorRef f(b.get(), J.rows());
+		     double f[] = new double[J.getRowDimension()];
+		     for (i = 0; i < J.getRowDimension(); i++) {
+		    	 f[i] = b[i];
+		     }
 
-		     Matrix H  =  (D.cwiseProduct(D)).asDiagonal();
-		     H.noalias() += J.transpose() * J;
+		     Matrix H = new Matrix(D.length, D.length);
+		     for (r = 0; r < D.length; r++) {
+		    	 H.set(r, r, D[r]*D[r]);
+		     }
+		     Matrix Jt = J.transpose();
+		     Matrix JtJ = (Jt).times(J);
+		     H = H.plus(JtJ);
 
-		     const Vector g = J.transpose() * f;
-		     const int schur_size = J.cols() - num_eliminate_cols;
+		     double g[] = new double[Jt.getRowDimension()];
+		     for (r = 0; r < Jt.getRowDimension(); r++) {
+		    	 for (c = 0; c < Jt.getColumnDimension(); c++) {
+		    		 g[r] += (Jt.getArray()[r][c] * f[c]);
+		    	 }
+		     }
+		     final int schur_size = J.getColumnDimension() - num_eliminate_cols;
 
-		     lhs_expected.resize(schur_size, schur_size);
-		     lhs_expected.setZero();
+		     lhs_expected = new Matrix(schur_size, schur_size);
 
-		     rhs_expected.resize(schur_size);
-		     rhs_expected.setZero();
+		     rhs_expected = new Vector<Double>(schur_size);
+		     for (i = 0; i < schur_size; i++) {
+		    	 rhs_expected.add(0.0);
+		     }
 
-		     sol_expected.resize(J.cols());
-		     sol_expected.setZero();
+		     sol_expected = new Vector<Double>(J.getColumnDimension());
+		     for (i = 0; i < J.getColumnDimension(); i++) {
+		    	 sol_expected.add(0.0);
+		     }
 
-		     Matrix P = H.block(0, 0, num_eliminate_cols, num_eliminate_cols);
-		     Matrix Q = H.block(0,
+		     Matrix P = H.getMatrix(0, num_eliminate_cols-1, 0, num_eliminate_cols-1);
+		     Matrix Q = H.getMatrix(0,
+		                        num_eliminate_cols-1,
 		                        num_eliminate_cols,
+		                        num_eliminate_cols + schur_size - 1);
+		     Matrix R = H.getMatrix(num_eliminate_cols,
+		    		            num_eliminate_cols + schur_size - 1,
 		                        num_eliminate_cols,
-		                        schur_size);
-		     Matrix R = H.block(num_eliminate_cols,
-		                        num_eliminate_cols,
-		                        schur_size,
-		                        schur_size);
+		                        num_eliminate_cols + schur_size - 1);
 		     int row = 0;
-		     const CompressedRowBlockStructure* bs = A->block_structure();
-		     for (int i = 0; i < num_eliminate_blocks; ++i) {
-		       const int block_size =  bs->cols[i].size;
-		       P.block(row, row,  block_size, block_size) =
-		           P
-		           .block(row, row,  block_size, block_size)
-		           .llt()
-		           .solve(Matrix::Identity(block_size, block_size));
+		     final CompressedRowBlockStructure bs = A.block_structure();
+		     for (i = 0; i < num_eliminate_blocks; ++i) {
+		       final int block_size =  bs.cols.get(i).size;
+		       P.setMatrix(row, row + block_size - 1, row, row + block_size -1,
+		           (P.getMatrix(row, row + block_size - 1,  row, row + block_size - 1).inverse()));
 		       row += block_size;
 		     }
 
-		     lhs_expected
+		     /*lhs_expected
 		         .triangularView<Eigen::Upper>() = R - Q.transpose() * P * Q;
 		     rhs_expected =
 		         g.tail(schur_size) - Q.transpose() * P * g.head(num_eliminate_cols);
-		     sol_expected = H.llt().solve(g);
+		     sol_expected = H.llt().solve(g);*/
+		     Matrix Qt = Q.transpose();
+		     Matrix QtP = Qt.times(P);
+		     lhs_expected = R.minus(QtP.times(Q));
+		     double QtPg[] = new double[schur_size];
+		     for (r = 0; r < schur_size; r++) {
+		    	 for (c = 0; c < num_eliminate_cols; c++) {
+		    		 QtPg[r] += QtP.getArray()[r][c]*g[c];
+		    	 }
+		     }
+		     offset = g.length - schur_size;
+		     for (i = 0; i < schur_size; i++) {
+		         rhs_expected.set(i,(g[offset + i] - QtPg[i]));	 
+		     }
+		     double garr[][] = new double[g.length][1];
+		     for (i = 0; i < g.length; i++) {
+		         garr[i][0] = g[i];	 
+		     }
+		     Matrix gMat = new Matrix(garr);
+		     Matrix sol_expected_mat = H.solve(gMat);
+		     for (i = 0; i < sol_expected.size(); i++) {
+		    	 sol_expected.set(i,sol_expected_mat.getArray()[i][0]);
+		     }
 		   }
 
-		   void EliminateSolveAndCompare(const VectorRef& diagonal,
-		                                 bool use_static_structure,
-		                                 const double relative_tolerance) {
-		     const CompressedRowBlockStructure* bs = A->block_structure();
-		     const int num_col_blocks = bs->cols.size();
-		     std::vector<int> blocks(num_col_blocks - num_eliminate_blocks, 0);
-		     for (int i = num_eliminate_blocks; i < num_col_blocks; ++i) {
-		       blocks[i - num_eliminate_blocks] = bs->cols[i].size;
+		   public void EliminateSolveAndCompare(double[] diagonal,
+		                                 boolean use_static_structure,
+		                                 double relative_tolerance,
+		                                 String testName) {
+			 int index, row, col, i, offset;
+			 double normSquared;
+			 double delta_norm;
+			 double lhs_expected_norm;
+			 double rhs_expected_norm;
+			 double sol_expected_norm;
+			 double norm;
+			 double diff;
+			 boolean passed = true;
+		     final CompressedRowBlockStructure bs = A.block_structure();
+		     final int num_col_blocks = bs.cols.size();
+		     Vector<Integer> blocks = new Vector<Integer>(num_col_blocks - num_eliminate_blocks);
+		     for (i = num_eliminate_blocks; i < num_col_blocks; ++i) {
+		       blocks.add(bs.cols.get(i).size);
 		     }
 
-		     BlockRandomAccessDenseMatrix lhs(blocks);
+		     BlockRandomAccessDenseMatrix lhs = new BlockRandomAccessDenseMatrix(blocks);
 
-		     const int num_cols = A->num_cols();
-		     const int schur_size = lhs.num_rows();
+		     final int num_cols = A.num_cols();
+		     final int schur_size = lhs.num_rows();
 
-		     Vector rhs(schur_size);
+		     double rhs[] = new double[schur_size];
 
-		     LinearSolver::Options options;
-		     ContextImpl context;
-		     options.context = &context;
-		     options.elimination_groups.push_back(num_eliminate_blocks);
+		     LinearSolverOptions options = new LinearSolverOptions();
+		     Context context = new Context();
+		     options.context = context;
+		     options.elimination_groups.add(num_eliminate_blocks);
 		     if (use_static_structure) {
-		       DetectStructure(*bs,
+		       DetectStructure(bs,
 		                       num_eliminate_blocks,
-		                       &options.row_block_size,
-		                       &options.e_block_size,
-		                       &options.f_block_size);
+		                       options.row_block_size,
+		                       options.e_block_size,
+		                       options.f_block_size);
 		     }
 
-		     scoped_ptr<SchurEliminatorBase> eliminator;
-		     eliminator.reset(SchurEliminatorBase::Create(options));
-		     const bool kFullRankETE = true;
-		     eliminator->Init(num_eliminate_blocks, kFullRankETE, A->block_structure());
-		     eliminator->Eliminate(A.get(), b.get(), diagonal.data(), &lhs, rhs.data());
+		     SchurEliminatorBase eliminator = createSchurEliminatorBase(options);
+		     final boolean kFullRankETE = true;
+		     eliminator.Init(num_eliminate_blocks, kFullRankETE, A.block_structure());
+		     eliminator.Eliminate(A, b, diagonal, lhs, rhs);
 
-		     MatrixRef lhs_ref(lhs.mutable_values(), lhs.num_rows(), lhs.num_cols());
-		     Vector reduced_sol  =
-		         lhs_ref
-		         .selfadjointView<Eigen::Upper>()
-		         .llt()
-		         .solve(rhs);
+		     double lhs_ref_array[][] = new double[lhs.num_rows()][lhs.num_cols()];
+		     for (index = 0, row = 0; row < lhs.num_rows(); row++) {
+		    	 for (col = 0; col < lhs.num_cols(); col++, index++) {
+		    		 lhs_ref_array[row][col] = lhs.mutable_values()[index];
+		    	 }
+		     }
+		     Matrix lhs_ref = new Matrix(lhs_ref_array);
+		     Matrix rhsMat = new Matrix(schur_size, 1);
+		     for (i = 0; i < schur_size; i++) {
+		    	 rhsMat.set(i, 0, rhs[i]);
+		     }
+		     Matrix reduced_sol_mat = lhs_ref.solve(rhsMat);
+		     double reduced_sol[] = new double[reduced_sol_mat.getRowDimension()];
+		     for (i = 0; i < reduced_sol.length; i++) {
+		    	 reduced_sol[i] = reduced_sol_mat.getArray()[i][0];
+		     }
 
 		     // Solution to the linear least squares problem.
-		     Vector sol(num_cols);
-		     sol.setZero();
-		     sol.tail(schur_size) = reduced_sol;
-		     eliminator->BackSubstitute(A.get(),
-		                                b.get(),
-		                                diagonal.data(),
-		                                reduced_sol.data(),
-		                                sol.data());
+		     double sol[] = new double[num_cols];
+		     offset = sol.length - schur_size;
+		     for (i = 0; i < schur_size; i++) {
+		    	 sol[i + offset] = reduced_sol[i];
+		     }
+		     
+		     eliminator.BackSubstitute(A,
+		                                b,
+		                                diagonal,
+		                                reduced_sol,
+		                                sol);
 
-		     Matrix delta = (lhs_ref - lhs_expected).selfadjointView<Eigen::Upper>();
-		     double diff = delta.norm();
-		     EXPECT_NEAR(diff / lhs_expected.norm(), 0.0, relative_tolerance);
-		     EXPECT_NEAR((rhs - rhs_expected).norm() / rhs_expected.norm(), 0.0,
-		                 relative_tolerance);
-		     EXPECT_NEAR((sol - sol_expected).norm() / sol_expected.norm(), 0.0,
-		                 relative_tolerance);
+		     Matrix delta = lhs_ref.minus(lhs_expected);
+		     normSquared = 0.0;
+		     for (row = 0; row < delta.getRowDimension(); row++) {
+		    	 for (col = 0; col < delta.getColumnDimension(); col++) {
+		    		 normSquared += (delta.getArray()[row][col] * delta.getArray()[row][col]);
+		    	 }
+		     }
+		     delta_norm = Math.sqrt(normSquared);
+		     normSquared = 0.0;
+		     for (row = 0; row < lhs_expected.getRowDimension(); row++) {
+		    	 for (col = 0; col < lhs_expected.getColumnDimension(); col++) {
+		    		 normSquared += (lhs_expected.getArray()[row][col] * lhs_expected.getArray()[row][col]);
+		    	 }
+		     }
+		     lhs_expected_norm = Math.sqrt(normSquared);
+		     if (delta_norm/lhs_expected_norm > relative_tolerance) {
+		    	 System.err.println("In " + testName + " use_static_structure = " + use_static_structure + " delta_norm/lhs_expected_norm > relative_tolerance");
+		    	 System.err.println("delta_norm = " + delta_norm);
+		    	 System.err.println("lhs_expected_norm = " + lhs_expected_norm);
+		    	 passed = false;
+		     }
+		     normSquared = 0.0;
+		     for (i = 0; i < rhs_expected.size(); i++) {
+		    	 normSquared += (rhs_expected.get(i) * rhs_expected.get(i));
+		     }
+		     rhs_expected_norm = Math.sqrt(normSquared);
+		     normSquared = 0.0;
+		     for (i = 0; i < rhs_expected.size(); i++) {
+		    	 diff = rhs[i] - rhs_expected.get(i);
+		    	 normSquared += (diff * diff);
+		     }
+		     norm = Math.sqrt(normSquared);
+		     if (norm/rhs_expected_norm > relative_tolerance) {
+		    	 System.err.println("In " + testName + " use_static_structure = " + use_static_structure + 
+		    			 " ((rhs - rhs_expected).norm()/rhs_expected_norm > relative_tolerance");
+		    	 System.err.println("norm = " + norm);
+		    	 System.err.println("rhs_expected_norm = " + rhs_expected_norm);
+		    	 passed = false;	 
+		     }
+		     
+		     normSquared = 0.0;
+		     for (i = 0; i < sol_expected.size(); i++) {
+		    	 normSquared += (sol_expected.get(i) * sol_expected.get(i));
+		     }
+		     sol_expected_norm = Math.sqrt(normSquared);
+		     normSquared = 0.0;
+		     for (i = 0; i < sol_expected.size(); i++) {
+		    	 diff = sol[i] - sol_expected.get(i);
+		    	 normSquared += (diff * diff);
+		     }
+		     norm = Math.sqrt(normSquared);
+		     if (norm/sol_expected_norm > relative_tolerance) {
+		    	 System.err.println("In " + testName + " use_static_structure = " + use_static_structure + 
+		    			 " ((sol - sol_expected).norm()/sol_expected_norm > relative_tolerance");
+		    	 System.err.println("norm = " + norm);
+		    	 System.err.println("sol_expected_norm = " + sol_expected_norm);
+		    	 passed = false;	 
+		     }
+		     if (passed) {
+		    	 System.out.println(testName + " use_static_structure = " + use_static_structure + " passed all tests");
+		     }
 		   }
 
-		   scoped_ptr<BlockSparseMatrix> A;
-		   scoped_array<double> b;
-		   scoped_array<double> D;
-		   int num_eliminate_blocks;
-		   int num_eliminate_cols;
-
-		   Matrix lhs_expected;
-		   Vector rhs_expected;
-		   Vector sol_expected;
 		 };
 
-		 TEST_F(SchurEliminatorTest, ScalarProblemNoRegularization) {
-		   SetUpFromId(2);
-		   Vector zero(A->num_cols());
-		   zero.setZero();
+		 
 
-		   ComputeReferenceSolution(VectorRef(zero.data(), A->num_cols()));
-		   EliminateSolveAndCompare(VectorRef(zero.data(), A->num_cols()), true, 1e-14);
-		   EliminateSolveAndCompare(VectorRef(zero.data(), A->num_cols()), false, 1e-14);
-		 }
-
-		 TEST_F(SchurEliminatorTest, ScalarProblemWithRegularization) {
+		 /*TEST_F(SchurEliminatorTest, ScalarProblemWithRegularization) {
 		   SetUpFromId(2);
 		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
 		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), true, 1e-14);
