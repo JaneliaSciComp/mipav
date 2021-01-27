@@ -5647,7 +5647,7 @@ public abstract class CeresSolver {
 					    boolean assume_full_rank_ete,
 					    CompressedRowBlockStructure bs) {
 				      if (num_eliminate_blocks <= 0) {
-					      System.err.println("SchurComplementSolver cannot be initialized with num_eliminate_blocks <= 0.");
+					      System.err.println("SchurEliminator cannot be initialized with num_eliminate_blocks <= 0.");
 					      return;
 				      }
 
@@ -6124,6 +6124,7 @@ public abstract class CeresSolver {
 			  }
 			  if (block1 >= block2) {
 				  System.err.println("block1 >= block2 in SchurEliminator NoEBlockRowOuterProduct");
+				  return;
 			  }
 			  cell_info = lhs.GetCell(block1, block2,
 			                                     r, c,
@@ -6155,6 +6156,7 @@ public abstract class CeresSolver {
 				int row;
 				int col;
 				int index;
+				int i;
 			  // This is the most computationally expensive part of this
 			  // code. Profiling experiments reveal that the bottleneck is not the
 			  // computation of the right-hand matrix product, but memory
@@ -6175,8 +6177,10 @@ public abstract class CeresSolver {
 			  double[] b1_transpose_inverse_ete = chunk_outer_product_buffer_;
 
 			  // S(i,j) -= bi' * ete^{-1} b_j
+			  int numit1Next = 0;
 			  while (it1.hasNext()) {
 				Map.Entry<Integer, Integer> pair = (Map.Entry<Integer, Integer>) it1.next();
+				numit1Next++;
 				int key = pair.getKey();
 				int value = pair.getValue();
 			    int block1 = key - num_eliminate_blocks_;
@@ -6187,7 +6191,10 @@ public abstract class CeresSolver {
 			        inverse_ete_data, 0, e_block_size, e_block_size,
 			        b1_transpose_inverse_ete, 0, 0, 0, block1_size, e_block_size);
 
-			    Iterator<Entry<Integer, Integer>> it2 = it1;
+			    Iterator<Entry<Integer, Integer>> it2 = buffer_layout.entrySet().iterator();
+			    for (i = 0; i < numit1Next; i++) {
+			    	it2.next();
+			    }
 			    while (it2.hasNext()) {
 			    	Map.Entry<Integer, Integer> pair2 = (Map.Entry<Integer, Integer>) it2.next();
 					int key2 = pair2.getKey();
