@@ -8648,7 +8648,14 @@ public class LatticeModel {
 			//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
-		voiDir = outputDirectory + File.separator + subDir + File.separator;		
+		voiDir = outputDirectory + File.separator + subDir + File.separator;			
+		voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}	
 		
 		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
 		imageName = imageName + postScript;
