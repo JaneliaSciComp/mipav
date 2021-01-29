@@ -2033,6 +2033,567 @@ public class CeresSolverTest extends CeresSolver {
 
 	  };
 	  
+	  
+
+	  public void TESTMatrixMatrixMultiply() {
+		// TESTMatrixMatrixMultiply() passed all tests.
+		boolean passed = true;
+		double norm;
+		int i, r, c, index;
+		double normSquared = 0.0;
+		double diff;
+		final double kTolerance = 3.0 * epsilon;
+	    final int kRowA = 3;
+	    final int kColA = 5;
+	    Matrix A = new Matrix(kRowA, kColA, 1.0);
+	    double Adata[] = new double[kRowA * kColA];
+	    for (i = 0; i < kRowA * kColA; i++) {
+	    	Adata[i] = 1.0;
+	    }
+
+	    final int kRowB = 5;
+	    final int kColB = 7;
+	    Matrix B = new Matrix(kRowB, kColB, 1.0);
+	    double Bdata[] = new double[kRowB * kColB];
+	    for (i = 0; i < kRowB * kColB; i++) {
+	    	Bdata[i] = 1.0;
+	    }
+	    Matrix AB = A.times(B);
+	    double AB_array[][] = AB.getArray();
+
+	    for (int row_stride_c = kRowA; row_stride_c < 3 * kRowA; ++row_stride_c) {
+	      for (int col_stride_c = kColB; col_stride_c < 3 * kColB; ++col_stride_c) {
+	        Matrix C = new Matrix(row_stride_c, col_stride_c, 1.0);
+
+	        Matrix C_plus = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        double C_plus_data[] = new double[row_stride_c * col_stride_c];
+	        for (i = 0; i < row_stride_c * col_stride_c; i++) {
+	        	C_plus_data[i] = 1.0;
+	        }
+	        Matrix C_minus = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        double C_minus_data[] = new double[row_stride_c * col_stride_c];
+	        for (i = 0; i < row_stride_c * col_stride_c; i++) {
+	        	C_minus_data[i] = 1.0;
+	        }
+	        Matrix C_assign = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        double C_assign_data[] = new double[row_stride_c * col_stride_c];
+	        for (i = 0; i < row_stride_c * col_stride_c; i++) {
+	        	C_assign_data[i] = 1.0;
+	        }
+	        Matrix C_plus_ref = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        Matrix C_minus_ref = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        Matrix C_assign_ref = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        for (int start_row_c = 0; start_row_c + kRowA < row_stride_c; ++start_row_c) {
+	          for (int start_col_c = 0; start_col_c + kColB < col_stride_c; ++start_col_c) {
+	        	for (r = start_row_c; r < start_row_c + kRowA; r++) {
+	        		for (c = start_col_c; c < start_col_c + kColB; c++) {
+	        	    C_plus_ref.set(r, c, C_plus_ref.get(r, c) + AB_array[r-start_row_c][c-start_col_c]);
+	        		}
+	        	}
+	        	
+
+	            MatrixMatrixMultiply(kRowA, kColA, kRowB, kColB, 1,
+	                Adata, 0, kRowA, kColA,
+	                Bdata, 0, kRowB, kColB,
+	                C_plus_data, 0, start_row_c, start_col_c, row_stride_c, col_stride_c);
+
+	            normSquared = 0.0;
+	            for (r = 0; r < row_stride_c; r++ ) {
+	            	for (c = 0; c < col_stride_c; c++) {
+	            		index = r*col_stride_c + c;
+	            		diff = C_plus_ref.get(r,c) - C_plus_data[index];
+	            		normSquared += (diff * diff);
+	            	}
+	            }
+	            norm = Math.sqrt(normSquared);
+	            if (norm > kTolerance) {
+	                passed = false;
+	                System.err.println("In TestMatrixMatrixMultiply C += A * B");
+	                System.err.println("row_stride_c : " + row_stride_c);
+	                System.err.println("col_stride_c : " + col_stride_c);
+	                System.err.println("start_row_c  : " + start_row_c);
+	                System.err.println("start_col_c  : " + start_col_c);
+	            }
+	            
+
+	            for (r = start_row_c; r < start_row_c + kRowA; r++) {
+	        		for (c = start_col_c; c < start_col_c + kColB; c++) {
+	        	    C_minus_ref.set(r, c, C_minus_ref.get(r, c) - AB_array[r-start_row_c][c-start_col_c]);
+	        		}
+	        	}
+
+	            MatrixMatrixMultiply(kRowA, kColA, kRowB, kColB, -1,
+	                Adata, 0, kRowA, kColA,
+	                Bdata, 0, kRowB, kColB,
+	                C_minus_data, 0, start_row_c, start_col_c, row_stride_c, col_stride_c);
+	            
+	            normSquared = 0.0;
+	            for (r = 0; r < row_stride_c; r++ ) {
+	            	for (c = 0; c < col_stride_c; c++) {
+	            		index = r*col_stride_c + c;
+	            		diff = C_minus_ref.get(r,c) - C_minus_data[index];
+	            		normSquared += (diff * diff);
+	            	}
+	            }
+	            norm = Math.sqrt(normSquared);
+	            if (norm > kTolerance) {
+	                passed = false;
+	                System.err.println("In TestMatrixMatrixMultiply C -= A * B");
+	                System.err.println("row_stride_c : " + row_stride_c);
+	                System.err.println("col_stride_c : " + col_stride_c);
+	                System.err.println("start_row_c  : " + start_row_c);
+	                System.err.println("start_col_c  : " + start_col_c);
+	            }
+
+	             
+	            for (r = start_row_c; r < start_row_c + kRowA; r++) {
+	        		for (c = start_col_c; c < start_col_c + kColB; c++) {
+	        	    C_assign_ref.set(r, c, AB_array[r-start_row_c][c-start_col_c]);
+	        		}
+	        	}
+
+	            MatrixMatrixMultiply(kRowA, kColA, kRowB, kColB, 0,
+	                Adata, 0, kRowA, kColA,
+	                Bdata, 0, kRowB, kColB,
+	                C_assign_data, 0, start_row_c, start_col_c, row_stride_c, col_stride_c);
+	            
+	            normSquared = 0.0;
+	            for (r = 0; r < row_stride_c; r++ ) {
+	            	for (c = 0; c < col_stride_c; c++) {
+	            		index = r*col_stride_c + c;
+	            		diff = C_assign_ref.get(r,c) - C_assign_data[index];
+	            		normSquared += (diff * diff);
+	            	}
+	            }
+	            norm = Math.sqrt(normSquared);
+	            if (norm > kTolerance) {
+	                passed = false;
+	                System.err.println("In TestMatrixMatrixMultiply C = A * B");
+	                System.err.println("row_stride_c : " + row_stride_c);
+	                System.err.println("col_stride_c : " + col_stride_c);
+	                System.err.println("start_row_c  : " + start_row_c);
+	                System.err.println("start_col_c  : " + start_col_c);
+	            }
+
+
+	            
+	          }
+	        }
+	      }
+	    }
+	    if (passed) {
+	         System.out.println("TESTMatrixMatrixMultiply() passed all tests.");	
+	    }
+	  }
+
+	  public void TESTMatrixTransposeMatrixMultiply() {
+		  // TESTMatrixTransposeMatrixMultiply() passed all tests.
+		  boolean passed = true;
+			double norm;
+			int i, r, c, index;
+			double normSquared = 0.0;
+			double diff;
+			final double kTolerance = 3.0 * epsilon;
+		    final int kRowA = 5;
+		    final int kColA = 3;
+		    Matrix A = new Matrix(kRowA, kColA, 1.0);
+		    double Adata[] = new double[kRowA * kColA];
+		    for (i = 0; i < kRowA * kColA; i++) {
+		    	Adata[i] = 1.0;
+		    }
+
+		    final int kRowB = 5;
+		    final int kColB = 7;
+		    Matrix B = new Matrix(kRowB, kColB, 1.0);
+		    double Bdata[] = new double[kRowB * kColB];
+		    for (i = 0; i < kRowB * kColB; i++) {
+		    	Bdata[i] = 1.0;
+		    }
+		    Matrix AtB = (A.transpose()).times(B);
+		    double AtB_array[][] = AtB.getArray();
+
+	    for (int row_stride_c = kColA; row_stride_c < 3 * kColA; ++row_stride_c) {
+	      for (int col_stride_c = kColB; col_stride_c <  3 * kColB; ++col_stride_c) {
+	    	  Matrix C = new Matrix(row_stride_c, col_stride_c, 1.0);
+
+		        Matrix C_plus = new Matrix(row_stride_c, col_stride_c, 1.0);
+		        double C_plus_data[] = new double[row_stride_c * col_stride_c];
+		        for (i = 0; i < row_stride_c * col_stride_c; i++) {
+		        	C_plus_data[i] = 1.0;
+		        }
+		        Matrix C_minus = new Matrix(row_stride_c, col_stride_c, 1.0);
+		        double C_minus_data[] = new double[row_stride_c * col_stride_c];
+		        for (i = 0; i < row_stride_c * col_stride_c; i++) {
+		        	C_minus_data[i] = 1.0;
+		        }
+		        Matrix C_assign = new Matrix(row_stride_c, col_stride_c, 1.0);
+		        double C_assign_data[] = new double[row_stride_c * col_stride_c];
+		        for (i = 0; i < row_stride_c * col_stride_c; i++) {
+		        	C_assign_data[i] = 1.0;
+		        }
+		        Matrix C_plus_ref = new Matrix(row_stride_c, col_stride_c, 1.0);
+		        Matrix C_minus_ref = new Matrix(row_stride_c, col_stride_c, 1.0);
+		        Matrix C_assign_ref = new Matrix(row_stride_c, col_stride_c, 1.0);
+	        for (int start_row_c = 0; start_row_c + kColA < row_stride_c; ++start_row_c) {
+	          for (int start_col_c = 0; start_col_c + kColB < col_stride_c; ++start_col_c) {
+	        	  for (r = start_row_c; r < start_row_c + kColA; r++) {
+		        		for (c = start_col_c; c < start_col_c + kColB; c++) {
+		        	    C_plus_ref.set(r, c, C_plus_ref.get(r, c) + AtB_array[r-start_row_c][c-start_col_c]);
+		        		}
+		        	}
+
+	            MatrixTransposeMatrixMultiply(kRowA, kColA, kRowB, kColB, 1,
+	                Adata, 0, kRowA, kColA,
+	                Bdata, 0, kRowB, kColB,
+	                C_plus_data, 0, start_row_c, start_col_c, row_stride_c, col_stride_c);
+	            
+	            normSquared = 0.0;
+	            for (r = 0; r < row_stride_c; r++ ) {
+	            	for (c = 0; c < col_stride_c; c++) {
+	            		index = r*col_stride_c + c;
+	            		diff = C_plus_ref.get(r,c) - C_plus_data[index];
+	            		normSquared += (diff * diff);
+	            	}
+	            }
+	            norm = Math.sqrt(normSquared);
+	            if (norm > kTolerance) {
+	                passed = false;
+	                System.err.println("In TestMatrixTransposeMatrixMultiply C += A' * B");
+	                System.err.println("row_stride_c : " + row_stride_c);
+	                System.err.println("col_stride_c : " + col_stride_c);
+	                System.err.println("start_row_c  : " + start_row_c);
+	                System.err.println("start_col_c  : " + start_col_c);
+	            }
+
+	            for (r = start_row_c; r < start_row_c + kColA; r++) {
+	        		for (c = start_col_c; c < start_col_c + kColB; c++) {
+	        	    C_minus_ref.set(r, c, C_minus_ref.get(r, c) - AtB_array[r-start_row_c][c-start_col_c]);
+	        		}
+	        	}
+
+	            MatrixTransposeMatrixMultiply(kRowA, kColA, kRowB, kColB, -1,
+	                Adata, 0, kRowA, kColA,
+	                Bdata, 0, kRowB, kColB,
+	                C_minus_data, 0, start_row_c, start_col_c, row_stride_c, col_stride_c);
+	            
+	            normSquared = 0.0;
+	            for (r = 0; r < row_stride_c; r++ ) {
+	            	for (c = 0; c < col_stride_c; c++) {
+	            		index = r*col_stride_c + c;
+	            		diff = C_minus_ref.get(r,c) - C_minus_data[index];
+	            		normSquared += (diff * diff);
+	            	}
+	            }
+	            norm = Math.sqrt(normSquared);
+	            if (norm > kTolerance) {
+	                passed = false;
+	                System.err.println("In TestMatrixTransposeMatrixMultiply C -= A' * B");
+	                System.err.println("row_stride_c : " + row_stride_c);
+	                System.err.println("col_stride_c : " + col_stride_c);
+	                System.err.println("start_row_c  : " + start_row_c);
+	                System.err.println("start_col_c  : " + start_col_c);
+	            }
+
+	            for (r = start_row_c; r < start_row_c + kColA; r++) {
+	        		for (c = start_col_c; c < start_col_c + kColB; c++) {
+	        	    C_assign_ref.set(r, c, AtB_array[r-start_row_c][c-start_col_c]);
+	        		}
+	        	}
+
+	            MatrixTransposeMatrixMultiply(kRowA, kColA, kRowB, kColB, 0,
+	                Adata, 0, kRowA, kColA,
+	                Bdata, 0, kRowB, kColB,
+	                C_assign_data, 0, start_row_c, start_col_c, row_stride_c, col_stride_c);
+	            
+	            normSquared = 0.0;
+	            for (r = 0; r < row_stride_c; r++ ) {
+	            	for (c = 0; c < col_stride_c; c++) {
+	            		index = r*col_stride_c + c;
+	            		diff = C_assign_ref.get(r,c) - C_assign_data[index];
+	            		normSquared += (diff * diff);
+	            	}
+	            }
+	            norm = Math.sqrt(normSquared);
+	            if (norm > kTolerance) {
+	                passed = false;
+	                System.err.println("In TestMatrixTransposeMatrixMultiply C = A' * B");
+	                System.err.println("row_stride_c : " + row_stride_c);
+	                System.err.println("col_stride_c : " + col_stride_c);
+	                System.err.println("start_row_c  : " + start_row_c);
+	                System.err.println("start_col_c  : " + start_col_c);
+	            }
+
+	          }
+	        }
+	      }
+	    }
+	    if (passed) {
+	         System.out.println("TESTMatrixTransposeMatrixMultiply() passed all tests.");	
+	    }
+	  }
+
+	  public void TESTMatrixVectorMultiply() {
+		// TESTMatrixVectorMultiply passed all tests
+		final double kTolerance = 3.0 * epsilon;
+		boolean passed = true;
+		int i, r, col;
+		double normSquared;
+		double diff;
+		double norm;
+	    final int kRowA = 5;
+	    final int kColA = 3;
+	    Matrix A = new Matrix(kRowA, kColA, 1.0);
+	    double Adata[] = new double[kRowA * kColA];
+	    for (i = 0; i < kRowA * kColA; i++) {
+	    	Adata[i] = 1.0;
+	    }
+
+	    Vector<Double> b = new Vector<Double>(kColA);
+	    double bdata[] = new double[kColA];
+	    for (i = 0; i < kColA; i++) {
+	    	b.add(1.0);
+	    	bdata[i] = 1.0;
+	    }
+
+	    Vector<Double> c = new Vector<Double>(kRowA);
+	    for (i = 0; i < kRowA; i++) {
+	    	c.add(1.0);
+	    }
+
+	    Vector<Double> c_plus = new Vector<Double>(kRowA);
+	    double c_plus_data[] = new double[kRowA];
+	    for (i = 0; i < kRowA; i++) {
+	    	c_plus.add(1.0);
+	    	c_plus_data[i] = 1.0;
+	    }
+	    Vector<Double> c_minus = new Vector<Double>(kRowA);
+	    double c_minus_data[] = new double[kRowA];
+	    for (i = 0; i < kRowA; i++) {
+	    	c_minus.add(1.0);
+	    	c_minus_data[i] = 1.0;
+	    }
+	    Vector<Double> c_assign = new Vector<Double>(kRowA);
+	    double c_assign_data[] = new double[kRowA];
+	    for (i = 0; i < kRowA; i++) {
+	    	c_assign.add(1.0);
+	    	c_assign_data[i] = 1.0;
+	    }
+	    
+	    Vector<Double> c_plus_ref = new Vector<Double>(kRowA);
+	    for (i = 0; i < kRowA; i++) {
+	    	c_plus_ref.add(1.0);
+	    }
+	    Vector<Double> c_minus_ref = new Vector<Double>(kRowA);
+	    for (i = 0; i < kRowA; i++) {
+	    	c_minus_ref.add(1.0);
+	    }
+	    Vector<Double> c_assign_ref = new Vector<Double>(kRowA);
+	    for (i = 0; i < kRowA; i++) {
+	    	c_assign_ref.add(1.0);
+	    }
+
+        double Ab[] = new double[kRowA];
+        for (r = 0; r < kRowA; r++) {
+        	for (col = 0; col < kColA; col++) {
+        		Ab[r] += A.get(r,col) * b.get(col);
+        	}
+        }
+        
+        for (r = 0; r < kRowA; r++) {
+        	c_plus_ref.set(r, c_plus_ref.get(r) + Ab[r]);
+        }
+	  
+	    MatrixVectorMultiply(kRowA, kColA, 1, Adata, 0, kRowA, kColA,
+	                                          bdata, 0,
+	                                          c_plus_data, 0);
+	    normSquared = 0.0;
+	    for (i = 0; i < kRowA; i++) {
+	    	diff = c_plus_ref.get(i) - c_plus_data[i];
+	    	normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	passed = false;
+	    	System.err.println("In TESTMatrixVectorMultiply c += A * b");
+	    }
+
+	    for (r = 0; r < kRowA; r++) {
+        	c_minus_ref.set(r, c_minus_ref.get(r) - Ab[r]);
+        }
+	    MatrixVectorMultiply(kRowA, kColA, -1, Adata, 0, kRowA, kColA,
+	                                                   bdata, 0,
+	                                                   c_minus_data, 0);
+	    normSquared = 0.0;
+	    for (i = 0; i < kRowA; i++) {
+	    	diff = c_minus_ref.get(i) - c_minus_data[i];
+	    	normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	passed = false;
+	    	System.err.println("In TESTMatrixVectorMultiply c -= A * b");
+	    }
+	    
+	    for (r = 0; r < kRowA; r++) {
+        	c_assign_ref.set(r, Ab[r]);
+        }
+	  
+	    MatrixVectorMultiply(kRowA, kColA, 0, Adata, 0, kRowA, kColA,
+	                                                    bdata, 0,
+	                                                    c_assign_data, 0);
+	    normSquared = 0.0;
+	    for (i = 0; i < kRowA; i++) {
+	    	diff = c_assign_ref.get(i) - c_assign_data[i];
+	    	normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	passed = false;
+	    	System.err.println("In TESTMatrixVectorMultiply c = A * b");
+	    }
+	    
+	    if (passed) {
+	    	System.out.println("TESTMatrixVectorMultiply passed all tests");
+	    }
+	  }
+
+	  public void TESTMatrixTransposeVectorMultiply() {
+		  // TESTMatrixTransposeVectorMultiply passed all tests.
+		  final double kTolerance = 3.0 * epsilon;
+			boolean passed = true;
+			int i, r, col, index;
+			double normSquared;
+			double diff;
+			double norm;
+	    final int kRowA = 5;
+	    final int kColA = 3;
+	    RandomNumberGen ran = new RandomNumberGen();
+	    Matrix A = new Matrix(kRowA, kColA);
+	    double Adata[] = new double[kRowA * kColA];
+	    for (r = 0; r < kRowA; r++) {
+	    	for (col = 0; col < kColA; col++) {
+	    		index = r * kColA + col;
+	    		A.set(r, col, ran.genGaussianRandomNum(-1.0,1.0));
+	    		Adata[index] = A.get(r, col);
+	    	}
+	    }
+
+	    Vector<Double> b = new Vector<Double>(kRowA);
+	    double bdata[] = new double[kRowA];
+	    for (i = 0; i < kRowA; i++) {
+	    	b.add(ran.genGaussianRandomNum(-1.0,1.0));
+	    	bdata[i] = b.get(i);
+	    }
+
+	    Vector<Double> c = new Vector<Double>(kColA);
+	    for (i = 0; i < kColA; i++) {
+	    	c.add(1.0);
+	    }
+	    
+	    Vector<Double> c_plus = new Vector<Double>(kColA);
+	    double c_plus_data[] = new double[kColA];
+	    for (i = 0; i < kColA; i++) {
+	    	c_plus.add(1.0);
+	    	c_plus_data[i] = 1.0;
+	    }
+	    Vector<Double> c_minus = new Vector<Double>(kColA);
+	    double c_minus_data[] = new double[kColA];
+	    for (i = 0; i < kColA; i++) {
+	    	c_minus.add(1.0);
+	    	c_minus_data[i] = 1.0;
+	    }
+	    Vector<Double> c_assign = new Vector<Double>(kColA);
+	    double c_assign_data[] = new double[kColA];
+	    for (i = 0; i < kColA; i++) {
+	    	c_assign.add(1.0);
+	    	c_assign_data[i] = 1.0;
+	    }
+	    
+	    Vector<Double> c_plus_ref = new Vector<Double>(kColA);
+	    for (i = 0; i < kColA; i++) {
+	    	c_plus_ref.add(1.0);
+	    }
+	    Vector<Double> c_minus_ref = new Vector<Double>(kColA);
+	    for (i = 0; i < kColA; i++) {
+	    	c_minus_ref.add(1.0);
+	    }
+	    Vector<Double> c_assign_ref = new Vector<Double>(kColA);
+	    for (i = 0; i < kColA; i++) {
+	    	c_assign_ref.add(1.0);
+	    }
+
+	    Matrix At = A.transpose();
+	    double Atb[] = new double[kColA];
+        for (r = 0; r < kColA; r++) {
+        	for (col = 0; col < kRowA; col++) {
+        		Atb[r] += At.get(r,col) * b.get(col);
+        	}
+        }
+
+        for (r = 0; r < kColA; r++) {
+        	c_plus_ref.set(r, c_plus_ref.get(r) + Atb[r]);
+        }
+       
+	    MatrixTransposeVectorMultiply(kRowA, kColA, 1, Adata, 0, kRowA, kColA,
+	                                                   bdata, 0,
+	                                                   c_plus_data, 0);
+	    
+	    normSquared = 0.0;
+	    for (i = 0; i < kColA; i++) {
+	    	diff = c_plus_ref.get(i) - c_plus_data[i];
+	    	normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	passed = false;
+	    	System.err.println("In TESTMatrixTransposeVectorMultiply c += A' * b");
+	    }
+
+	    for (r = 0; r < kColA; r++) {
+        	c_minus_ref.set(r, c_minus_ref.get(r) - Atb[r]);
+        }
+	   
+	    MatrixTransposeVectorMultiply(kRowA, kColA, -1, Adata, 0, kRowA, kColA,
+	                                                    bdata, 0,
+	                                                    c_minus_data, 0);
+	    
+	    normSquared = 0.0;
+	    for (i = 0; i < kColA; i++) {
+	    	diff = c_minus_ref.get(i) - c_minus_data[i];
+	    	normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	passed = false;
+	    	System.err.println("In TESTMatrixTransposeVectorMultiply c -= A' * b");
+	    }
+	    
+
+	    for (r = 0; r < kColA; r++) {
+        	c_assign_ref.set(r, Atb[r]);
+        }
+	    
+	    MatrixTransposeVectorMultiply(kRowA, kColA, 0, Adata, 0, kRowA, kColA,
+	                                                    bdata, 0,
+	                                                    c_assign_data, 0);
+	    
+	    normSquared = 0.0;
+	    for (i = 0; i < kColA; i++) {
+	    	diff = c_assign_ref.get(i) - c_assign_data[i];
+	    	normSquared += (diff * diff);
+	    }
+	    norm = Math.sqrt(normSquared);
+	    if (norm > kTolerance) {
+	    	passed = false;
+	    	System.err.println("In TESTMatrixTransposeVectorMultiply c = A' * b");
+	    }
+	    
+	    if (passed) {
+	        System.out.println("TESTMatrixTransposeVectorMultiply passed all tests.");	
+	    }
+	  }
+
+	  
 	  public void SchurEliminatorTestScalarProblemNoRegularization() {
 		  SchurEliminatorTest SE = new SchurEliminatorTest();
 		  SE.SchurEliminatorTestScalarProblemNoRegularization();
@@ -2057,7 +2618,6 @@ public class CeresSolverTest extends CeresSolver {
 			   SetUpFromId(2);
 			   double zero[] = new double[A.num_cols()];
 			   String testName = "SchurEliminatorTestScalarProblemNoRegularization()";
-
 			   ComputeReferenceSolution(zero);
 			   EliminateSolveAndCompare(zero, true, 1e-14, testName);
 			   EliminateSolveAndCompare(zero, false, 1e-14, testName);
@@ -2093,6 +2653,7 @@ public class CeresSolverTest extends CeresSolver {
 		   public void ComputeReferenceSolution(double[] D) {
 			 int i,r,c,offset;
 		     Matrix J = A.ToDenseMatrix();
+		     
 		     //VectorRef f(b.get(), J.rows());
 		     double f[] = new double[J.getRowDimension()];
 		     for (i = 0; i < J.getRowDimension(); i++) {
@@ -2267,6 +2828,12 @@ public class CeresSolverTest extends CeresSolver {
 		    	 System.err.println("In " + testName + " use_static_structure = " + use_static_structure + " delta_norm/lhs_expected_norm > relative_tolerance");
 		    	 System.err.println("delta_norm = " + delta_norm);
 		    	 System.err.println("lhs_expected_norm = " + lhs_expected_norm);
+		    	 for (row = 0; row < lhs_expected.getRowDimension(); row++) {
+		    		 for (col = 0; col < lhs_expected.getColumnDimension(); col++) {
+		    			 System.err.println("row = " + row + " col = " + col + " expected = " + lhs_expected.getArray()[row][col] +
+		    					 " ref = " + lhs_ref.getArray()[row][col]);
+		    		 }
+		    	 }
 		    	 passed = false;
 		     }
 		     normSquared = 0.0;
