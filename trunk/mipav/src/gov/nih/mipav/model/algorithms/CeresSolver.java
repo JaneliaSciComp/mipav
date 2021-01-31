@@ -6496,7 +6496,7 @@ public abstract class CeresSolver {
 		        			ss= 0.0;
 		        	 }
 		        	 for (j = 0; j < Math.min(m,n); j++) {
-		        		 U[i][j] = ss * U[i][j];
+		        		 U[j][i] = ss * U[j][i];
 		        	 } 
 		         }
 		         double alpha = 1.0;
