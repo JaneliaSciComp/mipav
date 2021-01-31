@@ -6456,7 +6456,7 @@ public abstract class CeresSolver {
 	                	return null;
 	                }
 	                for (row = 0; row < n; row++) {
-	                	for (col = row+1; col < n; col++) {
+	                	for (col = 0; col < row; col++) {
 	                	    arrin[row][col] = arrin[col][row];
 	                	}
 	                }
