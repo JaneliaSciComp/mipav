@@ -2592,6 +2592,201 @@ public class CeresSolverTest extends CeresSolver {
 	        System.out.println("TESTMatrixTransposeVectorMultiply passed all tests.");	
 	    }
 	  }
+	  
+	  // RandOrthMat ported from MATLAB code with no license
+	  // Ofek Shilon (2021). RandOrthMat (https://www.mathworks.com/matlabcentral/fileexchange/11783-randorthmat),
+	  // MATLAB Central File Exchange. Retrieved January 31, 2021. 
+	  public Matrix RandOrthMat(int n, double tol) {
+		      int i, j;
+		      double normSquared;
+		      double norm;
+		      double nrm;
+			  // M = RANDORTHMAT(n)
+			  // generates a random n x n orthogonal real matrix.
+			  
+			  // M = RANDORTHMAT(n,tol)
+			  // explicitly specifies a thresh value that measures linear dependence
+			  // of a newly formed column with the existing columns. Defaults to 1e-6.
+			  
+			  // In this version the generated matrix distribution *is* uniform over the manifold
+			  // O(n) w.r.t. the induced R^(n^2) Lebesgue measure, at a slight computational 
+			  // overhead (randn + normalization, as opposed to rand ). 
+			  
+			  // (c) Ofek Shilon , 2006.
+
+
+			      //if nargin==1
+			  	  //tol=1e-6;
+			      //end
+			      
+			      Matrix M = new Matrix(n,n,0.0); // prealloc
+			      
+			      // gram-schmidt on random column vectors
+			      Random rand = new Random(System.currentTimeMillis());	
+			      
+			      double vi[] = new double[n];
+			      for (i = 0; i < n; i++) {
+			    	  vi[i] = rand.nextGaussian();
+			      }
+			      // the n-dimensional normal distribution has spherical symmetry, which implies
+			      // that after normalization the drawn vectors would be uniformly distributed on the
+			      // n-dimensional unit sphere.
+			      normSquared = 0.0;
+			      for (i = 0; i < n; i++) {
+			    	  normSquared += (vi[i] * vi[i]);
+			      }
+			      norm = Math.sqrt(normSquared);
+			      for (i = 0; i < n; i++) {
+			    	  M.set(i, 0, vi[i]/norm);  
+			      }
+			      Matrix vMat = new Matrix(n,1);
+                  
+			      
+			      for (i = 1; i < n; i++) {
+			  	  nrm = 0;
+			  	  while (nrm < tol) {
+			  		for (j = 0; j < n; j++) {
+				    	vi[j] = rand.nextGaussian();
+				    }
+			  		Matrix Mp = M.getMatrix(0, n-1, 0, i-1);
+			  		Matrix Mpt = Mp.transpose();
+			  		for (j = 0; j < n; j++) {
+			  			vMat.set(j, 0, vi[j]);
+			  		}
+			  		Matrix MV = Mpt.times(vMat);
+			  		Matrix MMV = Mp.times(MV);
+			  		vMat = vMat.minus(MMV);
+			  		normSquared = 0.0;
+			  		for (j = 0; j < n; j++) {
+			  			normSquared += (vMat.get(j,0) * vMat.get(j,0));
+			  		}
+			  		nrm = Math.sqrt(normSquared);
+			  	  } // While (nrm < tol)
+			  	  for (j = 0; j < n; j++) {
+			  		  M.set(j, i, vMat.get(j, 0)/nrm);
+			  	  }
+
+			      } // for (i = 1; i < n; i++)
+			      return M;
+			          
+	  }  // RandOrthMat
+	  
+	  public void TESTInvertPSDMatrixIdentity3x3() {
+		  // TESTInvertPSDMatrixIdentity3x3 passed
+		  int r,c;
+		  double normSquared;
+		  double diff;
+		  double norm;
+		  boolean kFullRank = true;
+		  final Matrix m = Matrix.identity(3, 3);
+		  double mnorm = Math.sqrt(3);
+		  double marr[][] = m.getArray();
+		  double inverse_marr[][] = InvertPSDMatrix(kFullRank, marr);
+		  normSquared = 0.0;
+		  for (r = 0; r < 3; r++) {
+			  for (c = 0; c < 3; c++) {
+				  diff = inverse_marr[r][c] - marr[r][c];
+				  normSquared += (diff * diff);
+			  }
+		  }
+		  norm = Math.sqrt(normSquared);
+		  if (norm/mnorm > epsilon) {
+			  System.err.println("TESTInvertPSDMatrixIdentity3x3 failed");
+		  }
+		  else {
+			  System.out.println("TESTInvertPSDMatrixIdentity3x3 passed");
+		  }
+		}
+	  
+	  public void TESTInvertPSDMatrixFullRank5x5() {
+		  // TESTInvertPSDMatrixFullRank5x5() passed
+		  boolean kFullRank = true;
+		  double normSquared;
+		  double norm;
+		  int r,c;
+		  int i;
+		  double eigenvalues[] = new double[5];
+		  RandomNumberGen rand = new RandomNumberGen();
+		  for (i = 0; i < 5; i++) {
+			  eigenvalues[i] = rand.genGaussianRandomNum(1.0E-6, 4.0);
+		  }
+		  Matrix randMat = RandOrthMat(5,1.0E-6);
+		  Matrix diagMat = new Matrix(5,5,0.0);
+		  for (i = 0; i < 5; i++) {
+			  diagMat.set(i, i, eigenvalues[i]);
+		  }
+		  Matrix fullRankMat = (randMat.times(diagMat)).times(randMat.transpose());
+		  double marr[][] = fullRankMat.getArray();
+		  double inverse_marr[][] = InvertPSDMatrix(kFullRank, marr);
+		  Matrix inverseMat = new Matrix(inverse_marr);
+		  Matrix prod = fullRankMat.times(inverseMat);
+		  Matrix identityMat = Matrix.identity(5,5);
+		  Matrix diffMat = prod.minus(identityMat);
+		  normSquared = 0.0;
+		  for (r = 0; r < 5; r++) {
+			  for (c = 0; c < 5; c++) {
+				  normSquared += (diffMat.get(r,c) * diffMat.get(r,c));
+			  }
+		  }
+		  norm = Math.sqrt(normSquared);
+		  if (norm/5.0 > epsilon) {
+			  System.err.println("TESTInvertPSDMatrixFullRank5x5() failed");  
+		  }
+		  else {
+			  System.out.println("TESTInvertPSDMatrixFullRank5x5() passed");
+		  }
+		}
+
+	  public void TESTInvertPSDMatrixRankDeficient5x5() {
+		  // TESTInvertPSDMatrixRankDeficient5x5() passed
+		  boolean kRankDeficient = false;
+		  double mnormSquared;
+		  double mnorm;
+		  double diffnormSquared;
+		  double diffnorm;
+		  int r,c;
+		  int i;
+		  double eigenvalues[] = new double[5];
+		  RandomNumberGen rand = new RandomNumberGen();
+		  // eigenvalues[3] = 0;
+		  for (i = 0; i < 3; i++) {
+			  eigenvalues[i] = rand.genGaussianRandomNum(1.0E-6, 4.0);
+		  }
+		  eigenvalues[4] = rand.genGaussianRandomNum(1.0E-6, 4.0);
+		  Matrix randMat = RandOrthMat(5,1.0E-6);
+		  Matrix diagMat = new Matrix(5,5,0.0);
+		  for (i = 0; i < 5; i++) {
+			  diagMat.set(i, i, eigenvalues[i]);
+		  }
+		  Matrix singularMat = (randMat.times(diagMat)).times(randMat.transpose());
+		  double marr[][] = singularMat.getArray();
+		  double inverse_marr[][] = InvertPSDMatrix(kRankDeficient, marr);
+		  Matrix inverseMat = new Matrix(inverse_marr);
+		  Matrix prod = (singularMat.times(inverseMat)).times(singularMat);
+          Matrix diffMat = prod.minus(singularMat);
+		  mnormSquared = 0.0;
+		  diffnormSquared = 0.0;
+		  for (r = 0; r < 5; r++) {
+			  for (c = 0; c < 5; c++) {
+				  mnormSquared += (singularMat.get(r,c) * singularMat.get(r,c));
+				  diffnormSquared += (diffMat.get(r,c) * diffMat.get(r,c));
+			  }
+		  }
+		  mnorm = Math.sqrt(mnormSquared); 
+		  diffnorm = Math.sqrt(diffnormSquared);
+		  if (diffnorm/mnorm > 10.0 * epsilon) {
+			  System.err.println("TESTInvertPSDMatrixRankDeficient5x5() failed");
+			  System.err.println("diffnorm = " + diffnorm);
+			  System.err.println("mnorm = " + mnorm);
+		  }
+		  else {
+			  System.out.println("TESTInvertPSDMatrixRankDeficient5x5() passed");
+		  }
+		  //Matrix pseudo_identity = Matrix::Identity(5, 5);
+		  //pseudo_identity(3, 3) = 0.0;
+		}
+
+			      
 
 	  
 	  public void SchurEliminatorTestScalarProblemNoRegularization() {
