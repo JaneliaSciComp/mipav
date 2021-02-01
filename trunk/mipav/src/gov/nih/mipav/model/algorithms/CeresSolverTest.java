@@ -2786,7 +2786,491 @@ public class CeresSolverTest extends CeresSolver {
 		  //pseudo_identity(3, 3) = 0.0;
 		}
 
-			      
+	  public void OrderedGroupsEmptyOrderedGroupBehavesCorrectly() {
+		  // OrderedGroupsEmptyOrderedGroupBehavesCorrectly() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  if (ordering.NumGroups() != 0) {
+			  System.err.println("In OrderedGroupsEmptyOrderedGroupBehavesCorrectly() ordering.NumGroups() != 0");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 0) {
+			  System.err.println("In OrderedGroupsEmptyOrderedGroupBehavesCorrectly() ordering.NumElements() != 0");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 0) {
+			  System.err.println("In OrderedGroupsEmptyOrderedGroupBehavesCorrectly() ordering.GroupSize(1) != 0");
+			  passed = false;    
+		  }
+		  double x[] = new double[1];
+		  if (ordering.GroupId(x) != -1) {
+			  System.err.println("In OrderedGroupsEmptyOrderedGroupBehavesCorrectly() ordering.GroupId(x) != -1");
+			  passed = false;   
+		  }
+		  if (ordering.Remove(x)) {
+			  System.err.println("In OrderedGroupsEmptyOrderedGroupBehavesCorrectly() ordering.Remove(x) != true");
+			  passed = false;     
+		  }
+		  if (passed) {
+			  System.out.println("OrderedGroupsEmptyOrderedGroupBehavesCorrectly() passed all tests");
+		  }
+		}
+	  
+	  public void TESTOrderedGroupsEverythingInOneGroup() {
+		  // TESTOrderedGroupsEverythingInOneGroup() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  double x[][] = new double[3][1];
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 1);
+		  ordering.AddElementToGroup(x[2], 1);
+		  ordering.AddElementToGroup(x[0], 1);
+
+		  if (ordering.NumGroups() != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.NumGroups() != 1");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 3) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupSize(1) != 3");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(0) != 0) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupSize(0) != 0");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupId(x[0]) != 1");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupId(x[1]) != 1");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupId(x[2]) != 1");
+			  passed = false;      
+		  }
+
+		  ordering.Remove(x[0]);
+		  if (ordering.NumGroups() != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.NumGroups() != 1");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 2) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.NumElements() != 2");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 2) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupSize(1) != 2");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(0) != 0) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupSize(0) != 0");
+			  passed = false;    
+		  }
+
+		  if (ordering.GroupId(x[0]) != -1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupId(x[0]) != -1");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupId(x[1]) != 1");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 1) {
+			  System.err.println("In TESTOrderedGroupsEverythingInOneGroup() ordering.GroupId(x[2]) != 1");
+			  passed = false;      
+		  }
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsEverythingInOneGroup() passed all tests");
+		  }
+		}
+
+	  public void TESTOrderedGroupsStartInOneGroupAndThenSplit() {
+		  // TESTOrderedGroupsStartInOneGroupAndThenSplit() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  double x[][] = new double[3][1];
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 1);
+		  ordering.AddElementToGroup(x[2], 1);
+		  ordering.AddElementToGroup(x[0], 1);
+
+		  if (ordering.NumGroups() != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.NumGroups() != 1");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 3) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupSize(1) != 3");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(0) != 0) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupSize(0) != 0");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupId(x[0]) != 1");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupId(x[1]) != 1");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupId(x[2]) != 1");
+			  passed = false;      
+		  }
+		  
+
+		  ordering.AddElementToGroup(x[0], 5);
+		  if (ordering.NumGroups() != 2) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.NumGroups() != 2");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 2) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupSize(1) != 2");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(5) != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupSize(5) != 1");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(0) != 0) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupSize(0) != 0");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 5) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupId(x[0]) != 5");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupId(x[1]) != 1");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 1) {
+			  System.err.println("In TESTOrderedGroupsStartInOneGroupAndThenSplit() ordering.GroupId(x[2]) != 1");
+			  passed = false;      
+		  }
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsStartInOneGroupAndThenSplit() passed all tests");
+		  }
+		}
+     
+	  public void TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() {
+		  // TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  double x[][] = new double[3][1];
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 1);
+		  ordering.AddElementToGroup(x[2], 1);
+		  ordering.AddElementToGroup(x[0], 1);
+
+		  if (ordering.NumGroups() != 1) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.NumGroups() != 1");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 3) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupSize(1) != 3");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(0) != 0) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupSize(0) != 0");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 1) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupId(x[0]) != 1");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 1) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupId(x[1]) != 1");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 1) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupId(x[2]) != 1");
+			  passed = false;      
+		  }
+		  
+
+		  ordering.AddElementToGroup(x[0], 5);		  
+		  ordering.AddElementToGroup(x[1], 5);
+		  ordering.AddElementToGroup(x[2], 5);
+		  if (ordering.NumGroups() != 1) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.NumGroups() != 1");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 0) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupSize(1) != 0");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(5) != 3) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupSize(5) != 3");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(0) != 0) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupSize(0) != 0");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 5) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupId(x[0]) != 5");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 5) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupId(x[1]) != 5");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 5) {
+			  System.err.println("In TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() ordering.GroupId(x[2]) != 5");
+			  passed = false;      
+		  }
+
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsAddAndRemoveEveryThingFromOneGroup() passed all tests");
+		  }
+		} 
+	  
+	  public void TESTOrderedGroupsReverseOrdering() {
+		  // TESTOrderedGroupsReverseOrdering() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  double x[][] = new double[3][1];
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 2);
+		  ordering.AddElementToGroup(x[2], 2);
+		  
+		  if (ordering.NumGroups() != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.NumGroups() != 2");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 1) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupSize(1) != 1");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(2) != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupSize(2) != 2");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 1) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupId(x[0]) != 1");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupId(x[1]) != 2");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupId(x[2]) != 2");
+			  passed = false;      
+		  }
+
+		  ordering.Reverse();
+
+		  if (ordering.NumGroups() != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.NumGroups() != 2");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 3) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.NumElements() != 3");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(3) != 1) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupSize(3) != 1");
+			  passed = false;   
+		  }
+		  if (ordering.GroupSize(2) != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupSize(2) != 2");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[0]) != 3) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupId(x[0]) != 3");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[1]) != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupId(x[1]) != 2");
+			  passed = false;      
+		  }
+		  if (ordering.GroupId(x[2]) != 2) {
+			  System.err.println("In TESTOrderedGroupsReverseOrdering() ordering.GroupId(x[2]) != 2");
+			  passed = false;      
+		  }
+		  
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsReverseOrdering() passed all tests");
+		  }
+		}
+	  
+	  public void TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() {
+		  // TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  // This should be a no-op.
+		  ordering.Reverse();
+
+		  // Ensure the properties of an empty OrderedGroups still hold after Reverse().
+		  if (ordering.NumGroups() != 0) {
+			  System.err.println("In TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() ordering.NumGroups() != 0");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 0) {
+			  System.err.println("In TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() ordering.NumElements() != 0");
+			  passed = false;  
+		  }
+		  if (ordering.GroupSize(1) != 0) {
+			  System.err.println("In TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() ordering.GroupSize(1) != 0");
+			  passed = false;    
+		  }
+		  double x[] = new double[1];
+		  if (ordering.GroupId(x) != -1) {
+			  System.err.println("In TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() ordering.GroupId(x) != -1");
+			  passed = false;   
+		  }
+		  if (ordering.Remove(x)) {
+			  System.err.println("In TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() ordering.Remove(x) != true");
+			  passed = false;     
+		  }
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsReverseOrderingWithEmptyOrderedGroups() passed all tests");
+		  }
+		}
+
+	  public void TESTOrderedGroupsBulkRemove() {
+		  // TESTOrderedGroupsBulkRemove() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  double x[][] = new double[3][1];
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 2);
+		  ordering.AddElementToGroup(x[2], 2);
+		  
+		  Vector<double[]> elements_to_remove = new Vector<double[]>();
+		  elements_to_remove.add(x[0]);
+		  elements_to_remove.add(x[2]);
+
+		  if (ordering.Remove(elements_to_remove) != 2) {
+			  System.err.println("In TESTOrderedGroupsBulkRemove() ordering.Remove(elements_to_remove) != 2");
+			  passed = false;
+		  }
+		  if (ordering.NumElements() != 1) {
+			  System.err.println("In TESTOrderedGroupsBulkRemove() ordering.NumElements() != 1");
+			  passed = false;  
+		  }
+		  if (ordering.GroupId(x[0]) != -1) {
+			  System.err.println("In TESTOrderedGroupsBulkRemove() ordering.GroupId(x[0]) != -1");
+			  passed = false;   
+		  }
+		  if (ordering.GroupId(x[1]) != 2) {
+			  System.err.println("In TESTOrderedGroupsBulkRemove() ordering.GroupId(x[1]) != 2");
+			  passed = false;    
+		  }
+		  if (ordering.GroupId(x[2]) != -1) {
+			  System.err.println("In TESTOrderedGroupsBulkRemove() ordering.GroupId(x[2]) != -1");
+			  passed = false;   
+		  }
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsBulkRemove() passed all tests");
+		  }
+		}
+
+	  public void TESTOrderedGroupsBulkRemoveWithNoElements() {
+		  // TESTOrderedGroupsBulkRemoveWithNoElements() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+
+		  double x[][] = new double[3][1];
+		  Vector<double[]> elements_to_remove = new Vector<double[]>();
+		  elements_to_remove.add(x[0]);
+		  elements_to_remove.add(x[2]);
+
+		  if (ordering.Remove(elements_to_remove) != 0) {
+			  System.err.println("In TESTOrderedGroupsBulkRemoveWithNoElements() ordering.Remove(elements_to_remove) != 0");
+			  passed = false;
+		  }
+
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 2);
+		  ordering.AddElementToGroup(x[2], 2);
+
+		  elements_to_remove.clear();
+		  if (ordering.Remove(elements_to_remove) != 0) {
+			  System.err.println("In TESTOrderedGroupsBulkRemoveWithNoElements() ordering.Remove(elements_to_remove) != 0");
+			  passed = false;
+		  }
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsBulkRemoveWithNoElements() passed all tests");
+		  }
+		}
+
+	  public void TESTOrderedGroupsMinNonZeroGroup() {
+		  // TESTOrderedGroupsMinNonZeroGroup() passed all tests
+		  boolean passed = true;
+		  //ParameterBlockOrdering ordering;
+		  OrderedGroups<double[]> ordering = new OrderedGroups<double[]>();
+		  double x[][] = new double[3][1];
+		  ordering.AddElementToGroup(x[0], 1);
+		  ordering.AddElementToGroup(x[1], 1);
+		  ordering.AddElementToGroup(x[2], 2);
+		  
+
+		  if (ordering.MinNonZeroGroup() != 1) {
+			  System.err.println("In TESTOrderedGroupsMinNonZeroGroup() ordering.MinNonZeroGroup() != 1");
+			  passed = false;
+		  }
+		  ordering.Remove(x[0]);
+
+		  if (ordering.MinNonZeroGroup() != 1) {
+			  System.err.println("In TESTOrderedGroupsMinNonZeroGroup() ordering.MinNonZeroGroup() != 1");
+			  passed = false;
+		  }
+		  ordering.Remove(x[1]);
+
+		  if (ordering.MinNonZeroGroup() != 2) {
+			  System.err.println("In TESTOrderedGroupsMinNonZeroGroup() ordering.MinNonZeroGroup() != 2");
+			  passed = false;
+		  }
+		  ordering.Remove(x[2]);
+
+		  // No non-zero groups left.
+		  if (ordering.MinNonZeroGroup() != -1) {
+			  System.err.println("In TESTOrderedGroupsMinNonZeroGroup() ordering.MinNonZeroGroup() != -1");
+			  passed = false;  
+		  }
+		  
+		  if (passed) {
+			  System.out.println("TESTOrderedGroupsMinNonZeroGroup() passed all tests");
+		  }
+		}
 
 	  
 	  public void SchurEliminatorTestScalarProblemNoRegularization() {
