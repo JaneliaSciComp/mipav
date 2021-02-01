@@ -1123,6 +1123,277 @@ public class CeresSolverTest extends CeresSolver {
 	   
 	 }
    
+   public void DenseSparseMatrixTestRightMultiply() {
+	   // DenseSparseMatrixTestRightMultiply() passed all tests
+	   DenseSparseMatrixTest DSM = new DenseSparseMatrixTest();
+	   DSM.DenseSparseMatrixTestRightMultiply();
+   }
+   
+   public void DenseSparseMatrixTestLeftMultiply() {
+	   // DenseSparseMatrixTestLeftMultiply() passed all tests
+	   DenseSparseMatrixTest DSM = new DenseSparseMatrixTest();
+	   DSM.DenseSparseMatrixTestLeftMultiply();   
+   }
+   
+   public void DenseSparseMatrixTestColumnNorm() {
+	   // DenseSparseMatrixTestColumnNorm() passed all tests
+	   DenseSparseMatrixTest DSM = new DenseSparseMatrixTest();
+	   DSM.DenseSparseMatrixTestColumnNorm();      
+   }
+   
+   public void DenseSparseMatrixTestScale() {
+	   // DenseSparseMatrixTestScale() passed all tests
+	   DenseSparseMatrixTest DSM = new DenseSparseMatrixTest();
+	   DSM.DenseSparseMatrixTestScale();      
+   }
+   
+   public void DenseSparseMatrixTestToDenseMatrix() {
+	   // DenseSparseMatrixTestToDenseMatrix() passed all tests
+	   DenseSparseMatrixTest DSM = new DenseSparseMatrixTest();
+	   DSM.DenseSparseMatrixTestToDenseMatrix();   
+   }
+   
+   class DenseSparseMatrixTest {
+	private boolean passed;
+	private String test;
+	private int num_rows;
+	private int num_cols;
+
+	private TripletSparseMatrix tsm;
+	private DenseSparseMatrix dsm;
+	
+   public DenseSparseMatrixTest() {
+	   passed = true;
+   }
+   
+   public void SetUp() {
+	   LinearLeastSquaresProblem problem = 
+		        CreateLinearLeastSquaresProblemFromId(1);
+       if (problem == null) {
+    	   System.err.println("problem = null in DenseSparseMatrix SetUp");
+    	   passed = false;
+       }
+       
+       tsm = (TripletSparseMatrix)(problem.A);
+       dsm = new DenseSparseMatrix(tsm);
+
+       num_rows = tsm.num_rows();
+       num_cols = tsm.num_cols();
+
+   }
+   
+   public void CompareMatrices(SparseMatrix a, SparseMatrix b) {
+	   int j;
+	   double diff;
+	   double normSquared;
+	   double norm;
+	   if (a.num_rows() != b.num_rows()) {
+		   System.err.println("In " + test + " a.num_rows() != b.num_rows()");
+		   passed = false;
+	   }
+	   if (a.num_cols() != b.num_cols()) {
+		   System.err.println("In " + test + " a.num_cols() != b.num_cols()");
+		   passed = false;
+	   }
+
+	   int num_rows = a.num_rows();
+	   int num_cols = a.num_cols();
+
+	   for (int i = 0; i < num_cols; ++i) {
+	     double x[] = new double[num_cols];
+	     x[i] = 1.0;
+
+	     double y_a[] = new double[num_rows];
+	     double y_b[] = new double[num_rows];
+
+	     a.RightMultiply(x, y_a);
+	     b.RightMultiply(x, y_b);
+	     
+	     normSquared = 0.0;
+	     for (j = 0; j < num_rows; j++) {
+	    	 diff = y_a[j] - y_b[j];
+	    	 normSquared += (diff * diff);
+	     }
+         norm = Math.sqrt(normSquared);
+         if (norm != 0) {
+        	 System.err.println("In " + test + " (y_a - y_b).norm() != 0");
+        	 passed = false;
+         }
+	   } // for (int i = 0; i < num_cols; ++i)
+	 } // CompareMatrices
+   
+     public void DenseSparseMatrixTestRightMultiply() {
+       int j;
+  	   double diff;
+  	   double normSquared;
+  	   double norm;
+  	   test = "DenseSparseMatrixTestRightMultiply()";
+       SetUp();
+	   CompareMatrices(tsm, dsm);
+
+	   // Try with a not entirely zero vector to verify column interactions, which
+	   // could be masked by a subtle bug when using the elementary vectors.
+	   double a[] = new double[num_cols];
+	   for (int i = 0; i < num_cols; i++) {
+	     a[i] = i;
+	   }
+	   double b1[] = new double[num_rows];
+	   double b2[] = new double[num_rows];
+
+	   tsm.RightMultiply(a, b1);
+	   dsm.RightMultiply(a, b2);
+
+	   normSquared = 0.0;
+	     for (j = 0; j < num_rows; j++) {
+	    	 diff = b1[j] - b2[j];
+	    	 normSquared += (diff * diff);
+	     }
+       norm = Math.sqrt(normSquared);
+       if (norm != 0) {
+      	 System.err.println("In " + test + " (b1 - b2).norm() != 0");
+      	 passed = false;
+       }
+	   if (passed) {
+		   System.out.println("DenseSparseMatrixTestRightMultiply() passed all tests");
+	   }
+	 }
+     
+     public void DenseSparseMatrixTestLeftMultiply() {
+    	 int j;
+    	   double diff;
+    	   double normSquared;
+    	   double norm;
+    	   test = "DenseSparseMatrixTestLeftMultiply()";
+           SetUp();
+    	  for (int i = 0; i < num_rows; ++i) {
+    	    double a[] = new double[num_rows];
+    	    a[i] = 1.0;
+
+    	    double b1[] = new double[num_cols];
+    	    double b2[] = new double[num_cols];
+
+    	    tsm.LeftMultiply(a, b1);
+    	    dsm.LeftMultiply(a, b2);
+
+    	    normSquared = 0.0;
+   	     for (j = 0; j < num_cols; j++) {
+   	    	 diff = b1[j] - b2[j];
+   	    	 normSquared += (diff * diff);
+   	     }
+          norm = Math.sqrt(normSquared);
+          if (norm != 0) {
+         	 System.err.println("In " + test + " (b1 - b2).norm() != 0");
+         	 passed = false;
+          }
+    	  }
+
+    	  // Try with a not entirely zero vector to verify column interactions, which
+    	  // could be masked by a subtle bug when using the elementary vectors.
+    	  double a[] = new double[num_rows];
+    	  for (int i = 0; i < num_rows; i++) {
+    	    a[i] = i;
+    	  }
+    	  
+    	  double b1[] = new double[num_cols];
+  	    double b2[] = new double[num_cols];
+
+  	    tsm.LeftMultiply(a, b1);
+  	    dsm.LeftMultiply(a, b2);
+
+  	    normSquared = 0.0;
+ 	     for (j = 0; j < num_cols; j++) {
+ 	    	 diff = b1[j] - b2[j];
+ 	    	 normSquared += (diff * diff);
+ 	     }
+        norm = Math.sqrt(normSquared);
+        if (norm != 0) {
+       	 System.err.println("In " + test + " (b1 - b2).norm() != 0");
+       	 passed = false;
+        }
+    	  
+        if (passed) {
+        	System.out.println("DenseSparseMatrixTestLeftMultiply() passed all tests");
+        }
+    	} // public void DenseSparseMatrixTestLeftMultiply()
+     
+      public void DenseSparseMatrixTestColumnNorm() {
+    	  int j;
+   	   double diff;
+   	   double normSquared;
+   	   double norm;
+   	   test = "DenseSparseMatrixTestColumnNorm()";
+          SetUp();
+
+    	  double b1[] = new double[num_cols];
+    	  double b2[] = new double[num_cols];
+
+    	  tsm.SquaredColumnNorm(b1);
+    	  dsm.SquaredColumnNorm(b2);
+
+    	  normSquared = 0.0;
+  	     for (j = 0; j < num_cols; j++) {
+  	    	 diff = b1[j] - b2[j];
+  	    	 normSquared += (diff * diff);
+  	     }
+         norm = Math.sqrt(normSquared);
+         if (norm != 0) {
+        	 System.err.println("In " + test + " (b1 - b2).norm() != 0");
+        	 passed = false;
+         }
+     	  
+         if (passed) {
+         	System.out.println("DenseSparseMatrixTestColumnNorm() passed all tests");
+         }
+    	}
+
+      public void DenseSparseMatrixTestScale() {
+    	  test = "DenseSparseMatrixTestScale()";
+          SetUp();
+    	  double scale[] = new double[num_cols];
+    	  for (int i = 0; i < num_cols; ++i) {
+    	    scale[i] = i + 1;
+    	  }
+    	  tsm.ScaleColumns(scale);
+    	  dsm.ScaleColumns(scale);
+    	  CompareMatrices(tsm, dsm);
+    	  if (passed) {
+    		  System.out.println("DenseSparseMatrixTestScale() passed all tests");
+    	  }
+    	}
+      
+      public void DenseSparseMatrixTestToDenseMatrix() {
+    	  int r,c;
+    	  double diff;
+    	  double normSquared = 0.0;
+    	  double norm;
+    	  test = "DenseSparseMatrixToDenseMatrix()";
+          SetUp();
+    	  Matrix tsm_dense = tsm.ToDenseMatrix();
+    	  Matrix dsm_dense = dsm.ToDenseMatrix();
+    	  
+    	  normSquared = 0.0;
+    	  for (r = 0; r < tsm_dense.getRowDimension(); r++) {
+    		  for (c = 0; c < tsm_dense.getColumnDimension(); c++) {
+    			  diff = tsm_dense.get(r,c) - dsm_dense.get(r,c);
+    			  normSquared += (diff * diff);
+    		  }
+    	  }
+          norm = Math.sqrt(normSquared);
+          if (norm != 0) {
+        	  System.err.println("In " + test + " (tsm_dense - dsm_dense).norm() != 0.0");
+        	  passed = false;
+          }
+    	  
+    	  if (passed) {
+    		  System.out.println("DenseSparseMatrixTestToDenseMatrix() passed all tests");
+    	  }
+    	}
+
+
+
+   } // class DenseSparseMatrixTest
+
+   
    public void BlockJacobiPreconditionerTestSmallProblem() {
 	   // In BlockJacobiPreconditionerTest problem_id = 2 passed all tests
 		BlockJacobiPreconditionerTest BJP = new BlockJacobiPreconditionerTest();
