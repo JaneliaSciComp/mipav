@@ -17851,6 +17851,8 @@ public abstract class CeresSolver {
 	} // class ProblemImpl
 
 	class OrderedGroups<T> {
+		// Use only double[] of single length as T.
+		// Use structures like double x[][] = new double[3][1]
 		private HashMap<Integer, Set<T>> group_to_elements_;
 		private HashMap<T, Integer> element_to_group_;
 
@@ -17881,9 +17883,11 @@ public abstract class CeresSolver {
 					return true;
 				}
 
-				group_to_elements_.get(group).remove(element);
-				if (group_to_elements_.get(group).size() == 0) {
-					group_to_elements_.remove(group);
+				if (group_to_elements_.containsKey(value_element_to_group)) {
+					group_to_elements_.get(value_element_to_group).remove(element);
+					if (group_to_elements_.get(value_element_to_group).size() == 0) {
+						group_to_elements_.remove(value_element_to_group);
+					}
 				}
 			}
 			element_to_group_.put(element, group);
