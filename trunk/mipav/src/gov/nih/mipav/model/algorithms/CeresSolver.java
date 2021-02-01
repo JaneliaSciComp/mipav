@@ -17909,6 +17909,17 @@ public abstract class CeresSolver {
 			}
 			return ((Integer) group_to_elements_.keySet().toArray()[0]).intValue();
 		}
+		
+		  // This function always succeeds, i.e., implicitly there exists a
+		  // group for every integer.
+		  public int GroupSize(int group) {
+			  if (!group_to_elements_.containsKey(group)) {
+				  return 0;
+			  }
+			  else {
+				  return group_to_elements_.get(group).size();
+			  }
+		  }
 
 		// Return the group id for the element. If the element is not a
 		// member of any group, return -1.
