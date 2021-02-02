@@ -17659,6 +17659,11 @@ public abstract class CeresSolver {
 				context_impl = context;
 			}
 		}
+		
+		public void AddParameterBlock(double[] values, int size) {
+			  InternalAddParameterBlock(values, size);
+		}
+
 
 		public void AddParameterBlock(double[] values, int size, LocalParameterization local_parameterization) {
 			ParameterBlock parameter_block = InternalAddParameterBlock(values, size);
