@@ -2035,6 +2035,30 @@ public abstract class CeresSolver {
 
 		return graph;
 	}
+	
+	public int ComputeSchurOrdering(Program program,
+            Vector<ParameterBlock> ordering) {
+		if (ordering == null) {
+			System.err.println("Vector<ParameterBlock> ordering == null in ComputeSchurOrdering");
+			return -1;
+		}
+		ordering.clear();
+		
+		Graph<ParameterBlock> graph = CreateHessianGraph(program);
+		int independent_set_size = IndependentSetOrdering(graph, ordering);
+		final Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+		
+		// Add the excluded blocks to back of the ordering vector.
+		for (int i = 0; i < parameter_blocks.size(); ++i) {
+		ParameterBlock parameter_block = parameter_blocks.get(i);
+		if (parameter_block.IsConstant()) {
+		ordering.add(parameter_block);
+		}
+		}
+		
+		return independent_set_size;
+		}
+
 
 	public int ComputeStableSchurOrdering(Program program, Vector<ParameterBlock> ordering) {
 		if (ordering == null) {
