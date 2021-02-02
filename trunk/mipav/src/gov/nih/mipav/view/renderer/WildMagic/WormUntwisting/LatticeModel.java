@@ -9431,6 +9431,10 @@ public class LatticeModel {
 			contourImage.disposeLocal(false);
 			contourImage = null;
 		}
+		if ( insideImage != null ) {
+			insideImage.disposeLocal(false);
+			insideImage = null;
+		}
 		
 		
 		System.err.println( "TEST 2021: untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
