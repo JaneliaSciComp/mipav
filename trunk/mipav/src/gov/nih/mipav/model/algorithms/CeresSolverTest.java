@@ -1392,7 +1392,265 @@ public class CeresSolverTest extends CeresSolver {
 
 
    } // class DenseSparseMatrixTest
+   
+   public void SchurOrderingTestNoFixed() {
+	   // SchurOrderingTestNoFixed passed all tests
+	   SchurOrderingTest SOT = new SchurOrderingTest();
+	   SOT.SchurOrderingTestNoFixed();
+   }
+   
+   public void SchurOrderingTestAllFixed() {
+	   // SchurOrderingTestAllFixed() passed all tests
+	   SchurOrderingTest SOT = new SchurOrderingTest();
+	   SOT.SchurOrderingTestAllFixed();
+   }
+   
+   public void SchurOrderingTestOneFixed() {
+	   // SchurOrderingTestOneFixed passed all tests
+	   SchurOrderingTest SOT = new SchurOrderingTest();
+	   SOT.SchurOrderingTestOneFixed();   
+   }
+   
+   class DummyCostFunction extends SizedCostFunction {
+	   public DummyCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7,
+				int N8, int N9, int num_residuals) {
+		   super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, num_residuals);
+	   }
+	   public DummyCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7,
+				int N8, int N9) {
+		   super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9);
+	   }
+	   public boolean Evaluate(Vector<double[]> parameters,
+	                         double[] residuals,
+	                         double[][] jacobians) {
+	     return true;
+	   }
+	 };
+	 
+	 class SchurOrderingTest {
+		 private ProblemImpl problem_ = new ProblemImpl();
+		 private double x_[] = new double[3];
+		 private double y_[] = new double[4];
+		 private double z_[] = new double[5];
+		 private double w_[] = new double[6];
+		 private boolean passed;
+		 
+		 public SchurOrderingTest() {
+			 
+		 }
+		 
+		 public void SetUp() {
+			    // The explicit calls to AddParameterBlock are necessary because
+			    // the below tests depend on the specific numbering of the
+			    // parameter blocks.
+			    problem_.AddParameterBlock(x_, 3);
+			    problem_.AddParameterBlock(y_, 4);
+			    problem_.AddParameterBlock(z_, 5);
+			    problem_.AddParameterBlock(w_, 6);
 
+			    problem_.AddResidualBlock(new DummyCostFunction(2, 3,0,0,0,0,0,0,0,0,0), null, x_);
+			    problem_.AddResidualBlock(new DummyCostFunction(6, 5, 4,0,0,0,0,0,0,0,0), null, z_, y_);
+			    problem_.AddResidualBlock(new DummyCostFunction(3, 3, 5,0,0,0,0,0,0,0,0), null, x_, z_);
+			    problem_.AddResidualBlock(new DummyCostFunction(7, 5, 3,0,0,0,0,0,0,0,0), null, z_, x_);
+			    problem_.AddResidualBlock(new DummyCostFunction(1, 5, 3, 6,0,0,0,0,0,0,0), null,
+			                              z_, x_, w_);
+			  }
+		 
+		 public void SchurOrderingTestNoFixed() {
+			  passed = true;
+			  SetUp();
+			  final Program program = problem_.program();
+			  final Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+			  Graph<ParameterBlock> graph = CreateHessianGraph(program);
+
+			  final HashSet<ParameterBlock> vertices = graph.vertices();
+			  if (vertices.size() != 4) {
+				  System.err.println("In SchurOrderingTestNoFixed vertices.size() != 4");
+				  passed = false;
+			  }
+
+			  for (int i = 0; i < 4; ++i) {
+			    if (!vertices.contains(parameter_blocks.get(i))) {
+			    	System.err.println("In SchurOrderingTestNoFixed vertices.contains(parameter_blocks.get("+i+")) = false");
+					passed = false;	
+			    }
+			  }
+
+			  {
+			    final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(0));
+			    if (neighbors.size() != 2) {
+			    	System.err.println("In SchurOrderingTestNoFixed neighbors.size() != 2");
+					passed = false;		
+			    }
+			    if (!neighbors.contains(parameter_blocks.get(2))) {
+			    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(2)) = false");
+					passed = false;	
+			    }
+			    if (!neighbors.contains(parameter_blocks.get(3))) {
+			    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(3)) = false");
+					passed = false;	
+			    }
+			  }
+
+			  {
+				  final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(1));
+				    if (neighbors.size() != 1) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.size() != 1");
+						passed = false;		
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(2))) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(2)) = false");
+						passed = false;	
+				    }
+			  }
+
+			  {
+				  final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(2));
+				    if (neighbors.size() != 3) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.size() != 3");
+						passed = false;		
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(0))) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(0)) = false");
+						passed = false;	
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(1))) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(1)) = false");
+						passed = false;	
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(3))) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(3)) = false");
+						passed = false;	
+				    }
+			  }
+
+			  {
+				  final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(3));
+				    if (neighbors.size() != 2) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.size() != 2");
+						passed = false;		
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(0))) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(0)) = false");
+						passed = false;	
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(2))) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.contains(parameter_blocks.get(2)) = false");
+						passed = false;	
+				    }
+			    
+			  }
+			  
+			  if (passed) {
+				  System.out.println("SchurOrderingTestNoFixed passed all tests");
+			  }
+			} // public void SchurOrderingTestNoFixed()
+
+		 public void SchurOrderingTestAllFixed() {
+			 passed = true;
+			  SetUp();
+			  problem_.SetParameterBlockConstant(x_);
+			  problem_.SetParameterBlockConstant(y_);
+			  problem_.SetParameterBlockConstant(z_);
+			  problem_.SetParameterBlockConstant(w_);
+
+			  final Program program = problem_.program();
+			  Graph<ParameterBlock> graph = CreateHessianGraph(program);
+			  if (graph.vertices().size() != 0) {
+				  System.err.println("In SchurOrderingTestAllFixed graph.vertices().size() != 0");
+					passed = false;	  
+			  }
+			  
+			  if (passed) {
+				  System.out.println("SchurOrderingTestAllFixed() passed all tests");
+			  }
+			}
+		 
+		 public void SchurOrderingTestOneFixed() {
+			 passed = true;
+			  SetUp();
+			  problem_.SetParameterBlockConstant(x_);
+			  
+			  final Program program = problem_.program();
+			  final Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+			  Graph<ParameterBlock> graph = CreateHessianGraph(program);
+
+			  final HashSet<ParameterBlock> vertices = graph.vertices();
+			  
+			  if (vertices.size() != 3) {
+				  System.err.println("In SchurOrderingTestOneFixed vertices.size() != 3");
+				  passed = false;
+			  }
+			  if (vertices.contains(parameter_blocks.get(0))) {
+				  System.err.println("In SchurOrderingTestOneFixed vertices.contains(parameter_blocks.get(0)) = true");
+				  passed = false;  
+			  }
+
+			  for (int i = 1; i < 3; ++i) {
+			    if (!vertices.contains(parameter_blocks.get(i))) {
+			    	System.err.println("In  SchurOrderingTestOneFixed vertices.contains(parameter_blocks.get("+i+")) = false");
+					passed = false;	
+			    }
+			  }
+
+			  {
+				  final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(1));
+				    if (neighbors.size() != 1) {
+				    	System.err.println("In SchurOrderingTestOneFixed neighbors.size() != 1");
+						passed = false;		
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(2))) {
+				    	System.err.println("In SchurOrderingTestOneFixed neighbors.contains(parameter_blocks.get(2)) = false");
+						passed = false;	
+				    }
+			  }
+
+			  {
+				  final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(2));
+				    if (neighbors.size() != 2) {
+				    	System.err.println("In SchurOrderingTestNoFixed neighbors.size() != 2");
+						passed = false;		
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(1))) {
+				    	System.err.println("In SchurOrderingTestOneFixed neighbors.contains(parameter_blocks.get(1)) = false");
+						passed = false;	
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(3))) {
+				    	System.err.println("In SchurOrderingTestOneFixed neighbors.contains(parameter_blocks.get(3)) = false");
+						passed = false;	
+				    }
+			  }
+
+			  {
+				  final HashSet<ParameterBlock> neighbors = graph.Neighbors(parameter_blocks.get(3));
+				    if (neighbors.size() != 1) {
+				    	System.err.println("In SchurOrderingTestOneFixed neighbors.size() != 1");
+						passed = false;		
+				    }
+				    if (!neighbors.contains(parameter_blocks.get(2))) {
+				    	System.err.println("In SchurOrderingTestOneFixed neighbors.contains(parameter_blocks.get(2)) = false");
+						passed = false;	
+				    }
+			  }
+
+			  // The constant parameter block is at the end.
+			  Vector<ParameterBlock> ordering = new Vector<ParameterBlock>();
+			  ComputeSchurOrdering(program, ordering);
+			  if (ordering.lastElement() != parameter_blocks.get(0)) {
+				  System.err.println("In SchurOrderingTestOneFixed ordering.lastElement() != parameter_blocks.get(0)");
+					passed = false;	  
+			  }
+			  
+			  if (passed) {
+				  System.out.println("SchurOrderingTestOneFixed passed all tests");
+			  }
+			}
+
+
+	 
+	 }
+
+ 
    
    public void BlockJacobiPreconditionerTestSmallProblem() {
 	   // In BlockJacobiPreconditionerTest problem_id = 2 passed all tests
