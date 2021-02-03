@@ -1393,6 +1393,177 @@ public class CeresSolverTest extends CeresSolver {
 
    } // class DenseSparseMatrixTest
    
+   class MockCostFunctionBase extends SizedCostFunction {
+	   public MockCostFunctionBase(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7,
+				int N8, int N9, int num_residuals) {
+		   super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, num_residuals);
+	   }
+	   public MockCostFunctionBase(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7,
+				int N8, int N9) {
+		   super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9);
+	   }
+	   public boolean Evaluate(Vector<double[]> parameters,
+	                         double[] residuals,
+	                         double[][] jacobians) {
+		 // Do nothing. This is never called.
+	     return true;
+	   }
+	 };
+	 
+	 public void TESTReorderResidualBlockNormalFunction() {
+		  boolean passed = true;
+		  ProblemImpl problem = new ProblemImpl();
+		  double x[] = new double[1];
+		  double y[] = new double[1];
+		  double z[] = new double[1];
+
+		  problem.AddParameterBlock(x, 1);
+		  problem.AddParameterBlock(y, 1);
+		  problem.AddParameterBlock(z, 1);
+
+		  problem.AddResidualBlock(new MockCostFunctionBase(2,1,0,0,0,0,0,0,0,0,0), null, x);
+		  problem.AddResidualBlock(new MockCostFunctionBase(2,1,1,0,0,0,0,0,0,0,0), null, z, x);
+		  problem.AddResidualBlock(new MockCostFunctionBase(2,1,1,0,0,0,0,0,0,0,0), null, z, y);
+		  problem.AddResidualBlock(new MockCostFunctionBase(2,1,0,0,0,0,0,0,0,0,0), null, z);
+		  problem.AddResidualBlock(new MockCostFunctionBase(2,1,1,0,0,0,0,0,0,0,0), null, x, y);
+		  problem.AddResidualBlock(new MockCostFunctionBase(2,1,0,0,0,0,0,0,0,0,0), null, y);
+
+		  OrderedGroups<double[]> linear_solver_ordering = new OrderedGroups<double[]>();
+		  linear_solver_ordering.AddElementToGroup(x, 0);
+		  linear_solver_ordering.AddElementToGroup(y, 0);
+		  linear_solver_ordering.AddElementToGroup(z, 1);
+
+		  SolverOptions options = new SolverOptions();
+		  options.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+		  options.linear_solver_ordering = linear_solver_ordering;
+
+		  Vector<ResidualBlock> residual_blocks =
+		      problem.program().residual_blocks();
+
+		  Vector<ResidualBlock> expected_residual_blocks = new Vector<ResidualBlock>();
+
+		  // This is a bit fragile, but it serves the purpose. We know the
+		  // bucketing algorithm that the reordering function uses, so we
+		  // expect the order for residual blocks for each e_block to be
+		  // filled in reverse.
+		  expected_residual_blocks.add(residual_blocks.get(4));
+		  expected_residual_blocks.add(residual_blocks.get(1));
+		  expected_residual_blocks.add(residual_blocks.get(0));
+		  expected_residual_blocks.add(residual_blocks.get(5));
+		  expected_residual_blocks.add(residual_blocks.get(2));
+		  expected_residual_blocks.add(residual_blocks.get(3));
+
+		  Program program = problem.mutable_program();
+		  program.SetParameterOffsetsAndIndex();
+
+		  String message[] = new String[1];
+		 if (!LexicographicallyOrderResidualBlocks(
+		                  2,
+		                  problem.mutable_program(),
+		                  message)) {
+			 System.err.println("In TESTReorderResidualBlockNormalFunction() LexicographicallyOrderResidualBlocks == false");
+			 passed = false;
+		 }
+		 
+		  if (residual_blocks.size() != expected_residual_blocks.size()) {
+			  System.err.println("In TESTReorderResidualBlockNormalFunction() residual_blocks.size() != expected_residual_blocks.size()");
+				 passed = false;  
+		  }
+		  for (int i = 0; i < expected_residual_blocks.size(); ++i) {
+		       if (residual_blocks.get(i) != expected_residual_blocks.get(i)) {
+		    	   System.err.println("In TESTReorderResidualBlockNormalFunction() residual_blocks.get("+i+") != expected_residual_blocks.get("+i+")");
+					 passed = false;    
+		       }
+		  }
+		  if (passed) {
+			  System.out.println("TESTReorderResidualBlockNormalFunction() passed all tests");
+		  }
+		}
+
+		public void TESTApplyOrderingOrderingTooSmall() {
+		  // TESTApplyOrderingOrderingTooSmall() passed all tests
+		  boolean passed = true;
+		  ProblemImpl problem = new ProblemImpl();
+		  double x[] = new double[1];
+		  double y[] = new double[1];
+		  double z[] = new double[1];
+
+		  problem.AddParameterBlock(x, 1);
+		  problem.AddParameterBlock(y, 1);
+		  problem.AddParameterBlock(z, 1);
+
+		  OrderedGroups<double[]> linear_solver_ordering = new OrderedGroups<double[]>();
+		  linear_solver_ordering.AddElementToGroup(x, 0);
+		  linear_solver_ordering.AddElementToGroup(y, 1);
+
+		  Program program = problem.program();
+		  String message[] = new String[1];
+		  if (ApplyOrdering(problem.parameter_map(),
+		                             linear_solver_ordering,
+		                             program,
+		                             message)) {
+			  System.err.println("In TESTApplyOrderingOrderingTooSmall() ApplyOrdering == true");
+			  passed = false;
+		  }
+		  
+		  if (passed) {
+			  System.out.println("TESTApplyOrderingOrderingTooSmall() passed all tests");
+		  }
+		}
+		
+		public void TESTApplyOrderingNormal() {
+			// TESTApplyOrderingNormal() passed all tests
+			boolean passed = true;
+			  ProblemImpl problem = new ProblemImpl();
+			  double x[] = new double[1];
+			  double y[] = new double[1];
+			  double z[] = new double[1];
+
+			  problem.AddParameterBlock(x, 1);
+			  problem.AddParameterBlock(y, 1);
+			  problem.AddParameterBlock(z, 1);
+
+			  OrderedGroups<double[]> linear_solver_ordering = new OrderedGroups<double[]>();
+			  linear_solver_ordering.AddElementToGroup(x, 0);
+			  linear_solver_ordering.AddElementToGroup(y, 2);
+			  linear_solver_ordering.AddElementToGroup(z, 1);
+
+			  Program program = problem.mutable_program();
+			  String message[] = new String[1];
+			  
+			  if (!ApplyOrdering(problem.parameter_map(),
+                      linear_solver_ordering,
+                      program,
+                      message)) {
+				 System.err.println("In TESTApplyOrderingNormal() ApplyOrdering == false");
+				 passed = false;
+			 }
+
+			  final Vector<ParameterBlock> parameter_blocks = program.parameter_blocks();
+
+			  if (parameter_blocks.size() != 3) {
+				  System.err.println("In TESTApplyOrderingNormal() parameter_blocks.size() != 3");
+				  passed = false;  
+			  }
+			  if (parameter_blocks.get(0).user_state() != x) {
+				  System.err.println("In TESTApplyOrderingNormal() parameter_blocks.get(0).user_state() != x");
+				  passed = false;  
+			  }
+			  if (parameter_blocks.get(1).user_state() != z) {
+				  System.err.println("In TESTApplyOrderingNormal() parameter_blocks.get(1).user_state() != z");
+				  passed = false;  
+			  }
+			  if (parameter_blocks.get(2).user_state() != y) {
+				  System.err.println("In TESTApplyOrderingNormal() parameter_blocks.get(2).user_state() != y");
+				  passed = false;  
+			  }
+			  if (passed) {
+				  System.out.println("TESTApplyOrderingNormal() passed all tests");
+			  }
+			}
+
+
+   
    public void SchurOrderingTestNoFixed() {
 	   // SchurOrderingTestNoFixed passed all tests
 	   SchurOrderingTest SOT = new SchurOrderingTest();
