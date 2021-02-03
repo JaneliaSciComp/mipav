@@ -1753,7 +1753,8 @@ public abstract class CeresSolver {
 		}
 
 		// Now that the residuals are collected by E block, swap them in place.
-		swap(program.mutable_residual_blocks(), reordered_residual_blocks);
+		program.mutable_residual_blocks().clear();
+		program.mutable_residual_blocks().addAll(reordered_residual_blocks);
 		return true;
 	}
 
