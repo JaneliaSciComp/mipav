@@ -1411,6 +1411,7 @@ public class CeresSolverTest extends CeresSolver {
 	 };
 	 
 	 public void TESTReorderResidualBlockNormalFunction() {
+		  // TESTReorderResidualBlockNormalFunction() passed all tests
 		  boolean passed = true;
 		  ProblemImpl problem = new ProblemImpl();
 		  double x[] = new double[1];
@@ -1559,6 +1560,590 @@ public class CeresSolverTest extends CeresSolver {
 			  }
 			  if (passed) {
 				  System.out.println("TESTApplyOrderingNormal() passed all tests");
+			  }
+			}
+
+		public void TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() {
+			  // TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() passed all tests
+			  boolean passed = true;
+			  TripletSparseMatrix m = new TripletSparseMatrix();
+			  if (m.num_rows() != 0) {
+				  System.err.println("In TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() m.num_rows() != 0");
+				  passed = false;
+			  }
+			  if (m.num_cols() != 0) {
+				  System.err.println("In TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() m.num_cols() != 0");
+				  passed = false;  
+			  }
+			  if (m.num_nonzeros() != 0) {
+				  System.err.println("In TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() m.num_nonzeros() != 0");
+				  passed = false;    
+			  }
+			  if (m.max_num_nonzeros() != 0) {
+				  System.err.println("In TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() m.max_num_nonzeros() != 0");
+				  passed = false;      
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixDefaultConstructorReturnsEmptyObject() passed all tests");
+			  }
+			}
+
+		public void TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() {
+			  // TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() passed all tests
+			  boolean passed = true;
+			  // Build a matrix
+			  TripletSparseMatrix m = new TripletSparseMatrix(2, 5, 4);
+			  if (m.num_rows() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.num_rows() != 2");
+				  passed = false;
+			  }
+			  if (m.num_cols() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.num_cols() != 5");
+				  passed = false;  
+			  }
+			  if (m.num_nonzeros() != 0) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.num_nonzeros() != 0");
+				  passed = false;   
+			  }
+			  if (m.max_num_nonzeros() != 4) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.max_num_nonzeros() != 4");
+				  passed = false;   	  
+			  }
+
+			  m.mutable_rows()[0] = 0;
+			  m.mutable_cols()[0] = 1;
+			  m.mutable_values()[0] = 2.5;
+
+			  m.mutable_rows()[1] = 1;
+			  m.mutable_cols()[1] = 4;
+			  m.mutable_values()[1] = 5.2;
+			  m.set_num_nonzeros(2);
+
+			  if (m.num_nonzeros() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.num_nonzeros() != 2");
+				  passed = false; 	  
+			  }
+
+			  if (!m.AllTripletsWithinBounds()) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.AllTripletsWithinBounds() = false");
+				  passed = false; 	  
+			  }
+
+			  // We should never be able resize and lose data
+			  m.Reserve(1);
+			  // Should see error message "Reallocation in Reserve will cause data loss"
+
+			  // We should be able to resize while preserving data
+			  m.Reserve(50);
+			  if (m.max_num_nonzeros() != 50) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.max_num_nonzeros() != 50");
+				  passed = false;  
+			  }
+
+			  m.Reserve(3);
+			  if (m.max_num_nonzeros() != 50) {
+				  // The space is already reserved.
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.max_num_nonzeros() != 50");
+				  passed = false; 
+			  }
+
+			  if (m.rows()[0] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.rows()[0] != 0");
+				  passed = false;  
+			  }
+			  if (m.rows()[1] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.rows()[1] != 1");
+				  passed = false;    
+			  }
+
+			  if (m.cols()[0] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.cols()[0] != 1");
+				  passed = false;    
+			  }
+			  if (m.cols()[1] != 4) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.cols()[1] != 4");
+				  passed = false;      
+			  }
+
+			  if (m.values()[0] != 2.5) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.values()[0] != 2.5");
+				  passed = false;  
+			  }
+			  if (m.values()[1] != 5.2) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.values()[1] != 5.2");
+				  passed = false;  
+			  }
+
+			  // Bounds check should fail
+			  m.mutable_rows()[0] = 10;
+			  if(m.AllTripletsWithinBounds()) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.AllTripletsWithinBounds() = true");
+				  passed = false;  	  
+			  }
+
+			  m.mutable_rows()[0] = 1;
+			  m.mutable_cols()[0] = 100;
+			  if(m.AllTripletsWithinBounds()) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.AllTripletsWithinBounds() = true");
+				  passed = false;  	  
+			  }
+
+			  // Remove all data and then resize the data store
+			  m.SetZero();
+			  if (m.num_nonzeros() != 0) {
+				  System.err.println("In TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() m.num_nonzeros() != 0");
+				  passed = false;   
+			  }
+			  m.Reserve(1);
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixSimpleConstructorAndBasicOperations() passed all tests");
+			  }
+			}
+		
+		public void TESTTripletSparseMatrixCopyConstructor() {
+			  // TESTTripletSparseMatrixCopyConstructor() passed all tests
+			  boolean passed = true;
+			  TripletSparseMatrix orig = new TripletSparseMatrix(2, 5, 4);
+			  orig.mutable_rows()[0] = 0;
+			  orig.mutable_cols()[0] = 1;
+			  orig.mutable_values()[0] = 2.5;
+
+			  orig.mutable_rows()[1] = 1;
+			  orig.mutable_cols()[1] = 4;
+			  orig.mutable_values()[1] = 5.2;
+			  orig.set_num_nonzeros(2);
+
+			  TripletSparseMatrix cpy = new TripletSparseMatrix(orig);
+
+			  if (cpy.num_rows() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.num_rows() != 2");
+				  passed = false;
+			  }
+			  if (cpy.num_cols() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.num_cols() != 5");
+				  passed = false;  
+			  }
+			  if (cpy.num_nonzeros() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.num_nonzeros() != 2");
+				  passed = false;   
+			  }
+			  if (cpy.max_num_nonzeros() != 4) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.max_num_nonzeros() != 4");
+				  passed = false;  
+			  }
+
+			  if (cpy.rows()[0] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.rows()[0] != 0");
+				  passed = false;    
+			  }
+			  if (cpy.rows()[1] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.rows()[1] != 1");
+				  passed = false;   
+			  }
+
+			  if (cpy.cols()[0]!= 1) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.cols()[0] != 1");
+				  passed = false; 
+			  }
+			  if (cpy.cols()[1] != 4) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.cols()[1] != 4");
+				  passed = false;	  
+			  }
+
+			  if (cpy.values()[0] != 2.5) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.values()[0] != 2.5");
+				  passed = false;
+			  }
+			  if (cpy.values()[1] != 5.2) {
+				  System.err.println("In TESTTripletSparseMatrixCopyConstructor() cpy.values()[1] != 5.2");
+				  passed = false;  
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixCopyConstructor() passed all tests");
+			  }
+			}
+		
+		public void TESTTripletSparseMatrixAssignmentOperator() {
+			  // TESTTripletSparseMatrixAssignmentOperator() passed all tests
+			  boolean passed = true;
+			  TripletSparseMatrix orig = new TripletSparseMatrix(2, 5, 4);
+			  orig.mutable_rows()[0] = 0;
+			  orig.mutable_cols()[0] = 1;
+			  orig.mutable_values()[0] = 2.5;
+
+			  orig.mutable_rows()[1] = 1;
+			  orig.mutable_cols()[1] = 4;
+			  orig.mutable_values()[1] = 5.2;
+			  orig.set_num_nonzeros(2);
+
+			  TripletSparseMatrix cpy = new TripletSparseMatrix(3, 50, 40);
+			  cpy.mutable_rows()[0] = 0;
+			  cpy.mutable_cols()[0] = 10;
+			  cpy.mutable_values()[0] = 10.22;
+
+			  cpy.mutable_rows()[1] = 2;
+			  cpy.mutable_cols()[1] = 23;
+			  cpy.mutable_values()[1] = 34.45;
+
+			  cpy.mutable_rows()[0] = 0;
+			  cpy.mutable_cols()[0] = 10;
+			  cpy.mutable_values()[0] = 10.22;
+
+			  cpy.mutable_rows()[1] = 0;
+			  cpy.mutable_cols()[1] = 3;
+			  cpy.mutable_values()[1] = 4.4;
+			  cpy.set_num_nonzeros(3);
+
+			  cpy = orig;
+
+			  if (cpy.num_rows() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.num_rows() != 2");
+				  passed = false;
+			  }
+			  if (cpy.num_cols() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.num_cols() != 5");
+				  passed = false;  
+			  }
+			  if (cpy.num_nonzeros() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.num_nonzeros() != 2");
+				  passed = false;  
+			  }
+			  if (cpy.max_num_nonzeros() != 4) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.max_num_nonzeros() != 4");
+				  passed = false;    
+			  }
+
+			  if (cpy.rows()[0] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.rows()[0] != 0");
+				  passed = false;     
+			  }
+			  if (cpy.rows()[1] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.rows()[1] != 1");
+				  passed = false;   
+			  }
+
+			  if (cpy.cols()[0] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.cols()[0] != 1");
+				  passed = false;   
+			  }
+			  if (cpy.cols()[1] != 4) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.cols()[1] != 4");
+				  passed = false;  
+			  }
+
+			  if (cpy.values()[0] != 2.5) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.values()[0] != 2.5");
+				  passed = false;
+			  }
+			  if (cpy.values()[1] != 5.2) {
+				  System.err.println("In TESTTripletSparseMatrixAssignmentOperator() cpy.values()[1] != 5.2");
+				  passed = false;	  
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixAssignmentOperator() passed all tests");
+			  }
+			}
+		
+		public void TESTTripletSparseMatrixAppendRows() {
+			  // TESTTripletSparseMatrixAppendRows() passed all tests
+			  boolean passed = true;
+			  // Build one matrix.
+			  TripletSparseMatrix m = new TripletSparseMatrix(2, 5, 4);
+			  m.mutable_rows()[0] = 0;
+			  m.mutable_cols()[0] = 1;
+			  m.mutable_values()[0] = 2.5;
+
+			  m.mutable_rows()[1] = 1;
+			  m.mutable_cols()[1] = 4;
+			  m.mutable_values()[1] = 5.2;
+			  m.set_num_nonzeros(2);
+
+			  // Build another matrix.
+			  TripletSparseMatrix a = new TripletSparseMatrix(10, 5, 4);
+			  a.mutable_rows()[0] = 0;
+			  a.mutable_cols()[0] = 1;
+			  a.mutable_values()[0] = 3.5;
+
+			  a.mutable_rows()[1] = 1;
+			  a.mutable_cols()[1] = 4;
+			  a.mutable_values()[1] = 6.2;
+
+			  a.mutable_rows()[2] = 9;
+			  a.mutable_cols()[2] = 5;
+			  a.mutable_values()[2] = 1;
+			  a.set_num_nonzeros(3);
+
+			  // Glue the second matrix to the bottom of the first.
+			  m.AppendRows(a);
+
+			  if (m.num_rows() != 12) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.num_rows() != 12");
+				  passed = false;
+			  }
+			  if (m.num_cols() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.num_cols() != 5");
+				  passed = false;  
+			  }
+			  if (m.num_nonzeros() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.num_nonzeros() != 5");
+				  passed = false;  	  
+			  }
+
+			  if (m.values()[0] != 2.5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.values()[0] != 2.5");
+				  passed = false; 	  
+			  }
+			  if (m.values()[1] != 5.2) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.values()[1] != 5.2");
+				  passed = false;  
+			  }
+			  if (m.values()[2] != 3.5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.values()[2] != 3.5");
+				  passed = false;
+			  }
+			  if (m.values()[3] != 6.2) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.values()[3] != 6.2");
+				  passed = false;
+			  }
+			  if (m.values()[4] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.values()[4] != 1");
+				  passed = false;
+			  }
+
+			  if (m.rows()[0] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.rows()[0] != 0");
+				  passed = false;
+			  }
+			  if (m.rows()[1] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.rows()[1] != 1");
+				  passed = false;  
+			  }
+			  if (m.rows()[2] != 2) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.rows()[2] != 2");
+				  passed = false;
+			  }
+			  if (m.rows()[3] != 3) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.rows()[3] != 3");
+				  passed = false;
+			  }
+			  if (m.rows()[4] != 11) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.rows()[4] != 11");
+				  passed = false;
+			  }
+
+			  if (m.cols()[0] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.cols()[0] != 1");
+				  passed = false;
+			  }
+			  if (m.cols()[1] != 4) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.cols()[1] != 4");
+				  passed = false;  
+			  }
+			  if (m.cols()[2] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.cols()[2] != 1");
+				  passed = false;
+			  }
+			  if (m.cols()[3] != 4) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.cols()[3] != 4");
+				  passed = false;
+			  }
+			  if (m.cols()[4] != 5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendRows() m.cols()[4] != 5");
+				  passed = false;
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixAppendRows() passed all tests");
+			  }
+			}
+
+		public void TESTTripletSparseMatrixAppendCols() {
+			  // TESTTripletSparseMatrixAppendCols() passed all tests
+			  boolean passed = true;
+			  // Build one matrix.
+			  TripletSparseMatrix m = new TripletSparseMatrix(2, 5, 4);
+			  m.mutable_rows()[0] = 0;
+			  m.mutable_cols()[0] = 1;
+			  m.mutable_values()[0] = 2.5;
+
+			  m.mutable_rows()[1] = 1;
+			  m.mutable_cols()[1] = 4;
+			  m.mutable_values()[1] = 5.2;
+			  m.set_num_nonzeros(2);
+
+			  // Build another matrix.
+			  TripletSparseMatrix a = new TripletSparseMatrix(2, 15, 4);
+			  a.mutable_rows()[0] = 0;
+			  a.mutable_cols()[0] = 1;
+			  a.mutable_values()[0] = 3.5;
+
+			  a.mutable_rows()[1] = 1;
+			  a.mutable_cols()[1] = 4;
+			  a.mutable_values()[1] = 6.2;
+
+			  a.mutable_rows()[2] = 0;
+			  a.mutable_cols()[2] = 10;
+			  a.mutable_values()[2] = 1;
+			  a.set_num_nonzeros(3);
+
+			  // Glue the second matrix to the left of the first.
+			  m.AppendCols(a);
+
+			  if (m.num_rows() != 2) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.num_rows() != 2");
+				  passed = false;
+			  }
+			  if (m.num_cols() != 20) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.num_cols() != 20");
+				  passed = false;  
+			  }
+			  if (m.num_nonzeros() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.num_nonzeros() != 5");
+				  passed = false;   
+			  }
+
+			  if (m.values()[0] != 2.5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.values()[0] != 2.5");
+				  passed = false; 	  
+			  }
+			  if (m.values()[1] != 5.2) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.values()[1] != 5.2");
+				  passed = false;  
+			  }
+			  if (m.values()[2] != 3.5) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.values()[2] != 3.5");
+				  passed = false;
+			  }
+			  if (m.values()[3] != 6.2) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.values()[3] != 6.2");
+				  passed = false;
+			  }
+			  if (m.values()[4] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.values()[4] != 1");
+				  passed = false;
+			  }
+
+			  if (m.rows()[0] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.rows()[0] != 0");
+				  passed = false;
+			  }
+			  if (m.rows()[1] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.rows()[1] != 1");
+				  passed = false;  
+			  }
+			  if (m.rows()[2] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.rows()[2] != 0");
+				  passed = false;
+			  }
+			  if (m.rows()[3] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.rows()[3] != 1");
+				  passed = false;
+			  }
+			  if (m.rows()[4] != 0) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.rows()[4] != 0");
+				  passed = false;
+			  }
+
+			  if (m.cols()[0] != 1) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.cols()[0] != 1");
+				  passed = false;
+			  }
+			  if (m.cols()[1] != 4) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.cols()[1] != 4");
+				  passed = false;  
+			  }
+			  if (m.cols()[2] != 6) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.cols()[2] != 6");
+				  passed = false;
+			  }
+			  if (m.cols()[3] != 9) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.cols()[3] != 9");
+				  passed = false;
+			  }
+			  if (m.cols()[4] != 15) {
+				  System.err.println("In TESTTripletSparseMatrixAppendCols() m.cols()[4] != 15");
+				  passed = false;
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixAppendCols() passed all tests");
+			  }
+		}
+		
+		public void TESTTripletSparseMatrixCreateDiagonalMatrix() {
+			  // TESTTripletSparseMatrixCreateDiagonalMatrix() passed all tests
+			  boolean passed = true;
+			  double[] values = new double[10];
+			  for (int i = 0; i < 10; ++i)
+			    values[i] = i;
+
+			  TripletSparseMatrix m = 
+			      CreateSparseDiagonalMatrix(values, 10);
+			  if (m.num_rows() != 10) {
+				  System.err.println("In TESTTripletSparseMatrixCreateDiagonalMatrix() m.num_rows() != 10");
+				  passed = false;
+			  }
+			  if (m.num_cols() != 10) {
+				  System.err.println("In TESTTripletSparseMatrixCreateDiagonalMatrix() m.num_cols() != 10");
+				  passed = false;  
+			  }
+			  if (m.num_nonzeros() != 10) {
+				  System.err.println("In TESTTripletSparseMatrixCreateDiagonalMatrix() m.num_nonzeros() != 10");
+				  passed = false;
+
+			  }
+			  for (int i = 0; i < 10 ; ++i) {
+			    if (m.rows()[i] != i) {
+			    	System.err.println("In TESTTripletSparseMatrixCreateDiagonalMatrix() m.rows()["+i+"] != " + i);
+					passed = false;
+			    }
+			    if (m.cols()[i] != i) {
+			    	System.err.println("In TESTTripletSparseMatrixCreateDiagonalMatrix() m.cols()["+i+"] != " + i);
+					passed = false;	
+			    }
+			    if (m.values()[i] != i) {
+			    	System.err.println("In TESTTripletSparseMatrixCreateDiagonalMatrix() m.values()["+i+"] != " + i);
+					passed = false;
+			    }
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixCreateDiagonalMatrix() passed all tests");
+			  }
+			}
+
+		public void TESTTripletSparseMatrixResize() {
+			  // TESTTripletSparseMatrixResize() passed all tests
+			  boolean passed = true;
+			  TripletSparseMatrix m = new TripletSparseMatrix(10, 20, 200);
+			  int nnz = 0;
+			  for (int i = 0; i < 10; ++i) {
+			    for (int j = 0; j < 20; ++j) {
+			      m.mutable_rows()[nnz] = i;
+			      m.mutable_cols()[nnz] = j;
+			      m.mutable_values()[nnz++] = i+j;
+			    }
+			  }
+			  m.set_num_nonzeros(nnz);
+			  m.Resize(5, 6);
+			  if (m.num_rows() != 5) {
+				  System.err.println("In TESTTripletSparseMatrixResize() m.num_rows() != 5");
+				  passed = false;
+			  }
+			  if (m.num_cols() != 6) {
+				  System.err.println("In TESTTripletSparseMatrixResize() m.num_cols() != 6");
+				  passed = false;  
+			  }
+			  if (m.num_nonzeros() != 30) {
+				  System.err.println("In TESTTripletSparseMatrixResize() m.num_nonzeros() != 30");
+				  passed = false;
+
+			  }
+			  for (int i = 0; i < 30; ++i) {
+			    if (m.values()[i] != (m.rows()[i] + m.cols()[i])) {
+			    	System.err.println("In TESTTripletSparseMatrixResize() m.num_nonzeros() != m.values()["+i+"] != (m.rows()["+i+"] + m.cols()["+i+"])");
+					passed = false;	
+			    }
+			  }
+			  if (passed) {
+				  System.out.println("TESTTripletSparseMatrixResize() passed all tests");
 			  }
 			}
 
