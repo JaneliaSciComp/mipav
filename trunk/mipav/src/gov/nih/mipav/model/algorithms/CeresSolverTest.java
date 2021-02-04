@@ -2659,6 +2659,82 @@ public class CeresSolverTest extends CeresSolver {
 			}
 
 
+		public void TESTIdentityParameterizationEverythingTest() {
+			  // TESTIdentityParameterizationEverythingTest() passed all tests
+			  int i;
+			  double normSquared = 0.0;
+			  double diff;
+			  double norm;
+			  boolean passed = true;
+			  IdentityParameterization parameterization = new IdentityParameterization(3);
+			  if (parameterization.GlobalSize() != 3) {
+				  System.err.println("In TESTIdentityParameterizationEverythingTest() parameterization.GlobalSize() != 3");
+				  passed = false;
+			  }
+			  if (parameterization.LocalSize() != 3) {
+				  System.err.println("In TESTIdentityParameterizationEverythingTest() parameterization.LocalSize() != 3");
+				  passed = false;  
+			  }
+
+			  double x[] = new double[]{1.0, 2.0, 3.0};
+			  double delta[] = new double[]{0.0, 1.0, 2.0};
+			  double x_plus_delta[] = new double[]{0.0, 0.0, 0.0};
+			  parameterization.Plus(x, delta, x_plus_delta);
+			  if (x_plus_delta[0] != 1.0) {
+				  System.err.println("In TESTIdentityParameterizationEverythingTest() x_plus_delta[0] != 1.0");
+				  passed = false;    
+			  }
+			  if (x_plus_delta[1] != 3.0) {
+				  System.err.println("In TESTIdentityParameterizationEverythingTest() x_plus_delta[1] != 3.0");
+				  passed = false; 	  
+			  }
+			  if (x_plus_delta[2] != 5.0) {
+				  System.err.println("In TESTIdentityParameterizationEverythingTest() x_plus_delta[2] != 5.0");
+				  passed = false; 	  
+			  }
+
+			  double jacobian[] = new double[9];
+			  parameterization.ComputeJacobian(x, jacobian);
+			  int k = 0;
+			  for (i = 0; i < 3; ++i) {
+			    for (int j = 0; j < 3; ++j, ++k) {
+			      if ((i == j) && (jacobian[k] != 1.0)) {
+			    	  System.err.println("In TESTIdentityParameterizationEverythingTest() for i == j jacobian["+k+"] != 1.0");
+			    	  passed = false;
+			      }
+			      if ((i != j) && (jacobian[k] != 0.0)) {
+			    	  System.err.println("In TESTIdentityParameterizationEverythingTest() for i != j jacobian["+k+"] != 0.0");
+			    	  passed = false;  
+			      }
+			    }
+			  }
+
+			  Matrix global_matrix = new Matrix(10, 3, 1.0);
+			  double global_matrix_data[] = new double[30];
+			  for (i = 0; i < 30; i++) {
+				  global_matrix_data[i] = 1.0;
+			  }
+			  Matrix local_matrix = new Matrix(10, 3, 0.0);
+			  double local_matrix_data[] = new double[30];
+			  parameterization.MultiplyByJacobian(x,
+			                                      10,
+			                                      global_matrix_data,
+			                                      local_matrix_data);
+			  normSquared = 0.0;
+			  for (i = 0; i < 30; i++) {
+				  diff = local_matrix_data[i] - global_matrix_data[i];
+				  normSquared += (diff * diff);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  if (norm != 0.0) {
+				  System.err.println("In TESTIdentityParameterizationEverythingTest() (local_matrix - global_matrix).norm() != 0.0");
+				  passed = false;
+			  }
+			  
+			  if (passed) {
+				  System.out.println("TESTIdentityParameterizationEverythingTest() passed all tests");
+			  }
+			}
 
    
    public void SchurOrderingTestNoFixed() {
