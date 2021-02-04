@@ -2146,6 +2146,518 @@ public class CeresSolverTest extends CeresSolver {
 				  System.out.println("TESTTripletSparseMatrixResize() passed all tests");
 			  }
 			}
+		// Trivial cost function that accepts three arguments.
+		class TernaryCostFunction extends CostFunction {
+		 public TernaryCostFunction(int num_residuals,
+		                      int parameter_block1_size,
+		                      int parameter_block2_size,
+		                      int parameter_block3_size) {
+		    set_num_residuals(num_residuals);
+		    mutable_parameter_block_sizes().add(parameter_block1_size);
+		    mutable_parameter_block_sizes().add(parameter_block2_size);
+		    mutable_parameter_block_sizes().add(parameter_block3_size);
+		  }
+
+		  public boolean Evaluate(Vector<double[]> parameters,
+		                        double[] residuals,
+		                        double[][] jacobians) {
+			int r, c, index;
+		    for (int i = 0; i < num_residuals(); ++i) {
+		      residuals[i] = i;
+		    }
+		    if (jacobians != null) {
+		      for (int k = 0; k < 3; ++k) {
+		        if (jacobians[k] != null) {
+		          for (index = 0, r = 0; r < num_residuals(); r++) {
+		        	  for (c = 0; c < parameter_block_sizes().get(k); c++, index++) {
+		        		  jacobians[k][index] = k;
+		        	  }
+		          }
+		        }
+		      }
+		    }
+		    return true;
+		  }
+		};
+		
+		public void TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() {
+			  // TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() passed all tests
+			  int i;
+			  boolean passed = true;
+			  double scratch[] = new double[64];
+
+			  // Prepare the parameter blocks.
+			  double values_x[] = new double[2];
+			  ParameterBlock x = new ParameterBlock(values_x, 2, -1);
+
+			  double values_y[] = new double[3];
+			  ParameterBlock y = new ParameterBlock(values_y, 3, -1);
+
+			  double values_z[] = new double[4];
+			  ParameterBlock z = new ParameterBlock(values_z, 4, -1);
+
+			  Vector<ParameterBlock> parameters = new Vector<ParameterBlock>();
+			  parameters.add(x);
+			  parameters.add(y);
+			  parameters.add(z);
+
+			  TernaryCostFunction cost_function = new TernaryCostFunction(3, 2, 3, 4);
+
+			  // Create the object under tests.
+			  ResidualBlock residual_block = new ResidualBlock(cost_function, null, parameters, -1);
+
+			  // Verify getters.
+			  if (cost_function != residual_block.cost_function()) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() cost_function != residual_block.cost_function()");
+				  passed = false;
+			  }
+			  if(residual_block.loss_function() != null) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residual_block.loss_function() != null");
+				  passed = false;  
+			  }
+			  if (parameters.get(0) != residual_block.parameter_blocks()[0]) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() parameters.get(0) != residual_block.parameter_blocks()[0]");
+				  passed = false;  
+			  }
+			  if (parameters.get(1) != residual_block.parameter_blocks()[1]) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() parameters.get(1) != residual_block.parameter_blocks()[1]");
+				  passed = false;  
+			  }
+			  if (parameters.get(2) != residual_block.parameter_blocks()[2]) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() parameters.get(2) != residual_block.parameter_blocks()[2]");
+				  passed = false;  
+			  }
+			  if (residual_block.NumScratchDoublesForEvaluate() != 3) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residual_block.NumScratchDoublesForEvaluate() != 3");
+				  passed = false;  
+			  }
+
+			  // Verify cost-only evaluation.
+			  double cost[] = new double[1];
+			  residual_block.Evaluate(true, cost, null, null, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+
+			  // Verify cost and residual evaluation.
+			  double residuals[] = new double[3];
+			  residual_block.Evaluate(true, cost, residuals, null, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  if (residuals[0] != 0.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[0] != 0.0");
+				  passed = false;  
+			  }
+			  if (residuals[1] != 1.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[1] != 1.0");
+				  passed = false;  
+			  }
+			  if (residuals[2] != 2.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[2] != 2.0");
+				  passed = false;  
+			  }
+
+			  // Verify cost, residual, and jacobian evaluation.
+			  cost[0] = 0.0;
+			  residuals[0] = 0.0;
+			  residuals[1] = 0.0;
+			  residuals[2] = 0.0;
+
+			  Matrix jacobian_rx = new Matrix(3, 2, -1.0);
+			  double jacobian_rx_data[] = new double[6];
+			  for (i = 0; i < 6; i++) {
+				  jacobian_rx_data[i] = -1;
+			  }
+			  Matrix jacobian_ry = new Matrix(3, 3, -1.0);
+			  double jacobian_ry_data[] = new double[9];
+			  for (i = 0; i < 9; i++) {
+				  jacobian_ry_data[i] = -1;
+			  }
+			  Matrix jacobian_rz = new Matrix(3, 4, -1.0);
+			  double jacobian_rz_data[] = new double[12];
+			  for (i = 0; i < 12; i++) {
+				  jacobian_rz_data[i] = -1;
+			  }
+			  
+			  double jacobian_ptrs[][] = new double[3][];
+			  jacobian_ptrs[0] = jacobian_rx_data;
+			  jacobian_ptrs[1] = jacobian_ry_data;
+			  jacobian_ptrs[2] = jacobian_rz_data;
+
+			  residual_block.Evaluate(true, cost, residuals, jacobian_ptrs, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  if (residuals[0] != 0.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[0] != 0.0");
+				  passed = false;  
+			  }
+			  if (residuals[1] != 1.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[1] != 1.0");
+				  passed = false;  
+			  }
+			  if (residuals[2] != 2.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[2] != 2.0");
+				  passed = false;  
+			  }
+
+			  for (i = 0; i < jacobian_rx_data.length; i++) {
+				  if (jacobian_rx_data[i] != 0.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() jacobian_rx_data["+i+"] != 0.0");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_ry_data.length; i++) {
+				  if (jacobian_ry_data[i] != 1.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() jacobian_ry_data["+i+"] != 1.0");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_rz_data.length; i++) {
+				  if (jacobian_rz_data[i] != 2.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() jacobian_rz_data["+i+"] != 2.0");
+					  passed = false;    
+				  }
+			  }
+
+			  // Verify cost, residual, and partial jacobian evaluation.
+			  cost[0] = 0.0;
+			  residuals[0] = 0.0;
+			  residuals[1] = 0.0;
+			  residuals[2] = 0.0;
+			  for (i = 0; i < 6; i++) {
+				  jacobian_rx_data[i] = -1;
+			  }
+			  for (i = 0; i < 9; i++) {
+				  jacobian_ry_data[i] = -1;
+			  }
+			  for (i = 0; i < 12; i++) {
+				  jacobian_rz_data[i] = -1;
+			  }
+
+			  jacobian_ptrs[1] = null;  // Don't compute the jacobian for y.
+
+			  residual_block.Evaluate(true, cost, residuals, jacobian_ptrs, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  if (residuals[0] != 0.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[0] != 0.0");
+				  passed = false;  
+			  }
+			  if (residuals[1] != 1.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[1] != 1.0");
+				  passed = false;  
+			  }
+			  if (residuals[2] != 2.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() residuals[2] != 2.0");
+				  passed = false;  
+			  }
+
+			  for (i = 0; i < jacobian_rx_data.length; i++) {
+				  if (jacobian_rx_data[i] != 0.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() jacobian_rx_data["+i+"] != 0.0");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_ry_data.length; i++) {
+				  if (jacobian_ry_data[i] != -1.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() jacobian_ry_data["+i+"] != -1.0");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_rz_data.length; i++) {
+				  if (jacobian_rz_data[i] != 2.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() jacobian_rz_data["+i+"] != 2.0");
+					  passed = false;    
+				  }
+			  }
+
+			  if (passed) {
+				  System.out.println("TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() passed all tests");
+			  }
+			}
+
+		// Trivial cost function that accepts three arguments.
+		class LocallyParameterizedCostFunction extends SizedCostFunction {
+			public LocallyParameterizedCostFunction() {
+				super(3,2,3,4,0,0,0,0,0,0,0);
+			}
+			public LocallyParameterizedCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7,
+					int N8, int N9, int num_residuals) {
+			   super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9, num_residuals);
+		   }
+		   public LocallyParameterizedCostFunction(int kNumResiduals, int N0, int N1, int N2, int N3, int N4, int N5, int N6, int N7,
+					int N8, int N9) {
+			   super(kNumResiduals, N0, N1, N2, N3, N4, N5, N6, N7, N8, N9);
+		   }
+		 
+		   public boolean Evaluate(Vector<double[]> parameters,
+                   double[] residuals,
+                   double[][] jacobians) {
+			int r, c, index;
+		    for (int i = 0; i < num_residuals(); ++i) {
+		      residuals[i] = i;
+		    }
+		    if (jacobians != null) {
+		      for (int k = 0; k < 3; ++k) {
+		        // The jacobians here are full sized, but they are transformed in the
+		        // evaluator into the "local" jacobian. In the tests, the "subset
+		        // constant" parameterization is used, which should pick out columns
+		        // from these jacobians. Put values in the jacobian that make this
+		        // obvious; in particular, make the jacobians like this:
+		        //
+		        //   0 1 2 3 4 ...
+		        //   0 1 2 3 4 ...
+		        //   0 1 2 3 4 ...
+		        //
+		        if (jacobians[k] != null) {
+		        	for (index = 0, r = 0; r < num_residuals(); r++) {
+			        	  for (c = 0; c < parameter_block_sizes().get(k); c++, index++) {
+			        		  if (c < k+2) {
+			        		      jacobians[k][index] = c;
+			        		  }
+			        	  }
+			          }
+		        }
+		      }
+		    }
+		    return true;
+		  }
+		};
+		
+		public void TESTResidualBlockEvaluteWithLocalParameterizations() {
+			  // TESTResidualBlockEvaluteWithLocalParameterizations() passed all tests
+			  int i;
+			  boolean passed = true;
+			  double scratch[] = new double[64];
+
+			  // Prepare the parameter blocks.
+			  double values_x[] = new double[2];
+			  ParameterBlock x = new ParameterBlock(values_x, 2, -1);
+
+			  double values_y[] = new double[3];
+			  ParameterBlock y = new ParameterBlock(values_y, 3, -1);
+
+			  double values_z[] = new double[4];
+			  ParameterBlock z = new ParameterBlock(values_z, 4, -1);
+
+			  Vector<ParameterBlock> parameters = new Vector<ParameterBlock>();
+			  parameters.add(x);
+			  parameters.add(y);
+			  parameters.add(z);
+
+			  // Make x have the first component fixed.
+			  Vector<Integer> x_fixed = new Vector<Integer>();
+			  x_fixed.add(0);
+			  SubsetParameterization x_parameterization = new SubsetParameterization(2, x_fixed);
+			  x.SetParameterization(x_parameterization);
+
+			  // Make z have the last and last component fixed.
+			  Vector<Integer> z_fixed = new Vector<Integer>();
+			  z_fixed.add(2);
+			  SubsetParameterization z_parameterization = new SubsetParameterization(4, z_fixed);
+			  z.SetParameterization(z_parameterization);
+
+			  LocallyParameterizedCostFunction cost_function = new LocallyParameterizedCostFunction();
+
+			  // Create the object under tests.
+			  ResidualBlock residual_block = new ResidualBlock(cost_function, null, parameters, -1);
+
+			  // Verify getters.
+			  if (cost_function != residual_block.cost_function()) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() cost_function != residual_block.cost_function()");
+				  passed = false;
+			  }
+			  if(residual_block.loss_function() != null) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residual_block.loss_function() != null");
+				  passed = false;  
+			  }
+			  if (parameters.get(0) != residual_block.parameter_blocks()[0]) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() parameters.get(0) != residual_block.parameter_blocks()[0]");
+				  passed = false;  
+			  }
+			  if (parameters.get(1) != residual_block.parameter_blocks()[1]) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() parameters.get(1) != residual_block.parameter_blocks()[1]");
+				  passed = false;  
+			  }
+			  if (parameters.get(2) != residual_block.parameter_blocks()[2]) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() parameters.get(2) != residual_block.parameter_blocks()[2]");
+				  passed = false;  
+			  }
+			  if (residual_block.NumScratchDoublesForEvaluate() != 3*(2 + 4) + 3) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residual_block.NumScratchDoublesForEvaluate() != 3*(2 + 4) + 3");
+				  passed = false;  
+			  }
+
+			  // Verify cost-only evaluation.
+			  double cost[] = new double[1];
+			  residual_block.Evaluate(true, cost, null, null, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  
+
+			  // Verify cost and residual evaluation.
+			  double residuals[] = new double[3];
+			  residual_block.Evaluate(true, cost, residuals, null, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  if (residuals[0] != 0.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[0] != 0.0");
+				  passed = false;  
+			  }
+			  if (residuals[1] != 1.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[1] != 1.0");
+				  passed = false;  
+			  }
+			  if (residuals[2] != 2.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[2] != 2.0");
+				  passed = false;  
+			  }
+
+			  // Verify cost, residual, and jacobian evaluation.
+			  cost[0] = 0.0;
+			  residuals[0] = 0.0;
+			  residuals[1] = 0.0;
+			  residuals[2] = 0.0;
+
+			  Matrix jacobian_rx = new Matrix(3, 1, -1.0);
+			  double jacobian_rx_data[] = new double[3];
+			  for (i = 0; i < 3; i++) {
+				  jacobian_rx_data[i] = -1;
+			  }
+			  Matrix jacobian_ry = new Matrix(3, 3, -1.0);
+			  double jacobian_ry_data[] = new double[9];
+			  for (i = 0; i < 9; i++) {
+				  jacobian_ry_data[i] = -1;
+			  }
+			  Matrix jacobian_rz = new Matrix(3, 3, -1.0);
+			  double jacobian_rz_data[] = new double[9];
+			  for (i = 0; i < 9; i++) {
+				  jacobian_rz_data[i] = -1;
+			  }
+			  
+			  double jacobian_ptrs[][] = new double[3][];
+			  jacobian_ptrs[0] = jacobian_rx_data;
+			  jacobian_ptrs[1] = jacobian_ry_data;
+			  jacobian_ptrs[2] = jacobian_rz_data;
+			  
+			  residual_block.Evaluate(true, cost, residuals, jacobian_ptrs, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  if (residuals[0] != 0.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[0] != 0.0");
+				  passed = false;  
+			  }
+			  if (residuals[1] != 1.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[1] != 1.0");
+				  passed = false;  
+			  }
+			  if (residuals[2] != 2.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[2] != 2.0");
+				  passed = false;  
+			  }
+
+			  double[] expected_jacobian_rx = new double[] {1.0, 1.0, 1.0};
+
+			  double[] expected_jacobian_ry = new double[] { 0.0, 1.0, 2.0,
+			                          0.0, 1.0, 2.0,
+			                          0.0, 1.0, 2.0};
+
+			  double[] expected_jacobian_rz = new double[] { 0.0, 1.0, /* 2.0, */ 3.0,  // 3rd parameter constant.
+			                          0.0, 1.0, /* 2.0, */ 3.0,
+			                          0.0, 1.0, /* 2.0, */ 3.0};
+			  
+			  for (i = 0; i < jacobian_rx_data.length; i++) {
+				  if (jacobian_rx_data[i] != expected_jacobian_rx[i]) {
+					  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() jacobian_rx_data["+i+"] != expected_jacobian_rx["+i+"]");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_ry_data.length; i++) {
+				  if (jacobian_ry_data[i] != expected_jacobian_ry[i]) {
+					  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() jacobian_ry_data["+i+"] != expected_jacobian_ry["+i+"]");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_rz_data.length; i++) {
+				  if (jacobian_rz_data[i] != expected_jacobian_rz[i]) {
+					  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() jacobian_rz_data["+i+"] != expected_jacobian_rz["+i+"]");
+					  passed = false;    
+				  }
+			  }
+
+			  // Verify cost, residual, and partial jacobian evaluation.
+			  cost[0] = 0.0;
+			  residuals[0] = 0.0;
+			  residuals[1] = 0.0;
+			  residuals[2] = 0.0;
+			  for (i = 0; i < 3; i++) {
+				  jacobian_rx_data[i] = -1;
+			  }
+			  for (i = 0; i < 9; i++) {
+				  jacobian_ry_data[i] = -1;
+			  }
+			  for (i = 0; i < 9; i++) {
+				  jacobian_rz_data[i] = -1;
+			  }
+
+			  jacobian_ptrs[1] = null;  // Don't compute the jacobian for y.
+
+			  residual_block.Evaluate(true, cost, residuals, jacobian_ptrs, scratch);
+			  if (cost[0] != 0.5 * (0*0 + 1*1 + 2*2)) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() cost[0] != 0.5 * (0*0 + 1*1 + 2*2)");
+				  passed = false;   
+			  }
+			  if (residuals[0] != 0.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[0] != 0.0");
+				  passed = false;  
+			  }
+			  if (residuals[1] != 1.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[1] != 1.0");
+				  passed = false;  
+			  }
+			  if (residuals[2] != 2.0) {
+				  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() residuals[2] != 2.0");
+				  passed = false;  
+			  }
+
+			  for (i = 0; i < jacobian_rx_data.length; i++) {
+				  if (jacobian_rx_data[i] != expected_jacobian_rx[i]) {
+					  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() jacobian_rx_data["+i+"] != expected_jacobian_rx["+i+"]");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_ry_data.length; i++) {
+				  if (jacobian_ry_data[i] != -1.0) {
+					  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() jacobian_ry_data["+i+"] != -1.0");
+					  passed = false;    
+				  }
+			  }
+			  for (i = 0; i < jacobian_rz_data.length; i++) {
+				  if (jacobian_rz_data[i] != expected_jacobian_rz[i]) {
+					  System.err.println("In TESTResidualBlockEvaluteWithLocalParameterizations() jacobian_rz_data["+i+"] != expected_jacobian_rz["+i+"]");
+					  passed = false;    
+				  }
+			  }
+
+			  if (passed) {
+				  System.out.println("TESTResidualBlockEvaluteWithLocalParameterizations() passed all tests");
+			  }
+			  
+			}
+
 
 
    
