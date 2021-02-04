@@ -18878,6 +18878,196 @@ public abstract class CeresSolver {
 		    return true;
 		  }
 	} // class ParameterBlock
+	
+
+	// Hold a subset of the parameters inside a parameter block constant.
+	class SubsetParameterization extends LocalParameterization {
+		private int local_size_;
+		private Vector<Byte> constancy_mask_;
+		public SubsetParameterization(
+			    int size, Vector<Integer> constant_parameters) {
+			    int i;
+			    boolean duplicateFound;
+			    local_size_ = size - constant_parameters.size();
+			    constancy_mask_ = new Vector<Byte>(size);
+			    for (i = 0; i < size; i++) {
+			    	constancy_mask_.add((byte)0);
+			    }
+			  Vector<Integer> constant = constant_parameters;
+			  Collections.sort(constant);
+			  if(constant.firstElement() < 0) {
+			       System.err.println("In public SubsetParameterization indices indicating constant parameter must be greater than zero.");
+			       return;
+			  }
+			  if (constant.lastElement() >= size) {
+			      System.err.println("In public SubsetParameterization indices indicating constant parameter must be less than the size ");
+			      System.err.println("of the parameter block.");
+			      return;
+			  }
+			  duplicateFound = false;
+			  for (i = constant.size() -1; i >= 1; i--) {
+				  if (constant.get(i).intValue() == constant.get(i-1).intValue()) {
+					  duplicateFound = true;  
+				  }
+			  }
+			  if (duplicateFound) {
+			      System.err.println("In public SubsetParameterization he set of constant parameters cannot contain duplicates");
+			      return;
+			  }
+			  for (i = 0; i < constant_parameters.size(); ++i) {
+			    constancy_mask_.set(constant_parameters.get(i), (byte)1);
+			  }
+			}
+		
+		public boolean Plus(Vector<Double> x, int x_index,
+                Vector<Double> delta, int delta_index,
+                Vector<Double> x_plus_delta, int x_plus_delta_index) {
+			for (int i = 0, j = 0; i < constancy_mask_.size(); ++i) {
+				if (constancy_mask_.get(i) != 0) {
+					if ((x_plus_delta_index +i) < x_plus_delta.size()) {
+						x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i));
+					}
+					else {
+						x_plus_delta.add(x.get(x_index + i));
+					}
+				} else {
+					if ((x_plus_delta_index +i) < x_plus_delta.size()) {
+						x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i) + delta.get(delta_index + j++));
+					}
+					else {
+						x_plus_delta.add(x.get(x_index + i) + delta.get(delta_index + j++));
+					}
+				}
+				}
+				return true;
+		}
+
+		public boolean Plus(double[] x,
+                double[] delta,
+                double[] x_plus_delta){
+			for (int i = 0, j = 0; i < constancy_mask_.size(); ++i) {
+			if (constancy_mask_.get(i) != 0) {
+			x_plus_delta[i] = x[i];
+			} else {
+			x_plus_delta[i] = x[i] + delta[j++];
+			}
+			}
+			return true;
+			}
+		
+		public boolean ComputeJacobian(double[] x,
+                double[] jacobian) {
+			int r,c, index;
+			if (local_size_ == 0) {
+			return true;
+			}
+			
+			for (index = 0, r = 0; r < constancy_mask_.size(); r++) {
+			    for (c = 0; c < local_size_; c++, index++) {
+			    	jacobian[index] = 0.0;
+			    }
+			}
+			for (r = 0, c = 0; r < constancy_mask_.size(); ++r) {
+			if (constancy_mask_.get(r) == 0) {
+				index = r * local_size_ + c;
+				jacobian[index] = 1.0;
+				c++;
+			}
+			}
+			return true;
+			}
+		
+		public boolean ComputeJacobian(double[] x,
+                double[][] jacobian) {
+			int r,c;
+			if (local_size_ == 0) {
+			return true;
+			}
+			
+			for (r = 0; r < constancy_mask_.size(); r++) {
+			    for (c = 0; c < local_size_; c++) {
+			    	jacobian[r][c] = 0.0;
+			    }
+			}
+			for (r = 0, c = 0; r < constancy_mask_.size(); ++r) {
+			if (constancy_mask_.get(r) == 0) {
+				jacobian[r][c] = 1.0;
+				c++;
+			}
+			}
+			return true;
+			}
+		
+		public boolean ComputeJacobian(double[] x, int x_start, 
+                double[][] jacobian) {
+			int r,c;
+			if (local_size_ == 0) {
+			return true;
+			}
+			
+			for (r = 0; r < constancy_mask_.size(); r++) {
+			    for (c = 0; c < local_size_; c++) {
+			    	jacobian[r][c] = 0.0;
+			    }
+			}
+			for (r = 0, c = 0; r < constancy_mask_.size(); ++r) {
+			if (constancy_mask_.get(r) == 0) {
+				jacobian[r][c] = 1.0;
+				c++;
+			}
+			}
+			return true;
+			}
+
+	 
+		public boolean ComputeJacobian(double[] x, int x_start, 
+                double[] jacobian) {
+			int r,c, index;
+			if (local_size_ == 0) {
+			return true;
+			}
+			
+			for (index = 0, r = 0; r < constancy_mask_.size(); r++) {
+			    for (c = 0; c < local_size_; c++, index++) {
+			    	jacobian[index] = 0.0;
+			    }
+			}
+			for (r = 0, c = 0; r < constancy_mask_.size(); ++r) {
+			if (constancy_mask_.get(r) == 0) {
+				index = r * local_size_ + c;
+				jacobian[index] = 1.0;
+				c++;
+			}
+			}
+			return true;
+			}
+
+		public boolean MultiplyByJacobian(double[] x,
+                int num_rows,
+                double[] global_matrix,
+                double[] local_matrix) {
+			if (local_size_ == 0) {
+			return true;
+			}
+			
+			for (int row = 0; row < num_rows; ++row) {
+			for (int col = 0, j = 0; col < constancy_mask_.size(); ++col) {
+			if (constancy_mask_.get(col) == 0) {
+			local_matrix[row * LocalSize() + j++] =
+			global_matrix[row * GlobalSize() + col];
+			}
+			}
+			}
+			return true;
+			}
+
+	  public int GlobalSize() {
+	    return (constancy_mask_.size());
+	  }
+	  public int LocalSize() { return local_size_; }
+
+	
+	};
 
 	// The class LocalParameterization defines the function Plus and its
 	// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
