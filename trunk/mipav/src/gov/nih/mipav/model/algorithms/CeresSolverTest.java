@@ -2821,6 +2821,55 @@ public class CeresSolverTest extends CeresSolver {
 			  }
 			}
 
+		public void TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() {
+			  // TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() passed all tests
+			  boolean passed = true;
+			  Vector<Integer> constant_parameters = new Vector<Integer>();
+			  constant_parameters.add(0);
+			  LocalParameterization subset_param =
+			      new SubsetParameterization(1, constant_parameters);
+			  LocalParameterization identity_param = new IdentityParameterization(2);
+			  ProductParameterization product_param = new ProductParameterization(identity_param, subset_param);
+			  if (product_param.GlobalSize() != 3) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() product_param.GlobalSize() != 3");
+				  passed = false;
+			  }
+			  if (product_param.LocalSize() != 2) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() product_param.LocalSize() != 2");
+				  passed = false;	  
+			  }
+			  double x[] = new double[]{1.0, 1.0, 1.0};
+			  double delta[] = new double[]{2.0, 3.0};
+			  double x_plus_delta[] = new double[]{0.0, 0.0, 0.0};
+			  if (!product_param.Plus(x, delta, x_plus_delta)) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() product_param.Plus(x, delta, x_plus_delta) = false");
+				  passed = false;  
+			  }
+			  if (x_plus_delta[0] != x[0] + delta[0]) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() x_plus_delta[0] != x[0] + delta[0]");
+				  passed = false;    
+			  }
+			  if (x_plus_delta[1] != x[1] + delta[1]) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() x_plus_delta[1] != x[1] + delta[1]");
+				  passed = false;  
+			  }
+			  if (x_plus_delta[2] != x[2]) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() x_plus_delta[2] != x[2]");
+				  passed = false; 
+			  }
+
+			  Matrix actual_jacobian = new Matrix(3, 2);
+			  double actual_jacobian_data[] = new double[6];
+			  if (!product_param.ComputeJacobian(x, actual_jacobian_data)) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() product_param.ComputeJacobian(x, actual_jacobian_data) = false");
+				  passed = false;   
+			  }
+			  
+			  if (passed) {
+				  System.out.println("TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization2() passed all tests");
+			  }
+			}
+
 
    
    public void SchurOrderingTestNoFixed() {
