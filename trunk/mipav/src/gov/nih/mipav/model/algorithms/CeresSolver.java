@@ -18911,7 +18911,7 @@ public abstract class CeresSolver {
 				  }
 			  }
 			  if (duplicateFound) {
-			      System.err.println("In public SubsetParameterization he set of constant parameters cannot contain duplicates");
+			      System.err.println("In public SubsetParameterization the set of constant parameters cannot contain duplicates");
 			      return;
 			  }
 			  for (i = 0; i < constant_parameters.size(); ++i) {
