@@ -18879,6 +18879,239 @@ public abstract class CeresSolver {
 		  }
 	} // class ParameterBlock
 	
+	// Construct a local parameterization by taking the Cartesian product
+	// of a number of other local parameterizations. This is useful, when
+	// a parameter block is the cartesian product of two or more
+	// manifolds. For example the parameters of a camera consist of a
+	// rotation and a translation, i.e., SO(3) x R^3.
+	//
+	// Currently this class supports taking the cartesian product of up to
+	// four local parameterizations.
+	//
+	// Example usage:
+	//
+	// ProductParameterization product_param(new QuaterionionParameterization(),
+    //	                                       new IdentityParameterization(3));
+	//
+	// is the local parameterization for a rigid transformation, where the
+	// rotation is represented using a quaternion.
+	class ProductParameterization extends LocalParameterization {
+		private Vector<LocalParameterization> local_params_ = new Vector<LocalParameterization>();
+		private int local_size_;
+		private int global_size_;
+	    private int buffer_size_;
+		  //
+		  // NOTE: All the constructors take ownership of the input local
+		  // parameterizations.
+		  //
+		  public ProductParameterization(LocalParameterization local_param1,
+		                          LocalParameterization local_param2) {
+			  local_params_.add(local_param1);
+			  local_params_.add(local_param2);
+			  Init();  
+		  }
+
+		  public ProductParameterization(LocalParameterization local_param1,
+		                          LocalParameterization local_param2,
+		                          LocalParameterization local_param3) {
+			  local_params_.add(local_param1);
+			  local_params_.add(local_param2);
+			  local_params_.add(local_param3);
+			  Init();
+		  }
+
+		  public ProductParameterization(LocalParameterization local_param1,
+		                          LocalParameterization local_param2,
+		                          LocalParameterization local_param3,
+		                          LocalParameterization local_param4) {
+			  local_params_.add(local_param1);
+			  local_params_.add(local_param2);
+			  local_params_.add(local_param3);
+			  local_params_.add(local_param4);
+			  Init();
+		  }
+		  
+		  public void finalize() {
+			  for (int i = 0; i < local_params_.size(); ++i) {
+				  LocalParameterization local_param = local_params_.get(i);
+				  local_param = null;
+			  }
+		  }
+
+		  public boolean Plus(double[] x,
+		                    double[] delta,
+		                    double[] x_plus_delta) {
+			  int i;
+			  Vector<Double> xvec = new Vector<Double>();
+			  for (i = 0; i < x.length; i++) {
+				  xvec.add(x[i]);
+			  }
+			  Vector<Double> deltavec = new Vector<Double>();
+			  for (i = 0; i < delta.length; i++) {
+				  deltavec.add(delta[i]);
+			  }
+			  Vector<Double>x_plus_delta_vec = new Vector<Double>();
+			  for (i = 0; i < x_plus_delta.length; i++) {
+				  x_plus_delta_vec.add(x_plus_delta[i]);
+			  }
+			  int x_cursor = 0;
+			  int delta_cursor = 0;
+			  for (i = 0; i < local_params_.size(); ++i) {
+			    LocalParameterization param = local_params_.get(i);
+			    if (!param.Plus(xvec,x_cursor,
+			                     deltavec,delta_cursor,
+			                     x_plus_delta_vec,x_cursor)) {
+			      return false;
+			    }
+			    delta_cursor += param.LocalSize();
+			    x_cursor += param.GlobalSize();
+			  }
+			  
+			  for (i = 0; i < x_plus_delta.length; i++) {
+				 x_plus_delta[i] = x_plus_delta_vec.get(i);
+			  }
+
+			  return true;
+		  }
+		  
+		  
+		  
+		  public boolean Plus(Vector<Double> x, int x_index,
+	                Vector<Double> delta, int delta_index,
+	                Vector<Double> x_plus_delta, int x_plus_delta_index) {
+			  int i;
+			  int x_cursor = 0;
+			  int delta_cursor = 0;
+			  for (i = 0; i < local_params_.size(); ++i) {
+			    LocalParameterization param = local_params_.get(i);
+			    if (!param.Plus(x,x_index + x_cursor,
+			                     delta,delta_index + delta_cursor,
+			                     x_plus_delta,x_plus_delta_index + x_cursor)) {
+			      return false;
+			    }
+			    delta_cursor += param.LocalSize();
+			    x_cursor += param.GlobalSize();
+			  }
+			  return true;  
+		  }
+		  
+		  public boolean ComputeJacobian(double[] x,
+		                               double[] jacobian_ptr) {
+			  int r, c, index;
+			  double jacobian[][] = new double[GlobalSize()][LocalSize()];
+			  //MatrixRef jacobian(jacobian_ptr, GlobalSize(), LocalSize());
+			  //jacobian.setZero();
+			  double buffer[] = new double[buffer_size_];
+
+			  int x_cursor = 0;
+			  int delta_cursor = 0;
+			  for (int i = 0; i < local_params_.size(); ++i) {
+			    LocalParameterization param = local_params_.get(i);
+			    int local_size = param.LocalSize();
+			    int global_size = param.GlobalSize();
+			    double buf2D[][] = new double[global_size][local_size];
+			    for (index = 0, r = 0; r < global_size; r++) {
+			    	for (c = 0; c < local_size; c++, index++) {
+			    		buf2D[r][c] = buffer[index];
+			    	}
+			    }
+
+			    if (!param.ComputeJacobian(x, x_cursor, buf2D)) {
+			      return false;
+			    }
+			    for (index = 0, r = 0; r < global_size; r++) {
+			    	for (c = 0; c < local_size; c++, index++) {
+			    		buffer[index] = buf2D[r][c];
+			    	}
+			    }
+			    for (index = 0, r = x_cursor; r < x_cursor + global_size; r++) {
+			    	for (c = delta_cursor; c < delta_cursor + local_size; c++, index++) {
+			    		jacobian[r][c] = buffer[index];
+			    	}
+			    }
+			    
+			    delta_cursor += local_size;
+			    x_cursor += global_size;
+			  }
+			  
+			  for (index = 0, r = 0; r < GlobalSize(); r++) {
+				  for (c = 0; c < LocalSize(); c++, index++) {
+					  jacobian_ptr[index] = jacobian[r][c];
+				  }
+			  }
+
+			  return true;  
+		  }
+		  
+		  
+
+		  
+		  public boolean ComputeJacobian(double[] x, int x_start,
+                  double[][] jacobian_ptr) {
+			  int r, c, index;
+			  for (r = 0; r < GlobalSize(); r++) {
+				  for (c = 0; c < LocalSize(); c++) {
+					  jacobian_ptr[r][c] = 0;
+				  }
+			  }
+			  //MatrixRef jacobian(jacobian_ptr, GlobalSize(), LocalSize());
+			  //jacobian.setZero();
+			  double buffer[] = new double[buffer_size_];
+
+			  int x_cursor = 0;
+			  int delta_cursor = 0;
+			  for (int i = 0; i < local_params_.size(); ++i) {
+			    LocalParameterization param = local_params_.get(i);
+			    int local_size = param.LocalSize();
+			    int global_size = param.GlobalSize();
+			    double buf2D[][] = new double[global_size][local_size];
+			    for (index = 0, r = 0; r < global_size; r++) {
+			    	for (c = 0; c < local_size; c++, index++) {
+			    		buf2D[r][c] = buffer[index];
+			    	}
+			    }
+
+			    if (!param.ComputeJacobian(x, x_start + x_cursor, buf2D)) {
+			      return false;
+			    }
+			    for (index = 0, r = 0; r < global_size; r++) {
+			    	for (c = 0; c < local_size; c++, index++) {
+			    		buffer[index] = buf2D[r][c];
+			    	}
+			    }
+			    for (index = 0, r = x_cursor; r < x_cursor + global_size; r++) {
+			    	for (c = delta_cursor; c < delta_cursor + local_size; c++, index++) {
+			    		jacobian_ptr[r][c] = buffer[index];
+			    	}
+			    }
+			    
+			    delta_cursor += local_size;
+			    x_cursor += global_size;
+			  }
+
+			  return true;    
+          }
+		  
+		  public int GlobalSize() { return global_size_; }
+		  public int LocalSize() { return local_size_; }
+
+		  private void Init() {
+			  global_size_ = 0;
+			  local_size_ = 0;
+			  buffer_size_ = 0;
+			  for (int i = 0; i < local_params_.size(); ++i) {
+			    LocalParameterization param = local_params_.get(i);
+			    buffer_size_ = Math.max(buffer_size_,
+			                            param.LocalSize() * param.GlobalSize());
+			    global_size_ += param.GlobalSize();
+			    local_size_ += param.LocalSize();
+			  }
+  
+		  };
+
+		  
+		};
+	
 
 	// Hold a subset of the parameters inside a parameter block constant.
 	class SubsetParameterization extends LocalParameterization {
