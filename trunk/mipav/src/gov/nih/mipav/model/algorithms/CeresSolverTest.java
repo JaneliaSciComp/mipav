@@ -2735,6 +2735,92 @@ public class CeresSolverTest extends CeresSolver {
 				  System.out.println("TESTIdentityParameterizationEverythingTest() passed all tests");
 			  }
 			}
+		
+		public void TESTSubsetParameterizationNegativeParameterIndexDeathTest() {
+			  // See expected error message
+			  // In public SubsetParameterization indices indicating constant parameter must be greater than zero.
+			  Vector<Integer> constant_parameters = new Vector<Integer>();
+			  constant_parameters.add(-1);
+			  SubsetParameterization parameterization = new SubsetParameterization(2, constant_parameters);
+			  //EXPECT_DEATH_IF_SUPPORTED(
+			      //SubsetParameterization parameterization(2, constant_parameters),
+			      //"greater than zero");
+			}
+		
+		public void TESTSubsetParameterizationGreaterThanSizeParameterIndexDeathTest() {
+			  // See expected error message
+			  // In public SubsetParameterization indices indicating constant parameter must be less than the size 
+			  // of the parameter block.
+			  Vector<Integer> constant_parameters = new Vector<Integer>();
+			  constant_parameters.add(2);
+			  SubsetParameterization parameterization = new SubsetParameterization(2, constant_parameters);
+			  //EXPECT_DEATH_IF_SUPPORTED(
+			      //SubsetParameterization parameterization(2, constant_parameters),
+			      //"less than the size");
+			}
+		
+		public void TESTSubsetParameterizationDuplicateParametersDeathTest() {
+			// See expected error message
+			// In public SubsetParameterization the set of constant parameters cannot contain duplicates
+			Vector<Integer> constant_parameters = new Vector<Integer>();
+			  constant_parameters.add(1);
+			  constant_parameters.add(1);
+			  SubsetParameterization parameterization = new SubsetParameterization(2, constant_parameters);
+			  //EXPECT_DEATH_IF_SUPPORTED(
+			      //SubsetParameterization parameterization(2, constant_parameters),
+			      //"duplicates");
+			}
+
+
+		public void TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() {
+			  // TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() passed all tests
+			  boolean passed = true;
+			  Vector<Integer> constant_parameters = new Vector<Integer>();
+			  constant_parameters.add(0);
+			  LocalParameterization subset_param =
+			      new SubsetParameterization(1, constant_parameters);
+			  LocalParameterization identity_param = new IdentityParameterization(2);
+			  ProductParameterization product_param = new ProductParameterization(subset_param, identity_param);
+			  if (product_param.GlobalSize() != 3) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() product_param.GlobalSize() != 3");
+				  passed = false;
+			  }
+			  if (product_param.LocalSize() != 2) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() product_param.LocalSize() != 2");
+				  passed = false;	  
+			  }
+			  double x[] = {1.0, 1.0, 1.0};
+			  double delta[] = {2.0, 3.0};
+			  double x_plus_delta[] = {0.0, 0.0, 0.0};
+			  if (!product_param.Plus(x, delta, x_plus_delta)) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() product_param.Plus(x, delta, x_plus_delta) = false");
+				  passed = false;	    
+			  }
+			  if (x_plus_delta[0] != x[0]) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() x_plus_delta[0] != x[0]");
+				  passed = false;  
+			  }
+			  if (x_plus_delta[1] != x[1] + delta[0]) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() x_plus_delta[1] != x[1] + delta[0]");
+				  passed = false;    
+			  }
+			  if (x_plus_delta[2] != x[2] + delta[1]) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() x_plus_delta[2] != x[2] + delta[1]");
+				  passed = false;      
+			  }
+
+			  Matrix actual_jacobian = new Matrix(3, 2);
+			  double actual_jacobian_data[] = new double[6];
+			  if (!product_param.ComputeJacobian(x, actual_jacobian_data)) {
+				  System.err.println("In TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() product_param.ComputeJacobian(x, actual_jacobian_data) = false");
+				  passed = false;     
+			  }
+			  
+			  if (passed) {
+				  System.out.println("TESTSubsetParameterizationProductParameterizationWithZeroLocalSizeSubsetParameterization1() passed all tests");
+			  }
+			}
+
 
    
    public void SchurOrderingTestNoFixed() {
