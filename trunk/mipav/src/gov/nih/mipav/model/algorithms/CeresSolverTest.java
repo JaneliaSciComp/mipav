@@ -2870,7 +2870,114 @@ public class CeresSolverTest extends CeresSolver {
 			  }
 			}
 
+		public void TESTSubsetParameterizationNormalFunctionTest() {
+			// TESTSubsetParameterizationNormalFunctionTest() passed all tests
+			int m,index,r,c;
+			double normSquared;
+			double diff;
+			double norm;
+			  boolean passed = true;
+			  final int kGlobalSize = 4;
+			  final int kLocalSize = 3;
 
+			  double x[] = new double[]{1.0, 2.0, 3.0, 4.0}; // kGlobalSize
+			  for (int i = 0; i < kGlobalSize; ++i) {
+			    Vector<Integer> constant_parameters = new Vector<Integer>();
+			    constant_parameters.add(i);
+			    SubsetParameterization parameterization = new SubsetParameterization(kGlobalSize, constant_parameters);
+			    double delta[] = new double[]{1.0, 2.0, 3.0};
+			    double x_plus_delta[] = new double[kGlobalSize];
+
+			    parameterization.Plus(x, delta, x_plus_delta);
+			    int k = 0;
+			    for (int j = 0; j < kGlobalSize; ++j) {
+			      if (j == i)  {
+			        if (x_plus_delta[j] != x[j]) {
+			        	System.err.println("In TESTSubsetParameterizationNormalFunctionTest() x_plus_delta["+j+"] != x["+j+"]");
+			        	passed = false;
+			        }
+			      } else {
+			        if (x_plus_delta[j] != x[j] + delta[k++]) {
+			        	System.err.println("In TESTSubsetParameterizationNormalFunctionTest() x_plus_delta["+j+"] != x["+j+"] + delta["+k+"++]");
+			        	passed = false;
+			        }
+			      }
+			    }
+
+			    double jacobian[] = new double[kGlobalSize * kLocalSize];
+			    parameterization.ComputeJacobian(x, jacobian);
+			    int delta_cursor = 0;
+			    int jacobian_cursor = 0;
+			    for (int j = 0; j < kGlobalSize; ++j) {
+			      if (j != i) {
+			        for (k = 0; k < kLocalSize; ++k, jacobian_cursor++) {
+			          if (delta_cursor == k) {
+			        	  if (jacobian[jacobian_cursor] != 1.0) {
+			        		  System.err.println("In TESTSubsetParameterizationNormalFunctionTest() jacobian["+jacobian_cursor+"] != 1.0");
+					          passed = false;  
+			        	  }
+			          }
+			          else {
+			        	  if (jacobian[jacobian_cursor] != 0.0) {
+			        		  System.err.println("In TESTSubsetParameterizationNormalFunctionTest() jacobian["+jacobian_cursor+"] != 0.0");
+					          passed = false;  
+			        	  }  
+			          }
+			        }
+			        ++delta_cursor;
+			      } else {
+			        for (k = 0; k < kLocalSize; ++k, jacobian_cursor++) {
+			          if (jacobian[jacobian_cursor] != 0.0) {
+			        	  System.err.println("In TESTSubsetParameterizationNormalFunctionTest() jacobian["+jacobian_cursor+"] != 0.0");
+				          passed = false;  
+			          }
+			        }
+			      }
+			    }
+
+			    Matrix global_matrix = new Matrix(10, kGlobalSize, 1.0);
+			    double global_matrix_data[] = new double[10 * kGlobalSize];
+			    for (m = 0; m < 10 * kGlobalSize; m++) {
+			    	global_matrix_data[m] = 1.0;
+			    }
+			    for (int row = 0; row < kGlobalSize; ++row) {
+			      for (int col = 0; col < kGlobalSize; ++col) {
+			        global_matrix.set(row, col, col);
+			        global_matrix_data[row * kGlobalSize + col] = col;
+			      }
+			    }
+
+			    Matrix local_matrix = new Matrix(10, kLocalSize, 0.0);
+			    double local_matrix_data[] = new double[18 * kLocalSize];
+			    parameterization.MultiplyByJacobian(x,
+			                                        10,
+			                                        global_matrix_data,
+			                                        local_matrix_data);
+			    Matrix refMatrix = new Matrix(kGlobalSize, kLocalSize);
+			    for (index = 0, r = 0; r < kGlobalSize; r++) {
+			    	for (c = 0; c < kLocalSize; c++, index++) {
+			    		refMatrix.set(r, c, jacobian[index]);
+			    	}
+			    }
+			    Matrix expected_local_matrix = global_matrix.times(refMatrix);
+			    normSquared = 0.0;
+			    for (index = 0, r = 0; r < 10; r++) {
+			    	for (c = 0; c < kLocalSize; c++, index++) {
+			    		diff = local_matrix_data[index] - expected_local_matrix.get(r,c);
+			    		normSquared += diff * diff;
+			    	}
+			    }
+			    norm = Math.sqrt(normSquared);   
+			    //EXPECT_EQ((local_matrix - expected_local_matrix).norm(), 0.0);
+			    if (norm != 0.0) {
+			    	System.err.println("In TESTSubsetParameterizationNormalFunctionTest() (local_matrix - expected_local_matrix).norm() != 0.0");
+			        passed = false;  	
+			    }
+			  }
+			  if (passed) {
+				  System.out.println("TESTSubsetParameterizationNormalFunctionTest() passed all tests");
+			  }
+			}
    
    public void SchurOrderingTestNoFixed() {
 	   // SchurOrderingTestNoFixed passed all tests
