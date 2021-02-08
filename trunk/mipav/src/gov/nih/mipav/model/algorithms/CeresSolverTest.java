@@ -319,6 +319,11 @@ public class CeresSolverTest extends CeresSolver {
 		//Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
 		//Solved answer c = 0.13143858621916737 m = 0.29186127928969857
 		
+		// DENSE_SCHUR
+		// Ceres Solver Report: Iterations: 16, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		// Solved answer c = 0.13142124809212918 m = 0.2918659476251827
+
+		
 		double x[] = new double[] {0.0, 0.0 };
 		CostFunction cost_function = new CurveFittingCostFunction();
 		ProblemImpl problem = new ProblemImpl();
@@ -5407,6 +5412,11 @@ public class CeresSolverTest extends CeresSolver {
 		  SE.SchurEliminatorTestVaryingFBlockSizeWithStaticStructure();  
 	  }
 	  
+	  public void SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure() {
+		  SchurEliminatorTest SE = new SchurEliminatorTest();
+		  SE.SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure();  
+	  }
+	  
 	  class SchurEliminatorTest {
 		  private BlockSparseMatrix A;
 		  private double[] b;
@@ -5456,6 +5466,18 @@ public class CeresSolverTest extends CeresSolver {
 			   ComputeReferenceSolution(Dref);
 			   EliminateSolveAndCompare(Dref, true, 1e-14);
 			 }
+		  
+		  public void SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure() {
+			   int i;
+			   SetUpFromId(4);
+			   testName = "SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure()";
+			   double Dref[] = new double[A.num_cols()];
+			   for (i = 0; i < A.num_cols(); i++) {
+				   Dref[i] = D[i];
+			   }
+			   ComputeReferenceSolution(Dref);
+			   EliminateSolveAndCompare(Dref, false, 1e-14);
+		  }
 		  
 		  public void SetUpFromId(int id) {
 		     LinearLeastSquaresProblem
@@ -5718,19 +5740,6 @@ public class CeresSolverTest extends CeresSolver {
 
 		 };
 
-		 
-
-		 
-
-		/* 
-
-		 TEST_F(SchurEliminatorTest, VaryingFBlockSizeWithoutStaticStructure) {
-		   SetUpFromId(4);
-		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
-		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), false, 1e-14);
-		 }*/
-
-
 	  
    public void ImplicitSchurComplementTestSchurMatrixValuesTest() {
 	   ImplicitSchurComplementTest ISC = new ImplicitSchurComplementTest();
@@ -5759,6 +5768,7 @@ public class CeresSolverTest extends CeresSolver {
 	   // We do this with and without regularization to check that the
 	   // support for the LM diagonal is correct.
 	   public void ImplicitSchurComplementTestSchurMatrixValuesTest() {
+		 // ImplicitSchurComplementTest passed all tests
 		 boolean passed = true;
 		 SetUp();
 	     if(!TestImplicitSchurComplement(null)) {
