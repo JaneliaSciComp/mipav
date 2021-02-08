@@ -5389,8 +5389,22 @@ public class CeresSolverTest extends CeresSolver {
 
 	  
 	  public void SchurEliminatorTestScalarProblemNoRegularization() {
+		  // SchurEliminatorTestScalarProblemNoRegularization() use_static_structure = true passed all tests
+		  // SchurEliminatorTestScalarProblemNoRegularization() use_static_structure = false passed all tests
 		  SchurEliminatorTest SE = new SchurEliminatorTest();
 		  SE.SchurEliminatorTestScalarProblemNoRegularization();
+	  }
+	  
+	  public void SchurEliminatorTestScalarProblemWithRegularization() {
+		  // SchurEliminatorTestScalarProblemWithRegularization() use_static_structure = true passed all tests
+		  // SchurEliminatorTestScalarProblemWithRegularization() use_static_structure = false passed all tests
+		  SchurEliminatorTest SE = new SchurEliminatorTest();
+		  SE.SchurEliminatorTestScalarProblemWithRegularization();	 
+	  }
+	  
+	  public void SchurEliminatorTestVaryingFBlockSizeWithStaticStructure() {
+		  SchurEliminatorTest SE = new SchurEliminatorTest();
+		  SE.SchurEliminatorTestVaryingFBlockSizeWithStaticStructure();  
 	  }
 	  
 	  class SchurEliminatorTest {
@@ -5403,6 +5417,7 @@ public class CeresSolverTest extends CeresSolver {
 		  private Matrix lhs_expected;
 		  private Vector<Double> rhs_expected;
 		  private Vector<Double> sol_expected;
+		  private String testName;
 		  
 		  public SchurEliminatorTest() {
 			  
@@ -5411,10 +5426,35 @@ public class CeresSolverTest extends CeresSolver {
 		  public void SchurEliminatorTestScalarProblemNoRegularization() {
 			   SetUpFromId(2);
 			   double zero[] = new double[A.num_cols()];
-			   String testName = "SchurEliminatorTestScalarProblemNoRegularization()";
+			   testName = "SchurEliminatorTestScalarProblemNoRegularization()";
 			   ComputeReferenceSolution(zero);
-			   EliminateSolveAndCompare(zero, true, 1e-14, testName);
-			   EliminateSolveAndCompare(zero, false, 1e-14, testName);
+			   EliminateSolveAndCompare(zero, true, 1e-14);
+			   EliminateSolveAndCompare(zero, false, 1e-14);
+			 }
+		  
+		  public void SchurEliminatorTestScalarProblemWithRegularization() {
+			   int i;
+			   SetUpFromId(2);
+			   testName = "SchurEliminatorTestScalarProblemWithRegularization()";
+			   double Dref[] = new double[A.num_cols()];
+			   for (i = 0; i < A.num_cols(); i++) {
+				   Dref[i] = D[i];
+			   }
+			   ComputeReferenceSolution(Dref);
+			   EliminateSolveAndCompare(Dref, true, 1e-14);
+			   EliminateSolveAndCompare(Dref, false, 1e-14);
+			 }
+		  
+		  public void SchurEliminatorTestVaryingFBlockSizeWithStaticStructure() {
+			   int i;
+			   SetUpFromId(4);
+			   testName = "SchurEliminatorTestVaryingFBlockSizeWithStaticStructure()";
+			   double Dref[] = new double[A.num_cols()];
+			   for (i = 0; i < A.num_cols(); i++) {
+				   Dref[i] = D[i];
+			   }
+			   ComputeReferenceSolution(Dref);
+			   EliminateSolveAndCompare(Dref, true, 1e-14);
 			 }
 		  
 		  public void SetUpFromId(int id) {
@@ -5531,8 +5571,7 @@ public class CeresSolverTest extends CeresSolver {
 
 		   public void EliminateSolveAndCompare(double[] diagonal,
 		                                 boolean use_static_structure,
-		                                 double relative_tolerance,
-		                                 String testName) {
+		                                 double relative_tolerance) {
 			 int index, row, col, i, offset;
 			 double normSquared;
 			 double delta_norm;
@@ -5681,18 +5720,9 @@ public class CeresSolverTest extends CeresSolver {
 
 		 
 
-		 /*TEST_F(SchurEliminatorTest, ScalarProblemWithRegularization) {
-		   SetUpFromId(2);
-		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
-		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), true, 1e-14);
-		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), false, 1e-14);
-		 }
+		 
 
-		 TEST_F(SchurEliminatorTest, VaryingFBlockSizeWithStaticStructure) {
-		   SetUpFromId(4);
-		   ComputeReferenceSolution(VectorRef(D.get(), A->num_cols()));
-		   EliminateSolveAndCompare(VectorRef(D.get(), A->num_cols()), true, 1e-14);
-		 }
+		/* 
 
 		 TEST_F(SchurEliminatorTest, VaryingFBlockSizeWithoutStaticStructure) {
 		   SetUpFromId(4);
