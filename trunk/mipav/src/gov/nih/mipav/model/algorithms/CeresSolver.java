@@ -5667,6 +5667,14 @@ public abstract class CeresSolver {
 			      rhs_locks_ = new Vector<Lock>();
 			 }
 			 
+			 public void finalize() {
+				 int i;
+				 for (i = 0; i < rhs_locks_.size(); i++) {
+					 Lock lock = rhs_locks_.get(i);
+					 lock = null;
+				 }
+			 }
+			 
 			 public void Init(
 					    int num_eliminate_blocks,
 					    boolean assume_full_rank_ete,
@@ -6217,7 +6225,7 @@ public abstract class CeresSolver {
 			        b1_transpose_inverse_ete, 0, 0, 0, block1_size, e_block_size);
 
 			    Iterator<Entry<Integer, Integer>> it2 = buffer_layout.entrySet().iterator();
-			    for (i = 0; i < numit1Next; i++) {
+			    for (i = 0; i < numit1Next-1; i++) {
 			    	it2.next();
 			    }
 			    while (it2.hasNext()) {
