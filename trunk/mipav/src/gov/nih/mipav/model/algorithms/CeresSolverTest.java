@@ -5579,6 +5579,11 @@ public class CeresSolverTest extends CeresSolver {
 		    		 lhs_ref_array[row][col] = lhs.mutable_values()[index];
 		    	 }
 		     }
+		     for (row = 0; row < lhs.num_rows(); row++) {
+		    	 for (col = 0; col < row; col++) {
+		    		 lhs_ref_array[row][col] = lhs_ref_array[col][row];
+		    	 }
+		     }
 		     Matrix lhs_ref = new Matrix(lhs_ref_array);
 		     Matrix rhsMat = new Matrix(schur_size, 1);
 		     for (i = 0; i < schur_size; i++) {
