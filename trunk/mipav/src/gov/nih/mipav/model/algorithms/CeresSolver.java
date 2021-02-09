@@ -2789,7 +2789,7 @@ public abstract class CeresSolver {
 					int jac_pos = cells.get(j).position;
 					for (int row = 0; row < row_block_size; row++) {
 						for (int col = 0; col < col_block_size; col++) {
-							array[row_block_pos + row][col_block_pos] += values_[jac_pos + row * col_block_size + col];
+							array[row_block_pos + row][col_block_pos + col] += values_[jac_pos + row * col_block_size + col];
 						}
 					}
 				}
@@ -6342,6 +6342,7 @@ public abstract class CeresSolver {
 			    	     etedata[index] = etearr[r][col];
 			    	 }
 			     }
+			     
 			     MatrixTransposeMatrixMultiply
 			         (kRowBlockSize, kEBlockSize, kRowBlockSize, kEBlockSize, 1,
 			             values, e_cell.position, row.block.size, e_block_size,
