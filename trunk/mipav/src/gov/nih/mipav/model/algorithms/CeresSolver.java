@@ -81,7 +81,7 @@ public abstract class CeresSolver {
 	private LinearEquations le = new LinearEquations();
 	private LinearEquations2 le2 = new LinearEquations2();
 	private SVD svd = new SVD();
-	private LinearSolverType requestedLinearSolverType = LinearSolverType.DENSE_QR;
+	private LinearSolverType requestedLinearSolverType = LinearSolverType.DENSE_SCHUR;
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
 	// before passing them to user code. If on return an element of the
@@ -5816,7 +5816,7 @@ public abstract class CeresSolver {
 			         int block_size = bs.cols.get(i).size;
 			         double diag[] = new double[block_size];
 			         for (row = bs.cols.get(i).position; row < bs.cols.get(i).position + block_size; row++) {
-			             diag[row-bs.cols.get(i).position] = D[row];	 
+			             diag[row-bs.cols.get(i).position] = D[row];	
 			         }
 
 			         //CeresMutexLock l(&cell_info->m);
@@ -5830,7 +5830,7 @@ public abstract class CeresSolver {
 			         }
 			         //MatrixRef m(cell_info->values, row_stride, col_stride);
 			         for (index = 0; index < block_size; index++) {
-			        	 marr[r[0]+index][c[0]+index] += diag[index];
+			        	 marr[r[0]+index][c[0]+index] += (diag[index]*diag[index]);
 			         }
 			         for (index = 0, row = 0; row < row_stride[0]; row++) {
 			        	 for (col = 0; col < col_stride[0]; col++, index++) {
@@ -5901,7 +5901,7 @@ public abstract class CeresSolver {
 			    	   diag[row-bs.cols.get(e_block_id).position] = D[row];
 			       }
 			       for (row = 0; row < e_block_size; row++) {
-			    	   etearr[row][row] = diag[row];
+			    	   etearr[row][row] = (diag[row]*diag[row]);
 			       }
 			       //const typename EigenTypes<kEBlockSize>::ConstVectorRef
 			           //diag(D + bs->cols[e_block_id].position, e_block_size);
@@ -6011,7 +6011,7 @@ public abstract class CeresSolver {
 				    	 diag[r-bs.cols.get(e_block_id).position] = D[r];
 				    }
 			        for (r = 0; r < e_block_size; r++) {
-			        	etearr[r][r] = diag[r];
+			        	etearr[r][r] = (diag[r]*diag[r]);
 			        }
 			       //const typename EigenTypes<kEBlockSize>::ConstVectorRef
 			           //diag(D + bs->cols[e_block_id].position, e_block_size);
@@ -6339,7 +6339,7 @@ public abstract class CeresSolver {
 			     double etedata[] = new double[e_block_size * e_block_size];
 			     for (index = 0, r = 0; r < e_block_size; r++) {
 			    	 for (col = 0; col < e_block_size; col++, index++) {
-			    	     etedata[index] = etearr[r][col];	 
+			    	     etedata[index] = etearr[r][col];
 			    	 }
 			     }
 			     MatrixTransposeMatrixMultiply
@@ -6349,7 +6349,7 @@ public abstract class CeresSolver {
 			             etedata, 0, 0, 0, e_block_size, e_block_size);
 			     for (index = 0, r = 0; r < e_block_size; r++) {
 			    	 for (col = 0; col < e_block_size; col++, index++) {
-			    	     etearr[r][col] = etedata[index];	 
+			    	     etearr[r][col] = etedata[index];
 			    	 }
 			     }
 
