@@ -320,8 +320,8 @@ public class CeresSolverTest extends CeresSolver {
 		//Solved answer c = 0.13143858621916737 m = 0.29186127928969857
 		
 		// DENSE_SCHUR
-		// Ceres Solver Report: Iterations: 16, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
-		// Solved answer c = 0.13142124809212918 m = 0.2918659476251827
+		// Ceres Solver Report: Iterations: 14, Initial cost: 1.211734e+02, Final cost: 1.056751e+00, Termination: CONVERGENCE
+		// Solved answer c = 0.13143858621916737 m = 0.29186127928969857
 
 		
 		double x[] = new double[] {0.0, 0.0 };
@@ -5532,7 +5532,7 @@ public class CeresSolverTest extends CeresSolver {
 		     }
 		     final int schur_size = J.getColumnDimension() - num_eliminate_cols;
 
-		     lhs_expected = new Matrix(schur_size, schur_size);
+		     //lhs_expected = new Matrix(schur_size, schur_size);
 
 		     rhs_expected = new Vector<Double>(schur_size);
 		     for (i = 0; i < schur_size; i++) {
