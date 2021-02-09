@@ -5408,11 +5408,13 @@ public class CeresSolverTest extends CeresSolver {
 	  }
 	  
 	  public void SchurEliminatorTestVaryingFBlockSizeWithStaticStructure() {
+		  // SchurEliminatorTestVaryingFBlockSizeWithStaticStructure() use_static_structure = true passed all tests
 		  SchurEliminatorTest SE = new SchurEliminatorTest();
 		  SE.SchurEliminatorTestVaryingFBlockSizeWithStaticStructure();  
 	  }
 	  
 	  public void SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure() {
+		  // SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure() use_static_structure = false passed all tests
 		  SchurEliminatorTest SE = new SchurEliminatorTest();
 		  SE.SchurEliminatorTestVaryingFBlockSizeWithoutStaticStructure();  
 	  }
