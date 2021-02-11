@@ -5985,9 +5985,184 @@ public class CeresSolverTest extends CeresSolver {
      }
 
      
-   };
+   } // class ImplicitSchurTest
 
    
+   
+
+// Linear solver that takes as input a vector and checks that the
+// caller passes the same vector as LinearSolver::PerSolveOptions.D.
+class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMatrix> {
+	boolean passedReg[];
+	private final double kTolerance = 1e-16;
+	private final int num_cols_;
+	private final double[] diagonal_;
+	String testName;
+ public RegularizationCheckingLinearSolver(int num_cols, double[] diagonal, String testName,boolean passedReg[]) {
+	    super();
+        num_cols_ = num_cols;
+        diagonal_ = diagonal;
+        this.testName = testName;
+        this.passedReg = passedReg;
+  }
+
+
+ public LinearSolverSummary SolveImpl(
+      DenseSparseMatrix A,
+      double[] b,
+      LinearSolverPerSolveOptions per_solve_options,
+      double[] x) {
+	  double diff;
+      if (per_solve_options.D == null) {
+    	  System.err.println("In RegularizationCheckingLinearSolver SolveImpl per_solve_options.D == null");
+    	  return null;
+      };
+    for (int i = 0; i < num_cols_; ++i) {
+      diff = Math.abs(per_solve_options.D[i] - diagonal_[i]);
+      if (diff > kTolerance) {
+    	  System.err.println("Math.abs(per_solve_options.D["+i+"] - diagonal_["+i+"]) Exceeds kTolerance in " + testName);
+    	  System.err.println("per_solve_options.D["+i+"] = " + per_solve_options.D[i]);
+    	  System.err.println("diagonal_["+i+"] = " + diagonal_[i]);
+    	  passedReg[0] = false;
+      }
+    }
+    return new LinearSolverSummary();
+  }
+ 
+ 
+  
+};
+
+    public void TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() {
+      // TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() passed all tests
+      boolean passed[] = new boolean[] {true};
+	  TrustRegionStrategyOptions options = new TrustRegionStrategyOptions();
+	  options.initial_radius = 2.0;
+	  options.max_radius = 20.0;
+	  options.min_lm_diagonal = 1e-8;
+	  options.max_lm_diagonal = 1e8;
+
+	  // We need a non-null pointer here, so anything should do.
+	  LinearSolver linear_solver = 
+	      new RegularizationCheckingLinearSolver(0, null, "TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling()",passed);
+	  linear_solver.options_.type = LinearSolverType.DENSE_QR;
+	  options.linear_solver = linear_solver;
+
+	  LevenbergMarquardtStrategy lms = new LevenbergMarquardtStrategy(options);
+	  if (lms.Radius() != options.initial_radius) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != options.initial_radius");
+		  passed[0] = false;
+	  }
+	  lms.StepRejected(0.0);
+	  if (lms.Radius() != 1.0) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 1.0");
+		  passed[0] = false; 
+	  }
+	  lms.StepRejected(-1.0);
+	  if (lms.Radius() != 0.25) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 0.25");
+		  passed[0] = false;
+	  }
+	  lms.StepAccepted(1.0);
+	  if (lms.Radius() != 0.25 * 3.0) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 0.25 * 3.0");
+		  passed[0] = false;  
+	  }
+	  lms.StepAccepted(1.0);
+	  if (lms.Radius() != 0.25 * 3.0 * 3.0) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 0.25 * 3.0 * 3.0");
+		  passed[0] = false;  
+	  }
+	  lms.StepAccepted(0.25);
+	  if (lms.Radius() != 0.25 * 3.0 * 3.0 / 1.125) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 0.25 * 3.0 * 3.0 / 1.125");
+		  passed[0] = false; 
+	  }
+	  lms.StepAccepted(1.0);
+	  if (lms.Radius() != 0.25 * 3.0 * 3.0 / 1.125 * 3.0) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 0.25 * 3.0 * 3.0 / 1.125 * 3.0");
+		  passed[0] = false; 
+	  }
+	  lms.StepAccepted(1.0);
+	  if (lms.Radius() != 0.25 * 3.0 * 3.0 / 1.125 * 3.0 * 3.0) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != 0.25 * 3.0 * 3.0 / 1.125 * 3.0 * 3.0");
+		  passed[0] = false;   
+	  }
+	  lms.StepAccepted(1.0);
+	  if (lms.Radius() != options.max_radius) {
+		  System.err.println("In TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() lms.Radius() != options.max_radius");
+		  passed[0] = false; 
+	  }
+	  if (passed[0]) {
+		  System.out.println("TESTLevenbergMarquardtStrategyAcceptRejectStepRadiusScaling() passed all tests");
+	  }
+	}
+
+
+
+
+	public void TESTLevenbergMarquardtStrategyCorrectDiagonalToLinearSolver() {
+	  // TESTLevenbergMarquardtStrategyCorrectDiagonalToLinearSolver() passed all tests
+	  boolean passed[] = new boolean[] {true};
+	  Matrix jacobian = new Matrix(2, 3, 0.0);
+	  jacobian.set(0, 0, 0.0);
+	  jacobian.set(0, 1, 1.0);
+	  jacobian.set(1, 1, 1.0);
+	  jacobian.set(0, 2, 100.0);
+	
+	  double residual[] = new double[] {1.0};
+	  double x[] = new double[3];
+	  DenseSparseMatrix dsm = new DenseSparseMatrix(jacobian);
+	
+	  TrustRegionStrategyOptions options = new TrustRegionStrategyOptions();
+	  options.initial_radius = 2.0;
+	  options.max_radius = 20.0;
+	  options.min_lm_diagonal = 1e-2;
+	  options.max_lm_diagonal = 1e2;
+	
+	  double diagonal[] = new double[3];
+	  diagonal[0] = options.min_lm_diagonal;
+	  diagonal[1] = 2.0;
+	  diagonal[2] = options.max_lm_diagonal;
+	  for (int i = 0; i < 3; ++i) {
+	    diagonal[i] = Math.sqrt(diagonal[i] / options.initial_radius);
+	  }
+	
+	  RegularizationCheckingLinearSolver linear_solver = new RegularizationCheckingLinearSolver(3, diagonal, 
+			  "TESTLevenbergMarquardtStrategyCorrectDiagonalToLinearSolver()", passed);
+	  options.linear_solver = linear_solver;
+	
+	  LevenbergMarquardtStrategy lms = new LevenbergMarquardtStrategy(options);
+	  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+	
+	  /*{
+	    ScopedMockLog log;
+	    EXPECT_CALL(log, Log(_, _, _)).Times(AnyNumber());
+	    // This using directive is needed get around the fact that there
+	    // are versions of glog which are not in the google namespace.
+	    using namespace google;
+	
+	#if defined(_MSC_VER)
+	    // Use GLOG_WARNING to support MSVC if GLOG_NO_ABBREVIATED_SEVERITIES
+	    // is defined.
+	    EXPECT_CALL(log, Log(GLOG_WARNING, _,
+	                         HasSubstr("Failed to compute a step")));
+	#else
+	    EXPECT_CALL(log, Log(google::WARNING, _,
+	                         HasSubstr("Failed to compute a step")));
+	#endif*/
+	
+	    TrustRegionStrategySummary summary =
+	        lms.ComputeStep(pso, dsm, residual, x);
+	    if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+	    	System.err.println("In TESTLevenbergMarquardtStrategyCorrectDiagonalToLinearSolver() summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE");
+	    	passed[0] = false;
+	    }
+	    if (passed[0]) {
+	    	System.out.println("TESTLevenbergMarquardtStrategyCorrectDiagonalToLinearSolver() passed all tests");
+	    }
+	  //}
+	}
 
 
 
