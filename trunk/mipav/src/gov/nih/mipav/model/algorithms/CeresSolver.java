@@ -4139,7 +4139,7 @@ public abstract class CeresSolver {
 			} // class LinearSolverSummmary
 
 
-	class LinearSolver {
+	abstract class LinearSolver {
 		public LinearSolverOptions options_;
 		public LinearSolverSummary summary;
 		public LinearSolverPerSolveOptions perSolveOptions;
@@ -4157,6 +4157,9 @@ public abstract class CeresSolver {
 		  public HashMap<String, CallStatistics> Statistics() {
 		    return new HashMap<String, CallStatistics>();
 		  }
+		  
+		  public abstract LinearSolverSummary Solve(LinearOperator A, double b[], LinearSolverPerSolveOptions per_solve_options,
+					double x[]);
 
 	} // class LinearSolver
 
@@ -10359,7 +10362,7 @@ public abstract class CeresSolver {
 			  trust_region_step_array[i] = trust_region_step_.get(i);
 		  }
 		  
-		  TrustRegionStrategy.Summary strategy_summary =
+		  TrustRegionStrategySummary strategy_summary =
 			      strategy_.ComputeStep(per_solve_options,
 			                             jacobian_,
 			                             residuals_array,
@@ -12147,47 +12150,49 @@ public abstract class CeresSolver {
 
 			    
 			  } // class TrustStrategyPerSolveOptions
+		  
+		  class TrustRegionStrategySummary {
+			    // If the trust region problem is,
+			    //
+			    //   1/2 x'Ax + b'x + c,
+			    //
+			    // then
+			    //
+			    //   residual_norm = |Ax -b|
+			    public double residual_norm;
+
+			    // Number of iterations used by the linear solver. If a linear
+			    // solver was not called (e.g., DogLegStrategy after an
+			    // unsuccessful step), then this would be zero.
+			    public int num_iterations;
+
+			    // Status of the linear solver used to solve the Newton system.
+			    public LinearSolverTerminationType termination_type;
+		        public TrustRegionStrategySummary() {
+		          residual_norm = 0.0;
+		          num_iterations = -1;
+		          termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
+		    }
+		    
+		    
+		  } // class Summary
 
 	
 	abstract class TrustRegionStrategy {
 		 public TrustRegionStrategyOptions options;
 		 public TrustRegionStrategyPerSolveOptions perSolveOptions;
-		 public Summary summary;
+		 public TrustRegionStrategySummary summary;
 		 
 		 public TrustRegionStrategy() {
 			 options = new TrustRegionStrategyOptions();
 			 perSolveOptions = new TrustRegionStrategyPerSolveOptions();
-			 summary = new Summary();
+			 summary = new TrustRegionStrategySummary();
 		 }
 
-			  class Summary {
-				    // If the trust region problem is,
-				    //
-				    //   1/2 x'Ax + b'x + c,
-				    //
-				    // then
-				    //
-				    //   residual_norm = |Ax -b|
-				    public double residual_norm;
-
-				    // Number of iterations used by the linear solver. If a linear
-				    // solver was not called (e.g., DogLegStrategy after an
-				    // unsuccessful step), then this would be zero.
-				    public int num_iterations;
-
-				    // Status of the linear solver used to solve the Newton system.
-				    public LinearSolverTerminationType termination_type;
-			        public Summary() {
-			          residual_norm = 0.0;
-			          num_iterations = -1;
-			          termination_type = LinearSolverTerminationType.LINEAR_SOLVER_FAILURE;
-			    }
-			    
-			    
-			  } // class Summary
+			  
 			  
 			  // Use the current radius to solve for the trust region step.
-			  public abstract Summary ComputeStep(TrustRegionStrategyPerSolveOptions per_solve_options,
+			  public abstract TrustRegionStrategySummary ComputeStep(TrustRegionStrategyPerSolveOptions per_solve_options,
 			                              SparseMatrix jacobian,
 			                              double residuals[],
 			                              double step[]);
@@ -12276,7 +12281,7 @@ public abstract class CeresSolver {
 	      }
 
 	  // TrustRegionStrategy interface
-	  public TrustRegionStrategy.Summary ComputeStep(
+	  public TrustRegionStrategySummary ComputeStep(
 	      TrustRegionStrategyPerSolveOptions per_solve_options,
 	      SparseMatrix jacobian,
 	      double[] residuals,
@@ -12346,25 +12351,8 @@ public abstract class CeresSolver {
 		  // Then x can be found as x = -y, but the inputs jacobian and residuals
 		  // do not need to be modified.
 		  
-		  if (linear_solver_.options_.type == LinearSolverType.CGNR) {
-		      linear_solver_summary =
-		      ((CgnrSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
-		  }
-		  else if (linear_solver_.options_.type == LinearSolverType.DENSE_QR) {
-			  linear_solver_summary =
-				      ((DenseQRSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
-		  }
-		  else if (linear_solver_.options_.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
-			  linear_solver_summary =
-				      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);  
-		  }
-		  else if (linear_solver_.options_.type == LinearSolverType.ITERATIVE_SCHUR) {
-			  linear_solver_summary = ((IterativeSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
-		  }
-		  else if (linear_solver_.options_.type == LinearSolverType.DENSE_SCHUR) {
-			  linear_solver_summary = ((DenseSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, step);
-		  }
-
+		  linear_solver_summary =
+			      linear_solver_.Solve(jacobian, residuals, solve_options, step);
 
 		  if (linear_solver_summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FATAL_ERROR) {
 		    Preferences.debug("Linear solver fatal error: " + linear_solver_summary.message[0] + "\n",
@@ -12563,7 +12551,7 @@ public abstract class CeresSolver {
 	      }
 
 	  // TrustRegionStrategy interface
-	  public TrustRegionStrategy.Summary ComputeStep(TrustRegionStrategyPerSolveOptions per_solve_options,
+	  public TrustRegionStrategySummary ComputeStep(TrustRegionStrategyPerSolveOptions per_solve_options,
 	                              SparseMatrix jacobian,
 	                              double residuals[],
 	                              double step[]) {
@@ -13031,24 +13019,8 @@ public abstract class CeresSolver {
 		    for (i = 0; i < gauss_newton_step_.size(); i++) {
 		    	gauss_newton_step_array[i] = gauss_newton_step_.get(i);
 		    }
-		    if (linear_solver_.options_.type == LinearSolverType.CGNR) {
-			      linear_solver_summary =
-			      ((CgnrSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
-			  }
-			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_QR) {
-				  linear_solver_summary =
-					      ((DenseQRSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);  
-			  }
-			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_NORMAL_CHOLESKY) {
-				  linear_solver_summary =
-					      ((DenseNormalCholeskySolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);  
-			  }
-			  else if (linear_solver_.options_.type == LinearSolverType.ITERATIVE_SCHUR) {
-				  linear_solver_summary = ((IterativeSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
-			  }
-			  else if (linear_solver_.options_.type == LinearSolverType.DENSE_SCHUR) {
-				  linear_solver_summary = ((DenseSchurComplementSolver)linear_solver_).Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
-			  }
+		    linear_solver_summary = linear_solver_.Solve(jacobian, residuals, solve_options, gauss_newton_step_array);
+		    
 		    gauss_newton_step_.clear();
 		    for (i = 0; i < gauss_newton_step_array.length; i++) {
 		    	gauss_newton_step_.add(gauss_newton_step_array[i]);
