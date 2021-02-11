@@ -6154,6 +6154,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	
 	    TrustRegionStrategySummary summary =
 	        lms.ComputeStep(pso, dsm, residual, x);
+	    // Saw Preferences message
+	    // Linear solver failure. Failed to compute a step: null
 	    if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
 	    	System.err.println("In TESTLevenbergMarquardtStrategyCorrectDiagonalToLinearSolver() summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_FAILURE");
 	    	passed[0] = false;
