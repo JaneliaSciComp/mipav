@@ -6166,9 +6166,458 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  //}
 	}
 
+	class Fixture {
+		 protected DenseSparseMatrix jacobian_;
+		 protected double[] residual_;
+		 protected double[] x_;
+		 protected TrustRegionStrategyOptions options_;
+		 
+		 public Fixture() {
+		     options_ = new TrustRegionStrategyOptions();	 
+		 }
+		};
 
+		// A test problem where
+		//
+		//   J^T J = Q diag([1 2 4 8 16 32]) Q^T
+		//
+		// where Q is a randomly chosen orthonormal basis of R^6.
+		// The residual is chosen so that the minimum of the quadratic function is
+		// at (1, 1, 1, 1, 1, 1). It is therefore at a distance of sqrt(6) ~ 2.45
+		// from the origin.
+		class DoglegStrategyFixtureEllipse extends Fixture {
+			public DoglegStrategyFixtureEllipse() {
+				super();
+				SetUp();
+			}
+			
+		 protected void SetUp() {
+			 int i;
+		    double basis_array[][] = new double[6][];
+		    // The following lines exceed 80 characters for better readability.
+		    basis_array[0] = new double[] {-0.1046920933796121, -0.7449367449921986, -0.4190744502875876,
+		    		-0.4480450716142566,  0.2375351607929440, -0.0363053418882862};
+		    basis_array[1] = new double[] {0.4064975684355914,  0.2681113508511354, -0.7463625494601520,
+		                                  -0.0803264850508117, -0.4463149623021321,  0.0130224954867195};
+		    basis_array[2] = new double[] {-0.5514387729089798,  0.1026621026168657, -0.5008316122125011,
+		    		0.5738122212666414,  0.2974664724007106,  0.1296020877535158};
+		    basis_array[3] = new double[] {0.5037835370947156,  0.2668479925183712, -0.1051754618492798,
+		    		-0.0272739396578799,  0.7947481647088278, -0.1776623363955670};
+		    basis_array[4] = new double[] {-0.4005458426625444,  0.2939330589634109, -0.0682629380550051,
+		                                  -0.2895448882503687, -0.0457239396341685, -0.8139899477847840};
+		    basis_array[5] = new double[] {-0.3247764582762654,  0.4528151365941945, -0.0276683863102816,
+		    		-0.6155994592510784,  0.1489240599972848,  0.5362574892189350};
+            Matrix basis = new Matrix(basis_array);
+		    Matrix sqrtD = new Matrix(6, 6, 0.0);
+		    sqrtD.set(0, 0, 1.0);
+		    sqrtD.set(1, 1, Math.sqrt(2.0));
+		    sqrtD.set(2, 2, 2.0);
+		    sqrtD.set(3, 3, Math.sqrt(8.0));
+		    sqrtD.set(4, 4, 4.0);
+		    sqrtD.set(5, 5, Math.sqrt(32.0));
+		   
+		    Matrix jacobian = sqrtD.times(basis);
+		    jacobian_ = new DenseSparseMatrix(jacobian);
 
+		    Matrix minimum = new Matrix(6, 1, 1.0);
+		    double residual_array[][] = jacobian.times(minimum).getArray();
+		    residual_ = new double[6];
+		    for (i = 0; i < 6; i++) {
+		    	residual_[i] = -residual_array[i][0];
+		    }
 
+		    x_ = new double[6];
 
+		    options_.min_lm_diagonal = 1.0;
+		    options_.max_lm_diagonal = 1.0;
+		  }
+		};
+		
+		// A test problem where
+		//
+		//   J^T J = diag([1 2 4 8 16 32]) .
+		//
+		// The residual is chosen so that the minimum of the quadratic function is
+		// at (0, 0, 1, 0, 0, 0). It is therefore at a distance of 1 from the origin.
+		// The gradient at the origin points towards the global minimum.
+		class DoglegStrategyFixtureValley extends Fixture {
+			public DoglegStrategyFixtureValley() {
+				super();
+				SetUp();
+			}
+		 protected void SetUp() {
+            int i;
+		    Matrix jacobian = new Matrix(6, 6, 0.0);
+		    jacobian.set(0, 0, 1.0);
+		    jacobian.set(1, 1, 2.0);
+		    jacobian.set(2, 2, 4.0);
+		    jacobian.set(3, 3, 8.0);
+		    jacobian.set(4, 4, 16.0);
+		    jacobian.set(5, 5, 32.0);
+		    jacobian_ = new DenseSparseMatrix(jacobian);
+
+		    Matrix minimum = new Matrix(6, 1, 0.0);
+		    minimum.set(2, 0, 1.0);
+		    double residual_array[][] = jacobian.times(minimum).getArray();
+		    residual_ = new double[6];
+		    for (i = 0; i < 6; i++) {
+		    	residual_[i] = -residual_array[i][0];
+		    }
+
+		    x_ = new double[6];
+
+		    options_.min_lm_diagonal = 1.0;
+		    options_.max_lm_diagonal = 1.0;
+		  }
+		};
+		
+		public void DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional() {
+			// DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional passed all tests
+			new DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional();
+		}
+		
+		public void DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace() {
+			// DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace passed all tests
+			new DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace();
+		}
+		
+		public void DoglegStrategyFixtureEllipseCorrectGaussNewtonStep() {
+			// DoglegStrategyFixtureEllipseCorrectGaussNewtonStep passed all tests
+			new DoglegStrategyFixtureEllipseCorrectGaussNewtonStep();
+		}
+		
+		public void DoglegStrategyFixtureEllipseValidSubspaceBasis() {
+			// DoglegStrategyFixtureEllipseValidSubspaceBasis passed all tests
+		    new DoglegStrategyFixtureEllipseValidSubspaceBasis();	
+		}
+		
+		public void DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient() {
+			// DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient passed all tests
+			new DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient();
+		}
+		
+		public void DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient() {
+			// DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient passed all tests
+			new DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient();
+		}
+		
+		// The DoglegStrategy must never return a step that is longer than the current
+		// trust region radius.
+	    class DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional extends DoglegStrategyFixtureEllipse {
+	      public DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional() {
+	    	  super();
+	      int i;
+	      double normSquared;
+	      double x_norm;
+		  boolean passed = true;
+		  LinearSolver linear_solver =
+		      new DenseQRSolver(new LinearSolverOptions());
+		  options_.linear_solver = linear_solver;
+		  // The global minimum is at (1, 1, ..., 1), so the distance to it is
+		  // sqrt(6.0).  By restricting the trust region to a radius of 2.0,
+		  // we test if the trust region is actually obeyed.
+		  options_.dogleg_type = DoglegType.TRADITIONAL_DOGLEG;
+		  options_.initial_radius = 2.0;
+		  options_.max_radius = 2.0;
+
+		  DoglegStrategy strategy = new DoglegStrategy(options_);
+		  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+
+		  TrustRegionStrategySummary summary = strategy.ComputeStep(pso,
+		                                                              jacobian_,
+		                                                              residual_,
+		                                                              x_);
+
+		  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+			  System.err.println("In DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional summary.termination_type == LINEAR_SOLVER_FAILURE");
+			  passed = false;
+		  }
+		  normSquared = 0.0;
+		  for (i = 0; i < x_.length; i++) {
+			  normSquared += x_[i]*x_[i];
+		  }
+		  x_norm = Math.sqrt(normSquared);
+		  if (x_norm > options_.initial_radius * (1.0 + 4.0 * epsilon)) {
+			  System.err.println("In DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional (x_norm > options_.initial_radius * (1.0 + 4.0 * epsilon)");
+			  passed = false;
+		  }
+		  if (passed) {
+			  System.out.println("DoglegStrategyFixtureEllipseTrustRegionObeyedTraditional passed all tests");
+		  }
+		}
+	    }
+	    
+	 	    class DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace extends DoglegStrategyFixtureEllipse {
+	 	      public DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace() {
+	 	    	  super();
+	 	      int i;
+	 	      double normSquared;
+	 	      double x_norm;
+	 		  boolean passed = true;
+	 		  LinearSolver linear_solver =
+	 		      new DenseQRSolver(new LinearSolverOptions());
+	 		  options_.linear_solver = linear_solver;
+	 		  options_.dogleg_type = DoglegType.SUBSPACE_DOGLEG;
+	 		  options_.initial_radius = 2.0;
+	 		  options_.max_radius = 2.0;
+
+	 		  DoglegStrategy strategy = new DoglegStrategy(options_);
+	 		  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+
+	 		  TrustRegionStrategySummary summary = strategy.ComputeStep(pso,
+	 		                                                              jacobian_,
+	 		                                                              residual_,
+	 		                                                              x_);
+
+	 		  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace summary.termination_type == LINEAR_SOLVER_FAILURE");
+	 			  passed = false;
+	 		  }
+	 		  normSquared = 0.0;
+	 		  for (i = 0; i < x_.length; i++) {
+	 			  normSquared += x_[i]*x_[i];
+	 		  }
+	 		  x_norm = Math.sqrt(normSquared);
+	 		  if (x_norm > options_.initial_radius * (1.0 + 4.0 * epsilon)) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace (x_norm > options_.initial_radius * (1.0 + 4.0 * epsilon)");
+	 			  passed = false;
+	 		  }
+	 		  if (passed) {
+	 			  System.out.println("DoglegStrategyFixtureEllipseTrustRegionObeyedSubspace passed all tests");
+	 		  }
+	 		}
+	 	    }
+	 	    
+	 	    class DoglegStrategyFixtureEllipseCorrectGaussNewtonStep extends DoglegStrategyFixtureEllipse {
+	 	      final double kToleranceLoose = 1e-5;
+	 	      public DoglegStrategyFixtureEllipseCorrectGaussNewtonStep() {
+	 	    	  super();
+	 	      int i;
+	 		  boolean passed = true;
+	 		  LinearSolver linear_solver =
+	 		      new DenseQRSolver(new LinearSolverOptions());
+	 		  options_.linear_solver = linear_solver;
+	 		  options_.dogleg_type = DoglegType.SUBSPACE_DOGLEG;
+	 		  options_.initial_radius = 10.0;
+	 		  options_.max_radius = 10.0;
+
+	 		  DoglegStrategy strategy = new DoglegStrategy(options_);
+	 		  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+
+	 		  TrustRegionStrategySummary summary = strategy.ComputeStep(pso,
+	 		                                                              jacobian_,
+	 		                                                              residual_,
+	 		                                                              x_);
+
+	 		  if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseCorrectGaussNewtonStep summary.termination_type == LINEAR_SOLVER_FAILURE");
+	 			  passed = false;
+	 		  }
+	 		  for (i = 0; i < 6; i++) {
+	 			  if (Math.abs(x_[i] - 1.0) > kToleranceLoose) {
+	 				  System.err.println("In  DoglegStrategyFixtureEllipseCorrectGaussNewtonStep Math.abs(x_["+i+"] - 1.0) > kToleranceLoose");
+	 				  passed = false;
+	 			  }
+	 		  }
+	 		  if (passed) {
+	 			  System.out.println("DoglegStrategyFixtureEllipseCorrectGaussNewtonStep passed all tests");
+	 		  }
+	 		}
+	 	    }
+	 	    
+	 	// Test if the subspace basis is a valid orthonormal basis of the space spanned
+	 	// by the gradient and the Gauss-Newton point.
+ 	    class DoglegStrategyFixtureEllipseValidSubspaceBasis extends DoglegStrategyFixtureEllipse {
+ 	    	  final double kTolerance = 1e-14;
+	 	      public DoglegStrategyFixtureEllipseValidSubspaceBasis() {
+	 	    	  super();
+	 	      int i;
+	 	      double normSquared0;
+	 	      double normSquared1;
+	 	      double dotProduct;
+	 	      double col0;
+	 	      double col1;
+	 	      double norm0;
+	 	      double norm1;
+	 	      double normSquared;
+	 	      double norm;
+	 		  boolean passed = true;
+	 		  LinearSolver linear_solver =
+	 		      new DenseQRSolver(new LinearSolverOptions());
+	 		  options_.linear_solver = linear_solver;
+	 		  options_.dogleg_type = DoglegType.SUBSPACE_DOGLEG;
+	 		  options_.initial_radius = 2.0;
+	 		  options_.max_radius = 2.0;
+
+	 		  DoglegStrategy strategy = new DoglegStrategy(options_);
+	 		  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+
+	 		  TrustRegionStrategySummary summary = strategy.ComputeStep(pso,
+	 		                                                              jacobian_,
+	 		                                                              residual_,
+	 		                                                              x_);
+	 		  
+	 		  // Check if the basis is orthonormal.
+	 		  final Matrix basis = strategy.subspace_basis();
+	 		  normSquared0 = 0.0;
+	 		  normSquared1 = 0.0;
+	 		  dotProduct = 0.0;
+	 		  for (i = 0; i < basis.getRowDimension(); i++) {
+	 			  col0 = basis.get(i, 0);
+	 			  normSquared0 += col0 * col0;
+	 			  col1 = basis.get(i, 1);
+	 			  normSquared1 += col1 * col1;
+	 			  dotProduct += col0 * col1;
+	 		  }
+	 		  norm0 = Math.sqrt(normSquared0);
+	 		  norm1 = Math.sqrt(normSquared1);
+	 		  if (Math.abs(norm0 - 1.0) > kTolerance) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseValidSubspaceBasis Math.abs(basis.col(0).norm() - 1.0) > kTolerance");
+	 			  passed = false;
+	 		  }
+	 		  if (Math.abs(norm1 - 1.0) > kTolerance) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseValidSubspaceBasis Math.abs(basis.col(1).norm() - 1.0) > kTolerance");
+	 			  passed = false;
+	 		  }
+	 		  if (Math.abs(dotProduct) > kTolerance) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseValidSubspaceBasis Math.abs(basis.col(0).dot(basis.col(1))) > kTolerance");
+	 			  passed = false;  
+	 		  }
+
+	 		  // Check if the gradient projects onto itself.
+	 		  final Vector<Double> gradient = strategy.gradient();
+	 		  Matrix gradientMat = new Matrix(gradient.size(), 1);
+	 		  for (i = 0; i < gradient.size(); i++ ) {
+	 			  gradientMat.set(i, 0, gradient.get(i));
+	 		  }
+	 		  Matrix gMat = gradientMat.minus(basis.times((basis.transpose()).times(gradientMat)));
+	 		  normSquared = 0.0;
+	 		  for (i = 0; i < gradient.size(); i++) {
+	 			  normSquared += gMat.get(i,0) * gMat.get(i,0);
+	 		  }
+	 		  norm = Math.sqrt(normSquared);
+	 		  if (norm > kTolerance) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseValidSubspaceBasis (gradient - basis*(basis.transpose()*gradient)).norm() > kTolerance");
+	 			  passed = false;  
+	 		  }
+	 		  
+	 		  // Check if the Gauss-Newton point projects onto itself.
+	 		  final Vector<Double> gn = strategy.gauss_newton_step();
+	 		  Matrix gnMat = new Matrix(gn.size(), 1);
+	 		  for (i = 0; i < gn.size(); i++ ) {
+	 			  gnMat.set(i, 0, gn.get(i));
+	 		  }
+	 		  gMat = gnMat.minus(basis.times((basis.transpose()).times(gnMat)));
+	 		  normSquared = 0.0;
+	 		  for (i = 0; i < gn.size(); i++) {
+	 			  normSquared += gMat.get(i,0) * gMat.get(i,0);
+	 		  }
+	 		  norm = Math.sqrt(normSquared);
+	 		  if (norm > kTolerance) {
+	 			  System.err.println("In DoglegStrategyFixtureEllipseValidSubspaceBasis (gn - basis*(basis.transpose()*gn)).norm() > kTolerance");
+	 			  passed = false;  
+	 		  }
+
+	 		  if (passed) {
+	 			  System.out.println("DoglegStrategyFixtureEllipseValidSubspaceBasis passed all tests");
+	 		  }
+	 		}
+	 	    }
+ 	    
+ 	// Test if the step is correct if the gradient and the Gauss-Newton step point
+ 	// in the same direction and the Gauss-Newton step is outside the trust region,
+ 	// i.e. the trust region is active.
+ 	class DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient extends DoglegStrategyFixtureValley {
+ 		final double kToleranceLoose = 1e-5;
+ 		public DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient() {
+ 			super();
+ 			int i;
+ 			boolean passed = true;
+ 			LinearSolver linear_solver =
+ 		 		      new DenseQRSolver(new LinearSolverOptions());
+ 		 		  options_.linear_solver = linear_solver;
+ 		 		  options_.dogleg_type = DoglegType.SUBSPACE_DOGLEG;
+ 		 		  options_.initial_radius = 0.25;
+ 		 		  options_.max_radius = 0.25;
+ 	  
+ 		 		 DoglegStrategy strategy = new DoglegStrategy(options_);
+ 		 		  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+
+ 		 		  TrustRegionStrategySummary summary = strategy.ComputeStep(pso,
+ 		 		                                                              jacobian_,
+ 		 		                                                              residual_,
+ 		 		                                                              x_);
+ 		 		if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+ 		 			  System.err.println("In DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient summary.termination_type == LINEAR_SOLVER_FAILURE");
+ 		 			  passed = false;
+ 		 		  }
+ 		 		  for (i = 0; i < 6; i++) {
+ 		 			  if (i != 2) {
+	 		 			  if (Math.abs(x_[i]) > kToleranceLoose) {
+	 		 				  System.err.println("In DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient Math.abs(x_["+i+"]) > kToleranceLoose");
+	 		 				  passed = false;
+	 		 			  }
+ 		 			  }
+ 		 			  else {
+ 		 				  if (Math.abs(x_[2] - options_.initial_radius) > kToleranceLoose) {
+ 		 					System.err.println("In DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient Math.abs(x_[2] - options_.initial_radius) > kToleranceLoose");
+	 		 				passed = false;  
+ 		 				  }
+ 		 			  }
+ 		 		  }
+
+ 	              if (passed) {
+ 	            	  System.out.println("DoglegStrategyFixtureValleyCorrectStepLocalOptimumAlongGradient passed all tests");
+ 	              }
+ 		}
+ 	}
+ 	
+	 // Test if the step is correct if the gradient and the Gauss-Newton step point
+	 // in the same direction and the Gauss-Newton step is inside the trust region,
+	 // i.e. the trust region is inactive.
+ 	class DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient extends DoglegStrategyFixtureValley {
+ 		final double kToleranceLoose = 1e-5;
+ 		public DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient() {
+ 			super();
+ 			int i;
+ 			boolean passed = true;
+ 			LinearSolver linear_solver =
+ 		 		      new DenseQRSolver(new LinearSolverOptions());
+ 		 		  options_.linear_solver = linear_solver;
+ 		 		  options_.dogleg_type = DoglegType.SUBSPACE_DOGLEG;
+ 		 		  options_.initial_radius = 2.0;
+ 		 		  options_.max_radius = 2.0;
+ 	  
+ 		 		 DoglegStrategy strategy = new DoglegStrategy(options_);
+ 		 		  TrustRegionStrategyPerSolveOptions pso = new TrustRegionStrategyPerSolveOptions();
+
+ 		 		  TrustRegionStrategySummary summary = strategy.ComputeStep(pso,
+ 		 		                                                              jacobian_,
+ 		 		                                                              residual_,
+ 		 		                                                              x_);
+ 		 		if (summary.termination_type == LinearSolverTerminationType.LINEAR_SOLVER_FAILURE) {
+ 		 			  System.err.println("In DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient summary.termination_type == LINEAR_SOLVER_FAILURE");
+ 		 			  passed = false;
+ 		 		  }
+ 		 		  for (i = 0; i < 6; i++) {
+ 		 			  if (i != 2) {
+	 		 			  if (Math.abs(x_[i]) > kToleranceLoose) {
+	 		 				  System.err.println("In DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient Math.abs(x_["+i+"]) > kToleranceLoose");
+	 		 				  passed = false;
+	 		 			  }
+ 		 			  }
+ 		 			  else {
+ 		 				  if (Math.abs(x_[2] - 1.0) > kToleranceLoose) {
+ 		 					System.err.println("In DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient Math.abs(x_[2] - 1.0) > kToleranceLoose");
+	 		 				passed = false;  
+ 		 				  }
+ 		 			  }
+ 		 		  }
+
+ 	              if (passed) {
+ 	            	  System.out.println("DoglegStrategyFixtureValleyCorrectStepGlobalOptimumAlongGradient passed all tests");
+ 	              }
+ 		}
+ 	}
 	
 }
