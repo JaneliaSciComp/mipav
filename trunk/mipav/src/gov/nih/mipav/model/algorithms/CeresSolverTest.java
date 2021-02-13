@@ -6619,5 +6619,148 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  	              }
  		}
  	}
+ 	
+ 	public void LineSearchPreprocessorZeroProblem() {
+ 		  // LineSearchPreprocessorZeroProblem() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.minimizer_type = MinimizerType.LINE_SEARCH;
+ 		  LineSearchPreprocessor preprocessor = new LineSearchPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In LineSearchPreprocessorZeroProblem() preprocessor.Preprocess(options, problem, pp) = false");
+ 		  }
+ 		  else {
+ 			  System.out.println("LineSearchPreprocessorZeroProblem() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	public void LineSearchPreprocessorProblemWithInvalidParameterBlock() {
+ 		  // LineSearchPreprocessorProblemWithInvalidParameterBlock() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {Double.NaN};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.minimizer_type = MinimizerType.LINE_SEARCH;
+ 		  LineSearchPreprocessor preprocessor = new LineSearchPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In LineSearchPreprocessorProblemWithInvalidParameterBlock() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("LineSearchPreprocessorProblemWithInvalidParameterBlock() passed all tests");
+ 		  }
+ 		}
+
+ 	public void LineSearchPreprocessorParameterBlockHasBounds() {
+ 		  // LineSearchPreprocessorParameterBlockHasBounds() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {1.0};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  problem.SetParameterUpperBound(x, 0, 1.0);
+ 		  problem.SetParameterLowerBound(x, 0, 2.0);
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.minimizer_type = MinimizerType.LINE_SEARCH;
+ 		  LineSearchPreprocessor preprocessor = new LineSearchPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In LineSearchPreprocessorParameterBlockHasBounds() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("LineSearchPreprocessorParameterBlockHasBounds() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	class FailingCostFunction extends SizedCostFunction {
+ 		public FailingCostFunction() {
+ 			super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+ 		}
+ 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+ 			return false;
+ 		}
+ 		 
+ 	};
+ 	
+ 	public void LineSearchPreprocessorRemoveParameterBlocksFailed() {
+ 		  // LineSearchPreprocessorRemoveParameterBlocksFailed() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {3.0};
+ 		  problem.AddResidualBlock(new FailingCostFunction(), null, x);
+ 		  problem.SetParameterBlockConstant(x);
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.minimizer_type = MinimizerType.LINE_SEARCH;
+ 		  LineSearchPreprocessor preprocessor = new LineSearchPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In LineSearchPreprocessorRemoveParameterBlocksFailed() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("LineSearchPreprocessorRemoveParameterBlocksFailed() passed all tests");
+ 		  }
+ 		}
+
+
+ 	public void LineSearchPreprocessorRemoveParameterBlocksSucceeds() {
+ 		  // LineSearchPreprocessorRemoveParameterBlocksSucceeds() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {3.0};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.minimizer_type = MinimizerType.LINE_SEARCH;
+
+ 		  LineSearchPreprocessor preprocessor = new LineSearchPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In LineSearchPreprocessorRemoveParameterBlocksSucceeds() preprocessor.Preprocess(options, problem, pp) = false");
+ 		  }
+ 		  else {
+ 			  System.out.println("LineSearchPreprocessorRemoveParameterBlocksSucceeds() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	class DummyCostFunction2 extends SizedCostFunction {
+ 		public DummyCostFunction2(int kNumResiduals, int N1, int N2) {
+ 			super(kNumResiduals, N1, N2, 0, 0, 0, 0, 0, 0, 0, 0);
+ 		}
+ 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+ 			return true;
+ 		}
+ 	 
+ 	};
+ 	
+ 	public void LineSearchPreprocessorNormalOperation() {
+ 		  // LineSearchPreprocessorNormalOperation() passed all tests
+ 		  boolean passed = true;
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {1.0};
+ 		  double y[] = new double[] {1.0};
+ 		  double z[] = new double[] {1.0};
+ 		  problem.AddResidualBlock(new DummyCostFunction2(1, 1, 1), null, x, y);
+ 		  problem.AddResidualBlock(new DummyCostFunction2(1, 1, 1), null, y, z);
+
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.minimizer_type = MinimizerType.LINE_SEARCH;
+
+ 		  LineSearchPreprocessor preprocessor = new LineSearchPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In LineSearchPreprocessorNormalOperation() preprocessor.Preprocess(options, problem, pp) = false");
+ 			  passed = false;
+ 		  }
+ 		  if (pp.evaluator_options.linear_solver_type != LinearSolverType.CGNR) {
+ 			  System.err.println("In LineSearchPreprocessorNormalOperation() pp.evaluator_options.linear_solver_type != LinearSolverType.CGNR");
+			  passed = false;  
+ 		  }
+ 		  if (pp.evaluator == null) {
+ 			  System.err.println("In LineSearchPreprocessorNormalOperation() pp.evaluator == null");
+			  passed = false;    
+ 		  }
+ 		  if (passed) {
+ 			  System.out.println("LineSearchPreprocessorNormalOperation() passed all tests");
+ 		  }
+ 		}
+
+
+
 	
 }
