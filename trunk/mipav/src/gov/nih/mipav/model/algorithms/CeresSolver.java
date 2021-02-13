@@ -2463,6 +2463,7 @@ public abstract class CeresSolver {
 			reduced_parameters = new Vector<Double>();
 			linear_solver_options = new LinearSolverOptions();
 			minimizer_options = new MinimizerOptions();
+			evaluator_options = new EvaluatorOptions();
 		}
 
 	} // class Preprocessed
