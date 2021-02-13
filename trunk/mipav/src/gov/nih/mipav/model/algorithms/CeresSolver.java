@@ -17873,6 +17873,33 @@ public abstract class CeresSolver {
 		public HashMap<double[], ParameterBlock> parameter_map() {
 			return parameter_block_map_;
 		}
+		
+		public void SetParameterLowerBound(double[] values,
+                int index,
+                double lower_bound) {
+			ParameterBlock parameter_block = parameter_block_map_.get(values);
+			if (parameter_block == null) {
+			    System.err.println("Parameter block not found for values[] with values[0] = " + values[0]);
+			    System.err.println("You must add the parameter block to the problem before ");
+		        System.err.println("you can set a lower bound on one of its components.");
+			}
+			
+			    parameter_block.SetLowerBound(index, lower_bound);
+			}
+			
+			public void SetParameterUpperBound(double[] values,
+			                int index,
+			                double upper_bound) {
+				ParameterBlock parameter_block = parameter_block_map_.get(values);
+				if (parameter_block == null) {
+				    System.err.println("Parameter block not found for values[] with values[0] = " + values[0]);
+				    System.err.println("You must add the parameter block to the problem before ");
+			        System.err.println("you can set an upper bound on one of its components.");
+				}
+			
+			    parameter_block.SetUpperBound(index, upper_bound);
+			}
+
 
 	} // class ProblemImpl
 
