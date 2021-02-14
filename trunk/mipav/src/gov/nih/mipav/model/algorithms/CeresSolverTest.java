@@ -33,6 +33,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunctorExample;
 import gov.nih.mipav.model.algorithms.CeresSolver.CurveFittingFunctorExample;
+import gov.nih.mipav.model.algorithms.CeresSolver.EvaluateOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblem;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverOptions;
@@ -44,6 +45,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.Ownership;
 import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
 import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
+import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
@@ -7449,5 +7451,324 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  				  System.out.println("LineSearchMinimizerTestFinalCostIsZero() passed all tests");
  			  }
  	   }
+ 		
+ 		class PowellEvaluator2 extends Evaluator {
+ 			private final int num_active_cols_;
+ 			private boolean col1;
+ 			private boolean col2;
+ 			private boolean col3;
+ 			private boolean col4;
+ 			 public PowellEvaluator2(boolean col1, boolean col2, boolean col3, boolean col4) {
+ 				      super();
+ 				      this.col1 = col1;
+ 				      this.col2 = col2;
+ 				      this.col3 = col3;
+ 				      this.col4 = col4;
+ 			          num_active_cols_ = (col1 ? 1 : 0) +
+ 			          (col2 ? 1 : 0) +
+ 			          (col3 ? 1 : 0) +
+ 			          (col4 ? 1 : 0);
+ 			          if (1 <= MAX_LOG_LEVEL) {
+ 			        	  Preferences.debug("col = " + col1 + " col2 = " + col2 + " col3 = " + col3 + " col4 = " + col4 + "\n",
+ 			        			  Preferences.DEBUG_ALGORITHM);
+ 			          }
+ 			  }
+
+
+ 			  // Implementation of Evaluator interface.
+ 			  public SparseMatrix CreateJacobian() {
+ 			    if (!(col1 || col2 || col3 || col4)) {
+ 			    	System.err.println("Cannot have col1 = col2 = col3 = col4 = false in CreateJacobian");
+ 			    	return null;
+ 			    }
+ 			    DenseSparseMatrix dense_jacobian =
+ 			        new DenseSparseMatrix(NumResiduals(), NumEffectiveParameters());
+ 			    dense_jacobian.SetZero();
+ 			    return dense_jacobian;
+ 			  }
+ 			  
+ 			 public boolean Evaluate(EvaluateOptions evaluate_options,
+ 	                Vector<Double> state,
+ 	                double[] cost,
+ 	                Vector<Double> residuals,
+ 	                Vector<Double> gradient,
+ 	                SparseMatrix jacobian) {
+ 				 int i;
+ 				 boolean cond;
+ 				 double state_array[] = new double[state.size()];
+ 				 for (i = 0; i < state.size(); i++) {
+ 					 state_array[i] = state.get(i);
+ 				 }
+ 				 double residuals_array[] = new double[residuals.size()];
+ 				 for (i = 0; i < residuals.size(); i++) {
+ 					 residuals_array[i] = residuals.get(i);
+ 				 }
+ 				 double gradient_array[] = new double[gradient.size()];
+ 				 for (i = 0; i < gradient.size(); i++) {
+ 					 gradient_array[i] = gradient.get(i);
+ 				 }
+ 				 cond = Evaluate(evaluate_options, state_array, cost, residuals_array, gradient_array, jacobian);
+ 				 for (i = 0; i < residuals_array.length; i++) {
+ 					 residuals.set(i, residuals_array[i]);
+ 				 }
+ 				 for (i = 0; i < gradient_array.length; i++) {
+ 					 gradient.set(i, gradient_array[i]);
+ 				 }
+ 				 return cond;
+ 			 }
+
+ 			  public boolean Evaluate(EvaluateOptions evaluate_options,
+ 			                        double[] state,
+ 			                        double[] cost,
+ 			                        double[] residuals,
+ 			                        double[] gradient,
+ 			                        SparseMatrix jacobian) {
+ 				int r, c;
+ 			    final double x1 = state[0];
+ 			    final double x2 = state[1];
+ 			    final double x3 = state[2];
+ 			    final double x4 = state[3];
+
+ 			   if (1 <= MAX_LOG_LEVEL) {
+ 				      Preferences.debug("State: \n", Preferences.DEBUG_ALGORITHM);
+		        	  Preferences.debug("x1 = " + x1 + " x2 = " + x2 + "\n", Preferences.DEBUG_ALGORITHM);
+		        	  Preferences.debug("x3 = " + x3 + " x4 = " + x4 + "\n", Preferences.DEBUG_ALGORITHM);
+		        }
+ 			    
+ 			    final double f1 = x1 + 10.0 * x2;
+ 			    final double f2 = Math.sqrt(5.0) * (x3 - x4);
+ 			    final double f3 = Math.pow(x2 - 2.0 * x3, 2.0);
+ 			    final double f4 = Math.sqrt(10.0) * Math.pow(x1 - x4, 2.0);
+ 			    
+ 			   if (1 <= MAX_LOG_LEVEL) {
+				      Preferences.debug("Function: \n", Preferences.DEBUG_ALGORITHM);
+		        	  Preferences.debug("f1 = " + f1 + " f2 = " + f2 + "\n", Preferences.DEBUG_ALGORITHM);
+		        	  Preferences.debug("f3 = " + f3 + " f4 = " + f4 + "\n", Preferences.DEBUG_ALGORITHM);
+		        }
+
+ 			    cost[0] = (f1*f1 + f2*f2 + f3*f3 + f4*f4) / 2.0;
+
+ 			   if (1 <= MAX_LOG_LEVEL) {
+				      Preferences.debug("Cost: " + cost[0] +"\n", Preferences.DEBUG_ALGORITHM);
+ 			   }
+
+ 			    if (residuals != null) {
+ 			      residuals[0] = f1;
+ 			      residuals[1] = f2;
+ 			      residuals[2] = f3;
+ 			      residuals[3] = f4;
+ 			    }
+
+ 			    if (jacobian != null) {
+ 			      DenseSparseMatrix dense_jacobian = (DenseSparseMatrix)(jacobian);
+ 			      dense_jacobian.SetZero();
+
+ 			      //ColMajorMatrixRef jacobian_matrix = dense_jacobian.mutable_matrix();
+ 			      Matrix jacobian_matrix = dense_jacobian.mutable_matrix();
+ 			      if (jacobian_matrix.getColumnDimension() != num_active_cols_) {
+ 			    	  System.err.println("In Evaluate jacobian_matrix.getColumnDimension() != num_active_cols_");
+ 			    	  return false;
+ 			      }
+
+ 			      int column_index = 0;
+ 			      if (col1) {
+ 			    	jacobian_matrix.set(0, column_index, 1.0);
+ 			    	jacobian_matrix.set(1, column_index, 0.0);
+ 			    	jacobian_matrix.set(2, column_index, 0.0);
+ 			    	jacobian_matrix.set(3, column_index, Math.sqrt(10.0) * 2.0 * (x1 - x4) * (1.0 - x4));
+ 			        column_index++;  
+ 			      }
+ 			      
+ 			      if (col2) {
+ 			    	jacobian_matrix.set(0, column_index, 10.0);
+  			    	jacobian_matrix.set(1, column_index, 0.0);
+  			    	jacobian_matrix.set(2, column_index, 2.0*(x2 - 2.0*x3)*(1.0 - 2.0*x3));
+  			    	jacobian_matrix.set(3, column_index, 0.0);
+  			        column_index++;  
+ 			      }
+
+ 			      if (col3) {
+ 			    	jacobian_matrix.set(0, column_index, 0.0);
+   			    	jacobian_matrix.set(1, column_index, Math.sqrt(5.0));
+   			    	jacobian_matrix.set(2, column_index, 2.0*(x2 - 2.0*x3)*(x2 - 2.0));
+   			    	jacobian_matrix.set(3, column_index, 0.0);
+   			        column_index++;  
+ 			      }
+
+ 			      if (col4) {
+ 			    	 jacobian_matrix.set(0, column_index, 0.0);
+    			     jacobian_matrix.set(1, column_index, -Math.sqrt(5.0));
+    			     jacobian_matrix.set(2, column_index, 0.0);
+    			     jacobian_matrix.set(3, column_index, Math.sqrt(10.0) * 2.0 * (x1 - x4) * (x1 - 1.0));
+    			     column_index++;  
+ 			      }
+ 			     if (1 <= MAX_LOG_LEVEL) {
+				      Preferences.debug("\njacobian_matrix\n", Preferences.DEBUG_ALGORITHM);
+				      for (r = 0; r < jacobian_matrix.getRowDimension(); r++) {
+				    	  for (c = 0; c < jacobian_matrix.getColumnDimension(); c++) {
+				    		  Preferences.debug("jacobian_matrix["+r+"]["+c+"] = " + jacobian_matrix.get(r,c) + "\n",
+				    				  Preferences.DEBUG_ALGORITHM);
+				    	  }
+				      }
+			      }
+ 			    }
+
+ 			    if (gradient != null) {
+ 			      int column_index = 0;
+ 			      if (col1) {
+ 			        gradient[column_index++] = f1  + f4 * Math.sqrt(10.0) * 2.0 * (x1 - x4);
+ 			      }
+
+ 			      if (col2) {
+ 			        gradient[column_index++] = f1 * 10.0 + f3 * 2.0 * (x2 - 2.0 * x3);
+ 			      }
+
+ 			      if (col3) {
+ 			        gradient[column_index++] =
+ 			            f2 * Math.sqrt(5.0) + f3 * (2.0 * 2.0 * (2.0 * x3 - x2));
+ 			      }
+
+ 			      if (col4) {
+ 			        gradient[column_index++] =
+ 			            -f2 * Math.sqrt(5.0) + f4 * Math.sqrt(10.0) * 2.0 * (x4 - x1);
+ 			      }
+ 			    }
+
+ 			    return true;
+ 			  }
+
+ 			  public boolean Plus(double[] state,
+ 			                    double[] delta,
+ 			                    double[] state_plus_delta) {
+ 			    int delta_index = 0;
+ 			    state_plus_delta[0] = (col1  ? state[0] + delta[delta_index++] : state[0]);
+ 			    state_plus_delta[1] = (col2  ? state[1] + delta[delta_index++] : state[1]);
+ 			    state_plus_delta[2] = (col3  ? state[2] + delta[delta_index++] : state[2]);
+ 			    state_plus_delta[3] = (col4  ? state[3] + delta[delta_index++] : state[3]);
+ 			    return true;
+ 			  }
+ 			  
+ 			 public boolean Plus(Vector<Double> state,
+	                    Vector<Double> delta,
+	                    Vector<Double> state_plus_delta) {
+ 				 int i;
+ 				 boolean cond;
+ 				 double state_array[] = new double[state.size()];
+ 				 for (i = 0; i < state.size(); i++) {
+ 					 state_array[i] = state.get(i);
+ 				 }
+ 				 double delta_array[] = new double[delta.size()];
+ 				 for (i = 0; i < delta.size(); i++) {
+ 					 delta_array[i] = delta.get(i);
+ 				 }
+ 				 double state_plus_delta_array[] = new double[state_plus_delta.size()];
+ 				 for (i = 0; i < state_plus_delta.size(); i++) {
+ 					 state_plus_delta_array[i] = state_plus_delta.get(i);
+ 				 }
+ 				 cond = Plus(state_array, delta_array, state_plus_delta_array);
+ 				for (i = 0; i < state_plus_delta.size(); i++) {
+ 					state_plus_delta.set(i, state_plus_delta_array[i]);
+				}
+ 				return cond;
+ 			 }
+
+ 			  public int NumEffectiveParameters() { return num_active_cols_; }
+ 			  public int NumParameters()          { return 4; }
+ 			  public int NumResiduals()           { return 4; }
+ 			};
+ 			
+ 			public void IsTrustRegionSolveSuccessful(boolean col1, boolean col2, boolean col3, boolean col4, 
+ 					TrustRegionStrategyType strategy_type, int failed[]) {
+ 				  SolverOptions solver_options = new SolverOptions();
+ 				  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
+ 				  DenseQRSolver linear_solver = new DenseQRSolver(linear_solver_options);
+
+ 				  double parameters[] = new double[]{ 3, -1, 0, 1.0 };
+
+ 				  // If the column is inactive, then set its value to the optimal
+ 				  // value.
+ 				  parameters[0] = (col1 ? parameters[0] : 0.0);
+ 				  parameters[1] = (col2 ? parameters[1] : 0.0);
+ 				  parameters[2] = (col3 ? parameters[2] : 0.0);
+ 				  parameters[3] = (col4 ? parameters[3] : 0.0);
+
+ 				  MinimizerOptions minimizer_options = new MinimizerOptions(solver_options);
+ 				  minimizer_options.gradient_tolerance = 1e-26;
+ 				  minimizer_options.function_tolerance = 1e-26;
+ 				  minimizer_options.parameter_tolerance = 1e-26;
+ 				  minimizer_options.evaluator =
+ 				      new PowellEvaluator2(col1, col2, col3, col4);
+ 				  minimizer_options.jacobian =
+ 				      minimizer_options.evaluator.CreateJacobian();
+
+ 				  TrustRegionStrategyOptions trust_region_strategy_options = new TrustRegionStrategyOptions();
+ 				  trust_region_strategy_options.trust_region_strategy_type = strategy_type;
+ 				  trust_region_strategy_options.linear_solver = linear_solver;
+ 				  trust_region_strategy_options.initial_radius = 1e4;
+ 				  trust_region_strategy_options.max_radius = 1e20;
+ 				  trust_region_strategy_options.min_lm_diagonal = 1e-6;
+ 				  trust_region_strategy_options.max_lm_diagonal = 1e32;
+ 				  minimizer_options.trust_region_strategy =
+ 				      Create(trust_region_strategy_options);
+
+ 				  TrustRegionMinimizer minimizer = new TrustRegionMinimizer();
+ 				  SolverSummary summary = new SolverSummary();
+ 				  minimizer.Minimize(minimizer_options, parameters, summary);
+
+ 				  // The minimum is at x1 = x2 = x3 = x4 = 0.
+ 				  if (Math.abs(parameters[0]) > 0.001) {
+ 					  System.err.println("Math.abs(parameters[0]) > 0.001");
+ 					  failed[0]++;
+ 				  }
+ 				  if (Math.abs(parameters[1]) > 0.001) {
+					  System.err.println("Math.abs(parameters[1]) > 0.001");
+					  failed[0]++;;
+				  }
+ 				  if (Math.abs(parameters[2]) > 0.001) {
+					  System.err.println("Math.abs(parameters[2]) > 0.001");
+					  failed[0]++;;
+				  }
+ 				 if (Math.abs(parameters[3]) > 0.001) {
+					  System.err.println("Math.abs(parameters[3]) > 0.001");
+					  failed[0]++;;
+				  }
+ 				}
+ 			
+ 			public void TrustRegionMinimizerPowellsSingularFunctionUsingLevenbergMarquardt() {
+ 				  // This case is excluded because this has a local minimum and does
+ 				  // not find the optimum. This should not affect the correctness of
+ 				  // this test since we are testing all the other 14 combinations of
+ 				  // column activations.
+ 				  //
+ 				  //   IsSolveSuccessful<true, true, false, true>();
+                  int failed[] = new int[] {0};
+ 				  final TrustRegionStrategyType kStrategy = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+ 				  IsTrustRegionSolveSuccessful(true,  true,  true,  true, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(true,  true,  true,  false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(true,  false, true,  true, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, true,  true,  true, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(true,  true,  false, false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(true,  false, true,  false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, true,  true,  false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(true,  false, false, true, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, true,  false, true, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, false, true,  true, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(true,  false, false, false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, true,  false, false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, false, true,  false, kStrategy, failed);
+ 				  IsTrustRegionSolveSuccessful(false, false, false, true, kStrategy, failed);
+ 				  if (failed[0] > 1) {
+ 					  System.err.println("TrustRegionMinimizerPowellsSingularFunctionUsingLevenbergMarquardt() had " + failed[0] + " failures");
+ 				  }
+ 				  else if (failed[0] == 1) {
+ 					 System.err.println("TrustRegionMinimizerPowellsSingularFunctionUsingLevenbergMarquardt() had 1 failure");
+ 				  }
+ 				  else {
+ 					  System.out.println("TrustRegionMinimizerPowellsSingularFunctionUsingLevenbergMarquardt() passed all tests");
+ 				  }
+ 				}
+
+
+
 
 }
