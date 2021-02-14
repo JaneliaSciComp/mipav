@@ -7389,6 +7389,37 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  		 }
  		}
 
+ 	class QuadraticFirstOrderFunction extends FirstOrderFunction {
+ 		 public QuadraticFirstOrderFunction() {
+ 			 super();
+ 		 }
+ 		 public boolean Evaluate(double[] parameters,
+ 		                        double[] cost,
+ 		                        double[] gradient) {
 
+ 		    cost[0] = parameters[0] * parameters[0];
+ 		    if (gradient != null) {
+ 		      gradient[0] = 2.0 * parameters[0];
+ 		    }
+ 		    return true;
+ 		  }
+
+ 		  public int NumParameters() { return 1; }
+ 		};
+
+ 		public void LineSearchMinimizerTestFinalCostIsZero() {
+ 			  // LineSearchMinimizerTestFinalCostIsZero() passed all tests
+ 			  double parameters[] = new double[] {2.0};
+ 			  GradientProblem problem = new GradientProblem(new QuadraticFirstOrderFunction());
+ 			  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+ 			  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+ 			  Solve(options, problem, parameters, summary);
+ 			  if (Math.abs(summary.final_cost) > epsilon) {
+ 				  System.err.println("In LineSearchMinimizerTestFinalCostIsZero() Math.abs(summary.final_cost) > epsilon");
+ 			  }
+ 			  else {
+ 				  System.out.println("LineSearchMinimizerTestFinalCostIsZero() passed all tests");
+ 			  }
+ 	   }
 
 }
