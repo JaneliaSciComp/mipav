@@ -8154,6 +8154,10 @@ public abstract class CeresSolver {
 		  public abstract boolean Plus(Vector<Double> state,
 		                    Vector<Double> delta,
 		                    Vector<Double> state_plus_delta);
+		  
+		  public abstract boolean Plus(double[] state,
+                  double[] delta,
+                  double[] state_plus_delta);
 
 		  // The number of parameters in the optimization problem.
 		  public abstract int NumParameters();
@@ -8173,6 +8177,13 @@ public abstract class CeresSolver {
 		                        double[] residuals,
 		                        double[] gradient,
 		                        SparseMatrix jacobian);
+		  
+		  public abstract boolean Evaluate(EvaluateOptions evaluate_options,
+	                Vector<Double> state,
+	                double[] cost,
+	                Vector<Double> residuals,
+	                Vector<Double> gradient,
+	                SparseMatrix jacobian);
 
 		  // Variant of Evaluator::Evaluate where the user wishes to use the
 		  // default EvaluateOptions struct. This is mostly here as a
@@ -8809,6 +8820,28 @@ public abstract class CeresSolver {
 		                      Vector<Double> delta,
 		            Vector<Double> state_plus_delta) {
 		    return program_.Plus(state, delta, state_plus_delta);
+		  }
+		  
+		  public boolean Plus(double[] state, double[] delta, double[] state_plus_delta) {
+			  int i;
+			  boolean cond;
+			  Vector<Double>stateVec = new Vector<Double>(state.length);
+			  for (i = 0; i < state.length; i++) {
+				  stateVec.add(state[i]);
+			  }
+			  Vector<Double>deltaVec = new Vector<Double>(delta.length);
+			  for (i = 0; i < delta.length; i++) {
+				  deltaVec.add(delta[i]);
+			  }
+			  Vector<Double>state_plus_deltaVec = new Vector<Double>(state_plus_delta.length);
+			  for (i = 0; i < state_plus_delta.length; i++) {
+				  state_plus_deltaVec.add(state_plus_delta[i]);
+			  }
+			  cond = program_.Plus(stateVec, deltaVec, state_plus_deltaVec);
+			  for (i = 0; i < state_plus_delta.length; i++) {
+				  state_plus_delta[i] = state_plus_deltaVec.get(i);
+			  }
+			  return cond;
 		  }
 		  
 		  public boolean Evaluate(EvaluateOptions evaluate_options,
@@ -9937,9 +9970,9 @@ public abstract class CeresSolver {
 		      (options.inner_iteration_minimizer != null);
 		  inner_iterations_were_useful_ = false;
 
-		  num_parameters_ = ((ProgramEvaluator)evaluator_).NumParameters();
-		  num_effective_parameters_ = ((ProgramEvaluator)evaluator_).NumEffectiveParameters();
-		  num_residuals_ = ((ProgramEvaluator)evaluator_).NumResiduals();
+		  num_parameters_ = evaluator_.NumParameters();
+		  num_effective_parameters_ = evaluator_.NumEffectiveParameters();
+		  num_residuals_ = evaluator_.NumResiduals();
 		  num_consecutive_invalid_steps_ = 0;
 
 		  
@@ -10065,7 +10098,7 @@ public abstract class CeresSolver {
 			for (i = 0; i < delta_.size(); i++) {
 				delta_.set(i,0.0);
 			}
-		    if (!((ProgramEvaluator)evaluator_).Plus(x_, delta_, candidate_x_)) {
+		    if (!evaluator_.Plus(x_, delta_, candidate_x_)) {
 		      solver_summary_.message[0] =
 		          "Unable to project initial point onto the feasible set.";
 		      solver_summary_.termination_type = TerminationType.FAILURE;
@@ -10111,7 +10144,7 @@ public abstract class CeresSolver {
 		  int i;
 		  EvaluateOptions evaluate_options = new EvaluateOptions();
 		  evaluate_options.new_evaluation_point = new_evaluation_point;
-		  if (!((ProgramEvaluator)evaluator_).Evaluate(evaluate_options,
+		  if (!evaluator_.Evaluate(evaluate_options,
 		                            x_,
 		                            x_cost_,
 		                            residuals_,
@@ -10154,7 +10187,7 @@ public abstract class CeresSolver {
 		  for (i = 0; i < gradient_.size(); i++) {
 			  negative_gradient_.add(-gradient_.get(i));
 		  }
-		  if (!((ProgramEvaluator)evaluator_).Plus(x_,
+		  if (!evaluator_.Plus(x_,
 		                        negative_gradient_,
 		                        projected_gradient_step_)) {
 		    solver_summary_.message[0] =
