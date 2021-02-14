@@ -87,7 +87,7 @@ public abstract class CeresSolver {
 	// before passing them to user code. If on return an element of the
 	// array still contains this value, we will assume that the user code
 	// did not write to that memory location.
-	private int MAX_LOG_LEVEL = 3;
+	public int MAX_LOG_LEVEL = 3;
 	// Log severity level constants.
 	private int FATAL   = -3;
 	private int ERROR   = -2;
