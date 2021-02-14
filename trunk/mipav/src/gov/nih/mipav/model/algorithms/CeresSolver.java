@@ -22,6 +22,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
+import gov.nih.mipav.model.algorithms.CeresSolver.EvaluateOptions;
+import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
@@ -21517,6 +21519,36 @@ public abstract class CeresSolver {
 			  execution_summary_ = new ExecutionSummary();
 			  problem_ = problem;
 		  }
+		  
+		  public boolean Evaluate(EvaluateOptions evaluate_options,
+	                Vector<Double> state,
+	                double[] cost,
+	                Vector<Double> residuals,
+	                Vector<Double> gradient,
+	                SparseMatrix jacobian) {
+				 int i;
+				 boolean cond;
+				 double state_array[] = new double[state.size()];
+				 for (i = 0; i < state.size(); i++) {
+					 state_array[i] = state.get(i);
+				 }
+				 double residuals_array[] = new double[residuals.size()];
+				 for (i = 0; i < residuals.size(); i++) {
+					 residuals_array[i] = residuals.get(i);
+				 }
+				 double gradient_array[] = new double[gradient.size()];
+				 for (i = 0; i < gradient.size(); i++) {
+					 gradient_array[i] = gradient.get(i);
+				 }
+				 cond = Evaluate(evaluate_options, state_array, cost, residuals_array, gradient_array, jacobian);
+				 for (i = 0; i < residuals_array.length; i++) {
+					 residuals.set(i, residuals_array[i]);
+				 }
+				 for (i = 0; i < gradient_array.length; i++) {
+					 gradient.set(i, gradient_array[i]);
+				 }
+				 return cond;
+			 }
 		  
 		  public boolean Evaluate(EvaluateOptions evaluate_options,
                   double[] state,
