@@ -6760,7 +6760,635 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  		  }
  		}
 
+ 	public void TrustRegionPreprocessorZeroProblem() {
+ 		  // TrustRegionPreprocessorZeroProblem() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorZeroProblem() preprocessor.Preprocess(options, problem, pp) = false");
+ 		  }
+ 		  else {
+ 			  System.out.println("TrustRegionPreprocessorZeroProblem() passed all tests");
+ 		  }
+ 		}
+
+ 	public void TrustRegionPreprocessorProblemWithInvalidParameterBlock() {
+ 		  // TrustRegionPreprocessorProblemWithInvalidParameterBlock() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {Double.NaN};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorProblemWithInvalidParameterBlock() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("TrustRegionPreprocessorProblemWithInvalidParameterBlock() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	public void TrustRegionPreprocessorParameterBlockBoundsAreInvalid() {
+ 		  // TrustRegionPreprocessorParameterBlockBoundsAreInvalid() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {1.0};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  problem.SetParameterUpperBound(x, 0, 1.0);
+ 		  problem.SetParameterLowerBound(x, 0, 2.0);
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorParameterBlockBoundsAreInvalid() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("TrustRegionPreprocessorParameterBlockBoundsAreInvalid() passed all tests");
+ 		  }
+ 		}
+
+ 	public void TrustRegionPreprocessorParamterBlockIsInfeasible() {
+ 		  // TrustRegionPreprocessorParamterBlockIsInfeasible() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {3.0};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  problem.SetParameterUpperBound(x, 0, 1.0);
+ 		  problem.SetParameterLowerBound(x, 0, 2.0);
+ 		  problem.SetParameterBlockConstant(x);
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor(); 
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if(preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorParamterBlockIsInfeasible() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("TrustRegionPreprocessorParamterBlockIsInfeasible() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	public void TrustRegionPreprocessorRemoveParameterBlocksFailed() {
+ 		  // TrustRegionPreprocessorRemoveParameterBlocksFailed() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {3.0};
+ 		  problem.AddResidualBlock(new FailingCostFunction(), null, x);
+ 		  problem.SetParameterBlockConstant(x);
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorRemoveParameterBlocksFailed() preprocessor.Preprocess(options, problem, pp) = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("TrustRegionPreprocessorRemoveParameterBlocksFailed() passed all tests");
+ 		  }
+ 		}
+
+ 	public void TrustRegionPreprocessorRemoveParameterBlocksSucceeds() {
+ 		  // TrustRegionPreprocessorRemoveParameterBlocksSucceeds() passed all tests
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {3.0};
+ 		  problem.AddParameterBlock(x, 1);
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorRemoveParameterBlocksSucceeds() preprocessor.Preprocess(options, problem, pp) = false");
+ 		  }
+ 		  else {
+ 			  System.out.println("TrustRegionPreprocessorRemoveParameterBlocksSucceeds() passed all tests");
+ 		  }
+ 		}
+
+ 	class DummyCostFunction3 extends SizedCostFunction {
+ 		private int kNumResiduals;
+ 		private int N1;
+ 		private int N2;
+ 		private int N3;
+ 		
+ 		public DummyCostFunction3(int kNumResiduals, int N1) {
+ 			super(kNumResiduals, N1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+ 			this.kNumResiduals = kNumResiduals;
+ 			this.N1 = N1;
+ 			this.N2 = 0;
+ 			this.N3 = 0;
+ 		}
+ 		public DummyCostFunction3(int kNumResiduals, int N1, int N2) {
+ 			super(kNumResiduals, N1, N2, 0, 0, 0, 0, 0, 0, 0, 0);
+ 			this.kNumResiduals = kNumResiduals;
+ 			this.N1 = N1;
+ 			this.N2 = N2;
+ 			this.N3 = 0;
+ 		}
+ 		public DummyCostFunction3(int kNumResiduals, int N1, int N2, int N3) {
+ 			super(kNumResiduals, N1, N2, N3, 0, 0, 0, 0, 0, 0, 0);
+ 			this.kNumResiduals = kNumResiduals;
+ 			this.N1 = N1;
+ 			this.N2 = N2;
+ 			this.N3 = N3;
+ 		}
+ 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+ 		int i;
+ 			
+ 	    for (i = 0; i < kNumResiduals; ++i) {
+ 	      residuals[i] = kNumResiduals * kNumResiduals + i;
+ 	    }
+
+ 	    if (jacobians == null) {
+ 	      return true;
+ 	    }
+
+ 	    if (jacobians[0] != null) {
+ 	      for (i = 0; i < kNumResiduals * N1; i++) {
+ 	          jacobians[0][i] = kNumResiduals * N1;  
+ 	      }
+ 	    }
+
+ 	    if (N2 == 0) {
+ 	      return true;
+ 	    }
+
+ 	    if (jacobians[1] != null) {
+ 	    	for (i = 0; i < kNumResiduals * N2; i++) {
+ 	 	          jacobians[1][i] = kNumResiduals * N2;  
+ 	 	    }
+ 	    }
+
+ 	    if (N3 == 0) {
+ 	      return true;
+ 	    }
+
+ 	    if (jacobians[2] != null) {
+ 	    	for (i = 0; i < kNumResiduals * N3; i++) {
+	 	          jacobians[2][i] = kNumResiduals * N3;  
+	 	    }
+ 	    }
+
+ 	    return true;
+ 	  }
+ 	};
+ 	
+ 	class LinearSolverAndEvaluatorCreationTest {
+ 		 private double x_[];
+ 		 private double y_[];
+ 		 private double z_[];
+ 		 ProblemImpl problem_;
+ 		 public LinearSolverAndEvaluatorCreationTest(ProblemImpl problem_, double x_[], double y_[], double z_[]) {
+ 			 this.problem_ = problem_;
+ 			 this.x_ = x_;
+ 			 this.y_ = y_;
+ 			 this.z_ = z_;
+ 			 SetUp();
+ 		 }
+ 		 public void SetUp() {
+ 		    x_[0] = 1.0;
+ 		    y_[0] = 1.0;
+ 		    z_[0] = 1.0;
+ 		    problem_.AddResidualBlock(new DummyCostFunction3(1, 1, 1), null, x_, y_);
+ 		    problem_.AddResidualBlock(new DummyCostFunction3(1, 1, 1), null, y_, z_);
+ 		  }
+ 	}
+ 	
+ 	public void PreprocessForGivenLinearSolverAndVerify(
+ 		      LinearSolverType linear_solver_type, ProblemImpl problem_, String testName) {
+ 		    boolean passed = true;
+ 		    SolverOptions options = new SolverOptions();
+ 		    options.linear_solver_type = linear_solver_type;
+ 		    TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		    PreprocessedProblem pp = new PreprocessedProblem();
+ 		    if (!preprocessor.Preprocess(options, problem_, pp)) {
+ 		    	System.err.println("In " + testName + " preprocessor.Preprocess(options, problem_, pp) = false");
+ 		    	passed = false;
+ 		    }
+ 		    if (pp.options.linear_solver_type != linear_solver_type) {
+ 		    	System.err.println("In " + testName + " pp.options.linear_solver_type != linear_solver_type");
+ 		    	passed = false;	
+ 		    }
+ 		    if (pp.linear_solver_options.type != linear_solver_type) {
+ 		    	System.err.println("In " + testName + " pp.linear_solver_options.type != linear_solver_type");
+ 		    	passed = false;		
+ 		    }
+ 		    if (pp.linear_solver ==  null) {
+ 		    	System.err.println("In " + testName + " pp.linear_solver ==  null");
+ 		    	passed = false;	
+ 		    }
+ 		    if (pp.evaluator == null) {
+ 		    	System.err.println("In " + testName + " pp.evaluator == null");
+ 		    	passed = false;
+ 		    }
+ 		    if (passed) {
+ 		    	System.out.println(testName + " passed all tests");
+ 		    }
+ 		  }
+
+ 	public void LinearSolverAndEvaluatorCreationTestDenseQR() {
+ 		  // LinearSolverAndEvaluatorCreationTestDenseQR() passed all tests
+ 		  ProblemImpl problem_ = new ProblemImpl();
+ 		  double x_[] = new double[1];
+ 		  double y_[] = new double[1];
+ 		  double z_[] = new double[1];
+ 		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  PreprocessForGivenLinearSolverAndVerify(LinearSolverType.DENSE_QR, problem_, "LinearSolverAndEvaluatorCreationTestDenseQR()");
+ 	}
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestDenseNormalCholesky() {
+ 		  // LinearSolverAndEvaluatorCreationTestDenseNormalCholesky() passed all tests
+ 		  ProblemImpl problem_ = new ProblemImpl();
+ 		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  PreprocessForGivenLinearSolverAndVerify(LinearSolverType.DENSE_NORMAL_CHOLESKY, problem_, "LinearSolverAndEvaluatorCreationTestDenseNormalCholesky()");
+ 	}
+
+ 	public void LinearSolverAndEvaluatorCreationTestDenseSchur() {
+ 		  // LinearSolverAndEvaluatorCreationTestDenseSchur() passed all tests
+ 		  ProblemImpl problem_ = new ProblemImpl();
+ 		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  PreprocessForGivenLinearSolverAndVerify(LinearSolverType.DENSE_SCHUR, problem_, "LinearSolverAndEvaluatorCreationTestDenseSchur()");
+ 	}
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestCGNR() {
+ 		  // LinearSolverAndEvaluatorCreationTestCGNR() passed all tests
+ 		  ProblemImpl problem_ = new ProblemImpl();
+ 		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  PreprocessForGivenLinearSolverAndVerify(LinearSolverType.CGNR, problem_, "LinearSolverAndEvaluatorCreationTestCGNR()");
+    }
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestIterativeSchur() {
+ 		  // LinearSolverAndEvaluatorCreationTestIterativeSchur() passed all tests
+ 		  ProblemImpl problem_ = new ProblemImpl();
+ 		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  PreprocessForGivenLinearSolverAndVerify(LinearSolverType.ITERATIVE_SCHUR, problem_, "LinearSolverAndEvaluatorCreationTestIterativeSchur()");
+ 	}
 
 
-	
+ 	public void LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() {
+ 		  // LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() passed all tests
+ 		  boolean passed = true;
+ 		  ProblemImpl problem_ = new ProblemImpl();
+ 		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  problem_.SetParameterLowerBound(x_, 0, 0.0);
+ 		  SolverOptions options = new SolverOptions();
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		    if (!preprocessor.Preprocess(options, problem_, pp)) {
+		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() preprocessor.Preprocess(options, problem_, pp) = false");
+		    	passed = false;
+		    }
+		    if (pp.options.linear_solver_type != options.linear_solver_type) {
+		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() pp.options.linear_solver_type != options.linear_solver_type");
+		    	passed = false;	
+		    }
+		    if (pp.linear_solver_options.type != options.linear_solver_type) {
+		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() pp.linear_solver_options.type != options.linear_solver_type");
+		    	passed = false;		
+		    }
+		    if (pp.evaluator_options.linear_solver_type != options.linear_solver_type) {
+		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() pp.evaluator_options.linear_solver_type != options.linear_solver_type");
+		    	passed = false;	
+		    }
+		    if (pp.linear_solver ==  null) {
+		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() pp.linear_solver ==  null");
+		    	passed = false;	
+		    }
+		    if (pp.evaluator == null) {
+		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() pp.evaluator == null");
+		    	passed = false;
+		    }
+ 		    if (!pp.minimizer_options.is_constrained) {
+ 		    	System.err.println("In LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() pp.minimizer_options.is_constrained = false");
+		    	passed = false;	
+ 		    }
+ 		    if (passed) {
+ 		    	System.out.println("LinearSolverAndEvaluatorCreationTestMinimizerIsAwareOfBounds() passed all tests");
+ 		    }
+ 		}
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithBadOrdering() {
+ 		  // LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithBadOrdering() passed all tests
+		  ProblemImpl problem_ = new ProblemImpl();
+		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+ 		  options.linear_solver_ordering = new OrderedGroups<double[]>();
+ 		  options.linear_solver_ordering.AddElementToGroup(x_, 0);
+ 		  options.linear_solver_ordering.AddElementToGroup(y_, 0);
+ 		  options.linear_solver_ordering.AddElementToGroup(z_, 1);
+
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (preprocessor.Preprocess(options, problem_, pp)) {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithBadOrdering() = true");
+ 		  }
+ 		  else {
+ 			  System.out.println("LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithBadOrdering() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() {
+ 		  // LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() passed all tests
+ 		  boolean passed = true;
+ 		  ProblemImpl problem_ = new ProblemImpl();
+		  double x_[] = new double[1];
+		  double y_[] = new double[1];
+		  double z_[] = new double[1];
+		  new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+		  SolverOptions options = new SolverOptions();
+		  options.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+		  options.linear_solver_ordering = new OrderedGroups<double[]>();
+		  options.linear_solver_ordering.AddElementToGroup(x_, 0);
+		  options.linear_solver_ordering.AddElementToGroup(z_, 0);
+		  options.linear_solver_ordering.AddElementToGroup(y_, 1);
+
+		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem_, pp)) {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() preprocessor.Preprocess(options, problem_, pp) = false");
+ 			  passed = false;
+ 		  }
+ 		  if (pp.options.linear_solver_type != LinearSolverType.DENSE_SCHUR) {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() pp.options.linear_solver_type != DENSE_SCHUR");
+			  passed = false;  
+ 		  }
+ 		  if (pp.linear_solver_options.type != LinearSolverType.DENSE_SCHUR) {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() pp.linear_solver_options.type != DENSE_SCHUR");
+			  passed = false; 
+ 		  }
+ 		  if (pp.evaluator_options.linear_solver_type != LinearSolverType.DENSE_SCHUR) {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() pp.evaluator_options.linear_solver_type != DENSE_SCHUR");
+			  passed = false;   
+ 		  }
+ 		  if (pp.linear_solver == null)  {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() pp.linear_solver == null");
+			  passed = false;
+ 		  }
+ 		  if (pp.evaluator == null) {
+ 			  System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() pp.evaluator == null");
+			  passed = false;  
+ 		  }
+ 		  if (passed) {
+ 			  System.out.println("LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithGoodOrdering() passed all tests");
+ 		  }
+ 		}
+
+
+ 	public void LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup() {
+ 		    // LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup() passed all tests
+ 		    boolean passed = true;
+		    ProblemImpl problem_ = new ProblemImpl();
+		    double x_[] = new double[1];
+		    double y_[] = new double[1];
+		    double z_[] = new double[1];
+		    new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+			problem_.SetParameterBlockConstant(x_);
+			problem_.SetParameterBlockConstant(z_);
+			
+			SolverOptions options = new SolverOptions();
+			options.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+			options.linear_solver_ordering = new OrderedGroups<double[]>();
+			options.linear_solver_ordering.AddElementToGroup(x_, 0);
+			options.linear_solver_ordering.AddElementToGroup(z_, 0);
+			options.linear_solver_ordering.AddElementToGroup(y_, 1);
+			
+			
+			TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+			PreprocessedProblem pp = new PreprocessedProblem();
+			if (!preprocessor.Preprocess(options, problem_, pp)) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup()");
+				System.err.println("preprocessor.Preprocess(options, problem_, pp) = false");
+				passed = false;
+			}
+			if (pp.options.linear_solver_type != LinearSolverType.DENSE_QR) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup()");
+				System.err.println("pp.options.linear_solver_type != LinearSolverType.DENSE_QR");
+				passed = false;
+			}
+			if (pp.linear_solver_options.type != LinearSolverType.DENSE_QR) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup()");
+				System.err.println("pp.linear_solver_options.type != LinearSolverType.DENSE_QR");
+				passed = false;
+			}
+			if (pp.evaluator_options.linear_solver_type != LinearSolverType.DENSE_QR) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup()");
+				System.err.println("pp.evaluator_options.linear_solver_type != LinearSolverType.DENSE_QR");
+				passed = false;
+			}
+			if (pp.linear_solver == null) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup()");
+				System.err.println("pp.linear_solver == null");
+				passed = false;
+			}
+			if (pp.evaluator == null) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup()");
+				System.err.println("pp.evaluator == null");
+				passed = false;
+			}
+			if (passed) {
+				System.out.println("LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptyFirstEliminationGroup() passed all tests");
+			}
+		}
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup() {
+ 		    // LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup() passed all tests
+ 		    boolean passed = true;
+		    ProblemImpl problem_ = new ProblemImpl();
+		    double x_[] = new double[1];
+		    double y_[] = new double[1];
+		    double z_[] = new double[1];
+		    new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+			problem_.SetParameterBlockConstant(y_);
+			
+			SolverOptions options = new SolverOptions();
+			options.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+			options.linear_solver_ordering = new OrderedGroups<double[]>();
+			options.linear_solver_ordering.AddElementToGroup(x_, 0);
+			options.linear_solver_ordering.AddElementToGroup(z_, 0);
+			options.linear_solver_ordering.AddElementToGroup(y_, 1);
+			
+			
+			TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+			PreprocessedProblem pp = new PreprocessedProblem();
+			if (!preprocessor.Preprocess(options, problem_, pp)) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup()");
+				System.err.println("preprocessor.Preprocess(options, problem_, pp) = false");
+				passed = false;
+			}
+			if (pp.options.linear_solver_type != LinearSolverType.DENSE_SCHUR) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup()");
+				System.err.println("pp.options.linear_solver_type != LinearSolverType.DENSE_SCHUR");
+				passed = false;
+			}
+			if (pp.linear_solver_options.type != LinearSolverType.DENSE_SCHUR) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup()");
+				System.err.println("pp.linear_solver_options.type != LinearSolverType.DENSE_SCHUR");
+				passed = false;
+			}
+			if (pp.evaluator_options.linear_solver_type != LinearSolverType.DENSE_SCHUR) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup()");
+				System.err.println("pp.evaluator_options.linear_solver_type != LinearSolverType.DENSE_SCHUR");
+				passed = false;
+			}
+			if (pp.linear_solver == null) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup()");
+				System.err.println("pp.linear_solver == null");
+				passed = false;
+			}
+			if (pp.evaluator == null) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup()");
+				System.err.println("pp.evaluator == null");
+				passed = false;
+			}
+			if (passed) {
+				System.out.println("LinearSolverAndEvaluatorCreationTestSchurTypeSolverWithEmptySecondEliminationGroup() passed all tests");
+			}
+			
+	  }
+
+ 	public void TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() {
+ 		  // TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() passed all tests
+ 		  boolean passed = true;
+ 		  ProblemImpl problem = new ProblemImpl();
+ 		  double x[] = new double[] {1.0};
+ 		  problem.AddResidualBlock(new DummyCostFunction3(1, 1), null, x);
+
+ 		  SolverOptions options = new SolverOptions();
+ 		  options.use_inner_iterations = true;
+
+ 		  TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		  PreprocessedProblem pp = new PreprocessedProblem();
+ 		  if (!preprocessor.Preprocess(options, problem, pp)) {
+ 			  System.err.println("In TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() preprocessor.Preprocess(options, problem, pp) = false");
+ 			  passed = false;
+ 		  }
+ 		  if (pp.linear_solver == null) {
+ 			  System.err.println("In TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() pp.linear_solver == null");
+			  passed = false;
+ 		  }
+ 		  if (pp.evaluator == null) {
+ 			  System.err.println("In TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() pp.evaluator == null");
+			  passed = false; 
+ 		  }
+ 		  if (pp.inner_iteration_minimizer != null) {
+ 			  System.err.println("In TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() pp.inner_iteration_minimizer != null");
+			  passed = false; 
+ 		  }
+ 		  if (passed) {
+ 			  System.out.println("TrustRegionPreprocessorTestInnerIterationsWithOneParameterBlock() passed all tests");
+ 		  }
+ 		}
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() {
+ 		    // LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() passed all tests
+	 		boolean passed = true;
+		    ProblemImpl problem_ = new ProblemImpl();
+		    double x_[] = new double[1];
+		    double y_[] = new double[1];
+		    double z_[] = new double[1];
+	        new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+			SolverOptions options = new SolverOptions();
+			options.use_inner_iterations = true;
+			
+			TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+			PreprocessedProblem pp = new PreprocessedProblem();
+			if (!preprocessor.Preprocess(options, problem_, pp)) {
+	 			  System.err.println("In LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() preprocessor.Preprocess(options, problem_, pp) = false");
+	 			  passed = false;
+	 		  }
+	 		  if (pp.linear_solver == null) {
+	 			  System.err.println("In LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() pp.linear_solver == null");
+				  passed = false;
+	 		  }
+	 		  if (pp.evaluator == null) {
+	 			  System.err.println("In LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() pp.evaluator == null");
+				  passed = false; 
+	 		  }
+	 		  if (pp.inner_iteration_minimizer == null) {
+	 			  System.err.println("In LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() pp.inner_iteration_minimizer == null");
+				  passed = false; 
+	 		  }
+	 		  if (passed) {
+	 			  System.out.println("LinearSolverAndEvaluatorCreationTestInnerIterationsWithTwoParameterBlocks() passed all tests");
+	 		  }
+			}
+
+ 	public void  LinearSolverAndEvaluatorCreationTestInvalidInnerIterationsOrdering() {
+ 		    // LinearSolverAndEvaluatorCreationTestInvalidInnerIterationsOrdering() passed all tests
+	 		ProblemImpl problem_ = new ProblemImpl();
+		    double x_[] = new double[1];
+		    double y_[] = new double[1];
+		    double z_[] = new double[1];
+	        new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+			SolverOptions options = new SolverOptions();
+			options.use_inner_iterations = true;
+			options.inner_iteration_ordering = new OrderedGroups<double[]>();
+			options.inner_iteration_ordering.AddElementToGroup(x_, 0);
+			options.inner_iteration_ordering.AddElementToGroup(z_, 0);
+			options.inner_iteration_ordering.AddElementToGroup(y_, 0);
+			
+			TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+			PreprocessedProblem pp = new PreprocessedProblem();
+			if (preprocessor.Preprocess(options, problem_, pp)) {
+				System.err.println("In LinearSolverAndEvaluatorCreationTestInvalidInnerIterationsOrdering() preprocessor.Preprocess(options, problem_, pp) = true");
+			}
+			else {
+				System.out.println("LinearSolverAndEvaluatorCreationTestInvalidInnerIterationsOrdering() passed all tests");
+			}
+	  }
+ 	
+ 	public void LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() {
+ 		// LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() passed all tests
+ 		boolean passed = true;
+ 		ProblemImpl problem_ = new ProblemImpl();
+	    double x_[] = new double[1];
+	    double y_[] = new double[1];
+	    double z_[] = new double[1];
+        new LinearSolverAndEvaluatorCreationTest(problem_, x_, y_, z_);
+		SolverOptions options = new SolverOptions();
+		options.use_inner_iterations = true;
+		options.inner_iteration_ordering = new OrderedGroups<double[]>();
+		options.inner_iteration_ordering.AddElementToGroup(x_, 0);
+		options.inner_iteration_ordering.AddElementToGroup(z_, 0);
+		options.inner_iteration_ordering.AddElementToGroup(y_, 1);
+ 		 
+ 		TrustRegionPreprocessor preprocessor = new TrustRegionPreprocessor();
+ 		 PreprocessedProblem pp = new PreprocessedProblem();
+ 		 if (!preprocessor.Preprocess(options, problem_, pp)) {
+ 			 System.err.println("In LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() preprocessor.Preprocess(options, problem_, pp) = false");
+ 			 passed = false;
+ 		 }
+ 		 if (pp.linear_solver == null) {
+ 			 System.err.println("In LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() pp.linear_solver == null");
+			 passed = false; 
+ 		 }
+ 		 if (pp.evaluator == null) {
+ 			 System.err.println("In LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() pp.evaluator == null");
+			 passed = false;  
+ 		 }
+ 		 if (pp.inner_iteration_minimizer == null) {
+ 			System.err.println("In LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() pp.inner_iteration_minimizer == null");
+			 passed = false;  
+ 		 }
+ 		 if (passed) {
+ 			 System.out.println("LinearSolverAndEvaluatorCreationTestValidInnerIterationsOrdering() passed all tests");
+ 		 }
+ 		}
+
+
+
 }
