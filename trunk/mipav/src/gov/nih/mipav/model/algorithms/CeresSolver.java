@@ -4895,6 +4895,26 @@ public abstract class CeresSolver {
 			  }
 			  return val;  
 		  }
+		  
+		  public void restoreBackFromColMajorRef(Matrix new_arrayMat) {
+			  int original_rows = m_.getRowDimension();
+	          int original_cols = m_.getColumnDimension();
+	          double original_array[][] = m_.getArray();
+              int new_rows;
+              if (has_diagonal_reserved_ && !has_diagonal_appended_) {
+            	  new_rows = original_rows - original_cols;
+              }
+              else {
+            	  new_rows = original_rows;
+              }
+              int new_cols = original_cols;
+              double new_array[][] = new_arrayMat.getArray();
+              for (int row = 0; row < new_rows; row++) {
+            	  for (int col = 0; col < new_cols; col++) {
+            		  original_array[row][col] = new_array[row][col];
+            	  }
+              }
+		  }
 
 		  //ConstColMajorMatrixRef matrix() const;
 		  public Matrix matrix() {
