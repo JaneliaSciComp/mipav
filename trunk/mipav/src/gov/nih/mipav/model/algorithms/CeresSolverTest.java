@@ -7469,7 +7469,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  			          (col3 ? 1 : 0) +
  			          (col4 ? 1 : 0);
  			          if (1 <= MAX_LOG_LEVEL) {
- 			        	  Preferences.debug("col = " + col1 + " col2 = " + col2 + " col3 = " + col3 + " col4 = " + col4 + "\n",
+ 			        	  Preferences.debug("col1 = " + col1 + " col2 = " + col2 + " col3 = " + col3 + " col4 = " + col4 + "\n",
  			        			  Preferences.DEBUG_ALGORITHM);
  			          }
  			  }
@@ -7602,6 +7602,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     			     jacobian_matrix.set(3, column_index, Math.sqrt(10.0) * 2.0 * (x1 - x4) * (x1 - 1.0));
     			     column_index++;  
  			      }
+ 			      dense_jacobian.restoreBackFromColMajorRef(jacobian_matrix);
  			     if (1 <= MAX_LOG_LEVEL) {
 				      Preferences.debug("\njacobian_matrix\n", Preferences.DEBUG_ALGORITHM);
 				      for (r = 0; r < jacobian_matrix.getRowDimension(); r++) {
@@ -7679,6 +7680,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  			
  			public void IsTrustRegionSolveSuccessful(boolean col1, boolean col2, boolean col3, boolean col4, 
  					TrustRegionStrategyType strategy_type, int failed[]) {
+ 				  int i;
  				  SolverOptions solver_options = new SolverOptions();
  				  LinearSolverOptions linear_solver_options = new LinearSolverOptions();
  				  DenseQRSolver linear_solver = new DenseQRSolver(linear_solver_options);
@@ -7716,22 +7718,34 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  				  minimizer.Minimize(minimizer_options, parameters, summary);
 
  				  // The minimum is at x1 = x2 = x3 = x4 = 0.
+ 				  boolean currentPass = true;
  				  if (Math.abs(parameters[0]) > 0.001) {
  					  System.err.println("Math.abs(parameters[0]) > 0.001");
  					  failed[0]++;
+ 					  currentPass = false;
  				  }
  				  if (Math.abs(parameters[1]) > 0.001) {
 					  System.err.println("Math.abs(parameters[1]) > 0.001");
-					  failed[0]++;;
+					  failed[0]++;
+					  currentPass = false;
 				  }
  				  if (Math.abs(parameters[2]) > 0.001) {
 					  System.err.println("Math.abs(parameters[2]) > 0.001");
-					  failed[0]++;;
+					  failed[0]++;
+					  currentPass = false;
 				  }
  				 if (Math.abs(parameters[3]) > 0.001) {
 					  System.err.println("Math.abs(parameters[3]) > 0.001");
-					  failed[0]++;;
+					  failed[0]++;
+					  currentPass = false;
 				  }
+ 				 if (!currentPass) {
+ 					 System.err.println("col1 = " + col1 + " col2 = " + col2);
+ 					 System.err.println("col3 = " + col3 + " col4 = " + col4);
+ 					 for (i = 0; i < 4; i++) {
+ 						 System.err.println("parameters["+i+"] = " + parameters[i]);
+ 					 }
+ 				 }
  				}
  			
  			public void TrustRegionMinimizerPowellsSingularFunctionUsingLevenbergMarquardt() {
@@ -7741,9 +7755,11 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  				  // column activations.
  				  //
  				  //   IsSolveSuccessful<true, true, false, true>();
+ 				  // I find that both true, true, true, true and true, true, false, true
+ 				  // are at a local cost minimum of 107.5.
                   int failed[] = new int[] {0};
  				  final TrustRegionStrategyType kStrategy = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
- 				  IsTrustRegionSolveSuccessful(true,  true,  true,  true, kStrategy, failed);
+ 				  //IsTrustRegionSolveSuccessful(true,  true,  true,  true, kStrategy, failed);
  				  IsTrustRegionSolveSuccessful(true,  true,  true,  false, kStrategy, failed);
  				  IsTrustRegionSolveSuccessful(true,  false, true,  true, kStrategy, failed);
  				  IsTrustRegionSolveSuccessful(false, true,  true,  true, kStrategy, failed);
