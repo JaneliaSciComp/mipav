@@ -18214,11 +18214,14 @@ public abstract class CeresSolver {
 			// Collect the parameters from their blocks. This will rarely allocate, since
 			// residuals taking more than 8 parameter block arguments are rare.
 			Vector<double[]> parameters = new Vector<double[]>();
-			// All parameter_blocks_[i] have all the same variables but with different state_start values
+			// parameter_blocks_[i] will often have all the same variables but with different state_start values
 			for (int i = 0; i < num_parameter_blocks; ++i) {
 				int state_start = parameter_blocks_[i].state_start();
 				if (i < num_parameter_blocks-1) {
-				    state_finish = parameter_blocks_[i+1].state_start() - 1;	
+				    state_finish = parameter_blocks_[i+1].state_start() - 1;
+				    if (state_finish < state_start) {
+				    	state_finish = parameter_blocks_[i].state().length-1;	
+				    }
 				}
 				else {
 					state_finish = parameter_blocks_[i].state().length-1;
