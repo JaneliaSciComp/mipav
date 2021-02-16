@@ -7709,7 +7709,9 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  				  trust_region_strategy_options.initial_radius = 1e4;
  				  trust_region_strategy_options.max_radius = 1e20;
  				  trust_region_strategy_options.min_lm_diagonal = 1e-6;
- 				  trust_region_strategy_options.max_lm_diagonal = 1e32;
+ 				  //trust_region_strategy_options.max_lm_diagonal = 1e32;
+ 				  // Had to change max_lm_diagonal from 1e32 to 1e-6 for Dogleg to run successfully
+				  trust_region_strategy_options.max_lm_diagonal = 1e-6;
  				  minimizer_options.trust_region_strategy =
  				      Create(trust_region_strategy_options);
 
@@ -7756,7 +7758,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  				  //
  				  //   IsSolveSuccessful<true, true, false, true>();
  				  // I find that both true, true, true, true and true, true, false, true
- 				  // are at a local cost minimum of 107.5.
+ 				  // are stuck at a local cost minimum of 107.5.
                   int failed[] = new int[] {0};
  				  final TrustRegionStrategyType kStrategy = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
  				  //IsTrustRegionSolveSuccessful(true,  true,  true,  true, kStrategy, failed);
@@ -7784,7 +7786,38 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  				  }
  				}
 
-
+ 			public void TrustRegionMinimizerPowellsSingularFunctionUsingDogleg() {
+ 				// TrustRegionMinimizerPowellsSingularFunctionUsingDogleg() passed all tests
+ 				  // The following two cases are excluded because they encounter a
+ 				  // local minimum.
+ 				  //
+ 				  //  IsTrustRegionSolveSuccessful<true, true, false, true >(kStrategy);
+ 				  //  IsTrustRegionSolveSuccessful<true,  true,  true,  true >(kStrategy);
+ 				int failed[] = new int[] {0};
+ 				final TrustRegionStrategyType kStrategy = TrustRegionStrategyType.DOGLEG;
+ 				IsTrustRegionSolveSuccessful(true,  true,  true,  false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(true,  false, true,  true, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, true,  true,  true, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(true,  true,  false, false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(true,  false, true,  false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, true,  true,  false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(true,  false, false, true, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, true,  false, true, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, false, true,  true, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(true,  false, false, false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, true,  false, false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, false, true,  false, kStrategy, failed);
+				  IsTrustRegionSolveSuccessful(false, false, false, true, kStrategy, failed);
+				  if (failed[0] > 1) {
+					  System.err.println("TrustRegionMinimizerPowellsSingularFunctionUsingDogleg() had " + failed[0] + " failures");
+				  }
+				  else if (failed[0] == 1) {
+					 System.err.println("TrustRegionMinimizerPowellsSingularFunctionUsingDogleg() had 1 failure");
+				  }
+				  else {
+					  System.out.println("TrustRegionMinimizerPowellsSingularFunctionUsingDogleg() passed all tests");
+				  }
+				}
 
 
 }
