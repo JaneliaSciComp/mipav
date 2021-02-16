@@ -7818,6 +7818,111 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					  System.out.println("TrustRegionMinimizerPowellsSingularFunctionUsingDogleg() passed all tests");
 				  }
 				}
+ 			
+ 			class CurveCostFunction extends CostFunction {
+ 				private int     num_vertices_;
+ 	 		    private double  target_length_;
+ 				 public CurveCostFunction(int num_vertices, double target_length) {
+ 					 super();
+ 				     num_vertices_ = num_vertices;
+ 				     target_length_ = target_length; 
+ 				    set_num_residuals(1);
+ 				    for (int i = 0; i < num_vertices_; ++i) {
+ 				      mutable_parameter_block_sizes().add(2);
+ 				    }
+ 				  }
+
+ 				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+ 				    residuals[0] = target_length_;
+
+ 				    for (int i = 0; i < num_vertices_; ++i) {
+ 				      int prev = (num_vertices_ + i - 1) % num_vertices_;
+ 				      double length = 0.0;
+ 				      for (int dim = 0; dim < 2; dim++) {
+ 				        final double diff = parameters.get(prev)[dim] - parameters.get(i)[dim];
+ 				        length += diff * diff;
+ 				      }
+ 				      residuals[0] -= Math.sqrt(length);
+ 				    }
+
+ 				    if (jacobians == null) {
+ 				      return true;
+ 				    }
+
+ 				    for (int i = 0; i < num_vertices_; ++i) {
+ 				      if (jacobians[i] != null) {
+ 				        int prev = (num_vertices_ + i - 1) % num_vertices_;
+ 				        int next = (i + 1) % num_vertices_;
+
+ 				        double u[] = new double[2];
+ 				        double v[] = new double[2];
+ 				        double norm_u = 0., norm_v = 0.;
+ 				        for (int dim = 0; dim < 2; dim++) {
+ 				          u[dim] = parameters.get(i)[dim] - parameters.get(prev)[dim];
+ 				          norm_u += u[dim] * u[dim];
+ 				          v[dim] = parameters.get(next)[dim] - parameters.get(i)[dim];
+ 				          norm_v += v[dim] * v[dim];
+ 				        }
+
+ 				        norm_u = Math.sqrt(norm_u);
+ 				        norm_v = Math.sqrt(norm_v);
+
+ 				        for (int dim = 0; dim < 2; dim++) {
+ 				          jacobians[i][dim] = 0.;
+
+ 				          if (norm_u > Double.MIN_VALUE) {
+ 				            jacobians[i][dim] -= u[dim] / norm_u;
+ 				          }
+
+ 				          if (norm_v > Double.MIN_VALUE) {
+ 				            jacobians[i][dim] += v[dim] / norm_v;
+ 				          }
+ 				        }
+ 				      }
+ 				    }
+
+ 				    return true;
+ 				  }
+
+ 				 
+ 				};
+ 				
+ 				public void TrustRegionMinimizerJacobiScalingTest() {
+ 					  // TrustRegionMinimizerJacobiScalingTest() passed all tests
+ 					  int N = 6;
+ 					  Vector<double[]> y = new Vector<double[]>(N);
+ 					  for (int i = 0; i < N; i++) {
+ 					    double theta = i * 2. * Math.PI/ (double)(N);
+ 					    double yarr[] = new double[2];
+ 					    yarr[0] = Math.cos(theta);
+ 					    yarr[1] = Math.sin(theta);
+ 					    y.add(yarr);
+ 					  }
+
+ 					  ProblemImpl problem = new ProblemImpl();
+ 					  problem.AddResidualBlock(new CurveCostFunction(N, 10.), null, y);
+ 					  SolverOptions options = new SolverOptions();
+ 					  options.linear_solver_type = LinearSolverType.DENSE_QR;
+ 					  options.max_num_consecutive_invalid_steps = 15;
+ 					  options.function_tolerance = 1.0E-10;
+ 					  options.parameter_tolerance = 1.0E-10;
+ 					  
+ 					  SolverSummary summary = new SolverSummary();
+ 					  Solve(options, problem, summary);
+ 					  if (summary.final_cost > 1e-10) {
+ 						  System.err.println("In TrustRegionMinimizerJacobiScalingTest() summary.final_cost > 1e-10");
+ 						  System.err.println("summary.final_cost = " + summary.final_cost);
+ 					  }
+ 					  else {
+ 						  System.out.println("TrustRegionMinimizerJacobiScalingTest() passed all tests");
+ 					  }
+
+ 					  for (int i = 0; i < N; i++) {
+ 					     y.set(i, null);
+ 					  }
+ 					}
+			
+
 
 
 }
