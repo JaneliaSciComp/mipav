@@ -7921,8 +7921,67 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  					     y.set(i, null);
  					  }
  					}
+ 				
+		class ExpCostFunction extends SizedCostFunction {
+			public ExpCostFunction() {
+				// number of resdiuals
+				// size of first parameter
+				super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+
+				// f(x) = 10 - exp(x).
+				residuals[0] = 10 - Math.exp(x[0]);
+
+				// f'(x) = -Math.exp(x[0]). Since there's only 1 parameter and that parameter
+				// has 1 dimension, there is only 1 element to fill in the
+				// jacobians.
+				//
+				// Since the Evaluate function can be called with the jacobians
+				// pointer equal to NULL, the Evaluate function must check to see
+				// if jacobians need to be computed.
+				//
+				// For this simple problem it is overkill to check if jacobians[0]
+				// is NULL, but in general when writing more complex
+				// CostFunctions, it is possible that Ceres may only demand the
+				// derivatives w.r.t. a subset of the parameter blocks.
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][0] = -Math.exp(x[0]);
+				}
+
+				return true;
+			}
+		};
+ 				
+		public void TrustRegionMinimizerGradientToleranceConvergenceUpdatesStep() {
+			  // TrustRegionMinimizerGradientToleranceConvergenceUpdatesStep() passed all tests
+			  boolean passed = true;
+			  double x[] = new double[] {5};
+			  ProblemImpl problem = new ProblemImpl();
+			  problem.AddResidualBlock(new ExpCostFunction(), null, x);
+			  problem.SetParameterLowerBound(x, 0, 3.0);
+			  SolverOptions options = new SolverOptions();
+			  SolverSummary summary = new SolverSummary();
+			  Solve(options, problem, summary);
+			  if (Math.abs(x[0] - 3.0) > 1.0E-12) {
+				  System.err.println("In TrustRegionMinimizerGradientToleranceConvergenceUpdatesStep() (Math.abs(x[0] - 3.0) > 1.0E-12");
+				  System.err.println("x[0] = " + x[0]);
+				  passed = false;
+			  }
+			  final double expected_final_cost = 0.5 * Math.pow(10.0 - Math.exp(3.0), 2);
+			  if (Math.abs(expected_final_cost - summary.final_cost) > 1e-12) {
+				  System.err.println("In TrustRegionMinimizerGradientToleranceConvergenceUpdatesStep() abs(expected_final_cost - summary.final_cost)) > 1.0E-12"); 
+				  passed = false;
+			  }
+			  if (passed) {
+				  System.out.println("TrustRegionMinimizerGradientToleranceConvergenceUpdatesStep() passed all tests");
+			  }
+			}
+
 			
-
-
+ 				
 
 }
