@@ -18205,25 +18205,30 @@ public abstract class CeresSolver {
 
 		public boolean Evaluate(boolean apply_loss_function, double cost[], double residuals[], double jacobians[][],
 				double scratch[]) {
+			int state_finish;
+			int blockLength;
+			double block[];
 			int num_parameter_blocks = NumParameterBlocks();
 			int num_residuals = cost_function_.num_residuals();
 
 			// Collect the parameters from their blocks. This will rarely allocate, since
 			// residuals taking more than 8 parameter block arguments are rare.
 			Vector<double[]> parameters = new Vector<double[]>();
+			// All parameter_blocks_[i] have all the same variables but with different state_start values
 			for (int i = 0; i < num_parameter_blocks; ++i) {
 				int state_start = parameter_blocks_[i].state_start();
-				if (state_start == 0) {
-				    parameters.add(parameter_blocks_[i].state());
+				if (i < num_parameter_blocks-1) {
+				    state_finish = parameter_blocks_[i+1].state_start() - 1;	
 				}
 				else {
-					double state[] = parameter_blocks_[i].state();
-					double state_with_start[] = new double[state.length-state_start];
-					for (int j = state_start; j < state.length; j++) {
-						state_with_start[j-state_start] = state[j];
-						parameters.add(state_with_start);
-					}
+					state_finish = parameter_blocks_[i].state().length-1;
 				}
+				blockLength = state_finish - state_start + 1;
+				block = new double[blockLength];
+				for (int j = state_start; j <= state_finish; j++) {
+					block[j-state_start] = parameter_blocks_[i].state()[j];
+				}
+				parameters.add(block);
 			}
 
 			// Put pointers into the scratch space into global_jacobians as appropriate.
