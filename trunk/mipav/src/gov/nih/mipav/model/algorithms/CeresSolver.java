@@ -19373,6 +19373,83 @@ public abstract class CeresSolver {
 
 	
 	};
+	
+	// zw = z * w, where * is the Quaternion product between 4 vectors.
+	public void QuaternionProduct(double z[], double w[], double zw[]) {
+		  zw[0] = z[0] * w[0] - z[1] * w[1] - z[2] * w[2] - z[3] * w[3];
+		  zw[1] = z[0] * w[1] + z[1] * w[0] + z[2] * w[3] - z[3] * w[2];
+		  zw[2] = z[0] * w[2] - z[1] * w[3] + z[2] * w[0] + z[3] * w[1];
+		  zw[3] = z[0] * w[3] + z[1] * w[2] - z[2] * w[1] + z[3] * w[0];
+   }
+	
+	// Plus(x, delta) = [cos(|delta|), sin(|delta|) delta / |delta|] * x
+	// with * being the quaternion multiplication operator. Here we assume
+	// that the first element of the quaternion vector is the real (cos
+	// theta) part.
+	class QuaternionParameterization extends LocalParameterization {
+	 public QuaternionParameterization() {
+	     super();	 
+	 }
+	
+	  public boolean Plus(double[] x,
+	                    double[] delta,
+	                    double[] x_plus_delta)  {
+		  final double norm_delta =
+			      Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
+			  if (norm_delta > 0.0) {
+			    final double sin_delta_by_delta = (Math.sin(norm_delta) / norm_delta);
+			    double q_delta[] = new double[4];
+			    q_delta[0] = Math.cos(norm_delta);
+			    q_delta[1] = sin_delta_by_delta * delta[0];
+			    q_delta[2] = sin_delta_by_delta * delta[1];
+			    q_delta[3] = sin_delta_by_delta * delta[2];
+			    QuaternionProduct(q_delta, x, x_plus_delta);
+			  } else {
+			    for (int i = 0; i < 4; ++i) {
+			      x_plus_delta[i] = x[i];
+			    }
+			  }
+
+		  return true;
+	  }
+	  
+	  public boolean Plus(Vector<Double> x, int x_index,
+              Vector<Double> delta, int delta_index,
+              Vector<Double> x_plus_delta, int x_plus_delta_index) {
+		  int i;
+		  boolean cond;
+		  double x_array[] = new double[4];
+		  for (i = x_index; i < x_index+4; i++) {
+			  x_array[i-x_index] = x.get(i);
+		  }
+		  double delta_array[] = new double[4];
+		  for (i = delta_index; i < delta_index+4; i++) {
+			  delta_array[i - delta_index] = delta.get(i);
+		  }
+		  double x_plus_delta_array[] = new double[4];
+		  cond = Plus(x_array, delta_array, x_plus_delta_array);
+		  for (i = x_plus_delta_index; i < x_plus_delta_index+4; i++) {
+			  if (i < x_plus_delta.size()) {
+				  x_plus_delta.set(i, x_plus_delta_array[i-x_plus_delta_index]);
+			  }
+			  else {
+				  x_plus_delta.add(x_plus_delta_array[i-x_plus_delta_index]);
+			  }
+		  }
+		  return cond;
+	  }
+	  public boolean ComputeJacobian(double[] x, int x_start,
+	                               double[][] jacobian) {
+		  // jacobian is [4][3]
+		  jacobian[0][0] = -x[x_start+1]; jacobian[0][1]  = -x[x_start+2]; jacobian[0][2]  = -x[x_start+3];
+		  jacobian[1][0] =  x[x_start]; jacobian[1][1]  =  x[x_start+3]; jacobian[1][2]  = -x[x_start+2];
+		  jacobian[2][0] = -x[x_start+3]; jacobian[2][1]  =  x[x_start]; jacobian[2][2]  =  x[x_start+1];
+		  jacobian[3][0] =  x[x_start+2]; jacobian[3][1] = -x[x_start+1]; jacobian[3][2] =  x[x_start];
+		  return true;
+	  }
+	  public int GlobalSize() { return 4; }
+	  public int LocalSize() { return 3; }
+	};
 
 	// The class LocalParameterization defines the function Plus and its
 	// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
@@ -19382,6 +19459,7 @@ public abstract class CeresSolver {
                 int num_rows,
                 double[][] global_matrix,
                 double[][] local_matrix) {
+			int i,j;
 			//Matrix jacobian(GlobalSize(), LocalSize());
 			double jacobian[][] = new double[GlobalSize()][LocalSize()];
 			if (!ComputeJacobian(x, 0, jacobian)) {
@@ -19390,7 +19468,12 @@ public abstract class CeresSolver {
 			
 			//MatrixRef(local_matrix, num_rows, LocalSize()) =
 			//ConstMatrixRef(global_matrix, num_rows, GlobalSize()) * jacobian;
-			local_matrix = (new Matrix(global_matrix).times(new Matrix(jacobian))).getArray();
+			double local_matrix_array[][] = (new Matrix(global_matrix).times(new Matrix(jacobian))).getArray();
+			for (i = 0; i < num_rows; i++) {
+				for (j = 0; j < LocalSize(); j++) {
+					local_matrix[i][j] = local_matrix_array[i][j];
+				}
+			}
 			return true;
 		}
 		
