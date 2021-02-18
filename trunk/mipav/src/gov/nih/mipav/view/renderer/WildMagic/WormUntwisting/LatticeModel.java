@@ -27,6 +27,7 @@ import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
+import WildMagic.LibFoundation.Mathematics.Line3f;
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
@@ -50,6 +51,7 @@ import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
@@ -753,7 +755,10 @@ public class LatticeModel {
 	// planes that sweep through the worm volume, following the splines, used to sample the volume and untwist:
 	protected VOI samplingPlanes;
 
-	private VOI displayContours;
+	private int maxSplineLength = -1;
+
+	private VOI[] displayContours;
+	private VOI displayContours2;
 
 	protected VOI displayInterpolatedContours;
 
@@ -793,7 +798,7 @@ public class LatticeModel {
 	private int paddingFactor = 0;
 
 
-	private final int numEllipsePts = 32;
+	private int numEllipsePts = 32;
 
 	private VOI latticeContours = null;
 
@@ -1315,7 +1320,9 @@ public class LatticeModel {
 			for ( int i = 0; i < lattice.size(); i++ ) {
 				imageA.unregisterVOI(lattice.elementAt(i));
 			}
-			imageA.unregisterVOI(displayContours);
+			for ( int i = 0; i < displayContours.length; i++ ) {
+				imageA.unregisterVOI(displayContours[i]);
+			}
 			imageA.unregisterVOI(leftLine);
 			imageA.unregisterVOI(rightLine);
 			imageA.unregisterVOI(centerLine);
@@ -1425,7 +1432,175 @@ public class LatticeModel {
 //		return volMask;
 //	}
 
-	public TriMesh generateTriMesh( boolean returnMesh, boolean saveMesh, int stepSize ) {
+	public void testConflicts( boolean display, BitSet mask ) {
+		if ( currentMesh == null ) return;
+		if ( currentMesh.VBuffer == null ) return;
+		
+		long time = System.currentTimeMillis();
+		if ( display ) {
+//			BitSet mask = VolumeSurface.computeSurfaceMask(currentMesh, imageA);
+
+//			ModelImage mask = VolumeSurface.computeSurfaceImage(currentMesh, imageA);
+//			new ViewJFrameImage(mask);
+//
+////			ModelImage surfaceBlur = WormSegmentation.blur(mask, 1);
+//			VOIContour centerCurve = getCenter();
+//			Vector3f pt = centerCurve.elementAt( centerCurve.size() / 2 );
+//
+//    		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+//    		int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;		
+//    		int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;		
+//			BitSet seedPaintBitmap = new BitSet( dimX * dimY * dimZ );
+//
+//			try {
+//				AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(mask, 1.0f, 1.0f);
+//
+//				regionGrowAlgo.setRunningInSeparateThread(false);
+//				CubeBounds regionGrowBounds= new CubeBounds(dimX, 0, dimY, 0, dimZ, 0);
+//
+//				int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D((int)pt.X, (int)pt.Y, (int)pt.Z), -1,
+//						false, false, null, 0, 0, -1, -1,
+//						false, 0, regionGrowBounds);
+//
+//				regionGrowAlgo = null;
+//
+//
+//			} catch (final OutOfMemoryError error) {
+//	            System.gc();
+//	            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
+//	        }
+//						System.err.println( "surface mask " + AlgorithmBase.computeElapsedTime(time) + "  " + seedPaintBitmap.cardinality() );
+
+			
+			
+			System.err.println( "surface mask " + AlgorithmBase.computeElapsedTime(time) + "  " + mask.cardinality() );
+		}
+		else {
+			System.err.println( "surface mask " + AlgorithmBase.computeElapsedTime(time) );
+		}
+	}
+	
+	private int numSurfaceSegments = -1;
+	private TriMesh currentMesh = null;
+	public TriMesh generateTriMesh( boolean returnMesh, boolean saveMesh ) {
+		
+		TriMesh mesh = null;
+		if ( (numSurfaceSegments == left.getCurves().size()) && (currentMesh != null) && (currentMesh.VBuffer != null) ) {
+			// modify existing mesh:
+			mesh = currentMesh;
+			VertexBuffer vBuf = mesh.VBuffer;
+			int positionCount = 1;
+			System.err.println("Modify mesh " + maxSplineLength );
+			for ( int i = 0; i < maxSplineLength; i++ ) {
+
+				Vector3f center = new Vector3f();
+				for ( int j = 0; j < numEllipsePts; j++ ) {
+                    Vector3f pos = displayContours[ latticeSlices.length + j].getCurves().elementAt(0).elementAt(i);
+					if ( (i == 0) || (i == (maxSplineLength-1) ) ) {
+						center.add(pos);
+					}
+					vBuf.SetPosition3( positionCount, pos );
+					vBuf.SetTCoord3(0, positionCount, pos );
+					positionCount++;
+				}
+				if ( i == 0 ) {
+					center.scale(1.0f/numEllipsePts);
+					// first positions is center of 'head'
+					vBuf.SetPosition3( 0, center );
+					vBuf.SetTCoord3(0, 0, center );
+				}
+				if ( i == (maxSplineLength-1) ) {
+					center.scale(1.0f/numEllipsePts);
+					// last position is center of 'tail'
+					vBuf.SetPosition3( positionCount, center );
+					vBuf.SetTCoord3(0, positionCount, center );
+				}
+			}
+			System.err.println("Reload TriMesh");
+
+			mesh.Reload(true);
+		}
+		else {
+			// rebuild mesh:
+			numSurfaceSegments = left.getCurves().size();
+
+			Vector<Vector3f> positions = new Vector<Vector3f>();
+			for ( int i = 0; i < maxSplineLength; i++ ) {
+
+				Vector3f center = new Vector3f();
+				for ( int j = 0; j < numEllipsePts; j++ ) {
+                    Vector3f pos = displayContours[ latticeSlices.length + j].getCurves().elementAt(0).elementAt(i);
+					if ( (i == 0) || (i == (maxSplineLength-1) ) ) {
+						center.add(pos);
+					}
+					positions.add(pos);
+				}
+				if ( i == 0 ) {
+					center.scale(1.0f/numEllipsePts);
+					// first positions is center of 'head'
+					positions.add(0, center);
+				}
+				if ( i == (maxSplineLength-1) ) {
+					center.scale(1.0f/numEllipsePts);
+					// last position is center of 'tail'
+					positions.add(center);
+				}
+			}
+			VertexBuffer vBuf = new VertexBuffer(positions);
+
+			Vector<Integer> indexList = new Vector<Integer>();
+			for ( int i = 0; i < maxSplineLength; i++ ) {
+				for ( int j = 0; j < numEllipsePts; j++ ) {
+                    if ( i == 0 ) {
+						int index = 0;
+						int sliceIndex1 = 1 + j;
+						int sliceIndex2 = 1 + (j+1)%numEllipsePts;
+						indexList.add(index);
+						indexList.add(sliceIndex2);
+						indexList.add(sliceIndex1);
+					}
+					if ( i < (maxSplineLength - 1) ) {
+						int sliceIndexJ = 1 + (i)*numEllipsePts + j;
+						int nextSliceIndexJ = 1 + (i+1)*numEllipsePts + j;
+						int sliceIndexJP1 = 1 + (i)*numEllipsePts + (j+1)%numEllipsePts;
+						int nextSliceIndexJP1 = 1 + (i+1)*numEllipsePts + (j+1)%numEllipsePts;
+						// tri 1:
+						indexList.add(sliceIndexJ);
+						indexList.add(nextSliceIndexJP1);
+						indexList.add(nextSliceIndexJ);
+						// tri 2:
+						indexList.add(sliceIndexJ);
+						indexList.add(sliceIndexJP1);
+						indexList.add(nextSliceIndexJP1);
+					}
+					if ( i == (maxSplineLength-1) ) {
+						int index = positions.size()-1;
+						int sliceIndex1 = 1 + (i)*numEllipsePts + j;
+						int sliceIndex2 = 1 + (i)*numEllipsePts + (j+1)%numEllipsePts;
+						indexList.add(index);
+						indexList.add(sliceIndex1);
+						indexList.add(sliceIndex2);
+					}
+				}
+			}
+
+			int[] indexInput = new int[indexList.size()];
+			for ( int i = 0; i < indexList.size(); i++ ) {
+				indexInput[i] = indexList.elementAt(i);
+			}
+			IndexBuffer iBuf = new IndexBuffer(indexInput);
+			System.err.println("Rebuild TriMesh " + vBuf.GetVertexQuantity() + " " + iBuf.GetIndexQuantity() );
+			currentMesh = new TriMesh(vBuf, iBuf);	
+            mesh = currentMesh;			
+		}
+
+		if ( returnMesh ) {
+			return mesh;
+		}
+		return null;
+	}
+	
+	public TriMesh generateTriMesh2( boolean returnMesh, boolean saveMesh, int stepSize ) {
 
         if ( !latticeChanged() ) {
         	// check if the lattice file is newer than the triangle mesh file
@@ -1434,7 +1609,7 @@ public class LatticeModel {
 			long latticeChanged = file.lastModified();
 
 			String imageName = JDialogBase.makeImageName(imageA.getImageFileName(), "");
-			file = new File(outputDirectory + File.separator + "model" + File.separator + imageName + "_mesh_" + stepSize + ".ply");	
+			file = new File(outputDirectory + File.separator + "model" + File.separator + imageName + "_mesh_" + stepSize + ".xml");	
 			long meshChanged = file.lastModified();
 			
 			if ( meshChanged > latticeChanged ) {
@@ -1454,6 +1629,26 @@ public class LatticeModel {
 
 		generateCurves(1, stepSize);
 		
+
+		displayContours2 = new VOI((short)0, "wormContours2");
+//		System.err.println("generateCurves " + paddingFactor );
+		for (int i = 0; i < centerPositions.size(); i++ ) {
+
+			Vector3f rkEye = centerPositions.elementAt(i);
+			Vector3f rkRVector = rightVectors.elementAt(i);
+			Vector3f rkUVector = upVectors.elementAt(i);
+
+			VOIContour ellipse = new VOIContour(true);
+			ellipse.setVolumeDisplayRange(minRange);
+
+			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+			radius += paddingFactor;
+
+			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
+			displayContours2.getCurves().add(ellipse);
+		}
+
+		
 		ModelImage overlapImage = null;
 		//		if ( !returnMesh ) {
 		//			FileIO fileIO = new FileIO();
@@ -1464,9 +1659,9 @@ public class LatticeModel {
 		//		}
 
 		Vector<Vector3f> positions = new Vector<Vector3f>();
-		int numContours = displayContours.getCurves().size();
+		int numContours = displayContours2.getCurves().size();
 		for ( int i = 0; i < numContours; i++ ) {
-			VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(i);
+			VOIContour contour = (VOIContour) displayContours2.getCurves().elementAt(i);
 			Vector3f min = new Vector3f( contour.elementAt(0) );
 			Vector3f max = new Vector3f( contour.elementAt(0) );
 			Vector3f center = new Vector3f();
@@ -1497,7 +1692,7 @@ public class LatticeModel {
 		System.err.println( "TriMesh " + numContours );
 		Vector<Integer> indexList = new Vector<Integer>();
 		for ( int i = 0; i < numContours; i++ ) {
-			VOIContour contour1 = (VOIContour) displayContours.getCurves().elementAt(i);
+			VOIContour contour1 = (VOIContour) displayContours2.getCurves().elementAt(i);
 			int contourSize1 = contour1.size();
 			for ( int j = 0; j < contourSize1; j++ )
 			{
@@ -1518,7 +1713,7 @@ public class LatticeModel {
 					indexList.add(sliceIndex2);
 				}
 				if ( i < (numContours - 1) ) {
-					VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i+1);
+					VOIContour contour2 = (VOIContour) displayContours2.getCurves().elementAt(i+1);
 					int contourSize2 = contour2.size();
 					//					System.err.println( i + "   " + (contourSize1 == contourSize2) );
 					int sliceIndexJ = positions.indexOf(contour1.elementAt(j) );
@@ -1581,7 +1776,7 @@ public class LatticeModel {
 		boolean[] currentMask = null;
 		boolean[] nextMask = null;
 		for ( int i = 0; i < numContours; i++ ) {
-			VOIContour contour1 = (VOIContour) displayContours.getCurves().elementAt(i);
+			VOIContour contour1 = (VOIContour) displayContours2.getCurves().elementAt(i);
 			int contourSize1 = contour1.size();
 			if ( i == 0 )
 			{
@@ -1596,7 +1791,7 @@ public class LatticeModel {
 			for ( int j = 0; j < contourSize1; j++ )
 			{				
 				if ( i < (numContours - 1) ) {
-					VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i+1);
+					VOIContour contour2 = (VOIContour) displayContours2.getCurves().elementAt(i+1);
 					int contourSize2 = contour2.size();
 
 					Vector3f posJ = contour1.elementAt(j);
@@ -1675,7 +1870,7 @@ public class LatticeModel {
 					nextMask[j] = true;
 
 					if ( i < (numContours - 1) ) {
-						VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i+1);
+						VOIContour contour2 = (VOIContour) displayContours2.getCurves().elementAt(i+1);
 						int contourSize2 = contour2.size();
 						//					System.err.println( i + "   " + (contourSize1 == contourSize2) );
 						int sliceIndexJ = positions.indexOf(contour1.elementAt(j) );
@@ -2817,7 +3012,7 @@ public class LatticeModel {
 		//		System.err.println( dimX + " " + dimY + " " + dimZ );
 
 		if ( !segmentLattice ) {
-			generateTriMesh( false, true, 1);
+			generateTriMesh2( false, true, 1);
 		}
 		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
 		resultImage.registerVOI( latticeContours );
@@ -4211,12 +4406,20 @@ public class LatticeModel {
 
 	public void setPaddingFactor( int padding ) {
 		paddingFactor = padding;
-		boolean display = (imageA.isRegistered(displayContours) != -1);
+		boolean display = false;
+
+		if ( displayContours == null ) return;
+		
+		for ( int i = 0; i < displayContours.length; i++ ) {
+			display |= (imageA.isRegistered(displayContours[i]) != -1);
+		}
 
 		if ( display )
 		{
 			generateCurves(5, 10);
-			imageA.registerVOI(displayContours);
+			for ( int i = 0; i < displayContours.length; i++ ) {
+				imageA.registerVOI(displayContours[i]);
+			}
 		}
 	}
 
@@ -4262,27 +4465,30 @@ public class LatticeModel {
 	 * Enables the user to visualize the simple ellipse-based model of the worm during lattice construction.
 	 */
 	public void showModel() {
-		if ( (imageA.isRegistered(displayContours) == -1)) {
-			imageA.registerVOI(displayContours);
-			imageA.notifyImageDisplayListeners();
-		} else if ( (imageA.isRegistered(displayContours) != -1)) {
-			imageA.unregisterVOI(displayContours);
-			imageA.notifyImageDisplayListeners();
+		for ( int i = 0; i < displayContours.length; i++ ) {
+			if ( (imageA.isRegistered(displayContours[i]) == -1)) {
+				imageA.registerVOI(displayContours[i]);
+			} else if ( (imageA.isRegistered(displayContours[i]) != -1)) {
+				imageA.unregisterVOI(displayContours[i]);
+			}
 		}
+		imageA.notifyImageDisplayListeners();
 	}
 
 	/**
 	 * Enables the user to visualize the simple ellipse-based model of the worm during lattice construction.
 	 */
 	public void showModel(boolean display) {
-		if ( display && (imageA.isRegistered(displayContours) == -1) ) {
-			imageA.registerVOI(displayContours);
-			imageA.notifyImageDisplayListeners();
+
+		for ( int i = 0; i < displayContours.length; i++ ) {
+			if ( display && (imageA.isRegistered(displayContours[i]) == -1) ) {
+				imageA.registerVOI(displayContours[i]);
+			}
+			if ( !display && (imageA.isRegistered(displayContours[i]) != -1) ) {
+				imageA.unregisterVOI(displayContours[i]);
+			}
 		}
-		if ( !display && (imageA.isRegistered(displayContours) != -1) ) {
-			imageA.unregisterVOI(displayContours);
-			imageA.notifyImageDisplayListeners();
-		}
+		imageA.notifyImageDisplayListeners();
 //		if ( samplingPlanes == null ) generateEllipses();
 //		if ( display && (imageA.isRegistered(samplingPlanes) == -1) ) {
 //			imageA.registerVOI(samplingPlanes);
@@ -5409,13 +5615,13 @@ public class LatticeModel {
 			}
 		}
 
-		for ( int i = 0; i < rightVectorsInterp.length; i++ )
-		{
-			if ( rightVectorsInterp[i] == null )
-			{
-				System.err.println( step + " " + maxLength + " " + stepSize + " " + length );
-			}
-		}
+//		for ( int i = 0; i < rightVectorsInterp.length; i++ )
+//		{
+//			if ( rightVectorsInterp[i] == null )
+//			{
+//				System.err.println( step + " " + maxLength + " " + stepSize + " " + length );
+//			}
+//		}
 
 		//		System.err.println( maxLength );
 		//		totalCurvature = 0;
@@ -5443,6 +5649,7 @@ public class LatticeModel {
 			upVectors.add(upDir);
 
 			Vector3f normalTest = Vector3f.cross(rightDir, upDir);
+			normalTest.normalize();
 			normalVectors.add(normalTest);
 
 			Vector3f rightPt = new Vector3f(rightDir);
@@ -5496,43 +5703,94 @@ public class LatticeModel {
 		// it cannot model how the worm shape changes where sections of the worm press against each other.
 		// The next step of the algorithm attempts to solve this problem.
 		short sID = (short) 1;
-		displayContours = new VOI(sID, "wormContours");
+
+		numEllipsePts = 16;
+		displayContours = new VOI[latticeSlices.length + numEllipsePts];
+		int contourCount = 0;
 //		System.err.println("generateCurves " + paddingFactor );
-		for (int i = 0; i < centerPositions.size(); i += contourStepSize) {
-			Vector3f rkEye = centerPositions.elementAt(i);
-			Vector3f rkRVector = rightVectors.elementAt(i);
-			Vector3f rkUVector = upVectors.elementAt(i);
+		contourStepSize = 1;
+		for (int i = 0; i < centerPositions.size(); i++ ) {
 
-			VOIContour ellipse = new VOIContour(true);
-			ellipse.setVolumeDisplayRange(minRange);
+			for ( int j = 0; j < latticeSlices.length; j++ ) {
+				if ( i == latticeSlices[j]) {
 
+					Vector3f rkEye = centerPositions.elementAt(i);
+					Vector3f rkRVector = rightVectors.elementAt(i);
+					Vector3f rkUVector = upVectors.elementAt(i);
 
-			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
-			radius += paddingFactor;
+					VOIContour ellipse = new VOIContour(true);
+					ellipse.setVolumeDisplayRange(minRange);
 
-			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
+					float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+					radius += paddingFactor;
 
-			//			makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), ellipse, 32);
-			displayContours.getCurves().add(ellipse);
+					makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
 
-			if ( (contourStepSize != 1) && (i != (centerPositions.size() - 1)) && (i + 10) >= centerPositions.size() ) {
-				// add last contour:
-				i = centerPositions.size() - 1;
-				rkEye = centerPositions.elementAt(i);
-				rkRVector = rightVectors.elementAt(i);
-				rkUVector = upVectors.elementAt(i);
-
-				ellipse = new VOIContour(true);
-				ellipse.setVolumeDisplayRange(minRange);
-
-
-				radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
-				radius += paddingFactor;
-
-				makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
-				displayContours.getCurves().add(ellipse);
+					String name = "wormContours_" + contourCount;
+					displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+					displayContours[contourCount].getCurves().add(ellipse);
+//
+//					String name = "wormContours_" + contourCount;
+//					displayContours[contourCount] = new VOI(sID, name, VOI.ANNOTATION, (float) Math.random());
+//					int index = Integer.valueOf(name.substring(name.indexOf("wormContours") + 13));
+////					System.err.println( name + "   " + index );
+//
+//					for ( int k = 0; k < ellipse.size(); k++ ) {
+//						VOIText text = new VOIText(ellipse.elementAt(k));
+////						text.setText(""+i);
+////						int mod = k%(ellipse.size()/2);
+////						if ( mod < 3 || mod > 12 ) {
+////							text.setFixed(true);
+//////							text.update(new ColorRGBA(1,0,0,1));
+////						}
+//						displayContours[contourCount].getCurves().add( text );
+//					}
+					contourCount++;
+					break;
+				}
 			}
 		}
+		
+		int numContours = contourCount;
+		NaturalSpline3[] edgeSplines = new NaturalSpline3[numEllipsePts];
+		for ( int i = 0; i < numEllipsePts; i++ ) {
+			float[] tempTime = new float[numContours];
+			VOIContour temp = new VOIContour(false);
+			for ( int j = 0; j < numContours; j++ ) {
+				
+				temp.add( new Vector3f(displayContours[j].getCurves().elementAt(0).elementAt(i)) );
+				
+			}
+			edgeSplines[i] = smoothCurve(temp, tempTime);
+			
+
+			float tempLength = edgeSplines[i].GetLength(0, 1) / stepSize;
+			maxLength = (int)Math.ceil(tempLength);
+			if ( maxLength > maxSplineLength ) {
+				maxSplineLength = maxLength;
+			}
+		}
+		maxSplineLength = 15 * left.getCurves().size();
+		for ( int i = 0; i < numEllipsePts; i++ ) {
+			float tempLength = edgeSplines[i].GetLength(0, 1) / stepSize;
+			step = stepSize * (tempLength / maxSplineLength);
+			
+			VOIContour tempContour = new VOIContour(false);
+			float lastTime = 0;
+			for (int j = 0; j <= maxSplineLength; j++) {
+				final float t = edgeSplines[i].GetTime(j*step);
+				tempContour.add(edgeSplines[i].GetPosition(t));
+				lastTime = t;
+			}					
+			String name = "wormContours_" + contourCount;
+//			System.err.println( name + "  " + maxLength + "  " + lastTime );
+			displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+			displayContours[contourCount].getCurves().add(tempContour);
+//			System.err.println( "generateCurves " + name + "  " + tempContour.size() );
+			contourCount++;
+		}
+		System.err.println( "generateCurves " + maxSplineLength + "  " + left.getCurves().size() );
+		
 		sID++;
 		centerLine = new VOI(sID, "center line");
 		centerLine.getCurves().add(centerPositions);
@@ -5555,9 +5813,213 @@ public class LatticeModel {
 		imageA.registerVOI(rightLine);
 		imageA.registerVOI(centerLine);
 
+		
+//		checkModel(stepSize);
+		
 		return true;
 	}
 
+	private void checkModel(float stepsize) {
+
+		System.err.println( "checkModel " + centerPositions.size() + "  " + displayContours.length );
+//		int size = centerPositions.size();
+//		Ellipsoid3f[] ellipses = new Ellipsoid3f[size];		
+//		for ( int i = 0; i < size; i++ ) {
+//
+//			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+//			radius += paddingFactor;
+//			final float[] extents = new float[] {radius, radius, .6f * stepsize};
+//			final Vector3f[] axes = new Vector3f[] {rightVectors.elementAt(i), upVectors.elementAt(i), normalVectors.elementAt(i)};
+//			ellipses[i] = new Ellipsoid3f(centerPositions.elementAt(i), axes, extents);
+//
+//		}
+//		
+//		for ( int i = 0; i < ellipses.length; i++ ) {
+//			for ( int j = 0; j < displayContours.length; j++ ) {
+//				VOI contour = displayContours[j];
+//				VOIText text = (VOIText) contour.getCurves().elementAt(0);
+//				if ( !text.getText().equals(""+i) ) {
+//					// make sure this contour isn't the current ellipse
+//					for ( int k = 0; k < contour.getCurves().size(); k++ ) {
+//						text = (VOIText) contour.getCurves().elementAt(k);
+//						if ( ellipses[i].Contains( text.elementAt(0) ) ) {
+//							if ( !text.isFixed() ) {
+//								text.update( new ColorRGBA(0,1,0,1) );
+//							}
+//							else {
+//								text.update( new ColorRGBA(1,0,0,1) );
+//							}
+//						}
+//					}	
+//				}
+//			}
+//		}
+//		
+//		// once all clipping is determined - go through the list of displayContours and find clip sequences:
+//
+//		for ( int j = 0; j < displayContours.length; j++ ) {
+//			VOI contour = displayContours[j];
+//			// make sure this contour isn't the current ellipse
+//			VOIText text = (VOIText) contour.getCurves().elementAt(0);
+//			System.err.print( text.getText() );
+//			int start = -1;
+//			int stop = -1;
+//			int current = -1;
+//			int previous = -1;
+//			for ( int k = 0; k < contour.getCurves().size(); k++ ) {
+//				text = (VOIText) contour.getCurves().elementAt(k);
+//				Color c = text.getColor();
+//				if ( c.getRed() == 0 && c.getGreen() == 255 && c.getBlue() == 0 ) {
+//					if ( current == -1 ) {
+//						start = k-1;
+//					}
+//					previous = current;
+//					current = k;
+//					if ( (previous != -1) && (current - previous > 1) ) {
+//						stop = previous + 1;
+//						// complete series
+//						System.err.print( " (" + start + " => " + stop + ") ");
+//						
+//						Vector3f startPt = contour.getCurves().elementAt(start).elementAt(0);
+//						Vector3f endPt = contour.getCurves().elementAt(stop).elementAt(0);
+//						int steps = stop - start;
+//						float scale = 1f / (float)steps;
+//						int count = 1;
+//						for ( int p = start+1; p < stop; p++ ) {
+//							Vector3f diff = Vector3f.sub(endPt, startPt);
+//							float length = diff.normalize();
+//							diff.scale(length * count * scale);
+//							Vector3f newPt = Vector3f.add(startPt, diff);
+//
+//							contour.getCurves().elementAt(p).firstElement().copy(newPt);
+//							contour.getCurves().elementAt(p).lastElement().copy(newPt);
+//							count++;
+//						}
+//						
+//						// update start:
+//						start = current - 1;
+//						stop = -1;
+//					}
+//					System.err.print(  "  " + k );
+//				}
+//			}
+//			if ( previous != -1 ) {
+//				stop = current + 1;
+//				System.err.print( " (" + start + " => " + stop + ") ");
+//
+//				Vector3f startPt = contour.getCurves().elementAt(start).elementAt(0);
+//				Vector3f endPt = contour.getCurves().elementAt(stop).elementAt(0);
+//				int steps = stop - start;
+//				float scale = 1f / (float)steps;
+//				int count = 1;
+//				for ( int p = start+1; p < stop; p++ ) {
+//					Vector3f diff = Vector3f.sub(endPt, startPt);
+//					float length = diff.normalize();
+//					diff.scale(length * count * scale);
+//					Vector3f newPt = Vector3f.add(startPt, diff);
+//					
+//					contour.getCurves().elementAt(p).firstElement().copy(newPt);
+//					contour.getCurves().elementAt(p).lastElement().copy(newPt);
+//					count++;
+//				}
+//				
+//			}
+//			else if ( previous == -1 && start == current - 1 ) {
+//				stop = current + 1;
+//				System.err.print( " (" + start + " => " + stop + ") ");
+//
+//				Vector3f startPt = contour.getCurves().elementAt(start).elementAt(0);
+//				Vector3f endPt = contour.getCurves().elementAt(stop).elementAt(0);
+//				int steps = stop - start;
+//				float scale = 1f / (float)steps;
+//				int count = 1;
+//				for ( int p = start+1; p < stop; p++ ) {
+//					Vector3f diff = Vector3f.sub(endPt, startPt);
+//					float length = diff.normalize();
+//					diff.scale(length * count * scale);
+//					Vector3f newPt = Vector3f.add(startPt, diff);
+//					
+//					contour.getCurves().elementAt(p).firstElement().copy(newPt);
+//					contour.getCurves().elementAt(p).lastElement().copy(newPt);
+//					count++;
+//				}
+//				
+//			}
+//			System.err.println("");
+//		}
+		
+        boolean gotLast = false;
+		for ( int j = 0; j < displayContours.length; j += 10 ) {
+			VOI contour = displayContours[j];
+			VOIContour ellipse = new VOIContour(true);
+			ellipse.setVolumeDisplayRange(minRange);
+			for ( int k = 0; k < contour.getCurves().size(); k++ ) {
+				VOIText text = (VOIText) contour.getCurves().elementAt(k);
+				ellipse.add(text.elementAt(0));
+			}
+			displayContours2.getCurves().add(ellipse);
+			if ( j == displayContours.length -1 ) {
+				gotLast = true;
+			}
+		}
+		if ( !gotLast ) {
+			VOI contour = displayContours[displayContours.length -1];
+			VOIContour ellipse = new VOIContour(true);
+			ellipse.setVolumeDisplayRange(minRange);
+			for ( int k = 0; k < contour.getCurves().size(); k++ ) {
+				VOIText text = (VOIText) contour.getCurves().elementAt(k);
+				ellipse.add(text.elementAt(0));
+			}
+			displayContours2.getCurves().add(ellipse);
+		}
+		System.err.println( "checkModel " + displayContours2.getCurves().size() );
+
+		
+//		int test = size/4;
+//		VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(test);
+//        contour.update( new ColorRGBA(0,0,1,1));
+//		for ( int i = 0; i < ellipses.length; i++ ) {
+//			if ( i != test ) {
+//				for ( int j = 0; j < contour.size(); j++ ) {
+//					if ( ellipses[i].Contains( contour.elementAt(j) ) ) {
+//						VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i);
+//				        contour2.update( new ColorRGBA(1,0,0,1));
+//					}
+//				}
+//			}
+//		}
+		
+//		int[] conflictCount = new int[size];
+//		for ( int i = 0; i < size; i++ ) {
+//			conflictCount[i] = 0;
+//			VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(i);
+//			boolean conflict = false;
+//			for ( int j = 0; j < size; j++ ) {
+//				if ( i != j ) {
+//					for ( int k = 0; k < contour.size(); k++ ) {
+//						if ( ellipses[j].Contains( contour.elementAt(k) ) ) {
+//							conflictCount[i]++;
+//							conflict = true;
+////					        contour.update( new ColorRGBA(0,0,1,1));
+//					        contour.update( new ColorRGBA( 10*centerSpline.GetCurvature(allTimes[i]),0,1,1));
+//
+////							VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(j);
+////					        contour2.update( new ColorRGBA(1,0,0,1));
+//					        break;
+//						}
+//					}
+//				}
+//			}
+////			if ( conflict) break;
+//		}
+//		
+//		for ( int i = 0; i < size; i++ ) {
+//			if ( conflictCount[i] > 0 ) {
+//				System.err.println(i + "  " + conflictCount[i] + "  " + centerSpline.GetCurvature(allTimes[i]) );
+//			}
+//		}
+	}
+	
 	protected double GetSquared ( Vector3f point, Ellipsoid3f ellipsoid )
 	{
 		// compute coordinates of point in ellipsoid coordinate system
@@ -8181,8 +8643,10 @@ public class LatticeModel {
 		}
 
 		if (displayContours != null) {
-			imageA.unregisterVOI(displayContours);
-			displayContours.dispose();
+			for ( int i = 0; i < displayContours.length; i++ ) {
+				imageA.unregisterVOI(displayContours[i]);
+				displayContours[i].dispose();
+			}
 			displayContours = null;
 		}
 		if ( clearGrid )
@@ -8648,7 +9112,7 @@ public class LatticeModel {
 			//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
-		voiDir = outputDirectory + File.separator + subDir + File.separator;			
+		voiDir = outputDirectory + File.separator + subDir + File.separator;	
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
@@ -8659,57 +9123,27 @@ public class LatticeModel {
 		
 		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
 		imageName = imageName + postScript;
-		
-		
 
-//		int maxVal = -1;
-//		voiFileDir = new File(voiDir);
-//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { 
-//			final String[] list = voiFileDir.list();
-//			for (int i = 0; i < list.length; i++) {
-//				int fileVal = -1;
-////				System.err.println(list[i] + "   " + imageName + "   " + list[i].contains(imageName) );
-//				if ( list[i].contains(imageName) ) {
-//					String sub = list[i].substring( list[i].indexOf(imageName) + imageName.length(), list[i].length() );
-//					for ( int j = 0; j < sub.length(); j++ ) {
-//						String test = new String( "" + sub.charAt(j) );
-//						int val;
-//						try {
-//							val = Integer.valueOf(test);
-//							if ( fileVal == -1 ) {
-//								fileVal = val;
-//							}
-//							else
-//							{
-//								fileVal = fileVal * 10 + val;
-//							}
-//						} catch(NumberFormatException e) {
-//						}
-//					}
-////					System.err.println( "    " + fileVal );
-//				}
-//				if ( fileVal > maxVal )
-//				{
-//					maxVal = fileVal;
-//				}
-//			}
-//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-//		} else { // voiFileDir does not exist
-//			//			System.err.println( "saveImage " + voiDir);
-//			voiFileDir.mkdir();
-//		}
-//
-//		maxVal++;
-//		imageName = imageName + "_" + maxVal + ".ply";
-		
-		imageName = imageName + ".ply";
-		File meshFile = new File(voiDir + imageName);
+		String modelXML = imageName + ".xml";
+		File meshFile = new File(voiDir + modelXML);
 		if (meshFile.exists() && !meshFile.isDirectory()) { 
 			meshFile.delete();
 		}
         try {
-        	System.err.println(voiDir + imageName );
-            FileSurface_WM.save( voiDir + imageName, mesh, 0, mesh.VBuffer, false, null, null, null, null);
+        	System.err.println(voiDir + modelXML );
+            FileSurface_WM.save( voiDir + modelXML, mesh, image, false);
+        } catch (IOException error) {
+        	MipavUtil.displayError("Error while trying to save single mesh " + error);
+        }
+        
+		String modelPLY = imageName + ".ply";
+		meshFile = new File(voiDir + modelPLY);
+		if (meshFile.exists() && !meshFile.isDirectory()) { 
+			meshFile.delete();
+		}
+        try {
+        	System.err.println(voiDir + modelPLY );
+            FileSurface_WM.save( voiDir + modelPLY, mesh, 0, mesh.VBuffer, false, null, null, null, null);
         } catch (IOException error) {
         	MipavUtil.displayError("Error while trying to save single mesh " + error);
         }
@@ -10221,17 +10655,27 @@ public class LatticeModel {
 		}
 		boolean showContours = false;
 		if (displayContours != null) {
-			showContours = (imageA.isRegistered(displayContours) != -1);
-			if (showContours) {
-				imageA.unregisterVOI(displayContours);
+			for ( int i = 0; i < displayContours.length; i++ ) {
+				boolean show = (imageA.isRegistered(displayContours[i]) != -1);
+				if (show) {
+					imageA.unregisterVOI(displayContours[i]);
+				}
+				showContours |= show;				
 			}
 		}
 
 		if ( (left.getCurves().size() == right.getCurves().size()) && (left.getCurves().size() >= 2)) {
 			generateCurves(5, 10);
 			if (showContours) {
-				imageA.registerVOI(displayContours);
-			}
+				generateTriMesh(false, false);
+				for ( int i = 0; i < displayContours.length; i++ ) {
+					if ( displayContours[i] != null ) {
+						imageA.registerVOI(displayContours[i]);						
+					}
+				}
+//				System.err.println("test lattice against mesh here " + showContours);
+//				testLatticeMeshIntersection();
+			}				
 		}
 
 		updateSelected();
@@ -10280,7 +10724,11 @@ public class LatticeModel {
 			} else if (name.contains("pair_")) {
 				latticeGrid.add(voi);
 			} else if (name.contains("wormContours")) {
-				displayContours = voi;
+				if ( displayContours == null ) {
+					displayContours = new VOI[left.getCurves().size()];
+				}
+				int index = Integer.valueOf(name.substring(name.indexOf("wormContours") + 13));
+				displayContours[index] = voi;
 			} else if (name.contains("interpolatedContours")) {
 				displayInterpolatedContours = voi;
 			} else if (name.contains("showSelected")) {
@@ -10728,5 +11176,46 @@ public class LatticeModel {
         		return true;
         }
 		return false;
+	}
+	
+	private void testLatticeMeshIntersection() {
+        if ( currentMesh == null ) return;
+        if ( currentMesh.VBuffer == null ) return;
+		
+		Vector3f[] directions = new Vector3f[5];
+		
+		for ( int i = 0; i < left.getCurves().size(); i++ ) {
+			Vector3f pos = left.getCurves().elementAt(i).elementAt(0);
+			
+			directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
+			directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
+			directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
+			directions[3] = new Vector3f( (float)Math.random(), (float)Math.random(), -(float)Math.random() );
+			directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
+			Line3f[] akLines = new Line3f[directions.length];
+			for ( int j = 0; j < directions.length; j++ )
+			{
+				directions[j].normalize();
+				akLines[j] = new Line3f( pos, directions[j]);
+			}
+			
+			boolean intersection = false;
+			if ( VolumeSurface.testIntersections( currentMesh, pos, akLines ) )
+			{
+				intersection = true;
+			}
+			
+			pos = right.getCurves().elementAt(i).elementAt(0);
+			if ( VolumeSurface.testIntersections( currentMesh, pos, akLines ) )
+			{
+				intersection = true;
+			}
+			if ( intersection ) {
+				displayContours[i].getCurves().elementAt(0).update(new ColorRGBA(1,0,0,1));
+			}
+			else {
+				displayContours[i].getCurves().elementAt(0).update(new ColorRGBA(1,1,1,1));
+			}
+		}
 	}
 }

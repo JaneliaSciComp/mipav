@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -10,6 +11,7 @@ import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
 import java.util.BitSet;
@@ -1390,7 +1392,7 @@ public class VolumeSurface extends VolumeObject
      * This function is not accurate if the mesh is not closed, however it will still return a mask.
      * @return
      */
-    private BitSet createVolumeMask( )
+    public BitSet createVolumeMask( )
     {
     	final int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
     	final int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
@@ -1529,7 +1531,7 @@ public class VolumeSurface extends VolumeObject
     					{
     						akLines[i].Origin = kTest;
     					}
-    					if ( testIntersections( kTest, akLines ) )
+    					if ( testIntersections( m_kMesh, kTest, akLines ) )
     					{
     						mask.set( z * iDimX * iDimY + y * iDimX + x );
     						if ( kOutputImage != null )
@@ -1611,7 +1613,7 @@ public class VolumeSurface extends VolumeObject
     			directions[i].normalize();
             	akLines[i] = new Line3f(kP0Mesh,directions[i]);
     		}
-    		if ( testIntersections( kP0Mesh, akLines ) )
+    		if ( testIntersections( m_kMesh, kP0Mesh, akLines ) )
     		{
     			return true;
     		}
@@ -2053,14 +2055,14 @@ public class VolumeSurface extends VolumeObject
      * @param directions set of randomised directions for counting mesh-intersections (odd = inside, even = outside).
      * @return true when the point is inside the mesh, false otherwise.
      */
-    private boolean testIntersections( Vector3f origin, Line3f[] akLines )
+    public static boolean testIntersections( TriMesh mesh, Vector3f origin, Line3f[] akLines )
     {
     	int[] lineIntersectionCount = new int[akLines.length]; 
     	
     	
         // Compute intersections with the model-space triangles.
 		Triangle3f kTriangle = new Triangle3f();
-        int iTQuantity = m_kMesh.GetTriangleQuantity();
+        int iTQuantity = mesh.GetTriangleQuantity();
     	IntrLine3Triangle3f kIntr = new IntrLine3Triangle3f();
         
         int iV0, iV1, iV2;
@@ -2068,7 +2070,7 @@ public class VolumeSurface extends VolumeObject
         
         for (int i = 0; i < iTQuantity; i++)
         {
-            if (!m_kMesh.GetTriangle(i,aiTris) )
+            if (!mesh.GetTriangle(i,aiTris) )
             {
                 continue;
             }
@@ -2077,15 +2079,16 @@ public class VolumeSurface extends VolumeObject
             iV1 = aiTris[1];
             iV2 = aiTris[2];
 
-    		m_kMesh.VBuffer.GetPosition3(iV0, kTriangle.V[0]);
-    		m_kMesh.VBuffer.GetPosition3(iV1, kTriangle.V[1]);
-    		m_kMesh.VBuffer.GetPosition3(iV2, kTriangle.V[2]);
+            mesh.VBuffer.GetPosition3(iV0, kTriangle.V[0]);
+            mesh.VBuffer.GetPosition3(iV1, kTriangle.V[1]);
+            mesh.VBuffer.GetPosition3(iV2, kTriangle.V[2]);
             
             for ( int j = 0; j < akLines.length; j++ )
             {
             	kIntr.Line = akLines[j];
             	kIntr.Triangle = kTriangle;
-            	if (kIntr.Find() && 0 <= kIntr.GetLineT() &&  kIntr.GetLineT() <= Float.MAX_VALUE )
+            	if (kIntr.Find() && 0 < kIntr.GetLineT() &&  kIntr.GetLineT() <= Float.MAX_VALUE )
+//                	if (kIntr.Find() && 0 <= kIntr.GetLineT() &&  kIntr.GetLineT() <= Float.MAX_VALUE )
             	{
             		lineIntersectionCount[j]++;
             	}
@@ -2154,36 +2157,37 @@ public class VolumeSurface extends VolumeObject
 	 */
 	public BitSet computeSurfaceMask( )
 	{
-		if ( m_kSurfaceMask != null )
+		if ( m_kSurfaceMask == null )
 		{
-			return m_kSurfaceMask;
+			m_kSurfaceMask = computeSurfaceMask( m_kMesh, m_kVolumeImageA.GetImage(),
+					m_fVolumeMult, m_kVolumeTrans, m_kLocalScale );
 		}
 
-		BoxBV kBoundingBox = new BoxBV();
-		kBoundingBox.ComputeFromData( m_kMesh.VBuffer );
-    	
-    	Vector3f[] kBoxCorners = new Vector3f[8];
-    	kBoundingBox.GetBox().ComputeVertices( kBoxCorners );
-    	Vector3f kMaxBB = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
-    	Vector3f kMinBB = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
-    	for ( int i = 0; i < kBoxCorners.length; i++ )
-    	{
-    		kMaxBB.max( kBoxCorners[i] );
-    		kMinBB.min( kBoxCorners[i] );
-    	}		
+		return m_kSurfaceMask;
+	}
+
+	public static BitSet computeSurfaceMask( TriMesh mesh, ModelImage image ) 
+	{
+		return computeSurfaceMask(mesh,image, 1, null, null);
+	}
+	
+	private static BitSet computeSurfaceMask( TriMesh mesh, ModelImage image, 
+			float volume, Vector3f trans, Vector3f scale ) 
+	{
+
+		long time = System.currentTimeMillis();
 		
-    	ModelImage srcImage = m_kVolumeImageA.GetImage();
-		int dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
-		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;		
-		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;	
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;		
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;	
 		
-		System.err.println("computeSurfaceMask " + dimX + "   " + dimY + "   " + dimZ );
+//		System.err.println("VolumeSurface: computeSurfaceMask " + dimX + "   " + dimY + "   " + dimZ );
 				
-		m_kSurfaceMask = new BitSet( dimX * dimY * dimZ );
+		BitSet mask = new BitSet( dimX * dimY * dimZ );
 		Vector3f min = new Vector3f();
 		Vector3f max = new Vector3f();
 
-		int iTQuantity = m_kMesh.GetTriangleQuantity();
+		int iTQuantity = mesh.GetTriangleQuantity();
 
 		int iV0, iV1, iV2;
 		int[] aiTris = new int[3];
@@ -2191,9 +2195,150 @@ public class VolumeSurface extends VolumeObject
 		Vector3f kV1 = new Vector3f();
 		Vector3f kV2 = new Vector3f();
 
-		for (int i = 0; i < iTQuantity; i++)
+//		System.err.println("computeSurfaceMask " + iTQuantity);
+		
+
+        if (Preferences.isMultiThreadingEnabled())
+        {
+        	int nthreads = ThreadUtil.getAvailableCores();
+            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+            int step = iTQuantity / nthreads;
+            for (int i = 0; i < nthreads; i++) {
+                final int start = i*nthreads;
+                final int stop = (i == (nthreads - 1)) ? iTQuantity : i*nthreads + step;
+                System.err.println( start + " " + stop );
+                final Runnable task = new Runnable() {
+                    public void run() {
+                    	computeSurfaceMask( mask, mesh, image, volume, trans, scale, start, stop );
+                        doneSignal.countDown();
+                    }
+                };
+
+                ThreadUtil.mipavThreadPool.execute(task);
+            }
+            try {
+                doneSignal.await();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+
+    		
+    		for (int i = 0; i < iTQuantity; i++)
+    		{
+    			if (!mesh.GetTriangle(i,aiTris) )
+    			{
+    				continue;
+    			}
+
+    			iV0 = aiTris[0];
+    			iV1 = aiTris[1];
+    			iV2 = aiTris[2];
+
+    			mesh.VBuffer.GetPosition3(iV0, kV0);
+    			mesh.VBuffer.GetPosition3(iV1, kV1);
+    			mesh.VBuffer.GetPosition3(iV2, kV2);
+
+    			if ( trans != null ) {
+    				kV0.scale( volume ).add( trans ).mult( scale );
+    				kV1.scale( volume ).add( trans ).mult( scale );
+    				kV2.scale( volume ).add( trans ).mult( scale );
+    			}
+
+    			// compute the axis-aligned bounding box of the triangle
+    			min.copy( kV0 );
+    			min.min( kV1 );
+    			min.min( kV2 );
+    			
+    			max.copy( kV0 );
+    			max.max( kV1 );
+    			max.max( kV2 );
+    			// Rasterize the triangle.  The rasterization is repeated in all
+    			// three coordinate directions to make sure that floating point
+    			// round-off errors do not cause any holes in the rasterized
+    			// surface.
+    			float iXMin = min.X, iXMax = max.X;
+    			float iYMin = min.Y, iYMax = max.Y;
+    			float iZMin = min.Z, iZMax = max.Z;
+    			int ptr;
+    			int end = mask.size();
+
+    			
+//    			System.err.println( i + "  " + iXMin + " " + iXMax + " " + iYMin + " " + iYMax + " " + iZMin + " " + iZMax );
+    			for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+
+    				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+    					float iX = getIntersectX(kV0, kV1, kV2, iY, iZ);
+
+    					if (iX != -1) {
+    						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+    						if ( (ptr >= 0) && (ptr < end)) {
+    							mask.set(ptr);
+    						}
+    					}
+    				}
+    			}
+
+    			for (float iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+
+    				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+    					float iY = getIntersectY(kV0, kV1, kV2, iX, iZ);
+
+    					if (iY != -1) {
+    						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+    						if ( (ptr >= 0) && (ptr < end)) {
+    							mask.set(ptr);
+    						}
+    					}
+    				}
+    			}
+
+    			for (float iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+
+    				for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+    					float iZ = getIntersectZ(kV0, kV1, kV2, iX, iY);
+
+    					if (iZ != -1) {
+    						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+    						if ( (ptr >= 0) && (ptr < end)) {
+    							mask.set(ptr);
+    						}
+    					}
+    				}
+                }
+            }			
+        }
+		System.err.println( "surface mask " + AlgorithmBase.computeElapsedTime(time) + "  " + mask.cardinality() );
+
+		return mask;
+	}
+	
+
+
+	private static void computeSurfaceMask( BitSet mask, TriMesh mesh, ModelImage image, 
+			float volume, Vector3f trans, Vector3f scale, 
+			int start, int stop ) 
+	{
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;		
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;	
+		
+		Vector3f min = new Vector3f();
+		Vector3f max = new Vector3f();
+
+		int iTQuantity = mesh.GetTriangleQuantity();
+
+		int iV0, iV1, iV2;
+		int[] aiTris = new int[3];
+		Vector3f kV0 = new Vector3f();
+		Vector3f kV1 = new Vector3f();
+		Vector3f kV2 = new Vector3f();
+
+		
+		for (int i = start; i < stop; i++)
 		{
-			if (!m_kMesh.GetTriangle(i,aiTris) )
+			if (!mesh.GetTriangle(i,aiTris) )
 			{
 				continue;
 			}
@@ -2202,13 +2347,15 @@ public class VolumeSurface extends VolumeObject
 			iV1 = aiTris[1];
 			iV2 = aiTris[2];
 
-			m_kMesh.VBuffer.GetPosition3(iV0, kV0);
-			m_kMesh.VBuffer.GetPosition3(iV1, kV1);
-			m_kMesh.VBuffer.GetPosition3(iV2, kV2);
+			mesh.VBuffer.GetPosition3(iV0, kV0);
+			mesh.VBuffer.GetPosition3(iV1, kV1);
+			mesh.VBuffer.GetPosition3(iV2, kV2);
 
-			localToVolumeCoords(kV0);
-			localToVolumeCoords(kV1);
-			localToVolumeCoords(kV2);
+			if ( trans != null ) {
+				kV0.scale( volume ).add( trans ).mult( scale );
+				kV1.scale( volume ).add( trans ).mult( scale );
+				kV2.scale( volume ).add( trans ).mult( scale );
+			}
 
 			// compute the axis-aligned bounding box of the triangle
 			min.copy( kV0 );
@@ -2226,8 +2373,10 @@ public class VolumeSurface extends VolumeObject
 			float iYMin = min.Y, iYMax = max.Y;
 			float iZMin = min.Z, iZMax = max.Z;
 			int ptr;
-			int end = m_kSurfaceMask.size();
+			int end = mask.size();
 
+			
+//			System.err.println( i + "  " + iXMin + " " + iXMax + " " + iYMin + " " + iYMax + " " + iZMin + " " + iZMax );
 			for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
 
 				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
@@ -2236,7 +2385,7 @@ public class VolumeSurface extends VolumeObject
 					if (iX != -1) {
 						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
 						if ( (ptr >= 0) && (ptr < end)) {
-							m_kSurfaceMask.set(ptr);
+							mask.set(ptr);
 						}
 					}
 				}
@@ -2250,7 +2399,7 @@ public class VolumeSurface extends VolumeObject
 					if (iY != -1) {
 						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
 						if ( (ptr >= 0) && (ptr < end)) {
-							m_kSurfaceMask.set(ptr);
+							mask.set(ptr);
 						}
 					}
 				}
@@ -2264,14 +2413,164 @@ public class VolumeSurface extends VolumeObject
 					if (iZ != -1) {
 						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
 						if ( (ptr >= 0) && (ptr < end)) {
-							m_kSurfaceMask.set(ptr);
+							mask.set(ptr);
 						}
 					}
 				}
             }
         }		
-		return m_kSurfaceMask;
 	}
+	
+
+	
+	
+	
+	public static ModelImage computeSurfaceImage( TriMesh mesh, ModelImage image ) 
+	{
+		return computeSurfaceImage(mesh,image, 1, null, null);
+	}
+	
+	private static ModelImage computeSurfaceImage( TriMesh mesh, ModelImage image, 
+			float volume, Vector3f trans, Vector3f scale ) 
+	{
+
+		BoxBV kBoundingBox = new BoxBV();
+		kBoundingBox.ComputeFromData( mesh.VBuffer );
+    	
+    	Vector3f[] kBoxCorners = new Vector3f[8];
+    	kBoundingBox.GetBox().ComputeVertices( kBoxCorners );
+    	Vector3f kMaxBB = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+    	Vector3f kMinBB = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+    	for ( int i = 0; i < kBoxCorners.length; i++ )
+    	{
+    		kMaxBB.max( kBoxCorners[i] );
+    		kMinBB.min( kBoxCorners[i] );
+    	}		
+		
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;		
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;	
+		int dataSize = dimX*dimY*dimZ;
+		
+		System.err.println("VolumeSurface: computeSurfaceMask " + dimX + "   " + dimY + "   " + dimZ );
+				
+
+		ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), JDialogBase.makeImageName(image.getImageName(),  "_surface"));
+        JDialogBase.updateFileInfo(image, surfaceMaskImage);
+        
+        Vector3f min = new Vector3f();
+		Vector3f max = new Vector3f();
+
+		int iTQuantity = mesh.GetTriangleQuantity();
+
+		int iV0, iV1, iV2;
+		int[] aiTris = new int[3];
+		Vector3f kV0 = new Vector3f();
+		Vector3f kV1 = new Vector3f();
+		Vector3f kV2 = new Vector3f();
+
+		boolean printOnce = false;
+		for (int i = 0; i < iTQuantity; i++)
+		{
+			if (!mesh.GetTriangle(i,aiTris) )
+			{
+				continue;
+			}
+
+			iV0 = aiTris[0];
+			iV1 = aiTris[1];
+			iV2 = aiTris[2];
+
+			mesh.VBuffer.GetPosition3(iV0, kV0);
+			mesh.VBuffer.GetPosition3(iV1, kV1);
+			mesh.VBuffer.GetPosition3(iV2, kV2);
+
+			if ( trans != null ) {
+				kV0.scale( volume ).add( trans ).mult( scale );
+				kV1.scale( volume ).add( trans ).mult( scale );
+				kV2.scale( volume ).add( trans ).mult( scale );
+			}
+
+			// compute the axis-aligned bounding box of the triangle
+			min.copy( kV0 );
+			min.min( kV1 );
+			min.min( kV2 );
+			
+			max.copy( kV0 );
+			max.max( kV1 );
+			max.max( kV2 );
+			// Rasterize the triangle.  The rasterization is repeated in all
+			// three coordinate directions to make sure that floating point
+			// round-off errors do not cause any holes in the rasterized
+			// surface.
+			float iXMin = min.X, iXMax = max.X;
+			float iYMin = min.Y, iYMax = max.Y;
+			float iZMin = min.Z, iZMax = max.Z;
+			int ptr;
+			int end = dataSize;
+
+			for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+
+				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+					float iX = getIntersectX(kV0, kV1, kV2, iY, iZ);
+
+					if (iX != -1) {
+						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+						if ( (ptr >= 0) && (ptr < end)) {
+							surfaceMaskImage.set(ptr, 1f);
+							surfaceMaskImage.setMax(1);
+							
+							if ( !printOnce ) {
+								System.err.println("mask set " + ptr);
+//								printOnce = true;
+							}
+						}
+					}
+				}
+			}
+
+			for (float iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+
+				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+					float iY = getIntersectY(kV0, kV1, kV2, iX, iZ);
+
+					if (iY != -1) {
+						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+						if ( (ptr >= 0) && (ptr < end)) {
+							surfaceMaskImage.set(ptr, 1f);
+							surfaceMaskImage.setMax(1);
+							if ( !printOnce ) {
+								System.err.println("mask set " + ptr);
+//								printOnce = true;
+							}
+						}
+					}
+				}
+			}
+
+			for (float iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+
+				for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+					float iZ = getIntersectZ(kV0, kV1, kV2, iX, iY);
+
+					if (iZ != -1) {
+						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+						if ( (ptr >= 0) && (ptr < end)) {
+							surfaceMaskImage.set(ptr, 1f);
+							surfaceMaskImage.setMax(1);
+							if ( !printOnce ) {
+								System.err.println("mask set " + ptr);
+//								printOnce = true;
+							}
+						}
+					}
+				}
+            }
+        }		
+		surfaceMaskImage.setMin(0);
+		return surfaceMaskImage;
+	}
+	
 	
 	/**
      * Compute the point of intersection between a line (0,iY,iZ)+t(1,0,0) and
@@ -2287,7 +2586,7 @@ public class VolumeSurface extends VolumeObject
      *
      * @return  the x-value of the intersection
      */
-    private float getIntersectX(Vector3f kV0, Vector3f kV1, Vector3f kV2,
+    private static float getIntersectX(Vector3f kV0, Vector3f kV1, Vector3f kV2,
                                   float iY, float iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
@@ -2353,7 +2652,7 @@ public class VolumeSurface extends VolumeObject
      *
      * @return  the y-value of the intersection
      */
-    private float getIntersectY(Vector3f kV0, Vector3f kV1, Vector3f kV2,
+    private static float getIntersectY(Vector3f kV0, Vector3f kV1, Vector3f kV2,
                                   float iX, float iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
@@ -2417,7 +2716,7 @@ public class VolumeSurface extends VolumeObject
      *
      * @return  the z-value of the intersection
      */
-    private float getIntersectZ(Vector3f kV0, Vector3f kV1, Vector3f kV2,
+    private static float getIntersectZ(Vector3f kV0, Vector3f kV1, Vector3f kV2,
                                   float iX, float iY) {
 
         // Compute the intersection, if any, by calculating barycentric

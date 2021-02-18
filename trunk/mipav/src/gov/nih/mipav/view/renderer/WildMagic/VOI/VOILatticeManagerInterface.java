@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -773,9 +774,17 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public TriMesh generateTriMesh( int stepsize ) {
 		if ( latticeModel != null )
 		{
-			return latticeModel.generateTriMesh( true, true, stepsize);
+			return latticeModel.generateTriMesh( true, false );
 		}		
 		return null;
+	}
+	
+	public void testConflicts( boolean display, BitSet surfaceMask ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.testConflicts( display, surfaceMask );
+		}		
+		return;
 	}
 	
 	public void setPaddingFactor( int padding ) {

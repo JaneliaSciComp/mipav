@@ -245,6 +245,7 @@ public class VolumeVOI extends VolumeObject
 
 				Vector4f kTextPos = kWVP.multLeft( new Vector4f( m_kBillboardPos.X, m_kBillboardPos.Y, m_kBillboardPos.Z, 1 ) );
 				kTextPos.scale( 1f/kTextPos.W );
+//				System.err.println( "Annotation text    " + kTextPos );
 
 				if ( annotationTexture == null )
 				{

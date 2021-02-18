@@ -54,6 +54,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelAnnotations;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelCurves;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.JPanelLattice;
@@ -111,6 +112,7 @@ import org.jocl.Sizeof;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 /**
@@ -191,6 +193,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 	private JCheckBox displaySurface;
+	private JCheckBox displayConflicts;
 
 	private int previewCount = 0;
 
@@ -402,6 +405,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( openHyperStack() ) {
 						displayModel.setVisible(true);
 						displaySurface.setVisible(true);
+//						displayConflicts.setVisible(true);
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						validate();
@@ -417,7 +421,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					editMode = IntegratedEditing;
 					if ( openHyperStack() ) {
 						displayModel.setVisible(true);
-						displaySurface.setVisible(true);
+						displaySurface.setVisible(true);	
+//						displayConflicts.setVisible(true);
 						predict.setVisible(true);
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
@@ -603,9 +608,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				{					
 					if ( displaySurface.isSelected() ) {
 						TriMesh mesh = activeImage.voiManager.generateTriMesh(5);
+//						System.err.println( "displaySurface " + mesh );
 						SurfaceState surface = new SurfaceState( mesh, "worm" );
-						activeRenderer.addSurface( surface, true );
+//						surface.Fill = WireframeState.FillMode.FM_LINE;
+						activeRenderer.addSurface( surface, false, true );
 						activeRenderer.displaySurface(true);
+//						activeRenderer.setPolygonMode( "worm", surface.Fill);
 						updateSurfacePanels();
 					}
 					else
@@ -614,6 +622,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						activeRenderer.displaySurface(false);						
 					}
 				}
+			}
+			else if ( command.equals("displayConflicts") )
+			{
+//				VolumeSurface surface = activeRenderer.getVolumeSurface("worm");
+//				activeImage.voiManager.testConflicts(displayConflicts.isSelected(), surface.computeSurfaceMask() );	
 			}
 			else if ( command.equals("predict") )
 			{				
@@ -1002,6 +1015,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 			displayModel.setSelected(activeImage.voiManager.isModelDisplayed());
 			displaySurface.setSelected( activeRenderer.getSurface("worm") != null );
+			
 			updateSurfacePanels();
 			updateClipPanel(activeImage, activeRenderer, true);    		
 			updateHistoLUTPanels(activeImage);
@@ -1763,6 +1777,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					displayModel.setSelected(false);
 					latticeSelectionPanel.add(displaySurface);
 					displaySurface.setSelected(false);
+//					latticeSelectionPanel.add(displayConflicts);
+//					displayConflicts.setSelected(false);
 					if ( editMode == IntegratedEditing && (dualGPU != null)) {
 						latticeSelectionPanel.remove(predict);
 						latticeSelectionPanel.add(predict);
@@ -2652,6 +2668,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		displaySurface.setVisible(false);
 		displaySurface.setEnabled(true);
 		latticeSelectionPanel.add(displaySurface);
+
+//		displayConflicts = gui.buildCheckBox("Test Conflicts", false);
+//		displayConflicts.addActionListener(this);
+//		displayConflicts.setActionCommand("displayConflicts");
+//		displayConflicts.setVisible(false);
+//		displayConflicts.setEnabled(true);
+//		latticeSelectionPanel.add(displayConflicts);
 
 		predict = gui.buildButton("predict");
 		predict.addActionListener(this);
