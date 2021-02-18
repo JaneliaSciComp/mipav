@@ -444,6 +444,14 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_bSurfaceUpdate = true;
 		m_bSurfaceMaskUpdate = true;
 	}
+	
+	public void addSurface(SurfaceState kSurface, boolean computeSurfaceMask, boolean isFileCoords) {
+		VolumeSurface kVolumeSurfaces = new VolumeSurface(m_kVolumeImageA,
+				m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, computeSurfaceMask, isFileCoords);
+		m_kDisplayList.add(kVolumeSurfaces);
+		m_bSurfaceUpdate = true;
+		m_bSurfaceMaskUpdate = true;
+	}
 
 	/**
 	 * Add tract into the DTI display

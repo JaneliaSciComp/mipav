@@ -7100,9 +7100,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 				fr.close();
 				if ( count > 1 )
 				{
-					if ( !contourType )
-						m_kParent.addSphereVOIs( annotationVOI );
-					else 
+//					if ( !contourType )
+//						m_kParent.addSphereVOIs( annotationVOI );
+//					else 
 						image.registerVOI(annotationVOI);
 				}
 			} catch (FileNotFoundException e) {

@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -370,6 +371,16 @@ public class VOIText extends VOIBase {
      */
     public boolean useMarker() {
     	return this.useMarker;
+    }
+
+    public void update( ColorRGBA kColor )
+    {
+    	textColor = new Color( kColor.R, kColor.G, kColor.B, kColor.A );
+        m_kColor.Copy(kColor);
+        if ( m_kVolumeVOI != null )
+        {
+            m_kVolumeVOI.update( kColor );
+        }
     }
     
     public void updateText()
