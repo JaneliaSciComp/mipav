@@ -8134,5 +8134,174 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  QuaternionParameterizationTestHelper(x, delta, x_plus_delta, "QuaternionParameterizationAwayFromZeroTest()");
 			}
 	
+		public void EigenQuaternionParameterizationTestHelper(
+			    double[] x, double[] delta,
+			    double[] x_plus_delta_ref, String testName) {
+			  int i, j;
+			  boolean passed = true;
+			  final int kGlobalSize = 4;
+			  final int kLocalSize = 3;
+
+			  final double kTolerance = 1e-14;
+
+			  double x_plus_delta[] = new double[]{0.0, 0.0, 0.0, 0.0};
+			  EigenQuaternionParameterization parameterization = new EigenQuaternionParameterization();
+			  parameterization.Plus(x, delta, x_plus_delta);
+			  for (i = 0; i < kGlobalSize; ++i) {
+			    if (Math.abs(x_plus_delta_ref[i] - x_plus_delta[i]) > kTolerance) {
+			    	System.err.println("In " + testName + " Math.abs(x_plus_delta_ref["+i+"] - x_plus_delta["+i+"]) > kTolerance");
+			    	passed = false;
+			    }
+			  }
+
+			  final double x_plus_delta_norm =
+			      Math.sqrt(x_plus_delta[0] * x_plus_delta[0] +
+			           x_plus_delta[1] * x_plus_delta[1] +
+			           x_plus_delta[2] * x_plus_delta[2] +
+			           x_plus_delta[3] * x_plus_delta[3]);
+
+			  if (Math.abs(x_plus_delta_norm - 1.0) > kTolerance) {
+				  System.err.println("In " + testName + " Math.abs(x_plus_delta_norm - 1.0) > kTolerance");
+				  passed = false;
+			  }
+
+			  double jacobian_ref[][] = new double[4][3];
+			  jacobian_ref[0][0] = x[3]; jacobian_ref[0][1]  = x[2]; jacobian_ref[0][2]  = -x[1];
+			  jacobian_ref[1][0] =  -x[2]; jacobian_ref[1][1]  =  x[3]; jacobian_ref[1][2]  = x[0];
+			  jacobian_ref[2][0] = x[1]; jacobian_ref[2][1]  =  -x[0]; jacobian_ref[2][2]  =  x[3];
+			  jacobian_ref[3][0] =  -x[0]; jacobian_ref[3][1] = -x[1]; jacobian_ref[3][2] =  -x[2];
+			  
+
+			  double jacobian[][] = new double[4][3];
+			  parameterization.ComputeJacobian(x, 0, jacobian);
+			  for (i = 0; i < 4; ++i) {
+				  for (j = 0; j < 3; j++) {
+			    if (!Double.isFinite(jacobian[i][j])) {
+			    	System.err.println("In " + testName + " Double.isFinite(jacobian["+i+"]["+j+"]) = false");
+			    	passed = false;
+			    }
+			    if (Math.abs(jacobian[i][j] - jacobian_ref[i][j]) > kTolerance) {
+			        System.err.println("Jacobian mismatch: i = " + i + " j = " + j);
+			        System.err.println("Expected jacobian = " + jacobian_ref[i][j]);
+			        System.err.println("Actual jacobian = " + jacobian[i][j]);
+				 }
+				}
+			  }
+
+			  Matrix global_matrix = Matrix.random(10, kGlobalSize);
+			  Matrix local_matrix = new Matrix(10, kLocalSize, 0.0);
+			  double global_matrix_array[][] = global_matrix.getArray();
+			  double local_matrix_array[][] = local_matrix.getArray();
+			  parameterization.MultiplyByJacobian(x,
+			                                      10,
+			                                      global_matrix_array,
+			                                      local_matrix_array);
+			  Matrix jacobianMat = new Matrix(jacobian);
+			  Matrix expected_local_matrix =
+			      global_matrix.times(jacobianMat);
+			  double expected_local_matrix_array[][] = expected_local_matrix.getArray();
+			  double diff;
+			  double normSquared = 0.0;
+			  for (i = 0; i < 10; i++) {
+				  for (j = 0; j < kLocalSize; j++) {
+					  diff = local_matrix_array[i][j] - expected_local_matrix_array[i][j];
+					  normSquared += (diff * diff);
+				  }
+			  }
+			  double norm = Math.sqrt(normSquared);
+			  if (norm > 10.0 * epsilon) {
+				  System.err.println("In " + testName + " (local_matrix - expected_local_matrix).norm() > 10.0 * epsilon");
+				  System.err.println("norm = " + norm);
+				  passed = false;
+			  }
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
+		
+		public void EigenQuaternionParameterizationZeroTest() {
+			// EigenQuaternionParameterizationZeroTest() passed all tests
+			  double x[] = new double[] {0.5, 0.5, 0.5, 0.5};
+			  double x_eig[] = new double[] {0.5, 0.5, 0.5, 0.5};
+			  double delta[] = new double[]{0.0, 0.0, 0.0};
+			  double q_delta[] = new double[] {1.0, 0.0, 0.0, 0.0};
+			  double q_delta_eig[] = new double[] {0.0, 0.0, 0.0, 1.0};
+			  double x_plus_delta_eig[] = new double[4];
+			  // Eigen::Quaterniond x_plus_delta = q_delta * x;
+			  // EigenQuaternionProduct has the real parts in the last position
+			  EigenQuaternionProduct(q_delta_eig, x_eig, x_plus_delta_eig);
+			  double x_plus_delta[] =  new double[] {x_plus_delta_eig[3], x_plus_delta_eig[0], x_plus_delta_eig[1], x_plus_delta_eig[2]}; 
+			  EigenQuaternionParameterizationTestHelper(x, delta, x_plus_delta, "EigenQuaternionParameterizationZeroTest()");
+		}
+		
+		public void EigenQuaternionParameterizationNearZeroTest() {
+			  // EigenQuaternionParameterizationNearZeroTest() passed all tests
+			  int i;
+			  //Eigen::Quaterniond x(0.52, 0.25, 0.15, 0.45);
+			  double x[] = new double[] {0.52, 0.25, 0.15, 0.45};
+			  double normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i]*x[i]);
+			  }
+			  double norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] = x[i]/norm;
+			  }
+			  double x_eig[] = new double[] {x[1],x[2],x[3],x[0]};
+
+			  double delta[] = new double[] {0.24, 0.15, 0.10};
+			  for (i = 0; i < 3; ++i) {
+			    delta[i] = delta[i] * 1e-14;
+			  }
+
+			  // Note: w is first in the constructor.
+			  //Eigen::Quaterniond q_delta(1.0, delta[0], delta[1], delta[2]);
+			  double q_delta_eig[] = new double[] {delta[0], delta[1], delta[2], 1.0};
+			  // Eigen::Quaterniond x_plus_delta = q_delta * x;
+			  // EigenQuaternionProduct has the real parts in the last position
+			  double x_plus_delta_eig[] = new double[4];
+			  EigenQuaternionProduct(q_delta_eig, x_eig, x_plus_delta_eig);
+			  double x_plus_delta[] =  new double[] {x_plus_delta_eig[3], x_plus_delta_eig[0], x_plus_delta_eig[1], x_plus_delta_eig[2]}; 
+			  EigenQuaternionParameterizationTestHelper(x, delta, x_plus_delta, "EigenQuaternionParameterizationNearZeroTest()");
+			}
+		
+		public void EigenQuaternionParameterizationAwayFromZeroTest() {
+			  // EigenQuaternionParameterizationAwayFromZeroTest() passed all tests
+			  int i;
+			  //Eigen::Quaterniond x(0.52, 0.25, 0.15, 0.45);
+			  double x[] = new double[] {0.52, 0.25, 0.15, 0.45};
+			  double normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i]*x[i]);
+			  }
+			  double norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] = x[i]/norm;
+			  }
+			  double x_eig[] = new double[] {x[1],x[2],x[3],x[0]};
+
+			  double delta[] = new double[] {0.24, 0.15, 0.10};
+			  final double delta_norm = Math.sqrt(delta[0] * delta[0] +
+			                                 delta[1] * delta[1] +
+			                                 delta[2] * delta[2]);
+
+			  // Note: w is first in the constructor.
+			  //Eigen::Quaterniond q_delta(cos(delta_norm),
+			                             //sin(delta_norm) / delta_norm * delta[0],
+			                             //sin(delta_norm) / delta_norm * delta[1],
+			                             //sin(delta_norm) / delta_norm * delta[2]);
+			  // Here w is last
+			  double q_delta_eig[] = new double[] {Math.sin(delta_norm) / delta_norm * delta[0],
+                      Math.sin(delta_norm) / delta_norm * delta[1],
+                      Math.sin(delta_norm) / delta_norm * delta[2],
+                      Math.cos(delta_norm)};
+			  
+			  // Eigen::Quaterniond x_plus_delta = q_delta * x;
+			  // EigenQuaternionProduct has the real parts in the last position
+			  double x_plus_delta_eig[] = new double[4];
+			  EigenQuaternionProduct(q_delta_eig, x_eig, x_plus_delta_eig);
+			  double x_plus_delta[] =  new double[] {x_plus_delta_eig[3], x_plus_delta_eig[0], x_plus_delta_eig[1], x_plus_delta_eig[2]}; 
+			  EigenQuaternionParameterizationTestHelper(x, delta, x_plus_delta, "EigenQuaternionParameterizationAwayFromZeroTest()");
+			}
 
 }
