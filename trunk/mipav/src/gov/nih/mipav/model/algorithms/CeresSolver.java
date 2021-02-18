@@ -19450,6 +19450,121 @@ public abstract class CeresSolver {
 	  public int GlobalSize() { return 4; }
 	  public int LocalSize() { return 3; }
 	};
+	
+	// Implements the quaternion local parameterization for Eigen's representation
+	// of the quaternion. Eigen uses a different internal memory layout for the
+	// elements of the quaternion than what is commonly used. Specifically, Eigen
+	// stores the elements in memory as [x, y, z, w] where the real part is last
+	// whereas it is typically stored first. Note, when creating an Eigen quaternion
+	// through the constructor the elements are accepted in w, x, y, z order. Since
+	// Ceres operates on parameter blocks which are raw double pointers this
+	// difference is important and requires a different parameterization.
+	//
+	// Plus(x, delta) = [sin(|delta|) delta / |delta|, cos(|delta|)] * x
+	// with * being the quaternion multiplication operator.
+	// The following two typedefs are provided for convenience:
+	// Quaternionf for float
+	// Quaterniond for double
+	/** Constructs and initializes the quaternion \f$ w+xi+yj+zk \f$ from
+	    * its four coefficients \a w, \a x, \a y and \a z.
+	    *
+	    * \warning Note the order of the arguments: the real \a w coefficient first,
+	    * while internally the coefficients are stored in the following order:
+	    * [\c x, \c y, \c z, \c w]
+	    */
+	
+	public void EigenQuaternionProduct(double a[], double b[], double ab[]) {
+		// ab[3] is the real part
+		// a[3] and b[3] must be the real parts
+		      ab[3] = a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2];
+		      ab[0] = a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1];
+		      ab[1] = a[3] * b[1] + a[1] * b[3] + a[2] * b[0] - a[0] * b[2];
+		      ab[2] = a[3] * b[2] + a[2] * b[3] + a[0] * b[1] - a[1] * b[0];
+	};
+	
+	class EigenQuaternionParameterization extends LocalParameterization {
+	 public EigenQuaternionParameterization() {
+		 super();
+	 }
+	 
+	 public boolean Plus(double[] x_ptr,
+             double[] delta,
+             double[] x_plus_delta_ptr)  {
+		 // The inputs have the real parts first, but in the Eigen::Quaterniond the real parts are moved last
+		 //Eigen::Map<Eigen::Quaterniond> x_plus_delta(x_plus_delta_ptr);
+		 //Eigen::Map<const Eigen::Quaterniond> x(x_ptr);
+         double x[] = new double[] {x_ptr[1], x_ptr[2], x_ptr[3], x_ptr[0]};
+         double x_plus_delta[] = new double[4];
+		  final double norm_delta =
+		      Math.sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
+		  if (norm_delta > 0.0) {
+		    final double sin_delta_by_delta = Math.sin(norm_delta) / norm_delta;
+		 // Note, in the constructor w is first.
+		    //Eigen::Quaterniond delta_q(cos(norm_delta),
+		                               //sin_delta_by_delta * delta[0],
+		                               //sin_delta_by_delta * delta[1],
+		                               //sin_delta_by_delta * delta[2]);
+
+		    // Here w is last
+		    double delta_q[] = new double[] {
+		                               sin_delta_by_delta * delta[0],
+		                               sin_delta_by_delta * delta[1],
+		                               sin_delta_by_delta * delta[2],
+		                               Math.cos(norm_delta)};
+		    EigenQuaternionProduct(delta_q, x, x_plus_delta);
+		    // Real part is moved back from the last position to the first position
+		    x_plus_delta_ptr[0] = x_plus_delta[3];
+		    x_plus_delta_ptr[1] = x_plus_delta[0];
+		    x_plus_delta_ptr[2] = x_plus_delta[1];
+		    x_plus_delta_ptr[3] = x_plus_delta[2];
+		  } else {
+			  for (int i = 0; i < 4; ++i) {
+			      x_plus_delta_ptr[i] = x_ptr[i];
+			  }
+		  }
+
+
+			return true;
+			}
+			
+			public boolean Plus(Vector<Double> x, int x_index,
+			   Vector<Double> delta, int delta_index,
+			   Vector<Double> x_plus_delta, int x_plus_delta_index) {
+			int i;
+			boolean cond;
+			double x_array[] = new double[4];
+			for (i = x_index; i < x_index+4; i++) {
+				  x_array[i-x_index] = x.get(i);
+			}
+			double delta_array[] = new double[4];
+			for (i = delta_index; i < delta_index+4; i++) {
+				  delta_array[i - delta_index] = delta.get(i);
+			}
+			double x_plus_delta_array[] = new double[4];
+			cond = Plus(x_array, delta_array, x_plus_delta_array);
+			for (i = x_plus_delta_index; i < x_plus_delta_index+4; i++) {
+				  if (i < x_plus_delta.size()) {
+					  x_plus_delta.set(i, x_plus_delta_array[i-x_plus_delta_index]);
+				  }
+				  else {
+					  x_plus_delta.add(x_plus_delta_array[i-x_plus_delta_index]);
+				  }
+			}
+			return cond;
+			}
+			public boolean ComputeJacobian(double[] x, int x_start,
+			                        double[][] jacobian) {
+			// jacobian is [4][3]
+			jacobian[0][0] = x[x_start+3]; jacobian[0][1]  = x[x_start+2]; jacobian[0][2]  = -x[x_start+1];
+			jacobian[1][0] =  -x[x_start+2]; jacobian[1][1]  =  x[x_start+3]; jacobian[1][2]  = x[x_start];
+			jacobian[2][0] = x[x_start+1]; jacobian[2][1]  =  -x[x_start]; jacobian[2][2]  =  x[x_start+3];
+			jacobian[3][0] =  -x[x_start]; jacobian[3][1] = -x[x_start+1]; jacobian[3][2] =  -x[x_start+2];
+			return true;
+			}
+			public int GlobalSize() { return 4; }
+			public int LocalSize() { return 3; }
+	  
+	};
 
 	// The class LocalParameterization defines the function Plus and its
 	// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
