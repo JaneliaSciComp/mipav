@@ -19565,6 +19565,220 @@ public abstract class CeresSolver {
 			public int LocalSize() { return 3; }
 	  
 	};
+	
+	// Algorithm 5.1.1 from 'Matrix Computations' by Golub et al. (Johns Hopkins
+	// Studies in Mathematical Sciences) but using the nth element of the input
+	// vector as pivot instead of first. This computes the vector v with v(n) = 1
+	// and beta such that H = I - beta * v * v^T is orthogonal and
+	// H * x = ||x||_2 * e_n.
+	// beta is of length 1
+	public void ComputeHouseholderVector(double x[],
+	                              double v[],
+	                              double[] beta) {
+	  int i;
+	  double sigma;
+	  if (beta == null) {
+		  System.err.println("In ComputeHouseholderVector beta == null");
+		  return;
+	  }
+	  if (v == null) {
+		  System.err.println("In ComputeHouseholderVector v == null");
+		  return;	  
+	  }
+	  if (x.length <= 1) {
+		  System.err.println("In ComputeHouseholderVector x.length <= 1");
+		  return;
+	  }
+	  if (x.length != v.length) {
+		  System.err.println("In ComputeHouseholderVector x.length != v.length");
+		  return;  
+	  }
+
+	  sigma = 0;
+	  for (i = 0; i < x.length - 1; i++) {
+		  sigma += (x[i] * x[i]);
+		  v[i] = x[i];
+	  }
+	  v[v.length-1] = 1.0;
+
+	  beta[0] = 0.0;
+	  final double x_pivot = x[x.length - 1];
+
+	  if (sigma <= epsilon) {
+	    if (x_pivot < 0.0) {
+	      beta[0] = 2.0;
+	    }
+	    return;
+	  }
+
+	  final double mu = Math.sqrt(x_pivot * x_pivot + sigma);
+	  double v_pivot = 1.0;
+
+	  if (x_pivot <= 0.0) {
+	    v_pivot = x_pivot - mu;
+	  } else {
+	    v_pivot = -sigma / (x_pivot + mu);
+	  }
+
+	  beta[0] = 2.0 * v_pivot * v_pivot / (sigma + v_pivot * v_pivot);
+
+	  for (i = 0; i < v.length - 1; i++) {
+		  v[i] /= v_pivot;
+	  }
+	 
+	}
+
+	
+	// This provides a parameterization for homogeneous vectors which are commonly
+	// used in Structure for Motion problems.  One example where they are used is
+	// in representing points whose triangulation is ill-conditioned. Here
+	// it is advantageous to use an over-parameterization since homogeneous vectors
+	// can represent points at infinity.
+	//
+	// The plus operator is defined as
+	// Plus(x, delta) =
+//	    [sin(0.5 * |delta|) * delta / |delta|, cos(0.5 * |delta|)] * x
+	// with * defined as an operator which applies the update orthogonal to x to
+	// remain on the sphere. We assume that the last element of x is the scalar
+	// component. The size of the homogeneous vector is required to be greater than
+	// 1.
+	class HomogeneousVectorParameterization extends LocalParameterization {
+	 private int size_;
+	 public HomogeneousVectorParameterization(int size) {
+		 super();
+		 if (size <= 1) {
+			 System.err.println("The size of the homogeneous vector needs to be greater than 1");
+			 return;
+		 }
+
+		 size_ = size;
+	 }
+	 
+	 public boolean Plus(double[] x_ptr,
+             double[] delta_ptr,
+             double[] x_plus_delta_ptr)  {
+		 int i;
+		 double normSquared;
+		 //ConstVectorRef x(x_ptr, size_);
+		 // ConstVectorRef delta(delta_ptr, size_ - 1);
+		  //VectorRef x_plus_delta(x_plus_delta_ptr, size_);
+
+		 normSquared = 0.0;
+		 for (i = 0; i < size_ - 1; i++) {
+			 normSquared += (delta_ptr[i] * delta_ptr[i]);
+		 }
+		 final double norm_delta = Math.sqrt(normSquared);
+
+		  if (norm_delta == 0.0) {
+			for (i = 0; i < size_; i++) {
+		        x_plus_delta_ptr[i] = x_ptr[i];
+			}
+		    return true;
+		  }
+
+		  // Map the delta from the minimum representation to the over parameterized
+		  // homogeneous vector. See section A6.9.2 on page 624 of Hartley & Zisserman
+		  // (2nd Edition) for a detailed description.  Note there is a typo on Page
+		  // 625, line 4 so check the book errata.
+		  final double norm_delta_div_2 = 0.5 * norm_delta;
+		  final double sin_delta_by_delta = Math.sin(norm_delta_div_2) /
+		      norm_delta_div_2;
+
+		  double y[] = new double[size_];
+		  for (i = 0; i < size_ - 1; i++) {
+			  y[i] = 0.5 * sin_delta_by_delta * delta_ptr[i];
+		  }
+		  y[size_ - 1] = Math.cos(norm_delta_div_2);
+
+		  double v[] = new double[size_];
+		  double beta[] = new double[1];
+		  double x[] = new double[size_];
+		  normSquared = 0.0;
+		  for (i = 0; i < size_; i++) {
+			  x[i] = x_ptr[i];
+			  normSquared += (x[i] *x[i]);
+		  }
+		  double xnorm = Math.sqrt(normSquared);
+		  ComputeHouseholderVector(x, v, beta);
+
+		  // Apply the delta update to remain on the unit sphere. See section A6.9.3
+		  // on page 625 of Hartley & Zisserman (2nd Edition) for a detailed
+		  // description.
+		  //x_plus_delta = x.norm() * (y -  v * (beta * (v.transpose() * y)));
+          double vy = 0;
+          for (i = 0; i < size_; i++) {
+        	  vy += (v[i] * y[i]);
+          }
+          for (i = 0; i < size_; i++) {
+        	  x_plus_delta_ptr[i] = xnorm * (y[i] - v[i] * (beta[0] * vy));
+          }
+
+		 return true;
+	 }
+	 
+	 public boolean Plus(Vector<Double> x, int x_index,
+             Vector<Double> delta, int delta_index,
+             Vector<Double> x_plus_delta, int x_plus_delta_index) {
+		 int i;
+			boolean cond;
+			double x_array[] = new double[x.size()-x_index];
+			for (i = x_index; i < x.size(); i++) {
+				  x_array[i-x_index] = x.get(i);
+			}
+			double delta_array[] = new double[delta.size() - delta_index];
+			for (i = delta_index; i < delta.size(); i++) {
+				  delta_array[i - delta_index] = delta.get(i);
+			}
+			double x_plus_delta_array[] = new double[x_array.length];
+			cond = Plus(x_array, delta_array, x_plus_delta_array);
+			for (i = x_plus_delta_index; i < x_plus_delta_index+x_array.length; i++) {
+				  if (i < x_plus_delta.size()) {
+					  x_plus_delta.set(i, x_plus_delta_array[i-x_plus_delta_index]);
+				  }
+				  else {
+					  x_plus_delta.add(x_plus_delta_array[i-x_plus_delta_index]);
+				  }
+			}
+			return cond;
+	 }
+	 
+	 public boolean ComputeJacobian(double x_ptr[], int x_start, double jacobian_ptr[][]) {
+		  // ConstVectorRef x(x_ptr, size_);
+		  // MatrixRef jacobian(jacobian_ptr, size_, size_ - 1);
+		 int i,j ;
+		 double x[] = new double[size_];
+		 double normSquared = 0.0;
+		 for (i = x_start; i < x_start + size_; i++) {
+			 x[i-x_start] = x_ptr[i];
+			 normSquared += (x_ptr[i] * x_ptr[i]);
+		 }
+		 double xnorm = Math.sqrt(normSquared);
+		 
+		 double v[] = new double[size_];
+		 double beta[] = new double[1];
+		 ComputeHouseholderVector(x, v, beta);
+
+		  // The Jacobian is equal to J = 0.5 * H.leftCols(size_ - 1) where H is the
+		  // Householder matrix (H = I - beta * v * v').
+		  for (i = 0; i < size_ - 1; ++i) {
+			for (j = 0; j < size_; j++) {
+				jacobian_ptr[j][i] = -0.5 * beta[0] * v[i] * v[j];
+			}
+		   
+		    jacobian_ptr[i][i] += 0.5;
+		  }
+		  
+		  for (i = 0; i < size_ - 1; ++i) {
+				for (j = 0; j < size_; j++) {
+		            jacobian_ptr[j][i] *= xnorm;
+				}
+		  }
+
+		 return true;
+	 }
+	  public int GlobalSize() { return size_; }
+	  public int LocalSize() { return size_ - 1; }
+	};
 
 	// The class LocalParameterization defines the function Plus and its
 	// Jacobian which is needed to compute the Jacobian of f w.r.t delta.
