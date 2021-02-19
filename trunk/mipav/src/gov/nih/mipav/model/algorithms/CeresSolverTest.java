@@ -8303,5 +8303,88 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  double x_plus_delta[] =  new double[] {x_plus_delta_eig[3], x_plus_delta_eig[0], x_plus_delta_eig[1], x_plus_delta_eig[2]}; 
 			  EigenQuaternionParameterizationTestHelper(x, delta, x_plus_delta, "EigenQuaternionParameterizationAwayFromZeroTest()");
 			}
+		
+		public void HouseholderTestHelper(double x[], String testName) {
+			  int i;
+			  boolean passed = true;
+			  final double kTolerance = 1e-14;
+
+			  // Check to ensure that H * x = ||x|| * [0 ... 0 1]'.
+			  double v[] = new double[x.length];
+			  double beta[] = new double[1];
+			  ComputeHouseholderVector(x, v, beta);
+			  double vx = 0.0;
+			  double normSquared = 0.0;
+			  for (i = 0; i < x.length; i++) {
+				   vx += (v[i] * x[i]);
+				   normSquared += (x[i] * x[i]);
+			  }
+			  double xnorm = Math.sqrt(normSquared);
+			  double result[] = new double[x.length];
+			  for (i = 0; i < x.length; i++) {
+				  result[i] = x[i] - beta[0] * v[i] * vx;
+			  }
+
+			  double expected_result[] = new double[x.length];
+			  expected_result[x.length - 1] = xnorm;
+
+			  for (i = 0; i < x.length; ++i) {
+			       if (Math.abs(expected_result[i] - result[i]) > kTolerance) {
+			           System.err.println("In " + testName + " expected_result["+i+"] - result["+i+"]) > kTolerance");
+			           passed = false;
+			       }
+			  }
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
+
+		public void HouseholderVectorZeroPositive() {
+			  // HouseholderVectorZeroPositive() passed all tests
+			  double x[] = new double[] {0.0, 0.0, 0.25};
+			  HouseholderTestHelper(x, "HouseholderVectorZeroPositive()");
+		}
+		
+		public void HouseholderVectorZeroNegative() {
+			  // HouseholderVectorZeroNegative() passed all tests
+			  double x[] = new double[] {0.0, 0.0, -0.25};
+			  HouseholderTestHelper(x, "HouseholderVectorZeroNegative()");
+		}
+		
+		public void HouseholderVectorNearZeroPositive() {
+			  // HouseholderVectorNearZeroPositive() passed all tests
+			  double x[] = new double[] {1E-18, 1E-18, 0.25};
+			  HouseholderTestHelper(x, "HouseholderVectorNearZeroPositive()");
+		}
+		
+		public void HouseholderVectorNearZeroNegative() {
+			  // HouseholderVectorNearZeroNegative() passed all tests
+			  double x[] = new double[] {1E-18, 1E-18, -0.25};
+			  HouseholderTestHelper(x, "HouseholderVectorNearZeroNegative()");
+		}
+		
+		public void HouseholderVectorNonZeroNegative() {
+			  // HouseholderVectorNonZeroNegative() passed all tests
+			  double x[] = new double[] {1.0, 0.0, -3.0};
+			  HouseholderTestHelper(x, "HouseholderVectorNonZeroNegative()");
+		}
+		
+		public void HouseholderVectorNonZeroPositive() {
+			  // HouseholderVectorNonZeroPositive() passed all tests
+			  double x[] = new double[] {1.0, 1.0, 1.0};
+			  HouseholderTestHelper(x, "HouseholderVectorNonZeroPositive()");
+		}
+		
+		public void HouseholderVectorNonZeroPositive_Size4() {
+			  // HouseholderVectorNonZeroPositive_Size4() passed all tests
+			  double x[] = new double[] {1.0, 1.0, 0.0, 2.0};
+			  HouseholderTestHelper(x, "HouseholderVectorNonZeroPositive_Size4()");
+		}
+		
+		public void HouseholderVectorLastElementZero() {
+			  // HouseholderVectorLastElementZero() passed all tests
+			  double x[] = new double[] {1.0, 1.0, 0.0, 0.0};
+			  HouseholderTestHelper(x, "HouseholderVectorLastElementZero()");
+		}
 
 }
