@@ -8386,5 +8386,325 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  double x[] = new double[] {1.0, 1.0, 0.0, 0.0};
 			  HouseholderTestHelper(x, "HouseholderVectorLastElementZero()");
 		}
+		
+		public void HomogeneousVectorParameterizationHelper(double[] x,
+                double[] delta, String testName) {
+	    boolean passed = true;
+		final double kTolerance = 1e-14;
+		
+		HomogeneousVectorParameterization homogeneous_vector_parameterization = new HomogeneousVectorParameterization(4);
+		
+		// Ensure the update maintains the norm.
+		double x_plus_delta[] = new double[]{0.0, 0.0, 0.0, 0.0};
+		homogeneous_vector_parameterization.Plus(x, delta, x_plus_delta);
+		
+		final double x_plus_delta_norm =
+		Math.sqrt(x_plus_delta[0] * x_plus_delta[0] +
+		x_plus_delta[1] * x_plus_delta[1] +
+		x_plus_delta[2] * x_plus_delta[2] +
+		x_plus_delta[3] * x_plus_delta[3]);
+		
+		final double x_norm = Math.sqrt(x[0] * x[0] + x[1] * x[1] +
+		x[2] * x[2] + x[3] * x[3]);
+		
+		if (Math.abs(x_plus_delta_norm - x_norm) > kTolerance) {
+		    System.err.println("In " + testName + " Math.abs(x_plus_delta_norm - x_norm) > kTolerance");
+		    passed = false;
+		}
+		
+		
+		double jacobian_analytic[][] = new double[4][3];
+		
+		homogeneous_vector_parameterization.ComputeJacobian(x, 0, jacobian_analytic);
+		
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				if (!Double.isFinite(jacobian_analytic[i][j])) {
+					System.err.println("In " + testName + " jacobian_analytic["+i+"]["+j+"] is not finite");
+					passed = false;
+				}
+			}
+		}
+		if (passed) {
+			System.out.println(testName + " passed all tests");
+		}
+    }
+		
+		public void HomogeneousVectorParameterizationZeroTest() {
+			// HomogeneousVectorParameterizationZeroTest() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {0.0, 0.0, 0.0, 1.0};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[]{0.0, 0.0, 0.0};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationZeroTest()");
+			}
+		
+		public void HomogeneousVectorParameterizationNearZeroTest1() {
+			// HomogeneousVectorParameterizationNearZeroTest1() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {1E-5, 1E-5, 1E-5, 1.0};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[]{0.0, 1.0, 0.0};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationNearZeroTest1()");
+			}
+
+		public void HomogeneousVectorParameterizationNearZeroTest2() {
+			// HomogeneousVectorParameterizationNearZeroTest2() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {0.001, 0.0, 0.0, 0.0};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[]{0.0, 1.0, 0.0};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationNearZeroTest2()");
+			}
+		
+		public void HomogeneousVectorParameterizationAwayFromZeroTest1() {
+			// HomogeneousVectorParameterizationAwayFromZeroTest1() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {0.52, 0.25, 0.15, 0.45};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[] {0.0, 1.0, -0.5};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationAwayFromZeroTest1()");
+			}
+		
+		public void HomogeneousVectorParameterizationAwayFromZeroTest2() {
+			// HomogeneousVectorParameterizationAwayFromZeroTest2() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {0.87, -0.25, -0.34, 0.45};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[] {0.0, 0.0, -0.5};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationAwayFromZeroTest2()");
+			}
+		
+		public void HomogeneousVectorParameterizationAwayFromZeroTest3() {
+			// HomogeneousVectorParameterizationAwayFromZeroTest3() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {0.0, 0.0, 0.0, 2.0};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[] {0.0, 0.0, 0};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationAwayFromZeroTest3()");
+			}
+		
+		public void HomogeneousVectorParameterizationAwayFromZeroTest4() {
+			// HomogeneousVectorParameterizationAwayFromZeroTest4() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {0.2, -1.0, 0.0, 2.0};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[] {1.4, 0.0, -0.5};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationAwayFromZeroTest4()");
+			}
+		
+		public void HomogeneousVectorParameterizationAwayFromZeroTest5() {
+			// HomogeneousVectorParameterizationAwayFromZeroTest5() passed all tests
+			  int i;
+			  double normSquared;
+			  double norm;
+			  double x[] = new double[] {2.0, 0.0, 0.0, 0.0};
+			  normSquared = 0.0;
+			  for (i = 0; i < 4; i++) {
+				  normSquared += (x[i] * x[i]);
+			  }
+			  norm = Math.sqrt(normSquared);
+			  for (i = 0; i < 4; i++) {
+				  x[i] /= norm;
+			  }
+			  double delta[] = new double[] {1.4, 0.0, -0.5};
+
+			  HomogeneousVectorParameterizationHelper(x, delta, "HomogeneousVectorParameterizationAwayFromZeroTest5()");
+			}
+		
+		public void ProductParameterizationTestLocalAndGlobalSize2() {
+			// ProductParameterizationTestLocalAndGlobalSize2() passed all tests
+			ProductParameterizationTest PT = new ProductParameterizationTest();
+			PT.ProductParameterizationTestLocalAndGlobalSize2();
+		}
+		
+		public void ProductParameterizationTestLocalAndGlobalSize3() {
+			// ProductParameterizationTestLocalAndGlobalSize3() passed all tests
+			ProductParameterizationTest PT = new ProductParameterizationTest();
+			PT.ProductParameterizationTestLocalAndGlobalSize3();
+		}
+		
+		public void ProductParameterizationTestLocalAndGlobalSize4() {
+			// ProductParameterizationTestLocalAndGlobalSize4() passed all tests
+			ProductParameterizationTest PT = new ProductParameterizationTest();
+			PT.ProductParameterizationTestLocalAndGlobalSize4();
+		}
+		
+		class ProductParameterizationTest {
+			private LocalParameterization param1_;
+			private LocalParameterization param2_;
+			private LocalParameterization param3_;
+			private LocalParameterization param4_;
+			boolean passed;
+			 public ProductParameterizationTest() {
+			     SetUp();	 
+			 }
+			 public void SetUp() {
+			    final int global_size1 = 5;
+			    Vector<Integer> constant_parameters1 = new Vector<Integer>();
+			    constant_parameters1.add(2);
+			    param1_ = new SubsetParameterization(global_size1,
+			                                             constant_parameters1);
+
+			    final int global_size2 = 3;
+			    Vector<Integer> constant_parameters2 = new Vector<Integer>();
+			    constant_parameters2.add(0);
+			    constant_parameters2.add(1);
+			    param2_ = new SubsetParameterization(global_size2,
+			                                             constant_parameters2);
+
+			    final int global_size3 = 4;
+			    Vector<Integer> constant_parameters3 = new Vector<Integer>();
+			    constant_parameters3.add(1);
+			    param3_ = new SubsetParameterization(global_size3,
+			                                             constant_parameters3);
+
+			    final int global_size4 = 2;
+			    Vector<Integer> constant_parameters4 = new Vector<Integer>();
+			    constant_parameters4.add(1);
+			    param4_ = new SubsetParameterization(global_size4,
+			                                             constant_parameters4);
+			  }
+			 
+			 public void ProductParameterizationTestLocalAndGlobalSize2() {
+				  passed = true;
+				  LocalParameterization param1 = param1_;
+				  LocalParameterization param2 = param2_;
+
+				  ProductParameterization product_param = new ProductParameterization(param1, param2);
+				  if (product_param.LocalSize() != param1.LocalSize() + param2.LocalSize()) {
+					  System.err.println("In ProductParameterizationTestLocalAndGlobalSize2()");
+					  System.err.println("product_param.LocalSize() != param1.LocalSize() + param2.LocalSize()");
+					  passed = false;
+				  }
+				  if (product_param.GlobalSize() != param1.GlobalSize() + param2.GlobalSize()) {
+					  System.err.println("In ProductParameterizationTestLocalAndGlobalSize2()");
+					  System.err.println("product_param.GlobalSize() != param1.GlobalSize() + param2.GlobalSize()");
+					  passed = false;
+				  }
+				  if (passed) {
+					  System.out.println("ProductParameterizationTestLocalAndGlobalSize2() passed all tests");
+				  }
+				}
+
+			 public void ProductParameterizationTestLocalAndGlobalSize3() {
+				  passed = true;
+				  LocalParameterization param1 = param1_;
+				  LocalParameterization param2 = param2_;
+				  LocalParameterization param3 = param3_;
+
+				  ProductParameterization product_param = new ProductParameterization(param1, param2, param3);
+				  if (product_param.LocalSize() != param1.LocalSize() + param2.LocalSize() + param3.LocalSize()) {
+					  System.err.println("In ProductParameterizationTestLocalAndGlobalSize3()");
+					  System.err.println("product_param.LocalSize() != param1.LocalSize() + param2.LocalSize() + param3.LocalSize()");
+					  passed = false;
+				  }
+				  if (product_param.GlobalSize() != param1.GlobalSize() + param2.GlobalSize() + param3.GlobalSize()) {
+					  System.err.println("In ProductParameterizationTestLocalAndGlobalSize3()");
+					  System.err.println("product_param.GlobalSize() != param1.GlobalSize() + param2.GlobalSize() + param3.GlobalSize()");
+					  passed = false;
+				  }
+				  if (passed) {
+					  System.out.println("ProductParameterizationTestLocalAndGlobalSize3() passed all tests");
+				  }
+				}
+			 
+			 public void ProductParameterizationTestLocalAndGlobalSize4() {
+				  passed = true;
+				  LocalParameterization param1 = param1_;
+				  LocalParameterization param2 = param2_;
+				  LocalParameterization param3 = param3_;
+				  LocalParameterization param4 = param4_;
+
+				  ProductParameterization product_param = new ProductParameterization(param1, param2, param3, param4);
+				  if (product_param.LocalSize() != param1.LocalSize() + param2.LocalSize() + param3.LocalSize() + param4.LocalSize()) {
+					  System.err.println("In ProductParameterizationTestLocalAndGlobalSize4()");
+					  System.err.println("product_param.LocalSize() != param1.LocalSize() + param2.LocalSize() + param3.LocalSize() + param4.LocalSize()");
+					  passed = false;
+				  }
+				  if (product_param.GlobalSize() != param1.GlobalSize() + param2.GlobalSize() + param3.GlobalSize() + param4.GlobalSize()) {
+					  System.err.println("In ProductParameterizationTestLocalAndGlobalSize4()");
+					  System.err.println("product_param.GlobalSize() != param1.GlobalSize() + param2.GlobalSize() + param3.GlobalSize() + param4.GlobalSize()");
+					  passed = false;
+				  }
+				  if (passed) {
+					  System.out.println("ProductParameterizationTestLocalAndGlobalSize4() passed all tests");
+				  }
+				}
+
+			  
+			};
+
+
 
 }
