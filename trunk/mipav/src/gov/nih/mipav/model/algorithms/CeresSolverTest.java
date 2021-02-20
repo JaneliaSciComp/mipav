@@ -8600,6 +8600,18 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			PT.ProductParameterizationTestLocalAndGlobalSize4();
 		}
 		
+		public void ProductParameterizationTestPlus() {
+			// ProductParameterizationTestPlus() passed all tests
+			ProductParameterizationTest PT = new ProductParameterizationTest();
+			PT.ProductParameterizationTestPlus();
+		}
+		
+		 public void ProductParameterizationTestComputeJacobian() {
+			 // ProductParameterizationTestComputeJacobian() passed all tests
+			 ProductParameterizationTest PT = new ProductParameterizationTest();
+			 PT.ProductParameterizationTestComputeJacobian();
+		 }
+		
 		class ProductParameterizationTest {
 			private LocalParameterization param1_;
 			private LocalParameterization param2_;
@@ -8699,6 +8711,173 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				  }
 				  if (passed) {
 					  System.out.println("ProductParameterizationTestLocalAndGlobalSize4() passed all tests");
+				  }
+				}
+			 
+			 public void ProductParameterizationTestPlus() {
+				  int i;
+				  passed = true;
+				  LocalParameterization param1 = param1_;
+				  LocalParameterization param2 = param2_;
+				  LocalParameterization param3 = param3_;
+				  LocalParameterization param4 = param4_;
+
+				  ProductParameterization product_param = new ProductParameterization(param1, param2, param3, param4);
+				  Vector<Double> x = new Vector<Double>(product_param.GlobalSize());
+				  Vector<Double> delta = new Vector<Double>(product_param.LocalSize());
+				  Vector<Double> x_plus_delta_expected = new Vector<Double>(product_param.GlobalSize());
+				  Vector<Double> x_plus_delta = new Vector<Double>(product_param.GlobalSize());
+
+				  for (i = 0; i < product_param.GlobalSize(); ++i) {
+				    x.add(RandNormal());
+				    x_plus_delta_expected.add(0.0);
+				    x_plus_delta.add(0.0);
+				  }
+
+				  for (i = 0; i < product_param.LocalSize(); ++i) {
+				    delta.add(RandNormal());
+				  }
+
+				  if (!product_param.Plus(x, 0, delta, 0, x_plus_delta_expected,0)) {
+					  System.err.println("In ProductParameterizationTestPlus() product_param.Plus(x, 0, delta, 0, x_plus_delta_expected,0) = false");
+					  passed = false;
+				  }
+				  int x_cursor = 0;
+				  int delta_cursor = 0;
+
+				  if (!param1.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor)) {
+					  System.err.println("In ProductParameterizationTestPlus() param1.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor) = false");
+					  passed = false;
+				  }
+				  x_cursor += param1.GlobalSize();
+				  delta_cursor += param1.LocalSize();
+
+				  if(!param2.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor)) {
+					  System.err.println("In ProductParameterizationTestPlus() param2.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor) = false");
+					  passed = false;
+				  }
+				  x_cursor += param2.GlobalSize();
+				  delta_cursor += param2.LocalSize();
+
+				  if(!param3.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor)) {
+					  System.err.println("In ProductParameterizationTestPlus() param3.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor) = false");
+					  passed = false;
+				  }
+				  x_cursor += param3.GlobalSize();
+				  delta_cursor += param3.LocalSize();
+				  
+				  if(!param4.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor)) {
+					  System.err.println("In ProductParameterizationTestPlus() param4.Plus(x, x_cursor, delta, delta_cursor, x_plus_delta, x_cursor) = false");
+					  passed = false;
+				  }
+				  x_cursor += param4.GlobalSize();
+				  delta_cursor += param4.LocalSize();
+
+				  for (i = 0; i < x.size(); ++i) {
+				    if (x_plus_delta.get(i).doubleValue() != x_plus_delta_expected.get(i).doubleValue()) {
+				    	System.err.println("In ProductParameterizationTestPlus() x_plus_delta.get("+i+") != x_plus_delta_expected.get("+i+")");
+				    	System.err.println("x_plus_delta.get("+i+") = " + x_plus_delta.get(i));
+				    	System.err.println("x_plus_delta_expected.get("+i+") = " + x_plus_delta_expected.get(i));
+						passed = false;
+				    }
+				  }
+				  if (passed) {
+					  System.out.println("ProductParameterizationTestPlus() passed all tests");
+				  }
+				}
+
+			    public void ProductParameterizationTestComputeJacobian() {
+			      int i,j;
+			      passed = true;
+				  LocalParameterization param1 = param1_;
+				  LocalParameterization param2 = param2_;
+				  LocalParameterization param3 = param3_;
+				  LocalParameterization param4 = param4_;
+
+				  ProductParameterization product_param = new ProductParameterization(param1, param2, param3, param4);
+				  double x[] = new double[product_param.GlobalSize()];
+
+				  for (i = 0; i < product_param.GlobalSize(); ++i) {
+				    x[i] = RandNormal();
+				  }
+
+				  double[][] jacobian = Matrix.random(product_param.GlobalSize(),
+				                                   product_param.LocalSize()).getArray();
+				  if(!product_param.ComputeJacobian(x, 0, jacobian)) {
+					  System.err.println("In ProductParameterizationTestComputeJacobian() product_param.ComputeJacobian(x, 0, jacobian) = false");
+					  passed = false;
+				  }
+				  int x_cursor = 0;
+				  int delta_cursor = 0;
+
+				  double jacobian1[][] = new double[param1.GlobalSize()][param1.LocalSize()];
+				  if (!param1.ComputeJacobian(x, x_cursor, jacobian1)) {
+					  System.err.println("In ProductParameterizationTestComputeJacobian() param1.ComputeJacobian(x, x_cursor, jacobian1) = false");
+					  passed = false;
+				  }
+				  for (i = x_cursor; i < x_cursor + param1.GlobalSize(); i++) {
+					  for (j = delta_cursor; j < delta_cursor + param1.LocalSize(); j++) {
+						  jacobian[i][j] -= jacobian1[i-x_cursor][j-delta_cursor];
+					  }
+				  }
+				  x_cursor += param1.GlobalSize();
+				  delta_cursor += param1.LocalSize();
+
+				  double jacobian2[][] = new double[param2.GlobalSize()][param2.LocalSize()];
+				  if (!param2.ComputeJacobian(x, x_cursor, jacobian2)) {
+					  System.err.println("In ProductParameterizationTestComputeJacobian() param2.ComputeJacobian(x, x_cursor, jacobian2) = false");
+					  passed = false;
+				  }
+				  for (i = x_cursor; i < x_cursor + param2.GlobalSize(); i++) {
+					  for (j = delta_cursor; j < delta_cursor + param2.LocalSize(); j++) {
+						  jacobian[i][j] -= jacobian2[i-x_cursor][j-delta_cursor];
+					  }
+				  }
+				  x_cursor += param2.GlobalSize();
+				  delta_cursor += param2.LocalSize();
+
+				  double jacobian3[][] = new double[param3.GlobalSize()][param3.LocalSize()];
+				  if (!param3.ComputeJacobian(x, x_cursor, jacobian3)) {
+					  System.err.println("In ProductParameterizationTestComputeJacobian() param3.ComputeJacobian(x, x_cursor, jacobian3) = false");
+					  passed = false;
+				  }
+				  for (i = x_cursor; i < x_cursor + param3.GlobalSize(); i++) {
+					  for (j = delta_cursor; j < delta_cursor + param3.LocalSize(); j++) {
+						  jacobian[i][j] -= jacobian3[i-x_cursor][j-delta_cursor];
+					  }
+				  }
+				  x_cursor += param3.GlobalSize();
+				  delta_cursor += param3.LocalSize();
+
+				  double jacobian4[][] = new double[param4.GlobalSize()][param4.LocalSize()];
+				  if (!param4.ComputeJacobian(x, x_cursor, jacobian4)) {
+					  System.err.println("In ProductParameterizationTestComputeJacobian() param4.ComputeJacobian(x, x_cursor, jacobian4) = false");
+					  passed = false;
+				  }
+				  for (i = x_cursor; i < x_cursor + param4.GlobalSize(); i++) {
+					  for (j = delta_cursor; j < delta_cursor + param4.LocalSize(); j++) {
+						  jacobian[i][j] -= jacobian4[i-x_cursor][j-delta_cursor];
+					  }
+				  }
+				  x_cursor += param4.GlobalSize();
+				  delta_cursor += param4.LocalSize();
+				  
+				  double normSquared = 0.0;
+				  for (i = 0; i < jacobian.length; i++) {
+					  for (j = 0; j < jacobian[0].length; j++) {
+						  normSquared += (jacobian[i][j] * jacobian[i][j]);
+					  }
+				  }
+				  double jacobianNorm = Math.sqrt(normSquared);
+
+				  if (jacobianNorm > epsilon) {
+					  System.err.println("In ProductParameterizationTestComputeJacobian() jacobianNorm > epsilon");
+					  System.err.println("jacobianNorm = " + jacobianNorm);
+					  passed = false;
+				  }
+				  
+				  if (passed) {
+					  System.out.println("ProductParameterizationTestComputeJacobian() passed all tests");
 				  }
 				}
 
