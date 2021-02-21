@@ -95,7 +95,7 @@ public class CeresSolverTest extends CeresSolver {
 	// function f(x) = 10 - x.
 	class QuadraticCostFunction extends SizedCostFunction {
 		public QuadraticCostFunction() {
-			// number of resdiuals
+			// number of residuals
 			// size of first parameter
 			super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
@@ -8883,6 +8883,381 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			  
 			};
+
+			// Fixed sized struct for storing an evaluation.
+			class ExpectedEvaluation {
+				  int num_rows;
+				  int num_cols;
+				  double cost;
+				  double residuals[] = new double[50];
+				  double gradient[] = new double[50];
+				  double jacobian[] = new double[200];
+				  public ExpectedEvaluation() {
+					
+				  }
+			} // class ExpectedEvaluation
+			
+			// Compare two evaluations.
+			public void CompareEvaluations(int expected_num_rows,
+			                        int expected_num_cols,
+			                        double expected_cost,
+			                        double[] expected_residuals,
+			                        double[] expected_gradient,
+			                        double[] expected_jacobian,
+			                        double actual_cost,
+			                        double[] actual_residuals,
+			                        double[] actual_gradient,
+			                        double[] actual_jacobian,
+			                        String testName,
+			                        boolean[] passed) {
+				int i,j;
+				if (expected_cost != actual_cost) {
+				    System.err.println("In " + testName + " expected_cost != actual_cost");
+				    passed[0] = false;
+				}
+
+				  if (expected_residuals != null) {
+					  for (i = 0; i < expected_num_rows; i++) {
+						  if (actual_residuals[i] != expected_residuals[i]) {
+							  System.err.println("In " + testName + " actual_residuals["+i+"] != expected_residuals["+i+"]");
+							  System.err.println("actual_residuals["+i+"] = " + actual_residuals[i]);
+							  System.err.println("expected_residuals["+i+"] = " + expected_residuals[i]);
+							  passed[0] = false;
+						  }
+					  }
+				  }
+
+				  if (expected_gradient != null) {
+					  for (i = 0; i < expected_num_cols; i++) {
+						  if (actual_gradient[i] != expected_gradient[i]) {
+							  System.err.println("In " + testName + " actual_gradient["+i+"] != expected_gradient["+i+"]");
+							  System.err.println("actual_gradient["+i+"] = " + actual_gradient[i]);
+							  System.err.println("expected_gradient["+i+"] = " + expected_gradient[i]);
+							  passed[0] = false;  
+						  }
+					  }
+				  }
+
+				  if (expected_jacobian != null) {
+					  for (i = 0; i < expected_num_rows; i++) {
+						  for (j = 0; j < expected_num_cols; j++) {
+						      if (actual_jacobian[i*expected_num_cols + j] != expected_jacobian[i*expected_num_cols + j]) {
+						    	  System.err.println("In " + testName + " actual_jacobian["+i+"]["+j+"] != expected_jacobian["+i+"]["+j+"]");
+						    	  System.err.println("actual_jacobian["+i+"]["+j+"] = " + actual_jacobian[i*expected_num_cols + j]);
+						    	  System.err.println("expected_jacobian["+i+"]["+j+"] = " + expected_jacobian[i*expected_num_cols + j]);
+						    	  passed[0] = false;
+						      }
+						  }
+					  }
+				  }
+				  //if (passed[0]) {
+				  //System.out.println(testName + " passed all tests");
+				  //}
+
+			}
+			
+			public void CompareEvaluations(int expected_num_rows,
+                    int expected_num_cols,
+                    double expected_cost,
+                    double[] expected_residuals,
+                    double[] expected_gradient,
+                    double[][] expected_jacobian,
+                    double actual_cost,
+                    double[] actual_residuals,
+                    double[] actual_gradient,
+                    double[][] actual_jacobian,
+                    String testName,
+                    boolean passed[]) {
+			int i,j;
+			if (expected_cost != actual_cost) {
+			    System.err.println("In " + testName + " expected_cost != actual_cost");
+			    passed[0] = false;
+			}
+			
+			  if (expected_residuals != null) {
+				  for (i = 0; i < expected_num_rows; i++) {
+					  if (actual_residuals[i] != expected_residuals[i]) {
+						  System.err.println("In " + testName + " actual_residuals["+i+"] != expected_residuals["+i+"]");
+						  System.err.println("actual_residuals["+i+"] = " + actual_residuals[i]);
+						  System.err.println("expected_residuals["+i+"] = " + expected_residuals[i]);
+						  passed[0] = false;
+					  }
+				  }
+			  }
+			
+			  if (expected_gradient != null) {
+				  for (i = 0; i < expected_num_cols; i++) {
+					  if (actual_gradient[i] != expected_gradient[i]) {
+						  System.err.println("In " + testName + " actual_gradient["+i+"] != expected_gradient["+i+"]");
+						  System.err.println("actual_gradient["+i+"] = " + actual_gradient[i]);
+						  System.err.println("expected_gradient["+i+"] = " + expected_gradient[i]);
+						  passed[0] = false;  
+					  }
+				  }
+			  }
+			
+			  if (expected_jacobian != null) {
+				  for (i = 0; i < expected_num_rows; i++) {
+					  for (j = 0; j < expected_num_cols; j++) {
+					      if (actual_jacobian[i][j] != expected_jacobian[i][j]) {
+					    	  System.err.println("In " + testName + " actual_jacobian["+i+"]["+j+"] != expected_jacobian["+i+"]["+j+"]");
+					    	  System.err.println("actual_jacobian["+i+"]["+j+"] = " + actual_jacobian[i][j]);
+					    	  System.err.println("expected_jacobian["+i+"]["+j+"] = " + expected_jacobian[i][j]);
+					    	  passed[0] = false;
+					      }
+					  }
+				  }
+			  }
+			  //if (passed[0]) {
+			  //System.out.println(testName + " passed all tests");
+			  //}
+			
+			}
+			
+			// TODO(keir): Consider pushing this into a common test utils file.
+			//template<int kFactor, int kNumResiduals,
+			//         int N0 = 0, int N1 = 0, int N2 = 0, bool kSucceeds = true>
+			class ParameterIgnoringCostFunction extends SizedCostFunction {
+				 int kFactor;
+				 boolean kSucceeds = true;
+				 int r, c;
+			     public ParameterIgnoringCostFunction(int kFactor, int kNumResiduals, int N0, int N1, int N2) {
+			    	 super(kNumResiduals, N0, N1, N2, 0, 0, 0, 0, 0, 0, 0);
+			    	 this.kFactor = kFactor;
+			     }
+			     
+			     public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			 
+			    for (int i = 0; i <num_residuals(); ++i) {
+			      residuals[i] = i + 1;
+			    }
+			    if (jacobians != null) {
+			      for (int k = 0; k < parameter_block_sizes().size(); ++k) {
+			        // The jacobians here are full sized, but they are transformed in the
+			        // evaluator into the "local" jacobian. In the tests, the "subset
+			        // constant" parameterization is used, which should pick out columns
+			        // from these jacobians. Put values in the jacobian that make this
+			        // obvious; in particular, make the jacobians like this:
+			        //
+			        //   1 2 3 4 ...
+			        //   1 2 3 4 ...   .*  kFactor
+			        //   1 2 3 4 ...
+			        //
+			        // where the multiplication by kFactor makes it easier to distinguish
+			        // between Jacobians of different residuals for the same parameter.
+			        if (jacobians[k] != null) {
+			          for (int j = 0; j < parameter_block_sizes().get(k); ++j) {
+			        	for (r = 0;  r < num_residuals(); r++) {
+			        		jacobians[k][r * parameter_block_sizes().get(k) + j] = kFactor * (j+1);
+			        	}
+			          }
+			        }
+			      }
+			    }
+			    return kSucceeds;
+			  }
+			};
+			
+			class EvaluatorTestOptions {
+				  public LinearSolverType linear_solver_type;
+				  public int num_eliminate_blocks;
+				  // Dynamic sparsity is only supported with SPARSE_NORMAL_CHOLESKY which has not been implemented
+				  public boolean dynamic_sparsity = false;
+				  public EvaluatorTestOptions(LinearSolverType linear_solver_type,
+				                       int num_eliminate_blocks) {
+					  this.linear_solver_type = linear_solver_type;
+					  this.num_eliminate_blocks = num_eliminate_blocks;
+				  }
+		   }
+			
+			class EvaluatorTest {
+				// The values are ignored completely by the cost function.
+				public double x[] = new double[2];
+				public double y[] = new double[3];
+				public double z[] = new double[4];
+
+				public ProblemImpl problem = new ProblemImpl();
+				public EvaluatorTestOptions ETOptions;
+				public String testName;
+				public EvaluatorTest(EvaluatorTestOptions ETOptions, String testName) {
+					this.ETOptions = ETOptions;
+					this.testName = testName;
+				}
+				
+		        public Evaluator CreateEvaluator(Program program) {
+		    // This program is straight from the ProblemImpl, and so has no index/offset
+		    // yet; compute it here as required by the evalutor implementations.
+		        program.SetParameterOffsetsAndIndex();
+
+		    if (1 <= MAX_LOG_LEVEL) {
+		      Preferences.debug("Creating evaluator with type: " + LinearSolverTypeToString(ETOptions.linear_solver_type) + "\n",
+		    		  Preferences.DEBUG_ALGORITHM);
+		      //if (GetParam().linear_solver_type == SPARSE_NORMAL_CHOLESKY) {
+		        //StringAppendF(&report, ", dynamic_sparsity: %d",
+		                     // GetParam().dynamic_sparsity);
+		      //}
+		      Preferences.debug(" and num_eliminate_blocks: " + ETOptions.num_eliminate_blocks + "\n",
+		    		  Preferences.DEBUG_ALGORITHM);
+		    }
+		    EvaluatorOptions options = new EvaluatorOptions();
+		    options.linear_solver_type = ETOptions.linear_solver_type;
+		    options.num_eliminate_blocks = ETOptions.num_eliminate_blocks;
+		    options.dynamic_sparsity = ETOptions.dynamic_sparsity;
+		    options.context = problem.context();
+		    String error[] = new String[1];
+		    return Create(options, program, error);
+		  }
+
+		  public void EvaluateAndCompare(ProblemImpl problem,
+		                          int expected_num_rows,
+		                          int expected_num_cols,
+		                          double expected_cost,
+		                          double[] expected_residuals,
+		                          double[] expected_gradient,
+		                          double[] expected_jacobian,
+		                          boolean[] passed) {
+			
+			int i,j;
+		    Evaluator evaluator = 
+		        CreateEvaluator(problem.mutable_program());
+		    int num_residuals = expected_num_rows;
+		    int num_parameters = expected_num_cols;
+
+		    double cost[] = new double[] {-1};
+
+		    double residuals[] = new double[num_residuals];
+		    for (i = 0; i < num_residuals; i++) {
+		    	residuals[i] = -2000.0;
+		    }
+
+		    double gradient[] = new double[num_parameters];
+		    for (i = 0; i < num_parameters; i++) {
+		    	gradient[i] = -3000.0;
+		    }
+
+		    SparseMatrix jacobianMat = evaluator.CreateJacobian();
+		    double jacobian[] = jacobianMat.values();
+
+		    if (expected_num_rows != evaluator.NumResiduals()) {
+		    	System.err.println("In " + testName + " expected_num_rows != evaluator.NumResiduals()");
+		    	passed[0] = false;
+		    }
+		    if (expected_num_cols != evaluator.NumEffectiveParameters()) {
+		    	System.err.println("In " + testName + " expected_num_cols != evaluator.NumEffectiveParameters()");
+		    	passed[0] = false;
+		    }
+		    if (expected_num_rows != jacobianMat.num_rows()) {
+		    	System.err.println("In " + testName + " expected_num_rows != jacobianMat.num_rows()");
+		    	passed[0] = false;
+		    }
+		    if (expected_num_cols != jacobianMat.num_cols()) {
+		    	System.err.println("In " + testName + " expected_num_cols != jacobianMat.num_cols()");
+		    	passed[0] = false;
+		    }
+
+		    double state[] = new double[evaluator.NumParameters()];
+
+		    double er[];
+		    if (expected_residuals != null) {
+		    	er = residuals;
+		    }
+		    else {
+		    	er = null;
+		    }
+		    double eg[];
+		    if (expected_gradient != null) {
+		    	eg = gradient;
+		    }
+		    else {
+		    	eg = null;
+		    }
+		    SparseMatrix ej;
+		    if (expected_jacobian != null) {
+		    	ej = jacobianMat;
+		    }
+		    else {
+		    	ej = null;
+		    }
+		    if (!evaluator.Evaluate(
+		          state,
+		          cost,
+		          er,
+		          eg,
+		          ej)) {
+		    	System.err.println("In " + testName + " evaluator.Evaluate = false");
+		    	passed[0] = false;
+		    }
+
+		    Matrix actual_jacobian = null;
+		    if (expected_jacobian != null) {
+		      actual_jacobian = jacobianMat.ToDenseMatrix();
+		    }
+
+		    double jd[];
+		    if (actual_jacobian != null) {
+		    	jd = new double[actual_jacobian.getRowDimension() * actual_jacobian.getColumnDimension()];
+		    	for (i = 0; i < actual_jacobian.getRowDimension(); i++) {
+		    		for (j = 0; j < actual_jacobian.getColumnDimension(); j++) {
+		    			jd[i * actual_jacobian.getColumnDimension() + j] = actual_jacobian.get(i,j);
+		    		}
+		    	}
+		    }
+		    else {
+		    	jd = null;
+		    }
+		    CompareEvaluations(expected_num_rows,
+		                       expected_num_cols,
+		                       expected_cost,
+		                       expected_residuals,
+		                       expected_gradient,
+		                       expected_jacobian,
+		                       cost[0],
+		                       residuals,
+		                       gradient,
+		                       jd, testName, passed);
+		  }
+
+		  // Try all combinations of parameters for the evaluator.
+		  public void CheckAllEvaluationCombinations(ExpectedEvaluation expected) {
+			boolean passed[] = new boolean[] {true};
+		    for (int i = 0; i < 8; ++i) {
+		      double er[];
+		      if ((i == 1) || (i == 3) || (i == 5) || (i == 7)) {
+		    	  er = expected.residuals;
+		      }
+		      else {
+		    	  er = null;
+		      }
+		      double eg[];
+		      if ((i == 2) || (i == 3) || (i == 6) || (i == 7)) {
+		    	  eg = expected.gradient;  
+		      }
+		      else {
+		    	  eg = null;
+		      }
+		      double ej[];
+		      if (i >= 4) {
+		    	  ej = expected.jacobian;
+		      }
+		      else {
+		    	  ej = null;
+		      }
+		      EvaluateAndCompare(problem,
+		                         expected.num_rows,
+		                         expected.num_cols,
+		                         expected.cost,
+		                         er,
+		                         eg,
+		                         ej, passed);
+		    }
+		    if (passed[0]) {
+		    	System.out.println(testName + " passed all tests");
+		    }
+		  }
+
+		  
+		};
+
 
 
 
