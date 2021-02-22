@@ -125,6 +125,32 @@ public class CeresSolverTest extends CeresSolver {
 
 			return true;
 		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+
+			// f(x) = 10 - x.
+			residuals[0] = 10 - x[0];
+
+			// f'(x) = -1. Since there's only 1 parameter and that parameter
+			// has 1 dimension, there is only 1 element to fill in the
+			// jacobians.
+			//
+			// Since the Evaluate function can be called with the jacobians
+			// pointer equal to NULL, the Evaluate function must check to see
+			// if jacobians need to be computed.
+			//
+			// For this simple problem it is overkill to check if jacobians[0]
+			// is NULL, but in general when writing more complex
+			// CostFunctions, it is possible that Ceres may only demand the
+			// derivatives w.r.t. a subset of the parameter blocks.
+			if (jacobians != null && jacobians[0] != null) {
+				jacobians[0][jacobians_offset[0]] = -1;
+			}
+
+			return true;
+		}
 	};
 	
 	public void runNumericDiffCostFunctionExample() {
@@ -312,6 +338,24 @@ public class CeresSolverTest extends CeresSolver {
 			    if (jacobians != null && jacobians[0] != null) {
 					jacobians[0][2*i] = -exp;
 					jacobians[0][2*i+1] = -curveFittingData[2*i]*exp;
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < curveFittingObservations; i++) {
+				double exp = Math.exp(x[1] * curveFittingData[2*i] + x[0]);
+			    residuals[i] = curveFittingData[2*i+1] - exp;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0] + 2*i] = -exp;
+					jacobians[0][jacobians_offset[0] + 2*i+1] = -curveFittingData[2*i]*exp;
 			    }
 			}
 
@@ -1443,6 +1487,14 @@ public class CeresSolverTest extends CeresSolver {
 		 // Do nothing. This is never called.
 	     return true;
 	   }
+	   
+	   public boolean Evaluate(Vector<double[]> parameters,
+               double[] residuals,
+               double[][] jacobians,
+               int[] jacobians_offset) {
+		// Do nothing. This is never called.
+		return true;
+		}
 	 };
 	 
 	 public void TESTReorderResidualBlockNormalFunction() {
@@ -2213,6 +2265,28 @@ public class CeresSolverTest extends CeresSolver {
 		    }
 		    return true;
 		  }
+		  
+		  public boolean Evaluate(Vector<double[]> parameters,
+                  double[] residuals,
+                  double[][] jacobians,
+                  int[] jacobians_offset) {
+			int r, c, index;
+			for (int i = 0; i < num_residuals(); ++i) {
+			residuals[i] = i;
+			}
+			if (jacobians != null) {
+			for (int k = 0; k < 3; ++k) {
+			  if (jacobians[k] != null) {
+			    for (index = 0, r = 0; r < num_residuals(); r++) {
+			  	  for (c = 0; c < parameter_block_sizes().get(k); c++, index++) {
+			  		  jacobians[k][jacobians_offset[k] + index] = k;
+			  	  }
+			    }
+			  }
+			}
+			}
+			return true;
+			}
 		};
 		
 		public void TESTResidualBlockEvaluteWithNoLossFunctionOrLocalParameterizations() {
@@ -2456,6 +2530,40 @@ public class CeresSolverTest extends CeresSolver {
 			        	  for (c = 0; c < parameter_block_sizes().get(k); c++, index++) {
 			        		  if (c < k+2) {
 			        		      jacobians[k][index] = c;
+			        		  }
+			        	  }
+			          }
+		        }
+		      }
+		    }
+		    return true;
+		  }
+		   
+		   public boolean Evaluate(Vector<double[]> parameters,
+                   double[] residuals,
+                   double[][] jacobians,
+                   int[] jacobians_offset) {
+			int r, c, index;
+		    for (int i = 0; i < num_residuals(); ++i) {
+		      residuals[i] = i;
+		    }
+		    if (jacobians != null) {
+		      for (int k = 0; k < 3; ++k) {
+		        // The jacobians here are full sized, but they are transformed in the
+		        // evaluator into the "local" jacobian. In the tests, the "subset
+		        // constant" parameterization is used, which should pick out columns
+		        // from these jacobians. Put values in the jacobian that make this
+		        // obvious; in particular, make the jacobians like this:
+		        //
+		        //   0 1 2 3 4 ...
+		        //   0 1 2 3 4 ...
+		        //   0 1 2 3 4 ...
+		        //
+		        if (jacobians[k] != null) {
+		        	for (index = 0, r = 0; r < num_residuals(); r++) {
+			        	  for (c = 0; c < parameter_block_sizes().get(k); c++, index++) {
+			        		  if (c < k+2) {
+			        		      jacobians[k][jacobians_offset[k] + index] = c;
 			        		  }
 			        	  }
 			          }
@@ -3046,6 +3154,13 @@ public class CeresSolverTest extends CeresSolver {
 	                         double[][] jacobians) {
 	     return true;
 	   }
+	   
+	   public boolean Evaluate(Vector<double[]> parameters,
+               double[] residuals,
+               double[][] jacobians,
+               int[] jacobians_offset[]) {
+			return true;
+			}
 	 };
 	 
 	 class SchurOrderingTest {
@@ -6708,6 +6823,10 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
  			return false;
  		}
+ 		
+ 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int[] jacobians_offset) {
+ 			return false;
+ 		}
  		 
  	};
  	
@@ -6753,6 +6872,10 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
  			super(kNumResiduals, N1, N2, 0, 0, 0, 0, 0, 0, 0, 0);
  		}
  		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+ 			return true;
+ 		}
+ 		
+ 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int[] jacobians_offset) {
  			return true;
  		}
  	 
@@ -6956,6 +7079,46 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
  	    return true;
  	  }
+ 		
+ 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int[] jacobians_offset) {
+ 	 		int i;
+ 	 			
+ 	 	    for (i = 0; i < kNumResiduals; ++i) {
+ 	 	      residuals[i] = kNumResiduals * kNumResiduals + i;
+ 	 	    }
+
+ 	 	    if (jacobians == null) {
+ 	 	      return true;
+ 	 	    }
+
+ 	 	    if (jacobians[0] != null) {
+ 	 	      for (i = 0; i < kNumResiduals * N1; i++) {
+ 	 	          jacobians[0][jacobians_offset[0] + i] = kNumResiduals * N1;  
+ 	 	      }
+ 	 	    }
+
+ 	 	    if (N2 == 0) {
+ 	 	      return true;
+ 	 	    }
+
+ 	 	    if (jacobians[1] != null) {
+ 	 	    	for (i = 0; i < kNumResiduals * N2; i++) {
+ 	 	 	          jacobians[1][jacobians_offset[1] + i] = kNumResiduals * N2;  
+ 	 	 	    }
+ 	 	    }
+
+ 	 	    if (N3 == 0) {
+ 	 	      return true;
+ 	 	    }
+
+ 	 	    if (jacobians[2] != null) {
+ 	 	    	for (i = 0; i < kNumResiduals * N3; i++) {
+ 		 	          jacobians[2][jacobians_offset[2] + i] = kNumResiduals * N3;  
+ 		 	    }
+ 	 	    }
+
+ 	 	    return true;
+ 	 	  }
  	};
  	
  	class LinearSolverAndEvaluatorCreationTest {
@@ -7883,6 +8046,59 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
  				    return true;
  				  }
+ 				
+ 				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int[] jacobians_offset) {
+ 				    residuals[0] = target_length_;
+
+ 				    for (int i = 0; i < num_vertices_; ++i) {
+ 				      int prev = (num_vertices_ + i - 1) % num_vertices_;
+ 				      double length = 0.0;
+ 				      for (int dim = 0; dim < 2; dim++) {
+ 				        final double diff = parameters.get(prev)[dim] - parameters.get(i)[dim];
+ 				        length += diff * diff;
+ 				      }
+ 				      residuals[0] -= Math.sqrt(length);
+ 				    }
+
+ 				    if (jacobians == null) {
+ 				      return true;
+ 				    }
+
+ 				    for (int i = 0; i < num_vertices_; ++i) {
+ 				      if (jacobians[i] != null) {
+ 				        int prev = (num_vertices_ + i - 1) % num_vertices_;
+ 				        int next = (i + 1) % num_vertices_;
+
+ 				        double u[] = new double[2];
+ 				        double v[] = new double[2];
+ 				        double norm_u = 0., norm_v = 0.;
+ 				        for (int dim = 0; dim < 2; dim++) {
+ 				          u[dim] = parameters.get(i)[dim] - parameters.get(prev)[dim];
+ 				          norm_u += u[dim] * u[dim];
+ 				          v[dim] = parameters.get(next)[dim] - parameters.get(i)[dim];
+ 				          norm_v += v[dim] * v[dim];
+ 				        }
+
+ 				        norm_u = Math.sqrt(norm_u);
+ 				        norm_v = Math.sqrt(norm_v);
+
+ 				        for (int dim = 0; dim < 2; dim++) {
+ 				          jacobians[i][jacobians_offset[i] + dim] = 0.;
+
+ 				          if (norm_u > Double.MIN_VALUE) {
+ 				            jacobians[i][jacobians_offset[i] + dim] -= u[dim] / norm_u;
+ 				          }
+
+ 				          if (norm_v > Double.MIN_VALUE) {
+ 				            jacobians[i][jacobians_offset[i] + dim] += v[dim] / norm_v;
+ 				          }
+ 				        }
+ 				      }
+ 				    }
+
+ 				    return true;
+ 				  }
+
 
  				 
  				};
@@ -7950,6 +8166,32 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				// derivatives w.r.t. a subset of the parameter blocks.
 				if (jacobians != null && jacobians[0] != null) {
 					jacobians[0][0] = -Math.exp(x[0]);
+				}
+
+				return true;
+			}
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+
+				// f(x) = 10 - exp(x).
+				residuals[0] = 10 - Math.exp(x[0]);
+
+				// f'(x) = -Math.exp(x[0]). Since there's only 1 parameter and that parameter
+				// has 1 dimension, there is only 1 element to fill in the
+				// jacobians.
+				//
+				// Since the Evaluate function can be called with the jacobians
+				// pointer equal to NULL, the Evaluate function must check to see
+				// if jacobians need to be computed.
+				//
+				// For this simple problem it is overkill to check if jacobians[0]
+				// is NULL, but in general when writing more complex
+				// CostFunctions, it is possible that Ceres may only demand the
+				// derivatives w.r.t. a subset of the parameter blocks.
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]] = -Math.exp(x[0]);
 				}
 
 				return true;
@@ -8886,12 +9128,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			// Fixed sized struct for storing an evaluation.
 			class ExpectedEvaluation {
-				  int num_rows;
-				  int num_cols;
-				  double cost;
-				  double residuals[] = new double[50];
-				  double gradient[] = new double[50];
-				  double jacobian[] = new double[200];
+				  public int num_rows;
+				  public int num_cols;
+				  public double cost;
+				  public double residuals[] = new double[50];
+				  public double gradient[] = new double[50];
+				  public double jacobian[] = new double[200];
 				  public ExpectedEvaluation() {
 					
 				  }
@@ -9056,7 +9298,114 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			    }
 			    return kSucceeds;
 			  }
+			     
+			     public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+					 
+					    for (int i = 0; i <num_residuals(); ++i) {
+					      residuals[i] = i + 1;
+					    }
+					    if (jacobians != null) {
+					      for (int k = 0; k < parameter_block_sizes().size(); ++k) {
+					        // The jacobians here are full sized, but they are transformed in the
+					        // evaluator into the "local" jacobian. In the tests, the "subset
+					        // constant" parameterization is used, which should pick out columns
+					        // from these jacobians. Put values in the jacobian that make this
+					        // obvious; in particular, make the jacobians like this:
+					        //
+					        //   1 2 3 4 ...
+					        //   1 2 3 4 ...   .*  kFactor
+					        //   1 2 3 4 ...
+					        //
+					        // where the multiplication by kFactor makes it easier to distinguish
+					        // between Jacobians of different residuals for the same parameter.
+					        if (jacobians[k] != null) {
+					          for (int j = 0; j < parameter_block_sizes().get(k); ++j) {
+					        	for (r = 0;  r < num_residuals(); r++) {
+					        		jacobians[k][jacobians_offset[k] + r * parameter_block_sizes().get(k) + j] = kFactor * (j+1);
+					        	}
+					          }
+					        }
+					      }
+					    }
+					    return kSucceeds;
+					  }
 			};
+			
+			public void EvaluatorTestSingleResidualProblem() {
+				// EvaluatorTestSingleResidualProblem_DENSE_QR_0 passed all tests
+				// EvaluatorTestSingleResidualProblem_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestSingleResidualProblem_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestSingleResidualProblem_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestSingleResidualProblem_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestSingleResidualProblem_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestSingleResidualProblem_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestSingleResidualProblem_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestSingleResidualProblem_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestSingleResidualProblem_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestSingleResidualProblem_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestSingleResidualProblem";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestSingleResidualProblem();
+				}
+			}
+			
+			public void EvaluatorTestSingleResidualProblemWithPermutedParameters() {
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_DENSE_QR_0 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestSingleResidualProblemWithPermutedParameters_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestSingleResidualProblemWithPermutedParameters";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestSingleResidualProblemWithPermutedParameters();
+				}	
+			}
+			
+			public EvaluatorTestOptions[] createEvaluatorTestOptions() {
+				EvaluatorTestOptions evaluatorTO[] = new EvaluatorTestOptions[11];
+				evaluatorTO[0] = new EvaluatorTestOptions(LinearSolverType.DENSE_QR, 0);
+				evaluatorTO[1] = new EvaluatorTestOptions(LinearSolverType.DENSE_SCHUR, 0);
+				evaluatorTO[2] = new EvaluatorTestOptions(LinearSolverType.DENSE_SCHUR, 1);
+				evaluatorTO[3] = new EvaluatorTestOptions(LinearSolverType.DENSE_SCHUR, 2);
+				evaluatorTO[4] = new EvaluatorTestOptions(LinearSolverType.DENSE_SCHUR, 3);
+				evaluatorTO[5] = new EvaluatorTestOptions(LinearSolverType.DENSE_SCHUR, 4);
+				evaluatorTO[6] = new EvaluatorTestOptions(LinearSolverType.ITERATIVE_SCHUR, 0);
+				evaluatorTO[7] = new EvaluatorTestOptions(LinearSolverType.ITERATIVE_SCHUR, 1);
+				evaluatorTO[8] = new EvaluatorTestOptions(LinearSolverType.ITERATIVE_SCHUR, 2);
+				evaluatorTO[9] = new EvaluatorTestOptions(LinearSolverType.ITERATIVE_SCHUR, 3);
+				evaluatorTO[10] = new EvaluatorTestOptions(LinearSolverType.ITERATIVE_SCHUR, 4);
+				return evaluatorTO;
+			}
+			
+			public String[] createEvaluateStringName() {
+				String ESN[] = new String[11];
+				ESN[0] = "DENSE_QR_0";
+				ESN[1] = "DENSE_SCHUR_0";
+				ESN[2] = "DENSE_SCHUR_1";
+				ESN[3] = "DENSE_SCHUR_2";
+				ESN[4] = "DENSE_SCHUR_3";
+				ESN[5] = "DENSE_SCHUR_4";
+				ESN[6] = "ITERATIVE_SCHUR_0";
+				ESN[7] = "ITERATIVE_SCHUR_1";
+				ESN[8] = "ITERATIVE_SCHUR_2";
+				ESN[9] = "ITERATIVE_SCHUR_3";
+				ESN[10] = "ITERATIVE_SCHUR_4";
+				return ESN;
+			}
 			
 			class EvaluatorTestOptions {
 				  public LinearSolverType linear_solver_type;
@@ -9254,9 +9603,83 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    	System.out.println(testName + " passed all tests");
 		    }
 		  }
+		  
+		  public void EvaluatorTestSingleResidualProblem() {
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 2, 3, 4),
+			                           null,
+			                           x, y, z);
+
+			  ExpectedEvaluation expected = new ExpectedEvaluation();
+			    // Rows/columns
+			    expected.num_rows = 3;
+			    expected.num_cols = 9;
+			    // Cost
+			    expected.cost = 7.0;
+			    // Residuals
+			    expected.residuals = new double[]{ 1.0, 2.0, 3.0 };
+			    // Gradient
+			    expected.gradient = new double[]{ 6.0, 12.0,              // x
+			      6.0, 12.0, 18.0,        // y
+			      6.0, 12.0, 18.0, 24.0,  // z
+			    };
+			    // Jacobian
+			    //   x          y             z
+			    expected.jacobian = new double[]{ 1, 2,   1, 2, 3,   1, 2, 3, 4,
+			      1, 2,   1, 2, 3,   1, 2, 3, 4,
+			      1, 2,   1, 2, 3,   1, 2, 3, 4
+			    };
+			 
+			  CheckAllEvaluationCombinations(expected);
+			}
+
+		  public void EvaluatorTestSingleResidualProblemWithPermutedParameters() {
+			  // Add the parameters in explicit order to force the ordering in the program.
+			  problem.AddParameterBlock(x,  2);
+			  problem.AddParameterBlock(y,  3);
+			  problem.AddParameterBlock(z,  4);
+
+			  // Then use a cost function which is similar to the others, but swap around
+			  // the ordering of the parameters to the cost function. This shouldn't affect
+			  // the jacobian evaluation, but requires explicit handling in the evaluators.
+			  // At one point the compressed row evaluator had a bug that went undetected
+			  // for a long time, since by chance most users added parameters to the problem
+			  // in the same order that they occurred as parameters to a cost function.
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 4, 3, 2),
+			                           null,
+			                           z, y, x);
+
+			  ExpectedEvaluation expected = new ExpectedEvaluation();
+			    // Rows/columns
+			    expected.num_rows = 3;
+			    expected.num_cols = 9;
+			    // Cost
+			    expected.cost = 7.0;
+			    // Residuals
+			    expected.residuals = new double[]{ 1.0, 2.0, 3.0 };
+			    // Gradient
+			    expected.gradient = new double[]{ 6.0, 12.0,              // x
+			      6.0, 12.0, 18.0,        // y
+			      6.0, 12.0, 18.0, 24.0,  // z
+			    };
+			    // Jacobian
+			    //   x          y             z
+			    expected.jacobian = new double[]{ 1, 2,   1, 2, 3,   1, 2, 3, 4,
+			      1, 2,   1, 2, 3,   1, 2, 3, 4,
+			      1, 2,   1, 2, 3,   1, 2, 3, 4
+			    };
+			  CheckAllEvaluationCombinations(expected);
+			}
 
 		  
-		};
+		} // class EvaluatorTest
+		
+		public void SetSparseMatrixConstant(SparseMatrix sparse_matrix, double value) {
+			int i;
+			for (i = 0; i < sparse_matrix.num_nonzeros(); i++) {
+				sparse_matrix.mutable_values()[i] = value;
+			}
+		}
+
 
 
 
