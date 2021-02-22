@@ -16601,6 +16601,369 @@ public abstract class CeresSolver {
 			return true;
 		} // public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][])
 		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			int kNumParameters = N0 + N1 + N2 + N3 + N4 + N5 + N6 + N7 + N8 + N9;	
+			int kNumParameterBlocks = 0;
+			if (N0 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N1 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N2 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N3 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N4 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N5 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N6 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N7 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N8 > 0) {
+				kNumParameterBlocks++;
+			}
+			if (N9 > 0) {
+				kNumParameterBlocks++;
+			}
+			
+			// Get the function value (residuals) at the the point to evaluate.
+			double x[];
+			switch (testCase) {
+			case COST_FUNCTOR_EXAMPLE:
+				x = parameters.get(0);
+			    if (!((CostFunctorExample) functor_).operator(x, residuals)) {
+			    	return false;
+			    }
+			    break;
+			case CURVE_FITTING_EXAMPLE:
+				x = parameters.get(0);
+			    if (!((CurveFittingFunctorExample) functor_).operator(x, residuals)) {
+			    	return false;
+			    }
+			    break;
+		    } // switch(testCase)
+			
+			if (jacobians == null) {
+			      return true;
+			}
+			
+			// Create a copy of the parameters which will get mutated.
+		    double parameters_reference_copy[][] = new double[kNumParameterBlocks][];
+		    if (N0 > 0) {
+		    	parameters_reference_copy[0] = new double[N0];
+		    	for (i = 0; i < N0; i++) {
+		    		parameters_reference_copy[0][i] = parameters.get(0)[i]; 
+		    	}
+		    }
+		    if (N1 > 0) {
+		    	parameters_reference_copy[1] = new double[N1];
+		    	for (i = 0; i < N1; i++) {
+		    		parameters_reference_copy[1][i] = parameters.get(1)[i]; 
+		    	}
+		    }
+		    if (N2 > 0) {
+		    	parameters_reference_copy[2] = new double[N2];
+		    	for (i = 0; i < N2; i++) {
+		    		parameters_reference_copy[2][i] = parameters.get(2)[i]; 
+		    	}
+		    }
+		    if (N3 > 0) {
+		    	parameters_reference_copy[3] = new double[N3];
+		    	for (i = 0; i < N3; i++) {
+		    		parameters_reference_copy[3][i] = parameters.get(3)[i]; 
+		    	}
+		    }
+		    if (N4 > 0) {
+		    	parameters_reference_copy[4] = new double[N4];
+		    	for (i = 0; i < N4; i++) {
+		    		parameters_reference_copy[4][i] = parameters.get(4)[i]; 
+		    	}
+		    }
+		    if (N5 > 0) {
+		    	parameters_reference_copy[5] = new double[N5];
+		    	for (i = 0; i < N5; i++) {
+		    		parameters_reference_copy[5][i] = parameters.get(5)[i]; 
+		    	}
+		    }
+		    if (N6 > 0) {
+		    	parameters_reference_copy[6] = new double[N6];
+		    	for (i = 0; i < N6; i++) {
+		    		parameters_reference_copy[6][i] = parameters.get(6)[i]; 
+		    	}
+		    }
+		    if (N7 > 0) {
+		    	parameters_reference_copy[7] = new double[N7];
+		    	for (i = 0; i < N7; i++) {
+		    		parameters_reference_copy[7][i] = parameters.get(7)[i]; 
+		    	}
+		    }
+		    if (N8 > 0) {
+		    	parameters_reference_copy[8] = new double[N8];
+		    	for (i = 0; i < N8; i++) {
+		    		parameters_reference_copy[8][i] = parameters.get(8)[i]; 
+		    	}
+		    }
+		    if (N9 > 0) {
+		    	parameters_reference_copy[9] = new double[N9];
+		    	for (i = 0; i < N9; i++) {
+		    		parameters_reference_copy[9][i] = parameters.get(9)[i]; 
+		    	}
+		    }
+		    int new_num_residuals = new SizedCostFunction(kNumResiduals,              
+                    N0, N1, N2, N3, N4,                          
+                    N5, N6, N7, N8, N9).num_residuals();  
+		    if ((N0 > 0) && (jacobians[0] != null)) { 
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         0,                                           
+		 		                         N0,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,        
+		                             0,                                       
+		                             N0,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[0], jacobians_offset[0])) {                         
+		          return false;                                                   
+		        }
+		      }
+		    
+		    if ((N1 > 0) && (jacobians[1] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         1,                                           
+		 		                         N1,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,              
+		                             1,                                       
+		                             N1,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[1], jacobians_offset[1])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N2 > 0) && (jacobians[2] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         2,                                           
+		 		                         N2,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,              
+		                             2,                                       
+		                             N2,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[2], jacobians_offset[2])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N3 > 0) && (jacobians[3] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         3,                                           
+		 		                         N3,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,              
+		                             3,                                       
+		                             N3,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[3], jacobians_offset[3])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N4> 0) && (jacobians[4] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         4,                                           
+		 		                         N4,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,              
+		                             4,                                       
+		                             N4,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[4], jacobians_offset[4])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N5 > 0) && (jacobians[5] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         5,                                           
+		 		                         N5,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,               
+		                             5,                                       
+		                             N5,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[5], jacobians_offset[5])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N6 > 0) && (jacobians[6] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         6,                                           
+		 		                         N6,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,               
+		                             6,                                       
+		                             N6,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[6], jacobians_offset[6])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N7 > 0) && (jacobians[7] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         7,                                           
+		 		                         N7,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,               
+		                             7,                                       
+		                             N7,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[7], jacobians_offset[7])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N8 > 0) && (jacobians[8] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         8,                                           
+		 		                         N8,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,              
+		                             8,                                       
+		                             N8,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[8], jacobians_offset[8])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    
+		    if ((N9 > 0) && (jacobians[9] != null)) {                       
+		        if (!EvaluateJacobianForParameterBlock(
+		                        		  method,                                          
+		 		                         kNumResiduals,                                   
+		 		                         N0, N1, N2, N3, N4, N5, N6, N7, N8, N9,          
+		 		                         9,                                           
+		 		                         N9,
+		                             functor_,                              
+		                             residuals,                                   
+		                             options_,                                    
+		                             new_num_residuals,              
+		                             9,                                       
+		                             N9,                                  
+		                             parameters_reference_copy,             
+		                             jacobians[9], jacobians_offset[9])) {                         
+		          return false;                                                   
+		        }                                                                 
+		      }
+		    if (N0 > 0) {
+		    	for (i = 0; i < N0; i++) {
+		    		parameters.get(0)[i] = parameters_reference_copy[0][i]; 
+		    	}
+		    }
+		    if (N1 > 0) {
+		    	for (i = 0; i < N1; i++) {
+		    		parameters.get(1)[i] = parameters_reference_copy[1][i]; 
+		    	}
+		    }
+		    if (N2 > 0) {
+		    	for (i = 0; i < N2; i++) {
+		    		parameters.get(2)[i] = parameters_reference_copy[2][i]; 
+		    	}
+		    }
+		    if (N3 > 0) {
+		    	for (i = 0; i < N3; i++) {
+		    		parameters.get(3)[i] = parameters_reference_copy[3][i]; 
+		    	}
+		    }
+		    if (N4 > 0) {
+		    	for (i = 0; i < N4; i++) {
+		    		parameters.get(4)[i] = parameters_reference_copy[4][i]; 
+		    	}
+		    }
+		    if (N5 > 0) {
+		    	for (i = 0; i < N5; i++) {
+		    		parameters.get(5)[i] = parameters_reference_copy[5][i];  
+		    	}
+		    }
+		    if (N6 > 0) {
+		    	for (i = 0; i < N6; i++) {
+		    		parameters.get(6)[i] = parameters_reference_copy[6][i]; 
+		    	}
+		    }
+		    if (N7 > 0) {
+		    	for (i = 0; i < N7; i++) {
+		    		parameters.get(7)[i] = parameters_reference_copy[7][i]; 
+		    	}
+		    }
+		    if (N8 > 0) {
+		    	for (i = 0; i < N8; i++) {
+		    		parameters.get(8)[i] = parameters_reference_copy[8][i]; 
+		    	}
+		    }
+		    if (N9 > 0) {
+		    	for (i = 0; i < N9; i++) {
+		    		parameters.get(9)[i] = parameters_reference_copy[9][i]; 
+		    	}
+		    }
+			return true;
+		} // public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int[] jacobians_offset)
+		
 		
 	} // class NumericDiffCostFunction
 	
@@ -16644,6 +17007,141 @@ public abstract class CeresSolver {
 		   for (r = 0; r < num_residuals_internal; r++) {
 			   for (c = 0; c < parameter_block_size_internal; c++) {
 			       parameter_jacobian[r][c] = jacobian[r*parameter_block_size_internal + c];   
+			   }
+		   }
+		   double x_plus_delta[] = new double[kParameterBlockSize];
+		   for (i = 0; i < parameter_block_size_internal; i++) {
+			   x_plus_delta[i] = parameters[parameter_block_index_internal][i];   
+		   }
+		   double x[] = new double[kParameterBlockSize];
+		   for (i = 0; i < parameter_block_size_internal; i++) {
+			   x[i] = x_plus_delta[i];   
+		   }
+		   double step_size[] = new double[kParameterBlockSize];
+		   if (kMethod == NumericDiffMethodType.RIDDERS) {
+		       for (i = 0; i < parameter_block_size_internal; i++) {
+		    	   step_size[i] = Math.abs(x[i]) * options.ridders_relative_initial_step_size;
+		       }
+		   }
+		   else {
+			   for (i = 0; i < parameter_block_size_internal; i++) {
+		    	   step_size[i] = Math.abs(x[i]) * options.relative_step_size;
+		       }   
+		   }
+		   
+		// It is not a good idea to make the step size arbitrarily
+		// small. This will lead to problems with round off and numerical
+		// instability when dividing by the step size. The general
+		// recommendation is to not go down below sqrt(epsilon).
+		double min_step_size = Math.sqrt(epsilon);
+		
+		// For Ridders' method, the initial step size is required to be large,
+	    // thus ridders_relative_initial_step_size is used.
+	    if (kMethod == NumericDiffMethodType.RIDDERS) {
+	      min_step_size = Math.max(min_step_size,
+	                               options.ridders_relative_initial_step_size);
+	    }
+	    
+
+	    // For each parameter in the parameter block, use finite differences to
+	    // compute the derivative for that parameter.
+	    double temp_residual_array[] = new double[num_residuals_internal];
+	    double residual_array[] = new double[num_residuals_internal];
+	    //Map<ResidualVector> residuals(residual_array.get(),
+        //        num_residuals_internal);
+	    double residuals[] = new double[kNumResiduals];
+	    for (int j = 0; j < parameter_block_size_internal; ++j) {
+	        double delta = Math.max(min_step_size, step_size[j]);
+
+	        if (kMethod == NumericDiffMethodType.RIDDERS) {
+	          if (!EvaluateRiddersJacobianColumn(kMethod, kNumResiduals,
+	        		                             kParameterBlockSize,functor, j, delta,
+	                                             options,
+	                                             num_residuals_internal,
+	                                             parameter_block_index_internal,
+	                                             parameter_block_size_internal,
+	                                             x,
+	                                             residuals_at_eval_point,
+	                                             parameters,
+	                                             x_plus_delta,
+	                                             temp_residual_array,
+	                                             residual_array)) {
+	            return false;
+	          }
+	        } else {
+	          if (!EvaluateJacobianColumn(kMethod,kNumResiduals,
+	        		                      kParameterBlockSize,
+	        		                      functor, j, delta,
+	                                      num_residuals_internal,
+	                                      parameter_block_index_internal,
+	                                      parameter_block_size_internal,
+	                                      x,
+	                                      residuals_at_eval_point,
+	                                      parameters,
+	                                      x_plus_delta,
+	                                      temp_residual_array,
+	                                      residual_array)) {
+	            return false;
+	          }
+	        }
+
+	        for (i = 0; i < num_residuals_internal; i++) {
+	        	residuals[i] = residual_array[i];
+	        }
+	        for (i = 0; i < num_residuals_internal; i++) {
+	        	parameter_jacobian[i][j] = residuals[i];
+	        }
+	        for (r = 0; r < num_residuals_internal; r++) {
+		        jacobian[r*parameter_block_size_internal + j] = parameter_jacobian[r][j];   
+		    }
+	        for (i = 0; i < parameter_block_size_internal; i++) {
+				   parameters[parameter_block_index_internal][i] = x_plus_delta[i];   
+			   }
+	      }
+		return true;
+	}
+	
+	public <CostFunctor> boolean EvaluateJacobianForParameterBlock(
+			NumericDiffMethodType kMethod,
+	          int kNumResiduals,
+	          int N0, int N1, int N2, int N3, int N4,
+	          int N5, int N6, int N7, int N8, int N9,
+	          int kParameterBlock,
+	          int kParameterBlockSize,
+		      CostFunctor functor,
+		      double[] residuals_at_eval_point,
+		      NumericDiffOptions options,
+		      int num_residuals,
+		      int parameter_block_index,
+		      int parameter_block_size,
+		      double [][]parameters,
+		      double []jacobian,
+		      int jacobian_offset) {
+		      int i;
+		      int r; 
+		      int c;
+		   final int num_residuals_internal =
+		        (kNumResiduals != DYNAMIC ? kNumResiduals : num_residuals);
+		   final int parameter_block_index_internal =
+		        (kParameterBlock != DYNAMIC ? kParameterBlock :
+		                                             parameter_block_index);
+		   final int parameter_block_size_internal =
+		        (kParameterBlockSize != DYNAMIC ? kParameterBlockSize :
+		                                                 parameter_block_size);
+		   
+		   double ResidualVector[] = new double[kNumResiduals];
+		   double ParameterVector[] = new double[kParameterBlockSize];
+		   //Map<JacobianMatrix> parameter_jacobian(jacobian,
+                   //num_residuals_internal,
+                   //parameter_block_size_internal);
+
+			//Map<ParameterVector> x_plus_delta(
+			//parameters[parameter_block_index_internal],
+			//parameter_block_size_internal);
+		   double parameter_jacobian[][] = new double[kNumResiduals][kParameterBlockSize];
+		   for (r = 0; r < num_residuals_internal; r++) {
+			   for (c = 0; c < parameter_block_size_internal; c++) {
+			       parameter_jacobian[r][c] = jacobian[jacobian_offset + r*parameter_block_size_internal + c];   
 			   }
 		   }
 		   double x_plus_delta[] = new double[kParameterBlockSize];
