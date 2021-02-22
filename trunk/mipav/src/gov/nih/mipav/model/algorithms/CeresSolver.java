@@ -8335,7 +8335,7 @@ public abstract class CeresSolver {
 	}
 
 	class BlockEvaluatePreparer {
-		private int jacobian_layout_[];
+		private int jacobian_layout_[][];
 
 		// For the case that the overall jacobian is not available, but the
 		// individual jacobians are requested, use a pass-through scratch evaluate
@@ -8346,13 +8346,13 @@ public abstract class CeresSolver {
 
 		}
 
-		public void Init(int jacobian_layout[], int max_derivatives_per_residual_block) {
+		public void Init(int jacobian_layout[][], int max_derivatives_per_residual_block) {
 			jacobian_layout_ = jacobian_layout;
 			scratch_evaluate_preparer_ = new ScratchEvaluatePreparer();
 			scratch_evaluate_preparer_.Init(max_derivatives_per_residual_block);
 		}
 		
-		public int[] getJacobianLayout() {
+		public int[][] getJacobianLayout() {
 			return jacobian_layout_;
 		}
 		
@@ -8360,9 +8360,9 @@ public abstract class CeresSolver {
 		public void Prepare(ResidualBlock residual_block,
 		                                    int residual_block_index,
 		                                    SparseMatrix jacobian,
-		                                    double[][] jacobians) {
+		                                    double[][] jacobians,
+		                                    int[] jacobians_offset) {
 		  int i;
-		  int jacobian_transfer_size;
 		  // If the overall jacobian is not available, use the scratch space.
 		  if (jacobian == null) {
 		    scratch_evaluate_preparer_.Prepare(residual_block,
@@ -8375,26 +8375,18 @@ public abstract class CeresSolver {
 		  double[] jacobian_values =
 		      ((BlockSparseMatrix)jacobian).mutable_values();
 
-		  //int* jacobian_block_offset = jacobian_layout_[residual_block_index];
-		  int jacobian_block_offset = residual_block_index;
+		  int jacobian_block_offset[] = jacobian_layout_[residual_block_index];
+		  int ptr = 0;
 		  int num_parameter_blocks = residual_block.NumParameterBlocks();
 		  for (int j = 0; j < num_parameter_blocks; ++j) {
 		    if (!residual_block.parameter_blocks()[j].IsConstant()) {
-		    	  if (j < num_parameter_blocks - 1) {
-		    	      jacobian_transfer_size = jacobian_layout_[jacobian_block_offset + 1] -
-		    	    		                   jacobian_layout_[jacobian_block_offset];
-		    	  }
-		    	  else {
-		    		  jacobian_transfer_size = jacobian_values.length - 
-		    				  jacobian_layout_[jacobian_block_offset];
-		    	  }
-		    	  jacobians[j] = new double[jacobian_transfer_size];
-		          
+                  jacobians[j] = jacobian_values;
+                  jacobians_offset[j] = jacobian_block_offset[ptr++];
 
 		      // The jacobian_block_offset can't be indexed with 'j' since the code
 		      // that creates the layout strips out any blocks for inactive
 		      // parameters. Instead, bump the pointer for active parameters only.
-		      jacobian_block_offset++;
+              
 		    } else {
 		      jacobians[j] = null;
 		    }
@@ -8583,7 +8575,11 @@ public abstract class CeresSolver {
 			BlockEvaluatePreparer preparers[] = new BlockEvaluatePreparer[num_threads];
 			for (int i = 0; i < num_threads; i++) {
 				preparers[i] = new BlockEvaluatePreparer();
-				preparers[i].Init(jacobian_layout_.get(0), max_derivatives_per_residual_block);
+			    int jl[][] = new int[jacobian_layout_.size()][];
+			    for (int k = 0; k < jacobian_layout_.size(); k++) {
+			    	jl[k] = jacobian_layout_.get(k);
+			    }
+				preparers[i].Init(jl, max_derivatives_per_residual_block);
 			}
 			return preparers;
 		}
@@ -9020,6 +9016,7 @@ public abstract class CeresSolver {
 
 	      // Prepare block jacobians if requested.
 	      double[][] block_jacobians = null;
+	      int block_jacobians_offset[] = new int[scratch.jacobian_block_ptrs.length];
 	      if (jacobian != null || gradient != null) {
 	    	  if ((options_.linear_solver_type == LinearSolverType.DENSE_QR) ||
 	  				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
@@ -9034,7 +9031,8 @@ public abstract class CeresSolver {
 	    		  ((BlockEvaluatePreparer)preparer).Prepare(residual_block,
                           i,
                           jacobian,
-                          scratch.jacobian_block_ptrs);	  
+                          scratch.jacobian_block_ptrs,
+                          block_jacobians_offset);	  
 	    	  }
 	        block_jacobians = scratch.jacobian_block_ptrs;
 	      }
@@ -9046,6 +9044,7 @@ public abstract class CeresSolver {
 	              block_cost,
 	              block_residuals,
 	              block_jacobians,
+	              block_jacobians_offset,
 	              scratch.residual_block_evaluate_scratch)) {
 	        abort = true;
 	//#ifdef CERES_USE_OPENMP
@@ -9079,22 +9078,6 @@ public abstract class CeresSolver {
 	    	  else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
 	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
 	    			   (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
-	    		  double[] jacobian_values =
-	    			      ((BlockSparseMatrix)jacobian).mutable_values();
-	    		   int values_index = 0;
-	    		      
-	    			  int num_parameter_blocks = residual_block.NumParameterBlocks();
-	    			  for (j = 0; j < num_parameter_blocks; ++j) {
-	    			    if (!residual_block.parameter_blocks()[j].IsConstant()) {
-	    			    	  
-	    			    	  
-	    			          if (block_jacobians[j] != null) {
-	    			              for (int k = 0; k < block_jacobians[j].length; k++) {
-	    			            	  jacobian_values[values_index++] = block_jacobians[j][k];
-	    			              }
-	    			          }
-	    			  }
-	    			}
 	    	  }
 
 	      }
@@ -9111,7 +9094,7 @@ public abstract class CeresSolver {
 	          }
 
 	          MatrixTransposeVectorMultiply(DYNAMIC, DYNAMIC, 1,
-	              block_jacobians[j], 0,
+	              block_jacobians[j], block_jacobians_offset[j],
 	              num_residuals,
 	              parameter_block.LocalSize(),
 	              block_residuals, 0,
@@ -16039,6 +16022,10 @@ public abstract class CeresSolver {
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			return true;
 		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			return true;
+		}
 
 	}
 
@@ -18347,6 +18334,161 @@ public abstract class CeresSolver {
 			}
 			return true;
 		}
+		
+		public boolean Evaluate(boolean apply_loss_function, double cost[], double residuals[], double jacobians[][],
+				int jacobians_offset[], double scratch[]) {
+			int state_finish;
+			int blockLength;
+			double block[];
+			int num_parameter_blocks = NumParameterBlocks();
+			int num_residuals = cost_function_.num_residuals();
+
+			// Collect the parameters from their blocks. This will rarely allocate, since
+			// residuals taking more than 8 parameter block arguments are rare.
+			Vector<double[]> parameters = new Vector<double[]>();
+			// parameter_blocks_[i] will often have all the same variables but with different state_start values
+			for (int i = 0; i < num_parameter_blocks; ++i) {
+				int state_start = parameter_blocks_[i].state_start();
+				if (i < num_parameter_blocks-1) {
+				    state_finish = parameter_blocks_[i+1].state_start() - 1;
+				    if (state_finish < state_start) {
+				    	state_finish = parameter_blocks_[i].state().length-1;	
+				    }
+				}
+				else {
+					state_finish = parameter_blocks_[i].state().length-1;
+				}
+				blockLength = state_finish - state_start + 1;
+				block = new double[blockLength];
+				for (int j = state_start; j <= state_finish; j++) {
+					block[j-state_start] = parameter_blocks_[i].state()[j];
+				}
+				parameters.add(block);
+			}
+
+			// Put pointers into the scratch space into global_jacobians as appropriate.
+			double[][] global_jacobians = new double[num_parameter_blocks][];
+			int global_jacobians_offset[] = new int[num_parameter_blocks];
+			int scratchNum = 0;
+			Vector<Integer> scratchSize = new Vector<Integer>();
+			if (jacobians != null) {
+				for (int i = 0; i < num_parameter_blocks; ++i) {
+					ParameterBlock parameter_block = parameter_blocks_[i];
+					if (jacobians[i] != null && parameter_block.LocalParameterizationJacobian() != null) {
+						scratchNum++;
+						scratchSize.add(num_residuals * parameter_block.Size());
+					}
+				}
+				double scratch2D[][] = new double[scratchNum][];
+				for (int i = 0; i < scratchNum; i++) {
+					scratch2D[i] = new double[scratchSize.get(i)];
+				}
+				for (int i = 0, j = 0; i < num_parameter_blocks; ++i) {
+					ParameterBlock parameter_block = parameter_blocks_[i];
+					if (jacobians[i] != null && parameter_block.LocalParameterizationJacobian() != null) {
+						// global_jacobians[i] = scratch;
+						// scratch += num_residuals * parameter_block.Size();
+						global_jacobians[i] = scratch2D[j++];
+						global_jacobians_offset[i] = 0;
+					} else {
+						global_jacobians[i] = jacobians[i];
+						global_jacobians_offset[i] = jacobians_offset[i];
+					}
+				}
+			}
+
+			// If the caller didn't request residuals, use the scratch space for them.
+			boolean outputting_residuals = (residuals != null);
+			if (!outputting_residuals) {
+				residuals = scratch;
+			}
+
+			// Invalidate the evaluation buffers so that we can check them after
+			// the CostFunction::Evaluate call, to see if all the return values
+			// that were required were written to and that they are finite.
+			double[][] eval_jacobians = (jacobians != null) ? global_jacobians : null;
+			int[] eval_jacobians_offset = null;
+			if (jacobians != null) {
+				eval_jacobians_offset = new int[global_jacobians.length];
+				for (int i = 0; i < global_jacobians.length; i++) {
+					eval_jacobians_offset[i] = global_jacobians_offset[i];
+				}
+			}
+
+			InvalidateEvaluation(cost, residuals, eval_jacobians, eval_jacobians_offset);
+
+			if (!cost_function_.Evaluate(parameters, residuals, eval_jacobians, eval_jacobians_offset)) {
+				return false;
+			}
+
+			if (!IsEvaluationValid(parameters, cost, residuals, eval_jacobians, eval_jacobians_offset)) {
+				String message = "\n\n" + "Error in evaluating the ResidualBlock.\n\n"
+						+ "There are two possible reasons. Either the CostFunction did not evaluate and fill all    \n"
+						+ "residual and jacobians that were requested or there was a non-finite value (nan/infinite)\n"
+						+ "generated during the or jacobian computation. \n\n"
+						+ EvaluationToString(parameters, cost, residuals, eval_jacobians, eval_jacobians_offset);
+				System.err.println(message);
+				return false;
+			}
+
+			double squared_norm = 0.0;
+			for (int i = 0; i < num_residuals; i++) {
+				squared_norm += (residuals[i] * residuals[i]);
+			}
+
+			// Update the jacobians with the local parameterizations.
+			if (jacobians != null) {
+				for (int i = 0; i < num_parameter_blocks; ++i) {
+					if (jacobians[i] != null) {
+						ParameterBlock parameter_block = parameter_blocks_[i];
+
+						// Apply local reparameterization to the jacobians.
+						if (parameter_block.LocalParameterizationJacobian() != null) {
+							// jacobians[i] = global_jacobians[i] * global_to_local_jacobian.
+							MatrixMatrixMultiply(0, global_jacobians[i], global_jacobians_offset[i], num_residuals, parameter_block.Size(),
+									parameter_block.LocalParameterizationJacobian(), parameter_block.Size(),
+									parameter_block.LocalSize(), jacobians[i], jacobians_offset[i], 0, 0, num_residuals,
+									parameter_block.LocalSize());
+						}
+					}
+				}
+			}
+
+			if (loss_function_ == null || !apply_loss_function) {
+				cost[0] = 0.5 * squared_norm;
+				return true;
+			}
+
+			double rho[] = new double[3];
+			loss_function_.Evaluate(squared_norm, rho);
+			cost[0] = 0.5 * rho[0];
+
+			// No jacobians and not outputting residuals? All done. Doing an early exit
+			// here avoids constructing the "Corrector" object below in a common case.
+			if (jacobians == null && !outputting_residuals) {
+				return true;
+			}
+
+			// Correct for the effects of the loss function. The jacobians need to be
+			// corrected before the residuals, since they use the uncorrected residuals.
+			Corrector correct = new Corrector(squared_norm, rho);
+			if (jacobians != null) {
+				for (int i = 0; i < num_parameter_blocks; ++i) {
+					if (jacobians[i] != null) {
+						ParameterBlock parameter_block = parameter_blocks_[i];
+
+						// Correct the jacobians for the loss function.
+						correct.CorrectJacobian(num_residuals, parameter_block.LocalSize(), residuals, jacobians[i], jacobians_offset[i]);
+					}
+				}
+			}
+
+			// Correct the residuals with the loss function.
+			if (outputting_residuals) {
+				correct.CorrectResiduals(num_residuals, residuals);
+			}
+			return true;
+		}
 
 		public void InvalidateEvaluation(double cost[], double residuals[], double[][] jacobians) {
 			int num_parameter_blocks = NumParameterBlocks();
@@ -18358,6 +18500,20 @@ public abstract class CeresSolver {
 				for (int i = 0; i < num_parameter_blocks; ++i) {
 					int parameter_block_size = parameter_blocks()[i].Size();
 					InvalidateArray(num_residuals * parameter_block_size, jacobians[i]);
+				}
+			}
+		}
+		
+		public void InvalidateEvaluation(double cost[], double residuals[], double[][] jacobians, int jacobians_offset[]) {
+			int num_parameter_blocks = NumParameterBlocks();
+			int num_residuals = NumResiduals();
+
+			InvalidateArray(1, cost);
+			InvalidateArray(num_residuals, residuals);
+			if (jacobians != null) {
+				for (int i = 0; i < num_parameter_blocks; ++i) {
+					int parameter_block_size = parameter_blocks()[i].Size();
+					InvalidateArray(num_residuals * parameter_block_size, jacobians[i], jacobians_offset[i]);
 				}
 			}
 		}
@@ -18375,6 +18531,27 @@ public abstract class CeresSolver {
 				for (int i = 0; i < num_parameter_blocks; ++i) {
 					int parameter_block_size = parameter_blocks()[i].Size();
 					if (!IsArrayValid(num_residuals * parameter_block_size, jacobians[i])) {
+						return false;
+					}
+				}
+			}
+
+			return true;
+		}
+		
+		public boolean IsEvaluationValid(Vector<double[]> parameters, double cost[], double residuals[],
+				double jacobians[][], int jacobians_offset[]) {
+			int num_parameter_blocks = NumParameterBlocks();
+			int num_residuals = NumResiduals();
+
+			if (!IsArrayValid(num_residuals, residuals)) {
+				return false;
+			}
+
+			if (jacobians != null) {
+				for (int i = 0; i < num_parameter_blocks; ++i) {
+					int parameter_block_size = parameter_blocks()[i].Size();
+					if (!IsArrayValid(num_residuals * parameter_block_size, jacobians[i], jacobians_offset[i])) {
 						return false;
 					}
 				}
@@ -18423,6 +18600,57 @@ public abstract class CeresSolver {
 					for (int k = 0; k < num_residuals; ++k) {
 						if (jacobians != null && jacobians[i] != null) {
 							double y[] = new double[] { jacobians[i][k * parameter_block_size + j] };
+							AppendArrayToString(1, y, result);
+						}
+					}
+					result[0] = result[0] + "\n";
+				}
+				result[0] = result[0] + "\n";
+			}
+			result[0] = result[0] + "\n";
+			return result[0];
+		}
+		
+		public String EvaluationToString(Vector<double[]> parameters, double cost[], double residuals[],
+				double jacobians[][], int jacobians_offset[]) {
+			if (cost == null) {
+				return null;
+			}
+			if (residuals == null) {
+				return null;
+			}
+
+			int num_parameter_blocks = NumParameterBlocks();
+			int num_residuals = NumResiduals();
+			String result[] = new String[1];
+
+			result[0] = "Residual Block size: " + num_parameter_blocks + " parameter blocks x " + num_residuals
+					+ " residuals\n\n"
+					+ "For each parameter block, the value of the parameters are printed in the first column   \n"
+					+ "and the value of the jacobian under the corresponding residual. If a ParameterBlock was \n"
+					+ "held constant then the corresponding jacobian is printed as 'Not Computed'. If an entry \n"
+					+ "of the Jacobian/residual array was requested but was not written to by user code, it is \n"
+					+ "indicated by 'Uninitialized'. This is an error. Residuals or Jacobian values evaluating \n"
+					+ "to Inf or NaN is also an error.  \n\n";
+
+			String space = "Residuals:     ";
+			result[0] += space;
+			for (int i = 0; i < num_residuals; i++) {
+				result[0] = result[0] + "\n" + residuals[i];
+			}
+			result[0] += "\n\n";
+
+			for (int i = 0; i < num_parameter_blocks; ++i) {
+				int parameter_block_size = parameter_blocks()[i].Size();
+				result[0] = result[0] + "Parameter Block " + i + ", size: " + parameter_block_size + "\n";
+				result[0] = result[0] + "\n";
+				for (int j = 0; j < parameter_block_size; ++j) {
+					double x[] = new double[] { parameters.get(i)[j] };
+					AppendArrayToString(1, x, result);
+					result[0] = result[0] + "| ";
+					for (int k = 0; k < num_residuals; ++k) {
+						if (jacobians != null && jacobians[i] != null) {
+							double y[] = new double[] { jacobians[i][jacobians_offset[i] + k * parameter_block_size + j] };
 							AppendArrayToString(1, y, result);
 						}
 					}
@@ -18570,6 +18798,50 @@ public abstract class CeresSolver {
 				for (int r = 0; r < num_rows; ++r) {
 					jacobian[r * num_cols + c] = sqrt_rho1_
 							* (jacobian[r * num_cols + c] - alpha_sq_norm_ * residuals[r] * r_transpose_j);
+				}
+			}
+		}
+		
+		public void CorrectJacobian(int num_rows, int num_cols, double residuals[], double jacobian[], int jacobian_offset) {
+			int i;
+			if (residuals == null) {
+				System.err.println("residuals == null in Corrector.CorrectJacobian");
+				return;
+			}
+			if (jacobian == null) {
+				System.err.println("jacobian == null in Corrector.CorrectJacobian");
+				return;
+			}
+
+			// The common case (rho[2] <= 0).
+			if (alpha_sq_norm_ == 0.0) {
+				for (i = 0; i < num_rows * num_cols; i++) {
+					jacobian[jacobian_offset+i] *= sqrt_rho1_;
+				}
+				return;
+			}
+
+			// Equation 11 in BANS.
+			//
+			// J = sqrt(rho) * (J - alpha^2 r * r' J)
+			//
+			// In days gone by this loop used to be a single Eigen expression of
+			// the form
+			//
+			// J = sqrt_rho1_ * (J - alpha_sq_norm_ * r* (r.transpose() * J));
+			//
+			// Which turns out to about 17x slower on bal problems. The reason
+			// is that Eigen is unable to figure out that this expression can be
+			// evaluated columnwise and ends up creating a temporary.
+			for (int c = 0; c < num_cols; ++c) {
+				double r_transpose_j = 0.0;
+				for (int r = 0; r < num_rows; ++r) {
+					r_transpose_j += jacobian[jacobian_offset + r * num_cols + c] * residuals[r];
+				}
+
+				for (int r = 0; r < num_rows; ++r) {
+					jacobian[jacobian_offset + r * num_cols + c] = sqrt_rho1_
+							* (jacobian[jacobian_offset + r * num_cols + c] - alpha_sq_norm_ * residuals[r] * r_transpose_j);
 				}
 			}
 		}
@@ -20802,6 +21074,14 @@ public abstract class CeresSolver {
 		}
 	}
 	
+	public void InvalidateArray(int size, double x[], int x_offset) {
+		if (x != null) {
+			for (int i = 0; i < size; ++i) {
+				x[x_offset+ i] = kImpossibleValue;
+			}
+		}
+	}
+	
 	public void InvalidateArray(int row, int col, double x[][]) {
 		int r,c;
 		if (x != null) {
@@ -20825,6 +21105,17 @@ public abstract class CeresSolver {
 		if (x != null) {
 			for (int i = 0; i < size; ++i) {
 				if (!Double.isFinite(x[i]) || (x[i] == kImpossibleValue)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	public boolean IsArrayValid(int size, double x[], int x_offset) {
+		if (x != null) {
+			for (int i = 0; i < size; ++i) {
+				if (!Double.isFinite(x[x_offset+i]) || (x[x_offset+i] == kImpossibleValue)) {
 					return false;
 				}
 			}
@@ -21205,6 +21496,44 @@ public abstract class CeresSolver {
 				}
 
 				int index = (row + start_row_c) * col_stride_c + start_col_c + col;
+				if (kOperation > 0) {
+					C[index] += tmp;
+				} else if (kOperation < 0) {
+					C[index] -= tmp;
+				} else {
+					C[index] = tmp;
+				}
+			}
+		}
+	}
+	
+	public void MatrixMatrixMultiply(int kOperation, double A[], int A_start, int NUM_ROW_A, int NUM_COL_A, double B[][],
+			int NUM_ROW_B, int NUM_COL_B, double C[], int C_start, int start_row_c, int start_col_c, int row_stride_c,
+			int col_stride_c) {
+		if (NUM_COL_A != NUM_ROW_B) {
+			System.err.println("In MatrixMatrixMultiply NUM_COL_A != NUM_ROW_B");
+			return;
+		}
+
+		int NUM_ROW_C = NUM_ROW_A;
+		int NUM_COL_C = NUM_COL_B;
+		if (start_row_c + NUM_ROW_C > row_stride_c) {
+			System.err.println("In MatrixMatrixMultiply start_row_C + NUM_ROW_C > row_stride_c");
+			return;
+		}
+		if (start_col_c + NUM_COL_C > col_stride_c) {
+			System.err.println("In MatrixMatrixMultiply start_col_C + NUM_COL_C > col_stride_c");
+			return;
+		}
+
+		for (int row = 0; row < NUM_ROW_C; ++row) {
+			for (int col = 0; col < NUM_COL_C; ++col) {
+				double tmp = 0.0;
+				for (int k = 0; k < NUM_COL_A; ++k) {
+					tmp += A[A_start + row * NUM_COL_A + k] * B[k][col];
+				}
+
+				int index = C_start + (row + start_row_c) * col_stride_c + start_col_c + col;
 				if (kOperation > 0) {
 					C[index] += tmp;
 				} else if (kOperation < 0) {
