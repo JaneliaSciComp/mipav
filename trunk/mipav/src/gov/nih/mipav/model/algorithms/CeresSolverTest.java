@@ -9375,6 +9375,94 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				}	
 			}
 			
+			public void EvaluatorTestSingleResidualProblemWithNuisanceParameters() {
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_DENSE_QR_0 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestSingleResidualProblemWithNuisanceParameters_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestSingleResidualProblemWithNuisanceParameters";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestSingleResidualProblemWithNuisanceParameters();
+				}		
+			}
+			
+			public void EvaluatorTestMultipleResidualProblem() {
+				// EvaluatorTestMultipleResidualProblem_DENSE_QR_0 passed all tests
+				// EvaluatorTestMultipleResidualProblem_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestMultipleResidualProblem_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestMultipleResidualProblem_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestMultipleResidualProblem_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestMultipleResidualProblem_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestMultipleResidualProblem_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestMultipleResidualProblem_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestMultipleResidualProblem_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestMultipleResidualProblem_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestMultipleResidualProblem_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestMultipleResidualProblem";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestMultipleResidualProblem();
+				}		
+			}
+			
+			public void EvaluatorTestMultipleResidualsWithLocalParameterizations() {
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_DENSE_QR_0 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestMultipleResidualsWithLocalParameterizations_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestMultipleResidualsWithLocalParameterizations";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestMultipleResidualsWithLocalParameterizations();
+				}			
+			}
+			
+			public void EvaluatorTestMultipleResidualProblemWithSomeConstantParameters() {
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_DENSE_QR_0 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestMultipleResidualProblemWithSomeConstantParameters_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestMultipleResidualProblemWithSomeConstantParameters";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestMultipleResidualProblemWithSomeConstantParameters();
+				}		
+			}
+			
 			public EvaluatorTestOptions[] createEvaluatorTestOptions() {
 				EvaluatorTestOptions evaluatorTO[] = new EvaluatorTestOptions[11];
 				evaluatorTO[0] = new EvaluatorTestOptions(LinearSolverType.DENSE_QR, 0);
@@ -9668,6 +9756,249 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			      1, 2,   1, 2, 3,   1, 2, 3, 4
 			    };
 			  CheckAllEvaluationCombinations(expected);
+			}
+		  
+		  public void EvaluatorTestSingleResidualProblemWithNuisanceParameters() {
+			  // These parameters are not used.
+			  double a[] = new double[2];
+			  double b[] = new double[1];
+			  double c[] = new double[1];
+			  double d[] = new double[3];
+
+			  // Add the parameters in a mixed order so the Jacobian is "checkered" with the
+			  // values from the other parameters.
+			  problem.AddParameterBlock(a, 2);
+			  problem.AddParameterBlock(x, 2);
+			  problem.AddParameterBlock(b, 1);
+			  problem.AddParameterBlock(y, 3);
+			  problem.AddParameterBlock(c, 1);
+			  problem.AddParameterBlock(z, 4);
+			  problem.AddParameterBlock(d, 3);
+
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 2, 3, 4),
+			                           null,
+			                           x, y, z);
+
+			  ExpectedEvaluation expected = new ExpectedEvaluation();
+			    // Rows/columns
+			    expected.num_rows = 3;
+			    expected.num_cols = 16;
+			    // Cost
+			    expected.cost = 7.0;
+			    // Residuals
+			    expected.residuals = new double[]{ 1.0, 2.0, 3.0 };
+			    // Gradient
+			    expected.gradient = new double[] { 0.0, 0.0,               // a
+			      6.0, 12.0,              // x
+			      0.0,                    // b
+			      6.0, 12.0, 18.0,        // y
+			      0.0,                    // c
+			      6.0, 12.0, 18.0, 24.0,  // z
+			      0.0, 0.0, 0.0,          // d
+			    };
+			    // Jacobian
+			    //   a        x     b           y     c              z           d
+			    expected.jacobian = new double[]{ 0, 0,    1, 2,    0,    1, 2, 3,    0,    1, 2, 3, 4,    0, 0, 0,
+			      0, 0,    1, 2,    0,    1, 2, 3,    0,    1, 2, 3, 4,    0, 0, 0,
+			      0, 0,    1, 2,    0,    1, 2, 3,    0,    1, 2, 3, 4,    0, 0, 0
+			    };
+			  CheckAllEvaluationCombinations(expected);
+			}
+
+		  public void EvaluatorTestMultipleResidualProblem() {
+			  // Add the parameters in explicit order to force the ordering in the program.
+			  problem.AddParameterBlock(x,  2);
+			  problem.AddParameterBlock(y,  3);
+			  problem.AddParameterBlock(z,  4);
+
+			  // f(x, y) in R^2
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0),
+			                           null,
+			                           x, y);
+
+			  // g(x, z) in R^3
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0),
+			                           null,
+			                           x, z);
+
+			  // h(y, z) in R^4
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0),
+			                           null,
+			                           y, z);
+
+			  ExpectedEvaluation expected = new ExpectedEvaluation();
+			    // Rows/columns
+			    expected.num_rows = 9;
+			    expected.num_cols = 9;
+			    // Cost
+			    // f       g           h
+			    expected.cost = (  1 + 4 + 1 + 4 + 9 + 1 + 4 + 9 + 16) / 2.0;
+			    // Residuals
+			    expected.residuals = new double[] { 1.0, 2.0,           // f
+			      1.0, 2.0, 3.0,      // g
+			      1.0, 2.0, 3.0, 4.0  // h
+			    };
+			    // Gradient
+			    expected.gradient = new double[] { 15.0, 30.0,               // x
+			      33.0, 66.0, 99.0,         // y
+			      42.0, 84.0, 126.0, 168.0  // z
+			    };
+			    // Jacobian
+			    //                x        y           z
+			    expected.jacobian = new double[] {   /* f(x, y) */ 1, 2,    1, 2, 3,    0, 0, 0, 0,
+			                      1, 2,    1, 2, 3,    0, 0, 0, 0,
+
+			        /* g(x, z) */ 2, 4,    0, 0, 0,    2, 4, 6, 8,
+			                      2, 4,    0, 0, 0,    2, 4, 6, 8,
+			                      2, 4,    0, 0, 0,    2, 4, 6, 8,
+
+			        /* h(y, z) */ 0, 0,    3, 6, 9,    3, 6, 9, 12,
+			                      0, 0,    3, 6, 9,    3, 6, 9, 12,
+			                      0, 0,    3, 6, 9,    3, 6, 9, 12,
+			                      0, 0,    3, 6, 9,    3, 6, 9, 12
+			    };
+			  CheckAllEvaluationCombinations(expected);
+			}
+		  
+		  public void EvaluatorTestMultipleResidualsWithLocalParameterizations() {
+			  // Add the parameters in explicit order to force the ordering in the program.
+			  problem.AddParameterBlock(x,  2);
+
+			  // Fix y's first dimension.
+			  Vector<Integer> y_fixed = new Vector<Integer>();
+			  y_fixed.add(0);
+			  problem.AddParameterBlock(y, 3, new SubsetParameterization(3, y_fixed));
+
+			  // Fix z's second dimension.
+			  Vector<Integer> z_fixed = new Vector<Integer>();
+			  z_fixed.add(1);
+			  problem.AddParameterBlock(z, 4, new SubsetParameterization(4, z_fixed));
+
+			  // f(x, y) in R^2
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0),
+			                           null,
+			                           x, y);
+
+			  // g(x, z) in R^3
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0),
+			                           null,
+			                           x, z);
+
+			  // h(y, z) in R^4
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0),
+			                           null,
+			                           y, z);
+
+			  ExpectedEvaluation expected = new ExpectedEvaluation();
+			    // Rows/columns
+			    expected.num_rows = 9;
+			    expected.num_cols = 7;
+			    // Cost
+			    // f       g           h
+			    expected.cost = (  1 + 4 + 1 + 4 + 9 + 1 + 4 + 9 + 16) / 2.0;
+			    // Residuals
+			    expected.residuals = new double[] { 1.0, 2.0,           // f
+			      1.0, 2.0, 3.0,      // g
+			      1.0, 2.0, 3.0, 4.0  // h
+			    };
+			    // Gradient
+			    expected.gradient = new double[] { 15.0, 30.0,         // x
+			      66.0, 99.0,         // y
+			      42.0, 126.0, 168.0  // z
+			    };
+			    // Jacobian
+			    //                x        y           z
+			    expected.jacobian = new double[] {   /* f(x, y) */ 1, 2,    2, 3,    0, 0, 0,
+			                      1, 2,    2, 3,    0, 0, 0,
+
+			        /* g(x, z) */ 2, 4,    0, 0,    2, 6, 8,
+			                      2, 4,    0, 0,    2, 6, 8,
+			                      2, 4,    0, 0,    2, 6, 8,
+
+			        /* h(y, z) */ 0, 0,    6, 9,    3, 9, 12,
+			                      0, 0,    6, 9,    3, 9, 12,
+			                      0, 0,    6, 9,    3, 9, 12,
+			                      0, 0,    6, 9,    3, 9, 12
+			    };
+			  CheckAllEvaluationCombinations(expected);
+			}
+
+		  public void EvaluatorTestMultipleResidualProblemWithSomeConstantParameters() {
+			  // The values are ignored completely by the cost function.
+			  double x[] = new double[2];
+			  double y[] = new double[3];
+			  double z[] = new double[4];
+
+			  // Add the parameters in explicit order to force the ordering in the program.
+			  problem.AddParameterBlock(x,  2);
+			  problem.AddParameterBlock(y,  3);
+			  problem.AddParameterBlock(z,  4);
+
+			  // f(x, y) in R^2
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0),
+			                           null,
+			                           x, y);
+
+			  // g(x, z) in R^3
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0),
+			                           null,
+			                           x, z);
+
+			  // h(y, z) in R^4
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0),
+			                           null,
+			                           y, z);
+
+			  // For this test, "z" is constant.
+			  problem.SetParameterBlockConstant(z);
+
+			  // Create the reduced program which is missing the fixed "z" variable.
+			  // Normally, the preprocessing of the program that happens in solver_impl
+			  // takes care of this, but we don't want to invoke the solver here.
+			  Program reduced_program = new Program();
+			  Vector<ParameterBlock> parameter_blocks =
+			      problem.mutable_program().mutable_parameter_blocks();
+
+			  // "z" is the last parameter; save it for later and pop it off temporarily.
+			  // Note that "z" will still get read during evaluation, so it cannot be
+			  // deleted at this point.
+			  ParameterBlock parameter_block_z = parameter_blocks.lastElement();
+			  parameter_blocks.remove(parameter_blocks.size()-1);
+
+			  ExpectedEvaluation expected = new ExpectedEvaluation();
+			    // Rows/columns
+			    expected.num_rows = 9;
+			    expected.num_cols = 5;
+			    // Cost
+			    // f       g           h
+			    expected.cost = (  1 + 4 + 1 + 4 + 9 + 1 + 4 + 9 + 16) / 2.0;
+			    // Residuals
+			    expected.residuals = new double[]{ 1.0, 2.0,           // f
+			      1.0, 2.0, 3.0,      // g
+			      1.0, 2.0, 3.0, 4.0  // h
+			    };
+			    // Gradient
+			    expected.gradient = new double[]{ 15.0, 30.0,        // x
+			      33.0, 66.0, 99.0,  // y
+			    };
+			    // Jacobian
+			    //                x        y
+			    expected.jacobian = new double[] {   /* f(x, y) */ 1, 2,    1, 2, 3,
+			                      1, 2,    1, 2, 3,
+
+			        /* g(x, z) */ 2, 4,    0, 0, 0,
+			                      2, 4,    0, 0, 0,
+			                      2, 4,    0, 0, 0,
+
+			        /* h(y, z) */ 0, 0,    3, 6, 9,
+			                      0, 0,    3, 6, 9,
+			                      0, 0,    3, 6, 9,
+			                      0, 0,    3, 6, 9
+			    };
+			  CheckAllEvaluationCombinations(expected);
+
+			  // Restore parameter block z, so it will get freed in a consistent way.
+			  parameter_blocks.add(parameter_block_z);
 			}
 
 		  
