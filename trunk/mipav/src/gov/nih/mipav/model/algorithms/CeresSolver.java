@@ -15982,7 +15982,7 @@ public abstract class CeresSolver {
 	}
 
 	class CostFunction {
-		// private int num_residuals_;
+		private int num_residuals_;
 		private Vector<Integer> parameter_block_sizes_;
 
 		public CostFunction() {
