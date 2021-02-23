@@ -9261,11 +9261,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			//         int N0 = 0, int N1 = 0, int N2 = 0, bool kSucceeds = true>
 			class ParameterIgnoringCostFunction extends SizedCostFunction {
 				 int kFactor;
-				 boolean kSucceeds = true;
+				 boolean kSucceeds;
 				 int r, c;
-			     public ParameterIgnoringCostFunction(int kFactor, int kNumResiduals, int N0, int N1, int N2) {
+			     public ParameterIgnoringCostFunction(int kFactor, int kNumResiduals, int N0, int N1, int N2, boolean kSucceeds) {
 			    	 super(kNumResiduals, N0, N1, N2, 0, 0, 0, 0, 0, 0, 0);
 			    	 this.kFactor = kFactor;
+			    	 this.kSucceeds = kSucceeds;
 			     }
 			     
 			     public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
@@ -9461,6 +9462,28 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
 				  ET.EvaluatorTestMultipleResidualProblemWithSomeConstantParameters();
 				}		
+			}
+			
+			public void EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate() {
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_DENSE_QR_0 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_DENSE_SCHUR_0 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_DENSE_SCHUR_1 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_DENSE_SCHUR_2 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_DENSE_SCHUR_3 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_DENSE_SCHUR_4 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_ITERATIVE_SCHUR_0 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_ITERATIVE_SCHUR_1 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_ITERATIVE_SCHUR_2 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_ITERATIVE_SCHUR_3 passed all tests
+				// EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate_ITERATIVE_SCHUR_4 passed all tests
+				int i;
+				String baseName = "EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate";
+				String ETName[] = createEvaluateStringName();
+				EvaluatorTestOptions evaluatorTO[] = createEvaluatorTestOptions();
+				for (i = 0; i < evaluatorTO.length; i++) {
+				  EvaluatorTest ET = new EvaluatorTest(evaluatorTO[i],baseName + "_" + ETName[i]);
+				  ET.EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate();
+				}			
 			}
 			
 			public EvaluatorTestOptions[] createEvaluatorTestOptions() {
@@ -9693,7 +9716,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		  
 		  public void EvaluatorTestSingleResidualProblem() {
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 2, 3, 4),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 2, 3, 4, true),
 			                           null,
 			                           x, y, z);
 
@@ -9732,7 +9755,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  // At one point the compressed row evaluator had a bug that went undetected
 			  // for a long time, since by chance most users added parameters to the problem
 			  // in the same order that they occurred as parameters to a cost function.
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 4, 3, 2),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 4, 3, 2, true),
 			                           null,
 			                           z, y, x);
 
@@ -9775,7 +9798,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  problem.AddParameterBlock(z, 4);
 			  problem.AddParameterBlock(d, 3);
 
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 2, 3, 4),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 3, 2, 3, 4, true),
 			                           null,
 			                           x, y, z);
 
@@ -9812,17 +9835,17 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  problem.AddParameterBlock(z,  4);
 
 			  // f(x, y) in R^2
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0, true),
 			                           null,
 			                           x, y);
 
 			  // g(x, z) in R^3
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0, true),
 			                           null,
 			                           x, z);
 
 			  // h(y, z) in R^4
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0, true),
 			                           null,
 			                           y, z);
 
@@ -9875,17 +9898,17 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  problem.AddParameterBlock(z, 4, new SubsetParameterization(4, z_fixed));
 
 			  // f(x, y) in R^2
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0, true),
 			                           null,
 			                           x, y);
 
 			  // g(x, z) in R^3
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0, true),
 			                           null,
 			                           x, z);
 
 			  // h(y, z) in R^4
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0, true),
 			                           null,
 			                           y, z);
 
@@ -9935,17 +9958,17 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  problem.AddParameterBlock(z,  4);
 
 			  // f(x, y) in R^2
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(1, 2, 2, 3, 0, true),
 			                           null,
 			                           x, y);
 
 			  // g(x, z) in R^3
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(2, 3, 2, 4, 0, true),
 			                           null,
 			                           x, z);
 
 			  // h(y, z) in R^4
-			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0),
+			  problem.AddResidualBlock(new ParameterIgnoringCostFunction(3, 4, 3, 4, 0, true),
 			                           null,
 			                           y, z);
 
@@ -10000,7 +10023,25 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  // Restore parameter block z, so it will get freed in a consistent way.
 			  parameter_blocks.add(parameter_block_z);
 			}
+		  
+		  public void EvaluatorTestEvaluatorAbortsForResidualsThatFailToEvaluate() {
+			  // Switch the return value to failure.
+			  problem.AddResidualBlock(
+			      new ParameterIgnoringCostFunction(20, 3, 2, 3, 4, false), null, x, y, z);
 
+			  // The values are ignored.
+			  double state[] = new double[9];
+
+			  Evaluator evaluator = CreateEvaluator(problem.mutable_program());
+			 SparseMatrix jacobian = evaluator.CreateJacobian();
+			  double cost[] = new double[1];
+			  if (evaluator.Evaluate(state, cost, null, null, null)) {
+				  System.err.println("In " + testName + " evaluator.Evaluate(state, cost, null, null, null) == true");
+			  }
+			  else {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
 		  
 		} // class EvaluatorTest
 		
@@ -10011,6 +10052,174 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			}
 		}
 
+
+		// Simple cost function used to check if the evaluator is sensitive to
+		// state changes.
+		class ParameterSensitiveCostFunction extends SizedCostFunction {
+		 public ParameterSensitiveCostFunction() {
+			 super(2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		 }
+		 
+		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+		 
+		    double x1 = parameters.get(0)[0];
+		    double x2 = parameters.get(0)[1];
+		    residuals[0] = x1 * x1;
+		    residuals[1] = x2 * x2;
+
+		    if (jacobians != null) {
+		      double jacobian[] = jacobians[0];
+		      if (jacobian != null) {
+		        jacobian[0] = 2.0 * x1;
+		        jacobian[1] = 0.0;
+		        jacobian[2] = 0.0;
+		        jacobian[3] = 2.0 * x2;
+		      }
+		    }
+		    return true;
+		  }
+		 
+		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			 
+			    double x1 = parameters.get(0)[0];
+			    double x2 = parameters.get(0)[1];
+			    residuals[0] = x1 * x1;
+			    residuals[1] = x2 * x2;
+
+			    if (jacobians != null) {
+			      double jacobian[] = jacobians[0];
+			      if (jacobian != null) {
+			        jacobian[jacobians_offset[0]] = 2.0 * x1;
+			        jacobian[jacobians_offset[0]+1] = 0.0;
+			        jacobian[jacobians_offset[0]+2] = 0.0;
+			        jacobian[jacobians_offset[0]+3] = 2.0 * x2;
+			      }
+			    }
+			    return true;
+			  }
+		};
+		
+		public void EvaluatorRespectsParameterChanges() {
+			  // EvaluatorRespectsParameterChanges() passed all tests
+			  int row, col;
+			  boolean passed = true;
+			  ProblemImpl problem = new ProblemImpl();
+
+			  double x[] = new double[2];
+			  x[0] = 1.0;
+			  x[1] = 1.0;
+
+			  problem.AddResidualBlock(new ParameterSensitiveCostFunction(), null, x);
+			  Program program = problem.mutable_program();
+			  program.SetParameterOffsetsAndIndex();
+
+			  EvaluatorOptions options = new EvaluatorOptions();
+			  options.linear_solver_type = LinearSolverType.DENSE_QR;
+			  options.num_eliminate_blocks = 0;
+			  options.context = problem.context();
+			  String error[] = new String[1];
+			  Evaluator evaluator = Create(options, program, error);
+			  SparseMatrix jacobian = evaluator.CreateJacobian();
+
+			  if (jacobian.num_rows() != 2) {
+				  System.err.println("In EvaluatorRespectsParameterChanges() jacobian.num_rows() != 2");
+				  passed = false;
+			  }
+			  if (jacobian.num_cols() != 2) {
+				  System.err.println("In EvaluatorRespectsParameterChanges() jacobian.num_cols() != 2");
+				  passed = false; 
+			  }
+
+			  double state[] = new double[2];
+			  state[0] = 2.0;
+			  state[1] = 3.0;
+
+			  // The original state of a residual block comes from the user's
+			  // state. So the original state is 1.0, 1.0, and the only way we get
+			  // the 2.0, 3.0 results in the following tests is if it respects the
+			  // values in the state vector.
+
+			  // Cost only; no residuals and no jacobian.
+			  {
+			    double cost[] = new double[] {-1};
+			    if (!evaluator.Evaluate(state, cost, null, null, null)) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() evaluator.Evaluate(state, cost, null, null, null) = false");
+					passed = false;
+			    }
+			    if (cost[0] != 48.5) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() cost[0] != 48.5");
+					passed = false;
+			    }
+			  }
+
+			  // Cost and residuals, no jacobian.
+			  {
+			    double cost[] = new double[] {-1};
+			    double residuals[] = new double[] { -2, -2 };
+			    if (!evaluator.Evaluate(state, cost, residuals, null, null)) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() evaluator.Evaluate(state, cost, residuals, null, null) = false");
+					passed = false;
+
+			    }
+			    if (cost[0] != 48.5) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() cost[0] != 48.5");
+					passed = false;
+			    }
+			    if (residuals[0] != 4) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() residuals[0] != 4");
+					passed = false;
+			    }
+			    if (residuals[1] != 9) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() residuals[1] != 9");
+					passed = false;
+			    }
+			  }
+
+			  // Cost, residuals, and jacobian.
+			  {
+			    double cost[] = new double[] {-1};
+			    double residuals[] = new double[]{ -2, -2};
+			    SetSparseMatrixConstant(jacobian, -1);
+			    if (!evaluator.Evaluate(state, cost, residuals, null, jacobian)) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() evaluator.Evaluate(state, cost, residuals, null, jacobian) = false");
+					passed = false;
+			    }
+			    if (cost[0] != 48.5) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() cost[0] != 48.5");
+					passed = false;
+			    }
+			    if (residuals[0] != 4) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() residuals[0] != 4");
+					passed = false;
+			    }
+			    if (residuals[1] != 9) {
+			    	System.err.println("In EvaluatorRespectsParameterChanges() residuals[1] != 9");
+					passed = false;
+			    }
+			    
+			    double actual_jacobian_array[][] = 
+			    jacobian.ToDenseMatrix().getArray();
+			    
+			    double expected_jacobian_array[][] = new double[][] {{2.0 * state[0], 0.0}, {0.0, 2.0 * state[1]}};
+
+			    for (row = 0; row < 2; row++) {
+			    	for (col = 0; col < 2; col++) {
+			    		if (actual_jacobian_array[row][col] != expected_jacobian_array[row][col]) {
+			    			System.err.println("In EvaluatorRespectsParameterChanges()");
+			    			System.err.println("actual_jacobian_array["+row+"]["+col+"] != expected_jacobian_array["+row+"]["+col+"]");
+			    	        System.err.println("actual_jacobian_array["+row+"]["+col+"] = " + actual_jacobian_array[row][col]);
+			    	        System.err.println("expected_jacobian_array["+row+"]["+col+"] = " + expected_jacobian_array[row][col]);
+			    	        passed = false;
+			    		}
+			    	}
+			    }
+
+			    
+			  }
+			  if (passed) {
+				  System.out.println("EvaluatorRespectsParameterChanges() passed all tests");
+			  }
+			}
 
 
 
