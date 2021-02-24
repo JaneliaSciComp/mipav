@@ -10221,6 +10221,142 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 			}
 
+		// Rosenbrock function; see http://en.wikipedia.org/wiki/Rosenbrock_function .
+		class Rosenbrock2 extends FirstOrderFunction {
+		 public  Rosenbrock2() {
+			 super();
+		 }
+
+		 public  boolean Evaluate(double[] parameters,
+		                        double[] cost,
+		                        double[] gradient) {
+		    final double x = parameters[0];
+		    final double y = parameters[1];
+
+		    cost[0] = (1.0 - x) * (1.0 - x) + 100.0 * (y - x * x) * (y - x * x);
+		    if (gradient != null) {
+		      gradient[0] = -2.0 * (1.0 - x) - 200.0 * (y - x * x) * 2.0 * x;
+		      gradient[1] = 200.0 * (y - x * x);
+		    }
+		    return true;
+		  }
+
+		  public int NumParameters() { return 2; }
+		};
+
+		public void GradientProblemSolverSolvesRosenbrockWithDefaultOptions() {
+			  // GradientProblemSolverSolvesRosenbrockWithDefaultOptions() passed all tests
+			  boolean passed = true;
+			  final double expected_tolerance = 1e-9;
+			  double parameters[] = new double[]{-1.2, 0.0};
+
+			  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+			  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+			  GradientProblem problem = new GradientProblem(new Rosenbrock2());
+			  Solve(options, problem, parameters, summary);
+
+			  if (summary.termination_type != TerminationType.CONVERGENCE) {
+				  System.err.println("In GradientProblemSolverSolvesRosenbrockWithDefaultOptions() summary.termination_type != TerminationType.CONVERGENCE");
+				  passed = false;
+			  }
+			  if (Math.abs(parameters[0] - 1.0) > expected_tolerance) {
+				  System.err.println("In GradientProblemSolverSolvesRosenbrockWithDefaultOptions() Math.abs(parameters[0] - 1.0) > expected_tolerance");
+				  passed = false;
+			  }
+			  if (Math.abs(parameters[1] - 1.0) > expected_tolerance) {
+				  System.err.println("In GradientProblemSolverSolvesRosenbrockWithDefaultOptions() Math.abs(parameters[1] - 1.0) > expected_tolerance");
+				  passed = false;
+			  }
+			  if (passed) {
+				  System.out.println("GradientProblemSolverSolvesRosenbrockWithDefaultOptions() passed all tests");
+			  }
+			}
+		
+		class QuadraticFunction extends FirstOrderFunction {
+			  public QuadraticFunction() {
+				  super();
+			  }
+			  public boolean Evaluate(double[] parameters,
+			                        double[] cost,
+			                        double[] gradient) {
+			    final double x = parameters[0];
+			    cost[0] = 0.5 * (5.0 - x) * (5.0 - x);
+			    if (gradient != null) {
+			      gradient[0] = x - 5.0;
+			    }
+
+			    return true;
+			  }
+			  public int NumParameters() { return 1; }
+			};
+			
+			class RememberingCallback extends IterationCallback {
+				  public int calls;
+				  double []x;
+				  Vector<Double> x_values = new Vector<Double>();
+				  public RememberingCallback(double x[]) {
+					  super();
+					  calls = 0;
+					  this.x = x;
+				  }
+				  
+				  public CallbackReturnType operator(IterationSummary summary) {
+				    x_values.add(x[0]);
+				    return CallbackReturnType.SOLVER_CONTINUE;
+				  }
+				  
+				};
+
+				public void SolverUpdateStateEveryIterationOption() {
+					  // SolverUpdateStateEveryIterationOption() passed all tests
+					  boolean passed = true;
+					  double x[] = new double[] {50.0};
+					  final double original_x = x[0];
+
+					  GradientProblem problem = new GradientProblem(new QuadraticFunction());
+					  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+					  RememberingCallback callback = new RememberingCallback(x);
+					  options.callbacks.add(callback);
+					  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+
+					  int num_iterations;
+
+					  // First try: no updating.
+					  Solve(options, problem, x, summary);
+					  num_iterations = summary.iterations.size() - 1;
+					  if (num_iterations <= 1) {
+						  System.err.println("In SolverUpdateStateEveryIterationOption() num_iterations <= 1");
+						  passed = false;
+					  }
+					  for (int i = 0; i < callback.x_values.size(); ++i) {
+					    if (callback.x_values.get(i).doubleValue() != 50.0) {
+					    	System.err.println("In SolverUpdateStateEveryIterationOption() callback.x_values.get("+i+").doubleValue() != 50.0");
+					    	passed = false;
+					    }
+					  }
+
+					  // Second try: with updating
+					  x[0] = 50.0;
+					  options.update_state_every_iteration = true;
+					  callback.x_values.clear();
+					  Solve(options, problem, x, summary);
+					  num_iterations = summary.iterations.size() - 1;
+					  if (num_iterations <= 1) {
+						  System.err.println("In SolverUpdateStateEveryIterationOption() num_iterations <= 1");
+						  passed = false;
+					  }
+					  if (callback.x_values.get(0).doubleValue() != original_x) {
+						  System.err.println("In SolverUpdateStateEveryIterationOption() callback.x_values.get(0).doubleValue() != original_x");
+						  passed = false;
+					  }
+					  if (callback.x_values.get(1).doubleValue() == original_x) {
+						  System.err.println("In SolverUpdateStateEveryIterationOption() callback.x_values.get(1).doubleValue() == original_x");
+						  passed = false;
+					  }
+					  if (passed) {
+						  System.out.println("SolverUpdateStateEveryIterationOption() passed all tests");
+					  }
+					}
 
 
 
