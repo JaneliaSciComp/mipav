@@ -22969,6 +22969,10 @@ public abstract class CeresSolver {
 	      scratch_ = new double[function_.NumParameters()];
 	    }
 	    
+	    public void finalize() {
+	    	function_.finalize();
+	    }
+	    
 	    public GradientProblem(FirstOrderFunction function,
                 LocalParameterization parameterization) {
 	    	function_ = function;
@@ -23085,6 +23089,9 @@ public abstract class CeresSolver {
 	// and its gradient.
 	abstract class FirstOrderFunction {
 	  public FirstOrderFunction() {
+		  
+	  }
+	  public void finalize() {
 		  
 	  }
 	  // cost is never NULL. gradient may be null.
