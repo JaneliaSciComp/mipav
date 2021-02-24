@@ -9424,42 +9424,22 @@ public abstract class CeresSolver {
 	// parameters vector for GradientProblemSolver.
 	class GradientProblemSolverStateUpdatingCallback extends IterationCallback {
 		 private int num_parameters_;
-		 private Vector<Double> internal_parameters_;
-		 private Vector<Double> user_parameters_;
+		 private double[] internal_parameters_;
+		 private double[] user_parameters_;
 	 public GradientProblemSolverStateUpdatingCallback(int num_parameters,
-	                                             Vector<Double> internal_parameters,
-	                                             Vector<Double> user_parameters) {
+	                                             double[] internal_parameters,
+	                                             double[] user_parameters) {
 		  num_parameters_ = num_parameters;
 	      internal_parameters_ = internal_parameters;
 	      user_parameters_ = user_parameters; 	 
 	 }
-	 
-	 public GradientProblemSolverStateUpdatingCallback(int num_parameters,
-            double[] internal_parameters,
-            double[] user_parameters) {
-		    int i;
-			num_parameters_ = num_parameters;
-			internal_parameters_ = new Vector<Double>(internal_parameters.length);
-			for (i = 0; i < internal_parameters.length; i++) {
-				internal_parameters_.add(internal_parameters[i]);
-			}
-			user_parameters_ = new Vector<Double>(user_parameters.length);
-			for (i = 0; i < user_parameters.length; i++) {
-				user_parameters_.add(user_parameters[i]);
-			} 
-		}
 	 
 	 public CallbackReturnType operator(
 			    IterationSummary summary) {
 		      int i;
 			  if (summary.step_is_successful) {
 				  for (i = 0; i < num_parameters_; i++) {
-					  if (i < user_parameters_.size()) {
-					  user_parameters_.set(i, internal_parameters_.get(i));
-					  }
-					  else {
-					  user_parameters_.add(internal_parameters_.get(i));
-					  }
+					  user_parameters_[i] = internal_parameters_[i];
 				  }
 				 
 			  }
@@ -22906,11 +22886,6 @@ public abstract class CeresSolver {
 			    return;
 			}
 			
-			//VectorRef parameters(parameters_ptr, problem.NumParameters());
-			Vector<Double>parameters = new Vector<Double>(problem.NumParameters());
-			for (i = 0; i < problem.NumParameters(); i++) {
-				parameters.add(parameters_ptr[i]);
-			}
 			double solution[] = new double[problem.NumParameters()];
 			for (i = 0; i < problem.NumParameters(); i++) {
 				solution[i] = parameters_ptr[i];
@@ -22956,9 +22931,7 @@ public abstract class CeresSolver {
 			solver_summary.line_search_polynomial_minimization_time_in_seconds;
 			
 			if (IsSolutionUsable(summary)) {
-				parameters.clear();
 				for (i = 0; i < solution.length; i++) {
-					parameters.add(solution[i]);
 					parameters_ptr[i] = solution[i];
 				}
 			    SetSummaryFinalCost(summary);
