@@ -10358,6 +10358,109 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					  }
 					}
 
+	class QuadraticTestFunction extends FirstOrderFunction {
+		private boolean[] flag_to_set_on_destruction_;
+		 public QuadraticTestFunction(boolean[] flag_to_set_on_destruction /*= NULL*/) {
+			 super();
+			 flag_to_set_on_destruction_ = flag_to_set_on_destruction;
+		 }
+
+		  public void finalize() {
+		    if (flag_to_set_on_destruction_ != null) {
+		      flag_to_set_on_destruction_[0] = true;
+		    }
+		  }
+
+		  public boolean Evaluate(double[] parameters,
+		                        double[] cost,
+		                        double[] gradient) {
+		    final double x = parameters[0];
+		    cost[0] = x * x;
+		    if (gradient != null) {
+		      gradient[0] = 2.0 * x;
+		    }
+		    return true;
+		  }
+
+		  public int NumParameters() { return 1; }
+
+		 
+		};
+		
+		public void GradientProblemTakesOwnershipOfFirstOrderFunction() {
+			  // GradientProblemTakesOwnershipOfFirstOrderFunction() passed all tests
+			  boolean is_destructed[] = new boolean[] {false};
+			  {
+			    GradientProblem problem = new GradientProblem(new QuadraticTestFunction(is_destructed));
+			    problem.finalize();
+			  }
+			  if (!is_destructed[0]) {
+				  System.err.println("is_destructed[0] = false");
+			  }
+			  else {
+				  System.out.println("GradientProblemTakesOwnershipOfFirstOrderFunction() passed all tests");
+			  }
+			}
+
+		public void GradientProblemEvaluationWithoutParameterizationOrGradient() {
+			  // GradientProblemEvaluationWithoutParameterizationOrGradient() passed all tests
+			  GradientProblem problem = new GradientProblem(new QuadraticTestFunction(null));
+			  double x[] = new double[] {7.0};
+			  double cost[] = new double[] {0.0};
+			  problem.Evaluate(x, cost, null);
+			  if ((x[0] * x[0]) != cost[0]) {
+				  System.err.println("In GradientProblemEvaluationWithoutParameterizationOrGradient() (x[0] * x[0]) != cost[0]");
+			  }
+			  else {
+				  System.out.println("GradientProblemEvaluationWithoutParameterizationOrGradient() passed all tests");
+			  }
+	   }
+		
+       public void GradientProblemEvalutaionWithParameterizationAndNoGradient() {
+    	      // GradientProblemEvalutaionWithParameterizationAndNoGradient() passed all tests
+			  GradientProblem problem = new GradientProblem(new QuadraticTestFunction(null),
+			                                 new IdentityParameterization(1));
+			  double x[] = new double[] {7.0};
+			  double cost[] = new double[] {0.0};
+			  problem.Evaluate(x, cost, null);
+			  if ((x[0] * x[0]) != cost[0]) {
+				  System.err.println("In GradientProblemEvalutaionWithParameterizationAndNoGradient() (x[0] * x[0]) != cost[0]");
+			  }
+			  else {
+				  System.out.println("GradientProblemEvalutaionWithParameterizationAndNoGradient() passed all tests");
+			  }
+			}
+
+       public void GradientProblemEvaluationWithoutParameterizationAndWithGradient() {
+    	   // GradientProblemEvaluationWithoutParameterizationAndWithGradient() passed all tests
+    	   GradientProblem problem = new GradientProblem(new QuadraticTestFunction(null));
+    	   double x[] = new double[] {7.0};
+    	   double cost[] = new double[] {0.0};
+    	   double gradient[] = new double[] {0.0};
+    	   problem.Evaluate(x, cost, gradient);
+    	   if ((2.0 * x[0]) != gradient[0]) {
+    		   System.err.println("In GradientProblemEvaluationWithoutParameterizationAndWithGradient() (2.0 * x[0]) != gradient[0]");
+    	   }
+    	   else {
+    		   System.out.println("GradientProblemEvaluationWithoutParameterizationAndWithGradient() passed all tests");
+    	   }
+    	 }
+
+       public void GradientProblemEvaluationWithParameterizationAndWithGradient() {
+    	   // GradientProblemEvaluationWithParameterizationAndWithGradient() passed all tests
+    	   GradientProblem problem = new GradientProblem(new QuadraticTestFunction(null),
+    	                                  new IdentityParameterization(1));
+    	   double x[] = new double[] {7.0};
+    	   double cost[] = new double[] {0.0};
+    	   double gradient[] = new double[] {0.0};
+    	   problem.Evaluate(x, cost, gradient);
+    	   if ((2.0 * x[0]) != gradient[0]) {
+    		   System.err.println("In GradientProblemEvaluationWithParameterizationAndWithGradient() (2.0 * x[0]) != gradient[0]");
+    	   }
+    	   else {
+    		   System.out.println("GradientProblemEvaluationWithParameterizationAndWithGradient() passed all tests");
+    	   }
+    	 }
 
 
 }
