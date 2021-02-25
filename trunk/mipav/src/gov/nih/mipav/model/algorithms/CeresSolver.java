@@ -19702,6 +19702,28 @@ public abstract class CeresSolver {
 			}
 		}
 		
+		public boolean Plus(double x[], double delta[], double x_plus_delta[]) {
+			int i;
+			boolean cond;
+			Vector<Double>xvec = new Vector<Double>(x.length);
+			for (i = 0; i < x.length; i++) {
+				xvec.add(x[i]);
+			}
+			Vector<Double>deltavec = new Vector<Double>(delta.length);
+			for (i = 0; i < delta.length; i++) {
+				deltavec.add(delta[i]);
+			}
+			Vector<Double> x_plus_delta_vec = new Vector<Double>(x_plus_delta.length);
+			for (i = 0; i < x_plus_delta.length; i++) {
+				x_plus_delta_vec.add(0.0);
+			}
+			cond = Plus(xvec, 0, deltavec, 0, x_plus_delta_vec, 0);
+			for ( i = 0; i < x_plus_delta.length; i++) {
+				x_plus_delta[i] = x_plus_delta_vec.get(i);
+			}
+			return cond;
+		}
+		
 		// Generalization of the addition operation. This is the same as
 		  // LocalParameterization::Plus() followed by projection onto the
 		  // hyper cube implied by the bounds constraints.
