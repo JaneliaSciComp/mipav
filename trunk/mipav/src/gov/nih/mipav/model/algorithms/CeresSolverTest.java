@@ -10462,5 +10462,93 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	   }
     	 }
 
+       class FakeIterationCallback extends IterationCallback {
+    	   public FakeIterationCallback() {
+    		   super();
+    	   }
+    	   public CallbackReturnType operator(IterationSummary summary) {
+    	      return CallbackReturnType.SOLVER_CONTINUE;
+    	    }
+    	  };
+    	  
+    	  public void MinimizerInitializationCopiesCallbacks() {
+    		  // MinimizerInitializationCopiesCallbacks() passed all tests
+    		  boolean passed = true;
+    		  FakeIterationCallback callback0 = new FakeIterationCallback();
+    		  FakeIterationCallback callback1 = new FakeIterationCallback();
+
+    		  SolverOptions solver_options = new SolverOptions();
+    		  solver_options.callbacks.add(callback0);
+    		  solver_options.callbacks.add(callback1);
+
+    		  MinimizerOptions minimizer_options = new MinimizerOptions(solver_options);
+    		  if (minimizer_options.callbacks.size() != 2) {
+    			  System.err.println("In MinimizerInitializationCopiesCallbacks() minimizer_options.callbacks.size() != 2");
+    			  passed = false;
+    		  }
+    		  if (minimizer_options.callbacks.get(0) != callback0) {
+    			  System.err.println("In MinimizerInitializationCopiesCallbacks() minimizer_options.callbacks.get(0) != callback0");
+    			  passed = false;
+    		  }
+    		  if (minimizer_options.callbacks.get(1) != callback1) {
+    			  System.err.println("In MinimizerInitializationCopiesCallbacks() minimizer_options.callbacks.get(1) != callback1");
+    			  passed = false;
+    		  }
+    		  if (passed) {
+    			  System.out.println("MinimizerInitializationCopiesCallbacks() passed all tests");
+    		  }
+    		}
+    	  
+    	  class AbortingIterationCallback extends IterationCallback {
+    		  public AbortingIterationCallback() {
+    			  super();
+    		  }
+    		  public CallbackReturnType operator(IterationSummary summary) {
+    		     return CallbackReturnType.SOLVER_ABORT;
+    		   }
+    		 };
+
+
+    	  public void MinimizerUserAbortUpdatesSummaryMessage() {
+    		  // MinimizerUserAbortUpdatesSummaryMessage() passed all tests
+    		  AbortingIterationCallback callback = new AbortingIterationCallback();
+    		  SolverOptions solver_options = new SolverOptions();
+    		  solver_options.callbacks.add(callback);
+    		  MinimizerOptions minimizer_options = new MinimizerOptions(solver_options);
+    		  SolverSummary summary = new SolverSummary();
+    		  RunCallbacks(minimizer_options, new IterationSummary(), summary);
+    		  if (!summary.message[0].equalsIgnoreCase("User callback returned SOLVER_ABORT.")) {
+    			  System.err.println("In MinimizerUserAbortUpdatesSummaryMessage() summary.message[0].equalsIgnoreCase(\"User callback returned SOLVER_ABORT.\") = false");
+    		  }
+    		  else {
+    			  System.out.println("MinimizerUserAbortUpdatesSummaryMessage() passed all tests");
+    		  }
+    		}
+    	  
+    	  class SucceedingIterationCallback extends IterationCallback {
+    		  public SucceedingIterationCallback() {
+    			  super();
+    		  }
+    		   public CallbackReturnType operator(IterationSummary summary) {
+    		     return CallbackReturnType.SOLVER_TERMINATE_SUCCESSFULLY;
+    		   }
+    		 };
+
+    		 public void MinimizerUserSuccessUpdatesSummaryMessage() {
+    		   // MinimizerUserSuccessUpdatesSummaryMessage() passed all tests
+    		   SucceedingIterationCallback callback = new SucceedingIterationCallback();
+    		   SolverOptions solver_options = new SolverOptions();
+    		   solver_options.callbacks.add(callback);
+    		   MinimizerOptions minimizer_options = new MinimizerOptions(solver_options);
+    		   SolverSummary summary = new SolverSummary();
+    		   RunCallbacks(minimizer_options, new IterationSummary(), summary);
+    		   if (!summary.message[0].equalsIgnoreCase("User callback returned SOLVER_TERMINATE_SUCCESSFULLY.")) {
+    			   System.err.println("In MinimizerUserSuccessUpdatesSummaryMessage() summary.message[0].equalsIgnoreCase(\"User callback returned SOLVER_TERMINATE_SUCCESSFULLY.\") = false");
+    		   }
+    		   else {
+    			   System.out.println("MinimizerUserSuccessUpdatesSummaryMessage() passed all tests");
+    		   }
+    		 }
+
 
 }
