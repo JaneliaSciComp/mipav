@@ -10550,5 +10550,155 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     		   }
     		 }
 
+    		 public void ParameterBlockSetLocalParameterizationDiesOnSizeMismatch() {
+    			 // Gives appropriate error message:
+    			 // Invalid parameterization for parameter block. The parameter block 
+    			 // has size 3 while the parameterization has a global 
+    			 // size of 4. Did you 
+    			 // accidentally use the wrong parameter block or parameterization?
+    			  double x[] = new double[]{1.0, 2.0, 3.0};
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    			  Vector<Integer> indices = new Vector<Integer>();
+    			  indices.add(1);
+    			  SubsetParameterization subset_wrong_size = new SubsetParameterization(4, indices);
+    			  //EXPECT_DEATH_IF_SUPPORTED(
+    			      parameter_block.SetParameterization(subset_wrong_size);//, "global");
+    			}
+    		 
+    		 public void ParameterBlockSetLocalParameterizationWithSameExistingParameterization() {
+    			  // Runs without error
+    			  double x[] = new double[]{1.0, 2.0, 3.0};
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    			  Vector<Integer> indices = new Vector<Integer>();
+    			  indices.add(1);
+    			  SubsetParameterization subset = new SubsetParameterization(3, indices);
+    			  parameter_block.SetParameterization(subset);
+    			  parameter_block.SetParameterization(subset);
+    			}
+    		 
+    		 public void ParameterBlockSetLocalParameterizationDiesWhenResettingToNull() {
+    			  // Gives expected error message:
+                  // null parameterization invalid.    			 
+    			  double x[] = new double[] {1.0, 2.0, 3.0};
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    			  Vector<Integer> indices = new Vector<Integer>();
+    			  indices.add(1);
+    			  SubsetParameterization subset = new SubsetParameterization(3, indices);
+    			  parameter_block.SetParameterization(subset);
+    			  //EXPECT_DEATH_IF_SUPPORTED(parameter_block.SetParameterization(NULL), "NULL");
+    			  parameter_block.SetParameterization(null);
+    			}
+
+
+       public void ParameterBlockSetLocalParameterizationDiesWhenResettingToDifferentParameterization() {
+    	  // Gives expected error message:
+    	  // Can't re-set the local parameterization; it leads to 
+    	  // ambiguous ownership. Current local parameterization is: gov.nih.mipav.model.algorithms.CeresSolver$SubsetParameterization@6be78121
+    	  double x[] = new double[]{1.0, 2.0, 3.0};
+    	  ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    	  Vector<Integer> indices = new Vector<Integer>();
+    	  indices.add(1);
+    	  SubsetParameterization subset = new SubsetParameterization(3, indices);
+    	  parameter_block.SetParameterization(subset);
+    	  SubsetParameterization subset_different = new SubsetParameterization(3, indices);
+    	  //EXPECT_DEATH_IF_SUPPORTED(
+    	      //parameter_block.SetParameterization(&subset_different), "re-set");
+    	  parameter_block.SetParameterization(subset_different);
+    	}
+
+       public void ParameterBlockSetLocalParameterizationDiesOnNullParameterization() {
+    	   // Gives expected error message:
+    	   // null parameterization invalid.
+    	   double x[] = new double[]{1.0, 2.0, 3.0};
+    	   ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    	   Vector<Integer> indices = new Vector<Integer>();
+    	   indices.add(1);
+    	   //EXPECT_DEATH_IF_SUPPORTED(parameter_block.SetParameterization(NULL), "NULL");
+    	   parameter_block.SetParameterization(null);
+    	 }
+       
+       public void ParameterBlockSetParameterizationDiesOnZeroLocalSize() {
+    	   // Gives expected error message:
+    	   // Invalid parameterization. Parameterizations must have a positive 
+    	   // dimensional tangent space.
+    	   double x[] = new double[]{1.0, 2.0, 3.0};
+    	   ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    	   Vector<Integer> indices = new Vector<Integer>();
+    	   indices.add(0);
+    	   indices.add(1);
+    	   indices.add(2);
+    	   SubsetParameterization subset = new SubsetParameterization(3, indices);
+    	   //EXPECT_DEATH_IF_SUPPORTED(parameter_block.SetParameterization(&subset),
+    	                             //"positive dimensional tangent");
+    	   parameter_block.SetParameterization(subset);
+    	 }
+
+       public void ParameterBlockSetLocalParameterizationAndNormalOperation() {
+    	   // ParameterBlockSetLocalParameterizationAndNormalOperation() passed all tests
+    	   boolean passed = true;
+    	   int row, col;
+    	   double x[] = new double[]{ 1.0, 2.0, 3.0 };
+    	   ParameterBlock parameter_block = new ParameterBlock(x, 3, -1);
+    	   Vector<Integer> indices = new Vector<Integer>();
+    	   indices.add(1);
+    	   SubsetParameterization subset = new SubsetParameterization(3, indices);
+    	   parameter_block.SetParameterization(subset);
+
+    	   // Ensure the local parameterization jacobian result is correctly computed.
+    	   //ConstMatrixRef local_parameterization_jacobian(
+    	       //parameter_block.LocalParameterizationJacobian(),
+    	       //3,
+    	       //2);
+    	   double local_parameterization_jacobian[][] = new double[3][2];
+    	   for (row = 0; row < 3; row++) {
+    		   for (col = 0; col < 2; col++) {
+    			   local_parameterization_jacobian[row][col] = parameter_block.LocalParameterizationJacobian()[row][col];
+    		   }
+    	   }
+    	   if(local_parameterization_jacobian[0][0] != 1.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() local_parameterization_jacobian[0][0] != 1.0)");
+    		   passed = false;
+    	   }
+    	   if(local_parameterization_jacobian[0][1] != 0.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() local_parameterization_jacobian[0][1] != 0.0)");
+    		   passed = false;
+    	   }
+    	   if(local_parameterization_jacobian[1][0] != 0.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() local_parameterization_jacobian[1][0] != 0.0)");
+    		   passed = false;
+    	   }
+    	   if(local_parameterization_jacobian[1][1] != 0.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() local_parameterization_jacobian[1][1] != 0.0)");
+    		   passed = false;
+    	   }
+    	   if(local_parameterization_jacobian[2][0] != 0.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() local_parameterization_jacobian[2][0] != 0.0)");
+    		   passed = false;
+    	   }
+    	   if(local_parameterization_jacobian[2][1] != 1.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() local_parameterization_jacobian[2][1] != 1.0)");
+    		   passed = false;
+    	   }
+
+    	   // Check that updating works as expected.
+    	   double x_plus_delta[] = new double[3];
+    	   double delta[] = new double[]{ 0.5, 0.3 };
+    	   parameter_block.Plus(x, delta, x_plus_delta);
+    	   if (x_plus_delta[0] != 1.5) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() x_plus_delta[0] != 1.5");
+    		   passed = false;
+    	   }
+    	   if (x_plus_delta[1] != 2.0) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() x_plus_delta[1] != 2.0");
+    		   passed = false;
+    	   }
+    	   if (x_plus_delta[2] != 3.3) {
+    		   System.err.println("In ParameterBlockSetLocalParameterizationAndNormalOperation() x_plus_delta[2] != 3.3");
+    		   passed = false;
+    	   }
+    	   if (passed) {
+    		   System.out.println("ParameterBlockSetLocalParameterizationAndNormalOperation() passed all tests");
+    	   }
+    	 }
 
 }
