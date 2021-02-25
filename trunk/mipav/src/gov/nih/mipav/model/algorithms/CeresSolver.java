@@ -15640,6 +15640,41 @@ public abstract class CeresSolver {
 		  }
 		} // class LineSearchMinimizer
 		
+		public boolean RunCallbacks(MinimizerOptions options,
+                IterationSummary iteration_summary,
+                SolverSummary summary) {
+			final boolean is_not_silent = !options.is_silent;
+			CallbackReturnType status = CallbackReturnType.SOLVER_CONTINUE;
+			int i = 0;
+			while (status == CallbackReturnType.SOLVER_CONTINUE && i < options.callbacks.size()) {
+			status = (options.callbacks.get(i)).operator(iteration_summary);
+			++i;
+			}
+			switch (status) {
+			case SOLVER_CONTINUE:
+			return true;
+			case SOLVER_TERMINATE_SUCCESSFULLY:
+			summary.termination_type = TerminationType.USER_SUCCESS;
+			summary.message[0] =
+			"User callback returned SOLVER_TERMINATE_SUCCESSFULLY.";
+			if (is_not_silent && (1 <= MAX_LOG_LEVEL)) {
+			    Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+			return false;
+			case SOLVER_ABORT:
+			summary.termination_type = TerminationType.USER_FAILURE;
+			summary.message[0] = "User callback returned SOLVER_ABORT.";
+			if (is_not_silent && (1 <= MAX_LOG_LEVEL)) {
+			    Preferences.debug("Terminating: " + summary.message[0] + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+			return false;
+			default:
+			System.err.println("Unknown type of user callback status");
+			}
+			return false;
+			}
+
+		
 		// Options struct to control the behaviour of the Minimizer. Please
 				// see solver.h for detailed information about the meaning and
 				// default values of each of these parameters.
