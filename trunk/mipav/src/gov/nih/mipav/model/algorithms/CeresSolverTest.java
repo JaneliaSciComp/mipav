@@ -10935,5 +10935,228 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				  System.out.println("ParameterBlockPlusWithBoundsConstraints() passed all tests");
     			  }
     			}
+    		
+    		public void GraphEmptyGraph() {
+    			  // GraphEmptyGraph() passed all tests
+    			  Graph<Integer> graph = new Graph<Integer>();
+    			  if (graph.vertices().size() != 0) {
+    				  System.err.println("In GraphEmptyGraph() graph.vertices().size() != 0");
+    			  }
+    			  else {
+    				  System.out.println("GraphEmptyGraph() passed all tests");
+    			  }
+    			}
+
+    		public void GraphAddVertexAndEdge() {
+    			  // GraphAddVertexAndEdge() passed all tests
+    			  boolean passed = true;
+    			  Graph<Integer> graph = new Graph<Integer>();
+    			  graph.AddVertex(0);
+    			  graph.AddVertex(1);
+    			  graph.AddEdge(0, 1);
+
+    			  final HashSet<Integer> vertices = graph.vertices();
+    			  if (vertices.size() != 2) {
+    				  System.err.println("In GraphAddVertexAndEdge() vertices.size() != 2");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(0).size() != 1) {
+    				  System.err.println("In GraphAddVertexAndEdge() graph.Neighbors(0).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(1).size() != 1) {
+    				  System.err.println("In GraphAddVertexAndEdge() graph.Neighbors(1).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("GraphAddVertexAndEdge() passed all tests");
+    			  }
+    			}
+    		
+    		public void GraphAddVertexIdempotence() {
+    			  // GraphAddVertexIdempotence() passed all tests
+    			  boolean passed = true;
+    			  Graph<Integer> graph = new Graph<Integer>();
+    			  graph.AddVertex(0);
+    			  graph.AddVertex(1);
+    			  graph.AddEdge(0, 1);
+
+    			  final HashSet<Integer> vertices = graph.vertices();
+
+    			  if (vertices.size() != 2) {
+    				  System.err.println("In GraphAddVertexIdempotence() vertices.size() != 2");
+    				  passed = false;
+    			  }
+
+    			  // Try adding the vertex again with a new weight.
+    			  graph.AddVertex(0);
+    			  if (vertices.size() != 2) {
+    				  System.err.println("In GraphAddVertexIdempotence() vertices.size() != 2");
+    				  passed = false;
+    			  }
+
+    			  // Rest of the graph remains the same.
+    			  if (graph.Neighbors(0).size() != 1) {
+    				  System.err.println("In GraphAddVertexIdempotence() graph.Neighbors(0).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(1).size() != 1) {
+    				  System.err.println("In GraphAddVertexIdempotence() graph.Neighbors(1).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("GraphAddVertexIdempotence() passed all tests");
+    			  }
+    			}
+
+    		public void GraphDieOnNonExistentVertex() {
+    			  // Gives expected error message:
+    			  // In public HashSet<Vertex> Neighbors HashMap edges_ does not have key vertex
+    			  Graph<Integer> graph = new Graph<Integer>();
+    			  graph.AddVertex(0);
+    			  graph.AddVertex(1);
+    			  graph.AddEdge(0, 1);
+
+    			  //EXPECT_DEATH_IF_SUPPORTED(graph.Neighbors(2), "key not found");
+    			  graph.Neighbors(2);
+    	    }
+    		
+    		public void WeightedGraphEmptyGraph() {
+    			  // WeightedGraphEmptyGraph() passed all tests
+    			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+    			  if (graph.vertices().size() != 0) {
+    				  System.err.println("In WeightedGraphEmptyGraph() graph.vertices().size() != 0");
+    			  }
+    			  else {
+    				  System.out.println("WeightedGraphEmptyGraph() passed all tests");
+    			  }
+    			}
+    		
+    		public void WeightedGraphAddVertexAndEdge() {
+    			  // WeightedGraphAddVertexAndEdge() passed all tests
+    			  boolean passed = true;
+    			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+    			  graph.AddVertex(0, 1.0);
+    			  graph.AddVertex(1, 2.0);
+    			  graph.AddEdge(0, 1, 0.5);
+
+    			  final HashSet<Integer> vertices = graph.vertices();
+    			  if (vertices.size() != 2) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() vertices.size() != 2");
+    				  passed = false;
+    			  }
+    			  if (graph.VertexWeight(0) != 1.0) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() graph.VertexWeight(0) != 1.0");
+    				  passed = false;
+    			  }
+    			  if (graph.VertexWeight(1) != 2.0) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() graph.VertexWeight(1) != 2.0");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(0).size() != 1) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() graph.Neighbors(0).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(1).size() != 1) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() graph.Neighbors(1).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (graph.EdgeWeight(0, 1) != 0.5) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() graph.EdgeWeight(0, 1) != 0.5");
+    				  passed = false;
+    			  }
+    			  if (graph.EdgeWeight(1, 0) != 0.5) {
+    				  System.err.println("In WeightedGraphAddVertexAndEdge() graph.EdgeWeight(1, 0) != 0.5");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("WeightedGraphAddVertexAndEdge() passed all tests");
+    			  }
+    			}
+
+    		public void WeightedGraphAddVertexIdempotence() {
+    			  // WeightedGraphAddVertexIdempotence() passed all tests
+    			  boolean passed = true;
+    			  WeightedGraph<Integer> graph = new WeightedGraph();
+    			  graph.AddVertex(0, 1.0);
+    			  graph.AddVertex(1, 2.0);
+    			  graph.AddEdge(0, 1, 0.5);
+
+    			  final HashSet<Integer> vertices = graph.vertices();
+
+    			  if (vertices.size() != 2) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() vertices.size() != 2");
+    				  passed = false;
+    			  }
+
+    			  // Try adding the vertex again with a new weight.
+    			  graph.AddVertex(0, 3.0);
+    			  if (vertices.size() != 2) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() vertices.size() != 2");
+    				  passed = false;
+    			  }
+
+    			  // The vertex weight is reset.
+    			  if (graph.VertexWeight(0) != 3.0) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() graph.VertexWeight(0) != 3.0");
+    				  passed = false;
+    			  }
+
+    			  // Rest of the graph remains the same.
+    			  if (graph.VertexWeight(1) != 2.0) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() graph.VertexWeight(1) != 2.0");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(0).size() != 1) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() graph.Neighbors(0).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (graph.Neighbors(1).size() != 1) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() graph.Neighbors(1).size() != 1");
+    				  passed = false;
+    			  }
+    			  if (graph.EdgeWeight(0, 1) != 0.5) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() graph.EdgeWeight(0, 1) != 0.5");
+    				  passed = false;
+    			  }
+    			  if (graph.EdgeWeight(1, 0) != 0.5) {
+    				  System.err.println("In WeightedGraphAddVertexIdempotence() graph.EdgeWeight(1, 0) != 0.5");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("WeightedGraphAddVertexIdempotence() passed all tests");
+    			  }   			  
+    			}
+
+    		public void WeightedGraphDieOnNonExistentVertex() {
+    			  // Gives expected error messages:
+    			  // !vertex_weights_ containsKey(vertex) in WeightedGraph.VertexWeight
+    			  // In WeightedGraph Neighbors edges_ does not contain key vertex
+    			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+    			  graph.AddVertex(0, 1.0);
+    			  graph.AddVertex(1, 2.0);
+    			  graph.AddEdge(0, 1, 0.5);
+
+    			  //EXPECT_DEATH_IF_SUPPORTED(graph.VertexWeight(2), "key not found");
+    			  //EXPECT_DEATH_IF_SUPPORTED(graph.Neighbors(2), "key not found");
+    			  graph.VertexWeight(2);
+    			  graph.Neighbors(2);
+    			}
+    		
+    		public void WeightedGraphNonExistentEdge() {
+    			  // WeightedGraphNonExistentEdge() passed all tests
+    			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+    			  graph.AddVertex(0, 1.0);
+    			  graph.AddVertex(1, 2.0);
+    			  graph.AddEdge(0, 1, 0.5);
+
+    			  // Default value for non-existent edges is 0.
+    			  if (graph.EdgeWeight(2, 3) != 0) {
+    				  System.err.println("In WeightedGraphNonExistentEdge() graph.EdgeWeight(2, 3) != 0");
+    			  }
+    			  else {
+    				  System.out.println("WeightedGraphNonExistentEdge() passed all tests");
+    			  }
+    		}
 
 }
