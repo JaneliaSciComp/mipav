@@ -31,6 +31,7 @@ import gov.nih.mipav.model.structures.jama.LinearEquations;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.model.structures.jama.SVD;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.renderer.WildMagic.Poisson.Octree.Pair;
 
 /**
  * This is a port of the C++ files in ceres-solver-1.14.0 under the BSD license:
@@ -1883,6 +1884,190 @@ public abstract class CeresSolver {
 		}
 		return true;
 	}
+	
+	class Pair<T,U>
+	{
+	    public T first;
+	    public U second;
+
+	    public Pair(T t, U u)
+	    {
+	        first = t;
+	        second = u;
+	    }
+	    
+	    public T getFirst()
+	    {
+	        return first; 
+	    }
+
+	    public U getSecond()
+	    {
+	        return second; 
+	    }
+
+	    
+	    public boolean equals(Object obj) {
+	      if (obj == null) return false;
+	      if ((obj.getClass() != this.getClass())) { //|| (obj.hashCode() != this.hashCode())) {
+	        return false;
+	      }
+	      
+	      return (this.getFirst().equals(((Pair) obj).getFirst()) && this.getSecond().equals(((Pair) obj).getSecond()));
+	    }
+	    
+	    /**
+	     * Define a hash code based on the first and second's hash code
+	     */
+	    public int hashCode() {
+	      return first.hashCode() ^ second.hashCode();
+	    }
+	    
+	    public String toString() {
+	      return "Pair(" + first + ", " + second + ")";
+	    }
+	  
+	} 
+	
+	class WeightedGraph<Vertex> {
+		private HashSet<Vertex> vertices_;
+		private HashMap<Vertex, HashSet<Vertex>> edges_;
+		private HashMap<Vertex, Double> vertex_weights_;
+		private HashMap<Pair<Vertex, Vertex>, Double> edge_weights_;
+        
+		public WeightedGraph() {
+			vertices_ = new HashSet<Vertex>();
+			edges_ = new HashMap<Vertex, HashSet<Vertex>>();
+			vertex_weights_ = new HashMap<Vertex, Double>();
+			edge_weights_ = new HashMap<Pair<Vertex, Vertex>, Double>();
+		}
+		
+		  // Add a weighted vertex. If the vertex already exists in the graph,
+		  // its weight is set to the new weight.
+		  public void AddVertex(Vertex vertex, double weight) {
+			  if (!vertices_.contains(vertex)) {
+		      vertices_.add(vertex);
+		      edges_.put(vertex, new HashSet<Vertex>());
+		    }
+		    vertex_weights_.put(vertex, weight);
+		  }
+		  
+		  // Uses weight = 1.0. If vertex already exists, its weight is set to
+		  // 1.0.
+		  public void AddVertex(Vertex vertex) {
+		    AddVertex(vertex, 1.0);
+		  }
+		  
+		  public boolean RemoveVertex(Vertex vertex) {
+			  if (!vertices_.contains(vertex)) {
+			      return false;
+			  }
+			    vertices_.remove(vertex);
+			    vertex_weights_.remove(vertex);
+			    HashSet<Vertex> sinks = edges_.get(vertex);
+			    for (Vertex v: sinks) {
+			    	if (Neighbors(vertex).size() < Neighbors(v).size()) {
+			    		edge_weights_.remove(new Pair(vertex, v));
+			    	}
+			    	else {
+			    		edge_weights_.remove(new Pair(v, vertex));
+			    	}
+			    	edges_.get(v).remove(vertex);
+			    }
+
+			    edges_.remove(vertex);
+			    return true;
+			  }
+		  
+		  // Add a weighted edge between the vertex1 and vertex2. Calling
+		  // AddEdge on a pair of vertices which do not exist in the graph yet
+		  // will result in undefined behavior.
+		  //
+		  // It is legal to call this method repeatedly for the same set of
+		  // vertices.
+		  public void AddEdge(Vertex vertex1, Vertex vertex2, double weight) {
+			  if (!vertices_.contains(vertex1)) {
+					System.err.println("!vertices_contains(vertex1) in WeightedGraph.AddEdge");
+					return;
+				}
+				if (!vertices_.contains(vertex2)) {
+					System.err.println("!vertices_contains(vertex2) in WeightedGraph.AddEdge");
+					return;
+				}
+
+				if (edges_.get(vertex1).add(vertex2)) {
+					edges_.get(vertex2).add(vertex1);
+				}
+		    
+
+				// Equal Integer values cannot be ordered with ids like in C++ so must put same weight on both orderings
+				//if (Neighbors(vertex1).size() < Neighbors(vertex2).size()) {
+		      edge_weights_.put(new Pair(vertex1, vertex2), weight);
+		    //} else {
+		      edge_weights_.put(new Pair(vertex2, vertex1), weight);
+		    //}
+		  }
+		  
+		  // Uses weight = 1.0.
+		  public void AddEdge(Vertex vertex1, Vertex vertex2) {
+		    AddEdge(vertex1, vertex2, 1.0);
+		  }
+		  
+		  // Calling VertexWeight on a vertex not in the graph will result in
+		  // undefined behavior.
+		  public double VertexWeight(Vertex vertex) {
+			  if (!vertex_weights_.containsKey(vertex)) {
+					System.err.println("!vertex_weights_ containsKey(vertex) in WeightedGraph.VertexWeight");
+					return Double.NaN;
+				}
+		    return vertex_weights_.get(vertex);
+		  }
+		  
+		// Calling EdgeWeight on a pair of vertices where either one of the
+		  // vertices is not present in the graph will result in undefined
+		  // behaviour. If there is no edge connecting vertex1 and vertex2,
+		  // the edge weight is zero.
+		  public double EdgeWeight(Vertex vertex1, Vertex vertex2) {
+			  // Equal Integer values cannot be ordered as in C++
+			  //if (Neighbors(vertex1).size() < Neighbors(vertex2).size()) {
+				  if (edge_weights_.containsKey(new Pair(vertex1, vertex2))) {
+					  return edge_weights_.get(new Pair(vertex1, vertex2));
+				  }
+				  else {
+					  return 0.0;
+				  }
+				  
+		      
+		    //} else {
+		    	//if (edge_weights_.containsKey(new Pair(vertex2, vertex1))) {
+					  //return edge_weights_.get(new Pair(vertex2, vertex1));
+				  //}
+				  //else {
+					  //return 0.0;
+				  //}
+		      
+		    //}
+		  }
+		  
+		// Calling Neighbors on a vertex not in the graph will result in
+		  // undefined behaviour.
+		  public HashSet<Vertex> Neighbors(Vertex vertex) {
+			if (!edges_.containsKey(vertex)) {
+				System.err.println("In WeightedGraph Neighbors edges_ does not contain key vertex");
+				return null;
+			}
+		    return edges_.get(vertex);
+		  }
+		  
+		  public HashSet<Vertex> vertices() {
+			    return vertices_;
+	      }
+		  
+		  public double InvalidWeight() {
+			    return Double.NaN;
+		  }
+
+	}
 
 	// A unweighted undirected graph templated over the vertex ids. Vertex
 	// should be hashable.
@@ -1906,6 +2091,7 @@ public abstract class CeresSolver {
 		    if (!vertices_.contains(vertex)) {
 		      return false;
 		    }
+		    
 
 		    vertices_.remove(vertex);
 		    HashSet<Vertex> sinks = edges_.get(vertex);
