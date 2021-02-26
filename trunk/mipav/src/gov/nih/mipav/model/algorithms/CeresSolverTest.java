@@ -10700,5 +10700,240 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     		   System.out.println("ParameterBlockSetLocalParameterizationAndNormalOperation() passed all tests");
     	   }
     	 }
+       
+       class TestParameterization extends LocalParameterization {
+    		 public TestParameterization() {
+    			 super();
+    		 }
+    		  public boolean Plus(double[] x,
+    		                    double[] delta,
+    		                    double[] x_plus_delta) {
+    		    System.err.println("Shouldn't get called.");
+    		    return true;
+    		  }
+    		  
+    		  public boolean Plus(Vector<Double> x, int x_index,
+	                    Vector<Double> delta, int delta_index,
+	                    Vector<Double> x_plus_delta, int x_plus_delta_index) {
+			    System.err.println("Shouldn't get called.");
+			    return true;
+			  }
+    		  public boolean ComputeJacobian(double[] x,
+    		                               double[] jacobian) {
+    		    jacobian[0] = x[0] * 2;
+    		    return true;
+    		  }
+    		  
+    		  public boolean ComputeJacobian(double[] x,
+                      double[][] jacobian) {
+				jacobian[0][0] = x[0] * 2;
+				return true;
+			  }
+    		  
+    		  public boolean ComputeJacobian(double[] x, int x_offset, 
+                      double[][] jacobian) {
+				jacobian[0][0] = x[x_offset] * 2;
+				return true;
+			  }
+
+    		  public int GlobalSize() { return 1; }
+    		  public int LocalSize() { return 1; }
+    		};
+    		
+    		public void ParameterBlockSetStateUpdatesLocalParameterizationJacobian() {
+    			  // ParameterBlockSetStateUpdatesLocalParameterizationJacobian() passed all tests
+    			  boolean passed = true;
+    			  TestParameterization test_parameterization = new TestParameterization();
+    			  double x[] = new double[]{ 1.0 };
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 1, -1, test_parameterization);
+
+    			  if (parameter_block.LocalParameterizationJacobian()[0][0] != 2.0) {
+    				  System.err.println("In ParameterBlockSetStateUpdatesLocalParameterizationJacobian() parameter_block.LocalParameterizationJacobian()[0][0] != 2.0");
+    				  passed = false;
+    			  }
+
+    			  x[0] = 5.5;
+    			  parameter_block.SetState(x,0);
+    			  if (parameter_block.LocalParameterizationJacobian()[0][0] != 11.0) {
+    				  System.err.println("In ParameterBlockSetStateUpdatesLocalParameterizationJacobian() parameter_block.LocalParameterizationJacobian()[0][0] != 11.0");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ParameterBlockSetStateUpdatesLocalParameterizationJacobian() passed all tests");
+    			  }
+    			}
+    		
+    		public void ParameterBlockPlusWithNoLocalParameterization() {
+    			  // ParameterBlockPlusWithNoLocalParameterization() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[]{ 1.0, 2.0 };
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 2, -1);
+
+    			  double delta[] = new double[]{ 0.2, 0.3 };
+    			  double x_plus_delta[] = new double[2];
+    			  parameter_block.Plus(x, delta, x_plus_delta);
+    			  if (x_plus_delta[0] != 1.2) {
+    				  System.err.println("In ParameterBlockPlusWithNoLocalParameterization() x_plus_delta[0] != 1.2");
+    				  passed = false;
+    			  }
+    			  if (x_plus_delta[1] != 2.3) {
+    				  System.err.println("In ParameterBlockPlusWithNoLocalParameterization() x_plus_delta[1] != 2.3");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ParameterBlockPlusWithNoLocalParameterization() passed all tests");
+    			  }
+    			}
+    		
+    		// Stops computing the jacobian after the first time.
+    		class BadLocalParameterization extends LocalParameterization {
+    			private int calls_;
+    		 public BadLocalParameterization() {
+    			 super();
+    		     calls_ = 0;
+    		  }
+
+    		  public boolean Plus(double[] x,
+    		                    double[] delta,
+    		                    double[] x_plus_delta) {
+    			int i;
+    			for (i = 0; i < x.length; i++) {
+    		     x_plus_delta[i] = x[i] + delta[i];
+    			}
+    		    return true;
+    		  }
+    			
+    			public boolean Plus(Vector<Double> x, int x_index,
+	                    Vector<Double> delta, int delta_index,
+	                    Vector<Double> x_plus_delta, int x_plus_delta_index) {
+					int i;
+					for (i = 0; i < x.size()-x_index; i++) {
+				     x_plus_delta.set(x_plus_delta_index+i,x.get(x_index+i) + delta.get(delta_index+i));
+					}
+				    return true;
+				  }
+
+    		  public boolean ComputeJacobian(double[] x, double[] jacobian) {
+    		    if (calls_ == 0) {
+    		      jacobian[0] = 0;
+    		    }
+    		    ++calls_;
+    		    return true;
+    		  }
+    		  
+    		  public boolean ComputeJacobian(double[] x, double[][] jacobian) {
+      		    if (calls_ == 0) {
+      		      jacobian[0][0] = 0;
+      		    }
+      		    ++calls_;
+      		    return true;
+      		  }
+    		  
+    		  public boolean ComputeJacobian(double[] x, int x_index, double[][] jacobian) {
+        		    if (calls_ == 0) {
+        		      jacobian[0][0] = 0;
+        		    }
+        		    ++calls_;
+        		    return true;
+        		  }
+
+    		  public int GlobalSize() { return 1;}
+    		  public int LocalSize()  { return 1;}
+
+    		 
+    		};
+
+    		public void ParameterBlockDetectBadLocalParameterization() {
+    			  // ParameterBlockDetectBadLocalParameterization() passed all tests
+    			  double x[] = new double[] {1};
+    			  BadLocalParameterization bad_parameterization = new BadLocalParameterization();
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 1, -1, bad_parameterization);
+    			  double y[] = new double[] {2};
+    			  if (parameter_block.SetState(y, 0)) {
+    				  System.err.println("In ParameterBlockDetectBadLocalParameterization() parameter_block.SetState(y, 0) = true");
+    			  }
+    			  else {
+    				  System.out.println("ParameterBlockDetectBadLocalParameterization() passed all tests");
+    			  }
+    			}
+
+    		public void ParameterBlockDefaultBounds() {
+    			  // ParameterBlockDefaultBounds() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[2];
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 2, -1, null);
+    			  if (parameter_block.UpperBoundForParameter(0) != Double.MAX_VALUE) {
+    				  System.err.println("In ParameterBlockDefaultBounds() parameter_block.UpperBoundForParameter(0) != Double.MAX_VALUE");
+    				  passed = false;
+    			  }
+    			  if (parameter_block.UpperBoundForParameter(1) != Double.MAX_VALUE) {
+    				  System.err.println("In ParameterBlockDefaultBounds() parameter_block.UpperBoundForParameter(1) != Double.MAX_VALUE");
+    				  passed = false;
+    			  }
+    			  if (parameter_block.LowerBoundForParameter(0) != -Double.MAX_VALUE) {
+    				  System.err.println("In ParameterBlockDefaultBounds() parameter_block.LowerBoundForParameter(0) != -Double.MAX_VALUE");
+    				  passed = false;
+    			  }
+    			  if (parameter_block.LowerBoundForParameter(1) != -Double.MAX_VALUE) {
+    				  System.err.println("In ParameterBlockDefaultBounds() parameter_block.LowerBoundForParameter(1) != -Double.MAX_VALUE");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ParameterBlockDefaultBounds() passed all tests");
+    			  }
+    			}
+
+    		public void ParameterBlockSetBounds() {
+    			  // ParameterBlockSetBounds() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[2];
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 2, -1, null);
+    			  parameter_block.SetLowerBound(0, 1);
+    			  parameter_block.SetUpperBound(1, 1);
+
+    			  if (parameter_block.LowerBoundForParameter(0) != 1.0) {
+    				  System.err.println("In ParameterBlockSetBounds() parameter_block.LowerBoundForParameter(0) != 1.0");
+    				  passed = false;
+    			  }
+    			  if (parameter_block.LowerBoundForParameter(1) != -Double.MAX_VALUE) {
+    				  System.err.println("In ParameterBlockSetBounds() parameter_block.LowerBoundForParameter(1) != -Double.MAX_VALUE");
+    				  passed = false;
+    			  }
+
+    			  if (parameter_block.UpperBoundForParameter(0) != Double.MAX_VALUE) {
+    				  System.err.println("In ParameterBlockSetBounds() parameter_block.UpperBoundForParameter(0) != Double.MAX_VALUE");
+    				  passed = false;
+    			  }
+    			  if (parameter_block.UpperBoundForParameter(1) != 1.0) {
+    				  System.err.println("In ParameterBlockSetBounds() parameter_block.UpperBoundForParameter(1) != 1.0");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ParameterBlockSetBounds() passed all tests");
+    			  }
+    			}
+
+    		public void ParameterBlockPlusWithBoundsConstraints() {
+    			  // ParameterBlockPlusWithBoundsConstraints() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[]{1.0, 0.0};
+    			  double delta[] = new double[]{2.0, -10.0};
+    			  ParameterBlock parameter_block = new ParameterBlock(x, 2, -1, null);
+    			  parameter_block.SetUpperBound(0, 2.0);
+    			  parameter_block.SetLowerBound(1, -1.0);
+    			  double x_plus_delta[] = new double[2];
+    			  parameter_block.Plus(x, delta, x_plus_delta);
+    			  if (x_plus_delta[0] != 2.0) {
+    				  System.err.println("In ParameterBlockPlusWithBoundsConstraints() x_plus_delta[0] != 2.0");
+    				  passed = false;
+    			  }
+    			  if (x_plus_delta[1] != -1.0) {
+    				  System.err.println("In ParameterBlockPlusWithBoundsConstraints() x_plus_delta[1] != -1.0");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ParameterBlockPlusWithBoundsConstraints() passed all tests");
+    			  }
+    			}
 
 }
