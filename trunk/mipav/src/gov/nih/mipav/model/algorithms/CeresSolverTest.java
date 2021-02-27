@@ -11158,5 +11158,233 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				  System.out.println("WeightedGraphNonExistentEdge() passed all tests");
     			  }
     		}
+    		
+    		// Cannot do evaluation_callback_test.cc because Java does not allow the multiple inheritance used:
+    		// Generally multiple inheritance is a terrible idea, but in this (test)
+    		// case it makes for a relatively elegant test implementation.
+    		//struct WigglyBowlCostFunctionAndEvaluationCallback :
+    		      //SizedCostFunction<2, 2>,
+    		      //EvaluationCallback 
+    		
+    		// The following three classes are for the purposes of defining
+    		// function signatures. They have dummy Evaluate functions.
+
+    		// Trivial cost function that accepts a single argument.
+    		class UnaryCostFunction extends CostFunction {
+    		 public UnaryCostFunction(int num_residuals, int parameter_block_size) {
+    			super();
+    		    set_num_residuals(num_residuals);
+    		    mutable_parameter_block_sizes().add(parameter_block_size);
+    		  }
+
+    		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+    		    for (int i = 0; i < num_residuals(); ++i) {
+    		      residuals[i] = 1;
+    		    }
+    		    return true;
+    		  }
+    		 
+    		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+     		    for (int i = 0; i < num_residuals(); ++i) {
+     		      residuals[i] = 1;
+     		    }
+     		    return true;
+     		  }
+    		};
+    		
+    		// Trivial cost function that accepts two arguments.
+    		class BinaryCostFunction extends CostFunction {
+    		 public BinaryCostFunction(int num_residuals,
+    		                     int parameter_block1_size,
+    		                     int parameter_block2_size) {
+    			super();
+    		    set_num_residuals(num_residuals);
+    		    mutable_parameter_block_sizes().add(parameter_block1_size);
+    		    mutable_parameter_block_sizes().add(parameter_block2_size);
+    		  }
+
+    		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+    		    for (int i = 0; i < num_residuals(); ++i) {
+    		      residuals[i] = 2;
+    		    }
+    		    return true;
+    		  }
+    		 
+    		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+     		    for (int i = 0; i < num_residuals(); ++i) {
+     		      residuals[i] = 2;
+     		    }
+     		    return true;
+     		  }
+    		};
+    		
+    		// Trivial cost function that accepts three arguments.
+    		class TernaryCostFunction2 extends CostFunction {
+    		 public TernaryCostFunction2(int num_residuals,
+    		                      int parameter_block1_size,
+    		                      int parameter_block2_size,
+    		                      int parameter_block3_size) {
+    			super();
+    		    set_num_residuals(num_residuals);
+    		    mutable_parameter_block_sizes().add(parameter_block1_size);
+    		    mutable_parameter_block_sizes().add(parameter_block2_size);
+    		    mutable_parameter_block_sizes().add(parameter_block3_size);
+    		  }
+
+    		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+    		    for (int i = 0; i < num_residuals(); ++i) {
+    		      residuals[i] = 3;
+    		    }
+    		    return true;
+    		  }
+    		 
+    		 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+     		    for (int i = 0; i < num_residuals(); ++i) {
+     		      residuals[i] = 3;
+     		    }
+     		    return true;
+     		  }
+    		};
+
+    		public void ProblemAddResidualWithNullCostFunctionDies() {
+    			  // Gives expected error message:
+    			  // cost_function is null in AddResidualBlock
+    			  double x[] = new double[3];
+    			  double y[] = new double[4];
+    			  double z[] = new double[5];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddParameterBlock(x, 3);
+    			  problem.AddParameterBlock(y, 4);
+    			  problem.AddParameterBlock(z, 5);
+
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddResidualBlock(NULL, NULL, x),
+    			                            //"'cost_function' Must be non NULL");
+    			  problem.AddResidualBlock(null, null, x);
+    			}
+
+    		public void ProblemAddResidualWithIncorrectNumberOfParameterBlocksDies() {
+    			 // Gives expected error message:
+    			 // parameter_blocks.size() != cost_function.parameter_block_sizes().size() in AddResidualBlock
+    		     // parameter_blocks_size() = 2
+    		     // cost_function.parameter_block_sizes().size() = 1
+    			 double x[] = new double[3];
+   			     double y[] = new double[4];
+   			     double z[] = new double[5];
+
+   			     ProblemImpl problem = new ProblemImpl();
+   			     problem.AddParameterBlock(x, 3);
+   			     problem.AddParameterBlock(y, 4);
+   			     problem.AddParameterBlock(z, 5);
+
+    			  // UnaryCostFunction takes only one parameter, but two are passed.
+    			  //EXPECT_DEATH_IF_SUPPORTED(
+    			      problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x, y);
+    			      //"parameter_blocks.size");
+    			}
+
+    		public void ProblemAddResidualWithDifferentSizesOnTheSameVariableDies() {
+    			  // Gives expected error message:
+    			  // Tried adding a parameter block with the same double[], 
+    			  //  twice, but with different block sizes. Original 
+    			  // size was 3 but new size is 4
+    			  double x[] = new double[3];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x);
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddResidualBlock(
+    			                                //new UnaryCostFunction(
+    			                                   // 2, 4 /* 4 != 3 */), NULL, x),
+    			                            //"different block sizes");
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 4), null, x);
+    			}
+    		
+    		public void ProblemAddResidualWithDuplicateParametersDies() {
+    			  // Gives expected error messages:
+    			  // Duplicate parameter blocks in a residual parameter are not allowed.
+    			  // Parameter blocks 0 and 1 are duplicates.
+    			  // Duplicate parameter blocks in a residual parameter are not allowed.
+    			  // Parameter blocks 0 and 2 are duplicates.
+
+    			  double x[] = new double[3];
+    			  double z[] = new double[5];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddResidualBlock(
+    			                                //new BinaryCostFunction(2, 3, 3), NULL, x, x),
+    			                            //"Duplicate parameter blocks");
+    			  problem.AddResidualBlock(new BinaryCostFunction(2, 3, 3), null, x, x);
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddResidualBlock(
+    			                                //new TernaryCostFunction(1, 5, 3, 5),
+    			                                //NULL, z, x, z),
+    			                            //"Duplicate parameter blocks");
+    			  problem.AddResidualBlock(new TernaryCostFunction2(1, 5, 3, 5), null, z, x, z);
+    			}
+    		
+    		public void ProblemAddResidualWithIncorrectSizesOfParameterBlockDies() {
+    			 // Gives expected error message:
+    			 // Tried adding a parameter block with the same double[], 
+    			 // twice, but with different block sizes. Original 
+    			 // size was 5 but new size is 4
+    			 double x[] = new double[3];
+  			     double y[] = new double[4];
+  			     double z[] = new double[5];
+
+  			     ProblemImpl problem = new ProblemImpl();
+  			     problem.AddParameterBlock(x, 3);
+  			     problem.AddParameterBlock(y, 4);
+  			     problem.AddParameterBlock(z, 5);
+    			  
+    			  // The cost function expects the size of the second parameter, z, to be 4
+    			  // instead of 5 as declared above. This is fatal.
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddResidualBlock(
+    			      //new BinaryCostFunction(2, 3, 4), NULL, x, z),
+    			               //"different block sizes");
+  			     problem.AddResidualBlock(new BinaryCostFunction(2, 3, 4), null, x, z);
+    			}
+
+    		public void ProblemAddResidualAddsDuplicatedParametersOnlyOnce() {
+    			  // ProblemAddResidualAddsDuplicatedParametersOnlyOnce() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[3];
+    			  double y[] = new double[4];
+    			  double z[] = new double[5];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x);
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x);
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 4), null, y);
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 5), null, z);
+
+    			  if (problem.NumParameterBlocks() != 3) {
+    				  System.err.println("In ProblemAddResidualAddsDuplicatedParametersOnlyOnce() problem.NumParameterBlocks() != 3");
+    				  passed = false;
+    			  }
+    			  if (problem.NumParameters() != 12) {
+    				  System.err.println("In ProblemAddResidualAddsDuplicatedParametersOnlyOnce() problem.NumParameters() != 12");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ProblemAddResidualAddsDuplicatedParametersOnlyOnce() passed all tests");
+    			  }
+    			}
+
+    		public void ProblemAddParameterWithDifferentSizesOnTheSameVariableDies() {
+    			  // Gives expected error message:
+    			  // Tried adding a parameter block with the same double[], 
+    			  // twice, but with different block sizes. Original 
+    			  // size was 3 but new size is 4
+
+    			  double x[] = new double[3];
+    			  double y[] = new double[4];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddParameterBlock(x, 3);
+    			  problem.AddParameterBlock(y, 4);
+
+    			  // EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(x, 4),
+    			                            //"different block sizes");
+    			  problem.AddParameterBlock(x, 4);
+    			}
 
 }
