@@ -18641,6 +18641,23 @@ public abstract class CeresSolver {
 			
 			    parameter_block.SetUpperBound(index, upper_bound);
 			}
+			
+			public int NumParameterBlocks() {
+		        return program_.NumParameterBlocks();
+			}
+
+		    public int NumParameters() {
+		        return program_.NumParameters();
+			}
+
+			public int NumResidualBlocks() {
+				return program_.NumResidualBlocks();
+			}
+
+			public int NumResiduals() {
+				return program_.NumResiduals();
+			}
+
 
 
 	} // class ProblemImpl
