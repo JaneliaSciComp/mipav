@@ -17872,6 +17872,10 @@ public abstract class CeresSolver {
 		//
 		// so that they mimic the least squares cost for small residuals.
 		public abstract void Evaluate(double sq_norm, double out[]);
+		
+		public void finalize() {
+			
+		}
 	} // abstract class LossFunction
 
 	class Program {
@@ -18672,7 +18676,124 @@ public abstract class CeresSolver {
 
 		    public LossFunction GetLossFunctionForResidualBlock(ResidualBlock residual_block) {
 				  return residual_block.loss_function();
+ 			}
+
+		    public void RemoveResidualBlock(ResidualBlock residual_block) {
+		    	  if (residual_block == null) {
+		    		  System.err.println("In ProblemImpl.removeResidualBlock residual_block == null");
+		    		  return;
+		    	  }
+
+		    	  // Verify that residual_block identifies a residual in the current problem.
+		    	  final String residual_not_found_message =
+		    	      "Residual block to remove not found. This usually means " +
+		    	                   "one of three things have happened:\n" +
+		    	                   " 1) residual_block is uninitialised and points to a random " +
+		    	                   "area in memory.\n" +
+		    	                   " 2) residual_block represented a residual that was added to" +
+		    	                   " the problem, but referred to a parameter block which has\n " +
+		    	                   "since been removed, which removes all residuals which " +
+		    	                   "depend on that parameter block, and was thus removed.\n" +
+		    	                   " 3) residual_block referred to a residual that has already " +
+		    	                   "been removed from the problem (by the user).";
+		    	  if (options_.enable_fast_removal) {
+		    		if (!residual_block_set_.contains(residual_block)) {
+		    			System.err.println(residual_not_found_message);
+		    			return;
+		    		}
+		    	  } else {
+		    	    // Perform a full search over all current residuals.
+		    		  if (!program_.residual_blocks().contains(residual_block)) {
+		    			  System.err.println(residual_not_found_message);
+			    			return;
+		    		  }
+		    	  }
+
+		    	  InternalRemoveResidualBlock(residual_block);
+		    	}
+		    
+		    public void InternalRemoveResidualBlock(ResidualBlock residual_block) {
+		    	if (residual_block == null) {
+		    		  System.err.println("In ProblemImpl.InternalRemoveResidualBlock residual_block == null");
+		    		  return;
+		    	  }
+		    	 
+		    	  // Perform no check on the validity of residual_block, that is handled in
+		    	  // the public method: RemoveResidualBlock().
+
+		    	  // If needed, remove the parameter dependencies on this residual block.
+		    	  if (options_.enable_fast_removal) {
+		    	    final int num_parameter_blocks_for_residual =
+		    	        residual_block.NumParameterBlocks();
+		    	    for (int i = 0; i < num_parameter_blocks_for_residual; ++i) {
+		    	      residual_block.parameter_blocks()[i].RemoveResidualBlock(residual_block);
+		    	    }
+
+		    	    residual_block_set_.remove(residual_block);
+		    	  }
+		    	  DeleteBlockInVector(program_.mutable_residual_blocks(), residual_block);
+		    	}
+
+		 // Delete a block from a vector of blocks, maintaining the indexing invariant.
+		 // This is done in constant time by moving an element from the end of the
+		 // vector over the element to remove, then popping the last element. It
+		 // destroys the ordering in the interest of speed.
+		 public void DeleteBlockInVector(Vector<ResidualBlock> mutable_blocks,
+		                                       ResidualBlock block_to_remove) {
+		   //CHECK_EQ((*mutable_blocks)[block_to_remove->index()], block_to_remove)
+		       //<< "You found a Ceres bug! \n"
+		       //<< "Block requested: "
+		       //<< block_to_remove->ToString() << "\n"
+		       //<< "Block present: "
+		       //<< (*mutable_blocks)[block_to_remove->index()]->ToString();
+
+		   // Prepare the to-be-moved block for the new, lower-in-index position by
+		   // setting the index to the blocks final location.
+		   int index = mutable_blocks.indexOf(block_to_remove);
+		   ResidualBlock tmp = mutable_blocks.lastElement();
+		   mutable_blocks.set(index, tmp);
+		   DeleteBlock(block_to_remove);
+		   mutable_blocks.remove(mutable_blocks.size()-1);
+		 }
+		 
+		// Deletes the residual block in question, assuming there are no other
+		// references to it inside the problem (e.g. by another parameter). Referenced
+		// cost and loss functions are tucked away for future deletion, since it is not
+		// possible to know whether other parts of the problem depend on them without
+		// doing a full scan.
+		public void DeleteBlock(ResidualBlock residual_block) {
+		  // The const casts here are legit, since ResidualBlock holds these
+		  // pointers as const pointers but we have ownership of them and
+		  // have the right to destroy them when the destructor is called.
+		  CostFunction cost_function = residual_block.cost_function();
+		  if (options_.cost_function_ownership == Ownership.TAKE_OWNERSHIP) {
+			int value = cost_function_ref_count_.get(cost_function);
+			if (value > 1) {
+				cost_function_ref_count_.put(cost_function, value-1);
+
 			}
+			else {
+				cost_function_ref_count_.remove(cost_function);
+				cost_function.finalize();
+				cost_function = null;
+			}
+		  }
+
+		  LossFunction loss_function = residual_block.loss_function();
+		  if (options_.loss_function_ownership == Ownership.TAKE_OWNERSHIP &&
+		      loss_function !=null) {
+			  int value = loss_function_ref_count_.get(loss_function);
+				if (value > 1) {
+					loss_function_ref_count_.put(loss_function, value-1);
+				}
+				else {
+					loss_function_ref_count_.remove(loss_function);
+					loss_function.finalize();
+					loss_function = null;
+				}
+		  }
+		  residual_block = null;
+		}
 
 
 
@@ -19976,6 +20097,18 @@ public abstract class CeresSolver {
 
 		    return true;
 		  }
+		  
+		  public void RemoveResidualBlock(ResidualBlock residual_block) {
+			    if (residual_blocks_ == null) {
+			    	System.err.println("In ParameterBlock.RemoveResidualBlock residual_blocks_ == null");
+			    	return;
+			    }
+			    if (!residual_blocks_.contains(residual_block)) {
+			    	System.err.println("In ParameterBlock.RemoveResidualBlock residual_blocks_.contains(residual_block) == false");
+			        return;
+			    }
+			    residual_blocks_.remove(residual_block);
+			  }
 	} // class ParameterBlock
 	
 	// Construct a local parameterization by taking the Cartesian product
