@@ -18665,6 +18665,15 @@ public abstract class CeresSolver {
 			public int NumResiduals() {
 				return program_.NumResiduals();
 			}
+			
+			public CostFunction GetCostFunctionForResidualBlock(ResidualBlock residual_block) {
+				return residual_block.cost_function();
+		    }
+
+		    public LossFunction GetLossFunctionForResidualBlock(ResidualBlock residual_block) {
+				  return residual_block.loss_function();
+			}
+
 
 
 
