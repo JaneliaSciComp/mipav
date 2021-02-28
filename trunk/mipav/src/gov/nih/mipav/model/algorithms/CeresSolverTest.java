@@ -11622,29 +11622,50 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				  }
     				}
 
-    			/*public void ProblemCostFunctionsAreDeletedEvenWithRemovals() {
-    				  double y[4], z[5], w[4];
-    				  int num_destructions = 0;
+    			public void ProblemCostFunctionsAreDeletedEvenWithRemovals() {
+    				  // ProblemCostFunctionsAreDeletedEvenWithRemovals() passed all tests
+    				  boolean passed = true;
+    				  double y[] = new double[4];
+    				  double z[] = new double[5];
+    				  double w[] = new double[4];
+    				  int num_destructions[] = new int[] {0};
     				  {
-    				    Problem problem;
+    				    ProblemImpl problem = new ProblemImpl();
     				    problem.AddParameterBlock(y, 4);
     				    problem.AddParameterBlock(z, 5);
 
-    				    CostFunction* cost_yz =
-    				        new DestructorCountingCostFunction(&num_destructions);
-    				    CostFunction* cost_wz =
-    				        new DestructorCountingCostFunction(&num_destructions);
-    				    ResidualBlock* r_yz = problem.AddResidualBlock(cost_yz, NULL, y, z);
-    				    ResidualBlock* r_wz = problem.AddResidualBlock(cost_wz, NULL, w, z);
-    				    EXPECT_EQ(2, problem.NumResidualBlocks());
-
+    				    CostFunction cost_yz =
+    				        new DestructorCountingCostFunction(num_destructions);
+    				    CostFunction cost_wz =
+    				        new DestructorCountingCostFunction(num_destructions);
+    				    ResidualBlock r_yz = problem.AddResidualBlock(cost_yz, null, y, z);
+    				    ResidualBlock r_wz = problem.AddResidualBlock(cost_wz, null, w, z);
+    				    if (2 != problem.NumResidualBlocks()) {
+    				    	System.err.println("In ProblemCostFunctionsAreDeletedEvenWithRemovals() 2 != problem.NumResidualBlocks()");
+    				    	passed = false;
+    				    }
     				    problem.RemoveResidualBlock(r_yz);
-    				    CHECK_EQ(num_destructions, 1);
+    				    if (num_destructions[0] != 1) {
+    				    	System.err.println("In ProblemCostFunctionsAreDeletedEvenWithRemovals() num_destructions[0] != 1");
+    				    	passed = false;
+    				    }
     				    problem.RemoveResidualBlock(r_wz);
-    				    CHECK_EQ(num_destructions, 2);
+    				    if (num_destructions[0] != 2) {
+    				    	System.err.println("In ProblemCostFunctionsAreDeletedEvenWithRemovals() num_destructions[0] != 2");
+    				    	passed = false;
+    				    }
 
-    				    EXPECT_EQ(0, problem.NumResidualBlocks());
+    				    if (0 != problem.NumResidualBlocks()) {
+    				    	System.err.println("In ProblemCostFunctionsAreDeletedEvenWithRemovals() 0 != problem.NumResidualBlocks()");
+    				    	passed = false;
+    				    }
     				  }
-    				  CHECK_EQ(num_destructions, 2);
-    				}*/
+    				  if (num_destructions[0] != 2) {
+  				    	System.err.println("In ProblemCostFunctionsAreDeletedEvenWithRemovals() num_destructions[0] != 2");
+  				    	passed = false;
+  				      }
+    				  if (passed) {
+    					  System.out.println("ProblemCostFunctionsAreDeletedEvenWithRemovals() passed all tests");
+    				  }
+    				}
 }
