@@ -16227,6 +16227,10 @@ public abstract class CeresSolver {
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
 			return true;
 		}
+		
+		public void finalize() {
+			
+		}
 
 	}
 
@@ -16347,6 +16351,10 @@ public abstract class CeresSolver {
 				mutable_parameter_block_sizes().add(N8);
 			if (N9 > 0)
 				mutable_parameter_block_sizes().add(N9);
+		}
+		
+		public void finalize() {
+			
 		}
 	}
 	
