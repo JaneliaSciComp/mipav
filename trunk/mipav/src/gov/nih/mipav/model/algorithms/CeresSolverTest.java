@@ -11386,5 +11386,265 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     			                            //"different block sizes");
     			  problem.AddParameterBlock(x, 4);
     			}
+    		
+    		public double []IntToPtr(int i) {
+    	        return new double[i];
+    		}
+    		
+    		/*public void ProblemAddParameterWithAliasedParametersDies() {
+    			  // CheckForNoAliasing not implemented in Java because of memory address use
+    			  // Layout is
+    			  //
+    			  //   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17
+    			  //                 [x] x  x  x  x          [y] y  y
+    			  //         o==o==o                 o==o==o           o==o
+    			  //               o--o--o     o--o--o     o--o  o--o--o
+    			  //
+    			  // Parameter block additions are tested as listed above; expected successful
+    			  // ones marked with o==o and aliasing ones marked with o--o.
 
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddParameterBlock(IntToPtr(5),  5);  // x
+    			  problem.AddParameterBlock(IntToPtr(13), 3);  // y
+
+    			  problem.AddParameterBlock(IntToPtr( 4), 2);
+    			  problem.AddParameterBlock(IntToPtr( 4), 3);
+    			  problem.AddParameterBlock(IntToPtr( 4), 9);
+    			  problem.AddParameterBlock(IntToPtr( 8), 3);
+    			  problem.AddParameterBlock(IntToPtr(12), 2);
+    			  problem.AddParameterBlock(IntToPtr(14), 3);
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(IntToPtr( 4), 2),
+    			                            //"Aliasing detected");
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(IntToPtr( 4), 3),
+    			                            //"Aliasing detected");
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(IntToPtr( 4), 9),
+    			                            //"Aliasing detected");
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(IntToPtr( 8), 3),
+    			                            //"Aliasing detected");
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(IntToPtr(12), 2),
+    			                            //"Aliasing detected");
+    			  //EXPECT_DEATH_IF_SUPPORTED(problem.AddParameterBlock(IntToPtr(14), 3),
+    			                            //"Aliasing detected");
+
+    			  // These ones should work.
+    			  problem.AddParameterBlock(IntToPtr( 2), 3);
+    			  problem.AddParameterBlock(IntToPtr(10), 3);
+    			  problem.AddParameterBlock(IntToPtr(16), 2);
+
+    			  if (problem.NumParameterBlocks() != 5) {
+    				  System.err.println("In ProblemAddParameterWithAliasedParametersDies() problem.NumParameterBlocks() != 5");
+    			  }
+    			  else {
+    				  System.out.println("In ProblemAddParameterWithAliasedParametersDies() problem.NumParameterBlocks() == 5 as expected");
+    			  }
+    			}*/
+
+    		public void ProblemAddParameterIgnoresDuplicateCalls() {
+    			  // ProblemAddParameterIgnoresDuplicateCalls() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[3];
+    			  double y[] = new double[4];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddParameterBlock(x, 3);
+    			  problem.AddParameterBlock(y, 4);
+
+    			  // Creating parameter blocks multiple times is ignored.
+    			  problem.AddParameterBlock(x, 3);
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x);
+
+    			  // ... even repeatedly.
+    			  problem.AddParameterBlock(x, 3);
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x);
+
+    			  // More parameters are fine.
+    			  problem.AddParameterBlock(y, 4);
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 4), null, y);
+
+    			  if (problem.NumParameterBlocks() != 2) {
+    				  System.err.println("In ProblemAddParameterIgnoresDuplicateCalls() problem.NumParameterBlocks() != 2");
+    				  passed = false;
+    			  }
+    			  if (problem.NumParameters() != 7) {
+    				  System.err.println("In ProblemAddParameterIgnoresDuplicateCalls() problem.NumParameters() != 7");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ProblemAddParameterIgnoresDuplicateCalls() passed all tests");
+    			  }
+    			}
+    		
+    		public void ProblemAddingParametersAndResidualsResultsInExpectedProblem() {
+    			  // ProblemAddingParametersAndResidualsResultsInExpectedProblem() passed all tests
+    			  boolean passed = true;
+    			  double x[] = new double[3];
+    			  double y[] = new double[4];
+    			  double z[] = new double[5]; 
+    			  double w[] = new double[4];
+
+    			  ProblemImpl problem = new ProblemImpl();
+    			  problem.AddParameterBlock(x, 3);
+    			  if (1 != problem.NumParameterBlocks()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 1 != problem.NumParameterBlocks()");
+    				  passed = false;
+    			  }
+    			  if (3 != problem.NumParameters()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 3 != problem.NumParameters()");
+    				  passed = false;
+    			  }
+
+    			  problem.AddParameterBlock(y, 4);
+    			  if (2 != problem.NumParameterBlocks()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 2 != problem.NumParameterBlocks()");
+    				  passed = false;
+    			  }
+    			  if (7 != problem.NumParameters()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 7 != problem.NumParameters()");
+    				  passed = false;
+    			  }
+
+    			  problem.AddParameterBlock(z, 5);
+    			  if (3 != problem.NumParameterBlocks()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 3 != problem.NumParameterBlocks()");
+    				  passed = false;
+    			  }
+    			  if (12 != problem.NumParameters()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 12 != problem.NumParameters()");
+    				  passed = false;
+    			  }
+
+    			  // Add a parameter that has a local parameterization.
+    			  w[0] = 1.0; w[1] = 0.0; w[2] = 0.0; w[3] = 0.0;
+    			  problem.AddParameterBlock(w, 4, new QuaternionParameterization());
+    			  if (4 != problem.NumParameterBlocks()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 4 != problem.NumParameterBlocks()");
+    				  passed = false;
+    			  }
+    			  if (16 != problem.NumParameters()) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() 16 != problem.NumParameters()");
+    				  passed = false;
+    			  }
+
+    			  problem.AddResidualBlock(new UnaryCostFunction(2, 3), null, x);
+    			  problem.AddResidualBlock(new BinaryCostFunction(6, 5, 4) , null, z, y);
+    			  problem.AddResidualBlock(new BinaryCostFunction(3, 3, 5), null, x, z);
+    			  problem.AddResidualBlock(new BinaryCostFunction(7, 5, 3), null, z, x);
+    			  problem.AddResidualBlock(new TernaryCostFunction2(1, 5, 3, 4), null, z, x, y);
+
+    			  final int total_residuals = 2 + 6 + 3 + 7 + 1;
+    			  if (problem.NumResidualBlocks() != 5) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() problem.NumResidualBlocks() != 5");
+    				  passed = false;
+    			  }
+    			  if (problem.NumResiduals() != total_residuals) {
+    				  System.err.println("In ProblemAddingParametersAndResidualsResultsInExpectedProblem() problem.NumResiduals() != total_residuals");
+    				  passed = false;
+    			  }
+    			  if (passed) {
+    				  System.out.println("ProblemAddingParametersAndResidualsResultsInExpectedProblem() passed all tests");
+    			  }
+    			}
+
+    		class DestructorCountingCostFunction extends SizedCostFunction {
+    			private int num_destructions_[];
+    			 public DestructorCountingCostFunction(int num_destructions[]) {
+    				  super(3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+    			      this.num_destructions_ = num_destructions; 
+    			 }
+
+    			  public void finalize() {
+    			    num_destructions_[0] += 1;
+    			  }
+    			  
+    			  public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+    				  return true;
+    			  }
+    			  
+    			  public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+    				  return true;
+    			  }
+
+    			};
+
+    			public void ProblemReusedCostFunctionsAreOnlyDeletedOnce() {
+    				  // ProblemReusedCostFunctionsAreOnlyDeletedOnce() passed all tests
+    				  boolean passed = true;
+    				  double y[] = new double[4];
+    				  double z[] = new double[5];
+    				  int num_destructions[] = new int[] {0};
+
+    				  // Add a cost function multiple times and check to make sure that
+    				  // the destructor on the cost function is only called once.
+    				  {
+    				    ProblemImpl problem = new ProblemImpl();
+    				    problem.AddParameterBlock(y, 4);
+    				    problem.AddParameterBlock(z, 5);
+
+    				    CostFunction cost = new DestructorCountingCostFunction(num_destructions);
+    				    problem.AddResidualBlock(cost, null, y, z);
+    				    problem.AddResidualBlock(cost, null, y, z);
+    				    problem.AddResidualBlock(cost, null, y, z);
+    				    if (3 !=  problem.NumResidualBlocks()) {
+    				    	System.err.println("In ProblemReusedCostFunctionsAreOnlyDeletedOnce() 3 !=  problem.NumResidualBlocks()");
+    				    	passed = false;
+    				    }
+    				    cost.finalize();
+    				  }
+
+    				  // Check that the destructor was called only once.
+    				  if (num_destructions[0] != 1) {
+    					  System.err.println("In ProblemReusedCostFunctionsAreOnlyDeletedOnce() num_destructions[0] != 1");
+    					  passed = false;
+    				  }
+    				  if (passed) {
+    					  System.out.println("ProblemReusedCostFunctionsAreOnlyDeletedOnce() passed all tests");
+    				  }
+    				}
+
+    			public void ProblemGetCostFunctionForResidualBlock() {
+    				  // ProblemGetCostFunctionForResidualBlock() passed all tests
+    				  boolean passed = true;
+    				  double x[] = new double[3];
+    				  ProblemImpl problem = new ProblemImpl();
+    				  CostFunction cost_function = new UnaryCostFunction(2, 3);
+    				  final ResidualBlock residual_block =
+    				      problem.AddResidualBlock(cost_function, null, x);
+    				  if (problem.GetCostFunctionForResidualBlock(residual_block) != cost_function) {
+    					  System.err.println("In ProblemGetCostFunctionForResidualBlock() problem.GetCostFunctionForResidualBlock(residual_block) != cost_function");
+    					  passed = false;
+    				  }
+    				  if (problem.GetLossFunctionForResidualBlock(residual_block) != null) {
+    					  System.err.println("In ProblemGetCostFunctionForResidualBlock() problem.GetLossFunctionForResidualBlock(residual_block) != null");
+    					  passed = false;
+    				  }
+    				  if (passed) {
+    					  System.out.println("ProblemGetCostFunctionForResidualBlock() passed all tests");
+    				  }
+    				}
+
+    			/*public void ProblemCostFunctionsAreDeletedEvenWithRemovals() {
+    				  double y[4], z[5], w[4];
+    				  int num_destructions = 0;
+    				  {
+    				    Problem problem;
+    				    problem.AddParameterBlock(y, 4);
+    				    problem.AddParameterBlock(z, 5);
+
+    				    CostFunction* cost_yz =
+    				        new DestructorCountingCostFunction(&num_destructions);
+    				    CostFunction* cost_wz =
+    				        new DestructorCountingCostFunction(&num_destructions);
+    				    ResidualBlock* r_yz = problem.AddResidualBlock(cost_yz, NULL, y, z);
+    				    ResidualBlock* r_wz = problem.AddResidualBlock(cost_wz, NULL, w, z);
+    				    EXPECT_EQ(2, problem.NumResidualBlocks());
+
+    				    problem.RemoveResidualBlock(r_yz);
+    				    CHECK_EQ(num_destructions, 1);
+    				    problem.RemoveResidualBlock(r_wz);
+    				    CHECK_EQ(num_destructions, 2);
+
+    				    EXPECT_EQ(0, problem.NumResidualBlocks());
+    				  }
+    				  CHECK_EQ(num_destructions, 2);
+    				}*/
 }
