@@ -18800,6 +18800,19 @@ public abstract class CeresSolver {
 
 			parameter_block.SetConstant();
 		}
+		
+		public void SetParameterBlockVariable(double[] values) {
+			  ParameterBlock parameter_block =
+			      FindWithDefault(parameter_block_map_, values, null);
+			  if (parameter_block == null) {
+			    System.err.println("Parameter block not found for supplied double[] values.");
+			    System.err.println("You must add the parameter block to the problem before it can be set varying.");
+			    return;
+			  }
+
+			  parameter_block.SetVarying();
+			}
+
 
 		public LocalParameterization GetParameterization(double[] values) {
 			ParameterBlock parameter_block = FindWithDefault(parameter_block_map_, values, null);
