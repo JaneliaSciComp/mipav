@@ -18805,7 +18805,7 @@ public abstract class CeresSolver {
 			  ParameterBlock parameter_block =
 			      FindWithDefault(parameter_block_map_, values, null);
 			  if (parameter_block == null) {
-			    System.err.println("Parameter block not found for supplied double[] values.");
+			    System.err.println("In SetParameterBlockVariable Parameter block not found for supplied double[] values.");
 			    System.err.println("You must add the parameter block to the problem before it can be set varying.");
 			    return;
 			  }
