@@ -20472,6 +20472,12 @@ public abstract class CeresSolver {
 			    }
 			    residual_blocks_.remove(residual_block);
 			  }
+		  
+		  // This is only intended for iterating; perhaps this should only expose
+		  // .begin() and .end().
+		  public HashSet<ResidualBlock> mutable_residual_blocks() {
+		    return residual_blocks_;
+		  }
 	} // class ParameterBlock
 	
 	// Construct a local parameterization by taking the Cartesian product
