@@ -19153,8 +19153,8 @@ public abstract class CeresSolver {
 		}
 
 
-		public ResidualBlockSet residual_block_set() {
-		    if (options_.enable_fast_removal)
+		public HashSet<ResidualBlock> residual_block_set() {
+		    if (options_.enable_fast_removal) {
 		        System.err.println("Fast removal not enabled, residual_block_set is not maintained.");
 		        return null;
 		    }
