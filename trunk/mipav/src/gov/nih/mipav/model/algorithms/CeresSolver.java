@@ -17841,6 +17841,361 @@ public abstract class CeresSolver {
 		 */
 
 	}
+	
+	// Some common implementations follow below.
+	//
+	// Note: in the region of interest (i.e. s < 3) we have:
+	//   TrivialLoss >= HuberLoss >= SoftLOneLoss >= CauchyLoss
+
+
+	// This corresponds to no robustification.
+	//
+	//   rho(s) = s
+	//
+	// At s = 0: rho = [0, 1, 0].
+	//
+	// It is not normally necessary to use this, as passing NULL for the
+	// loss function when building the problem accomplishes the same
+	// thing.
+	class TrivialLoss extends LossFunction {
+	 public TrivialLoss() {
+		 super();
+	 }
+	 
+	 public void Evaluate(double s, double rho[]) {
+		  rho[0] = s;
+		  rho[1] = 1.0;
+		  rho[2] = 0.0;
+		}
+
+	};
+	
+	// Huber.
+	//
+	//   rho(s) = s               for s <= 1,
+	//   rho(s) = 2 sqrt(s) - 1   for s >= 1.
+	//
+	// At s = 0: rho = [0, 1, 0].
+	//
+	// The scaling parameter 'a' corresponds to 'delta' on this page:
+	//   http://en.wikipedia.org/wiki/Huber_Loss_Function
+	class HuberLoss extends LossFunction {
+		private double a_;
+			  // b = a^2.
+	    private double b_;
+	    public HuberLoss(double a) {
+	    	super();
+	    	a_ = a;
+	    	b_ = (a * a);
+	    }
+	  
+	    public void Evaluate(double s, double rho[]) {
+	    	  if (s > b_) {
+	    	    // Outlier region.
+	    	    // 'r' is always positive.
+	    	    final double r = Math.sqrt(s);
+	    	    rho[0] = 2.0 * a_ * r - b_;
+	    	    rho[1] = Math.max(Double.MIN_VALUE, a_ / r);
+	    	    rho[2] = - rho[1] / (2.0 * s);
+	    	  } else {
+	    	    // Inlier region.
+	    	    rho[0] = s;
+	    	    rho[1] = 1.0;
+	    	    rho[2] = 0.0;
+	    	  }
+	    	}
+
+	};
+	
+	// Soft L1, similar to Huber but smooth.
+	//
+	//   rho(s) = 2 (sqrt(1 + s) - 1).
+	//
+	// At s = 0: rho = [0, 1, -1/2].
+	class SoftLOneLoss extends LossFunction {
+	    // b = a^2.
+		private double b_;
+	    // c = 1 / a^2.
+	    private double c_;
+	    public SoftLOneLoss(double a) {
+	    	super();
+	    	b_ = (a * a);
+	    	c_ = (1.0/ b_); 
+	
+	    }
+	  
+	    public void Evaluate(double s, double rho[]) {
+	    	  final double sum = 1.0 + s * c_;
+	    	  final double tmp = Math.sqrt(sum);
+	    	  // 'sum' and 'tmp' are always positive, assuming that 's' is.
+	    	  rho[0] = 2.0 * b_ * (tmp - 1.0);
+	    	  rho[1] = Math.max(Double.MIN_VALUE, 1.0 / tmp);
+	    	  rho[2] = - (c_ * rho[1]) / (2.0 * sum);
+	    }
+	 
+	};
+	
+	// Inspired by the Cauchy distribution
+	//
+	//   rho(s) = log(1 + s).
+	//
+	// At s = 0: rho = [0, 1, -1].
+	class CauchyLoss extends LossFunction {
+			  // b = a^2.
+			  private double b_;
+			  // c = 1 / a^2.
+			  private double c_;
+			  
+	          public CauchyLoss(double a) {
+	        	  super();
+	        	  b_ = (a * a);
+	        	  c_ = (1.0 / b_);
+	          }
+	  
+	          public void Evaluate(double s, double rho[]) {
+	        	  final double sum = 1.0 + s * c_;
+	        	  final double inv = 1.0 / sum;
+	        	  // 'sum' and 'inv' are always positive, assuming that 's' is.
+	        	  rho[0] = b_ * Math.log(sum);
+	        	  rho[1] = Math.max(Double.MIN_VALUE, inv);
+	        	  rho[2] = - c_ * (inv * inv);
+	        	}
+	 
+	};
+	
+	// Loss that is capped beyond a certain level using the arc-tangent function.
+	// The scaling parameter 'a' determines the level where falloff occurs.
+	// For costs much smaller than 'a', the loss function is linear and behaves like
+	// TrivialLoss, and for values much larger than 'a' the value asymptotically
+	// approaches the constant value of a * PI / 2.
+	//
+	//   rho(s) = a atan(s / a).
+	//
+	// At s = 0: rho = [0, 1, 0].
+	class ArctanLoss extends LossFunction {
+		private double a_;
+	    // b = 1 / a^2.
+	    private double b_;
+	    
+	    public ArctanLoss(double a) {
+	    	super();
+	    	a_ = a;
+	    	b_ = (1.0 / (a * a));
+	    }
+	  
+	    public void Evaluate(double s, double rho[]) {
+	    	  final double sum = 1 + s * s * b_;
+	    	  final double inv = 1 / sum;
+	    	  // 'sum' and 'inv' are always positive.
+	    	  rho[0] = a_ * Math.atan2(s, a_);
+	    	  rho[1] = Math.max(Double.MIN_VALUE, inv);
+	    	  rho[2] = -2.0 * s * b_ * (inv * inv);
+	    }
+
+	};
+	
+	// Loss function that maps to approximately zero cost in a range around the
+	// origin, and reverts to linear in error (quadratic in cost) beyond this range.
+	// The tolerance parameter 'a' sets the nominal point at which the
+	// transition occurs, and the transition size parameter 'b' sets the nominal
+	// distance over which most of the transition occurs. Both a and b must be
+	// greater than zero, and typically b will be set to a fraction of a.
+	// The slope rho'[s] varies smoothly from about 0 at s <= a - b to
+	// about 1 at s >= a + b.
+	//
+	// The term is computed as:
+	//
+	//   rho(s) = b log(1 + exp((s - a) / b)) - c0.
+	//
+	// where c0 is chosen so that rho(0) == 0
+	//
+	//   c0 = b log(1 + exp(-a / b)
+	//
+	// This has the following useful properties:
+	//
+	//   rho(s) == 0               for s = 0
+	//   rho'(s) ~= 0              for s << a - b
+	//   rho'(s) ~= 1              for s >> a + b
+	//   rho''(s) > 0              for all s
+	//
+	// In addition, all derivatives are continuous, and the curvature is
+	// concentrated in the range a - b to a + b.
+	//
+	// At s = 0: rho = [0, ~0, ~0].
+	class TolerantLoss extends LossFunction {
+		private double a_, b_, c_;
+		
+		public TolerantLoss(double a, double b) {
+		  super();
+		  if (a < 0.0) {
+			  System.err.println("a = " + a + " must be >= 0.0 in public TolerantLoss");
+			  return;
+		  }
+		  if (b <= 0.0) {
+			  System.err.println("b = " + b + " must be > 0.0 in public TolerantLoss");
+			  return;
+		  }
+	      a_ = a;
+	      b_ = b;
+	      c_ = (b * Math.log(1.0 + Math.exp(-a / b)));
+	   }
+
+		public void Evaluate(double s, double rho[]) {
+			  final double x = (s - a_) / b_;
+			  // The basic equation is rho[0] = b ln(1 + e^x).  However, if e^x is too
+			  // large, it will overflow.  Since numerically 1 + e^x == e^x when the
+			  // x is greater than about ln(2^53) for doubles, beyond this threshold
+			  // we substitute x for ln(1 + e^x) as a numerically equivalent approximation.
+			  final double kLog2Pow53 = 36.7;  // ln(MathLimits<double>::kEpsilon).
+			  if (x > kLog2Pow53) {
+			    rho[0] = s - a_ - c_;
+			    rho[1] = 1.0;
+			    rho[2] = 0.0;
+			  } else {
+			    final double e_x = Math.exp(x);
+			    rho[0] = b_ * Math.log(1.0 + e_x) - c_;
+			    rho[1] = Math.max(Double.MIN_VALUE, e_x / (1.0 + e_x));
+			    rho[2] = 0.5 / (b_ * (1.0 + Math.cosh(x)));
+			  }
+			}
+
+	};
+	
+	// This is the Tukey biweight loss function which aggressively
+	// attempts to suppress large errors.
+	//
+	// The term is computed as:
+	//
+	//   rho(s) = a^2 / 6 * (1 - (1 - s / a^2)^3 )   for s <= a^2,
+	//   rho(s) = a^2 / 6                            for s >  a^2.
+	//
+	// At s = 0: rho = [0, 0.5, -1 / a^2]
+	class TukeyLoss extends LossFunction {
+		private double a_squared_;
+		
+	    public TukeyLoss(double a) {
+	    	super();
+	    	a_squared_ = (a * a);
+	    }
+	  
+	    public void Evaluate(double s, double[] rho) {
+	    	  if (s <= a_squared_) {
+	    	    // Inlier region.
+	    	    final double value = 1.0 - s / a_squared_;
+	    	    final double value_sq = value * value;
+	    	    rho[0] = a_squared_ / 6.0 * (1.0 - value_sq * value);
+	    	    rho[1] = 0.5 * value_sq;
+	    	    rho[2] = -1.0 / a_squared_ * value;
+	    	  } else {
+	    	    // Outlier region.
+	    	    rho[0] = a_squared_ / 6.0;
+	    	    rho[1] = 0.0;
+	    	    rho[2] = 0.0;
+	    	  }
+	    	}
+
+	};
+	
+	// Composition of two loss functions.  The error is the result of first
+	// evaluating g followed by f to yield the composition f(g(s)).
+	// The loss functions must not be NULL.
+	class ComposedLoss extends LossFunction {
+		private LossFunction f_, g_;
+		private Ownership ownership_f_, ownership_g_;
+		
+		public ComposedLoss(LossFunction f, Ownership ownership_f,
+                LossFunction g, Ownership ownership_g) {
+			super();
+			if (f == null) {
+				System.err.println("LossFunction f == null in public ComposedLoss");
+				return;
+			}
+			if (g == null) {
+				System.err.println("LossFunction g == null in public ComposedLoss");
+				return;
+			}
+			f_ = f;
+			g_ = g;
+			ownership_f_ = ownership_f;
+			ownership_g_ = ownership_g;
+        }
+
+	    public void finalize() {
+	    	if (ownership_f_ == Ownership.DO_NOT_TAKE_OWNERSHIP) {
+	    	    f_ = null;
+	    	  }
+	    	  if (ownership_g_ == Ownership.DO_NOT_TAKE_OWNERSHIP) {
+	    	    g_ = null;
+	    	  }
+
+	    }
+	  
+	    public void Evaluate(double s, double rho[]) {
+	    	  double rho_f[] = new double[3];
+	    	  double rho_g[] = new double[3];
+	    	  g_.Evaluate(s, rho_g);
+	    	  f_.Evaluate(rho_g[0], rho_f);
+	    	  rho[0] = rho_f[0];
+	    	  // f'(g(s)) * g'(s).
+	    	  rho[1] = rho_f[1] * rho_g[1];
+	    	  // f''(g(s)) * g'(s) * g'(s) + f'(g(s)) * g''(s).
+	    	  rho[2] = rho_f[2] * rho_g[1] * rho_g[1] + rho_f[1] * rho_g[2];
+	    	}
+ 
+	};
+	
+	// The discussion above has to do with length scaling: it affects the space
+	// in which s is measured. Sometimes you want to simply scale the output
+	// value of the robustifier. For example, you might want to weight
+	// different error terms differently (e.g., weight pixel reprojection
+	// errors differently from terrain errors).
+	//
+	// If rho is the wrapped robustifier, then this simply outputs
+	// s -> a * rho(s)
+	//
+	// The first and second derivatives are, not surprisingly
+	// s -> a * rho'(s)
+	// s -> a * rho''(s)
+	//
+	// Since we treat the a NULL Loss function as the Identity loss
+	// function, rho = NULL is a valid input and will result in the input
+	// being scaled by a. This provides a simple way of implementing a
+	// scaled ResidualBlock.
+	class ScaledLoss extends LossFunction {
+		private LossFunction rho_;
+	    private double a_;
+	    private Ownership ownership_;
+	  // Constructs a ScaledLoss wrapping another loss function. Takes
+	  // ownership of the wrapped loss function or not depending on the
+	  // ownership parameter.
+	    public ScaledLoss(LossFunction rho, double a, Ownership ownership) {
+	      super();
+	      rho_ = rho;
+	      a_ = a;
+	      ownership_ = ownership; 
+	    }
+
+	   public void finalize() {
+		    if (ownership_ == Ownership.DO_NOT_TAKE_OWNERSHIP) {
+		      rho_ = null;
+		    }
+	    }
+	   
+	   public void Evaluate(double s, double rho[]) {
+		   if (rho_ == null) {
+		     rho[0] = a_ * s;
+		     rho[1] = a_;
+		     rho[2] = 0.0;
+		   } else {
+		     rho_.Evaluate(s, rho);
+		     rho[0] *= a_;
+		     rho[1] *= a_;
+		     rho[2] *= a_;
+		   }
+		 }
+
+	  
+	};
 
 	abstract class LossFunction {
 		public LossFunction() {
