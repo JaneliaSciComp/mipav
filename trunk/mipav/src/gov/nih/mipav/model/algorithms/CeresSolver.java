@@ -16050,7 +16050,7 @@ public abstract class CeresSolver {
 		// they are owned by problem_impl, gradient_checking_problem_impl
 		// should not take ownership of it.
 		ProblemImpl problem = new ProblemImpl();
-		ProblemImpl.Options gradient_checking_problem_options = problem.options_;
+		ProblemOptions gradient_checking_problem_options = problem.options_;
 		gradient_checking_problem_options.cost_function_ownership = Ownership.TAKE_OWNERSHIP;
 		gradient_checking_problem_options.loss_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
 		gradient_checking_problem_options.local_parameterization_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
@@ -18680,12 +18680,57 @@ public abstract class CeresSolver {
 			}
 
 	} // class Program
+	
+	class ProblemOptions {
+		// These flags control whether the Problem object owns the cost
+		// functions, loss functions, and parameterizations passed into
+		// the Problem. If set to TAKE_OWNERSHIP, then the problem object
+		// will delete the corresponding cost or loss functions on
+		// destruction. The destructor is careful to delete the pointers
+		// only once, since sharing cost/loss/parameterizations is
+		// allowed.
+		public Ownership cost_function_ownership;
+		public Ownership loss_function_ownership;
+		public Ownership local_parameterization_ownership;
+
+		// The increase in memory usage is twofold: an additonal hash set per
+		// parameter block containing all the residuals that depend on the parameter
+		// block; and a hash set in the problem containing all residuals.
+		public boolean enable_fast_removal;
+
+		// By default, Ceres performs a variety of safety checks when constructing
+		// the problem. There is a small but measurable performance penalty to
+		// these checks, typically around 5% of construction time. If you are sure
+		// your problem construction is correct, and 5% of the problem construction
+		// time is truly an overhead you want to avoid, then you can set
+		// disable_all_safety_checks to true.
+		//
+		// WARNING: Do not set this to true, unless you are absolutely sure of what
+		// you are doing.
+		public boolean disable_all_safety_checks;
+
+		// A Ceres global context to use for solving this problem. This may help to
+		// reduce computation time as Ceres can reuse expensive objects to create.
+		// The context object can be NULL, in which case Ceres may create one.
+		//
+		// Ceres does NOT take ownership of the pointer.
+		public Context context;
+
+		public ProblemOptions() {
+			cost_function_ownership = Ownership.TAKE_OWNERSHIP;
+			loss_function_ownership = Ownership.TAKE_OWNERSHIP;
+			local_parameterization_ownership = Ownership.TAKE_OWNERSHIP;
+			enable_fast_removal = false;
+			disable_all_safety_checks = false;
+			context = new Context();
+		}
+	}
 
 	class ProblemImpl {
 		private Vector<double[]> residual_parameters_;
 		private Program program_;
 		private HashMap<double[], ParameterBlock> parameter_block_map_;
-		protected Options options_;
+		protected ProblemOptions options_;
 		// Iff enable_fast_removal is enabled, contains the current residual blocks.
 		private HashSet<ResidualBlock> residual_block_set_;
 		private HashMap<CostFunction, Integer> cost_function_ref_count_;
@@ -18694,54 +18739,11 @@ public abstract class CeresSolver {
 		private Context context_impl_;
 		private int count;
 
-		class Options {
-			// These flags control whether the Problem object owns the cost
-			// functions, loss functions, and parameterizations passed into
-			// the Problem. If set to TAKE_OWNERSHIP, then the problem object
-			// will delete the corresponding cost or loss functions on
-			// destruction. The destructor is careful to delete the pointers
-			// only once, since sharing cost/loss/parameterizations is
-			// allowed.
-			public Ownership cost_function_ownership;
-			public Ownership loss_function_ownership;
-			public Ownership local_parameterization_ownership;
-
-			// The increase in memory usage is twofold: an additonal hash set per
-			// parameter block containing all the residuals that depend on the parameter
-			// block; and a hash set in the problem containing all residuals.
-			public boolean enable_fast_removal;
-
-			// By default, Ceres performs a variety of safety checks when constructing
-			// the problem. There is a small but measurable performance penalty to
-			// these checks, typically around 5% of construction time. If you are sure
-			// your problem construction is correct, and 5% of the problem construction
-			// time is truly an overhead you want to avoid, then you can set
-			// disable_all_safety_checks to true.
-			//
-			// WARNING: Do not set this to true, unless you are absolutely sure of what
-			// you are doing.
-			public boolean disable_all_safety_checks;
-
-			// A Ceres global context to use for solving this problem. This may help to
-			// reduce computation time as Ceres can reuse expensive objects to create.
-			// The context object can be NULL, in which case Ceres may create one.
-			//
-			// Ceres does NOT take ownership of the pointer.
-			public Context context;
-
-			public Options() {
-				cost_function_ownership = Ownership.TAKE_OWNERSHIP;
-				loss_function_ownership = Ownership.TAKE_OWNERSHIP;
-				local_parameterization_ownership = Ownership.TAKE_OWNERSHIP;
-				enable_fast_removal = false;
-				disable_all_safety_checks = false;
-				context = new Context();
-			}
-		}
+		
 
 		public ProblemImpl() {
 			residual_parameters_ = new Vector<double[]>(10);
-			options_ = new Options();
+			options_ = new ProblemOptions();
 			program_ = new Program();
 			parameter_block_map_ = new HashMap<double[], ParameterBlock>();
 			residual_block_set_ = new HashSet<ResidualBlock>();
@@ -18752,7 +18754,7 @@ public abstract class CeresSolver {
 			context_impl_ = options_.context;
 		}
 
-		public ProblemImpl(Options options) {
+		public ProblemImpl(ProblemOptions options) {
 			residual_parameters_ = new Vector<double[]>(10);
 			options_ = options;
 			program_ = new Program();
