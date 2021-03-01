@@ -11621,6 +11621,29 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     					  System.out.println("ProblemGetCostFunctionForResidualBlock() passed all tests");
     				  }
     				}
+    			
+    			public void ProblemGetLossFunctionForResidualBlock() {
+    				  // ProblemGetLossFunctionForResidualBlock() passed all tests
+    				  boolean passed = true;
+    				  double x[] = new double[3];
+    				  ProblemImpl problem = new ProblemImpl();
+    				  CostFunction cost_function = new UnaryCostFunction(2, 3);
+    				  LossFunction loss_function = new TrivialLoss();
+    				  final ResidualBlock residual_block =
+    				      problem.AddResidualBlock(cost_function, loss_function, x);
+    				  if (problem.GetCostFunctionForResidualBlock(residual_block) != cost_function) {
+    					  System.err.println("In ProblemGetLossFunctionForResidualBlock() problem.GetCostFunctionForResidualBlock(residual_block) != cost_function");
+    					  passed = false;
+    				  }
+    				  if (problem.GetLossFunctionForResidualBlock(residual_block) != loss_function) {
+    					  System.err.println("In ProblemGetLossFunctionForResidualBlock() problem.GetLossFunctionForResidualBlock(residual_block) != loss_function");
+    					  passed = false;
+    				  }
+    				  if (passed) {
+    					  System.out.println("ProblemGetLossFunctionForResidualBlock() passed all tests");
+    				  }
+    				}
+
 
     			public void ProblemCostFunctionsAreDeletedEvenWithRemovals() {
     				  // ProblemCostFunctionsAreDeletedEvenWithRemovals() passed all tests
@@ -11668,4 +11691,165 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     					  System.out.println("ProblemCostFunctionsAreDeletedEvenWithRemovals() passed all tests");
     				  }
     				}
+    			
+    			// Make the dynamic problem tests (e.g. for removing residual blocks)
+    			// parameterized on whether the low-latency mode is enabled or not.
+    			//
+    			// This tests against ProblemImpl instead of Problem in order to inspect the
+    			// state of the resulting Program; this is difficult with only the thin Problem
+    			// interface.
+    			class DynamicProblem {
+    				ProblemImpl problem;
+      			    double y[] = new double[4];
+      			    double z[] = new double[5];
+      			    double w[] = new double[3];
+      			    boolean param;
+      			    boolean passed[];
+      			    String testName;
+    			    public DynamicProblem(boolean param, boolean passed[], String testName) {
+    			    	this.param = param;
+    			    	this.passed = passed;
+    			    	this.testName = testName;
+    			        ProblemOptions options = new ProblemOptions();
+    			        options.enable_fast_removal = param;
+    			        problem = new ProblemImpl(options);
+    			  }
+
+    			  public ParameterBlock GetParameterBlock(int block) {
+    			    return problem.program().parameter_blocks().get(block);
+    			  }
+    			  public ResidualBlock GetResidualBlock(int block) {
+    			    return problem.program().residual_blocks().get(block);
+    			  }
+
+    			  public boolean HasResidualBlock(ResidualBlock residual_block) {
+    			    boolean have_residual_block = true;
+    			    if (param) {
+    			      have_residual_block &=
+    			          (problem.residual_block_set().contains(residual_block));
+    			    }
+    			    have_residual_block &=
+    			        (problem.program().residual_blocks().contains(residual_block));
+    			    return have_residual_block;
+    			  }
+
+    			  public int NumResidualBlocks() {
+    			    // Verify that the hash set of residuals is maintained consistently.
+    			    if (param) {
+    			      if (problem.residual_block_set().size() != problem.NumResidualBlocks()) {
+    			    	  System.err.println("In " + testName + " problem.residual_block_set().size() != problem.NumResidualBlocks()");
+    			    	  passed[0] = false;
+    			      }
+    			    }
+    			    return problem.NumResidualBlocks();
+    			  }
+
+    			  // The next block of functions until the end are only for testing the
+    			  // residual block removals.
+    			  public void ExpectParameterBlockContainsResidualBlock(
+    			      double[] values,
+    			      ResidualBlock residual_block) {
+    				  if (!problem.parameter_map().containsKey(values)) {
+    					  System.err.println("In " + testName + " problem.parameter_map().containsKey(values) = false");
+    					  passed[0] = false;
+    					  return;
+    				  }
+					  ParameterBlock parameter_block = problem.parameter_map().get(values);
+					  if (!parameter_block.mutable_residual_blocks().contains(residual_block)) {
+						  System.err.println("In " + testName + " parameter_block.mutable_residual_blocks().contains(residual_block) = false");
+    					  passed[0] = false;
+    					  return;
+					  }
+    			  }
+
+    			  public void ExpectSize(double[] values, int size) {
+    				  if (!problem.parameter_map().containsKey(values)) {
+    					  System.err.println("In " + testName + " problem.parameter_map().containsKey(values) = false");
+    					  passed[0] = false;
+    					  return;
+    				  }
+    				  ParameterBlock parameter_block = problem.parameter_map().get(values);
+    			      if (size != parameter_block.mutable_residual_blocks().size()) {
+    			    	  System.err.println("In " + testName + " size != parameter_block.mutable_residual_blocks().size()");
+    					  passed[0] = false;
+    					  return;
+    			      }
+    			  }
+
+    			  // Degenerate case.
+    			  public void ExpectParameterBlockContains(double[] values) {
+    			    ExpectSize(values, 0);
+    			  }
+
+    			  public void ExpectParameterBlockContains(double[] values,
+    			                                    ResidualBlock r1) {
+    			    ExpectSize(values, 1);
+    			    ExpectParameterBlockContainsResidualBlock(values, r1);
+    			  }
+
+    			  public void ExpectParameterBlockContains(double[] values,
+    			                                    ResidualBlock r1,
+    			                                    ResidualBlock r2) {
+    			    ExpectSize(values, 2);
+    			    ExpectParameterBlockContainsResidualBlock(values, r1);
+    			    ExpectParameterBlockContainsResidualBlock(values, r2);
+    			  }
+
+    			  public void ExpectParameterBlockContains(double[] values,
+    			                                    ResidualBlock r1,
+    			                                    ResidualBlock r2,
+    			                                    ResidualBlock r3) {
+    			    ExpectSize(values, 3);
+    			    ExpectParameterBlockContainsResidualBlock(values, r1);
+    			    ExpectParameterBlockContainsResidualBlock(values, r2);
+    			    ExpectParameterBlockContainsResidualBlock(values, r3);
+    			  }
+
+    			  public void ExpectParameterBlockContains(double[] values,
+    			                                    ResidualBlock r1,
+    			                                    ResidualBlock r2,
+    			                                    ResidualBlock r3,
+    			                                    ResidualBlock r4) {
+    			    ExpectSize(values, 4);
+    			    ExpectParameterBlockContainsResidualBlock(values, r1);
+    			    ExpectParameterBlockContainsResidualBlock(values, r2);
+    			    ExpectParameterBlockContainsResidualBlock(values, r3);
+    			    ExpectParameterBlockContainsResidualBlock(values, r4);
+    			  }
+
+    			  
+    			};
+    			
+    			public void ProblemSetParameterBlockConstantWithUnknownPtrDies() {
+    				  // Gives expected error message:
+    				  // In SetParameterBlockConstant Parameter block not found for supplied double[] values.
+    				  // You must add the parameter block to the problem before it can be set constant
+    				  double x[] = new double[3];
+    				  double y[] = new double[2];
+
+    				  ProblemImpl problem = new ProblemImpl();
+    				  problem.AddParameterBlock(x, 3);
+
+    				  //EXPECT_DEATH_IF_SUPPORTED(problem.SetParameterBlockConstant(y),
+    				                            //"Parameter block not found:");
+    				  problem.SetParameterBlockConstant(y);
+    			}
+    			
+    			public void ProblemSetParameterBlockVariableWithUnknownPtrDies() {
+    				  // Gives expected error message:
+    				  // In SetParameterBlockVariable Parameter block not found for supplied double[] values.
+    				  // You must add the parameter block to the problem before it can be set varying.
+    				  double x[] = new double[3];
+    				  double y[] = new double[2];
+
+    				  ProblemImpl problem = new ProblemImpl();
+    				  problem.AddParameterBlock(x, 3);
+
+    				  //EXPECT_DEATH_IF_SUPPORTED(problem.SetParameterBlockVariable(y),
+    				                            //"Parameter block not found:");
+    				  problem.SetParameterBlockVariable(y);
+    			}
+
+
+			
 }
