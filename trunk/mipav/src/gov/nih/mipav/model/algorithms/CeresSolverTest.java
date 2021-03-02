@@ -11850,6 +11850,102 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				  problem.SetParameterBlockVariable(y);
     			}
 
+    			public void ProblemIsParameterBlockConstant() {
+    				  // ProblemIsParameterBlockConstant() passed all tests
+    				  boolean passed = true;
+    				  double x1[] = new double[3];
+    				  double x2[] = new double[3];
+
+    				  ProblemImpl problem = new ProblemImpl();
+    				  problem.AddParameterBlock(x1, 3);
+    				  problem.AddParameterBlock(x2, 3);
+
+    				  if (problem.IsParameterBlockConstant(x1)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x1) = true");
+    					  passed = false;
+    				  }
+    				  if (problem.IsParameterBlockConstant(x2)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x2) = true");
+    					  passed = false;
+    				  }
+
+    				  problem.SetParameterBlockConstant(x1);
+    				  if (!problem.IsParameterBlockConstant(x1)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x1) = false");
+    					  passed = false;
+    				  }
+    				  if (problem.IsParameterBlockConstant(x2)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x2) = true");
+    					  passed = false;
+    				  }
+
+    				  problem.SetParameterBlockConstant(x2);
+    				  if (!problem.IsParameterBlockConstant(x1)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x1) = false");
+    					  passed = false;
+    				  }
+    				  if (!problem.IsParameterBlockConstant(x2)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x2) = false");
+    					  passed = false;
+    				  }
+    				  
+    				  problem.SetParameterBlockVariable(x1);
+    				  if (problem.IsParameterBlockConstant(x1)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x1) = true");
+    					  passed = false;
+    				  }
+    				  if (!problem.IsParameterBlockConstant(x2)) {
+    					  System.err.println("In ProblemIsParameterBlockConstant() problem.IsParameterBlockConstant(x2) = false");
+    					  passed = false;
+    				  }
+    				  
+    				  if (passed) {
+    					  System.out.println("ProblemIsParameterBlockConstant() passed all tests");
+    				  }
+    			}
+
+    			public void ProblemIsParameterBlockConstantWithUnknownPtrDies() {
+    				  // Gives expected error message:
+    				  // In IsParameterBlockConstant Parameter block not found for supplied double[] values.
+    				  // You must add the parameter block to the problem before it can be queried.
+    				  double x[] = new double[3];
+    				  double y[] = new double[2];
+
+    				  ProblemImpl problem = new ProblemImpl();
+    				  problem.AddParameterBlock(x, 3);
+
+    				  //EXPECT_DEATH_IF_SUPPORTED(problem.IsParameterBlockConstant(y),
+    				                            //"Parameter block not found:");
+    				  problem.IsParameterBlockConstant(y);
+    			}
+    			
+    			public void ProblemSetLocalParameterizationWithUnknownPtrDies() {
+    				// Gives expected error message:
+    				// In SetParameterization Parameter block not found for supplied double[] values.
+    				// You must add the parameter block to the problem before you can set its local parameterization.
+    				double x[] = new double[3];
+  				    double y[] = new double[2];
+
+  				    ProblemImpl problem = new ProblemImpl();
+  				    problem.AddParameterBlock(x, 3);
+    				  
+    				  //EXPECT_DEATH_IF_SUPPORTED(
+    				      //problem.SetParameterization(y, new IdentityParameterization(3)),
+    				      //"Parameter block not found:");
+  				  problem.SetParameterization(y, new IdentityParameterization(3));
+    			}
+    			
+    			/*public void ProblemRemoveParameterBlockWithUnknownPtrDies() {
+    				  double x[] = new double[3];
+  				      double y[] = new double[2];
+
+  				      ProblemImpl problem = new ProblemImpl();
+  				      problem.AddParameterBlock(x, 3);
+    				  
+    				  //EXPECT_DEATH_IF_SUPPORTED(
+    				      problem.RemoveParameterBlock(y); //, "Parameter block not found:");
+    				}*/
+
 
 			
 }
