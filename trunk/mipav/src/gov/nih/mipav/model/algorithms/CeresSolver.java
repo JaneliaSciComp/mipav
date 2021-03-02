@@ -18801,6 +18801,18 @@ public abstract class CeresSolver {
 			parameter_block.SetConstant();
 		}
 		
+		public boolean IsParameterBlockConstant(double[] values) {
+			ParameterBlock parameter_block = FindWithDefault(parameter_block_map_, values, null);
+			if (parameter_block == null) {
+				System.err.println("In IsParameterBlockConstant Parameter block not found for supplied double[] values.");
+				System.err.println("You must add the parameter block to the problem before it can be queried.");
+				return false;
+			}
+			  
+			  return parameter_block.IsConstant();
+			}
+
+		
 		public void SetParameterBlockVariable(double[] values) {
 			  ParameterBlock parameter_block =
 			      FindWithDefault(parameter_block_map_, values, null);
@@ -18811,8 +18823,19 @@ public abstract class CeresSolver {
 			  }
 
 			  parameter_block.SetVarying();
-			}
+		}
+		
+		public void SetParameterization(double[] values, LocalParameterization local_parameterization) {
+			ParameterBlock parameter_block =
+				      FindWithDefault(parameter_block_map_, values, null);
+				  if (parameter_block == null) {
+				    System.err.println("In SetParameterization Parameter block not found for supplied double[] values.");
+				    System.err.println("You must add the parameter block to the problem before you can set its local parameterization.");
+				    return;
+				  }
 
+			  parameter_block.SetParameterization(local_parameterization);
+		}
 
 		public LocalParameterization GetParameterization(double[] values) {
 			ParameterBlock parameter_block = FindWithDefault(parameter_block_map_, values, null);
