@@ -18738,7 +18738,7 @@ public abstract class CeresSolver {
 		private boolean context_impl_owned_[] = new boolean[] {false};
 		private Context context_impl_;
 		private int count;
-
+        private Vector<LocalParameterization> local_parameterizations_to_delete_;
 		
 
 		public ProblemImpl() {
@@ -18752,6 +18752,7 @@ public abstract class CeresSolver {
 			//InitializeContext(options_.context, context_impl_, context_impl_owned_);
 			context_impl_owned_[0] = false;
 			context_impl_ = options_.context;
+			local_parameterizations_to_delete_ = new Vector<LocalParameterization>();
 		}
 
 		public ProblemImpl(ProblemOptions options) {
@@ -18765,6 +18766,7 @@ public abstract class CeresSolver {
 			//InitializeContext(options_.context, context_impl_, context_impl_owned_);
 			context_impl_owned_[0] = false;
 			context_impl_ = options_.context;
+			local_parameterizations_to_delete_ = new Vector<LocalParameterization>();
 		}
 
 		void InitializeContext(Context context, Context context_impl, boolean context_impl_owned[]) {
@@ -19187,6 +19189,40 @@ public abstract class CeresSolver {
 		  }
 		  residual_block = null;
 		}
+		
+		public void DeleteBlockInVector(Vector<ParameterBlock> mutable_blocks,
+                ParameterBlock block_to_remove) {
+			//CHECK_EQ((*mutable_blocks)[block_to_remove->index()], block_to_remove)
+			//<< "You found a Ceres bug! \n"
+			//<< "Block requested: "
+			//<< block_to_remove->ToString() << "\n"
+			//<< "Block present: "
+			//<< (*mutable_blocks)[block_to_remove->index()]->ToString();
+			
+			// Prepare the to-be-moved block for the new, lower-in-index position by
+			// setting the index to the blocks final location.
+			int index = mutable_blocks.indexOf(block_to_remove);
+		    ParameterBlock tmp = mutable_blocks.lastElement();
+			mutable_blocks.set(index, tmp);
+			DeleteBlock(block_to_remove);
+			mutable_blocks.remove(mutable_blocks.size()-1);
+		}
+		
+		// Deletes the parameter block in question, assuming there are no other
+		// references to it inside the problem (e.g. by any residual blocks).
+		// Referenced parameterizations are tucked away for future deletion, since it
+		// is not possible to know whether other parts of the problem depend on them
+		// without doing a full scan.
+		public void DeleteBlock(ParameterBlock parameter_block) {
+		  if (options_.local_parameterization_ownership == Ownership.TAKE_OWNERSHIP &&
+		      parameter_block.local_parameterization() != null) {
+		    local_parameterizations_to_delete_.add(
+		        parameter_block.mutable_local_parameterization());
+		  }
+		  parameter_block_map_.remove(parameter_block.mutable_user_state());
+		  parameter_block = null;
+		}
+
 
 
 		public HashSet<ResidualBlock> residual_block_set() {
@@ -19195,7 +19231,45 @@ public abstract class CeresSolver {
 		        return null;
 		    }
 		    return residual_block_set_;
-		  }
+	    }
+		
+		public void RemoveParameterBlock(double[] values) {
+			ParameterBlock parameter_block =
+				      FindWithDefault(parameter_block_map_, values, null);
+				  if (parameter_block == null) {
+				    System.err.println("In SetParameterization Parameter block not found for supplied double[] values.");
+				    System.err.println("You must add the parameter block to the problem before it can be removed.");
+				    return;
+				  }
+
+			  if (options_.enable_fast_removal) {
+			    // Copy the dependent residuals from the parameter block because the set of
+			    // dependents will change after each call to RemoveResidualBlock().
+			    Vector<ResidualBlock> residual_blocks_to_remove = new Vector<ResidualBlock>(parameter_block.mutable_residual_blocks().size());
+			    residual_blocks_to_remove.addAll(parameter_block.mutable_residual_blocks());
+			    for (int i = 0; i < residual_blocks_to_remove.size(); ++i) {
+			      InternalRemoveResidualBlock(residual_blocks_to_remove.get(i));
+			    }
+			  } else {
+			    // Scan all the residual blocks to remove ones that depend on the parameter
+			    // block. Do the scan backwards since the vector changes while iterating.
+			    final int num_residual_blocks = NumResidualBlocks();
+			    for (int i = num_residual_blocks - 1; i >= 0; --i) {
+			      ResidualBlock residual_block =
+			          program_.mutable_residual_blocks().get(i);
+			      final int num_parameter_blocks = residual_block.NumParameterBlocks();
+			      for (int j = 0; j < num_parameter_blocks; ++j) {
+			        if (residual_block.parameter_blocks()[j] == parameter_block) {
+			          InternalRemoveResidualBlock(residual_block);
+			          // The parameter blocks are guaranteed unique.
+			          break;
+			        }
+			      }
+			    }
+			  }
+			  DeleteBlockInVector(program_.mutable_parameter_blocks(), parameter_block);
+			}
+
 
 	} // class ProblemImpl
 
