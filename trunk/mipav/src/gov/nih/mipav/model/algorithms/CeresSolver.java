@@ -19237,7 +19237,7 @@ public abstract class CeresSolver {
 			ParameterBlock parameter_block =
 				      FindWithDefault(parameter_block_map_, values, null);
 				  if (parameter_block == null) {
-				    System.err.println("In SetParameterization Parameter block not found for supplied double[] values.");
+				    System.err.println("In RemoveParameterBlock Parameter block not found for supplied double[] values.");
 				    System.err.println("You must add the parameter block to the problem before it can be removed.");
 				    return;
 				  }
@@ -19268,6 +19268,18 @@ public abstract class CeresSolver {
 			    }
 			  }
 			  DeleteBlockInVector(program_.mutable_parameter_blocks(), parameter_block);
+			}
+
+		public int ParameterBlockSize( double[] values) {
+			ParameterBlock parameter_block =
+				      FindWithDefault(parameter_block_map_, values, null);
+				  if (parameter_block == null) {
+				    System.err.println("In ParameterBlockSize Parameter block not found for supplied double[] values.");
+				    System.err.println("You must add the parameter block to the problem before you can get its size.");
+				    return -1;
+				  }
+
+			  return parameter_block.Size();
 			}
 
 
