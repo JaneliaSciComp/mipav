@@ -69,6 +69,10 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
     /** Radio button to denote image is pelvis CT*/
     private JRadioButton pelvisRadio;
     
+    private JRadioButton fullRadio;
+    
+    private JRadioButton halfRadio;
+    
     /**Alternate configs in user-dir*/
     private JRadioButton[] extraRadio;
     
@@ -76,6 +80,8 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
     private JRadioButton customRadio;
     
     private PlugInMuscleImageDisplay542a.ImageType imageType;
+    
+    private boolean dofull = true;
     
     private boolean multipleSlices = false;
     
@@ -186,7 +192,7 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         try {
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
-            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation542a(image, imageType, multipleSlices, fileName);
+            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation542a(image, imageType, multipleSlices, fileName, dofull);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -298,6 +304,25 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         	customRadio.setSelected(true);
         }
         
+        fullRadio = new JRadioButton("Full area");
+        fullRadio.setFont(MipavUtil.font12);
+        halfRadio = new JRadioButton("Half area");
+        halfRadio.setFont(MipavUtil.font12);
+        ButtonGroup fullGroup = new ButtonGroup();
+        fullGroup.add(fullRadio);
+        fullGroup.add(halfRadio);
+        
+        fullRadio.setSelected(true);       
+        int index = fileName.indexOf("full");
+        if (index >= 0) {
+        }
+        else {
+        	index = fileName.indexOf("1_2");
+        	if (index >= 0) {
+        		halfRadio.setSelected(true);
+        	}
+        }
+        
         ButtonGroup group = new ButtonGroup();
         group.add(twoThighRadio);
         group.add(abdomenRadio);
@@ -309,6 +334,7 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         	group.add(extraRadio[i]);
         }
         group.add(customRadio);
+        
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
@@ -323,6 +349,11 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        mainPanel.add(fullRadio, gbc);
+        gbc.gridx = 1;
+        mainPanel.add(halfRadio, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         mainPanel.add(twoThighRadio, gbc);
         gbc.gridx = 1;
         mainPanel.add(abdomenRadio, gbc);
@@ -398,6 +429,12 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
             		fileName = extraRadio[i].getText();
             }
             System.out.println("File name: "+fileName);
+        }
+        if (fullRadio.isSelected()) {
+        	dofull = true;
+        }
+        else {
+        	dofull = false;
         }
         return true;
     }
