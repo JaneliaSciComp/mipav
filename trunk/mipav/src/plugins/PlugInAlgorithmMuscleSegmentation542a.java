@@ -138,6 +138,8 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
     
     /**Button to add a VOI*/
     private JButton incButton;
+    
+    private boolean dofull;
 
     /**
      * Constructor.
@@ -146,13 +148,14 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
      * @param  srcImg       Source image model.
      */
     public PlugInAlgorithmMuscleSegmentation542a(ModelImage srcImg, PlugInMuscleImageDisplay542a.ImageType imageType, 
-    										 boolean multipleSlices, String fileName) {
+    										 boolean multipleSlices, String fileName, boolean dofull) {
         super(null, srcImg);
         this.imageType = imageType;
         this.multipleSlices = multipleSlices;
         //is equal to blank string if image is not run-time defined
         this.fileName = fileName;
         this.imageDir = srcImg.getImageDirectory();
+        this.dofull = dofull;
         
         tabs = new ArrayList<JPanel>();
     }
@@ -1101,10 +1104,10 @@ private void buildChestDialog() {
 		    
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
         	i = new PlugInMuscleImageDisplay542a(srcImage, titles, voiList,  
-        			imageType, symmetry, multipleSlices);
+        			imageType, symmetry, multipleSlices, dofull);
         } else {
         	i = new PlugInMuscleImageDisplay542a(srcImage, titles, voiList, 
-        			imageType, symmetry, true, multipleSlices);
+        			imageType, symmetry, true, multipleSlices, dofull);
         }
         
         boolean b = i.requestFocusInWindow();
