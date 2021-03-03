@@ -270,16 +270,17 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
      * @param imageType
      * @param symmetry
      * @param multipleSlices
+     * @param dofull
      */
     public PlugInMuscleImageDisplay542a(ModelImage image, String[] titles,
             PlugInSelectableVOI542a[][] voiList,  
-            ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
+            ImageType imageType, Symmetry symmetry, boolean multipleSlices, boolean dofull) {
 
     	super(image);
 
     	setVisible(false);
      
-        commonConstructor(image, titles, voiList,  imageType, symmetry, false, multipleSlices);
+        commonConstructor(image, titles, voiList,  imageType, symmetry, false, multipleSlices, dofull);
 
         File f;
         if(!(f = new File(imageDir+File.separator)).exists()) {
@@ -305,18 +306,20 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
      * @param imageType
      * @param symmetry
      * @param standAlone
+     * @param multipleSices
+     * @param dofull
      */
     public PlugInMuscleImageDisplay542a(ModelImage image, String[] titles,
             PlugInSelectableVOI542a[][] voiList, 
             ImageType imageType, Symmetry symmetry, 
-            boolean standAlone, boolean multipleSlices) {
+            boolean standAlone, boolean multipleSlices, boolean dofull) {
     	
     	// calls the ViewJFrameBase constructor that will not call ViewJFrameImage's init() function
     	super(image, (ModelImage)null);
     	
     	
     	
-    	commonConstructor(image, titles, voiList,  imageType, symmetry, standAlone, multipleSlices);
+    	commonConstructor(image, titles, voiList,  imageType, symmetry, standAlone, multipleSlices, dofull);
 
     	setVisible(false);
     	progressBar.setVisible(true);
@@ -348,7 +351,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
     
     private void commonConstructor(ModelImage image, String[] titles,
 	        PlugInSelectableVOI542a[][] voiList,  
-	        ImageType imageType, Symmetry symmetry, boolean standAlone, boolean multipleSlices) {
+	        ImageType imageType, Symmetry symmetry, boolean standAlone, boolean multipleSlices, boolean dofull) {
 		this.setImageA(image); 
 	    this.titles = titles; 
 	    this.mirrorArr = new String[voiList.length][]; 
@@ -359,6 +362,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	    this.imageType = imageType; 
 	    this.symmetry = symmetry; 
 	    this.multipleSlices = multipleSlices; 
+	    this.dofull = dofull;
 	    this.currentSlice = getViewableSlice();
 	    this.colorChoice = 0;
 	    //left as zero to ensure VOIs across image stay same color (helps for image batches)
@@ -398,7 +402,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	    }
 	    progressBar.updateValue(5);
 	    imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay542a.VOI_DIR;
-	    int index = imageDir.indexOf("full");
+	    /*int index = imageDir.indexOf("full");
         if (index >= 0) {
         	dofull = true;
         }
@@ -414,7 +418,16 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         			haveDoneHalfSubcutaneous = new boolean[getImageA().getExtents()[2] + 1];
         		}
         	}
-        }
+        }*/
+	    if (!dofull ) {
+	    	int nDims = getImageA().getNDims();
+    		if (nDims == 2) {
+    			haveDoneHalfSubcutaneous = new boolean[2];
+    		}
+    		else {
+    			haveDoneHalfSubcutaneous = new boolean[getImageA().getExtents()[2] + 1];
+    		}	
+	    }
 	    //Propagate children relationship backwards
 	    setDependents();
 	}
