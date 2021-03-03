@@ -19280,7 +19280,35 @@ public abstract class CeresSolver {
 				  }
 
 			  return parameter_block.Size();
-			}
+		}
+		
+		public int ParameterBlockLocalSize( double[] values) {
+			ParameterBlock parameter_block =
+				      FindWithDefault(parameter_block_map_, values, null);
+				  if (parameter_block == null) {
+				    System.err.println("In ParameterBlockLocalSize Parameter block not found for supplied double[] values.");
+				    System.err.println("You must add the parameter block to the problem before you can get its local size.");
+				    return -1;
+				  }
+
+			  return parameter_block.LocalSize();
+		}
+		
+		public void GetParameterBlocks(Vector<double[]> parameter_blocks) {
+			  if (parameter_blocks == null) {
+				  System.err.println("In ProblemImpl GetParameterBlocks Vector<double[]> parameter_blocks = null");
+				  return;
+			  }
+			  parameter_blocks.clear();
+			  Set<double[]> keySet = parameter_block_map_.keySet();
+			  parameter_blocks.addAll(keySet);
+		}
+		
+		public boolean HasParameterBlock(double[] parameter_block) {
+			  return (parameter_block_map_.containsKey(parameter_block));
+		}
+
+
 
 
 	} // class ProblemImpl
