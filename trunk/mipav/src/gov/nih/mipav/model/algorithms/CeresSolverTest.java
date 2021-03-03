@@ -11935,7 +11935,10 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
   				  problem.SetParameterization(y, new IdentityParameterization(3));
     			}
     			
-    			/*public void ProblemRemoveParameterBlockWithUnknownPtrDies() {
+    			public void ProblemRemoveParameterBlockWithUnknownPtrDies() {
+    				  // Gives expected error message:
+    				  // In RemoveParameterBlock Parameter block not found for supplied double[] values.
+    				  // You must add the parameter block to the problem before it can be removed.
     				  double x[] = new double[3];
   				      double y[] = new double[2];
 
@@ -11944,8 +11947,100 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				  
     				  //EXPECT_DEATH_IF_SUPPORTED(
     				      problem.RemoveParameterBlock(y); //, "Parameter block not found:");
-    				}*/
+    				}
 
+    			public void ProblemGetParameterization() {
+    				  // ProblemGetParameterization() passed all tests
+    				  boolean passed = true;
+    				  double x[] = new double[3];
+    				  double y[] = new double[2];
 
-			
+    				  ProblemImpl problem = new ProblemImpl();
+    				  problem.AddParameterBlock(x, 3);
+    				  problem.AddParameterBlock(y, 2);
+
+    				  LocalParameterization parameterization =  new IdentityParameterization(3);
+    				  problem.SetParameterization(x, parameterization);
+    				  if (problem.GetParameterization(x) != parameterization) {
+    					  System.err.println("In ProblemGetParameterization() problem.GetParameterization(x) != parameterization");
+    					  passed = false;
+    				  }
+    				  if (problem.GetParameterization(y) != null) {
+    					  System.err.println("In ProblemGetParameterization() problem.GetParameterization(y) != null");
+    					  passed = false;
+    				  }
+    				  if (passed) {
+    					  System.out.println("ProblemGetParameterization() passed all tests");
+    				  }
+    			}
+
+    			public void ProblemParameterBlockQueryTest() {
+    				  // ProblemParameterBlockQueryTest() passed all tests
+    				  boolean passed = true;
+    				  double x[] = new double[3];
+    				  double y[] = new double[4];
+    				  ProblemImpl problem = new ProblemImpl();
+    				  problem.AddParameterBlock(x, 3);
+    				  problem.AddParameterBlock(y, 4);
+
+    				  Vector<Integer> constant_parameters = new Vector<Integer>();
+    				  constant_parameters.add(0);
+    				  problem.SetParameterization(
+    				      x,
+    				      new SubsetParameterization(3, constant_parameters));
+    				  if (problem.ParameterBlockSize(x) != 3) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() problem.ParameterBlockSize(x) != 3");
+    					  passed = false;
+    				  }
+    				  if (problem.ParameterBlockLocalSize(x) != 2) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() problem.ParameterBlockLocalSize(x) != 2");
+    					  passed = false;
+    				  }
+    				  if (problem.ParameterBlockLocalSize(y) != 4) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() problem.ParameterBlockLocalSize(y) != 4");
+    					  passed = false;
+    				  }
+
+    				  Vector<double[]> parameter_blocks = new Vector<double[]>();
+    				  problem.GetParameterBlocks(parameter_blocks);
+    				  if (parameter_blocks.size() != 2) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() parameter_blocks.size() != 2");
+    					  passed = false;
+    				  }
+    				  if (parameter_blocks.get(0) == parameter_blocks.get(1)) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() parameter_blocks.get(0) == parameter_blocks.get(1)");
+    					  passed = false;
+    				  }
+    				  if (parameter_blocks.get(0) != x && parameter_blocks.get(0) != y) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() parameter_blocks.get(0) != x && parameter_blocks.get(0) != y");
+    					  passed = false;
+    				  }
+    				  if (parameter_blocks.get(1) != x && parameter_blocks.get(1) != y) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() parameter_blocks.get(1) != x && parameter_blocks.get(1) != y");
+    					  passed = false;
+    				  }
+
+    				  if (!problem.HasParameterBlock(x)) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() problem.HasParameterBlock(x) = false");
+    					  passed = false;
+    				  }
+    				  problem.RemoveParameterBlock(x);
+    				  if (problem.HasParameterBlock(x)) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() problem.HasParameterBlock(x) = true");
+    					  passed = false; 
+    				  }
+    				  problem.GetParameterBlocks(parameter_blocks);
+    				  if (parameter_blocks.size() != 1) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() parameter_blocks.size() != 1");
+    					  passed = false; 
+    				  }
+    				  if (parameter_blocks.get(0) != y) {
+    					  System.err.println("In ProblemParameterBlockQueryTest() parameter_blocks.get(0) != y");
+    					  passed = false;
+    				  }
+    				  if (passed) {
+    					  System.out.println("ProblemParameterBlockQueryTest() passed all tests");
+    				  }
+    				}
+
 }
