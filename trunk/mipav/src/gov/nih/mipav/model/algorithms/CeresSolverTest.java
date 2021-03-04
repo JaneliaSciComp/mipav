@@ -12006,72 +12006,141 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				  CostFunction cost_z   = new UnaryCostFunction  (1, 5);
     				  CostFunction cost_w   = new UnaryCostFunction  (1, 3);
 
-    				  /*ResidualBlock* r_yzw = problem->AddResidualBlock(cost_yzw, NULL, y, z, w);
-    				  ResidualBlock* r_yz  = problem->AddResidualBlock(cost_yz,  NULL, y, z);
-    				  ResidualBlock* r_yw  = problem->AddResidualBlock(cost_yw,  NULL, y, w);
-    				  ResidualBlock* r_zw  = problem->AddResidualBlock(cost_zw,  NULL, z, w);
-    				  ResidualBlock* r_y   = problem->AddResidualBlock(cost_y,   NULL, y);
-    				  ResidualBlock* r_z   = problem->AddResidualBlock(cost_z,   NULL, z);
-    				  ResidualBlock* r_w   = problem->AddResidualBlock(cost_w,   NULL, w);
+    				  ResidualBlock r_yzw = problem.AddResidualBlock(cost_yzw, null, y, z, w);
+    				  ResidualBlock r_yz  = problem.AddResidualBlock(cost_yz,  null, y, z);
+    				  ResidualBlock r_yw  = problem.AddResidualBlock(cost_yw,  null, y, w);
+    				  ResidualBlock r_zw  = problem.AddResidualBlock(cost_zw,  null, z, w);
+    				  ResidualBlock r_y   = problem.AddResidualBlock(cost_y,   null, y);
+    				  ResidualBlock r_z   = problem.AddResidualBlock(cost_z,   null, z);
+    				  ResidualBlock r_w   = problem.AddResidualBlock(cost_w,  null, w);
 
-    				  EXPECT_EQ(3, problem->NumParameterBlocks());
-    				  EXPECT_EQ(7, NumResidualBlocks());
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+    					  passed = false;
+    				  }
+    				  if (7 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 7 != NumResidualBlocks()");
+    					  passed = false;
+    				  }
 
     				  // Remove w, which should remove r_yzw, r_yw, r_zw, r_w.
-    				  problem->RemoveParameterBlock(w);
-    				  ASSERT_EQ(2, problem->NumParameterBlocks());
-    				  ASSERT_EQ(3, NumResidualBlocks());
+    				  problem.RemoveParameterBlock(w);
+    				  if (2 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 2 != problem.NumParameterBlocks()");
+    					  passed = false;
+    				  }
+    				  if (3 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 3 != NumResidualBlocks()");
+    					  passed = false;
+    				  }
 
-    				  ASSERT_FALSE(HasResidualBlock(r_yzw));
-    				  ASSERT_TRUE (HasResidualBlock(r_yz ));
-    				  ASSERT_FALSE(HasResidualBlock(r_yw ));
-    				  ASSERT_FALSE(HasResidualBlock(r_zw ));
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_z  ));
-    				  ASSERT_FALSE(HasResidualBlock(r_w  ));
+    				  if (HasResidualBlock(r_yzw)) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yzw) = true");
+    					  passed = false;
+    				  }
+    				  if (!HasResidualBlock(r_yz )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yz) = false");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_yw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yw) = true");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_zw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_zw) = true");
+    					  passed = false;
+    				  }
+    				  if (!HasResidualBlock(r_y  )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y) = false");
+    					  passed = false;
+    				  }
+    				  if (!HasResidualBlock(r_z  )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z) = false");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_w  )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_w) = true");
+    					  passed = false;
+    				  }
 
     				  // Remove z, which will remove almost everything else.
-    				  problem->RemoveParameterBlock(z);
-    				  ASSERT_EQ(1, problem->NumParameterBlocks());
-    				  ASSERT_EQ(1, NumResidualBlocks());
+    				  problem.RemoveParameterBlock(z);
+    				  if (1 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 1 != problem.NumParameterBlocks()");
+    					  passed = false;
+    				  }
+    				  if (1 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 1 != NumResidualBlocks()");
+    					  passed = false;
+    				  }
 
-    				  ASSERT_FALSE(HasResidualBlock(r_yzw));
-    				  ASSERT_FALSE(HasResidualBlock(r_yz ));
-    				  ASSERT_FALSE(HasResidualBlock(r_yw ));
-    				  ASSERT_FALSE(HasResidualBlock(r_zw ));
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_FALSE(HasResidualBlock(r_z  ));
-    				  ASSERT_FALSE(HasResidualBlock(r_w  ));
+    				  if (HasResidualBlock(r_yzw)) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yzw) = true");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_yz )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yz) = true");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_yw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yw) = true");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_zw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_zw) = true");
+    					  passed = false;
+    				  }
+    				  if (!HasResidualBlock(r_y  )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y) = false");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_z  )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z) = true");
+    					  passed = false;
+    				  }
+    				  if (HasResidualBlock(r_w  )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_w) = true");
+    					  passed = false;
+    				  }
 
     				  // Remove y; all gone.
-    				  problem->RemoveParameterBlock(y);
-    				  EXPECT_EQ(0, problem->NumParameterBlocks());
-    				  EXPECT_EQ(0, NumResidualBlocks());
+    				  problem.RemoveParameterBlock(y);
+    				  if (0 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 0 != problem.NumParameterBlocks()");
+    					  passed = false;
+    				  }
+    				  if (0 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 0 != NumResidualBlocks()");
+    					  passed = false;
+    				  }
+    				  if (passed) {
+    					  System.out.println(testName + " passed all tests");
+    				  }
     				}
 
-    				TEST_P(DynamicProblem, RemoveResidualBlock) {
-    				  problem->AddParameterBlock(y, 4);
-    				  problem->AddParameterBlock(z, 5);
-    				  problem->AddParameterBlock(w, 3);
+    				public void DynamicProblemRemoveResidualBlock() {
+    				  problem.AddParameterBlock(y, 4);
+    				  problem.AddParameterBlock(z, 5);
+    				  problem.AddParameterBlock(w, 3);
 
     				  // Add all combinations of cost functions.
-    				  CostFunction* cost_yzw = new TernaryCostFunction(1, 4, 5, 3);
-    				  CostFunction* cost_yz  = new BinaryCostFunction (1, 4, 5);
-    				  CostFunction* cost_yw  = new BinaryCostFunction (1, 4, 3);
-    				  CostFunction* cost_zw  = new BinaryCostFunction (1, 5, 3);
-    				  CostFunction* cost_y   = new UnaryCostFunction  (1, 4);
-    				  CostFunction* cost_z   = new UnaryCostFunction  (1, 5);
-    				  CostFunction* cost_w   = new UnaryCostFunction  (1, 3);
+    				  CostFunction cost_yzw = new TernaryCostFunction2(1, 4, 5, 3);
+    				  CostFunction cost_yz  = new BinaryCostFunction (1, 4, 5);
+    				  CostFunction cost_yw  = new BinaryCostFunction (1, 4, 3);
+    				  CostFunction cost_zw  = new BinaryCostFunction (1, 5, 3);
+    				  CostFunction cost_y   = new UnaryCostFunction  (1, 4);
+    				  CostFunction cost_z   = new UnaryCostFunction  (1, 5);
+    				  CostFunction cost_w   = new UnaryCostFunction  (1, 3);
 
-    				  ResidualBlock* r_yzw = problem->AddResidualBlock(cost_yzw, NULL, y, z, w);
-    				  ResidualBlock* r_yz  = problem->AddResidualBlock(cost_yz,  NULL, y, z);
-    				  ResidualBlock* r_yw  = problem->AddResidualBlock(cost_yw,  NULL, y, w);
-    				  ResidualBlock* r_zw  = problem->AddResidualBlock(cost_zw,  NULL, z, w);
-    				  ResidualBlock* r_y   = problem->AddResidualBlock(cost_y,   NULL, y);
-    				  ResidualBlock* r_z   = problem->AddResidualBlock(cost_z,   NULL, z);
-    				  ResidualBlock* r_w   = problem->AddResidualBlock(cost_w,   NULL, w);
+    				  ResidualBlock r_yzw = problem.AddResidualBlock(cost_yzw, null, y, z, w);
+    				  ResidualBlock r_yz  = problem.AddResidualBlock(cost_yz,  null, y, z);
+    				  ResidualBlock r_yw  = problem.AddResidualBlock(cost_yw,  null, y, w);
+    				  ResidualBlock r_zw  = problem.AddResidualBlock(cost_zw,  null, z, w);
+    				  ResidualBlock r_y   = problem.AddResidualBlock(cost_y,   null, y);
+    				  ResidualBlock r_z   = problem.AddResidualBlock(cost_z,   null, z);
+    				  ResidualBlock r_w   = problem.AddResidualBlock(cost_w,   null, w);
 
-    				  if (GetParam()) {
+    				  if (param) {
     				    // In this test parameterization, there should be back-pointers from the
     				    // parameter blocks to the residual blocks.
     				    ExpectParameterBlockContains(y, r_yzw, r_yz, r_yw, r_y);
@@ -12079,99 +12148,277 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				    ExpectParameterBlockContains(w, r_yzw, r_yw, r_zw, r_w);
     				  } else {
     				    // Otherwise, nothing.
-    				    EXPECT_TRUE(GetParameterBlock(0)->mutable_residual_blocks() == NULL);
-    				    EXPECT_TRUE(GetParameterBlock(1)->mutable_residual_blocks() == NULL);
-    				    EXPECT_TRUE(GetParameterBlock(2)->mutable_residual_blocks() == NULL);
+    				    if (GetParameterBlock(0).mutable_residual_blocks() != null) {
+    				    	System.err.println("In " + testName + " GetParameterBlock(0).mutable_residual_blocks() != null");
+    				    	passed = false;
+    				    }
+    				    if (GetParameterBlock(1).mutable_residual_blocks() != null) {
+    				    	System.err.println("In " + testName + " GetParameterBlock(1).mutable_residual_blocks() != null");
+    				    	passed = false;
+    				    }
+    				    if (GetParameterBlock(2).mutable_residual_blocks() != null) {
+    				    	System.err.println("In " + testName + " GetParameterBlock(2).mutable_residual_blocks() != null");
+    				    	passed = false;
+    				    }
     				  }
-    				  EXPECT_EQ(3, problem->NumParameterBlocks());
-    				  EXPECT_EQ(7, NumResidualBlocks());
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (7 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 7 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
 
     				  // Remove each residual and check the state after each removal.
 
     				  // Remove r_yzw.
-    				  problem->RemoveResidualBlock(r_yzw);
-    				  ASSERT_EQ(3, problem->NumParameterBlocks());
-    				  ASSERT_EQ(6, NumResidualBlocks());
-    				  if (GetParam()) {
+    				  problem.RemoveResidualBlock(r_yzw);
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (6 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 6 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (param) {
     				    ExpectParameterBlockContains(y, r_yz, r_yw, r_y);
     				    ExpectParameterBlockContains(z, r_yz, r_zw, r_z);
     				    ExpectParameterBlockContains(w, r_yw, r_zw, r_w);
     				  }
-    				  ASSERT_TRUE (HasResidualBlock(r_yz ));
-    				  ASSERT_TRUE (HasResidualBlock(r_yw ));
-    				  ASSERT_TRUE (HasResidualBlock(r_zw ));
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_z  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_w  ));
+    				  if (!HasResidualBlock(r_yz )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yz ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_yw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yw ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_zw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_zw ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_y )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_z )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_w )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_w ) = false");
+  				    	  passed = false; 
+    				  }
 
     				  // Remove r_yw.
-    				  problem->RemoveResidualBlock(r_yw);
-    				  ASSERT_EQ(3, problem->NumParameterBlocks());
-    				  ASSERT_EQ(5, NumResidualBlocks());
-    				  if (GetParam()) {
+    				  problem.RemoveResidualBlock(r_yw);
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (5 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 5 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (param) {
     				    ExpectParameterBlockContains(y, r_yz, r_y);
     				    ExpectParameterBlockContains(z, r_yz, r_zw, r_z);
     				    ExpectParameterBlockContains(w, r_zw, r_w);
     				  }
-    				  ASSERT_TRUE (HasResidualBlock(r_yz ));
-    				  ASSERT_TRUE (HasResidualBlock(r_zw ));
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_z  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_w  ));
+    				  if (!HasResidualBlock(r_yz )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yz ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_zw )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_zw ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_y )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_z )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_w )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_w ) = false");
+  				    	  passed = false; 
+    				  }
 
     				  // Remove r_zw.
-    				  problem->RemoveResidualBlock(r_zw);
-    				  ASSERT_EQ(3, problem->NumParameterBlocks());
-    				  ASSERT_EQ(4, NumResidualBlocks());
-    				  if (GetParam()) {
+    				  problem.RemoveResidualBlock(r_zw);
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (4 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 4 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (param) {
     				    ExpectParameterBlockContains(y, r_yz, r_y);
     				    ExpectParameterBlockContains(z, r_yz, r_z);
     				    ExpectParameterBlockContains(w, r_w);
     				  }
-    				  ASSERT_TRUE (HasResidualBlock(r_yz ));
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_z  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_w  ));
+    				  if (!HasResidualBlock(r_yz )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yz ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_y )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_z )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_w )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_w ) = false");
+  				    	  passed = false; 
+    				  }
 
     				  // Remove r_w.
-    				  problem->RemoveResidualBlock(r_w);
-    				  ASSERT_EQ(3, problem->NumParameterBlocks());
-    				  ASSERT_EQ(3, NumResidualBlocks());
-    				  if (GetParam()) {
+    				  problem.RemoveResidualBlock(r_w);
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (3 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 3 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (param) {
     				    ExpectParameterBlockContains(y, r_yz, r_y);
     				    ExpectParameterBlockContains(z, r_yz, r_z);
     				    ExpectParameterBlockContains(w);
     				  }
-    				  ASSERT_TRUE (HasResidualBlock(r_yz ));
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_z  ));
-
+    				  if (!HasResidualBlock(r_yz )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_yz ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_y )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_z )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z ) = false");
+  				    	  passed = false; 
+    				  }
     				  // Remove r_yz.
-    				  problem->RemoveResidualBlock(r_yz);
-    				  ASSERT_EQ(3, problem->NumParameterBlocks());
-    				  ASSERT_EQ(2, NumResidualBlocks());
-    				  if (GetParam()) {
+    				  problem.RemoveResidualBlock(r_yz);
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (2 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 2 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (param) {
     				    ExpectParameterBlockContains(y, r_y);
     				    ExpectParameterBlockContains(z, r_z);
     				    ExpectParameterBlockContains(w);
     				  }
-    				  ASSERT_TRUE (HasResidualBlock(r_y  ));
-    				  ASSERT_TRUE (HasResidualBlock(r_z  ));
+    				  if (!HasResidualBlock(r_y )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_y ) = false");
+  				    	  passed = false; 
+    				  }
+    				  if (!HasResidualBlock(r_z )) {
+    					  System.err.println("In " + testName + " HasResidualBlock(r_z ) = false");
+  				    	  passed = false; 
+    				  }
 
     				  // Remove the last two.
-    				  problem->RemoveResidualBlock(r_z);
-    				  problem->RemoveResidualBlock(r_y);
-    				  ASSERT_EQ(3, problem->NumParameterBlocks());
-    				  ASSERT_EQ(0, NumResidualBlocks());
-    				  if (GetParam()) {
+    				  problem.RemoveResidualBlock(r_z);
+    				  problem.RemoveResidualBlock(r_y);
+    				  if (3 != problem.NumParameterBlocks()) {
+    					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (0 != NumResidualBlocks()) {
+    					  System.err.println("In " + testName + " 0 != NumResidualBlocks()");
+  				    	  passed = false;
+    				  }
+    				  if (param) {
     				    ExpectParameterBlockContains(y);
     				    ExpectParameterBlockContains(z);
     				    ExpectParameterBlockContains(w);
-    				  }*/
+    				  }
+    				  if (passed) {
+    					  System.out.println(testName + " passed all tests");
+    				  }
     				}
 
-    			  
-    			};
+    				public void DynamicProblemRemoveInvalidResidualBlockDies() {
+    					  problem.AddParameterBlock(y, 4);
+    					  problem.AddParameterBlock(z, 5);
+    					  problem.AddParameterBlock(w, 3);
+
+    					  // Add all combinations of cost functions.
+    					  CostFunction cost_yzw = new TernaryCostFunction2(1, 4, 5, 3);
+    					  CostFunction cost_yz  = new BinaryCostFunction (1, 4, 5);
+    					  CostFunction cost_yw  = new BinaryCostFunction (1, 4, 3);
+    					  CostFunction cost_zw  = new BinaryCostFunction (1, 5, 3);
+    					  CostFunction cost_y   = new UnaryCostFunction  (1, 4);
+    					  CostFunction cost_z   = new UnaryCostFunction  (1, 5);
+    					  CostFunction cost_w   = new UnaryCostFunction  (1, 3);
+
+    					  ResidualBlock r_yzw = problem.AddResidualBlock(cost_yzw, null, y, z, w);
+    					  ResidualBlock r_yz  = problem.AddResidualBlock(cost_yz,  null, y, z);
+    					  ResidualBlock r_yw  = problem.AddResidualBlock(cost_yw,  null, y, w);
+    					  ResidualBlock r_zw  = problem.AddResidualBlock(cost_zw,  null, z, w);
+    					  ResidualBlock r_y   = problem.AddResidualBlock(cost_y,   null, y);
+    					  ResidualBlock r_z   = problem.AddResidualBlock(cost_z,   null, z);
+    					  ResidualBlock r_w   = problem.AddResidualBlock(cost_w,   null, w);
+
+    					  // Remove r_yzw.
+    					  problem.RemoveResidualBlock(r_yzw);
+    					  if (3 != problem.NumParameterBlocks()) {
+        					  System.err.println("In " + testName + " 3 != problem.NumParameterBlocks()");
+      				    	  passed = false;
+        				  }
+        				  if (6 != NumResidualBlocks()) {
+        					  System.err.println("In " + testName + " 6 != NumResidualBlocks()");
+      				    	  passed = false;
+        				  }
+    					  // Attempt to remove r_yzw again.
+    					  //EXPECT_DEATH_IF_SUPPORTED(problem->RemoveResidualBlock(r_yzw), "not found");
+        				  problem.RemoveResidualBlock(r_yzw);
+
+    					  // Attempt to remove a cast pointer never added as a residual.
+    					  //int trash_memory = 1234;
+    					  //ResidualBlock* invalid_residual =
+    					      //reinterpret_cast<ResidualBlock*>(&trash_memory);
+    					  //EXPECT_DEATH_IF_SUPPORTED(problem->RemoveResidualBlock(invalid_residual),
+    					                            //"not found");
+
+    					  // Remove a parameter block, which in turn removes the dependent residuals
+    					  // then attempt to remove them directly.
+    					  problem.RemoveParameterBlock(z);
+    					  if (2 != problem.NumParameterBlocks()) {
+        					  System.err.println("In " + testName + " 2 != problem.NumParameterBlocks()");
+      				    	  passed = false;
+        				  }
+        				  if (3 != NumResidualBlocks()) {
+        					  System.err.println("In " + testName + " 3 != NumResidualBlocks()");
+      				    	  passed = false;
+        				  }
+    					  //EXPECT_DEATH_IF_SUPPORTED(problem->RemoveResidualBlock(r_yz), "not found");
+    					  //EXPECT_DEATH_IF_SUPPORTED(problem->RemoveResidualBlock(r_zw), "not found");
+    					  //EXPECT_DEATH_IF_SUPPORTED(problem->RemoveResidualBlock(r_z), "not found");
+        				  problem.RemoveResidualBlock(r_yz);
+        				  problem.RemoveResidualBlock(r_zw);
+        				  problem.RemoveResidualBlock(r_z);
+
+    					  problem.RemoveResidualBlock(r_yw);
+    					  problem.RemoveResidualBlock(r_w);
+    					  problem.RemoveResidualBlock(r_y);
+    					}
+
+    			} // class DynamicProblem
     			
     			public void ProblemSetParameterBlockConstantWithUnknownPtrDies() {
     				  // Gives expected error message:
@@ -12404,5 +12651,71 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     				DP = new DynamicProblem(false, "DynamicProblemRemoveParameterBlockWithNoResiduals()_param_false");
     				DP.DynamicProblemRemoveParameterBlockWithNoResiduals();
     			}
+    			
+    			public void DynamicProblemRemoveParameterBlockWithResiduals() {
+    				//DynamicProblemRemoveParameterBlockWithResiduals()_param_true passed all tests
+    				//DynamicProblemRemoveParameterBlockWithResiduals()_param_false passed all tests
+    				DynamicProblem DP = new DynamicProblem(true, "DynamicProblemRemoveParameterBlockWithResiduals()_param_true");
+    				DP.DynamicProblemRemoveParameterBlockWithResiduals();
+    				DP = new DynamicProblem(false, "DynamicProblemRemoveParameterBlockWithResiduals()_param_false");
+    				DP.DynamicProblemRemoveParameterBlockWithResiduals();
+    			}
+    			
+    			public void DynamicProblemRemoveResidualBlock() {
+    				//DynamicProblemRemoveResidualBlock()_param_true passed all tests
+    				//DynamicProblemRemoveResidualBlock()_param_false passed all tests
+    				DynamicProblem DP = new DynamicProblem(true, "DynamicProblemRemoveResidualBlock()_param_true");
+    				DP.DynamicProblemRemoveResidualBlock();
+    				DP = new DynamicProblem(false, "DynamicProblemRemoveResidualBlock()_param_false");
+    				DP.DynamicProblemRemoveResidualBlock();
+    			}
+    			
+    			public void DynamicProblemRemoveInvalidResidualBlockDies() {
+    				// Gives error message 8 times as expected:
+    				//Residual block to remove not found. This usually means one of three things have happened:
+    			    //1) residual_block is uninitialised and points to a random area in memory.
+    			    //2) residual_block represented a residual that was added to the problem, but referred to a parameter block which has
+    			    //since been removed, which removes all residuals which depend on that parameter block, and was thus removed.
+    			    //3) residual_block referred to a residual that has already been removed from the problem (by the user).
+    				DynamicProblem DP = new DynamicProblem(true, "DynamicProblemRemoveInvalidResidualBlockDies()_param_true");
+    				DP.DynamicProblemRemoveInvalidResidualBlockDies();
+    				DP = new DynamicProblem(false, "DynamicProblemRemoveInvalidResidualBlockDies()_param_false");
+    				DP.DynamicProblemRemoveInvalidResidualBlockDies();
+    			}
+    			
+    			// Check that a null-terminated array, a, has the same elements as b.
+    			// Used on ResidualBlock pointers
+    			/*template<typename T>
+    			void ExpectVectorContainsUnordered(const T* a, const vector<T>& b) {
+    			  // Compute the size of a.
+    			  int size = 0;
+    			  while (a[size]) {
+    			    ++size;
+    			  }
+    			  ASSERT_EQ(size, b.size());
+
+    			  // Sort a.
+    			  vector<T> a_sorted(size);
+    			  copy(a, a + size, a_sorted.begin());
+    			  sort(a_sorted.begin(), a_sorted.end());
+
+    			  // Sort b.
+    			  vector<T> b_sorted(b);
+    			  sort(b_sorted.begin(), b_sorted.end());
+
+    			  // Compare.
+    			  for (int i = 0; i < size; ++i) {
+    			    EXPECT_EQ(a_sorted[i], b_sorted[i]);
+    			  }
+    			}
+
+    			void ExpectProblemHasResidualBlocks(
+    			// Sorting on ResidualBlock pointers
+    			    const ProblemImpl &problem,
+    			    const ResidualBlockId *expected_residual_blocks) {
+    			  vector<ResidualBlockId> residual_blocks;
+    			  problem.GetResidualBlocks(&residual_blocks);
+    			  ExpectVectorContainsUnordered(expected_residual_blocks, residual_blocks);
+    			}*/
 
 }
