@@ -13043,7 +13043,9 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     			  //Matrix g_hess = (((jac.transpose()).times(jac)).timesEquals(rho[1])).plus
    		         //(((((jac.transpose()).times(res)).times(res.transpose())).times(jac)).timesEquals(2.0 * rho[2]));
     			    // Since res = 0 simplifies to:
-    			    Matrix g_hess = ((jac.transpose()).times(jac)).timesEquals(rho[1]);
+    			    //Matrix g_hess = ((jac.transpose()).times(jac)).timesEquals(rho[1]);
+    			    // Hessians match when g_hess changed to:
+    			    Matrix g_hess = (jac.transpose()).times(jac);
 
     			    Corrector c = new Corrector(sq_norm, rho);
     			    c.CorrectJacobian(3, 2, residuals, jacobian);
