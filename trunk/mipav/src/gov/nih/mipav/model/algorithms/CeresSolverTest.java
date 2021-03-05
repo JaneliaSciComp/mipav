@@ -13281,6 +13281,48 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     			    AssertLossFunctionIsValid(c, 0.357, "LossFunctionComposedLoss()_0.357");
     			    AssertLossFunctionIsValid(c, 1.792, "LossFunctionComposedLoss()_1.792");
     			  }
-    			}
+    		}
+
+    		/*public void LossFunctionScaledLoss() {
+    			  // Wrap a few loss functions, and a few scale factors. This can't combine
+    			  // construction with the call to AssertLossFunctionIsValid() because Apple's
+    			  // GCC is unable to eliminate the copy of ScaledLoss, which is not copyable.
+    			  {
+    			    ScaledLoss scaled_loss = new ScaledLoss(null, 6, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 0.323, "scaled_loss_0.323");
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss = new ScaledLoss(new TrivialLoss(), 10, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 0.357, "scaled_loss_0.357");
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss = new SclaedLoss(new HuberLoss(0.7), 0.1, TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss(new SoftLOneLoss(1.3), 0.1, TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss(new CauchyLoss(1.3), 10, TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss(new ArctanLoss(1.3), 10, TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss(
+    			        new TolerantLoss(1.3, 0.1), 10, TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			  }
+    			  {
+    			    ScaledLoss scaled_loss(
+    			        new ComposedLoss(
+    			            new HuberLoss(0.8), TAKE_OWNERSHIP,
+    			            new TolerantLoss(1.3, 0.5), TAKE_OWNERSHIP), 10, TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			  }
+    			}*/
 
 }
