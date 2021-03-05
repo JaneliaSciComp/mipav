@@ -13114,5 +13114,173 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
        		   }	  
     	     }
 
+    		// Helper function for testing a LossFunction callback.
+    		 //
+    		 // Compares the values of rho'(s) and rho''(s) computed by the
+    		 // callback with estimates obtained by symmetric finite differencing
+    		 // of rho(s).
+    		 public void AssertLossFunctionIsValid(LossFunction loss, double s, String testName) {
+    		   boolean passed = true;
+    		   if (s <= 0.0) {
+    			   System.err.println("In  AssertLossFunctionIsValid s <= 0.0");
+    			   return;
+    		   }
+
+    		   // Evaluate rho(s), rho'(s) and rho''(s).
+    		   double rho[] = new double[3];
+    		   loss.Evaluate(s, rho);
+
+    		   // Use symmetric finite differencing to estimate rho'(s) and
+    		   // rho''(s).
+    		   final double kH = 1e-4;
+    		   // Values at s + kH.
+    		   double fwd[] = new double[3];
+    		   // Values at s - kH.
+    		   double bwd[] = new double[3];
+    		   loss.Evaluate(s + kH, fwd);
+    		   loss.Evaluate(s - kH, bwd);
+
+    		   // First derivative.
+    		   final double fd_1 = (fwd[0] - bwd[0]) / (2 * kH);
+    		   if (Math.abs(fd_1 - rho[1]) > 1e-6) {
+    			   System.err.println("In " + testName + " (Math.abs(fd_1 - rho[1]) > 1e-6");
+    			   passed = false;
+    		   }
+
+    		   // Second derivative.
+    		   final double fd_2 = (fwd[0] - 2*rho[0] + bwd[0]) / (kH * kH);
+    		   if (Math.abs(fd_2 - rho[2]) > 1e-6) {
+    			   System.err.println("In " + testName + " Math.abs(fd_2 - rho[2]) > 1e-6");
+    			   passed = false;
+    		   }
+    		   if (passed) {
+    			   System.out.println(testName + " passed all tests");
+    		   }
+    		 }
+    		 
+    		// Try two values of the scaling a = 0.7 and 1.3
+    		// (where scaling makes sense) and of the squared norm
+    		// s = 0.357 and 1.792
+    		//
+    		// Note that for the Huber loss the test exercises both code paths
+    		//  (i.e. both small and large values of s).
+
+    		public void LossFunctionTrivialLoss() {
+    		  //LossFunctionTrivialLoss_0.357 passed all tests
+    		  //LossFunctionTrivialLoss_1.792 passed all tests
+    		  AssertLossFunctionIsValid(new TrivialLoss(), 0.357, "LossFunctionTrivialLoss_0.357");
+    		  AssertLossFunctionIsValid(new TrivialLoss(), 1.792, "LossFunctionTrivialLoss_1.792");
+    		}
+
+    		public void LossFunctionHuberLoss() {
+    			  //LossFunctionHuberLoss(0.7)_0.357 passed all tests
+    			  //LossFunctionHuberLoss(0.7)_1.792 passed all tests
+    			  //LossFunctionHuberLoss(1.3)_0.357 passed all tests
+    			  //LossFunctionHuberLoss(1.3)_1.792 passed all tests
+    			  AssertLossFunctionIsValid(new HuberLoss(0.7), 0.357, "LossFunctionHuberLoss(0.7)_0.357");
+    			  AssertLossFunctionIsValid(new HuberLoss(0.7), 1.792, "LossFunctionHuberLoss(0.7)_1.792");
+    			  AssertLossFunctionIsValid(new HuberLoss(1.3), 0.357, "LossFunctionHuberLoss(1.3)_0.357");
+    			  AssertLossFunctionIsValid(new HuberLoss(1.3), 1.792, "LossFunctionHuberLoss(1.3)_1.792");
+    		}
+    		
+    		public void LossFunctionSoftLOneLoss() {
+    			  //LossFunctionSoftLOneLoss(0.7)_0.357 passed all tests
+    			  //LossFunctionSoftLOneLoss(0.7)_1.792 passed all tests
+    			  //LossFunctionSoftLOneLoss(1.3)_0.357 passed all tests
+    			  //LossFunctionSoftLOneLoss(1.3)_1.792 passed all tests
+    			  AssertLossFunctionIsValid(new SoftLOneLoss(0.7), 0.357, "LossFunctionSoftLOneLoss(0.7)_0.357");
+    			  AssertLossFunctionIsValid(new SoftLOneLoss(0.7), 1.792, "LossFunctionSoftLOneLoss(0.7)_1.792");
+    			  AssertLossFunctionIsValid(new SoftLOneLoss(1.3), 0.357, "LossFunctionSoftLOneLoss(1.3)_0.357");
+    			  AssertLossFunctionIsValid(new SoftLOneLoss(1.3), 1.792, "LossFunctionSoftLOneLoss(1.3)_1.792");
+    		}
+
+    		public void LossFunctionCauchyLoss() {
+    			  //LossFunctionCauchyLoss(0.7)_0.357 passed all tests
+    			  //LossFunctionCauchyLoss(0.7)_1.792 passed all tests
+    			  //LossFunctionCauchyLoss(1.3)_0.357 passed all tests
+    			  //LossFunctionCauchyLoss(1.3)_1.792 passed all tests
+    			  AssertLossFunctionIsValid(new CauchyLoss(0.7), 0.357, "LossFunctionCauchyLoss(0.7)_0.357");
+    			  AssertLossFunctionIsValid(new CauchyLoss(0.7), 1.792, "LossFunctionCauchyLoss(0.7)_1.792");
+    			  AssertLossFunctionIsValid(new CauchyLoss(1.3), 0.357, "LossFunctionCauchyLoss(1.3)_0.357");
+    			  AssertLossFunctionIsValid(new CauchyLoss(1.3), 1.792, "LossFunctionCauchyLoss(1.3)_1.792");
+    		}
+    		
+    		public void LossFunctionArctanLoss() {
+    			  //LossFunctionArctanLoss(0.7)_0.357 passed all tests
+    			  //LossFunctionArctanLoss(0.7)_1.792 passed all tests
+    			  //LossFunctionArctanLoss(1.3)_0.357 passed all tests
+    			  //LossFunctionArctanLoss(1.3)_1.792 passed all tests
+    			  AssertLossFunctionIsValid(new ArctanLoss(0.7), 0.357, "LossFunctionArctanLoss(0.7)_0.357");
+    			  AssertLossFunctionIsValid(new ArctanLoss(0.7), 1.792, "LossFunctionArctanLoss(0.7)_1.792");
+    			  AssertLossFunctionIsValid(new ArctanLoss(1.3), 0.357, "LossFunctionArctanLoss(1.3)_0.357");
+    			  AssertLossFunctionIsValid(new ArctanLoss(1.3), 1.792, "LossFunctionArctanLoss(1.3)_1.792");
+    		}
+
+    		public void LossFunctionTolerantLoss() {
+    			  //LossFunctionTolerantLoss(0.7, 0.4)_0.357 passed all tests
+    			  //LossFunctionTolerantLoss(0.7, 0.4)_1.792 passed all tests
+    			  //LossFunctionTolerantLoss(0.7, 0.4)_55.5 passed all tests
+    			  //LossFunctionTolerantLoss(1.3, 0.1)_0.357 passed all tests
+    			  //LossFunctionTolerantLoss(1.3, 0.1)_1.792 passed all tests
+    			  //LossFunctionTolerantLoss(1.3, 0.1)_55.5 passed all tests
+    			  //(new TolerantLoss(0.7, 0.4)).Evaluate(0.0, rho) passed
+    			  //LossFunctionTolerantLoss(20.0, 1.0)_56.6 passed all tests
+    			  //LossFunctionTolerantLoss(20.0, 1.0)_56.7 passed all tests
+    			  //LossFunctionTolerantLoss(20.0, 1.0)_56.8 passed all tests
+    			  //LossFunctionTolerantLoss(20.0, 1.0)_1020.0 passed all tests
+    			  AssertLossFunctionIsValid(new TolerantLoss(0.7, 0.4), 0.357, "LossFunctionTolerantLoss(0.7, 0.4)_0.357");
+    			  AssertLossFunctionIsValid(new TolerantLoss(0.7, 0.4), 1.792, "LossFunctionTolerantLoss(0.7, 0.4)_1.792");
+    			  AssertLossFunctionIsValid(new TolerantLoss(0.7, 0.4), 55.5, "LossFunctionTolerantLoss(0.7, 0.4)_55.5");
+    			  AssertLossFunctionIsValid(new TolerantLoss(1.3, 0.1), 0.357, "LossFunctionTolerantLoss(1.3, 0.1)_0.357");
+    			  AssertLossFunctionIsValid(new TolerantLoss(1.3, 0.1), 1.792, "LossFunctionTolerantLoss(1.3, 0.1)_1.792");
+    			  AssertLossFunctionIsValid(new TolerantLoss(1.3, 0.1), 55.5, "LossFunctionTolerantLoss(1.3, 0.1)_55.5");
+    			  // Check the value at zero is actually zero.
+    			  double rho[] = new double[3];
+    			  (new TolerantLoss(0.7, 0.4)).Evaluate(0.0, rho);
+    			  if (Math.abs(rho[0]) > 1e-6) {
+    				  System.err.println("In LossFunctionTolerantLoss() Math.abs(rho[0]) > 1e-6");
+    			  }
+    			  else {
+    				  System.out.println("(new TolerantLoss(0.7, 0.4)).Evaluate(0.0, rho) passed");
+    			  }
+    			  // Check that loss before and after the approximation threshold are good.
+    			  // A threshold of 36.7 is used by the implementation.
+    			  AssertLossFunctionIsValid(new TolerantLoss(20.0, 1.0), 20.0 + 36.6, "LossFunctionTolerantLoss(20.0, 1.0)_56.6");
+    			  AssertLossFunctionIsValid(new TolerantLoss(20.0, 1.0), 20.0 + 36.7, "LossFunctionTolerantLoss(20.0, 1.0)_56.7");
+    			  AssertLossFunctionIsValid(new TolerantLoss(20.0, 1.0), 20.0 + 36.8, "LossFunctionTolerantLoss(20.0, 1.0)_56.8");
+    			  AssertLossFunctionIsValid(new TolerantLoss(20.0, 1.0), 20.0 + 1000.0, "LossFunctionTolerantLoss(20.0, 1.0)_1020.0");
+    		}
+    		
+    		public void LossFunctionTukeyLoss() {
+    			  //LossFunctionTukeyLoss(0.7)_0.357 passed all tests
+    			  //LossFunctionTukeyLoss(0.7)_1.792 passed all tests
+    			  //LossFunctionTukeyLoss(1.3)_0.357 passed all tests
+    			  //LossFunctionTukeyLoss(1.3)_1.792 passed all tests
+    			  AssertLossFunctionIsValid(new TukeyLoss(0.7), 0.357, "LossFunctionTukeyLoss(0.7)_0.357");
+    			  AssertLossFunctionIsValid(new TukeyLoss(0.7), 1.792, "LossFunctionTukeyLoss(0.7)_1.792");
+    			  AssertLossFunctionIsValid(new TukeyLoss(1.3), 0.357, "LossFunctionTukeyLoss(1.3)_0.357");
+    			  AssertLossFunctionIsValid(new TukeyLoss(1.3), 1.792, "LossFunctionTukeyLoss(1.3)_1.792");
+    		}
+
+    		public void LossFunctionComposedLoss() {
+    			  //LossFunctionComposedLoss()_0.357 passed all tests
+    			  //LossFunctionComposedLoss()_1.792 passed all tests
+    			  //LossFunctionComposedLoss()_0.357 passed all tests
+    			  //LossFunctionComposedLoss()_1.792 passed all tests
+    			  {
+    			    HuberLoss f = new HuberLoss(0.7);
+    			    CauchyLoss g = new CauchyLoss(1.3);
+    			    ComposedLoss c = new ComposedLoss(f, Ownership.DO_NOT_TAKE_OWNERSHIP, g, Ownership.DO_NOT_TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(c, 0.357, "LossFunctionComposedLoss()_0.357");
+    			    AssertLossFunctionIsValid(c, 1.792, "LossFunctionComposedLoss()_1.792");
+    			  }
+    			  {
+    			    CauchyLoss f = new CauchyLoss(0.7);
+    			    HuberLoss g = new HuberLoss(1.3);
+    			    ComposedLoss c = new ComposedLoss(f, Ownership.DO_NOT_TAKE_OWNERSHIP, g, Ownership.DO_NOT_TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(c, 0.357, "LossFunctionComposedLoss()_0.357");
+    			    AssertLossFunctionIsValid(c, 1.792, "LossFunctionComposedLoss()_1.792");
+    			  }
+    			}
 
 }
