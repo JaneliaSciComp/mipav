@@ -12717,5 +12717,400 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     			  problem.GetResidualBlocks(&residual_blocks);
     			  ExpectVectorContainsUnordered(expected_residual_blocks, residual_blocks);
     			}*/
+    			
+    			// If rho[1] is zero, the Corrector constructor should crash.
+    		    public void CorrectorZeroGradientDeathTest() {
+    		      // Gives expected error message:
+    		      // rho[1] <= 0.0 in public Corrector(double sq_norm, double rho[])
+    			  final double kRho[] = new double[]{0.0, 0.0, 1.0};
+    			  //EXPECT_DEATH_IF_SUPPORTED({Corrector c(1.0, kRho);}, ".*");
+    			  Corrector c = new Corrector(1.0, kRho);
+    			}
+
+    		    // If rho[1] is negative, the Corrector constructor should crash.
+    		    public void CorrectorNegativeGradientDeathTest() {
+    		      // Gives expected error message:
+      		      // rho[1] <= 0.0 in public Corrector(double sq_norm, double rho[])
+    		      final double kRho[] = new double[]{0.0, -0.1, 1.0};
+    		      //EXPECT_DEATH_IF_SUPPORTED({Corrector c(1.0, kRho);},".*");
+    		      Corrector c = new Corrector(1.0, kRho);
+    		    }
+    		    
+    		    public void CorrectorScalarCorrection() {
+    		    	  // CorrectorScalarCorrection() passed all tests
+    		    	  boolean passed = true;
+    		    	  double residuals[] = new double[] {Math.sqrt(3.0)};
+    		    	  double jacobian[] = new double[] {10.0};
+    		    	  double sq_norm = residuals[0] * residuals[0];
+
+    		    	  final double kRho[] = new double[]{sq_norm, 0.1, -0.01};
+
+    		    	  // In light of the rho'' < 0 clamping now implemented in
+    		    	  // corrector.cc, alpha = 0 whenever rho'' < 0.
+    		    	  final double kAlpha = 0.0;
+
+    		    	  // Thus the expected value of the residual is
+    		    	  // residual[i] * sqrt(kRho[1]) / (1.0 - kAlpha).
+    		    	  final double kExpectedResidual =
+    		    	      residuals[0] * Math.sqrt(kRho[1]) / (1 - kAlpha);
+
+    		    	  // The jacobian in this case will be
+    		    	  // sqrt(kRho[1]) * (1 - kAlpha) * jacobian.
+    		    	  final double kExpectedJacobian = Math.sqrt(kRho[1]) * (1 - kAlpha) * jacobian[0];
+
+    		    	  Corrector c = new Corrector(sq_norm, kRho);
+    		    	  c.CorrectJacobian(1, 1, residuals, jacobian);
+    		    	  c.CorrectResiduals(1, residuals);
+
+    		    	  if (Math.abs(residuals[0] - kExpectedResidual) > 1e-6) {
+    		    		  System.err.println("In CorrectorScalarCorrection() (Math.abs(residuals[0] - kExpectedResidual) > 1e-6");
+    		    		  passed = false;
+    		    	  }
+    		    	  if (Math.abs(kExpectedJacobian - jacobian[0]) > 1e-6) {
+    		    		  System.err.println("In CorrectorScalarCorrection() (Math.abs(kExpectedJacobian - jacobian[0]) > 1e-6");
+    		    		  passed = false; 
+    		    	  }
+    		    	  if (passed) {
+    		    		  System.out.println("CorrectorScalarCorrection() passed all tests");
+    		    	  }
+    		    }
+    		    
+    		    public void CorrectorScalarCorrectionZeroResidual() {
+    		    	  // CorrectorScalarCorrectionZeroResidual() passed all tests
+    		    	  boolean passed = true;
+    		    	  double residuals[] = new double[] {0.0};
+    		    	  double jacobian[] = new double[] {10.0};
+    		    	  double sq_norm = residuals[0] * residuals[0];
+
+    		    	  final double kRho[] = new double[]{0.0, 0.1, -0.01};
+    		    	  Corrector c = new Corrector(sq_norm, kRho);
+
+    		    	  // The alpha equation is
+    		    	  // 1/2 alpha^2 - alpha + 0.0 = 0.
+    		    	  // i.e. alpha = 1.0 - sqrt(1.0).
+    		    	  //      alpha = 0.0.
+    		    	  // Thus the expected value of the residual is
+    		    	  // residual[i] * sqrt(kRho[1])
+    		    	  final double kExpectedResidual = residuals[0] * Math.sqrt(kRho[1]);
+
+    		    	  // The jacobian in this case will be
+    		    	  // sqrt(kRho[1]) * jacobian.
+    		    	  final double kExpectedJacobian = Math.sqrt(kRho[1]) * jacobian[0];
+
+    		    	  c.CorrectJacobian(1, 1, residuals, jacobian);
+    		    	  c.CorrectResiduals(1, residuals);
+
+    		    	  if (Math.abs(residuals[0] - kExpectedResidual) > 1e-6) {
+    		    		  System.err.println("In CorrectorScalarCorrectionZeroResidual() (Math.abs(residuals[0] - kExpectedResidual) > 1e-6");
+    		    		  passed = false;
+    		    	  }
+    		    	  if (Math.abs(kExpectedJacobian - jacobian[0]) > 1e-6) {
+    		    		  System.err.println("In CorrectorScalarCorrectionZeroResidual() (Math.abs(kExpectedJacobian - jacobian[0]) > 1e-6");
+    		    		  passed = false; 
+    		    	  }
+    		    	  if (passed) {
+    		    		  System.out.println("CorrectorScalarCorrectionZeroResidual() passed all tests");
+    		    	  }
+    		    	}
+
+    		    public void CorrectorScalarCorrectionAlphaClamped() {
+    		    	  // CorrectorScalarCorrectionAlphaClamped() passed all tests
+    		    	  boolean passed = true;
+    		    	  double residuals[] = new double[] {Math.sqrt(3.0)};
+    		    	  double jacobian[] = new double[] {10.0};
+    		    	  double sq_norm = residuals[0] * residuals[0];
+
+    		    	  final double kRho[] = new double[]{3, 0.1, -0.1};
+
+    		    	  // rho[2] < 0 -> alpha = 0.0
+    		    	  final double kAlpha = 0.0;
+
+    		    	  // Thus the expected value of the residual is
+    		    	  // residual[i] * sqrt(kRho[1]) / (1.0 - kAlpha).
+    		    	  final double kExpectedResidual =
+    		    	      residuals[0] * Math.sqrt(kRho[1]) / (1.0 - kAlpha);
+
+    		    	  // The jacobian in this case will be scaled by
+    		    	  // sqrt(rho[1]) * (1 - alpha) * J.
+    		    	  final double kExpectedJacobian = Math.sqrt(kRho[1]) *
+    		    	      (1.0 - kAlpha) * jacobian[0];
+
+    		    	  Corrector c = new Corrector(sq_norm, kRho);
+    		    	  c.CorrectJacobian(1, 1, residuals, jacobian);
+    		    	  c.CorrectResiduals(1, residuals);
+
+    		    	  if (Math.abs(residuals[0] - kExpectedResidual) > 1e-6) {
+    		    		  System.err.println("In CorrectorScalarCorrectionAlphaClamped() (Math.abs(residuals[0] - kExpectedResidual) > 1e-6");
+    		    		  passed = false;
+    		    	  }
+    		    	  if (Math.abs(kExpectedJacobian - jacobian[0]) > 1e-6) {
+    		    		  System.err.println("In CorrectorScalarCorrectionAlphaClamped() (Math.abs(kExpectedJacobian - jacobian[0]) > 1e-6");
+    		    		  passed = false; 
+    		    	  }
+    		    	  if (passed) {
+    		    		  System.out.println("CorrectorScalarCorrectionAlphaClamped() passed all tests");
+    		    	  }
+    		    	}
+
+    		 // Test that the corrected multidimensional residual and jacobians
+    		 // match the expected values and the resulting modified normal
+    		 // equations match the robustified gauss newton approximation.
+    		 public void CorrectorMultidimensionalGaussNewtonApproximation() {
+    		   //CorrectorMultidimensionalGaussNewtonApproximation() passed all tests
+    		   int i, row, col;
+    		   double diff;
+    		   boolean passed = true;
+    		   double residuals[] = new double[3];
+    		   double jacobian[] = new double[2 * 3];
+    		   double rho[] = new double[3];
+
+    		   // Eigen matrix references for linear algebra.
+    		   //MatrixRef jac(jacobian, 3, 2);
+    		   Matrix jac = new Matrix(3, 2);
+    		   //VectorRef res(residuals, 3);
+    		   Matrix res = new Matrix(3, 1);
+
+    		   // Ground truth values of the modified jacobian and residuals.
+    		   //Matrix g_jac(3, 2);
+    		   double g_res[] = new double[3];
+
+    		   // Ground truth values of the robustified Gauss-Newton
+    		   // approximation.
+    		   //Matrix g_hess(2, 2);
+    		   //Vector g_grad(2);
+
+    		   // Corrected hessian and gradient implied by the modified jacobian
+    		   // and hessians.
+    		   //Matrix c_hess(2, 2);
+    		   //Vector c_grad(2);
+
+    		   for (int iter = 0; iter < 10000; ++iter) {
+    		     // Initialize the jacobian and residual.
+    		     for (i = 0, row = 0; row < 3; row++) {
+    		    	 for (col = 0; col < 2; col++, i++) {
+    		    		 jacobian[i] = RandDouble();
+    		    		 jac.set(row, col, jacobian[i]);
+    		    	 }
+    		     }
+    		       
+    		     for (i = 0; i < 3; ++i) {
+    		       residuals[i] = RandDouble();
+    		       res.set(i, 0, residuals[i]);
+    		     }
+
+    		     double sq_norm = 0.0;
+    		     for (i = 0; i < 3; i++) {
+    		    	 sq_norm += (residuals[i] * residuals[i]);
+    		     }
+
+    		     rho[0] = sq_norm;
+    		     rho[1] = RandDouble();
+    		     rho[2] = 2.0 * RandDouble() - 1.0;
+
+    		     // If rho[2] > 0, then the curvature correction to the correction
+    		     // and the gauss newton approximation will match. Otherwise, we
+    		     // will clamp alpha to 0.
+
+    		     final double kD = 1 + 2 * rho[2] / rho[1] * sq_norm;
+    		     final double kAlpha = (rho[2] > 0.0) ? 1 - Math.sqrt(kD) : 0.0;
+
+    		     // Ground truth values.
+    		     for (i = 0; i < 3; i++) {
+    		         g_res[i] = Math.sqrt(rho[1]) / (1.0 - kAlpha) * residuals[i];
+    		     }
+    		     Matrix g_jac =  (jac.minus
+    		                             (((res.times(res.transpose())).times(jac)).timesEquals(kAlpha / sq_norm))).timesEquals(Math.sqrt(rho[1]));
+
+    		     Matrix g_grad = ((jac.transpose()).times(res)).timesEquals(rho[1]);
+    		     //Matrix g_hess = (((jac.transpose()).times(jac)).timesEquals(rho[1])).plus
+    		         //(((((jac.transpose()).times(res)).times(res.transpose())).times(jac)).timesEquals(2.0 * rho[2]));
+
+    		     Corrector c = new Corrector(sq_norm, rho);
+    		     c.CorrectJacobian(3, 2, residuals, jacobian);
+    		     c.CorrectResiduals(3, residuals);
+    		     for (i = 0, row = 0; row < 3; row++) {
+    		    	 for (col = 0; col < 2; col++, i++) {
+    		    		 jac.set(row, col, jacobian[i]);
+    		    	 }
+    		     }
+    		     for (i = 0; i < 3; ++i) {
+      		       res.set(i, 0, residuals[i]);
+      		     }
+
+    		     // Corrected gradient and hessian.
+    		     Matrix c_grad  = (jac.transpose()).times(res);
+    		     //Matrix c_hess = (jac.transpose()).times(jac);
+
+    		     double resdiffnorm = 0.0;
+    		     for (i = 0; i < 3; i++) {
+    		         diff = g_res[i] - res.get(i, 0);
+    		         resdiffnorm += (diff * diff);
+    		     }
+    		     resdiffnorm = Math.sqrt(resdiffnorm);
+    		     if (resdiffnorm > 1.0E-10) {
+    		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximation() iter = " + iter + " (g_res - res).norm() > 1.0E-10");
+    		    	 passed = false;
+    		     }
+    		     double jacdiffnorm = 0.0;
+    		     for (row = 0; row < 3; row++) {
+    		    	 for (col = 0; col < 2; col++) {
+    		    		 diff = g_jac.get(row, col) - jac.get(row, col);
+    		    		 jacdiffnorm += (diff * diff);
+    		    	 }
+    		     }
+    		     jacdiffnorm = Math.sqrt(jacdiffnorm);
+    		     if (jacdiffnorm > 1.0E-10) {
+    		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximation() iter = " + iter + " (g_jac - jac).norm() > 1.0E-10");
+    		    	 passed = false;
+    		     }
+    		     
+    		     double graddiffnorm = 0.0;
+    		     for (i = 0; i < 2; i++) {
+    		    	 diff = g_grad.get(i, 0) - c_grad.get(i, 0);
+    		    	 graddiffnorm += (diff * diff);
+    		     }
+    		     graddiffnorm = Math.sqrt(graddiffnorm);
+    		     if (graddiffnorm > 1.0E-10) {
+    		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximation() iter = " + iter + " (g_grad - c_grad).norm() > 1.0E-10");
+    		    	 passed = false;
+    		     }
+    		   }
+    		   if (passed) {
+    			   System.out.println("CorrectorMultidimensionalGaussNewtonApproximation() passed all tests");
+    		   }
+    		 }
+    		 
+    		 public void CorrectorMultidimensionalGaussNewtonApproximationZeroResidual() {
+    			 // res, grad, and jac match
+    			 // hessian do not match
+    			 int i, row, col;
+      		     double diff;
+      		      boolean passed = true;
+    			  double residuals[] = new double[3];
+    			  double jacobian[] = new double[2 * 3];
+    			  double rho[] = new double[3];
+
+    			  // Eigen matrix references for linear algebra.
+    			  //MatrixRef jac(jacobian, 3, 2);
+       		      Matrix jac = new Matrix(3, 2);
+       		      //VectorRef res(residuals, 3);
+       		      Matrix res = new Matrix(3, 1);
+
+    			  // Ground truth values of the modified jacobian and residuals.
+    			  //Matrix g_jac(3, 2);
+    			  //Vector g_res(3);
+       		      double g_res[] = new double[3];
+
+    			  // Ground truth values of the robustified Gauss-Newton
+    			  // approximation.
+    			  //Matrix g_hess(2, 2);
+    			  //Vector g_grad(2);
+
+    			  // Corrected hessian and gradient implied by the modified jacobian
+    			  // and hessians.
+    			  //Matrix c_hess(2, 2);
+    			  //Vector c_grad(2);
+
+    			  for (int iter = 0; iter < 10000; ++iter) {
+    			    // Initialize the jacobian.
+    				  for (i = 0, row = 0; row < 3; row++) {
+    	    		    	 for (col = 0; col < 2; col++, i++) {
+    	    		    		 jacobian[i] = RandDouble();
+    	    		    		 jac.set(row, col, jacobian[i]);
+    	    		    	 }
+    	    		  }
+
+    			    // Zero residuals
+    				  for (i = 0; i < 3; ++i) {
+   	    		       residuals[i] = 0.0;
+   	    		       res.set(i, 0, 0.0);
+   	    		     }
+
+    			    final double sq_norm = 0.0;
+
+    			    rho[0] = sq_norm;
+    			    rho[1] = RandDouble();
+    			    rho[2] = 2 * RandDouble() - 1.0;
+
+    			    // Ground truth values.
+    			    for (i = 0; i < 3; i++) {
+    			        g_res[i] = Math.sqrt(rho[1]) * residuals[i];
+    			    }
+    			    Matrix g_jac = jac.timesEquals(Math.sqrt(rho[1]));
+
+    			    Matrix g_grad = ((jac.transpose()).times(res)).timesEquals(rho[1]);
+    			    
+    			  //Matrix g_hess = (((jac.transpose()).times(jac)).timesEquals(rho[1])).plus
+   		         //(((((jac.transpose()).times(res)).times(res.transpose())).times(jac)).timesEquals(2.0 * rho[2]));
+    			    // Since res = 0 simplifies to:
+    			    Matrix g_hess = ((jac.transpose()).times(jac)).timesEquals(rho[1]);
+
+    			    Corrector c = new Corrector(sq_norm, rho);
+    			    c.CorrectJacobian(3, 2, residuals, jacobian);
+    			    c.CorrectResiduals(3, residuals);
+    			    for (i = 0, row = 0; row < 3; row++) {
+	       		    	 for (col = 0; col < 2; col++, i++) {
+	       		    		 jac.set(row, col, jacobian[i]);
+	       		    	 }
+	       		    }
+	       		    for (i = 0; i < 3; ++i) {
+	         		   res.set(i, 0, residuals[i]);
+	         		}
+
+    			    // Corrected gradient and hessian.
+    			    Matrix c_grad = (jac.transpose()).times(res);
+    			    Matrix c_hess = (jac.transpose()).times(jac);
+
+    			    double resdiffnorm = 0.0;
+       		     for (i = 0; i < 3; i++) {
+       		         diff = g_res[i] - res.get(i, 0);
+       		         resdiffnorm += (diff * diff);
+       		     }
+       		     resdiffnorm = Math.sqrt(resdiffnorm);
+       		     if (resdiffnorm > 1.0E-10) {
+       		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximationZeroResidual() iter = " + iter + " (g_res - res).norm() > 1.0E-10");
+       		    	 passed = false;
+       		     }
+       		     double jacdiffnorm = 0.0;
+       		     for (row = 0; row < 3; row++) {
+       		    	 for (col = 0; col < 2; col++) {
+       		    		 diff = g_jac.get(row, col) - jac.get(row, col);
+       		    		 jacdiffnorm += (diff * diff);
+       		    	 }
+       		     }
+       		     jacdiffnorm = Math.sqrt(jacdiffnorm);
+       		     if (jacdiffnorm > 1.0E-10) {
+       		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximationZeroResidual() iter = " + iter + " (g_jac - jac).norm() > 1.0E-10");
+       		    	 passed = false;
+       		     }
+       		     
+       		     double graddiffnorm = 0.0;
+       		     for (i = 0; i < 2; i++) {
+       		    	 diff = g_grad.get(i, 0) - c_grad.get(i, 0);
+       		    	 graddiffnorm += (diff * diff);
+       		     }
+       		     graddiffnorm = Math.sqrt(graddiffnorm);
+       		     if (graddiffnorm > 1.0E-10) {
+       		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximationZeroResidual() iter = " + iter + " (g_grad - c_grad).norm() > 1.0E-10");
+       		    	 passed = false;
+       		     }
+       		     double hessdiffnorm = 0.0;
+    		     for (row = 0; row < 2; row++) {
+    		    	 for (col = 0; col < 2; col++) {
+    		    		 diff = g_hess.get(row, col) - c_hess.get(row, col);
+    		    		 hessdiffnorm += (diff * diff);
+    		    	 }
+    		     }
+    		     hessdiffnorm = Math.sqrt(hessdiffnorm);
+    		     if (hessdiffnorm > 1.0E-10) {
+    		    	 System.err.println("In CorrectorMultidimensionalGaussNewtonApproximationZeroResidual() iter = " + iter + " (g_hess - c_hess).norm() > 1.0E-10");
+    		    	 passed = false;
+    		     }
+    	       }
+    		   if (passed) {
+       			   System.out.println("CorrectorMultidimensionalGaussNewtonApproximationZeroResidual() passed all tests");
+       		   }	  
+    	     }
+
 
 }
