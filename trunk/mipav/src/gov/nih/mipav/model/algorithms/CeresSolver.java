@@ -18196,6 +18196,82 @@ public abstract class CeresSolver {
 
 	  
 	};
+	
+	// Sometimes after the optimization problem has been constructed, we
+	// wish to mutate the scale of the loss function. For example, when
+	// performing estimation from data which has substantial outliers,
+	// convergence can be improved by starting out with a large scale,
+	// optimizing the problem and then reducing the scale. This can have
+	// better convergence behaviour than just using a loss function with a
+	// small scale.
+	//
+	// This templated class allows the user to implement a loss function
+	// whose scale can be mutated after an optimization problem has been
+	// constructed.
+	//
+	// Since we treat the a NULL Loss function as the Identity loss
+	// function, rho = NULL is a valid input.
+	//
+	// Example usage
+	//
+	//  Problem problem;
+	//
+	//  // Add parameter blocks
+	//
+	//  CostFunction* cost_function =
+//	    new AutoDiffCostFunction < UW_Camera_Mapper, 2, 9, 3>(
+//	      new UW_Camera_Mapper(feature_x, feature_y));
+	//
+	//  LossFunctionWrapper* loss_function(new HuberLoss(1.0), TAKE_OWNERSHIP);
+	//
+	//  problem.AddResidualBlock(cost_function, loss_function, parameters);
+	//
+	//  Solver::Options options;
+	//  Solger::Summary summary;
+	//
+	//  Solve(options, &problem, &summary)
+	//
+	//  loss_function->Reset(new HuberLoss(1.0), TAKE_OWNERSHIP);
+	//
+	//  Solve(options, &problem, &summary)
+	//
+	class LossFunctionWrapper extends LossFunction {
+		 private LossFunction rho_;
+	     private Ownership ownership_;
+	     
+	 public LossFunctionWrapper(LossFunction rho, Ownership ownership) {
+		  super();
+	      rho_ = rho;
+	      ownership_ = ownership;
+	  }
+
+	  public void finalize() {
+	    if (ownership_ == Ownership.DO_NOT_TAKE_OWNERSHIP) {
+	      rho_ = null;
+	    }
+	  }
+
+	  public void Evaluate(double sq_norm, double out[]) {
+	    if (rho_ == null) {
+	      out[0] = sq_norm;
+	      out[1] = 1.0;
+	      out[2] = 0.0;
+	    }
+	    else {
+	      rho_.Evaluate(sq_norm, out);
+	    }
+	  }
+
+	  public void Reset(LossFunction rho, Ownership ownership) {
+	    if (ownership_ == Ownership.DO_NOT_TAKE_OWNERSHIP) {
+	      rho_ = null;
+	    }
+	    rho_ = rho;
+	    ownership_ = ownership;
+	  }
+
+	
+	};
 
 	abstract class LossFunction {
 		public LossFunction() {
