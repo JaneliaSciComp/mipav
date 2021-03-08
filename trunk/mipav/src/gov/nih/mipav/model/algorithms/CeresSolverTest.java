@@ -13283,46 +13283,127 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     			  }
     		}
 
-    		/*public void LossFunctionScaledLoss() {
+    		public void LossFunctionScaledLoss() {
+    			  //scaled_loss_null_0.323 passed all tests
+    			  //scaled_loss_Trivial_0.357 passed all tests
+    			  //scaled_loss_Huber_1.792 passed all tests
+    			  //scaled_loss_SoftLOne_1.792 passed all tests
+    			  //scaled_loss_Cauchy_1.792 passed all tests
+    			  //scaled_loss_Arctan_1.792 passed all tests
+    			  //scaled_loss_Tolerant_1.792 passed all tests
+    			  //scaled_loss_Composed_1.792 passed all tests
     			  // Wrap a few loss functions, and a few scale factors. This can't combine
     			  // construction with the call to AssertLossFunctionIsValid() because Apple's
     			  // GCC is unable to eliminate the copy of ScaledLoss, which is not copyable.
     			  {
     			    ScaledLoss scaled_loss = new ScaledLoss(null, 6, Ownership.TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 0.323, "scaled_loss_0.323");
+    			    AssertLossFunctionIsValid(scaled_loss, 0.323, "scaled_loss_null_0.323");
     			  }
     			  {
     			    ScaledLoss scaled_loss = new ScaledLoss(new TrivialLoss(), 10, Ownership.TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 0.357, "scaled_loss_0.357");
+    			    AssertLossFunctionIsValid(scaled_loss, 0.357, "scaled_loss_Trivial_0.357");
     			  }
     			  {
-    			    ScaledLoss scaled_loss = new SclaedLoss(new HuberLoss(0.7), 0.1, TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			    ScaledLoss scaled_loss = new ScaledLoss(new HuberLoss(0.7), 0.1, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792, "scaled_loss_Huber_1.792");
     			  }
     			  {
-    			    ScaledLoss scaled_loss(new SoftLOneLoss(1.3), 0.1, TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			    ScaledLoss scaled_loss = new ScaledLoss(new SoftLOneLoss(1.3), 0.1, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792, "scaled_loss_SoftLOne_1.792");
     			  }
     			  {
-    			    ScaledLoss scaled_loss(new CauchyLoss(1.3), 10, TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			    ScaledLoss scaled_loss = new ScaledLoss(new CauchyLoss(1.3), 10, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792, "scaled_loss_Cauchy_1.792");
     			  }
     			  {
-    			    ScaledLoss scaled_loss(new ArctanLoss(1.3), 10, TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			    ScaledLoss scaled_loss = new ScaledLoss(new ArctanLoss(1.3), 10, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792, "scaled_loss_Arctan_1.792");
     			  }
     			  {
-    			    ScaledLoss scaled_loss(
-    			        new TolerantLoss(1.3, 0.1), 10, TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			    ScaledLoss scaled_loss = new ScaledLoss(
+    			        new TolerantLoss(1.3, 0.1), 10, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792, "scaled_loss_Tolerant_1.792");
     			  }
     			  {
-    			    ScaledLoss scaled_loss(
+    			    ScaledLoss scaled_loss = new ScaledLoss(
     			        new ComposedLoss(
-    			            new HuberLoss(0.8), TAKE_OWNERSHIP,
-    			            new TolerantLoss(1.3, 0.5), TAKE_OWNERSHIP), 10, TAKE_OWNERSHIP);
-    			    AssertLossFunctionIsValid(scaled_loss, 1.792);
+    			            new HuberLoss(0.8), Ownership.TAKE_OWNERSHIP,
+    			            new TolerantLoss(1.3, 0.5), Ownership.TAKE_OWNERSHIP), 10, Ownership.TAKE_OWNERSHIP);
+    			    AssertLossFunctionIsValid(scaled_loss, 1.792, "scaled_loss_Composed_1.792");
     			  }
-    			}*/
+    			}
+    		
+    		public void LossFunctionLossFunctionWrapper() {
+    			  // LossFunctionLossFunctionWrapper() passed all tests
+    			  boolean passed = true;
+    			  // Initialization
+    			  HuberLoss loss_function1 = new HuberLoss(1.0);
+    			  LossFunctionWrapper loss_function_wrapper = new LossFunctionWrapper(new HuberLoss(1.0),
+    			                                            Ownership.TAKE_OWNERSHIP);
+
+    			  double s = 0.862;
+    			  double rho_gold[] = new double[3];
+    			  double rho[] = new double[3];
+    			  loss_function1.Evaluate(s, rho_gold);
+    			  loss_function_wrapper.Evaluate(s, rho);
+    			  for (int i = 0; i < 3; ++i) {
+    			    if (Math.abs(rho[i] - rho_gold[i]) >  1e-12) {
+    			    	System.err.println("In LossFunctionLossFunctionWrapper() function1 failed for i = " + i);
+    			    	passed = false;
+    			    }
+    			  }
+
+    			  // Resetting
+    			  HuberLoss loss_function2 = new HuberLoss(0.5);
+    			  loss_function_wrapper = new LossFunctionWrapper(new HuberLoss(0.5), Ownership.TAKE_OWNERSHIP);
+    			  loss_function_wrapper.Evaluate(s, rho);
+    			  loss_function2.Evaluate(s, rho_gold);
+    			  for (int i = 0; i < 3; ++i) {
+    				  if (Math.abs(rho[i] - rho_gold[i]) >  1e-12) {
+      			    	System.err.println("In LossFunctionLossFunctionWrapper() function2 failed for i = " + i);
+      			    	passed = false;
+      			      }
+    			  }
+
+    			  // Not taking ownership.
+    			  HuberLoss loss_function3 = new HuberLoss(0.3);
+    			  loss_function_wrapper = new LossFunctionWrapper(loss_function3, Ownership.DO_NOT_TAKE_OWNERSHIP);
+    			  loss_function_wrapper.Evaluate(s, rho);
+    			  loss_function3.Evaluate(s, rho_gold);
+    			  for (int i = 0; i < 3; ++i) {
+    				  if (Math.abs(rho[i] - rho_gold[i]) >  1e-12) {
+        			    	System.err.println("In LossFunctionLossFunctionWrapper() function3 failed for i = " + i);
+        			    	passed = false;
+        			  }
+    			  }
+
+    			  // Set to NULL
+    			  TrivialLoss loss_function4 = new TrivialLoss();
+    			  loss_function_wrapper = new LossFunctionWrapper(null, Ownership.TAKE_OWNERSHIP);
+    			  loss_function_wrapper.Evaluate(s, rho);
+    			  loss_function4.Evaluate(s, rho_gold);
+    			  for (int i = 0; i < 3; ++i) {
+    				  if (Math.abs(rho[i] - rho_gold[i]) >  1e-12) {
+      			    	System.err.println("In LossFunctionLossFunctionWrapper() function4 TAKE_OWNERSHIP failed for i = " + i);
+      			    	passed = false;
+      			      }
+    			  }
+
+    			  // Set to NULL, not taking ownership
+    			  loss_function_wrapper = new LossFunctionWrapper(null, Ownership.DO_NOT_TAKE_OWNERSHIP);
+    			  loss_function_wrapper.Evaluate(s, rho);
+    			  loss_function4.Evaluate(s, rho_gold);
+    			  for (int i = 0; i < 3; ++i) {
+    				  if (Math.abs(rho[i] - rho_gold[i]) >  1e-12) {
+        			    	System.err.println("In LossFunctionLossFunctionWrapper() function4 DO_NOT_TAKE_OWNERSHIP failed for i = " + i);
+        			    	passed = false;
+        			  }
+    			  }
+    			  if (passed) {
+    				  System.out.println("LossFunctionLossFunctionWrapper() passed all tests");
+    			  }
+
+    			}
+
 
 }
