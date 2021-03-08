@@ -24150,6 +24150,77 @@ public abstract class CeresSolver {
 
 		  
 		};
+		
+		// Implements a cost function of the form
+		//
+		//   cost(x) = ||A(x - b)||^2
+		//
+		// where, the matrix A and the vector b are fixed and x is the
+		// variable. In case the user is interested in implementing a cost
+		// function of the form
+		//
+		//   cost(x) = (x - mu)^T S^{-1} (x - mu)
+		//
+		// where, mu is a vector and S is a covariance matrix, then, A =
+		// S^{-1/2}, i.e the matrix A is the square root of the inverse of the
+		// covariance, also known as the stiffness matrix. There are however
+		// no restrictions on the shape of A. It is free to be rectangular,
+		// which would be the case if the covariance matrix S is rank
+		// deficient.
+
+		class NormalPrior extends CostFunction {
+			private Matrix A_;
+		    private Vector<Double> b_;
+		 
+		  // Check that the number of rows in the vector b are the same as the
+		  // number of columns in the matrix A, crash otherwise.
+		  public NormalPrior(Matrix A, Vector<Double> b) {
+			  super();
+			  if (b.size() <= 0) {
+				  System.err.println("In public NormalPrior b.size() <= 0");
+				  return;
+			  }
+			  if (A.getRowDimension() <= 0) {
+				  System.err.println("In public NormalPrior A.getRowDimension() <= 0");
+				  return;
+			  }
+			  if (b.size() != A.getColumnDimension()) {
+				  System.err.println("In public NormalPrior b.size() != A.getColumnDimension()");
+				  return;
+			  }
+
+			  A_ = A;
+			  b_ = b;
+			  set_num_residuals(A_.getRowDimension());
+			  mutable_parameter_block_sizes().add(b_.size());
+
+		  }
+
+		  public  boolean Evaluate(Vector<double[]> parameters,
+		                        double[] residuals,
+		                        double[][] jacobians) {
+			  int i, j;
+			  // The following line should read
+			  // r = A_ * (p - b_);
+			  // The extra eval is to get around a bug in the eigen library.
+			  for (i = 0; i < num_residuals(); i++) {
+				  residuals[i] = 0;
+				  for (j = 0; j < parameter_block_sizes().get(0); j++) {
+					  residuals[i] += (A_.get(i,j) * (parameters.get(j)[0] - b_.get(j)));
+				  }
+			  }
+			  if ((jacobians != null) && (jacobians[0] != null)) {
+				for (i = 0; i < num_residuals(); i++) {
+					for (j = 0; j < parameter_block_sizes().get(0); j++) {
+						jacobians[i][j] = A_.get(i,j);
+					}
+				}
+			  }
+			  return true;
+
+		  }
+		 
+		};
 
 } // public abstract class CeresSolver
 
