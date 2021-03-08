@@ -13405,5 +13405,171 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
     			}
 
+    		public void RandomVector(Vector<Double> v) {
+    			  for (int r = 0; r < v.size(); ++r)
+    			    v.set(r,2 * RandDouble() - 1);
+    		}
+
+    	    public void RandomMatrix(Matrix m) {
+    			  for (int r = 0; r < m.getRowDimension(); ++r) {
+    			    for (int c = 0; c < m.getColumnDimension(); ++c) {
+    			      m.set(r, c, 2 * RandDouble() - 1);
+    			    }
+    			  }
+    		}
+    	    
+    	    public void NormalPriorTestResidualAtRandomPosition() {
+    	    	  // NormalPriorTestResidualAtRandomPosition() passed all tests
+    	    	  boolean passed = true;
+    	    	  int i, j;
+
+    	    	  for (int num_rows = 1; num_rows < 5; ++num_rows) {
+    	    	    for (int num_cols = 1; num_cols < 5; ++num_cols) {
+    	    	      Vector<Double> b = new Vector<Double>(num_cols);
+    	    	      for (i = 0; i < num_cols; i++) {
+    	    	    	  b.add(0.0);
+    	    	      }
+    	    	      RandomVector(b);
+
+    	    	      Matrix A = new Matrix(num_rows, num_cols);
+    	    	      RandomMatrix(A);
+
+    	    	      Vector<double[]> x = new Vector<double[]>(num_cols);
+    	    	      for (i = 0; i < num_cols; ++i) {
+    	    	        double p[] = new double[] {2 * RandDouble() - 1};
+    	    	        x.add(p);
+    	    	      }
+
+    	    	      double [][]jacobian = new double[num_rows][num_cols];
+    	    	      double[] residuals = new double[num_rows];
+
+    	    	      NormalPrior prior = new NormalPrior(A, b);
+    	    	      prior.Evaluate(x, residuals, jacobian);
+
+    	    	      // Compare the norm of the residual
+    	    	      double residual_diff_norm = 0;
+    	    	      double Axb[] = new double[num_rows];
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  for (j = 0; j < num_cols; j++) {
+    	    	    		  Axb[i] += A.get(i, j) * (x.get(j)[0] - b.get(j));
+    	    	    	  }
+    	    	      }
+    	    	      double diff;
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  diff = residuals[i] - Axb[i];
+    	    	    	  residual_diff_norm += (diff * diff);
+    	    	      }
+    	    	      if (residual_diff_norm > 1.0E-10) {
+    	    	    	  System.err.println("In NormalPriorTestResidualAtRandomPosition() residual_diff_norm > 1.0E-10");
+    	    	    	  passed = false;
+    	    	      }
+
+    	    	      // Compare the jacobians
+    	    	      double jacobian_diff_norm = 0.0;
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  for (j = 0; j < num_cols; j++) {
+    	    	    		  diff = jacobian[i][j] - A.get(i,j);
+    	    	    		  jacobian_diff_norm += (diff * diff);
+    	    	    	  }
+    	    	      }
+    	    	      jacobian_diff_norm = Math.sqrt(jacobian_diff_norm);
+    	    	      if (jacobian_diff_norm > 1.0E-10) {
+    	    	    	  System.err.println("In NormalPriorTestResidualAtRandomPosition() jacobian_diff_norm > 1.0E-10");
+    	    	    	  passed = false;
+    	    	      }
+
+    	    	      for (i = 0; i < x.size(); i++) {
+    	    	    	  x.set(i, null);  
+    	    	      }
+    	    	      x = null;
+    	    	      for (i = 0; i < jacobian.length; i++) {
+    	    	    	  jacobian[i] = null;
+    	    	      }
+    	    	      jacobian = null;
+    	    	    }
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println("NormalPriorTestResidualAtRandomPosition() passed all tests");
+    	    	  }
+    	    	}
+
+    	    public void NormalPriorTestResidualAtRandomPositionNullJacobians() {
+    	    	 // NormalPriorTestResidualAtRandomPositionNullJacobians() passed all tests
+    	    	  boolean passed = true;
+    	    	  int i, j;
+
+    	    	  for (int num_rows = 1; num_rows < 5; ++num_rows) {
+    	    	    for (int num_cols = 1; num_cols < 5; ++num_cols) {
+    	    	      Vector<Double> b = new Vector<Double>(num_cols);
+      	    	      for (i = 0; i < num_cols; i++) {
+      	    	    	  b.add(0.0);
+      	    	      }
+      	    	      RandomVector(b);
+
+      	    	      Matrix A = new Matrix(num_rows, num_cols);
+      	    	      RandomMatrix(A);
+
+      	    	      Vector<double[]> x = new Vector<double[]>(num_cols);
+      	    	      for (i = 0; i < num_cols; ++i) {
+      	    	        double p[] = new double[] {2 * RandDouble() - 1};
+      	    	        x.add(p);
+      	    	      }
+
+    	    	      double jacobians[][] = new double[1][];
+    	    	      jacobians[0] = null;
+
+    	    	      double[] residuals = new double[num_rows];
+
+    	    	      NormalPrior prior = new NormalPrior(A, b);
+    	    	      prior.Evaluate(x, residuals, jacobians);
+
+    	    	      // Compare the norm of the residual
+    	    	      double residual_diff_norm = 0;
+    	    	      double Axb[] = new double[num_rows];
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  for (j = 0; j < num_cols; j++) {
+    	    	    		  Axb[i] += A.get(i, j) * (x.get(j)[0] - b.get(j));
+    	    	    	  }
+    	    	      }
+    	    	      double diff;
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  diff = residuals[i] - Axb[i];
+    	    	    	  residual_diff_norm += (diff * diff);
+    	    	      }
+    	    	      if (residual_diff_norm > 1.0E-10) {
+    	    	    	  System.err.println("In NormalPriorTestResidualAtRandomPositionNullJacobians() residual_diff_norm > 1.0E-10");
+    	    	    	  passed = false;
+    	    	      }
+
+    	    	      prior.Evaluate(x, residuals, null);
+    	    	      // Compare the norm of the residual
+    	    	      residual_diff_norm = 0;
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  Axb[i] = 0.0;
+    	    	    	  for (j = 0; j < num_cols; j++) {
+    	    	    		  Axb[i] += A.get(i, j) * (x.get(j)[0] - b.get(j));
+    	    	    	  }
+    	    	      }
+    	    	      for (i = 0; i < num_rows; i++) {
+    	    	    	  diff = residuals[i] - Axb[i];
+    	    	    	  residual_diff_norm += (diff * diff);
+    	    	      }
+    	    	      if (residual_diff_norm > 1.0E-10) {
+    	    	    	  System.err.println("In NormalPriorTestResidualAtRandomPositionNullJacobians() residual_diff_norm > 1.0E-10");
+    	    	    	  passed = false;
+    	    	      }
+
+
+    	    	      for (i = 0; i < x.size(); i++) {
+    	    	    	  x.set(i, null);  
+    	    	      }
+    	    	      x = null;
+    	    	    }
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println("NormalPriorTestResidualAtRandomPositionNullJacobians() passed all tests");
+    	    	  }
+    	    	}
+
 
 }
