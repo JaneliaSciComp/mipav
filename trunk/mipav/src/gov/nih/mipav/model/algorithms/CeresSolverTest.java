@@ -13571,5 +13571,355 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    	  }
     	    	}
 
+    	    public void SolverOptionsDefaultTrustRegionOptionsAreValid() {
+    	    	  // SolverOptionsDefaultTrustRegionOptionsAreValid() passed all tests
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.minimizer_type = MinimizerType.TRUST_REGION;
+    	    	  String error[] = new String[1];
+    	    	  if (!options.IsValid(error)) {
+    	    		  System.err.println("In SolverOptionsDefaultTrustRegionOptionsAreValid() " + error[0]);
+    	    	  }
+    	    	  else {
+    	    		  System.out.println("SolverOptionsDefaultTrustRegionOptionsAreValid() passed all tests");
+    	    	  }
+    	    }
+    	    
+    	    public void SolverOptionsDefaultLineSearchOptionsAreValid() {
+    	    	  // SolverOptionsDefaultLineSearchOptionsAreValid() passed all tests
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.minimizer_type = MinimizerType.LINE_SEARCH;
+    	    	  String error[] = new String[1];
+    	    	  if (!options.IsValid(error)) {
+    	    		  System.err.println("In SolverOptionsDefaultLineSearchOptionsAreValid() " + error[0]);
+    	    	  }
+    	    	  else {
+    	    		  System.out.println("SolverOptionsDefaultLineSearchOptionsAreValid() passed all tests");
+    	    	  }
+    	    }
+    	    
+    	    // A cost function that simply returns its argument.
+    	    class UnaryIdentityCostFunction extends SizedCostFunction {
+    	     public UnaryIdentityCostFunction() {
+    	    	 super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    	     }
+    	     
+    	     public boolean Evaluate(Vector<double[]> parameters,
+    	                            double[] residuals,
+    	                            double[][] jacobians) {
+    	        residuals[0] = parameters.get(0)[0];
+    	        if (jacobians != null && jacobians[0] != null) {
+    	          jacobians[0][0] = 1.0;
+    	        }
+    	        return true;
+    	      }
+    	    };
+    	    
+    	    public void SolverTrustRegionProblemHasNoParameterBlocks() {
+    	    	  // SolverTrustRegionProblemHasNoParameterBlocks() passed all tests
+    	    	  boolean passed = true;
+    	    	  ProblemImpl problem = new ProblemImpl();
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.minimizer_type = MinimizerType.TRUST_REGION;
+    	    	  SolverSummary summary = new SolverSummary();
+    	    	  Solve(options, problem, summary);
+    	    	  if (summary.termination_type != TerminationType.CONVERGENCE) {
+    	    		  System.err.println("In SolverTrustRegionProblemHasNoParameterBlocks() summary.termination_type != TerminationType.CONVERGENCE");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (!summary.message[0].equalsIgnoreCase("Function tolerance reached. No non-constant parameter blocks found.")) {
+    	    		  System.err.println("In SolverTrustRegionProblemHasNoParameterBlocks() message is not Function tolerance reached.");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println("SolverTrustRegionProblemHasNoParameterBlocks() passed all tests");
+    	    	  }
+    	    	}
+    	    
+    	    public void SolverLineSearchProblemHasNoParameterBlocks() {
+    	      // SolverLineSearchProblemHasNoParameterBlocks() passed all tests
+    	      boolean passed = true;
+  	    	  ProblemImpl problem = new ProblemImpl();
+  	    	  SolverOptions options = new SolverOptions();
+  	    	  options.minimizer_type = MinimizerType.LINE_SEARCH;
+  	    	  SolverSummary summary = new SolverSummary();
+  	    	  Solve(options, problem, summary);
+  	    	  if (summary.termination_type != TerminationType.CONVERGENCE) {
+  	    		  System.err.println("In SolverLineSearchProblemHasNoParameterBlocks() summary.termination_type != TerminationType.CONVERGENCE");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (!summary.message[0].equalsIgnoreCase("Function tolerance reached. No non-constant parameter blocks found.")) {
+  	    		  System.err.println("In SolverLineSearchProblemHasNoParameterBlocks() message is not Function tolerance reached.");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (passed) {
+  	    		  System.out.println("SolverLineSearchProblemHasNoParameterBlocks() passed all tests");
+  	    	  }
+  	    	}
+
+    	    public void SolverTrustRegionProblemHasZeroResiduals() {
+    	    	  // SolverTrustRegionProblemHasZeroResiduals() passed all tests
+    	    	  boolean passed = true;
+    	    	  ProblemImpl problem = new ProblemImpl();
+    	    	  double x[] = new double[] {1};
+    	    	  problem.AddParameterBlock(x, 1);
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.minimizer_type = MinimizerType.TRUST_REGION;
+    	    	  SolverSummary summary = new SolverSummary();
+    	    	  Solve(options, problem, summary);
+    	    	  if (summary.termination_type != TerminationType.CONVERGENCE) {
+    	    		  System.err.println("In SolverTrustRegionProblemHasZeroResiduals() summary.termination_type != TerminationType.CONVERGENCE");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (!summary.message[0].equalsIgnoreCase("Function tolerance reached. No non-constant parameter blocks found.")) {
+    	    		  System.err.println("In SolverTrustRegionProblemHasZeroResiduals() message is not Function tolerance reached.");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println("SolverTrustRegionProblemHasZeroResiduals() passed all tests");
+    	    	  }
+    	    }
+    	    
+    	    public void SolverLineSearchProblemHasZeroResiduals() {
+    	      // SolverLineSearchProblemHasZeroResiduals() passed all tests
+    	      boolean passed = true;
+  	    	  ProblemImpl problem = new ProblemImpl();
+  	    	  double x[] = new double[] {1};
+  	    	  problem.AddParameterBlock(x, 1);
+  	    	  SolverOptions options = new SolverOptions();
+  	    	  options.minimizer_type = MinimizerType.LINE_SEARCH;
+  	    	  SolverSummary summary = new SolverSummary();
+  	    	  Solve(options, problem, summary);
+  	    	  if (summary.termination_type != TerminationType.CONVERGENCE) {
+  	    		  System.err.println("In SolverLineSearchProblemHasZeroResiduals() summary.termination_type != TerminationType.CONVERGENCE");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (!summary.message[0].equalsIgnoreCase("Function tolerance reached. No non-constant parameter blocks found.")) {
+  	    		  System.err.println("In SolverLineSearchProblemHasZeroResiduals() message is not Function tolerance reached.");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (passed) {
+  	    		  System.out.println("SolverLineSearchProblemHasZeroResiduals() passed all tests");
+  	    	  }
+    	    }
+    	    
+    	    public void SolverTrustRegionProblemIsConstant() {
+    	    	  // SolverTrustRegionProblemIsConstant() passed all tests
+    	    	  boolean passed = true;
+    	    	  ProblemImpl problem = new ProblemImpl();
+    	    	  double x[] = new double[] {1};
+    	    	  problem.AddResidualBlock(new UnaryIdentityCostFunction(), null, x);
+    	    	  problem.SetParameterBlockConstant(x);
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.minimizer_type = MinimizerType.TRUST_REGION;
+    	    	  SolverSummary summary = new SolverSummary();
+    	    	  Solve(options, problem, summary);
+    	    	  if (summary.termination_type != TerminationType.CONVERGENCE) {
+    	    		  System.err.println("In SolverTrustRegionProblemIsConstant() summary.termination_type != TerminationType.CONVERGENCE");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (summary.initial_cost != 1.0 / 2.0) {
+    	    		  System.err.println("In SolverTrustRegionProblemIsConstant() summary.initial_cost != 1.0 / 2.0");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (summary.final_cost != 1.0 / 2.0) {
+    	    		  System.err.println("In SolverTrustRegionProblemIsConstant() summary.final_cost != 1.0 / 2.0");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println("SolverTrustRegionProblemIsConstant() passed all tests");
+    	    	  }
+    	    }
+    	    
+    	    public void SolverLineSearchProblemIsConstant() {
+    	      // SolverLineSearchProblemIsConstant() passed all tests
+    	      boolean passed = true;
+  	    	  ProblemImpl problem = new ProblemImpl();
+  	    	  double x[] = new double[] {1};
+  	    	  problem.AddResidualBlock(new UnaryIdentityCostFunction(), null, x);
+  	    	  problem.SetParameterBlockConstant(x);
+  	    	  SolverOptions options = new SolverOptions();
+  	    	  options.minimizer_type = MinimizerType.LINE_SEARCH;
+  	    	  SolverSummary summary = new SolverSummary();
+  	    	  Solve(options, problem, summary);
+  	    	  if (summary.termination_type != TerminationType.CONVERGENCE) {
+  	    		  System.err.println("In SolverLineSearchProblemIsConstant() summary.termination_type != TerminationType.CONVERGENCE");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (summary.initial_cost != 1.0 / 2.0) {
+  	    		  System.err.println("In SolverLineSearchProblemIsConstant() summary.initial_cost != 1.0 / 2.0");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (summary.final_cost != 1.0 / 2.0) {
+  	    		  System.err.println("In SolverLineSearchProblemIsConstant() summary.final_cost != 1.0 / 2.0");
+  	    		  passed = false;
+  	    	  }
+  	    	  if (passed) {
+  	    		  System.out.println("SolverLineSearchProblemIsConstant() passed all tests");
+  	    	  }
+    	    }
+
+    	    public void SolverIterativeLinearSolverForDogleg() {
+    	    	  // SolverIterativeLinearSolverForDogleg() passed all tests
+    	    	  boolean passed = true;
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.trust_region_strategy_type = TrustRegionStrategyType.DOGLEG;
+    	    	  String message[] = new String[1];
+    	    	  options.linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
+    	    	  if (options.IsValid(message)) {
+    	    		  System.err.println("In SolverIterativeLinearSolverForDogleg() options.IsValid(message) == true");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  options.linear_solver_type = LinearSolverType.CGNR;
+    	    	  if (options.IsValid(message)) {
+    	    		  System.err.println("In SolverIterativeLinearSolverForDogleg() options.IsValid(message) == true");
+    	    		  passed = false;
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println("SolverIterativeLinearSolverForDogleg() passed all tests");
+    	    	  }
+    	    }
+    	    
+    	    public void SolverLinearSolverTypeNormalOperation() {
+    	    	  // SolverLinearSolverTypeNormalOperation() passed all tests
+    	    	  boolean passed = true;
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  options.linear_solver_type = LinearSolverType.DENSE_QR;
+
+    	    	  String message[] = new String[1];
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverLinearSolverTypeNormalOperation() options.IsValid(message) = false");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  options.linear_solver_type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverLinearSolverTypeNormalOperation() options.IsValid(message) = false");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  options.linear_solver_type = LinearSolverType.DENSE_SCHUR;
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverLinearSolverTypeNormalOperation() options.IsValid(message) = false");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  options.linear_solver_type = LinearSolverType.ITERATIVE_SCHUR;
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverLinearSolverTypeNormalOperation() options.IsValid(message) = false");
+    	    		  passed = false;
+    	    	  }
+                  if (passed) {
+                	  System.out.println("SolverLinearSolverTypeNormalOperation() passed all tests");
+                  }
+    	    	}
+
+    	    class NoOpEvaluationCallback extends EvaluationCallback {
+    	    		  public NoOpEvaluationCallback() {
+    	    			  super();
+    	    		  }
+    	    		  
+    	    		  public void PrepareForEvaluation(boolean evaluate_jacobians,
+    	    		                                    boolean new_evaluation_point) {
+    	    		    //(void) evaluate_jacobians;
+    	    		    //(void) new_evaluation_point;
+    	    		  }
+    	    };
+    	    
+    	    public void SolverCantMixEvaluationCallbackWithInnerIterations() {
+    	    	  // SolverCantMixEvaluationCallbackWithInnerIterations() passed all tests
+    	    	  boolean passed = true;
+    	    	  SolverOptions options = new SolverOptions();
+    	    	  NoOpEvaluationCallback evaluation_callback = new NoOpEvaluationCallback();
+    	    	  String message[] = new String[1];
+
+    	    	  // Can't combine them.
+    	    	  options.use_inner_iterations = true;
+    	    	  options.evaluation_callback = evaluation_callback;
+    	    	  if (options.IsValid(message)) {
+    	    		  System.err.println("In SolverCantMixEvaluationCallbackWithInnerIterations() options.IsValid(message) == true");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  // Either or none is OK.
+    	    	  options.use_inner_iterations = false;
+    	    	  options.evaluation_callback = evaluation_callback;
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverCantMixEvaluationCallbackWithInnerIterations() options.IsValid(message) == false");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  options.use_inner_iterations = true;
+    	    	  options.evaluation_callback = null;
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverCantMixEvaluationCallbackWithInnerIterations() options.IsValid(message) == false");
+    	    		  passed = false;
+    	    	  }
+
+    	    	  options.use_inner_iterations = false;
+    	    	  options.evaluation_callback = null;
+    	    	  if (!options.IsValid(message)) {
+    	    		  System.err.println("In SolverCantMixEvaluationCallbackWithInnerIterations() options.IsValid(message) == false");
+    	    		  passed = false;
+    	    	  }
+    	    	  
+    	    	  if (passed) {
+    	    		  System.out.println("SolverCantMixEvaluationCallbackWithInnerIterations() passed all tests");
+    	    	  }
+    	    }
+
+    	    class DummyCostFunction4 extends SizedCostFunction {
+    	    	 private int kNumResiduals;
+    	    	 public DummyCostFunction4(int kNumResiduals, int N1) {
+    	    		 super(kNumResiduals, N1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    	    		 this.kNumResiduals = kNumResiduals;
+    	    	 }
+    	    	 
+    	    	 public boolean Evaluate(Vector<double[]> parameters,
+    	    	                double[] residuals,
+    	    	                double[][] jacobians) {
+    	    	    for (int i = 0; i < kNumResiduals; ++i) {
+    	    	      residuals[i] = kNumResiduals * kNumResiduals + i;
+    	    	    }
+
+    	    	    return true;
+    	    	  }
+    	    	};
+
+    	    	public void SolverFixedCostForConstantProblem() {
+    	    		  // SolverFixedCostForConstantProblem() passed all tests
+    	    		  boolean passed = true;
+    	    		  double x[] = new double[] {1.0};
+    	    		  ProblemImpl problem = new ProblemImpl();
+    	    		  problem.AddResidualBlock(new DummyCostFunction4(2, 1), null, x);
+    	    		  problem.SetParameterBlockConstant(x);
+    	    		  final double expected_cost = 41.0 / 2.0;  // 1/2 * ((4 + 0)^2 + (4 + 1)^2)
+    	    		  SolverOptions options = new SolverOptions();
+    	    		  SolverSummary summary = new SolverSummary();
+    	    		  Solve(options, problem, summary);
+    	    		  if (!summary.IsSolutionUsable()) {
+    	    		      System.err.println("In SolverFixedCostForConstantProblem() summary.IsSolutionUsable() == false");
+    	    		      passed = false;
+    	    		  }
+    	    		  if (summary.fixed_cost != expected_cost) {
+    	    			  System.err.println("In SolverFixedCostForConstantProblem() summary.fixed_cost != expected_cost");
+    	    		      passed = false;
+    	    		  }
+    	    		  if (summary.initial_cost != expected_cost) {
+    	    			  System.err.println("In SolverFixedCostForConstantProblem() summary.initial_cost != expected_cost");
+    	    		      passed = false;
+    	    		  }
+    	    		  if (summary.final_cost != expected_cost) {
+    	    			  System.err.println("In SolverFixedCostForConstantProblem() summary.final_cost != expected_cost");
+    	    		      passed = false;
+    	    		  }
+    	    		  if (summary.iterations.size() != 0) {
+    	    			  System.err.println("In SolverFixedCostForConstantProblem() summary.iterations.size() != 0");
+    	    		      passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("SolverFixedCostForConstantProblem() passed all tests");
+    	    		  }
+    	    		}
 
 }
