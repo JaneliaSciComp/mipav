@@ -22197,13 +22197,15 @@ public abstract class CeresSolver {
 					return false;
 				}
 			}
-
-			/*
-			 * if (options.use_inner_iterations && options.evaluation_callback != NULL) {
-			 * error = "Inner iterations (use_inner_iterations = true) can't be "
-			 * "combined with an evaluation callback "
-			 * "(options.evaluation_callback != NULL)."; return false; }
-			 */
+			
+			if (use_inner_iterations &&
+				      evaluation_callback != null) {
+				    message[0] =  "Inner iterations (use_inner_iterations = true) can't be \n" +
+				        "combined with an evaluation callback \n" +
+				        "(options.evaluation_callback != null).";
+				    return false;
+		    }
+	
 
 			if (use_nonmonotonic_steps) {
 				if (max_consecutive_nonmonotonic_steps <= 0) {
