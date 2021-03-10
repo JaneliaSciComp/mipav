@@ -21848,6 +21848,12 @@ public abstract class CeresSolver {
 			                      final_cost,
 			                      TerminationTypeToString(termination_type));
 			}
+		
+		public boolean IsSolutionUsable() {
+			  return (termination_type == TerminationType.CONVERGENCE ||
+			          termination_type == TerminationType.NO_CONVERGENCE ||
+			          termination_type == TerminationType.USER_SUCCESS);
+		}
 	} // class SolverSummary
 	
 	class SolverOptions {
