@@ -13922,4 +13922,259 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    		  }
     	    		}
 
+    	    	// For IEEE-754 doubles, machine precision is about 2e-16.
+    	    	final double kEpsilon = 1e-13;
+    	    	final double kEpsilonLoose = 1e-9;
+
+    	    	// Return the constant polynomial p(x) = 1.23.
+    	    	public Vector<Double> ConstantPolynomial(double value) {
+    	    	  Vector<Double> poly = new Vector<Double>(1);
+    	    	  poly.add(value);
+    	    	  return poly;
+    	    	}
+    	    	
+    	    	// Return the polynomial p(x) = poly(x) * (x - root).
+    	    	public Vector<Double> AddRealRoot(Vector<Double> poly, double root) {
+    	          int i;
+    	    	  Vector<Double> poly2 = new Vector<Double>(poly.size() + 1);
+    	    	  for (i = 0; i < poly.size() + 1; i++) {
+    	    		  poly2.add(0.0);
+    	    	  }
+    	    	  for (i = 0; i < poly.size(); i++) {
+    	    		  poly2.set(i, poly2.get(i) + poly.get(i));
+    	    	  }
+    	    	  for (i = 0; i < poly.size(); i++) {
+    	    		  poly2.set(i+1, poly2.get(i+1) - root*poly.get(i));
+    	    	  }
+    	    	  return poly2;
+    	    	}
+    	    	
+    	    	// Return the polynomial
+    	    	// p(x) = poly(x) * (x - real - imag*i) * (x - real + imag*i).
+    	    	public Vector<Double> AddComplexRootPair(Vector<Double> poly, double real, double imag) {
+    	    	  int i;
+    	    	  Vector<Double> poly2 = new Vector<Double>(poly.size() + 2);
+    	    	  for (i = 0; i < poly.size() + 2; i++) {
+    	    		  poly2.add(0.0);
+    	    	  }
+    	    	  // Multiply poly by x^2 - 2real + abs(real,imag)^2
+    	    	  for (i = 0; i < poly.size(); i++) {
+    	    		  poly2.set(i, poly2.get(i) + poly.get(i));
+    	    	  }
+    	    	  for (i = 0; i < poly.size(); i++) {
+    	    		  poly2.set(i+1, poly2.get(i+1) - 2 * real * poly.get(i));
+    	    	  }
+    	    	  for (i = 0; i < poly.size(); i++) {
+    	    		  poly2.set(i+2, poly2.get(i+2) + (real* real + imag*imag)*poly.get(i));
+    	    	  }
+    	    	  return poly2;
+    	    	}
+    	    	
+    	    	// Sort the entries in a vector.
+    	    	// Needed because the roots are not returned in sorted order.
+    	    	public Vector<Double> SortVector(Vector<Double> in) {
+    	    	  Vector<Double> out = new Vector<Double>(in.size());
+    	    	  out.addAll(in);
+    	    	  Collections.sort(out);
+    	    	  return out;
+    	    	}
+
+    	    	// Run a test with the polynomial defined by the N real roots in roots_real.
+    	    	// If use_real is false, NULL is passed as the real argument to
+    	    	// FindPolynomialRoots. If use_imaginary is false, NULL is passed as the
+    	    	// imaginary argument to FindPolynomialRoots.
+    	    	void RunPolynomialTestRealRoots(double real_roots[],
+    	    	                                boolean use_real,
+    	    	                                boolean use_imaginary,
+    	    	                                double epsilon, String testName) {
+    	    	  boolean passed = true;
+    	    	  int i;
+    	    	  int N = real_roots.length;
+    	    	  Vector<Double> real;
+    	    	  if (use_real) {
+    	    	      real = new Vector<Double>();
+    	    	  }
+    	    	  else {
+    	    		  real = null;
+    	    	  }
+    	    	  Vector<Double> imaginary;
+    	    	  if (use_imaginary) {
+    	    	      imaginary = new Vector<Double>();
+    	    	  }
+    	    	  else {
+    	    		  imaginary = null;
+    	    	  }
+    	    	  Vector<Double> poly = ConstantPolynomial(1.23);
+    	    	  for (i = 0; i < N; ++i) {
+    	    	    poly = AddRealRoot(poly, real_roots[i]);
+    	    	  }
+    	    	  boolean success = FindPolynomialRoots(poly, real, imaginary);
+
+    	    	  if(!success) {
+    	    		 System.err.println("In " + testName + " success = false");
+    	    		 passed = false;
+    	    	  }
+    	    	  if (use_real) {
+    	    	    if (real.size() != N) {
+    	    	    	System.err.println("In " + testName + " real.size() != N");
+    	    	    	passed = false;
+    	    	    }
+    	    	    real = SortVector(real);
+    	    	    for (i = 0; i < real.size(); i++) {
+    	    	    	if (Math.abs(real.get(i) - real_roots[i]) > epsilon) {
+    	    	    		System.err.println("In " + testName + " Math.abs(real.get("+i+") - real_roots["+i+"]) > epsilon");
+    	    	    		System.err.println("real.get("+i+") = " + real.get(i));
+    	    	    		System.err.println("real_roots["+i+"] = " + real_roots[i]);
+    	    	    		passed = false;
+    	    	    	}
+    	    	    }
+    	    	  }
+    	    	  if (use_imaginary) {
+    	    		  if (imaginary.size() != N) {
+      	    	    	System.err.println("In " + testName + " imaginary.size() != N");
+      	    	    	passed = false;
+      	    	      }
+    	    		  for (i = 0; i < imaginary.size(); i++) {
+      	    	    	if (Math.abs(imaginary.get(i)) > epsilon) {
+      	    	    		System.err.println("In " + testName + " Math.abs(imaginary.get("+i+")) > epsilon");
+      	    	    		passed = false;
+      	    	    	}
+      	    	    }
+    	    	  }
+    	    	  if (passed) {
+    	    		  System.out.println(testName + " passed all tests");
+    	    	  }
+    	    	}
+    	    	
+    	    	public void PolynomialInvalidPolynomialOfZeroLengthIsRejected() {
+    	    		  // PolynomialInvalidPolynomialOfZeroLengthIsRejected() passed all tests
+    	    		  // Vector poly(0) is an ambiguous constructor call, so
+    	    		  // use the constructor with explicit column count.
+    	    		  Vector<Double> poly = new Vector<Double>(1);
+    	    		  poly.add(0.0);
+    	    		  Vector<Double> real = new Vector<Double>();
+    	    		  Vector<Double> imag = new Vector<Double>();
+    	    		  boolean success = FindPolynomialRoots(poly, real, imag);
+
+    	    		  if (success) {
+    	    			  System.err.println("In PolynomialInvalidPolynomialOfZeroLengthIsRejected() success = true");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialInvalidPolynomialOfZeroLengthIsRejected() passed all tests");
+    	    		  }
+    	    		}
+
+    	    	public void PolynomialConstantPolynomialReturnsNoRoots() {
+    	    		  // PolynomialConstantPolynomialReturnsNoRoots() passed all tests
+    	    		  boolean passed = true;
+    	    		  Vector<Double> poly = ConstantPolynomial(1.23);
+    	    		  Vector<Double> real = new Vector<Double>();
+    	    		  Vector<Double> imag = new Vector<Double>();
+    	    		  boolean success = FindPolynomialRoots(poly, real, imag);
+
+    	    		  if (!success) {
+    	    			  System.err.println("In PolynomialConstantPolynomialReturnsNoRoots() success = false");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (real.size() != 0) {
+    	    			  System.err.println("In PolynomialConstantPolynomialReturnsNoRoots() real.size() != 0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (imag.size() != 0) {
+    	    			  System.err.println("In PolynomialConstantPolynomialReturnsNoRoots() imag.size() != 0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialConstantPolynomialReturnsNoRoots() passed all tests");
+    	    		  }
+    	    		}
+
+    	    	public void PolynomialLinearPolynomialWithPositiveRootWorks() {
+    	    		  // PolynomialLinearPolynomialWithPositiveRootWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 42.42 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialLinearPolynomialWithPositiveRootWorks()");
+    	    	}
+
+    	    	public void PolynomialLinearPolynomialWithNegativeRootWorks() {
+    	    		  // PolynomialLinearPolynomialWithNegativeRootWorks() passed all tests
+    	    		  final double roots[] = new double[]{ -42.42 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialLinearPolynomialWithNegativeRootWorks()");
+    	    	}
+    	    	
+    	    	public void PolynomialQuadraticPolynomialWithPositiveRootsWorks() {
+    	    		  // PolynomialQuadraticPolynomialWithPositiveRootsWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 1.0, 42.42 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialQuadraticPolynomialWithPositiveRootsWorks()");
+    	    	}
+    	    	
+    	    	public void PolynomialQuadraticPolynomialWithOneNegativeRootWorks() {
+    	    		  // PolynomialQuadraticPolynomialWithOneNegativeRootWorks() passed all tests
+    	    		  final double roots[] = new double[]{ -42.42, 1.0 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialQuadraticPolynomialWithOneNegativeRootWorks()");
+    	    	}
+
+    	    	public void PolynomialQuadraticPolynomialWithTwoNegativeRootsWorks() {
+    	    		  // PolynomialQuadraticPolynomialWithTwoNegativeRootsWorks() passed all tests
+    	    		  final double roots[] = new double[]{ -42.42, -1.0 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialQuadraticPolynomialWithTwoNegativeRootsWorks()");
+    	    	}
+
+    	    	public void PolynomialQuadraticPolynomialWithCloseRootsWorks() {
+    	    		  // PolynomialQuadraticPolynomialWithCloseRootsWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 42.42, 42.43 };
+    	    		  RunPolynomialTestRealRoots(roots, true, false, kEpsilonLoose, "PolynomialQuadraticPolynomialWithCloseRootsWorks()");
+    	    	}
+    	    	
+    	    	public void PolynomialQuadraticPolynomialWithComplexRootsWorks() {
+    	    		  // PolynomialQuadraticPolynomialWithComplexRootsWorks() passed all tests
+    	    		  boolean passed = true;
+    	    		  Vector<Double> real = new Vector<Double>();
+    	    		  Vector<Double> imag = new Vector<Double>();
+
+    	    		  Vector<Double> poly = ConstantPolynomial(1.23);
+    	    		  poly = AddComplexRootPair(poly, 42.42, 4.2);
+    	    		  boolean success = FindPolynomialRoots(poly, real, imag);
+
+    	    		  if (!success) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() success = false");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (real.size() != 2) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() real.size() != 2");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (imag.size() != 2) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() imag.size() != 2");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (Math.abs(real.get(0) - 42.42) > kEpsilon) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() Math.abs(real.get(0) - 42.42) > kEpsilon");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (Math.abs(real.get(1) - 42.42) > kEpsilon) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() Math.abs(real.get(1) - 42.42) > kEpsilon");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (Math.abs(Math.abs(imag.get(0)) - 4.2) > kEpsilon) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() Math.abs(Math.abs(imag.get(0)) - 4.2) > kEpsilon");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (Math.abs(Math.abs(imag.get(1)) - 4.2) > kEpsilon) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() Math.abs(Math.abs(imag.get(1)) - 4.2) > kEpsilon");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (Math.abs(imag.get(0) + imag.get(1)) > kEpsilon) {
+    	    			  System.err.println("In PolynomialQuadraticPolynomialWithComplexRootsWorks() Math.abs(imag.get(0) + imag.get(1)) > kEpsilon");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialQuadraticPolynomialWithComplexRootsWorks() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialQuarticPolynomialWorks() {
+    	    		  final double roots[] = new double[]{ 1.23e-4, 1.23e-1, 1.23e+2, 1.23e+5 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialQuarticPolynomialWorks()");
+    	    	}
+
 }
