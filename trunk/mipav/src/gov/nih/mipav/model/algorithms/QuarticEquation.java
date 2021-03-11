@@ -150,7 +150,6 @@ public class QuarticEquation {
 	public void runReal() {
 		int i;
 	    double poly[] = new double[degree+1];
-	    double solsreal[] = new double[4];
 	    poly[0] = ereal;
 	    if (degree >= 1) {
 	        poly[1] = dreal;
