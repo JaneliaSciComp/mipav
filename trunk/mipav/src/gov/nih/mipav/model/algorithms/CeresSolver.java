@@ -13721,6 +13721,10 @@ public abstract class CeresSolver {
 			            real.add((-b + sqrt_D) / (2.0 * a));
 			        }
 		        }
+			    if (imaginary != null) {
+			    	imaginary.add(0.0);
+			    	imaginary.add(0.0);
+			    }
 		        return;
 	       }
 
