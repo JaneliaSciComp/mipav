@@ -13661,7 +13661,7 @@ public abstract class CeresSolver {
 	public Vector<Double> RemoveLeadingZeros(Vector<Double> polynomial_in) {
 	  int i = 0;
 	  int j;
-	  while (i < (polynomial_in.size() - 1) && polynomial_in.get(i) == 0.0) {
+	  while ((i < polynomial_in.size()) && polynomial_in.get(i) == 0.0) {
 	    ++i;
 	  }
 	  Vector<Double>polynomial_leading_zeros_stripped = new Vector<Double>();
@@ -23299,7 +23299,11 @@ public abstract class CeresSolver {
 	    }
 	    
 	    // Is the polynomial constant?
-	    if (degree == 0) {
+	    if (degree == -1) {
+	        System.err.println("After leading zeros stripped polynomial has zero length");
+	        return false;
+	    }
+	    else if (degree == 0) {
 	      Preferences.debug("Trying to extract roots from a constant polynomial\n",
 	    		  Preferences.DEBUG_ALGORITHM);
 	      // We return true with no roots, not false, as if the polynomial is constant
