@@ -23359,7 +23359,7 @@ public abstract class CeresSolver {
 				solsreal = new double[4];
 				solsimag = new double[4];
 	    	}
-			QuarticEquation qe = new QuarticEquation(degree, areal, aimag, breal, bimag, creal, cimag,
+			QuarticEquationEP qe = new QuarticEquationEP(degree, areal, aimag, breal, bimag, creal, cimag,
 					dreal, dimag, ereal, eimag, num_sols, solsreal, solsimag);
 			qe.run();
 			if (roots_real != null) {
