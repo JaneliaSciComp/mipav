@@ -14173,8 +14173,49 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    	}
 
     	    	public void PolynomialQuarticPolynomialWorks() {
+    	    		  // PolynomialQuarticPolynomialWorks() passed all tests
     	    		  final double roots[] = new double[]{ 1.23e-4, 1.23e-1, 1.23e+2, 1.23e+5 };
     	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialQuarticPolynomialWorks()");
     	    	}
+    	    	
+    	    	public void PolynomialQuarticPolynomialWithTwoClustersOfCloseRootsWorks() {
+    	    		  // PolynomialQuarticPolynomialWithTwoClustersOfCloseRootsWorks passed all tests
+    	    		  final double roots[] = new double[]{ 1.23e-1, 2.46e-1, 1.23e+5, 2.46e+5 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilonLoose, "PolynomialQuarticPolynomialWithTwoClustersOfCloseRootsWorks");
+    	        }
+    	    	
+    	    	public void PolynomialQuarticPolynomialWithTwoZeroRootsWorks() {
+    	    		  // PolynomialQuarticPolynomialWithTwoZeroRootsWorks() passed all tests
+    	    		  final double roots[] = new double[]{ -42.42, 0.0, 0.0, 42.42 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, 2 * kEpsilonLoose, "PolynomialQuarticPolynomialWithTwoZeroRootsWorks()");
+    	    	}
+    	    	
+    	    	public void PolynomialQuarticMonomialWorks() {
+    	    		  // PolynomialQuarticMonomialWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 0.0, 0.0, 0.0, 0.0 };
+    	    		  RunPolynomialTestRealRoots(roots, true, true, kEpsilon, "PolynomialQuarticMonomialWorks()");
+    	    	}
+    	    	
+    	    	public void PolynomialNullPointerAsImaginaryPartWorks() {
+    	    		  // PolynomialNullPointerAsImaginaryPartWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 1.23e-4, 1.23e-1, 1.23e+2, 1.23e+5 };
+    	    		  RunPolynomialTestRealRoots(roots, true, false, kEpsilon, "PolynomialNullPointerAsImaginaryPartWorks()");
+    	    	}
+
+    	    	public void PolynomialNullPointerAsRealPartWorks() {
+    	    		  // PolynomialNullPointerAsRealPartWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 1.23e-4, 1.23e-1, 1.23e+2, 1.23e+5 };
+    	    		  RunPolynomialTestRealRoots(roots, false, true, kEpsilon, "PolynomialNullPointerAsRealPartWorks()");
+    	    	}
+    	    	
+    	    	public void PolynomialBothOutputArgumentsNullWorks() {
+    	    		  // PolynomialBothOutputArgumentsNullWorks() passed all tests
+    	    		  final double roots[] = new double[]{ 1.23e-4, 1.23e-1, 1.23e+2, 1.23e+5 };
+    	    		  RunPolynomialTestRealRoots(roots, false, false, kEpsilon, "PolynomialBothOutputArgumentsNullWorks()");
+    	    	}
+
+
+
+
 
 }
