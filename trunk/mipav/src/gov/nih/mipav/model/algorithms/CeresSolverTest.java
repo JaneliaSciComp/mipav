@@ -14214,8 +14214,469 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    		  RunPolynomialTestRealRoots(roots, false, false, kEpsilon, "PolynomialBothOutputArgumentsNullWorks()");
     	    	}
 
+    	    	public void PolynomialDifferentiateConstantPolynomial() {
+    	    		  // PolynomialDifferentiateConstantPolynomial() passed all tests
+    	    		  boolean passed = true;
+    	    		  // p(x) = 1;
+    	    		  Vector<Double> polynomial = new Vector<Double>(1);
+    	    		  polynomial.add(1.0);
+    	    		  final Vector<Double> derivative = DifferentiatePolynomial(polynomial);
+    	    		  if (derivative.size() != 1) {
+    	    			  System.err.println("In PolynomialDifferentiateConstantPolynomial() derivative.size() != 1)");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (derivative.get(0) != 0.0) {
+    	    			  System.err.println("In PolynomialDifferentiateConstantPolynomial() derivative.get(0) != 0.0)");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialDifferentiateConstantPolynomial() passed all tests");
+    	    		  }
+    	    	}
+    	    	
+    	    	public void PolynomialDifferentiateQuadraticPolynomial() {
+    	    		  // PolynomialDifferentiateQuadraticPolynomial() passed all tests
+    	    		  boolean passed = true;
+    	    		  // p(x) = x^2 + 2x + 3;
+    	    		  Vector<Double> polynomial = new Vector<Double>(3);
+    	    		  polynomial.add(1.0);
+    	    		  polynomial.add(2.0);
+    	    		  polynomial.add(3.0);
 
+    	    		  final Vector<Double> derivative = DifferentiatePolynomial(polynomial);
+    	    		  if (derivative.size() != 2) {
+    	    			  System.err.println("In PolynomialDifferentiateQuadraticPolynomial() derivative.size() != 2");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (derivative.get(0) != 2.0) {
+    	    			  System.err.println("In PolynomialDifferentiateQuadraticPolynomial() derivative.get(0) != 2.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (derivative.get(1) != 2.0) {
+    	    			  System.err.println("In PolynomialDifferentiateQuadraticPolynomial() derivative.get(1) != 2.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialDifferentiateQuadraticPolynomial() passed all tests");
+    	    		  }
+    	    	}
 
+    	    	public void PolynomialMinimizeConstantPolynomial() {
+    	    		  // PolynomialMinimizeConstantPolynomial() passed all tests
+    	    		  boolean passed = true;
+    	    		  // p(x) = 1;
+    	    		  Vector<Double> polynomial = new Vector<Double>(1);
+    	    		  polynomial.add(1.0);
 
+    	    		  double optimal_x[] = new double[] {0.0};
+    	    		  double optimal_value[] = new double[] {0.0};
+    	    		  double min_x = 0.0;
+    	    		  double max_x = 1.0;
+    	    		  MinimizePolynomial(polynomial, min_x, max_x, optimal_x, optimal_value);
 
+    	    		  if (optimal_value[0] != 1.0) {
+    	    			  System.err.println("PolynomialMinimizeConstantPolynomial() optimal_value[0] != 1.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (optimal_x[0] > max_x) {
+    	    			  System.err.println("PolynomialMinimizeConstantPolynomial() optimal_x[0] > max_x");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (optimal_x[0] < min_x) {
+    	    			  System.err.println("PolynomialMinimizeConstantPolynomial() optimal_x[0] < min_x");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialMinimizeConstantPolynomial() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialMinimizeLinearPolynomial() {
+    	    		  // PolynomialMinimizeLinearPolynomial() passed all tests
+    	    		  boolean passed = true;
+    	    		  // p(x) = x - 2
+    	    		  Vector<Double> polynomial = new Vector<Double>(2);
+
+    	    		  polynomial.add(1.0);
+    	    		  polynomial.add(2.0);
+
+    	    		  double optimal_x[] = new double[] {0.0};
+    	    		  double optimal_value[] = new double[] {0.0};
+    	    		  double min_x = 0.0;
+    	    		  double max_x = 1.0;
+    	    		  MinimizePolynomial(polynomial, min_x, max_x, optimal_x, optimal_value);
+
+    	    		  if (optimal_x[0] != 0.0) {
+    	    			  System.err.println("In PolynomialMinimizeLinearPolynomial() optimal_x[0] != 0.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (optimal_value[0] != 2.0) {
+    	    			  System.err.println("In PolynomialMinimizeLinearPolynomial() optimal_value[0] != 2.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialMinimizeLinearPolynomial() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialMinimizeQuadraticPolynomial() {
+    	    		  // PolynomialMinimizeQuadraticPolynomial() passed all tests
+    	    		  boolean passed = true;
+    	    		  // p(x) = x^2 - 3 x + 2
+    	    		  // min_x = 3/2
+    	    		  // min_value = -1/4;
+    	    		  Vector<Double> polynomial = new Vector<Double>(3);
+    	    		  polynomial.add(1.0);
+    	    		  polynomial.add(-3.0);
+    	    		  polynomial.add(2.0);
+
+    	    		  double optimal_x[] = new double[] {0.0};
+    	    		  double optimal_value[] = new double[] {0.0};
+    	    		  double min_x = -2.0;
+    	    		  double max_x = 2.0;
+    	    		  MinimizePolynomial(polynomial, min_x, max_x, optimal_x, optimal_value);
+    	    		  if (optimal_x[0] != 3.0/2.0) {
+    	    			  System.err.println("In  PolynomialMinimizeQuadraticPolynomial() optimal_x[0] != 3.0/2.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (optimal_value[0] != -1.0/4.0) {
+    	    			  System.err.println("In  PolynomialMinimizeQuadraticPolynomial() optimal_value[0] != -1.0/4.0");
+    	    			  passed = false;
+    	    		  }
+
+    	    		  min_x = -2.0;
+    	    		  max_x = 1.0;
+    	    		  MinimizePolynomial(polynomial, min_x, max_x, optimal_x, optimal_value);
+    	    		  if (optimal_x[0] != 1.0) {
+    	    			  System.err.println("In  PolynomialMinimizeQuadraticPolynomial() optimal_x[0] != 1.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (optimal_value[0] != 0.0) {
+    	    			  System.err.println("In  PolynomialMinimizeQuadraticPolynomial() optimal_value[0] != 0.0");
+    	    			  passed = false;
+    	    		  }
+
+    	    		  min_x = 2.0;
+    	    		  max_x = 3.0;
+    	    		  MinimizePolynomial(polynomial, min_x, max_x, optimal_x, optimal_value);
+    	    		  if (optimal_x[0] != 2.0) {
+    	    			  System.err.println("In  PolynomialMinimizeQuadraticPolynomial() optimal_x[0] != 2.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (optimal_value[0] != 0.0) {
+    	    			  System.err.println("In  PolynomialMinimizeQuadraticPolynomial() optimal_value[0] != 0.0");
+    	    			  passed = false;
+    	    		  }
+    	    		  if (passed) {
+    	    			  System.out.println("PolynomialMinimizeQuadraticPolynomial() passed all tests");
+    	    		  }
+    	    	}
+ 
+    	    	public void PolymomialConstantInterpolatingPolynomial() {
+    	    		  // PolymomialConstantInterpolatingPolynomial() passed all tests
+    	    		  // p(x) = 1.0
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(1);
+    	    		  true_polynomial.add(1.0);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  FunctionSample sample = new FunctionSample();
+    	    		  sample.x = 1.0;
+    	    		  sample.value = new double[] {1.0};
+    	    		  sample.value_is_valid = true;
+    	    		  samples.add(sample);
+
+    	    		  final Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  if (Math.abs(true_polynomial.get(0) - polynomial.get(0)) > 1.0E-15) {
+    	    			  System.err.println("In PolymomialConstantInterpolatingPolynomial() Math.abs(true_polynomial.get(0) - polynomial.get(0)) > 1.0E-15");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolymomialConstantInterpolatingPolynomial() passed all tests");
+    	    		  }
+    	    	}
+    	    	
+    	    	public void PolynomialLinearInterpolatingPolynomial() {
+    	    		  // PolynomialLinearInterpolatingPolynomial() passed all tests
+    	    		  // p(x) = 2x - 1
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(2);
+    	    		  true_polynomial.add(2.0);
+    	    		  true_polynomial.add(-1.0);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  FunctionSample sample = new FunctionSample();
+    	    		  sample.x = 1.0;
+    	    		  sample.value = new double[] {1.0};
+    	    		  sample.value_is_valid = true;
+    	    		  sample.gradient = 2.0;
+    	    		  sample.gradient_is_valid = true;
+    	    		  samples.add(sample);
+
+    	    		  final Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  double squaredNorm = 0.0;
+    	    		  int i;
+    	    		  double diff;
+    	    		  for (i = 0; i < 2; i++) {
+    	    			  diff = true_polynomial.get(i) - polynomial.get(i);
+    	    			  squaredNorm += diff * diff;
+    	    		  }
+    	    		  double norm = Math.sqrt(squaredNorm);
+    	    		  if (norm > 1.0E-15) {
+    	    			  System.err.println("In PolynomialLinearInterpolatingPolynomial() true_polynomial - polynomial).norm() > 1e-15");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialLinearInterpolatingPolynomial() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialQuadraticInterpolatingPolynomial() {
+    	    		  // PolynomialQuadraticInterpolatingPolynomial() passed all tests
+    	    		  // p(x) = 2x^2 + 3x + 2
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(3);
+    	    		  true_polynomial.add(2.0);
+    	    		  true_polynomial.add(3.0);
+    	    		  true_polynomial.add(2.0);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 1.0;
+    	    		    sample.value = new double[] {7.0};
+    	    		    sample.value_is_valid = true;
+    	    		    sample.gradient = 7.0;
+    	    		    sample.gradient_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = -3.0;
+    	    		    sample.value = new double[] {11.0};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  double squaredNorm = 0.0;
+    	    		  int i;
+    	    		  double diff;
+    	    		  for (i = 0; i < 3; i++) {
+    	    			  diff = true_polynomial.get(i) - polynomial.get(i);
+    	    			  squaredNorm += diff * diff;
+    	    		  }
+    	    		  double norm = Math.sqrt(squaredNorm);
+    	    		  if (norm > 1.0E-15) {
+    	    			  System.err.println("In PolynomialQuadraticInterpolatingPolynomial() true_polynomial - polynomial).norm() > 1e-15");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialQuadraticInterpolatingPolynomial() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialDeficientCubicInterpolatingPolynomial() {
+    	    		  // PolynomialDeficientCubicInterpolatingPolynomial() passed all tests
+    	    		  // p(x) = 2x^2 + 3x + 2
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(4);
+    	    		  true_polynomial.add(0.0);
+    	    		  true_polynomial.add(2.0);
+    	    		  true_polynomial.add(3.0);
+    	    		  true_polynomial.add(2.0);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 1.0;
+    	    		    sample.value = new double[] {7.0};
+    	    		    sample.value_is_valid = true;
+    	    		    sample.gradient = 7.0;
+    	    		    sample.gradient_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = -3.0;
+    	    		    sample.value = new double[] {11.0};
+    	    		    sample.value_is_valid = true;
+    	    		    sample.gradient = -9;
+    	    		    sample.gradient_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  final Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  double squaredNorm = 0.0;
+    	    		  int i;
+    	    		  double diff;
+    	    		  for (i = 0; i < 4; i++) {
+    	    			  diff = true_polynomial.get(i) - polynomial.get(i);
+    	    			  squaredNorm += diff * diff;
+    	    		  }
+    	    		  double norm = Math.sqrt(squaredNorm);
+    	    		  if (norm > 1.0E-14) {
+    	    			  System.err.println("In PolynomialDeficientCubicInterpolatingPolynomial() true_polynomial - polynomial).norm() > 1e-14");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialDeficientCubicInterpolatingPolynomial() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialCubicInterpolatingPolynomialFromValues() {
+    	    		  // PolynomialCubicInterpolatingPolynomialFromValues() passed all tests
+    	    		  // p(x) = x^3 + 2x^2 + 3x + 2
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(4);
+    	    		  true_polynomial.add(1.0);
+    	    		  true_polynomial.add(2.0);
+    	    		  true_polynomial.add(3.0);
+    	    		  true_polynomial.add(2.0);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 1.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = -3.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 2.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 0.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  final Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  double squaredNorm = 0.0;
+    	    		  int i;
+    	    		  double diff;
+    	    		  for (i = 0; i < 4; i++) {
+    	    			  diff = true_polynomial.get(i) - polynomial.get(i);
+    	    			  squaredNorm += diff * diff;
+    	    		  }
+    	    		  double norm = Math.sqrt(squaredNorm);
+    	    		  if (norm > 1.0E-14) {
+    	    			  System.err.println("In PolynomialCubicInterpolatingPolynomialFromValues() true_polynomial - polynomial).norm() > 1e-14");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialCubicInterpolatingPolynomialFromValues() passed all tests");
+    	    		  }
+    	    	}
+    	    	
+    	    	public void PolynomialCubicInterpolatingPolynomialFromValuesAndOneGradient() {
+    	    		  // PolynomialCubicInterpolatingPolynomialFromValuesAndOneGradient() passed all tests
+    	    		  // p(x) = x^3 + 2x^2 + 3x + 2
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(4);
+  	    		      true_polynomial.add(1.0);
+  	    		      true_polynomial.add(2.0);
+  	    		      true_polynomial.add(3.0);
+  	    		      true_polynomial.add(2.0);
+    	    		  Vector<Double> true_gradient_polynomial = DifferentiatePolynomial(true_polynomial);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 1.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = -3.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 2.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    sample.gradient = EvaluatePolynomial(true_gradient_polynomial, sample.x);
+    	    		    sample.gradient_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  final Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  double squaredNorm = 0.0;
+    	    		  int i;
+    	    		  double diff;
+    	    		  for (i = 0; i < 4; i++) {
+    	    			  diff = true_polynomial.get(i) - polynomial.get(i);
+    	    			  squaredNorm += diff * diff;
+    	    		  }
+    	    		  double norm = Math.sqrt(squaredNorm);
+    	    		  if (norm > 1.0E-14) {
+    	    			  System.err.println("In PolynomialCubicInterpolatingPolynomialFromValuesAndOneGradient() true_polynomial - polynomial).norm() > 1e-14");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialCubicInterpolatingPolynomialFromValuesAndOneGradient() passed all tests");
+    	    		  }
+    	    	}
+
+    	    	public void PolynomialCubicInterpolatingPolynomialFromValuesAndGradients() {
+    	    		  // PolynomialCubicInterpolatingPolynomialFromValuesAndGradients() passed all tests
+    	    		  // p(x) = x^3 + 2x^2 + 3x + 2
+    	    		  Vector<Double> true_polynomial = new Vector<Double>(4);
+ 	    		      true_polynomial.add(1.0);
+ 	    		      true_polynomial.add(2.0);
+ 	    		      true_polynomial.add(3.0);
+ 	    		      true_polynomial.add(2.0);
+    	    		  Vector<Double> true_gradient_polynomial = DifferentiatePolynomial(true_polynomial);
+
+    	    		  Vector<FunctionSample> samples = new Vector<FunctionSample>();
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = -3.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    sample.gradient = EvaluatePolynomial(true_gradient_polynomial, sample.x);
+    	    		    sample.gradient_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  {
+    	    		    FunctionSample sample = new FunctionSample();
+    	    		    sample.x = 2.0;
+    	    		    sample.value = new double[] {EvaluatePolynomial(true_polynomial, sample.x)};
+    	    		    sample.value_is_valid = true;
+    	    		    sample.gradient = EvaluatePolynomial(true_gradient_polynomial, sample.x);
+    	    		    sample.gradient_is_valid = true;
+    	    		    samples.add(sample);
+    	    		  }
+
+    	    		  final Vector<Double> polynomial = FindInterpolatingPolynomial(samples);
+    	    		  double squaredNorm = 0.0;
+    	    		  int i;
+    	    		  double diff;
+    	    		  for (i = 0; i < 4; i++) {
+    	    			  diff = true_polynomial.get(i) - polynomial.get(i);
+    	    			  squaredNorm += diff * diff;
+    	    		  }
+    	    		  double norm = Math.sqrt(squaredNorm);
+    	    		  if (norm > 1.0E-14) {
+    	    			  System.err.println("In PolynomialCubicInterpolatingPolynomialFromValuesAndGradients() true_polynomial - polynomial).norm() > 1e-14");
+    	    		  }
+    	    		  else {
+    	    			  System.out.println("PolynomialCubicInterpolatingPolynomialFromValuesAndGradients() passed all tests");
+    	    		  }
+    	    	}
+	    	
 }
