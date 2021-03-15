@@ -742,6 +742,9 @@ public class LatticeModel {
 	// up vector per voxel step
 	protected Vector<Vector3f> upVectors;
 
+	Vector<Vector3f> curvatureNormals;
+	Vector<Float> curvature;
+
 	// old / used for testing:
 	// bounding box containing the ellipses:
 	protected Vector<Box3f> boxBounds;
@@ -1483,34 +1486,37 @@ public class LatticeModel {
 	private int numSurfaceSegments = -1;
 	private TriMesh currentMesh = null;
 	public TriMesh generateTriMesh( boolean returnMesh, boolean saveMesh ) {
+		maxSplineLength = displayContours2.getCurves().size();
 		
 		TriMesh mesh = null;
-		if ( (numSurfaceSegments == left.getCurves().size()) && (currentMesh != null) && (currentMesh.VBuffer != null) ) {
+		if ( (numSurfaceSegments == maxSplineLength) && (currentMesh != null) && (currentMesh.VBuffer != null) ) {
 			// modify existing mesh:
 			mesh = currentMesh;
 			VertexBuffer vBuf = mesh.VBuffer;
 			int positionCount = 1;
 			System.err.println("Modify mesh " + maxSplineLength );
-			for ( int i = 0; i < maxSplineLength; i++ ) {
 
+			for ( int i = 0; i < maxSplineLength; i++ ) {
+				VOIContour contour = (VOIContour) displayContours2.getCurves().elementAt(i);
 				Vector3f center = new Vector3f();
-				for ( int j = 0; j < numEllipsePts; j++ ) {
-                    Vector3f pos = displayContours[ latticeSlices.length + j].getCurves().elementAt(0).elementAt(i);
+				int contourSize = contour.size();
+				for ( int j = 0; j < contourSize; j++ )
+				{
 					if ( (i == 0) || (i == (maxSplineLength-1) ) ) {
-						center.add(pos);
+						center.add(contour.elementAt(j));
 					}
-					vBuf.SetPosition3( positionCount, pos );
-					vBuf.SetTCoord3(0, positionCount, pos );
+					vBuf.SetPosition3( positionCount, contour.elementAt(j) );
+					vBuf.SetTCoord3(0, positionCount, contour.elementAt(j) );
 					positionCount++;
 				}
 				if ( i == 0 ) {
-					center.scale(1.0f/numEllipsePts);
+					center.scale(1.0f/contourSize);
 					// first positions is center of 'head'
 					vBuf.SetPosition3( 0, center );
 					vBuf.SetTCoord3(0, 0, center );
 				}
 				if ( i == (maxSplineLength-1) ) {
-					center.scale(1.0f/numEllipsePts);
+					center.scale(1.0f/contourSize);
 					// last position is center of 'tail'
 					vBuf.SetPosition3( positionCount, center );
 					vBuf.SetTCoord3(0, positionCount, center );
@@ -1522,26 +1528,27 @@ public class LatticeModel {
 		}
 		else {
 			// rebuild mesh:
-			numSurfaceSegments = left.getCurves().size();
+			numSurfaceSegments = maxSplineLength;
 
 			Vector<Vector3f> positions = new Vector<Vector3f>();
 			for ( int i = 0; i < maxSplineLength; i++ ) {
-
+				VOIContour contour = (VOIContour) displayContours2.getCurves().elementAt(i);
 				Vector3f center = new Vector3f();
-				for ( int j = 0; j < numEllipsePts; j++ ) {
-                    Vector3f pos = displayContours[ latticeSlices.length + j].getCurves().elementAt(0).elementAt(i);
+				int contourSize = contour.size();
+				for ( int j = 0; j < contourSize; j++ )
+				{
 					if ( (i == 0) || (i == (maxSplineLength-1) ) ) {
-						center.add(pos);
+						center.add(contour.elementAt(j));
 					}
-					positions.add(pos);
+					positions.add(contour.elementAt(j));
 				}
 				if ( i == 0 ) {
-					center.scale(1.0f/numEllipsePts);
+					center.scale(1.0f/contourSize);
 					// first positions is center of 'head'
 					positions.add(0, center);
 				}
 				if ( i == (maxSplineLength-1) ) {
-					center.scale(1.0f/numEllipsePts);
+					center.scale(1.0f/contourSize);
 					// last position is center of 'tail'
 					positions.add(center);
 				}
@@ -1601,63 +1608,10 @@ public class LatticeModel {
 	}
 	
 	public TriMesh generateTriMesh2( boolean returnMesh, boolean saveMesh, int stepSize ) {
-
-        if ( !latticeChanged() ) {
-        	// check if the lattice file is newer than the triangle mesh file
-        	// if it is recreate the mesh and save it, otherwise, load the stored mesh:
-    		File file = new File(outputDirectory + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
-			long latticeChanged = file.lastModified();
-
-			String imageName = JDialogBase.makeImageName(imageA.getImageFileName(), "");
-			file = new File(outputDirectory + File.separator + "model" + File.separator + imageName + "_mesh_" + stepSize + ".xml");	
-			long meshChanged = file.lastModified();
-			
-			if ( meshChanged > latticeChanged ) {
-				System.err.println("reading trimesh from file");
-				MaterialState material = new MaterialState();
-				material.Emissive = new ColorRGB(ColorRGB.BLACK);
-				material.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
-				material.Diffuse = new ColorRGB(ColorRGB.WHITE);
-				material.Specular = new ColorRGB(ColorRGB.WHITE);
-				material.Shininess = 32f;
-				if ( saveMesh ) {
-					generateCurves(1, stepSize);
-				}
-				return FileSurface_WM.readSurface(imageA, file, material, true);
-			}
-        }
-
-		generateCurves(1, stepSize);
 		
-
-		displayContours2 = new VOI((short)0, "wormContours2");
-//		System.err.println("generateCurves " + paddingFactor );
-		for (int i = 0; i < centerPositions.size(); i++ ) {
-
-			Vector3f rkEye = centerPositions.elementAt(i);
-			Vector3f rkRVector = rightVectors.elementAt(i);
-			Vector3f rkUVector = upVectors.elementAt(i);
-
-			VOIContour ellipse = new VOIContour(true);
-			ellipse.setVolumeDisplayRange(minRange);
-
-			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
-			radius += paddingFactor;
-
-			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
-			displayContours2.getCurves().add(ellipse);
-		}
-
+		saveLattice( outputDirectory + File.separator + WormData.editLatticeOutput + File.separator, "lattice.csv" );
+		readMeshContoursCSV();
 		
-		ModelImage overlapImage = null;
-		//		if ( !returnMesh ) {
-		//			FileIO fileIO = new FileIO();
-		//			overlapImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_overlap.xml" );
-		//			dimX = overlapImage.getExtents().length > 0 ? overlapImage.getExtents()[0] : 1;
-		//			dimY = overlapImage.getExtents().length > 1 ? overlapImage.getExtents()[1] : 1;
-		//			dimZ = overlapImage.getExtents().length > 2 ? overlapImage.getExtents()[2] : 1;
-		//		}
-
 		Vector<Vector3f> positions = new Vector<Vector3f>();
 		int numContours = displayContours2.getCurves().size();
 		for ( int i = 0; i < numContours; i++ ) {
@@ -1805,23 +1759,6 @@ public class LatticeModel {
 					int nextSliceIndexJP1 = positions.indexOf( posJP1Next );
 
 					boolean test = false;
-					//					if ( overlapImage != null ) {
-					//						if (    (overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJ.X)),       Math.min( dimY-1, Math.max(0, (int)posJ.Y)),        Math.min( dimZ-1, Math.max(0, (int)posJ.Z)) ) != 0 ) || 
-					//								(overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJNext.X)),   Math.min( dimY-1, Math.max(0, (int)posJNext.Y)),    Math.min( dimZ-1, Math.max(0, (int)posJNext.Z)) ) != 0 ) || 
-					//								(overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJP1.X)),     Math.min( dimY-1, Math.max(0, (int)posJP1.Y)),      Math.min( dimZ-1, Math.max(0, (int)posJP1.Z)) ) != 0 ) || 
-					//								(overlapImage.getFloat( Math.min( dimX-1, Math.max(0, (int)posJP1Next.X)), Math.min( dimY-1, Math.max(0, (int)posJP1Next.Y)),  Math.min( dimZ-1, Math.max(0, (int)posJP1Next.Z)) ) != 0 ) ) {
-					//
-					//							vBuf.SetColor3(0, sliceIndexJ, 1, 0, 0);
-					//							vBuf.SetColor3(0, nextSliceIndexJ, 1, 0, 0);
-					//							vBuf.SetColor3(0, sliceIndexJP1, 1, 0, 0);
-					//							vBuf.SetColor3(0, nextSliceIndexJP1, 1, 0, 0);
-					//							currentMask[j] = true;
-					//							currentMask[(j+1)%contourSize1] = true;
-					//							nextMask[j] = true;
-					//							nextMask[(j+1)%contourSize1] = true;
-					//							test = true;
-					//						}
-					//					}
 					if ( !test ) {
 						Vector3f center = new Vector3f();
 						center.add(contour1.elementAt(j));
@@ -1886,11 +1823,6 @@ public class LatticeModel {
 				}
 			}
 			clipMask.add(currentMask);
-		}
-
-		if ( overlapImage != null ) {
-			overlapImage.disposeLocal(false);
-			overlapImage = null;
 		}
 
 		if ( saveMesh || returnMesh ) {
@@ -2392,7 +2324,7 @@ public class LatticeModel {
 		// the left and right-hand sides of the worm body. A third curve down the center-line of the worm body is
 		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
 		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
-		generateCurves(1, 1);
+		generateCurves(1);
 		generateEllipses();
 		if ( saveStats ) {
 			saveLatticeStatistics();
@@ -2785,11 +2717,107 @@ public class LatticeModel {
 	 */
 	public void saveLattice(final String directory, final String fileName)
 	{
-		if ( latticeChanged() ) {
+		boolean contourFile = getContourFile();
+		boolean changed = latticeChanged();
+		if ( changed  ) {
 			saveLattice(directory, fileName, lattice );
+		}
+
+		if ( (displayContours2 != null) || !contourFile) {
+			generateCurves(1);
+			saveMeshContoursCSV();
 		}
 	}
 	
+	private boolean getContourFile() {
+		String dir = outputDirectory + File.separator + "model_contours" + File.separator;
+		File fileDir = new File(dir);
+		if ( !fileDir.exists() ) return false;
+		if ( !fileDir.isDirectory() ) return false;
+		dir = outputDirectory + File.separator + "model_contours" + File.separator + "wormContours.csv";
+		File file = new File(dir);
+		return file.exists();
+	}
+	
+	private void saveMeshContoursCSV() {
+		String dir = outputDirectory + File.separator + "model_contours" + File.separator;
+		File fileDir = new File(dir);
+
+		if ( !fileDir.exists() ) { // voiFileDir does not exist
+			fileDir.mkdir();
+		}
+		
+		File file = new File(dir + File.separator +  "wormContours.csv");
+		if (file.exists()) {
+			file.delete();
+			file = new File(dir + File.separator +  "wormContours.csv");
+		}
+		
+		try {			
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write( displayContours2.getCurves().size() + "\n" );
+			for ( int i = 0; i < displayContours2.getCurves().size(); i++ ) {
+				VOIContour contour = (VOIContour) displayContours2.getCurves().elementAt(i);
+				bw.write( contour.size() + "\n" );
+				for ( int j = 0; j < contour.size(); j++ ) {
+					Vector3f position = contour.elementAt(j);
+					bw.write(position.X + "," + position.Y + ","	+ position.Z + "\n");
+				}
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			e.printStackTrace();
+		}
+
+	}
+	
+	private void readMeshContoursCSV() {
+		String dir = outputDirectory + File.separator + "model_contours" + File.separator;
+		File file = new File(dir + File.separator +  "wormContours.csv");
+		if ( file.exists() )
+		{		
+			
+			displayContours2 = new VOI((short)0, "wormContours2");
+
+			FileReader fr;
+			try {
+				fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String line = br.readLine();
+				String[] parsed = line.split( "," );
+
+                int numContours = Integer.valueOf( parsed[0] );
+                for ( int i = 0; i < numContours; i++ ) {		
+        			VOIContour ellipse = new VOIContour(true);
+
+                	line = br.readLine();
+    				parsed = line.split( "," );
+                    int numPts = Integer.valueOf( parsed[0] );
+                    for ( int j = 0; j < numPts; j++ ) {
+
+                    	line = br.readLine();
+                    	parsed = line.split( "," );
+                    	int parsedIndex = 0;
+						float x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+						float y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+						float z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+						
+                    	ellipse.add(new Vector3f(x,y,z));
+                    }
+                    displayContours2.getCurves().add(ellipse);
+                }
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	public void openNeuriteCurves()
 	{
@@ -3028,17 +3056,17 @@ public class LatticeModel {
 
 			if ( !segmentLattice && (clipMask != null) && (clipMask.size() == dimZ) ) {
 				//				System.err.println( "use clip mask " + (i/10) + "  " + clipMask.size() );
-				boolean[] mask = clipMask.elementAt(i);
-				for ( int j = 0; j < mask.length; j++ ) {
-					if ( !mask[j] ) {
-						// extend contour out to edge:
-						Vector3f dir = Vector3f.sub( contour.elementAt(j), center );
-						dir.normalize();
-						dir.scale(maxDist);
-						dir.add(center);
-						contour.elementAt(j).copy(dir);
-					}
-				}
+//				boolean[] mask = clipMask.elementAt(i);
+//				for ( int j = 0; j < mask.length; j++ ) {
+//					if ( !mask[j] ) {
+//						// extend contour out to edge:
+//						Vector3f dir = Vector3f.sub( contour.elementAt(j), center );
+//						dir.normalize();
+//						dir.scale(maxDist);
+//						dir.add(center);
+//						contour.elementAt(j).copy(dir);
+//					}
+//				}
 				for ( int y = 0; y < dimY; y++ ) {
 					for ( int x = 0; x < dimX; x++ ) {
 						if ( contour.contains(x,y) ) {
@@ -4416,7 +4444,7 @@ public class LatticeModel {
 
 		if ( display )
 		{
-			generateCurves(5, 10);
+			generateCurves(5);
 			for ( int i = 0; i < displayContours.length; i++ ) {
 				imageA.registerVOI(displayContours[i]);
 			}
@@ -4478,9 +4506,11 @@ public class LatticeModel {
 	/**
 	 * Enables the user to visualize the simple ellipse-based model of the worm during lattice construction.
 	 */
+	private boolean modelDisplayed = false;
 	public void showModel(boolean display) {
-
+		modelDisplayed = display;
 		for ( int i = 0; i < displayContours.length; i++ ) {
+			if ( displayContours[i] == null ) continue;
 			if ( display && (imageA.isRegistered(displayContours[i]) == -1) ) {
 				imageA.registerVOI(displayContours[i]);
 			}
@@ -4502,7 +4532,17 @@ public class LatticeModel {
 	
 	public boolean isModelDisplayed()
 	{
-		return (imageA.isRegistered(samplingPlanes) != -1);
+		return modelDisplayed;
+	}
+	
+	private boolean splineModel = true;
+	private boolean ellipseCross = false; 
+	private float ellipseScale = 1;
+	public void updateCrossSection( boolean useSpline, boolean ellipse, float percent ) {
+		splineModel = useSpline;
+		ellipseCross = ellipse;
+		ellipseScale = percent;
+		updateLattice(false);
 	}
 
 	private boolean displayLatticeLabels = false;
@@ -4562,7 +4602,7 @@ public class LatticeModel {
 	{		
 		left = leftIn;
 		right = rightIn;
-		generateCurves(1, 1);
+		generateCurves(1);
 		generateEllipses();
 
 		//		lengthResult[0] = length;
@@ -4659,7 +4699,7 @@ public class LatticeModel {
 
 
 
-		if ( !generateCurves(5, 10) )
+		if ( !generateCurves(5) )
 		{
 			return new float[]{-1,1};
 		}
@@ -5381,7 +5421,7 @@ public class LatticeModel {
 	/**
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
-	protected boolean generateCurves( float stepSize, float contourStepSize ) {
+	protected boolean generateCurves( float stepSize ) {
 		clearCurves(false);
 
 		if ( seamCellImage != null )
@@ -5408,11 +5448,30 @@ public class LatticeModel {
 		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
 		// lattice.
 		center = new VOIContour(false);
+		float headWidth = -1;
+		float tailWidth = -1;
+		float maxWormWidth = -1;
+		int maxWidthIndex = -1;
 		for (int i = 0; i < left.getCurves().size(); i++)
 		{
 			final Vector3f centerPt = Vector3f.add(left.getCurves().elementAt(i).elementAt(0), right.getCurves().elementAt(i).elementAt(0));
 			centerPt.scale(0.5f);
 			center.add(centerPt);
+			
+			float width = left.getCurves().elementAt(i).elementAt(0).distance(right.getCurves().elementAt(i).elementAt(0));
+			
+			System.err.println(i + "   " + width );
+			
+			if ( width > maxWormWidth ) {
+				maxWormWidth = width;
+				maxWidthIndex = i;
+			}
+			if ( i == 0 ) {
+				headWidth = width;
+			}
+			if ( i == left.getCurves().size() -1 ) {
+				tailWidth = width;
+			}
 
 			if ( seamCellImage != null )
 			{
@@ -5441,6 +5500,9 @@ public class LatticeModel {
 		rightVectors = new Vector<Vector3f>();
 		upVectors = new Vector<Vector3f>();
 		normalVectors = new Vector<Vector3f>();
+		
+		curvatureNormals = new Vector<Vector3f>();
+		curvature = new Vector<Float>();
 
 		// 3. The center curve is uniformly sampled along the length of the curve.
 		// The step size is set to be one voxel. This determines the length of the final straightened
@@ -5482,8 +5544,9 @@ public class LatticeModel {
 		float minDiameter = Float.MAX_VALUE;
 
 
-		splineRangeIndex = new int[center.size()];
+		int splineMaxWidthIndex = -1;
 		int maxIndex = -1;
+		splineRangeIndex = new int[center.size()];
 		for ( int i = 0; i < center.size(); i++ )
 		{
 			splineRangeIndex[i] = -1;
@@ -5525,6 +5588,9 @@ public class LatticeModel {
 			if ( splineRangeIndex[i] > maxIndex )
 			{
 				maxIndex = splineRangeIndex[i];
+			}
+			if ( maxWidthIndex == i ) {
+				splineMaxWidthIndex = splineRangeIndex[i];
 			}
 		}
 
@@ -5627,9 +5693,29 @@ public class LatticeModel {
 		//		totalCurvature = 0;
 		for (int i = 0; i <= maxLength; i++) {
 			final float t = allTimes[i];
+			curvature.add(centerSpline.GetCurvature(t));
+			curvatureNormals.add(centerSpline.GetNormal(t));
+			
 			Vector3f normal = centerSpline.GetTangent(t);
 			final Vector3f rightDir = rightVectorsInterp[i];
+			
 			float diameter = diameters[i];
+			// interpolate diameter from head->max->tail
+//			if ( i < splineMaxWidthIndex ) 
+//			{
+//				float interp = (i) / (float)(splineMaxWidthIndex);
+//				diameter = (1 - interp) * headWidth + interp * maxWormWidth;
+//			}
+//			if ( i == splineMaxWidthIndex ) 
+//			{
+//				diameter = maxWormWidth;
+//			}
+//			if ( i > splineMaxWidthIndex ) 
+//			{
+//				float interp = (i - splineMaxWidthIndex) / (float)(maxLength - splineMaxWidthIndex);
+//				diameter = (1 - interp) * maxWormWidth + interp * tailWidth;
+//			}
+//			diameter /= 2.0f;
 			if (diameter > extent) {
 				extent = (int) Math.ceil(diameter);
 			}
@@ -5653,12 +5739,12 @@ public class LatticeModel {
 			normalVectors.add(normalTest);
 
 			Vector3f rightPt = new Vector3f(rightDir);
-			rightPt.scale(diameters[i]);
+			rightPt.scale(diameter);
 			rightPt.add(centerPositions.elementAt(i));
 			rightPositions.add(rightPt);
 			//			
 			Vector3f leftPt = new Vector3f(rightDir);
-			leftPt.scale(-diameters[i]);
+			leftPt.scale(-diameter);
 			leftPt.add(centerPositions.elementAt(i));
 			leftPositions.add(leftPt);
 
@@ -5702,95 +5788,11 @@ public class LatticeModel {
 		// of the ellipse long axis. This ellipse-based model approximates the overall shape of the worm, however
 		// it cannot model how the worm shape changes where sections of the worm press against each other.
 		// The next step of the algorithm attempts to solve this problem.
-		short sID = (short) 1;
 
-		numEllipsePts = 16;
-		displayContours = new VOI[latticeSlices.length + numEllipsePts];
-		int contourCount = 0;
-//		System.err.println("generateCurves " + paddingFactor );
-		contourStepSize = 1;
-		for (int i = 0; i < centerPositions.size(); i++ ) {
+		updateEllipseModel(stepSize);
 
-			for ( int j = 0; j < latticeSlices.length; j++ ) {
-				if ( i == latticeSlices[j]) {
-
-					Vector3f rkEye = centerPositions.elementAt(i);
-					Vector3f rkRVector = rightVectors.elementAt(i);
-					Vector3f rkUVector = upVectors.elementAt(i);
-
-					VOIContour ellipse = new VOIContour(true);
-					ellipse.setVolumeDisplayRange(minRange);
-
-					float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
-					radius += paddingFactor;
-
-					makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, ellipse);	
-
-					String name = "wormContours_" + contourCount;
-					displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
-					displayContours[contourCount].getCurves().add(ellipse);
-//
-//					String name = "wormContours_" + contourCount;
-//					displayContours[contourCount] = new VOI(sID, name, VOI.ANNOTATION, (float) Math.random());
-//					int index = Integer.valueOf(name.substring(name.indexOf("wormContours") + 13));
-////					System.err.println( name + "   " + index );
-//
-//					for ( int k = 0; k < ellipse.size(); k++ ) {
-//						VOIText text = new VOIText(ellipse.elementAt(k));
-////						text.setText(""+i);
-////						int mod = k%(ellipse.size()/2);
-////						if ( mod < 3 || mod > 12 ) {
-////							text.setFixed(true);
-//////							text.update(new ColorRGBA(1,0,0,1));
-////						}
-//						displayContours[contourCount].getCurves().add( text );
-//					}
-					contourCount++;
-					break;
-				}
-			}
-		}
 		
-		int numContours = contourCount;
-		NaturalSpline3[] edgeSplines = new NaturalSpline3[numEllipsePts];
-		for ( int i = 0; i < numEllipsePts; i++ ) {
-			float[] tempTime = new float[numContours];
-			VOIContour temp = new VOIContour(false);
-			for ( int j = 0; j < numContours; j++ ) {
-				
-				temp.add( new Vector3f(displayContours[j].getCurves().elementAt(0).elementAt(i)) );
-				
-			}
-			edgeSplines[i] = smoothCurve(temp, tempTime);
-			
-
-			float tempLength = edgeSplines[i].GetLength(0, 1) / stepSize;
-			maxLength = (int)Math.ceil(tempLength);
-			if ( maxLength > maxSplineLength ) {
-				maxSplineLength = maxLength;
-			}
-		}
-		maxSplineLength = 15 * left.getCurves().size();
-		for ( int i = 0; i < numEllipsePts; i++ ) {
-			float tempLength = edgeSplines[i].GetLength(0, 1) / stepSize;
-			step = stepSize * (tempLength / maxSplineLength);
-			
-			VOIContour tempContour = new VOIContour(false);
-			float lastTime = 0;
-			for (int j = 0; j <= maxSplineLength; j++) {
-				final float t = edgeSplines[i].GetTime(j*step);
-				tempContour.add(edgeSplines[i].GetPosition(t));
-				lastTime = t;
-			}					
-			String name = "wormContours_" + contourCount;
-//			System.err.println( name + "  " + maxLength + "  " + lastTime );
-			displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
-			displayContours[contourCount].getCurves().add(tempContour);
-//			System.err.println( "generateCurves " + name + "  " + tempContour.size() );
-			contourCount++;
-		}
-		System.err.println( "generateCurves " + maxSplineLength + "  " + left.getCurves().size() );
-		
+		short sID = (short) 1;		
 		sID++;
 		centerLine = new VOI(sID, "center line");
 		centerLine.getCurves().add(centerPositions);
@@ -5818,206 +5820,130 @@ public class LatticeModel {
 		
 		return true;
 	}
+	
+	private void updateEllipseModel(float stepSize) {
 
-	private void checkModel(float stepsize) {
+        short sID = 1;
+        
+		numEllipsePts = 16;
+		displayContours = new VOI[latticeSlices.length + numEllipsePts];
+		displayContours2 = new VOI((short)0, "wormContours2");
 
-		System.err.println( "checkModel " + centerPositions.size() + "  " + displayContours.length );
-//		int size = centerPositions.size();
-//		Ellipsoid3f[] ellipses = new Ellipsoid3f[size];		
-//		for ( int i = 0; i < size; i++ ) {
-//
-//			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
-//			radius += paddingFactor;
-//			final float[] extents = new float[] {radius, radius, .6f * stepsize};
-//			final Vector3f[] axes = new Vector3f[] {rightVectors.elementAt(i), upVectors.elementAt(i), normalVectors.elementAt(i)};
-//			ellipses[i] = new Ellipsoid3f(centerPositions.elementAt(i), axes, extents);
-//
-//		}
-//		
-//		for ( int i = 0; i < ellipses.length; i++ ) {
-//			for ( int j = 0; j < displayContours.length; j++ ) {
-//				VOI contour = displayContours[j];
-//				VOIText text = (VOIText) contour.getCurves().elementAt(0);
-//				if ( !text.getText().equals(""+i) ) {
-//					// make sure this contour isn't the current ellipse
-//					for ( int k = 0; k < contour.getCurves().size(); k++ ) {
-//						text = (VOIText) contour.getCurves().elementAt(k);
-//						if ( ellipses[i].Contains( text.elementAt(0) ) ) {
-//							if ( !text.isFixed() ) {
-//								text.update( new ColorRGBA(0,1,0,1) );
-//							}
-//							else {
-//								text.update( new ColorRGBA(1,0,0,1) );
-//							}
-//						}
-//					}	
-//				}
-//			}
-//		}
-//		
-//		// once all clipping is determined - go through the list of displayContours and find clip sequences:
-//
-//		for ( int j = 0; j < displayContours.length; j++ ) {
-//			VOI contour = displayContours[j];
-//			// make sure this contour isn't the current ellipse
-//			VOIText text = (VOIText) contour.getCurves().elementAt(0);
-//			System.err.print( text.getText() );
-//			int start = -1;
-//			int stop = -1;
-//			int current = -1;
-//			int previous = -1;
-//			for ( int k = 0; k < contour.getCurves().size(); k++ ) {
-//				text = (VOIText) contour.getCurves().elementAt(k);
-//				Color c = text.getColor();
-//				if ( c.getRed() == 0 && c.getGreen() == 255 && c.getBlue() == 0 ) {
-//					if ( current == -1 ) {
-//						start = k-1;
-//					}
-//					previous = current;
-//					current = k;
-//					if ( (previous != -1) && (current - previous > 1) ) {
-//						stop = previous + 1;
-//						// complete series
-//						System.err.print( " (" + start + " => " + stop + ") ");
-//						
-//						Vector3f startPt = contour.getCurves().elementAt(start).elementAt(0);
-//						Vector3f endPt = contour.getCurves().elementAt(stop).elementAt(0);
-//						int steps = stop - start;
-//						float scale = 1f / (float)steps;
-//						int count = 1;
-//						for ( int p = start+1; p < stop; p++ ) {
-//							Vector3f diff = Vector3f.sub(endPt, startPt);
-//							float length = diff.normalize();
-//							diff.scale(length * count * scale);
-//							Vector3f newPt = Vector3f.add(startPt, diff);
-//
-//							contour.getCurves().elementAt(p).firstElement().copy(newPt);
-//							contour.getCurves().elementAt(p).lastElement().copy(newPt);
-//							count++;
-//						}
-//						
-//						// update start:
-//						start = current - 1;
-//						stop = -1;
-//					}
-//					System.err.print(  "  " + k );
-//				}
-//			}
-//			if ( previous != -1 ) {
-//				stop = current + 1;
-//				System.err.print( " (" + start + " => " + stop + ") ");
-//
-//				Vector3f startPt = contour.getCurves().elementAt(start).elementAt(0);
-//				Vector3f endPt = contour.getCurves().elementAt(stop).elementAt(0);
-//				int steps = stop - start;
-//				float scale = 1f / (float)steps;
-//				int count = 1;
-//				for ( int p = start+1; p < stop; p++ ) {
-//					Vector3f diff = Vector3f.sub(endPt, startPt);
-//					float length = diff.normalize();
-//					diff.scale(length * count * scale);
-//					Vector3f newPt = Vector3f.add(startPt, diff);
-//					
-//					contour.getCurves().elementAt(p).firstElement().copy(newPt);
-//					contour.getCurves().elementAt(p).lastElement().copy(newPt);
-//					count++;
-//				}
-//				
-//			}
-//			else if ( previous == -1 && start == current - 1 ) {
-//				stop = current + 1;
-//				System.err.print( " (" + start + " => " + stop + ") ");
-//
-//				Vector3f startPt = contour.getCurves().elementAt(start).elementAt(0);
-//				Vector3f endPt = contour.getCurves().elementAt(stop).elementAt(0);
-//				int steps = stop - start;
-//				float scale = 1f / (float)steps;
-//				int count = 1;
-//				for ( int p = start+1; p < stop; p++ ) {
-//					Vector3f diff = Vector3f.sub(endPt, startPt);
-//					float length = diff.normalize();
-//					diff.scale(length * count * scale);
-//					Vector3f newPt = Vector3f.add(startPt, diff);
-//					
-//					contour.getCurves().elementAt(p).firstElement().copy(newPt);
-//					contour.getCurves().elementAt(p).lastElement().copy(newPt);
-//					count++;
-//				}
-//				
-//			}
-//			System.err.println("");
-//		}
-		
-        boolean gotLast = false;
-		for ( int j = 0; j < displayContours.length; j += 10 ) {
-			VOI contour = displayContours[j];
+		int contourCount = 0;
+		for (int i = 0; i < centerPositions.size(); i++ ) {
+			System.err.print( i + "," + curvature.elementAt(i) );
+			
+			Vector3f rkEye = centerPositions.elementAt(i);
+			Vector3f rkRVector = rightVectors.elementAt(i);
+			Vector3f rkUVector = upVectors.elementAt(i);
+
 			VOIContour ellipse = new VOIContour(true);
 			ellipse.setVolumeDisplayRange(minRange);
-			for ( int k = 0; k < contour.getCurves().size(); k++ ) {
-				VOIText text = (VOIText) contour.getCurves().elementAt(k);
-				ellipse.add(text.elementAt(0));
-			}
-			displayContours2.getCurves().add(ellipse);
-			if ( j == displayContours.length -1 ) {
-				gotLast = true;
-			}
-		}
-		if ( !gotLast ) {
-			VOI contour = displayContours[displayContours.length -1];
-			VOIContour ellipse = new VOIContour(true);
-			ellipse.setVolumeDisplayRange(minRange);
-			for ( int k = 0; k < contour.getCurves().size(); k++ ) {
-				VOIText text = (VOIText) contour.getCurves().elementAt(k);
-				ellipse.add(text.elementAt(0));
-			}
-			displayContours2.getCurves().add(ellipse);
-		}
-		System.err.println( "checkModel " + displayContours2.getCurves().size() );
+			
+			float radius = wormDiameters.elementAt(i);
+			radius += paddingFactor;
 
+			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, curvatureNormals.elementAt(i), curvature.elementAt(i), ellipse, ellipseCross, ellipseScale );	
+			
+			if ( !splineModel) {
+				displayContours2.getCurves().add(ellipse);
+			}
+
+
+//			boolean contourAdded = false;
+			for ( int j = 0; j < latticeSlices.length; j++ ) {
+				if ( i == latticeSlices[j]) {
+					String name = "wormContours_" + contourCount;
+					displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+					displayContours[contourCount].getCurves().add(ellipse);
+					contourCount++;					
+//					displayContours2.getCurves().add(ellipse);
+//					contourAdded = true;
+					break;
+				}
+			}
+//			if ( !contourAdded && (i%contourSteps == 0) ) {
+//				displayContours2.getCurves().add(ellipse);
+//			}
+		}
+
+//		System.err.println("");
+//		System.err.println("");
+//		for ( int j = 0; j < latticeSlices.length; j++ ) {
+//			System.err.println( latticeSlices[j] );
+//		}
+//		System.err.println("");
+//		System.err.println("");
 		
-//		int test = size/4;
-//		VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(test);
-//        contour.update( new ColorRGBA(0,0,1,1));
-//		for ( int i = 0; i < ellipses.length; i++ ) {
-//			if ( i != test ) {
-//				for ( int j = 0; j < contour.size(); j++ ) {
-//					if ( ellipses[i].Contains( contour.elementAt(j) ) ) {
-//						VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(i);
-//				        contour2.update( new ColorRGBA(1,0,0,1));
-//					}
-//				}
-//			}
-//		}
+		if ( splineModel) {
+			int numContours = contourCount;
+			NaturalSpline3[] edgeSplines = new NaturalSpline3[numEllipsePts];
+			for ( int i = 0; i < numEllipsePts; i++ ) {
+				float[] tempTime = new float[numContours];
+				VOIContour temp = new VOIContour(false);
+				final Vector3f[] akPoints = new Vector3f[numContours];
+
+				for ( int j = 0; j < numContours; j++ ) {
+
+					temp.add( new Vector3f(displayContours[j].getCurves().elementAt(0).elementAt(i)) );
+					
+					akPoints[j] = new Vector3f(displayContours[j].getCurves().elementAt(0).elementAt(i));
+
+				}
+				
+				edgeSplines[i] = new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, numContours - 1, afTimeC, akPoints); // smoothCurve(temp, tempTime);
+
+//				float tp = 0;
+//				float steps = 0;
+//				for ( int j = 1; j < latticeSlices.length; j++ ) {
+//					float t = allTimes[latticeSlices[j]];
+//					steps = latticeSlices[j] - latticeSlices[j-1];
+//					System.err.println( latticeSlices[j] + "   " + edgeSplines[i].GetLength( tp, t ) + "   " + (edgeSplines[i].GetLength( tp, t )/steps) );
+//					tp = t;
+//				}		
+//				System.err.println( edgeSplines[i].GetLength(0,1) );
+
+			}
+			maxSplineLength = centerPositions.size();
+			for ( int i = 0; i < numEllipsePts; i++ ) {
+				VOIContour tempContour = new VOIContour(false);
+				for (int j = 0; j < maxSplineLength; j++) {
+					final float t = j*(1f/(float)(maxSplineLength-1));
+					tempContour.add(edgeSplines[i].GetPosition(t));
+				}					
+				String name = "wormContours_" + contourCount;
+				displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+				displayContours[contourCount].getCurves().add(tempContour);
+				contourCount++;
+			}
+			System.err.println( numContours + " " + displayContours.length );
+			for ( int i = 0; i < maxSplineLength; i++ ) {
+				VOIContour ellipse = new VOIContour(true);
+
+				for ( int j = 0; j < numEllipsePts; j++ ) {
+					ellipse.add( displayContours[numContours + j].getCurves().elementAt(0).elementAt(i) );
+				}
+				displayContours2.getCurves().add(ellipse);
+			}
+			maxSplineLength = displayContours2.getCurves().size();
+		}
+		else {		
+			maxSplineLength = displayContours2.getCurves().size();
+			for ( int i = 0; i < numEllipsePts; i++ ) {
+				VOIContour tempContour = new VOIContour(false);
+				for (int j = 0; j < maxSplineLength; j++) {
+					tempContour.add(displayContours2.getCurves().elementAt(j).elementAt(i));
+				}					
+				String name = "wormContours_" + contourCount;
+				displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+				displayContours[contourCount].getCurves().add(tempContour);
+				contourCount++;
+			}
+		}
+	
 		
-//		int[] conflictCount = new int[size];
-//		for ( int i = 0; i < size; i++ ) {
-//			conflictCount[i] = 0;
-//			VOIContour contour = (VOIContour) displayContours.getCurves().elementAt(i);
-//			boolean conflict = false;
-//			for ( int j = 0; j < size; j++ ) {
-//				if ( i != j ) {
-//					for ( int k = 0; k < contour.size(); k++ ) {
-//						if ( ellipses[j].Contains( contour.elementAt(k) ) ) {
-//							conflictCount[i]++;
-//							conflict = true;
-////					        contour.update( new ColorRGBA(0,0,1,1));
-//					        contour.update( new ColorRGBA( 10*centerSpline.GetCurvature(allTimes[i]),0,1,1));
-//
-////							VOIContour contour2 = (VOIContour) displayContours.getCurves().elementAt(j);
-////					        contour2.update( new ColorRGBA(1,0,0,1));
-//					        break;
-//						}
-//					}
-//				}
-//			}
-////			if ( conflict) break;
-//		}
-//		
-//		for ( int i = 0; i < size; i++ ) {
-//			if ( conflictCount[i] > 0 ) {
-//				System.err.println(i + "  " + conflictCount[i] + "  " + centerSpline.GetCurvature(allTimes[i]) );
-//			}
-//		}
+		
+		System.err.println( "generateCurves " + maxSplineLength + "  " + left.getCurves().size() );
 	}
 	
 	protected double GetSquared ( Vector3f point, Ellipsoid3f ellipsoid )
@@ -6981,6 +6907,112 @@ public class LatticeModel {
 			//			System.err.println(pos);
 		}
 	}
+
+
+	protected void makeEllipse2DA(final Vector3f right, final Vector3f up, final Vector3f center, final float radius, final Vector3f normal,
+			final float curvature, final VOIContour ellipse, boolean ellipseCross, float scale) {
+		
+		float area = (float) (Math.PI * radius * radius);
+		
+		int curve = (int) (100 * curvature);
+		float radiusC = curve / 100f;
+//		float max = -Float.MAX_VALUE;		
+		
+		radiusC = 1 - radiusC;
+		
+		radiusC = Math.min(1, radiusC);
+		radiusC *= radius;
+		
+		float radiusR = radius; // (float) (area / (Math.PI * radiusC));
+		
+		System.err.println( "," + radius + "," + radiusC + "," + radiusR );
+		
+		if ( !ellipseCross ) {
+			radiusC = radiusR = (radius * scale);
+		}
+		else {
+			radiusC *= scale;
+		}
+		
+		for (int i = 0; i < numEllipsePts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
+			final Vector3f pos1 = Vector3f.scale((float) (radiusR * c), right);
+			final Vector3f pos2 = Vector3f.scale((float) (radiusC * s), up);
+			final Vector3f pos = Vector3f.add(pos1, pos2);
+			
+			
+			
+			
+			
+//			final Vector3f normalNeg = new Vector3f(normal); normalNeg.neg(); normalNeg.normalize();
+//			final Vector3f posNorm = new Vector3f(pos); posNorm.normalize();
+//			float dot = posNorm.dot(normalNeg);
+//			float dotRight = Math.abs(posNorm.dot(right));
+//			System.err.println( dotRight + "   " + right );
+//			float dotRightScale = 1 - dotRight;
+//			float scale = Math.abs(10 * curvature * dot * dotRightScale);
+//            Vector3f posScale = new Vector3f(pos); posScale.scale((float) (0.5 + dotRight * 0.5));	
+////			System.err.print((10*curvature) + "      " + dot + "      " +  + scale + "      " + pos + "  =>  " );
+////            Vector3f temp = new Vector3f(pos);
+////            
+////            pos.sub(posScale);	
+//            
+//            if ( print ) System.err.println(i + "," + pos.length());
+////            System.err.println((5*curvature) + "," + 100 * (temp.distance(pos) / radius));
+////			System.err.println(pos);
+//            
+//            pos.copy(posScale);
+            
+//            float dist = 100 * (temp.distance(pos) / radius);
+//            if ( dist > max ) {
+//            	max = dist;
+//            }
+            
+			pos.add(center);
+//			posScale.add(center);
+//			pos.scale(0.5f);
+			ellipse.addElement(pos);
+			//			System.err.println(pos);
+		}
+//		if ( !print ) System.err.println("," + max);
+	}
+//	protected void makeEllipse2DA(final Vector3f right, final Vector3f up, final Vector3f center, final float radius, final Vector3f normal,
+//			final float curvature, final VOIContour ellipse, boolean print) {
+////		System.err.println(normal + "     " + curvature );
+//		
+//		float max = -Float.MAX_VALUE;
+//		for (int i = 0; i < numEllipsePts; i++) {
+//			final double c = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+//			final double s = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
+//			final Vector3f pos1 = Vector3f.scale((float) (radius * c), right);
+//			final Vector3f pos2 = Vector3f.scale((float) (radius * s), up);
+//			final Vector3f pos = Vector3f.add(pos1, pos2);
+//			final Vector3f normalNeg = new Vector3f(normal); normalNeg.neg(); normalNeg.normalize();
+//			final Vector3f posNorm = new Vector3f(pos); posNorm.normalize();
+//			float dot = posNorm.dot(normalNeg);
+//			float scale = 5 * curvature * dot;
+//            Vector3f posScale = new Vector3f(pos); posScale.scale(scale);	
+////			System.err.print((10*curvature) + "      " + dot + "      " +  + scale + "      " + pos + "  =>  " );
+//            Vector3f temp = new Vector3f(pos);
+//            pos.add(posScale);	
+//            if ( print ) System.err.println(i + "," + pos.length());
+////            System.err.println((5*curvature) + "," + 100 * (temp.distance(pos) / radius));
+////			System.err.println(pos);
+//            
+//            float dist = 100 * (temp.distance(pos) / radius);
+//            if ( dist > max ) {
+//            	max = dist;
+//            }
+//            
+//			pos.add(center);
+////			posScale.add(center);
+////			pos.scale(0.5f);
+//			ellipse.addElement(pos);
+//			//			System.err.println(pos);
+//		}
+////		if ( !print ) System.err.println("," + max);
+//	}
 
 	protected void makeEllipse2DSkin(final Vector3f right, final Vector3f up, final Vector3f center, final float horizontalRadius, final float verticalRadius,
 			final VOIContour ellipse, int numPts) {
@@ -8644,8 +8676,10 @@ public class LatticeModel {
 
 		if (displayContours != null) {
 			for ( int i = 0; i < displayContours.length; i++ ) {
-				imageA.unregisterVOI(displayContours[i]);
-				displayContours[i].dispose();
+				if ( displayContours[i] != null ) {
+					imageA.unregisterVOI(displayContours[i]);
+					displayContours[i].dispose();
+				}
 			}
 			displayContours = null;
 		}
@@ -10665,7 +10699,7 @@ public class LatticeModel {
 		}
 
 		if ( (left.getCurves().size() == right.getCurves().size()) && (left.getCurves().size() >= 2)) {
-			generateCurves(5, 10);
+			generateCurves(5);
 			if (showContours) {
 				generateTriMesh(false, false);
 				for ( int i = 0; i < displayContours.length; i++ ) {
