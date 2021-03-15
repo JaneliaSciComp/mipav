@@ -610,10 +610,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						TriMesh mesh = activeImage.voiManager.generateTriMesh(5);
 //						System.err.println( "displaySurface " + mesh );
 						SurfaceState surface = new SurfaceState( mesh, "worm" );
-						surface.Fill = WireframeState.FillMode.FM_LINE;
+//						surface.Fill = WireframeState.FillMode.FM_LINE;
 						activeRenderer.addSurface( surface, false, true );
 						activeRenderer.displaySurface(true);
-						activeRenderer.setPolygonMode( "worm", surface.Fill);
+//						activeRenderer.setPolygonMode( "worm", surface.Fill);
 						updateSurfacePanels();
 					}
 					else
