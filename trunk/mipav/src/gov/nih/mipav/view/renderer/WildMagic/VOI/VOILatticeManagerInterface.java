@@ -746,6 +746,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return false;
 	}
 	
+	public void updateCrossSection( boolean useSpline, boolean ellipse, float percent ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.updateCrossSection( useSpline, ellipse, percent );
+		}		
+	}
+	
 	public void showLattice( boolean display ) {
 		if ( latticeModel != null )
 		{

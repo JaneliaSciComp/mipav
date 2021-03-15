@@ -45,10 +45,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Vector;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JSplitPane;
@@ -92,6 +94,12 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	private JSlider latticePosition;
 	private JCheckBox clipLattice;
 	private JSlider clipDistance;
+	
+	private JRadioButton splineModel;
+	private JRadioButton ellipseModel;
+	private JCheckBox ellipseCross;
+	private JSlider ellipseDiameter;
+	
 
 
 	public JPanelLattice( VOILatticeManagerInterface voiInterface, ModelImage image ) {
@@ -124,6 +132,20 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 		else if ( command.equals("clipLattice") ) {
 			int value = clipDistance.getValue();
 			setLatticeClip( clipLattice.isSelected(), value );
+		}
+		else if ( command.equals("splineModel") ) {
+			if ( voiManager != null )
+			{
+				float percentage = ellipseDiameter.getValue() / 100.f;
+				voiManager.updateCrossSection( splineModel.isSelected(), ellipseCross.isSelected(), percentage );
+			}
+		}
+		else if ( command.equals("ellipseCross") ) {
+			if ( voiManager != null )
+			{
+				float percentage = ellipseDiameter.getValue() / 100.f;
+				voiManager.updateCrossSection( splineModel.isSelected(), ellipseCross.isSelected(), percentage );
+			}
 		}
 	}
 
@@ -384,10 +406,43 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			clipDistance.addChangeListener(this);
 			clipPanel.add( clipDistance, gbcC );
 			gbcC.gridy++;
+			
+
+			gbcC.gridx = 0;			gbcC.gridy = 0;
+			JPanel modelPanel = new JPanel(gbc);
+			modelPanel.setBorder(JDialogBase.buildTitledBorder(imageA.getImageName() + " Model"));
+
+			gbcC.gridx = 0;
+			JLabel modelLable = new JLabel("Model: ");
+			modelPanel.add( modelLable, gbcC );
+			gbcC.gridx++;
+			splineModel = new JRadioButton("spline", true);
+			splineModel.addActionListener(this);
+			splineModel.setActionCommand("splineModel");
+			modelPanel.add( splineModel, gbcC );
+			gbcC.gridx++;
+			ellipseModel = new JRadioButton("ellipse", false);
+			ellipseModel.addActionListener(this);
+			ellipseModel.setActionCommand("splineModel");
+			modelPanel.add( ellipseModel, gbcC );
+			ButtonGroup g = new ButtonGroup();
+			g.add(splineModel);
+			g.add(ellipseModel);
+
+			gbcC.gridx = 0;
+			gbcC.gridy++;
+			ellipseCross = new JCheckBox("cross-section", false);
+			ellipseCross.addActionListener(this);
+			ellipseCross.setActionCommand("ellipseCross");
+			modelPanel.add( ellipseCross, gbcC );
+			gbcC.gridx++;			ellipseDiameter = new JSlider(0, 200, 100);
+			ellipseDiameter.addChangeListener(this);
+			modelPanel.add( ellipseDiameter, gbcC );
 
 			JPanel panels = new JPanel(new BorderLayout());
 			panels.add(labelPanel, BorderLayout.NORTH);
 			panels.add(clipPanel, BorderLayout.CENTER);
+			panels.add(modelPanel, BorderLayout.SOUTH);
 
 			// build the annotation table for the list of annotations:
 			buildAnnotationTable();
@@ -618,6 +673,13 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			}
 			int value = clipDistance.getValue();
 			voiManager.setLatticeClip(clipLattice.isSelected(), value);
+		}
+		else if ( source == ellipseDiameter ) {
+			if ( voiManager != null )
+			{
+				float percentage = ellipseDiameter.getValue() / 100.f;
+				voiManager.updateCrossSection( splineModel.isSelected(), ellipseCross.isSelected(), percentage );
+			}
 		}
 	}
 	
