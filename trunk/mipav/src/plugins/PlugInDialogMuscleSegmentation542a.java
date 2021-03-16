@@ -313,7 +313,7 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         fullGroup.add(halfRadio);
         
         fullRadio.setSelected(true);       
-        int index = fileName.indexOf("full");
+        /*int index = fileName.indexOf("full");
         if (index >= 0) {
         }
         else {
@@ -321,7 +321,7 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         	if (index >= 0) {
         		halfRadio.setSelected(true);
         	}
-        }
+        }*/
         
         ButtonGroup group = new ButtonGroup();
         group.add(twoThighRadio);
