@@ -14678,5 +14678,273 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    			  System.out.println("PolynomialCubicInterpolatingPolynomialFromValuesAndGradients() passed all tests");
     	    		  }
     	    	}
-	    	
+    	    	
+    	    	class MockCostFunctionBase2 extends SizedCostFunction {
+    	    		   int kNumResiduals;
+    	    		   int N0;
+    	    		   int N1;
+    	    		   int N2;
+    	    		   public MockCostFunctionBase2(int kNumResiduals, int N0, int N1, int N2) {
+    	    			   super(kNumResiduals, N0, N1, N2, 0, 0, 0, 0, 0, 0, 0);
+    	    			   this.kNumResiduals = kNumResiduals;
+    	    			   this.N0 = N0;
+    	    			   this.N1 = N1;
+    	    			   this.N2 = N2;
+    	    		   }
+    	    		   public boolean Evaluate(Vector<double[]> parameters,
+    	    		                         double[] residuals,
+    	    		                         double[][] jacobians) {
+    	    			   for (int i = 0; i < kNumResiduals; ++i) {
+    	    				      residuals[i] = kNumResiduals +  N0 + N1 + N2;
+    	    			   }
+
+    	    		     return true;
+    	    		   }
+    	    		   
+    	    		   public boolean Evaluate(Vector<double[]> parameters,
+    	    	               double[] residuals,
+    	    	               double[][] jacobians,
+    	    	               int[] jacobians_offset) {
+    	    			   for (int i = 0; i < kNumResiduals; ++i) {
+ 	    				      residuals[i] = kNumResiduals +  N0 + N1 + N2;
+ 	    			       }
+
+    	    			return true;
+    	    			}
+    	    		 };
+    	    		 
+    	    		 class UnaryCostFunction2 extends MockCostFunctionBase2 {
+    	    			  public UnaryCostFunction2() {
+    	    				  super(2 ,1, 0, 0);
+    	    			  }
+    	    		 }
+    	    		 
+    	    		 class BinaryCostFunction2 extends MockCostFunctionBase2 {
+    	    			 public BinaryCostFunction2() {
+    	    				 super(2, 1, 1, 0);
+    	    			 }
+    	    		 }
+    	    		 
+    	    		 class TernaryCostFunction3 extends MockCostFunctionBase2 {
+    	    			 public TernaryCostFunction3() {
+    	    				 super(2, 1, 1, 1);
+    	    			 }
+    	    		 }
+    	    	
+    	    		 public void ProgramRemoveFixedBlocksNothingConstant() {
+    	    			  // ProgramRemoveFixedBlocksNothingConstant() passed all tests
+    	    			  boolean passed = true;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[1];
+    	    			  double y[] = new double[1];
+    	    			  double z[] = new double[1];
+
+    	    			  problem.AddParameterBlock(x, 1);
+    	    			  problem.AddParameterBlock(y, 1);
+    	    			  problem.AddParameterBlock(z, 1);
+    	    			  problem.AddResidualBlock(new UnaryCostFunction2(), null, x);
+    	    			  problem.AddResidualBlock(new BinaryCostFunction2(), null, x, y);
+    	    			  problem.AddResidualBlock(new TernaryCostFunction3(), null, x, y, z);
+
+    	    			  Vector<double[]> removed_parameter_blocks = new Vector<double[]>();
+    	    			  double fixed_cost[] = new double[] {0.0};
+    	    			  String message[] = new String[1];
+    	    			  Program reduced_program = problem.program().CreateReducedProgram(removed_parameter_blocks,
+    	    			                                          fixed_cost,
+    	    			                                          message);
+                          if (reduced_program == null) {
+                        	  System.err.println("In ProgramRemoveFixedBlocksNothingConstant() reduced_program == null");
+                        	  return;
+                          }
+    	    			  if (reduced_program.NumParameterBlocks() != 3) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNothingConstant() reduced_program.NumParameterBlocks() != 3");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (reduced_program.NumResidualBlocks() != 3) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNothingConstant() reduced_program.NumResidualBlocks() != 3");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (removed_parameter_blocks.size() != 0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNothingConstant() removed_parameter_blocks.size() != 0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (fixed_cost[0] != 0.0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNothingConstant() fixed_cost[0] != 0.0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (passed) {
+    	    				  System.out.println("ProgramRemoveFixedBlocksNothingConstant() passed all tests");
+    	    			  }
+    	    		}
+   	    	
+    	    		 public void ProgramRemoveFixedBlocksAllParameterBlocksConstant() {
+    	    			  // ProgramRemoveFixedBlocksAllParameterBlocksConstant() passed all tests
+    	    			  boolean passed = true;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[] {1.0};
+
+    	    			  problem.AddParameterBlock(x, 1);
+    	    			  problem.AddResidualBlock(new UnaryCostFunction2(), null, x);
+    	    			  problem.SetParameterBlockConstant(x);
+
+    	    			  Vector<double[]> removed_parameter_blocks = new Vector<double[]>();
+    	    			  double fixed_cost[] = new double[] {0.0};
+    	    			  String message[] = new String[1];
+    	    			  Program reduced_program = problem.program().CreateReducedProgram(removed_parameter_blocks,
+    	    			                                          fixed_cost,
+    	    			                                          message);
+                          if (reduced_program == null) {
+                        	  System.err.println("In ProgramRemoveFixedBlocksAllParameterBlocksConstant() reduced_program == null");
+                        	  return;
+                          }
+    	    			  
+                          if (reduced_program.NumParameterBlocks() != 0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksAllParameterBlocksConstant() reduced_program.NumParameterBlocks() != 0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (reduced_program.NumResidualBlocks() != 0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksAllParameterBlocksConstant() reduced_program.NumResidualBlocks() != 0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (removed_parameter_blocks.size() != 1) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksAllParameterBlocksConstant() removed_parameter_blocks.size() != 1");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (removed_parameter_blocks.get(0) != x) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksAllParameterBlocksConstant() removed_parameter_blocks.get(0) != x");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (fixed_cost[0] != 9.0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksAllParameterBlocksConstant() fixed_cost[0] != 9.0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (passed) {
+    	    				  System.out.println("ProgramRemoveFixedBlocksAllParameterBlocksConstant() passed all tests");
+    	    			  }
+    	    		}
+
+    	    		 public void ProgramRemoveFixedBlocksNoResidualBlocks() {
+    	    			  // ProgramRemoveFixedBlocksNoResidualBlocks() passed all tests
+    	    			  boolean passed = true;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[1];
+    	    			  double y[] = new double[1];
+    	    			  double z[] = new double[1];
+
+    	    			  problem.AddParameterBlock(x, 1);
+    	    			  problem.AddParameterBlock(y, 1);
+    	    			  problem.AddParameterBlock(z, 1);
+
+    	    			  Vector<double[]> removed_parameter_blocks = new Vector<double[]>();
+    	    			  double fixed_cost[] = new double[] {0.0};
+    	    			  String message[] = new String[1];
+    	    			  Program reduced_program = problem.program().CreateReducedProgram(removed_parameter_blocks,
+    	    			                                          fixed_cost,
+    	    			                                          message);
+                          if (reduced_program == null) {
+                        	  System.err.println("In ProgramRemoveFixedBlocksNoResidualBlocks() reduced_program == null");
+                        	  return;
+                          }
+    	    			  
+                          if (reduced_program.NumParameterBlocks() != 0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNoResidualBlocks() reduced_program.NumParameterBlocks() != 0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (reduced_program.NumResidualBlocks() != 0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNoResidualBlocks() reduced_program.NumResidualBlocks() != 0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (removed_parameter_blocks.size() != 3) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNoResidualBlocks() removed_parameter_blocks.size() != 3");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (fixed_cost[0] != 0.0) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNoResidualBlocks() fixed_cost[0] != 0.0");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (passed) {
+    	    				  System.out.println("ProgramRemoveFixedBlocksNoResidualBlocks() passed all tests");
+    	    			  }
+    	    		}
+    	    		 
+    	    		 public void ProgramRemoveFixedBlocksOneParameterBlockConstant() {
+    	    			  // ProgramRemoveFixedBlocksOneParameterBlockConstant() passed all tests
+    	    			  boolean passed = true;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[1];
+    	    			  double y[] = new double[1];
+    	    			  double z[] = new double[1];
+
+    	    			  problem.AddParameterBlock(x, 1);
+    	    			  problem.AddParameterBlock(y, 1);
+    	    			  problem.AddParameterBlock(z, 1);
+
+    	    			  problem.AddResidualBlock(new UnaryCostFunction2(), null, x);
+    	    			  problem.AddResidualBlock(new BinaryCostFunction2(), null, x, y);
+    	    			  problem.SetParameterBlockConstant(x);
+
+    	    			  Vector<double[]> removed_parameter_blocks = new Vector<double[]>();
+    	    			  double fixed_cost[] = new double[] {0.0};
+    	    			  String message[] = new String[1];
+    	    			  Program reduced_program = problem.program().CreateReducedProgram(removed_parameter_blocks,
+    	    			                                          fixed_cost,
+    	    			                                          message);
+                          if (reduced_program == null) {
+                        	  System.err.println("In ProgramRemoveFixedBlocksOneParameterBlockConstant() reduced_program == null");
+                        	  return;
+                          }
+    	    			  
+                          if (reduced_program.NumParameterBlocks() != 1) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksOneParameterBlockConstant() reduced_program.NumParameterBlocks() != 1");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (reduced_program.NumResidualBlocks() != 1) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksOneParameterBlockConstant() reduced_program.NumResidualBlocks() != 1");
+    	    				  passed = false;
+    	    			  }
+                          if (passed) {
+                        	  System.out.println("ProgramRemoveFixedBlocksOneParameterBlockConstant() passed all tests");
+                          }
+    	    		}
+
+    	    		 public void ProgramRemoveFixedBlocksNumEliminateBlocks() {
+    	    			  // ProgramRemoveFixedBlocksNumEliminateBlocks() passed all tests
+    	    			  boolean passed = true;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[1];
+    	    			  double y[] = new double[1];
+    	    			  double z[] = new double[1];
+
+    	    			  problem.AddParameterBlock(x, 1);
+    	    			  problem.AddParameterBlock(y, 1);
+    	    			  problem.AddParameterBlock(z, 1);
+    	    			  problem.AddResidualBlock(new UnaryCostFunction2(), null, x);
+    	    			  problem.AddResidualBlock(new TernaryCostFunction3(), null, x, y, z);
+    	    			  problem.AddResidualBlock(new BinaryCostFunction2(), null, x, y);
+    	    			  problem.SetParameterBlockConstant(x);
+
+    	    			  Vector<double[]> removed_parameter_blocks = new Vector<double[]>();
+    	    			  double fixed_cost[] = new double[] {0.0};
+    	    			  String message[] = new String[1];
+    	    			  Program reduced_program = problem.program().CreateReducedProgram(removed_parameter_blocks,
+    	    			                                          fixed_cost,
+    	    			                                          message);
+                          if (reduced_program == null) {
+                        	  System.err.println("In ProgramRemoveFixedBlocksNumEliminateBlocks() reduced_program == null");
+                        	  return;
+                          }
+    	    			  
+                          if (reduced_program.NumParameterBlocks() != 2) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNumEliminateBlocks() reduced_program.NumParameterBlocks() != 2");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (reduced_program.NumResidualBlocks() != 2) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksNumEliminateBlocks() reduced_program.NumResidualBlocks() != 2");
+    	    				  passed = false;
+    	    			  }
+                          if (passed) {
+                        	  System.out.println("ProgramRemoveFixedBlocksNumEliminateBlocks() passed all tests");
+                          }
+    	    		}
+
 }
