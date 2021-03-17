@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24280,7 +24281,49 @@ public abstract class CeresSolver {
 
 		  }
 		 
-		};
+		} // class NormalPrior
+		
+		// This routine takes an array of integer values, sorts and uniques
+		// them and then maps each value in the array to its position in the
+		// sorted+uniqued array. By doing this, if there are are k unique
+		// values in the array, each value is replaced by an integer in the
+		// range [0, k-1], while preserving their relative order.
+		//
+		// For example
+		//
+		// [1 0 3 5 0 1 5]
+		//
+		// gets mapped to
+		//
+		// [1 0 2 3 0 1 3]
+		public void MapValuesToContiguousRange(int[] array) {
+			int i, j;
+			int array_sort[] = new int[array.length];
+			for (i = 0; i < array.length; i++) {
+				array_sort[i] = array[i];
+			}
+			Arrays.sort(array_sort);
+			int uniqueNum = 1;
+			for (i = 1; i < array.length; i++) {
+				if (array_sort[i] != array_sort[i-1]) {
+					uniqueNum++;
+				}
+			}
+			int uniqueArray[] = new int[uniqueNum];
+			uniqueArray[0] = array_sort[0];
+			for (i = 1, j = 1; i < array.length; i++) {
+				if (array_sort[i] != array_sort[i-1]) {
+					uniqueArray[j++] = array_sort[i];
+				}
+			}
+			for (i = 0; i < uniqueNum; i++) {
+				for (j = 0; j < array.length; j++) {
+					if (array[j] == uniqueArray[i]) {
+					     array[j] = i;	
+					}
+				}
+			}
+		}
 
 } // public abstract class CeresSolver
 
