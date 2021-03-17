@@ -18757,7 +18757,51 @@ public abstract class CeresSolver {
 			  for (int i = 0; i < parameter_blocks_.size(); ++i) {
 			    parameter_blocks_.get(i).GetState(parameter_blocks_.get(i).mutable_user_state(),0);
 			  }
+		}
+		
+		public TripletSparseMatrix CreateJacobianBlockSparsityTranspose() {
+			  // Matrix to store the block sparsity structure of the Jacobian.
+			  TripletSparseMatrix tsm =
+			      new TripletSparseMatrix(NumParameterBlocks(),
+			                              NumResidualBlocks(),
+			                              10 * NumResidualBlocks());
+			  int num_nonzeros = 0;
+			  int[] rows = tsm.mutable_rows();
+			  int[] cols = tsm.mutable_cols();
+			  double[] values = tsm.mutable_values();
+
+			  for (int c = 0; c < residual_blocks_.size(); ++c) {
+			    final ResidualBlock residual_block = residual_blocks_.get(c);
+			    final int num_parameter_blocks = residual_block.NumParameterBlocks();
+			    ParameterBlock[] parameter_blocks =
+			        residual_block.parameter_blocks();
+
+			    for (int j = 0; j < num_parameter_blocks; ++j) {
+			      if (parameter_blocks[j].IsConstant()) {
+			        continue;
+			      }
+
+			      // Re-size the matrix if needed.
+			      if (num_nonzeros >= tsm.max_num_nonzeros()) {
+			        tsm.set_num_nonzeros(num_nonzeros);
+			        tsm.Reserve(2 * num_nonzeros);
+			        rows = tsm.mutable_rows();
+			        cols = tsm.mutable_cols();
+			        values = tsm.mutable_values();
+			      }
+
+			      final int r = parameter_blocks[j].index();
+			      rows[num_nonzeros] = r;
+			      cols[num_nonzeros] = c;
+			      values[num_nonzeros] = 1.0;
+			      ++num_nonzeros;
+			    }
+			  }
+
+			  tsm.set_num_nonzeros(num_nonzeros);
+			  return tsm;
 			}
+
 
 	} // class Program
 	
