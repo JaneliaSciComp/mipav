@@ -15255,5 +15255,140 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	        	  }
     	        }
 
+    	        public void ArrayUtilsIsArrayValid() {
+    	        	  // ArrayUtilsIsArrayValid() passed all tests
+    	        	  boolean passed = true;
+    	        	  double x[] = new double[3];
+    	        	  x[0] = 0.0;
+    	        	  x[1] = 1.0;
+    	        	  x[2] = 2.0;
+    	        	  if (!IsArrayValid(3, x)) {
+    	        		  System.err.println("In ArrayUtilsIsArrayValid() IsArrayValid(3, x) = false");
+    	        		  passed = false;
+    	        	  }
+    	        	  x[1] = Double.POSITIVE_INFINITY;
+    	        	  if (IsArrayValid(3, x)) {
+    	        		  System.err.println("In ArrayUtilsIsArrayValid() IsArrayValid(3, x) = true with POSITIVE_INFINITY");
+    	        		  passed = false;
+    	        	  }
+    	        	  x[1] = Double.NaN;
+    	        	  if (IsArrayValid(3, x)) {
+    	        		  System.err.println("In ArrayUtilsIsArrayValid() IsArrayValid(3, x) = true with NaN");
+    	        		  passed = false;
+    	        	  }
+    	        	  double y[] = null;
+    	        	  if (!IsArrayValid(1, y)) {
+    	        		  System.err.println("In ArrayUtilsIsArrayValid() IsArrayValid(1, y) = false");
+    	        		  passed = false;
+    	        	  }
+    	        	  InvalidateArray(3, x);
+    	        	  if (IsArrayValid(3, x)) {
+    	        		  System.err.println("In ArrayUtilsIsArrayValid() IsArrayValid(3, x) = true with InvalidateArray(3, x)");
+    	        		  passed = false;
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("ArrayUtilsIsArrayValid() passed all tests");
+    	        	  }
+    	        }
+    	        
+    	        public void ArrayUtilsFindInvalidIndex() {
+    	        	  // ArrayUtilsFindInvalidIndex() passed all tests
+    	        	  boolean passed = true;
+    	        	  double x[] = new double[3];
+    	        	  x[0] = 0.0;
+    	        	  x[1] = 1.0;
+    	        	  x[2] = 2.0;
+    	        	  if (FindInvalidValue(3, x) != 3) {
+    	        		  System.err.println("In ArrayUtilsFindInvalidIndex() FindInvalidValue(3, x) != 3");
+    	        		  passed = false;
+    	        	  }
+    	        	  x[1] = Double.POSITIVE_INFINITY;
+    	        	  if (FindInvalidValue(3, x) != 1) {
+    	        		  System.err.println("In ArrayUtilsFindInvalidIndex() FindInvalidValue(3, x) != 1 with POSITIVE_INFINITY");
+    	        		  passed = false;
+    	        	  }
+    	        	  x[1] = Double.NaN;
+    	        	  if (FindInvalidValue(3, x) != 1) {
+    	        		  System.err.println("In ArrayUtilsFindInvalidIndex() FindInvalidValue(3, x) != 1 with NaN");
+    	        		  passed = false;
+    	        	  }
+    	        	  if (FindInvalidValue(1, null) != 1) {
+    	        		  System.err.println("In ArrayUtilsFindInvalidIndex() FindInvalidValue(1, null) != 1");
+    	        		  passed = false;
+    	        	  }
+    	        	  InvalidateArray(3, x);
+    	        	  if (FindInvalidValue(3, x) != 0) {
+    	        		  System.err.println("In ArrayUtilsFindInvalidIndex() FindInvalidValue(3, x) != 0 with InvalidateArray(3, x)");
+    	        		  passed = false;
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("ArrayUtilsFindInvalidIndex() passed all tests");
+    	        	  }
+    	        }
+    	        
+    	        public void MapValuesToContiguousRangeContiguousEntries() {
+    	        	  // MapValuesToContiguousRangeContiguousEntries() passed all tests
+    	        	  int i;
+    	        	  boolean passed = true;
+    	        	  int array[] = new int[] {0,1};
+    	        	  int expected[] = new int[] {0,1};
+    	        	  MapValuesToContiguousRange(array);
+    	        	  for (i = 0; i < array.length; i++) {
+    	        		  if (array[i] != expected[i]) {
+    	        			  System.err.println("In MapValuesToContiguousRangeContiguousEntries() array["+i+"] != expected["+i+"]");
+    	        			  passed = false;
+    	        		  }
+    	        	  }
+    	        	  array = null;
+
+    	        	  array = new int[] {1, 0};
+    	        	  expected = new int[] {1, 0};
+    	        	  MapValuesToContiguousRange(array);
+    	        	  for (i = 0; i < array.length; i++) {
+    	        		  if (array[i] != expected[i]) {
+    	        			  System.err.println("In MapValuesToContiguousRangeContiguousEntries() array["+i+"] != expected["+i+"]");
+    	        			  passed = false;
+    	        		  }
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("MapValuesToContiguousRangeContiguousEntries() passed all tests");
+    	        	  }
+    	        }
+
+    	        public void MapValuesToContiguousRangeNonContiguousEntries() {
+    	        	  // MapValuesToContiguousRangeNonContiguousEntries() passed all tests
+    	        	  int i;
+    	        	  boolean passed = true;
+    	        	  int array[] = new int[] {0,2};
+    	        	  int expected[] = new int[] {0,1};
+    	        	  MapValuesToContiguousRange(array);
+    	        	  for (i = 0; i < array.length; i++) {
+    	        		  if (array[i] != expected[i]) {
+    	        			  System.err.println("In MapValuesToContiguousRangeNonContiguousEntries() array["+i+"] != expected["+i+"]");
+    	        			  passed = false;
+    	        		  }
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("MapValuesToContiguousRangeNonContiguousEntries() passed all tests");
+    	        	  }
+    	        }
+
+    	        public void MapValuesToContiguousRangeNonContiguousRepeatingEntries() {
+    	        	  // MapValuesToContiguousRangeNonContiguousRepeatingEntries() passed all tests
+    	        	  int i;
+    	        	  boolean passed = true;
+    	        	  int array[] = new int[] {3, 1, 0, 0, 0, 5};
+    	        	  int expected[] = new int[] {2, 1, 0, 0, 0, 3};
+    	        	  MapValuesToContiguousRange(array);
+    	        	  for (i = 0; i < array.length; i++) {
+    	        		  if (array[i] != expected[i]) {
+    	        			  System.err.println("In MapValuesToContiguousRangeNonContiguousRepeatingEntries() array["+i+"] != expected["+i+"]");
+    	        			  passed = false;
+    	        		  }
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("MapValuesToContiguousRangeNonContiguousRepeatingEntries() passed all tests");
+    	        	  }
+    	        }
 
 }
