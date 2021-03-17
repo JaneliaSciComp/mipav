@@ -14946,5 +14946,314 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
                         	  System.out.println("ProgramRemoveFixedBlocksNumEliminateBlocks() passed all tests");
                           }
     	    		}
+    	    		 
+    	    		 public void ProgramRemoveFixedBlocksFixedCost() {
+    	    			  // ProgramRemoveFixedBlocksFixedCost() passed all tests
+    	    			  boolean passed = true;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[] {1.23};
+    	    			  double y[] = new double[] {4.56};
+    	    			  double z[] = new double[] {7.89};
+
+    	    			  problem.AddParameterBlock(x, 1);
+    	    			  problem.AddParameterBlock(y, 1);
+    	    			  problem.AddParameterBlock(z, 1);
+    	    			  problem.AddResidualBlock(new UnaryIdentityCostFunction(), null, x);
+    	    			  problem.AddResidualBlock(new TernaryCostFunction3(), null, x, y, z);
+    	    			  problem.AddResidualBlock(new BinaryCostFunction2(), null, x, y);
+    	    			  problem.SetParameterBlockConstant(x);
+
+    	    			  ResidualBlock expected_removed_block =
+    	    			      problem.program().residual_blocks().get(0);
+    	    			  double scratch[] = 
+    	    			      new double[expected_removed_block.NumScratchDoublesForEvaluate()];
+    	    			  double expected_fixed_cost[] = new double[1];
+    	    			  expected_removed_block.Evaluate(true,
+    	    			                                   expected_fixed_cost,
+    	    			                                   null,
+    	    			                                   null,
+    	    			                                   scratch);
+
+
+    	    			  Vector<double[]> removed_parameter_blocks = new Vector<double[]>();
+    	    			  double fixed_cost[] = new double[] {0.0};
+    	    			  String message[] = new String[1];
+    	    			  Program reduced_program = problem.program().CreateReducedProgram(removed_parameter_blocks,
+    	    			                                          fixed_cost,
+    	    			                                          message);
+                          if (reduced_program == null) {
+                        	  System.err.println("In ProgramRemoveFixedBlocksFixedCost() reduced_program == null");
+                        	  return;
+                          }
+    	    			  
+                          if (reduced_program.NumParameterBlocks() != 2) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksFixedCost() reduced_program.NumParameterBlocks() != 2");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (reduced_program.NumResidualBlocks() != 2) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksFixedCost() reduced_program.NumResidualBlocks() != 2");
+    	    				  passed = false;
+    	    			  }
+    	    			  if (fixed_cost[0] != expected_fixed_cost[0]) {
+    	    				  System.err.println("In ProgramRemoveFixedBlocksFixedCost() fixed_cost[0] != expected_fixed_cost[0]");
+    	    				  passed = false; 
+    	    			  }
+                          if (passed) {
+                        	  System.out.println("ProgramRemoveFixedBlocksFixedCost() passed all tests");
+                          }
+    	    		}
+
+    	    		 public void ProgramCreateJacobianBlockSparsityTranspose() {
+    	    			  // ProgramCreateJacobianBlockSparsityTranspose() passed all tests
+    	    			  int i,j;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[] = new double[2];
+    	    			  double y[] = new double[3];
+    	    			  double z[] = new double[1];
+
+    	    			  problem.AddParameterBlock(x, 2);
+    	    			  problem.AddParameterBlock(y, 3);
+    	    			  problem.AddParameterBlock(z, 1);
+
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(2, 2, 0, 0), null, x);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(3, 1, 2, 0), null, z, x);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(4, 1, 3, 0), null, z, y);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(5, 1, 3, 0), null, z, y);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(1, 2, 1, 0), null, x, z);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(2, 1, 3, 0), null, z, y);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(2, 2, 1, 0), null, x, z);
+    	    			  problem.AddResidualBlock(new MockCostFunctionBase2(1, 3, 0, 0), null, y);
+
+    	    			  TripletSparseMatrix expected_block_sparse_jacobian = new TripletSparseMatrix(3, 8, 14);
+    	    			  {
+    	    			    int rows[] = expected_block_sparse_jacobian.mutable_rows();
+    	    			    int cols[] = expected_block_sparse_jacobian.mutable_cols();
+    	    			    double[] values = expected_block_sparse_jacobian.mutable_values();
+    	    			    rows[0] = 0;
+    	    			    cols[0] = 0;
+
+    	    			    rows[1] = 2;
+    	    			    cols[1] = 1;
+    	    			    rows[2] = 0;
+    	    			    cols[2] = 1;
+
+    	    			    rows[3] = 2;
+    	    			    cols[3] = 2;
+    	    			    rows[4] = 1;
+    	    			    cols[4] = 2;
+
+    	    			    rows[5] = 2;
+    	    			    cols[5] = 3;
+    	    			    rows[6] = 1;
+    	    			    cols[6] = 3;
+
+    	    			    rows[7] = 0;
+    	    			    cols[7] = 4;
+    	    			    rows[8] = 2;
+    	    			    cols[8] = 4;
+
+    	    			    rows[9] = 2;
+    	    			    cols[9] = 5;
+    	    			    rows[10] = 1;
+    	    			    cols[10] = 5;
+
+    	    			    rows[11] = 0;
+    	    			    cols[11] = 6;
+    	    			    rows[12] = 2;
+    	    			    cols[12] = 6;
+
+    	    			    rows[13] = 1;
+    	    			    cols[13] = 7;
+    	    			    for (i = 0; i < 14; i++) {
+    	    			    	values[i] = 1.0;
+    	    			    }
+    	    			    expected_block_sparse_jacobian.set_num_nonzeros(14);
+    	    			  }
+
+    	    			  Program program = problem.mutable_program();
+    	    			  program.SetParameterOffsetsAndIndex();
+
+    	    			  TripletSparseMatrix actual_block_sparse_jacobian =
+    	    			      program.CreateJacobianBlockSparsityTranspose();
+
+    	    			  Matrix expected_dense_jacobian = expected_block_sparse_jacobian.ToDenseMatrix();
+
+    	    			  Matrix actual_dense_jacobian = actual_block_sparse_jacobian.ToDenseMatrix();
+    	    			  double normSquared = 0.0;
+    	    			  double diff;
+    	    			  for (i = 0; i < expected_dense_jacobian.getRowDimension(); i++) {
+    	    				  for (j = 0; j < expected_dense_jacobian.getColumnDimension(); j++) {
+    	    					  diff = expected_dense_jacobian.get(i,j) - actual_dense_jacobian.get(i,j);
+    	    					  normSquared += diff * diff;
+    	    				  }
+    	    			  }
+    	    			  double norm = Math.sqrt(normSquared);
+    	    			  if (norm != 0.0) {
+    	    				  System.err.println("In ProgramCreateJacobianBlockSparsityTranspose() (expected_dense_jacobian - actual_dense_jacobian).norm() != 0.0");
+    	    			  }
+    	    			  else {
+    	    				  System.out.println("ProgramCreateJacobianBlockSparsityTranspose() passed all tests");
+    	    			  }
+    	    		}
+    	    		 
+    	    		class NumParameterBlocksCostFunction extends CostFunction {
+    	    		  public NumParameterBlocksCostFunction(int kNumResiduals, int kNumParameterBlocks) {
+    	    			 super();
+    	    		     set_num_residuals(kNumResiduals);
+    	    		     for (int i = 0; i < kNumParameterBlocks; ++i) {
+    	    		       mutable_parameter_block_sizes().add(1);
+    	    		     }
+    	    		   }
+
+    	    		  public boolean Evaluate(Vector<double[]> parameters,
+		                         double[] residuals,
+		                         double[][] jacobians) {
+    	    			  return true;
+    	    		  }
+    	    		  
+    	    		  public boolean Evaluate(Vector<double[]> parameters,
+		                         double[] residuals,
+		                         double[][] jacobians,
+		                         int[] jacobians_offsete) {
+ 	    			     return true;
+ 	    		     }
+
+    	    		   
+    	    	}
+
+    	        public void ProgramReallocationInCreateJacobianBlockSparsityTranspose() {
+    	        	      // ProgramReallocationInCreateJacobianBlockSparsityTranspose() passed all tests
+    	    			  // CreateJacobianBlockSparsityTranspose starts with a conservative
+    	    			  // estimate of the size of the sparsity pattern. This test ensures
+    	    			  // that when those estimates are violated, the reallocation/resizing
+    	    			  // logic works correctly.
+                          int i, j;
+    	    			  ProblemImpl problem = new ProblemImpl();
+    	    			  double x[][] = new double[20][1];
+
+    	    			  Vector<double[]> parameter_blocks = new Vector<double[]>();
+    	    			  for (i = 0; i < 20; ++i) {
+    	    			    problem.AddParameterBlock(x[i], 1);
+    	    			    parameter_blocks.add(x[i]);
+    	    			  }
+
+    	    			  problem.AddResidualBlock(new NumParameterBlocksCostFunction(1, 20),
+    	    			                           null,
+    	    			                           parameter_blocks);
+
+    	    			  TripletSparseMatrix expected_block_sparse_jacobian = new TripletSparseMatrix(20, 1, 20);
+    	    			  {
+    	    			    int[] rows = expected_block_sparse_jacobian.mutable_rows();
+    	    			    int[] cols = expected_block_sparse_jacobian.mutable_cols();
+    	    			    for (i = 0; i < 20; ++i) {
+    	    			      rows[i] = i;
+    	    			      cols[i] = 0;
+    	    			    }
+
+    	    			    double[] values = expected_block_sparse_jacobian.mutable_values();
+    	    			    for (i = 0; i < 20; i++) {
+    	    			    	values[i] = 1.0;
+    	    			    }
+    	    			    expected_block_sparse_jacobian.set_num_nonzeros(20);
+    	    			  }
+
+    	    			  Program program = problem.mutable_program();
+    	    			  program.SetParameterOffsetsAndIndex();
+
+    	    			  TripletSparseMatrix actual_block_sparse_jacobian = 
+    	    			      program.CreateJacobianBlockSparsityTranspose();
+    	    			  
+    	    			  Matrix expected_dense_jacobian = expected_block_sparse_jacobian.ToDenseMatrix();
+
+    	    			  Matrix actual_dense_jacobian = actual_block_sparse_jacobian.ToDenseMatrix();
+    	    			  double normSquared = 0.0;
+    	    			  double diff;
+    	    			  for (i = 0; i < expected_dense_jacobian.getRowDimension(); i++) {
+    	    				  for (j = 0; j < expected_dense_jacobian.getColumnDimension(); j++) {
+    	    					  diff = expected_dense_jacobian.get(i,j) - actual_dense_jacobian.get(i,j);
+    	    					  normSquared += diff * diff;
+    	    				  }
+    	    			  }
+    	    			  double norm = Math.sqrt(normSquared);
+    	    			  if (norm != 0.0) {
+    	    				  System.err.println("In ProgramReallocationInCreateJacobianBlockSparsityTranspose() (expected_dense_jacobian - actual_dense_jacobian).norm() != 0.0");
+    	    			  }
+    	    			  else {
+    	    				  System.out.println("ProgramReallocationInCreateJacobianBlockSparsityTranspose() passed all tests");
+    	    			  }
+    	    		}
+    	        
+    	        public void ProgramProblemHasNanParameterBlocks() {
+    	        	  boolean passed = true;
+    	        	  ProblemImpl problem = new ProblemImpl();
+    	        	  double x[] = new double[2];
+    	        	  x[0] = 1.0;
+    	        	  x[1] = Double.NaN;
+    	        	  problem.AddResidualBlock(new MockCostFunctionBase2(1, 2, 0, 0), null, x);
+    	        	  String error[] = new String[1];
+    	        	  if (problem.program().ParameterBlocksAreFinite(error)) {
+    	        		  System.err.println("In ProgramProblemHasNanParameterBlocks() problem.program().ParameterBlocksAreFinite(error) = true"); 
+    	        		  passed = false;
+    	        	  }
+    	        	  //System.err.println(error[0]);
+    	        	  int index = error[0].indexOf("has at least one invalid value");
+    	        	  if (index == -1) {
+    	        		  System.err.println("In ProgramProblemHasNanParameterBlocks() no error message with: has at least one invalid value"); 
+    	        		  passed = false;
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("ProgramProblemHasNanParameterBlocks() passed all tests");
+    	        	  }
+    	        }
+
+    	        public void ProgramInfeasibleParameterBlock() {
+    	        	  // ProgramInfeasibleParameterBlock() passed all tests
+    	        	  boolean passed = true;
+    	        	  ProblemImpl problem = new ProblemImpl();
+    	        	  double x[] = new double[] {0.0, 0.0};
+    	        	  problem.AddResidualBlock(new MockCostFunctionBase2(1, 2, 0, 0), null, x);
+    	        	  problem.SetParameterLowerBound(x, 0, 2.0);
+    	        	  problem.SetParameterUpperBound(x, 0, 1.0);
+    	        	  String error[] = new String[1];
+    	        	  if (problem.program().IsFeasible(error)) {
+    	        		  System.err.println("In ProgramInfeasibleParameterBlock() problem.program().IsFeasible(error) = true");
+    	        		  passed = false;
+    	        	  }
+    	        	  //System.err.println(error[0]);
+    	        	  int index = error[0].indexOf("has lower_bound >= upper_bound");
+    	        	  if (index == -1) {
+    	        		  System.err.println("In ProgramInfeasibleParameterBlock() no error message with: has lower_bound >= upper_bound"); 
+    	        		  passed = false;
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("ProgramInfeasibleParameterBlock() passed all tests");
+    	        	  }
+    	        }
+    	        
+    	        public void ProgramInfeasibleConstantParameterBlock() {
+    	        	  // ProgramInfeasibleConstantParameterBlock() passed all tests
+    	        	  boolean passed = true;
+    	        	  ProblemImpl problem = new ProblemImpl();
+    	        	  double x[] = new double[] {0.0, 0.0};
+    	        	  problem.AddResidualBlock(new MockCostFunctionBase2(1, 2, 0, 0), null, x);
+    	        	  problem.SetParameterLowerBound(x, 0, 1.0);
+    	        	  problem.SetParameterUpperBound(x, 0, 2.0);
+    	        	  problem.SetParameterBlockConstant(x);
+    	        	  String error[] = new String[1];
+    	        	  if (problem.program().IsFeasible(error)) {
+    	        		  System.err.println("In ProgramInfeasibleConstantParameterBlock() problem.program().IsFeasible(error) = true");
+    	        		  passed = false;
+    	        	  }
+    	        	  //System.err.println(error[0]);
+    	        	  int index = error[0].indexOf("infeasible value");
+    	        	  if (index == -1) {
+    	        		  System.err.println("In ProgramInfeasibleConstantParameterBlock() no error message with: infeasible value"); 
+    	        		  passed = false;
+    	        	  }
+    	        	  if (passed) {
+    	        		  System.out.println("ProgramInfeasibleConstantParameterBlock() passed all tests");
+    	        	  }
+    	        }
+
 
 }
