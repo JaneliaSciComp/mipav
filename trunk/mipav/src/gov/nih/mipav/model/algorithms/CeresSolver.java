@@ -24324,7 +24324,88 @@ public abstract class CeresSolver {
 				}
 			}
 		}
+		
+		public double norm(double[] arg) {
+			int i;
+			double normSquared = 0.0;
+			for (i = 0; i < arg.length; i++) {
+				normSquared += arg[i] * arg[i];
+			}
+			return Math.sqrt(normSquared);
+		}
+		
+		public void AngleAxisToQuaternion(double[] angle_axis, double[] quaternion) {
+  		  final double a0 = angle_axis[0];
+  		  final double a1 = angle_axis[1];
+  		  final double a2 = angle_axis[2];
+  		  final double theta_squared = a0 * a0 + a1 * a1 + a2 * a2;
 
+  		  // For points not at the origin, the full conversion is numerically stable.
+  		  if (theta_squared > 0.0) {
+  		    final double theta = Math.sqrt(theta_squared);
+  		    final double half_theta = theta * 0.5;
+  		    final double k = Math.sin(half_theta) / theta;
+  		    quaternion[0] = Math.cos(half_theta);
+  		    quaternion[1] = a0 * k;
+  		    quaternion[2] = a1 * k;
+  		    quaternion[3] = a2 * k;
+  		  } else {
+  		    // At the origin, sqrt() will produce NaN in the derivative since
+  		    // the argument is zero.  By approximating with a Taylor series,
+  		    // and truncating at one term, the value and first derivatives will be
+  		    // computed correctly when Jets are used.
+  		    double k = 0.5;
+  		    quaternion[0] = 1.0;
+  		    quaternion[1] = a0 * k;
+  		    quaternion[2] = a1 * k;
+  		    quaternion[3] = a2 * k;
+  		  }
+  		}
+
+		public void QuaternionToAngleAxis(double[] quaternion, double[] angle_axis) {
+			  final double q1 = quaternion[1];
+			  final double q2 = quaternion[2];
+			  final double q3 = quaternion[3];
+			  final double sin_squared_theta = q1 * q1 + q2 * q2 + q3 * q3;
+
+			  // For quaternions representing non-zero rotation, the conversion
+			  // is numerically stable.
+			  if (sin_squared_theta > 0.0) {
+			    final double sin_theta = Math.sqrt(sin_squared_theta);
+			    final double cos_theta = quaternion[0];
+
+			    // If cos_theta is negative, theta is greater than pi/2, which
+			    // means that angle for the angle_axis vector which is 2 * theta
+			    // would be greater than pi.
+			    //
+			    // While this will result in the correct rotation, it does not
+			    // result in a normalized angle-axis vector.
+			    //
+			    // In that case we observe that 2 * theta ~ 2 * theta - 2 * pi,
+			    // which is equivalent saying
+			    //
+			    //   theta - pi = atan(sin(theta - pi), cos(theta - pi))
+			    //              = atan(-sin(theta), -cos(theta))
+			    //
+			    final double two_theta =
+			        2.0 * ((cos_theta < 0.0)
+			                  ? Math.atan2(-sin_theta, -cos_theta)
+			                  : Math.atan2(sin_theta, cos_theta));
+			    final double k = two_theta / sin_theta;
+			    angle_axis[0] = q1 * k;
+			    angle_axis[1] = q2 * k;
+			    angle_axis[2] = q3 * k;
+			  } else {
+			    // For zero rotation, sqrt() will produce NaN in the derivative since
+			    // the argument is zero.  By approximating with a Taylor series,
+			    // and truncating at one term, the value and first derivatives will be
+			    // computed correctly when Jets are used.
+			    final double k = 2.0;
+			    angle_axis[0] = q1 * k;
+			    angle_axis[1] = q2 * k;
+			    angle_axis[2] = q3 * k;
+			  }
+			}
 } // public abstract class CeresSolver
 
 class indexValueComparator implements Comparator<indexValue> {
