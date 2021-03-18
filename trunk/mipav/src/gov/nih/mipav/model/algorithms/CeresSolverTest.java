@@ -15390,5 +15390,446 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	        		  System.out.println("MapValuesToContiguousRangeNonContiguousRepeatingEntries() passed all tests");
     	        	  }
     	        }
+    	        
+    	     // Use as:
+    	     // double quaternion[4];
+    	     // EXPECT_THAT(quaternion, IsNormalizedQuaternion());
+    	    public boolean IsNormalizedQuaternion(double arg[]) {
+    	       double kTolerance = 10.0 * epsilon;
+    	       if (arg == null) {
+    	         System.err.println("Null quaternion");
+    	         return false;
+    	       }
 
+    	       double norm2 = arg[0] * arg[0] + arg[1] * arg[1] +
+    	           arg[2] * arg[2] + arg[3] * arg[3];
+    	       if (Math.abs(norm2 - 1.0) > kTolerance) {
+    	         System.err.println("squared norm is " + norm2);
+    	         return false;
+    	       }
+
+    	       return true;
+    	    }
+    	 // Use as:
+    	 // double expected_quaternion[4];
+    	 // double actual_quaternion[4];
+    	 // EXPECT_THAT(actual_quaternion, IsNearQuaternion(expected_quaternion));
+    	 public boolean IsNearQuaternion(double arg[], double expected[]) {
+    		 double kTolerance = 10.0 * epsilon;
+    	   if (arg == null) {
+    	     System.err.println("Null quaternion");
+    	     return false;
+    	   }
+
+    	   // Quaternions are equivalent upto a sign change. So we will compare
+    	   // both signs before declaring failure.
+    	   boolean near = true;
+    	   for (int i = 0; i < 4; i++) {
+    	     if (Math.abs(arg[i] - expected[i]) > kTolerance) {
+    	       near = false;
+    	       break;
+    	     }
+    	   }
+
+    	   if (near) {
+    	     return true;
+    	   }
+
+    	   near = true;
+    	   for (int i = 0; i < 4; i++) {
+    	     if (Math.abs(arg[i] + expected[i]) > kTolerance) {
+    	       near = false;
+    	       break;
+    	     }
+    	   }
+
+    	   if (near) {
+    	     return true;
+    	   }
+
+    	   System.err.println("expected : " +
+    	                    expected[0] + " "
+    	                    + expected[1] + " "
+    	                    + expected[2] + " "
+    	                    + expected[3]);
+    	   System.err.println("actual : " +
+    	                    arg[0] + " "
+    	                    + arg[1] + " "
+    	                    + arg[2] + " "
+    	                    + arg[3]);
+    	   return false;
+    	 }
+
+    	// Use as:
+    	// double expected_axis_angle[3];
+    	// double actual_axis_angle[3];
+    	// EXPECT_THAT(actual_axis_angle, IsNearAngleAxis(expected_axis_angle));
+    	public boolean IsNearAngleAxis(double arg[], double expected[]) {
+    	  int i;
+    	  double kLooseTolerance = 1.0E-9;
+    	  if (arg == null) {
+    	    System.err.println("Null axis/angle");
+    	    return false;
+    	  }
+  
+    	  final double e_norm = norm(expected);
+    	  double aminuse[] = new double[arg.length];
+    	  double apluse[] = new double[arg.length];
+    	  for (i = 0; i < arg.length; i++) {
+    		  aminuse[i] = arg[i] - expected[i];
+    		  apluse[i] = arg[i] + expected[i];
+    	  }
+
+    	  double delta_norm = Double.MAX_VALUE;
+    	  if (e_norm > 0) {
+    	    // Deal with the sign ambiguity near PI. Since the sign can flip,
+    	    // we take the smaller of the two differences.
+    	    if (Math.abs(e_norm - Math.PI) < kLooseTolerance) {
+    	      delta_norm = Math.min(norm(aminuse), norm(apluse)) / e_norm;
+    	    } else {
+    	      delta_norm = norm(aminuse) / e_norm;
+    	    }
+    	  } else {
+    	    delta_norm = norm(arg);
+    	  }
+
+    	  if (delta_norm <= kLooseTolerance) {
+    	    return true;
+    	  }
+
+    	  System.err.println("arg: " +
+                  arg[0] + " "
+                  + arg[1] + " "
+                  + arg[2]);
+          System.err.println("was expected to be: " +
+                  expected[0] + " "
+                  + expected[1] + " "
+                  + expected[2]);
+    	  
+    	  return false;
+    	}
+    	
+    	// Use as:
+    	// double matrix[9];
+    	// EXPECT_THAT(matrix, IsOrthonormal());
+    	public boolean IsOrthonormal(double arg[]) {
+    	  double kTolerance = 10.0 * epsilon;
+    	  if (arg == null) {
+    	    System.err.println("Null matrix");
+    	    return false;
+    	  }
+
+    	  for (int c1 = 0; c1 < 3; c1++) {
+    	    for (int c2 = 0; c2 < 3; c2++) {
+    	      double v = 0;
+    	      for (int i = 0; i < 3; i++) {
+    	        v += arg[i + 3 * c1] * arg[i + 3 * c2];
+    	      }
+    	      double expected = (c1 == c2) ? 1 : 0;
+    	      if (Math.abs(expected - v) > kTolerance) {
+    	        System.err.println("Columns " + c1 + " and " + c2);
+    	        System.err.println("should have dot product " + expected);
+    	        System.err.println("but have " + v);
+    	        return false;
+    	      }
+    	    }
+    	  }
+
+    	  return true;
+    	}
+
+    	// Use as:
+    	// double matrix1[9];
+    	// double matrix2[9];
+    	// EXPECT_THAT(matrix1, IsNear3x3Matrix(matrix2));
+    	public boolean IsNear3x3Matrix(double arg[], double expected[]) {
+    	  double kTolerance = 10.0 * epsilon;
+    	  if (arg == null) {
+    	    System.err.println("Null matrix");
+    	    return false;
+    	  }
+
+    	  for (int i = 0; i < 9; i++) {
+    	    if (Math.abs(arg[i] - expected[i]) > kTolerance) {
+    	      System.err.println("component " + i + " should be " + expected[i]);
+    	      return false;
+    	    }
+    	  }
+
+    	  return true;
+    	}
+    	
+    	// Transforms a zero axis/angle to a quaternion.
+    	public void RotationZeroAngleAxisToQuaternion() {
+    	  // RotationZeroAngleAxisToQuaternion() passed all tests
+    	  boolean passed = true;
+    	  double axis_angle[] = new double[] { 0, 0, 0 };
+    	  double quaternion[] = new double[4];
+    	  double expected[] = new double[] { 1, 0, 0, 0 };
+    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  if (!IsNormalizedQuaternion(quaternion)) {
+    		  System.err.println("In RotationZeroAngleAxisToQuaternion() IsNormalizedQuaternion(quaternion) = false");
+    		  passed = false;
+    	  }
+    	  if (!IsNearQuaternion(quaternion, expected)) {
+    		  System.err.println("In RotationZeroAngleAxisToQuaternion() IsNearQuaternion(quaternion, expected) = false");
+    		  passed = false;
+    	  }
+    	  if (passed) {
+    		  System.out.println("RotationZeroAngleAxisToQuaternion() passed all tests");
+    	  }
+    	}
+    	
+    	// Test that exact conversion works for small angles.
+    	public void RotationSmallAngleAxisToQuaternion() {
+    	  // RotationSmallAngleAxisToQuaternion() passed all tests
+    	  boolean passed = true;
+    	  // Small, finite value to test.
+    	  double theta = 1.0e-2;
+    	  double axis_angle[] = new double[] { theta, 0, 0 };
+    	  double quaternion[] = new double[4];
+    	  double expected[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
+    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  if (!IsNormalizedQuaternion(quaternion)) {
+    		  System.err.println("In RotationSmallAngleAxisToQuaternion() IsNormalizedQuaternion(quaternion) = false");
+    		  passed = false;
+    	  }
+    	  if (!IsNearQuaternion(quaternion, expected)) {
+    		  System.err.println("In RotationSmallAngleAxisToQuaternion() IsNearQuaternion(quaternion, expected) = false");
+    		  passed = false;
+    	  }
+    	  if (passed) {
+    		  System.out.println("RotationSmallAngleAxisToQuaternion() passed all tests");
+    	  }
+    	}
+    	
+    	// Test that approximate conversion works for very small angles.
+    	public void RotationTinyAngleAxisToQuaternion() {
+          // RotationTinyAngleAxisToQuaternion() passed all tests
+    	  boolean passed = true;
+    	  // Very small value that could potentially cause underflow.
+    	  double theta = Math.pow(Double.MIN_VALUE, 0.75);
+    	  double axis_angle[] = new double[] { theta, 0, 0 };
+    	  double quaternion[] = new double[4];
+    	  double expected[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
+    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  if (!IsNormalizedQuaternion(quaternion)) {
+    		  System.err.println("In RotationTinyAngleAxisToQuaternion() IsNormalizedQuaternion(quaternion) = false");
+    		  passed = false;
+    	  }
+    	  if (!IsNearQuaternion(quaternion, expected)) {
+    		  System.err.println("In RotationTinyAngleAxisToQuaternion() IsNearQuaternion(quaternion, expected) = false");
+    		  passed = false;
+    	  }
+    	  if (passed) {
+    		  System.out.println("RotationTinyAngleAxisToQuaternion() passed all tests");
+    	  }
+    	}
+    	
+    	// Transforms a rotation by pi/2 around X to a quaternion.
+    	public void RotationXRotationToQuaternion() {
+    	  // RotationXRotationToQuaternion() passed all tests
+    	  boolean passed = true;
+    	  double kHalfSqrt2 = 1.0/Math.sqrt(2.0);
+    	  double axis_angle[] = new double[] { Math.PI / 2, 0, 0 };
+    	  double quaternion[] = new double[4];
+    	  double expected[] = { kHalfSqrt2, kHalfSqrt2, 0, 0 };
+    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  if (!IsNormalizedQuaternion(quaternion)) {
+    		  System.err.println("In RotationXRotationToQuaternion() IsNormalizedQuaternion(quaternion) = false");
+    		  passed = false;
+    	  }
+    	  if (!IsNearQuaternion(quaternion, expected)) {
+    		  System.err.println("In RotationXRotationToQuaternion() IsNearQuaternion(quaternion, expected) = false");
+    		  passed = false;
+    	  }
+    	  if (passed) {
+    		  System.out.println("RotationXRotationToQuaternion() passed all tests");
+    	  }
+    	}
+
+    	// Transforms a unit quaternion to an axis angle.
+    	public void RotationUnitQuaternionToAngleAxis() {
+    	  // RotationUnitQuaternionToAngleAxis() passed all tests
+    	  double quaternion[] = new double[] { 1, 0, 0, 0 };
+    	  double axis_angle[] = new double[3];
+    	  double expected[] = new double[] { 0, 0, 0 };
+    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  if (!IsNearAngleAxis(axis_angle, expected)) {
+    		  System.err.println("In RotationUnitQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
+    	  }
+    	  else {
+    		  System.out.println("RotationUnitQuaternionToAngleAxis() passed all tests");
+    	  }
+    	}
+
+    	// Transforms a quaternion that rotates by pi about the Y axis to an axis angle.
+    	public void RotationYRotationQuaternionToAngleAxis() {
+    	  // RotationYRotationQuaternionToAngleAxis() passed all tests
+    	  double quaternion[] = new double[] { 0, 0, 1, 0 };
+    	  double axis_angle[] = new double[3];
+    	  double expected[] = new double[]{ 0, Math.PI, 0 };
+    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  if (!IsNearAngleAxis(axis_angle, expected)) {
+    		  System.err.println("In RotationYRotationQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
+    	  }
+    	  else {
+    		  System.out.println("RotationYRotationQuaternionToAngleAxis() passed all tests");
+    	  }
+    	}
+    	
+    	// Transforms a quaternion that rotates by pi/3 about the Z axis to an axis
+    	// angle.
+    	public void RotationZRotationQuaternionToAngleAxis() {
+    	  // RotationZRotationQuaternionToAngleAxis() passed all tests
+    	  double quaternion[] = new double[] { Math.sqrt(3) / 2, 0, 0, 0.5 };
+    	  double axis_angle[] = new double[3];
+    	  double expected[] = new double[] { 0, 0, Math.PI / 3 };
+    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  if (!IsNearAngleAxis(axis_angle, expected)) {
+    		  System.err.println("In RotationZRotationQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
+    	  }
+    	  else {
+    		  System.out.println("RotationZRotationQuaternionToAngleAxis() passed all tests");
+    	  }
+    	}
+
+    	// Test that exact conversion works for small angles.
+    	public void RotationSmallQuaternionToAngleAxis() {
+    	  // RotationSmallQuaternionToAngleAxis() passed all tests
+    	  // Small, finite value to test.
+    	  double theta = 1.0e-2;
+    	  double quaternion[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
+    	  double axis_angle[] = new double[3];
+    	  double expected[] = new double[] { theta, 0, 0 };
+    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  if (!IsNearAngleAxis(axis_angle, expected)) {
+    		  System.err.println("In RotationSmallQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
+    	  }
+    	  else {
+    		  System.out.println("RotationSmallQuaternionToAngleAxis() passed all tests");
+    	  }
+    	}
+    	
+    	// Test that approximate conversion works for very small angles.
+        public void RotationTinyQuaternionToAngleAxis() {
+          // RotationTinyQuaternionToAngleAxis() passed all tests
+    	  // Very small value that could potentially cause underflow.
+    	  double theta = Math.pow(Double.MIN_VALUE, 0.75);
+    	  double quaternion[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
+    	  double axis_angle[] = new double[3];
+    	  double expected[] = new double[] { theta, 0, 0 };
+    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  if (!IsNearAngleAxis(axis_angle, expected)) {
+    		  System.err.println("In RotationTinyQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
+    	  }
+    	  else {
+    		  System.out.println("RotationTinyQuaternionToAngleAxis() passed all tests");
+    	  }
+    	}
+
+        public void RotationQuaternionToAngleAxisAngleIsLessThanPi() {
+        	  // RotationQuaternionToAngleAxisAngleIsLessThanPi() passed all tests
+        	  double quaternion[] = new double[4];
+        	  double angle_axis[] = new double[3];
+
+        	  final double half_theta = 0.75 * Math.PI;
+
+        	  quaternion[0] = Math.cos(half_theta);
+        	  quaternion[1] = 1.0 * Math.sin(half_theta);
+        	  quaternion[2] = 0.0;
+        	  quaternion[3] = 0.0;
+        	  QuaternionToAngleAxis(quaternion, angle_axis);
+        	  final double angle = Math.sqrt(angle_axis[0] * angle_axis[0] +
+        	                            angle_axis[1] * angle_axis[1] +
+        	                            angle_axis[2] * angle_axis[2]);
+        	  if (angle > Math.PI) {
+        		  System.err.println("In RotationQuaternionToAngleAxisAngleIsLessThanPi() angle > Math.PI");
+        	  }
+        	  else {
+        		  System.out.println("RotationQuaternionToAngleAxisAngleIsLessThanPi() passed all tests");
+        	  }
+        }
+        
+        static final int kNumTrials = 10000;
+
+     // Takes a bunch of random axis/angle values, converts them to quaternions,
+     // and back again.
+     public void RotationAngleAxisToQuaterionAndBack() {
+       // RotationAngleAxisToQuaterionAndBack() passed all tests
+       boolean passed = true;
+       for (int i = 0; i < kNumTrials; i++) {
+         double axis_angle[] = new double[3];
+         // Make an axis by choosing three random numbers in [-1, 1) and
+         // normalizing.
+         double norm = 0;
+         for (int j = 0; j < 3; j++) {
+           axis_angle[j] = RandDouble() * 2 - 1;
+           norm += axis_angle[j] * axis_angle[j];
+         }
+         norm = Math.sqrt(norm);
+
+         // Angle in [-pi, pi).
+         double theta = Math.PI * 2 * RandDouble() - Math.PI;
+         for (int j = 0; j < 3; j++) {
+           axis_angle[j] = axis_angle[j] * theta / norm;
+         }
+
+         double quaternion[] = new double[4];
+         double round_trip[] = new double[3];
+         // We use ASSERTs here because if there's one failure, there are
+         // probably many and spewing a million failures doesn't make anyone's
+         // day.
+         AngleAxisToQuaternion(axis_angle, quaternion);
+         if (!IsNormalizedQuaternion(quaternion)) {
+   		  System.err.println("In RotationAngleAxisToQuaterionAndBack() IsNormalizedQuaternion(quaternion) = false");
+   		  passed = false;
+   	     }
+         QuaternionToAngleAxis(quaternion, round_trip);
+         if (!IsNearAngleAxis(round_trip, axis_angle)) {
+   		  System.err.println("In RotationAngleAxisToQuaterionAndBack() IsNearAngleAxis(axis_angle, expected) = false");
+   		  passed = false;
+   	     }
+       }
+       if (passed) {
+      	 System.out.println("RotationAngleAxisToQuaterionAndBack() passed all tests");
+       }
+     }
+
+  // Takes a bunch of random quaternions, converts them to axis/angle,
+  // and back again.
+  public void RotationQuaterionToAngleAxisAndBack() {
+	// RotationQuaterionToAngleAxisAndBack() passed all tests
+    boolean passed = true;
+    for (int i = 0; i < kNumTrials; i++) {
+      double quaternion[] = new double[4];
+      // Choose four random numbers in [-1, 1) and normalize.
+      double norm = 0;
+      for (int j = 0; j < 4; j++) {
+        quaternion[j] = RandDouble() * 2 - 1;
+        norm += quaternion[j] * quaternion[j];
+      }
+      norm = Math.sqrt(norm);
+
+      for (int j = 0; j < 4; j++) {
+        quaternion[j] = quaternion[j] / norm;
+      }
+
+      double axis_angle[] = new double[3];
+      double round_trip[] = new double[4];
+      QuaternionToAngleAxis(quaternion, axis_angle);
+      AngleAxisToQuaternion(axis_angle, round_trip);
+      if (!IsNormalizedQuaternion(round_trip)) {
+    	  System.err.println("In RotationQuaterionToAngleAxisAndBack() IsNormalizedQuaternion(round_trip) = false");
+    	  passed = false;
+      }
+      if (!IsNearQuaternion(round_trip, quaternion)) {
+    	  System.err.println("In RotationQuaterionToAngleAxisAndBack() IsNearQuaternion(round_trip, quaternion) = false");
+    	  passed = false;
+      }
+    }
+    if (passed) {
+    	System.out.println("RotationQuaterionToAngleAxisAndBack() passed all tests");
+    }
+  }
 }
