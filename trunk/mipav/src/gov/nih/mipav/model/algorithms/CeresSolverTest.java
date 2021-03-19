@@ -15551,7 +15551,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
     	  for (int i = 0; i < 9; i++) {
     	    if (Math.abs(arg[i] - expected[i]) > kTolerance) {
-    	      System.err.println("component " + i + " should be " + expected[i]);
+    	      System.err.println("component " + i + " = " + arg[i] + " should be " + expected[i]);
     	      return false;
     	    }
     	  }
@@ -15965,5 +15965,274 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  System.out.println("RotationNearPiAngleAxisRoundTrip() passed all tests");
 		  }
 		}
+	
+	public void RotationAtPiAngleAxisRoundTrip() {
+		  // RotationAtPiAngleAxisRoundTrip() passed all tests
+		  boolean passed = true;
+		  // A rotation of kPi about the X axis;
+		  final double kMatrix[][] = new double[][] {
+		    {1.0,  0.0,  0.0},
+		    {0.0,  -1.0,  0.0},
+		    {0.0,  0.0,  -1.0}
+		  };
+
+		  double in_matrix[] = new double[9];
+		  // Fill it from kMatrix in col-major order.
+		  for (int j = 0, k = 0; j < 3; ++j) {
+		     for (int i = 0; i < 3; ++i, ++k) {
+		       in_matrix[k] = kMatrix[i][j];
+		     }
+		  }
+
+		  final double expected_axis_angle[] = new double[] { Math.PI, 0, 0 };
+
+		  double out_matrix[] = new double[9];
+		  double axis_angle[] = new double[3];
+		  RotationMatrixToAngleAxis(in_matrix, axis_angle);
+		  AngleAxisToRotationMatrix(axis_angle, out_matrix);
+
+		  /*LOG(INFO) << "AngleAxis = " << axis_angle[0] << " " << axis_angle[1]
+		            << " " << axis_angle[2];
+		  LOG(INFO) << "Expected AngleAxis = " << kPi << " 0 0";
+		  double out_rowmajor[3][3];
+		  for (int j = 0, k = 0; j < 3; ++j) {
+		    for (int i = 0; i < 3; ++i, ++k) {
+		      out_rowmajor[i][j] = out_matrix[k];
+		    }
+		  }
+		  LOG(INFO) << "Rotation:";
+		  LOG(INFO) << "EXPECTED        |        ACTUAL";
+		  for (int i = 0; i < 3; ++i) {
+		    string line;
+		    for (int j = 0; j < 3; ++j) {
+		      StringAppendF(&line, "%g ", kMatrix[i][j]);
+		    }
+		    line += "         |        ";
+		    for (int j = 0; j < 3; ++j) {
+		      StringAppendF(&line, "%g ", out_rowmajor[i][j]);
+		    }
+		    LOG(INFO) << line;
+		  }*/
+
+		  if (!IsNearAngleAxis(axis_angle, expected_axis_angle)) {
+			  System.err.println("In RotationAtPiAngleAxisRoundTrip() IsNearAngleAxis(axis_angle, expected_axis_angle) = false");
+			  passed = false;
+		  }
+		  if (!IsNear3x3Matrix(out_matrix, in_matrix)) {
+			  System.err.println("In RotationAtPiAngleAxisRoundTrip() IsNear3x3Matrix(out_matrix, in_matrix) = false");
+			  passed = false;
+		  }
+		  if (passed) {
+			  System.out.println("RotationAtPiAngleAxisRoundTrip() passed all tests");
+		  }
+		}
+
+	// Transforms an axis angle that rotates by pi/3 about the Z axis to a
+	// rotation matrix.
+	public void RotationZRotationToRotationMatrix() {
+	  // RotationZRotationToRotationMatrix() passed all tests
+      boolean passed = true;
+	  double axis_angle[] =  new double[] { 0, 0, Math.PI / 3 };
+	  double matrix[] = new double[9];
+	  // This is laid-out row-major on the screen but is actually stored
+	  // column-major.
+	  double expected[] = new double[] { 0.5, Math.sqrt(3) / 2, 0,   // Column 1
+	                         -Math.sqrt(3) / 2, 0.5, 0,  // Column 2
+	                         0, 0, 1 };             // Column 3
+	  AngleAxisToRotationMatrix(axis_angle, matrix);
+	  if (!IsOrthonormal(matrix)) {
+		  System.err.println("In RotationZRotationToRotationMatrix() IsOrthonormal(matrix) = false");
+		  passed = false;
+	  }
+	  if (!IsNear3x3Matrix(matrix, expected)) {
+		  System.err.println("In RotationZRotationToRotationMatrix() IsNear3x3Matrix(matrix, expected) = false");
+		  passed = false;
+	  }
+	  double round_trip[] = new double[3];
+	  RotationMatrixToAngleAxis(matrix, round_trip);
+	  if (!IsNearAngleAxis(round_trip, axis_angle)) {
+		  System.err.println("In RotationZRotationToRotationMatrix() IsNearAngleAxis(round_trip, axis_angle) = false");
+		  passed = false;
+	  }
+	  if (passed) {
+		 System.out.println("RotationZRotationToRotationMatrix() passed all tests"); 
+	  }
+	}
+	
+	// Takes a bunch of random axis/angle values, converts them to rotation
+	// matrices, and back again.
+	public void RotationAngleAxisToRotationMatrixAndBack() {
+     // RotationAngleAxisToRotationMatrixAndBack() passed all tests
+	 double kLooseTolerance = 1.0E-9;
+	 boolean passed = true;
+	  for (int i = 0; i < kNumTrials; i++) {
+	    double axis_angle[] = new double[3];
+	    // Make an axis by choosing three random numbers in [-1, 1) and
+	    // normalizing.
+	    double norm = 0;
+	    for (int j = 0; j < 3; j++) {
+	      axis_angle[j] = RandDouble() * 2 - 1;
+	      norm += axis_angle[j] * axis_angle[j];
+	    }
+	    norm = Math.sqrt(norm);
+
+	    // Angle in [-pi, pi).
+	    double theta = Math.PI * 2 * RandDouble() - Math.PI;
+	    for (int j = 0; j < 3; j++) {
+	      axis_angle[j] = axis_angle[j] * theta / norm;
+	    }
+
+	    double matrix[] = new double[9];
+	    double round_trip[] = new double[3];
+	    AngleAxisToRotationMatrix(axis_angle, matrix);
+	    if (!IsOrthonormal(matrix)) {
+	    	System.err.println("In RotationAngleAxisToRotationMatrixAndBack() IsOrthonormal(matrix) = false");
+	    	passed = false;
+	    }
+	    RotationMatrixToAngleAxis(matrix, round_trip);
+
+	    for (int j = 0; j < 3; ++j) {
+	      if (Math.abs(round_trip[j] - axis_angle[j]) > kLooseTolerance) {
+	    	  System.err.println("In RotationAngleAxisToRotationMatrixAndBack() Math.abs(round_trip[j] - axis_angle[j]) > kLooseTolerance");
+	    	  passed = false;
+	      }
+	    }
+	  }
+	  if (passed) {
+		  System.out.println("RotationAngleAxisToRotationMatrixAndBack() passed all tests");
+	  }
+	}
+
+	// Takes a bunch of random axis/angle values near zero, converts them
+	// to rotation matrices, and back again.
+	public void RotationAngleAxisToRotationMatrixAndBackNearZero() {
+      // RotationAngleAxisToRotationMatrixAndBackNearZero() passed all tests
+	  boolean passed = true;
+	  for (int i = 0; i < kNumTrials; i++) {
+	    double axis_angle[] = new double[3];
+	    // Make an axis by choosing three random numbers in [-1, 1) and
+	    // normalizing.
+	    double norm = 0;
+	    for (int j = 0; j < 3; j++) {
+	      axis_angle[j] = RandDouble() * 2 - 1;
+	      norm += axis_angle[j] * axis_angle[j];
+	    }
+	    norm = Math.sqrt(norm);
+
+	    // Tiny theta.
+	    double theta = 1e-16 * (Math.PI * 2 * RandDouble() - Math.PI);
+	    for (int j = 0; j < 3; j++) {
+	      axis_angle[j] = axis_angle[j] * theta / norm;
+	    }
+
+	    double matrix[] = new double[9];
+	    double round_trip[] = new double[3];
+	    AngleAxisToRotationMatrix(axis_angle, matrix);
+	    if (!IsOrthonormal(matrix)) {
+	    	System.err.println("In RotationAngleAxisToRotationMatrixAndBackNearZero() IsOrthonormal(matrix) = false");
+	    	passed = false;
+	    }
+	    RotationMatrixToAngleAxis(matrix, round_trip);
+
+	    for (int j = 0; j < 3; ++j) {
+	      if (Math.abs(round_trip[j] - axis_angle[j]) > epsilon) {
+	    	  System.err.println("In RotationAngleAxisToRotationMatrixAndBackNearZero() Math.abs(round_trip[j] - axis_angle[j]) > epsilon");
+	    	  passed = false;
+	      }
+	    }
+	  }
+	  if (passed) {
+		  System.out.println("RotationAngleAxisToRotationMatrixAndBackNearZero() passed all tests");
+	  }
+	}
+	
+	// Compare the 3x3 rotation matrices produced by the axis-angle
+	// rotation 'aa' and the Euler angle rotation 'ea' (in radians).
+	public void CompareEulerToAngleAxis(double aa[], double ea[], String testName, boolean passed[]) {
+	  double aa_matrix[] = new double[9];
+	  AngleAxisToRotationMatrix(aa, aa_matrix);
+	  Transpose3x3(aa_matrix);  // Column to row major order.
+
+	  double ea_matrix[] = new double[9];
+	  ToDegrees(ea);  // Radians to degrees.
+	  //const int kRowStride = 3;
+	  //EulerAnglesToRotationMatrix(ea, kRowStride, ea_matrix);
+	  EulerAnglesToRotationMatrix(ea, ea_matrix);
+
+	  if (!IsOrthonormal(aa_matrix)) {
+		  System.err.println("In " + testName + " IsOrthonormal(aa_matrix) = false");
+		  passed[0] = false;
+	  }
+	  if (!IsOrthonormal(ea_matrix)) {
+		  System.err.println("In " + testName + " IsOrthonormal(ea_matrix) = false");
+		  passed[0] = false;
+	  }
+	  if (!IsNear3x3Matrix(ea_matrix, aa_matrix)) {
+		  System.err.println("In " + testName + " IsNear3x3Matrix(ea_matrix, aa_matrix) = false");
+		  passed[0] = false;
+	  }
+	}
+
+	// Test with rotation axis along the x/y/z axes.
+	// Also test zero rotation.
+	public void EulerAnglesToRotationMatrixOnAxis() {
+      // EulerAnglesToRotationMatrixOnAxis() passed all tests
+	  boolean passed [] = new boolean[] {true};
+	  String testName = "EulerAnglesToRotationMatrixOnAxis()";
+	  int n_tests = 0;
+	  for (double x = -1.0; x <= 1.0; x += 1.0) {
+	    for (double y = -1.0; y <= 1.0; y += 1.0) {
+	      for (double z = -1.0; z <= 1.0; z += 1.0) {
+	    	int sum = 0;
+	    	if (x != 0.0) {
+	    		sum++;
+	    	}
+	    	if (y != 0.0) {
+	    		sum++;
+	    	}
+	    	if (z != 0.0) {
+	    		sum++;
+	    	}
+	        if (sum > 1)
+	          continue;
+	        double axis_angle[] = new double[] {x, y, z};
+	        double euler_angles[] = new double[ ]{x, y, z};
+	        CompareEulerToAngleAxis(axis_angle, euler_angles, testName, passed);
+	        ++n_tests;
+	      }
+	    }
+	  }
+	  if (7 != n_tests) {
+		  System.err.println("In EulerAnglesToRotationMatrixOnAxis() 7 != n_tests");
+		  passed[0] = false;
+	  }
+	  if (passed[0]) {
+		  System.out.println("EulerAnglesToRotationMatrixOnAxis() passed all tests");
+	  }
+	}
+	
+	// Test that a random rotation produces an orthonormal rotation
+	// matrix.
+	public void EulerAnglesToRotationMatrixIsOrthonormal() {
+      // EulerAnglesToRotationMatrixIsOrthonormal() passed all tests
+	  boolean passed = true;
+	  for (int trial = 0; trial < kNumTrials; ++trial) {
+	    double euler_angles_degrees[] = new double[3];
+	    for (int i = 0; i < 3; ++i) {
+	      euler_angles_degrees[i] = RandDouble() * 360.0 - 180.0;
+	    }
+	    double rotation_matrix[] = new double[9];
+	    //EulerAnglesToRotationMatrix(euler_angles_degrees, 3, rotation_matrix);
+	    EulerAnglesToRotationMatrix(euler_angles_degrees, rotation_matrix);
+	    if (!IsOrthonormal(rotation_matrix)) {
+	    	System.err.println("In EulerAnglesToRotationMatrixIsOrthonormal() IsOrthonormal(rotation_matrix) = false");
+	    	passed = false;
+	    }
+	  }
+	  if (passed) {
+		  System.out.println("EulerAnglesToRotationMatrixIsOrthonormal() passed all tests");
+	  }
+	}
+
 
 }
