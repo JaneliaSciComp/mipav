@@ -24529,6 +24529,66 @@ public abstract class CeresSolver {
 		  QuaternionToAngleAxis(quaternion, angle_axis);
 		  return;
 		}
+		
+		// Transposes a 3x3 matrix.
+		public void Transpose3x3(double m[]) {
+		  double temp;
+		  temp = m[1];
+		  m[1] = m[3];
+		  m[3] = temp;
+		  temp = m[2];
+		  m[2] = m[6];
+		  m[6] = temp;
+		  temp = m[5];
+		  m[5] = m[7];
+		  m[7] = temp;
+		}
+		
+		// Convert Euler angles from radians to degrees.
+		public void ToDegrees(double euler_angles[]) {
+		  double scale = 180.0/Math.PI;
+		  for (int i = 0; i < 3; ++i) {
+		    euler_angles[i] *= scale;
+		  }
+		}
+
+		//template <typename T>
+		//inline void EulerAnglesToRotationMatrix(const T* euler,
+		                                        //const int row_stride_parameter,
+		                                        //T* R) {
+		  //EulerAnglesToRotationMatrix(euler, RowMajorAdapter3x3(R));
+		//}
+
+		//template <typename T, int row_stride, int col_stride>
+		//void EulerAnglesToRotationMatrix(
+		    //const T* euler,
+		    //const MatrixAdapter<T, row_stride, col_stride>& R) {
+		public void EulerAnglesToRotationMatrix(double euler[], double R[]) {
+		  final double degrees_to_radians = Math.PI / 180.0;
+
+		  final double pitch = euler[0] * degrees_to_radians;
+		  final double roll = euler[1] * degrees_to_radians;
+		  final double yaw = euler[2] * degrees_to_radians;
+
+		  final double c1 = Math.cos(yaw);
+		  final double s1 = Math.sin(yaw);
+		  final double c2 = Math.cos(roll);
+		  final double s2 = Math.sin(roll);
+		  final double c3 = Math.cos(pitch);
+		  final double s3 = Math.sin(pitch);
+
+		  R[0] = c1*c2; // R(0, 0)
+		  R[1] = -s1*c3 + c1*s2*s3; // R(0, 1)
+		  R[2] = s1*s3 + c1*s2*c3; // R(0, 2)
+
+		  R[3] = s1*c2; // R(1, 0)
+		  R[4] = c1*c3 + s1*s2*s3; // R(1, 1)
+		  R[5] = -c1*s3 + s1*s2*c3; // R(1, 2)
+
+		  R[6] = -s2; // R(2, 0)
+		  R[7] = c2*s3; // R(2, 1)
+		  R[8] = c2*c3; // R(2, 2)
+		}
 } // public abstract class CeresSolver
 
 class indexValueComparator implements Comparator<indexValue> {
