@@ -4696,7 +4696,7 @@ public class PlugInDialogFITBIR extends JFrame
      * Converts from DICOM/US date and time format (MM/DD/YYYY) or M/D/YYYY to ISO 8601 format (YYYY-MM-DDThh:mm:ss).
      * 
      * @param date A date string in the format MM/DD/YYYY or M/D/YYYY.
-     * @param time A time string in the format hh:mm:ss.fract or hhmmss.fract.
+     * @param time A time string in the format hh:mm:ss or hhmmss.
      * @return An ISO 8601 formatted version of the given date and time (or the original string if not in the DICOM/US
      *         date format).
      */
@@ -4736,7 +4736,7 @@ public class PlugInDialogFITBIR extends JFrame
             String hour = m.group(1);
             String min = m.group(2);
             String sec = m.group(3);
-            final String frac = m.group(4);
+            //final String frac = m.group(4);
             // add leading zeroes, if necessary
             if (hour.length() == 1) {
                 hour = "0" + hour;
@@ -4748,9 +4748,9 @@ public class PlugInDialogFITBIR extends JFrame
                 sec = "0" + sec;
             }
             isoTime = hour + ":" + min + ":" + sec;
-            if (frac.length() > 0) {
-                isoTime += "." + frac;
-            }
+//            if (frac.length() > 0) {
+//                isoTime += "." + frac;
+//            }
         }
 
         if (isoTime.equals("")) {
