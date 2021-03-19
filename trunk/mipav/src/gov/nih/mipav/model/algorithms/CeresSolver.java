@@ -24406,6 +24406,129 @@ public abstract class CeresSolver {
 			    angle_axis[2] = q3 * k;
 			  }
 			}
+		
+		public double DotProduct(double a[], double b[]) {
+			int i;
+			if (a.length != b.length) {
+				System.err.println("a.length != b.length in DotProduct");
+				return Double.NaN;
+			}
+			double result = 0.0;
+			for (i = 0; i < a.length; i++) {
+				result += a[i] * b[i];
+			}
+			return result;
+		}
+		
+		//template <typename T>
+		//inline void AngleAxisToRotationMatrix(const T* angle_axis, T* R) {
+		  //AngleAxisToRotationMatrix(angle_axis, ColumnMajorAdapter3x3(R));
+		//}
+
+		//template <typename T, int row_stride, int col_stride>
+		//void AngleAxisToRotationMatrix(
+		    //const T* angle_axis,
+		    //const MatrixAdapter<T, row_stride, col_stride>& R) {
+		  // Put double R[] values in column major order
+		public void AngleAxisToRotationMatrix(double[] angle_axis, double[] R) {
+		  final double kOne = 1.0;
+		  final double theta2 = DotProduct(angle_axis, angle_axis);
+		  if (theta2 > epsilon) {
+		    // We want to be careful to only evaluate the square root if the
+		    // norm of the angle_axis vector is greater than zero. Otherwise
+		    // we get a division by zero.
+		    final double theta = Math.sqrt(theta2);
+		    final double wx = angle_axis[0] / theta;
+		    final double wy = angle_axis[1] / theta;
+		    final double wz = angle_axis[2] / theta;
+
+		    final double costheta = Math.cos(theta);
+		    final double sintheta = Math.sin(theta);
+
+		    R[0] =     costheta   + wx*wx*(kOne -    costheta); // R(0, 0)
+		    R[1] =  wz*sintheta   + wx*wy*(kOne -    costheta); // R(1, 0)
+		    R[2] = -wy*sintheta   + wx*wz*(kOne -    costheta); // R(2, 0)
+		    R[3] =  wx*wy*(kOne - costheta)     - wz*sintheta;  // R(0, 1)
+		    R[4] =     costheta   + wy*wy*(kOne -    costheta); // R(1, 1)
+		    R[5] =  wx*sintheta   + wy*wz*(kOne -    costheta); // R(2, 1)
+		    R[6] =  wy*sintheta   + wx*wz*(kOne -    costheta); // R(0, 2)
+		    R[7] = -wx*sintheta   + wy*wz*(kOne -    costheta); // R(1, 2)
+		    R[8] =     costheta   + wz*wz*(kOne -    costheta); // R(2, 2)
+		  } else {
+		    // Near zero, we switch to using the first order Taylor expansion.
+		    R[0] =  kOne; // R(0, 0)
+		    R[1] =  angle_axis[2]; // R(1, 0)
+		    R[2] = -angle_axis[1]; // R(2, 0)
+		    R[3] = -angle_axis[2]; // R(0, 1)
+		    R[4] =  kOne; // R(1, 1)
+		    R[5] =  angle_axis[0]; // R(2, 1)
+		    R[6] =  angle_axis[1]; // R(0, 2)
+		    R[7] = -angle_axis[0]; // R(1 ,2)
+		    R[8] = kOne; // R(2, 2)
+		  }
+		}
+		
+		//template <typename T>
+		//void RotationMatrixToQuaternion(const T* R, T* angle_axis) {
+		  //RotationMatrixToQuaternion(ColumnMajorAdapter3x3(R), angle_axis);
+		//}
+
+		// This algorithm comes from "Quaternion Calculus and Fast Animation",
+		// Ken Shoemake, 1987 SIGGRAPH course notes
+		//template <typename T, int row_stride, int col_stride>
+		//void RotationMatrixToQuaternion(
+		    //const MatrixAdapter<const T, row_stride, col_stride>& R,
+		    //T* quaternion) {
+		public void RotationMatrixToQuaternion(double R[], double quaternion[]) {
+		  final double trace = R[0] + R[4] + R[8];
+		  if (trace >= 0.0) {
+		    double t = Math.sqrt(trace + 1.0);
+		    quaternion[0] = 0.5 * t;
+		    t = 0.5 / t;
+		    quaternion[1] = (R[5] - R[7]) * t;
+		    quaternion[2] = (R[6] - R[2]) * t;
+		    quaternion[3] = (R[1] - R[3]) * t;
+		  } else {
+		    int i = 0;
+		    if (R[4] > R[0]) {
+		      i = 1;
+		    }
+
+		    if (R[8] > R[4*i]) {
+		      i = 2;
+		    }
+
+		    final int j = (i + 1) % 3;
+		    final int k = (j + 1) % 3;
+		    double t = Math.sqrt(R[4*i] - R[4*j] - R[4*k] + 1.0);
+		    quaternion[i + 1] = 0.5 * t;
+		    t = 0.5 / t;
+		    quaternion[0] = (R[k + 3*j] - R[j + 3*k]) * t;
+		    quaternion[j + 1] = (R[j + 3*i] + R[i + 3*j]) * t;
+		    quaternion[k + 1] = (R[k + 3*i] + R[i + 3*k]) * t;
+		  }
+		}
+		
+		// The conversion of a rotation matrix to the angle-axis form is
+		// numerically problematic when then rotation angle is close to zero
+		// or to Pi. The following implementation detects when these two cases
+		// occurs and deals with them by taking code paths that are guaranteed
+		// to not perform division by a small number.
+		//template <typename T>
+		//inline void RotationMatrixToAngleAxis(const T* R, T* angle_axis) {
+		  //RotationMatrixToAngleAxis(ColumnMajorAdapter3x3(R), angle_axis);
+		//}
+
+		//template <typename T, int row_stride, int col_stride>
+		//void RotationMatrixToAngleAxis(
+		    //const MatrixAdapter<const T, row_stride, col_stride>& R,
+		    //T* angle_axis) {
+		public void RotationMatrixToAngleAxis(double R[], double angle_axis[]) {
+		  double quaternion[] = new double[4];
+		  RotationMatrixToQuaternion(R, quaternion);
+		  QuaternionToAngleAxis(quaternion, angle_axis);
+		  return;
+		}
 } // public abstract class CeresSolver
 
 class indexValueComparator implements Comparator<indexValue> {
