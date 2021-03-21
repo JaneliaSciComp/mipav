@@ -16234,5 +16234,283 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  }
 	}
 
+	public void QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() {
+		  // QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() passed all tests
+		  double kTolerance = 10.0 * epsilon;
+		  int i;
+		  boolean passed = true;
+		  // Canned data generated in octave.
+		  final double q[] = new double[] {
+		    +0.1956830471754074,
+		    -0.0150618562474847,
+		    +0.7634572982788086,
+		    -0.3019454777240753,
+		  };
+		  final double Q[] = new double[] {  // Scaled rotation matrix.
+		     -0.6355194033477252,  0.0951730541682254,  0.3078870197911186,
+		     -0.1411693904792992,  0.5297609702153905, -0.4551502574482019,
+		    -0.2896955822708862, -0.4669396571547050, -0.4536309793389248
+		  };
+		  final double R[] = new double[]{  // With unit rows and columns.
+		     -0.8918859164053080,  0.1335655625725649,  0.4320876677394745,
+		    -0.1981166751680096,  0.7434648665444399, -0.6387564287225856,
+		    -0.4065578619806013, -0.6553016349046693, -0.6366242786393164,
+		  };
+
+		  // Compute R from q and compare to known answer.
+		  double Rq[] = new double[9];
+		  QuaternionToScaledRotation(q, Rq);
+		  for (i = 0; i < 9; i++) {
+			  if (Math.abs(Q[i] - Rq[i]) > kTolerance) {
+				  System.err.println("In QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() Math.abs(Q["+i+"] - Rq["+i+"]) > kTolerance");
+				  passed = false;
+			  }
+		  }
+
+		  // Now do the same but compute R with normalization.
+		  QuaternionToRotation(q, Rq);
+		  for (i = 0; i < 9; i++) {
+			  if (Math.abs(R[i] - Rq[i]) > kTolerance) {
+				  System.err.println("In QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() Math.abs(R["+i+"] - Rq["+i+"]) > kTolerance");
+				  passed = false;
+			  }
+		  }
+		  if (passed) {
+			  System.out.println("QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() passed all tests");
+		  }
+		}
+	
+	public void QuaternionRotatePointGivesSameAnswerAsRotationByMatrix() {
+		  // QuaternionRotatePointGivesSameAnswerAsRotationByMatrix() passed all tests
+		  double kTolerance = 10.0 * epsilon;
+		  boolean passed = true;
+		  int i;
+		  // Rotation defined by a unit quaternion.
+		  final double q[] = new double[] {
+		    0.2318160216097109,
+		    -0.0178430356832060,
+		    0.9044300776717159,
+		    -0.3576998641394597,
+		  };
+		  final double p[] = new double[] {
+		    +0.11,
+		    -13.15,
+		    1.17,
+		  };
+
+		  double R[] = new double[3 * 3];
+		  QuaternionToRotation(q, R);
+
+		  double result1[] = new double[3];
+		  UnitQuaternionRotatePoint(q, p, result1);
+
+		  double result2[] = new double[3];
+		  for (i = 0; i < 3; i++) {
+			  result2[i] = R[3*i]*p[0] + R[3*i + 1]*p[1] + R[3*i + 2]*p[2];
+		  }
+		  for (i = 0; i < 3; i++) {
+			  if (Math.abs(result1[i] - result2[i]) > kTolerance) {
+				  System.err.println("In QuaternionRotatePointGivesSameAnswerAsRotationByMatrix() Math.abs(result1["+i+"] - result2["+i+"]) > kTolerance");
+				  passed = false;
+			  }
+		  }
+		  if (passed) {
+			  System.out.println("QuaternionRotatePointGivesSameAnswerAsRotationByMatrix() passed all tests");
+		  }
+		}
+
+	// Verify that (a * b) * c == a * (b * c).
+	public void QuaternionMultiplicationIsAssociative() {
+      // QuaternionMultiplicationIsAssociative() passed all tests
+	  double kTolerance = 10.0 * epsilon;
+	  boolean passed = true;
+	  int i;
+	  double a[] = new double[4];
+	  double b[] = new double[4];
+	  double c[] = new double[4];
+	  for (i = 0; i < 4; ++i) {
+	    a[i] = 2 * RandDouble() - 1;
+	    b[i] = 2 * RandDouble() - 1;
+	    c[i] = 2 * RandDouble() - 1;
+	  }
+
+	  double ab[] = new double[4];
+	  double ab_c[] = new double[4];
+	  QuaternionProduct(a, b, ab);
+	  QuaternionProduct(ab, c, ab_c);
+
+	  double bc[] = new double[4];
+	  double a_bc[] = new double[4];
+	  QuaternionProduct(b, c, bc);
+	  QuaternionProduct(a, bc, a_bc);
+
+	  for (i = 0; i < 4; i++) {
+		  if (Math.abs(ab_c[i] - a_bc[i]) > kTolerance) {
+			  System.err.println("In QuaternionMultiplicationIsAssociative() Math.abs(ab_c["+i+"] - a_bc["+i+"]) > kTolerance");
+			  passed = false;
+		  }
+	  }
+	  if (passed) {
+		  System.out.println("QuaternionMultiplicationIsAssociative() passed all tests");
+	  }
+	}
+	
+	public void AngleAxisRotatePointGivesSameAnswerAsRotationMatrix() {
+		  // AngleAxisRotatePointGivesSameAnswerAsRotationMatrix() passed all tests
+		  boolean passed = true;
+		  double kTolerance = 10.0 * epsilon;
+		  double angle_axis[] = new double[3];
+		  double R[] = new double[9];
+		  double p[] = new double[3];
+		  double angle_axis_rotated_p[] = new double[3];
+		  double rotation_matrix_rotated_p[] = new double[3];
+
+		  for (int i = 0; i < 10000; ++i) {
+		    double theta = (2.0 * i * 0.0011 - 1.0) * Math.PI;
+		    for (int j = 0; j < 50; ++j) {
+		      double norm2 = 0.0;
+		      for (int k = 0; k < 3; ++k) {
+		        angle_axis[k] = 2.0 * RandDouble() - 1.0;
+		        p[k] = 2.0 * RandDouble() - 1.0;
+		        norm2 = angle_axis[k] * angle_axis[k];
+		      }
+
+		      final double inv_norm = theta / Math.sqrt(norm2);
+		      for (int k = 0; k < 3; ++k) {
+		        angle_axis[k] *= inv_norm;
+		      }
+
+		      AngleAxisToRotationMatrix(angle_axis, R);
+		      rotation_matrix_rotated_p[0] = R[0] * p[0] + R[3] * p[1] + R[6] * p[2];
+		      rotation_matrix_rotated_p[1] = R[1] * p[0] + R[4] * p[1] + R[7] * p[2];
+		      rotation_matrix_rotated_p[2] = R[2] * p[0] + R[5] * p[1] + R[8] * p[2];
+
+		      AngleAxisRotatePoint(angle_axis, p, angle_axis_rotated_p);
+		      for (int k = 0; k < 3; ++k) {
+		    	  if (Math.abs(rotation_matrix_rotated_p[k] - angle_axis_rotated_p[k]) > kTolerance) {
+		    		  System.err.println("In AngleAxisRotatePointGivesSameAnswerAsRotationMatrix() Math.abs(rotation_matrix_rotated_p["+k+"] - angle_axis_rotated_p["+k+"]) > kTolerance");
+		    		  passed = false;
+		    		  System.err.println("p: " + p[0] + " " + p[1] + " " + p[2]);
+		    		  System.err.println("angle_axis: " + angle_axis[0] + " " + angle_axis[1] + " " + angle_axis[2]);
+		    	  }
+		      }
+		    }
+		  }
+		  if (passed) {
+			  System.out.println("AngleAxisRotatePointGivesSameAnswerAsRotationMatrix() passed all tests");
+		  }
+		}
+
+	public void AngleAxisNearZeroRotatePointGivesSameAnswerAsRotationMatrix() {
+		  // AngleAxisNearZeroRotatePointGivesSameAnswerAsRotationMatrix() passed all tests
+		  boolean passed = true;
+		  double kTolerance = 10.0 * epsilon;
+		  double angle_axis[] = new double[3];
+		  double R[] = new double[9];
+		  double p[] = new double[3];
+		  double angle_axis_rotated_p[] = new double[3];
+		  double rotation_matrix_rotated_p[] = new double[3];
+
+		  for (int i = 0; i < 10000; ++i) {
+		    double norm2 = 0.0;
+		    for (int k = 0; k < 3; ++k) {
+		      angle_axis[k] = 2.0 * RandDouble() - 1.0;
+		      p[k] = 2.0 * RandDouble() - 1.0;
+		      norm2 = angle_axis[k] * angle_axis[k];
+		    }
+
+		    double theta = (2.0 * i * 0.0001  - 1.0) * 1e-16;
+		    final double inv_norm = theta / Math.sqrt(norm2);
+		    for (int k = 0; k < 3; ++k) {
+		      angle_axis[k] *= inv_norm;
+		    }
+
+		    AngleAxisToRotationMatrix(angle_axis, R);
+		    rotation_matrix_rotated_p[0] = R[0] * p[0] + R[3] * p[1] + R[6] * p[2];
+		    rotation_matrix_rotated_p[1] = R[1] * p[0] + R[4] * p[1] + R[7] * p[2];
+		    rotation_matrix_rotated_p[2] = R[2] * p[0] + R[5] * p[1] + R[8] * p[2];
+
+		    AngleAxisRotatePoint(angle_axis, p, angle_axis_rotated_p);
+		    for (int k = 0; k < 3; ++k) {
+		    	  if (Math.abs(rotation_matrix_rotated_p[k] - angle_axis_rotated_p[k]) > kTolerance) {
+		    		  System.err.println("In AngleAxisNearZeroRotatePointGivesSameAnswerAsRotationMatrix() Math.abs(rotation_matrix_rotated_p["+k+"] - angle_axis_rotated_p["+k+"]) > kTolerance");
+		    		  passed = false;
+		    		  System.err.println("p: " + p[0] + " " + p[1] + " " + p[2]);
+		    		  System.err.println("angle_axis: " + angle_axis[0] + " " + angle_axis[1] + " " + angle_axis[2]);
+		    	  }
+		      }
+		  }
+		  if (passed) {
+			  System.out.println("AngleAxisNearZeroRotatePointGivesSameAnswerAsRotationMatrix() passed all tests");
+		  }
+		}
+	
+	public void RotationMatrixToAngleAxisNearPiExampleOneFromTobiasStrauss() {
+		  // RotationMatrixToAngleAxisNearPiExampleOneFromTobiasStrauss() passed all tests
+		  // Example from Tobias Strauss
+		  final double rotation_matrix[] = new double[] {
+		    -0.999807135425239,    -0.0128154391194470,   -0.0148814136745799,
+		    -0.0128154391194470,   -0.148441438622958,     0.988838158557669,
+		    -0.0148814136745799,    0.988838158557669,     0.148248574048196
+		  };
+
+		  double angle_axis[] = new double[3];
+		  //RotationMatrixToAngleAxis(RowMajorAdapter3x3(rotation_matrix), angle_axis);
+		  RotationMatrixToAngleAxis(rotation_matrix, angle_axis);
+		  double round_trip[] = new double[9];
+		  //AngleAxisToRotationMatrix(angle_axis, RowMajorAdapter3x3(round_trip));
+		  AngleAxisToRotationMatrix(angle_axis, round_trip);
+		  if (!IsNear3x3Matrix(rotation_matrix, round_trip)) {
+			  System.err.println("In RotationMatrixToAngleAxisNearPiExampleOneFromTobiasStrauss() IsNear3x3Matrix(rotation_matrix, round_trip) = false");
+		  }
+		  else {
+			  System.out.println("RotationMatrixToAngleAxisNearPiExampleOneFromTobiasStrauss() passed all tests");
+		  }
+		}
+
+	public void CheckRotationMatrixToAngleAxisRoundTrip(double theta,
+            double phi,
+            double angle, String testName, boolean passed[]) {
+			double angle_axis[] = new double[3];
+			angle_axis[0] = angle * Math.sin(phi) * Math.cos(theta);
+			angle_axis[1] = angle * Math.sin(phi) * Math.sin(theta);
+			angle_axis[2] = angle * Math.cos(phi);
+			
+			double rotation_matrix[] = new double[9];
+			AngleAxisToRotationMatrix(angle_axis, rotation_matrix);
+			
+			double angle_axis_round_trip[] = new double[3];
+			RotationMatrixToAngleAxis(rotation_matrix, angle_axis_round_trip);
+			if (!IsNearAngleAxis(angle_axis_round_trip, angle_axis)) {
+				System.err.println("In " + testName + " IsNearAngleAxis(angle_axis_round_trip, angle_axis) = false");
+				passed[0] = false;
+			}
+	}
+	
+	public void RotationMatrixToAngleAxisExhaustiveRoundTrip() {
+		  // RotationMatrixToAngleAxisExhaustiveRoundTrip() passed all tests
+		  boolean passed[] = new boolean[] {true};
+		  String testName = "RotationMatrixToAngleAxisExhaustiveRoundTrip()";
+		  final double kMaxSmallAngle = 1e-8;
+		  final int kNumSteps = 1000;
+		  for (int i = 0; i < kNumSteps; ++i) {
+		    final double theta = (double)(i) / kNumSteps * 2.0 * Math.PI;
+		    for (int j = 0; j < kNumSteps; ++j) {
+		      final double phi = (double)(j) / kNumSteps * Math.PI;
+		      // Rotations of angle Pi.
+		      CheckRotationMatrixToAngleAxisRoundTrip(theta, phi, Math.PI, testName, passed);
+		      // Rotation of angle approximately Pi.
+		      CheckRotationMatrixToAngleAxisRoundTrip(
+		          theta, phi, Math.PI - kMaxSmallAngle * RandDouble(), testName, passed);
+		      // Rotations of angle approximately zero.
+		      CheckRotationMatrixToAngleAxisRoundTrip(
+		          theta, phi, kMaxSmallAngle * 2.0 * RandDouble() - 1.0, testName, passed);
+		    }
+		  }
+		  if (passed[0]) {
+			  System.out.println("RotationMatrixToAngleAxisExhaustiveRoundTrip() passed all tests");
+		  }
+		}
+
 
 }
