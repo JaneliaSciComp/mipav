@@ -24589,6 +24589,140 @@ public abstract class CeresSolver {
 		  R[7] = c2*s3; // R(2, 1)
 		  R[8] = c2*c3; // R(2, 2)
 		}
+		
+		//template <typename T> inline
+		//void QuaternionToScaledRotation(const T q[4], T R[3 * 3]) {
+		  //QuaternionToScaledRotation(q, RowMajorAdapter3x3(R));
+		//}
+
+		//template <typename T, int row_stride, int col_stride> inline
+		//void QuaternionToScaledRotation(
+		    //const T q[4],
+		    //const MatrixAdapter<T, row_stride, col_stride>& R) {
+		  // Make convenient names for elements of q.
+		public void QuaternionToScaledRotation(double q[], double R[]) {
+		  double a = q[0];
+		  double b = q[1];
+		  double c = q[2];
+		  double d = q[3];
+		  // This is not to eliminate common sub-expression, but to
+		  // make the lines shorter so that they fit in 80 columns!
+		  double aa = a * a;
+		  double ab = a * b;
+		  double ac = a * c;
+		  double ad = a * d;
+		  double bb = b * b;
+		  double bc = b * c;
+		  double bd = b * d;
+		  double cc = c * c;
+		  double cd = c * d;
+		  double dd = d * d;
+
+		  R[0] = aa + bb - cc - dd; R[1] = 2 * (bc - ad);  R[2] = 2 * (ac + bd);
+		  R[3] = 2 * (ad + bc);  R[4] = aa - bb + cc - dd; R[5] = 2 * (cd - ab);
+		  R[6] = 2 * (bd - ac);  R[7] = 2 * (ab + cd);  R[8] = aa - bb - cc + dd;
+		}
+		
+		//template <typename T> inline
+		//void QuaternionToRotation(const T q[4], T R[3 * 3]) {
+		  //QuaternionToRotation(q, RowMajorAdapter3x3(R));
+		//}
+
+		//template <typename T, int row_stride, int col_stride> inline
+		//void QuaternionToRotation(const T q[4],
+		                          //const MatrixAdapter<T, row_stride, col_stride>& R) {
+		public void QuaternionToRotation(double q[], double R[]) {
+		  QuaternionToScaledRotation(q, R);
+
+		  double normalizer = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3];
+		  normalizer = 1.0 / normalizer;
+
+		  for (int i = 0; i < 3; ++i) {
+		    for (int j = 0; j < 3; ++j) {
+		      R[3 * i + j] *= normalizer;
+		    }
+		  }
+		}
+		
+		//template <typename T> inline
+		//void UnitQuaternionRotatePoint(const T q[4], const T pt[3], T result[3]) {
+		public void UnitQuaternionRotatePoint(double q[], double pt[], double result[]) {
+		  final double t2 =  q[0] * q[1];
+		  final double t3 =  q[0] * q[2];
+		  final double t4 =  q[0] * q[3];
+		  final double t5 = -q[1] * q[1];
+		  final double t6 =  q[1] * q[2];
+		  final double t7 =  q[1] * q[3];
+		  final double t8 = -q[2] * q[2];
+		  final double t9 =  q[2] * q[3];
+		  final double t1 = -q[3] * q[3];
+		  result[0] = 2 * ((t8 + t1) * pt[0] + (t6 - t4) * pt[1] + (t3 + t7) * pt[2]) + pt[0];
+		  result[1] = 2 * ((t4 + t6) * pt[0] + (t5 + t1) * pt[1] + (t9 - t2) * pt[2]) + pt[1];
+		  result[2] = 2 * ((t7 - t3) * pt[0] + (t2 + t9) * pt[1] + (t5 + t8) * pt[2]) + pt[2];
+		}
+		
+		//template<typename T> inline
+		//void AngleAxisRotatePoint(const T angle_axis[3], const T pt[3], T result[3]) {
+		public void AngleAxisRotatePoint(double angle_axis[], double pt[], double result[]) {
+		  final double theta2 = DotProduct(angle_axis, angle_axis);
+		  if (theta2 > epsilon) {
+		    // Away from zero, use the rodriguez formula
+		    //
+		    //   result = pt costheta +
+		    //            (w x pt) * sintheta +
+		    //            w (w . pt) (1 - costheta)
+		    //
+		    // We want to be careful to only evaluate the square root if the
+		    // norm of the angle_axis vector is greater than zero. Otherwise
+		    // we get a division by zero.
+		    //
+		    final double theta = Math.sqrt(theta2);
+		    final double costheta = Math.cos(theta);
+		    final double sintheta = Math.sin(theta);
+		    final double theta_inverse = 1.0 / theta;
+
+		    final double w[] = new double[] { angle_axis[0] * theta_inverse,
+		                     angle_axis[1] * theta_inverse,
+		                     angle_axis[2] * theta_inverse };
+
+		    // Explicitly inlined evaluation of the cross product for
+		    // performance reasons.
+		    final double w_cross_pt[] = new double[] { w[1] * pt[2] - w[2] * pt[1],
+		                              w[2] * pt[0] - w[0] * pt[2],
+		                              w[0] * pt[1] - w[1] * pt[0] };
+		    final double tmp =
+		        (w[0] * pt[0] + w[1] * pt[1] + w[2] * pt[2]) * (1.0 - costheta);
+
+		    result[0] = pt[0] * costheta + w_cross_pt[0] * sintheta + w[0] * tmp;
+		    result[1] = pt[1] * costheta + w_cross_pt[1] * sintheta + w[1] * tmp;
+		    result[2] = pt[2] * costheta + w_cross_pt[2] * sintheta + w[2] * tmp;
+		  } else {
+		    // Near zero, the first order Taylor approximation of the rotation
+		    // matrix R corresponding to a vector w and angle w is
+		    //
+		    //   R = I + hat(w) * sin(theta)
+		    //
+		    // But sintheta ~ theta and theta * w = angle_axis, which gives us
+		    //
+		    //  R = I + hat(w)
+		    //
+		    // and actually performing multiplication with the point pt, gives us
+		    // R * pt = pt + w x pt.
+		    //
+		    // Switching to the Taylor expansion near zero provides meaningful
+		    // derivatives when evaluated using Jets.
+		    //
+		    // Explicitly inlined evaluation of the cross product for
+		    // performance reasons.
+		    final double w_cross_pt[] = new double[] { angle_axis[1] * pt[2] - angle_axis[2] * pt[1],
+		                              angle_axis[2] * pt[0] - angle_axis[0] * pt[2],
+		                              angle_axis[0] * pt[1] - angle_axis[1] * pt[0] };
+
+		    result[0] = pt[0] + w_cross_pt[0];
+		    result[1] = pt[1] + w_cross_pt[1];
+		    result[2] = pt[2] + w_cross_pt[2];
+		  }
+		}
 } // public abstract class CeresSolver
 
 class indexValueComparator implements Comparator<indexValue> {
