@@ -24723,6 +24723,153 @@ public abstract class CeresSolver {
 		    result[2] = pt[2] + w_cross_pt[2];
 		  }
 		}
+		
+		public void ComputeVisibility(CompressedRowBlockStructure block_structure,
+                int num_eliminate_blocks,
+                Vector<HashSet<Integer>> visibility) {
+			int i;
+		    if (visibility == null) {
+		    	System.err.println("In ComputeVisibility visibility == null");
+		    	return;
+		    }
+			
+			// Clear the visibility vector and resize it to hold a
+			// vector for each camera.
+			visibility.clear();
+			int visSize = block_structure.cols.size() - num_eliminate_blocks;
+			for (i = 0; i < visSize; i++) {
+				visibility.add(new HashSet<Integer>());
+			}
+			
+			for (i = 0; i < block_structure.rows.size(); ++i) {
+			final Vector<Cell> cells = block_structure.rows.get(i).cells;
+			int block_id = cells.get(0).block_id;
+			// If the first block is not an e_block, then skip this row block.
+			if (block_id >= num_eliminate_blocks) {
+			continue;
+			}
+			
+			for (int j = 1; j < cells.size(); ++j) {
+			int camera_block_id = cells.get(j).block_id - num_eliminate_blocks;
+			if(camera_block_id < 0) {
+				System.err.println("In ComputeVisibility camera_block_id < 0");
+				return;
+			}
+			if (camera_block_id >=visibility.size()) {
+				System.err.println("In ComputeVisibilty camera_block_size >= visibility.size()");
+				return;
+			}
+			visibility.get(camera_block_id).add(block_id);
+			}
+			}
+		}
+		
+		WeightedGraph<Integer> CreateSchurComplementGraph(
+			    Vector<HashSet<Integer> > visibility) {
+			  int i,j;
+			  int camera1, camera2;
+			  // Compute the number of e_blocks/point blocks. Since the visibility
+			  // set for each e_block/camera contains the set of e_blocks/points
+			  // visible to it, we find the maximum across all visibility sets.
+			  int num_points = 0;
+			  for (i = 0; i < visibility.size(); i++) {
+			    if (visibility.get(i).size() > 0) {
+			    	int lastValue = 0;
+			    	final HashSet<Integer> visibility_set = visibility.get(i);
+				    Iterator<Integer> visibility_it = visibility_set.iterator();
+				    while (visibility_it.hasNext()) {
+				    	lastValue = visibility_it.next();
+				    }
+			      num_points = Math.max(num_points, lastValue+1);
+			    }
+			  }
+
+			  // Invert the visibility. The input is a camera->point mapping,
+			  // which tells us which points are visible in which
+			  // cameras. However, to compute the sparsity structure of the Schur
+			  // Complement efficiently, its better to have the point->camera
+			  // mapping.
+			  Vector<HashSet<Integer> > inverse_visibility = new Vector<HashSet<Integer>>(num_points);
+			  for (i = 0; i < num_points; i++) {
+				  inverse_visibility.add(new HashSet<Integer>());
+			  }
+			  
+			  for (i = 0; i < visibility.size(); i++) {
+			    final HashSet<Integer> visibility_set = visibility.get(i);
+			    Iterator<Integer> visibility_it = visibility_set.iterator();
+			    while (visibility_it.hasNext()) {
+			    	inverse_visibility.get(visibility_it.next()).add(i);
+			    }
+			  }
+
+			  // Map from camera pairs to number of points visible to both cameras
+			  // in the pair.
+			  HashMap<Pair<Integer, Integer>, Integer > camera_pairs = new HashMap<Pair<Integer, Integer>, Integer>();
+
+			  // Count the number of points visible to each camera/f_block pair.
+			  for (i = 0; i < inverse_visibility.size(); i++) {
+			    final HashSet<Integer> inverse_visibility_set = inverse_visibility.get(i);
+			    Iterator<Integer> camera1_it = inverse_visibility_set.iterator();
+			    int numTimes = 0;
+			    while (camera1_it.hasNext()) {
+			    	numTimes++;
+			    	camera1 = camera1_it.next();
+			    	Iterator<Integer> camera2_it = inverse_visibility_set.iterator();
+			    	for (j = 0; j < numTimes; j++) {
+			    		camera2_it.next();
+			    	}
+			        while (camera2_it.hasNext()) {
+			        	camera2 = camera2_it.next();
+				        Pair<Integer, Integer> pair = new Pair<Integer, Integer>(camera1, camera2);
+				        if (camera_pairs.get(pair) == null) {
+				        	camera_pairs.put(pair, 1);
+				        }
+				        else {
+				        	int oldValue = camera_pairs.get(pair);
+				        	int newValue = oldValue +1;
+				        	camera_pairs.replace(pair, oldValue, newValue);
+				        }
+			      }
+			    }
+			  }
+
+			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+
+			  // Add vertices and initialize the pairs for self edges so that self
+			  // edges are guaranteed. This is needed for the Canonical views
+			  // algorithm to work correctly.
+			  final double kSelfEdgeWeight = 1.0;
+			  for (i = 0; i < visibility.size(); ++i) {
+			    graph.AddVertex(i);
+			    graph.AddEdge(i, i, kSelfEdgeWeight);
+			  }
+
+			  // Add an edge for each camera pair.
+			    Collection<Integer> intValues = camera_pairs.values();
+				Iterator<Integer> intValues_it = intValues.iterator();
+				Set<Pair<Integer, Integer>> pairSet = camera_pairs.keySet();
+				Iterator<Pair<Integer, Integer>> pair_iterator = pairSet.iterator();
+				while (pair_iterator.hasNext()) {
+					Pair<Integer, Integer> pair = pair_iterator.next();
+					int count = intValues_it.next();
+					camera1 = pair.first;
+			        camera2 = pair.second;
+			        if (camera1 == camera2) {
+			        	System.err.println("In CreateSchurComplementGraph camera1 == camera2");
+			        	return null;
+			        }
+
+			    // Static cast necessary for Windows.
+			    final double weight = (double)(count) /
+			        (Math.sqrt((double)(
+			                  visibility.get(camera1).size() * visibility.get(camera2).size())));
+			    graph.AddEdge(camera1, camera2, weight);
+			  }
+
+			  return graph;
+			}
+
+
 } // public abstract class CeresSolver
 
 class indexValueComparator implements Comparator<indexValue> {
