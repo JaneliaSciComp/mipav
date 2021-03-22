@@ -16512,5 +16512,204 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		}
 
+	public void VisibilityTestSimpleMatrix() {
+		  // VisibilityTestSimpleMatrix() passed all tests
+		  int i,j;
+		  boolean passed = true;
+		  //   A = [1 0 0 0 0 1
+		  //        1 0 0 1 0 0
+		  //        0 1 1 0 0 0
+		  //        0 1 0 0 1 0]
+
+		  int num_cols = 6;
+		  int num_eliminate_blocks = 2;
+		  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+
+		  // Row 1
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 0;
+		    row.cells.add(new Cell(0, 0));
+		    row.cells.add(new Cell(5, 0));
+		  }
+
+		  // Row 2
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 2;
+		    row.cells.add(new Cell(0, 1));
+		    row.cells.add(new Cell(3, 1));
+		  }
+
+		  // Row 3
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 4;
+		    row.cells.add(new Cell(1, 2));
+		    row.cells.add(new Cell(2, 2));
+		  }
+
+		  // Row 4
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 6;
+		    row.cells.add(new Cell(1, 3));
+		    row.cells.add(new Cell(4, 3));
+		  }
+		  for (i = 0; i < num_cols; i++) {
+			  bs.cols.add(new Block());
+		  }
+
+		  Vector< HashSet<Integer> > visibility = new Vector<HashSet<Integer>>();
+		  ComputeVisibility(bs, num_eliminate_blocks, visibility);
+		  if (visibility.size() != num_cols - num_eliminate_blocks) {
+			  System.err.println("In VisibilityTestSimpleMatrix() visibility.size() != num_cols - num_eliminate_blocks");
+			  passed = false;
+		  }
+		  for (i = 0; i < visibility.size(); ++i) {
+		     if (visibility.get(i).size() != 1) {
+		    	 System.err.println("In VisibilityTestSimpleMatrix() visibility.get("+i+").size() != 1");
+				 passed = false;	 
+		     }
+		  }
+
+		  WeightedGraph<Integer> graph = CreateSchurComplementGraph(visibility);
+		  if (graph.vertices().size() != visibility.size()) {
+			  System.err.println("In VisibilityTestSimpleMatrix() graph.vertices().size() != visibility.size()");
+			  passed = false;	
+		  }
+		  for (i = 0; i < visibility.size(); ++i) {
+		    if (graph.VertexWeight(i) != 1.0) {
+		    	System.err.println("In VisibilityTestSimpleMatrix() graph.VertexWeight("+i+") != 1.0");
+				passed = false;		
+		    }
+		  }
+
+		  for (i = 0; i < visibility.size(); ++i) {
+		    for (j = i; j < visibility.size(); ++j) {
+		      double edge_weight = 0.0;
+		      if ((i == 1 && j == 3) || (i == 0 && j == 2) || (i == j)) {
+		        edge_weight = 1.0;
+		      }
+
+		      if (graph.EdgeWeight(i, j) != edge_weight) {
+		    	  System.err.println("In VisibilityTestSimpleMatrix() graph.EdgeWeight("+i+", "+j+") != edge_weight");
+				  passed = false;	
+				  System.err.println("weight: " + graph.EdgeWeight(i,j));
+				  System.err.println("Expected weight: " + edge_weight);
+		      }
+		    }
+		  }
+		  if (passed) {
+			  System.out.println("VisibilityTestSimpleMatrix() passed all tests");
+		  }
+		}
+	
+	public void VisibilityTestNoEBlocks() {
+		  // VisibilityTestNoEBlocks() passed all tests
+		  //   A = [1 0 0 0 0 0
+		  //        1 0 0 0 0 0
+		  //        0 1 0 0 0 0
+		  //        0 1 0 0 0 0]
+
+		  int i,j;
+		  boolean passed = true;  
+		  int num_cols = 6;
+		  int num_eliminate_blocks = 2;
+		  CompressedRowBlockStructure bs = new CompressedRowBlockStructure();
+
+		  // Row 1
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 0;
+		    row.cells.add(new Cell(0, 0));
+		  }
+
+		  // Row 2
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 2;
+		    row.cells.add(new Cell(0, 1));
+		  }
+
+		  // Row 3
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 4;
+		    row.cells.add(new Cell(1, 2));
+		  }
+
+		  // Row 4
+		  {
+		    bs.rows.add(new CompressedList());
+		    CompressedList row = bs.rows.lastElement();
+		    row.block.size = 2;
+		    row.block.position = 6;
+		    row.cells.add(new Cell(1, 3));
+		  }
+		  for (i = 0; i < num_cols; i++) {
+			  bs.cols.add(new Block());
+		  }
+
+		  Vector< HashSet<Integer> > visibility = new Vector<HashSet<Integer>>();
+		  ComputeVisibility(bs, num_eliminate_blocks, visibility);
+		  if (visibility.size() != num_cols - num_eliminate_blocks) {
+			  System.err.println("In VisibilityTestNoEBlocks() visibility.size() != num_cols - num_eliminate_blocks");
+			  passed = false;
+		  }
+		  for (i = 0; i < visibility.size(); ++i) {
+			     if (visibility.get(i).size() != 0) {
+			    	 System.err.println("In VisibilityTestNoEBlocks() visibility.get("+i+").size() != 0");
+					 passed = false;	 
+			     }
+		  }
+		         
+		  WeightedGraph<Integer> graph = CreateSchurComplementGraph(visibility);
+		  if (graph.vertices().size() != visibility.size()) {
+			  System.err.println("In VisibilityTestNoEBlocks() graph.vertices().size() != visibility.size()");
+			  passed = false;	
+		  }
+		  for (i = 0; i < visibility.size(); ++i) {
+		    if (graph.VertexWeight(i) != 1.0) {
+		    	System.err.println("In VisibilityTestNoEBlocks() graph.VertexWeight("+i+") != 1.0");
+				passed = false;		
+		    }
+		  }
+		  
+
+		  for (i = 0; i < visibility.size(); ++i) {
+		    for (j = i; j < visibility.size(); ++j) {
+		      double edge_weight = 0.0;
+		      if (i == j) {
+		        edge_weight = 1.0;
+		      }
+		      
+		      if (graph.EdgeWeight(i, j) != edge_weight) {
+		    	  System.err.println("In VisibilityTestNoEBlocks() graph.EdgeWeight("+i+", "+j+") != edge_weight");
+				  passed = false;	
+				  System.err.println("weight: " + graph.EdgeWeight(i,j));
+				  System.err.println("Expected weight: " + edge_weight);
+		      }
+		      
+		    }
+		  }
+		  if (passed) {
+			  System.out.println("VisibilityTestNoEBlocks() passed all tests");
+		  }
+		}
 
 }
