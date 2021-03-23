@@ -93,10 +93,10 @@ public abstract class CeresSolver {
 	// did not write to that memory location.
 	public int MAX_LOG_LEVEL = 3;
 	// Log severity level constants.
-	private int FATAL   = -3;
-	private int ERROR   = -2;
-	private int WARNING = -1;
-	private int INFO    =  0;
+	public int FATAL   = -3;
+	public int ERROR   = -2;
+	public int WARNING = -1;
+	public int INFO    =  0;
 	// Each package in SuiteSparse has its own separate
 	// CXSparse and CHOLMOD are SuiteSparse packages
 
@@ -22459,10 +22459,12 @@ public abstract class CeresSolver {
 	class GradientCheckingIterationCallback extends IterationCallback {
 		private boolean gradient_error_detected_;
 		private String[] error_log_;
+		private Lock m;
 
 		public GradientCheckingIterationCallback() {
 			super();
 			gradient_error_detected_ = false;
+			m = new ReentrantLock();
 		}
 
 		// Retrieve error status (not thread safe).
@@ -22482,6 +22484,15 @@ public abstract class CeresSolver {
 			  }
 			  return CallbackReturnType.SOLVER_CONTINUE;
 		}
+		
+		public void SetGradientErrorDetected(
+			    String error_log) {
+			  m.lock();
+			  gradient_error_detected_ = true;
+			  error_log_[0] += "\n" + error_log;
+			  m.unlock();
+			}
+
 
 	}
 
@@ -22533,8 +22544,116 @@ public abstract class CeresSolver {
 			set_num_residuals(function.num_residuals());
 
 		}
+		
+		public boolean Evaluate(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians) {
+			int i,j;
+			if (jacobians == null) {
+				// Nothing to check in this case; just forward.
+				return function_.Evaluate(parameters, residuals, null);
+			}
+			
+			ProbeResults results = new ProbeResults();
+			boolean okay = gradient_checker_.Probe(parameters,
+			                                relative_precision_,
+			                                results);
+			
+			// If the cost function returned false, there's nothing we can say about
+			// the gradients.
+			if (results.return_value == false) {
+			return false;
+			}
+			
+			// Copy the residuals.
+			final int num_residuals = function_.num_residuals();
+			for (i = 0; i < num_residuals; i++) {
+				residuals[i] = results.residuals.get(i);
+			}
+			
+			// Copy the original jacobian blocks into the jacobians array.
+			final Vector<Integer> block_sizes = function_.parameter_block_sizes();
+			for (int k = 0; k < block_sizes.size(); k++) {
+			if (jacobians[k] != null) {
+				for (i = 0; i < results.jacobians.get(k).getRowDimension(); i++) {
+					for (j = 0; j < results.jacobians.get(k).getColumnDimension(); j++) {
+						jacobians[k][i*results.jacobians.get(k).getColumnDimension() + j] =
+								results.jacobians.get(k).get(i,j);
+					}
+				}
+			}
+			}
+			
+			if (!okay) {
+			String error_log = "Gradient Error detected!\nExtra info for " +
+			  "this residual: " + extra_info_ + "\n" + results.error_log;
+			callback_.SetGradientErrorDetected(error_log);
+			}
+			return true;
+		}
+
 
 	}
+	
+	public CostFunction CreateGradientCheckingCostFunction(
+		    CostFunction cost_function,
+		    Vector<LocalParameterization> local_parameterizations,
+		    double relative_step_size,
+		    double relative_precision,
+		    String extra_info,
+		    GradientCheckingIterationCallback callback) {
+		  NumericDiffOptions numeric_diff_options = new NumericDiffOptions();
+		  numeric_diff_options.relative_step_size = relative_step_size;
+
+		  return new GradientCheckingCostFunction(cost_function,
+		                                          local_parameterizations,
+		                                          numeric_diff_options,
+		                                          relative_precision, extra_info,
+		                                          callback);
+	}
+	
+	// Contains results from a call to Probe for later inspection.
+	  class ProbeResults {
+	    // The return value of the cost function.
+	    boolean return_value;
+
+	    // Computed residual vector.
+	    Vector<Double> residuals;
+
+	    // The sizes of the Jacobians below are dictated by the cost function's
+	    // parameter block size and residual block sizes. If a parameter block
+	    // has a local parameterization associated with it, the size of the "local"
+	    // Jacobian will be determined by the local parameterization dimension and
+	    // residual block size, otherwise it will be identical to the regular
+	    // Jacobian.
+
+	    // Derivatives as computed by the cost function.
+	    Vector<Matrix> jacobians;
+
+	    // Derivatives as computed by the cost function in local space.
+	    Vector<Matrix> local_jacobians;
+
+	    // Derivatives as computed by nuerical differentiation in local space.
+	    Vector<Matrix> numeric_jacobians;
+
+	    // Derivatives as computed by nuerical differentiation in local space.
+	    Vector<Matrix> local_numeric_jacobians;
+
+	    // Contains the maximum relative error found in the local Jacobians.
+	    double maximum_relative_error;
+
+	    // If an error was detected, this will contain a detailed description of
+	    // that error.
+	    String error_log;
+	    public ProbeResults() {
+	        residuals = new Vector<Double>();
+	        jacobians = new Vector<Matrix>();
+	        local_jacobians = new Vector<Matrix>();
+	        numeric_jacobians = new Vector<Matrix>();
+	        local_numeric_jacobians = new Vector<Matrix>();
+	    }
+	  };
+
 
 	class GradientChecker {
 		private Vector<LocalParameterization> local_parameterizations_;
@@ -22576,7 +22695,252 @@ public abstract class CeresSolver {
 			finite_diff_cost_function.SetNumResiduals(function.num_residuals());
 
 		}
+		
+		public boolean Probe(Vector<double[]> parameters,
+                double relative_precision,
+                ProbeResults results_param) {
+			int num_residuals = function_.num_residuals();
+			
+			// Make sure that we have a place to store results, no matter if the user has
+			// provided an output argument.
+			ProbeResults results;
+			ProbeResults results_local;
+			if (results_param != null) {
+			results = results_param;
+			results.residuals.clear();
+			results.jacobians.clear();
+			results.numeric_jacobians.clear();
+			results.local_jacobians.clear();
+			results.local_numeric_jacobians.clear();
+			results.error_log = null;
+			} else {
+			results_local = new ProbeResults();
+			results = results_local;
+			}
+			results.maximum_relative_error = 0.0;
+			results.return_value = true;
+			
+			// Evaluate the derivative using the user supplied code.
+			Vector<Matrix> jacobians = results.jacobians;
+			Vector<Matrix> local_jacobians = results.local_jacobians;
+			if (!EvaluateCostFunction(function_, parameters, local_parameterizations_,
+			           results.residuals, jacobians, local_jacobians)) {
+			results.error_log = "Function evaluation with Jacobians failed.";
+			results.return_value = false;
+			}
+			
+			// Evaluate the derivative using numeric derivatives.
+			Vector<Matrix> numeric_jacobians = results.numeric_jacobians;
+			Vector<Matrix> local_numeric_jacobians = results.local_numeric_jacobians;
+			Vector<Double> finite_diff_residuals = new Vector<Double>();
+			if (!EvaluateCostFunction(finite_diff_cost_function_, parameters,
+			                local_parameterizations_, finite_diff_residuals,
+			                numeric_jacobians, local_numeric_jacobians)) {
+			results.error_log += "\nFunction evaluation with numerical " +
+			"differentiation failed.";
+			results.return_value = false;
+			}
+			
+			if (!results.return_value) {
+			return false;
+			}
+			
+			for (int i = 0; i < num_residuals; ++i) {
+			if (!IsClose(
+			results.residuals.get(i),
+			finite_diff_residuals.get(i),
+			relative_precision,
+			null,
+			null)) {
+			results.error_log = "Function evaluation with and without Jacobians " +
+			"resulted in different residuals.";
+			if (INFO <= MAX_LOG_LEVEL) {
+		    Preferences.debug("results.residuals.get("+i+") = " + results.residuals.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("finite_diff_residuals.get("+i+") = " + finite_diff_residuals.get(i) + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+			return false;
+			}
+			}
+			
+			// See if any elements have relative error larger than the threshold.
+			int num_bad_jacobian_components = 0;
+			double worst_relative_error = results.maximum_relative_error;
+			worst_relative_error = 0;
+			
+			// Accumulate the error message for all the jacobians, since it won't get
+			// output if there are no bad jacobian components.
+			String error_log = "";
+			for (int k = 0; k < function_.parameter_block_sizes().size(); k++) {
+			String.format(error_log,
+			      "========== " +
+			      "Jacobian for block %d: (%ld by %ld)) " +
+			      "==========\n",
+			      k,
+			      (long)local_jacobians.get(k).getRowDimension(),
+			      (long)local_jacobians.get(k).getColumnDimension());
+			// The funny spacing creates appropriately aligned column headers.
+			error_log +=
+			" block  row  col        user dx/dy    num diff dx/dy         " +
+			"abs error    relative error         parameter          residual\n";
+			
+			for (int i = 0; i < local_jacobians.get(k).getRowDimension(); i++) {
+			for (int j = 0; j < local_jacobians.get(k).getColumnDimension(); j++) {
+			double term_jacobian = local_jacobians.get(k).get(i, j);
+			double finite_jacobian = local_numeric_jacobians.get(k).get(i, j);
+			double relative_error[] = new double[1];
+			double absolute_error[] = new double[1];
+			boolean bad_jacobian_entry =
+			!IsClose(term_jacobian,
+			         finite_jacobian,
+			         relative_precision,
+			         relative_error,
+			         absolute_error);
+			worst_relative_error = Math.max(worst_relative_error, relative_error[0]);
+			
+			String.format(error_log,
+			          "%6d %4d %4d %17g %17g %17g %17g %17g %17g",
+			          k, i, j,
+			          term_jacobian, finite_jacobian,
+			          absolute_error, relative_error,
+			          parameters.get(k)[j],
+			          results.residuals.get(i));
+			
+			if (bad_jacobian_entry) {
+			num_bad_jacobian_components++;
+			String.format(
+			  error_log,
+			  " ------ (%d,%d,%d) Relative error worse than %g",
+			  k, i, j, relative_precision);
+			}
+			error_log += "\n";
+			}
+			}
+			}
+			
+			// Since there were some bad errors, dump comprehensive debug info.
+			if (num_bad_jacobian_components > 0) {
+			String header = String.format("\nDetected %d bad Jacobian component(s). " +
+			"Worst relative error was %g.\n",
+			num_bad_jacobian_components,
+			worst_relative_error);
+			results.error_log = header + "\n" + error_log;
+			return false;
+			}
+			return true;
+		}
+
 	}
+	
+	// Evaluate the cost function and transform the returned Jacobians to
+	// the local space of the respective local parameterizations.
+	public boolean EvaluateCostFunction(
+	    CostFunction function,
+	    Vector<double[]> parameters,
+	    Vector<LocalParameterization> local_parameterizations,
+	    Vector<Double> residuals,
+	    Vector<Matrix> jacobians,
+	    Vector<Matrix> local_jacobians) {
+	    if (residuals == null) {
+	    	System.err.println("In EvaluateCostFunction residuals == null");
+	    	return false;
+	    }
+	    if (jacobians == null) {
+	    	System.err.println("In EvaluateCostFunction jacobians == null");
+	    	return false;
+	    }
+	    if (local_jacobians == null) {
+	    	System.err.println("In EvaluateCostFunction local_jacobians == null");
+	    	return false;
+	    }
+
+	  final Vector<Integer> block_sizes = function.parameter_block_sizes();
+	  final int num_parameter_blocks = block_sizes.size();
+
+	  // Allocate Jacobian matrices in local space.
+	  //local_jacobians->resize(num_parameter_blocks);
+	  local_jacobians.clear();
+	  for (int i = 0; i < num_parameter_blocks; ++i) {
+	    int block_size = block_sizes.get(i);
+	    if (local_parameterizations.get(i) != null) {
+	      block_size = local_parameterizations.get(i).LocalSize();
+	    }
+	    local_jacobians.add(new Matrix(function.num_residuals(), block_size, 0.0));
+	  }
+
+	  // Allocate Jacobian matrices in global space.
+	  jacobians.clear();
+	  double[][] jacobian_data = new double[num_parameter_blocks][];
+	  for (int i = 0; i < num_parameter_blocks; ++i) {
+	    jacobians.add(new Matrix(function.num_residuals(), block_sizes.get(i), 0.0));
+	    //jacobian_data.at(i) = jacobians->at(i).data();
+	    jacobian_data[i] = new double[function.num_residuals() * block_sizes.get(i)];
+	  }
+
+	  // Compute residuals & jacobians.
+	  if (0 == function.num_residuals()) {
+		  System.err.println("In EvaluateCostFunction function.num_residuals() == 0");
+		  return false;
+	  }
+	  residuals.clear();
+	  for (int i = 0; i < function.num_residuals(); i++) {
+		  residuals.add(0.0);
+	  }
+	  double residuals_data[] = new double[function.num_residuals()];
+	  if (!function.Evaluate(parameters, residuals_data,
+	                          jacobian_data)) {
+	    return false;
+	  }
+	  for (int i = 0; i < function.num_residuals(); i++) {
+		  residuals.set(i, residuals_data[i]);
+		  for (int r = 0; r < function.num_residuals(); r++) {
+			  for (int c = 0; c < block_sizes.get(c); c++) {
+				  jacobians.get(i).set(r,c,jacobian_data[i][r*block_sizes.get(c) + c]);
+			  }
+		  }
+	  }
+
+	  // Convert Jacobians from global to local space.
+	  for (int i = 0; i < local_jacobians.size(); ++i) {
+	    if (local_parameterizations.get(i) == null) {
+	      local_jacobians.set(i,jacobians.get(i));
+	    } else {
+	      int global_size = local_parameterizations.get(i).GlobalSize();
+	      int local_size = local_parameterizations.get(i).LocalSize();
+	      if (jacobians.get(i).getColumnDimension() != global_size) {
+	    	  System.err.println("In EvaluateCostFunction jacobians.get("+i+").getColumnDimension() != global_size");
+	    	  return false;
+	      }
+	      Matrix global_J_local = new Matrix(global_size, local_size);
+	      local_parameterizations.get(i).ComputeJacobian(
+	          parameters.get(i), 0, global_J_local.getArray());
+	      local_jacobians.set(i, (jacobians.get(i).times(global_J_local)));
+	    }
+	  }
+	  return true;
+	}
+
+	
+	public boolean IsClose(double x, double y, double relative_precision,
+            double relative_error[],
+            double absolute_error[]) {
+		 double local_absolute_error[] = new double[1];
+		 double local_relative_error[] = new double[1];
+		 if (absolute_error == null) {
+		   absolute_error = local_absolute_error;
+		 }
+		 if (relative_error  == null) {
+		   relative_error = local_relative_error;
+		 }
+		 absolute_error[0] = Math.abs(x - y);
+		 relative_error[0] = absolute_error[0] / Math.max(Math.abs(x), Math.abs(y));
+		 if (x == 0 || y == 0) {
+		   // If x or y is exactly zero, then relative difference doesn't have any
+		   // meaning. Take the absolute difference instead.
+		   relative_error[0] = absolute_error[0];
+		 }
+		 return relative_error[0] < Math.abs(relative_precision);
+	}
+
 
 	class DynamicNumericDiffCostFunction<T> extends DynamicCostFunction {
 		// internal::scoped_ptr<const CostFunctor> functor_;
