@@ -22464,6 +22464,7 @@ public abstract class CeresSolver {
 		public GradientCheckingIterationCallback() {
 			super();
 			gradient_error_detected_ = false;
+			error_log_ = new String[1];
 			m = new ReentrantLock();
 		}
 
@@ -22582,7 +22583,7 @@ public abstract class CeresSolver {
 					}
 				}
 			}
-			}
+			};
 			
 			if (!okay) {
 			String error_log = "Gradient Error detected!\nExtra info for " +
@@ -22678,6 +22679,7 @@ public abstract class CeresSolver {
 				int oldSize = 0; // local_parameterizations.size();
 				if (newSize > oldSize) {
 					int numAdd = newSize - oldSize;
+					local_parameterizations_ = new Vector<LocalParameterization>();
 					for (int i = 0; i < numAdd; i++) {
 						local_parameterizations_.add(null);
 					}
@@ -22892,11 +22894,14 @@ public abstract class CeresSolver {
 	  }
 	  for (int i = 0; i < function.num_residuals(); i++) {
 		  residuals.set(i, residuals_data[i]);
+	  }
+	  
+	  for (int i = 0; i < num_parameter_blocks; i++) {
 		  for (int r = 0; r < function.num_residuals(); r++) {
-			  for (int c = 0; c < block_sizes.get(c); c++) {
-				  jacobians.get(i).set(r,c,jacobian_data[i][r*block_sizes.get(c) + c]);
+			  for (int c = 0; c < block_sizes.get(i); c++) {
+				  jacobians.get(i).set(r,c,jacobian_data[i][r*block_sizes.get(i) + c]);
 			  }
-		  }
+		  }  
 	  }
 
 	  // Convert Jacobians from global to local space.
