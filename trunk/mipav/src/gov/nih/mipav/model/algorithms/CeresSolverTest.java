@@ -16880,5 +16880,203 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  System.out.println("GradientCheckingCostFunctionSmokeTest() passed all tests");
 		  }
 		}
+	// The following three classes are for the purposes of defining
+	// function signatures. They have dummy Evaluate functions.
+
+	// Trivial cost function that accepts a single argument.
+	class UnaryCostFunction4 extends CostFunction {
+	 
+	  public UnaryCostFunction4(int num_residuals, int parameter_block_size) {
+		super();
+	    set_num_residuals(num_residuals);
+	    mutable_parameter_block_sizes().add(parameter_block_size);
+	  }
+
+	  public boolean Evaluate(Vector<double[]> parameters,
+	                        double[] residuals,
+	                        double[][] jacobians) {
+	    for (int i = 0; i < num_residuals(); ++i) {
+	      residuals[i] = 1;
+	    }
+	    return true;
+	  }
+	};
+
+	// Trivial cost function that accepts two arguments.
+	class BinaryCostFunction4 extends CostFunction {
+	
+	  public BinaryCostFunction4(int num_residuals,
+	                     int parameter_block1_size,
+	                     int parameter_block2_size) {
+		super();
+	    set_num_residuals(num_residuals);
+	    mutable_parameter_block_sizes().add(parameter_block1_size);
+	    mutable_parameter_block_sizes().add(parameter_block2_size);
+	  }
+
+	  public boolean Evaluate(Vector<double[]> parameters,
+	                        double[] residuals,
+	                        double[][] jacobians) {
+	    for (int i = 0; i < num_residuals(); ++i) {
+	      residuals[i] = 2;
+	    }
+	    return true;
+	  }
+	};
+	
+	// Trivial cost function that accepts three arguments.
+	class TernaryCostFunction4 extends CostFunction {
+	
+	  public TernaryCostFunction4(int num_residuals,
+	                      int parameter_block1_size,
+	                      int parameter_block2_size,
+	                      int parameter_block3_size) {
+		super();
+	    set_num_residuals(num_residuals);
+	    mutable_parameter_block_sizes().add(parameter_block1_size);
+	    mutable_parameter_block_sizes().add(parameter_block2_size);
+	    mutable_parameter_block_sizes().add(parameter_block3_size);
+	  }
+
+	  public boolean Evaluate(Vector<double[]> parameters,
+	                        double[] residuals,
+	                        double[][] jacobians) {
+	    for (int i = 0; i < num_residuals(); ++i) {
+	      residuals[i] = 3;
+	    }
+	    return true;
+	  }
+	};
+
+	// Verify that the two ParameterBlocks are formed from the same user
+	// array and have the same LocalParameterization object.
+	public void ParameterBlocksAreEquivalent(ParameterBlock  left,
+	                                  ParameterBlock right, String testName, boolean passed[]) {
+	  if (left == null) {
+		  System.err.println("In " + testName + " left == null");
+		  passed[0] = false;
+	  }
+	  if (right == null) {
+		  System.err.println("In " + testName + " right == null");
+		  passed[0] = false;	  
+	  }
+	  if (left.user_state() != right.user_state()) {
+		  System.err.println("In " + testName + " left.user_state() != right.user_state()");
+		  passed[0] = false;
+	  }
+	  if (left.Size() != right.Size()) {
+		  System.err.println("In " + testName + " left.Size() != right.Size()");
+		  passed[0] = false;
+	  }
+	  if (left.LocalSize() != right.LocalSize()) {
+		  System.err.println("In " + testName + " left.LocalSize() != right.LocalSize()");
+		  passed[0] = false;
+	  }
+	  if (left.local_parameterization() != right.local_parameterization()) {
+		  System.err.println("In " + testName + " left.local_parameterization() != right.local_parameterization()");
+		  passed[0] = false;
+	  }
+	  if (left.IsConstant() != right.IsConstant()) {
+		  System.err.println("In " + testName + " left.IsConstant() != right.IsConstant()");
+		  passed[0] = false;
+	  }
+	}
+	
+	public void GradientCheckingProblemImplProblemDimensionsMatch() {
+		  // GradientCheckingProblemImplProblemDimensionsMatch() passed all tests
+		  boolean passed[] = new boolean[] {true};
+		  String testName = "GradientCheckingProblemImplProblemDimensionsMatch()";
+		  // Parameter blocks with arbitrarily chosen initial values.
+		  double x[] = new double[]{1.0, 2.0, 3.0};
+		  double y[] = new double[]{4.0, 5.0, 6.0, 7.0};
+		  double z[] = new double[]{8.0, 9.0, 10.0, 11.0, 12.0};
+		  double w[] = new double[]{13.0, 14.0, 15.0, 16.0};
+
+		  ProblemImpl problem_impl = new ProblemImpl();
+		  problem_impl.AddParameterBlock(x, 3);
+		  problem_impl.AddParameterBlock(y, 4);
+		  problem_impl.SetParameterBlockConstant(y);
+		  problem_impl.AddParameterBlock(z, 5);
+		  problem_impl.AddParameterBlock(w, 4, new QuaternionParameterization());
+		  problem_impl.AddResidualBlock(new UnaryCostFunction4(2, 3), null, x);
+		  problem_impl.AddResidualBlock(new BinaryCostFunction4(6, 5, 4) ,
+		                                null, z, y);
+		  problem_impl.AddResidualBlock(new BinaryCostFunction4(3, 3, 5),
+		                                new TrivialLoss(), x, z);
+		  problem_impl.AddResidualBlock(new BinaryCostFunction4(7, 5, 3),
+		                                null, z, x);
+		  problem_impl.AddResidualBlock(new TernaryCostFunction4(1, 5, 3, 4),
+		                                null, z, x, y);
+
+		  GradientCheckingIterationCallback callback = new GradientCheckingIterationCallback();
+		  ProblemImpl gradient_checking_problem_impl =
+		      CreateGradientCheckingProblemImpl(problem_impl, 1.0, 1.0, callback);
+
+		  // The dimensions of the two problems match.
+		  if (problem_impl.NumParameterBlocks() != gradient_checking_problem_impl.NumParameterBlocks()) {
+			  System.err.println("In " + testName + " problem_impl.NumParameterBlocks() != gradient_checking_problem_impl.NumParameterBlocks()");
+			  passed[0] = false;  
+		  }
+		  if (problem_impl.NumResidualBlocks() != gradient_checking_problem_impl.NumResidualBlocks()) {
+			  System.err.println("In " + testName + " problem_impl.NumResidualBlocks() != gradient_checking_problem_impl.NumResidualBlocks()");
+			  passed[0] = false;  
+		  }
+
+		  if (problem_impl.NumParameters() != gradient_checking_problem_impl.NumParameters()) {
+			  System.err.println("In " + testName + " problem_impl.NumParameters() != gradient_checking_problem_impl.NumParameters()");
+			  passed[0] = false; 
+		  }
+		  if (problem_impl.NumResiduals() != gradient_checking_problem_impl.NumResiduals()) {
+			  System.err.println("In " + testName + " problem_impl.NumResiduals() != gradient_checking_problem_impl.NumResiduals()");
+			  passed[0] = false; 
+		  }
+
+		  final Program program = problem_impl.program();
+		  final Program gradient_checking_program =
+		      gradient_checking_problem_impl.program();
+
+		  // Since we added the ParameterBlocks and ResidualBlocks explicitly,
+		  // they should be in the same order in the two programs. It is
+		  // possible that may change due to implementation changes to
+		  // Program. This is not expected to be the case and writing code to
+		  // anticipate that possibility not worth the extra complexity in
+		  // this test.
+		  for (int i = 0; i < program.parameter_blocks().size(); ++i) {
+		    ParameterBlocksAreEquivalent(
+		        program.parameter_blocks().get(i),
+		        gradient_checking_program.parameter_blocks().get(i), testName, passed);
+		  }
+
+		  for (int i = 0; i < program.residual_blocks().size(); ++i) {
+		    // Compare the sizes of the two ResidualBlocks.
+		    final ResidualBlock original_residual_block =
+		        program.residual_blocks().get(i);
+		    final ResidualBlock new_residual_block =
+		        gradient_checking_program.residual_blocks().get(i);
+		    if (original_residual_block.NumParameterBlocks() != new_residual_block.NumParameterBlocks()) {
+		    	 System.err.println("In " + testName + " original_residual_block.NumParameterBlocks() != new_residual_block.NumParameterBlocks()");
+				 passed[0] = false; 
+		    }
+		    if (original_residual_block.NumResiduals() != new_residual_block.NumResiduals()) {
+		    	System.err.println("In " + testName + " original_residual_block.NumResiduals() != new_residual_block.NumResiduals()");
+				passed[0] = false; 
+		    }
+		    if (original_residual_block.NumScratchDoublesForEvaluate() != new_residual_block.NumScratchDoublesForEvaluate()) {
+		    	System.err.println("In " + testName + " original_residual_block.NumScratchDoublesForEvaluate() != new_residual_block.NumScratchDoublesForEvaluate()");
+				passed[0] = false; 
+		    }
+
+		    // Verify that the ParameterBlocks for the two residuals are equivalent.
+		    for (int j = 0; j < original_residual_block.NumParameterBlocks(); ++j) {
+		      ParameterBlocksAreEquivalent(
+		          original_residual_block.parameter_blocks()[j],
+		          new_residual_block.parameter_blocks()[j], testName, passed);
+		    }
+		  }
+		  if (passed[0]) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+
 
 }
