@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
+import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.EvaluateOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
@@ -554,6 +555,7 @@ public abstract class CeresSolver {
 	protected int testCase;
 	protected final int COST_FUNCTOR_EXAMPLE = 1;
 	protected final int CURVE_FITTING_EXAMPLE = 2;
+	protected final int TEST_TERM_EXAMPLE = 3;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -566,6 +568,144 @@ public abstract class CeresSolver {
 			return true;
 		}
 	};
+	
+	// Pick a (non-quadratic) function whose derivative are easy:
+		//
+//		    f = exp(- a' x).
+		//   df = - f a.
+		//
+		// where 'a' is a vector of the same size as 'x'. In the block
+		// version, they are both block vectors, of course.
+		//template<int bad_block = 1, int bad_variable = 2>
+		class TestTerm extends CostFunction {
+		  // In EvaluateJacobianColumn under switch(testCase) added case TEST_TERM_EXAMPLE:
+		  // The constructor of this function needs to know the number
+		  // of blocks desired, and the size of each block.
+			private int arity_;
+		    private Vector<Vector<Double> > a_;
+		    private int bad_block;
+		    private int bad_variable;
+		  public TestTerm(int bad_block, int bad_variable, int arity, int dim[]) {
+			super();
+			this.bad_block = bad_block;
+			this.bad_variable = bad_variable;
+		    // Make 'arity' random vectors.
+			arity_ = arity;
+			a_ = new Vector<Vector<Double>>(arity_);
+			int i, j, u;
+			for (j = 0; j < arity_; j++) {
+				a_.add(new Vector<Double>(dim[j]));
+				for (u = 0; u < dim[j]; u++) {
+					a_.get(j).add(2.0 * RandDouble() - 1.0);
+				}
+			}
+
+		    for (i = 0; i < arity_; i++) {
+		      mutable_parameter_block_sizes().add(dim[i]);
+		    }
+		    set_num_residuals(1);
+		  }
+		  
+		  public boolean Evaluate(double[][] parameters, double[] residuals) {
+			// Compute a . x.
+			    double ax = 0;
+			    for (int j = 0; j < arity_; ++j) {
+			      for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			        ax += a_.get(j).get(u) * parameters[j][u];
+			      }
+			    } 
+			    
+			    residuals[0] = Math.exp(-ax);
+			    return true;
+		  }
+		  
+		  
+
+		  public boolean Evaluate(Vector<double[]> parameters,
+		                double[] residuals,
+		                double[][] jacobians) {
+		    // Compute a . x.
+		    double ax = 0;
+		    for (int j = 0; j < arity_; ++j) {
+		      for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+		        ax += a_.get(j).get(u) * parameters.get(j)[u];
+		      }
+		    }
+
+		    // This is the cost, but also appears as a factor
+		    // in the derivatives.
+		    double f = residuals[0] = Math.exp(-ax);
+
+		    // Accumulate 1st order derivatives.
+		    if (jacobians != null) {
+		      for (int j = 0; j < arity_; ++j) {
+		        if (jacobians[j] != null) {
+		          for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+		            // See comments before class.
+		            jacobians[j][u] = - f * a_.get(j).get(u);
+
+		            if (bad_block == j && bad_variable == u) {
+		              // Whoopsiedoopsie! Deliberately introduce a faulty jacobian entry
+		              // like what happens when users make an error in their jacobian
+		              // computations. This should get detected.
+		              if (INFO <= MAX_LOG_LEVEL) {
+		                  Preferences.debug("Poisoning jacobian for parameter block " + j
+		                        + ", row 0, column " + u + "\n", Preferences.DEBUG_ALGORITHM);
+		              }
+		              jacobians[j][u] += 500;
+		            }
+		          }
+		        }
+		      }
+		    }
+
+		    return true;
+		  }
+		  
+		  public boolean Evaluate(Vector<double[]> parameters,
+	              double[] residuals,
+	              double[][] jacobians,
+	              int[] jacobians_offset) {
+			  // Compute a . x.
+			  double ax = 0;
+			  for (int j = 0; j < arity_; ++j) {
+			    for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			      ax += a_.get(j).get(u) * parameters.get(j)[u];
+			    }
+			  }
+			
+			  // This is the cost, but also appears as a factor
+			  // in the derivatives.
+			  double f = residuals[0] = Math.exp(-ax);
+			
+			  // Accumulate 1st order derivatives.
+			  if (jacobians != null) {
+			    for (int j = 0; j < arity_; ++j) {
+			      if (jacobians[j] != null) {
+			        for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			          // See comments before class.
+			          jacobians[j][jacobians_offset[j] + u] = - f * a_.get(j).get(u);
+			
+			          if (bad_block == j && bad_variable == u) {
+			            // Whoopsiedoopsie! Deliberately introduce a faulty jacobian entry
+			            // like what happens when users make an error in their jacobian
+			            // computations. This should get detected.
+			            if (INFO <= MAX_LOG_LEVEL) {
+			                Preferences.debug("Poisoning jacobian for parameter block " + j
+			                      + ", row 0, column " + u + "\n", Preferences.DEBUG_ALGORITHM);
+			            }
+			            jacobians[j][jacobians_offset[j] + u] += 500;
+			          }
+			        }
+			      }
+			    }
+			  }
+			
+			  return true;
+			}
+
+		 
+		};
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -17201,12 +17341,18 @@ public abstract class CeresSolver {
 		      int c;
 		   final int num_residuals_internal =
 		        (kNumResiduals != DYNAMIC ? kNumResiduals : num_residuals);
+		   if (kNumResiduals == DYNAMIC) {
+			   kNumResiduals = num_residuals;
+		   }
 		   final int parameter_block_index_internal =
 		        (kParameterBlock != DYNAMIC ? kParameterBlock :
 		                                             parameter_block_index);
 		   final int parameter_block_size_internal =
 		        (kParameterBlockSize != DYNAMIC ? kParameterBlockSize :
 		                                                 parameter_block_size);
+		   if (kParameterBlockSize == DYNAMIC) {
+			   kParameterBlockSize = parameter_block_size;
+		   }
 		   
 		   double ResidualVector[] = new double[kNumResiduals];
 		   double ParameterVector[] = new double[kParameterBlockSize];
@@ -17336,12 +17482,18 @@ public abstract class CeresSolver {
 		      int c;
 		   final int num_residuals_internal =
 		        (kNumResiduals != DYNAMIC ? kNumResiduals : num_residuals);
+		   if (kNumResiduals == DYNAMIC) {
+			   kNumResiduals = num_residuals;
+		   }
 		   final int parameter_block_index_internal =
 		        (kParameterBlock != DYNAMIC ? kParameterBlock :
 		                                             parameter_block_index);
 		   final int parameter_block_size_internal =
 		        (kParameterBlockSize != DYNAMIC ? kParameterBlockSize :
 		                                                 parameter_block_size);
+		   if (kParameterBlockSize == DYNAMIC) {
+			   kParameterBlockSize = parameter_block_size;
+		   }
 		   
 		   double ResidualVector[] = new double[kNumResiduals];
 		   double ParameterVector[] = new double[kParameterBlockSize];
@@ -17511,6 +17663,11 @@ public abstract class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case TEST_TERM_EXAMPLE:
+				if (!((TestTerm) functor).Evaluate(parameters, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			
@@ -17535,6 +17692,11 @@ public abstract class CeresSolver {
 			case CURVE_FITTING_EXAMPLE:
 				xp = parameters[0];
 			    if (!((CurveFittingFunctorExample) functor).operator(xp, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case TEST_TERM_EXAMPLE:
+				if (!((TestTerm) functor).Evaluate(parameters, temp_residuals)) {
 			    	return false;
 			    }
 			    break;
@@ -22464,7 +22626,7 @@ public abstract class CeresSolver {
 		public GradientCheckingIterationCallback() {
 			super();
 			gradient_error_detected_ = false;
-			error_log_ = new String[1];
+			error_log_ = new String[] {""};
 			m = new ReentrantLock();
 		}
 
@@ -22773,9 +22935,9 @@ public abstract class CeresSolver {
 			// output if there are no bad jacobian components.
 			String error_log = "";
 			for (int k = 0; k < function_.parameter_block_sizes().size(); k++) {
-			String.format(error_log,
+			error_log += String.format(
 			      "========== " +
-			      "Jacobian for block %d: (%ld by %ld)) " +
+			      "Jacobian for block %d: (%d by %d)) " +
 			      "==========\n",
 			      k,
 			      (long)local_jacobians.get(k).getRowDimension(),
@@ -22799,18 +22961,17 @@ public abstract class CeresSolver {
 			         absolute_error);
 			worst_relative_error = Math.max(worst_relative_error, relative_error[0]);
 			
-			String.format(error_log,
+			error_log += String.format(
 			          "%6d %4d %4d %17g %17g %17g %17g %17g %17g",
 			          k, i, j,
 			          term_jacobian, finite_jacobian,
-			          absolute_error, relative_error,
+			          absolute_error[0], relative_error[0],
 			          parameters.get(k)[j],
 			          results.residuals.get(i));
 			
 			if (bad_jacobian_entry) {
 			num_bad_jacobian_components++;
-			String.format(
-			  error_log,
+			error_log += String.format(
 			  " ------ (%d,%d,%d) Relative error worse than %g",
 			  k, i, j, relative_precision);
 			}
@@ -22962,7 +23123,70 @@ public abstract class CeresSolver {
 			options_ = options;
 			this.method = method;
 		}
-	}
+		
+		public boolean Evaluate(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians) {
+			int i;
+			//using internal::NumericDiff;
+			if (num_residuals() <= 0) {
+			    System.err.println("You must call DynamicNumericDiffCostFunction::SetNumResiduals() ");
+			    System.err.println("before DynamicNumericDiffCostFunction::Evaluate().");
+			    return false;
+			}
+			
+			Vector<Integer> block_sizes = parameter_block_sizes();
+			if (block_sizes.isEmpty()) {
+			    System.err.println("You must call DynamicNumericDiffCostFunction::AddParameterBlock() ");
+			    System.err.println("before DynamicNumericDiffCostFunction::Evaluate().");
+			    return false;
+			}
+			
+			final boolean status = EvaluateCostFunctor(parameters, residuals);
+			if (jacobians == null || !status) {
+			return status;
+			}
+			
+			// Create local space for a copy of the parameters which will get mutated.
+			double[][] parameters_references_copy = new double[block_sizes.size()][];
+			for (int block = 0; block < block_sizes.size(); ++block) {
+			    parameters_references_copy[block] = new double[block_sizes.get(block)];
+			}
+			
+			// Copy the parameters into the local temp space.
+			for (int block = 0; block < block_sizes.size(); ++block) {
+				for (i = 0; i < block_sizes.get(block); i++) {
+					parameters_references_copy[block][i] = parameters.get(block)[i];
+				}
+			}
+			
+			for (int block = 0; block < block_sizes.size(); ++block) {
+			if (jacobians[block] != null &&
+			  !EvaluateJacobianForParameterBlock(
+					   method, DYNAMIC,
+		               DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC,
+		               DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC,
+		               DYNAMIC, DYNAMIC,
+			                                     functor_,
+			                                     residuals,
+			                                     options_,
+			                                     num_residuals(),
+			                                     block,
+			                                     block_sizes.get(block),
+			                                     parameters_references_copy,
+			                                     jacobians[block])) {
+			return false;
+			}
+			}
+			return true;
+		}
+		
+		  private boolean EvaluateCostFunctor(Vector<double[]> parameters, double[] residuals) {
+			     return ((CostFunction) functor_).Evaluate(parameters, residuals, null);
+		  }
+	   }
+	
+	
 
 	// A common base class for DynamicAutoDiffCostFunction and
 	// DynamicNumericDiffCostFunction which depend on methods that can add
