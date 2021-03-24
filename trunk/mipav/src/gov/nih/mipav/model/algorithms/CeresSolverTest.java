@@ -16712,4 +16712,173 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		}
 
+	
+	
+	public void GradientCheckingCostFunctionResidualsAndJacobiansArePreservedTest() {
+		  // GradientCheckingCostFunctionResidualsAndJacobiansArePreservedTest() passed all tests
+		  boolean passed = true;
+
+		  // Test with 3 blocks of size 2, 3 and 4.
+		  final int arity = 3;
+		  final int dim[] = new int[]{ 2, 3, 4 };
+
+		  // Make a random set of blocks.
+		  Vector<double[]> parameters = new Vector<double[]>(arity);
+		  for (int j = 0; j < arity; ++j) {
+		    parameters.add(new double[dim[j]]);
+		    for (int u = 0; u < dim[j]; ++u) {
+		      parameters.get(j)[u] = 2.0 * RandDouble() - 1.0;
+		    }
+		  }
+
+		  double original_residual[] = new double[1];
+		  double residual[] = new double[1];
+		  double original_jacobians[][] = new double[arity][];
+		  double jacobians[][] = new double[arity][];
+
+		  for (int j = 0; j < arity; ++j) {
+		    // Since residual is one dimensional the jacobians have the same
+		    // size as the parameter blocks.
+		    jacobians[j] = new double[dim[j]];
+		    original_jacobians[j] = new double[dim[j]];
+		  }
+
+		  final double kRelativeStepSize = 1e-6;
+		  final double kRelativePrecision = 1e-4;
+
+		  TestTerm term = new TestTerm(-1, -1, arity, dim);
+		  GradientCheckingIterationCallback callback = new GradientCheckingIterationCallback();
+		  CostFunction gradient_checking_cost_function = 
+		      CreateGradientCheckingCostFunction(term, null,
+		                                         kRelativeStepSize,
+		                                         kRelativePrecision,
+		                                         "Ignored.", callback);
+		  
+		  term.Evaluate(parameters,
+		                original_residual,
+		                original_jacobians);
+
+		  
+		  gradient_checking_cost_function.Evaluate(parameters,
+		                                            residual,
+		                                            jacobians);
+		  if (original_residual[0] != residual[0]) {
+			  System.err.println("In GradientCheckingCostFunctionResidualsAndJacobiansArePreservedTest() original_residual[0] != residual[0]");
+			  passed = false;
+		  }
+
+		  for (int j = 0; j < arity; j++) {
+		    for (int k = 0; k < dim[j]; ++k) {
+		      if (original_jacobians[j][k] != jacobians[j][k]) {
+		    	  System.err.println("In GradientCheckingCostFunctionResidualsAndJacobiansArePreservedTest() original_jacobians["+j+"]["+k+"] != jacobians["+j+"]["+k+"]");
+				  passed = false; 
+				  System.err.println("original_jacobians["+j+"]["+k+"] = " + original_jacobians[j][k]);
+				  System.err.println("jacobians["+j+"]["+k+"] = " + jacobians[j][k]);
+		      }
+		    }
+
+		    parameters.set(j, null);
+		    jacobians[j] = null;
+		    original_jacobians[j] = null;
+		  }
+		  if (passed) {
+			  System.out.println("GradientCheckingCostFunctionResidualsAndJacobiansArePreservedTest() passed all tests");
+		  }
+		}
+
+	public void GradientCheckingCostFunctionSmokeTest() {
+		  // GradientCheckingCostFunctionSmokeTest() passed all tests
+		  boolean passed = true;
+		  testCase = TEST_TERM_EXAMPLE;
+
+		  // Test with 3 blocks of size 2, 3 and 4.
+		  final int arity = 3;
+		  final int dim[] = new int[]{ 2, 3, 4 };
+
+		  // Make a random set of blocks.
+		  Vector<double[]> parameters = new Vector<double[]>(arity);
+		  for (int j = 0; j < arity; ++j) {
+		    parameters.add(new double[dim[j]]);
+		    for (int u = 0; u < dim[j]; ++u) {
+		      parameters.get(j)[u] = 2.0 * RandDouble() - 1.0;
+		    }
+		  }
+
+		  double residual[] = new double[1];
+		  double jacobians[][] = new double[arity][];
+		  for (int j = 0; j < arity; ++j) {
+		    // Since residual is one dimensional the jacobians have the same size as the
+		    // parameter blocks.
+		    jacobians[j] = new double[dim[j]];
+		  }
+
+		  final double kRelativeStepSize = 1e-6;
+		  final double kRelativePrecision = 1e-4;
+
+		  // Should have one term that's bad, causing everything to get dumped.
+		  if (INFO <= MAX_LOG_LEVEL) {
+			  Preferences.debug("Bad gradient\n", Preferences.DEBUG_ALGORITHM);
+		  }
+		  
+		  {
+		    TestTerm term = new TestTerm(1, 2, arity, dim);
+		    GradientCheckingIterationCallback callback = new GradientCheckingIterationCallback();
+		    CostFunction gradient_checking_cost_function =
+		        CreateGradientCheckingCostFunction(term, null,
+		                                           kRelativeStepSize,
+		                                           kRelativePrecision,
+		                                           "Fuzzy banana", callback);
+		        if (!gradient_checking_cost_function.Evaluate(parameters, residual, jacobians)) {
+		        	System.err.println("In GradientCheckingCostFunctionSmokeTest() gradient_checking_cost_function.Evaluate(parameters, residual, jacobians) = false");
+		        	passed = false;
+		        }
+		    if (!callback.gradient_error_detected()) {
+		    	System.err.println("In GradientCheckingCostFunctionSmokeTest() callback.gradient_error_detected() = false");
+		    	passed = false;
+		    }
+		    //System.err.println(callback.error_log()[0]);
+		    int index = callback.error_log()[0].indexOf("Fuzzy banana");
+		    if (index == -1) {
+		    	System.err.println("In GradientCheckingCostFunctionSmokeTest() call.error_log()[0] does not contain Fuzzy banana");
+		    	passed = false;	
+		    }
+		    index = callback.error_log()[0].indexOf("(1,0,2) Relative error worse than");
+		    if (index == -1) {
+		    	System.err.println("In GradientCheckingCostFunctionSmokeTest() call.error_log()[0] does not contain (1,0,2) Relative error worse than");
+		    	passed = false;	
+		    }         
+		  }
+
+		  // The gradient is correct, so no errors are reported.
+		  if (INFO <= MAX_LOG_LEVEL) {
+			  Preferences.debug("Good gradient\n", Preferences.DEBUG_ALGORITHM);
+		  }
+		  {
+		    TestTerm term = new TestTerm(-1, -1, arity, dim);
+		    GradientCheckingIterationCallback callback = new GradientCheckingIterationCallback();
+		    CostFunction gradient_checking_cost_function =
+		        CreateGradientCheckingCostFunction(term, null,
+		                                           kRelativeStepSize,
+		                                           kRelativePrecision,
+		                                           "Fuzzy banana", callback);
+		    
+		    if (!gradient_checking_cost_function.Evaluate(parameters, residual, jacobians)) {
+	        	System.err.println("In GradientCheckingCostFunctionSmokeTest() gradient_checking_cost_function.Evaluate(parameters, residual, jacobians) = false");
+	        	passed = false;
+	        }
+		    if (callback.gradient_error_detected()) {
+		    	System.err.println("In GradientCheckingCostFunctionSmokeTest() callback.gradient_error_detected() = true");
+		    	passed = false;
+		    }
+		  }
+
+		  for (int j = 0; j < arity; j++) {
+		    parameters.set(j, null);
+		    jacobians[j] = null;
+		  }
+		  if (passed) {
+			  System.out.println("GradientCheckingCostFunctionSmokeTest() passed all tests");
+		  }
+		}
+
 }
