@@ -16182,7 +16182,7 @@ public abstract class CeresSolver {
 
 	} // class Minimizer
 
-	private ProblemImpl CreateGradientCheckingProblemImpl(ProblemImpl problem_impl, double relative_step_size,
+	public ProblemImpl CreateGradientCheckingProblemImpl(ProblemImpl problem_impl, double relative_step_size,
 			double relative_precision, GradientCheckingIterationCallback callback) {
 		if (callback == null) {
 			System.err.println("in CreateGradientCheckingProblemImpl callback is null");
