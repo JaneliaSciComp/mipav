@@ -17078,5 +17078,245 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		}
 
+		public void CheckDimensions(ProbeResults results,
+                Vector<Integer> parameter_sizes,
+                Vector<Integer> local_parameter_sizes,
+                int residual_size, String testName, boolean passed[]) {
+			if (parameter_sizes.size() != local_parameter_sizes.size()) {
+				System.err.println("In " + testName + " parameter_sizes.size() != local_parameter_sizes.size()");
+				passed[0] = false;
+			}
+			int num_parameters = parameter_sizes.size();
+			if (residual_size != results.residuals.size()) {
+				System.err.println("In " + testName + " residual_size != results.residuals.size()");
+				passed[0] = false;
+			}
+			if (num_parameters != results.local_jacobians.size()) {
+				System.err.println("In " + testName + " num_parameters != results.local_jacobians.size()");
+				passed[0] = false;
+			}
+			if (num_parameters != results.local_numeric_jacobians.size()) {
+				System.err.println("In " + testName + " num_parameters != results.local_numeric_jacobians.size()");
+				passed[0] = false;
+			}
+			if (num_parameters != results.jacobians.size()) {
+				System.err.println("In " + testName + " num_parameters != results.jacobians.size()");
+				passed[0] = false;
+			}
+			if (num_parameters != results.numeric_jacobians.size()) {
+				System.err.println("In " + testName + " num_parameters != results.numeric_jacobians.size()");
+				passed[0] = false;
+			}
+			for (int i = 0; i < num_parameters; ++i) {
+			    if (residual_size != results.local_jacobians.get(i).getRowDimension()) {
+			    	System.err.println("In " + testName + " residual_size != results.local_jacobians.get("+i+").getRowDimension()");
+					passed[0] = false;
+			    }
+			    if (local_parameter_sizes.get(i) != results.local_jacobians.get(i).getColumnDimension()) {
+			    	System.err.println("In " + testName + " local_parameter_sizes.get("+i+") != results.local_jacobians.get("+i+").getColumnDimension()");
+					passed[0] = false;
+			    }
+			    if (residual_size != results.local_numeric_jacobians.get(i).getRowDimension()) {
+			    	System.err.println("In " + testName + " residual_size != results.local_numeric_jacobians.get("+i+").getRowDimension()");
+					passed[0] = false;
+			    }
+			    if (local_parameter_sizes.get(i) != results.local_numeric_jacobians.get(i).getColumnDimension()) {
+			    	System.err.println("In " + testName + " local_parameter_sizes.get("+i+") != results.local_numeric_jacobians.get("+i+").getColumnDimension()");
+					passed[0] = false;
+			    }
+			    if (residual_size != results.jacobians.get(i).getRowDimension()) {
+			    	System.err.println("In " + testName + " residual_size != results.jacobians.get("+i+").getRowDimension()");
+					passed[0] = false;
+			    }
+			    if (parameter_sizes.get(i) != results.jacobians.get(i).getColumnDimension()) {
+			    	System.err.println("In " + testName + " parameter_sizes.get("+i+") != results.jacobians.get("+i+").getColumnDimension()");
+					passed[0] = false;
+			    }
+			    if (residual_size != results.numeric_jacobians.get(i).getRowDimension()) {
+			    	System.err.println("In " + testName + " residual_size != results.numeric_jacobians.get("+i+").getRowDimension()");
+					passed[0] = false;
+			    }
+			    if (parameter_sizes.get(i) != results.numeric_jacobians.get(i).getColumnDimension()) {
+			    	System.err.println("In " + testName + " parameter_sizes.get("+i+") != results.numeric_jacobians.get("+i+").getColumnDimension()");
+					passed[0] = false;
+			    }
+			}
+		}
+		
+		public void GradientCheckerSmokeTest() {
+			  // GradientCheckerSmokeTest() passed all tests
+			  int r,c;
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "GradientCheckerSmokeTest()";
+			  final double kTolerance = 1.0E-6;
+
+			  // Test with 3 blocks of size 2, 3 and 4.
+			  final int num_parameters = 3;
+			  Vector<Integer> parameter_sizes = new Vector<Integer>(3);
+			  parameter_sizes.add(2);
+			  parameter_sizes.add(3);
+			  parameter_sizes.add(4);
+			  int parameter_sizes_data[] = new int[] {2,3,4};
+
+			  // Make a random set of blocks.
+			  Vector<double[]> parameters = new Vector<double[]>(num_parameters);
+			  for (int j = 0; j < num_parameters; ++j) {
+			    parameters.add(new double[parameter_sizes.get(j)]);
+			    for (int u = 0; u < parameter_sizes.get(j); ++u) {
+			      parameters.get(j)[u] = 2.0 * RandDouble() - 1.0;
+			    }
+			  }
+
+			  NumericDiffOptions numeric_diff_options = new NumericDiffOptions();
+			  ProbeResults results = new ProbeResults();
+
+			  // Test that Probe returns true for correct Jacobians.
+			  testCase = GOOD_TEST_TERM_EXAMPLE;
+			  GoodTestTerm good_term = new GoodTestTerm(num_parameters, parameter_sizes_data);
+			  GradientChecker good_gradient_checker = new GradientChecker(good_term, null, numeric_diff_options);
+			  if (!good_gradient_checker.Probe(parameters, kTolerance, null)) {
+				  System.err.println("In " + testName + " good_gradient_checker.Probe(parameters, kTolerance, null) = false");
+				  passed[0] = false;  
+			  }
+			  if (!good_gradient_checker.Probe(parameters, kTolerance, results)) {
+				  System.err.println("In " + testName + " good_gradient_checker.Probe(parameters, kTolerance, results) = false");
+				  passed[0] = false;  
+			  }
+
+			  // Check that results contain sensible data.
+			  if (!results.return_value) {
+				  System.err.println("In " + testName + " results.return_value = false");
+				  passed[0] = false;
+			  }
+			  if (results.residuals.size() != 1) {
+				  System.err.println("In " + testName + " results.residuals.size() != 1");
+				  passed[0] = false;
+			  }
+			  CheckDimensions(results, parameter_sizes, parameter_sizes, 1, testName, passed);
+			  if (results.maximum_relative_error < 0.0) {
+				  System.err.println("In " + testName + " results.maximum_relative_error < 0.0");
+				  passed[0] = false;
+			  }
+			  if((results.error_log != null) && (!results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log != null) && (!results.error_log.isEmpty())");
+				  passed[0] = false; 
+			  }
+
+			  // Test that if the cost function return false, Probe should return false.
+			  good_term.SetReturnValue(false);
+			  if (good_gradient_checker.Probe(parameters, kTolerance, null)) {
+				  System.err.println("In " + testName + " good_gradient_checker.Probe(parameters, kTolerance, null) = true");
+				  passed[0] = false; 
+			  };
+			  if (good_gradient_checker.Probe(parameters, kTolerance, results)) {
+				  System.err.println("In " + testName + " good_gradient_checker.Probe(parameters, kTolerance, results) = true");
+				  passed[0] = false;  
+			  }
+
+			  // Check that results contain sensible data.
+			  if (results.return_value) {
+				  System.err.println("In " + testName + " results.return_value = true");
+				  passed[0] = false;
+			  }
+			  
+			  if (results.residuals.size() != 1) {
+				  System.err.println("In " + testName + " results.residuals.size() != 1");
+				  passed[0] = false;
+			  }
+			  CheckDimensions(results, parameter_sizes, parameter_sizes, 1, testName, passed);
+			  for (int i = 0; i < num_parameters; ++i) {
+				for (r = 0; r < results.local_jacobians.get(i).getRowDimension(); r++) {
+					for (c = 0; c < results.local_jacobians.get(i).getColumnDimension(); c++) {
+						if (results.local_jacobians.get(i).get(r,c) != 0.0) {
+							System.err.println("In " + testName + " results.local_jacobians.get("+i+").get("+r+","+c+") != 0.0");
+							passed[0] = false;
+						}
+					}
+				}
+				for (r = 0; r < results.local_numeric_jacobians.get(i).getRowDimension(); r++) {
+					for (c = 0; c < results.local_numeric_jacobians.get(i).getColumnDimension(); c++) {
+						if (results.local_numeric_jacobians.get(i).get(r,c) != 0.0) {
+							System.err.println("In " + testName + " results.local_numeric_jacobians.get("+i+").get("+r+","+c+") != 0.0");
+							passed[0] = false;
+						}
+					}
+				}
+			  }
+			  if (results.maximum_relative_error != 0.0) {
+				  System.err.println("In " + testName + " results.maximum_relative_error != 0.0");
+				  passed[0] = false; 
+			  }
+			  if((results.error_log == null) || (results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log == null) || (results.error_log.isEmpty())");
+				  passed[0] = false; 
+			  }
+
+			  // Test that Probe returns false for incorrect Jacobians.
+			  testCase = BAD_TEST_TERM_EXAMPLE;
+			  BadTestTerm bad_term = new BadTestTerm(num_parameters, parameter_sizes_data);
+			  GradientChecker bad_gradient_checker = new GradientChecker(bad_term, null, numeric_diff_options);
+			  if (bad_gradient_checker.Probe(parameters, kTolerance, null)) {
+				  System.err.println("In " + testName + " bad_gradient_checker.Probe(parameters, kTolerance, null) == true");
+				  passed[0] = false;
+			  }
+			  if (bad_gradient_checker.Probe(parameters, kTolerance, results)) {
+				  System.err.println("In " + testName + " bad_gradient_checker.Probe(parameters, kTolerance, results) == true");
+				  passed[0] = false;
+			  }
+
+			  // Check that results contain sensible data.
+			  if (!results.return_value) {
+				  System.err.println("In " + testName + " results.return_value = false");
+				  passed[0] = false;
+			  }
+			  if (results.residuals.size() != 1) {
+				  System.err.println("In " + testName + " results.residuals.size() != 1");
+				  passed[0] = false;
+			  }
+			  CheckDimensions(results, parameter_sizes, parameter_sizes, 1, testName, passed);
+			  if (results.maximum_relative_error <= kTolerance) {
+				  System.err.println("In " + testName + " results.maximum_relative_error <= kTolerance");
+				  System.err.println("results.maximum_relative_error = " + results.maximum_relative_error);
+				  passed[0] = false;
+			  }
+			  if((results.error_log == null) || (results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log == null) || (results.error_log.isEmpty())");
+				  passed[0] = false; 
+			  }
+
+			  // Setting a high threshold should make the test pass.
+			  if (!bad_gradient_checker.Probe(parameters, 1.0, results)) {
+				  System.err.println("In " + testName + " bad_gradient_checker.Probe(parameters, 1.0, results) == false");
+				  passed[0] = false;
+			  }
+
+			  // Check that results contain sensible data.
+			  if (!results.return_value) {
+				  System.err.println("In " + testName + " results.return_value = false");
+				  passed[0] = false;
+			  }
+			  if (results.residuals.size() != 1) {
+				  System.err.println("In " + testName + " results.residuals.size() != 1");
+				  passed[0] = false;
+			  }
+			  CheckDimensions(results, parameter_sizes, parameter_sizes, 1, testName, passed);
+			  if (results.maximum_relative_error <= 0.0) {
+				  System.err.println("In " + testName + " results.maximum_relative_error <= 0.0");
+				  System.err.println("results.maximum_relative_error = " + results.maximum_relative_error);
+				  passed[0] = false;
+			  }
+			  if((results.error_log != null) && (!results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log != null) && (!results.error_log.isEmpty())");
+				  passed[0] = false; 
+			  }
+
+			  for (int j = 0; j < num_parameters; j++) {
+			    parameters.set(j, null);
+			  }
+			  if (passed[0]) {
+			      System.out.println(testName + " passed all tests");
+			  }
+			}
+
 
 }
