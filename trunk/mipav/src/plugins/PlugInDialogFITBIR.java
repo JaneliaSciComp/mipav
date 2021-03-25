@@ -3595,7 +3595,7 @@ public class PlugInDialogFITBIR extends JFrame
                                         progressBar.setMessage("Copying attached file for record #" + (i + 1));
                                         FileUtils.copyFile(srcFile, destFile);
                                         //deVal.setValue(destFile.getAbsolutePath());
-                                        imagePath = structSubDirName + File.separator + destFile.getName();
+                                        deVal.setValue(structSubDirName + File.separator + destFile.getName());
                                     } catch (final IOException e) {
                                         MipavUtil.displayError("Unable to copy file into output directory");
                                         e.printStackTrace();
