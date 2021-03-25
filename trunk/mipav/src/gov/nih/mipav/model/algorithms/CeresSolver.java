@@ -556,6 +556,8 @@ public abstract class CeresSolver {
 	protected final int COST_FUNCTOR_EXAMPLE = 1;
 	protected final int CURVE_FITTING_EXAMPLE = 2;
 	protected final int TEST_TERM_EXAMPLE = 3;
+	protected final int GOOD_TEST_TERM_EXAMPLE = 4;
+	protected final int BAD_TEST_TERM_EXAMPLE = 5;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -706,6 +708,163 @@ public abstract class CeresSolver {
 
 		 
 		};
+		
+		// We pick a (non-quadratic) function whose derivative are easy:
+		//
+	    //	 f = exp(- a' x).
+		//   df = - f a.
+		//
+		// where 'a' is a vector of the same size as 'x'. In the block
+		// version, they are both block vectors, of course.
+		class GoodTestTerm extends CostFunction {
+			// // In EvaluateJacobianColumn under switch(testCase) added case GOOD_TEST_TERM_EXAMPLE:
+			private int arity_;
+			private boolean return_value_;
+		    private Vector<Vector<Double> > a_;  // our vectors.
+		    public GoodTestTerm(int arity, int[] dim) {
+		    super();
+		    arity_ = arity;
+		    return_value_ = true;
+		    // Make 'arity' random vectors.
+		    a_ = new Vector<Vector<Double>>(arity_);
+		    for (int j = 0; j < arity_; ++j) {
+		      a_.add(new Vector<Double>(dim[j]));
+		      for (int u = 0; u < dim[j]; ++u) {
+		        a_.get(j).add(2.0 * RandDouble() - 1.0);
+		      }
+		    }
+
+		    for (int i = 0; i < arity_; i++) {
+		      mutable_parameter_block_sizes().add(dim[i]);
+		    }
+		    set_num_residuals(1);
+		  }
+
+		  public boolean Evaluate(Vector<double[]> parameters,
+		                double[] residuals,
+		                double[][] jacobians) {
+		    if (!return_value_) {
+		      return false;
+		    }
+		    // Compute a . x.
+		    double ax = 0;
+		    for (int j = 0; j < arity_; ++j) {
+		      for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+		        ax += a_.get(j).get(u) * parameters.get(j)[u];
+		      }
+		    }
+
+		    // This is the cost, but also appears as a factor
+		    // in the derivatives.
+		    double f = residuals[0] = Math.exp(-ax);
+
+		    // Accumulate 1st order derivatives.
+		    if (jacobians != null) {
+		      for (int j = 0; j < arity_; ++j) {
+		        if (jacobians[j] != null) {
+		          for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+		            // See comments before class.
+		            jacobians[j][u] = -f * a_.get(j).get(u);
+		          }
+		        }
+		      }
+		    }
+
+		    return true;
+		  }
+		  
+		  public boolean Evaluate(double[][] parameters,
+	                double[] residuals) {
+			  if (!return_value_) {
+			      return false;
+			    }
+			    // Compute a . x.
+			    double ax = 0;
+			    for (int j = 0; j < arity_; ++j) {
+			      for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			        ax += a_.get(j).get(u) * parameters[j][u];
+			      }
+			    }
+			
+			    // This is the cost, but also appears as a factor
+			    // in the derivatives.
+			    double f = residuals[0] = Math.exp(-ax);
+			    return true;
+			}
+
+		  public void SetReturnValue(boolean return_value) { return_value_ = return_value; }
+		};
+		
+		class BadTestTerm extends CostFunction {
+			// // In EvaluateJacobianColumn under switch(testCase) added case BAD_TEST_TERM_EXAMPLE:
+			private int arity_;
+			private Vector<Vector<Double> > a_;  // our vectors.
+			public BadTestTerm(int arity, int[] dim) {
+			    super();
+			    arity_ = arity;
+			    // Make 'arity' random vectors.
+			    a_ = new Vector<Vector<Double>>(arity_);
+			    for (int j = 0; j < arity_; ++j) {
+			      a_.add(new Vector<Double>(dim[j]));
+			      for (int u = 0; u < dim[j]; ++u) {
+			        a_.get(j).add(2.0 * RandDouble() - 1.0);
+			      }
+			    }
+
+			    for (int i = 0; i < arity_; i++) {
+			      mutable_parameter_block_sizes().add(dim[i]);
+			    }
+			    set_num_residuals(1);
+			  }
+			
+			public boolean Evaluate(Vector<double[]> parameters,
+	                double[] residuals,
+	                double[][] jacobians) {
+	    
+			    // Compute a . x.
+			    double ax = 0;
+			    for (int j = 0; j < arity_; ++j) {
+			      for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			        ax += a_.get(j).get(u) * parameters.get(j)[u];
+			      }
+			    }
+			
+			    // This is the cost, but also appears as a factor
+			    // in the derivatives.
+			    double f = residuals[0] = Math.exp(-ax);
+			
+			    // Accumulate 1st order derivatives.
+			    if (jacobians != null) {
+			      for (int j = 0; j < arity_; ++j) {
+			        if (jacobians[j] != null) {
+			          for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			            // See comments before class.
+			            jacobians[j][u] = -f * a_.get(j).get(u) + 0.001;
+			          }
+			        }
+			      }
+			    }
+			
+			    return true;
+			  }
+			
+			public boolean Evaluate(double[][] parameters,
+	                double[] residuals) {
+	    
+			    // Compute a . x.
+			    double ax = 0;
+			    for (int j = 0; j < arity_; ++j) {
+			      for (int u = 0; u < parameter_block_sizes().get(j); ++u) {
+			        ax += a_.get(j).get(u) * parameters[j][u];
+			      }
+			    }
+			
+			    // This is the cost, but also appears as a factor
+			    // in the derivatives.
+			    double f = residuals[0] = Math.exp(-ax);
+			    return true;
+			}
+		}
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -17668,6 +17827,16 @@ public abstract class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case GOOD_TEST_TERM_EXAMPLE:
+				if (!((GoodTestTerm) functor).Evaluate(parameters, residuals)) {
+			    	return false;
+			    }
+			    break;
+			case BAD_TEST_TERM_EXAMPLE:
+				if (!((BadTestTerm) functor).Evaluate(parameters, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			
@@ -17697,6 +17866,16 @@ public abstract class CeresSolver {
 			    break;
 			case TEST_TERM_EXAMPLE:
 				if (!((TestTerm) functor).Evaluate(parameters, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case GOOD_TEST_TERM_EXAMPLE:
+				if (!((GoodTestTerm) functor).Evaluate(parameters, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case BAD_TEST_TERM_EXAMPLE:
+				if (!((BadTestTerm) functor).Evaluate(parameters, temp_residuals)) {
 			    	return false;
 			    }
 			    break;
@@ -22979,6 +23158,7 @@ public abstract class CeresSolver {
 			}
 			}
 			}
+			results.maximum_relative_error = worst_relative_error;
 			
 			// Since there were some bad errors, dump comprehensive debug info.
 			if (num_bad_jacobian_components > 0) {
