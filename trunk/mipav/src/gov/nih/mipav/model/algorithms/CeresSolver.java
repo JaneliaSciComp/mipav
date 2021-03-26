@@ -558,6 +558,7 @@ public abstract class CeresSolver {
 	protected final int TEST_TERM_EXAMPLE = 3;
 	protected final int GOOD_TEST_TERM_EXAMPLE = 4;
 	protected final int BAD_TEST_TERM_EXAMPLE = 5;
+	protected final int LINEAR_COST_FUNCTION_EXAMPLE = 6;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -717,7 +718,7 @@ public abstract class CeresSolver {
 		// where 'a' is a vector of the same size as 'x'. In the block
 		// version, they are both block vectors, of course.
 		class GoodTestTerm extends CostFunction {
-			// // In EvaluateJacobianColumn under switch(testCase) added case GOOD_TEST_TERM_EXAMPLE:
+			// In EvaluateJacobianColumn under switch(testCase) added case GOOD_TEST_TERM_EXAMPLE:
 			private int arity_;
 			private boolean return_value_;
 		    private Vector<Vector<Double> > a_;  // our vectors.
@@ -865,6 +866,194 @@ public abstract class CeresSolver {
 			    return true;
 			}
 		}
+		
+		/**
+		 * Helper cost function that multiplies the parameters by the given jacobians
+		 * and adds a constant offset.
+		 */
+		class LinearCostFunction extends CostFunction {
+			// In EvaluateJacobianColumn under switch(testCase) added case LINEAR_COST_FUNCTION_EXAMPLE
+			private Vector<Matrix> residual_J_params_;
+		    private HashMap<Integer, Matrix> jacobian_offsets_;
+		    private Vector<Double> residuals_offset_;
+		    
+		    public LinearCostFunction(Vector<Double> residuals_offset) {
+		    	super();
+		        residuals_offset_ = residuals_offset;
+		        set_num_residuals(residuals_offset_.size());
+		        residual_J_params_ = new Vector<Matrix>();
+		        jacobian_offsets_ = new HashMap<Integer, Matrix>();
+		  }
+
+		  public boolean Evaluate(Vector<double[]> parameter_ptrs,
+		                        double[] residuals_ptr,
+		                        Vector<Matrix> residual_J_params) {
+			int i, r, c;
+		    //VectorRef residuals(residuals_ptr, residual_J_params_[0].rows());
+		    //residuals = residuals_offset_;
+			for (i = 0; i < residual_J_params_.get(0).getRowDimension(); i++) {
+				residuals_ptr[i] = residuals_offset_.get(i);
+			}
+
+		    for (i = 0; i < residual_J_params_.size(); ++i) {
+		      final Matrix residual_J_param = residual_J_params_.get(i);
+		      int parameter_size = residual_J_param.getColumnDimension();
+		      double param[] = new double[parameter_size];
+		      for (r = 0; r < parameter_size; r++) {
+		    	  param[r] = parameter_ptrs.get(i)[r];
+		      }
+
+		      // Compute residual.
+		      double prod[] = new double[residual_J_param.getRowDimension()];
+		      for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+		    	  for (c = 0; c < parameter_size; c++) {
+		    		  prod[r] += residual_J_param.get(r,c) * param[c];
+		    	  }
+		      }
+		      for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+		    	  residuals_ptr[r] += prod[r];
+		      }
+
+		      // Return Jacobian.
+		      if (residual_J_params != null && residual_J_params.get(i) != null) {
+		        
+		        if (jacobian_offsets_.get(i) != null) {
+		          for (r = 0; r < residual_J_params.get(i).getRowDimension(); r++) {
+		        	  for (c = 0; c < residual_J_params.get(i).getColumnDimension(); c++) {
+		        		  residual_J_params.get(i).set(r,c,residual_J_param.get(r,c) + jacobian_offsets_.get(i).get(r,c));
+		        	  }
+		          }
+		        }
+		        else {
+		        	for (r = 0; r < residual_J_params.get(i).getRowDimension(); r++) {
+			        	  for (c = 0; c < residual_J_params.get(i).getColumnDimension(); c++) {
+			        		  residual_J_params.get(i).set(r,c,residual_J_param.get(r,c));
+			        	  }
+			          }
+			        }	
+		       }
+		    }
+		      
+		    return true;
+		  }
+		  
+		  public boolean Evaluate(Vector<double[]> parameter_ptrs,
+                  double[] residuals_ptr,
+                  double[][] residual_J_params) {
+			int i, r, c;
+			//VectorRef residuals(residuals_ptr, residual_J_params_[0].rows());
+			//residuals = residuals_offset_;
+			for (i = 0; i < residual_J_params_.get(0).getRowDimension(); i++) {
+				residuals_ptr[i] = residuals_offset_.get(i);
+			}
+			
+			for (i = 0; i < residual_J_params_.size(); ++i) {
+			final Matrix residual_J_param = residual_J_params_.get(i);
+			int parameter_size = residual_J_param.getColumnDimension();
+			double param[] = new double[parameter_size];
+			for (r = 0; r < parameter_size; r++) {
+				  param[r] = parameter_ptrs.get(i)[r];
+			}
+			
+			// Compute residual.
+			double prod[] = new double[residual_J_param.getRowDimension()];
+			for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+				  for (c = 0; c < parameter_size; c++) {
+					  prod[r] += residual_J_param.get(r,c) * param[c];
+				  }
+			}
+			for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+				  residuals_ptr[r] += prod[r];
+			}
+			
+			// Return Jacobian.
+			if (residual_J_params != null && residual_J_params[i] != null) {
+			  
+			  if (jacobian_offsets_.get(i) != null) {
+			    for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+			  	  for (c = 0; c < residual_J_param.getColumnDimension(); c++) {
+			  		  residual_J_params[i][r*residual_J_param.getColumnDimension() + c] = residual_J_param.get(r,c) + jacobian_offsets_.get(i).get(r,c);
+			  	  }
+			    }
+			  }
+			  else {
+			  	for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+			      	  for (c = 0; c < residual_J_param.getColumnDimension(); c++) {
+			      		residual_J_params[i][r*residual_J_param.getColumnDimension() + c] = residual_J_param.get(r,c);
+			      	  }
+			        }
+			      }	
+			 }
+			}
+			
+			return true;
+		}
+		  
+		  public boolean Evaluate(double[][] parameter_ptrs,
+                  double[] residuals_ptr) {
+			int i, r, c;
+			//VectorRef residuals(residuals_ptr, residual_J_params_[0].rows());
+			//residuals = residuals_offset_;
+			for (i = 0; i < residual_J_params_.get(0).getRowDimension(); i++) {
+				residuals_ptr[i] = residuals_offset_.get(i);
+			}
+			
+			for (i = 0; i < residual_J_params_.size(); ++i) {
+			final Matrix residual_J_param = residual_J_params_.get(i);
+			int parameter_size = residual_J_param.getColumnDimension();
+			double param[] = new double[parameter_size];
+			for (r = 0; r < parameter_size; r++) {
+				  param[r] = parameter_ptrs[i][r];
+			}
+			
+			// Compute residual.
+			double prod[] = new double[residual_J_param.getRowDimension()];
+			for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+				  for (c = 0; c < parameter_size; c++) {
+					  prod[r] += residual_J_param.get(r,c) * param[c];
+				  }
+			}
+			for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+				  residuals_ptr[r] += prod[r];
+			}
+			}
+			
+		    return true;
+		}
+
+		  public void AddParameter(Matrix residual_J_param, String testName, boolean passed[]) {
+		    if (num_residuals() != residual_J_param.getRowDimension()) {
+		    	System.err.println("In " + testName + " num_residuals() != residual_J_param.getRowDimension()");
+		    	passed[0] = false;
+		    	return;
+		    }
+		    residual_J_params_.add(residual_J_param);
+		    mutable_parameter_block_sizes().add(residual_J_param.getColumnDimension());
+		  }
+
+		  /// Add offset to the given Jacobian before returning it from Evaluate(),
+		  /// thus introducing an error in the comutation.
+		  public void SetJacobianOffset(int index, Matrix offset, String testName, boolean passed[]) {
+		    if (index >= residual_J_params_.size()) {
+		    	System.err.println("In " + testName + " index >= residual_J_params_.size()");
+		    	passed[0] = false;
+		    	return;
+		    }
+		    if (residual_J_params_.get(index).getRowDimension() != offset.getRowDimension()) {
+		    	System.err.println("In " + testName + " residual_J_params_.get(index).getRowDimension() != offset.getRowDimension()");
+		    	passed[0] = false;
+		    	return;
+		    }
+		    if (residual_J_params_.get(index).getColumnDimension() != offset.getColumnDimension()) {
+		    	System.err.println("In " + testName + " residual_J_params_.get(index).getColumnDimension() != offset.getColumnDimension()");
+		    	passed[0] = false;
+		    	return;
+		    }
+		    jacobian_offsets_.put(index,offset);
+		  }
+
+		 
+		};
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -17837,6 +18026,11 @@ public abstract class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case LINEAR_COST_FUNCTION_EXAMPLE:
+				if (!((LinearCostFunction) functor).Evaluate(parameters, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			
@@ -17876,6 +18070,11 @@ public abstract class CeresSolver {
 			    break;
 			case BAD_TEST_TERM_EXAMPLE:
 				if (!((BadTestTerm) functor).Evaluate(parameters, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case LINEAR_COST_FUNCTION_EXAMPLE:
+				if (!((LinearCostFunction) functor).Evaluate(parameters, temp_residuals)) {
 			    	return false;
 			    }
 			    break;
