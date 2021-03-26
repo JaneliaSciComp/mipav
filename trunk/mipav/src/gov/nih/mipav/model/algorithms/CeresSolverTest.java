@@ -17317,101 +17317,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			      System.out.println(testName + " passed all tests");
 			  }
 			}
-
-		/**
-		 * Helper cost function that multiplies the parameters by the given jacobians
-		 * and adds a constant offset.
-		 */
-		class LinearCostFunction extends CostFunction {
-			private Vector<Matrix> residual_J_params_;
-		    private HashMap<Integer, Matrix> jacobian_offsets_;
-		    private Vector<Double> residuals_offset_;
-		    
-		    public LinearCostFunction(Vector<Double> residuals_offset) {
-		    	super();
-		        residuals_offset_ = residuals_offset;
-		        set_num_residuals(residuals_offset_.size());
-		        jacobian_offsets_ = new HashMap<Integer, Matrix>();
-		  }
-
-		  public boolean Evaluate(Vector<double[]> parameter_ptrs,
-		                        double[] residuals_ptr,
-		                        Vector<Matrix> residual_J_params_) {
-			int i, r, c;
-			this.residual_J_params_ = residual_J_params_;
-		    //VectorRef residuals(residuals_ptr, residual_J_params_[0].rows());
-		    //residuals = residuals_offset_;
-			for (i = 0; i < residual_J_params_.get(0).getRowDimension(); i++) {
-				residuals_ptr[i] = residuals_offset_.get(i);
-			}
-
-		    for (i = 0; i < residual_J_params_.size(); ++i) {
-		      final Matrix residual_J_param = residual_J_params_.get(i);
-		      int parameter_size = residual_J_param.getColumnDimension();
-		      double param[] = new double[parameter_size];
-		      for (r = 0; r < parameter_size; r++) {
-		    	  param[r] = parameter_ptrs.get(i)[r];
-		      }
-
-		      // Compute residual.
-		      double prod[] = new double[residual_J_params_.get(0).getRowDimension()];
-		      for (r = 0; r < residual_J_params_.get(0).getRowDimension(); r++) {
-		    	  for (c = 0; c < parameter_size; c++) {
-		    		  prod[r] += residual_J_param.get(r,c) * param[c];
-		    	  }
-		      }
-		      for (r = 0; r < residual_J_params_.get(0).getRowDimension(); r++) {
-		    	  residuals_ptr[r] += prod[r];
-		      }
-
-		      // Return Jacobian.
-		      if (residual_J_params_ != null && residual_J_params_.get(i) != null) {
-		        
-		        if (jacobian_offsets_.get(i) != null) {
-		          for (r = 0; r < residual_J_params_.get(i).getRowDimension(); r++) {
-		        	  for (c = 0; c < residual_J_params_.get(i).getColumnDimension(); c++) {
-		        		  residual_J_params_.get(i).set(r,c,residual_J_params_.get(i).get(r,c) + jacobian_offsets_.get(i).get(r,c));
-		        	  }
-		          }
-		        }
-		      }
-		    }
-		    return true;
-		  }
-
-		  public void AddParameter(Matrix residual_J_param, String testName, boolean passed[]) {
-		    if (num_residuals() != residual_J_param.getRowDimension()) {
-		    	System.err.println("In " + testName + " num_residuals() != residual_J_param.getRowDimension()");
-		    	passed[0] = false;
-		    	return;
-		    }
-		    residual_J_params_.add(residual_J_param);
-		    mutable_parameter_block_sizes().add(residual_J_param.getColumnDimension());
-		  }
-
-		  /// Add offset to the given Jacobian before returning it from Evaluate(),
-		  /// thus introducing an error in the comutation.
-		  public void SetJacobianOffset(int index, Matrix offset, String testName, boolean passed[]) {
-		    if (index >= residual_J_params_.size()) {
-		    	System.err.println("In " + testName + " index >= residual_J_params_.size()");
-		    	passed[0] = false;
-		    	return;
-		    }
-		    if (residual_J_params_.get(index).getRowDimension() != offset.getRowDimension()) {
-		    	System.err.println("In " + testName + " residual_J_params_.get(index).getRowDimension() != offset.getRowDimension()");
-		    	passed[0] = false;
-		    	return;
-		    }
-		    if (residual_J_params_.get(index).getColumnDimension() != offset.getColumnDimension()) {
-		    	System.err.println("In " + testName + " residual_J_params_.get(index).getColumnDimension() != offset.getColumnDimension()");
-		    	passed[0] = false;
-		    	return;
-		    }
-		    jacobian_offsets_.put(index,offset);
-		  }
-
-		 
-		};
 		
 		/**
 		 * Helper local parameterization that multiplies the delta vector by the given
@@ -17458,21 +17363,29 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		  public boolean ComputeJacobian(double[] x, double[] jacobian) {
 			int r,c;
-			global_J_local = new Matrix(GlobalSize(), LocalSize());
 			for (r = 0; r < GlobalSize(); r++) {
 				for (c = 0; c < LocalSize(); c++) {
-					global_J_local.set(r,c, jacobian[r*LocalSize() + c]);
+					jacobian[r*LocalSize() +c ] = global_J_local.get(r,c);
 				}
 			}
 		    return true;
 		  }
 		  
-		  public boolean ComputeJacobian(double[] x, double[][] jacobian) {
+		  public boolean ComputeJacobian(double[] x, Matrix jacobian) {
 				int r,c;
-				global_J_local = new Matrix(GlobalSize(), LocalSize());
 				for (r = 0; r < GlobalSize(); r++) {
 					for (c = 0; c < LocalSize(); c++) {
-						global_J_local.set(r,c, jacobian[r][c]);
+						jacobian.set(r,c, global_J_local.get(r,c));
+					}
+				}
+			    return true;
+			  }
+		  
+		  public boolean ComputeJacobian(double[] x, double[][] jacobian) {
+				int r,c;
+				for (r = 0; r < GlobalSize(); r++) {
+					for (c = 0; c < LocalSize(); c++) {
+						jacobian[r][c] = global_J_local.get(r,c);
 					}
 				}
 			    return true;
@@ -17483,7 +17396,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				global_J_local = new Matrix(GlobalSize(), LocalSize());
 				for (r = 0; r < GlobalSize(); r++) {
 					for (c = 0; c < LocalSize(); c++) {
-						global_J_local.set(r,c, jacobian[r][c]);
+						jacobian[r][c] = global_J_local.get(r,c);
 					}
 				}
 			    return true;
@@ -17511,221 +17424,363 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  for (c = 0; c < p.getColumnDimension(); c++) {
 				  if (Math.abs(p.get(r,c) - q.get(r,c)) > tolerance) {
 					  System.err.println("In " + testName + " Math.abs(p.get("+r+","+c+") - q.get("+r+","+c+")) > tolerance");
+					  System.err.println("p.get("+r+","+c+") = " + p.get(r,c));
+					  System.err.println("q.get("+r+","+c+") = " + q.get(r,c));
 					  passed[0] = false;
 				  }
 			  }
 		  }
 		}
+		
+		public void ExpectMatricesClose(double p[], double q[], double tolerance, String testName, boolean passed[]) {
+			  int r,c;
+			  if (p.length != q.length) {
+				  System.err.println("In " + testName + " p.length != q.length");
+				  passed[0] = false;
+				  return;
+			  }
+			  
+			  for (r = 0; r < p.length; r++) {
+					  if (Math.abs(p[r] - q[r]) > tolerance) {
+						  System.err.println("In " + testName + " Math.abs(p["+r+"] - q["+r+"]) > tolerance");
+						  passed[0] = false;
+					  }
+			  }
+			}
 
 		public void GradientCheckerTestCorrectnessWithLocalParameterizations() {
+			  testCase = LINEAR_COST_FUNCTION_EXAMPLE;
+			  int r,c;
 			  boolean passed[] = new boolean[] {true};
 			  String testName = "GradientCheckerTestCorrectnessWithLocalParameterizations()";
+			  final double kTolerance = 1.0E-6;
 			  // Create cost function.
-			  /*Eigen::Vector3d residual_offset(100.0, 200.0, 300.0);
-			  LinearCostFunction cost_function(residual_offset);
-			  Eigen::Matrix<double, 3, 3, Eigen::RowMajor> j0;
-			  j0.row(0) << 1.0, 2.0, 3.0;
-			  j0.row(1) << 4.0, 5.0, 6.0;
-			  j0.row(2) << 7.0, 8.0, 9.0;
-			  Eigen::Matrix<double, 3, 2, Eigen::RowMajor> j1;
-			  j1.row(0) << 10.0, 11.0;
-			  j1.row(1) << 12.0, 13.0;
-			  j1.row(2) << 14.0, 15.0;
+			  Vector<Double> residual_offset = new Vector<Double>(3);
+			  residual_offset.add(100.0);
+			  residual_offset.add(200.0);
+			  residual_offset.add(300.0);
+			  LinearCostFunction cost_function = new LinearCostFunction(residual_offset);
+			  Matrix j0 = new Matrix(3,3);
+			  int j0_value = 1;
+			  for (r = 0; r < 3; r++) {
+				  for (c = 0; c < 3; c++) {
+				       j0.set(r,c,(double)j0_value++);
+				  }
+			  }
+			  Matrix j1 = new Matrix(3, 2);
+			  int j1_value = 10;
+			  for (r = 0; r < 3; r++) {
+				  for (c = 0; c < 2; c++) {
+				       j1.set(r,c,(double)j1_value++);
+				  }
+			  }
+			  
 
-			  Eigen::Vector3d param0(1.0, 2.0, 3.0);
-			  Eigen::Vector2d param1(4.0, 5.0);
+			  double param0[] = new double[] {1.0, 2.0, 3.0};
+			  double param1[] = new double[] {4.0, 5.0};
 
-			  cost_function.AddParameter(j0);
-			  cost_function.AddParameter(j1);
+			  cost_function.AddParameter(j0, testName, passed);
+			  cost_function.AddParameter(j1, testName, passed);
 
-			  std::vector<int> parameter_sizes(2);
-			  parameter_sizes[0] = 3;
-			  parameter_sizes[1] = 2;
-			  std::vector<int> local_parameter_sizes(2);
-			  local_parameter_sizes[0] = 2;
-			  local_parameter_sizes[1] = 2;
+			  Vector<Integer> parameter_sizes = new Vector<Integer>(2);
+			  parameter_sizes.add(3);
+			  parameter_sizes.add(2);
+			  Vector<Integer> local_parameter_sizes = new Vector<Integer>(2);
+			  local_parameter_sizes.add(2);
+			  local_parameter_sizes.add(2);
 
 			  // Test cost function for correctness.
-			  Eigen::Matrix<double, 3, 3, Eigen::RowMajor> j1_out;
-			  Eigen::Matrix<double, 3, 2, Eigen::RowMajor> j2_out;
-			  Eigen::Vector3d residual;
-			  std::vector<const double*> parameters(2);
-			  parameters[0] = param0.data();
-			  parameters[1] = param1.data();
-			  std::vector<double*> jacobians(2);
-			  jacobians[0] = j1_out.data();
-			  jacobians[1] = j2_out.data();
-			  cost_function.Evaluate(parameters.data(), residual.data(), jacobians.data());
+			  Matrix j1_out = new Matrix(3,3);
+			  Matrix j2_out = new Matrix(3,2);
+			  double residual[] = new double[3];
+			  Vector<double[]> parameters = new Vector<double[]>(2);
+			  parameters.add(param0);
+			  parameters.add(param1);
+			  Vector<Matrix> jacobians = new Vector<Matrix>(2);
+			  jacobians.add(j1_out);
+			  jacobians.add(j2_out);
+			  cost_function.Evaluate(parameters, residual, jacobians);
 
-			  Matrix residual_expected = residual_offset + j0 * param0 + j1 * param1;
+			  double j0param[] = new double[3];
+			  for (r = 0; r < 3; r++) {
+				  for (c = 0; c < 3; c++) {
+					  j0param[r] += j0.get(r,c) * param0[c];
+				  }
+			  }
+			  double j1param[] = new double[3];
+			  for (r = 0; r < 3; r++) {
+				  for (c = 0; c < 2; c++) {
+					  j1param[r] += j1.get(r,c) * param1[c];
+				  }
+			  }
+			  double residual_expected[] = new double[3];
+			  for (r = 0; r < 3; r++) {
+				  residual_expected[r] = residual_offset.get(r) + j0param[r] + j1param[r];
+			  }
 
-			  ExpectMatricesClose(j1_out, j0, std::numeric_limits<double>::epsilon());
-			  ExpectMatricesClose(j2_out, j1, std::numeric_limits<double>::epsilon());
-			  ExpectMatricesClose(residual, residual_expected, kTolerance);
+			  ExpectMatricesClose(j1_out, j0, epsilon, testName, passed);
+			  ExpectMatricesClose(j2_out, j1, epsilon, testName, passed);
+			  ExpectMatricesClose(residual, residual_expected, kTolerance, testName, passed);
 
 			  // Create local parameterization.
-			  Eigen::Matrix<double, 3, 2, Eigen::RowMajor> global_J_local;
-			  global_J_local.row(0) << 1.5, 2.5;
-			  global_J_local.row(1) << 3.5, 4.5;
-			  global_J_local.row(2) << 5.5, 6.5;
+			  Matrix global_J_local = new Matrix(3,2);
+			  global_J_local.set(0,0,1.5);
+			  global_J_local.set(0,1,2.5);
+			  global_J_local.set(1,0,3.5);
+			  global_J_local.set(1,1,4.5);
+			  global_J_local.set(2,0,5.5);
+			  global_J_local.set(2,1,6.5);
 
-			  MatrixParameterization parameterization;
+			  MatrixParameterization parameterization = new MatrixParameterization();
 			  parameterization.global_J_local = global_J_local;
 
 			  // Test local parameterization for correctness.
-			  Eigen::Vector3d x(7.0, 8.0, 9.0);
-			  Eigen::Vector2d delta(10.0, 11.0);
+			  double x[] = new double[] {7.0, 8.0, 9.0};
+			  double delta[] = new double[] {10.0, 11.0};
 
-			  Eigen::Matrix<double, 3, 2, Eigen::RowMajor> global_J_local_out;
-			  parameterization.ComputeJacobian(x.data(), global_J_local_out.data());
+			  Matrix global_J_local_out = new Matrix(3, 2);
+			  parameterization.ComputeJacobian(x, global_J_local_out);
 			  ExpectMatricesClose(global_J_local_out,
 			                      global_J_local,
-			                      std::numeric_limits<double>::epsilon());
+			                      epsilon, testName, passed);
 
-			  Eigen::Vector3d x_plus_delta;
-			  parameterization.Plus(x.data(), delta.data(), x_plus_delta.data());
-			  Eigen::Vector3d x_plus_delta_expected = x + (global_J_local * delta);
-			  ExpectMatricesClose(x_plus_delta, x_plus_delta_expected, kTolerance);
+			  double x_plus_delta[] = new double[3];
+			  parameterization.Plus(x, delta, x_plus_delta);
+			  double x_plus_delta_expected[] = new double[3];
+			  double gdelta[] = new double[3];
+			  for (r = 0; r < 3; r++) {
+				  for (c = 0; c < 2; c++) {
+					  gdelta[r] += global_J_local.get(r,c) * delta[c];
+				  }
+			  }
+			  for (r = 0; r < 3; r++) {
+				  x_plus_delta_expected[r] = x[r] + gdelta[r];
+			  }
+			  ExpectMatricesClose(x_plus_delta, x_plus_delta_expected, kTolerance, testName, passed);
 
 			  // Now test GradientChecker.
-			  std::vector<const LocalParameterization*> parameterizations(2);
-			  parameterizations[0] = &parameterization;
-			  parameterizations[1] = NULL;
-			  NumericDiffOptions numeric_diff_options;
-			  GradientChecker::ProbeResults results;
-			  GradientChecker gradient_checker(
-			      &cost_function, &parameterizations, numeric_diff_options);
+			  Vector<LocalParameterization> parameterizations = new Vector<LocalParameterization>(2);
+			  parameterizations.add(parameterization);
+			  parameterizations.add(null);
+			  NumericDiffOptions numeric_diff_options = new NumericDiffOptions();
+			  ProbeResults results = new ProbeResults();
+			  GradientChecker gradient_checker = 
+			      new GradientChecker(cost_function, parameterizations, numeric_diff_options);
 
-			  Problem::Options problem_options;
-			  problem_options.cost_function_ownership = DO_NOT_TAKE_OWNERSHIP;
-			  problem_options.local_parameterization_ownership = DO_NOT_TAKE_OWNERSHIP;
-			  Problem problem(problem_options);
-			  Eigen::Vector3d param0_solver;
-			  Eigen::Vector2d param1_solver;
-			  problem.AddParameterBlock(param0_solver.data(), 3, &parameterization);
-			  problem.AddParameterBlock(param1_solver.data(), 2);
+			  ProblemOptions problem_options = new ProblemOptions();
+			  problem_options.cost_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
+			  problem_options.local_parameterization_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
+			  ProblemImpl problem = new ProblemImpl(problem_options);
+			  double param0_solver[] = new double[3];
+			  double param1_solver[] = new double[2];
+			  problem.AddParameterBlock(param0_solver, 3, parameterization);
+			  problem.AddParameterBlock(param1_solver, 2);
 			  problem.AddResidualBlock(
-			      &cost_function, NULL, param0_solver.data(), param1_solver.data());
-			  Solver::Options solver_options;
+			      cost_function, null, param0_solver, param1_solver);
+			  SolverOptions solver_options = new SolverOptions();
 			  solver_options.check_gradients = true;
 			  solver_options.initial_trust_region_radius = 1e10;
-			  Solver solver;
-			  Solver::Summary summary;
+			  Solver solver = new Solver();
+			  SolverSummary summary = new SolverSummary();
 
 			  // First test case: everything is correct.
-			  EXPECT_TRUE(gradient_checker.Probe(parameters.data(), kTolerance, NULL));
-			  EXPECT_TRUE(gradient_checker.Probe(parameters.data(), kTolerance, &results))
-			      << results.error_log;
+			  if(!gradient_checker.Probe(parameters, kTolerance, null)) {
+				  System.err.println("In " + testName + " gradient_checker.Probe(parameters, kTolerance, null) == false");
+				  passed[0] = false;
+			  }
+			  if (!gradient_checker.Probe(parameters, kTolerance, results)) {
+				  System.err.println("In " + testName + " gradient_checker.Probe(parameters, kTolerance, results) == false");
+				  passed[0] = false;
+				  System.err.println(results.error_log);
+			  }
 
 			  // Check that results contain correct data.
-			  ASSERT_EQ(results.return_value, true);
+			  if (!results.return_value) {
+				  System.err.println("In " + testName + " results.return_value == false");
+				  passed[0] = false; 
+			  }
+			  double results_residuals_data[] = new double[results.residuals.size()];
+			  for (r = 0; r < results.residuals.size(); r++) {
+				  results_residuals_data[r] = results.residuals.get(r);
+			  }
 			  ExpectMatricesClose(
-			      results.residuals, residual, std::numeric_limits<double>::epsilon());
-			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3);
+			      results_residuals_data, residual, epsilon, testName, passed);
+			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3, testName, passed);
 			  ExpectMatricesClose(
-			      results.local_jacobians.at(0), j0 * global_J_local, kTolerance);
-			  ExpectMatricesClose(results.local_jacobians.at(1),
+			      results.local_jacobians.get(0), j0.times(global_J_local), kTolerance, testName, passed);
+			  /*ExpectMatricesClose(results.local_jacobians.get(1),
 			                      j1,
-			                      std::numeric_limits<double>::epsilon());
+			                      epsilon, testName, passed);
 			  ExpectMatricesClose(
-			      results.local_numeric_jacobians.at(0), j0 * global_J_local, kTolerance);
-			  ExpectMatricesClose(results.local_numeric_jacobians.at(1), j1, kTolerance);
+			      results.local_numeric_jacobians.get(0), j0.times(global_J_local), kTolerance, testName, passed);
+			  ExpectMatricesClose(results.local_numeric_jacobians.get(1), j1, kTolerance, testName, passed);
 			  ExpectMatricesClose(
-			      results.jacobians.at(0), j0, std::numeric_limits<double>::epsilon());
+			      results.jacobians.get(0), j0, epsilon, testName, passed);
 			  ExpectMatricesClose(
-			      results.jacobians.at(1), j1, std::numeric_limits<double>::epsilon());
-			  ExpectMatricesClose(results.numeric_jacobians.at(0), j0, kTolerance);
-			  ExpectMatricesClose(results.numeric_jacobians.at(1), j1, kTolerance);
-			  EXPECT_GE(results.maximum_relative_error, 0.0);
-			  EXPECT_TRUE(results.error_log.empty());
+			      results.jacobians.get(1), j1, epsilon, testName, passed);
+			  ExpectMatricesClose(results.numeric_jacobians.get(0), j0, kTolerance, testName, passed);
+			  ExpectMatricesClose(results.numeric_jacobians.get(1), j1, kTolerance, testName, passed);
+			  if (results.maximum_relative_error < 0.0) {
+				  System.err.println("In " + testName + " results.maximum_relative_error < 0.0");
+				  passed[0] = false; 
+			  }
+			  if ((results.error_log != null) && (!results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log != null) && (!results.error_log.isEmpty())");
+				  passed[0] = false;
+			  };
 
 			  // Test interaction with the 'check_gradients' option in Solver.
 			  param0_solver = param0;
 			  param1_solver = param1;
-			  solver.Solve(solver_options, &problem, &summary);
-			  EXPECT_EQ(CONVERGENCE, summary.termination_type);
-			  EXPECT_LE(summary.final_cost, 1e-12);
+			  Solve(solver_options, problem, summary);
+			  if (TerminationType.CONVERGENCE != summary.termination_type) {
+				  System.err.println("In " + testName + " TerminationType.CONVERGENCE != summary.termination_type");
+				  passed[0] = false;
+			  }
+			  if (summary.final_cost > 1e-12) {
+				  System.err.println("In " + testName + " summary.final_cost > 1e-12");
+				  passed[0] = false;
+			  }
 
 			  // Second test case: Mess up reported derivatives with respect to 3rd
 			  // component of 1st parameter. Check should fail.
-			  Eigen::Matrix<double, 3, 3, Eigen::RowMajor> j0_offset;
-			  j0_offset.setZero();
-			  j0_offset.col(2).setConstant(0.001);
-			  cost_function.SetJacobianOffset(0, j0_offset);
-			  EXPECT_FALSE(gradient_checker.Probe(parameters.data(), kTolerance, NULL));
-			  EXPECT_FALSE(gradient_checker.Probe(parameters.data(), kTolerance, &results))
-			      << results.error_log;
+			  Matrix j0_offset = new Matrix(3, 3, 0.0);
+			  for (r = 0; r < 3; r++) {
+				  j0_offset.set(r, 2, 0.001);
+			  }
+			  cost_function.SetJacobianOffset(0, j0_offset, testName, passed);
+			  if (gradient_checker.Probe(parameters, kTolerance, null)) {
+				  System.err.println("In " + testName + " gradient_checker.Probe(parameters, kTolerance, null) == true");
+				  passed[0] = false;
+			  }
+			  if (gradient_checker.Probe(parameters, kTolerance, results)) {
+				  System.err.println("In " + testName + " gradient_checker.Probe(parameters, kTolerance, results) == true");
+				  passed[0] = false;
+			  }
 
 			  // Check that results contain correct data.
-			  ASSERT_EQ(results.return_value, true);
+			  if (!results.return_value) {
+				  System.err.println("In " + testName + " results.return_value == false");
+				  passed[0] = false; 
+			  }
+			  results_residuals_data = new double[results.residuals.size()];
+			  for (r = 0; r < results.residuals.size(); r++) {
+				  results_residuals_data[r] = results.residuals.get(r);
+			  }
 			  ExpectMatricesClose(
-			      results.residuals, residual, std::numeric_limits<double>::epsilon());
-			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3);
-			  ASSERT_EQ(results.local_jacobians.size(), 2);
-			  ASSERT_EQ(results.local_numeric_jacobians.size(), 2);
-			  ExpectMatricesClose(results.local_jacobians.at(0),
-			                      (j0 + j0_offset) * global_J_local,
-			                      kTolerance);
-			  ExpectMatricesClose(results.local_jacobians.at(1),
+			      results_residuals_data, residual, epsilon, testName, passed);
+			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3, testName, passed);
+			  if (results.local_jacobians.size() != 2) {
+				  System.err.println("In " + testName + " results.local_jacobians.size() != 2");
+				  passed[0] = false;
+			  }
+			  if (results.local_numeric_jacobians.size() != 2) {
+				  System.err.println("In " + testName + " results.local_numeric_jacobians.size() != 2");
+				  passed[0] = false;
+			  }
+			  ExpectMatricesClose(results.local_jacobians.get(0),
+			                      (j0.plus(j0_offset)).times(global_J_local),
+			                      kTolerance, testName, passed);
+			  ExpectMatricesClose(results.local_jacobians.get(1),
 			                      j1,
-			                      std::numeric_limits<double>::epsilon());
+			                      epsilon, testName, passed);
 			  ExpectMatricesClose(
-			      results.local_numeric_jacobians.at(0), j0 * global_J_local, kTolerance);
-			  ExpectMatricesClose(results.local_numeric_jacobians.at(1), j1, kTolerance);
-			  ExpectMatricesClose(results.jacobians.at(0), j0 + j0_offset, kTolerance);
+			      results.local_numeric_jacobians.get(0), j0.times(global_J_local), kTolerance, testName, passed);
+			  ExpectMatricesClose(results.local_numeric_jacobians.get(1), j1, kTolerance, testName, passed);
+			  ExpectMatricesClose(results.jacobians.get(0), j0.plus(j0_offset), kTolerance, testName, passed);
 			  ExpectMatricesClose(
-			      results.jacobians.at(1), j1, std::numeric_limits<double>::epsilon());
-			  ExpectMatricesClose(results.numeric_jacobians.at(0), j0, kTolerance);
-			  ExpectMatricesClose(results.numeric_jacobians.at(1), j1, kTolerance);
-			  EXPECT_GT(results.maximum_relative_error, 0.0);
-			  EXPECT_FALSE(results.error_log.empty());
+			      results.jacobians.get(1), j1, epsilon, testName, passed);
+			  ExpectMatricesClose(results.numeric_jacobians.get(0), j0, kTolerance, testName, passed);
+			  ExpectMatricesClose(results.numeric_jacobians.get(1), j1, kTolerance, testName, passed);
+			  if (results.maximum_relative_error <= 0.0) {
+				  System.err.println("In " + testName + " results.maximum_relative_error <= 0.0");
+				  passed[0] = false; 
+			  }
+			  if ((results.error_log == null) || (results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log == null) || (results.error_log.isEmpty())");
+				  passed[0] = false;
+			  };
 
 			  // Test interaction with the 'check_gradients' option in Solver.
 			  param0_solver = param0;
 			  param1_solver = param1;
-			  solver.Solve(solver_options, &problem, &summary);
-			  EXPECT_EQ(FAILURE, summary.termination_type);
+			  Solve(solver_options, problem, summary);
+			  if (TerminationType.FAILURE != summary.termination_type) {
+				  System.err.println("In " + testName + " TerminationType.FAILURE != summary.termination_type");
+				  passed[0] = false; 
+			  }
 
 			  // Now, zero out the local parameterization Jacobian of the 1st parameter
 			  // with respect to the 3rd component. This makes the combination of
 			  // cost function and local parameterization return correct values again.
-			  parameterization.global_J_local.row(2).setZero();
+			  parameterization.global_J_local.set(2, 0, 0.0);
+			  parameterization.global_J_local.set(2, 1, 0.0);
 
 			  // Verify that the gradient checker does not treat this as an error.
-			  EXPECT_TRUE(gradient_checker.Probe(parameters.data(), kTolerance, &results))
-			      << results.error_log;
+			  if (!gradient_checker.Probe(parameters, kTolerance, results)) {
+				  System.err.println("In " + testName + " gradient_checker.Probe(parameters, kTolerance, results) == false");
+				  passed[0] = false; 
+			  }
 
 			  // Check that results contain correct data.
-			  ASSERT_EQ(results.return_value, true);
+			  if (!results.return_value) {
+				  System.err.println("In " + testName + " results.return_value == false");
+				  passed[0] = false; 
+			  }
+			  results_residuals_data = new double[results.residuals.size()];
+			  for (r = 0; r < results.residuals.size(); r++) {
+				  results_residuals_data[r] = results.residuals.get(r);
+			  }
 			  ExpectMatricesClose(
-			      results.residuals, residual, std::numeric_limits<double>::epsilon());
-			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3);
-			  ASSERT_EQ(results.local_jacobians.size(), 2);
-			  ASSERT_EQ(results.local_numeric_jacobians.size(), 2);
-			  ExpectMatricesClose(results.local_jacobians.at(0),
-			                      (j0 + j0_offset) * parameterization.global_J_local,
-			                      kTolerance);
-			  ExpectMatricesClose(results.local_jacobians.at(1),
+			      results_residuals_data, residual, epsilon, testName, passed);
+			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3, testName, passed);
+			  if (results.local_jacobians.size() != 2) {
+				  System.err.println("In " + testName + " results.local_jacobians.size() != 2");
+				  passed[0] = false; 
+			  }
+			  if (results.local_numeric_jacobians.size() != 2) {
+				  System.err.println("In " + testName + " results.local_numeric_jacobians.size() != 2");
+				  passed[0] = false; 
+			  }
+			  ExpectMatricesClose(results.local_jacobians.get(0),
+			                      (j0.plus(j0_offset)).times(parameterization.global_J_local),
+			                      kTolerance, testName, passed);
+			  ExpectMatricesClose(results.local_jacobians.get(1),
 			                      j1,
-			                      std::numeric_limits<double>::epsilon());
-			  ExpectMatricesClose(results.local_numeric_jacobians.at(0),
-			                      j0 * parameterization.global_J_local,
-			                      kTolerance);
-			  ExpectMatricesClose(results.local_numeric_jacobians.at(1), j1, kTolerance);
-			  ExpectMatricesClose(results.jacobians.at(0), j0 + j0_offset, kTolerance);
+			                      epsilon, testName, passed);
+			  ExpectMatricesClose(results.local_numeric_jacobians.get(0),
+			                      j0.times(parameterization.global_J_local),
+			                      kTolerance, testName, passed);
+			  ExpectMatricesClose(results.local_numeric_jacobians.get(1), j1, kTolerance, testName, passed);
+			  ExpectMatricesClose(results.jacobians.get(0), j0.plus(j0_offset), kTolerance, testName, passed);
 			  ExpectMatricesClose(
-			      results.jacobians.at(1), j1, std::numeric_limits<double>::epsilon());
-			  ExpectMatricesClose(results.numeric_jacobians.at(0), j0, kTolerance);
-			  ExpectMatricesClose(results.numeric_jacobians.at(1), j1, kTolerance);
-			  EXPECT_GE(results.maximum_relative_error, 0.0);
-			  EXPECT_TRUE(results.error_log.empty());
+			      results.jacobians.get(1), j1, epsilon, testName, passed);
+			  ExpectMatricesClose(results.numeric_jacobians.get(0), j0, kTolerance, testName, passed);
+			  ExpectMatricesClose(results.numeric_jacobians.get(1), j1, kTolerance, testName, passed);
+			  if (results.maximum_relative_error < 0.0) {
+				  System.err.println("In " + testName + " results.maximum_relative_error < 0.0");
+				  passed[0] = false; 
+			  }
+			  if ((results.error_log != null) && (!results.error_log.isEmpty())) {
+				  System.err.println("In " + testName + " (results.error_log != null) && (!results.error_log.isEmpty())");
+				  passed[0] = false;
+			  };
 
 			  // Test interaction with the 'check_gradients' option in Solver.
 			  param0_solver = param0;
 			  param1_solver = param1;
-			  solver.Solve(solver_options, &problem, &summary);
-			  EXPECT_EQ(CONVERGENCE, summary.termination_type);
-			  EXPECT_LE(summary.final_cost, 1e-12);*/
+			  Solve(solver_options, problem, summary);
+			  if (TerminationType.CONVERGENCE != summary.termination_type) {
+				  System.err.println("In " + testName + " TerminationType.CONVERGENCE != summary.termination_type");
+				  passed[0] = false;
+			  }
+			  if (summary.final_cost > 1e-12) {
+				  System.err.println("In " + testName + " summary.final_cost > 1e-12");
+				  passed[0] = false;
+			  }*/
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
 			}
 
 
