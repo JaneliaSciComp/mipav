@@ -22696,7 +22696,8 @@ public abstract class CeresSolver {
 			trust_region_problem_dump_directory = "/tmp";
 			trust_region_problem_dump_format_type = DumpFormatType.TEXTFILE;
 			check_gradients = false;
-			gradient_check_relative_precision = 1e-8;
+			//gradient_check_relative_precision = 1e-8;
+			gradient_check_relative_precision = 2e-8;
 			gradient_check_numeric_derivative_relative_step_size = 1e-6;
 			update_state_every_iteration = false;
 			// Callbacks that are executed at the end of each iteration of the
