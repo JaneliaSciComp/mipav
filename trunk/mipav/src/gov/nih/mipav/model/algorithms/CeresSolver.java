@@ -16594,8 +16594,7 @@ public abstract class CeresSolver {
 		// LossFunctions and LocalParameterizations are reused and since
 		// they are owned by problem_impl, gradient_checking_problem_impl
 		// should not take ownership of it.
-		ProblemImpl problem = new ProblemImpl();
-		ProblemOptions gradient_checking_problem_options = problem.options_;
+		ProblemOptions gradient_checking_problem_options = new ProblemOptions();
 		gradient_checking_problem_options.cost_function_ownership = Ownership.TAKE_OWNERSHIP;
 		gradient_checking_problem_options.loss_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
 		gradient_checking_problem_options.local_parameterization_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
@@ -23123,6 +23122,7 @@ public abstract class CeresSolver {
 		public GradientCheckingCostFunction(CostFunction function,
 				Vector<LocalParameterization> local_parameterizations, NumericDiffOptions options,
 				double relative_precision, String extra_info, GradientCheckingIterationCallback callback) {
+			super();
 			function_ = function;
 			gradient_checker_ = new GradientChecker(function, local_parameterizations, options);
 			relative_precision_ = relative_precision;
@@ -23171,6 +23171,53 @@ public abstract class CeresSolver {
 				for (i = 0; i < results.jacobians.get(k).getRowDimension(); i++) {
 					for (j = 0; j < results.jacobians.get(k).getColumnDimension(); j++) {
 						jacobians[k][i*results.jacobians.get(k).getColumnDimension() + j] =
+								results.jacobians.get(k).get(i,j);
+					}
+				}
+			}
+			};
+			
+			if (!okay) {
+			String error_log = "Gradient Error detected!\nExtra info for " +
+			  "this residual: " + extra_info_ + "\n" + results.error_log;
+			callback_.SetGradientErrorDetected(error_log);
+			}
+			return true;
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians, int[] jacobian_offsets) {
+			int i,j;
+			if (jacobians == null) {
+				// Nothing to check in this case; just forward.
+				return function_.Evaluate(parameters, residuals, null);
+			}
+			
+			ProbeResults results = new ProbeResults();
+			boolean okay = gradient_checker_.Probe(parameters,
+			                                relative_precision_,
+			                                results);
+			
+			// If the cost function returned false, there's nothing we can say about
+			// the gradients.
+			if (results.return_value == false) {
+			return false;
+			}
+			
+			// Copy the residuals.
+			final int num_residuals = function_.num_residuals();
+			for (i = 0; i < num_residuals; i++) {
+				residuals[i] = results.residuals.get(i);
+			}
+			
+			// Copy the original jacobian blocks into the jacobians array.
+			final Vector<Integer> block_sizes = function_.parameter_block_sizes();
+			for (int k = 0; k < block_sizes.size(); k++) {
+			if (jacobians[k] != null) {
+				for (i = 0; i < results.jacobians.get(k).getRowDimension(); i++) {
+					for (j = 0; j < results.jacobians.get(k).getColumnDimension(); j++) {
+						jacobians[k][jacobian_offsets[k] + i*results.jacobians.get(k).getColumnDimension() + j] =
 								results.jacobians.get(k).get(i,j);
 					}
 				}
