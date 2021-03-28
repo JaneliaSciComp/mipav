@@ -17393,7 +17393,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  
 		  public boolean ComputeJacobian(double[] x, int x_offset, double[][] jacobian) {
 				int r,c;
-				global_J_local = new Matrix(GlobalSize(), LocalSize());
 				for (r = 0; r < GlobalSize(); r++) {
 					for (c = 0; c < LocalSize(); c++) {
 						jacobian[r][c] = global_J_local.get(r,c);
@@ -17608,7 +17607,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  CheckDimensions(results, parameter_sizes, local_parameter_sizes, 3, testName, passed);
 			  ExpectMatricesClose(
 			      results.local_jacobians.get(0), j0.times(global_J_local), kTolerance, testName, passed);
-			  /*ExpectMatricesClose(results.local_jacobians.get(1),
+			  ExpectMatricesClose(results.local_jacobians.get(1),
 			                      j1,
 			                      epsilon, testName, passed);
 			  ExpectMatricesClose(
@@ -17644,7 +17643,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			  // Second test case: Mess up reported derivatives with respect to 3rd
 			  // component of 1st parameter. Check should fail.
-			  Matrix j0_offset = new Matrix(3, 3, 0.0);
+			  /*Matrix j0_offset = new Matrix(3, 3, 0.0);
 			  for (r = 0; r < 3; r++) {
 				  j0_offset.set(r, 2, 0.001);
 			  }
