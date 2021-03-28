@@ -989,6 +989,58 @@ public abstract class CeresSolver {
 			return true;
 		}
 		  
+		  public boolean Evaluate(Vector<double[]> parameter_ptrs,
+                  double[] residuals_ptr,
+                  double[][] residual_J_params, int[] jacobian_offsets) {
+			int i, r, c;
+			//VectorRef residuals(residuals_ptr, residual_J_params_[0].rows());
+			//residuals = residuals_offset_;
+			for (i = 0; i < residual_J_params_.get(0).getRowDimension(); i++) {
+				residuals_ptr[i] = residuals_offset_.get(i);
+			}
+			
+			for (i = 0; i < residual_J_params_.size(); ++i) {
+			final Matrix residual_J_param = residual_J_params_.get(i);
+			int parameter_size = residual_J_param.getColumnDimension();
+			double param[] = new double[parameter_size];
+			for (r = 0; r < parameter_size; r++) {
+				  param[r] = parameter_ptrs.get(i)[r];
+			}
+			
+			// Compute residual.
+			double prod[] = new double[residual_J_param.getRowDimension()];
+			for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+				  for (c = 0; c < parameter_size; c++) {
+					  prod[r] += residual_J_param.get(r,c) * param[c];
+				  }
+			}
+			for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+				  residuals_ptr[r] += prod[r];
+			}
+			
+			// Return Jacobian.
+			if (residual_J_params != null && residual_J_params[i] != null) {
+			  
+			  if (jacobian_offsets_.get(i) != null) {
+			    for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+			  	  for (c = 0; c < residual_J_param.getColumnDimension(); c++) {
+			  		  residual_J_params[i][jacobian_offsets[i] + r*residual_J_param.getColumnDimension() + c] = residual_J_param.get(r,c) + jacobian_offsets_.get(i).get(r,c);
+			  	  }
+			    }
+			  }
+			  else {
+			  	for (r = 0; r < residual_J_param.getRowDimension(); r++) {
+			      	  for (c = 0; c < residual_J_param.getColumnDimension(); c++) {
+			      		residual_J_params[i][jacobian_offsets[i] + r*residual_J_param.getColumnDimension() + c] = residual_J_param.get(r,c);
+			      	  }
+			        }
+			      }	
+			 }
+			}
+			
+			return true;
+		}
+		  
 		  public boolean Evaluate(double[][] parameter_ptrs,
                   double[] residuals_ptr) {
 			int i, r, c;
