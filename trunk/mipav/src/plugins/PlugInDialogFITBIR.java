@@ -7912,32 +7912,51 @@ public class PlugInDialogFITBIR extends JFrame
                         int bvalCount = 0;
                         Arrays.sort(bvals);
                         for (int i = 0; i < bvals.length; i++) {
-                            if (bvals[i] != 0) {
+                            // increased threshold from 0 to 5, since some Siemens data has b-values +/- 5-20. b0s seem to be either 0 or 5.
+                            if (bvals[i] > 5) {
                                 numDirections++;
 
                                 if ( !seenBvals.contains(bvals[i])) {
-                                    bvalCount++;
-
-                                    if (bvalCount == 1) {
-                                        extractedFields.put("ImgDiffusionFirstBVal", "" + bvals[i]);
-                                    } else if (bvalCount == 2) {
-                                        extractedFields.put("ImgDiffusionSecondBVal", "" + bvals[i]);
-                                    } else if (bvalCount == 3) {
-                                        extractedFields.put("ImgDiffusionThirdBVal", "" + bvals[i]);
-                                    } else if (bvalCount == 4) {
-                                        extractedFields.put("ImgDiffusionFourthBVal", "" + bvals[i]);
-                                    } else if (bvalCount == 5) {
-                                        extractedFields.put("ImgDiffusionFifthBVal", "" + bvals[i]);
-                                    } else if (bvalCount == 6) {
-                                        extractedFields.put("ImgDiffusionSixthBVal", "" + bvals[i]);
-                                    } else {
-                                        System.err.println("Found more than 6 bVals: " + bvalCount + " " + bvals[i]);
+                                    boolean closeMatch = false;
+                                    for (Double bval : seenBvals) {
+                                        if (Math.abs(bvals[i] - bval) <= 20) {
+                                            closeMatch = true;
+                                            
+                                            // prefer this bval if it is a round number
+                                            if (bvals[i] % 100 == 0) {
+                                                seenBvals.add(bvals[i]);
+                                                seenBvals.remove(bval);
+                                            }
+                                        }
                                     }
-
-                                    seenBvals.add(bvals[i]);
+                                    
+                                    if (!closeMatch) {
+                                        seenBvals.add(bvals[i]);
+                                    }
                                 }
                             }
                         }
+                        
+                        for (Double bval : seenBvals) {
+                            bvalCount++;
+
+                            if (bvalCount == 1) {
+                                extractedFields.put("ImgDiffusionFirstBVal", "" + bval);
+                            } else if (bvalCount == 2) {
+                                extractedFields.put("ImgDiffusionSecondBVal", "" + bval);
+                            } else if (bvalCount == 3) {
+                                extractedFields.put("ImgDiffusionThirdBVal", "" + bval);
+                            } else if (bvalCount == 4) {
+                                extractedFields.put("ImgDiffusionFourthBVal", "" + bval);
+                            } else if (bvalCount == 5) {
+                                extractedFields.put("ImgDiffusionFifthBVal", "" + bval);
+                            } else if (bvalCount == 6) {
+                                extractedFields.put("ImgDiffusionSixthBVal", "" + bval);
+                            } else {
+                                System.err.println("Found more than 6 bVals: " + bvalCount + " " + bval);
+                            }
+                        }
+                        
                         extractedFields.put("ImgDiffusionBValCt", "" + bvalCount);
 
                         extractedFields.put("ImgDiffusionDirCt", "" + numDirections);
