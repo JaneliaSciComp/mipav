@@ -10695,8 +10695,8 @@ public abstract class CeresSolver {
 		  //x_norm_ set to -1 later in routine
 		  //x_norm_ = 0.0;
 		  //for (i = 0; i < num_parameters_; i++) {
-			//  x_norm_ += (parameters_.get(i)*parameters_get(i));
-		  // }
+			  //x_norm_ += (parameters_[i]*parameters_[i]);
+		   //}
 		  //x_norm_ = Math.sqrt(x_norm_);
 		  if (residuals_ == null) {
 			  residuals_ = new Vector<Double>();
@@ -11338,7 +11338,10 @@ public abstract class CeresSolver {
 
 		  double inner_iteration_start_time = 1.0E-3 * System.currentTimeMillis();
 		  ++solver_summary_.num_inner_iteration_steps;
-		  inner_iteration_x_ = candidate_x_;
+		  inner_iteration_x_.clear();
+		  for (i = 0; i < candidate_x_.size(); i++) {
+			  inner_iteration_x_.add(candidate_x_.get(i));
+		  }
 		  SolverSummary inner_iteration_summary = new SolverSummary();
 		  options_.inner_iteration_minimizer.Minimize(
 		      options_, inner_iteration_x_, inner_iteration_summary);
@@ -11365,7 +11368,10 @@ public abstract class CeresSolver {
 		      "Inner iteration cost: " + inner_iteration_cost[0] + "\n", Preferences.DEBUG_ALGORITHM);
 		  }
 
-		  candidate_x_ = inner_iteration_x_;
+		  candidate_x_.clear();
+		  for (i = 0; i < inner_iteration_x_.size(); i++) {
+			  candidate_x_.add(inner_iteration_x_.get(i));
+		  }
 
 		  // Normally, the quality of a trust region step is measured by
 		  // the ratio
