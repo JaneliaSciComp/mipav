@@ -17640,11 +17640,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  for (r = 0; r < 2; r++) {
 				  param1_solver[r] = param1[r];
 			  }
-			  problem = new ProblemImpl(problem_options);
-			  problem.AddParameterBlock(param0_solver, 3, parameterization);
-			  problem.AddParameterBlock(param1_solver, 2);
-			  problem.AddResidualBlock(
-			      cost_function, null, param0_solver, param1_solver);
 			  
 			  Solve(solver_options, problem, summary);
 			  if (TerminationType.CONVERGENCE != summary.termination_type) {
@@ -17726,12 +17721,11 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  for (r = 0; r < 2; r++) {
 				  param1_solver[r] = param1[r];
 			  }
-			  problem = new ProblemImpl(problem_options);
-			  problem.AddParameterBlock(param0_solver, 3, parameterization);
-			  problem.AddParameterBlock(param1_solver, 2);
-			  problem.AddResidualBlock(
-			      cost_function, null, param0_solver, param1_solver);
+			  
 			  summary = new SolverSummary();
+			  solver_options = new SolverOptions();
+			  solver_options.check_gradients = true;
+			  solver_options.initial_trust_region_radius = 1e10;
 			  System.err.println("Will detect gradient error");
 			  Solve(solver_options, problem, summary);
 			  System.err.println("Have detected gradient error");
@@ -17746,8 +17740,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  // cost function and local parameterization return correct values again.
 			  parameterization.global_J_local.set(2, 0, 0.0);
 			  parameterization.global_J_local.set(2, 1, 0.0);
-			  gradient_checker = 
-				      new GradientChecker(cost_function, parameterizations, numeric_diff_options);
 
 
 			  // Verify that the gradient checker does not treat this as an error.
@@ -17807,15 +17799,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  for (r = 0; r < 2; r++) {
 				  param1_solver[r] = param1[r];
 			  }
-			  problem = new ProblemImpl(problem_options);
-			  problem.AddParameterBlock(param0_solver, 3, parameterization);
-			  problem.AddParameterBlock(param1_solver, 2);
-			  problem.AddResidualBlock(
-			      cost_function, null, param0_solver, param1_solver);
-			  System.err.println("Will detect gradient error");
+			  
 			  summary = new SolverSummary();
+			  solver_options = new SolverOptions();
+			  solver_options.check_gradients = true;
+			  solver_options.initial_trust_region_radius = 1e10;
 			  Solve(solver_options, problem, summary);
-			  System.err.println("Have detected gradient error");
 			  if (TerminationType.CONVERGENCE != summary.termination_type) {
 				  System.err.println("In " + testName + " TerminationType.CONVERGENCE != summary.termination_type");
 				  System.err.println("TerminationType = " + TerminationTypeToString(summary.termination_type));
