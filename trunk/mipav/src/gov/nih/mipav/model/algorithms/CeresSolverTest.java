@@ -17579,7 +17579,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  SolverOptions solver_options = new SolverOptions();
 			  solver_options.check_gradients = true;
 			  solver_options.initial_trust_region_radius = 1e10;
-			  Solver solver = new Solver();
 			  SolverSummary summary = new SolverSummary();
 
 			  // First test case: everything is correct.
@@ -17629,21 +17628,31 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  };
 
 			  // Test interaction with the 'check_gradients' option in Solver.
-			  param0_solver = param0;
-			  param1_solver = param1;
+			  for (r = 0; r < 3; r++) {
+				  param0_solver[r] = param0[r];
+			  }
+			  for (r = 0; r < 2; r++) {
+				  param1_solver[r] = param1[r];
+			  }
+			  problem.AddParameterBlock(param0_solver, 3, parameterization);
+			  problem.AddParameterBlock(param1_solver, 2);
+			  problem.AddResidualBlock(
+			      cost_function, null, param0_solver, param1_solver);
 			  Solve(solver_options, problem, summary);
 			  if (TerminationType.CONVERGENCE != summary.termination_type) {
 				  System.err.println("In " + testName + " TerminationType.CONVERGENCE != summary.termination_type");
+				  System.err.println("TerminationType = " + TerminationTypeToString(summary.termination_type));
 				  passed[0] = false;
 			  }
+			  System.err.println("summary.final_cost = " + summary.final_cost);
 			  if (summary.final_cost > 1e-12) {
-				  System.err.println("In " + testName + " summary.final_cost > 1e-12");
+				  System.err.println("In " + testName + " summary.final_cost  = " + summary.final_cost + " > 1e-12");
 				  passed[0] = false;
 			  }
 
 			  // Second test case: Mess up reported derivatives with respect to 3rd
 			  // component of 1st parameter. Check should fail.
-			  /*Matrix j0_offset = new Matrix(3, 3, 0.0);
+			  Matrix j0_offset = new Matrix(3, 3, 0.0);
 			  for (r = 0; r < 3; r++) {
 				  j0_offset.set(r, 2, 0.001);
 			  }
@@ -17701,11 +17710,20 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  };
 
 			  // Test interaction with the 'check_gradients' option in Solver.
-			  param0_solver = param0;
-			  param1_solver = param1;
+			  for (r = 0; r < 3; r++) {
+				  param0_solver[r] = param0[r];
+			  }
+			  for (r = 0; r < 2; r++) {
+				  param1_solver[r] = param1[r];
+			  }
+			  problem.AddParameterBlock(param0_solver, 3, parameterization);
+			  problem.AddParameterBlock(param1_solver, 2);
+			  problem.AddResidualBlock(
+			      cost_function, null, param0_solver, param1_solver);
 			  Solve(solver_options, problem, summary);
 			  if (TerminationType.FAILURE != summary.termination_type) {
 				  System.err.println("In " + testName + " TerminationType.FAILURE != summary.termination_type");
+				  System.err.println("TerminationType = " + TerminationTypeToString(summary.termination_type));
 				  passed[0] = false; 
 			  }
 
@@ -17766,17 +17784,27 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  };
 
 			  // Test interaction with the 'check_gradients' option in Solver.
-			  param0_solver = param0;
-			  param1_solver = param1;
+			  for (r = 0; r < 3; r++) {
+				  param0_solver[r] = param0[r];
+			  }
+			  for (r = 0; r < 2; r++) {
+				  param1_solver[r] = param1[r];
+			  }
+			  problem.AddParameterBlock(param0_solver, 3, parameterization);
+			  problem.AddParameterBlock(param1_solver, 2);
+			  problem.AddResidualBlock(
+			      cost_function, null, param0_solver, param1_solver);
 			  Solve(solver_options, problem, summary);
 			  if (TerminationType.CONVERGENCE != summary.termination_type) {
 				  System.err.println("In " + testName + " TerminationType.CONVERGENCE != summary.termination_type");
+				  System.err.println("TerminationType = " + TerminationTypeToString(summary.termination_type));
 				  passed[0] = false;
 			  }
+			  System.err.println("summary.final_cost = " + summary.final_cost);
 			  if (summary.final_cost > 1e-12) {
 				  System.err.println("In " + testName + " summary.final_cost > 1e-12");
 				  passed[0] = false;
-			  }*/
+			  }
 			  if (passed[0]) {
 				  System.out.println(testName + " passed all tests");
 			  }
