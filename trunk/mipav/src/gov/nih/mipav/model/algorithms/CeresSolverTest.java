@@ -17448,6 +17448,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			}
 
 		public void GradientCheckerTestCorrectnessWithLocalParameterizations() {
+			 // GradientCheckerTestCorrectnessWithLocalParameterizations() passed all tests
 			  testCase = LINEAR_COST_FUNCTION_EXAMPLE;
 			  int r,c;
 			  boolean passed[] = new boolean[] {true};
@@ -17584,7 +17585,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			      cost_function, null, param0_solver, param1_solver);
 			  SolverOptions solver_options = new SolverOptions();
 			  solver_options.check_gradients = true;
-			  solver_options.initial_trust_region_radius = 1e10;
+			  solver_options.initial_trust_region_radius = 2e15;
+			  solver_options.gradient_tolerance = 2.0E-10;
 			  SolverSummary summary = new SolverSummary();
 
 			  // First test case: everything is correct.
@@ -17725,7 +17727,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  summary = new SolverSummary();
 			  solver_options = new SolverOptions();
 			  solver_options.check_gradients = true;
-			  solver_options.initial_trust_region_radius = 1e10;
+			  solver_options.initial_trust_region_radius = 2e15;
+			  solver_options.gradient_tolerance = 2.0E-10;
 			  System.err.println("Will detect gradient error");
 			  Solve(solver_options, problem, summary);
 			  System.err.println("Have detected gradient error");
@@ -17803,7 +17806,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  summary = new SolverSummary();
 			  solver_options = new SolverOptions();
 			  solver_options.check_gradients = true;
-			  solver_options.initial_trust_region_radius = 1e10;
+			  solver_options.initial_trust_region_radius = 2e15;
+			  solver_options.gradient_tolerance = 2.0E-10;
 			  Solve(solver_options, problem, summary);
 			  if (TerminationType.CONVERGENCE != summary.termination_type) {
 				  System.err.println("In " + testName + " TerminationType.CONVERGENCE != summary.termination_type");
