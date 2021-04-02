@@ -47,6 +47,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
+import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
@@ -17823,6 +17824,272 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  if (passed[0]) {
 				  System.out.println(testName + " passed all tests");
 			  }
+			}
+
+		
+		public long hash(byte data[]) {
+			// Force hash to be an unsigned int value
+			long hash = 5381;
+			for (int i = 0; i < data.length; i++) {
+				hash = 0xffffffffL & (((hash << 5) + hash) + data[i]);
+			}
+			return hash;
+		}
+		
+	    final long kUninitialized = 0;
+
+		// Generally multiple inheritance is a terrible idea, but in this (test)
+		// case it makes for a relatively elegant test implementation.
+		class WigglyBowlCostFunctionAndEvaluationCallback extends EvaluationCallback {
+			  // Pointer to the parameter block associated with this cost function.
+			  // Contents should get set by Ceres before calls to PrepareForEvaluation()
+			  // and Evaluate().
+			  public double[] user_parameter_block;
+
+			  // Track state: PrepareForEvaluation().
+			  //
+			  // These track details from the PrepareForEvaluation() call (hence the
+			  // "prepare_" prefix), which are checked for consistency in Evaluate().
+			  public int prepare_num_calls;
+			  public boolean prepare_requested_jacobians;
+			  public boolean prepare_new_evaluation_point;
+			  public long prepare_parameter_hash;
+
+			  // Track state: Evaluate().
+			  //
+			  // These track details from the Evaluate() call (hence the "evaluate_"
+			  // prefix), which are then checked for consistency in the calls to
+			  // PrepareForEvaluation(). Mutable is reasonable for this case.
+			  public int evaluate_num_calls;
+			  public long evaluate_last_parameter_hash;
+			  public InnerClass innerClass;
+			  String testName;
+			  boolean passed[];
+		      //SizedCostFunction<2, 2>,
+
+		      public WigglyBowlCostFunctionAndEvaluationCallback(double[] parameter, String testName, boolean passed[]) {
+		        super();
+		        innerClass = new InnerClass();
+		        user_parameter_block = parameter;
+		        prepare_num_calls = 0;
+		        evaluate_num_calls = 0;
+		        evaluate_last_parameter_hash = kUninitialized;
+		        this.testName = testName;
+		        this.passed = passed;
+		      }
+		      
+		      public InnerClass getInnerClass() {
+		          return innerClass;
+		      }
+
+		  // Evaluation callback interface. This checks that all the preconditions are
+		  // met at the point that Ceres calls into it.
+		  public void PrepareForEvaluation(boolean evaluate_jacobians,
+		                                    boolean new_evaluation_point) {
+			int i,j;
+		    // At this point, the incoming parameters are implicitly pushed by Ceres
+		    // into the user parameter blocks; in contrast to in Evaluate().
+			byte buffer2D[][] = new byte[user_parameter_block.length][8];
+			byte buffer[] = new byte[8 * user_parameter_block.length];
+			for (i = 0; i < user_parameter_block.length; i++) {
+				FileBase.doubleToBytes(user_parameter_block[i], true, buffer2D[i]);
+				for (j = 0; j < 8; j++) {
+					buffer[8*i + j] = buffer2D[i][j];
+				}
+			}
+			
+		    long incoming_parameter_hash = hash(buffer);
+
+		    // Check: Prepare() & Evaluate() come in pairs, in that order. Before this
+		    // call, the number of calls excluding this one should match.
+		    if (prepare_num_calls != evaluate_num_calls) {
+		    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls");
+		    	passed[0] = false;
+		    }
+
+		    // Check: new_evaluation_point indicates that the parameter has changed.
+		    if (new_evaluation_point) {
+		      // If it's a new evaluation point, then the parameter should have
+		      // changed. Technically, it's not required that it must change but
+		      // in practice it does, and that helps with testing.
+		      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
+		    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+		    	  passed[0] = false;
+		      }
+		      if (prepare_parameter_hash == incoming_parameter_hash) {
+		    	  System.err.println("In " + testName + " prepare_parameter_hash == incoming_parameter_hash");
+		    	  passed[0] = false;
+		      }
+		    } else {
+		      // If this is the same evaluation point as last time, ensure that
+		      // the parameters match both from the previous evaluate, the
+		      // previous prepare, and the current prepare.
+		      if (evaluate_last_parameter_hash != prepare_parameter_hash) {
+		    	 System.err.println("In " + testName + " evaluate_last_parameter_hash != prepare_parameter_hash");
+		    	 passed[0] = false;
+		      }
+		      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
+		    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+		    	  passed[0] = false;
+		      }
+		    }
+
+		    // Save details for to check at the next call to Evaluate().
+		    prepare_num_calls++;
+		    prepare_requested_jacobians = evaluate_jacobians;
+		    prepare_new_evaluation_point = new_evaluation_point;
+		    prepare_parameter_hash = incoming_parameter_hash;
+		  }
+		  
+		  class InnerClass extends SizedCostFunction {
+			  public InnerClass() {
+				  super(2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			  }
+			  
+			// Cost function interface. This checks that preconditions that were
+			  // set as part of the PrepareForEvaluation() call are met in this one.
+			  public boolean Evaluate(Vector<double[]> parameters,
+			                        double[] residuals,
+			                        double[][] jacobians) {
+				int i,j;
+			    // Cost function implementation of the "Wiggly Bowl" function:
+			    //
+			    //   1/2 * [(y - a*sin(x))^2 + x^2],
+			    //
+			    // expressed as a Ceres cost function with two residuals:
+			    //
+			    //   r[0] = y - a*sin(x)
+			    //   r[1] = x.
+			    //
+			    // This is harder to optimize than the Rosenbrock function because the
+			    // minimizer has to navigate a sine-shaped valley while descending the 1D
+			    // parabola formed along the y axis. Note that the "a" needs to be more
+			    // than 5 to get a strong enough wiggle effect in the cost surface to
+			    // trigger failed iterations in the optimizer.
+			    final double a = 10.0;
+			    double x = parameters.get(0)[0];
+			    double y = parameters.get(0)[1];
+			    residuals[0] = y - a * Math.sin(x);
+			    residuals[1] = x;
+			    if (jacobians != null) {
+			      jacobians[0][0] = - a * Math.cos(x);  // df1/dx
+			      jacobians[0][1] = 1.0;           // df1/dy
+			      jacobians[1][0] = 1.0;           // df2/dx
+			      jacobians[1][1] = 0.0;           // df2/dy
+			    }
+
+			 // into the user parameter blocks; in contrast to in Evaluate().
+				byte buffer2D[][] = new byte[parameters.get(0).length][8];
+				byte buffer[] = new byte[8 * parameters.get(0).length];
+				for (i = 0; i < parameters.get(0).length; i++) {
+					FileBase.doubleToBytes(parameters.get(0)[i], true, buffer2D[i]);
+					for (j = 0; j < 8; j++) {
+						buffer[8*i + j] = buffer2D[i][j];
+					}
+				}
+			    long incoming_parameter_hash = hash(buffer);
+
+			    // Check: PrepareForEvaluation() & Evaluate() come in pairs, in that order.
+			    if (prepare_num_calls != evaluate_num_calls + 1) {
+			    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls + 1");
+			    	passed[0] = false;
+			    }
+
+			    // Check: if new_evaluation_point indicates that the parameter has
+			    // changed, it has changed; otherwise it is the same.
+			    if (prepare_new_evaluation_point) {
+			      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
+			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+			    	  passed[0] = false;
+			      }
+			    } else {
+			      if (evaluate_last_parameter_hash == kUninitialized) {
+			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == kUninitialized");
+			    	  passed[0] = false;
+			      }
+			      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
+			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+			    	  passed[0] = false;
+			      }
+			    }
+
+			    // Check: Parameter matches value in in parameter blocks during prepare.
+			    if (prepare_parameter_hash != incoming_parameter_hash) {
+			    	  System.err.println("In " + testName + " prepare_parameter_hash != incoming_parameter_hash");
+			    	  passed[0] = false;
+			    }
+
+			    // Check: jacobians are requested if they were in PrepareForEvaluation().
+			    if (prepare_requested_jacobians != (jacobians != null)) {
+			    	System.err.println("In " + testName + " prepare_requested_jacobians != (jacobians != null)");
+			    	passed[0] = false;
+			    }
+
+			    evaluate_num_calls++;
+			    evaluate_last_parameter_hash = incoming_parameter_hash;
+			    return true;
+			  }
+
+		  }
+
+		  
+		  
+		};
+		
+		public void EvaluationCallbackWithTrustRegionMinimizer() {
+			  int i,j;
+			  String testName = "EvaluationCallbackWithTrustRegionMinimizer()";
+			  boolean passed[] = new boolean[] {true};
+			  double parameters[] = new double[]{50.0, 50.0};
+			  byte buffer2D[][] = new byte[parameters.length][8];
+				byte buffer[] = new byte[8 * parameters.length];
+				for (i = 0; i < parameters.length; i++) {
+					FileBase.doubleToBytes(parameters[i], true, buffer2D[i]);
+					for (j = 0; j < 8; j++) {
+						buffer[8*i + j] = buffer2D[i][j];
+					}
+				}
+
+			  final long original_parameters_hash = hash(buffer);
+
+			  WigglyBowlCostFunctionAndEvaluationCallback cost_function = new WigglyBowlCostFunctionAndEvaluationCallback(parameters, testName, passed);
+			  ProblemOptions problem_options = new ProblemOptions();
+			  problem_options.cost_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
+			  ProblemImpl problem = new ProblemImpl(problem_options);
+			  problem.AddResidualBlock(cost_function.innerClass, null, parameters);
+
+			  /*Solver::Options options;
+			  options.linear_solver_type = DENSE_QR;
+			  options.max_num_iterations = 300;  // Cost function is hard.
+			  options.evaluation_callback = &cost_function;
+
+			  // Run the solve. Checking is done inside the cost function / callback.
+			  Solver::Summary summary;
+			  Solve(options, &problem, &summary);
+
+			  // Ensure that this was a hard cost function (not all steps succeed).
+			  EXPECT_GT(summary.num_successful_steps, 10);
+			  EXPECT_GT(summary.num_unsuccessful_steps, 10);
+
+			  // Ensure PrepareForEvaluation() is called the appropriate number of times.
+			  EXPECT_EQ(cost_function.prepare_num_calls,
+			            // Unsuccessful steps are evaluated only once (no jacobians).
+			            summary.num_unsuccessful_steps +
+			            // Successful steps are evaluated twice: with and without jacobians.
+			            2 * summary.num_successful_steps
+			            // Final iteration doesn't re-evaluate the jacobian.
+			            // Note: This may be sensitive to tweaks to the TR algorithm; if
+			            // this becomes too brittle, remove this EXPECT_EQ() entirely.
+			            - 1);
+
+			  // Ensure the callback calls ran a reasonable number of times.
+			  EXPECT_GT(cost_function.prepare_num_calls, 0);
+			  EXPECT_GT(cost_function.evaluate_num_calls, 0);
+			  EXPECT_EQ(cost_function.prepare_num_calls,
+			            cost_function.evaluate_num_calls);
+
+			  // Ensure that the parameters did actually change.
+			  EXPECT_NE(Djb2Hash(parameters, 2), original_parameters_hash);*/
 			}
 
 
