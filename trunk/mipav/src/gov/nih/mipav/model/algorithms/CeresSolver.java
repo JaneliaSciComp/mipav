@@ -24320,7 +24320,7 @@ public abstract class CeresSolver {
 
 	
 	Vector<Double> FindInterpolatingPolynomial(Vector<FunctionSample> samples) {
-		  int i;
+		  int i,j;
 		  int num_samples = samples.size();
 		  int num_constraints = 0;
 		  for (i = 0; i < num_samples; ++i) {
@@ -24344,7 +24344,7 @@ public abstract class CeresSolver {
 		  for (i = 0; i < num_samples; ++i) {
 		    FunctionSample sample = samples.get(i);
 		    if (sample.value_is_valid) {
-		      for (int j = 0; j <= degree; ++j) {
+		      for (j = 0; j <= degree; ++j) {
 		        lhs.set(row, j, Math.pow(sample.x, degree - j));
 		      }
 		      rhs.set(row,sample.value[0]);
@@ -24352,7 +24352,7 @@ public abstract class CeresSolver {
 		    }
 
 		    if (sample.gradient_is_valid) {
-		      for (int j = 0; j < degree; ++j) {
+		      for (j = 0; j < degree; ++j) {
 		        lhs.set(row, j, (degree - j) * Math.pow(sample.x, degree - j - 1));
 		      }
 		      rhs.set(row,sample.gradient);
@@ -24365,38 +24365,84 @@ public abstract class CeresSolver {
 		// Compute the LU decomposition of A in place
 		  int m = num_constraints;
 		  int n = num_constraints;
+		  int nrhs = 1; // number of columns of B
 		  double lhs_array[][] = lhs.getArray();
 		  int lda = m;
-		  int ipiv[] = new int[m];
+		  int ldb = m;
 		  int info[] = new int[1];
-	      le2.dgetrf(m, n, lhs_array, lda, ipiv, info);
+		  boolean rankDeficient = false;
+	      
+	       int ipiv[] = new int[m];
+	       le2.dgetrf(m, n, lhs_array, lda, ipiv, info);
 	      if (info[0] < 0) {
 	    	  System.err.println("In FindInterpolatingPolynomial dgetrf argument number " + 
 	      (-info[0]) + " is illegal");
 	    	  return null;
 	      }
 	      if (info[0] > 0) {
-	    	  System.err.println("In FindInterpolatingPolynomial dgetrf U["+(info[0]-1)+
-	    			  "]["+(info[0]-1)+"] is exactly 0");
-	    	  return null;
+	    	  //System.err.println("In FindInterpolatingPolynomial dgetrf U["+(info[0]-1)+
+	    			  //"]["+(info[0]-1)+"] is exactly 0");
+	    	  rankDeficient = true;
 	      }
-	      char trans = 'N'; // Solve A*X = B (no transpose)
-	      int nrhs = 1; // number of columns of B
-	      double rhs_array[][] = new double[m][1];
-	      for (i = 0; i < m; i++) {
-	    	  rhs_array[i][0] = rhs.get(i);
-	      }
-	      int ldb = n;
-	      le2.dgetrs(trans, n, nrhs, lhs_array, lda, ipiv,
-					rhs_array, ldb, info);
-	      if (info[0] < 0) {
-	    	  System.err.println("In FindInterpolatingPolynomial dgetrs argument number " + 
-	      (-info[0]) + " is illegal");
-	    	  return null;
-	      }
-	      for (i = 0; i < n; i++) {
-	    	  rhs.set(i,rhs_array[i][0]);
-	      }
+	      if (!rankDeficient) {
+		      char trans = 'N'; // Solve A*X = B (no transpose)
+		      double rhs_array[][] = new double[m][1];
+		      for (i = 0; i < m; i++) {
+		    	  rhs_array[i][0] = rhs.get(i);
+		      }
+		      le2.dgetrs(trans, n, nrhs, lhs_array, lda, ipiv,
+						rhs_array, ldb, info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In FindInterpolatingPolynomial dgetrs argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  return null;
+		      }
+		      for (i = 0; i < n; i++) {
+		    	  rhs.set(i,rhs_array[i][0]);
+		      }
+	      } // if (!rankDeficient)
+	      else {
+		      double B[][] = new double[m][nrhs];
+			  for (i = 0; i < m; i++) {
+				  B[i][0] = rhs.get(i);
+			  }
+			  double s[] = new double[Math.max(m,n)];
+			  double rcond = -1.0; // Singular values s(i) <= RCOND*s[0] are treated as zero.
+				                   // If  rcond < 0, machine precision is used instead.
+			  int rank[] = new int[1];
+			  double work[] = new double[1];
+			  int lwork_query = -1;
+			  int lwork;
+			  gi2.dgelss(m,n,nrhs,lhs_array,lda,B,ldb,s,rcond,rank,work,lwork_query,info);
+			  if (info[0] != 0) {
+			        System.err.println("FindInterpolatingPolynomial: LAPACK dgelss work query error code = " + info[0]);
+			        return null;
+				}
+				lwork = (int)work[0];
+	
+				// Allocate the workspace
+				try {
+					work = new double[lwork];
+				}
+				catch (OutOfMemoryError e) {
+					return null;	
+				}
+				// This routine must handle rank deficient matrices
+				// since dgetrf does not handle rank deficient matrices.
+				gi2.dgelss(m,n,nrhs,lhs_array,lda,B,ldb,s,rcond,rank,work,lwork,info);
+				if (info[0] < 0) {
+					System.err.println("In FindingInterpolatingPolynomial the (-info[0]) argument had an illegal value");
+					return null;
+				}
+				if (info[0] > 0) {
+					System.err.println("In FindingInterpolatingPolynomial the algorithm for computing the SVD failed to converge");
+					System.err.println(info[0] + " off-diagonal elements of an intermediate bidiagonal form did not converge to zero.");
+					return null;
+				}
+			    for (i = 0; i < n; i++) {
+				  rhs.set(i,B[i][0]);
+			    }
+	      } // else 
 	      return rhs;
 		  //Eigen::FullPivLU<Matrix> lu(lhs);
 		  //return lu.setThreshold(0.0).solve(rhs);
