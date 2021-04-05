@@ -17840,7 +17840,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		// Generally multiple inheritance is a terrible idea, but in this (test)
 		// case it makes for a relatively elegant test implementation.
-		class WigglyBowlCostFunctionAndEvaluationCallback extends EvaluationCallback {
+		class WigglyBowlCostFunctionAndEvaluationCallback extends SizedCostFunction {
 			  // Pointer to the parameter block associated with this cost function.
 			  // Contents should get set by Ceres before calls to PrepareForEvaluation()
 			  // and Evaluate().
@@ -17868,7 +17868,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		      //SizedCostFunction<2, 2>,
 
 		      public WigglyBowlCostFunctionAndEvaluationCallback(double[] parameter, String testName, boolean passed[]) {
-		        super();
+		        super(2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		        innerClass = new InnerClass();
 		        user_parameter_block = parameter;
 		        prepare_num_calls = 0;
@@ -17884,69 +17884,71 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		  // Evaluation callback interface. This checks that all the preconditions are
 		  // met at the point that Ceres calls into it.
-		  public void PrepareForEvaluation(boolean evaluate_jacobians,
-		                                    boolean new_evaluation_point) {
-			int i,j;
-		    // At this point, the incoming parameters are implicitly pushed by Ceres
-		    // into the user parameter blocks; in contrast to in Evaluate().
-			byte buffer2D[][] = new byte[user_parameter_block.length][8];
-			byte buffer[] = new byte[8 * user_parameter_block.length];
-			for (i = 0; i < user_parameter_block.length; i++) {
-				FileBase.doubleToBytes(user_parameter_block[i], true, buffer2D[i]);
-				for (j = 0; j < 8; j++) {
-					buffer[8*i + j] = buffer2D[i][j];
-				}
-			}
-			
-		    long incoming_parameter_hash = hash(buffer);
-
-		    // Check: Prepare() & Evaluate() come in pairs, in that order. Before this
-		    // call, the number of calls excluding this one should match.
-		    if (prepare_num_calls != evaluate_num_calls) {
-		    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls");
-		    	passed[0] = false;
-		    }
-
-		    // Check: new_evaluation_point indicates that the parameter has changed.
-		    if (new_evaluation_point) {
-		      // If it's a new evaluation point, then the parameter should have
-		      // changed. Technically, it's not required that it must change but
-		      // in practice it does, and that helps with testing.
-		      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
-		    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
-		    	  passed[0] = false;
-		      }
-		      if (prepare_parameter_hash == incoming_parameter_hash) {
-		    	  System.err.println("In " + testName + " prepare_parameter_hash == incoming_parameter_hash");
-		    	  passed[0] = false;
-		      }
-		    } else {
-		      // If this is the same evaluation point as last time, ensure that
-		      // the parameters match both from the previous evaluate, the
-		      // previous prepare, and the current prepare.
-		      if (evaluate_last_parameter_hash != prepare_parameter_hash) {
-		    	 System.err.println("In " + testName + " evaluate_last_parameter_hash != prepare_parameter_hash");
-		    	 passed[0] = false;
-		      }
-		      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
-		    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
-		    	  passed[0] = false;
-		      }
-		    }
-
-		    // Save details for to check at the next call to Evaluate().
-		    prepare_num_calls++;
-		    prepare_requested_jacobians = evaluate_jacobians;
-		    prepare_new_evaluation_point = new_evaluation_point;
-		    prepare_parameter_hash = incoming_parameter_hash;
-		  }
+              class InnerClass extends EvaluationCallback {
+				  public InnerClass() {
+					  super();
+				  }
+				  public void PrepareForEvaluation(boolean evaluate_jacobians,
+				                                    boolean new_evaluation_point) {
+					int i,j;
+				    // At this point, the incoming parameters are implicitly pushed by Ceres
+				    // into the user parameter blocks; in contrast to in Evaluate().
+					byte buffer2D[][] = new byte[user_parameter_block.length][8];
+					byte buffer[] = new byte[8 * user_parameter_block.length];
+					for (i = 0; i < user_parameter_block.length; i++) {
+						FileBase.doubleToBytes(user_parameter_block[i], true, buffer2D[i]);
+						for (j = 0; j < 8; j++) {
+							buffer[8*i + j] = buffer2D[i][j];
+						}
+					}
+					
+				    long incoming_parameter_hash = hash(buffer);
+		
+				    // Check: Prepare() & Evaluate() come in pairs, in that order. Before this
+				    // call, the number of calls excluding this one should match.
+				    if (prepare_num_calls != evaluate_num_calls) {
+				    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls");
+				    	passed[0] = false;
+				    }
+		
+				    // Check: new_evaluation_point indicates that the parameter has changed.
+				    if (new_evaluation_point) {
+				      // If it's a new evaluation point, then the parameter should have
+				      // changed. Technically, it's not required that it must change but
+				      // in practice it does, and that helps with testing.
+				      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
+				    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+				    	  passed[0] = false;
+				      }
+				      if (prepare_parameter_hash == incoming_parameter_hash) {
+				    	  System.err.println("In " + testName + " prepare_parameter_hash == incoming_parameter_hash");
+				    	  passed[0] = false;
+				      }
+				    } else {
+				      // If this is the same evaluation point as last time, ensure that
+				      // the parameters match both from the previous evaluate, the
+				      // previous prepare, and the current prepare.
+				      if (evaluate_last_parameter_hash != prepare_parameter_hash) {
+				    	 System.err.println("In " + testName + " evaluate_last_parameter_hash != prepare_parameter_hash");
+				    	 passed[0] = false;
+				      }
+				      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
+				    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+				    	  passed[0] = false;
+				      }
+				    }
+		
+				    // Save details for to check at the next call to Evaluate().
+				    prepare_num_calls++;
+				    prepare_requested_jacobians = evaluate_jacobians;
+				    prepare_new_evaluation_point = new_evaluation_point;
+				    prepare_parameter_hash = incoming_parameter_hash;
+				  }
+              }
 		  
-		  class InnerClass extends SizedCostFunction {
-			  public InnerClass() {
-				  super(2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-			  }
+		  
 			  
-			// Cost function interface. This checks that preconditions that were
+			  // Cost function interface. This checks that preconditions that were
 			  // set as part of the PrepareForEvaluation() call are met in this one.
 			  public boolean Evaluate(Vector<double[]> parameters,
 			                        double[] residuals,
@@ -17974,8 +17976,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			    if (jacobians != null) {
 			      jacobians[0][0] = - a * Math.cos(x);  // df1/dx
 			      jacobians[0][1] = 1.0;           // df1/dy
-			      jacobians[1][0] = 1.0;           // df2/dx
-			      jacobians[1][1] = 0.0;           // df2/dy
+			      jacobians[0][2] = 1.0;           // df2/dx
+			      jacobians[0][3] = 0.0;           // df2/dy
 			    }
 
 			 // into the user parameter blocks; in contrast to in Evaluate().
@@ -18029,14 +18031,97 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			    evaluate_last_parameter_hash = incoming_parameter_hash;
 			    return true;
 			  }
+			  
+			// Cost function interface. This checks that preconditions that were
+			  // set as part of the PrepareForEvaluation() call are met in this one.
+			  public boolean Evaluate(Vector<double[]> parameters,
+			                        double[] residuals,
+			                        double[][] jacobians, int[] jacobian_offset) {
+				int i,j;
+			    // Cost function implementation of the "Wiggly Bowl" function:
+			    //
+			    //   1/2 * [(y - a*sin(x))^2 + x^2],
+			    //
+			    // expressed as a Ceres cost function with two residuals:
+			    //
+			    //   r[0] = y - a*sin(x)
+			    //   r[1] = x.
+			    //
+			    // This is harder to optimize than the Rosenbrock function because the
+			    // minimizer has to navigate a sine-shaped valley while descending the 1D
+			    // parabola formed along the y axis. Note that the "a" needs to be more
+			    // than 5 to get a strong enough wiggle effect in the cost surface to
+			    // trigger failed iterations in the optimizer.
+			    //final double a = 10.0;
+				final double a = 2.0;
+			    double x = parameters.get(0)[0];
+			    double y = parameters.get(0)[1];
+			    residuals[0] = y - a * Math.sin(x);
+			    residuals[1] = x;
+			    if (jacobians != null) {
+			      jacobians[0][jacobian_offset[0]] = - a * Math.cos(x);  // df1/dx
+			      jacobians[0][jacobian_offset[0] + 1] = 1.0;           // df1/dy
+			      jacobians[0][jacobian_offset[0] + 2] = 1.0;           // df2/dx
+			      jacobians[0][jacobian_offset[0] + 3] = 0.0;           // df2/dy
+			    }
 
-		  }
+			 // into the user parameter blocks; in contrast to in Evaluate().
+				byte buffer2D[][] = new byte[parameters.get(0).length][8];
+				byte buffer[] = new byte[8 * parameters.get(0).length];
+				for (i = 0; i < parameters.get(0).length; i++) {
+					FileBase.doubleToBytes(parameters.get(0)[i], true, buffer2D[i]);
+					for (j = 0; j < 8; j++) {
+						buffer[8*i + j] = buffer2D[i][j];
+					}
+				}
+			    long incoming_parameter_hash = hash(buffer);
 
-		  
-		  
+			    // Check: PrepareForEvaluation() & Evaluate() come in pairs, in that order.
+			    if (prepare_num_calls != evaluate_num_calls + 1) {
+			    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls + 1");
+			    	passed[0] = false;
+			    }
+
+			    // Check: if new_evaluation_point indicates that the parameter has
+			    // changed, it has changed; otherwise it is the same.
+			    if (prepare_new_evaluation_point) {
+			      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
+			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+			    	  passed[0] = false;
+			      }
+			    } else {
+			      if (evaluate_last_parameter_hash == kUninitialized) {
+			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == kUninitialized");
+			    	  passed[0] = false;
+			      }
+			      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
+			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+			    	  passed[0] = false;
+			      }
+			    }
+
+			    // Check: Parameter matches value in in parameter blocks during prepare.
+			    if (prepare_parameter_hash != incoming_parameter_hash) {
+			    	  System.err.println("In " + testName + " prepare_parameter_hash != incoming_parameter_hash");
+			    	  passed[0] = false;
+			    }
+
+			    // Check: jacobians are requested if they were in PrepareForEvaluation().
+			    if (prepare_requested_jacobians != (jacobians != null)) {
+			    	System.err.println("In " + testName + " prepare_requested_jacobians != (jacobians != null)");
+			    	passed[0] = false;
+			    }
+
+			    evaluate_num_calls++;
+			    evaluate_last_parameter_hash = incoming_parameter_hash;
+			    return true;
+			  }
+  
+  
 		};
 		
 		public void EvaluationCallbackWithTrustRegionMinimizer() {
+			  // EvaluationCallbackWithTrustRegionMinimizer() passed all tests
 			  int i,j;
 			  String testName = "EvaluationCallbackWithTrustRegionMinimizer()";
 			  boolean passed[] = new boolean[] {true};
@@ -18056,23 +18141,31 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  ProblemOptions problem_options = new ProblemOptions();
 			  problem_options.cost_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
 			  ProblemImpl problem = new ProblemImpl(problem_options);
-			  problem.AddResidualBlock(cost_function.innerClass, null, parameters);
+			  problem.AddResidualBlock(cost_function, null, parameters);
 
-			  /*Solver::Options options;
-			  options.linear_solver_type = DENSE_QR;
+			  SolverOptions options = new SolverOptions();
+			  options.linear_solver_type = LinearSolverType.DENSE_QR;
 			  options.max_num_iterations = 300;  // Cost function is hard.
-			  options.evaluation_callback = &cost_function;
+			  options.max_num_consecutive_invalid_steps = 300;
+			  options.min_trust_region_radius = 1.0E-100;
+			  options.evaluation_callback = cost_function.innerClass;
 
 			  // Run the solve. Checking is done inside the cost function / callback.
-			  Solver::Summary summary;
-			  Solve(options, &problem, &summary);
+			  SolverSummary summary = new SolverSummary();
+			  Solve(options, problem, summary);
 
 			  // Ensure that this was a hard cost function (not all steps succeed).
-			  EXPECT_GT(summary.num_successful_steps, 10);
-			  EXPECT_GT(summary.num_unsuccessful_steps, 10);
+			  if (summary.num_successful_steps <= 10) {
+				  System.err.println("In " + testName + " summary.num_successful_steps <= 10");
+				  passed[0] = false;
+			  }
+			  if (summary.num_unsuccessful_steps <= 10) {
+				  System.err.println("In " + testName + " summary.num_unsuccessful_steps <= 10");
+				  passed[0] = false;
+			  }
 
 			  // Ensure PrepareForEvaluation() is called the appropriate number of times.
-			  EXPECT_EQ(cost_function.prepare_num_calls,
+			  /*if (cost_function.prepare_num_calls !=
 			            // Unsuccessful steps are evaluated only once (no jacobians).
 			            summary.num_unsuccessful_steps +
 			            // Successful steps are evaluated twice: with and without jacobians.
@@ -18080,17 +18173,167 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			            // Final iteration doesn't re-evaluate the jacobian.
 			            // Note: This may be sensitive to tweaks to the TR algorithm; if
 			            // this becomes too brittle, remove this EXPECT_EQ() entirely.
-			            - 1);
+			            - 1) {
+				  System.err.println("In " + testName + " (cost_function.prepare_num_calls != summary.num_unsuccessful_steps + 2 * summary.num_successful_steps - 1");
+				  passed[0] = false;
+			  }*/
 
 			  // Ensure the callback calls ran a reasonable number of times.
-			  EXPECT_GT(cost_function.prepare_num_calls, 0);
-			  EXPECT_GT(cost_function.evaluate_num_calls, 0);
-			  EXPECT_EQ(cost_function.prepare_num_calls,
-			            cost_function.evaluate_num_calls);
+			  if (cost_function.prepare_num_calls <= 0) {
+				  System.err.println("In " + testName + " cost_function.prepare_num_calls <= 0");
+				  passed[0] = false;
+			  }
+			  if (cost_function.evaluate_num_calls <= 0) {
+				  System.err.println("In " + testName + " cost_function.evaluate_num_calls <= 0");
+				  passed[0] = false;
+			  }
+			  if (cost_function.prepare_num_calls != cost_function.evaluate_num_calls) {
+				  System.err.println("In " + testName + " cost_function.prepare_num_calls != cost_function.evaluate_num_calls");
+				  passed[0] = false;
+			  }
 
 			  // Ensure that the parameters did actually change.
-			  EXPECT_NE(Djb2Hash(parameters, 2), original_parameters_hash);*/
+			  buffer2D = new byte[parameters.length][8];
+				buffer = new byte[8 * parameters.length];
+				for (i = 0; i < parameters.length; i++) {
+					FileBase.doubleToBytes(parameters[i], true, buffer2D[i]);
+					for (j = 0; j < 8; j++) {
+						buffer[8*i + j] = buffer2D[i][j];
+					}
+				}
+				final long new_parameters_hash = hash(buffer);
+			    if (new_parameters_hash == original_parameters_hash) {
+			    	System.err.println("In " + testName + " new_parameters_hash == original_parameters_hash");
+			    	passed[0] = false;
+			    }
+			    if (passed[0]) {
+			    	System.out.println(testName + " passed all tests");
+			    }
 			}
 
+		public void WithLineSearchMinimizerImpl(
+			    LineSearchType line_search,
+			    LineSearchDirectionType line_search_direction,
+			    LineSearchInterpolationType line_search_interpolation,
+			    String testName, boolean passed[]) {
+			  int i,j;
+			  double parameters[] = new double[]{50.0, 50.0};
+			  byte buffer2D[][] = new byte[parameters.length][8];
+				byte buffer[] = new byte[8 * parameters.length];
+				for (i = 0; i < parameters.length; i++) {
+					FileBase.doubleToBytes(parameters[i], true, buffer2D[i]);
+					for (j = 0; j < 8; j++) {
+						buffer[8*i + j] = buffer2D[i][j];
+					}
+				}
+
+			  final long original_parameters_hash = hash(buffer);
+
+			  WigglyBowlCostFunctionAndEvaluationCallback cost_function = new WigglyBowlCostFunctionAndEvaluationCallback(parameters, testName, passed);
+			  ProblemOptions problem_options = new ProblemOptions();
+			  problem_options.cost_function_ownership = Ownership.DO_NOT_TAKE_OWNERSHIP;
+			  ProblemImpl problem = new ProblemImpl(problem_options);
+			  problem.AddResidualBlock(cost_function, null, parameters);
+
+			  SolverOptions options = new SolverOptions();
+			  options.linear_solver_type = LinearSolverType.DENSE_QR;
+			  options.max_num_iterations = 300;  // Cost function is hard.
+			  options.minimizer_type = MinimizerType.LINE_SEARCH;
+			  options.evaluation_callback = cost_function.innerClass;
+			  options.line_search_type = line_search;
+			  options.line_search_direction_type = line_search_direction;
+			  options.line_search_interpolation_type = line_search_interpolation;
+
+			  // Run the solve. Checking is done inside the cost function / callback.
+			  SolverSummary summary = new SolverSummary();
+			  Solve(options, problem, summary);
+
+			  // Ensure the callback calls ran a reasonable number of times.
+			  if (summary.num_line_search_steps <= 10) {
+				  System.err.println("In " + testName + " summary.num_line_search_steps <= 10");
+				  passed[0] = false;
+			  }
+			  if (cost_function.prepare_num_calls <= 30) {
+				  System.err.println("In " + testName + " cost_function.prepare_num_calls <= 30");
+				  passed[0] = false;
+			  }
+			  if (cost_function.prepare_num_calls != cost_function.evaluate_num_calls) {
+				  System.err.println("In " + testName + " cost_function.prepare_num_calls != cost_function.evaluate_num_calls");
+				  passed[0] = false;
+			  }
+
+			  // Ensure that the parameters did actually change.
+			  buffer2D = new byte[parameters.length][8];
+				buffer = new byte[8 * parameters.length];
+				for (i = 0; i < parameters.length; i++) {
+					FileBase.doubleToBytes(parameters[i], true, buffer2D[i]);
+					for (j = 0; j < 8; j++) {
+						buffer[8*i + j] = buffer2D[i][j];
+					}
+				}
+				final long new_parameters_hash = hash(buffer);
+			    if (new_parameters_hash == original_parameters_hash) {
+			    	System.err.println("In " + testName + " new_parameters_hash == original_parameters_hash");
+			    	passed[0] = false;
+			    }
+			    if (passed[0]) {
+			    	System.out.println(testName + " passed all tests");
+			    }
+			}
+		
+		// Note: These tests omit combinations of Wolfe line search with bisection.
+		// Due to an implementation quirk in Wolfe line search with bisection, there
+		// are calls to re-evaluate an existing point with new_point = true. That
+		// causes the (overly) strict tests to break, since they check the new_point
+		// preconditions in an if-and-only-if way. Strictly speaking, if new_point =
+		// true, the interface does not *require* that the point has changed; only that
+		// if new_point = false, the same point is reused.
+		//
+		// Since the strict checking is useful to verify that there aren't missed
+		// optimizations, omit tests of the Wolfe with bisection cases.
+
+		// Wolfe with L-BFGS.
+		public void EvaluationCallbackWithLineSearchMinimizerWolfeLbfgsCubic() {
+	      // EvaluationCallbackWithLineSearchMinimizerWolfeLbfgsCubic() passed all tests
+		  String testName = "EvaluationCallbackWithLineSearchMinimizerWolfeLbfgsCubic()";
+		  boolean passed[] = new boolean[] {true};
+		  WithLineSearchMinimizerImpl(LineSearchType.WOLFE, LineSearchDirectionType.LBFGS, LineSearchInterpolationType.CUBIC, testName, passed);
+		}
+
+		public void EvaluationCallbackWithLineSearchMinimizerWolfeLbfgsQuadratic() {
+			  // EvaluationCallbackWithLineSearchMinimizerWolfeLbfgsQuadratic() passed all tests
+			  String testName = "EvaluationCallbackWithLineSearchMinimizerWolfeLbfgsQuadratic()";
+			  boolean passed[] = new boolean[] {true};
+			  WithLineSearchMinimizerImpl(LineSearchType.WOLFE, LineSearchDirectionType.LBFGS, LineSearchInterpolationType.QUADRATIC, testName, passed);
+		}
+		
+		// Wolfe with full BFGS.
+		public void EvaluationCallbackWithLineSearchMinimizerWolfeBfgsCubic() {
+			// EvaluationCallbackWithLineSearchMinimizerWolfeBfgsCubic() passed all tests
+			String testName = "EvaluationCallbackWithLineSearchMinimizerWolfeBfgsCubic()";
+			boolean passed[] = new boolean[] {true};
+			WithLineSearchMinimizerImpl(LineSearchType.WOLFE, LineSearchDirectionType.BFGS, LineSearchInterpolationType.CUBIC, testName, passed);
+		}
+
+		public void EvaluationCallbackWithLineSearchMinimizerWolfeBfgsQuadratic() {
+			  // EvaluationCallbackWithLineSearchMinimizerWolfeBfgsQuadratic() passed all tests
+			  String testName = "EvaluationCallbackWithLineSearchMinimizerWolfeBfgsQuadratic()";
+			  boolean passed[] = new boolean[] {true};
+			  WithLineSearchMinimizerImpl(LineSearchType.WOLFE, LineSearchDirectionType.BFGS, LineSearchInterpolationType.QUADRATIC, testName, passed);
+		}
+		
+		// Armijo with nonlinear conjugate gradient.
+		public void EvaluationCallbackWithLineSearchMinimizerArmijoCubic() {
+			// EvaluationCallbackWithLineSearchMinimizerArmijoCubic() passed all tests
+			String testName = "EvaluationCallbackWithLineSearchMinimizerArmijoCubic()";
+			boolean passed[] = new boolean[] {true};
+			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.CUBIC, testName, passed);
+		}
+
+		public void EvaluationCallbackWithLineSearchMinimizerArmijoBisection() {
+			String testName = "EvaluationCallbackWithLineSearchMinimizerArmijoBisection()";
+			boolean passed[] = new boolean[] {true};
+			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.BISECTION, testName, passed);
+		}
 
 }
