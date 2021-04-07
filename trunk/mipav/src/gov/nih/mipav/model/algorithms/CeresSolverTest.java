@@ -18375,5 +18375,90 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  EasyFunctor functor = new EasyFunctor();
 			  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
 		}
+		
+		public void NumericDiffCostFunctionEasyCaseFunctorForwardDifferences() {
+			  // NumericDiffCostFunctionEasyCaseFunctorForwardDifferences() passed all tests
+			  String testName = "NumericDiffCostFunctionEasyCaseFunctorForwardDifferences()";
+			  boolean passed[] = new boolean[] {true};
+			  testCase = EASY_FUNCTOR_EXAMPLE;
+			  EasyFunctor ef = new EasyFunctor();
+			  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
+			  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+			  NumericDiffOptions options = new NumericDiffOptions();
+			  // 3 number of residuals
+			  // 5 size of x1
+			  // 5 size of x2
+			  CostFunction cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, 3, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+			  EasyFunctor functor = new EasyFunctor();
+			  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.FORWARD, testName, passed);
+		}
+
+	public void NumericDiffCostFunctionEasyCaseFunctorRidders() {
+		  // NumericDiffCostFunctionEasyCaseFunctorRidders() passed all tests
+		  String testName = "NumericDiffCostFunctionEasyCaseFunctorRidders()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = EASY_FUNCTOR_EXAMPLE;
+		  EasyFunctor ef = new EasyFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 3 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, 3, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  EasyFunctor functor = new EasyFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.RIDDERS, testName, passed);
+	}
+	
+	public void NumericDiffCostFunctionEasyCaseCostFunctionCentralDifferences() {
+		  // NumericDiffCostFunctionEasyCaseCostFunctionCentralDifferences() passed all tests
+		  String testName = "NumericDiffCostFunctionEasyCaseCostFunctionCentralDifferences()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = EASY_COST_FUNCTION;
+		  EasyCostFunction ef = new EasyCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 3 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<EasyCostFunction>(ef, method, ownership, options, 3, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  EasyFunctor functor = new EasyFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
+	}
+	
+	public void NumericDiffCostFunctionEasyCaseCostFunctionForwardDifferences() {
+		  // NumericDiffCostFunctionEasyCaseCostFunctionForwardDifferences() passed all tests
+		  String testName = "NumericDiffCostFunctionEasyCaseCostFunctionForwardDifferences()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = EASY_COST_FUNCTION;
+		  EasyCostFunction ef = new EasyCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 3 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<EasyCostFunction>(ef, method, ownership, options, 3, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  EasyFunctor functor = new EasyFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.FORWARD, testName, passed);
+	}
+	
+	public void NumericDiffCostFunctionEasyCaseCostFunctionRidders() {
+		  // NumericDiffCostFunctionEasyCaseCostFunctionRidders() passed all tests
+		  String testName = "NumericDiffCostFunctionEasyCaseCostFunctionRidders()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = EASY_COST_FUNCTION;
+		  EasyCostFunction ef = new EasyCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 3 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<EasyCostFunction>(ef, method, ownership, options, 3, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  EasyFunctor functor = new EasyFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.RIDDERS, testName, passed);
+	}
 
 }
