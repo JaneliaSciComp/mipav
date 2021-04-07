@@ -12660,16 +12660,16 @@ public abstract class CeresSolver {
 			
 			double[] gradient = null;
 			if (evaluate_gradient) {
-			while (output.vector_gradient.size() < direction_.size()) {
-				output.vector_gradient.add(0.0);
-			}
-			while (output.vector_gradient.size() > direction_.size()) {
-				output.vector_gradient.removeElementAt(output.vector_gradient.size()-1);
-			}
-			gradient = new double[direction_.size()];
-			for (i = 0; i < direction_.size(); i++) {
-				gradient[i] = output.vector_gradient.get(i);
-			}
+				while (output.vector_gradient.size() < direction_.size()) {
+					output.vector_gradient.add(0.0);
+				}
+				while (output.vector_gradient.size() > direction_.size()) {
+					output.vector_gradient.removeElementAt(output.vector_gradient.size()-1);
+				}
+				gradient = new double[direction_.size()];
+				for (i = 0; i < direction_.size(); i++) {
+					gradient[i] = output.vector_gradient.get(i);
+				}
 			}
 			double vector_x_array[] = new double[output.vector_x.size()];
 			for (i = 0; i < output.vector_x.size(); i++) {
@@ -12680,8 +12680,10 @@ public abstract class CeresSolver {
 			for (i = 0; i < output.vector_x.size(); i++) {
 				output.vector_x.set(i,vector_x_array[i]);
 			}
-			for (i = 0; i <output.vector_gradient.size(); i++) {
-				output.vector_gradient.set(i,gradient[i]);
+			if (evaluate_gradient) {
+				for (i = 0; i <output.vector_gradient.size(); i++) {
+					output.vector_gradient.set(i,gradient[i]);
+				}
 			}
 			if (!eval_status || !Double.isFinite(output.value[0])) {
 			return;
