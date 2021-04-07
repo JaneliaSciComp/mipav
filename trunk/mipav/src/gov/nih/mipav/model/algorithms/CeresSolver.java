@@ -563,6 +563,7 @@ public class CeresSolver {
 	protected final int BAD_TEST_TERM_EXAMPLE = 5;
 	protected final int LINEAR_COST_FUNCTION_EXAMPLE = 6;
 	protected final int EASY_FUNCTOR_EXAMPLE = 7;
+	protected final int EASY_COST_FUNCTION = 8;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -1233,6 +1234,20 @@ public class CeresSolver {
 			  EXPECT_NEAR(relative_difference, 0.0, max_abs_relative_difference);*/
 			  return relative_difference <= max_abs_relative_difference;
 			}
+		
+		public class EasyCostFunction extends SizedCostFunction {
+			 private EasyFunctor functor_;
+			 public EasyCostFunction() {
+				 super(3,5,5,0,0,0,0,0,0,0,0);
+				 functor_ = new EasyFunctor();
+			 }
+			 public boolean Evaluate(Vector<double[]> parameters,
+			                        double[] residuals,
+			                        double[][] jacobian /* not used */){
+			    return functor_.operator(parameters.get(0), parameters.get(1), residuals);
+			 }
+
+		};
 
 
 	class CurveFittingFunctorExample {
@@ -17185,6 +17200,11 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case EASY_COST_FUNCTION:
+				if (!((EasyCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -17553,6 +17573,11 @@ public class CeresSolver {
 				x = parameters.get(0);
 				y = parameters.get(1);
 				if (!((EasyFunctor) functor_).operator(x, y, residuals)) {
+					return false;
+				}
+				break;
+			case EASY_COST_FUNCTION:
+				if (!((EasyCostFunction) functor_).Evaluate(parameters, residuals, null)) {
 					return false;
 				}
 				break;
@@ -18242,6 +18267,14 @@ public class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case EASY_COST_FUNCTION:
+				Vector<double[]>paramVec = new Vector<double[]>(2);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				if (!((EasyCostFunction) functor).Evaluate(paramVec, residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			
@@ -18296,6 +18329,14 @@ public class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case EASY_COST_FUNCTION:
+				Vector<double[]>paramVec = new Vector<double[]>(2);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				if (!((EasyCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			for (i = 0; i < residuals.length; i++) {
