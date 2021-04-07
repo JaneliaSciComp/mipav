@@ -17854,6 +17854,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  public boolean prepare_requested_jacobians;
 			  public boolean prepare_new_evaluation_point;
 			  public long prepare_parameter_hash;
+			  public double lastx = -1.0;
+			  public double lasty = -1.0;
 
 			  // Track state: Evaluate().
 			  //
@@ -17907,7 +17909,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				    // Check: Prepare() & Evaluate() come in pairs, in that order. Before this
 				    // call, the number of calls excluding this one should match.
 				    if (prepare_num_calls != evaluate_num_calls) {
-				    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls");
+				    	System.err.println("In PrepareForEvaluation " + testName + " prepare_num_calls != evaluate_num_calls");
 				    	passed[0] = false;
 				    }
 		
@@ -17917,11 +17919,11 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				      // changed. Technically, it's not required that it must change but
 				      // in practice it does, and that helps with testing.
 				      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
-				    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+				    	  System.err.println("In PrepareForEvaluation " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
 				    	  passed[0] = false;
 				      }
 				      if (prepare_parameter_hash == incoming_parameter_hash) {
-				    	  System.err.println("In " + testName + " prepare_parameter_hash == incoming_parameter_hash");
+				    	  System.err.println("In PrepareForEvaluation " + testName + " prepare_parameter_hash == incoming_parameter_hash");
 				    	  passed[0] = false;
 				      }
 				    } else {
@@ -17929,11 +17931,13 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				      // the parameters match both from the previous evaluate, the
 				      // previous prepare, and the current prepare.
 				      if (evaluate_last_parameter_hash != prepare_parameter_hash) {
-				    	 System.err.println("In " + testName + " evaluate_last_parameter_hash != prepare_parameter_hash");
+				    	 System.err.println("In PrepareForEvaluation " + testName + " evaluate_last_parameter_hash != prepare_parameter_hash");
 				    	 passed[0] = false;
 				      }
 				      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
-				    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+				    	  System.err.println("In PrepareForEvaluation " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+				    	  System.err.println("user_parameter_block[0] = " + user_parameter_block[0] + " lastx = " + lastx);
+				    	  System.err.println("user_parameter_block[1] = " + user_parameter_block[1] + " lasty = " + lasty);
 				    	  passed[0] = false;
 				      }
 				    }
@@ -17993,7 +17997,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			    // Check: PrepareForEvaluation() & Evaluate() come in pairs, in that order.
 			    if (prepare_num_calls != evaluate_num_calls + 1) {
-			    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls + 1");
+			    	System.err.println("In Evaluate " + testName + " prepare_num_calls != evaluate_num_calls + 1");
 			    	passed[0] = false;
 			    }
 
@@ -18001,34 +18005,38 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			    // changed, it has changed; otherwise it is the same.
 			    if (prepare_new_evaluation_point) {
 			      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
-			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+			    	  System.err.println("In Evaluate " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
 			    	  passed[0] = false;
 			      }
 			    } else {
 			      if (evaluate_last_parameter_hash == kUninitialized) {
-			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == kUninitialized");
+			    	  System.err.println("In Evaluate " + testName + " evaluate_last_parameter_hash == kUninitialized");
 			    	  passed[0] = false;
 			      }
 			      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
-			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+			    	  System.err.println("In Evaluate " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+			    	  System.err.println("x = " + x + " lastx = " + lastx);
+			    	  System.err.println("y = " + y + " lasty = " + lasty);
 			    	  passed[0] = false;
 			      }
 			    }
 
 			    // Check: Parameter matches value in in parameter blocks during prepare.
 			    if (prepare_parameter_hash != incoming_parameter_hash) {
-			    	  System.err.println("In " + testName + " prepare_parameter_hash != incoming_parameter_hash");
+			    	  System.err.println("In Evaluate " + testName + " prepare_parameter_hash != incoming_parameter_hash");
 			    	  passed[0] = false;
 			    }
 
 			    // Check: jacobians are requested if they were in PrepareForEvaluation().
 			    if (prepare_requested_jacobians != (jacobians != null)) {
-			    	System.err.println("In " + testName + " prepare_requested_jacobians != (jacobians != null)");
+			    	System.err.println("In Evaluate " + testName + " prepare_requested_jacobians != (jacobians != null)");
 			    	passed[0] = false;
 			    }
 
 			    evaluate_num_calls++;
 			    evaluate_last_parameter_hash = incoming_parameter_hash;
+			    lastx = x;
+			    lasty = y;
 			    return true;
 			  }
 			  
@@ -18078,7 +18086,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			    // Check: PrepareForEvaluation() & Evaluate() come in pairs, in that order.
 			    if (prepare_num_calls != evaluate_num_calls + 1) {
-			    	System.err.println("In " + testName + " prepare_num_calls != evaluate_num_calls + 1");
+			    	System.err.println("In Evaluate " + testName + " prepare_num_calls != evaluate_num_calls + 1");
 			    	passed[0] = false;
 			    }
 
@@ -18086,34 +18094,38 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			    // changed, it has changed; otherwise it is the same.
 			    if (prepare_new_evaluation_point) {
 			      if (evaluate_last_parameter_hash == incoming_parameter_hash) {
-			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
+			    	  System.err.println("In Evaluate " + testName + " evaluate_last_parameter_hash == incoming_parameter_hash");
 			    	  passed[0] = false;
 			      }
 			    } else {
 			      if (evaluate_last_parameter_hash == kUninitialized) {
-			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash == kUninitialized");
+			    	  System.err.println("In Evaluate " + testName + " evaluate_last_parameter_hash == kUninitialized");
 			    	  passed[0] = false;
 			      }
 			      if (evaluate_last_parameter_hash != incoming_parameter_hash) {
-			    	  System.err.println("In " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+			    	  System.err.println("In Evaluate " + testName + " evaluate_last_parameter_hash != incoming_parameter_hash");
+			    	  System.err.println("x = " + x + " lastx = " + lastx);
+			    	  System.err.println("y = " + y + " lasty = " + lasty);
 			    	  passed[0] = false;
 			      }
 			    }
 
 			    // Check: Parameter matches value in in parameter blocks during prepare.
 			    if (prepare_parameter_hash != incoming_parameter_hash) {
-			    	  System.err.println("In " + testName + " prepare_parameter_hash != incoming_parameter_hash");
+			    	  System.err.println("In Evaluate " + testName + " prepare_parameter_hash != incoming_parameter_hash");
 			    	  passed[0] = false;
 			    }
 
 			    // Check: jacobians are requested if they were in PrepareForEvaluation().
 			    if (prepare_requested_jacobians != (jacobians != null)) {
-			    	System.err.println("In " + testName + " prepare_requested_jacobians != (jacobians != null)");
+			    	System.err.println("In Evaluate " + testName + " prepare_requested_jacobians != (jacobians != null)");
 			    	passed[0] = false;
 			    }
 
 			    evaluate_num_calls++;
 			    evaluate_last_parameter_hash = incoming_parameter_hash;
+			    lastx = x;
+			    lasty = y;
 			    return true;
 			  }
   
@@ -18243,6 +18255,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  options.line_search_type = line_search;
 			  options.line_search_direction_type = line_search_direction;
 			  options.line_search_interpolation_type = line_search_interpolation;
+			  options.min_line_search_step_size = 1.0E-11;
 
 			  // Run the solve. Checking is done inside the cost function / callback.
 			  SolverSummary summary = new SolverSummary();
@@ -18276,6 +18289,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			    	System.err.println("In " + testName + " new_parameters_hash == original_parameters_hash");
 			    	passed[0] = false;
 			    }
+			    //System.err.println("parameters[0] = " + parameters[0] + " parameters[1] = " + parameters[1]);
 			    if (passed[0]) {
 			    	System.out.println(testName + " passed all tests");
 			    }
@@ -18335,5 +18349,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			boolean passed[] = new boolean[] {true};
 			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.BISECTION, testName, passed);
 		}
+		
+		public void EvaluationCallbackWithLineSearchMinimizerArmijoQuadratic() {
+			String testName = "EvaluationCallbackWithLineSearchMinimizerArmijoQuadratic()";
+			boolean passed[] = new boolean[] {true};
+			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.QUADRATIC, testName, passed);
+		}
+
 
 }
