@@ -24903,9 +24903,25 @@ public abstract class CeresSolver {
 		    // indicates the rank of the Hessian approximation.
 		    public int max_lbfgs_rank;
 		    
+		 // Invalid values for most fields, to ensure that we are not
+		 // accidentally reporting default values.
 		    public GradientProblemSolverSummary() {
-		        message = new String[1];
+		        message = new String[] {"GradientProblemSolver was not called."};
 		        iterations = new Vector<IterationSummary>();
+		        termination_type = TerminationType.FAILURE;
+		        initial_cost = -1.0;
+		        final_cost = -1.0;
+		        total_time_in_seconds = -1.0;
+		        cost_evaluation_time_in_seconds = -1.0;
+		        gradient_evaluation_time_in_seconds = -1.0;
+		        line_search_polynomial_minimization_time_in_seconds = -1.0;
+		        num_parameters = -1;
+		        num_local_parameters = -1;
+		        line_search_direction_type = LineSearchDirectionType.LBFGS;
+		        line_search_type = LineSearchType.ARMIJO;
+		        line_search_interpolation_type = LineSearchInterpolationType.BISECTION;
+		        nonlinear_conjugate_gradient_type = NonlinearConjugateGradientType.FLETCHER_REEVES;
+		        max_lbfgs_rank = -1;
 		    }
 		    
 		    // A brief one line description of the state of the solver after
