@@ -18345,12 +18345,14 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		}
 
 		public void EvaluationCallbackWithLineSearchMinimizerArmijoBisection() {
+			// EvaluationCallbackWithLineSearchMinimizerArmijoBisection() passed all tests
 			String testName = "EvaluationCallbackWithLineSearchMinimizerArmijoBisection()";
 			boolean passed[] = new boolean[] {true};
 			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.BISECTION, testName, passed);
 		}
 		
 		public void EvaluationCallbackWithLineSearchMinimizerArmijoQuadratic() {
+			// EvaluationCallbackWithLineSearchMinimizerArmijoQuadratic() passed all tests
 			String testName = "EvaluationCallbackWithLineSearchMinimizerArmijoQuadratic()";
 			boolean passed[] = new boolean[] {true};
 			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.QUADRATIC, testName, passed);
