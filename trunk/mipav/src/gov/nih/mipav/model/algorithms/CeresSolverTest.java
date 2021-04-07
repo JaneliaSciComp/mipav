@@ -85,6 +85,7 @@ import gov.nih.mipav.view.Preferences;
 * */
 
 public class CeresSolverTest extends CeresSolver {
+	CeresSolver2 ce2 = new CeresSolver2();
 	
 	public CeresSolverTest() {
 		super();
@@ -15333,7 +15334,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	        	  boolean passed = true;
     	        	  int array[] = new int[] {0,1};
     	        	  int expected[] = new int[] {0,1};
-    	        	  MapValuesToContiguousRange(array);
+    	        	  ce2.MapValuesToContiguousRange(array);
     	        	  for (i = 0; i < array.length; i++) {
     	        		  if (array[i] != expected[i]) {
     	        			  System.err.println("In MapValuesToContiguousRangeContiguousEntries() array["+i+"] != expected["+i+"]");
@@ -15344,7 +15345,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
     	        	  array = new int[] {1, 0};
     	        	  expected = new int[] {1, 0};
-    	        	  MapValuesToContiguousRange(array);
+    	        	  ce2.MapValuesToContiguousRange(array);
     	        	  for (i = 0; i < array.length; i++) {
     	        		  if (array[i] != expected[i]) {
     	        			  System.err.println("In MapValuesToContiguousRangeContiguousEntries() array["+i+"] != expected["+i+"]");
@@ -15362,7 +15363,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	        	  boolean passed = true;
     	        	  int array[] = new int[] {0,2};
     	        	  int expected[] = new int[] {0,1};
-    	        	  MapValuesToContiguousRange(array);
+    	        	  ce2.MapValuesToContiguousRange(array);
     	        	  for (i = 0; i < array.length; i++) {
     	        		  if (array[i] != expected[i]) {
     	        			  System.err.println("In MapValuesToContiguousRangeNonContiguousEntries() array["+i+"] != expected["+i+"]");
@@ -15380,7 +15381,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	        	  boolean passed = true;
     	        	  int array[] = new int[] {3, 1, 0, 0, 0, 5};
     	        	  int expected[] = new int[] {2, 1, 0, 0, 0, 3};
-    	        	  MapValuesToContiguousRange(array);
+    	        	  ce2.MapValuesToContiguousRange(array);
     	        	  for (i = 0; i < array.length; i++) {
     	        		  if (array[i] != expected[i]) {
     	        			  System.err.println("In MapValuesToContiguousRangeNonContiguousRepeatingEntries() array["+i+"] != expected["+i+"]");
@@ -15473,7 +15474,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    return false;
     	  }
   
-    	  final double e_norm = norm(expected);
+    	  final double e_norm = ce2.norm(expected);
     	  double aminuse[] = new double[arg.length];
     	  double apluse[] = new double[arg.length];
     	  for (i = 0; i < arg.length; i++) {
@@ -15486,12 +15487,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	    // Deal with the sign ambiguity near PI. Since the sign can flip,
     	    // we take the smaller of the two differences.
     	    if (Math.abs(e_norm - Math.PI) < kLooseTolerance) {
-    	      delta_norm = Math.min(norm(aminuse), norm(apluse)) / e_norm;
+    	      delta_norm = Math.min(ce2.norm(aminuse), ce2.norm(apluse)) / e_norm;
     	    } else {
-    	      delta_norm = norm(aminuse) / e_norm;
+    	      delta_norm = ce2.norm(aminuse) / e_norm;
     	    }
     	  } else {
-    	    delta_norm = norm(arg);
+    	    delta_norm = ce2.norm(arg);
     	  }
 
     	  if (delta_norm <= kLooseTolerance) {
@@ -15567,7 +15568,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double axis_angle[] = new double[] { 0, 0, 0 };
     	  double quaternion[] = new double[4];
     	  double expected[] = new double[] { 1, 0, 0, 0 };
-    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  ce2.AngleAxisToQuaternion(axis_angle, quaternion);
     	  if (!IsNormalizedQuaternion(quaternion)) {
     		  System.err.println("In RotationZeroAngleAxisToQuaternion() IsNormalizedQuaternion(quaternion) = false");
     		  passed = false;
@@ -15590,7 +15591,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double axis_angle[] = new double[] { theta, 0, 0 };
     	  double quaternion[] = new double[4];
     	  double expected[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
-    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  ce2.AngleAxisToQuaternion(axis_angle, quaternion);
     	  if (!IsNormalizedQuaternion(quaternion)) {
     		  System.err.println("In RotationSmallAngleAxisToQuaternion() IsNormalizedQuaternion(quaternion) = false");
     		  passed = false;
@@ -15613,7 +15614,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double axis_angle[] = new double[] { theta, 0, 0 };
     	  double quaternion[] = new double[4];
     	  double expected[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
-    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  ce2.AngleAxisToQuaternion(axis_angle, quaternion);
     	  if (!IsNormalizedQuaternion(quaternion)) {
     		  System.err.println("In RotationTinyAngleAxisToQuaternion() IsNormalizedQuaternion(quaternion) = false");
     		  passed = false;
@@ -15635,7 +15636,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double axis_angle[] = new double[] { Math.PI / 2, 0, 0 };
     	  double quaternion[] = new double[4];
     	  double expected[] = { kHalfSqrt2, kHalfSqrt2, 0, 0 };
-    	  AngleAxisToQuaternion(axis_angle, quaternion);
+    	  ce2.AngleAxisToQuaternion(axis_angle, quaternion);
     	  if (!IsNormalizedQuaternion(quaternion)) {
     		  System.err.println("In RotationXRotationToQuaternion() IsNormalizedQuaternion(quaternion) = false");
     		  passed = false;
@@ -15655,7 +15656,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double quaternion[] = new double[] { 1, 0, 0, 0 };
     	  double axis_angle[] = new double[3];
     	  double expected[] = new double[] { 0, 0, 0 };
-    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  ce2.QuaternionToAngleAxis(quaternion, axis_angle);
     	  if (!IsNearAngleAxis(axis_angle, expected)) {
     		  System.err.println("In RotationUnitQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
     	  }
@@ -15670,7 +15671,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double quaternion[] = new double[] { 0, 0, 1, 0 };
     	  double axis_angle[] = new double[3];
     	  double expected[] = new double[]{ 0, Math.PI, 0 };
-    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  ce2.QuaternionToAngleAxis(quaternion, axis_angle);
     	  if (!IsNearAngleAxis(axis_angle, expected)) {
     		  System.err.println("In RotationYRotationQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
     	  }
@@ -15686,7 +15687,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double quaternion[] = new double[] { Math.sqrt(3) / 2, 0, 0, 0.5 };
     	  double axis_angle[] = new double[3];
     	  double expected[] = new double[] { 0, 0, Math.PI / 3 };
-    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  ce2.QuaternionToAngleAxis(quaternion, axis_angle);
     	  if (!IsNearAngleAxis(axis_angle, expected)) {
     		  System.err.println("In RotationZRotationQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
     	  }
@@ -15703,7 +15704,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double quaternion[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
     	  double axis_angle[] = new double[3];
     	  double expected[] = new double[] { theta, 0, 0 };
-    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  ce2.QuaternionToAngleAxis(quaternion, axis_angle);
     	  if (!IsNearAngleAxis(axis_angle, expected)) {
     		  System.err.println("In RotationSmallQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
     	  }
@@ -15720,7 +15721,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  double quaternion[] = new double[] { Math.cos(theta/2), Math.sin(theta/2.0), 0, 0 };
     	  double axis_angle[] = new double[3];
     	  double expected[] = new double[] { theta, 0, 0 };
-    	  QuaternionToAngleAxis(quaternion, axis_angle);
+    	  ce2.QuaternionToAngleAxis(quaternion, axis_angle);
     	  if (!IsNearAngleAxis(axis_angle, expected)) {
     		  System.err.println("In RotationTinyQuaternionToAngleAxis() IsNearAngleAxis(axis_angle, expected) = false");
     	  }
@@ -15740,7 +15741,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         	  quaternion[1] = 1.0 * Math.sin(half_theta);
         	  quaternion[2] = 0.0;
         	  quaternion[3] = 0.0;
-        	  QuaternionToAngleAxis(quaternion, angle_axis);
+        	  ce2.QuaternionToAngleAxis(quaternion, angle_axis);
         	  final double angle = Math.sqrt(angle_axis[0] * angle_axis[0] +
         	                            angle_axis[1] * angle_axis[1] +
         	                            angle_axis[2] * angle_axis[2]);
@@ -15781,12 +15782,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
          // We use ASSERTs here because if there's one failure, there are
          // probably many and spewing a million failures doesn't make anyone's
          // day.
-         AngleAxisToQuaternion(axis_angle, quaternion);
+         ce2.AngleAxisToQuaternion(axis_angle, quaternion);
          if (!IsNormalizedQuaternion(quaternion)) {
    		  System.err.println("In RotationAngleAxisToQuaterionAndBack() IsNormalizedQuaternion(quaternion) = false");
    		  passed = false;
    	     }
-         QuaternionToAngleAxis(quaternion, round_trip);
+         ce2.QuaternionToAngleAxis(quaternion, round_trip);
          if (!IsNearAngleAxis(round_trip, axis_angle)) {
    		  System.err.println("In RotationAngleAxisToQuaterionAndBack() IsNearAngleAxis(axis_angle, expected) = false");
    		  passed = false;
@@ -15818,8 +15819,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
       double axis_angle[] = new double[3];
       double round_trip[] = new double[4];
-      QuaternionToAngleAxis(quaternion, axis_angle);
-      AngleAxisToQuaternion(axis_angle, round_trip);
+      ce2.QuaternionToAngleAxis(quaternion, axis_angle);
+      ce2.AngleAxisToQuaternion(axis_angle, round_trip);
       if (!IsNormalizedQuaternion(round_trip)) {
     	  System.err.println("In RotationQuaterionToAngleAxisAndBack() IsNormalizedQuaternion(round_trip) = false");
     	  passed = false;
@@ -15841,7 +15842,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	 double axis_angle[] = new double[]{ 0, 0, 0 };
 	 double matrix[] = new double[9];
 	 double expected[] = new double[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
-	 AngleAxisToRotationMatrix(axis_angle, matrix);
+	 ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 	 if (!IsOrthonormal(matrix)) {
 		 System.err.println("In RotationZeroAngleAxisToRotationMatrix() IsOrthonormal(matrix) = false");
 		 passed = false;
@@ -15861,7 +15862,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  double axis_angle[] = new double[] { 1e-24, 2e-24, 3e-24 };
 		  double matrix[] = new double[9];
 		  double expected[] = new double[]{ 1, 0, 0, 0, 1, 0, 0, 0, 1 };
-		  AngleAxisToRotationMatrix(axis_angle, matrix);
+		  ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 		  if (!IsOrthonormal(matrix)) {
 			 System.err.println("In RotationNearZeroAngleAxisToRotationMatrix() IsOrthonormal(matrix) = false");
 			 passed = false;
@@ -15883,7 +15884,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  double matrix[] = new double[9];
 	  // The rotation matrices are stored column-major.
 	  double expected[] = new double[] { 1, 0, 0, 0, 0, 1, 0, -1, 0 };
-	  AngleAxisToRotationMatrix(axis_angle, matrix);
+	  ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 	  if (!IsOrthonormal(matrix)) {
 		 System.err.println("In RotationXRotationToRotationMatrix() IsOrthonormal(matrix) = false");
 		 passed = false;
@@ -15893,7 +15894,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		 passed = false;
 	  }
 	  double round_trip[] = new double[3];
-	  RotationMatrixToAngleAxis(matrix, round_trip);
+	  ce2.RotationMatrixToAngleAxis(matrix, round_trip);
 	  if (!IsNearAngleAxis(round_trip, axis_angle)) {
 		  System.err.println("In RotationXRotationToRotationMatrix() IsNearAngleAxis(round_trip, axis_angle) = false");
 		  passed = false; 
@@ -15911,7 +15912,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  double axis_angle[] = new double[]{ 0, Math.PI, 0 };
 	  double matrix[] = new double[9];
 	  double expected[] = new double[] { -1, 0, 0, 0, 1, 0, 0, 0, -1 };
-	  AngleAxisToRotationMatrix(axis_angle, matrix);
+	  ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 	  if (!IsOrthonormal(matrix)) {
 		 System.err.println("In RotationYRotationToRotationMatrix() IsOrthonormal(matrix) = false");
 		 passed = false;
@@ -15921,7 +15922,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		 passed = false;
 	  }
 	  double round_trip[] = new double[3];
-	  RotationMatrixToAngleAxis(matrix, round_trip);
+	  ce2.RotationMatrixToAngleAxis(matrix, round_trip);
 	  if (!IsNearAngleAxis(round_trip, axis_angle)) {
 		  System.err.println("In RotationYRotationToRotationMatrix() IsNearAngleAxis(round_trip, axis_angle) = false");
 		  passed = false; 
@@ -15955,8 +15956,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    for (int j = 0; j < 3; j++) {
 		      in_axis_angle[j] *= (theta / norm);
 		    }
-		    AngleAxisToRotationMatrix(in_axis_angle, matrix);
-		    RotationMatrixToAngleAxis(matrix, out_axis_angle);
+		    ce2.AngleAxisToRotationMatrix(in_axis_angle, matrix);
+		    ce2.RotationMatrixToAngleAxis(matrix, out_axis_angle);
 		    if (!IsNearAngleAxis(in_axis_angle, out_axis_angle)) {
 		    	System.err.println("In RotationNearPiAngleAxisRoundTrip() IsNearAngleAxis(in_axis_angle, out_axis_angle) = false");
 		    	passed = false;
@@ -15989,8 +15990,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		  double out_matrix[] = new double[9];
 		  double axis_angle[] = new double[3];
-		  RotationMatrixToAngleAxis(in_matrix, axis_angle);
-		  AngleAxisToRotationMatrix(axis_angle, out_matrix);
+		  ce2.RotationMatrixToAngleAxis(in_matrix, axis_angle);
+		  ce2.AngleAxisToRotationMatrix(axis_angle, out_matrix);
 
 		  /*LOG(INFO) << "AngleAxis = " << axis_angle[0] << " " << axis_angle[1]
 		            << " " << axis_angle[2];
@@ -16040,7 +16041,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  double expected[] = new double[] { 0.5, Math.sqrt(3) / 2, 0,   // Column 1
 	                         -Math.sqrt(3) / 2, 0.5, 0,  // Column 2
 	                         0, 0, 1 };             // Column 3
-	  AngleAxisToRotationMatrix(axis_angle, matrix);
+	  ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 	  if (!IsOrthonormal(matrix)) {
 		  System.err.println("In RotationZRotationToRotationMatrix() IsOrthonormal(matrix) = false");
 		  passed = false;
@@ -16050,7 +16051,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  passed = false;
 	  }
 	  double round_trip[] = new double[3];
-	  RotationMatrixToAngleAxis(matrix, round_trip);
+	  ce2.RotationMatrixToAngleAxis(matrix, round_trip);
 	  if (!IsNearAngleAxis(round_trip, axis_angle)) {
 		  System.err.println("In RotationZRotationToRotationMatrix() IsNearAngleAxis(round_trip, axis_angle) = false");
 		  passed = false;
@@ -16085,12 +16086,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 	    double matrix[] = new double[9];
 	    double round_trip[] = new double[3];
-	    AngleAxisToRotationMatrix(axis_angle, matrix);
+	    ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 	    if (!IsOrthonormal(matrix)) {
 	    	System.err.println("In RotationAngleAxisToRotationMatrixAndBack() IsOrthonormal(matrix) = false");
 	    	passed = false;
 	    }
-	    RotationMatrixToAngleAxis(matrix, round_trip);
+	    ce2.RotationMatrixToAngleAxis(matrix, round_trip);
 
 	    for (int j = 0; j < 3; ++j) {
 	      if (Math.abs(round_trip[j] - axis_angle[j]) > kLooseTolerance) {
@@ -16128,12 +16129,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 	    double matrix[] = new double[9];
 	    double round_trip[] = new double[3];
-	    AngleAxisToRotationMatrix(axis_angle, matrix);
+	    ce2.AngleAxisToRotationMatrix(axis_angle, matrix);
 	    if (!IsOrthonormal(matrix)) {
 	    	System.err.println("In RotationAngleAxisToRotationMatrixAndBackNearZero() IsOrthonormal(matrix) = false");
 	    	passed = false;
 	    }
-	    RotationMatrixToAngleAxis(matrix, round_trip);
+	    ce2.RotationMatrixToAngleAxis(matrix, round_trip);
 
 	    for (int j = 0; j < 3; ++j) {
 	      if (Math.abs(round_trip[j] - axis_angle[j]) > epsilon) {
@@ -16151,14 +16152,14 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	// rotation 'aa' and the Euler angle rotation 'ea' (in radians).
 	public void CompareEulerToAngleAxis(double aa[], double ea[], String testName, boolean passed[]) {
 	  double aa_matrix[] = new double[9];
-	  AngleAxisToRotationMatrix(aa, aa_matrix);
-	  Transpose3x3(aa_matrix);  // Column to row major order.
+	  ce2.AngleAxisToRotationMatrix(aa, aa_matrix);
+	  ce2.Transpose3x3(aa_matrix);  // Column to row major order.
 
 	  double ea_matrix[] = new double[9];
-	  ToDegrees(ea);  // Radians to degrees.
+	  ce2.ToDegrees(ea);  // Radians to degrees.
 	  //const int kRowStride = 3;
 	  //EulerAnglesToRotationMatrix(ea, kRowStride, ea_matrix);
-	  EulerAnglesToRotationMatrix(ea, ea_matrix);
+	  ce2.EulerAnglesToRotationMatrix(ea, ea_matrix);
 
 	  if (!IsOrthonormal(aa_matrix)) {
 		  System.err.println("In " + testName + " IsOrthonormal(aa_matrix) = false");
@@ -16224,7 +16225,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	    }
 	    double rotation_matrix[] = new double[9];
 	    //EulerAnglesToRotationMatrix(euler_angles_degrees, 3, rotation_matrix);
-	    EulerAnglesToRotationMatrix(euler_angles_degrees, rotation_matrix);
+	    ce2.EulerAnglesToRotationMatrix(euler_angles_degrees, rotation_matrix);
 	    if (!IsOrthonormal(rotation_matrix)) {
 	    	System.err.println("In EulerAnglesToRotationMatrixIsOrthonormal() IsOrthonormal(rotation_matrix) = false");
 	    	passed = false;
@@ -16260,7 +16261,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		  // Compute R from q and compare to known answer.
 		  double Rq[] = new double[9];
-		  QuaternionToScaledRotation(q, Rq);
+		  ce2.QuaternionToScaledRotation(q, Rq);
 		  for (i = 0; i < 9; i++) {
 			  if (Math.abs(Q[i] - Rq[i]) > kTolerance) {
 				  System.err.println("In QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() Math.abs(Q["+i+"] - Rq["+i+"]) > kTolerance");
@@ -16269,7 +16270,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 
 		  // Now do the same but compute R with normalization.
-		  QuaternionToRotation(q, Rq);
+		  ce2.QuaternionToRotation(q, Rq);
 		  for (i = 0; i < 9; i++) {
 			  if (Math.abs(R[i] - Rq[i]) > kTolerance) {
 				  System.err.println("In QuaternionRotatePointGivesSameAnswerAsRotationByMatrixCanned() Math.abs(R["+i+"] - Rq["+i+"]) > kTolerance");
@@ -16300,10 +16301,10 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  };
 
 		  double R[] = new double[3 * 3];
-		  QuaternionToRotation(q, R);
+		  ce2.QuaternionToRotation(q, R);
 
 		  double result1[] = new double[3];
-		  UnitQuaternionRotatePoint(q, p, result1);
+		  ce2.UnitQuaternionRotatePoint(q, p, result1);
 
 		  double result2[] = new double[3];
 		  for (i = 0; i < 3; i++) {
@@ -16381,12 +16382,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		        angle_axis[k] *= inv_norm;
 		      }
 
-		      AngleAxisToRotationMatrix(angle_axis, R);
+		      ce2.AngleAxisToRotationMatrix(angle_axis, R);
 		      rotation_matrix_rotated_p[0] = R[0] * p[0] + R[3] * p[1] + R[6] * p[2];
 		      rotation_matrix_rotated_p[1] = R[1] * p[0] + R[4] * p[1] + R[7] * p[2];
 		      rotation_matrix_rotated_p[2] = R[2] * p[0] + R[5] * p[1] + R[8] * p[2];
 
-		      AngleAxisRotatePoint(angle_axis, p, angle_axis_rotated_p);
+		      ce2.AngleAxisRotatePoint(angle_axis, p, angle_axis_rotated_p);
 		      for (int k = 0; k < 3; ++k) {
 		    	  if (Math.abs(rotation_matrix_rotated_p[k] - angle_axis_rotated_p[k]) > kTolerance) {
 		    		  System.err.println("In AngleAxisRotatePointGivesSameAnswerAsRotationMatrix() Math.abs(rotation_matrix_rotated_p["+k+"] - angle_axis_rotated_p["+k+"]) > kTolerance");
@@ -16426,12 +16427,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		      angle_axis[k] *= inv_norm;
 		    }
 
-		    AngleAxisToRotationMatrix(angle_axis, R);
+		    ce2.AngleAxisToRotationMatrix(angle_axis, R);
 		    rotation_matrix_rotated_p[0] = R[0] * p[0] + R[3] * p[1] + R[6] * p[2];
 		    rotation_matrix_rotated_p[1] = R[1] * p[0] + R[4] * p[1] + R[7] * p[2];
 		    rotation_matrix_rotated_p[2] = R[2] * p[0] + R[5] * p[1] + R[8] * p[2];
 
-		    AngleAxisRotatePoint(angle_axis, p, angle_axis_rotated_p);
+		    ce2.AngleAxisRotatePoint(angle_axis, p, angle_axis_rotated_p);
 		    for (int k = 0; k < 3; ++k) {
 		    	  if (Math.abs(rotation_matrix_rotated_p[k] - angle_axis_rotated_p[k]) > kTolerance) {
 		    		  System.err.println("In AngleAxisNearZeroRotatePointGivesSameAnswerAsRotationMatrix() Math.abs(rotation_matrix_rotated_p["+k+"] - angle_axis_rotated_p["+k+"]) > kTolerance");
@@ -16457,10 +16458,10 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		  double angle_axis[] = new double[3];
 		  //RotationMatrixToAngleAxis(RowMajorAdapter3x3(rotation_matrix), angle_axis);
-		  RotationMatrixToAngleAxis(rotation_matrix, angle_axis);
+		  ce2.RotationMatrixToAngleAxis(rotation_matrix, angle_axis);
 		  double round_trip[] = new double[9];
 		  //AngleAxisToRotationMatrix(angle_axis, RowMajorAdapter3x3(round_trip));
-		  AngleAxisToRotationMatrix(angle_axis, round_trip);
+		  ce2.AngleAxisToRotationMatrix(angle_axis, round_trip);
 		  if (!IsNear3x3Matrix(rotation_matrix, round_trip)) {
 			  System.err.println("In RotationMatrixToAngleAxisNearPiExampleOneFromTobiasStrauss() IsNear3x3Matrix(rotation_matrix, round_trip) = false");
 		  }
@@ -16478,10 +16479,10 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			angle_axis[2] = angle * Math.cos(phi);
 			
 			double rotation_matrix[] = new double[9];
-			AngleAxisToRotationMatrix(angle_axis, rotation_matrix);
+			ce2.AngleAxisToRotationMatrix(angle_axis, rotation_matrix);
 			
 			double angle_axis_round_trip[] = new double[3];
-			RotationMatrixToAngleAxis(rotation_matrix, angle_axis_round_trip);
+			ce2.RotationMatrixToAngleAxis(rotation_matrix, angle_axis_round_trip);
 			if (!IsNearAngleAxis(angle_axis_round_trip, angle_axis)) {
 				System.err.println("In " + testName + " IsNearAngleAxis(angle_axis_round_trip, angle_axis) = false");
 				passed[0] = false;
@@ -16570,7 +16571,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 
 		  Vector< HashSet<Integer> > visibility = new Vector<HashSet<Integer>>();
-		  ComputeVisibility(bs, num_eliminate_blocks, visibility);
+		  ce2.ComputeVisibility(bs, num_eliminate_blocks, visibility);
 		  if (visibility.size() != num_cols - num_eliminate_blocks) {
 			  System.err.println("In VisibilityTestSimpleMatrix() visibility.size() != num_cols - num_eliminate_blocks");
 			  passed = false;
@@ -16582,7 +16583,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		     }
 		  }
 
-		  WeightedGraph<Integer> graph = CreateSchurComplementGraph(visibility);
+		  WeightedGraph<Integer> graph = ce2.CreateSchurComplementGraph(visibility);
 		  if (graph.vertices().size() != visibility.size()) {
 			  System.err.println("In VisibilityTestSimpleMatrix() graph.vertices().size() != visibility.size()");
 			  passed = false;	
@@ -16667,7 +16668,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 
 		  Vector< HashSet<Integer> > visibility = new Vector<HashSet<Integer>>();
-		  ComputeVisibility(bs, num_eliminate_blocks, visibility);
+		  ce2.ComputeVisibility(bs, num_eliminate_blocks, visibility);
 		  if (visibility.size() != num_cols - num_eliminate_blocks) {
 			  System.err.println("In VisibilityTestNoEBlocks() visibility.size() != num_cols - num_eliminate_blocks");
 			  passed = false;
@@ -16679,7 +16680,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			     }
 		  }
 		         
-		  WeightedGraph<Integer> graph = CreateSchurComplementGraph(visibility);
+		  WeightedGraph<Integer> graph = ce2.CreateSchurComplementGraph(visibility);
 		  if (graph.vertices().size() != visibility.size()) {
 			  System.err.println("In VisibilityTestNoEBlocks() graph.vertices().size() != visibility.size()");
 			  passed = false;	
@@ -18358,5 +18359,21 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			WithLineSearchMinimizerImpl(LineSearchType.ARMIJO, LineSearchDirectionType.NONLINEAR_CONJUGATE_GRADIENT, LineSearchInterpolationType.QUADRATIC, testName, passed);
 		}
 
+		public void NumericDiffCostFunctionEasyCaseFunctorCentralDifferences() {
+			  // NumericDiffCostFunctionEasyCaseFunctorCentralDifferences() passed all tests
+			  String testName = "NumericDiffCostFunctionEasyCaseFunctorCentralDifferences()";
+			  boolean passed[] = new boolean[] {true};
+			  testCase = EASY_FUNCTOR_EXAMPLE;
+			  EasyFunctor ef = new EasyFunctor();
+			  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+			  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+			  NumericDiffOptions options = new NumericDiffOptions();
+			  // 3 number of residuals
+			  // 5 size of x1
+			  // 5 size of x2
+			  CostFunction cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, 3, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+			  EasyFunctor functor = new EasyFunctor();
+			  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
+		}
 
 }
