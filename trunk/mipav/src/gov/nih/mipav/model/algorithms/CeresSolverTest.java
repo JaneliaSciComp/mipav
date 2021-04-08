@@ -18460,5 +18460,113 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  EasyFunctor functor = new EasyFunctor();
 		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.RIDDERS, testName, passed);
 	}
+	
+	public void NumericDiffCostFunctionTranscendentalCaseFunctorCentralDifferences() {
+		// NumericDiffCostFunctionTranscendentalCaseFunctorCentralDifferences() passed all tests
+		String testName = "NumericDiffCostFunctionTranscendentalCaseFunctorCentralDifferences()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = TRANSCENDENTAL_FUNCTOR;
+		  TranscendentalFunctor tf = new TranscendentalFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 2 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<TranscendentalFunctor>(tf, method, ownership, options, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  TranscendentalFunctor functor = new TranscendentalFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
+    }
+
+	public void NumericDiffCostFunctionTranscendentalCaseFunctorForwardDifferences() {
+		// NumericDiffCostFunctionTranscendentalCaseFunctorForwardDifferences() passed all tests
+		String testName = "NumericDiffCostFunctionTranscendentalCaseFunctorForwardDifferences()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = TRANSCENDENTAL_FUNCTOR;
+		  TranscendentalFunctor tf = new TranscendentalFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 2 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<TranscendentalFunctor>(tf, method, ownership, options, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  TranscendentalFunctor functor = new TranscendentalFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.FORWARD, testName, passed);
+    }
+	
+	public void NumericDiffCostFunctionTranscendentalCaseFunctorRidders() {
+		// NumericDiffCostFunctionTranscendentalCaseFunctorRidders() passed all tests
+		String testName = "NumericDiffCostFunctionTranscendentalCaseFunctorRidders()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = TRANSCENDENTAL_FUNCTOR;
+		  TranscendentalFunctor tf = new TranscendentalFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // Using a smaller initial step size to overcome oscillatory function
+		  // behavior.
+		  options.ridders_relative_initial_step_size = 1e-3;
+		  // 2 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<TranscendentalFunctor>(tf, method, ownership, options, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  TranscendentalFunctor functor = new TranscendentalFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.RIDDERS, testName, passed);
+    }
+	
+	public void NumericDiffCostFunctionTranscendentalCaseCostFunctionCentralDifferences() {
+		// NumericDiffCostFunctionTranscendentalCaseCostFunctionCentralDifferences() passed all tests
+		String testName = "NumericDiffCostFunctionTranscendentalCaseCostFunctionCentralDifferences()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = TRANSCENDENTAL_COST_FUNCTION;
+		  TranscendentalCostFunction tf = new TranscendentalCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 2 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<TranscendentalCostFunction>(tf, method, ownership, options, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  TranscendentalFunctor functor = new TranscendentalFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
+    }
+	
+	public void NumericDiffCostFunctionTranscendentalCaseCostFunctionForwardDifferences() {
+		// NumericDiffCostFunctionTranscendentalCaseCostFunctionForwardDifferences() passed all tests
+		String testName = "NumericDiffCostFunctionTranscendentalCaseCostFunctionForwardDifferences()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = TRANSCENDENTAL_COST_FUNCTION;
+		  TranscendentalCostFunction tf = new TranscendentalCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 2 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<TranscendentalCostFunction>(tf, method, ownership, options, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  TranscendentalFunctor functor = new TranscendentalFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.FORWARD, testName, passed);
+    }
+	
+	public void NumericDiffCostFunctionTranscendentalCaseCostFunctionRidders() {
+		// NumericDiffCostFunctionTranscendentalCaseCostFunctionRidders() passed all tests
+		String testName = "NumericDiffCostFunctionTranscendentalCaseCostFunctionRidders()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = TRANSCENDENTAL_COST_FUNCTION;
+		  TranscendentalCostFunction tf = new TranscendentalCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // Using a smaller initial step size to overcome oscillatory function
+		  // behavior.
+		  options.ridders_relative_initial_step_size = 1e-3;
+		  // 2 number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<TranscendentalCostFunction>(tf, method, ownership, options, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0);
+		  TranscendentalFunctor functor = new TranscendentalFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.RIDDERS, testName, passed);
+    }
 
 }
