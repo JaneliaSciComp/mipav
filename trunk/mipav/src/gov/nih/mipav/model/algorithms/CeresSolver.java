@@ -564,6 +564,8 @@ public class CeresSolver {
 	protected final int LINEAR_COST_FUNCTION_EXAMPLE = 6;
 	protected final int EASY_FUNCTOR_EXAMPLE = 7;
 	protected final int EASY_COST_FUNCTION = 8;
+	protected final int TRANSCENDENTAL_FUNCTOR = 9;
+	protected final int TRANSCENDENTAL_COST_FUNCTION = 10;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -1248,7 +1250,129 @@ public class CeresSolver {
 			 }
 
 		};
+		
+		// y1 = sin(x1'x2)
+		// y2 = exp(-x1'x2 / 10)
+		//
+		// dy1/dx1 =  x2 * cos(x1'x2),            dy1/dx2 =  x1 * cos(x1'x2)
+		// dy2/dx1 = -x2 * exp(-x1'x2 / 10) / 10, dy2/dx2 = -x2 * exp(-x1'x2 / 10) / 10
+		class TranscendentalFunctor {
+		 public TranscendentalFunctor() {};
+		 public boolean operator(double[] x1, double[] x2, double[] residuals) {
+			double x1x2 = 0;
+			for (int i = 0; i < 5; ++i) {
+			x1x2 += x1[i] * x2[i];
+			}
+			residuals[0] = Math.sin(x1x2);
+			residuals[1] = Math.exp(-x1x2 / 10);
+			return true;
+		}
+		 
+		public void ExpectCostFunctionEvaluationIsNearlyCorrect(
+				    CostFunction cost_function,
+				    NumericDiffMethodType method, String testName, boolean passed[]) {
+				   double kTests[][] = new double[][]
+				    { { 1.0, 2.0, 3.0, 4.0, 5.0 },  // No zeros.
+				      { 9.0, 9.0, 5.0, 5.0, 1.0 },
+				    
+				    { 0.0, 2.0, 3.0, 0.0, 5.0 },  // Some zeros x1.
+				      { 9.0, 9.0, 5.0, 5.0, 1.0 },
+				    
+				    { 1.0, 2.0, 3.0, 1.0, 5.0 },  // Some zeros x2.
+				      { 0.0, 9.0, 0.0, 5.0, 0.0 },
+				    
+				    { 0.0, 0.0, 0.0, 0.0, 0.0 },  // All zeros x1.
+				      { 9.0, 9.0, 5.0, 5.0, 1.0 },
+				   
+				    { 1.0, 2.0, 3.0, 4.0, 5.0 },  // All zeros x2.
+				      { 0.0, 0.0, 0.0, 0.0, 0.0 },
+				   
+				    { 0.0, 0.0, 0.0, 0.0, 0.0 },  // All zeros.
+				      { 0.0, 0.0, 0.0, 0.0, 0.0 }};
 
+				  for (int k = 0; k < 6; ++k) {
+					
+				    double[] x1 = kTests[2*k];
+				    double[] x2 = kTests[2*k+1];
+				    Vector<double[]>parameters = new Vector<double[]>(2);
+					 parameters.add(x1);
+					 parameters.add(x2);
+
+				    double dydx1[] = new double[10];
+				    double dydx2[] = new double[10];
+				    double jacobians[][] = new double[2][];
+					jacobians[0] = dydx1;
+					jacobians[1] = dydx2;
+
+				    double residuals[] = new double[2];
+
+				    if(!cost_function.Evaluate(parameters, residuals, jacobians)) {
+						  System.err.println("In " + testName + " cost_function.Evaluate(parameters, residuals, jacobians) = false");
+						  passed[0] = false;
+						  return;
+					}
+
+				    double x1x2 = 0;
+				    for (int i = 0; i < 5; ++i) {
+				      x1x2 += x1[i] * x2[i];
+				    }
+
+				    double tolerance = 0.0;
+				    switch (method) {
+				      default:
+				      case CENTRAL:
+				        tolerance = 2e-7;
+				        break;
+
+				      case FORWARD:
+				        tolerance = 2e-5;
+				        break;
+
+				      case RIDDERS:
+				        tolerance = 3e-12;
+				        break;
+				    }
+
+				    for (int i = 0; i < 5; ++i) {
+				      if (!ExpectClose(x2[i] * Math.cos(x1x2),dydx1[5 * 0 + i], tolerance)) {
+				    	  System.err.println("k = " + k + " x2["+i+"] * Math.cos(x1x2) = " + (x2[i] * Math.cos(x1x2)) + " dydx1[5 * 0 + "+i+"] = " + dydx1[i]);
+				    	  passed[0] = false;
+				      }
+				      if (!ExpectClose( x1[i] * Math.cos(x1x2),dydx2[5 * 0 + i], tolerance)) {
+				    	  System.err.println("k = " + k + " x1["+i+"] * Math.cos(x1x2) = " + (x1[i] * Math.cos(x1x2)) + " dydx2[5 * 0 + "+i+"] = " + dydx2[i]);
+				    	  passed[0] = false;
+				      }
+				      if (!ExpectClose(-x2[i] * Math.exp(-x1x2 / 10.) / 10., dydx1[5 * 1 + i], tolerance)) {
+				    	  System.err.println("k = " + k + " -x2["+i+"] * Math.exp(-x1x2/10.)/10." + (-x2[i] * Math.exp(-x1x2 / 10.) / 10.) +
+				    			  " dydx1[5 * 1 + "+i+"] = " + dydx1[5 + i]);
+				    	  passed[0] = false;
+				      }
+				      if (!ExpectClose(-x1[i] * Math.exp(-x1x2 / 10.) / 10., dydx2[5 * 1 + i], tolerance)) {
+				    	  System.err.println("k = " + k + " -x1["+i+"] * Math.exp(-x1x2/10.)/10." + (-x1[i] * Math.exp(-x1x2 / 10.) / 10.) +
+				    			  " dydx2[5 * 1 + "+i+"] = " + dydx2[5 + i]);
+				    	  passed[0] = false;
+				      }
+				    }
+				  }
+				  if (passed[0]) {
+					  System.out.println(testName + " passed all tests");
+				  }
+				} 
+		};
+
+		class TranscendentalCostFunction extends SizedCostFunction {
+			private TranscendentalFunctor functor_;
+			     public TranscendentalCostFunction() {
+			    	 super(2,5,5,0,0,0,0,0,0,0,0);
+					 functor_ = new TranscendentalFunctor();
+			     }
+				 
+				 public boolean Evaluate(Vector<double[]> parameters,
+	                        double[] residuals,
+	                        double[][] jacobian /* not used */){
+	                       return functor_.operator(parameters.get(0), parameters.get(1), residuals);
+	             }
+			};
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -17205,6 +17329,18 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case TRANSCENDENTAL_FUNCTOR:
+				x = parameters.get(0);
+				y = parameters.get(1);
+				if (!((TranscendentalFunctor) functor_).operator(x, y, residuals)) {
+					return false;
+				}
+				break;
+			case TRANSCENDENTAL_COST_FUNCTION:
+				if (!((TranscendentalCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -17578,6 +17714,18 @@ public class CeresSolver {
 				break;
 			case EASY_COST_FUNCTION:
 				if (!((EasyCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
+			case TRANSCENDENTAL_FUNCTOR:
+				x = parameters.get(0);
+				y = parameters.get(1);
+				if (!((TranscendentalFunctor) functor_).operator(x, y, residuals)) {
+					return false;
+				}
+				break;
+			case TRANSCENDENTAL_COST_FUNCTION:
+				if (!((TranscendentalCostFunction) functor_).Evaluate(parameters, residuals, null)) {
 					return false;
 				}
 				break;
@@ -18227,6 +18375,7 @@ public class CeresSolver {
 			
 		    double xp[];
 		    double yp[];
+		    Vector<double[]>paramVec;
 		    switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
 				xp = parameters[0];
@@ -18268,10 +18417,25 @@ public class CeresSolver {
 			    }
 			    break;
 			case EASY_COST_FUNCTION:
-				Vector<double[]>paramVec = new Vector<double[]>(2);
+				paramVec = new Vector<double[]>(2);
 				paramVec.add(parameters[0]);
 				paramVec.add(parameters[1]);
 				if (!((EasyCostFunction) functor).Evaluate(paramVec, residuals, null)) {
+					return false;
+				}
+				break;
+			case TRANSCENDENTAL_FUNCTOR:
+				xp = parameters[0];
+				yp = parameters[1];
+				if (!((TranscendentalFunctor) functor).operator(xp, yp, residuals)) {
+			    	return false;
+			    }
+			    break;
+			case TRANSCENDENTAL_COST_FUNCTION:
+				paramVec = new Vector<double[]>(2);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				if (!((TranscendentalCostFunction) functor).Evaluate(paramVec, residuals, null)) {
 					return false;
 				}
 				break;
@@ -18330,10 +18494,25 @@ public class CeresSolver {
 			    }
 			    break;
 			case EASY_COST_FUNCTION:
-				Vector<double[]>paramVec = new Vector<double[]>(2);
+				paramVec = new Vector<double[]>(2);
 				paramVec.add(parameters[0]);
 				paramVec.add(parameters[1]);
 				if (!((EasyCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
+					return false;
+				}
+				break;
+			case TRANSCENDENTAL_FUNCTOR:
+				xp = parameters[0];
+				yp = parameters[1];
+				if (!((TranscendentalFunctor) functor).operator(xp, yp, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case TRANSCENDENTAL_COST_FUNCTION:
+				paramVec = new Vector<double[]>(2);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				if (!((TranscendentalCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
 					return false;
 				}
 				break;
