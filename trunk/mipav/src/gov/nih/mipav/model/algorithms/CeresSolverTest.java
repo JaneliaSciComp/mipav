@@ -18625,5 +18625,37 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  EasyFunctor functor = new EasyFunctor();
 		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
     }
+	
+	public void NumericDiffCostFunctionExponentialFunctorRidders() {
+		  // NumericDiffCostFunctionExponentialFunctorRidders() passed all tests
+		  String testName = "NumericDiffCostFunctionExponentialFunctorRidders()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = EXPONENTIAL_FUNCTOR;
+		  ExponentialFunctor ef = new ExponentialFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 1 number of residuals
+		  // 1 size of x1
+		  CostFunction cost_function = new NumericDiffCostFunction<ExponentialFunctor>(ef, method, ownership, options, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		  ExponentialFunctor functor = new ExponentialFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, testName, passed);
+	}
+
+	public void NumericDiffCostFunctionExponentialCostFunctionRidders() {
+		  // NumericDiffCostFunctionExponentialCostFunctionRidders() passed all tests
+		  String testName = "NumericDiffCostFunctionExponentialCostFunctionRidders()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = EXPONENTIAL_COST_FUNCTION;
+		  ExponentialCostFunction ef = new ExponentialCostFunction();
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // 1 number of residuals
+		  // 1 size of x1
+		  CostFunction cost_function = new NumericDiffCostFunction<ExponentialCostFunction>(ef, method, ownership, options, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		  ExponentialFunctor functor = new ExponentialFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, testName, passed);
+	}
 
 }
