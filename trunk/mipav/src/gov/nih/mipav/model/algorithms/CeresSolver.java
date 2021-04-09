@@ -566,6 +566,7 @@ public class CeresSolver {
 	protected final int EASY_COST_FUNCTION = 8;
 	protected final int TRANSCENDENTAL_FUNCTOR = 9;
 	protected final int TRANSCENDENTAL_COST_FUNCTION = 10;
+	protected final int SIZE_TESTING_COST_FUNCTION = 11;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -1373,6 +1374,19 @@ public class CeresSolver {
 	                       return functor_.operator(parameters.get(0), parameters.get(1), residuals);
 	             }
 			};
+		
+	class SizeTestingCostFunction extends SizedCostFunction {
+		 public SizeTestingCostFunction(int num_rows, int num_cols) {
+			 super(num_rows, num_cols, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		 }
+		 
+		 public boolean Evaluate(Vector<double[]> parameters,
+		                        double[] residuals,
+		                        double[][] jacobians) {
+		    return true;
+		 }
+	};
+
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -17341,6 +17355,11 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case SIZE_TESTING_COST_FUNCTION:
+				if (!((SizeTestingCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -17409,9 +17428,13 @@ public class CeresSolver {
 		    		parameters_reference_copy[9][i] = parameters.get(9)[i]; 
 		    	}
 		    }
-		    int new_num_residuals = new SizedCostFunction(kNumResiduals,              
-                    N0, N1, N2, N3, N4,                          
-                    N5, N6, N7, N8, N9).num_residuals();  
+		    int new_num_residuals;
+		    if (kNumResiduals != DYNAMIC) {
+		    	new_num_residuals = kNumResiduals;
+		    }
+		    else {
+		    	new_num_residuals = num_residuals;
+		    } 
 		    if ((N0 > 0) && (jacobians[0] != null)) { 
 		        if (!EvaluateJacobianForParameterBlock(
 		                        		  method,                                          
@@ -17726,6 +17749,11 @@ public class CeresSolver {
 				break;
 			case TRANSCENDENTAL_COST_FUNCTION:
 				if (!((TranscendentalCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
+			case SIZE_TESTING_COST_FUNCTION:
+				if (!((SizeTestingCostFunction) functor_).Evaluate(parameters, residuals, null)) {
 					return false;
 				}
 				break;
@@ -18359,12 +18387,12 @@ public class CeresSolver {
 		    }
 			
 			//Map<ResidualVector> residuals(residuals_ptr, num_residuals);
-		    double residuals[] = new double[kNumResiduals];
+		    double residuals[] = new double[num_residuals];
 		    for (i = 0; i < num_residuals; i++) {
 		    	residuals[i] = residuals_ptr[i];
 		    }
 			//Map<ResidualVector> temp_residuals(temp_residuals_ptr, num_residuals);
-		    double temp_residuals[] = new double[kNumResiduals];
+		    double temp_residuals[] = new double[num_residuals];
 		    for (i = 0; i < num_residuals; i++) {
 		    	temp_residuals[i] = temp_residuals_ptr[i];
 		    }
@@ -18436,6 +18464,13 @@ public class CeresSolver {
 				paramVec.add(parameters[0]);
 				paramVec.add(parameters[1]);
 				if (!((TranscendentalCostFunction) functor).Evaluate(paramVec, residuals, null)) {
+					return false;
+				}
+				break;
+			case SIZE_TESTING_COST_FUNCTION:
+				paramVec = new Vector<double[]>(1);
+				paramVec.add(parameters[0]);
+				if (!((SizeTestingCostFunction) functor).Evaluate(paramVec, residuals, null)) {
 					return false;
 				}
 				break;
@@ -18513,6 +18548,13 @@ public class CeresSolver {
 				paramVec.add(parameters[0]);
 				paramVec.add(parameters[1]);
 				if (!((TranscendentalCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
+					return false;
+				}
+				break;
+			case SIZE_TESTING_COST_FUNCTION:
+				paramVec = new Vector<double[]>(1);
+				paramVec.add(parameters[0]);
+				if (!((SizeTestingCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
 					return false;
 				}
 				break;
