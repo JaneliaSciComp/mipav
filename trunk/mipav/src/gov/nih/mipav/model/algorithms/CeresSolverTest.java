@@ -18568,5 +18568,62 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  TranscendentalFunctor functor = new TranscendentalFunctor();
 		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.RIDDERS, testName, passed);
     }
+	
+	// As described in
+	// http://forum.kde.org/viewtopic.php?f=74&t=98536#p210774
+	// Eigen3 has restrictions on the Row/Column major storage of vectors,
+	// depending on their dimensions. This test ensures that the correct
+	// templates are instantiated for various shapes of the Jacobian
+	// matrix.
+	public void NumericDiffCostFunctionEigenRowMajorColMajorTest() {
+	  // NumericDiffCostFunctionEigenRowMajorColMajorTest() passed all tests
+	  String testName = "NumericDiffCostFunctionEigenRowMajorColMajorTest()";
+	  boolean passed = true;
+	  testCase = SIZE_TESTING_COST_FUNCTION;
+	  SizeTestingCostFunction scf = new SizeTestingCostFunction(1,1);
+	  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+	  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+	  NumericDiffOptions options = new NumericDiffOptions();
+	  CostFunction cost_function = new NumericDiffCostFunction<SizeTestingCostFunction>(scf, method, ownership, options, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+	  scf = new SizeTestingCostFunction(2,1);
+	  cost_function = new NumericDiffCostFunction<SizeTestingCostFunction>(scf, method, ownership, options, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	  
+	  scf = new SizeTestingCostFunction(1,2);
+	  cost_function = new NumericDiffCostFunction<SizeTestingCostFunction>(scf, method, ownership, options, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	  
+	  scf = new SizeTestingCostFunction(2,2);
+	  cost_function = new NumericDiffCostFunction<SizeTestingCostFunction>(scf, method, ownership, options, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	  
+	  testCase = EASY_FUNCTOR_EXAMPLE;
+	  EasyFunctor ef = new EasyFunctor();
+	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2);
+	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2);
+	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2);
+	 
+	  if (passed) {
+		  System.out.println(testName + " passed all tests");
+	  }
+	}
+
+	public void NumericDiffCostFunctionEasyCaseFunctorCentralDifferencesAndDynamicNumResiduals() {
+		// NumericDiffCostFunctionEasyCaseFunctorCentralDifferencesAndDynamicNumResiduals() passed all tests
+		String testName = "NumericDiffCostFunctionEasyCaseFunctorCentralDifferencesAndDynamicNumResiduals()";
+		boolean passed[] = new boolean[] {true};
+		  testCase = EASY_FUNCTOR_EXAMPLE;
+		  EasyFunctor ef = new EasyFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // DYNAMIC number of residuals
+		  // 5 size of x1
+		  // 5 size of x2
+		  CostFunction cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 3);
+		  EasyFunctor functor = new EasyFunctor();
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, NumericDiffMethodType.CENTRAL, testName, passed);
+    }
 
 }
