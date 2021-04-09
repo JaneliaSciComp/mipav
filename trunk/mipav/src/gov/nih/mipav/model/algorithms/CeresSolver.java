@@ -567,6 +567,8 @@ public class CeresSolver {
 	protected final int TRANSCENDENTAL_FUNCTOR = 9;
 	protected final int TRANSCENDENTAL_COST_FUNCTION = 10;
 	protected final int SIZE_TESTING_COST_FUNCTION = 11;
+	protected final int EXPONENTIAL_FUNCTOR = 12;
+	protected final int EXPONENTIAL_COST_FUNCTION = 13;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -1386,7 +1388,73 @@ public class CeresSolver {
 		    return true;
 		 }
 	};
+	
+	// y = exp(x), dy/dx = exp(x)
+	class ExponentialFunctor {
+		 public ExponentialFunctor() {};
+		 public boolean operator(double[] x1,
+	             double[] residuals) {
+			residuals[0] = Math.exp(x1[0]);
+			return true;
+		}
+		public void ExpectCostFunctionEvaluationIsNearlyCorrect(
+				    CostFunction cost_function, String testName, boolean passed[]) {
+				  // Evaluating the functor at specific points for testing.
+				  double kTests[] = new double[]{ 1.0, 2.0, 3.0, 4.0, 5.0 };
 
+				  // Minimal tolerance w.r.t. the cost function and the tests.
+				  //final double kTolerance = 2e-14;
+				  final double kTolerance = 9E-14;
+
+				  for (int k = 0; k < kTests.length; ++k) {
+					double xk[] = new double[] {kTests[k]};
+					Vector<double[]> parameters = new Vector<double[]>(1);
+					parameters.add(xk);
+				    double dydx[] = new double[1];
+				    double jacobians[][] = new double[1][];
+				    jacobians[0] = dydx;
+				    double residual[] = new double[1];
+
+				    if(!cost_function.Evaluate(parameters, residual, jacobians)) {
+						  System.err.println("In " + testName + " cost_function.Evaluate(parameters, residual, jacobians) = false");
+						  passed[0] = false;
+						  return;
+					}
+				    
+				    double expected_result = Math.exp(kTests[k]);
+
+				    // Expect residual to be close to exp(x).
+				    if (!ExpectClose(residual[0], expected_result, kTolerance)) {
+				    	System.err.println("k = " + k + " residual[0] = " + residual[0] + " expected_result = " + expected_result);
+				    	passed[0] = false;
+				    }
+
+				    // Check evaluated differences. dydx should also be close to exp(x).
+				    if (!ExpectClose(dydx[0], expected_result, kTolerance)) {
+				    	System.err.println("k = " + k + " dydx[0] = " + dydx[0] + " expected_result = " + expected_result);
+				    	passed[0] = false;
+				    }
+				  }
+				  if (passed[0]) {
+					  System.out.println(testName + " passed all tests");
+				  }
+				}
+	  
+	};
+
+	class ExponentialCostFunction extends SizedCostFunction {
+	 private ExponentialFunctor functor_;
+	 public ExponentialCostFunction() {
+		 super(1,1,0,0,0,0,0,0,0,0,0);
+		 functor_ = new ExponentialFunctor();
+	 }
+		 
+		 public boolean Evaluate(Vector<double[]> parameters,
+                 double[] residuals,
+                 double[][] jacobian /* not used */){
+                return functor_.operator(parameters.get(0), residuals);
+         }
+	  }
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -17360,6 +17428,17 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case EXPONENTIAL_FUNCTOR:
+				x = parameters.get(0);
+				if (!((ExponentialFunctor) functor_).operator(x, residuals)) {
+					return false;
+				}
+				break;
+			case EXPONENTIAL_COST_FUNCTION:
+				if (!((ExponentialCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -17754,6 +17833,17 @@ public class CeresSolver {
 				break;
 			case SIZE_TESTING_COST_FUNCTION:
 				if (!((SizeTestingCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
+			case EXPONENTIAL_FUNCTOR:
+				x = parameters.get(0);
+				if (!((ExponentialFunctor) functor_).operator(x, residuals)) {
+					return false;
+				}
+				break;
+			case EXPONENTIAL_COST_FUNCTION:
+				if (!((ExponentialCostFunction) functor_).Evaluate(parameters, residuals, null)) {
 					return false;
 				}
 				break;
@@ -18474,6 +18564,19 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case EXPONENTIAL_FUNCTOR:
+				xp = parameters[0];
+				if (!((ExponentialFunctor) functor).operator(xp, residuals)) {
+			    	return false;
+			    }
+			    break;
+			case EXPONENTIAL_COST_FUNCTION:
+				paramVec = new Vector<double[]>(1);
+				paramVec.add(parameters[0]);
+				if (!((ExponentialCostFunction) functor).Evaluate(paramVec, residuals, null)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			
@@ -18555,6 +18658,19 @@ public class CeresSolver {
 				paramVec = new Vector<double[]>(1);
 				paramVec.add(parameters[0]);
 				if (!((SizeTestingCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
+					return false;
+				}
+				break;
+			case EXPONENTIAL_FUNCTOR:
+				xp = parameters[0];
+				if (!((ExponentialFunctor) functor).operator(xp, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case EXPONENTIAL_COST_FUNCTION:
+				paramVec = new Vector<double[]>(1);
+				paramVec.add(parameters[0]);
+				if (!((ExponentialCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
 					return false;
 				}
 				break;
