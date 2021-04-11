@@ -569,6 +569,9 @@ public class CeresSolver {
 	protected final int SIZE_TESTING_COST_FUNCTION = 11;
 	protected final int EXPONENTIAL_FUNCTOR = 12;
 	protected final int EXPONENTIAL_COST_FUNCTION = 13;
+	protected final int RANDOMIZED_FUNCTOR = 14;
+	protected final int RANDOMIZED_COST_FUNCTION = 15;
+	protected final int ONLY_FILLS_ONE_OUTPUT_FUNCTOR = 16;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -1455,6 +1458,100 @@ public class CeresSolver {
                 return functor_.operator(parameters.get(0), residuals);
          }
 	  }
+	
+	// Test adaptive numeric differentiation by synthetically adding random noise
+	// to a functor.
+	// y = x^2 + [random noise], dy/dx ~ 2x
+	class RandomizedFunctor {
+		private double noise_factor_;
+	    private long random_seed_;
+	    private Random random;
+	    public RandomizedFunctor(double noise_factor, long random_seed) {
+	        noise_factor_ = noise_factor;
+	        random_seed_ = random_seed;
+	        // Initialize random number generator with given seed.
+	    	random = new Random(random_seed_);
+	    }
+	
+	    public boolean operator(double[] x1,
+                double[] residuals) {
+			double random_value = (double)random.nextInt(Integer.MAX_VALUE)/(double)(Integer.MAX_VALUE - 1);
+			
+			// Normalize noise to [-factor, factor].
+			random_value *= 2.0;
+			random_value -= 1.0;
+			random_value *= noise_factor_;
+			
+			residuals[0] = x1[0] * x1[0] + random_value;
+			return true;
+		}
+
+	    public void ExpectCostFunctionEvaluationIsNearlyCorrect(
+	    	    CostFunction cost_function, String testName, boolean passed[]) {
+	    	  double kTests[] = new double[]{ 0.0, 1.0, 3.0, 4.0, 50.0 };
+
+	    	  final double kTolerance = 2e-4;
+
+	    	  
+
+	    	  for (int k = 0; k < kTests.length; ++k) {
+	    		    double xk[] = new double[] {kTests[k]};
+					Vector<double[]> parameters = new Vector<double[]>(1);
+					parameters.add(xk);
+				    double dydx[] = new double[1];
+				    double jacobians[][] = new double[1][];
+				    jacobians[0] = dydx;
+				    double residual[] = new double[1];
+
+				    if(!cost_function.Evaluate(parameters, residual, jacobians)) {
+						  System.err.println("In " + testName + " cost_function.Evaluate(parameters, residual, jacobians) = false");
+						  passed[0] = false;
+						  return;
+					}
+
+	    	    // Expect residual to be close to x^2 w.r.t. noise factor.
+	    	    if (!ExpectClose(residual[0], kTests[k] * kTests[k], noise_factor_)) {
+	    	    	System.err.println("k = " + k + " residual[0] = " + residual[0] + " kTests[k] * kTests[k] = " + (kTests[k] * kTests[k]));
+	    	    	passed[0] = false;
+	    	    }
+
+	    	    // Check evaluated differences. (dy/dx = ~2x)
+	    	    if (!ExpectClose(dydx[0], 2 * kTests[k], kTolerance)) {
+	    	    	System.err.println("k = " + k + "dydx[0] = " + dydx[0] + " 2 * kTests[k] = " + (2 * kTests[k]));
+	    	    	passed[0] = false;
+	    	    }
+	    	  }
+	    	  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+	    	}
+	 
+	};
+	
+	class OnlyFillsOneOutputFunctor {
+		  public OnlyFillsOneOutputFunctor() {};
+		  public boolean operator(double[] x, double[] output) {
+		    output[0] = x[0];
+		    return true;
+		  }
+		};
+
+
+	class RandomizedCostFunction extends SizedCostFunction {
+		private RandomizedFunctor functor_;
+		 public RandomizedCostFunction(double noise_factor, long random_seed) {
+			 super(1,1,0,0,0,0,0,0,0,0,0);
+		      functor_ = new RandomizedFunctor(noise_factor, random_seed);
+		  }
+		 
+		 public boolean Evaluate(Vector<double[]> parameters,
+	             double[] residuals,
+	             double[][] jacobian /* not used */){
+	            return functor_.operator(parameters.get(0), residuals);
+	     }
+	 
+	};
+
 
 	class CurveFittingFunctorExample {
 		public CurveFittingFunctorExample() {
@@ -4904,6 +5001,11 @@ public class CeresSolver {
 	
 	public double RandDouble() {
 		Random random = new Random();
+		return ((double)random.nextInt(Integer.MAX_VALUE)/(double)(Integer.MAX_VALUE - 1));
+	}
+	
+	public double RandDouble(long longSeed) {
+		Random random = new Random(longSeed);
 		return ((double)random.nextInt(Integer.MAX_VALUE)/(double)(Integer.MAX_VALUE - 1));
 	}
 
@@ -17439,6 +17541,23 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case RANDOMIZED_FUNCTOR:
+				x = parameters.get(0);
+				if (!((RandomizedFunctor) functor_).operator(x, residuals)) {
+					return false;
+				}
+				break;
+			case RANDOMIZED_COST_FUNCTION:
+				if (!((RandomizedCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
+			case ONLY_FILLS_ONE_OUTPUT_FUNCTOR:
+				x = parameters.get(0);
+			    if (!((OnlyFillsOneOutputFunctor) functor_).operator(x, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -17847,6 +17966,23 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case RANDOMIZED_FUNCTOR:
+				x = parameters.get(0);
+				if (!((RandomizedFunctor) functor_).operator(x, residuals)) {
+					return false;
+				}
+				break;
+			case RANDOMIZED_COST_FUNCTION:
+				if (!((RandomizedCostFunction) functor_).Evaluate(parameters, residuals, null)) {
+					return false;
+				}
+				break;
+			case ONLY_FILLS_ONE_OUTPUT_FUNCTOR:
+				x = parameters.get(0);
+			    if (!((OnlyFillsOneOutputFunctor) functor_).operator(x, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -18577,6 +18713,25 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case RANDOMIZED_FUNCTOR:
+				xp = parameters[0];
+				if (!((RandomizedFunctor) functor).operator(xp, residuals)) {
+			    	return false;
+			    }
+			    break;
+			case RANDOMIZED_COST_FUNCTION:
+				paramVec = new Vector<double[]>(1);
+				paramVec.add(parameters[0]);
+				if (!((RandomizedCostFunction) functor).Evaluate(paramVec, residuals, null)) {
+					return false;
+				}
+				break;
+			case ONLY_FILLS_ONE_OUTPUT_FUNCTOR:
+				xp = parameters[0];
+				if (!((OnlyFillsOneOutputFunctor) functor).operator(xp, residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			
@@ -18674,6 +18829,25 @@ public class CeresSolver {
 					return false;
 				}
 				break;
+			case RANDOMIZED_FUNCTOR:
+				xp = parameters[0];
+				if (!((RandomizedFunctor) functor).operator(xp, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
+			case RANDOMIZED_COST_FUNCTION:
+				paramVec = new Vector<double[]>(1);
+				paramVec.add(parameters[0]);
+				if (!((RandomizedCostFunction) functor).Evaluate(paramVec, temp_residuals, null)) {
+					return false;
+				}
+				break;
+			case ONLY_FILLS_ONE_OUTPUT_FUNCTOR:
+				xp = parameters[0];
+				if (!((OnlyFillsOneOutputFunctor) functor).operator(xp, temp_residuals)) {
+			    	return false;
+			    }
+			    break;
 		    } // switch(testCase)
 			
 			for (i = 0; i < residuals.length; i++) {
