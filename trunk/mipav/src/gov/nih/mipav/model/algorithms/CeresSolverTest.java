@@ -18657,5 +18657,100 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  ExponentialFunctor functor = new ExponentialFunctor();
 		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, testName, passed);
 	}
+	
+	// Noise factor for randomized cost function.
+	final double kNoiseFactor = 0.01;
+
+	// Default random seed for randomized cost function.
+	final long kRandomSeed = 1234;
+	
+	public void NumericDiffCostFunctionRandomizedFunctorRidders() {
+		  // NumericDiffCostFunctionRandomizedFunctorRidders() passed all tests
+		  String testName = "NumericDiffCostFunctionRandomizedFunctorRidders()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = RANDOMIZED_FUNCTOR;
+		  RandomizedFunctor rf = new RandomizedFunctor(kNoiseFactor, kRandomSeed);
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // Larger initial step size is chosen to produce robust results in the
+		  // presence of random noise.
+		  options.ridders_relative_initial_step_size = 10.0;
+		  // 1 number of residuals
+		  // 1 size of x1
+		  CostFunction cost_function = new NumericDiffCostFunction<RandomizedFunctor>(rf, method, ownership, options, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		  RandomizedFunctor functor = new RandomizedFunctor(kNoiseFactor, kRandomSeed);
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, testName, passed);
+		}
+
+	public void NumericDiffCostFunctionRandomizedCostFunctionRidders() {
+		  // NumericDiffCostFunctionRandomizedCostFunctionRidders() passed all tests
+		  String testName = "NumericDiffCostFunctionRandomizedCostFunctionRidders()";
+		  boolean passed[] = new boolean[] {true};
+		  testCase = RANDOMIZED_COST_FUNCTION;
+		  RandomizedCostFunction rf = new RandomizedCostFunction(kNoiseFactor, kRandomSeed);
+		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  // Larger initial step size is chosen to produce robust results in the
+		  // presence of random noise.
+		  options.ridders_relative_initial_step_size = 10.0;
+
+		  // 1 number of residuals
+		  // 1 size of x1
+		  CostFunction cost_function = new NumericDiffCostFunction<RandomizedCostFunction>(rf, method, ownership, options, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		  RandomizedFunctor functor = new RandomizedFunctor(kNoiseFactor, kRandomSeed);
+		  functor.ExpectCostFunctionEvaluationIsNearlyCorrect(cost_function, testName, passed);
+		}
+	
+	public void NumericDiffCostFunctionPartiallyFilledResidualShouldFailEvaluation() {
+		  // NumericDiffCostFunctionPartiallyFilledResidualShouldFailEvaluation() passed all tests
+		  String testName = "NumericDiffCostFunctionPartiallyFilledResidualShouldFailEvaluation()";
+		  boolean passed = true;
+		  testCase = ONLY_FILLS_ONE_OUTPUT_FUNCTOR;
+		  double parameter[] = new double[] {1.0};
+		  double jacobian[] = new double[2];
+		  double residuals[] = new double[2];
+		  Vector<double[]>parameters = new Vector<double[]>(1);
+		  parameters.add(parameter);
+		  double jacobians[][] = new double[1][0];
+		  jacobians[0] = jacobian;
+		  
+		  OnlyFillsOneOutputFunctor of = new OnlyFillsOneOutputFunctor();
+		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
+		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
+		  NumericDiffOptions options = new NumericDiffOptions();
+		  
+		  CostFunction cost_function = new NumericDiffCostFunction<OnlyFillsOneOutputFunctor>(of, method, ownership, options, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+		  InvalidateArray(2, jacobian);
+		  InvalidateArray(2, residuals);
+		  if (!cost_function.Evaluate(parameters, residuals, jacobians)) {
+			  System.err.println("In " + testName + " cost_function.Evaluate(parameters, residuals, jacobians) = false");
+			  passed = false;
+		  }
+		  if (IsArrayValid(2, residuals)) {
+			  System.err.println("In " + testName + " IsArrayValid(2, residuals) = true");
+			  passed = false;
+		  }
+		  InvalidateArray(2, residuals);
+		  if(!cost_function.Evaluate(parameters, residuals, null)) {
+			  System.err.println("In " + testName + " cost_function.Evaluate(parameters, residuals, null) = false");
+			  passed = false;
+		  }
+		  // We are only testing residuals here, because the Jacobians are
+		  // computed using finite differencing from the residuals, so unless
+		  // we introduce a validation step after every evaluation of
+		  // residuals inside NumericDiffCostFunction, there is no way of
+		  // ensuring that the Jacobian array is invalid.
+		  if (IsArrayValid(2, residuals)) {
+			  System.err.println("In " + testName + " IsArrayValid(2, residuals) = true");
+			  passed = false;
+		  }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+
 
 }
