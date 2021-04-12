@@ -645,4 +645,70 @@ public class CeresSolver2 {
 
 				  return graph;
 				}
+		
+			// An object that implements an infinite one dimensional grid needed
+			// by the CubicInterpolator where the source of the function values is
+			// an array of type T on the interval
+			//
+			//   [begin, ..., end - 1]
+			//
+			// Since the input array is finite and the grid is infinite, values
+			// outside this interval needs to be computed. Grid1D uses the value
+			// from the nearest edge.
+			//
+			// The function being provided can be vector valued, in which case
+			// kDataDimension > 1. The dimensional slices of the function maybe
+			// interleaved, or they maybe stacked, i.e, if the function has
+			// kDataDimension = 2, if kInterleaved = true, then it is stored as
+			//
+			//   f01, f02, f11, f12 ....
+			//
+			// and if kInterleaved = false, then it is stored as
+			//
+			//  f01, f11, .. fn1, f02, f12, .. , fn2
+			//
+			//template <typename T,
+			//          int kDataDimension = 1,
+			//          bool kInterleaved = true>
+		public class Grid1D {
+			  // class cast exception if try to go from Integer to double
+			  //enum { DATA_DIMENSION = kDataDimension };
+			private final double[] data_;
+			private int DATA_DIMENSION = 1;
+			private boolean kInterleaved = true;
+			private int begin_;
+		    private int end_;
+		    private int num_values_;
+
+			  public Grid1D(int[] x, int kDataDimension, boolean interleaved, int begin, int end) {
+				  int i;
+				  data_ = new double[x.length];
+				  for (i = 0; i < x.length; i++) {
+					  data_[i] = (double)(x[i]);
+				  }
+				  DATA_DIMENSION = kDataDimension;
+				  kInterleaved = interleaved;
+				  begin_ = begin;
+				  end_ = end;
+				  num_values_ = end - begin;
+				  if (begin >= end) {
+					  System.err.println("begin >= end in public Grid1D");
+				  }
+			  }
+
+			public void GetValue(int n, double[] f) {
+			    final int idx = Math.min(Math.max(begin_, n), end_ - 1) - begin_;
+			    if (kInterleaved) {
+			      for (int i = 0; i < DATA_DIMENSION; ++i) {
+			        f[i] = data_[DATA_DIMENSION * idx + i];
+			      }
+			    } else {
+			      for (int i = 0; i < DATA_DIMENSION; ++i) {
+			        f[i] = data_[i * num_values_ + idx];
+			      }
+			    }
+			  }
+
+			 
+			};
 }
