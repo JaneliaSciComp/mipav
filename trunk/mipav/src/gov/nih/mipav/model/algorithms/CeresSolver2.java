@@ -711,4 +711,107 @@ public class CeresSolver2 {
 
 			 
 			};
+			
+			// An object that implements an infinite two dimensional grid needed
+			// by the BiCubicInterpolator where the source of the function values
+			// is an grid of type T on the grid
+			//
+			//   [(row_start,   col_start), ..., (row_start,   col_end - 1)]
+			//   [                          ...                            ]
+			//   [(row_end - 1, col_start), ..., (row_end - 1, col_end - 1)]
+			//
+			// Since the input grid is finite and the grid is infinite, values
+			// outside this interval needs to be computed. Grid2D uses the value
+			// from the nearest edge.
+			//
+			// The function being provided can be vector valued, in which case
+			// kDataDimension > 1. The data maybe stored in row or column major
+			// format and the various dimensional slices of the function maybe
+			// interleaved, or they maybe stacked, i.e, if the function has
+			// kDataDimension = 2, is stored in row-major format and if
+			// kInterleaved = true, then it is stored as
+			//
+			//   f001, f002, f011, f012, ...
+			//
+			// A commonly occuring example are color images (RGB) where the three
+			// channels are stored interleaved.
+			//
+			// If kInterleaved = false, then it is stored as
+			//
+			//  f001, f011, ..., fnm1, f002, f012, ...
+			//template <typename T,
+			//          int kDataDimension = 1,
+			//          bool kRowMajor = true,
+			//          bool kInterleaved = true>
+			public class Grid2D {
+				private final double[] data_;
+				private int DATA_DIMENSION = 1;
+				private boolean kRowMajor = true;
+				private boolean kInterleaved = true;
+			    private final int row_begin_;
+			    private final int row_end_;
+			    private final int col_begin_;
+				private final int col_end_;
+				private final int num_rows_;
+				private final int num_cols_;
+			    private final int num_values_;
+			 //public:
+			  //enum { DATA_DIMENSION = kDataDimension };
+
+			  public Grid2D(int[] data, int kDataDimension, boolean rowMajor, boolean interleaved,
+			         int row_begin, int row_end,
+			         int col_begin, int col_end) {
+				  int i;
+				  data_ = new double[data.length];
+				  for (i = 0; i < data.length; i++) {
+					  data_[i] = (double)(data[i]);
+				  }
+				  DATA_DIMENSION = kDataDimension;
+				  kRowMajor = rowMajor;
+				  kInterleaved = interleaved;
+			      row_begin_ = row_begin;
+			      row_end_ = row_end;
+			      col_begin_ = col_begin;
+			      col_end_ = col_end;
+			      num_rows_ = row_end - row_begin;
+			      num_cols_ = col_end - col_begin;
+			      num_values_ = (num_rows_ * num_cols_);
+			      if (kDataDimension < 1) {
+			    	  System.err.println("In public Grid2D kDataDimension < 1");
+			    	  return;
+			      }
+			      if (row_begin >= row_end) {
+			    	  System.err.println("In public Grid2D row_begin >= row_end");
+			    	  return;
+			      }
+			      if (col_begin >= col_end) {
+			    	  System.err.println("In public Grid2D col_begin >= col_end");
+			      }
+			  }
+
+			  public void GetValue( int r, int c, double[] f) {
+			    final int row_idx =
+			        Math.min(Math.max(row_begin_, r), row_end_ - 1) - row_begin_;
+			    final int col_idx =
+			        Math.min(Math.max(col_begin_, c), col_end_ - 1) - col_begin_;
+
+			    final int n =
+			        (kRowMajor)
+			        ? num_cols_ * row_idx + col_idx
+			        : num_rows_ * col_idx + row_idx;
+
+
+			    if (kInterleaved) {
+			      for (int i = 0; i < DATA_DIMENSION; ++i) {
+			        f[i] = data_[DATA_DIMENSION * n + i];
+			      }
+			    } else {
+			      for (int i = 0; i < DATA_DIMENSION; ++i) {
+			        f[i] = data_[i * num_values_ + n];
+			      }
+			    }
+			  }
+
+			 
+			};
 }
