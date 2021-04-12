@@ -47,6 +47,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
+import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
@@ -18752,5 +18753,24 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		}
 
+	final double kTolerance = 1e-12;
+
+	public void Grid1DOneDataDimension() {
+	  // Grid1DOneDataDimension() passed all tests
+	  boolean passed = true;
+	  int x[] = new int[]{1, 2, 3};
+	  Grid1D grid = ce2.new Grid1D(x,1,true,0,3);
+	  for (int i = 0; i < 3; ++i) {
+	    double value[] = new double[1];
+	    grid.GetValue(i, value);
+	    if (value[0] != (double)(i + 1)) {
+	    	System.err.println("In Grid1DOneDataDimension() value[0] != (double)(i+1)");
+	    	passed = false;
+	    }
+	  }
+	  if (passed) {
+		  System.out.println("Grid1DOneDataDimension() passed all tests");
+	  }
+	}
 
 }
