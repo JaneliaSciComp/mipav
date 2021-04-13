@@ -695,6 +695,18 @@ public class CeresSolver2 {
 					  System.err.println("begin >= end in public Grid1D");
 				  }
 			  }
+			  
+			  public Grid1D(double[] x, int kDataDimension, boolean interleaved, int begin, int end) {
+				  data_ = x;
+				  DATA_DIMENSION = kDataDimension;
+				  kInterleaved = interleaved;
+				  begin_ = begin;
+				  end_ = end;
+				  num_values_ = end - begin;
+				  if (begin >= end) {
+					  System.err.println("begin >= end in public Grid1D");
+				  }
+			  }
 
 			public void GetValue(int n, double[] f) {
 			    final int idx = Math.min(Math.max(begin_, n), end_ - 1) - begin_;
@@ -788,6 +800,33 @@ public class CeresSolver2 {
 			    	  System.err.println("In public Grid2D col_begin >= col_end");
 			      }
 			  }
+			  
+			  public Grid2D(double[] data, int kDataDimension, boolean rowMajor, boolean interleaved,
+				         int row_begin, int row_end,
+				         int col_begin, int col_end) {
+					  data_ = data;
+					  DATA_DIMENSION = kDataDimension;
+					  kRowMajor = rowMajor;
+					  kInterleaved = interleaved;
+				      row_begin_ = row_begin;
+				      row_end_ = row_end;
+				      col_begin_ = col_begin;
+				      col_end_ = col_end;
+				      num_rows_ = row_end - row_begin;
+				      num_cols_ = col_end - col_begin;
+				      num_values_ = (num_rows_ * num_cols_);
+				      if (kDataDimension < 1) {
+				    	  System.err.println("In public Grid2D kDataDimension < 1");
+				    	  return;
+				      }
+				      if (row_begin >= row_end) {
+				    	  System.err.println("In public Grid2D row_begin >= row_end");
+				    	  return;
+				      }
+				      if (col_begin >= col_end) {
+				    	  System.err.println("In public Grid2D col_begin >= col_end");
+				      }
+				  }
 
 			  public void GetValue( int r, int c, double[] f) {
 			    final int row_idx =
@@ -814,4 +853,68 @@ public class CeresSolver2 {
 
 			 
 			};
+			
+			
+			// Given samples from a function sampled at four equally spaced points,
+			//
+			//   p0 = f(-1)
+			//   p1 = f(0)
+			//   p2 = f(1)
+			//   p3 = f(2)
+			//
+			// Evaluate the cubic Hermite spline (also known as the Catmull-Rom
+			// spline) at a point x that lies in the interval [0, 1].
+			//
+			// This is also the interpolation kernel (for the case of a = 0.5) as
+			// proposed by R. Keys, in:
+			//
+			// "Cubic convolution interpolation for digital image processing".
+			// IEEE Transactions on Acoustics, Speech, and Signal Processing
+			// 29 (6): 1153–1160.
+			//
+			// For more details see
+			//
+			// http://en.wikipedia.org/wiki/Cubic_Hermite_spline
+			// http://en.wikipedia.org/wiki/Bicubic_interpolation
+			//
+			// f if not NULL will contain the interpolated function values.
+			// dfdx if not NULL will contain the interpolated derivative values.
+			//template <int kDataDimension>
+			public void CubicHermiteSpline(
+					                int kDataDimension,
+					                double p0[],
+					                double p1[],
+					                double p2[],
+					                double p3[],
+			                        double x,
+			                        double[] f,
+			                        double[] dfdx) {
+	
+			  double a[] = new double[kDataDimension];
+			  double b[] = new double[kDataDimension];
+			  double c[] = new double[kDataDimension];
+			  int i;
+			  for (i = 0; i < kDataDimension; i++) {
+				  a[i] = 0.5 * (-p0[i] + 3.0 * p1[i] - 3.0 * p2[i] + p3[i]);
+				  b[i] = 0.5 * (2.0 * p0[i] - 5.0 * p1[i] + 4.0 * p2[i] - p3[i]);
+				  c[i] = 0.5 * (-p0[i] + p2[i]);
+			  }
+
+			  // Use Horner's rule to evaluate the function value and its
+			  // derivative.
+
+			  // f = ax^3 + bx^2 + cx + p1
+			  if (f != null) {
+				for (i = 0; i < kDataDimension; i++) {
+					f[i] = p1[i] + x * (c[i] + x * (b[i] + x * a[i]));
+				}
+			  }
+
+			  // dfdx = 3ax^2 + 2bx + c
+			  if (dfdx != null) {
+				for (i = 0; i < kDataDimension; i++) {
+					dfdx[i] = c[i] + x * (2.0 * b[i] + 3.0 * a[i] * x);
+				}
+			  }
+			}
 }
