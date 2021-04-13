@@ -18880,6 +18880,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		}
 	
 	public void Grid2DOneDataDimensionRowMajorOutOfBounds() {
+		  // Grid2DOneDataDimensionRowMajorOutOfBounds() passed all tests
 		  String testName = "Grid2DOneDataDimensionRowMajorOutOfBounds()";
 		  boolean passed = true;
 		  int x[] = new int[]{1, 2, 3,
@@ -18897,32 +18898,179 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    	passed = false; 
 		  }
 		  grid.GetValue(-1, 1, value);
-		  if (value[0] != x[0]) {
+		  if (value[0] != x[1]) {
 		    	System.err.println("In " + testName + " value[0] != x[1]");
 		    	passed = false; 
 		  }
-		  /*grid.GetValue(-1, 2, value);
-		  EXPECT_EQ(value, x[2]);
-		  grid.GetValue(-1, 3, &value);
-		  EXPECT_EQ(value, x[2]);
-		  grid.GetValue(0, 3, &value);
-		  EXPECT_EQ(value, x[2]);
-		  grid.GetValue(1, 3, &value);
-		  EXPECT_EQ(value, x[5]);
-		  grid.GetValue(2, 3, &value);
-		  EXPECT_EQ(value, x[5]);
-		  grid.GetValue(2, 2, &value);
-		  EXPECT_EQ(value, x[5]);
-		  grid.GetValue(2, 1, &value);
-		  EXPECT_EQ(value, x[4]);
-		  grid.GetValue(2, 0, &value);
-		  EXPECT_EQ(value, x[3]);
-		  grid.GetValue(2, -1, &value);
-		  EXPECT_EQ(value, x[3]);
-		  grid.GetValue(1, -1, &value);
-		  EXPECT_EQ(value, x[3]);
-		  grid.GetValue(0, -1, &value);
-		  EXPECT_EQ(value, x[0]);*/
+		  grid.GetValue(-1, 2, value);
+		  if (value[0] != x[2]) {
+		    	System.err.println("In " + testName + " value[0] != x[2]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(-1, 3, value);
+		  if (value[0] != x[2]) {
+		    	System.err.println("In " + testName + " value[0] != x[2]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(0, 3, value);
+		  if (value[0] != x[2]) {
+		    	System.err.println("In " + testName + " value[0] != x[2]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(1, 3, value);
+		  if (value[0] != x[5]) {
+		    	System.err.println("In " + testName + " value[0] != x[5]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(2, 3, value);
+		  if (value[0] != x[5]) {
+		    	System.err.println("In " + testName + " value[0] != x[5]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(2, 2, value);
+		  if (value[0] != x[5]) {
+		    	System.err.println("In " + testName + " value[0] != x[5]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(2, 1, value);
+		  if (value[0] != x[4]) {
+		    	System.err.println("In " + testName + " value[0] != x[4]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(2, 0, value);
+		  if (value[0] != x[3]) {
+		    	System.err.println("In " + testName + " value[0] != x[3]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(2, -1, value);
+		  if (value[0] != x[3]) {
+		    	System.err.println("In " + testName + " value[0] != x[3]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(1, -1, value);
+		  if (value[0] != x[3]) {
+		    	System.err.println("In " + testName + " value[0] != x[3]");
+		    	passed = false; 
+		  }
+		  grid.GetValue(0, -1, value);
+		  if (value[0] != x[0]) {
+		    	System.err.println("In " + testName + " value[0] != x[0]");
+		    	passed = false; 
+		  }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+
+	public void Grid2DTwoDataDimensionRowMajorInterleaved() {
+		  // Grid2DTwoDataDimensionRowMajorInterleaved() passed all tests
+		  String testName = "Grid2DTwoDataDimensionRowMajorInterleaved()";
+		  boolean passed = true;
+		  int x[] = new int[]{1, 4, 2, 8, 3, 12,
+		             2, 8, 3, 12, 4, 16};
+		  Grid2D grid = ce2.new Grid2D(x, 2, true, true, 0, 2, 0, 3);
+		  for (int r = 0; r < 2; ++r) {
+		    for (int c = 0; c < 3; ++c) {
+		      double value[] = new double[2];
+		      grid.GetValue(r, c, value);
+		      if (value[0] != (double)(r + c + 1)) {
+		    	  System.err.println("In " + testName + " value[0] != (double)(r + c + 1)");
+		    	  passed = false;
+		      }
+		      if (value[1] != (double)(4 *(r + c + 1))) {
+		    	  System.err.println("In " + testName + " value[1] != (double)(4 *(r + c + 1))");
+		    	  passed = false;
+		      }
+		    }
+		  }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+	
+	public void Grid2DTwoDataDimensionRowMajorStacked() {
+		  // Grid2DTwoDataDimensionRowMajorStacked() passed all tests
+		  String testName = "Grid2DTwoDataDimensionRowMajorStacked()";
+		  boolean passed = true;
+		  int x[] = new int[]{1,  2,  3,
+		             2,  3,  4,
+		             4,  8, 12,
+		             8, 12, 16};
+		  Grid2D grid = ce2.new Grid2D(x, 2, true, false, 0, 2, 0, 3);
+		  for (int r = 0; r < 2; ++r) {
+		    for (int c = 0; c < 3; ++c) {
+		      double value[] = new double[2];
+		      grid.GetValue(r, c, value);
+		      if (value[0] != (double)(r + c + 1)) {
+		    	  System.err.println("In " + testName + " value[0] != (double)(r + c + 1)");
+		    	  passed = false;
+		      }
+		      if (value[1] != (double)(4 *(r + c + 1))) {
+		    	  System.err.println("In " + testName + " value[1] != (double)(4 *(r + c + 1))");
+		    	  passed = false;
+		      }
+		    }
+		  }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+
+	public void Grid2DTwoDataDimensionColMajorInterleaved() {
+		  // Grid2DTwoDataDimensionColMajorInterleaved() passed all tests
+		  String testName = "Grid2DTwoDataDimensionColMajorInterleaved()";
+		  boolean passed = true;
+		  int x[] = { 1,  4, 2,  8,
+		              2,  8, 3, 12,
+		              3, 12, 4, 16};
+		  Grid2D grid = ce2.new Grid2D(x, 2, false, true, 0, 2, 0, 3);
+		  for (int r = 0; r < 2; ++r) {
+		    for (int c = 0; c < 3; ++c) {
+		      double value[] = new double[2];
+		      grid.GetValue(r, c, value);
+		      if (value[0] != (double)(r + c + 1)) {
+		    	  System.err.println("In " + testName + " value[0] != (double)(r + c + 1)");
+		    	  passed = false;
+		      }
+		      if (value[1] != (double)(4 *(r + c + 1))) {
+		    	  System.err.println("In " + testName + " value[1] != (double)(4 *(r + c + 1))");
+		    	  passed = false;
+		      }
+		    }
+		  }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+	
+	public void Grid2DTwoDataDimensionColMajorStacked() {
+		  // Grid2DTwoDataDimensionColMajorStacked() passed all tests
+		  String testName = "Grid2DTwoDataDimensionColMajorStacked()";
+		  boolean passed = true;
+		  int x[] = new int[]{1,   2,
+		             2,   3,
+		             3,   4,
+		             4,   8,
+		             8,  12,
+		             12, 16};
+		  Grid2D grid = ce2.new Grid2D(x, 2, false, false, 0, 2, 0, 3);
+		  for (int r = 0; r < 2; ++r) {
+		    for (int c = 0; c < 3; ++c) {
+		      double value[] = new double[2];
+		      grid.GetValue(r, c, value);
+		      if (value[0] != (double)(r + c + 1)) {
+		    	  System.err.println("In " + testName + " value[0] != (double)(r + c + 1)");
+		    	  passed = false;
+		      }
+		      if (value[1] != (double)(4 *(r + c + 1))) {
+		    	  System.err.println("In " + testName + " value[1] != (double)(4 *(r + c + 1))");
+		    	  passed = false;
+		      }
+		    }
+		  }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
 		}
 
 
