@@ -707,6 +707,10 @@ public class CeresSolver2 {
 					  System.err.println("begin >= end in public Grid1D");
 				  }
 			  }
+			  
+			  public int getDataDimension() {
+				  return DATA_DIMENSION;
+			  }
 
 			public void GetValue(int n, double[] f) {
 			    final int idx = Math.min(Math.max(begin_, n), end_ - 1) - begin_;
@@ -827,6 +831,10 @@ public class CeresSolver2 {
 				    	  System.err.println("In public Grid2D col_begin >= col_end");
 				      }
 				  }
+			  
+			  public int getDataDimension() {
+				  return DATA_DIMENSION;
+			  }
 
 			  public void GetValue( int r, int c, double[] f) {
 			    final int row_idx =
@@ -917,4 +925,83 @@ public class CeresSolver2 {
 				}
 			  }
 			}
+			
+			// Given as input an infinite one dimensional grid, which provides the
+			// following interface.
+			//
+			//   class Grid {
+//			    public:
+//			     enum { DATA_DIMENSION = 2; };
+//			     void GetValue(int n, double* f) const;
+			//   };
+			//
+			// Here, GetValue gives the value of a function f (possibly vector
+			// valued) for any integer n.
+			//
+			// The enum DATA_DIMENSION indicates the dimensionality of the
+			// function being interpolated. For example if you are interpolating
+			// rotations in axis-angle format over time, then DATA_DIMENSION = 3.
+			//
+			// CubicInterpolator uses cubic Hermite splines to produce a smooth
+			// approximation to it that can be used to evaluate the f(x) and f'(x)
+			// at any point on the real number line.
+			//
+			// For more details on cubic interpolation see
+			//
+			// http://en.wikipedia.org/wiki/Cubic_Hermite_spline
+			//
+			// Example usage:
+			//
+			//  const double data[] = {1.0, 2.0, 5.0, 6.0};
+			//  Grid1D<double, 1> grid(x, 0, 4);
+			//  CubicInterpolator<Grid1D<double, 1> > interpolator(grid);
+			//  double f, dfdx;
+			//  interpolator.Evaluator(1.5, &f, &dfdx);
+			//template<typename Grid>
+			public class CubicInterpolator {
+				private Grid1D grid_;
+				private int DATA_DIMENSION;
+			 public CubicInterpolator(Grid1D grid) {
+			      grid_ = grid;
+			    // The + casts the enum into an int before doing the
+			    // comparison. It is needed to prevent
+			    // "-Wunnamed-type-template-args" related errors.
+			    if (grid.getDataDimension() < 1) {
+			    	System.err.println("grid.getDataDimension() < 1");
+			    	return;
+			    }
+			    DATA_DIMENSION = grid.getDataDimension();
+			  }
+
+			  public void Evaluate(double x, double[] f, double[]dfdx) {
+			    final int n = (int)Math.floor(x);
+			    double p0[] = new double[DATA_DIMENSION];
+			    double p1[] = new double[DATA_DIMENSION];
+			    double p2[] = new double[DATA_DIMENSION];
+			    double p3[] = new double[DATA_DIMENSION];
+			    grid_.GetValue(n - 1, p0);
+			    grid_.GetValue(n,     p1);
+			    grid_.GetValue(n + 1, p2);
+			    grid_.GetValue(n + 2, p3);
+			    CubicHermiteSpline(DATA_DIMENSION, p0, p1, p2, p3, x - n, f, dfdx);
+			  }
+
+			  // The following two Evaluate overloads are needed for interfacing
+			  // with automatic differentiation. The first is for when a scalar
+			  // evaluation is done, and the second one is for when Jets are used.
+			  void Evaluate(double x, double[] f) {
+			    Evaluate(x, f, null);
+			  }
+
+			  /*template<typename JetT> void Evaluate(const JetT& x, JetT* f) const {
+			    double fx[Grid::DATA_DIMENSION], dfdx[Grid::DATA_DIMENSION];
+			    Evaluate(x.a, fx, dfdx);
+			    for (int i = 0; i < Grid::DATA_DIMENSION; ++i) {
+			      f[i].a = fx[i];
+			      f[i].v = dfdx[i] * x.v;
+			    }
+			  }*/
+
+			
+			};
 }
