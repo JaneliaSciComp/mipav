@@ -47,6 +47,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
+import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
 import gov.nih.mipav.model.file.FileBase;
@@ -19072,6 +19073,107 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  System.out.println(testName + " passed all tests");
 		  }
 		}
+
+	public void RunPolynomialInterpolationTest(int kDataDimension, double a,
+            double b,
+            double c,
+            double d, String testName, boolean passed[]) {
+		    int kNumSamples = 10;
+			int kNumTestSamples = 100;
+			double values_[];
+			values_ = new double[kDataDimension * kNumSamples];
+			
+			for (int x = 0; x < kNumSamples; ++x) {
+			for (int dim = 0; dim < kDataDimension; ++dim) {
+			values_[x * kDataDimension + dim] =
+			(dim * dim  + 1) * (a  * x * x * x + b * x * x + c * x + d);
+			}
+			}
+			
+			Grid1D grid = ce2.new Grid1D(values_, kDataDimension, true, 0, kNumSamples);
+			CubicInterpolator interpolator = ce2.new CubicInterpolator(grid);
+			
+			// Check values in the all the cells but the first and the last
+			// ones. In these cells, the interpolated function values should
+			// match exactly the values of the function being interpolated.
+			//
+			// On the boundary, we extrapolate the values of the function on
+			// the basis of its first derivative, so we do not expect the
+			// function values and its derivatives not to match.
+			for (int j = 0; j < kNumTestSamples; ++j) {
+			final double x = 1.0 + 7.0 / (kNumTestSamples - 1) * j;
+			double expected_f[] = new double[kDataDimension];
+			double expected_dfdx[] = new double[kDataDimension];
+			double f[] = new double[kDataDimension];
+			double dfdx[] = new double[kDataDimension];
+			
+			for (int dim = 0; dim < kDataDimension; ++dim) {
+			expected_f[dim] =
+			(dim * dim  + 1) * (a  * x * x * x + b * x * x + c * x + d);
+			expected_dfdx[dim] = (dim * dim + 1) * (3.0 * a * x * x + 2.0 * b * x + c);
+			}
+			
+			interpolator.Evaluate(x, f, dfdx);
+			for (int dim = 0; dim < kDataDimension; ++dim) {
+			if (Math.abs(f[dim] - expected_f[dim]) > kTolerance) {
+				System.err.println("In " + testName + " Math.abs(f[dim] - expected_f[dim]) > kTolerance");
+			    System.err.println("x: " + x + " dim: " + dim);
+			    System.err.println("actual f(x): " + expected_f[dim] + " estimated f(x): " + f[dim]);
+			    passed[0] = false;
+			}
+			if (Math.abs(dfdx[dim] - expected_dfdx[dim]) > kTolerance) {
+				System.err.println("In " + testName + " Math.abs(dfdx[dim] - expected_dfdx[dim]) > kTolerance");
+				System.err.println("x: " + x + " dim: " + dim);
+			    System.err.println("actual df(x)/dx: " + expected_dfdx[dim] + " estimated df(x)/dx: " + dfdx[dim]);
+			    passed[0] = false;
+			}
+			}
+			}
+			
+			
+		};
+		
+		public void CubicInterpolatorTestConstantFunction() {
+			  // CubicInterpolatorTestConstantFunction() passed all tests
+			  String testName = "CubicInterpolatorTestConstantFunction_1()";
+			  boolean passed[] = new boolean[] {true};
+			  RunPolynomialInterpolationTest(1,0.0, 0.0, 0.0, 0.5,testName,passed);
+			  testName = "CubicInterpolatorTestConstantFunction_2()";
+			  RunPolynomialInterpolationTest(2,0.0, 0.0, 0.0, 0.5,testName,passed);
+			  testName = "CubicInterpolatorTestConstantFunction_3()";
+			  RunPolynomialInterpolationTest(3,0.0, 0.0, 0.0, 0.5,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("CubicInterpolatorTestConstantFunction() passed all tests");
+			  }
+		}
+
+		public void CubicInterpolatorTestLinearFunction() {
+			  // CubicInterpolatorTestLinearFunction() passed all tests
+			  String testName = "CubicInterpolatorTestLinearFunction_1()";
+			  boolean passed[] = new boolean[] {true};
+			  RunPolynomialInterpolationTest(1,0.0, 0.0, 1.0, 0.5,testName,passed);
+			  testName = "CubicInterpolatorTestLinearFunction_2()";
+			  RunPolynomialInterpolationTest(2,0.0, 0.0, 1.0, 0.5,testName,passed);
+			  testName = "CubicInterpolatorTestLinearFunction_3()";
+			  RunPolynomialInterpolationTest(3,0.0, 0.0, 1.0, 0.5,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("CubicInterpolatorTestLinearFunction() passed all tests");
+			  }
+		}
+		
+		public void CubicInterpolatorTestQuadraticFunction() {
+			  // CubicInterpolatorTestQuadraticFunction() passed all tests
+			  String testName = "CubicInterpolatorTestQuadraticFunction_1()";
+			  boolean passed[] = new boolean[] {true};
+			  RunPolynomialInterpolationTest(1,0.0, 0.4, 1.0, 0.5,testName,passed);
+			  testName = "CubicInterpolatorTestQuadraticFunction_2()";
+			  RunPolynomialInterpolationTest(2,0.0, 0.4, 1.0, 0.5,testName,passed);
+			  testName = "CubicInterpolatorTestQuadraticFunction_3()";
+			  RunPolynomialInterpolationTest(3,0.0, 0.4, 1.0, 0.5,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("CubicInterpolatorTestQuadraticFunction() passed all tests");
+			  }
+			}
 
 
 }
