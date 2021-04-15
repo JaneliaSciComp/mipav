@@ -1004,4 +1004,144 @@ public class CeresSolver2 {
 
 			
 			};
+			
+			// BiCubicInterpolator uses the cubic convolution interpolation
+			// algorithm of R. Keys, to produce a smooth approximation to it that
+			// can be used to evaluate the f(r,c), df(r, c)/dr and df(r,c)/dc at
+			// any point in the real plane.
+			//
+			// For more details on the algorithm used here see:
+			//
+			// "Cubic convolution interpolation for digital image processing".
+			// Robert G. Keys, IEEE Trans. on Acoustics, Speech, and Signal
+			// Processing 29 (6): 1153–1160, 1981.
+			//
+			// http://en.wikipedia.org/wiki/Cubic_Hermite_spline
+			// http://en.wikipedia.org/wiki/Bicubic_interpolation
+			//
+			// Example usage:
+			//
+			// const double data[] = {1.0, 3.0, -1.0, 4.0,
+//			                         3.6, 2.1,  4.2, 2.0,
+//			                        2.0, 1.0,  3.1, 5.2};
+			//  Grid2D<double, 1>  grid(data, 3, 4);
+			//  BiCubicInterpolator<Grid2D<double, 1> > interpolator(grid);
+			//  double f, dfdr, dfdc;
+			//  interpolator.Evaluate(1.2, 2.5, &f, &dfdr, &dfdc);
+
+			//template<typename Grid>
+			public class BiCubicInterpolator {
+				private Grid2D grid_;
+				private int DATA_DIMENSION;
+			 public BiCubicInterpolator(Grid2D grid) {
+			      grid_ = grid;
+			    // The + casts the enum into an int before doing the
+			    // comparison. It is needed to prevent
+			    // "-Wunnamed-type-template-args" related errors.
+			    if (grid.getDataDimension() < 1) {
+			    	System.err.println("grid.getDataDimension() < 1");
+			    	return;
+			    }
+			    DATA_DIMENSION = grid.getDataDimension();
+			  }
+			 
+
+			  // Evaluate the interpolated function value and/or its
+			  // derivative. Returns false if r or c is out of bounds.
+			  public void Evaluate(double r, double c,
+			                double[] f, double[] dfdr, double[] dfdc) {
+			    // BiCubic interpolation requires 16 values around the point being
+			    // evaluated.  We will use pij, to indicate the elements of the
+			    // 4x4 grid of values.
+			    //
+			    //          col
+			    //      p00 p01 p02 p03
+			    // row  p10 p11 p12 p13
+			    //      p20 p21 p22 p23
+			    //      p30 p31 p32 p33
+			    //
+			    // The point (r,c) being evaluated is assumed to lie in the square
+			    // defined by p11, p12, p22 and p21.
+
+			    final int row = (int)Math.floor(r);
+			    final int col = (int)Math.floor(c);
+
+			    double p0[] = new double[DATA_DIMENSION];
+			    double p1[] = new double[DATA_DIMENSION];
+			    double p2[] = new double[DATA_DIMENSION];
+			    double p3[] = new double[DATA_DIMENSION];
+
+			    // Interpolate along each of the four rows, evaluating the function
+			    // value and the horizontal derivative in each row.
+			    double f0[] = new double[DATA_DIMENSION];
+			    double f1[] = new double[DATA_DIMENSION];
+			    double f2[] = new double[DATA_DIMENSION];
+			    double f3[] = new double[DATA_DIMENSION];
+			    double df0dc[] = new double[DATA_DIMENSION];
+			    double df1dc[] = new double[DATA_DIMENSION];
+			    double df2dc[] = new double[DATA_DIMENSION];
+			    double df3dc[] = new double[DATA_DIMENSION];
+
+			    grid_.GetValue(row - 1, col - 1, p0);
+			    grid_.GetValue(row - 1, col    , p1);
+			    grid_.GetValue(row - 1, col + 1, p2);
+			    grid_.GetValue(row - 1, col + 2, p3);
+			    CubicHermiteSpline(DATA_DIMENSION,p0, p1, p2, p3, c - col,
+			                                             f0, df0dc);
+
+			    grid_.GetValue(row, col - 1, p0);
+			    grid_.GetValue(row, col    , p1);
+			    grid_.GetValue(row, col + 1, p2);
+			    grid_.GetValue(row, col + 2, p3);
+			    CubicHermiteSpline(DATA_DIMENSION,p0, p1, p2, p3, c - col,
+			                                             f1, df1dc);
+
+			    grid_.GetValue(row + 1, col - 1, p0);
+			    grid_.GetValue(row + 1, col    , p1);
+			    grid_.GetValue(row + 1, col + 1, p2);
+			    grid_.GetValue(row + 1, col + 2, p3);
+			    CubicHermiteSpline(DATA_DIMENSION,p0, p1, p2, p3, c - col,
+			                                             f2, df2dc);
+
+			    grid_.GetValue(row + 2, col - 1, p0);
+			    grid_.GetValue(row + 2, col    , p1);
+			    grid_.GetValue(row + 2, col + 1, p2);
+			    grid_.GetValue(row + 2, col + 2, p3);
+			    CubicHermiteSpline(DATA_DIMENSION,p0, p1, p2, p3, c - col,
+			                                             f3, df3dc);
+
+			    // Interpolate vertically the interpolated value from each row and
+			    // compute the derivative along the columns.
+			    CubicHermiteSpline(DATA_DIMENSION,f0, f1, f2, f3, r - row, f, dfdr);
+			    if (dfdc != null) {
+			      // Interpolate vertically the derivative along the columns.
+			      CubicHermiteSpline(DATA_DIMENSION,df0dc, df1dc, df2dc, df3dc,
+			                                               r - row, dfdc, null);
+			    }
+			  }
+
+			  // The following two Evaluate overloads are needed for interfacing
+			  // with automatic differentiation. The first is for when a scalar
+			  // evaluation is done, and the second one is for when Jets are used.
+			  public void Evaluate(double r, double c, double[] f) {
+			    Evaluate(r, c, f, null, null);
+			  }
+
+			  /*template<typename JetT> void Evaluate(const JetT& r,
+			                                        const JetT& c,
+			                                        JetT* f) const {
+			    double frc[Grid::DATA_DIMENSION];
+			    double dfdr[Grid::DATA_DIMENSION];
+			    double dfdc[Grid::DATA_DIMENSION];
+			    Evaluate(r.a, c.a, frc, dfdr, dfdc);
+			    for (int i = 0; i < Grid::DATA_DIMENSION; ++i) {
+			      f[i].a = frc[i];
+			      f[i].v = dfdr[i] * r.v + dfdc[i] * c.v;
+			    }
+			  }*/
+
+			 
+			};
+			
+			
 }
