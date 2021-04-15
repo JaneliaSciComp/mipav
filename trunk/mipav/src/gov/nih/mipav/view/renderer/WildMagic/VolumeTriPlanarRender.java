@@ -266,12 +266,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_bExtract = false;
 		}
 
-		if ( m_bFirstDisplay && (configuredListener != null) )
+		if ( m_bFirstDisplay )
 		{		
-    		configuredListener.rendererConfigured( this );
 			m_bFirstDisplay = false;
-			m_kSlices.SetDisplay(false);
-			m_kVolumeRayCast.SetDisplay(true);
+			if ( m_kSlices != null ) m_kSlices.SetDisplay(true);
+			if ( m_kVolumeRayCast != null ) m_kVolumeRayCast.SetDisplay(false);
+			if ( configuredListener != null ) {
+	    		configuredListener.rendererConfigured( this );
+			}
 		}
 //		if ( wormAnimationStep() != -1 )
 		{
