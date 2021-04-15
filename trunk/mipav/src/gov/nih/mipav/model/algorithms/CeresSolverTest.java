@@ -47,6 +47,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
+import gov.nih.mipav.model.algorithms.CeresSolver2.BiCubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
@@ -19175,5 +19176,220 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 			}
 
+		// coeff is 3 by 3 
+		public void RunPolynomialInterpolationTest(int kDataDimension, Matrix coeff, String testName, boolean passed[]) { 
+		  Matrix coeff_;
+		  final int kNumRows = 10;
+		  final int kNumCols = 10;
+		  final int kNumRowSamples = 100;
+		  final int kNumColSamples = 100;
+		  double values_[];
+		  
+		  values_ = new double[kNumRows * kNumCols * kDataDimension];
+		    coeff_ = coeff;
+		    double v[] = values_;
+		    int index = 0;
+		    for (int r = 0; r < kNumRows; ++r) {
+		      for (int c = 0; c < kNumCols; ++c) {
+		        for (int dim = 0; dim < kDataDimension; ++dim) {
+		          v[index++] = (dim * dim + 1) * EvaluateF(coeff_,r, c);
+		        }
+		      }
+		    }
+
+		    Grid2D grid = ce2.new Grid2D(values_, kDataDimension, true, true, 0, kNumRows, 0, kNumCols);
+		    BiCubicInterpolator interpolator = ce2.new BiCubicInterpolator(grid);
+
+		    for (int j = 0; j < kNumRowSamples; ++j) {
+		      final double r = 1.0 + 7.0 / (kNumRowSamples - 1) * j;
+		      for (int k = 0; k < kNumColSamples; ++k) {
+		        final double c = 1.0 + 7.0 / (kNumColSamples - 1) * k;
+		        double f[] = new double[kDataDimension];
+		        double dfdr[] = new double[kDataDimension];
+		        double dfdc[] = new double[kDataDimension];
+		        interpolator.Evaluate(r, c, f, dfdr, dfdc);
+		        for (int dim = 0; dim < kDataDimension; ++dim) {
+		          if (Math.abs(f[dim] - (dim * dim + 1) * EvaluateF(coeff_, r, c)) > kTolerance) {
+		        	  System.err.println("In " + testName + " Math.abs(f[dim] - (dim * dim + 1) * EvaluateF(coeff_, r, c)) > kTolerance");
+		        	  passed[0] = false;
+		          }
+		          if (Math.abs(dfdr[dim] - (dim * dim + 1) * EvaluatedFdr(coeff_, r, c)) > kTolerance) {
+		        	  System.err.println("In " + testName + " dfdr[dim] - (dim * dim + 1) * EvaluatedFdr(coeff_, r, c)) > kTolerance");
+		        	  passed[0] = false;
+		          }
+		          if (Math.abs(dfdc[dim] - (dim * dim + 1) * EvaluatedFdc(coeff_, r, c)) > kTolerance) {
+		        	  System.err.println("In " + testName + " Math.abs(dfdc[dim] - (dim * dim + 1) * EvaluatedFdc(coeff_, r, c)) > kTolerance");
+		        	  passed[0] = false;
+		          }
+		        }
+		      }
+		    }
+		  }
+		
+		public double EvaluateF(Matrix coeff_, double r, double c) {
+		    Matrix x = new Matrix(3,1);
+		    x.set(0,0,r);
+		    x.set(1,0,c);
+		    x.set(2,0,1);
+		    return ((x.transpose().times(coeff_)).times(x)).get(0,0);
+		}
+
+		public double EvaluatedFdr(Matrix coeff_, double r, double c) {
+		    return (2*coeff_.get(0,0)*r + (coeff_.get(0,1) + coeff_.get(1,0))*c + (coeff_.get(0,2) + coeff_.get(2,0))); 
+		}
+
+		public double EvaluatedFdc(Matrix coeff_, double r, double c) {
+		    return ((coeff_.get(1,0) + coeff_.get(0,1))*r + 2*coeff_.get(1,1)*c + (coeff_.get(1,2) + coeff_.get(2,1)));
+		}
+		
+		public void BiCubicInterpolatorTestZeroFunction() {
+			  // BiCubicInterpolatorTestZeroFunction() passed all tests
+			  String testName = "BiCubicInterpolatorTestZeroFunction_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestZeroFunction_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestZeroFunction_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestZeroFunction() passed all tests");
+			  }
+		}
+
+	    public void BiCubicInterpolatorTestDegree00Function() {
+	    	  // BiCubicInterpolatorTestDegree00Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree00Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree00Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree00Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree00Function() passed all tests");
+			  }
+		}
+	    
+	    public void BiCubicInterpolatorTestDegree01Function() {
+	    	  // BiCubicInterpolatorTestDegree01Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree01Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  coeff.set(0, 2, 0.1);
+			  coeff.set(2, 0, 0.1);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree01Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree01Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree01Function() passed all tests");
+			  }
+		}
+	    
+	    public void BiCubicInterpolatorTestDegree10Function() {
+	    	  // BiCubicInterpolatorTestDegree10Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree10Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  coeff.set(0, 1, 0.1);
+			  coeff.set(1, 0, 0.1);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree10Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree10Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree10Function() passed all tests");
+			  }
+		}
+	    
+	    public void BiCubicInterpolatorTestDegree11Function() {
+	    	  // BiCubicInterpolatorTestDegree11Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree11Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  coeff.set(0, 1, 0.1);
+			  coeff.set(1, 0, 0.1);
+			  coeff.set(0, 2, 0.2);
+			  coeff.set(2, 0, 0.2);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree11Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree11Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree11Function() passed all tests");
+			  }
+		}
+	    
+	    public void BiCubicInterpolatorTestDegree12Function() {
+	    	  // BiCubicInterpolatorTestDegree12Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree12Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  coeff.set(0, 1, 0.1);
+			  coeff.set(1, 0, 0.1);
+			  coeff.set(0, 2, 0.2);
+			  coeff.set(2, 0, 0.2);
+			  coeff.set(1, 1, 0.3);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree12Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree12Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree12Function() passed all tests");
+			  }
+		}
+	    
+	    public void BiCubicInterpolatorTestDegree21Function() {
+	    	  // BiCubicInterpolatorTestDegree21Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree21Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  coeff.set(0, 1, 0.1);
+			  coeff.set(1, 0, 0.1);
+			  coeff.set(0, 2, 0.2);
+			  coeff.set(2, 0, 0.2);
+			  coeff.set(0, 0, 0.3);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree21Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree21Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree21Function() passed all tests");
+			  }
+		}
+	    
+	    public void BiCubicInterpolatorTestDegree22Function() {
+	    	  // BiCubicInterpolatorTestDegree22Function() passed all tests
+	    	  String testName = "BiCubicInterpolatorTestDegree22Function_1()";
+			  boolean passed[] = new boolean[] {true};
+			  Matrix coeff = new Matrix(3,3,0.0);
+			  coeff.set(2,2,1.0);
+			  coeff.set(0, 1, -0.4);
+			  coeff.set(1, 0, -0.4);
+			  coeff.set(0, 2, 0.2);
+			  coeff.set(2, 0, 0.2);
+			  coeff.set(0, 0, 0.3);
+			  RunPolynomialInterpolationTest(1,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree22Function_2()";
+			  RunPolynomialInterpolationTest(2,coeff,testName,passed);
+			  testName = "BiCubicInterpolatorTestDegree22Function_3()";
+			  RunPolynomialInterpolationTest(3,coeff,testName,passed);
+			  if (passed[0]) {
+				  System.out.println("BiCubicInterpolatorTestDegree22Function() passed all tests");
+			  }
+		}
 
 }
