@@ -1463,6 +1463,9 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	    int i;
 	    
 	    ModelLUT LUT = getComponentImage().getLUTa();
+	    if (LUT == null) {
+	    	System.err.println("LUT = getComponentImage().getLUTa() is null");
+	    }
 	
 	    //Stores the maximum and minimum intensity values applicable to this image
 	    minImage = (float)image.getMin();
