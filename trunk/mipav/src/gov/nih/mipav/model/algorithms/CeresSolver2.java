@@ -12,6 +12,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
 import gov.nih.mipav.model.algorithms.CeresSolver.WeightedGraph;
+import gov.nih.mipav.view.Preferences;
 
 /**
  * This is a port of the C++ files in ceres-solver-1.14.0 under the BSD license:
@@ -1143,5 +1144,227 @@ public class CeresSolver2 {
 			 
 			};
 			
+			public class CanonicalViewsClusteringOptions {
+				// The minimum number of canonical views to compute.
+				  public int min_views;
+
+				  // Penalty weight for the number of canonical views.  A higher
+				  // number will result in fewer canonical views.
+				  public double size_penalty_weight;
+
+				  // Penalty weight for the diversity (orthogonality) of the
+				  // canonical views.  A higher number will encourage less similar
+				  // canonical views.
+				  public double similarity_penalty_weight;
+
+				  // Weight for per-view scores.  Lower weight places less
+				  // confidence in the view scores.
+				  public double view_score_weight;
+				  public CanonicalViewsClusteringOptions() {
+				        min_views = 3;
+				        size_penalty_weight = 5.75;
+				        similarity_penalty_weight = 100.0;
+				        view_score_weight = 0.0;
+				  }
+				  
+			}
+			
+			class CanonicalViewsClustering {
+				CanonicalViewsClusteringOptions options_;
+				  WeightedGraph<Integer> graph_;
+				  // Maps a view to its representative canonical view (its cluster
+				  // center).
+				  HashMap<Integer, Integer> view_to_canonical_view_;
+				  // Maps a view to its similarity to its current cluster center.
+				  HashMap<Integer, Double> view_to_canonical_view_similarity_;
+				 public CanonicalViewsClustering() {
+					 options_ = new CanonicalViewsClusteringOptions();
+					 graph_ = ce.new WeightedGraph<Integer>();
+					 view_to_canonical_view_ = new HashMap<Integer, Integer>();
+					 view_to_canonical_view_similarity_ = new HashMap<Integer, Double>();
+				 }
+
+				  // Compute the canonical views clustering of the vertices of the
+				  // graph. centers will contain the vertices that are the identified
+				  // as the canonical views/cluster centers, and membership is a map
+				  // from vertices to cluster_ids. The i^th cluster center corresponds
+				  // to the i^th cluster. It is possible depending on the
+				  // configuration of the clustering algorithm that some of the
+				  // vertices may not be assigned to any cluster. In this case they
+				  // are assigned to a cluster with id = kInvalidClusterId.
+				  public void ComputeClustering(CanonicalViewsClusteringOptions options,
+				                                WeightedGraph<Integer> graph,
+				                         Vector<Integer> centers,
+				                         HashMap<Integer,Integer> membership) {
+					  options_ = options;
+					  if (centers == null) {
+						  System.err.println("In ComputeClustering centers == null");
+						  return;
+					  }
+					  if (membership == null) {
+						  System.err.println("In ComputeClustering membership == null");
+						  return;
+					  }
+					  centers.clear();
+					  membership.clear();
+					  graph_ = graph;
+
+					  HashSet<Integer> valid_views = new HashSet<Integer>();
+					  FindValidViews(valid_views);
+					  while (valid_views.size() > 0) {
+					    // Find the next best canonical view.
+					    double best_difference = -Double.MAX_VALUE;
+					    int best_view = 0;
+
+					    // TODO(sameeragarwal): Make this loop multi-threaded.
+					    for (Integer view: valid_views) {
+					      final double difference =
+					          ComputeClusteringQualityDifference(view, centers);
+					      if (difference > best_difference) {
+					        best_difference = difference;
+					        best_view = view;
+					      }
+					    }
+
+					    if (best_difference == -Double.MAX_VALUE) {
+					    	System.err.println("In ComputeClustering best_difference == -Double.MAX_VALUE");
+					    	return;
+					    }
+
+					    // Add canonical view if quality improves, or if minimum is not
+					    // yet met, otherwise break.
+					    if ((best_difference <= 0) &&
+					        (centers.size() >= options_.min_views)) {
+					      break;
+					    }
+
+					    centers.add(best_view);
+					    valid_views.remove(best_view);
+					    UpdateCanonicalViewAssignments(best_view);
+					  }
+
+					  ComputeClusterMembership(centers, membership);
+  
+				  }
+
+				  // Return the set of vertices of the graph which have valid vertex
+				  // weights.
+				  private void FindValidViews(HashSet<Integer> valid_views) {
+					  final HashSet<Integer> views = graph_.vertices();
+					  for (Integer view : views) {
+					    if (!Double.isNaN(graph_.VertexWeight(view))) {
+					      valid_views.add(view);
+					    }
+					  }
+  
+				  }
+				  
+				  // Computes the difference in the quality score if 'candidate' were
+				  // added to the set of canonical views.
+				  private double ComputeClusteringQualityDifference(int candidate,
+				                                            Vector<Integer> centers) {
+					// View score.
+					  double difference =
+					      options_.view_score_weight * graph_.VertexWeight(candidate);
+
+					  // Compute how much the quality score changes if the candidate view
+					  // was added to the list of canonical views and its nearest
+					  // neighbors became members of its cluster.
+					  final HashSet<Integer> neighbors = graph_.Neighbors(candidate);
+					  for (Integer neighbor: neighbors) {
+					    final double old_similarity = view_to_canonical_view_similarity_.getOrDefault(neighbor, 0.0); 
+					    final double new_similarity = graph_.EdgeWeight(neighbor, candidate);
+					    if (new_similarity > old_similarity) {
+					      difference += new_similarity - old_similarity;
+					    }
+					  }
+
+					  // Number of views penalty.
+					  difference -= options_.size_penalty_weight;
+
+					  // Orthogonality.
+					  for (int i = 0; i < centers.size(); ++i) {
+					    difference -= options_.similarity_penalty_weight *
+					        graph_.EdgeWeight(centers.get(i), candidate);
+					  }
+
+					  return difference;
+
+				  }
+				  
+				  // Reassign views if they're more similar to the new canonical view.
+				  private void UpdateCanonicalViewAssignments(int canonical_view) {
+					  final HashSet<Integer> neighbors = graph_.Neighbors(canonical_view);
+					  for (Integer neighbor: neighbors) {
+					    final double old_similarity = view_to_canonical_view_similarity_.getOrDefault(neighbor, 0.0); 
+					    final double new_similarity =
+					        graph_.EdgeWeight(neighbor, canonical_view);
+					    if (new_similarity > old_similarity) {
+					      view_to_canonical_view_.put(neighbor,canonical_view);
+					      view_to_canonical_view_similarity_.put(neighbor,new_similarity);
+					    }
+					  }
+  
+				  }
+				  
+				  // Assign a cluster id to each view.
+				  private void ComputeClusterMembership(Vector<Integer> centers,
+				                                HashMap<Integer,Integer> membership) {
+					  if (membership == null) {
+						  System.err.println("membership == null in ComputeClusterMembership");
+						  return;
+					  }
+					  membership.clear();
+
+					  // The i^th cluster has cluster id i.
+					  HashMap<Integer, Integer> center_to_cluster_id = new HashMap<Integer, Integer>();
+					  for (int i = 0; i < centers.size(); ++i) {
+					    center_to_cluster_id.put(centers.get(i),i);
+					  }
+
+					  final int kInvalidClusterId = -1;
+
+					  final HashSet<Integer> views = graph_.vertices();
+					  for (Integer view : views) {
+					    Integer value = view_to_canonical_view_.get(view);
+					    int cluster_id = kInvalidClusterId;
+					    if (value != null) {
+					    	if (center_to_cluster_id.get(value) == null) {
+					    		System.err.println("In ComputeClusterMembership center_to_cluster_id.get(value) == null");
+					    		System.err.println("value.intValue() = " + value.intValue());
+					    		return;
+					    	}
+					    	else {
+					    		cluster_id = center_to_cluster_id.get(value);
+					    	}
+					    }
+					    if (membership.get(view) != null) {
+					    	System.err.println("In ComputeClusterMembership key view is already present");
+					    	System.err.println("view.intValue() = " + view.intValue());
+					    	return;
+					    }
+					    membership.put(view, cluster_id);
+					  }
+  
+				  }
+
+				  
+			};
+			
+			public void ComputeCanonicalViewsClustering(
+				    CanonicalViewsClusteringOptions options,
+				    WeightedGraph<Integer> graph,
+				    Vector<Integer> centers,
+				    HashMap<Integer,Integer> membership) {
+				  long start_time = System.currentTimeMillis();
+				  CanonicalViewsClustering cv = new CanonicalViewsClustering();
+				  cv.ComputeClustering(options, graph, centers, membership);
+				  if (2 <= ce.MAX_LOG_LEVEL) {
+				  Preferences.debug("Canonical views clustering time (secs): "
+				          + (System.currentTimeMillis() - start_time)/1000.0 + "\n", Preferences.DEBUG_ALGORITHM);
+				  }
+				}
+
+
 			
 }
