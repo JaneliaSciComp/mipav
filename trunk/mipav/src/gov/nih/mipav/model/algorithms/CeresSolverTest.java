@@ -48,6 +48,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BiCubicInterpolator;
+import gov.nih.mipav.model.algorithms.CeresSolver2.CanonicalViewsClusteringOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
@@ -19391,5 +19392,189 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				  System.out.println("BiCubicInterpolatorTestDegree22Function() passed all tests");
 			  }
 		}
+	    
+	    final int kVertexIds[] = new int[]{0, 1, 2, 3};
+	    WeightedGraph<Integer> graph_;
+
+	    CanonicalViewsClusteringOptions options_;
+	    Vector<Integer> centers_;
+	    HashMap<Integer, Integer> membership_;
+
+	    public void ComputeClustering() {
+	    	// The graph structure is as follows.
+	        //
+	        // Vertex weights:   0      2      2      0
+	        //                   V0-----V1-----V2-----V3
+	        // Edge weights:        0.8    0.9    0.3
+	        final double kVertexWeights[] = {0.0, 2.0, 2.0, -1.0};
+	        graph_ = new WeightedGraph<Integer>();
+	        for (int i = 0; i < 4; ++i) {
+	          graph_.AddVertex(i, kVertexWeights[i]);
+	        }
+	        // Create self edges.
+	        // CanonicalViews requires that every view "sees" itself.
+	        for (int i = 0; i < 4; ++i) {
+	          graph_.AddEdge(i, i, 1.0);
+	        }
+
+	        // Create three edges.
+	        final double kEdgeWeights[] = new double[]{0.8, 0.9, 0.3};
+	        for (int i = 0; i < 3; ++i) {
+	          // The graph interface is directed, so remember to create both
+	          // edges.
+	          graph_.AddEdge(kVertexIds[i], kVertexIds[i + 1], kEdgeWeights[i]);
+	        }
+            centers_ = new Vector<Integer>();
+            membership_ = new HashMap<Integer,Integer>();
+	        ce2.ComputeCanonicalViewsClustering(options_, graph_, centers_, membership_);
+	    }
+	    
+	    public void CanonicalViewsTestComputeCanonicalViewsTest() {
+	    	  // CanonicalViewsTestComputeCanonicalViewsTest() passed all tests
+	    	  String testName = "CanonicalViewsTestComputeCanonicalViewsTest()";
+	    	  boolean passed = true;
+	    	  options_ = ce2.new CanonicalViewsClusteringOptions();
+	    	  options_.min_views = 0;
+	    	  options_.size_penalty_weight = 0.5;
+	    	  options_.similarity_penalty_weight = 0.0;
+	    	  options_.view_score_weight = 0.0;
+	    	  ComputeClustering();
+
+	    	  // 2 canonical views.
+	    	  if (centers_.size() != 2) {
+	    		  System.err.println("In " + testName + " centers_.size() != 2");
+	    		  passed = false;
+	    	  }
+	    	  if (centers_.get(0) != kVertexIds[1]) {
+	    		  System.err.println("In " + testName + " centers_.get(0) != kVertexIds[1]");
+	    		  passed = false;
+	    	  }
+	    	  if (centers_.get(1) != kVertexIds[3]) {
+	    		  System.err.println("In " + testName + " centers_.get(1) != kVertexIds[3]");
+	    		  passed = false;
+	    	  }
+
+	    	  // Check cluster membership.
+	    	  if (membership_.get(kVertexIds[0]) == null) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[0]) == null");
+	    		  passed = false;
+	    	  }
+	    	  else if (membership_.get(kVertexIds[0]) != 0) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[0]) != 0");
+	    		  passed = false;
+	    	  }
+	    	  if (membership_.get(kVertexIds[1]) == null) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[1]) == null");
+	    		  passed = false;
+	    	  }
+	    	  else if (membership_.get(kVertexIds[1]) != 0) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[1]) != 0");
+	    		  passed = false;
+	    	  }
+	    	  if (membership_.get(kVertexIds[2]) == null) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[2]) == null");
+	    		  passed = false;
+	    	  }
+	    	  else if (membership_.get(kVertexIds[2]) != 0) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[2]) != 0");
+	    		  passed = false;
+	    	  }
+	    	  if (membership_.get(kVertexIds[3]) == null) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[3]) == null");
+	    		  passed = false;
+	    	  }
+	    	  else if (membership_.get(kVertexIds[3]) != 1) {
+	    		  System.err.println("In " + testName + " membership_.get(kVertexIds[3]) != 1");
+	    		  passed = false;
+	    	  }
+	    	  if (passed) {
+	    		  System.out.println(testName + " passed all tests");
+	    	  }
+	    	}
+
+	 // Increases size penalty so the second canonical view won't be
+	 // chosen.
+	 public void CanonicalViewsTestSizePenaltyTest() {
+	   // CanonicalViewsTestSizePenaltyTest() passed all tests
+	   String testName = "CanonicalViewsTestSizePenaltyTest()";
+	   boolean passed = true;
+	   options_ = ce2.new CanonicalViewsClusteringOptions();
+	   options_.min_views = 0;
+	   options_.size_penalty_weight = 2.0;
+	   options_.similarity_penalty_weight = 0.0;
+	   options_.view_score_weight = 0.0;
+	   ComputeClustering();
+
+	   // 1 canonical view.
+	   if (centers_.size() != 1) {
+		   System.err.println("In " + testName + " centers_.size() != 1");
+		   passed = false;
+	   }
+	   if (centers_.get(0) != kVertexIds[1]) {
+		   System.err.println("In " + testName + " centers_.get(0) != kVertexIds[1]");
+		   passed = false;
+	   }
+	   if (passed) {
+ 		  System.out.println(testName + " passed all tests");
+ 	  }
+	}
+
+	  // Increases view score weight so vertex 2 will be chosen.
+	 public void CanonicalViewsTestViewScoreTest() {
+	   // CanonicalViewsTestViewScoreTest() passed all tests
+	   String testName = "CanonicalViewsTestViewScoreTest()";
+	   boolean passed = true;
+	   options_ = ce2.new CanonicalViewsClusteringOptions();
+	   options_.min_views = 0;
+	   options_.size_penalty_weight = 0.5;
+	   options_.similarity_penalty_weight = 0.0;
+	   options_.view_score_weight = 1.0;
+	   ComputeClustering();
+
+	   // 2 canonical views.
+	   if (centers_.size() != 2) {
+		   System.err.println("In " + testName + " centers_.size() != 2");
+		   passed = false;
+	   }
+	   if (centers_.get(0) != kVertexIds[1]) {
+		   System.err.println("In " + testName + " centers_.get(0) != kVertexIds[1]");
+		   passed = false;
+	   }
+	   if (centers_.get(1) != kVertexIds[2]) {
+		   System.err.println("In " + testName + " centers_.get(1) != kVertexIds[2]");
+		   passed = false;
+	   }
+	   if (passed) {
+ 		  System.out.println(testName + " passed all tests");
+ 	  }
+	}
+	 
+	// Increases similarity penalty so vertex 2 won't be chosen despite
+	// it's view score.
+	public void CanonicalViewsTestSimilarityPenaltyTest() {
+      // CanonicalViewsTestSimilarityPenaltyTest() passed all tests
+	  String testName = "CanonicalViewsTestSimilarityPenaltyTest()";
+	  boolean passed = true;
+	  options_ = ce2.new CanonicalViewsClusteringOptions();
+	  options_.min_views = 0;
+	  options_.size_penalty_weight = 0.5;
+	  options_.similarity_penalty_weight = 3.0;
+	  options_.view_score_weight = 1.0;
+	  ComputeClustering();
+
+	  // 2 canonical views.
+	  if (centers_.size() != 1) {
+		   System.err.println("In " + testName + " centers_.size() != 1");
+		   passed = false;
+	   }
+	   if (centers_.get(0) != kVertexIds[1]) {
+		   System.err.println("In " + testName + " centers_.get(0) != kVertexIds[1]");
+		   passed = false;
+	   }
+	   if (passed) {
+		  System.out.println(testName + " passed all tests");
+	  }
+	}
+
 
 }
