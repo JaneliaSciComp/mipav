@@ -5,13 +5,18 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.Map.Entry;
 
+import gov.nih.mipav.model.algorithms.CeresSolver.BlockRandomAccessMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
+import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.WeightedGraph;
+import gov.nih.mipav.model.algorithms.CeresSolver.CellInfo;
 import gov.nih.mipav.view.Preferences;
 
 /**
@@ -1365,6 +1370,203 @@ public class CeresSolver2 {
 				  }
 				}
 
+			// A thread safe square block sparse implementation of
+			// BlockRandomAccessMatrix. Internally a TripletSparseMatrix is used
+			// for doing the actual storage. This class augments this matrix with
+			// an unordered_map that allows random read/write access.
+			public class BlockRandomAccessSparseMatrix extends BlockRandomAccessMatrix {
+			  private final long kMaxRowBlocks;
+			  // row/column block sizes.
+			  private final Vector<Integer> blocks_;
+			  private Vector<Integer> block_positions_;
+			  // A mapping from <row_block_id, col_block_id> to the position in
+			  // the values array of tsm_ where the block is stored.
+			  private HashMap<Long, CellInfo> layout_;
+			  
+			  // In order traversal of contents of the matrix. This allows us to
+			  // implement a matrix-vector which is 20% faster than using the
+			  // iterator in the Layout object instead.
+			  private Vector<Pair<Pair<Integer, Integer>, Pair<double[], Integer> >> cell_values_;
+			  // The underlying matrix object which actually stores the cells.
+			  private TripletSparseMatrix tsm_;
+			  // blocks is an array of block sizes. block_pairs is a set of
+			  // <row_block_id, col_block_id> pairs to identify the non-zero cells
+			  // of this matrix.
+			  public BlockRandomAccessSparseMatrix(Vector<Integer> blocks, Set<Pair<Integer, Integer> > block_pairs) {
+				  ce.super();
+				  kMaxRowBlocks = 10 * 1000 * 1000;
+			      blocks_ = blocks;
+			      if (blocks.size() >= kMaxRowBlocks) {
+			    	  System.err.println("In public BlockRandomAccessSparseMatrix blocks.size() >= kMaxRowBlocks");
+			    	  return;
+			      }
 
+			      // Build the row/column layout vector and count the number of scalar
+			      // rows/columns.
+			      int num_cols = 0;
+			      block_positions_.ensureCapacity(blocks_.size());
+			      for (int i = 0; i < blocks_.size(); ++i) {
+			        block_positions_.add(num_cols);
+			        num_cols += blocks_.get(i);
+			      }
+
+			      // Count the number of scalar non-zero entries and build the layout
+			      // object for looking into the values array of the
+			      // TripletSparseMatrix.
+			      int num_nonzeros = 0;
+			      for (Pair<Integer, Integer> pair : block_pairs) {
+			        final int row_block_size = blocks_.get((int) pair.first);
+			        final int col_block_size = blocks_.get((int) pair.second);
+			        num_nonzeros += row_block_size * col_block_size;
+			      }
+
+			      if (1 <= ce.MAX_LOG_LEVEL) {
+			          Preferences.debug("TripletSparseMatrix Size ["+num_cols+","+num_cols+"]\n",Preferences.DEBUG_ALGORITHM);
+			          Preferences.debug("num_nonzeros = " + num_nonzeros + "\n",Preferences.DEBUG_ALGORITHM);
+			      }
+
+			      tsm_ = ce.new TripletSparseMatrix(num_cols, num_cols, num_nonzeros);
+			      tsm_.set_num_nonzeros(num_nonzeros);
+			      int[] rows = tsm_.mutable_rows();
+			      int[] cols = tsm_.mutable_cols();
+			      double[] values = tsm_.mutable_values();
+
+			      int pos = 0;
+			      for (Pair<Integer, Integer> pair : block_pairs) {
+				        final int row_block_size = blocks_.get((int) pair.first);
+				        final int col_block_size = blocks_.get((int) pair.second);
+			            cell_values_.add(ce.new Pair<Pair<Integer, Integer>, Pair<double[], Integer> >(ce.new Pair<Integer,Integer>(pair.first, pair.second),
+			                                         ce.new Pair<double[],Integer>(values,pos)));
+			        layout_.put(IntPairToLong(pair.first, pair.second),
+			            ce.new CellInfo(values,pos));
+			        pos += row_block_size * col_block_size;
+			      }
+
+			      // Fill the sparsity pattern of the underlying matrix.
+			      for (Pair<Integer, Integer> pair : block_pairs) {
+			        final int row_block_id = pair.first;
+			        final int col_block_id = pair.second;
+			        final int row_block_size = blocks_.get(row_block_id);
+			        final int col_block_size = blocks_.get(col_block_id);
+			        pos = layout_.get(IntPairToLong(row_block_id, col_block_id)).values_index;
+			        for (int r = 0; r < row_block_size; ++r) {
+			          for (int c = 0; c < col_block_size; ++c, ++pos) {
+			              rows[pos] = block_positions_.get(row_block_id) + r;
+			              cols[pos] = block_positions_.get(col_block_id) + c;
+			              values[pos] = 1.0;
+			              if (rows[pos] >= tsm_.num_rows()) {
+			            	  System.err.println("In public BlockRandomAccessSparseMatrix rows[pos] >= tsm_.num_rows()");
+			            	  return;
+			              }
+			              if (cols[pos] >= tsm_.num_rows()) {
+			            	  System.err.println("In public BlockRandomAccessSparseMatrix cols[pos] >= tsm_.num_rows()");
+			            	  return;
+			              }
+			          }
+			        }
+			      }
+			  }
+
+			  // The destructor is not thread safe. It assumes that no one is
+			  // modifying any cells when the matrix is being destroyed.
+			  // Assume that the user does not hold any locks on any cell blocks
+			  // when they are calling SetZero.
+			  public void finalize() {
+				  Iterator<Entry<Long, CellInfo>> it1 = layout_.entrySet().iterator(); 
+				  while (it1.hasNext()) {
+					  Map.Entry<Long, CellInfo> pair = (Map.Entry<Long, CellInfo>) it1.next();
+					  CellInfo ci = pair.getValue();
+					  ci.finalize();
+					  ci = null;
+				  }
+			  }
+
+			  // BlockRandomAccessMatrix Interface.
+			  public  CellInfo GetCell(int row_block_id,
+			                            int col_block_id,
+			                            int[] row,
+			                            int[] col,
+			                            int[] row_stride,
+			                            int[] col_stride) {
+				  CellInfo ci = layout_.get(IntPairToLong(row_block_id, col_block_id));
+					  if (ci == null) {
+					    return null;
+					  }
+
+					  // Each cell is stored contiguously as its own little dense matrix.
+					  row[0] = 0;
+					  col[0] = 0;
+					  row_stride[0] = blocks_.get(row_block_id);
+					  col_stride[0] = blocks_.get(col_block_id);
+					  return ci;
+			  }
+
+			  // This is not a thread safe method, it assumes that no cell is
+			  // locked.
+			  // Assume that the user does not hold any locks on any cell blocks
+			  // when they are calling SetZero.
+			  public void SetZero() {
+				  if (tsm_.num_nonzeros() > 0) {
+					  for (int i = 0; i < tsm_.num_nonzeros(); i++) {
+						  tsm_.mutable_values()[i] = 0.0;
+					  }
+				  }
+			  }
+
+			  // Assume that the matrix is symmetric and only one half of the
+			  // matrix is stored.
+			  //
+			  // y += S * x
+			  public void SymmetricRightMultiply(double[] x, double[] y) {
+				     int i;
+					 for (i = 0; i < cell_values_.size(); i++) {
+					    final int row = cell_values_.get(i).first.first;
+					    final int row_block_size = blocks_.get(row);
+					    final int row_block_pos = block_positions_.get(row);
+
+					    final int col = cell_values_.get(i).first.second;
+					    final int col_block_size = blocks_.get(col);
+					    final int col_block_pos = block_positions_.get(col);
+
+					    ce.MatrixVectorMultiply(ce.DYNAMIC, ce.DYNAMIC, 1,
+					        cell_values_.get(i).second.first, cell_values_.get(i).second.second, row_block_size, col_block_size,
+					        x, col_block_pos,
+					        y, row_block_pos);
+
+					    // Since the matrix is symmetric, but only the upper triangular
+					    // part is stored, if the block being accessed is not a diagonal
+					    // block, then use the same block to do the corresponding lower
+					    // triangular multiply also.
+					    if (row != col) {
+					      ce.MatrixTransposeVectorMultiply(ce.DYNAMIC, ce.DYNAMIC, 1,
+					    		  cell_values_.get(i).second.first, cell_values_.get(i).second.second, row_block_size, col_block_size,
+					          x, row_block_pos,
+					          y, col_block_pos);
+					    }
+					  }
+
+			  }
+
+			  // Since the matrix is square, num_rows() == num_cols().
+			  public int num_rows() { return tsm_.num_rows(); }
+			  public int num_cols() { return tsm_.num_cols(); }
+
+			  // Access to the underlying matrix object.
+			  public TripletSparseMatrix matrix() { return tsm_; }
+			  public TripletSparseMatrix mutable_matrix() { return tsm_; }
+
+			 private long IntPairToLong(int row, int col) {
+			    return row * kMaxRowBlocks + col;
+			  }
+
+			  public void LongToIntPair(long index, int[] row, int[] col) {
+			    row[0] = (int)(index / kMaxRowBlocks);
+			    col[0] = (int)(index % kMaxRowBlocks);
+			  }
+
+			  
+
+			  //friend class BlockRandomAccessSparseMatrixTest;
+			};
 			
 }
