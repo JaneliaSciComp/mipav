@@ -4760,7 +4760,7 @@ public class CeresSolver {
 	
 	// Structure to carry a pointer to the array containing a cell and the
 	// Mutex guarding it.
-	class CellInfo {
+	public class CellInfo {
       public double values[];
       public int values_index;
 	  public Lock m;
