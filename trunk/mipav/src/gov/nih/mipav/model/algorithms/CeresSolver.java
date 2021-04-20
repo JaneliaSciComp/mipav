@@ -17187,7 +17187,7 @@ public class CeresSolver {
 
 	class CostFunction {
 		private int num_residuals_;
-		private Vector<Integer> parameter_block_sizes_;
+		protected Vector<Integer> parameter_block_sizes_;
 
 		public CostFunction() {
 			num_residuals_ = 0;
