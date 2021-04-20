@@ -42,12 +42,14 @@ import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffMethodType;
 import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.Ownership;
+import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
 import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
 import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BiCubicInterpolator;
+import gov.nih.mipav.model.algorithms.CeresSolver2.BlockRandomAccessSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CanonicalViewsClusteringOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
@@ -19576,5 +19578,374 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  }
 	}
 
+	public void BlockRandomAccessSparseMatrixGetCell() {
+		  // BlockRandomAccessSparseMatrixGetCell() passed all tests
+		  String testName = "BlockRandomAccessSparseMatrixGetCell()";
+		  boolean passed = true;
+		  int r,c;
+		  Vector<Integer> blocks = new Vector<Integer>();
+		  blocks.add(3);
+		  blocks.add(4);
+		  blocks.add(5);
+		  final int num_rows = 3 + 4 + 5;
 
+		  Set< Pair<Integer, Integer> > block_pairs = new HashSet<Pair<Integer, Integer>>();
+		  int num_nonzeros = 0;
+		  block_pairs.add(new Pair<Integer, Integer>(0, 0));
+		  num_nonzeros += blocks.get(0) * blocks.get(0);
+
+		  block_pairs.add(new Pair<Integer, Integer>(1, 1));
+		  num_nonzeros += blocks.get(1) * blocks.get(1);
+
+		  block_pairs.add(new Pair<Integer, Integer>(1, 2));
+		  num_nonzeros += blocks.get(1) * blocks.get(2);
+
+		  block_pairs.add(new Pair<Integer, Integer>(0, 2));
+		  num_nonzeros += blocks.get(2) * blocks.get(0);
+
+		  BlockRandomAccessSparseMatrix m = ce2.new BlockRandomAccessSparseMatrix(blocks, block_pairs);
+		  if (m.num_rows() != num_rows) {
+			  System.err.println("In " + testName + " m.num_rows() != num_rows");
+			  passed = false;
+		  }
+		  if (m.num_cols() != num_rows) {
+			  System.err.println("In " + testName + " m.num_cols() != num_rows");
+			  passed = false;
+		  }
+
+		  for (Pair<Integer, Integer> pair : block_pairs) {
+		    final int row_block_id = pair.first;
+		    final int col_block_id = pair.second;
+		    int row[] = new int[1];
+		    int col[] = new int[1];
+		    int row_stride[] = new int[1];
+		    int col_stride[] = new int[1];
+		    CellInfo cell =  m.GetCell(row_block_id, col_block_id,
+		                                row, col,
+		                                row_stride, col_stride);
+		    if (cell == null) {
+		    	System.err.println("In " + testName + " cell == null");
+		    	passed = false;
+		    }
+		    if (row[0] != 0) {
+		    	System.err.println("In " + testName + " row[0] != 0");
+		    	passed = false;
+		    }
+		    if (col[0] != 0) {
+		    	System.err.println("In " + testName + " col[0] != 0");
+		    	passed = false;
+		    }
+		    if (row_stride[0] != blocks.get(row_block_id)) {
+		    	System.err.println("In " + testName + " row_stride[0] != blocks.get(row_block_id)");
+		    	passed = false;
+		    }
+		    if (col_stride[0] != blocks.get(col_block_id)) {
+		    	System.err.println("In " + testName + " col_stride[0] != blocks.get(col_block_id)");
+		    	passed = false;
+		    }
+
+		    // Write into the block
+		    for (r = row[0]; r < row[0] + blocks.get(row_block_id); r++) {
+		    	for (c = col[0]; c < col[0] + blocks.get(col_block_id); c++) {
+		    		cell.values[cell.values_index + r * blocks.get(col_block_id) + c] = (row_block_id + 1) * (col_block_id + 1);
+		    	}
+		    }
+		  }
+
+		  final TripletSparseMatrix tsm = m.matrix();
+		  if (tsm.num_nonzeros() != num_nonzeros) {
+			  System.err.println("In " + testName + " tsm.num_nonzeros() != num_nonzeros");
+			  passed = false;
+		  }
+		  if (tsm.max_num_nonzeros() != num_nonzeros) {
+			  System.err.println("In " + testName + " tsm.max_num_nonzeros() != num_nonzeros");
+			  passed = false;
+		  }
+
+		  Matrix dense = tsm.ToDenseMatrix();
+
+		  double kTolerance = 1e-14;
+
+		  // (0, 0)
+		  if (((dense.getMatrix(0, 2, 0, 2)).minus(new Matrix(3, 3, 1.0))).normF() > kTolerance) {
+			  System.err.println("In " + testName + " ((dense.getMatrix(0, 0, 2, 2)).minus(new Matrix(3, 3, 1.0))).normF() > kTolerance");
+			  passed = false;
+		  }
+		  // (1, 1)
+		  if (((dense.getMatrix(3, 6, 3, 6)).minus(new Matrix(4, 4, 4.0))).normF() > kTolerance) {
+			  System.err.println("In " + testName + " ((dense.getMatrix(3, 3, 6, 6)).minus(new Matrix(4, 4, 4.0))).normF() > kTolerance");
+			  passed = false;
+		  }
+		  // (1, 2)
+		  if (((dense.getMatrix(3, 6, 7, 11)).minus(new Matrix(4, 5, 6.0))).normF() > kTolerance) {
+			  System.err.println("In " + testName + " ((dense.getMatrix(3, 6, 7, 11)).minus(new Matrix(4, 5, 6.0))).normF() > kTolerance");
+			  passed = false;
+		  }
+		  // (0, 2)
+		  if (((dense.getMatrix(0, 2, 7, 11)).minus(new Matrix(3, 5, 3.0))).normF() > kTolerance) {
+			  System.err.println("In " + testName + " ((dense.getMatrix(0, 2, 7, 11)).minus(new Matrix(3, 5, 3.0))).normF() > kTolerance");
+			  passed = false;
+		  }
+
+		  // There is nothing else in the matrix besides these four blocks.
+		  if ((dense.normF() - Math.sqrt(9. + 16. * 16. + 36. * 20. + 9. * 15.)) > kTolerance) {
+			  System.err.println("In " + testName + " (dense.normF() - Math.sqrt(9. + 16. * 16. + 36. * 20. + 9. * 15.)) > kTolerance");
+			  passed = false;
+		  }
+		  
+		  // dense number of rows = dense number of columns
+		  Matrix dense_upper_triangular_symmetric = new Matrix(dense.getRowDimension(), dense.getColumnDimension(),0.0);
+		  for (r = 0; r < dense.getRowDimension(); r++) {
+			  for (c = r; c < dense.getColumnDimension(); c++) {
+				  dense_upper_triangular_symmetric.set(r,c,dense.get(r,c));
+				  dense_upper_triangular_symmetric.set(c,r,dense.get(r,c));
+			  }
+		  }
+		  Matrix xMat = new Matrix(dense.getRowDimension(),1,1.0);
+		  Matrix expected_yMat = dense_upper_triangular_symmetric.times(xMat);
+		  double expected_y[] = new double[dense.getColumnDimension()];
+		  for (c = 0; c < dense.getColumnDimension(); c++) {
+			  expected_y[c] = expected_yMat.get(c,0);
+		  }
+		  double x[] = new double[dense.getRowDimension()];
+		  for (r = 0; r < dense.getRowDimension(); r++) {
+			  x[r] = 1.0;
+		  }
+		  double actual_y[] = new double[dense.getRowDimension()];
+		  m.SymmetricRightMultiply(x, actual_y);
+          double norm = 0.0;
+          for (r = 0; r < dense.getRowDimension(); r++) {
+        	  double diff = expected_y[r] - actual_y[r];
+        	  norm += diff * diff;
+          }
+          norm = Math.sqrt(norm);
+          if (norm > kTolerance) {
+        	  System.err.println("In " + testName + " (expected_y - actual_y).norm() > kTolerance");
+        	  passed = false;
+        	  for (r = 0; r < dense.getRowDimension(); r++) {
+        		  System.err.println("actual_y["+r+"] = " + actual_y[r] + " expected_y["+r+"] = " + expected_y[r]);
+        	  }
+        	  for (r = 0; r < dense.getRowDimension(); r++) {
+        		  for (c = 0; c < dense.getColumnDimension(); c++) {
+        			  System.err.println("dense.get("+r+","+c+") = " + dense.get(r,c));
+        		  }
+        	  }
+          }
+		  if (passed) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+	
+	public void CheckIntPairToLong(int a, int b, String testName, boolean passed[]) {
+		// BlockRandomAccessSparseMatrixTestIntPairToLongOverflow() passed all tests
+		BlockRandomAccessSparseMatrix m_;
+		Vector<Integer> blocks = new Vector<Integer>();
+	    blocks.add(1);
+	    Set< Pair<Integer, Integer> > block_pairs = new HashSet<Pair<Integer, Integer>>();
+	    block_pairs.add(new Pair<Integer, Integer>(0, 0));
+	    m_ = ce2.new BlockRandomAccessSparseMatrix(blocks, block_pairs);
+
+	    long value = m_.IntPairToLong(a, b);
+	    if (value <= 0) {
+	    	System.err.println("In " + testName + " Overflow a = " + a + " b = " + b);
+	    	passed[0] = false;
+	    }
+	    if (value <= a) {
+	    	System.err.println("In " + testName + " Overflow a = " + a + " b = " + b);
+	    	passed[0] = false;
+	    }
+	    if (value <= b) {
+	    	System.err.println("In " + testName + " Overflow a = " + a + " b = " + b);
+	    	passed[0] = false;
+	    }
+	  }
+
+	public void BlockRandomAccessSparseMatrixTestIntPairToLongOverflow() {
+		  String testName = "BlockRandomAccessSparseMatrixTestIntPairToLongOverflow()";
+		  boolean passed[] = new boolean[] {true};
+		  CheckIntPairToLong(Integer.MAX_VALUE, Integer.MAX_VALUE, testName, passed);
+		  if (passed[0]) {
+			  System.out.println(testName + " passed all tests");
+		  }
+	}
+	
+	public void CheckLongToIntPair(String testName, boolean passed[]) {
+		BlockRandomAccessSparseMatrix m_;
+		Vector<Integer> blocks = new Vector<Integer>();
+	    blocks.add(1);
+	    Set< Pair<Integer, Integer> > block_pairs = new HashSet<Pair<Integer, Integer>>();
+	    block_pairs.add(new Pair<Integer, Integer>(0, 0));
+	    m_ = ce2.new BlockRandomAccessSparseMatrix(blocks, block_pairs);
+	    long max_rows =  m_.kMaxRowBlocks;
+	    for (int row = (int)(max_rows - 10); row < (int)max_rows; ++row) {
+	      for (int col = 0; col < 10; ++col) {
+	        int row_computed[] = new int[1];
+	        int col_computed[] = new int[1];
+	        m_.LongToIntPair(m_.IntPairToLong(row, col),
+	                          row_computed,
+	                          col_computed);
+	        if (row != row_computed[0]) {
+	        	System.err.println("In " + testName + " row != row_computed[0]");
+	        	passed[0] = false;
+	        }
+	        if (col != col_computed[0]) {
+	        	System.err.println("In " + testName + " col != col_computed[0]");
+	        	passed[0] = false;
+	        }
+	      }
+	    }
+	  }
+
+    public void BlockRandomAccessSparseMatrixTestLongToIntPair() {
+    	  String testName = "BlockRandomAccessSparseMatrixTestLongToIntPair()";
+    	  boolean passed[] = new boolean[] {true};
+    	  CheckLongToIntPair(testName, passed);
+    	  if (passed[0]) {
+    		  System.out.println(testName + " passed all tests");
+    	  }
+    }
+    
+    public void DenseLinearSolverTest1() {
+    	  // DenseLinearSolverTest1() passed all tests
+    	  String testName = "DenseLinearSolverTest1()";
+    	  boolean passed = true;
+    	  int i;
+    	  final boolean regularized = true;
+
+    	  LinearLeastSquaresProblem problem = 
+    	      CreateLinearLeastSquaresProblemFromId(0);
+    	  DenseSparseMatrix lhs = new DenseSparseMatrix((TripletSparseMatrix)problem.A);
+
+    	  final int num_cols = lhs.num_cols();
+    	  final int num_rows = lhs.num_rows();
+
+    	  double rhs[] = new double[num_rows + num_cols];
+    	  for (i = 0; i < num_rows; i++) {
+    		  rhs[i] = problem.b[i];
+    	  }
+
+    	  LinearSolverOptions options = new LinearSolverOptions();
+    	  options.type = LinearSolverType.DENSE_QR;
+    	  options.dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
+    	  Context context = new Context();
+    	  options.context = context;
+    	  LinearSolver solver = Create(options);
+
+    	  LinearSolverPerSolveOptions per_solve_options = new LinearSolverPerSolveOptions();
+    	  if (regularized) {
+    	    per_solve_options.D = problem.D;
+    	  }
+
+    	  double solution[] = new double[num_cols];
+    	  LinearSolverSummary summary =
+    	      solver.Solve(lhs, rhs, per_solve_options, solution);
+    	  if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
+    		  System.err.println("In " + testName + " passed all tests");
+    		  passed = false;
+    	  }
+
+    	  // If solving for the regularized solution, add the diagonal to the
+    	  // matrix. This makes subsequent computations simpler.
+    	  if (regularized) {
+    	    lhs.AppendDiagonal(problem.D);
+    	  };
+
+    	  double tmp[] = new double[num_rows + num_cols];
+    	  lhs.RightMultiply(solution, tmp);
+    	  double actual_normal_rhs[] = new double[num_cols];
+    	  lhs.LeftMultiply(tmp, actual_normal_rhs);
+
+    	  double expected_normal_rhs[] = new double[num_cols];
+    	  lhs.LeftMultiply(rhs, expected_normal_rhs);
+    	  double rhsNorm = 0.0;
+    	  double diffNorm = 0.0;
+    	  for (i = 0; i < num_cols; i++) {
+    		  double diff = expected_normal_rhs[i] - actual_normal_rhs[i];
+    		  diffNorm += diff * diff;
+    		  rhsNorm += expected_normal_rhs[i]*expected_normal_rhs[i];
+    	  }
+    	  diffNorm = Math.sqrt(diffNorm);
+    	  rhsNorm = Math.sqrt(rhsNorm);
+    	  
+    	  final double residual = diffNorm / rhsNorm;
+          if (residual > 10.0 * epsilon) {
+        	  System.err.println("In " + testName + " residual > 10.0 * epsilon");
+        	  passed = false;
+          }
+    	  if (passed) {
+    		  System.out.println(testName + " passed all tests");
+    	  }
+    	}
+
+    public void DenseLinearSolverTest2() {
+      // DenseLinearSolverTest2() passed all tests
+  	  String testName = "DenseLinearSolverTest2()";
+  	  boolean passed = true;
+  	  int i;
+  	  final boolean regularized = false;
+
+  	  LinearLeastSquaresProblem problem = 
+  	      CreateLinearLeastSquaresProblemFromId(1);
+  	  DenseSparseMatrix lhs = new DenseSparseMatrix((TripletSparseMatrix)problem.A);
+
+  	  final int num_cols = lhs.num_cols();
+  	  final int num_rows = lhs.num_rows();
+
+  	  double rhs[] = new double[num_rows + num_cols];
+  	  for (i = 0; i < num_rows; i++) {
+  		  rhs[i] = problem.b[i];
+  	  }
+
+  	  LinearSolverOptions options = new LinearSolverOptions();
+  	  options.type = LinearSolverType.DENSE_NORMAL_CHOLESKY;
+  	  options.dense_linear_algebra_library_type = DenseLinearAlgebraLibraryType.LAPACK;
+  	  Context context = new Context();
+  	  options.context = context;
+  	  LinearSolver solver = Create(options);
+
+  	  LinearSolverPerSolveOptions per_solve_options = new LinearSolverPerSolveOptions();
+  	  if (regularized) {
+  	    per_solve_options.D = problem.D;
+  	  }
+
+  	  double solution[] = new double[num_cols];
+  	  LinearSolverSummary summary =
+  	      solver.Solve(lhs, rhs, per_solve_options, solution);
+  	  if (summary.termination_type != LinearSolverTerminationType.LINEAR_SOLVER_SUCCESS) {
+  		  System.err.println("In " + testName + " passed all tests");
+  		  passed = false;
+  	  }
+
+  	  // If solving for the regularized solution, add the diagonal to the
+  	  // matrix. This makes subsequent computations simpler.
+  	  if (regularized) {
+  	    lhs.AppendDiagonal(problem.D);
+  	  };
+
+  	  double tmp[] = new double[num_rows + num_cols];
+  	  lhs.RightMultiply(solution, tmp);
+  	  double actual_normal_rhs[] = new double[num_cols];
+  	  lhs.LeftMultiply(tmp, actual_normal_rhs);
+
+  	  double expected_normal_rhs[] = new double[num_cols];
+  	  lhs.LeftMultiply(rhs, expected_normal_rhs);
+  	  double rhsNorm = 0.0;
+  	  double diffNorm = 0.0;
+  	  for (i = 0; i < num_cols; i++) {
+  		  double diff = expected_normal_rhs[i] - actual_normal_rhs[i];
+  		  diffNorm += diff * diff;
+  		  rhsNorm += expected_normal_rhs[i]*expected_normal_rhs[i];
+  	  }
+  	  diffNorm = Math.sqrt(diffNorm);
+  	  rhsNorm = Math.sqrt(rhsNorm);
+  	  
+  	  final double residual = diffNorm / rhsNorm;
+        if (residual > 10.0 * epsilon) {
+      	  System.err.println("In " + testName + " residual > 10.0 * epsilon");
+      	  passed = false;
+        }
+  	  if (passed) {
+  		  System.out.println(testName + " passed all tests");
+  	  }
+  	}
 }
