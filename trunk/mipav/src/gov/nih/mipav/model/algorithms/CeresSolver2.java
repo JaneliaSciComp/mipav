@@ -1375,7 +1375,7 @@ public class CeresSolver2 {
 			// for doing the actual storage. This class augments this matrix with
 			// an unordered_map that allows random read/write access.
 			public class BlockRandomAccessSparseMatrix extends BlockRandomAccessMatrix {
-			  private final long kMaxRowBlocks;
+			  public final long kMaxRowBlocks;
 			  // row/column block sizes.
 			  private final Vector<Integer> blocks_;
 			  private Vector<Integer> block_positions_;
@@ -1400,6 +1400,9 @@ public class CeresSolver2 {
 			    	  System.err.println("In public BlockRandomAccessSparseMatrix blocks.size() >= kMaxRowBlocks");
 			    	  return;
 			      }
+			      block_positions_ = new Vector<Integer>();
+			      layout_ = new HashMap<Long, CellInfo>();
+			      cell_values_ = new Vector<Pair<Pair<Integer, Integer>, Pair<double[], Integer> >>();
 
 			      // Build the row/column layout vector and count the number of scalar
 			      // rows/columns.
@@ -1555,7 +1558,7 @@ public class CeresSolver2 {
 			  public TripletSparseMatrix matrix() { return tsm_; }
 			  public TripletSparseMatrix mutable_matrix() { return tsm_; }
 
-			 private long IntPairToLong(int row, int col) {
+			 public long IntPairToLong(int row, int col) {
 			    return row * kMaxRowBlocks + col;
 			  }
 
