@@ -26113,20 +26113,49 @@ public class CeresSolver {
 		  public  boolean Evaluate(Vector<double[]> parameters,
 		                        double[] residuals,
 		                        double[][] jacobians) {
-			  int i, j;
+			  int i, j, k;
+			  int numpar = 0;
+			  for (j = 0; j < parameters.size(); j++) {
+				  numpar += parameters.get(j).length;
+			  }
+			  if (numpar != parameter_block_sizes().get(0)) {
+				  System.err.println("In NormalPrior Evaluate (numpar != parameter_block_sizes().get(0)");
+				  return false;
+			  }
+			  double par[] = new double[numpar];
+			  for (i = 0, j = 0; j < parameters.size(); j++) {
+				  for (k = 0; k < parameters.get(j).length; k++) {
+					  par[i++] = parameters.get(j)[k];
+				  }
+			  }
+			  double jac[] = null;
+			  if (jacobians != null) {
+				  int numJacobians = 0;
+				  for (i = 0; i < jacobians.length; i++) {
+					  if (jacobians[i] != null) {
+					      numJacobians += jacobians[i].length;
+					  }
+				  }
+				  jac = new double[numJacobians];
+			  }
 			  // The following line should read
 			  // r = A_ * (p - b_);
 			  // The extra eval is to get around a bug in the eigen library.
 			  for (i = 0; i < num_residuals(); i++) {
 				  residuals[i] = 0;
 				  for (j = 0; j < parameter_block_sizes().get(0); j++) {
-					  residuals[i] += (A_.get(i,j) * (parameters.get(j)[0] - b_.get(j)));
+					  residuals[i] += (A_.get(i,j) * (par[j] - b_.get(j)));
 				  }
 			  }
 			  if ((jacobians != null) && (jacobians[0] != null)) {
 				for (i = 0; i < num_residuals(); i++) {
 					for (j = 0; j < parameter_block_sizes().get(0); j++) {
-						jacobians[i][j] = A_.get(i,j);
+						jac[i*parameter_block_sizes().get(0) + j] = A_.get(i,j);
+					}
+				}
+				for (k = 0, i = 0; i < jacobians.length; i++) {
+					for (j = 0; j < jacobians[i].length; j++) {
+						jacobians[i][j] = jac[k++];
 					}
 				}
 			  }
