@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import gov.nih.mipav.model.algorithms.CeresSolver.BlockRandomAccessMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
+import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
+import gov.nih.mipav.model.algorithms.CeresSolver.Ownership;
 import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.WeightedGraph;
@@ -1566,10 +1568,148 @@ public class CeresSolver2 {
 			    row[0] = (int)(index / kMaxRowBlocks);
 			    col[0] = (int)(index % kMaxRowBlocks);
 			  }
+			};
+			
+			// This class allows you to apply different conditioning to the residual
+			// values of a wrapped cost function. An example where this is useful is
+			// where you have an existing cost function that produces N values, but you
+			// want the total cost to be something other than just the sum of these
+			// squared values - maybe you want to apply a different scaling to some
+			// values, to change their contribution to the cost.
+			//
+			// Usage:
+			//
+			//   // my_cost_function produces N residuals
+			//   CostFunction* my_cost_function = ...
+			//   CHECK_EQ(N, my_cost_function->num_residuals());
+			//   vector<CostFunction*> conditioners;
+			//
+			//   // Make N 1x1 cost functions (1 parameter, 1 residual)
+			//   CostFunction* f_1 = ...
+			//   conditioners.push_back(f_1);
+			//   ...
+			//   CostFunction* f_N = ...
+			//   conditioners.push_back(f_N);
+			//   ConditionedCostFunction* ccf =
+            //			     new ConditionedCostFunction(my_cost_function, conditioners);
+			//
+			// Now ccf's residual i (i=0..N-1) will be passed though the i'th conditioner.
+			//
+			//   ccf_residual[i] = f_i(my_cost_function_residual[i])
+			//
+			// and the Jacobian will be affected appropriately.
+			public class ConditionedCostFunction extends CostFunction {
+				private CostFunction wrapped_cost_function_;
+			    private Vector<CostFunction> conditioners_;
+			    private Ownership ownership_;
+		
+			  // Builds a cost function based on a wrapped cost function, and a
+			  // per-residual conditioner. Takes ownership of all of the wrapped cost
+			  // functions, or not, depending on the ownership parameter. Conditioners
+			  // may be NULL, in which case the corresponding residual is not modified.
+			    public ConditionedCostFunction(CostFunction wrapped_cost_function,
+			                          Vector<CostFunction> conditioners,
+			                          Ownership ownership) {
+			    	ce.super();
+			    	wrapped_cost_function_ = wrapped_cost_function;
+			        conditioners_ = conditioners;
+			        ownership_ = ownership;
+			        // Set up our dimensions.
+			        set_num_residuals(wrapped_cost_function_.num_residuals());
+			        parameter_block_sizes_ =
+			            wrapped_cost_function_.parameter_block_sizes();
 
+			        // Sanity-check the conditioners' dimensions.
+			        if (wrapped_cost_function_.num_residuals() != conditioners_.size()) {
+			        	System.err.println("In public ConditionedCostFunction wrapped_cost_function_.num_residuals() != conditioners_.size()");
+			        	return;
+			        }
+			        for (int i = 0; i < wrapped_cost_function_.num_residuals(); i++) {
+			          if (conditioners.get(i) != null) {
+			            if (1 != conditioners.get(i).num_residuals()) {
+			            	System.err.println("In public ConditionedCostFunction 1 != conditioners.get("+i+").num_residuals()");
+			            	return;
+			            }
+			            if (1 != conditioners.get(i).parameter_block_sizes().size()) {
+			            	System.err.println("In public ConditionedCostFunction 1 != conditioners.get("+i+").parameter_block_sizes().size()");
+			            	return;
+			            }
+			            if (1 != conditioners.get(i).parameter_block_sizes().get(0)) {
+			            	System.err.println("In public ConditionedCostFunction 1 != conditioners.get("+i+").parameter_block_sizes().get(0)");
+			            	return;
+			            }
+			          }
+			        }
+
+			    }
 			  
+			    
+			    public void finalize() {
+			    	if (ownership_ == Ownership.TAKE_OWNERSHIP) {
+			    	    for (int i = 0; i < conditioners_.size(); i++) {
+			    	    	CostFunction cf = conditioners_.get(i);
+			    	    	cf = null;
+			    	    }
+			    	}
+			    }
 
-			  //friend class BlockRandomAccessSparseMatrixTest;
+			  public boolean Evaluate(Vector<double[]> parameters,
+			                        double[] residuals,
+			                        double[][] jacobians) {
+				  boolean success = wrapped_cost_function_.Evaluate(parameters, residuals,
+                          jacobians);
+				if (!success) {
+				return false;
+				}
+				
+				for (int r = 0; r < wrapped_cost_function_.num_residuals(); r++) {
+				// On output, we want to have
+				// residuals[r] = conditioners[r](wrapped_residuals[r])
+				// For parameter block i, column c,
+				// jacobians[i][r*parameter_block_size_[i] + c] =
+				//   = d residual[r] / d parameters[i][c]
+				//   = conditioners[r]'(wrapped_residuals[r]) *
+				//       d wrapped_residuals[r] / d parameters[i][c]
+				if (conditioners_.get(r) != null) {
+				double[][] conditioner_derivative_pointer2;
+				if (jacobians == null) {
+				conditioner_derivative_pointer2 = null;
+				}
+				else {
+					conditioner_derivative_pointer2 = new double[1][1];
+				}
+				
+				double res[] = new double[] {residuals[r]};
+				Vector<double[]>parameters2 = new Vector<>();
+				parameters2.add(res);
+				success = conditioners_.get(r).Evaluate(parameters2,
+				                   res,
+				                   conditioner_derivative_pointer2);
+				residuals[r] = res[0];
+				if (!success) {
+				return false;
+				}
+				
+				if (jacobians != null) {
+				for (int i = 0;
+				i < wrapped_cost_function_.parameter_block_sizes().size();
+				i++) {
+				if (jacobians[i] != null) {
+				int parameter_block_size =
+				wrapped_cost_function_.parameter_block_sizes().get(i);
+				for (int j = 0; j < parameter_block_size; j++) {
+					jacobians[i][j + r * parameter_block_size] *= conditioner_derivative_pointer2[0][0];
+				}
+				}
+				}
+				}
+				}
+				}
+				return true;
+
+			  }
+
+			 
 			};
 			
 }
