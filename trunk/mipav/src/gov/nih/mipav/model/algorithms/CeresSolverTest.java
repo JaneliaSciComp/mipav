@@ -19978,6 +19978,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     
     // Tests that ConditionedCostFunction does what it's supposed to.
     public void CostFunctionTestConditionedCostFunction() {
+      // CostFunctionTestConditionedCostFunction() passed all tests
       String testName = "CostFunctionTestConditionedCostFunction()";
       boolean passed = true;
       // The size of the cost functions we build.
@@ -20026,11 +20027,11 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
       Vector<double[]>parameters = new Vector<double[]>(1);
       parameters.add(v1);
       double jacs[][] = new double[1][kTestCostFunctionSize*kTestCostFunctionSize];
-      for (i = 0; i < kTestCostFunctionSize*kTestCostFunctionSize; i++) {
-    		  jacs[0][i] = jac[i];
-      }
 
       conditioned_cost_function.Evaluate(parameters, result, jacs);
+      for (i = 0; i < kTestCostFunctionSize*kTestCostFunctionSize; i++) {
+		  jac[i] = jacs[0][i];
+  }
       for (i = 0; i < kTestCostFunctionSize; i++) {
         if (((i + 2) * (v1[i] - v2[i]) + i * 7) != result[i]) {
         	System.err.println("In " + testName + " i = " + i + " ((i + 2) * (v1[i] - v2[i]) + i * 7) != result[i]");
