@@ -886,7 +886,7 @@ public class CeresSolver2 {
 			//
 			// "Cubic convolution interpolation for digital image processing".
 			// IEEE Transactions on Acoustics, Speech, and Signal Processing
-			// 29 (6): 1153–1160.
+			// 29 (6): 1153-1160.
 			//
 			// For more details see
 			//
@@ -1022,7 +1022,7 @@ public class CeresSolver2 {
 			//
 			// "Cubic convolution interpolation for digital image processing".
 			// Robert G. Keys, IEEE Trans. on Acoustics, Speech, and Signal
-			// Processing 29 (6): 1153–1160, 1981.
+			// Processing 29 (6): 1153-1160, 1981.
 			//
 			// http://en.wikipedia.org/wiki/Cubic_Hermite_spline
 			// http://en.wikipedia.org/wiki/Bicubic_interpolation
