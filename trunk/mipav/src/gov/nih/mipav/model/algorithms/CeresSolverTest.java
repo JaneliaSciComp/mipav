@@ -51,6 +51,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BiCubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BlockRandomAccessSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CanonicalViewsClusteringOptions;
+import gov.nih.mipav.model.algorithms.CeresSolver2.ConditionedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
@@ -19948,4 +19949,117 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
   		  System.out.println(testName + " passed all tests");
   	  }
   	}
+
+    // A simple cost function: return ax + b.
+    class LinearCostFunction2 extends CostFunction {
+     private double a_;
+     private double b_;
+     public LinearCostFunction2(double a, double b) {
+    	super();
+    	a_ = a;
+    	b_ = b;
+        set_num_residuals(1);
+        parameter_block_sizes_.add(1);
+      }
+
+      public boolean Evaluate(Vector<double[]> parameters,
+                            double[] residuals,
+                            double[][] jacobians) {
+        residuals[0] = parameters.get(0)[0] * a_ + b_;
+        if (jacobians != null && jacobians[0] != null) {
+          jacobians[0][0] = a_;
+        }
+
+        return true;
+      }
+
+     
+    };
+    
+    // Tests that ConditionedCostFunction does what it's supposed to.
+    public void CostFunctionTestConditionedCostFunction() {
+      String testName = "CostFunctionTestConditionedCostFunction()";
+      boolean passed = true;
+      // The size of the cost functions we build.
+      final int kTestCostFunctionSize = 3;
+      int i,j;
+      double v1[] = new double[kTestCostFunctionSize]; 
+      double v2[] = new double[kTestCostFunctionSize];
+      double jac[] = new double[kTestCostFunctionSize * kTestCostFunctionSize];
+      double result[] = new double[kTestCostFunctionSize];
+
+      for (i = 0; i < kTestCostFunctionSize; i++) {
+        v1[i] = i;
+        v2[i] = i * 10;
+        // Seed a few garbage values in the Jacobian matrix, to make sure that
+        // they're overwritten.
+        jac[i * 2] = i * i;
+        result[i] = i * i * i;
+      }
+
+      // Make a cost function that computes x - v2
+      //VectorRef v2_vector(v2, kTestCostFunctionSize, 1);
+      Vector<Double >v2_vector = new Vector<Double>(kTestCostFunctionSize);
+      for (i = 0; i < kTestCostFunctionSize; i++) {
+    	  v2_vector.add(v2[i]);
+      }
+      Matrix identity = Matrix.identity(kTestCostFunctionSize, kTestCostFunctionSize);
+      NormalPrior difference_cost_function = new NormalPrior(identity, v2_vector);
+
+      Vector<CostFunction> conditioners = new Vector<CostFunction>(kTestCostFunctionSize);
+      for (i = 0; i < kTestCostFunctionSize; i++) {
+        conditioners.add(new LinearCostFunction2(i + 2, i * 7));
+      }
+
+      ConditionedCostFunction conditioned_cost_function = ce2.new ConditionedCostFunction(difference_cost_function,
+                                                        conditioners,
+                                                        Ownership.TAKE_OWNERSHIP);
+      if (difference_cost_function.num_residuals() != conditioned_cost_function.num_residuals()) {
+    	  System.err.println("In " + testName + " difference_cost_function.num_residuals() != conditioned_cost_function.num_residuals()");
+    	  passed = false;
+      }
+      if (difference_cost_function.parameter_block_sizes() != conditioned_cost_function.parameter_block_sizes()) {
+    	  System.err.println("In " + testName + " difference_cost_function.parameter_block_sizes() != conditioned_cost_function.parameter_block_sizes()");
+    	  passed = false;
+      }
+
+      Vector<double[]>parameters = new Vector<double[]>(1);
+      parameters.add(v1);
+      double jacs[][] = new double[1][kTestCostFunctionSize*kTestCostFunctionSize];
+      for (i = 0; i < kTestCostFunctionSize*kTestCostFunctionSize; i++) {
+    		  jacs[0][i] = jac[i];
+      }
+
+      conditioned_cost_function.Evaluate(parameters, result, jacs);
+      for (i = 0; i < kTestCostFunctionSize; i++) {
+        if (((i + 2) * (v1[i] - v2[i]) + i * 7) != result[i]) {
+        	System.err.println("In " + testName + " i = " + i + " ((i + 2) * (v1[i] - v2[i]) + i * 7) != result[i]");
+        	passed = false;
+        }
+      }
+
+      for (i = 0; i < kTestCostFunctionSize; i++) {
+        for (j = 0; j < kTestCostFunctionSize; j++) {
+          double actual = jac[i * kTestCostFunctionSize + j];
+          if (i != j) {
+            if (0 != actual) {
+            	System.err.println("In " + testName + " i = " + i + " j = " + j + " 0 != actual");
+            	System.err.println("actual = " + actual);
+            	passed = false;
+            }
+          } else { 
+        	  if ((i + 2) != actual) {
+            	System.err.println("In " + testName + " i = " + i + " j = " + j + " (i + 2) != actual");
+            	System.err.println("actual = " + actual);
+            	passed = false;
+        	  }
+            }
+          }
+        }
+      if (passed) {
+    	  System.out.println(testName + " passed all tests");
+      }
+    }
+
+
 }
