@@ -1,5 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,6 +11,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
+import Jama.Matrix;
+
 import java.util.Map.Entry;
 
 import gov.nih.mipav.model.algorithms.CeresSolver.BlockRandomAccessMatrix;
@@ -16,6 +22,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Ownership;
 import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
+import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.WeightedGraph;
 import gov.nih.mipav.model.algorithms.CeresSolver.CellInfo;
@@ -1948,6 +1955,214 @@ public class CeresSolver2 {
 	      return "Triplet(" + first + ", " + second +  ", " + third+ ")";
 	    }
 	  
-	} 
-    			
+	}
+    	
+	public enum StorageType {
+	    UNSYMMETRIC,
+	    // Matrix is assumed to be symmetric but only the lower triangular
+	    // part of the matrix is stored.
+	    LOWER_TRIANGULAR,
+	    // Matrix is assumed to be symmetric but only the upper triangular
+	    // part of the matrix is stored.
+	    UPPER_TRIANGULAR
+	  };
+	  
+	  // Options struct to control the generation of random block sparse
+	  // matrices in compressed row sparse format.
+	  //
+	  // The random matrix generation proceeds as follows.
+	  //
+	  // First the row and column block structure is determined by
+	  // generating random row and column block sizes that lie within the
+	  // given bounds.
+	  //
+	  // Then we walk the block structure of the resulting matrix, and with
+	  // probability block_density detemine whether they are structurally
+	  // zero or not. If the answer is no, then we generate entries for the
+	  // block which are distributed normally.
+	  public class RandomMatrixOptions {
+		    public int num_row_blocks;
+		    public int min_row_block_size;
+		    public int max_row_block_size;
+		    public int num_col_blocks;
+		    public int min_col_block_size;
+		    public int max_col_block_size;
+
+		    // 0 < block_density <= 1 is the probability of a block being
+		    // present in the matrix. A given random matrix will not have
+		    // precisely this density.
+		    public double block_density;
+	    public RandomMatrixOptions() {
+	          num_row_blocks = 0;
+	          min_row_block_size = 0;
+	          max_row_block_size = 0;
+	          num_col_blocks = 0;
+	          min_col_block_size = 0;
+	          max_col_block_size = 0;
+	          block_density = 0.0;
+	    }
+
+	    
+	  };
+
+	  
+	  public class CompressedRowSparseMatrix extends SparseMatrix {
+		  private int num_rows_;
+		  private int num_cols_;
+		  private int[] rows_;
+		  private int[] cols_;
+		  private double[] values_;
+		  private StorageType storage_type_;
+
+		  // If the matrix has an underlying block structure, then it can also
+		  // carry with it row and column block sizes. This is auxilliary and
+		  // optional information for use by algorithms operating on the
+		  // matrix. The class itself does not make use of this information in
+		  // any way.
+		  private Vector<Integer> row_blocks_;
+		  private Vector<Integer> col_blocks_; 
+		  
+		  public CompressedRowSparseMatrix() {
+			  ce.super();
+		  }
+		  
+		  public int num_rows() { return num_rows_; }
+		  public int num_cols() { return num_cols_; }
+		  public int num_nonzeros() { return rows_[num_rows_]; }
+		  public double[] values() { return values_; }
+		  public double[] mutable_values() { return values_; }
+		  
+		  // Non-destructive array resizing method.
+		  public void set_num_rows(int num_rows) { num_rows_ = num_rows; }
+		  public void set_num_cols(int num_cols) { num_cols_ = num_cols; }
+
+		  // Low level access methods that expose the structure of the matrix.
+		  public int[] cols() { return cols_; }
+		  public int[] mutable_cols() { return cols_; }
+
+		  public int[] rows() { return rows_; }
+		  public int[] mutable_rows() { return rows_; }
+
+		  public StorageType storage_type() { return storage_type_; }
+		  public void set_storage_type(StorageType storage_type) {
+		    storage_type_ = storage_type;
+		  }
+
+		  public Vector<Integer> row_blocks() { return row_blocks_; }
+		  public Vector<Integer> mutable_row_blocks() { return row_blocks_; }
+
+		  public Vector<Integer> col_blocks() { return col_blocks_; }
+		  public Vector<Integer> mutable_col_blocks() { return col_blocks_; }
+		  
+		  public void SquaredColumnNorm(double[] x) {
+			  int idx;
+			  if (x == null) {
+				  System.err.println("In CompressedRowSparseMatrix.SquaredColumnNorm x == null");
+				  return;
+			  }
+
+			  for (idx = 0; idx < num_cols_; idx++) {
+				  x[idx] = 0.0;
+			  }
+			  for (idx = 0; idx < rows_[num_rows_]; ++idx) {
+			    x[cols_[idx]] += values_[idx] * values_[idx];
+			  }
+			}
+
+		  public Matrix ToDenseMatrix() {
+			  Matrix dense_matrix = new Matrix(num_rows_, num_cols_, 0.0);
+
+			  for (int r = 0; r < num_rows_; ++r) {
+			    for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+			      dense_matrix.set(r, cols_[idx],values_[idx]);
+			    }
+			  }
+			  return dense_matrix;
+			}
+		  
+		  public void SetZero() {
+			  for (int i = 0; i < values_.length; i++) {
+				  values_[i] = 0.0;
+			  }
+		  }
+
+		  public void LeftMultiply(double[] x, double[] y) {
+			  if (x == null) {
+				  System.err.println("In CompressedRowSparseMatrix LeftMultiply x == null");
+				  return;
+			  }
+			  if (y == null) {
+				  System.err.println("In CompressedRowSparseMatrix LeftMultiply y == null");
+				  return;
+			  }
+
+			  for (int r = 0; r < num_rows_; ++r) {
+			    for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+			      y[cols_[idx]] += values_[idx] * x[r];
+			    }
+			  }
+			}
+		  
+		  public void RightMultiply(double[] x,
+                  double[] y) {
+			  if (x == null) {
+				  System.err.println("In CompressedRowSparseMatrix RightMultiply x == null");
+				  return;
+			  }
+			  if (y == null) {
+				  System.err.println("In CompressedRowSparseMatrix RightMultiply y == null");
+				  return;
+			  }
+				
+				for (int r = 0; r < num_rows_; ++r) {
+					for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+					    y[r] += values_[idx] * x[cols_[idx]];
+					}
+				}
+			}
+
+		  public void ToTextFile(File file) {
+			  if (file == null) {
+				  System.err.println("In CompressedRowSparseMatrix ToTextFile file == null");
+				  return;
+			  }
+			  FileWriter fw = null;
+				try {
+					fw = new FileWriter(file);
+				} catch (IOException e) {
+					System.err.println("IOException in ToTextFile on new FileWriter(file)");
+					return;
+				}
+			  for (int r = 0; r < num_rows_; ++r) {
+			    for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
+			      String str = String.format("% 10d % 10d %17f\n", r, cols_[idx], values_[idx]);
+			      try {
+						fw.write(str, 0, str.length());
+					} catch (IOException e) {
+						System.err.println("IOException in ToTextFile on fw.write(str,0,str.length())");
+						return;
+					}
+			    }
+			  }
+			  try {
+			      fw.close();
+			  }
+			  catch (IOException e) {
+				  System.err.println("IOExcpetion in ToTextFIle on fw.close()");
+			  }
+			}
+		  
+		  public void ScaleColumns(double[] scale) {
+			  if (scale == null) {
+				  System.err.println("In CompressedRowSparseMatrix ScaleColumns scale == null");
+				  return;
+			  }
+
+			  for (int idx = 0; idx < rows_[num_rows_]; ++idx) {
+			    values_[idx] *= scale[cols_[idx]];
+			  }
+			}
+
+
+	  }
 }
