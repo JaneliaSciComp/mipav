@@ -55,6 +55,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver2.ConditionedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
+import gov.nih.mipav.model.algorithms.CeresSolver2.Triplet;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
@@ -20061,6 +20062,399 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     	  System.out.println(testName + " passed all tests");
       }
     }
+
+    public void BlockPermutationToScalarPermutation() {
+    	  // BlockPermutationToScalarPermutation() passed all tests
+    	  String testName = "BlockPermutationToScalarPermutation()";
+    	  boolean passed = true;
+    	  Vector<Integer> blocks = new Vector<Integer>();
+    	  //  Block structure
+    	  //  0  --1-  ---2---  ---3---  4
+    	  // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    	  blocks.add(1);
+    	  blocks.add(2);
+    	  blocks.add(3);
+    	  blocks.add(3);
+    	  blocks.add(1);
+
+    	  // Block ordering
+    	  // [1, 0, 2, 4, 5]
+    	  Vector<Integer> block_ordering = new Vector<Integer>(5);
+    	  block_ordering.add(1);
+    	  block_ordering.add(0);
+    	  block_ordering.add(2);
+    	  block_ordering.add(4);
+    	  block_ordering.add(3);
+
+    	  // Expected ordering
+    	  // [1, 2, 0, 3, 4, 5, 9, 6, 7, 8]
+    	  Vector<Integer> expected_scalar_ordering = new Vector<Integer>(10);
+    	  expected_scalar_ordering.add(1);
+    	  expected_scalar_ordering.add(2);
+    	  expected_scalar_ordering.add(0);
+    	  expected_scalar_ordering.add(3);
+    	  expected_scalar_ordering.add(4);
+    	  expected_scalar_ordering.add(5);
+    	  expected_scalar_ordering.add(9);
+    	  expected_scalar_ordering.add(6);
+    	  expected_scalar_ordering.add(7);
+    	  expected_scalar_ordering.add(8);
+
+    	  Vector<Integer> scalar_ordering = new Vector<Integer>();
+    	  ce2.BlockOrderingToScalarOrdering(blocks,
+    	                                block_ordering,
+    	                                scalar_ordering);
+    	  if (scalar_ordering.size() != expected_scalar_ordering.size()) {
+    		  System.err.println("In " + testName + " scalar_ordering.size() != expected_scalar_ordering.size()");
+    		  passed = false;
+    	  }
+    	  for (int i = 0; i < expected_scalar_ordering.size(); ++i) {
+    	    if (scalar_ordering.get(i) != expected_scalar_ordering.get(i)) {
+    	    	System.err.println("In " + testName + " scalar_ordering.get("+i+") != expected_scalar_ordering.get("+i+")");
+    	        passed = false;
+    	    }
+    	  }
+    	  if (passed) {
+    		  System.out.println(testName + " passed all tests");
+    	  }
+    	}
+    
+        public void FillBlock(Vector<Integer> row_blocks,
+            Vector<Integer> col_blocks,
+             int row_block_id,
+               int col_block_id,
+            Vector<Triplet<Integer, Integer, Double> > triplets) {
+        	int i;
+        	int row_offset = 0;
+        	for (i = 0; i < row_block_id; i++) {
+                row_offset += row_blocks.get(i);
+        	}
+        	int col_offset = 0;
+        	for (i = 0; i < col_block_id; i++) {
+        		col_offset += col_blocks.get(i);
+        	}
+			for (int r = 0; r < row_blocks.get(row_block_id); ++r) {
+			 for (int c = 0; c < col_blocks.get(col_block_id); ++c) {
+			    triplets.add(ce2.new Triplet<Integer, Integer, Double>(row_offset + r, col_offset + c, 1.0));
+			 }
+			}
+		}
+
+        public void ScalarMatrixToBlockMatrix() {
+        	  // ScalarMatrixToBlockMatrix() passed all tests
+        	  // Block sparsity.
+        	  //
+        	  //     [1 2 3 2]
+        	  // [1]  x   x
+        	  // [2]    x   x
+        	  // [2]  x x
+        	  // num_nonzeros = 1 + 3 + 4 + 4 + 1 + 2 = 15
+              String testName = "ScalarMatrixToBlockMatrix()";
+              boolean passed = true;
+              int i,j;
+
+        	  Vector<Integer> col_blocks = new Vector<Integer>();
+        	  col_blocks.add(1);
+        	  col_blocks.add(2);
+        	  col_blocks.add(3);
+        	  col_blocks.add(2);
+
+        	  Vector<Integer> row_blocks = new Vector<Integer>();
+        	  row_blocks.add(1);
+        	  row_blocks.add(2);
+        	  row_blocks.add(2);
+
+        	  int num_rows = 0;
+        	  for (i = 0; i < row_blocks.size(); i++) {
+        		  num_rows += row_blocks.get(i);
+        	  }
+        	  int num_cols = 0;
+        	  for (i = 0; i < col_blocks.size(); i++) {
+        		  num_cols += col_blocks.get(i);
+        	  }
+
+        	  Vector<Triplet<Integer, Integer, Double> > triplets = new Vector<Triplet<Integer, Integer, Double> >();
+        	  FillBlock(row_blocks, col_blocks, 0, 0, triplets);
+        	  FillBlock(row_blocks, col_blocks, 2, 0, triplets);
+        	  FillBlock(row_blocks, col_blocks, 1, 1, triplets);
+        	  FillBlock(row_blocks, col_blocks, 2, 1, triplets);
+        	  FillBlock(row_blocks, col_blocks, 0, 2, triplets);
+        	  FillBlock(row_blocks, col_blocks, 1, 3, triplets);
+        	  for (i = 0; i < triplets.size(); i++) {
+        		  for (j = i+1; j < triplets.size(); j++) {
+        			  if ((triplets.get(i).getFirst().intValue() == triplets.get(j).getFirst().intValue()) &&
+        					  (triplets.get(i).getSecond().intValue() == triplets.get(j).getSecond().intValue())) {
+        				  System.err.println(" i = " + i + " j = " + j);
+        			  }
+        		  }
+        	  }
+        	  Vector<Integer> rows = new Vector<Integer>();
+        	  Vector<Integer> cols = new Vector<Integer>();
+        	  Vector<Double> values = new Vector<Double>();
+        	  
+        	  for (i = 0; i < triplets.size(); i++) {
+        		  rows.add(triplets.get(i).getFirst());
+        		  cols.add(triplets.get(i).getSecond());
+        		  values.add(triplets.get(i).getThird());
+        	  }
+        	  TripletSparseMatrix sparse_matrix = new TripletSparseMatrix(num_rows, num_cols, rows, cols, values);
+        	  // Sort with smallest to largest col, followed by smallest to largest row numvbers
+        	  boolean have[] = new boolean[triplets.size()];
+        	  int numSorted = 0;
+        	  int sortedRows[] = new int[triplets.size()];
+        	  int sortedCols[] = new int[triplets.size()];
+        	  double sortedValues[] = new double[triplets.size()];
+        	  while (numSorted < triplets.size()) {
+        	      int smallestCol = Integer.MAX_VALUE;
+        	      for (i = 0; i < triplets.size(); i++) {
+        	    	  if (!have[i]) {
+	        	    	  if (cols.get(i) < smallestCol) {
+	        	    		  smallestCol = cols.get(i);
+	        	    	  }
+        	    	  }
+        	      }
+        	      int smallestRow = Integer.MAX_VALUE;
+        	      int index = -1;
+        	      double value = Double.NaN;
+        	      for (i = 0; i < triplets.size(); i++) {
+        	    	  if ((!have[i]) && (cols.get(i).intValue() == smallestCol)) {
+        	    		  if (rows.get(i) < smallestRow) {
+        	    			  index = i;
+        	    			  smallestRow = rows.get(i);
+        	    			  value = values.get(i);
+        	    		  }
+        	    	  }
+        	      }
+        	      have[index] = true;
+        	      sortedRows[numSorted] = smallestRow;
+        	      sortedCols[numSorted] = smallestCol;
+        	      sortedValues[numSorted++] = value;  
+        	  }
+        	  int columnNumber = 1;
+        	  for (i = 1; i < triplets.size(); i++) {
+        		  if (sortedCols[i] != sortedCols[i-1]) {
+        			  columnNumber++;
+        		  }
+        	  }
+        	  int columnStartIndices[] = new int[columnNumber+1];
+        	  columnStartIndices[0] = 0;
+        	  for (i = 1, j = 1; i < triplets.size(); i++) {
+        		  if (sortedCols[i] != sortedCols[i-1]) {
+        			  columnStartIndices[j++] = i;
+        		  }
+        	  }
+        	  columnStartIndices[columnNumber] = triplets.size();
+
+        	  Vector<Integer> expected_compressed_block_rows = new Vector<Integer>();
+        	  expected_compressed_block_rows.add(0);
+        	  expected_compressed_block_rows.add(2);
+        	  expected_compressed_block_rows.add(1);
+        	  expected_compressed_block_rows.add(2);
+        	  expected_compressed_block_rows.add(0);
+        	  expected_compressed_block_rows.add(1);
+
+        	  Vector<Integer> expected_compressed_block_cols = new Vector<Integer>();
+        	  expected_compressed_block_cols.add(0);
+        	  expected_compressed_block_cols.add(2);
+        	  expected_compressed_block_cols.add(4);
+        	  expected_compressed_block_cols.add(5);
+        	  expected_compressed_block_cols.add(6);
+
+        	  Vector<Integer> compressed_block_rows = new Vector<Integer>();
+        	  Vector<Integer> compressed_block_cols = new Vector<Integer>();
+        	  ce2.CompressedColumnScalarMatrixToBlockMatrix(
+        	      sortedRows,
+        	      columnStartIndices,
+        	      row_blocks,
+        	      col_blocks,
+        	      compressed_block_rows,
+        	      compressed_block_cols);
+
+        	  if (compressed_block_rows.size() != expected_compressed_block_rows.size()) {
+        		  System.err.println("In " + testName + " compressed_block_rows.size() != expected_compressed_block_rows.size()");
+        		  System.err.println("compressed_block_rows.size() = " + compressed_block_rows.size());
+        		  System.err.println("expected_compressed_blocks_rows.size() = " + expected_compressed_block_rows.size());
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < compressed_block_rows.size(); i++) {
+        			  if (compressed_block_rows.get(i) != expected_compressed_block_rows.get(i)) {
+        				  System.err.println("In " + testName + " compressed_block_rows.get("+i+") != expected_compressed_block_rows.get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (compressed_block_cols.size() != expected_compressed_block_cols.size()) {
+        		  System.err.println("In " + testName + " compressed_block_cols.size() != expected_compressed_block_cols.size()");
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < compressed_block_cols.size(); i++) {
+        			  if (compressed_block_cols.get(i) != expected_compressed_block_cols.get(i)) {
+        				  System.err.println("In " + testName + " compressed_block_cols.get("+i+") != expected_compressed_block_cols.get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+        
+        public void UpperTriangularSetUp(Vector<Integer> rows, Vector<Integer> cols, Vector<Double> values) {
+
+            cols.add(0);
+            cols.add(1);
+            cols.add(2);
+            cols.add(4);
+            cols.add(7);
+            
+            rows.add(0);
+            rows.add(1);
+            rows.add(1);
+            rows.add(2);
+            rows.add(0);
+            rows.add(1);
+            rows.add(3);
+            
+            values.add(0.50754);
+            values.add(0.80483);
+            values.add(0.14120);
+            values.add(0.3);
+            values.add(0.77696);
+            values.add(0.41860);
+            values.add(0.88979);
+         }
+
+        public void SolveUpperTriangularTestSolveInPlace() {
+        	// SolveUpperTriangularTestSolveInPlace() passed all tests
+        	String testName = "SolveUpperTriangularTestSolveInPlace()";
+        	boolean passed = true;
+        	int i;
+        	Vector<Integer> rows = new Vector<Integer>();
+        	Vector<Integer> cols = new Vector<Integer>();
+        	Vector<Double> values = new Vector<Double>();
+        	UpperTriangularSetUp(rows, cols, values);
+        	int rows_array[] = new int[rows.size()];
+        	for (i = 0; i < rows.size(); i++) {
+        		rows_array[i] = rows.get(i);
+        	}
+        	int cols_array[] = new int[cols.size()];
+        	for (i = 0; i < cols.size(); i++) {
+        		cols_array[i] = cols.get(i);
+        	}
+        	double values_array[] = new double[values.size()];
+        	for (i = 0; i < values.size(); i++) {
+        		values_array[i] = values.get(i);
+        	}
+        	
+        	  double rhs_and_solution[] = new double[]{1.0, 1.0, 2.0, 2.0};
+        	  final double expected[] = new double[]{ -1.4706, -1.0962, 6.6667, 2.2477};
+
+        	  ce2.SolveUpperTriangularInPlace(cols.size() - 1,
+        	                                   rows_array,
+        	                                   cols_array,
+        	                                   values_array,
+        	                                   rhs_and_solution);
+
+        	  for (i = 0; i < 4; ++i) {
+        	    if (Math.abs(rhs_and_solution[i] - expected[i]) > 1e-4) {
+        	    	System.err.println("In " + testName + " Math.abs(rhs_and_solution["+i+"] - expected["+i+"]) > 1e-4");
+        	    	passed = false;
+        	    }
+        	  }
+        	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+
+        public void SolveUpperTriangularTestTransposeSolveInPlace() {
+        	  // SolveUpperTriangularTestTransposeSolveInPlace() passed all tests
+        	  String testName = "SolveUpperTriangularTestTransposeSolveInPlace()";
+        	  double rhs_and_solution[] = new double[]{1.0, 1.0, 2.0, 2.0};
+        	  double expected[] = new double[]{1.970288,  1.242498,  6.081864, -0.057255};
+        	  boolean passed = true;
+          	int i;
+          	Vector<Integer> rows = new Vector<Integer>();
+          	Vector<Integer> cols = new Vector<Integer>();
+          	Vector<Double> values = new Vector<Double>();
+          	UpperTriangularSetUp(rows, cols, values);
+          	int rows_array[] = new int[rows.size()];
+          	for (i = 0; i < rows.size(); i++) {
+          		rows_array[i] = rows.get(i);
+          	}
+          	int cols_array[] = new int[cols.size()];
+          	for (i = 0; i < cols.size(); i++) {
+          		cols_array[i] = cols.get(i);
+          	}
+          	double values_array[] = new double[values.size()];
+          	for (i = 0; i < values.size(); i++) {
+          		values_array[i] = values.get(i);
+          	}
+
+          	  ce2.SolveUpperTriangularTransposeInPlace(cols.size() - 1,
+          	                                   rows_array,
+          	                                   cols_array,
+          	                                   values_array,
+          	                                   rhs_and_solution);
+
+          	  for (i = 0; i < 4; ++i) {
+          	    if (Math.abs(rhs_and_solution[i] - expected[i]) > 1e-4) {
+          	    	System.err.println("In " + testName + " Math.abs(rhs_and_solution["+i+"] - expected["+i+"]) > 1e-4");
+          	    	passed = false;
+          	    }
+          	  }
+          	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+
+        	}
+        
+        public void SolveUpperTriangularTestRTRSolveWithSparseRHS() {
+        	  //SolveUpperTriangularTestRTRSolveWithSparseRHS() passed all tests
+        	  String testName = "SolveUpperTriangularTestRTRSolveWithSparseRHS()";
+        	  double solution[] = new double[4];
+        	  double expected[] = new double[]{ 6.8420e+00,   1.0057e+00,  -1.4907e-16,  -1.9335e+00,
+        	                        1.0057e+00,   2.2275e+00,  -1.9493e+00,  -6.5693e-01,
+        	                        -1.4907e-16,  -1.9493e+00,   1.1111e+01,   9.7381e-17,
+        	                        -1.9335e+00,  -6.5693e-01,   9.7381e-17,   1.2631e+00 };
+        	  boolean passed = true;
+            	int i,j;
+            	Vector<Integer> rows = new Vector<Integer>();
+            	Vector<Integer> cols = new Vector<Integer>();
+            	Vector<Double> values = new Vector<Double>();
+            	UpperTriangularSetUp(rows, cols, values);
+            	int rows_array[] = new int[rows.size()];
+            	for (i = 0; i < rows.size(); i++) {
+            		rows_array[i] = rows.get(i);
+            	}
+            	int cols_array[] = new int[cols.size()];
+            	for (i = 0; i < cols.size(); i++) {
+            		cols_array[i] = cols.get(i);
+            	}
+            	double values_array[] = new double[values.size()];
+            	for (i = 0; i < values.size(); i++) {
+            		values_array[i] = values.get(i);
+            	}
+
+        	  for (i = 0; i < 4; ++i) {
+        	    ce2.SolveRTRWithSparseRHS(cols.size() - 1,
+        	                               rows_array,
+        	                               cols_array,
+        	                               values_array,
+        	                               i,
+        	                               solution);
+        	    for (j = 0; j < 4; ++j) {
+        	      if (Math.abs(solution[j] - expected[4 * i + j]) > 1e-3) {
+        	    	  System.err.println("In " + testName + " Math.abs(solution["+j+"] - expected[4 * "+i+" + "+j+"]) > 1e-3");
+        	    	  passed = false;
+        	      }
+        	    }
+        	  }
+        	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
 
 
 }
