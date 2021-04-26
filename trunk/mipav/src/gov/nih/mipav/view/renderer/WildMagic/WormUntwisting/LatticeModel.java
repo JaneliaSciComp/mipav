@@ -1642,12 +1642,14 @@ public class LatticeModel {
 		}
 		VertexBuffer vBuf = new VertexBuffer(positions);
 
+		Box3f[] contourBoxes = new Box3f[numContours-1];
 		Box3f[][] boxes = new Box3f[numContours-1][numEllipsePts];
 		System.err.println( "TriMesh " + numContours );
 		Vector<Integer> indexList = new Vector<Integer>();
 		for ( int i = 0; i < numContours; i++ ) {
 			VOIContour contour1 = (VOIContour) displayContours2.getCurves().elementAt(i);
 			int contourSize1 = contour1.size();
+			Vector3f[] boxPts = new Vector3f[contourSize1 * 2];
 			for ( int j = 0; j < contourSize1; j++ )
 			{
 				if ( i == 0 ) {
@@ -1669,6 +1671,15 @@ public class LatticeModel {
 				if ( i < (numContours - 1) ) {
 					VOIContour contour2 = (VOIContour) displayContours2.getCurves().elementAt(i+1);
 					int contourSize2 = contour2.size();
+
+					for ( int k = 0; k < contourSize1; k++ ) {
+						boxPts[k] = contour1.elementAt(k);
+					}
+					for ( int k = 0; k < contourSize2; k++ ) {
+						boxPts[contourSize1 + k] = contour2.elementAt(k);
+					}
+					contourBoxes[i] = ContBox3f.ContAlignedBox( boxPts.length, boxPts );
+					
 					//					System.err.println( i + "   " + (contourSize1 == contourSize2) );
 					int sliceIndexJ = positions.indexOf(contour1.elementAt(j) );
 					int nextSliceIndexJ = positions.indexOf( contour2.elementAt(j) );
@@ -1724,6 +1735,10 @@ public class LatticeModel {
 				}
 			}
 		}
+		
+		// save contour boxes:
+		saveContours( imageA, "model", "_contours", contourBoxes );
+
 
 		clipMask = new Vector<boolean[]>();
 		int boxIndex = 0;
@@ -2717,6 +2732,7 @@ public class LatticeModel {
 	 */
 	public void saveLattice(final String directory, final String fileName)
 	{
+		if ( left == null || right == null ) return;
 		boolean contourFile = getContourFile();
 		boolean changed = latticeChanged();
 		if ( changed  ) {
@@ -3026,6 +3042,7 @@ public class LatticeModel {
 
 		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
+		int[] resultExtents = resultImage.getExtents();
 
 		ModelImage contourImage = new ModelImage( ModelStorageBase.FLOAT, resultImage.getExtents(), imageName + "_straight_contour.xml" );
 		contourImage.setResolutions( resultImage.getResolutions(0) );
@@ -3143,6 +3160,15 @@ public class LatticeModel {
 		System.err.println( "   save vois " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
 
+		
+
+		
+//		time = System.currentTimeMillis();
+//		untwistAll(imageA, resultExtents);
+//		System.err.println( "untwist ALL elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
+		
+		
+		
 		resultImage.disposeLocal(false);
 		resultImage = null;
 
@@ -3155,6 +3181,9 @@ public class LatticeModel {
 		}
 		contourImageBlur.disposeLocal(false);
 		contourImageBlur = null;
+		
+		
+		
 		return null;
 	}
 
@@ -9131,7 +9160,146 @@ public class LatticeModel {
 		}
 	}
 
+    public static void saveContours( ModelImage image, String subDir, String postScript, Box3f[] contours ) {
+		
+		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
+		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
+		checkParentDir(parentDir);	
+		
+		String voiDir = outputDirectory + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}
+		voiDir = outputDirectory + File.separator + subDir + File.separator;	
+		voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			//			System.err.println( "saveImage " + voiDir);
+			voiFileDir.mkdir();
+		}	
+		
+		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
+		imageName = imageName + postScript;
 
+		String contourCSV = imageName + ".csv";
+		File contourFile = new File(voiDir + contourCSV);
+		if (contourFile.exists() && !contourFile.isDirectory()) { 
+			contourFile.delete();
+		}
+		
+
+		try {
+
+			final FileWriter fw = new FileWriter(contourFile);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(contours.length + "\n");
+			for (int i = 0; i < contours.length; i++) {
+				Box3f box = contours[i];
+				bw.write( box.Center.X + "," + box.Center.Y + "," + box.Center.Z + "," + 
+						box.Axis[0].X + "," + box.Axis[0].Y + "," + box.Axis[0].Z + "," + 
+						box.Axis[1].X + "," + box.Axis[1].Y + "," + box.Axis[1].Z + "," + 
+						box.Axis[2].X + "," + box.Axis[2].Y + "," + box.Axis[2].Z + "," + 
+						box.Extent[0] + "," + box.Extent[1] + "," + box.Extent[2] +	"\n");
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			e.printStackTrace();
+		}
+    }
+    
+
+
+    public static Box3f[] readContours( ModelImage image, String subDir, String postScript  ) {
+    	Box3f[] contours = null;
+    	
+		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
+		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
+		checkParentDir(parentDir);	
+		
+		String voiDir = outputDirectory + File.separator;
+		File voiFileDir = new File(voiDir);
+		if ( !voiFileDir.exists() ) {
+			return null;
+		}
+		voiDir = outputDirectory + File.separator + subDir + File.separator;	
+		voiFileDir = new File(voiDir);
+		if ( !voiFileDir.exists() ) {
+			return null;
+		}
+		
+		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
+		imageName = imageName + postScript;
+
+		String contourCSV = imageName + ".csv";
+		File contourFile = new File(voiDir + contourCSV);
+		if ( !contourFile.exists() ) {
+			return null;
+		}
+
+		FileReader fr;
+		try {
+			fr = new FileReader(contourFile);
+			BufferedReader br = new BufferedReader(fr);
+			String line = br.readLine();
+			int count = Integer.valueOf(line);
+			line = br.readLine();
+			contours = new Box3f[count];
+			count = 0;
+			while ( line != null && (line.length() > 1) && count < contours.length )
+			{
+				String[] parsed = line.split( "," );
+				if ( parsed.length == 15 )
+				{
+					Vector3f Center = new Vector3f();
+					Center.X = Float.valueOf( parsed[0] ); 
+					Center.Y = Float.valueOf( parsed[1] ); 
+					Center.Z = Float.valueOf( parsed[2] ); 
+					
+					Vector3f[] Axis = new Vector3f[3];
+					Axis[0] = new Vector3f();
+					Axis[0].X = Float.valueOf( parsed[3] ); 
+					Axis[0].Y = Float.valueOf( parsed[4] ); 
+					Axis[0].Z = Float.valueOf( parsed[5] ); 
+
+					Axis[1] = new Vector3f();
+					Axis[1].X = Float.valueOf( parsed[6] ); 
+					Axis[1].Y = Float.valueOf( parsed[7] ); 
+					Axis[1].Z = Float.valueOf( parsed[8] ); 
+
+					Axis[2] = new Vector3f();
+					Axis[2].X = Float.valueOf( parsed[9] ); 
+					Axis[2].Y = Float.valueOf( parsed[10] ); 
+					Axis[2].Z = Float.valueOf( parsed[11] ); 
+					
+					float[] Extents = new float[3];
+					Extents[0] = Float.valueOf( parsed[12] ); 
+					Extents[1] = Float.valueOf( parsed[13] ); 
+					Extents[2] = Float.valueOf( parsed[14] ); 
+
+					contours[count++] = new Box3f(Center, Axis, Extents);
+				}
+
+				line = br.readLine();
+			}
+			fr.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return contours;
+    }
+    
     public static void saveTriMesh( ModelImage image, String subDir, String postScript, TriMesh mesh ) {
 		
 		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
@@ -9908,6 +10076,107 @@ public class LatticeModel {
 		System.err.println( "TEST 2021: untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
 
+	}
+
+
+	private void untwistAll(final ModelImage image, final int[] resultExtents )
+	{
+		System.err.println( "untwist ALL " + paddingFactor);
+
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		ModelImage resultImage;
+		if ( image.isColorImage() )
+		{
+			resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_new.xml");
+		}
+		else
+		{
+			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_new.xml");
+		}	
+		resultImage.setResolutions(new float[] {1, 1, 1});
+
+		if ( samplingPlanes == null )
+		{
+			samplingPlanes = loadSamplePlanes( outputDirectory + File.separator );
+		}
+		if ( wormDiameters == null )
+		{
+			wormDiameters = loadDiameters( outputDirectory + File.separator );
+		}
+		int size = samplingPlanes.getCurves().size();
+
+		
+		FileIO fileIO = new FileIO();
+		ModelImage insideImage = fileIO.readImage( outputDirectory + File.separator + "model" + File.separator + imageName + "_interior.tif" );
+
+		final Vector3f[] corners = new Vector3f[4];		
+		float[] minDistance = new float[1];
+
+		int dimX = insideImage.getExtents().length > 0 ? insideImage.getExtents()[0] : 1;
+		int dimY = insideImage.getExtents().length > 1 ? insideImage.getExtents()[1] : 1;
+		int dimZ = insideImage.getExtents().length > 2 ? insideImage.getExtents()[2] : 1;
+		
+		Box3f[] orientedBoxes = readContours(  imageA, "model", "_contours"  );
+
+		Vector3f testPt = new Vector3f();
+		for ( int z = 0; z < dimZ; z++ ) {
+			System.err.println(z + " / " + dimZ );
+			for ( int y = 0; y < dimY; y++ ) {
+//				System.err.print( y + " "  );
+				for ( int x = 0; x < dimX; x++ ) {
+					int index = x + (dimX * (y + (dimY * z)));
+					if ( insideImage.getFloat(index) <= 0 ) continue;
+					{
+						testPt.set(x, y, z);
+						float minUntwist = Float.MAX_VALUE;
+						int minSlice = -1;
+						Vector3f minPt = new Vector3f();
+
+						for ( int j = 0; j < size; j++ )
+						{			
+							boolean test = false;
+							
+							if ( j < orientedBoxes.length ) {
+								test = ContBox3f.InBox(testPt, orientedBoxes[j] );
+							}
+							else if ( !test && j == orientedBoxes.length ) {
+								test = ContBox3f.InBox(testPt, orientedBoxes[j-1] );
+							}
+							
+							if ( test ) {	
+								// Calculate the straightened marker location:
+								VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+								for (int k = 0; k < 4; k++) {
+									corners[k] = kBox.elementAt(k);
+								}
+								Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, testPt, minDistance );
+								if ( minDistance[0] < minUntwist ) {
+									minUntwist = minDistance[0];
+									minSlice = j;
+									minPt.copy(markerPt);
+								}
+							}
+						}
+						if ( minSlice != -1 ) {
+							float value = resultImage.getFloat((int)minPt.X, (int)minPt.Y, (int)minPt.Z);
+//							System.err.println((int)minPt.X + " " + (int)minPt.Y + " " + (int)minPt.Z + "   " + value);
+							resultImage.set( (int)minPt.X, (int)minPt.Y, (int)minPt.Z, Math.max(value, image.getFloat(x,y,z)) );
+						}
+					}
+				}
+			}
+			System.err.println( " "  );
+		}
+		saveImage(imageName, resultImage, true);
+		new ViewJFrameImage(resultImage);
+
+		if ( insideImage != null ) {
+			insideImage.disposeLocal(false);
+			insideImage = null;
+		}
 	}
 
 	public ModelImage untwistAnnotations(ModelImage contourImage)
