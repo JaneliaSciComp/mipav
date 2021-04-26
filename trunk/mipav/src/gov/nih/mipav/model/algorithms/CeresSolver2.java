@@ -1712,7 +1712,17 @@ public class CeresSolver2 {
 		 
 		};
 			
-	public void CompressedColumnScalarMatrixToBlockMatrix(
+		// Extract the block sparsity pattern of the scalar compressed columns
+		// matrix and return it in compressed column form. The compressed
+		// column form is stored in two vectors block_rows, and block_cols,
+		// which correspond to the row and column arrays in a compressed
+		// column sparse matrix.
+		//
+		// If c_ij is the block in the matrix A corresponding to row block i
+		// and column block j, then it is expected that A contains at least
+		// one non-zero entry corresponding to the top left entry of c_ij,
+		// as that entry is used to detect the presence of a non-zero c_ij.
+		public void CompressedColumnScalarMatrixToBlockMatrix(
     	     int[] scalar_rows,
     	     int[] scalar_cols,
     	     Vector<Integer> row_blocks,
@@ -1765,7 +1775,7 @@ public class CeresSolver2 {
     	      // For rows all but the first row in the last row block,
     	      // lower_bound will return row_block_starts.end(), but those can
     	      // be skipped like the rows in other row blocks too.
-    	      if (it == row_block_starts.size() || row_block_starts.get(it) != scalar_rows[idx]) {
+    	      if (it == row_block_starts.size() || row_block_starts.get(it).intValue() != scalar_rows[idx]) {
     	        continue;
     	      }
 
@@ -1777,6 +1787,9 @@ public class CeresSolver2 {
     	  }
     	}
 
+	// Given a set of blocks and a permutation of these blocks, compute
+	// the corresponding "scalar" ordering, where the scalar ordering of
+	// size sum(blocks).
 	public void BlockOrderingToScalarOrdering(Vector<Integer> blocks,
             Vector<Integer> block_ordering,
             Vector<Integer> scalar_ordering) {
@@ -1810,5 +1823,131 @@ public class CeresSolver2 {
 	}
         
 	}
+	
+	// Solve the linear system
+	//
+	//   R * solution = rhs
+	//
+	// Where R is an upper triangular compressed column sparse matrix
+	public void SolveUpperTriangularInPlace(int num_cols,
+	                                 int[] rows,
+	                                 int[] cols,
+	                                 double[] values,
+	                                 double[] rhs_and_solution) {
+	  for (int c = num_cols - 1; c >= 0; --c) {
+	    rhs_and_solution[c] /= values[cols[c + 1] - 1];
+	    for (int idx = cols[c]; idx < cols[c + 1] - 1; ++idx) {
+	      final int r = rows[idx];
+	      final double v = values[idx];
+	      rhs_and_solution[r] -= v * rhs_and_solution[c];
+	    }
+	  }
+	}
+	
+	// Solve the linear system
+	//
+	//   R' * solution = rhs
+	//
+	// Where R is an upper triangular compressed column sparse matrix.
+	public void SolveUpperTriangularTransposeInPlace(int num_cols,
+	                                          int[] rows,
+	                                          int[] cols,
+	                                          double[] values,
+	                                          double[] rhs_and_solution) {
+	  for (int c = 0; c < num_cols; ++c) {
+	    for (int idx = cols[c]; idx < cols[c + 1] - 1; ++idx) {
+	      final int r = rows[idx];
+	      final double v = values[idx];
+	      rhs_and_solution[c] -= v * rhs_and_solution[r];
+	    }
+	    rhs_and_solution[c] =  rhs_and_solution[c] / values[cols[c + 1] - 1];
+	  }
+	}
+	
+	// Given a upper triangular matrix R in compressed column form, solve
+	// the linear system,
+	//
+	//  R'R x = b
+	//
+	// Where b is all zeros except for rhs_nonzero_index, where it is
+	// equal to one.
+	//
+	// The function exploits this knowledge to reduce the number of
+	// floating point operations.
+	public void SolveRTRWithSparseRHS(int num_cols,
+	                           int[] rows,
+	                           int[] cols,
+	                           double[] values,
+	                           int rhs_nonzero_index,
+	                           double[] solution) {
+	  int i;
+	  for (i = 0; i < num_cols; i++) {
+		  solution[i] = 0.0;
+	  }
+	  solution[rhs_nonzero_index] = 1.0 / values[cols[rhs_nonzero_index + 1] - 1];
+
+	  for (int c = rhs_nonzero_index + 1; c < num_cols; ++c) {
+	    for (int idx = cols[c]; idx < cols[c + 1] - 1; ++idx) {
+	      final int r = rows[idx];
+	      if (r < rhs_nonzero_index) continue;
+	      final double v = values[idx];
+	      solution[c] -= v * solution[r];
+	    }
+	    solution[c] =  solution[c] / values[cols[c + 1] - 1];
+	  }
+
+	  SolveUpperTriangularInPlace(num_cols, rows, cols, values, solution);
+	}
+	
+	public class Triplet<T, U, V>
+	{
+	    public T first;
+	    public U second;
+	    public V third;
+
+	    public Triplet(T t, U u, V v)
+	    {
+	        first = t;
+	        second = u;
+	        third = v;
+	    }
+	    
+	    public T getFirst()
+	    {
+	        return first; 
+	    }
+
+	    public U getSecond()
+	    {
+	        return second; 
+	    }
+	    
+	    public V getThird() {
+	    	return third;
+	    }
+
+	    
+	    public boolean equals(Object obj) {
+	      if (obj == null) return false;
+	      if ((obj.getClass() != this.getClass())) { //|| (obj.hashCode() != this.hashCode())) {
+	        return false;
+	      }
+	      
+	      return (this.getFirst().equals(((Triplet) obj).getFirst()) && this.getSecond().equals(((Triplet) obj).getSecond())
+	    		  && this.getThird().equals(((Triplet) obj).getThird()));
+	    }
+	    
+	    /**
+	     * Define a hash code based on the first and seconds and third's hash code
+	     */
+	    public int hashCode() {
+	      return first.hashCode() ^ second.hashCode() ^ third.hashCode();
+	    }
+	    
+	    public String toString() {
+	      return "Triplet(" + first + ", " + second +  ", " + third+ ")";
+	    }
+	  
+	} 
     			
 }
