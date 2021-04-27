@@ -20,7 +20,6 @@ import Jama.Matrix;
 
 import java.util.Map.Entry;
 
-import gov.nih.mipav.model.algorithms.AlgorithmEfficientWatershed.indexValueItem;
 import gov.nih.mipav.model.algorithms.CeresSolver.BlockRandomAccessMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
@@ -2135,8 +2134,8 @@ public class CeresSolver2 {
 		  int i;
 		  int num_rows = input.num_rows();
 		  int num_cols = input.num_cols();
-		  final int[] rows = input.rows();
-		  final int[] cols = input.cols();
+		  int[] rows = input.rows();
+		  int[] cols = input.cols();
 		  final double[] values = input.values();
 
 		  if (transpose) {
