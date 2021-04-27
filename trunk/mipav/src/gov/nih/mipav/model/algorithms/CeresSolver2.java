@@ -21,6 +21,7 @@ import Jama.Matrix;
 import java.util.Map.Entry;
 
 import gov.nih.mipav.model.algorithms.CeresSolver.BlockRandomAccessMatrix;
+import gov.nih.mipav.model.algorithms.CeresSolver.CRSMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
@@ -2128,6 +2129,14 @@ public class CeresSolver2 {
 			}
 		}
 	}
+	
+	public CompressedRowSparseMatrix  FromTripletSparseMatrix(TripletSparseMatrix input) {
+		  return FromTripletSparseMatrix(input, false);
+	}
+	
+	public CompressedRowSparseMatrix  FromTripletSparseMatrixTransposed(TripletSparseMatrix input) {
+		  return FromTripletSparseMatrix(input, true);
+	}
 
 	public CompressedRowSparseMatrix FromTripletSparseMatrix(
 		    TripletSparseMatrix input, boolean transpose) {
@@ -2240,7 +2249,33 @@ public class CeresSolver2 {
 
 		  }
 
-		  
+		 public CompressedRowSparseMatrix(double[] diagonal, int num_rows) {
+			ce.super();
+			if (diagonal == null) {
+				System.err.println("In public CompressedRowSparseMatrix diagonal == null");
+				return;
+			}
+			
+			num_rows_ = num_rows;
+			num_cols_ = num_rows;
+			storage_type_ = StorageType.UNSYMMETRIC;
+			rows_ = new int[num_rows + 1];
+			cols_ = new int[num_rows];
+			values_ = new double[num_rows];
+			
+			rows_[0] = 0;
+			for (int i = 0; i < num_rows_; ++i) {
+				cols_[i] = i;
+				values_[i] = diagonal[i];
+				rows_[i + 1] = i + 1;
+			}
+			
+			if (num_nonzeros() != num_rows) {
+				System.err.println("In public CompressedRowSparseMatrix num_nonzeros() != num_rows");
+			}
+		}
+ 
+		 
 		  public int num_rows() { return num_rows_; }
 		  public int num_cols() { return num_cols_; }
 		  public int num_nonzeros() { return rows_[num_rows_]; }
@@ -2377,6 +2412,149 @@ public class CeresSolver2 {
 			    values_[idx] *= scale[cols_[idx]];
 			  }
 			}
+		  
+		  public void DeleteRows(int delta_rows) {
+			  int i;
+			  if (delta_rows < 0) {
+				  System.err.println("In CompressedRowSparseMatrix DeleteRows delta_rows < 0");
+				  return;
+			  }
+			  if (delta_rows > num_rows_) {
+				  System.err.println("In CompressedRowSparseMatrix DeleteRows delta_rows > num_rows_");
+				  return;
+			  }
+
+			  num_rows_ -= delta_rows;
+			  int rows_temp[] = new int[num_rows_ + 1];
+			  for (i = 0; i < num_rows_ + 1; i++) {
+				  rows_temp[i] = rows_[i];
+			  }
+			  rows_ = new int[num_rows_ + 1];
+			  for (i = 0; i < num_rows_ + 1; i++) {
+				  rows_[i] = rows_temp[i];
+			  }
+			  rows_temp = null;
+
+			  // The rest of the code updates the block information. Immediately
+			  // return in case of no block information.
+			  if (row_blocks_.isEmpty()) {
+			    return;
+			  }
+
+			  // Walk the list of row blocks until we reach the new number of rows
+			  // and the drop the rest of the row blocks.
+			  int num_row_blocks = 0;
+			  int num_rows = 0;
+			  while (num_row_blocks < row_blocks_.size() && num_rows < num_rows_) {
+			    num_rows += row_blocks_.get(num_row_blocks);
+			    ++num_row_blocks;
+			  }
+
+			  while (row_blocks_.size() > num_row_blocks) {
+				  row_blocks_.remove(row_blocks_.size() - 1);
+			  }
+		  }
+
+		  public void AppendRows(CompressedRowSparseMatrix m) {
+			  int i;
+			  if (m.num_cols() != num_cols_) {
+				  System.err.println("In CompressedRowSparseMatrix AppendRows m.num_cols() != num_cols_");
+				  return;
+			  }
+
+			  if ((row_blocks_.isEmpty() && !m.row_blocks().isEmpty()) ||
+			        (!row_blocks_.isEmpty() && m.row_blocks().isEmpty())) {
+			      System.err.println("Cannot append a matrix with row blocks to one without and vice versa.");
+			      System.err.println("This matrix has : " + row_blocks_.size() + " row blocks.");
+			      System.err.println("The matrix being appended has: " + m.row_blocks().size() + " row blocks.");
+			      return;
+			  }
+
+			  if (m.num_rows() == 0) {
+			    return;
+			  }
+
+			  if (cols_.length < num_nonzeros() + m.num_nonzeros()) {
+				int cols_temp[] = new int[cols_.length];
+				for (i = 0; i < cols_.length; i++) {
+					cols_temp[i] = cols_[i];
+				}
+			    cols_ = new int[num_nonzeros() + m.num_nonzeros()];
+			    for (i = 0; i < cols_temp.length; i++) {
+			    	cols_[i] = cols_temp[i];
+			    }
+			    cols_temp = null;
+			    double values_temp[] = new double[values_.length];
+			    for (i = 0; i < values_.length; i++) {
+			    	values_temp[i] = values_[i];
+			    }
+			    values_ = new double[num_nonzeros() + m.num_nonzeros()];
+			    for (i = 0; i < values_temp.length; i++) {
+			    	values_[i] = values_temp[i];
+			    }
+			    values_temp = null;
+			  }
+
+			  // Copy the contents of m into this matrix.
+			  if (num_nonzeros() >= cols_.length) {
+			      System.err.println("In CompressedRowSparseMatrix AppendRows (num_nonzeros() >= cols_.length");
+			      return;
+			  }
+			  if (m.num_nonzeros() > 0) {
+				for (i = 0; i < m.num_nonzeros(); i++) {
+				    cols_[num_nonzeros() + i] = m.cols()[i];
+				    values_[num_nonzeros() + i] = m.values()[i];
+				}
+			  }
+
+			  int rows_temp[] = new int[rows_.length];
+			  for (i = 0; i < rows_.length; i++) {
+				  rows_temp[i] = rows_[i];
+			  }
+			  rows_ = new int[num_rows_ + m.num_rows() + 1];
+			  for (i = 0; i < rows_temp.length; i++) {
+				  rows_[i] = rows_temp[i];
+			  }
+			  rows_temp = null;
+			  // new_rows = [rows_, m.row() + rows_[num_rows_]]
+			  for (i = num_rows_; i < num_rows_ + m.num_rows() + 1; i++) {
+				  rows_[i] = rows_[num_rows_];
+			  }
+			  
+
+			  for (int r = 0; r < m.num_rows() + 1; ++r) {
+			    rows_[num_rows_ + r] += m.rows()[r];
+			  }
+
+			  num_rows_ += m.num_rows();
+
+			  // The rest of the code updates the block information. Immediately
+			  // return in case of no block information.
+			  if (row_blocks_.isEmpty()) {
+			    return;
+			  }
+			  
+			  for (i = 0; i < m.row_blocks().get(i); i++) {
+				  row_blocks_.add(m.row_blocks().get(i));
+			  }
+
+			}
+		  
+		  public CRSMatrix ToCRSMatrix() {
+			  int i;
+			  CRSMatrix matrix = ce.new CRSMatrix();
+			  matrix.num_rows = num_rows_;
+			  matrix.num_cols = num_cols_;
+			  for (i = 0; i < matrix.num_rows +1; i++) {
+				  matrix.rows.add(rows_[i]);
+			  }
+			  for (i = 0; i < matrix.rows.get(matrix.num_rows); i++) {
+				  matrix.cols.add(cols_[i]);
+				  matrix.values.add(values_[i]);
+			  }
+			  return matrix;
+			}
+
 
 
 	  }
