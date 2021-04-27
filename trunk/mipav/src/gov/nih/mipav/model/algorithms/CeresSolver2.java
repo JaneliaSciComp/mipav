@@ -3,11 +3,15 @@ package gov.nih.mipav.model.algorithms;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -16,6 +20,7 @@ import Jama.Matrix;
 
 import java.util.Map.Entry;
 
+import gov.nih.mipav.model.algorithms.AlgorithmEfficientWatershed.indexValueItem;
 import gov.nih.mipav.model.algorithms.CeresSolver.BlockRandomAccessMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
@@ -2004,6 +2009,198 @@ public class CeresSolver2 {
 
 	    
 	  };
+	  
+	  private class indexRowColItem {
+		    private int index;
+			private int row;
+			private int col;
+			
+			public indexRowColItem(int index, int row, int col) {
+				this.index = index;
+				this.row = row;
+				this.col = col;
+			}
+			
+			public int getIndex() {
+				return index;
+			}
+			
+			public int getRow() {
+				return row;
+			}
+			
+			public int getCol() {
+				return col;
+			}
+			
+			
+		}
+	  
+	// Helper functor used by the constructor for reordering the contents
+	// of a TripletSparseMatrix. This comparator assumes thay there are no
+	// duplicates in the pair of arrays rows and cols, i.e., there is no
+	// indices i and j (not equal to each other) s.t.
+	//
+	//  rows[i] == rows[j] && cols[i] == cols[j]
+	//
+	// If this is the case, this functor will not be a StrictWeakOrdering.
+	public class RowColLessThanComparator implements Comparator<indexRowColItem> {
+		
+	 
+
+	  public int compare(indexRowColItem x, indexRowColItem y) {
+		  if (x.getRow() == y.getRow()) {
+		      return (x.getCol() - y.getCol());
+		    }
+		    return (x.getRow() - y.getRow());
+	  }
+
+	
+
+	
+
+	 
+	};
+
+	public void TransposeForCompressedRowSparseStructure(int num_rows,
+            int num_cols,
+            int num_nonzeros,
+            int[] rows,
+            int[] cols,
+            double[] values,
+            int[] transpose_rows,
+            int[] transpose_cols,
+            double[] transpose_values) {
+		    int i, idx;
+				// Explicitly zero out transpose_rows.
+		        for (i = 0; i < num_cols + 1; i++) {
+		        	transpose_rows[i] = 0;
+		        }
+				
+				// Count the number of entries in each column of the original matrix
+				// and assign to transpose_rows[col + 1].
+				for (idx = 0; idx < num_nonzeros; ++idx) {
+				    ++transpose_rows[cols[idx] + 1];
+				}
+				
+				// Compute the starting position for each row in the transpose by
+				// computing the cumulative sum of the entries of transpose_rows.
+				for (i = 1; i < num_cols + 1; ++i) {
+				    transpose_rows[i] += transpose_rows[i - 1];
+				}
+				
+				// Populate transpose_cols and (optionally) transpose_values by
+				// walking the entries of the source matrices. For each entry that
+				// is added, the value of transpose_row is incremented allowing us
+				// to keep track of where the next entry for that row should go.
+				//
+				// As a result transpose_row is shifted to the left by one entry.
+				for (int r = 0; r < num_rows; ++r) {
+					for (idx = rows[r]; idx < rows[r + 1]; ++idx) {
+						final int c = cols[idx];
+						final int transpose_idx = transpose_rows[c]++;
+						transpose_cols[transpose_idx] = r;
+						if (values != null && transpose_values != null) {
+						    transpose_values[transpose_idx] = values[idx];
+						}
+					}
+				}
+				
+				// This loop undoes the left shift to transpose_rows introduced by
+				// the previous loop.
+				for (i = num_cols - 1; i > 0; --i) {
+				    transpose_rows[i] = transpose_rows[i - 1];
+				}
+				transpose_rows[0] = 0;
+			}
+	
+	public void AddRandomBlock(int num_rows,
+            int num_cols,
+            int row_block_begin,
+            int col_block_begin,
+            Vector<Integer> rows,
+            Vector<Integer> cols,
+            Vector<Double> values) {
+		for (int r = 0; r < num_rows; ++r) {
+			for (int c = 0; c < num_cols; ++c) {
+				rows.add(row_block_begin + r);
+				cols.add(col_block_begin + c);
+				values.add(ce.RandNormal());
+			}
+		}
+	}
+
+	public CompressedRowSparseMatrix FromTripletSparseMatrix(
+		    TripletSparseMatrix input, boolean transpose) {
+		  int i;
+		  int num_rows = input.num_rows();
+		  int num_cols = input.num_cols();
+		  final int[] rows = input.rows();
+		  final int[] cols = input.cols();
+		  final double[] values = input.values();
+
+		  if (transpose) {
+			int tmp;
+			int tmp_array[];
+			tmp = num_rows;
+			num_rows = num_cols;
+			num_cols = tmp;
+		    tmp_array = rows;
+		    rows = cols;
+		    cols = tmp_array;
+		  }
+
+		  
+		  
+
+		  // Sort index such that the entries of m are ordered by row and ties
+		  // are broken by column.
+		  ArrayList <indexRowColItem> ircList = new ArrayList<indexRowColItem>();
+		  for (i = 0; i < input.num_nonzeros(); ++i) {
+			  ircList.add(new indexRowColItem(i,rows[i],cols[i]));
+		  }
+		  Collections.sort(ircList, new RowColLessThanComparator());
+		  // index is the list of indices into the TripletSparseMatrix input.
+		  int index[] = new int[input.num_nonzeros()];
+		  for (i = 0; i < input.num_nonzeros(); i++) {
+			  index[i] = ircList.get(i).getIndex();
+		  }
+		  
+		  if (1 <= ce.MAX_LOG_LEVEL) {
+		        Preferences.debug("# of rows: " + num_rows + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("# of columns: " + num_cols + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("max_num_nonzeros: " + cols.length + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+
+		  
+		  CompressedRowSparseMatrix output =
+		      new CompressedRowSparseMatrix(num_rows, num_cols, input.num_nonzeros());
+
+		  // Copy the contents of the cols and values array in the order given
+		  // by index and count the number of entries in each row.
+		  int[] output_rows = output.mutable_rows();
+		  int[] output_cols = output.mutable_cols();
+		  double[] output_values = output.mutable_values();
+
+		  output_rows[0] = 0;
+		  for (i = 0; i < index.length; ++i) {
+		    final int idx = index[i];
+		    ++output_rows[rows[idx] + 1];
+		    output_cols[i] = cols[idx];
+		    output_values[i] = values[idx];
+		  }
+
+		  // Find the cumulative sum of the row counts.
+		  for (i = 1; i < num_rows + 1; ++i) {
+		    output_rows[i] += output_rows[i - 1];
+		  }
+
+		  if (output.num_nonzeros() != input.num_nonzeros()) {
+			  System.err.println("In public CompressedRowSparseMatrix FromTripletSparseMatrix output.num_nonzeros() != input.num_nonzeros()");
+			  return null;
+		  }
+		  return output;
+		}
 
 	  
 	  public class CompressedRowSparseMatrix extends SparseMatrix {
@@ -2025,6 +2222,25 @@ public class CeresSolver2 {
 		  public CompressedRowSparseMatrix() {
 			  ce.super();
 		  }
+		  
+		 // This constructor gives you a semi-initialized CompressedRowSparseMatrix.
+		 public CompressedRowSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros) {
+			ce.super();
+		    num_rows_ = num_rows;
+		    num_cols_ = num_cols;
+		    storage_type_ = StorageType. UNSYMMETRIC;
+		    rows_ = new int[num_rows + 1];
+		    cols_ = new int[max_num_nonzeros];
+		    values_ = new double[max_num_nonzeros];
+		    
+		    if (1 <= ce.MAX_LOG_LEVEL) {
+		        Preferences.debug("# of rows: " + num_rows_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("# of columns: " + num_cols_ + "\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("max_num_nonzeros: " + cols_.length + "\n", Preferences.DEBUG_ALGORITHM);
+		    }
+
+		  }
+
 		  
 		  public int num_rows() { return num_rows_; }
 		  public int num_cols() { return num_cols_; }
