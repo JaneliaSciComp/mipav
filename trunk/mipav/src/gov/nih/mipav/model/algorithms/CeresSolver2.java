@@ -2209,6 +2209,173 @@ public class CeresSolver2 {
 		  }
 		  return output;
 		}
+	
+	public CompressedRowSparseMatrix CreateBlockDiagonalMatrix(
+		    double[] diagonal, Vector<Integer> blocks) {
+		  int i, r;
+		  int num_rows = 0;
+		  int num_nonzeros = 0;
+		  for (i = 0; i < blocks.size(); ++i) {
+		    num_rows += blocks.get(i);
+		    num_nonzeros += blocks.get(i) * blocks.get(i);
+		  }
+
+		  CompressedRowSparseMatrix matrix =
+		      new CompressedRowSparseMatrix(num_rows, num_rows, num_nonzeros);
+
+		  int[] rows = matrix.mutable_rows();
+		  int[] cols = matrix.mutable_cols();
+		  double[] values = matrix.mutable_values();
+		  for (i = 0; i < num_nonzeros; i++) {
+			  values[i] = 0.0;
+		  }
+
+		  int idx_cursor = 0;
+		  int col_cursor = 0;
+		  int rows_index = 0;
+		  int cols_index = 0;
+		  for (i = 0; i < blocks.size(); ++i) {
+		    final int block_size = blocks.get(i);
+		    for (r = 0; r < block_size; ++r) {
+		      rows[rows_index++] = idx_cursor;
+		      values[idx_cursor + r] = diagonal[col_cursor + r];
+		      for (int c = 0; c < block_size; ++c, ++idx_cursor) {
+		        cols[cols_index++] = col_cursor + c;
+		      }
+		    }
+		    col_cursor += block_size;
+		  }
+		  rows[rows_index] = idx_cursor;
+
+		  matrix.set_row_blocks(blocks);
+		  matrix.set_col_blocks(blocks);
+
+		  if (idx_cursor != num_nonzeros) {
+			  System.err.println("In CompressedRowSparseMatrix CreateBlockDiagonalMatrix idx_cursor != num_nonzeros");
+			  return null;
+		  }
+		  if (col_cursor != num_rows) {
+			  System.err.println("In CompressedRowSparseMatrix CreateBlockDiagonalMatrix col_cursor != num_rows");
+			  return null;
+		  }
+		  return matrix;
+		}
+	
+	public CompressedRowSparseMatrix CreateRandomMatrix(RandomMatrixOptions options) {
+		  int i;
+		  RandomNumberGen randomGen = new RandomNumberGen();
+		  
+		  if (options.min_row_block_size <= 0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.min_row_block_size <= 0");
+			  return null;
+		  }
+		  if (options.max_row_block_size <= 0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.max_row_block_size <= 0");
+			  return null;
+		  }
+		  if (options.min_row_block_size > options.max_row_block_size) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.min_row_block_size > options.max_row_block_size");
+			  return null;
+		  }
+		  if (options.num_col_blocks <= 0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.num_col_blocks <= 0");
+			  return null;
+		  }
+		  if (options.min_col_block_size <= 0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.min_col_block_size <= 0");
+			  return null;
+		  }
+		  if (options.max_col_block_size <= 0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.max_col_block_size <= 0");
+			  return null; 
+		  }
+		  if (options.min_col_block_size > options.max_col_block_size) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.min_col_block_size > options.max_col_block_size");
+			  return null;
+		  }
+		  if (options.block_density <= 0.0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.block_density <= 0.0");
+			  return null;
+		  }
+		  if (options.block_density > 1.0) {
+			  System.err.println("In CompressedRowSparseMatrix CreateRandomMatrix options.block_density > 1.0");
+			  return null;
+		  }
+
+		  Vector<Integer> row_blocks = new Vector<Integer>();
+		  Vector<Integer> col_blocks = new Vector<Integer>();
+
+		  // Generate the row block structure.
+		  for (i = 0; i < options.num_row_blocks; ++i) {
+		    // Generate a random integer in [min_row_block_size, max_row_block_size]
+		    final int delta_block_size =
+		        randomGen.genUniformRandomNum(0,options.max_row_block_size - options.min_row_block_size);
+		    row_blocks.add(options.min_row_block_size + delta_block_size);
+		  }
+
+		  // Generate the col block structure.
+		  for (i = 0; i < options.num_col_blocks; ++i) {
+		    // Generate a random integer in [min_col_block_size, max_col_block_size]
+		    final int delta_block_size =
+		        randomGen.genUniformRandomNum(0,options.max_col_block_size - options.min_col_block_size);
+		    col_blocks.add(options.min_col_block_size + delta_block_size);
+		  }
+
+		  Vector<Integer> tsm_rows = new Vector<Integer>();
+		  Vector<Integer> tsm_cols = new Vector<Integer>();
+		  Vector<Double> tsm_values = new Vector<Double>();
+
+		  // For ease of construction, we are going to generate the
+		  // CompressedRowSparseMatrix by generating it as a
+		  // TripletSparseMatrix and then converting it to a
+		  // CompressedRowSparseMatrix.
+
+		  // It is possible that the random matrix is empty which is likely
+		  // not what the user wants, so do the matrix generation till we have
+		  // at least one non-zero entry.
+		  while (tsm_values.isEmpty()) {
+		    tsm_rows.clear();
+		    tsm_cols.clear();
+		    tsm_values.clear();
+
+		    int row_block_begin = 0;
+		    for (int r = 0; r < options.num_row_blocks; ++r) {
+		      int col_block_begin = 0;
+		      for (int c = 0; c < options.num_col_blocks; ++c) {
+		        // Randomly determine if this block is present or not.
+		        if (ce.RandDouble() <= options.block_density) {
+		          AddRandomBlock(row_blocks.get(r),
+		                         col_blocks.get(c),
+		                         row_block_begin,
+		                         col_block_begin,
+		                         tsm_rows,
+		                         tsm_cols,
+		                         tsm_values);
+		        }
+		        col_block_begin += col_blocks.get(c);
+		      }
+		      row_block_begin += row_blocks.get(r);
+		    }
+		  }
+		  
+		  int num_rows = 0;
+		  for (i = 0; i < row_blocks.size(); i++) {
+			  num_rows += row_blocks.get(i);
+		  }
+		  int num_cols = 0;
+		  for (i = 0; i < col_blocks.size(); i++) {
+			  num_cols += col_blocks.get(i);
+		  }
+		  final boolean kDoNotTranspose = false;
+		  CompressedRowSparseMatrix matrix = FromTripletSparseMatrix(
+		          ce.new TripletSparseMatrix(
+		              num_rows, num_cols, tsm_rows, tsm_cols, tsm_values),
+		          kDoNotTranspose);
+		  matrix.set_row_blocks(row_blocks);
+		  matrix.set_col_blocks(col_blocks);
+		  matrix.set_storage_type(StorageType.UNSYMMETRIC);
+		  return matrix;
+		}
 
 	  
 	  public class CompressedRowSparseMatrix extends SparseMatrix {
@@ -2300,9 +2467,15 @@ public class CeresSolver2 {
 
 		  public Vector<Integer> row_blocks() { return row_blocks_; }
 		  public Vector<Integer> mutable_row_blocks() { return row_blocks_; }
+		  public void set_row_blocks(Vector<Integer> row_blocks) {
+			  row_blocks_ = row_blocks;
+		  }
 
 		  public Vector<Integer> col_blocks() { return col_blocks_; }
 		  public Vector<Integer> mutable_col_blocks() { return col_blocks_; }
+		  public void set_col_blocks(Vector<Integer> col_blocks) {
+			  col_blocks_ = col_blocks;
+		  }
 		  
 		  public void SquaredColumnNorm(double[] x) {
 			  int idx;
@@ -2555,6 +2728,73 @@ public class CeresSolver2 {
 			  return matrix;
 			}
 
+		  public void SetMaxNumNonZeros(int num_nonzeros) {
+			  int i;
+			  if (num_nonzeros < 0) {
+				  System.err.println("In CompressedRowSparseMatrix num_nonzeros < 0");
+				  return;
+			  }
+
+			  int cols_temp[] = new int[Math.min(num_nonzeros, cols_.length)];
+			  for (i = 0; i < cols_temp.length; i++) {
+				  cols_temp[i] = cols_[i];
+			  }
+			  cols_ = new int[num_nonzeros];
+			  for (i = 0; i < cols_temp.length; i++) {
+				  cols_[i] = cols_temp[i];
+			  }
+			  cols_temp = null;
+			  
+			  double values_temp[] = new double[Math.min(num_nonzeros, values_.length)];
+			  for (i = 0; i < values_temp.length; i++) {
+				  values_temp[i] = values_[i];
+			  }
+			  values_ = new double[num_nonzeros];
+			  for (i = 0; i < values_temp.length; i++) {
+				  values_[i] = values_temp[i];
+			  }
+			  values_temp = null;
+		  }
+		  
+		  public CompressedRowSparseMatrix Transpose() {
+			  CompressedRowSparseMatrix transpose =
+			      new CompressedRowSparseMatrix(num_cols_, num_rows_, num_nonzeros());
+
+			  switch (storage_type_) {
+			    case UNSYMMETRIC:
+			      transpose.set_storage_type(StorageType.UNSYMMETRIC);
+			      break;
+			    case LOWER_TRIANGULAR:
+			      transpose.set_storage_type(StorageType.UPPER_TRIANGULAR);
+			      break;
+			    case UPPER_TRIANGULAR:
+			      transpose.set_storage_type(StorageType.LOWER_TRIANGULAR);
+			      break;
+			    default:
+			      System.err.println("Unknown storage type: " + storage_type_);
+			      return null;
+			  };
+
+			  TransposeForCompressedRowSparseStructure(num_rows(),
+			                                           num_cols(),
+			                                           num_nonzeros(),
+			                                           rows(),
+			                                           cols(),
+			                                           values(),
+			                                           transpose.mutable_rows(),
+			                                           transpose.mutable_cols(),
+			                                           transpose.mutable_values());
+
+			  // The rest of the code updates the block information. Immediately
+			  // return in case of no block information.
+			  if (row_blocks_.isEmpty()) {
+			    return transpose;
+			  }
+
+			  transpose.set_row_blocks(col_blocks_);
+			  transpose.set_col_blocks(row_blocks_);
+			  return transpose;
+			}
 
 
 	  }
