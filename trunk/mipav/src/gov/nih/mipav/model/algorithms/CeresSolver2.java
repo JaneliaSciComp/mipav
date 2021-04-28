@@ -2407,6 +2407,8 @@ public class CeresSolver2 {
 		    rows_ = new int[num_rows + 1];
 		    cols_ = new int[max_num_nonzeros];
 		    values_ = new double[max_num_nonzeros];
+		    row_blocks_ = new Vector<Integer>();
+		    col_blocks_ = new Vector<Integer>();
 		    
 		    if (1 <= ce.MAX_LOG_LEVEL) {
 		        Preferences.debug("# of rows: " + num_rows_ + "\n", Preferences.DEBUG_ALGORITHM);
@@ -2429,6 +2431,8 @@ public class CeresSolver2 {
 			rows_ = new int[num_rows + 1];
 			cols_ = new int[num_rows];
 			values_ = new double[num_rows];
+			row_blocks_ = new Vector<Integer>();
+			col_blocks_ = new Vector<Integer>();
 			
 			rows_[0] = 0;
 			for (int i = 0; i < num_rows_; ++i) {
