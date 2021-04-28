@@ -51,6 +51,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BiCubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BlockRandomAccessSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CanonicalViewsClusteringOptions;
+import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.ConditionedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
@@ -20456,5 +20457,390 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
           	  }
         	}
 
+        public void CompareMatrices(SparseMatrix a, SparseMatrix b, String testName, boolean passed[]) {
+        	  int i;
+        	  if (a.num_rows() != b.num_rows()) {
+        		  System.err.println("In " + testName + " a.num_rows() != b.num_rows()");
+        		  passed[0] = false;
+        	  }
+        	  if (a.num_cols() != b.num_cols()) {
+        		  System.err.println("In " + testName + " a.num_cols() != b.num_cols()");
+        		  passed[0] = false;
+        	  }
+
+        	  int num_rows = a.num_rows();
+        	  int num_cols = a.num_cols();
+ 
+        	  double x[] = new double[num_cols];
+        	  for (i = 0; i < num_cols; ++i) {
+        	    x[i] = 1.0;
+        	  }
+
+        	    double y_a[] = new double[num_rows];
+        	    double y_b[] = new double[num_rows];
+
+        	    a.RightMultiply(x, y_a);
+        	    b.RightMultiply(x, y_b);
+        	    
+                for (i = 0; i < num_rows; i++) {
+                	if (y_a[i] != y_b[i]) {
+                		System.err.println("In " + testName + " y_a["+i+"] != y_b["+i+"]");
+                		passed[0] = false;
+                	}
+                }
+        	 }
+        
+        TripletSparseMatrix tsm;
+        CompressedRowSparseMatrix crsm;
+        
+        public void CompressedRowSparseMatrixSetUp(int num_rows[], int num_cols[]) {
+        	int i;
+            LinearLeastSquaresProblem problem =
+                CreateLinearLeastSquaresProblemFromId(1);
+
+            if (problem == null) {
+            	System.err.println("In CompressedRowSparseeMatrixSetUp problem == null");
+            }
+
+            tsm = (TripletSparseMatrix)(problem.A);
+            crsm = ce2.FromTripletSparseMatrix(tsm);
+
+            num_rows[0] = tsm.num_rows();
+            num_cols[0] = tsm.num_cols();
+
+            Vector<Integer> row_blocks = crsm.mutable_row_blocks();
+            row_blocks.clear();
+            for (i = 0; i < num_rows[0]; i++) {
+            	row_blocks.add(1);
+            }
+
+            Vector<Integer> col_blocks = crsm.mutable_col_blocks();
+            col_blocks.clear();
+            for (i = 0; i < num_cols[0]; i++) {
+            	col_blocks.add(1);
+            }
+          }
+
+        public void CompressedRowSparseMatrixTestRightMultiply() {
+        	  // CompressedRowSparseMatrixTestRightMultiply() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestRightMultiply()";
+        	  boolean passed[] = new boolean[] {true};
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  CompareMatrices(tsm, crsm, testName, passed);
+        	  if (passed[0]) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        }
+        
+        public void CompressedRowSparseMatrixTestLeftMultiply() {
+        	  // CompressedRowSparseMatrixTestLeftMultiply() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestLeftMultiply()";
+        	  boolean passed[] = new boolean[] {true};
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  for (int i = 0; i < num_rows[0]; ++i) {
+        	    double a[] = new double[num_rows[0]];
+         	    a[i] = 1.0;
+
+        	    double b1[] = new double[num_cols[0]];
+        	    double b2[] = new double[num_cols[0]];
+
+        	    tsm.LeftMultiply(a, b1);
+        	    crsm.LeftMultiply(a, b2);
+
+        	    for (int j = 0; j < num_cols[0]; j++) {
+        	    	if (b1[j] != b2[j]) {
+        	    		System.err.println("In " + testName + " i = " + i + " b1["+j+"] != b2["+j+"]");
+        	    		passed[0] = false;
+        	    	}
+        	    }
+        	  }
+        	  if (passed[0]) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+
+        public void CompressedRowSparseMatrixTestColumnNorm() {
+        	  // CompressedRowSparseMatrixTestColumnNorm() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestColumnNorm()";
+        	  boolean passed[] = new boolean[] {true};
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  double b1[] = new double[num_cols[0]];
+      	      double b2[] = new double[num_cols[0]];
+
+        	  tsm.SquaredColumnNorm(b1);
+        	  crsm.SquaredColumnNorm(b2);
+              
+        	  for (int j = 0; j < num_cols[0]; j++) {
+      	    	if (b1[j] != b2[j]) {
+      	    		System.err.println("In " + testName + " b1["+j+"] != b2["+j+"]");
+      	    		passed[0] = false;
+      	    	}
+      	    }
+      	    if (passed[0]) {
+      		  System.out.println(testName + " passed all tests");
+      	    }
+        }
+        
+        public void CompressedRowSparseMatrixTestScale() {
+        	  // CompressedRowSparseMatrixTestScale() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestScale()";
+        	  boolean passed[] = new boolean[] {true};
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  double scale[] = new double[num_cols[0]];
+        	  for (int i = 0; i < num_cols[0]; ++i) {
+        	    scale[i] = i + 1;
+        	  }
+
+        	  tsm.ScaleColumns(scale);
+        	  crsm.ScaleColumns(scale);
+        	  CompareMatrices(tsm, crsm, testName, passed);
+        	  if (passed[0]) {
+          		  System.out.println(testName + " passed all tests");
+          	   }
+        }
+
+        public void CompressedRowSparseMatrixTestDeleteRows() {
+        	  // CompressedRowSparseMatrixTestDeleteRows() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestDeleteRows()";
+        	  // Clear the row and column blocks as these are purely scalar tests.
+        	  boolean passed[] = new boolean[] {true};
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  crsm.mutable_row_blocks().clear();
+        	  crsm.mutable_col_blocks().clear();
+
+        	  for (int i = 0; i < num_rows[0]; ++i) {
+        	    tsm.Resize(num_rows[0] - i, num_cols[0]);
+        	    crsm.DeleteRows(crsm.num_rows() - tsm.num_rows());
+        	    CompareMatrices(tsm, crsm, testName, passed);
+        	  }
+        	  if (passed[0]) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        }
+        
+        public void CompressedRowSparseMatrixTestAppendRows() {
+        	  // CompressedRowSparseMatrixTestAppendRows() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestAppendRows()";
+        	  boolean passed[] = new boolean[] {true};
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  // Clear the row and column blocks as these are purely scalar tests.
+        	  crsm.mutable_row_blocks().clear();
+        	  crsm.mutable_col_blocks().clear();
+
+        	  for (int i = 0; i < num_rows[0]; ++i) {
+        	    TripletSparseMatrix tsm_appendage = new TripletSparseMatrix(tsm);
+        	    tsm_appendage.Resize(i, num_cols[0]);
+
+        	    tsm.AppendRows(tsm_appendage);
+        	    CompressedRowSparseMatrix crsm_appendage = ce2.FromTripletSparseMatrix(tsm_appendage);
+
+        	    crsm.AppendRows(crsm_appendage);
+        	    CompareMatrices(tsm, crsm, testName, passed);
+        	  }
+        	  if (passed[0]) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
+
+        public void CompressedRowSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix() {
+        	  // CompressedRowSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix() passed all tests
+        	  int i;
+        	  String testName = "CompressedRowSparseMatrixTestAppendAndDeleteBlockDiagonalMatrix()";
+        	  boolean passed = true;
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  int num_diagonal_rows = crsm.num_cols();
+
+        	  double[] diagonal = new double[num_diagonal_rows];
+        	  for (i = 0; i < num_diagonal_rows; ++i) {
+        	    diagonal[i] = i;
+        	  }
+
+        	  Vector<Integer> row_and_column_blocks = new Vector<Integer>();
+        	  row_and_column_blocks.add(1);
+        	  row_and_column_blocks.add(2);
+        	  row_and_column_blocks.add(2);
+
+        	  Vector<Integer> pre_row_blocks = new Vector<Integer>();
+        	  pre_row_blocks.addAll(crsm.row_blocks());
+        	  Vector<Integer> pre_col_blocks = new Vector<Integer>();
+        	  pre_col_blocks.addAll(crsm.col_blocks());
+
+        	  CompressedRowSparseMatrix appendage =
+        	      ce2.CreateBlockDiagonalMatrix(diagonal, row_and_column_blocks);
+        	  if (INFO <= MAX_LOG_LEVEL) {
+        	      Preferences.debug("appendage.row_blocks().size() = " + appendage.row_blocks().size() + "\n", Preferences.DEBUG_ALGORITHM);
+        	  }
+
+        	  crsm.AppendRows(appendage);
+
+        	  final Vector<Integer> post_row_blocks = crsm.row_blocks();
+        	  final Vector<Integer> post_col_blocks = crsm.col_blocks();
+
+        	  Vector<Integer> expected_row_blocks = new Vector<Integer>();
+        	  expected_row_blocks.addAll(pre_row_blocks);
+        	  expected_row_blocks.addAll(row_and_column_blocks);
+
+        	  Vector<Integer> expected_col_blocks = new Vector<Integer>();
+        	  expected_col_blocks.addAll(pre_col_blocks);
+
+        	  if (expected_row_blocks.size() != crsm.row_blocks().size()) {
+        		 System.err.println("In " + testName + " expected_row_blocks.size() != crsm.row_blocks().size()");
+        		 System.err.println("expected_row_blocks.size() = " + expected_row_blocks.size());
+        		 System.err.println("crsm.row_blocks().size() = " + crsm.row_blocks().size());
+        		 passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < expected_row_blocks.size(); i++) {
+        			  if (expected_row_blocks.get(i) != crsm.row_blocks().get(i)) {
+        				  System.err.println("In " + testName + " expected_row_blocks.get("+i+") != crsm.row_blocks().get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (expected_col_blocks.size() != crsm.col_blocks().size()) {
+         		 System.err.println("In " + testName + " (expected_col_blocks.size() != crsm.col_blocks().size()");
+         		 passed = false;
+         	  }
+         	  else {
+         		  for (i = 0; i < expected_col_blocks.size(); i++) {
+         			  if (expected_col_blocks.get(i) != crsm.col_blocks().get(i)) {
+         				  System.err.println("In " + testName + " expected_col_blocks.get("+i+") != crsm.col_blocks().get("+i+")");
+         				  passed = false;
+         			  }
+         		  }
+         	  }
+
+        	  crsm.DeleteRows(num_diagonal_rows);
+        	  if (crsm.row_blocks().size() != pre_row_blocks.size()) {
+        		  System.err.println("In " + testName + " crsm.row_blocks().size() != pre_row_blocks.size()");
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < crsm.row_blocks().size(); i++) {
+        			  if (crsm.row_blocks().get(i) != pre_row_blocks.get(i)) {
+        				  System.err.println("In " + testName + " crsm.row_blocks().get("+i+") != pre_row_blocks.get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (crsm.col_blocks().size() != pre_col_blocks.size()) {
+        		  System.err.println("In " + testName + " crsm.col_blocks().size() != pre_col_blocks.size()");
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < crsm.col_blocks().size(); i++) {
+        			  if (crsm.col_blocks().get(i) != pre_col_blocks.get(i)) {
+        				  System.err.println("In " + testName + " crsm.col_blocks().get("+i+") != pre_col_blocks.get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
+        
+        public void CompressedRowSparseMatrixTestToDenseMatrix() {
+        	  // CompressedRowSparseMatrixTestToDenseMatrix() passed all tests
+        	  int r,c;
+        	  String testName = "CompressedRowSparseMatrixTestToDenseMatrix()";
+        	  boolean passed = true;
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+
+        	  Matrix tsm_dense = tsm.ToDenseMatrix();
+        	  Matrix crsm_dense = crsm.ToDenseMatrix();
+
+        	  boolean equalDimensions = true;
+        	  if (tsm_dense.getRowDimension() != crsm_dense.getRowDimension()) {
+        		  System.err.println("In " + testName + " tsm_dense.getRowDimension() != crsm_dense.getRowDimension()");
+        		  passed = false;
+        		  equalDimensions = false;
+        	  }
+        	  if (tsm_dense.getColumnDimension() != crsm_dense.getColumnDimension()) {
+        		  System.err.println("In " + testName + " tsm_dense.getColumnDimension() != crsm_dense.getColumnDimension()");
+        		  passed = false;
+        		  equalDimensions = false;
+        	  }
+        	  if (equalDimensions) {
+        		  for (r = 0; r < tsm_dense.getRowDimension(); r++) {
+        			  for (c = 0; c < tsm_dense.getColumnDimension(); c++) {
+        				  if (tsm_dense.get(r,c) != crsm_dense.get(r,c)) {
+        					  System.err.println("In " + testName + " tsm_dense.get("+r+","+c+") != crsm_dense.get("+r+","+c+")");
+        					  passed = false;
+        				  }
+        			  }
+        		  }
+        	  }
+        	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
+
+        public void CompressedRowSparseMatrixTestToCRSMatrix() {
+        	  // CompressedRowSparseMatrixTestToCRSMatrix() passed all tests
+        	  String testName = "CompressedRowSparseMatrixTestToCRSMatrix()";
+        	  boolean passed = true;
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+        	  CRSMatrix crs_matrix = crsm.ToCRSMatrix();
+        	  if (crsm.num_rows() != crs_matrix.num_rows) {
+        		  System.err.println("In " + testName + " crsm.num_rows() != crs_matrix.num_rows");
+        		  passed = false;
+        	  }
+        	  if (crsm.num_cols() != crs_matrix.num_cols) {
+        		  System.err.println("In " + testName + " crsm.num_cols() != crs_matrix.num_cols");
+        		  passed = false;
+        	  }
+        	  if (crsm.num_rows() + 1 != crs_matrix.rows.size()) {
+        		  System.err.println("In " + testName + " crsm.num_rows() + 1 != crs_matrix.rows.size()");
+        		  passed = false;
+        	  }
+        	  if (crsm.num_nonzeros() != crs_matrix.cols.size()) {
+        		  System.err.println("In " + testName + " crsm.num_nonzeros() != crs_matrix.cols.size()");
+        		  passed = false;
+        	  }
+        	  if (crsm.num_nonzeros() != crs_matrix.values.size()) {
+        		  System.err.println("In " + testName + " crsm.num_nonzeros() != crs_matrix.values.size()");
+        		  passed = false;
+        	  }
+
+        	  for (int i = 0; i < crsm.num_rows() + 1; ++i) {
+        	    if (crsm.rows()[i] != crs_matrix.rows.get(i)) {
+        	    	System.err.println("In " + testName + " crsm.rows()["+i+"] != crs_matrix.rows.get("+i+")");
+        	    	passed = false;
+        	    }
+        	  }
+
+        	  for (int i = 0; i < crsm.num_nonzeros(); ++i) {
+        	    if (crsm.cols()[i] != crs_matrix.cols.get(i)) {
+        	    	System.err.println("In " + testName + " crsm.cols()["+i+"] != crs_matrix.cols.get("+i+")");
+        	    	passed = false;
+        	    }
+        	    if (crsm.values()[i] != crs_matrix.values.get(i)) {
+        	    	System.err.println("In " + testName + " crsm.values()["+i+"] != crs_matrix.values.get("+i+")");
+        	    	passed = false;
+        	    }
+        	  }
+        	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
 
 }
