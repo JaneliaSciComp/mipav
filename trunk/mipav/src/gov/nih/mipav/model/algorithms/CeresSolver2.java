@@ -2711,7 +2711,7 @@ public class CeresSolver2 {
 			    return;
 			  }
 			  
-			  for (i = 0; i < m.row_blocks().get(i); i++) {
+			  for (i = 0; i < m.row_blocks().size(); i++) {
 				  row_blocks_.add(m.row_blocks().get(i));
 			  }
 
