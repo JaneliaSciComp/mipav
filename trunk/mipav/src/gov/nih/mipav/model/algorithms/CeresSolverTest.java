@@ -20842,5 +20842,234 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
           		  System.out.println(testName + " passed all tests");
           	  }
         	}
+        
+        public void CompressedRowSparseMatrixCreateBlockDiagonalMatrix() {
+        	  // CompressedRowSparseMatrixCreateBlockDiagonalMatrix() passed all tests
+        	  int i;
+        	  String testName = "CompressedRowSparseMatrixCreateBlockDiagonalMatrix()";
+        	  boolean passed = true;
+        	  int num_rows[] = new int[1];
+        	  int num_cols[] = new int[1];
+        	  CompressedRowSparseMatrixSetUp(num_rows, num_cols);
+
+        	  Vector<Integer> blocks = new Vector<Integer>();
+        	  blocks.add(1);
+        	  blocks.add(2);
+        	  blocks.add(2);
+
+        	  double diagonal[] = new double[5];
+        	  for (i = 0; i < 5; ++i) {
+        	    diagonal[i] = i + 1;
+        	  }
+
+        	  CompressedRowSparseMatrix matrix = ce2.CreateBlockDiagonalMatrix(diagonal, blocks);
+
+        	  if (matrix.num_rows() != 5) {
+        		  System.err.println("In " + testName + " matrix.num_rows() != 5");
+        		  passed = false;
+        	  }
+        	  if (matrix.num_cols() != 5) {
+        		  System.err.println("In " + testName + " matrix.num_cols() != 5");
+        		  passed = false;
+        	  }
+        	  if (matrix.num_nonzeros() != 9) {
+        		  System.err.println("In " + testName + " matrix.num_nonzeros() != 9");
+        		  passed = false;
+        	  }
+        	  if (blocks.size() != matrix.row_blocks().size()) {
+        		  System.err.println("In " + testName + " blocks.size() != matrix.row_blocks().size()");
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < blocks.size(); i++) {
+        			  if (blocks.get(i) != matrix.row_blocks().get(i)) {
+        				  System.err.println("In " + testName + " blocks.get("+i+") != matrix.row_blocks().get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (blocks.size() != matrix.col_blocks().size()) {
+        		  System.err.println("In " + testName + " blocks.size() != matrix.col_blocks().size()");
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < blocks.size(); i++) {
+        			  if (blocks.get(i) != matrix.col_blocks().get(i)) {
+        				  System.err.println("In " + testName + " blocks.get("+i+") != matrix.col_blocks().get("+i+")");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+
+        	  double x[] = new double[5];
+        	  double y[] = new double[5];
+
+        	  for (i = 0; i < 5; i++) {
+        		  x[i] = 1.0;
+        		  y[i] = 0.0;
+        	  }
+        	  matrix.RightMultiply(x, y);
+        	  for (i = 0; i < diagonal.length; ++i) {
+        	    if (y[i] != diagonal[i]) {
+        	    	System.err.println("In " + testName + " y["+i+"] != diagonal["+i+"]");
+        	    	passed = false;
+        	    }
+        	  }
+
+        	  for (i = 0; i < 5; i++) {
+        		  y[i] = 0.0;
+        	  }
+        	  matrix.LeftMultiply(x, y);
+        	  for (i = 0; i < diagonal.length; ++i) {
+        		  if (y[i] != diagonal[i]) {
+          	    	System.err.println("In " + testName + " y["+i+"] != diagonal["+i+"]");
+          	    	passed = false;
+          	    }
+        	  }
+
+        	  Matrix dense = matrix.ToDenseMatrix();
+        	  int dense_diagonal_length = Math.min(dense.getRowDimension(), dense.getColumnDimension());
+        	  double dense_diagonal[] = new double[dense_diagonal_length];
+        	  for (i = 0; i < dense_diagonal_length; i++) {
+        		  dense_diagonal[i] = dense.get(i,i);
+        	  }
+        	  if (dense_diagonal_length != diagonal.length) {
+        		  System.err.println("In " + testName + " dense.diagonal().length != diagonal.length");
+        		  passed = false;
+        	  }
+        	  else {
+        		  for (i = 0; i < diagonal.length; i++) {
+        			  if (dense_diagonal[i] != diagonal[i]) {
+        				  System.err.println("In " + testName + " dense_diagonal["+i+"] != diagonal["+i+"]");
+        				  passed = false;
+        			  }
+        		  }
+        	  }
+        	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+
+        public void CompressedRowSparseMatrixTranspose() {
+        	// CompressedRowSparseMatrixTranspose() passed all tests
+        	  //  0  1  0  2  3  0
+        	  //  4  6  7  0  0  8
+        	  //  9 10  0 11 12  0
+        	  // 13  0 14 15  9  0
+        	  //  0 16 17  0  0  0
+
+        	  // Block structure:
+        	  //  A  A  A  A  B  B
+        	  //  A  A  A  A  B  B
+        	  //  A  A  A  A  B  B
+        	  //  C  C  C  C  D  D
+        	  //  C  C  C  C  D  D
+        	  //  C  C  C  C  D  D
+
+        	  int i, r, c;
+              String testName = "CompressedRowSparseMatrixTranspose()";
+        	  boolean passed = true;
+        	  CompressedRowSparseMatrix matrix = ce2.new CompressedRowSparseMatrix(5, 6, 30);
+        	  int[] rows = matrix.mutable_rows();
+        	  int[] cols = matrix.mutable_cols();
+        	  double[] values = matrix.mutable_values();
+        	  matrix.mutable_row_blocks().add(3);
+        	  matrix.mutable_row_blocks().add(3);
+        	  matrix.mutable_col_blocks().add(4);
+        	  matrix.mutable_col_blocks().add(2);
+
+        	  rows[0] = 0;
+        	  cols[0] = 1;
+        	  cols[1] = 3;
+        	  cols[2] = 4;
+
+        	  rows[1] = 3;
+        	  cols[3] = 0;
+        	  cols[4] = 1;
+        	  cols[5] = 2;
+        	  cols[6] = 5;
+
+        	  rows[2] = 7;
+        	  cols[7] = 0;
+        	  cols[8] = 1;
+        	  cols[9] = 3;
+        	  cols[10] = 4;
+
+        	  rows[3] = 11;
+        	  cols[11] = 0;
+        	  cols[12] = 2;
+        	  cols[13] = 3;
+        	  cols[14] = 4;
+
+        	  rows[4] = 15;
+        	  cols[15] = 1;
+        	  cols[16] = 2;
+        	  rows[5] = 17;
+
+        	  for (i = 0; i < 17; i++) {
+        		  cols[i] = (int)values[i];
+        	  }
+
+        	  CompressedRowSparseMatrix transpose = matrix.Transpose();
+
+        	  if (transpose.row_blocks().size() != matrix.col_blocks().size()) {
+        		  System.err.println("In " + testName + " transpose.row_blocks().size() != matrix.col_blocks().size()");
+        		  passed = false;
+        	  }
+        	  else {
+	        	  for (i = 0; i < transpose.row_blocks().size(); ++i) {
+	        	    if (transpose.row_blocks().get(i) != matrix.col_blocks().get(i) ) {
+	        	    	System.err.println("In " + testName + " transpose.row_blocks().get("+i+") != matrix.col_blocks().get("+i+")");
+	        	    	passed = false;
+	        	    }
+	        	  }
+        	  }
+
+        	  if (transpose.col_blocks().size() != matrix.row_blocks().size()) {
+        		  System.err.println("In " + testName + " transpose.col_blocks().size() != matrix.row_blocks().size()");
+        		  passed = false;
+        	  }
+        	  else {
+	        	  for (i = 0; i < transpose.col_blocks().size(); ++i) {
+	        	    if (transpose.col_blocks().get(i) != matrix.row_blocks().get(i)) {
+	        	    	System.err.println("In " + testName + " transpose.col_blocks().get("+i+") != matrix.row_blocks().get("+i+")");
+	        	    	passed = false;
+	        	    }
+	        	  }
+        	  }
+
+        	  Matrix dense_matrix = matrix.ToDenseMatrix();
+
+        	  Matrix dense_transpose = transpose.ToDenseMatrix();
+        	  Matrix dense_transpose_transpose = dense_transpose.transpose();
+        	  boolean equalDimensions = true;
+        	  if (dense_matrix.getRowDimension() != dense_transpose_transpose.getRowDimension()) {
+        		  System.err.println("In " + testName + " dense_matrix.getRowDimension() != dense_transpose_transpose.getRowDimension()");
+        		  equalDimensions = false;
+        		  passed = false;
+        	  }
+        	  if (dense_matrix.getColumnDimension() != dense_transpose_transpose.getColumnDimension()) {
+        		  System.err.println("In " + testName + " dense_matrix.getColumnDimension() != dense_transpose_transpose.getColumnDimension()");
+        		  equalDimensions = false;
+        		  passed = false;
+        	  }
+        	  if (equalDimensions) {
+        		  double normSquared = 0.0;
+        		  for (r = 0; r < dense_matrix.getRowDimension(); r++) {
+        			  for (c = 0; c < dense_matrix.getColumnDimension(); c++) {
+        				  double diff = dense_matrix.get(r,c) - dense_transpose_transpose.get(r,c);
+        				  normSquared += (diff * diff);
+        			  }
+        		  }
+        		  double norm = Math.sqrt(normSquared);
+        		  if (norm > 1.0E-14) {
+        			  System.err.println("In " + testName + " (dense_matrix - dense_transpose.transpose()).norm() > 1.0E-14");
+        			  passed = false;
+        		  }
+        	  }
+        	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
 
 }
