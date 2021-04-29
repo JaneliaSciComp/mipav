@@ -3747,7 +3747,7 @@ public class CeresSolver {
 		private double values_[];
 		// scoped_ptr<CompressedRowBlockStructure> block_structure_;
 		private CompressedRowBlockStructure block_structure_;
-		public RandomMatrixOptions randomMatrixOptions;
+		public BlockSparseMatrixRandomMatrixOptions randomMatrixOptions;
 
 		// Construct a block sparse matrix with a fully initialized
 		// CompressedRowBlockStructure objected. The matrix takes over
@@ -3756,7 +3756,7 @@ public class CeresSolver {
 		// TODO(sameeragarwal): Add a function which will validate legal
 		// CompressedRowBlockStructure objects.
 		public BlockSparseMatrix(CompressedRowBlockStructure block_structure) {
-			randomMatrixOptions = new RandomMatrixOptions();
+			randomMatrixOptions = new BlockSparseMatrixRandomMatrixOptions();
 			num_rows_ = 0;
 			num_cols_ = 0;
 			num_nonzeros_ = 0;
@@ -4145,39 +4145,41 @@ public class CeresSolver {
 			  }	  
 		  }
 
-		  class RandomMatrixOptions {
-			  public int num_row_blocks;
-			  public int min_row_block_size;
-			  public int max_row_block_size;
-			  public int num_col_blocks;
-			  public int min_col_block_size;
-			  public int max_col_block_size;
-
-			    // 0 < block_density <= 1 is the probability of a block being
-			    // present in the matrix. A given random matrix will not have
-			    // precisely this density.
-			    public double block_density;
-
-			    // If col_blocks is non-empty, then the generated random matrix
-			    // has this block structure and the column related options in this
-			    // struct are ignored.
-			    public Vector<Block> col_blocks;
-		    public RandomMatrixOptions() {
-		    	  col_blocks = new Vector<Block>();
-		          num_row_blocks = 0;
-		          min_row_block_size = 0;
-		          max_row_block_size = 0;
-		          num_col_blocks = 0;
-		          min_col_block_size = 0;
-		          max_col_block_size = 0;
-		          block_density = 0.0;
-		    }
-
-		    
-		  } // class RandomMatrixOptions
+		  
 
 		 
 	} // class BlockSparseMatrix extends SparseMatrix
+	
+	class BlockSparseMatrixRandomMatrixOptions {
+		  public int num_row_blocks;
+		  public int min_row_block_size;
+		  public int max_row_block_size;
+		  public int num_col_blocks;
+		  public int min_col_block_size;
+		  public int max_col_block_size;
+
+		    // 0 < block_density <= 1 is the probability of a block being
+		    // present in the matrix. A given random matrix will not have
+		    // precisely this density.
+		    public double block_density;
+
+		    // If col_blocks is non-empty, then the generated random matrix
+		    // has this block structure and the column related options in this
+		    // struct are ignored.
+		    public Vector<Block> col_blocks;
+	    public BlockSparseMatrixRandomMatrixOptions() {
+	    	  col_blocks = new Vector<Block>();
+	          num_row_blocks = 0;
+	          min_row_block_size = 0;
+	          max_row_block_size = 0;
+	          num_col_blocks = 0;
+	          min_col_block_size = 0;
+	          max_col_block_size = 0;
+	          block_density = 0.0;
+	    }
+
+	    
+	  } // class BlockSparseMatrixRandomMatrixOptions
 	
 	public BlockSparseMatrix CreateDiagonalMatrix(double diagonal[], Vector<Block> column_blocks) {
 		  // Create the block structure for the diagonal matrix.
@@ -4221,7 +4223,7 @@ public class CeresSolver {
 	// Create a random BlockSparseMatrix whose entries are normally
 	// distributed and whose structure is determined by
 	// RandomMatrixOptions.
-	public BlockSparseMatrix CreateRandomMatrix(BlockSparseMatrix.RandomMatrixOptions options) {
+	public BlockSparseMatrix CreateRandomMatrix(BlockSparseMatrixRandomMatrixOptions options) {
 		  if (options.num_row_blocks <= 0) {
 			  System.err.println("In BlockSparseMatrix CreateRandomMatrix options.num_row_blocks <= 0");
 			  return null;
@@ -4320,12 +4322,27 @@ public class CeresSolver {
 		  return matrix;
 		} // BlockSparseMatrix CreateRandomMatrix
 	
+	  // Options struct to control the generation of random
+	  // TripletSparseMatrix objects.
+	  class TripletSparseMatrixRandomMatrixOptions {
+	    public int num_rows;
+	    public int num_cols;
+	    // 0 < density <= 1 is the probability of an entry being
+	    // structurally non-zero. A given random matrix will not have
+	    // precisely this density.
+	    public double density;
+	    
+	    public TripletSparseMatrixRandomMatrixOptions() {
+	    	
+	    }
+	  } // class TripletSpareseMatrixRandomMatrixOptions
+	
 	// An implementation of the SparseMatrix interface to store and
 	// manipulate sparse matrices in triplet (i,j,s) form.  This object is
 	// inspired by the design of the cholmod_triplet struct used in the
 	// SuiteSparse package and is memory layout compatible with it.
 	class TripletSparseMatrix extends SparseMatrix {
-		  public RandomMatrixOptions randomMatrixOptions;
+		  public TripletSparseMatrixRandomMatrixOptions randomMatrixOptions;
 		  private int num_rows_;
 		  private int num_cols_;
 		  private int max_num_nonzeros_;
@@ -4342,23 +4359,10 @@ public class CeresSolver {
 		  //scoped_array<double> values_;
 		  private double values_[];
 		  
-		  // Options struct to control the generation of random
-		  // TripletSparseMatrix objects.
-		  class RandomMatrixOptions {
-		    public int num_rows;
-		    public int num_cols;
-		    // 0 < density <= 1 is the probability of an entry being
-		    // structurally non-zero. A given random matrix will not have
-		    // precisely this density.
-		    public double density;
-		    
-		    public RandomMatrixOptions() {
-		    	
-		    }
-		  } // class RandomMatrixOptions
+		  
 	 public TripletSparseMatrix() {
 		  super();
-		  randomMatrixOptions = new RandomMatrixOptions();
+		  randomMatrixOptions = new TripletSparseMatrixRandomMatrixOptions();
 		  num_rows_ = 0;
 	      num_cols_ = 0;
 	      max_num_nonzeros_ = 0;
@@ -4370,7 +4374,7 @@ public class CeresSolver {
 	 
 	  public TripletSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros) {
 		  super();
-		  randomMatrixOptions = new RandomMatrixOptions();
+		  randomMatrixOptions = new TripletSparseMatrixRandomMatrixOptions();
 		  num_rows_ = num_rows;
 	      num_cols_ = num_cols;
 	      max_num_nonzeros_ = max_num_nonzeros;
@@ -4401,7 +4405,7 @@ public class CeresSolver {
 	                      Vector<Integer> cols,
 	                      Vector<Double> values) {
 		  super();
-		  randomMatrixOptions = new RandomMatrixOptions();
+		  randomMatrixOptions = new TripletSparseMatrixRandomMatrixOptions();
 		  num_rows_ = num_rows;
 	      num_cols_ = num_cols;
 	      max_num_nonzeros_ = values.size();
@@ -4443,7 +4447,7 @@ public class CeresSolver {
 
 	  public TripletSparseMatrix(TripletSparseMatrix orig) {
 		  super();
-		  randomMatrixOptions = new RandomMatrixOptions();
+		  randomMatrixOptions = new TripletSparseMatrixRandomMatrixOptions();
 	      num_rows_ = orig.num_rows_;
 	      num_cols_ = orig.num_cols_;
 	      max_num_nonzeros_ = orig.max_num_nonzeros_;
@@ -4717,7 +4721,7 @@ public class CeresSolver {
 	// RandomMatrixOptions.
 	//
 	// Caller owns the result.
-	public TripletSparseMatrix CreateRandomMatrix(TripletSparseMatrix.RandomMatrixOptions options) {
+	public TripletSparseMatrix CreateRandomMatrix(TripletSparseMatrixRandomMatrixOptions options) {
 		  if (options.num_rows <= 0) {
 			  System.err.println("In TripletSparseMatrix CreateRandomMatrix options.num_rows <= 0");
 			  return null;
