@@ -56,6 +56,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver2.ConditionedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
+import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrixRandomMatrixOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Triplet;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
@@ -21071,5 +21072,110 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         		  System.out.println(testName + " passed all tests");
         	  }
         	}
+        
+        public void CompressedRowSparseMatrixFromTripletSparseMatrix() {
+        	  // CompressedRowSparseMatrixFromTripletSparseMatrix() passed all tests
+        	  int i,r,c;
+        	  String testName = "CompressedRowSparseMatrixFromTripletSparseMatrix()";
+        	  boolean passed = true;
+        	  TripletSparseMatrixRandomMatrixOptions options = new TripletSparseMatrixRandomMatrixOptions();
+        	  options.num_rows = 5;
+        	  options.num_cols = 7;
+        	  options.density = 0.5;
+
+        	  final int kNumTrials = 10;
+        	  for (i = 0; i < kNumTrials; ++i) {
+        	    TripletSparseMatrix tsm = CreateRandomMatrix(options);
+        	    CompressedRowSparseMatrix crsm = ce2.FromTripletSparseMatrix(tsm);
+
+        	    Matrix expected = tsm.ToDenseMatrix();
+        	    Matrix actual = crsm.ToDenseMatrix();
+        	    boolean equalDimensions = true;
+	          	  if (expected.getRowDimension() != actual.getRowDimension()) {
+	          		  System.err.println("In " + testName + " expected.getRowDimension() != actual.getRowDimension()");
+	          		  equalDimensions = false;
+	          		  passed = false;
+	          	  }
+	          	  if (expected.getColumnDimension() != actual.getColumnDimension()) {
+	          		  System.err.println("In " + testName + " expected.getColumnDimension() != actual.getColumnDimension()");
+	          		  equalDimensions = false;
+	          		  passed = false;
+	          	  }
+	          	  if (equalDimensions) {
+	          		  double normSquared = 0.0;
+	          		  double actualNormSquared = 0.0;
+	          		  for (r = 0; r < expected.getRowDimension(); r++) {
+	          			  for (c = 0; c < expected.getColumnDimension(); c++) {
+	          				  double diff = expected.get(r,c) - actual.get(r,c);
+	          				  normSquared += (diff * diff);
+	          				  actualNormSquared += (actual.get(r,c) * actual.get(r,c));
+	          			  }
+	          		  }
+	          		  double norm = Math.sqrt(normSquared);
+	          		  double actualNorm = Math.sqrt(actualNormSquared);
+	          		  if (norm/actualNorm > epsilon) {
+	          			  System.err.println("In " + testName + " (expected - actual).norm() / actual.norm() > epsilon");
+	          			  passed = false;
+	          		  }
+	          	  }
+        	  }
+          	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
+
+        public void CompressedRowSparseMatrixFromTripletSparseMatrixTransposed() {
+        	  // CompressedRowSparseMatrixFromTripletSparseMatrixTransposed() passed all tests
+        	  int i,r,c;
+        	  String testName = "CompressedRowSparseMatrixFromTripletSparseMatrixTransposed()";
+        	  boolean passed = true;
+        	  TripletSparseMatrixRandomMatrixOptions options = new TripletSparseMatrixRandomMatrixOptions();
+        	  options.num_rows = 5;
+        	  options.num_cols = 7;
+        	  options.density = 0.5;
+
+        	  final int kNumTrials = 10;
+        	  for (i = 0; i < kNumTrials; ++i) {
+        	    TripletSparseMatrix tsm = CreateRandomMatrix(options);
+        	    CompressedRowSparseMatrix crsm = ce2.FromTripletSparseMatrixTransposed(tsm);
+
+        	    Matrix tmp = tsm.ToDenseMatrix();
+        	    Matrix expected = tmp.transpose();
+        	    Matrix actual = crsm.ToDenseMatrix();
+        	    boolean equalDimensions = true;
+	          	  if (expected.getRowDimension() != actual.getRowDimension()) {
+	          		  System.err.println("In " + testName + " expected.getRowDimension() != actual.getRowDimension()");
+	          		  equalDimensions = false;
+	          		  passed = false;
+	          	  }
+	          	  if (expected.getColumnDimension() != actual.getColumnDimension()) {
+	          		  System.err.println("In " + testName + " expected.getColumnDimension() != actual.getColumnDimension()");
+	          		  equalDimensions = false;
+	          		  passed = false;
+	          	  }
+	          	  if (equalDimensions) {
+	          		  double normSquared = 0.0;
+	          		  double actualNormSquared = 0.0;
+	          		  for (r = 0; r < expected.getRowDimension(); r++) {
+	          			  for (c = 0; c < expected.getColumnDimension(); c++) {
+	          				  double diff = expected.get(r,c) - actual.get(r,c);
+	          				  normSquared += (diff * diff);
+	          				  actualNormSquared += (actual.get(r,c) * actual.get(r,c));
+	          			  }
+	          		  }
+	          		  double norm = Math.sqrt(normSquared);
+	          		  double actualNorm = Math.sqrt(actualNormSquared);
+	          		  if (norm/actualNorm > epsilon) {
+	          			  System.err.println("In " + testName + " (expected - actual).norm() / actual.norm() > epsilon");
+	          			  passed = false;
+	          		  }
+	          	  }
+        	  }
+        	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
+        	
+
 
 }
