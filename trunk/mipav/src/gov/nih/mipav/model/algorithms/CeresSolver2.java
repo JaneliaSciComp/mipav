@@ -1985,7 +1985,7 @@ public class CeresSolver2 {
 	  // probability block_density detemine whether they are structurally
 	  // zero or not. If the answer is no, then we generate entries for the
 	  // block which are distributed normally.
-	  public class RandomMatrixOptions {
+	  public class CompressedRowSparseMatrixRandomMatrixOptions {
 		    public int num_row_blocks;
 		    public int min_row_block_size;
 		    public int max_row_block_size;
@@ -1997,7 +1997,7 @@ public class CeresSolver2 {
 		    // present in the matrix. A given random matrix will not have
 		    // precisely this density.
 		    public double block_density;
-	    public RandomMatrixOptions() {
+	    public CompressedRowSparseMatrixRandomMatrixOptions() {
 	          num_row_blocks = 0;
 	          min_row_block_size = 0;
 	          max_row_block_size = 0;
@@ -2261,7 +2261,7 @@ public class CeresSolver2 {
 		  return matrix;
 		}
 	
-	public CompressedRowSparseMatrix CreateRandomMatrix(RandomMatrixOptions options) {
+	public CompressedRowSparseMatrix CreateRandomMatrix(CompressedRowSparseMatrixRandomMatrixOptions options) {
 		  int i;
 		  RandomNumberGen randomGen = new RandomNumberGen();
 		  
