@@ -54,6 +54,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver2.CanonicalViewsClusteringOptio
 import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.ConditionedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
+import gov.nih.mipav.model.algorithms.CeresSolver2.DynamicCompressedRowSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrixRandomMatrixOptions;
@@ -21175,7 +21176,315 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
           		  System.out.println(testName + " passed all tests");
           	  }
         	}
+        
+        int num_rows;
+        int num_cols;
+
+        int num_additional_elements;
+
+        int expected_num_nonzeros;
+
+        Matrix dense;
+
+        DynamicCompressedRowSparseMatrix dcrsm;
+        boolean dcrmPassed;
+
         	
+        public void DynamicompressedRowSparseMatrixSetUp() {
+            num_rows = 7;
+            num_cols = 4;
+
+            // The number of additional elements reserved when `Finalize` is called
+            // should have no effect on the number of rows, columns or nonzeros.
+            // Set this to some nonzero value to be sure.
+            num_additional_elements = 13;
+
+            expected_num_nonzeros = num_rows * num_cols - Math.min(num_rows, num_cols);
+
+            InitialiseDenseReference();
+            InitialiseSparseMatrixReferences();
+
+            dcrsm = ce2.new DynamicCompressedRowSparseMatrix(num_rows,
+                                                             num_cols,
+                                                             0);
+          }
+        
+          public void Finalize() {
+            dcrsm.Finalize(num_additional_elements);
+          }
+          
+          public void InitialiseDenseReference() {
+        	    dense = new Matrix(num_rows, num_cols, 0.0);
+        	    int num_nonzeros = 0;
+        	    for (int i = 0; i < (num_rows * num_cols); ++i) {
+        	      final int r = i / num_cols, c = i % num_cols;
+        	      if (r != c) {
+        	        dense.set(r, c,i + 1);
+        	        ++num_nonzeros;
+        	      }
+        	    }
+        	    if (num_nonzeros != expected_num_nonzeros) {
+        	    	System.err.println("In InitialiseDenseReference num_nonzeros != expected_num_nonzeros");
+        	    	dcrmPassed = false;
+        	    }
+         }
+
+          public void InitialiseSparseMatrixReferences() {
+        	    int i, r, c;
+        	    Vector<Integer> rows = new Vector<Integer>();
+        	    Vector<Integer> cols = new Vector<Integer>();
+        	    Vector<Double> values = new Vector<Double>();
+        	    for (i = 0; i < (num_rows * num_cols); ++i) {
+        	      r = i / num_cols;
+        	      c = i % num_cols;
+        	      if (r != c) {
+        	        rows.add(r);
+        	        cols.add(c);
+        	        values.add(i + 1.0);
+        	      }
+        	    }
+        	    if (values.size() != expected_num_nonzeros) {
+        	    	System.err.println("In InitialiseSparseMatrixReferences() InitialiseSparseMatrixReferences()");
+        	    	dcrmPassed = false;
+        	    	return;
+        	    }
+
+        	    tsm = new TripletSparseMatrix(num_rows,
+        	                                      num_cols,
+        	                                      expected_num_nonzeros);
+        	    for (i = 0; i < rows.size(); i++) {
+        	    	tsm.mutable_rows()[i] = rows.get(i);
+        	    }
+        	    for (i = 0; i < cols.size(); i++) {
+        	    	tsm.mutable_cols()[i] = cols.get(i);
+        	    }
+        	    for (i = 0; i < values.size(); i++) {
+        	    	tsm.mutable_values()[i] = values.get(i);
+        	    }
+        	    tsm.set_num_nonzeros(values.size());
+
+        	    Matrix dense_from_tsm = tsm.ToDenseMatrix();
+        	    boolean equalDimensions = true;
+        	    if (dense.getRowDimension() != dense_from_tsm.getRowDimension()) {
+        	        System.err.println("In InitialiseSparseMatrixReferences() dense.getRowDimension() != dense_from_tsm.getRowDimension()");
+        	        equalDimensions = false;
+        	        dcrmPassed = false;
+        	    }
+        	    if (dense.getColumnDimension() != dense_from_tsm.getColumnDimension()) {
+        	        System.err.println("In InitialiseSparseMatrixReferences() dense.getColumnDimension() != dense_from_tsm.getColumnDimension()");
+        	        equalDimensions = false;
+        	        dcrmPassed = false;
+        	    }
+        	    if (equalDimensions) {
+        	    	for (r = 0; r < dense.getRowDimension(); r++) {
+        	    		for (c = 0; c < dense.getColumnDimension(); c++) {
+        	    			if (dense.get(r,c) != dense_from_tsm.get(r,c)) {
+        	    				System.err.println("In nitialiseSparseMatrixReferences() dense.get("+r+","+c+") != dense_from_tsm.get("+r+","+c+")");
+        	    				dcrmPassed = false;
+        	    			}
+        	    		}
+        	    	}
+        	    }
+        	    
+        	    crsm = ce2.FromTripletSparseMatrix(tsm);
+        	    Matrix dense_from_crsm = crsm.ToDenseMatrix();
+        	    equalDimensions = true;
+        	    if (dense.getRowDimension() != dense_from_crsm.getRowDimension()) {
+        	        System.err.println("In InitialiseSparseMatrixReferences() dense.getRowDimension() != dense_from_crsm.getRowDimension()");
+        	        equalDimensions = false;
+        	        dcrmPassed = false;
+        	    }
+        	    if (dense.getColumnDimension() != dense_from_crsm.getColumnDimension()) {
+        	        System.err.println("In InitialiseSparseMatrixReferences() dense.getColumnDimension() != dense_from_crsm.getColumnDimension()");
+        	        equalDimensions = false;
+        	        dcrmPassed = false;
+        	    }
+        	    if (equalDimensions) {
+        	    	for (r = 0; r < dense.getRowDimension(); r++) {
+        	    		for (c = 0; c < dense.getColumnDimension(); c++) {
+        	    			if (dense.get(r,c) != dense_from_crsm.get(r,c)) {
+        	    				System.err.println("In InitialiseSparseMatrixReferences() dense.get("+r+","+c+") != dense_from_crsm.get("+r+","+c+")");
+        	    				dcrmPassed = false;
+        	    			}
+        	    		}
+        	    	}
+        	    }
+        	 }
+
+          public void InsertNonZeroEntriesFromDenseReference() {
+        	    for (int r = 0; r < num_rows; ++r) {
+        	      for (int c = 0; c < num_cols; ++c) {
+        	        final double v = dense.get(r, c);
+        	        if (v != 0.0) {
+        	          dcrsm.InsertEntry(r, c, v);
+        	        }
+        	      }
+        	    }
+         }
+          
+          public void ExpectEmpty() {
+        	    if (dcrsm.num_rows() != num_rows) {
+        	    	System.err.println("In ExpectEmpty dcrsm.num_rows() != num_rows");
+        	    	dcrmPassed = false;
+        	    }
+        	    if (dcrsm.num_cols() != num_cols) {
+        	    	System.err.println("In ExpectEmpty dcrsm.num_cols() != num_cols");
+        	    	dcrmPassed = false;
+        	    }
+        	    if (dcrsm.num_nonzeros() != 0) {
+        	    	System.err.println("In ExpectEmpty dcrsm.num_nonzeros() != 0");
+        	    	dcrmPassed = false;
+        	    }
+
+        	    Matrix dense_from_dcrsm = dcrsm.ToDenseMatrix();
+        	    if (dense_from_dcrsm.getRowDimension() != num_rows) {
+        	    	System.err.println("In ExpectEmpty dense_from_dcrsm.getRowDimension() != num_rows");
+        	    	dcrmPassed = false;
+        	    }
+        	    if (dense_from_dcrsm.getColumnDimension() != num_cols) {
+        	    	System.err.println("In ExpectEmpty dense_from_dcrsm.getColumnDimension() != num_cols");
+        	    	dcrmPassed = false;
+        	    }
+        	    for (int r = 0; r < dense_from_dcrsm.getRowDimension(); r++) {
+        	    	for (int c = 0; c < dense_from_dcrsm.getColumnDimension(); c++) {
+        	    		if (dense_from_dcrsm.get(r,c) != 0.0) {
+        	    			System.err.println("In ExpectEmpty dense_from_dcrsm.get("+r+","+c+") != 0.0");
+        	    			dcrmPassed = false;
+        	    		}
+        	    	}
+        	    }
+          }
+
+          public void ExpectEqualToDenseReference() {
+        	    int r,c;
+        	    Matrix dense_from_dcrsm = dcrsm.ToDenseMatrix();
+        	    boolean equalDimensions = true;
+        	    if (dense.getRowDimension() != dense_from_dcrsm.getRowDimension()) {
+        	        System.err.println("In ExpectEqualToDenseReference() dense.getRowDimension() != dense_from_dcrsm.getRowDimension()");
+        	        equalDimensions = false;
+        	        dcrmPassed = false;
+        	    }
+        	    if (dense.getColumnDimension() != dense_from_dcrsm.getColumnDimension()) {
+        	        System.err.println("In ExpectEqualToDenseReference() dense.getColumnDimension() != dense_from_dcrsm.getColumnDimension()");
+        	        equalDimensions = false;
+        	        dcrmPassed = false;
+        	    }
+        	    if (equalDimensions) {
+        	    	for (r = 0; r < dense.getRowDimension(); r++) {
+        	    		for (c = 0; c < dense.getColumnDimension(); c++) {
+        	    			if (dense.get(r,c) != dense_from_dcrsm.get(r,c)) {
+        	    				System.err.println("In ExpectEqualToDenseReference() dense.get("+r+","+c+") != dense_from_dcrsm.get("+r+","+c+")");
+        	    				dcrmPassed = false;
+        	    			}
+        	    		}
+        	    	}
+        	    }
+          }
+
+          public void ExpectEqualToCompressedRowSparseMatrixReference() {
+        	    int i;
+        	    if (crsm.num_rows() != dcrsm.num_rows()) {
+        	    	System.err.println("In ExpectEqualToCompressedRowSparseMatrixReference() crsm.num_rows() != dcrsm.num_rows()");
+        	    	dcrmPassed = false;
+        	    }
+        	    else {
+        	    	for (i = 0; i < crsm.num_rows() + 1; i++) {
+        	    		if (crsm.rows()[i] != dcrsm.rows()[i]) {
+        	    			System.err.println("In ExpectEqualToCompressedRowSparseMatrixReference() crsm.rows()["+i+"] != dcrsm.rows()["+i+"]");
+                	    	dcrmPassed = false;
+        	    		}
+        	    	}
+        	    }
+        	    
+        	    if (crsm.num_nonzeros() != dcrsm.num_nonzeros()) {
+        	    	System.err.println("In ExpectEqualToCompressedRowSparseMatrixReference() crsm.num_nonzeros() != dcrsm.num_nonzeros()");
+        	    	dcrmPassed = false;
+        	    }
+        	    else {
+        	    	for (i = 0; i < crsm.num_nonzeros(); i++) {
+        	    		if (crsm.cols()[i] != dcrsm.cols()[i]) {
+        	    			System.err.println("In ExpectEqualToCompressedRowSparseMatrixReference() crsm.cols()["+i+"] != dcrsm.cols()["+i+"]");
+                	    	dcrmPassed = false;
+        	    		}
+        	    		if (crsm.values()[i] != dcrsm.values()[i]) {
+        	    			System.err.println("In ExpectEqualToCompressedRowSparseMatrixReference() crsm.values()["+i+"] != dcrsm.values()["+i+"]");
+                	    	dcrmPassed = false;
+        	    		}
+        	    	}
+        	    }
+        	  }
+          
+          public void DynamicCompressedRowSparseMatrixTestInitialization() {
+        	  // DynamicCompressedRowSparseMatrixTestInitialization() passed all tests
+        	  dcrmPassed = true;
+        	  DynamicompressedRowSparseMatrixSetUp();
+        	  ExpectEmpty();
+        	  Finalize();
+        	  ExpectEmpty();
+        	  if (dcrmPassed) {
+        		  System.out.println("DynamicCompressedRowSparseMatrixTestInitialization() passed all tests");
+        	  }
+        	  else {
+        		  System.err.println("DynamicCompressedRowSparseMatrixTestInitialization() failed 1 or more tests");
+        	  }
+        	}
+
+          public void DynamicCompressedRowSparseMatrixTestInsertEntryAndFinalize() {
+        	  // DynamicCompressedRowSparseMatrixTestInsertEntryAndFinalize() passed all tests
+        	  dcrmPassed = true;
+        	  DynamicompressedRowSparseMatrixSetUp();
+        	  InsertNonZeroEntriesFromDenseReference();
+        	  ExpectEmpty();
+
+        	  Finalize();
+        	  ExpectEqualToDenseReference();
+        	  ExpectEqualToCompressedRowSparseMatrixReference();
+        	  if (dcrmPassed) {
+        		  System.out.println("DynamicCompressedRowSparseMatrixTestInsertEntryAndFinalize() passed all tests");
+        	  }
+        	  else {
+        		  System.err.println("DynamicCompressedRowSparseMatrixTestInsertEntryAndFinalize() failed 1 or more tests");
+        	  }
+        	}
+          
+          public void DynamicCompressedRowSparseMatrixTestClearRows() {
+        	  // DynamicCompressedRowSparseMatrixTestClearRows() passed all tests
+        	  dcrmPassed = true;
+        	  DynamicompressedRowSparseMatrixSetUp();
+        	  InsertNonZeroEntriesFromDenseReference();
+        	  Finalize();
+        	  ExpectEqualToDenseReference();
+        	  ExpectEqualToCompressedRowSparseMatrixReference();
+
+        	  dcrsm.ClearRows(0, 0);
+        	  Finalize();
+        	  ExpectEqualToDenseReference();
+        	  ExpectEqualToCompressedRowSparseMatrixReference();
+
+        	  dcrsm.ClearRows(0, num_rows);
+        	  ExpectEqualToCompressedRowSparseMatrixReference();
+
+        	  Finalize();
+        	  ExpectEmpty();
+
+        	  InsertNonZeroEntriesFromDenseReference();
+        	  dcrsm.ClearRows(1, 2);
+        	  Finalize();
+        	  for (int r = 1; r < 3; r++) {
+        		  for (int c = 0; c < num_cols; c++) {
+        			  dense.set(r,c,0.0);
+        		  }
+        	  }
+        	  ExpectEqualToDenseReference();
+
+        	  InitialiseDenseReference();
+        	  if (dcrmPassed) {
+        		  System.out.println("DynamicCompressedRowSparseMatrixTestClearRows() passed all tests");
+        	  }
+        	  else {
+        		  System.err.println("DynamicCompressedRowSparseMatrixTestClearRows() failed 1 or more tests");
+        	  }
+        	}
 
 
 }
