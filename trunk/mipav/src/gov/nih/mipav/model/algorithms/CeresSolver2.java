@@ -2799,6 +2799,99 @@ public class CeresSolver2 {
 			  transpose.set_col_blocks(row_blocks_);
 			  return transpose;
 			}
+	  }
+	  
+	  public class DynamicCompressedRowSparseMatrix extends CompressedRowSparseMatrix {
+		  private Vector<Vector<Integer> > dynamic_cols_;
+		  private Vector<Vector<Double> > dynamic_values_; 
+		  
+		  public DynamicCompressedRowSparseMatrix(int num_rows, int num_cols, int initial_max_num_nonzeros) {
+				  super(num_rows, num_cols, initial_max_num_nonzeros);
+				  dynamic_cols_ = new Vector<Vector<Integer>>(num_rows);
+				  dynamic_values_ = new Vector<Vector<Double>>(num_rows);
+				  for (int i = 0; i < num_rows; i++) {
+					  dynamic_cols_.add(new Vector<Integer>());
+					  dynamic_values_.add(new Vector<Double>());
+				  }
+		 }
+		  
+		 public void InsertEntry(int row, int col, double value) {
+			if (row < 0) {
+				System.err.println("In DynamicCompressedRowSparseMatrix InsertEntry row < 0");
+				return;
+			}
+			if (row >= num_rows()) {
+				System.err.println("In DynamicCompressedRowSparseMatrix InsertEntry row >= num_rows()");
+				return;
+			}
+			if (col < 0) {
+				System.err.println("In DynamicCompressedRowSparseMatrix InsertEntry col < 0");
+				return;
+			}
+			if (col >= num_cols()) {
+				System.err.println("In DynamicCompressedRowSparseMatrix InsertEntry col >= num_cols()");
+				return;
+			}
+			dynamic_cols_.get(row).add(col);
+			dynamic_values_.get(row).add(value);
+		 }
+
+		 public void ClearRows(int row_start, int num_rows) {
+			for (int r = 0; r < num_rows; ++r) {
+				final int i = row_start + r;
+				if (i < 0) {
+					System.err.println("In DynamicCompressedRowSparseMatrix ClearRows i < 0");
+					return;
+				}
+				if (i >= this.num_rows()) {
+					System.err.println("In DynamicCompressedRowSparseMatrx ClearRows i >= this.num_rows()");
+					return;
+				}
+				dynamic_cols_.get(i).clear();
+				dynamic_values_.get(i).clear();
+			}
+         }
+		 
+		 public void Finalize(int num_additional_elements) {
+			  // `num_additional_elements` is provided as an argument so that additional
+			  // storage can be reserved when it is known by the finalizer.
+			  if (num_additional_elements < 0) {
+				  System.err.println("In DynamicCompressedRowSparseMatrix Finalize num_additional_elements < 0");
+				  return;
+			  }
+
+			  // Count the number of non-zeros and resize `cols_` and `values_`.
+			  int num_jacobian_nonzeros = 0;
+			  for (int i = 0; i < dynamic_cols_.size(); ++i) {
+			    num_jacobian_nonzeros += dynamic_cols_.get(i).size();
+			  }
+
+			  SetMaxNumNonZeros(num_jacobian_nonzeros + num_additional_elements);
+
+			  // Flatten `dynamic_cols_` into `cols_` and `dynamic_values_`
+			  // into `values_`.
+			  int index_into_values_and_cols = 0;
+			  for (int i = 0; i < num_rows(); ++i) {
+			    mutable_rows()[i] = index_into_values_and_cols;
+			    final int num_nonzero_columns = dynamic_cols_.get(i).size();
+			    if (num_nonzero_columns > 0) {
+			      for (int j = 0; j < dynamic_cols_.get(i).size(); j++) {
+			    	  mutable_cols()[index_into_values_and_cols + j] = dynamic_cols_.get(i).get(j);
+			      }
+			      for (int j = 0; j < dynamic_values_.get(i).size(); j++) {
+			    	  mutable_values()[index_into_values_and_cols + j] = dynamic_values_.get(i).get(j);
+			      }
+			      index_into_values_and_cols += dynamic_cols_.get(i).size();
+			    }
+			  }
+			  mutable_rows()[num_rows()] = index_into_values_and_cols;
+
+			  if (index_into_values_and_cols != num_jacobian_nonzeros) {
+			    System.err.println("Ceres bug: final index into values_ and cols_ should be equal to ");
+			     System.err.println("the number of jacobian nonzeros. Please contact the developers!");
+			  }
+			  
+		 }
 
 
 	  }
