@@ -38,6 +38,8 @@ import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblem;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverSummary;
+import gov.nih.mipav.model.algorithms.CeresSolver.MyCostFunctor;
+import gov.nih.mipav.model.algorithms.CeresSolver.MyThreeParameterCostFunctor;
 import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffMethodType;
 import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffOptions;
@@ -11091,7 +11093,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
     		public void WeightedGraphAddVertexIdempotence() {
     			  // WeightedGraphAddVertexIdempotence() passed all tests
     			  boolean passed = true;
-    			  WeightedGraph<Integer> graph = new WeightedGraph();
+    			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
     			  graph.AddVertex(0, 1.0);
     			  graph.AddVertex(1, 2.0);
     			  graph.AddEdge(0, 1, 0.5);
@@ -21485,6 +21487,652 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         		  System.err.println("DynamicCompressedRowSparseMatrixTestClearRows() failed 1 or more tests");
         	  }
         	}
+
+          public void DynamicNumericdiffCostFunctionTestTestResiduals() {
+        	  // DynamicNumericdiffCostFunctionTestTestResiduals() passed all tests
+        	  int i;
+        	  String testName = "DynamicNumericdiffCostFunctionTestTestResiduals()";
+        	  testCase = MY_COST_FUNCTOR;
+        	  boolean passed = true;
+        	  double[] param_block_0 = new double[10];
+        	  double[] param_block_1 = new double[5];
+        	  DynamicNumericDiffCostFunction<MyCostFunctor> cost_function = 
+        			  new DynamicNumericDiffCostFunction<MyCostFunctor>(new MyCostFunctor(), Ownership.DO_NOT_TAKE_OWNERSHIP, new NumericDiffOptions(),
+        					  NumericDiffMethodType.CENTRAL);
+        	  cost_function.AddParameterBlock(param_block_0.length);
+        	  cost_function.AddParameterBlock(param_block_1.length);
+        	  cost_function.SetNumResiduals(21);
+
+        	  // Test residual computation.
+        	  double[] residuals = new double[21];
+        	  for (i = 0; i < 21; i++) {
+        		  residuals[i] = -100000;
+        	  }
+        	  Vector<double[]> parameter_blocks = new Vector<double[]>(2);
+        	  parameter_blocks.add(param_block_0);
+        	  parameter_blocks.add(param_block_1);
+        	  if (!cost_function.EvaluateDynamic(parameter_blocks, residuals, null)) {
+        		  System.err.println(" In " + testName + " cost_function.EvaluateDynamic(parameter_blocks, residuals, null) = false");
+        		  passed = false;
+        	  }
+        	  for (int r = 0; r < 10; ++r) {
+        	    if (1.0 * r != residuals[r * 2]) {
+        	    	System.err.println("In " + testName + " 1.0 * r != residuals[r * 2]");
+        	    	passed = false;
+        	    }
+        	    if (-1.0 * r != residuals[r * 2 + 1]) {
+        	    	System.err.println("In " + testName + " -1.0 * r != residuals[r * 2 + 1]");
+        	    	passed = false;
+        	    }
+        	  }
+        	  if (0 != residuals[20]) {
+        		  System.err.println("In " + testName + " 0 != residuals[20]");
+        		  passed = false;
+        	  }
+        	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+          
+          public void DynamicNumericdiffCostFunctionTestTestJacobian() {
+        	  // DynamicNumericdiffCostFunctionTestTestJacobian() passed all tests
+        	  int i;
+        	  final double kTolerance = 1e-6;
+        	  String testName = "DynamicNumericdiffCostFunctionTestTestJacobian()";
+        	  testCase = MY_COST_FUNCTOR;
+        	  // Test the residual counting.
+        	  boolean passed = true;
+        	  double[] param_block_0 = new double[10];
+        	  for (i = 0; i < 10; ++i) {
+          	    param_block_0[i] = 2 * i;
+          	  }
+        	  double[] param_block_1 = new double[5];
+        	  DynamicNumericDiffCostFunction<MyCostFunctor> cost_function = 
+        			  new DynamicNumericDiffCostFunction<MyCostFunctor>(new MyCostFunctor(), Ownership.DO_NOT_TAKE_OWNERSHIP, new NumericDiffOptions(),
+        					  NumericDiffMethodType.CENTRAL);
+        	  cost_function.AddParameterBlock(param_block_0.length);
+        	  cost_function.AddParameterBlock(param_block_1.length);
+        	  cost_function.SetNumResiduals(21);
+
+        	  // Prepare the residuals.
+        	  double[] residuals = new double[21];
+        	  for (i = 0; i < 21; i++) {
+        		  residuals[i] = -100000;
+        	  }
+
+        	  // Prepare the parameters.
+        	  Vector<double[]> parameter_blocks = new Vector<double[]>(2);
+        	  parameter_blocks.add(param_block_0);
+        	  parameter_blocks.add(param_block_1);
+
+        	  // Prepare the jacobian.
+        	  double jacobian[][] = new double[2][];
+        	  jacobian[0] = new double[21 * 10];
+        	  for (i = 0; i < 21 * 10; i++) {
+        		  jacobian[0][i] = -100000;
+        	  }
+        	  jacobian[1] = new double[21 * 5];
+        	  for (i = 0; i < 21 * 5; i++) {
+        		  jacobian[1][i] = -100000;
+        	  }
+        	  
+
+        	  // Test jacobian computation.
+        	  if (!(cost_function.EvaluateDynamic(parameter_blocks, residuals, jacobian))) {
+        		  System.err.println(" In " + testName + " cost_function.EvaluateDynamic(parameter_blocks, residuals, jacobian) = false");
+        		  passed = false;
+        	  }
+        	  
+
+        	  for (int r = 0; r < 10; ++r) {
+        		  if (-1.0 * r != residuals[r * 2]) {
+          	    	System.err.println("In " + testName + " -1.0 * r != residuals[r * 2]");
+          	    	passed = false;
+          	    }
+          	    if (1.0 * r != residuals[r * 2 + 1]) {
+          	    	System.err.println("In " + testName + " 1.0 * r != residuals[r * 2 + 1]");
+          	    	passed = false;
+          	    }
+        	  }
+        	  if (420 != residuals[20]) {
+        		  System.err.println("In " + testName + " 420 != residuals[20]");
+        		  passed = false;
+        	  }
+        	  for (int p = 0; p < 10; ++p) {
+        	    // Check "A" Jacobian.
+        	    if (Math.abs(-1.0 - jacobian[0][2*p * 10 + p]) > kTolerance) {
+        	    	System.err.println("In " + testName + " Math.abs(-1.0 - jacobian[0][2*p * 10 + p]) > kTolerance");
+        	    	System.err.println("p = " + p + " jacobian[0][2*p * 10 + p] = " + jacobian[0][2*p * 10 + p]);
+        	    	passed = false;
+        	    }
+        	    // Check "B" Jacobian.
+        	    if (Math.abs(+1.0 - jacobian[0][(2*p+1) * 10 + p]) > kTolerance) {
+        	    	System.err.println("In " + testName + " Math.abs(+1.0 - jacobian[0][(2*p+1) * 10 + p]) > kTolerance");
+        	    	passed = false;
+        	    }
+        	    jacobian[0][2*p * 10 + p] = 0.0;
+        	    jacobian[0][(2*p+1) * 10 + p] = 0.0;
+        	  }
+
+        	  // Check "C" Jacobian for first parameter block.
+        	  for (int p = 0; p < 10; ++p) {
+        	    if (Math.abs(4 * p - 8 - jacobian[0][20 * 10 + p]) > kTolerance) {
+        	    	System.err.println("In " + testName + " Math.abs(4 * p - 8 - jacobian[0][20 * 10 + p]) > kTolerance");
+        	    	passed = false;
+        	    }
+        	    jacobian[0][20 * 10 + p] = 0.0;
+        	  }
+        	  for (i = 0; i < jacobian[0].length; ++i) {
+        	    if (Math.abs(jacobian[0][i]) > kTolerance) {
+        	    	System.err.println("In " + testName + " Math.abs(jacobian[0]["+i+"]) > kTolerance");
+        	    	passed = false;
+        	    }
+        	  }
+
+        	  // Check "C" Jacobian for second parameter block.
+        	  for (int p = 0; p < 5; ++p) {
+        	    if (Math.abs(1.0 - jacobian[1][20 * 5 + p]) > kTolerance) {
+        	    	System.err.println("In " + testName + " Math.abs(1.0 - jacobian[1][20 * 5 + p]) > kTolerance");
+        	    	passed = false;
+        	    }
+        	    jacobian[1][20 * 5 + p] = 0.0;
+        	  }
+        	  for (i = 0; i < jacobian[1].length; ++i) {
+        	   if(Math.abs(jacobian[1][i]) > kTolerance) {
+        		   System.err.println("In " + testName + " Math.abs(jacobian[1]["+i+"]) > kTolerance");
+        		   passed = false;
+        	   }
+        	  }
+        	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+
+          public void DynamicNumericdiffCostFunctionTestJacobianWithFirstParameterBlockConstant() {
+        	  // DynamicNumericdiffCostFunctionTestJacobianWithFirstParameterBlockConstant() passed all tests
+        	  // Test the residual counting.
+        	  int i;
+        	  final double kTolerance = 1e-6;
+        	  String testName = "DynamicNumericdiffCostFunctionTestJacobianWithFirstParameterBlockConstant()";
+        	  testCase = MY_COST_FUNCTOR;
+        	  boolean passed = true;
+        	  double[] param_block_0 = new double[10];
+        	  for (i = 0; i < 10; ++i) {
+          	    param_block_0[i] = 2 * i;
+          	  }
+        	  double[] param_block_1 = new double[5];
+        	  DynamicNumericDiffCostFunction<MyCostFunctor> cost_function = 
+        			  new DynamicNumericDiffCostFunction<MyCostFunctor>(new MyCostFunctor(), Ownership.DO_NOT_TAKE_OWNERSHIP, new NumericDiffOptions(), 
+        					  NumericDiffMethodType.CENTRAL);
+        	  cost_function.AddParameterBlock(param_block_0.length);
+        	  cost_function.AddParameterBlock(param_block_1.length);
+        	  cost_function.SetNumResiduals(21);
+
+        	  // Prepare the residuals.
+        	  double[] residuals = new double[21];
+        	  for (i = 0; i < 21; i++) {
+        		  residuals[i] = -100000;
+        	  }
+
+        	  // Prepare the parameters.
+        	  Vector<double[]> parameter_blocks = new Vector<double[]>(2);
+        	  parameter_blocks.add(param_block_0);
+        	  parameter_blocks.add(param_block_1);
+
+        	  // Prepare the jacobian.
+        	  double jacobian[][] = new double[2][];
+        	  jacobian[0] = null;
+        	  jacobian[1] = new double[21 * 5];
+        	  for (i = 0; i < 21 * 5; i++) {
+        		  jacobian[1][i] = -100000;
+        	  }
+        	  
+
+        	  // Test jacobian computation.
+        	  if (!(cost_function.EvaluateDynamic(parameter_blocks, residuals, jacobian))) {
+        		  System.err.println(" In " + testName + " cost_function.EvaluateDynamic(parameter_blocks, residuals, jacobian) = false");
+        		  passed = false;
+        	  }
+        	  
+
+        	  for (int r = 0; r < 10; ++r) {
+        		  if (-1.0 * r != residuals[r * 2]) {
+        	    	System.err.println("In " + testName + " -1.0 * r != residuals[r * 2]");
+        	    	passed = false;
+	        	  }
+	        	  if (1.0 * r != residuals[r * 2 + 1]) {
+	        	    System.err.println("In " + testName + " 1.0 * r != residuals[r * 2 + 1]");
+	        	    passed = false;
+	        	  }
+        	  }
+        	  if (420 != residuals[20]) {
+        		  System.err.println("In " + testName + " 420 != residuals[20]");
+        		  passed = false;
+        	  }
+
+        	  // Check "C" Jacobian for second parameter block.
+        	  for (int p = 0; p < 5; ++p) {
+          	    if (Math.abs(1.0 - jacobian[1][20 * 5 + p]) > kTolerance) {
+          	    	System.err.println("In " + testName + " Math.abs(1.0 - jacobian[1][20 * 5 + p]) > kTolerance");
+          	    	passed = false;
+          	    }
+          	    jacobian[1][20 * 5 + p] = 0.0;
+          	  }
+          	  for (i = 0; i < jacobian[1].length; ++i) {
+          	   if(Math.abs(jacobian[1][i]) > kTolerance) {
+          		   System.err.println("In " + testName + " Math.abs(jacobian[1]["+i+"]) > kTolerance");
+          		   passed = false;
+          	   }
+          	  }
+          	  if (passed) {
+          		  System.out.println(testName + " passed all tests");
+          	  }
+        	}
+          
+          
+          
+          public void DynamicNumericdiffCostFunctionTestJacobianWithSecondParameterBlockConstant() {
+        	  // DynamicNumericdiffCostFunctionTestJacobianWithSecondParameterBlockConstant() passed all tests
+        	  // Test the residual counting.
+        	  int i;
+        	  final double kTolerance = 1e-6;
+        	  String testName = "DynamicNumericdiffCostFunctionTestJacobianWithSecondParameterBlockConstant()";
+        	  testCase = MY_COST_FUNCTOR;
+        	  boolean passed = true;
+        	  double[] param_block_0 = new double[10];
+        	  for (i = 0; i < 10; ++i) {
+          	    param_block_0[i] = 2 * i;
+          	  }
+        	  double[] param_block_1 = new double[5];
+        	  DynamicNumericDiffCostFunction<MyCostFunctor> cost_function = 
+        			  new DynamicNumericDiffCostFunction<MyCostFunctor>(new MyCostFunctor(), Ownership.DO_NOT_TAKE_OWNERSHIP, new NumericDiffOptions(),
+        					  NumericDiffMethodType.CENTRAL);
+        	  cost_function.AddParameterBlock(param_block_0.length);
+        	  cost_function.AddParameterBlock(param_block_1.length);
+        	  cost_function.SetNumResiduals(21);
+
+        	  // Prepare the residuals.
+        	  double[] residuals = new double[21];
+        	  for (i = 0; i < 21; i++) {
+        		  residuals[i] = -100000;
+        	  }
+
+        	  // Prepare the parameters.
+        	  Vector<double[]> parameter_blocks = new Vector<double[]>(2);
+        	  parameter_blocks.add(param_block_0);
+        	  parameter_blocks.add(param_block_1);
+        	  
+        	  // Prepare the jacobian.
+        	  double jacobian[][] = new double[2][];
+        	  jacobian[0] = new double[21 * 10];
+        	  for (i = 0; i < 21 * 10; i++) {
+        		  jacobian[0][i] = -100000;
+        	  }
+        	  jacobian[1] = null;
+        	  
+
+        	  // Test jacobian computation.
+        	  if (!(cost_function.EvaluateDynamic(parameter_blocks, residuals, jacobian))) {
+        		  System.err.println(" In " + testName + " cost_function.EvaluateDynamic(parameter_blocks, residuals, jacobian) = false");
+        		  passed = false;
+        	  }
+
+        	  for (int r = 0; r < 10; ++r) {
+        		  if (-1.0 * r != residuals[r * 2]) {
+        	    	System.err.println("In " + testName + " -1.0 * r != residuals[r * 2]");
+        	    	passed = false;
+	        	  }
+	        	  if (1.0 * r != residuals[r * 2 + 1]) {
+	        	    System.err.println("In " + testName + " 1.0 * r != residuals[r * 2 + 1]");
+	        	    passed = false;
+	        	  }
+        	  }
+        	  if (420 != residuals[20]) {
+        		  System.err.println("In " + testName + " 420 != residuals[20]");
+        		  passed = false;
+        	  }
+        	  for (int p = 0; p < 10; ++p) {
+          	    // Check "A" Jacobian.
+          	    if (Math.abs(-1.0 - jacobian[0][2*p * 10 + p]) > kTolerance) {
+          	    	System.err.println("In " + testName + " Math.abs(-1.0 - jacobian[0][2*p * 10 + p]) > kTolerance");
+          	    	System.err.println("p = " + p + " jacobian[0][2*p * 10 + p] = " + jacobian[0][2*p * 10 + p]);
+          	    	passed = false;
+          	    }
+          	    // Check "B" Jacobian.
+          	    if (Math.abs(+1.0 - jacobian[0][(2*p+1) * 10 + p]) > kTolerance) {
+          	    	System.err.println("In " + testName + " Math.abs(+1.0 - jacobian[0][(2*p+1) * 10 + p]) > kTolerance");
+          	    	passed = false;
+          	    }
+          	    jacobian[0][2*p * 10 + p] = 0.0;
+          	    jacobian[0][(2*p+1) * 10 + p] = 0.0;
+          	  }
+
+        	  // Check "C" Jacobian for first parameter block.
+        	  for (int p = 0; p < 10; ++p) {
+          	    if (Math.abs(4 * p - 8 - jacobian[0][20 * 10 + p]) > kTolerance) {
+          	    	System.err.println("In " + testName + " Math.abs(4 * p - 8 - jacobian[0][20 * 10 + p]) > kTolerance");
+          	    	passed = false;
+          	    }
+          	    jacobian[0][20 * 10 + p] = 0.0;
+          	  }
+          	  for (i = 0; i < jacobian[0].length; ++i) {
+          	    if (Math.abs(jacobian[0][i]) > kTolerance) {
+          	    	System.err.println("In " + testName + " Math.abs(jacobian[0]["+i+"]) > kTolerance");
+          	    	passed = false;
+          	    }
+          	  }
+          	  if (passed) {
+        		  System.out.println(testName + " passed all tests");
+        	  }
+        	}
+          
+          public void ThreeParameterCostFunctorTestTestThreeParameterResiduals() {
+        	  // ThreeParameterCostFunctorTestTestThreeParameterResiduals() passed all tests
+        	  ThreeParameterCostFunctorTest TP = new ThreeParameterCostFunctorTest();
+        	  TP.ThreeParameterCostFunctorTestTestThreeParameterResiduals();
+          }
+          
+          public void ThreeParameterCostFunctorTestTestThreeParameterJacobian() {
+        	  // ThreeParameterCostFunctorTestTestThreeParameterJacobian() passed all tests
+        	  ThreeParameterCostFunctorTest TP = new ThreeParameterCostFunctorTest();
+        	  TP.ThreeParameterCostFunctorTestTestThreeParameterJacobian();
+          }
+          
+          public void ThreeParameterCostFunctorTestThreeParameterJacobianWithFirstAndLastParameterBlockConstant() {
+        	  // ThreeParameterCostFunctorTestThreeParameterJacobianWithFirstAndLastParameterBlockConstant() passed all tests
+        	  ThreeParameterCostFunctorTest TP = new ThreeParameterCostFunctorTest();
+        	  TP.ThreeParameterCostFunctorTestThreeParameterJacobianWithFirstAndLastParameterBlockConstant();
+          }
+          
+          public void ThreeParameterCostFunctorTestThreeParameterJacobianWithSecondParameterBlockConstant() {
+        	  // ThreeParameterCostFunctorTestThreeParameterJacobianWithSecondParameterBlockConstant() passed all tests
+        	  ThreeParameterCostFunctorTest TP = new ThreeParameterCostFunctorTest();
+        	  TP.ThreeParameterCostFunctorTestThreeParameterJacobianWithSecondParameterBlockConstant();
+          }
+          
+          class ThreeParameterCostFunctorTest {
+        	  final double kTolerance = 1.0E-6;
+        	  public double[] x_;
+       	      public double[] y_;
+       	      public double[] z_;
+
+       	      public Vector<double[]> parameter_blocks_;
+
+       	      public DynamicNumericDiffCostFunction<MyThreeParameterCostFunctor> cost_function;
+
+       	      public double[][] jacobian;
+
+       	      public double[] expected_residuals_;
+
+       	      public double[] expected_jacobian_x_;
+       	      public double[] expected_jacobian_y_;
+       	      public double[] expected_jacobian_z_;
+        	  public ThreeParameterCostFunctorTest() {
+        		  SetUp();  
+        	  }
+        	  
+        	   public void SetUp() {
+        		 int i;
+        	     // Prepare the parameters.
+        		 testCase = MY_THREE_PARAMETER_COST_FUNCTOR;
+        	     x_ = new double[1];
+        	     x_[0] = 0.0;
+
+        	     y_ = new double[2];
+        	     y_[0] = 1.0;
+        	     y_[1] = 3.0;
+
+        	     z_ = new double[3];
+        	     z_[0] = 2.0;
+        	     z_[1] = 4.0;
+        	     z_[2] = 6.0;
+
+        	     parameter_blocks_ = new Vector<double[]>(3);
+        	     parameter_blocks_.add(x_);
+        	     parameter_blocks_.add(y_);
+        	     parameter_blocks_.add(z_);
+
+        	     // Prepare the cost function.
+        	     NumericDiffOptions options = new NumericDiffOptions();
+        	     cost_function = new DynamicNumericDiffCostFunction<MyThreeParameterCostFunctor>(new MyThreeParameterCostFunctor(),
+        	    		 Ownership.DO_NOT_TAKE_OWNERSHIP, options, NumericDiffMethodType.CENTRAL);
+        	     cost_function.AddParameterBlock(1);
+        	     cost_function.AddParameterBlock(2);
+        	     cost_function.AddParameterBlock(3);
+        	     cost_function.SetNumResiduals(7);
+
+        	     // Setup jacobian data.
+        	     jacobian = new double[3][];
+        	     jacobian[0] = new double[7 * x_.length];
+        	     for (i = 0; i < 7 * x_.length; i++) {
+        	    	 jacobian[0][i] = -100000;
+        	     }
+        	     jacobian[1] = new double[7 * y_.length];
+        	     for (i = 0; i < 7 * y_.length; i++) {
+        	    	 jacobian[1][i] = -100000;
+        	     }
+        	     jacobian[2] = new double[7 * z_.length];
+        	     for (i = 0; i < 7 * z_.length; i++) {
+        	    	 jacobian[2][i] = -100000;
+        	     }
+
+        	     // Prepare the expected residuals.
+        	     final double sum_x = x_[0];
+        	     final double sum_y = y_[0] + 2.0 * y_[1];
+        	     final double sum_z = z_[0] + 3.0 * z_[1] + 6.0 * z_[2];
+
+        	     expected_residuals_ = new double[7];
+        	     expected_residuals_[0] = sum_x;
+        	     expected_residuals_[1] = sum_y;
+        	     expected_residuals_[2] = sum_z;
+        	     expected_residuals_[3] = sum_x * sum_y;
+        	     expected_residuals_[4] = sum_y * sum_z;
+        	     expected_residuals_[5] = sum_x * sum_z;
+        	     expected_residuals_[6] = sum_x * sum_y * sum_z;
+
+        	     // Prepare the expected jacobian entries.
+        	     expected_jacobian_x_ = new double[7];
+        	     expected_jacobian_x_[0] = 1.0;
+        	     expected_jacobian_x_[1] = 0.0;
+        	     expected_jacobian_x_[2] = 0.0;
+        	     expected_jacobian_x_[3] = sum_y;
+        	     expected_jacobian_x_[4] = 0.0;
+        	     expected_jacobian_x_[5] = sum_z;
+        	     expected_jacobian_x_[6] = sum_y * sum_z;
+
+        	     expected_jacobian_y_ = new double[14];
+        	     expected_jacobian_y_[0] = 0.0;
+        	     expected_jacobian_y_[1] = 0.0;
+        	     expected_jacobian_y_[2] = 1.0;
+        	     expected_jacobian_y_[3] = 2.0;
+        	     expected_jacobian_y_[4] = 0.0;
+        	     expected_jacobian_y_[5] = 0.0;
+        	     expected_jacobian_y_[6] = sum_x;
+        	     expected_jacobian_y_[7] = 2.0 * sum_x;
+        	     expected_jacobian_y_[8] = sum_z;
+        	     expected_jacobian_y_[9] = 2.0 * sum_z;
+        	     expected_jacobian_y_[10] = 0.0;
+        	     expected_jacobian_y_[11] = 0.0;
+        	     expected_jacobian_y_[12] = sum_x * sum_z;
+        	     expected_jacobian_y_[13] = 2.0 * sum_x * sum_z;
+
+        	     expected_jacobian_z_ = new double[21];
+        	     expected_jacobian_z_[0] = 0.0;
+        	     expected_jacobian_z_[1] = 0.0;
+        	     expected_jacobian_z_[2] = 0.0;
+        	     expected_jacobian_z_[3] = 0.0;
+        	     expected_jacobian_z_[4] = 0.0;
+        	     expected_jacobian_z_[5] = 0.0;
+        	     expected_jacobian_z_[6] = 1.0;
+        	     expected_jacobian_z_[7] = 3.0;
+        	     expected_jacobian_z_[8] = 6.0;
+        	     expected_jacobian_z_[9] = 0.0;
+        	     expected_jacobian_z_[10] = 0.0;
+        	     expected_jacobian_z_[11] = 0.0;
+        	     expected_jacobian_z_[12] = sum_y;
+        	     expected_jacobian_z_[13] = 3.0 * sum_y;
+        	     expected_jacobian_z_[14] = 6.0 * sum_y;
+        	     expected_jacobian_z_[15] = sum_x;
+        	     expected_jacobian_z_[16] = 3.0 * sum_x;
+        	     expected_jacobian_z_[17] = 6.0 * sum_x;
+        	     expected_jacobian_z_[18] = sum_x * sum_y;
+        	     expected_jacobian_z_[19] = 3.0 * sum_x * sum_y;
+        	     expected_jacobian_z_[20] = 6.0 * sum_x * sum_y;
+        	   }
+        	   
+        	   public void ThreeParameterCostFunctorTestTestThreeParameterResiduals() {
+        		   String testName = "ThreeParameterCostFunctorTestTestThreeParameterResiduals()";
+        		   boolean passed = true;
+        		   int i;
+        		   double[] residuals = new double[7];
+        		   for (i = 0; i < 7; i++) {
+        			   residuals[i] = -100000;
+        		   }
+        		
+        		   if (!(cost_function.EvaluateDynamic(parameter_blocks_, residuals, null))) {
+             		  System.err.println("In " + testName + " cost_function.EvaluateDynamic(parameter_blocks_, residuals, null) = false");
+             		  passed = false;
+             	  }
+        		   
+        		   for (i = 0; i < 7; ++i) {
+        		     if (expected_residuals_[i] != residuals[i]) {
+        		    	 System.err.println("In " + testName + " expected_residuals_["+i+"] != residuals["+i+"]");
+        		    	 passed = false;
+        		     }
+        		   }
+        		   if (passed) {
+        			   System.out.println(testName + " passed all tests");
+        		   }
+        		 }
+        	   
+        	   public void ThreeParameterCostFunctorTestTestThreeParameterJacobian() {
+        		   String testName = "ThreeParameterCostFunctorTestTestThreeParameterJacobian()";
+        		   boolean passed = true;
+        		   int i;
+        		   double[] residuals = new double[7];
+        		   for (i = 0; i < 7; i++) {
+        			   residuals[i] = -100000;
+        		   }
+        		
+        		   if (!(cost_function.EvaluateDynamic(parameter_blocks_, residuals, jacobian))) {
+             		  System.err.println("In " + testName + " cost_function.EvaluateDynamic(parameter_blocks_, residuals, jacobian) = false");
+             		  passed = false;
+             	   }
+        		   
+        		   for (i = 0; i < 7; ++i) {
+        		     if (expected_residuals_[i] != residuals[i]) {
+        		    	 System.err.println("In " + testName + " expected_residuals_["+i+"] != residuals["+i+"]");
+        		    	 passed = false;
+        		     }
+        		   }
+        		   
+        		   for (i = 0; i < 7; ++i) {
+          		     if (Math.abs(expected_jacobian_x_[i] - jacobian[0][i]) > kTolerance) {
+          		    	 System.err.println("In " + testName + " Math.abs(expected_jacobian_x_["+i+"] - jacobian[0]["+i+"]) > kTolerance");
+          		    	 passed = false;
+          		     }
+          		   }
+
+          		   for (i = 0; i < 14; ++i) {
+          		     if (Math.abs(expected_jacobian_y_[i] - jacobian[1][i]) > kTolerance) {
+          		    	 System.err.println("In " + testName + " Math.abs(expected_jacobian_y_["+i+"] - jacobian[1]["+i+"]) > kTolerance");
+          		    	 passed = false;
+          		     }
+          		   }
+
+          		   for (i = 0; i < 21; ++i) {
+          		     if (Math.abs(expected_jacobian_z_[i] - jacobian[2][i]) > kTolerance) {
+          		    	 System.err.println("In " + testName + " Math.abs(expected_jacobian_z_["+i+"] - jacobian[2]["+i+"]) > kTolerance");
+          		    	 passed = false;
+          		     }
+          		   }
+        		   if (passed) {
+        			   System.out.println(testName + " passed all tests");
+        		   }
+        		 }
+
+       public void ThreeParameterCostFunctorTestThreeParameterJacobianWithFirstAndLastParameterBlockConstant() {
+    	   String testName = "ThreeParameterCostFunctorTestThreeParameterJacobianWithFirstAndLastParameterBlockConstant()";
+		   boolean passed = true;
+		   int i;
+		   double[] residuals = new double[7];
+		   for (i = 0; i < 7; i++) {
+			   residuals[i] = -100000;
+		   }
+
+ 	      jacobian[0] = null;
+ 	      jacobian[2] = null;
+ 	     
+ 	     if (!(cost_function.EvaluateDynamic(parameter_blocks_, residuals, jacobian))) {
+    		  System.err.println("In " + testName + " cost_function.EvaluateDynamic(parameter_blocks_, residuals, jacobian) = false");
+    		  passed = false;
+    	   }
+		   
+		   for (i = 0; i < 7; ++i) {
+		     if (expected_residuals_[i] != residuals[i]) {
+		    	 System.err.println("In " + testName + " expected_residuals_["+i+"] != residuals["+i+"]");
+		    	 passed = false;
+		     }
+		   }
+		   
+		   for (i = 0; i < 14; ++i) {
+    		     if (Math.abs(expected_jacobian_y_[i] - jacobian[1][i]) > kTolerance) {
+    		    	 System.err.println("In " + testName + " Math.abs(expected_jacobian_y_["+i+"] - jacobian[1]["+i+"]) > kTolerance");
+    		    	 passed = false;
+    		     }
+    	   }
+
+           if (passed) {
+        	   System.out.println(testName + " passed all tests");
+           }
+        }
+       
+       public void ThreeParameterCostFunctorTestThreeParameterJacobianWithSecondParameterBlockConstant() {
+    	   String testName = "ThreeParameterCostFunctorTestThreeParameterJacobianWithSecondParameterBlockConstant()";
+		   boolean passed = true;
+		   int i;
+		   double[] residuals = new double[7];
+		   for (i = 0; i < 7; i++) {
+			   residuals[i] = -100000;
+		   }
+
+ 	      jacobian[1] = null;
+ 	     
+ 	     if (!(cost_function.EvaluateDynamic(parameter_blocks_, residuals, jacobian))) {
+    		  System.err.println("In " + testName + " cost_function.EvaluateDynamic(parameter_blocks_, residuals, jacobian) = false");
+    		  passed = false;
+    	   }
+		   
+		   for (i = 0; i < 7; ++i) {
+		     if (expected_residuals_[i] != residuals[i]) {
+		    	 System.err.println("In " + testName + " expected_residuals_["+i+"] != residuals["+i+"]");
+		    	 passed = false;
+		     }
+		   }
+		   
+		   for (i = 0; i < 7; ++i) {
+    		     if (Math.abs(expected_jacobian_x_[i] - jacobian[0][i]) > kTolerance) {
+    		    	 System.err.println("In " + testName + " Math.abs(expected_jacobian_x_["+i+"] - jacobian[0]["+i+"]) > kTolerance");
+    		    	 passed = false;
+    		     }
+    	   }
+		   
+		   for (i = 0; i < 21; ++i) {
+    		     if (Math.abs(expected_jacobian_z_[i] - jacobian[2][i]) > kTolerance) {
+    		    	 System.err.println("In " + testName + " Math.abs(expected_jacobian_z_["+i+"] - jacobian[2]["+i+"]) > kTolerance");
+    		    	 passed = false;
+    		     }
+    	   }
+  		   if (passed) {
+  			   System.out.println(testName + " passed all tests");
+  		   }
+			  
+		}
+
+
+        	   
+     };
+
 
 
 }
