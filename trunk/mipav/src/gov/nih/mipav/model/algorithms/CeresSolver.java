@@ -23,9 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
-import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
-import gov.nih.mipav.model.algorithms.CeresSolver.EvaluateOptions;
-import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
@@ -33,7 +30,6 @@ import gov.nih.mipav.model.structures.jama.LinearEquations;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.model.structures.jama.SVD;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.renderer.WildMagic.Poisson.Octree.Pair;
 
 /**
  * This is a port of the C++ files in ceres-solver-1.14.0 under the BSD license:
@@ -572,6 +568,8 @@ public class CeresSolver {
 	protected final int RANDOMIZED_FUNCTOR = 14;
 	protected final int RANDOMIZED_COST_FUNCTION = 15;
 	protected final int ONLY_FILLS_ONE_OUTPUT_FUNCTOR = 16;
+	protected final int MY_COST_FUNCTOR = 17;
+	protected final int MY_THREE_PARAMETER_COST_FUNCTOR = 18;
 	protected boolean optionsValid = true;
 	
 	class CostFunctorExample {
@@ -1390,6 +1388,73 @@ public class CeresSolver {
 		                        double[][] jacobians) {
 		    return true;
 		 }
+	};
+	
+	    // Takes 2 parameter blocks:
+		//  parameters[0] is size 10.
+		//  parameters[1] is size 5.
+		//Emits 21 residuals:
+		//  A: i - parameters[0][i], for i in [0,10)  -- this is 10 residuals
+		//  B: parameters[0][i] - i, for i in [0,10)  -- this is another 10.
+		//  C: sum(parameters[0][i]^2 - 8*parameters[0][i]) + sum(parameters[1][i])
+		public class MyCostFunctor {
+			public MyCostFunctor() {};
+			
+			public boolean operator(Vector<double[]> parameters, double[] residuals) {
+			 final double[] params0 = parameters.get(0);
+			 int r = 0;
+			 for (int i = 0; i < 10; ++i) {
+			   residuals[r++] = i - params0[i];
+			   residuals[r++] = params0[i] - i;
+			 }
+			
+			 double c_residual = 0.0;
+			 for (int i = 0; i < 10; ++i) {
+			   c_residual += Math.pow(params0[i], 2) - 8.0 * params0[i];
+			 }
+			
+			 final double[] params1 = parameters.get(1);
+			 for (int i = 0; i < 5; ++i) {
+			   c_residual += params1[i];
+			 }
+			 residuals[r++] = c_residual;
+			 return true;
+			}
+		}
+		
+		// Takes 3 parameter blocks:
+//	     parameters[0] (x) is size 1.
+//	     parameters[1] (y) is size 2.
+//	     parameters[2] (z) is size 3.
+	// Emits 7 residuals:
+//	     A: x[0] (= sum_x)
+//	     B: y[0] + 2.0 * y[1] (= sum_y)
+//	     C: z[0] + 3.0 * z[1] + 6.0 * z[2] (= sum_z)
+//	     D: sum_x * sum_y
+//	     E: sum_y * sum_z
+//	     F: sum_x * sum_z
+//	     G: sum_x * sum_y * sum_z
+	public class MyThreeParameterCostFunctor {
+	 public MyThreeParameterCostFunctor() {};
+	 
+	 public boolean operator(Vector<double[]> parameters, double[] residuals) {
+	    final double[] x = parameters.get(0);
+	    final double[] y = parameters.get(1);
+	    final double[] z = parameters.get(2);
+
+	    double sum_x = x[0];
+	    double sum_y = y[0] + 2.0 * y[1];
+	    double sum_z = z[0] + 3.0 * z[1] + 6.0 * z[2];
+
+	    residuals[0] = sum_x;
+	    residuals[1] = sum_y;
+	    residuals[2] = sum_z;
+	    residuals[3] = sum_x * sum_y;
+	    residuals[4] = sum_y * sum_z;
+	    residuals[5] = sum_x * sum_z;
+	    residuals[6] = sum_x * sum_y * sum_z;
+	    return true;
+	  }
 	};
 	
 	// y = exp(x), dy/dx = exp(x)
@@ -17562,6 +17627,16 @@ public class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case MY_COST_FUNCTOR:
+				if (!((MyCostFunctor) functor_).operator(parameters, residuals)) {
+					return false;
+				}
+				break;
+			case MY_THREE_PARAMETER_COST_FUNCTOR:
+				if (!((MyThreeParameterCostFunctor) functor_).operator(parameters, residuals)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -17987,6 +18062,16 @@ public class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case MY_COST_FUNCTOR:
+				if (!((MyCostFunctor) functor_).operator(parameters, residuals)) {
+					return false;
+				}
+				break;
+			case MY_THREE_PARAMETER_COST_FUNCTOR:
+				if (!((MyThreeParameterCostFunctor) functor_).operator(parameters, residuals)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			if (jacobians == null) {
@@ -18736,6 +18821,24 @@ public class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case MY_COST_FUNCTOR:
+				paramVec = new Vector<double[]>(2);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				if (!((MyCostFunctor) functor).operator(paramVec, residuals)) {
+					return false;
+				}
+				break;
+			case MY_THREE_PARAMETER_COST_FUNCTOR:
+				paramVec = new Vector<double[]>(3);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				paramVec.add(parameters[2]);
+				if (!((MyThreeParameterCostFunctor) functor).operator(paramVec, residuals)) {
+					return false;
+				}
+				break;
+
 		    } // switch(testCase)
 			
 			
@@ -18852,6 +18955,23 @@ public class CeresSolver {
 			    	return false;
 			    }
 			    break;
+			case MY_COST_FUNCTOR:
+				paramVec = new Vector<double[]>(2);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				if (!((MyCostFunctor) functor).operator(paramVec, temp_residuals)) {
+					return false;
+				}
+				break;
+			case MY_THREE_PARAMETER_COST_FUNCTOR:
+				paramVec = new Vector<double[]>(3);
+				paramVec.add(parameters[0]);
+				paramVec.add(parameters[1]);
+				paramVec.add(parameters[2]);
+				if (!((MyThreeParameterCostFunctor) functor).operator(paramVec, temp_residuals)) {
+					return false;
+				}
+				break;
 		    } // switch(testCase)
 			
 			for (i = 0; i < residuals.length; i++) {
@@ -24326,10 +24446,76 @@ public class CeresSolver {
 			this.method = method;
 		}
 		
+		public boolean EvaluateDynamic(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians) {
+			int i;
+			//using internal::NumericDiff;
+			if (num_residuals() <= 0) {
+			    System.err.println("You must call DynamicNumericDiffCostFunction::SetNumResiduals() ");
+			    System.err.println("before DynamicNumericDiffCostFunction::Evaluate().");
+			    return false;
+			}
+			
+			Vector<Integer> block_sizes = parameter_block_sizes();
+			if (block_sizes.isEmpty()) {
+			    System.err.println("You must call DynamicNumericDiffCostFunction::AddParameterBlock() ");
+			    System.err.println("before DynamicNumericDiffCostFunction::Evaluate().");
+			    return false;
+			}
+			
+			boolean status = false;
+			switch (testCase) {
+			case MY_COST_FUNCTOR:
+			    status = ((MyCostFunctor) functor_).operator(parameters, residuals);
+			    break;
+			case MY_THREE_PARAMETER_COST_FUNCTOR:
+				status = ((MyThreeParameterCostFunctor) functor_).operator(parameters, residuals);
+			    break;
+			}
+			if (jacobians == null || !status) {
+			return status;
+			}
+			
+			// Create local space for a copy of the parameters which will get mutated.
+			double[][] parameters_references_copy = new double[block_sizes.size()][];
+			for (int block = 0; block < block_sizes.size(); ++block) {
+			    parameters_references_copy[block] = new double[block_sizes.get(block)];
+			}
+			
+			// Copy the parameters into the local temp space.
+			for (int block = 0; block < block_sizes.size(); ++block) {
+				for (i = 0; i < block_sizes.get(block); i++) {
+					parameters_references_copy[block][i] = parameters.get(block)[i];
+				}
+			}
+			
+			for (int block = 0; block < block_sizes.size(); ++block) {
+			if (jacobians[block] != null &&
+			  !EvaluateJacobianForParameterBlock(
+					   method, DYNAMIC,
+		               DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC,
+		               DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC, DYNAMIC,
+		               DYNAMIC, DYNAMIC,
+			                                     functor_,
+			                                     residuals,
+			                                     options_,
+			                                     num_residuals(),
+			                                     block,
+			                                     block_sizes.get(block),
+			                                     parameters_references_copy,
+			                                     jacobians[block])) {
+			return false;
+			}
+			}
+			return true;
+		}
+		
 		public boolean Evaluate(Vector<double[]> parameters,
                 double[] residuals,
                 double[][] jacobians) {
 			int i;
+			System.err.println("In this evaluate");
 			//using internal::NumericDiff;
 			if (num_residuals() <= 0) {
 			    System.err.println("You must call DynamicNumericDiffCostFunction::SetNumResiduals() ");
@@ -24383,9 +24569,11 @@ public class CeresSolver {
 			return true;
 		}
 		
-		  private boolean EvaluateCostFunctor(Vector<double[]> parameters, double[] residuals) {
-			     return ((CostFunction) functor_).Evaluate(parameters, residuals, null);
-		  }
+		private boolean EvaluateCostFunctor(Vector<double[]> parameters, double[] residuals) {
+		     return ((CostFunction) functor_).Evaluate(parameters, residuals, null);
+		}
+		
+		  
 	   }
 	
 	
