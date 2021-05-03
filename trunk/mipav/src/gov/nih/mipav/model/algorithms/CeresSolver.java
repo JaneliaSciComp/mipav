@@ -9377,10 +9377,13 @@ public class CeresSolver {
 
 				// If false, this evaluation point is the same as the last one.
 				public boolean new_evaluation_point;
+				
+				public int num_threads;
 
 				public EvaluateOptions() {
 					apply_loss_function = true;
 					new_evaluation_point = true;
+					num_threads = 1;
 				}
 
 			} // class EvaluateOptions
