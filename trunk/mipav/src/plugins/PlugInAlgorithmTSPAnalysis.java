@@ -174,6 +174,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     private boolean doN4MRIBiasFieldCorrection = false;
     
+    // Save original raw data in standard ordering and exit
+    private boolean saveOriginalData = false;  
+    
     private JDialog pickImageDialog = null;
     
     private JButton OKButton = null;
@@ -219,7 +222,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		double TSP_threshold, int TSP_iter, double Psvd, boolean autoAIFCalculation, boolean plotAIF,
     		boolean multiThreading, int search, boolean calculateCorrelation, 
     		boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase,
-    		boolean experimentalAIF, float edgeKernelSize, boolean doN4MRIBiasFieldCorrection) {
+    		boolean experimentalAIF, float edgeKernelSize, boolean doN4MRIBiasFieldCorrection,
+    		boolean saveOriginalData) {
         //super(resultImage, srcImg);
     	this.pwiImageFileDirectory = pwiImageFileDirectory;
     	this.spatialSmoothing = spatialSmoothing;
@@ -242,6 +246,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	this.experimentalAIF = experimentalAIF;
     	this.edgeKernelSize = edgeKernelSize;
     	this.doN4MRIBiasFieldCorrection = doN4MRIBiasFieldCorrection;
+    	this.saveOriginalData = saveOriginalData;
     }
     
     public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean spatialSmoothing, float sigmax, float sigmay, 
@@ -789,6 +794,42 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 				}
 			}	
     	}
+    	
+    	if (saveOriginalData) {
+    		short shortBuffer[] = new short[tDim * volume];
+    		for (z = 0; z < zDim; z++) {
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						for (t = 0; t < tDim; t++) {
+							shortBuffer[x + y*xDim + z*length + t*volume] = data[z][y][x][t];
+						}
+					}
+				}
+			}
+    		ModelImage originalImage = new ModelImage(ModelStorageBase.SHORT, extents, "Original");
+        	try {
+        		originalImage.importData(0, shortBuffer, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException on originalImage");
+        		setCompleted(false);
+        		return;
+        	}
+        	FileInfoBase fileInfo[] = originalImage.getFileInfo();
+        	for (i = 0; i < zDim*tDim; i++) {
+        		fileInfo[i].setResolutions(resolutions);
+        		fileInfo[i].setUnitsOfMeasure(units);
+        		fileInfo[i].setDataType(ModelStorageBase.SHORT);
+        	}
+        	
+        	saveImageFile(originalImage, outputFilePath, outputPrefix + "Original", saveFileFormat);
+        	
+        	originalImage.disposeLocal();
+        	originalImage = null;
+        	System.out.println("Finished directory " + pwiImageFileDirectory);
+        	setCompleted(true);
+        	return;
+    	} // if (saveOriginalData)
     	
     	// If a maximum peak has a fwhm < 1.0 indicating a noise spike, set that time value equal to the average of the neighboring 2 channels.
     	int numValues = 0;
