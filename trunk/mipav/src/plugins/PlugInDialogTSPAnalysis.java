@@ -127,6 +127,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private boolean doN4MRIBiasFieldCorrection = false;
 	
+	private JCheckBox saveOriginalCheckBox;
+	
+	private boolean saveOriginalData = false;
+	
 	/**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -462,6 +466,12 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         boundsCheckBox.setForeground(Color.black);
         inputPanel.add(boundsCheckBox, gbc);
         
+        gbc.gridy++;
+        saveOriginalCheckBox = new JCheckBox("Save original data and exit" , false);
+        saveOriginalCheckBox.setFont(MipavUtil.font12);
+        saveOriginalCheckBox.setForeground(Color.black);
+        inputPanel.add(saveOriginalCheckBox, gbc);
+        
         // Build the Panel that holds the OK and CANCEL Buttons
         JPanel OKCancelPanel = new JPanel();
 
@@ -527,7 +537,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection);
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection,
+            		saveOriginalData);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -585,6 +596,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
     	experimentalRAPIDAIF = scriptParameters.getParams().getBoolean("experimental_aif");
     	edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel");
+    	saveOriginalData = scriptParameters.getParams().getBoolean("save_original");
     }
     
     /**
@@ -611,6 +623,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalRAPIDAIF));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel", edgeKernelSize));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("save_original", saveOriginalData));
     }
     
     private boolean setVariables() {
@@ -788,6 +801,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCBFCBVMTT = CBFCBVMTTCheckBox.isSelected();
     	
     	calculateBounds = boundsCheckBox.isSelected();
+    	
+    	saveOriginalData = saveOriginalCheckBox.isSelected();
     	
     	return true;
     }
