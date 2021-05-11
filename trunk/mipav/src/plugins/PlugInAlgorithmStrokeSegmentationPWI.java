@@ -130,7 +130,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private boolean havePWI = true;
     
     private boolean doPwiMultiThreading = true;
-    private boolean doPwiCalculateCorrelation = false;
+    private boolean doPwiCalculateCorrelation = true;
     private boolean doPwiCalculateCBFCBVMTT = false;
     private boolean doPwiSaveOutputs = false;
     
@@ -190,7 +190,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         doPwiMultiThreading = pwiMultiThreading;
         doPwiCalculateCorrelation = pwiCalculateCorrelation;
-        doPwiCalculateCBFCBVMTT = pwiCalculateCorrelation;
+        doPwiCalculateCBFCBVMTT = pwiCalculateCBFCBVMTT;
         doPwiSaveOutputs = pwiSaveOutputs;
         
         doPwiSpatialSmoothing = spatialSmoothing;
@@ -216,6 +216,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     public void runAlgorithm() {
         ModelImage segImg = null;
         ModelImage dwiLightbox = null;
+        ModelImage corrmapLightbox = null;
         
         try {
             fireProgressStateChanged("Segmenting image ...");
@@ -511,6 +512,23 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     obj.setDwiNoObject();
                     maskList.add(obj);
                     lightboxObjectTable.put(sliceAifFile, maskList);
+                }
+                
+                // TODO corrmap
+                if (doPwiCalculateCorrelation) {
+                    ModelImage corrmapImage = tspAlgo.getCorrmapImage();
+                    corrmapLightbox = generateLightbox(corrmapImage, null, coreLightboxColor, lightboxOpacity, false);
+                    
+                    File lightboxCorrmap = saveImageFile(corrmapLightbox, coreOutputDir, outputBasename + "_corrmap_lightbox", FileUtility.PNG, false);
+                    
+                    if (lightboxCorrmap != null) {
+                        lightboxFileList.add(lightboxCorrmap);
+                        Vector<MaskObject> maskList = new Vector<MaskObject>();
+                        MaskObject obj = new MaskObject(0, (short) 0, 0);
+                        obj.setCorrmapNoObject();
+                        maskList.add(obj);
+                        lightboxObjectTable.put(lightboxCorrmap, maskList);
+                    }
                 }
             }
             
@@ -1342,6 +1360,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         public boolean isDwi = false;
         
         public boolean isPerfusion = false;
+        
+        public boolean isCorrmap = false;
 
         /**
          * Creates a new intObject object.
@@ -1363,6 +1383,17 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         	coreSize = -1;
         	isDwi = true;
         	isPerfusion = false;
+        	isCorrmap = false;
+        }
+        
+        public void setCorrmapNoObject() {
+            id = -1;
+            index = -1;
+            size = -1;
+            coreSize = -1;
+            isDwi = false;
+            isPerfusion = false;
+            isCorrmap = true;
         }
         
         public void setCoreSize(final int core) {

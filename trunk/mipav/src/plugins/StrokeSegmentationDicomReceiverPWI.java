@@ -1255,8 +1255,8 @@ public class StrokeSegmentationDicomReceiverPWI {
                 } else if (passNum == 1) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
                 }
-            } else if (lightboxFileList.size() == 6) {
-                // core no PWI, perfusion, core w/ PWI, dwi
+            } else if (lightboxFileList.size() == 7) {
+                // core no PWI, perfusion, core w/ PWI, dwi, corrmap
                 
                 if (passNum == 1) {
                     passDetails = "";
@@ -1272,6 +1272,8 @@ public class StrokeSegmentationDicomReceiverPWI {
                     passDescr = "AIF curve";
                 } else if (passNum == 6) {
                     passDescr = "AIF location";
+                } else if (passNum == 7) {
+                    passDescr = "PWI Correlation Map";
                 }
                 
                 reportTxt += "<h3>" + passDescr + "</h3>\n";

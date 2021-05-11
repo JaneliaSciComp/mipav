@@ -107,7 +107,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private boolean doPwiMultithread = true;
     
     private JCheckBox pwiCalcCorrMapCheckbox;
-    private boolean doPwiCalcCorrMap = false;
+    private boolean doPwiCalcCorrMap = true;
     
     private JCheckBox pwiCalcCBFCBVMTTCheckbox;
     private boolean doPwiCalcCBFCBVMTT = false;

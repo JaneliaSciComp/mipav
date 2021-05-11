@@ -153,6 +153,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 //    private ModelImage MTTImage;
     private ModelImage TmaxImage;
 //    private ModelImage delay_mapImage;
+    private ModelImage corrmapImage;
     
     private File aifFile = null;
     private File sliceAifFile = null;
@@ -325,7 +326,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	String delZString;
     	float delZ;
     	ModelImage corr_map2Image;
-    	ModelImage corrmapImage;
+//    	ModelImage corrmapImage;
     	ModelImage peaks_mapImage;
     	ModelImage delay_mapImage;
     	String TEString;
@@ -1536,8 +1537,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	
 	    	saveImageFile(corrmapImage, outputFilePath, outputPrefix + "corrmap", saveFileFormat);
 	    	
-	    	corrmapImage.disposeLocal();
-	    	corrmapImage = null;
+//	    	corrmapImage.disposeLocal();
+//	    	corrmapImage = null;
     	} // if (calculateCorrelation)
     	
     	peaks_mapImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "peaks_map");
@@ -4906,6 +4907,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             TmaxImage.disposeLocal();
             TmaxImage = null;
         }
+        if (corrmapImage != null) {
+            corrmapImage.disposeLocal();
+            corrmapImage = null;
+        }
     }
 
 //    public ModelImage getMTTImage() {
@@ -4922,6 +4927,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     
     public File getSliceAifFile() {
         return sliceAifFile;
+    }
+    
+    public ModelImage getCorrmapImage() {
+        return corrmapImage;
     }
     
 //    public ModelImage getDelayMapImage() {
