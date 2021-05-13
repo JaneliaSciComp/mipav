@@ -1,9 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.io.IOException;
+
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.MipavUtil;
 
 
 /**
@@ -120,8 +123,12 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
         }
 
         
-
-        calc();
+        if (srcImage.getNDims() == 4) {
+        	calc35D();
+        }
+        else {
+            calc();
+        }
     }
 
     /**
@@ -178,5 +185,105 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
         destImage.setImageName(srcImage.getImageName() + "_midsag");
 
         setCompleted(true);
+    }
+    
+    private void calc35D() {
+    	int t;
+    	float[] res = srcImage.getFileInfo(0).getResolutions();
+        int[] ext = srcImage.getExtents();
+    	int xDim = srcImage.getExtents()[0];
+    	int yDim = srcImage.getExtents()[1];
+    	int zDim = srcImage.getExtents()[2];
+    	float xResols = srcImage.getFileInfo()[0].getResolutions()[0];
+    	float yResols = srcImage.getFileInfo()[0].getResolutions()[1];
+    	float zResols = srcImage.getFileInfo()[0].getResolutions()[2];
+    	float resols3D[] = new float[] {xResols, yResols, zResols};
+    	int extents3D[] = new int[] {xDim, yDim, zDim};
+    	int volume = xDim * yDim * zDim;
+    	int tDim = srcImage.getExtents()[3];
+    	int colorFactor = 1;
+    	if (srcImage.isColorImage()) {
+    		colorFactor = 4;
+    	}
+    	double volumeBuffer[] = new double[colorFactor * volume];
+    	ModelImage volumeImage = new ModelImage(srcImage.getType(), extents3D, "volumeImage");
+        volumeImage.getFileInfo()[0].setResolutions(resols3D);
+        destImage = new ModelImage(srcImage.getType(), ext, srcImage.getImageName() + "_midsag");
+    	for (t = 0; t < tDim; t++) {
+    		fireProgressStateChanged((t * 100)/tDim);
+    		try {
+                srcImage.exportData(t * colorFactor * volume, colorFactor * volume, volumeBuffer);
+            } catch (IOException ex) {
+                System.gc();
+                MipavUtil.displayError("IOException = " + ex + " on srcImage.exportData");
+
+                return;
+            } 
+
+            try {
+                volumeImage.importData(0, volumeBuffer, true);
+            } catch (IOException ex) {
+                System.gc();
+                MipavUtil.displayError("IOException = " + ex + " on volumeImage.importData");
+
+                return;
+            }
+            
+            ModelImage flipImage = (ModelImage) volumeImage.clone(volumeImage.getImageName() + "_flip");
+            // flip
+            AlgorithmFlip flipAlgo = new AlgorithmFlip(flipImage, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE, true);
+            flipAlgo.setRunningInSeparateThread(false);
+
+            flipAlgo.run();
+
+            // register
+            AlgorithmRegOAR3D regAlgo = new AlgorithmRegOAR3D(volumeImage, flipImage, costFunc, dof, interp, -searchAngle,
+                                                              searchAngle, coarseAngle, fineAngle, -searchAngle,
+                                                              searchAngle, coarseAngle, fineAngle, -searchAngle,
+                                                              searchAngle, coarseAngle, fineAngle, maxOfMin, doSubsample,
+                                                              doMultiThread, fastMode, baseNumIter, numMinima);
+            
+            regAlgo.setRunningInSeparateThread(false);
+            regAlgo.run();
+
+            flipImage.disposeLocal();
+
+            // get xy translations and z rotation
+            TransMatrix trans = regAlgo.getTransformMigsagittal();
+
+            // rotate by half
+            
+            AlgorithmTransform transformAlgo = new AlgorithmTransform(volumeImage, trans, AlgorithmTransform.TRILINEAR, res[0],
+                                                                      res[1], res[2], ext[0], ext[1], ext[2], 
+                                                                      false, false,
+                                                                      false);
+            transformAlgo.setRunningInSeparateThread(false);
+            transformAlgo.run();
+            ModelImage transformedImage = transformAlgo.getTransformedImage();
+            try {
+                transformedImage.exportData(0, colorFactor * volume, volumeBuffer);
+            } catch (IOException ex) {
+                System.gc();
+                MipavUtil.displayError("IOException = " + ex + " on transformedImage.exportData");
+
+                return;
+            }
+            transformedImage.disposeLocal();
+            transformedImage = null;
+            
+            try {
+                destImage.importData(t * colorFactor * volume, volumeBuffer, false);
+            } catch (IOException ex) {
+                System.gc();
+                MipavUtil.displayError("IOException = " + ex + " on destImage.importData");
+
+                return;
+            }
+    	}
+    	volumeImage.disposeLocal();
+    	volumeImage = null;
+    	destImage.calcMinMax();
+    	fireProgressStateChanged(100);
+    	setCompleted(true);
     }
 }
