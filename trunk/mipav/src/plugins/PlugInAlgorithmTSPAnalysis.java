@@ -2712,7 +2712,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		        for (z = 0; z < zDim; z++) {
 					for (y = 0; y < yDim; y++) {
 						for (x = 0; x < xDim; x++) {
-							if (peaks[z][y][x] < peaks_threshold) {
+							if ((peaks[z][y][x] < peaks_threshold) && (peaks[z][y][x] != 0)) {
 								if (t == 0) {
 									sumcount++;
 									xsum += x;
