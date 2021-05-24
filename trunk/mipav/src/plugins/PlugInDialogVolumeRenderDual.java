@@ -2320,7 +2320,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 							min.min( text.elementAt(0) );
 							max.max( text.elementAt(0) );
 
-							//							System.err.println( annotationName + "  " + time + "   " + x + "  " + y + "  " + z );
+//							System.err.println( annotationName + "  " + time + "   " + x + "  " + y + "  " + z );
 							//    						if ( text.elementAt(0).Z < 0 )
 							//    						{
 							//    							System.err.println(list[i] );
