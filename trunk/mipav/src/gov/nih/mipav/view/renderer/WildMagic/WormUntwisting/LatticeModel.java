@@ -87,20 +87,20 @@ public class LatticeModel {
 		return ( (c1.getRed() == c2.getRed()) && (c1.getGreen() == c2.getGreen()) && (c1.getBlue() == c2.getBlue()) );
 	}
 	
-	public static String checkName(String name, String original, int count, VOI annotationVOIs) {
-		if ( annotationVOIs == null ) return name;
-		if ( annotationVOIs.getCurves() == null ) return name;
-		if ( annotationVOIs.getCurves().size() == 0 ) return name;
-		
-		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
-			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
-			if ( text.getText().contentEquals(name) ) {
-				name = original + "_" + count++;
-				return checkName(name, original, count, annotationVOIs);
-			}
-		}
-		return name;
-	}
+//	public static String checkName(String name, String original, int count, VOI annotationVOIs) {
+//		if ( annotationVOIs == null ) return name;
+//		if ( annotationVOIs.getCurves() == null ) return name;
+//		if ( annotationVOIs.getCurves().size() == 0 ) return name;
+//		
+//		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+//			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+//			if ( text.getText().contentEquals(name) ) {
+//				name = original + "_" + count++;
+//				return checkName(name, original, count, annotationVOIs);
+//			}
+//		}
+//		return name;
+//	}
 
 	/**
 	 * Read a list of annotations from a CSV file: name,x,y,z,radius (optional)
@@ -120,7 +120,7 @@ public class LatticeModel {
 				BufferedReader br = new BufferedReader(fr);
 				String line = br.readLine();
 				line = br.readLine();
-				String renameString = "";
+//				String renameString = "";
 				VOI annotationVOIs = new VOI( sID, "annotationVOIs", VOI.ANNOTATION, 0 );
 				int count = 1;
 				while ( line != null && (line.length() > 1) )
@@ -137,11 +137,12 @@ public class LatticeModel {
 							// name, position and color
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
-							String name1 = checkName(name, new String(name), 1, annotationVOIs);
-							if ( !name.equals(name1) ) {
-								renameString += name + "->" + name1 + "\n";
-							}
-							text.setText(name1);
+							text.setText(name);
+//							String name1 = checkName(name, new String(name), 1, annotationVOIs);
+//							if ( !name.equals(name1) ) {
+//								renameString += name + "->" + name1 + "\n";
+//							}
+//							text.setText(name1);
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
@@ -165,11 +166,13 @@ public class LatticeModel {
 							// name, position and radius:
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
-							String name1 = checkName(name, new String(name), 1, annotationVOIs);
-							if ( !name.equals(name1) ) {
-								renameString += name + "->" + name1 + "\n";
-							}
-							text.setText(name1);
+							text.setText(name);
+
+//							String name1 = checkName(name, new String(name), 1, annotationVOIs);
+//							if ( !name.equals(name1) ) {
+//								renameString += name + "->" + name1 + "\n";
+//							}
+//							text.setText(name1);
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
