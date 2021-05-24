@@ -199,9 +199,9 @@ public class LatticeModel {
 					}
 					line = br.readLine();
 				}
-				if ( renameString.length() > 0 ) {
-					MipavUtil.displayError( "Renamed duplicate annotations:\n" + renameString );
-				}
+//				if ( renameString.length() > 0 ) {
+//					MipavUtil.displayError( "Renamed duplicate annotations:\n" + renameString );
+//				}
 				fr.close();
 				if ( count > 1 )
 				{

@@ -2962,9 +2962,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					if ( display )
 					{
 						Vector3f position = new Vector3f(text.elementAt(0));
-						position.X = (float) Math.floor(position.X);
-						position.Y = (float) Math.floor(position.Y);
-						position.Z = (float) Math.floor(position.Z);
 						surface.SetTranslateVolumeCoords( position );
 					}
 					Color color = text.getColor();
