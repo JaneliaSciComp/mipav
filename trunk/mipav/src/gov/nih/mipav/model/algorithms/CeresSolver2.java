@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import Jama.Matrix;
+import PlugInAlgorithmTSPAnalysis.indexPeakItem;
 
 import java.util.Map.Entry;
 
@@ -25,8 +26,15 @@ import gov.nih.mipav.model.algorithms.CeresSolver.CRSMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.Cell;
 import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
+import gov.nih.mipav.model.algorithms.CeresSolver.CovarianceAlgorithmType;
+import gov.nih.mipav.model.algorithms.CeresSolver.EvaluateOptions;
+import gov.nih.mipav.model.algorithms.CeresSolver.EventLogger;
 import gov.nih.mipav.model.algorithms.CeresSolver.Ownership;
 import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
+import gov.nih.mipav.model.algorithms.CeresSolver.ParameterBlock;
+import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
+import gov.nih.mipav.model.algorithms.CeresSolver.ResidualBlock;
+import gov.nih.mipav.model.algorithms.CeresSolver.SparseLinearAlgebraLibraryType;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.WeightedGraph;
@@ -2894,5 +2902,564 @@ public class CeresSolver2 {
 		 }
 
 
+	  }
+	  
+	  class CovarianceOptions {
+		// Sparse linear algebra library to use when a sparse matrix
+		    // factorization is being used to compute the covariance matrix.
+		    //
+		    // Currently this only applies to SPARSE_QR.
+		    public SparseLinearAlgebraLibraryType sparse_linear_algebra_library_type;
+
+		    // Ceres supports two different algorithms for covariance
+		    // estimation, which represent different tradeoffs in speed,
+		    // accuracy and reliability.
+		    //
+		    // 1. DENSE_SVD uses Eigen's JacobiSVD to perform the
+		    //    computations. It computes the singular value decomposition
+		    //
+		    //      U * S * V' = J
+		    //
+		    //    and then uses it to compute the pseudo inverse of J'J as
+		    //
+		    //      pseudoinverse[J'J]^ = V * pseudoinverse[S] * V'
+		    //
+		    //    It is an accurate but slow method and should only be used
+		    //    for small to moderate sized problems. It can handle
+		    //    full-rank as well as rank deficient Jacobians.
+		    //
+		    // 2. SPARSE_QR uses the sparse QR factorization algorithm
+		    //    to compute the decomposition
+		    //
+		    //      Q * R = J
+		    //
+		    //    [J'J]^-1 = [R*R']^-1
+		    //
+		    // SPARSE_QR is not capable of computing the covariance if the
+		    // Jacobian is rank deficient. Depending on the value of
+		    // Covariance::Options::sparse_linear_algebra_library_type, either
+		    // Eigen's Sparse QR factorization algorithm will be used or
+		    // SuiteSparse's high performance SuiteSparseQR algorithm will be
+		    // used.
+		    public CovarianceAlgorithmType algorithm_type;
+
+		    // If the Jacobian matrix is near singular, then inverting J'J
+		    // will result in unreliable results, e.g, if
+		    //
+		    //   J = [1.0 1.0         ]
+		    //       [1.0 1.0000001   ]
+		    //
+		    // which is essentially a rank deficient matrix, we have
+		    //
+		    //   inv(J'J) = [ 2.0471e+14  -2.0471e+14]
+		    //              [-2.0471e+14   2.0471e+14]
+		    //
+		    // This is not a useful result. Therefore, by default
+		    // Covariance::Compute will return false if a rank deficient
+		    // Jacobian is encountered. How rank deficiency is detected
+		    // depends on the algorithm being used.
+		    //
+		    // 1. DENSE_SVD
+		    //
+		    //      min_sigma / max_sigma < sqrt(min_reciprocal_condition_number)
+		    //
+		    //    where min_sigma and max_sigma are the minimum and maxiumum
+		    //    singular values of J respectively.
+		    //
+		    // 2. SPARSE_QR
+		    //
+		    //      rank(J) < num_col(J)
+		    //
+		    //   Here rank(J) is the estimate of the rank of J returned by the
+		    //   sparse QR factorization algorithm. It is a fairly reliable
+		    //   indication of rank deficiency.
+		    //
+		    public double min_reciprocal_condition_number;
+
+		    // When using DENSE_SVD, the user has more control in dealing with
+		    // singular and near singular covariance matrices.
+		    //
+		    // As mentioned above, when the covariance matrix is near
+		    // singular, instead of computing the inverse of J'J, the
+		    // Moore-Penrose pseudoinverse of J'J should be computed.
+		    //
+		    // If J'J has the eigen decomposition (lambda_i, e_i), where
+		    // lambda_i is the i^th eigenvalue and e_i is the corresponding
+		    // eigenvector, then the inverse of J'J is
+		    //
+		    //   inverse[J'J] = sum_i e_i e_i' / lambda_i
+		    //
+		    // and computing the pseudo inverse involves dropping terms from
+		    // this sum that correspond to small eigenvalues.
+		    //
+		    // How terms are dropped is controlled by
+		    // min_reciprocal_condition_number and null_space_rank.
+		    //
+		    // If null_space_rank is non-negative, then the smallest
+		    // null_space_rank eigenvalue/eigenvectors are dropped
+		    // irrespective of the magnitude of lambda_i. If the ratio of the
+		    // smallest non-zero eigenvalue to the largest eigenvalue in the
+		    // truncated matrix is still below
+		    // min_reciprocal_condition_number, then the Covariance::Compute()
+		    // will fail and return false.
+		    //
+		    // Setting null_space_rank = -1 drops all terms for which
+		    //
+		    //   lambda_i / lambda_max < min_reciprocal_condition_number.
+		    //
+		    // This option has no effect on the SUITE_SPARSE_QR and
+		    // EIGEN_SPARSE_QR algorithms.
+		    public int null_space_rank;
+
+		    public int num_threads;
+
+		    // Even though the residual blocks in the problem may contain loss
+		    // functions, setting apply_loss_function to false will turn off
+		    // the application of the loss function to the output of the cost
+		    // function and in turn its effect on the covariance.
+		    //
+		    // TODO(sameergaarwal): Expand this based on Jim's experiments.
+		    public boolean apply_loss_function;
+		    
+		    public CovarianceOptions() {
+		    	//algorithm_type = CovarianceAlgorithmType.SPARSE_QR;
+		    	algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+
+		        // Eigen's QR factorization is always available.
+		        sparse_linear_algebra_library_type = SparseLinearAlgebraLibraryType.EIGEN_SPARSE;
+		  //#if !defined(CERES_NO_SUITESPARSE)
+		        //sparse_linear_algebra_library_type = SUITE_SPARSE;
+		  //#endif
+
+		        min_reciprocal_condition_number = 1e-14;
+		        null_space_rank = 0;
+		        num_threads = 1;
+		        apply_loss_function = true;
+		    }
+	  }
+	  
+	  class CovarianceImpl {
+		  private ProblemImpl problem_;
+		  private CovarianceOptions options_;
+		  private EvaluateOptions evaluate_options_;
+		  private boolean is_computed_;
+		  private boolean is_valid_;
+		  private HashMap<double[], Integer> parameter_block_to_row_index_;
+		  private HashSet<double[]> constant_parameter_blocks_;
+		  private CompressedRowSparseMatrix covariance_matrix_;
+		  
+		  public CovarianceImpl(CovarianceOptions options) {
+		      options_ = options;
+		      is_computed_ = false;
+		      is_valid_ = false;
+		      if (options_.num_threads > 1) {
+			      if (ce.WARNING <= ce.MAX_LOG_LEVEL) {
+			        Preferences.debug("Neither OpenMP nor TBB support is compiled into this binary; \n" +
+			        "only options.num_threads = 1 is supported. Switching \n" +
+			        "to single threaded mode.\n", Preferences.DEBUG_ALGORITHM);
+			        options_.num_threads = 1;
+			      }
+		     }
+
+		  evaluate_options_.num_threads = options_.num_threads;
+		  evaluate_options_.apply_loss_function = options_.apply_loss_function;
+		}
+		  
+		  public void CheckForDuplicates(Vector<double[]> blocks) {
+		      // Pair can have first and second as the same array or as different arrays
+		      // Pair can have arrays of the same or different lengths
+			int i;
+			ArrayList<indexArrayItem> ia = new ArrayList<indexArrayItem>();
+			for (i = 0; i < blocks.size(); i++) {
+				ia.add(new indexArrayItem(i,blocks.get(i)));
+			}
+			indexArrayComparator ic = new indexArrayComparator();
+			Collections.sort(ia, ic);
+			for (i = 0; i < blocks.size()-1; i++) {
+				if (ic.compare(ia.get(i), ia.get(i+1)) == 0) {
+					System.err.println("Covariance::Compute called with duplicate blocks at indices " + ia.get(i).getIndex() + " and " + ia.get(i+1).getIndex());
+				}
+			}
+			return;
+			
+		}
+		  
+		public void CheckForPairDuplicates(Vector<Pair<double[], double[]>> blocks) {
+		      // Pair can have first and second as the same array or as different arrays
+		      // Pair can have arrays of the same or different lengths
+			int i;
+			ArrayList<indexArrayArrayItem> iaa = new ArrayList<indexArrayArrayItem>();
+			for (i = 0; i < blocks.size(); i++) {
+				iaa.add(new indexArrayArrayItem(i,blocks.get(i).getFirst(),blocks.get(i).getSecond()));
+			}
+			indexArrayArrayComparator ic = new indexArrayArrayComparator();
+			Collections.sort(iaa, ic);
+			for (i = 0; i < blocks.size()-1; i++) {
+				if (ic.compare(iaa.get(i), iaa.get(i+1)) == 0) {
+					System.err.println("Covariance::pairCompute called with duplicate blocks at indices " + iaa.get(i).getIndex() + " and " + iaa.get(i+1).getIndex());
+				}
+			}
+			return;
+			
+		}
+		
+		public boolean Compute(Vector<double[]> parameter_blocks,
+                ProblemImpl problem) {
+			CheckForDuplicates(parameter_blocks);
+			Vector<Pair<double[], double[]>> covariance_blocks = new Vector<Pair<double[], double[]>>();
+			for (int i = 0; i < parameter_blocks.size(); ++i) {
+				for (int j = i; j < parameter_blocks.size(); ++j) {
+				    covariance_blocks.add(ce.new Pair(parameter_blocks.get(i),
+				                               parameter_blocks.get(j)));
+				}
+			}
+			
+			return pairCompute(covariance_blocks, problem);
+		}
+
+		
+		public boolean pairCompute(Vector<Pair<double[], double[]>> covariance_blocks,
+	                ProblemImpl problem) {
+				CheckForPairDuplicates(covariance_blocks);
+				problem_ = problem;
+				parameter_block_to_row_index_.clear();
+				covariance_matrix_ = null;
+				/*is_valid_ = (ComputeCovarianceSparsity(covariance_blocks, problem) &&
+				  ComputeCovarianceValues());
+				is_computed_ = true;
+				return is_valid_;*/
+				return true;
+		}
+		
+		// Determine the sparsity pattern of the covariance matrix based on
+		// the block pairs requested by the user.
+		public boolean ComputeCovarianceSparsity(
+		    Vector<Pair<double[], double[]>>  original_covariance_blocks,
+		    ProblemImpl problem) {
+		  EventLogger event_logger = ce.new EventLogger("CovarianceImpl::ComputeCovarianceSparsity");
+
+		  // Determine an ordering for the parameter block, by sorting the
+		  // parameter blocks by their pointers.
+		  Vector<double[]> all_parameter_blocks = new Vector<double[]>();
+		  problem.GetParameterBlocks(all_parameter_blocks);
+		  HashMap<double[], ParameterBlock> parameter_map = problem.parameter_map();
+		  HashSet<ParameterBlock> parameter_blocks_in_use;
+		  Vector<ResidualBlock> residual_blocks = new Vector<ResidualBlock>();
+		  /*problem.GetResidualBlocks(residual_blocks);
+
+		  for (int i = 0; i < residual_blocks.size(); ++i) {
+		    ResidualBlock* residual_block = residual_blocks[i];
+		    parameter_blocks_in_use.insert(residual_block->parameter_blocks(),
+		                                   residual_block->parameter_blocks() +
+		                                   residual_block->NumParameterBlocks());
+		  }
+
+		  constant_parameter_blocks_.clear();
+		  vector<double*>& active_parameter_blocks =
+		      evaluate_options_.parameter_blocks;
+		  active_parameter_blocks.clear();
+		  for (int i = 0; i < all_parameter_blocks.size(); ++i) {
+		    double* parameter_block = all_parameter_blocks[i];
+		    ParameterBlock* block = FindOrDie(parameter_map, parameter_block);
+		    if (!block->IsConstant() && (parameter_blocks_in_use.count(block) > 0)) {
+		      active_parameter_blocks.push_back(parameter_block);
+		    } else {
+		      constant_parameter_blocks_.insert(parameter_block);
+		    }
+		  }
+
+		  std::sort(active_parameter_blocks.begin(), active_parameter_blocks.end());
+
+		  // Compute the number of rows.  Map each parameter block to the
+		  // first row corresponding to it in the covariance matrix using the
+		  // ordering of parameter blocks just constructed.
+		  int num_rows = 0;
+		  parameter_block_to_row_index_.clear();
+		  for (int i = 0; i < active_parameter_blocks.size(); ++i) {
+		    double* parameter_block = active_parameter_blocks[i];
+		    const int parameter_block_size =
+		        problem->ParameterBlockLocalSize(parameter_block);
+		    parameter_block_to_row_index_[parameter_block] = num_rows;
+		    num_rows += parameter_block_size;
+		  }
+
+		  // Compute the number of non-zeros in the covariance matrix.  Along
+		  // the way flip any covariance blocks which are in the lower
+		  // triangular part of the matrix.
+		  int num_nonzeros = 0;
+		  CovarianceBlocks covariance_blocks;
+		  for (int i = 0; i <  original_covariance_blocks.size(); ++i) {
+		    const pair<const double*, const double*>& block_pair =
+		        original_covariance_blocks[i];
+		    if (constant_parameter_blocks_.count(block_pair.first) > 0 ||
+		        constant_parameter_blocks_.count(block_pair.second) > 0) {
+		      continue;
+		    }
+
+		    int index1 = FindOrDie(parameter_block_to_row_index_, block_pair.first);
+		    int index2 = FindOrDie(parameter_block_to_row_index_, block_pair.second);
+		    const int size1 = problem->ParameterBlockLocalSize(block_pair.first);
+		    const int size2 = problem->ParameterBlockLocalSize(block_pair.second);
+		    num_nonzeros += size1 * size2;
+
+		    // Make sure we are constructing a block upper triangular matrix.
+		    if (index1 > index2) {
+		      covariance_blocks.push_back(make_pair(block_pair.second,
+		                                            block_pair.first));
+		    } else {
+		      covariance_blocks.push_back(block_pair);
+		    }
+		  }
+
+		  if (covariance_blocks.size() == 0) {
+		    VLOG(2) << "No non-zero covariance blocks found";
+		    covariance_matrix_.reset(NULL);
+		    return true;
+		  }
+
+		  // Sort the block pairs. As a consequence we get the covariance
+		  // blocks as they will occur in the CompressedRowSparseMatrix that
+		  // will store the covariance.
+		  sort(covariance_blocks.begin(), covariance_blocks.end());
+
+		  // Fill the sparsity pattern of the covariance matrix.
+		  covariance_matrix_.reset(
+		      new CompressedRowSparseMatrix(num_rows, num_rows, num_nonzeros));
+
+		  int* rows = covariance_matrix_->mutable_rows();
+		  int* cols = covariance_matrix_->mutable_cols();
+
+		  // Iterate over parameter blocks and in turn over the rows of the
+		  // covariance matrix. For each parameter block, look in the upper
+		  // triangular part of the covariance matrix to see if there are any
+		  // blocks requested by the user. If this is the case then fill out a
+		  // set of compressed rows corresponding to this parameter block.
+		  //
+		  // The key thing that makes this loop work is the fact that the
+		  // row/columns of the covariance matrix are ordered by the pointer
+		  // values of the parameter blocks. Thus iterating over the keys of
+		  // parameter_block_to_row_index_ corresponds to iterating over the
+		  // rows of the covariance matrix in order.
+		  int i = 0;  // index into covariance_blocks.
+		  int cursor = 0;  // index into the covariance matrix.
+		  for (map<const double*, int>::const_iterator it =
+		           parameter_block_to_row_index_.begin();
+		       it != parameter_block_to_row_index_.end();
+		       ++it) {
+		    const double* row_block =  it->first;
+		    const int row_block_size = problem->ParameterBlockLocalSize(row_block);
+		    int row_begin = it->second;
+
+		    // Iterate over the covariance blocks contained in this row block
+		    // and count the number of columns in this row block.
+		    int num_col_blocks = 0;
+		    int num_columns = 0;
+		    for (int j = i; j < covariance_blocks.size(); ++j, ++num_col_blocks) {
+		      const pair<const double*, const double*>& block_pair =
+		          covariance_blocks[j];
+		      if (block_pair.first != row_block) {
+		        break;
+		      }
+		      num_columns += problem->ParameterBlockLocalSize(block_pair.second);
+		    }
+
+		    // Fill out all the compressed rows for this parameter block.
+		    for (int r = 0; r < row_block_size; ++r) {
+		      rows[row_begin + r] = cursor;
+		      for (int c = 0; c < num_col_blocks; ++c) {
+		        const double* col_block = covariance_blocks[i + c].second;
+		        const int col_block_size = problem->ParameterBlockLocalSize(col_block);
+		        int col_begin = FindOrDie(parameter_block_to_row_index_, col_block);
+		        for (int k = 0; k < col_block_size; ++k) {
+		          cols[cursor++] = col_begin++;
+		        }
+		      }
+		    }
+
+		    i+= num_col_blocks;
+		  }
+
+		  rows[num_rows] = cursor;*/
+		  return true;
+		}
+
+
+
+    }
+	  
+	  private class indexArrayItem {
+		  private int index;
+		  private double array[];
+		  
+		  public indexArrayItem(int index, double array[]) {
+			  this.index = index;
+			  this.array = array;
+		  }
+		  
+		  public int getIndex() {
+			  return index;
+		  }
+		  
+		  public double[] getArray() {
+			  return array;
+		  }
+		  
+		 
+	  }
+	  
+	  private class indexArrayComparator implements Comparator<indexArrayItem> {
+		  public int compare(indexArrayItem o1, indexArrayItem o2) {  
+			  int i;
+			  double firstArray[] = o1.getArray();
+			  double secondArray[] = o2.getArray();
+			  if (firstArray.length < secondArray.length) {
+				  return -1;
+			  }
+			  if (firstArray.length > secondArray.length) {
+				  return 1;
+			  }
+			  for (i = 0; i < firstArray.length; i++) {
+				  if (firstArray[i] < secondArray[i]) {
+					  return -1;
+				  }
+				  if (firstArray[i] > secondArray[i]) {
+					  return 1;
+				  }
+			  }
+			  return 0;
+		  }
+	  }
+	  
+	  private class indexArrayArrayComparator implements Comparator<indexArrayArrayItem> {
+		  public int compare(indexArrayArrayItem o1, indexArrayArrayItem o2) {
+			  int i;
+			  double firstArray1[] = o1.getArray1();
+			  double firstArray2[] = o1.getArray2();
+			  double secondArray1[] = o2.getArray1();
+			  double secondArray2[] = o2.getArray2();
+			  boolean equalFirstArrays = true;
+			  if (firstArray1.length != firstArray2.length) {
+				  equalFirstArrays = false;
+			  }
+			  if (equalFirstArrays) {
+			      for (i = 0; i < firstArray1.length && equalFirstArrays; i++) {
+			    	  if (firstArray1[i] != firstArray2[i]) {
+			    		  equalFirstArrays = false;
+			    	  }
+			      }
+			  }
+			  boolean equalSecondArrays = true;
+			  if (secondArray1.length != secondArray2.length) {
+				  equalSecondArrays = false;
+			  }
+			  if (equalSecondArrays) {
+			      for (i = 0; i < secondArray1.length && equalSecondArrays; i++) {
+			    	  if (secondArray1[i] != secondArray2[i]) {
+			    		  equalSecondArrays = false;
+			    	  }
+			      }
+			  }
+			  if (equalFirstArrays && (!equalSecondArrays)) {
+				  return -1;
+			  }
+			  if ((!equalFirstArrays) && equalSecondArrays) {
+				  return 1;
+			  }
+			  if (equalFirstArrays && equalSecondArrays) {
+				  if (firstArray1.length < secondArray1.length) {
+					  return -1;
+				  }
+				  if (firstArray1.length > secondArray1.length) {
+					  return 1;
+				  }
+				  for (i = 0; i < firstArray1.length; i++) {
+					  if (firstArray1[i] < secondArray1[i]) {
+						  return -1;
+					  }
+					  if (firstArray1[i] > secondArray1[i]) {
+						  return 1;
+					  }
+				  }
+				  return 0;
+			  } // if (equalFirstArrays && equalSecondArrays)
+			  int firstMinLength = Math.min(firstArray1.length,firstArray2.length);
+			  int firstMaxLength = Math.max(firstArray1.length,firstArray2.length);
+			  int secondMinLength = Math.min(secondArray1.length,secondArray2.length);
+			  int secondMaxLength = Math.max(secondArray1.length,secondArray2.length);
+			  if (firstMinLength < secondMinLength) {
+				  return -1;
+			  }
+			  if (firstMinLength > secondMinLength) {
+				  return 1;
+			  }
+			  if (firstMaxLength < secondMaxLength) {
+				  return -1;
+			  }
+			  if (firstMaxLength > secondMaxLength) {
+				  return 1;
+			  }
+			  if (firstArray1.length == secondArray1.length) {
+				  for (i = 0; i < firstArray1.length; i++) {
+					  if (firstArray1[i] < secondArray1[i]) {
+						  return -1;
+					  }
+					  if (firstArray1[i] > secondArray1[i]) {
+						  return 1;
+					  }
+				  }
+				  for (i = 0; i < firstArray2.length; i++) {
+					  if (firstArray2[i] < secondArray2[i]) {
+						  return -1;
+					  }
+					  if (firstArray2[i] > secondArray2[i]) {
+						  return 1;
+					  }
+				  }
+				  return 0;
+			  }
+			  else {
+				  for (i = 0; i < firstArray1.length; i++) {
+					  if (firstArray1[i] < secondArray2[i]) {
+						  return -1;
+					  }
+					  if (firstArray1[i] > secondArray2[i]) {
+						  return 1;
+					  }
+				  }
+				  for (i = 0; i < firstArray2.length; i++) {
+					  if (firstArray2[i] < secondArray1[i]) {
+						  return -1;
+					  }
+					  if (firstArray2[i] > secondArray1[i]) {
+						  return 1;
+					  }
+				  }
+				  return 0;  
+			  }
+		  }
+	  }
+	  
+	  private class indexArrayArrayItem {
+		  private int index;
+		  private double array1[];
+		  private double array2[];
+		  
+		  public indexArrayArrayItem(int index, double array1[], double array2[]) {
+			  this.index = index;
+			  this.array1 = array1;
+			  this.array2 = array2;
+		  }
+		  
+		  public int getIndex() {
+			  return index;
+		  }
+		  
+		  public double[] getArray1() {
+			  return array1;
+		  }
+		  
+		  public double[] getArray2() {
+			  return array2;
+		  }
 	  }
 }
