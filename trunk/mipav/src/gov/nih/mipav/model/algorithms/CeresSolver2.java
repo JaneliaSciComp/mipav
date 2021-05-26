@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.Vector;
 
 import Jama.Matrix;
-import PlugInAlgorithmTSPAnalysis.indexPeakItem;
 
 import java.util.Map.Entry;
 
@@ -3109,7 +3108,7 @@ public class CeresSolver2 {
 			Vector<Pair<double[], double[]>> covariance_blocks = new Vector<Pair<double[], double[]>>();
 			for (int i = 0; i < parameter_blocks.size(); ++i) {
 				for (int j = i; j < parameter_blocks.size(); ++j) {
-				    covariance_blocks.add(ce.new Pair(parameter_blocks.get(i),
+				    covariance_blocks.add(ce.new Pair<double[], double[]>(parameter_blocks.get(i),
 				                               parameter_blocks.get(j)));
 				}
 			}
@@ -3136,6 +3135,7 @@ public class CeresSolver2 {
 		public boolean ComputeCovarianceSparsity(
 		    Vector<Pair<double[], double[]>>  original_covariance_blocks,
 		    ProblemImpl problem) {
+		  int i,j;
 		  EventLogger event_logger = ce.new EventLogger("CovarianceImpl::ComputeCovarianceSparsity");
 
 		  // Determine an ordering for the parameter block, by sorting the
@@ -3143,43 +3143,56 @@ public class CeresSolver2 {
 		  Vector<double[]> all_parameter_blocks = new Vector<double[]>();
 		  problem.GetParameterBlocks(all_parameter_blocks);
 		  HashMap<double[], ParameterBlock> parameter_map = problem.parameter_map();
-		  HashSet<ParameterBlock> parameter_blocks_in_use;
+		  HashSet<ParameterBlock> parameter_blocks_in_use = new HashSet<ParameterBlock>();
 		  Vector<ResidualBlock> residual_blocks = new Vector<ResidualBlock>();
-		  /*problem.GetResidualBlocks(residual_blocks);
+		  problem.GetResidualBlocks(residual_blocks);
 
-		  for (int i = 0; i < residual_blocks.size(); ++i) {
-		    ResidualBlock* residual_block = residual_blocks[i];
-		    parameter_blocks_in_use.insert(residual_block->parameter_blocks(),
-		                                   residual_block->parameter_blocks() +
-		                                   residual_block->NumParameterBlocks());
-		  }
-
-		  constant_parameter_blocks_.clear();
-		  vector<double*>& active_parameter_blocks =
-		      evaluate_options_.parameter_blocks;
-		  active_parameter_blocks.clear();
-		  for (int i = 0; i < all_parameter_blocks.size(); ++i) {
-		    double* parameter_block = all_parameter_blocks[i];
-		    ParameterBlock* block = FindOrDie(parameter_map, parameter_block);
-		    if (!block->IsConstant() && (parameter_blocks_in_use.count(block) > 0)) {
-		      active_parameter_blocks.push_back(parameter_block);
-		    } else {
-		      constant_parameter_blocks_.insert(parameter_block);
+		  for (i = 0; i < residual_blocks.size(); ++i) {
+		    ResidualBlock residual_block = residual_blocks.get(i);
+		    for (j = 0; j < residual_block.NumParameterBlocks(); j++) {
+		        parameter_blocks_in_use.add(residual_block.parameter_blocks()[j]);
 		    }
 		  }
 
-		  std::sort(active_parameter_blocks.begin(), active_parameter_blocks.end());
+		  constant_parameter_blocks_.clear();
+		  Vector<double[]> active_parameter_blocks =
+		      evaluate_options_.parameter_blocks;
+		  active_parameter_blocks.clear();
+		  for (i = 0; i < all_parameter_blocks.size(); ++i) {
+		    double[] parameter_block = all_parameter_blocks.get(i);
+		    ParameterBlock block = parameter_map.get(parameter_block);
+		    if (block == null) {
+		    	System.err.println("In ComputeCovarianceSparsity parameter_map.get(parameter_block) returned null");
+		    	return false;
+		    }
+		    if (!block.IsConstant() && (parameter_blocks_in_use.contains(block))) {
+		      active_parameter_blocks.add(parameter_block);
+		    } else {
+		      constant_parameter_blocks_.add(parameter_block);
+		    }
+		  }
+		  
+		  ArrayList<indexArrayItem> ia = new ArrayList<indexArrayItem>();
+			for (i = 0; i < active_parameter_blocks.size(); i++) {
+				ia.add(new indexArrayItem(i,active_parameter_blocks.get(i)));
+			}
+			indexArrayComparator ic = new indexArrayComparator();
+			Collections.sort(ia, ic);
+			active_parameter_blocks.clear();
+			for (i = 0; i < active_parameter_blocks.size(); i++) {
+				active_parameter_blocks.add(ia.get(i).getArray());
+			}
 
 		  // Compute the number of rows.  Map each parameter block to the
 		  // first row corresponding to it in the covariance matrix using the
 		  // ordering of parameter blocks just constructed.
 		  int num_rows = 0;
 		  parameter_block_to_row_index_.clear();
-		  for (int i = 0; i < active_parameter_blocks.size(); ++i) {
-		    double* parameter_block = active_parameter_blocks[i];
-		    const int parameter_block_size =
-		        problem->ParameterBlockLocalSize(parameter_block);
-		    parameter_block_to_row_index_[parameter_block] = num_rows;
+		  for (i = 0; i < active_parameter_blocks.size(); ++i) {
+		    double[] parameter_block = active_parameter_blocks.get(i);
+		    final int parameter_block_size =
+		        problem.ParameterBlockLocalSize(parameter_block);
+		    parameter_block_to_row_index_.put(parameter_block,num_rows);
 		    num_rows += parameter_block_size;
 		  }
 
@@ -3187,47 +3200,69 @@ public class CeresSolver2 {
 		  // the way flip any covariance blocks which are in the lower
 		  // triangular part of the matrix.
 		  int num_nonzeros = 0;
-		  CovarianceBlocks covariance_blocks;
-		  for (int i = 0; i <  original_covariance_blocks.size(); ++i) {
-		    const pair<const double*, const double*>& block_pair =
-		        original_covariance_blocks[i];
-		    if (constant_parameter_blocks_.count(block_pair.first) > 0 ||
-		        constant_parameter_blocks_.count(block_pair.second) > 0) {
+		  Vector<Pair<double[], double[]>> covariance_blocks = new Vector<Pair<double[], double[]>>();
+		  for (i = 0; i <  original_covariance_blocks.size(); ++i) {
+		    final Pair<double[], double[]> block_pair =
+		        original_covariance_blocks.get(i);
+		    if (constant_parameter_blocks_.contains(block_pair.first) ||
+		        constant_parameter_blocks_.contains(block_pair.second)) {
 		      continue;
 		    }
 
-		    int index1 = FindOrDie(parameter_block_to_row_index_, block_pair.first);
-		    int index2 = FindOrDie(parameter_block_to_row_index_, block_pair.second);
-		    const int size1 = problem->ParameterBlockLocalSize(block_pair.first);
-		    const int size2 = problem->ParameterBlockLocalSize(block_pair.second);
+		    int index1, index2;
+		    if (parameter_block_to_row_index_.get(block_pair.first) == null) {
+		    	System.err.println("In ComputeCovarianceSparsity parameter_block_to_row_index_.get(block_pair.first) == null");
+		    	return false;
+		    }
+		    else {
+		    	index1 = parameter_block_to_row_index_.get(block_pair.first);
+		    }
+		    if (parameter_block_to_row_index_.get(block_pair.second) == null) {
+		    	System.err.println("In ComputeCovarianceSparsity parameter_block_to_row_index_.get(block_pair.second) == null");
+		    	return false;
+		    }
+		    else {
+		    	index2 = parameter_block_to_row_index_.get(block_pair.second);
+		    }
+		    final int size1 = problem.ParameterBlockLocalSize(block_pair.first);
+		    final int size2 = problem.ParameterBlockLocalSize(block_pair.second);
 		    num_nonzeros += size1 * size2;
 
 		    // Make sure we are constructing a block upper triangular matrix.
 		    if (index1 > index2) {
-		      covariance_blocks.push_back(make_pair(block_pair.second,
+		      covariance_blocks.add(ce.new Pair<double[], double[]>(block_pair.second,
 		                                            block_pair.first));
 		    } else {
-		      covariance_blocks.push_back(block_pair);
+		      covariance_blocks.add(block_pair);
 		    }
 		  }
 
 		  if (covariance_blocks.size() == 0) {
-		    VLOG(2) << "No non-zero covariance blocks found";
-		    covariance_matrix_.reset(NULL);
+			if (2 <= ce.MAX_LOG_LEVEL) {
+		        Preferences.debug("No non-zero covariance blocks found\n", Preferences.DEBUG_ALGORITHM);
+			}
+		    covariance_matrix_ = null;
 		    return true;
 		  }
 
 		  // Sort the block pairs. As a consequence we get the covariance
 		  // blocks as they will occur in the CompressedRowSparseMatrix that
 		  // will store the covariance.
-		  sort(covariance_blocks.begin(), covariance_blocks.end());
+		  ArrayList<indexArrayArrayItem> iaa = new ArrayList<indexArrayArrayItem>();
+			for (i = 0; i < covariance_blocks.size(); i++) {
+				iaa.add(new indexArrayArrayItem(i,covariance_blocks.get(i).getFirst(),covariance_blocks.get(i).getSecond()));
+			}
+			indexArrayArrayComparator icc = new indexArrayArrayComparator();
+			Collections.sort(iaa, icc);
+			for (i = 0; i < covariance_blocks.size(); i++) {
+				covariance_blocks.add(ce.new Pair<double[], double[]>(iaa.get(i).getArray1(), iaa.get(i).getArray2()));
+			}
 
 		  // Fill the sparsity pattern of the covariance matrix.
-		  covariance_matrix_.reset(
-		      new CompressedRowSparseMatrix(num_rows, num_rows, num_nonzeros));
+		  covariance_matrix_ = new CompressedRowSparseMatrix(num_rows, num_rows, num_nonzeros);
 
-		  int* rows = covariance_matrix_->mutable_rows();
-		  int* cols = covariance_matrix_->mutable_cols();
+		  int[] rows = covariance_matrix_.mutable_rows();
+		  int[] cols = covariance_matrix_.mutable_cols();
 
 		  // Iterate over parameter blocks and in turn over the rows of the
 		  // covariance matrix. For each parameter block, look in the upper
@@ -3240,36 +3275,45 @@ public class CeresSolver2 {
 		  // values of the parameter blocks. Thus iterating over the keys of
 		  // parameter_block_to_row_index_ corresponds to iterating over the
 		  // rows of the covariance matrix in order.
-		  int i = 0;  // index into covariance_blocks.
+		  i = 0;  // index into covariance_blocks.
 		  int cursor = 0;  // index into the covariance matrix.
-		  for (map<const double*, int>::const_iterator it =
-		           parameter_block_to_row_index_.begin();
-		       it != parameter_block_to_row_index_.end();
-		       ++it) {
-		    const double* row_block =  it->first;
-		    const int row_block_size = problem->ParameterBlockLocalSize(row_block);
-		    int row_begin = it->second;
+		    Collection<Integer> intValues = parameter_block_to_row_index_.values();
+			Iterator<Integer> intValues_it = intValues.iterator();
+			Set<double[]> darraySet = parameter_block_to_row_index_.keySet();
+			Iterator<double[]> darray_iterator = darraySet.iterator();
+			while (darray_iterator.hasNext()) {
+				final double[] row_block = darray_iterator.next();
+				final int row_block_size = problem.ParameterBlockLocalSize(row_block);
+				int row_begin = intValues_it.next();
+				
 
 		    // Iterate over the covariance blocks contained in this row block
 		    // and count the number of columns in this row block.
 		    int num_col_blocks = 0;
-		    int num_columns = 0;
-		    for (int j = i; j < covariance_blocks.size(); ++j, ++num_col_blocks) {
-		      const pair<const double*, const double*>& block_pair =
-		          covariance_blocks[j];
+		    //int num_columns = 0;
+		    for (j = i; j < covariance_blocks.size(); ++j, ++num_col_blocks) {
+		      final Pair<double[], double[]> block_pair =
+		          covariance_blocks.get(j);
 		      if (block_pair.first != row_block) {
 		        break;
 		      }
-		      num_columns += problem->ParameterBlockLocalSize(block_pair.second);
+		      //num_columns += problem.ParameterBlockLocalSize(block_pair.second);
 		    }
 
 		    // Fill out all the compressed rows for this parameter block.
 		    for (int r = 0; r < row_block_size; ++r) {
 		      rows[row_begin + r] = cursor;
 		      for (int c = 0; c < num_col_blocks; ++c) {
-		        const double* col_block = covariance_blocks[i + c].second;
-		        const int col_block_size = problem->ParameterBlockLocalSize(col_block);
-		        int col_begin = FindOrDie(parameter_block_to_row_index_, col_block);
+		        final double[] col_block = covariance_blocks.get(i + c).second;
+		        final int col_block_size = problem.ParameterBlockLocalSize(col_block);
+		        int col_begin;
+		        if (parameter_block_to_row_index_.get(col_block) == null) {
+		            System.err.println("In ComputeCovarianceSparisty parameter_block_to_row_index_.get(col_block) == null");
+		            return false;
+		        }
+		        else {
+		        	col_begin = parameter_block_to_row_index_.get(col_block);
+		        }
 		        for (int k = 0; k < col_block_size; ++k) {
 		          cols[cursor++] = col_begin++;
 		        }
@@ -3279,7 +3323,7 @@ public class CeresSolver2 {
 		    i+= num_col_blocks;
 		  }
 
-		  rows[num_rows] = cursor;*/
+		  rows[num_rows] = cursor;
 		  return true;
 		}
 
