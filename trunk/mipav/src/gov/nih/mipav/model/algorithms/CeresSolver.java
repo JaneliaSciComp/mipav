@@ -20869,6 +20869,13 @@ public class CeresSolver {
 			  return (parameter_block_map_.containsKey(parameter_block));
 		}
 
+		public void GetResidualBlocks(Vector<ResidualBlock> residual_blocks) {
+			if (residual_blocks == null) {
+				  System.err.println("In ProblemImpl GetResidualBlocks Vector<ResidualBlock> residual_blocks = null");
+				  return;
+			  }
+			  residual_blocks = program().residual_blocks();
+		}
 
 
 
