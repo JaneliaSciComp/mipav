@@ -9371,6 +9371,31 @@ public class CeresSolver {
 	
 	// Options struct to control Evaluator::Evaluate;
 			class EvaluateOptions {
+				// The set of parameter blocks for which evaluation should be
+			    // performed. This vector determines the order that parameter
+			    // blocks occur in the gradient vector and in the columns of the
+			    // jacobian matrix. If parameter_blocks is empty, then it is
+			    // assumed to be equal to vector containing ALL the parameter
+			    // blocks.  Generally speaking the parameter blocks will occur in
+			    // the order in which they were added to the problem. But, this
+			    // may change if the user removes any parameter blocks from the
+			    // problem.
+			    //
+			    // NOTE: This vector should contain the same pointers as the ones
+			    // used to add parameter blocks to the Problem. These parameter
+			    // block should NOT point to new memory locations. Bad things will
+			    // happen otherwise.
+			    public Vector<double[]> parameter_blocks;
+
+			    // The set of residual blocks to evaluate. This vector determines
+			    // the order in which the residuals occur, and how the rows of the
+			    // jacobian are ordered. If residual_blocks is empty, then it is
+			    // assumed to be equal to the vector containing ALL the residual
+			    // blocks. Generally speaking the residual blocks will occur in
+			    // the order in which they were added to the problem. But, this
+			    // may change if the user removes any residual blocks from the
+			    // problem.
+			    public Vector<ResidualBlock> residual_blocks;
 				// If false, the loss function correction is not applied to the
 				// residual blocks.
 				public boolean apply_loss_function;
@@ -9384,6 +9409,8 @@ public class CeresSolver {
 					apply_loss_function = true;
 					new_evaluation_point = true;
 					num_threads = 1;
+					parameter_blocks = new Vector<double[]>();
+					residual_blocks = new Vector<ResidualBlock>();
 				}
 
 			} // class EvaluateOptions
