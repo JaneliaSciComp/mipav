@@ -75,7 +75,7 @@ import gov.nih.mipav.view.Preferences;
  *
  */
 
-public class CeresSolver {
+public abstract class CeresSolver {
 	public CeresSolver() {
 		
 	}
@@ -154,7 +154,7 @@ public class CeresSolver {
 	// Licensing looks possible but EIGEN SPARSE library not currently implemented
 	private boolean CERES_USE_EIGEN_SPARSE = false;
 	private final double kImpossibleValue = 1e302;
-	private boolean testMode = false;
+	public boolean testMode = false;
 	double epsilon = 2.2204460e-16;
 	double default_relstep = Math.pow(epsilon, 1.0 / 3.0);
 	/** integer scalar containing the number of data points. */
@@ -551,7 +551,7 @@ public class CeresSolver {
 		LINEAR_SOLVER_FATAL_ERROR
 	};
 	
-	protected int testCase;
+	public int testCase;
 	protected final int COST_FUNCTOR_EXAMPLE = 1;
 	protected final int CURVE_FITTING_EXAMPLE = 2;
 	protected final int TEST_TERM_EXAMPLE = 3;
@@ -17587,6 +17587,7 @@ public class CeresSolver {
 			// Get the function value (residuals) at the the point to evaluate.
 			double x[];
 			double y[];
+			if (testMode) {
 			switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
 				x = parameters.get(0);
@@ -17668,6 +17669,13 @@ public class CeresSolver {
 				}
 				break;
 		    } // switch(testCase)
+			} // if (testMode)
+			else {
+				x = parameters.get(0);
+				if (!fitToExternalFunction(x, residuals, null)) {
+					return false;
+				}
+			}
 			
 			if (jacobians == null) {
 			      return true;
@@ -18022,6 +18030,7 @@ public class CeresSolver {
 			// Get the function value (residuals) at the the point to evaluate.
 			double x[];
 			double y[];
+			if (testMode) {
 			switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
 				x = parameters.get(0);
@@ -18103,6 +18112,13 @@ public class CeresSolver {
 				}
 				break;
 		    } // switch(testCase)
+			} // if (testMode)
+			else {
+				x = parameters.get(0);
+				if (!fitToExternalFunction(x, residuals, null)) {
+					return false;
+				}
+			}
 			
 			if (jacobians == null) {
 			      return true;
@@ -18749,6 +18765,7 @@ public class CeresSolver {
 		    double xp[];
 		    double yp[];
 		    Vector<double[]>paramVec;
+		    if (testMode) {
 		    switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
 				xp = parameters[0];
@@ -18870,6 +18887,13 @@ public class CeresSolver {
 				break;
 
 		    } // switch(testCase)
+		    } // if (testMode)
+		    else {
+		    	xp = parameters[0];
+		    	if (!fitToExternalFunction(xp, residuals, null)) {
+		    		return false;
+		    	}
+		    }
 			
 			
 			// Compute this column of the jacobian in 3 steps:
@@ -18883,6 +18907,7 @@ public class CeresSolver {
 			parameters[parameter_block_index][parameter_index] = x_plus_delta[parameter_index];
 			
 			
+			if (testMode) {
 			switch (testCase) {
 			case COST_FUNCTOR_EXAMPLE:
 				xp = parameters[0];
@@ -19003,6 +19028,13 @@ public class CeresSolver {
 				}
 				break;
 		    } // switch(testCase)
+			} // if (testMode)
+			else {
+				xp = parameters[0];
+				if (!fitToExternalFunction(xp, temp_residuals, null)) {
+					return false;
+				}
+			}
 			
 			for (i = 0; i < residuals.length; i++) {
 				residuals[i] -= temp_residuals[i];
@@ -24502,6 +24534,7 @@ public class CeresSolver {
 			}
 			
 			boolean status = false;
+			if (testMode) {
 			switch (testCase) {
 			case MY_COST_FUNCTOR:
 			    status = ((MyCostFunctor) functor_).operator(parameters, residuals);
@@ -24510,6 +24543,7 @@ public class CeresSolver {
 				status = ((MyThreeParameterCostFunctor) functor_).operator(parameters, residuals);
 			    break;
 			}
+			} // if (testMode)
 			if (jacobians == null || !status) {
 			return status;
 			}
@@ -26394,7 +26428,7 @@ public class CeresSolver {
 		 
 		} // class NormalPrior
 		
-		
+		 public abstract boolean fitToExternalFunction(double[] a, double[] residuals, double[][] jacobian);
 
 
 } // public class CeresSolver
