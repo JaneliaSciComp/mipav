@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
+import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
+import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -34,7 +37,7 @@ SOFTWARE.
 */
 
 
-public class DSC_MRI_toolbox extends AlgorithmBase {
+public class DSC_MRI_toolbox extends CeresSolver {
 	private ViewUserInterface UI;
 	// 4D matrix with raw GRE-DSC acquisition
 	private double volumes[][][][];
@@ -145,6 +148,9 @@ public class DSC_MRI_toolbox extends AlgorithmBase {
 	// Mask optimized for finding the arterial input function
 	private byte mask_aif[][][];
 	
+	private int gauss2FittingObservations;
+    private double gauss2FittingData[];
+	
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
 		this.volumes = volumes;
 		this.te = te;
@@ -214,7 +220,7 @@ public class DSC_MRI_toolbox extends AlgorithmBase {
 	    for (i = 0; i < nbin; i++) {
 	    	intensity[i] = minSum + ((2.0*i + 1.0)/2.0)*((maxSum - minSum)/nbin);
 	    }
-	    int binNum;
+	    int binNum = 0;
 	    for (x = 0; x < nR; x++) {
 	    	for (y = 0; y < nC; y++) {
 	    		for (z = 0; z < nS; z++) {
@@ -226,6 +232,115 @@ public class DSC_MRI_toolbox extends AlgorithmBase {
 	    		}
 	    	}
 	    }
+	    
+	    int ind_max = -1;
+	    int maxProb = -1;
+	    for (i = 0; i < binNum; i++) {
+	    	if (prob[i] > maxProb) {
+	    		ind_max = i;
+	    		maxProb = prob[i];
+	    	}
+	    }
+	    if (((double)prob[ind_max + 1])/((double)maxProb) > 0.3) {
+	        ind_max = ind_max-1;	
+	    }
+	    int tempInt[] = new int[nbin-1-ind_max];
+	    for (i = ind_max+1; i <= nbin-1; i++) {
+	    	tempInt[i-ind_max-1] = prob[i];
+	    }
+	    prob = null;
+	    prob = new int[nbin-1-ind_max];
+	    for (i = 0; i < nbin-1-ind_max; i++) {
+	    	prob[i] = tempInt[i];
+	    }
+	    
+	    double tempDouble[] = new double[nbin-1-ind_max];
+	    for (i = ind_max+1; i <=nbin-1; i++) {
+	    	tempDouble[i-ind_max-1] = intensity[i];
+	    }
+	    intensity = null;
+	    intensity = new double[nbin-1-ind_max];
+	    for (i = 0; i < nbin-1-ind_max; i++) {
+	    	intensity[i] = tempDouble[i];
+	    }
+	    
+	    gauss2FittingObservations = nbin-1-ind_max;
+	    gauss2FittingData = new double[2*gauss2FittingObservations];
+	    for (i = 0; i < gauss2FittingObservations; i++) {
+	    	gauss2FittingData[2*i] = intensity[i];
+	    	gauss2FittingData[2*i+1] = (double)prob[i];
+	    }
+	    
+	    double xp[] = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+	    CostFunction cost_function = new gauss2FittingFunctorExample();
+	    ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, xp);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		if (display > 0) {
+		    UI.setDataText(solverSummary.BriefReport());
+		    UI.setDataText("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
+		    UI.setDataText("a1 = " + xp[0] + "\n");
+		    UI.setDataText("b1 = " + xp[1] + "\n");
+		    UI.setDataText("c1 = " + xp[2] + "\n");
+		    UI.setDataText("a2 = " + xp[3] + "\n");
+		    UI.setDataText("b2 = " + xp[4] + "\n");
+		    UI.setDataText("c2 = " + xp[5] + "\n");
+		}
 	}
 	
-}
+	    // f(x) = a1*exp(-((x-b1)/c1)^2) - a2*exp(-((x-b2)/c2)^2)
+		class diffGaussians extends FirstOrderFunction {
+		  double xp[];
+		  public diffGaussians(double xp[]) {
+			  super();
+			  this.xp = xp;
+		  }
+
+		  public boolean Evaluate(double[] parameters,
+		                        double[] cost,
+		                        double[] gradient) {
+		    final double x = parameters[0];
+            double val1 = (x - xp[1])/xp[2];
+            double val2 = (x - xp[4])/xp[5];
+		    cost[0] = xp[0]*Math.exp(-val1*val1) - xp[3]*Math.exp(-val2*val2);
+		    if (gradient != null) {
+		      gradient[0] = -2.0*xp[0]*(val1/xp[2])*Math.exp(-val1*val1) + 2.0*xp[3]*(val2/xp[5])*Math.exp(-val2*val2);
+		    }
+		    return true;
+		  }
+
+		  public int NumParameters() { return 1; }
+		} // class diff
+	
+	public boolean fitToExternalFunction(double x[], double residuals[], double jacobian[][]) {
+		return true;
+	}
+	
+	class gauss2FittingFunctorExample extends SizedCostFunction {
+		
+		public gauss2FittingFunctorExample() {
+			// number of resdiuals
+			// size of first parameter
+			super(gauss2FittingObservations, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean fitToExternalFunction(double x[], double residual[], double jacobian[][]) {
+			int i;
+			for (i = 0; i < gauss2FittingObservations; i++) {
+				double val1 = (gauss2FittingData[2*i] - x[1])/x[2];
+				double val2 = (gauss2FittingData[2*i] - x[4])/x[5];
+				double value = x[0]*Math.exp(-val1*val1) + x[3]*Math.exp(-val2*val2);
+			    residual[i] = gauss2FittingData[2*i+1] - value;
+			}
+
+			return true;
+		}
+	};
+	
+} 
