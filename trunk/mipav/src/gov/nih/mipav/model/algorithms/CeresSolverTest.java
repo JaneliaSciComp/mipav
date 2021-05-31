@@ -105,6 +105,10 @@ public class CeresSolverTest extends CeresSolver {
 		super();
 	}
 	
+	public boolean fitToExternalFunction(double x[], double residuals[], double jacobian[][]) {
+		return true;
+	}
+	
 	
 
 	// A CostFunction implementing analytically derivatives for the
@@ -176,6 +180,7 @@ public class CeresSolverTest extends CeresSolver {
 		// Actual answer = 10.0
 		double x[] = new double[] {0.5};
 		testCase = COST_FUNCTOR_EXAMPLE;
+		testMode = true;
 		CostFunctorExample cf = new CostFunctorExample();
 		NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 		Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -420,16 +425,13 @@ public class CeresSolverTest extends CeresSolver {
 		problem.AddResidualBlock(cost_function, null, x);
 
 		// Run the solver!
-		Solver solver = new Solver();
-		solver.options.minimizer_progress_to_stdout = true;
-		// Solver::Summary summary;
-		optionsValid = true;
-		Solve(solver.options, problem, solver.summary);
-		if (optionsValid) {
-			System.out.println(solver.summary.BriefReport());
-			System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
-			System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
-		}
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		System.out.println("Solved answer c = " + x[0] + " m = " + x[1]);
+		System.out.println("Actual answer = c = 0.1314013888081673 m = 0.29187119399433387");
 	}
 	
 	
@@ -440,6 +442,7 @@ public class CeresSolverTest extends CeresSolver {
 		// Solved CeresSolver answer Solved answer c = 0.13151752052574492 m = 0.2918347450638119
 		double x[] = new double[] {0.0,0.0};
 		testCase = CURVE_FITTING_EXAMPLE;
+		testMode = true;
 		CurveFittingFunctorExample cf = new CurveFittingFunctorExample();
 		NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 		Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -16806,6 +16809,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  // GradientCheckingCostFunctionSmokeTest() passed all tests
 		  boolean passed = true;
 		  testCase = TEST_TERM_EXAMPLE;
+		  testMode = true;
 
 		  // Test with 3 blocks of size 2, 3 and 4.
 		  final int arity = 3;
@@ -17188,6 +17192,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			  // Test that Probe returns true for correct Jacobians.
 			  testCase = GOOD_TEST_TERM_EXAMPLE;
+			  testMode = true;
 			  GoodTestTerm good_term = new GoodTestTerm(num_parameters, parameter_sizes_data);
 			  GradientChecker good_gradient_checker = new GradientChecker(good_term, null, numeric_diff_options);
 			  if (!good_gradient_checker.Probe(parameters, kTolerance, null)) {
@@ -17269,6 +17274,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			  // Test that Probe returns false for incorrect Jacobians.
 			  testCase = BAD_TEST_TERM_EXAMPLE;
+			  testMode = true;
 			  BadTestTerm bad_term = new BadTestTerm(num_parameters, parameter_sizes_data);
 			  GradientChecker bad_gradient_checker = new GradientChecker(bad_term, null, numeric_diff_options);
 			  if (bad_gradient_checker.Probe(parameters, kTolerance, null)) {
@@ -17466,6 +17472,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		public void GradientCheckerTestCorrectnessWithLocalParameterizations() {
 			 // GradientCheckerTestCorrectnessWithLocalParameterizations() passed all tests
 			  testCase = LINEAR_COST_FUNCTION_EXAMPLE;
+			  testMode = true;
 			  int r,c;
 			  boolean passed[] = new boolean[] {true};
 			  String testName = "GradientCheckerTestCorrectnessWithLocalParameterizations()";
@@ -18378,6 +18385,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  String testName = "NumericDiffCostFunctionEasyCaseFunctorCentralDifferences()";
 			  boolean passed[] = new boolean[] {true};
 			  testCase = EASY_FUNCTOR_EXAMPLE;
+			  testMode = true;
 			  EasyFunctor ef = new EasyFunctor();
 			  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 			  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18395,6 +18403,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  String testName = "NumericDiffCostFunctionEasyCaseFunctorForwardDifferences()";
 			  boolean passed[] = new boolean[] {true};
 			  testCase = EASY_FUNCTOR_EXAMPLE;
+			  testMode = true;
 			  EasyFunctor ef = new EasyFunctor();
 			  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
 			  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18412,6 +18421,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionEasyCaseFunctorRidders()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = EASY_FUNCTOR_EXAMPLE;
+		  testMode = true;
 		  EasyFunctor ef = new EasyFunctor();
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18429,6 +18439,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionEasyCaseCostFunctionCentralDifferences()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = EASY_COST_FUNCTION;
+		  testMode = true;
 		  EasyCostFunction ef = new EasyCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18446,6 +18457,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionEasyCaseCostFunctionForwardDifferences()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = EASY_COST_FUNCTION;
+		  testMode = true;
 		  EasyCostFunction ef = new EasyCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18463,6 +18475,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionEasyCaseCostFunctionRidders()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = EASY_COST_FUNCTION;
+		  testMode = true;
 		  EasyCostFunction ef = new EasyCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18480,6 +18493,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionTranscendentalCaseFunctorCentralDifferences()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = TRANSCENDENTAL_FUNCTOR;
+		  testMode = true;
 		  TranscendentalFunctor tf = new TranscendentalFunctor();
 		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18497,6 +18511,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionTranscendentalCaseFunctorForwardDifferences()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = TRANSCENDENTAL_FUNCTOR;
+		  testMode = true;
 		  TranscendentalFunctor tf = new TranscendentalFunctor();
 		  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18514,6 +18529,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionTranscendentalCaseFunctorRidders()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = TRANSCENDENTAL_FUNCTOR;
+		  testMode = true;
 		  TranscendentalFunctor tf = new TranscendentalFunctor();
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18534,6 +18550,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionTranscendentalCaseCostFunctionCentralDifferences()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = TRANSCENDENTAL_COST_FUNCTION;
+		  testMode = true;
 		  TranscendentalCostFunction tf = new TranscendentalCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18551,6 +18568,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionTranscendentalCaseCostFunctionForwardDifferences()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = TRANSCENDENTAL_COST_FUNCTION;
+		  testMode = true;
 		  TranscendentalCostFunction tf = new TranscendentalCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.FORWARD;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18568,6 +18586,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionTranscendentalCaseCostFunctionRidders()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = TRANSCENDENTAL_COST_FUNCTION;
+		  testMode = true;
 		  TranscendentalCostFunction tf = new TranscendentalCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18594,6 +18613,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  String testName = "NumericDiffCostFunctionEigenRowMajorColMajorTest()";
 	  boolean passed = true;
 	  testCase = SIZE_TESTING_COST_FUNCTION;
+	  testMode = true;
 	  SizeTestingCostFunction scf = new SizeTestingCostFunction(1,1);
 	  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 	  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18610,6 +18630,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	  cost_function = new NumericDiffCostFunction<SizeTestingCostFunction>(scf, method, ownership, options, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	  
 	  testCase = EASY_FUNCTOR_EXAMPLE;
+	  testMode = true;
 	  EasyFunctor ef = new EasyFunctor();
 	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1);
 	  cost_function = new NumericDiffCostFunction<EasyFunctor>(ef, method, ownership, options, DYNAMIC, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2);
@@ -18628,6 +18649,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		String testName = "NumericDiffCostFunctionEasyCaseFunctorCentralDifferencesAndDynamicNumResiduals()";
 		boolean passed[] = new boolean[] {true};
 		  testCase = EASY_FUNCTOR_EXAMPLE;
+		  testMode = true;
 		  EasyFunctor ef = new EasyFunctor();
 		  NumericDiffMethodType method = NumericDiffMethodType.CENTRAL;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18645,6 +18667,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionExponentialFunctorRidders()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = EXPONENTIAL_FUNCTOR;
+		  testMode = true;
 		  ExponentialFunctor ef = new ExponentialFunctor();
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18661,6 +18684,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionExponentialCostFunctionRidders()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = EXPONENTIAL_COST_FUNCTION;
+		  testMode = true;
 		  ExponentialCostFunction ef = new ExponentialCostFunction();
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18683,6 +18707,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionRandomizedFunctorRidders()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = RANDOMIZED_FUNCTOR;
+		  testMode = true;
 		  RandomizedFunctor rf = new RandomizedFunctor(kNoiseFactor, kRandomSeed);
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18702,6 +18727,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionRandomizedCostFunctionRidders()";
 		  boolean passed[] = new boolean[] {true};
 		  testCase = RANDOMIZED_COST_FUNCTION;
+		  testMode = true;
 		  RandomizedCostFunction rf = new RandomizedCostFunction(kNoiseFactor, kRandomSeed);
 		  NumericDiffMethodType method = NumericDiffMethodType.RIDDERS;
 		  Ownership ownership = Ownership.TAKE_OWNERSHIP;
@@ -18722,6 +18748,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  String testName = "NumericDiffCostFunctionPartiallyFilledResidualShouldFailEvaluation()";
 		  boolean passed = true;
 		  testCase = ONLY_FILLS_ONE_OUTPUT_FUNCTOR;
+		  testMode = true;
 		  double parameter[] = new double[] {1.0};
 		  double jacobian[] = new double[2];
 		  double residuals[] = new double[2];
@@ -21493,6 +21520,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         	  int i;
         	  String testName = "DynamicNumericdiffCostFunctionTestTestResiduals()";
         	  testCase = MY_COST_FUNCTOR;
+        	  testMode = true;
         	  boolean passed = true;
         	  double[] param_block_0 = new double[10];
         	  double[] param_block_1 = new double[5];
@@ -21540,6 +21568,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         	  final double kTolerance = 1e-6;
         	  String testName = "DynamicNumericdiffCostFunctionTestTestJacobian()";
         	  testCase = MY_COST_FUNCTOR;
+        	  testMode = true;
         	  // Test the residual counting.
         	  boolean passed = true;
         	  double[] param_block_0 = new double[10];
@@ -21655,6 +21684,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         	  final double kTolerance = 1e-6;
         	  String testName = "DynamicNumericdiffCostFunctionTestJacobianWithFirstParameterBlockConstant()";
         	  testCase = MY_COST_FUNCTOR;
+        	  testMode = true;
         	  boolean passed = true;
         	  double[] param_block_0 = new double[10];
         	  for (i = 0; i < 10; ++i) {
@@ -21738,6 +21768,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         	  final double kTolerance = 1e-6;
         	  String testName = "DynamicNumericdiffCostFunctionTestJacobianWithSecondParameterBlockConstant()";
         	  testCase = MY_COST_FUNCTOR;
+        	  testMode = true;
         	  boolean passed = true;
         	  double[] param_block_0 = new double[10];
         	  for (i = 0; i < 10; ++i) {
@@ -21875,6 +21906,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
         		 int i;
         	     // Prepare the parameters.
         		 testCase = MY_THREE_PARAMETER_COST_FUNCTOR;
+        		 testMode = true;
         	     x_ = new double[1];
         	     x_[0] = 0.0;
 
