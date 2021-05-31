@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.io.*;
 
@@ -34,8 +35,14 @@ SOFTWARE.
 
 
 public class DSC_MRI_toolbox extends AlgorithmBase {
+	private ViewUserInterface UI;
 	// 4D matrix with raw GRE-DSC acquisition
 	private double volumes[][][][];
+	private int nR;
+	private int nC;
+	private int nS;
+	private int nT;
+	private double time[];
 	// echo time in seconds
 	private double te = 0.025;
 	// repetition time in seconds
@@ -133,6 +140,11 @@ public class DSC_MRI_toolbox extends AlgorithmBase {
 	private double par_rho = 1.0;
 	private double par_kvoi = 1.0;
 	
+	// Mask optimized for masking the entire brain
+	private byte mask_data[][][];
+	// Mask optimized for finding the arterial input function
+	private byte mask_aif[][][];
+	
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
 		this.volumes = volumes;
 		this.te = te;
@@ -140,7 +152,80 @@ public class DSC_MRI_toolbox extends AlgorithmBase {
 	}
 	
 	public void runAlgorithm() {
+		DSC_mri_core();
+	}
+	
+	public void DSC_mri_core() {
+		int i;
+		UI = ViewUserInterface.getReference();
+		if (display > 0) {
+			UI.setDataText("Checking data...\n");
+		}
+		nR = volumes.length;
+		nC = volumes[0].length;
+		nS = volumes[0][0].length;
+		nT = volumes[0][0][0].length;
 		
+		time = new double[nT];
+		for (i = 0; i < nT; i++) {
+			time[i] = i*tr;
+		}
+		
+		if (display > 0) {
+			UI.setDataText("DATA SIZE\n");
+			UI.setDataText("Rows = " + nR + "\n");
+			UI.setDataText("Columns = " + nC + "\n");
+			UI.setDataText("Slices = " + nS + "\n");
+			UI.setDataText("Samples = " + nT + "\n");
+			UI.setDataText("Echo time = " + te + "\n");
+			UI.setDataText("Repetition time = " + tr + "\n");
+		}
+	}
+	
+	public void DSC_mri_mask() {
+		int i, x, y, z, t;
+	    if (display > 0) {
+	    	UI.setDataText("Masking data...");
+	    }
+	    
+	    int nbin = 100;
+	    double volume_sum[][][] = new double[nR][nC][nS];
+	    double maxSum = -Double.MAX_VALUE;
+	    double minSum = Double.MAX_VALUE;
+	    for (x = 0; x < nR; x++) {
+	    	for (y = 0; y < nC; y++) {
+	    		for (z = 0; z < nS; z++) {
+	    			for (t = 0; t < nT; t++) {
+	    				volume_sum[x][y][z] += volumes[x][y][z][t];
+	    			}
+	    			if (volume_sum[x][y][z] <  minSum) {
+	    				minSum = volume_sum[x][y][z];
+	    			}
+	    			if (volume_sum[x][y][z] > maxSum) {
+	    				maxSum = volume_sum[x][y][z];
+	    			}
+	    		}
+	    	}
+	    }
+	    mask_data = new byte[nR][nC][nS];
+	    mask_data = new byte[nR][nC][nS];
+	    double intensity[] = new double[nbin];
+	    int prob[] = new int[nbin];
+	    for (i = 0; i < nbin; i++) {
+	    	intensity[i] = minSum + ((2.0*i + 1.0)/2.0)*((maxSum - minSum)/nbin);
+	    }
+	    int binNum;
+	    for (x = 0; x < nR; x++) {
+	    	for (y = 0; y < nC; y++) {
+	    		for (z = 0; z < nS; z++) {
+	    		    binNum = (int)(((volume_sum[x][y][z] - minSum)/(maxSum - minSum))*nbin);
+	    		    if (binNum == nbin) {
+	    		    	binNum =  nbin -1;
+	    		    }
+	    		    prob[binNum]++;
+	    		}
+	    	}
+	    }
 	}
 	
 }
