@@ -84,8 +84,10 @@ import gov.nih.mipav.view.Preferences;
  *
  */
 
-public class CeresSolver2 {
-	CeresSolver ce = new CeresSolver();
+public class CeresSolver2 extends CeresSolver {
+	public boolean fitToExternalFunction(double x[], double residuals[], double jacobian[][]) {
+		return true;
+	}
 	
 	// This routine takes an array of integer values, sorts and uniques
 		// them and then maps each value in the array to its position in the
@@ -237,7 +239,7 @@ public class CeresSolver2 {
 		public void AngleAxisToRotationMatrix(double[] angle_axis, double[] R) {
 		  final double kOne = 1.0;
 		  final double theta2 = DotProduct(angle_axis, angle_axis);
-		  if (theta2 > ce.epsilon) {
+		  if (theta2 > epsilon) {
 		    // We want to be careful to only evaluate the square root if the
 		    // norm of the angle_axis vector is greater than zero. Otherwise
 		    // we get a division by zero.
@@ -469,7 +471,7 @@ public class CeresSolver2 {
 		//void AngleAxisRotatePoint(const T angle_axis[3], const T pt[3], T result[3]) {
 		public void AngleAxisRotatePoint(double angle_axis[], double pt[], double result[]) {
 		  final double theta2 = DotProduct(angle_axis, angle_axis);
-		  if (theta2 > ce.epsilon) {
+		  if (theta2 > epsilon) {
 		    // Away from zero, use the rodriguez formula
 		    //
 		    //   result = pt costheta +
@@ -624,7 +626,7 @@ public class CeresSolver2 {
 		    	}
 		        while (camera2_it.hasNext()) {
 		        	camera2 = camera2_it.next();
-			        Pair<Integer, Integer> pair = ce.new Pair<Integer, Integer>(camera1, camera2);
+			        Pair<Integer, Integer> pair = new Pair<Integer, Integer>(camera1, camera2);
 			        if (camera_pairs.get(pair) == null) {
 			        	camera_pairs.put(pair, 1);
 			        }
@@ -637,7 +639,7 @@ public class CeresSolver2 {
 		    }
 		  }
 
-		  WeightedGraph<Integer> graph = ce.new WeightedGraph<Integer>();
+		  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
 
 		  // Add vertices and initialize the pairs for self edges so that self
 		  // edges are guaranteed. This is needed for the Canonical views
@@ -1205,7 +1207,7 @@ public class CeresSolver2 {
 			  HashMap<Integer, Double> view_to_canonical_view_similarity_;
 			 public CanonicalViewsClustering() {
 				 options_ = new CanonicalViewsClusteringOptions();
-				 graph_ = ce.new WeightedGraph<Integer>();
+				 graph_ = new WeightedGraph<Integer>();
 				 view_to_canonical_view_ = new HashMap<Integer, Integer>();
 				 view_to_canonical_view_similarity_ = new HashMap<Integer, Double>();
 			 }
@@ -1385,7 +1387,7 @@ public class CeresSolver2 {
 			  long start_time = System.currentTimeMillis();
 			  CanonicalViewsClustering cv = new CanonicalViewsClustering();
 			  cv.ComputeClustering(options, graph, centers, membership);
-			  if (2 <= ce.MAX_LOG_LEVEL) {
+			  if (2 <= MAX_LOG_LEVEL) {
 			  Preferences.debug("Canonical views clustering time (secs): "
 		          + (System.currentTimeMillis() - start_time)/1000.0 + "\n", Preferences.DEBUG_ALGORITHM);
 		  }
@@ -1414,7 +1416,7 @@ public class CeresSolver2 {
 		  // <row_block_id, col_block_id> pairs to identify the non-zero cells
 		  // of this matrix.
 		  public BlockRandomAccessSparseMatrix(Vector<Integer> blocks, Set<Pair<Integer, Integer> > block_pairs) {
-			  ce.super();
+			  super();
 			  kMaxRowBlocks = 10 * 1000 * 1000;
 		      blocks_ = blocks;
 		      if (blocks.size() >= kMaxRowBlocks) {
@@ -1444,12 +1446,12 @@ public class CeresSolver2 {
 		        num_nonzeros += row_block_size * col_block_size;
 		      }
 
-		      if (1 <= ce.MAX_LOG_LEVEL) {
+		      if (1 <= MAX_LOG_LEVEL) {
 		          Preferences.debug("TripletSparseMatrix Size ["+num_cols+","+num_cols+"]\n",Preferences.DEBUG_ALGORITHM);
 		          Preferences.debug("num_nonzeros = " + num_nonzeros + "\n",Preferences.DEBUG_ALGORITHM);
 		      }
 
-		      tsm_ = ce.new TripletSparseMatrix(num_cols, num_cols, num_nonzeros);
+		      tsm_ = new TripletSparseMatrix(num_cols, num_cols, num_nonzeros);
 		      tsm_.set_num_nonzeros(num_nonzeros);
 		      int[] rows = tsm_.mutable_rows();
 		      int[] cols = tsm_.mutable_cols();
@@ -1459,10 +1461,10 @@ public class CeresSolver2 {
 		      for (Pair<Integer, Integer> pair : block_pairs) {
 			        final int row_block_size = blocks_.get((int) pair.first);
 			        final int col_block_size = blocks_.get((int) pair.second);
-		            cell_values_.add(ce.new Pair<Pair<Integer, Integer>, Pair<double[], Integer> >(ce.new Pair<Integer,Integer>(pair.first, pair.second),
-		                                         ce.new Pair<double[],Integer>(values,pos)));
+		            cell_values_.add(new Pair<Pair<Integer, Integer>, Pair<double[], Integer> >(new Pair<Integer,Integer>(pair.first, pair.second),
+		                                         new Pair<double[],Integer>(values,pos)));
 		        layout_.put(IntPairToLong(pair.first, pair.second),
-		            ce.new CellInfo(values,pos));
+		            new CellInfo(values,pos));
 		        pos += row_block_size * col_block_size;
 		      }
 
@@ -1552,7 +1554,7 @@ public class CeresSolver2 {
 				    final int col_block_size = blocks_.get(col);
 				    final int col_block_pos = block_positions_.get(col);
 
-				    ce.MatrixVectorMultiply(ce.DYNAMIC, ce.DYNAMIC, 1,
+				    MatrixVectorMultiply(DYNAMIC, DYNAMIC, 1,
 				        cell_values_.get(i).second.first, cell_values_.get(i).second.second, row_block_size, col_block_size,
 				        x, col_block_pos,
 				        y, row_block_pos);
@@ -1562,7 +1564,7 @@ public class CeresSolver2 {
 				    // block, then use the same block to do the corresponding lower
 				    // triangular multiply also.
 				    if (row != col) {
-				      ce.MatrixTransposeVectorMultiply(ce.DYNAMIC, ce.DYNAMIC, 1,
+				      MatrixTransposeVectorMultiply(DYNAMIC, DYNAMIC, 1,
 				    		  cell_values_.get(i).second.first, cell_values_.get(i).second.second, row_block_size, col_block_size,
 				          x, row_block_pos,
 				          y, col_block_pos);
@@ -1629,7 +1631,7 @@ public class CeresSolver2 {
 		    public ConditionedCostFunction(CostFunction wrapped_cost_function,
 		                          Vector<CostFunction> conditioners,
 		                          Ownership ownership) {
-		    	ce.super();
+		    	super();
 		    	wrapped_cost_function_ = wrapped_cost_function;
 		        conditioners_ = conditioners;
 		        ownership_ = ownership;
@@ -2132,7 +2134,7 @@ public class CeresSolver2 {
 			for (int c = 0; c < num_cols; ++c) {
 				rows.add(row_block_begin + r);
 				cols.add(col_block_begin + c);
-				values.add(ce.RandNormal());
+				values.add(RandNormal());
 			}
 		}
 	}
@@ -2181,7 +2183,7 @@ public class CeresSolver2 {
 			  index[i] = ircList.get(i).getIndex();
 		  }
 		  
-		  if (1 <= ce.MAX_LOG_LEVEL) {
+		  if (1 <= MAX_LOG_LEVEL) {
 		        Preferences.debug("# of rows: " + num_rows + "\n", Preferences.DEBUG_ALGORITHM);
 		        Preferences.debug("# of columns: " + num_cols + "\n", Preferences.DEBUG_ALGORITHM);
 		        Preferences.debug("max_num_nonzeros: " + cols.length + "\n", Preferences.DEBUG_ALGORITHM);
@@ -2350,7 +2352,7 @@ public class CeresSolver2 {
 		      int col_block_begin = 0;
 		      for (int c = 0; c < options.num_col_blocks; ++c) {
 		        // Randomly determine if this block is present or not.
-		        if (ce.RandDouble() <= options.block_density) {
+		        if (RandDouble() <= options.block_density) {
 		          AddRandomBlock(row_blocks.get(r),
 		                         col_blocks.get(c),
 		                         row_block_begin,
@@ -2375,7 +2377,7 @@ public class CeresSolver2 {
 		  }
 		  final boolean kDoNotTranspose = false;
 		  CompressedRowSparseMatrix matrix = FromTripletSparseMatrix(
-		          ce.new TripletSparseMatrix(
+		          new TripletSparseMatrix(
 		              num_rows, num_cols, tsm_rows, tsm_cols, tsm_values),
 		          kDoNotTranspose);
 		  matrix.set_row_blocks(row_blocks);
@@ -2402,12 +2404,12 @@ public class CeresSolver2 {
 		  private Vector<Integer> col_blocks_; 
 		  
 		  public CompressedRowSparseMatrix() {
-			  ce.super();
+			  super();
 		  }
 		  
 		 // This constructor gives you a semi-initialized CompressedRowSparseMatrix.
 		 public CompressedRowSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros) {
-			ce.super();
+			super();
 		    num_rows_ = num_rows;
 		    num_cols_ = num_cols;
 		    storage_type_ = StorageType. UNSYMMETRIC;
@@ -2417,7 +2419,7 @@ public class CeresSolver2 {
 		    row_blocks_ = new Vector<Integer>();
 		    col_blocks_ = new Vector<Integer>();
 		    
-		    if (1 <= ce.MAX_LOG_LEVEL) {
+		    if (1 <= MAX_LOG_LEVEL) {
 		        Preferences.debug("# of rows: " + num_rows_ + "\n", Preferences.DEBUG_ALGORITHM);
 		        Preferences.debug("# of columns: " + num_cols_ + "\n", Preferences.DEBUG_ALGORITHM);
 		        Preferences.debug("max_num_nonzeros: " + cols_.length + "\n", Preferences.DEBUG_ALGORITHM);
@@ -2426,7 +2428,7 @@ public class CeresSolver2 {
 		  }
 
 		 public CompressedRowSparseMatrix(double[] diagonal, int num_rows) {
-			ce.super();
+			super();
 			if (diagonal == null) {
 				System.err.println("In public CompressedRowSparseMatrix diagonal == null");
 				return;
@@ -2726,7 +2728,7 @@ public class CeresSolver2 {
 		  
 		  public CRSMatrix ToCRSMatrix() {
 			  int i;
-			  CRSMatrix matrix = ce.new CRSMatrix();
+			  CRSMatrix matrix = new CRSMatrix();
 			  matrix.num_rows = num_rows_;
 			  matrix.num_cols = num_cols_;
 			  for (i = 0; i < matrix.num_rows +1; i++) {
@@ -3052,7 +3054,7 @@ public class CeresSolver2 {
 		      is_computed_ = false;
 		      is_valid_ = false;
 		      if (options_.num_threads > 1) {
-			      if (ce.WARNING <= ce.MAX_LOG_LEVEL) {
+			      if (WARNING <= MAX_LOG_LEVEL) {
 			        Preferences.debug("Neither OpenMP nor TBB support is compiled into this binary; \n" +
 			        "only options.num_threads = 1 is supported. Switching \n" +
 			        "to single threaded mode.\n", Preferences.DEBUG_ALGORITHM);
@@ -3108,7 +3110,7 @@ public class CeresSolver2 {
 			Vector<Pair<double[], double[]>> covariance_blocks = new Vector<Pair<double[], double[]>>();
 			for (int i = 0; i < parameter_blocks.size(); ++i) {
 				for (int j = i; j < parameter_blocks.size(); ++j) {
-				    covariance_blocks.add(ce.new Pair<double[], double[]>(parameter_blocks.get(i),
+				    covariance_blocks.add(new Pair<double[], double[]>(parameter_blocks.get(i),
 				                               parameter_blocks.get(j)));
 				}
 			}
@@ -3136,7 +3138,7 @@ public class CeresSolver2 {
 		    Vector<Pair<double[], double[]>>  original_covariance_blocks,
 		    ProblemImpl problem) {
 		  int i,j;
-		  EventLogger event_logger = ce.new EventLogger("CovarianceImpl::ComputeCovarianceSparsity");
+		  EventLogger event_logger = new EventLogger("CovarianceImpl::ComputeCovarianceSparsity");
 
 		  // Determine an ordering for the parameter block, by sorting the
 		  // parameter blocks by their pointers.
@@ -3230,7 +3232,7 @@ public class CeresSolver2 {
 
 		    // Make sure we are constructing a block upper triangular matrix.
 		    if (index1 > index2) {
-		      covariance_blocks.add(ce.new Pair<double[], double[]>(block_pair.second,
+		      covariance_blocks.add(new Pair<double[], double[]>(block_pair.second,
 		                                            block_pair.first));
 		    } else {
 		      covariance_blocks.add(block_pair);
@@ -3238,7 +3240,7 @@ public class CeresSolver2 {
 		  }
 
 		  if (covariance_blocks.size() == 0) {
-			if (2 <= ce.MAX_LOG_LEVEL) {
+			if (2 <= MAX_LOG_LEVEL) {
 		        Preferences.debug("No non-zero covariance blocks found\n", Preferences.DEBUG_ALGORITHM);
 			}
 		    covariance_matrix_ = null;
@@ -3255,7 +3257,7 @@ public class CeresSolver2 {
 			indexArrayArrayComparator icc = new indexArrayArrayComparator();
 			Collections.sort(iaa, icc);
 			for (i = 0; i < covariance_blocks.size(); i++) {
-				covariance_blocks.add(ce.new Pair<double[], double[]>(iaa.get(i).getArray1(), iaa.get(i).getArray2()));
+				covariance_blocks.add(new Pair<double[], double[]>(iaa.get(i).getArray1(), iaa.get(i).getArray2()));
 			}
 
 		  // Fill the sparsity pattern of the covariance matrix.
