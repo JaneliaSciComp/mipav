@@ -8819,14 +8819,20 @@ public class PlugInDialogFITBIR extends JFrame
     
     private static final boolean doesTagExistWithValue(final String needleTagKey, final FileDicomTag haystackTag) {
         if (haystackTag.getType() == FileDicomTagInfo.VR.SQ) {
-            FileDicomSQ seqVal = (FileDicomSQ) haystackTag.getValue(false);
-            Vector<FileDicomSQItem> seqItems = seqVal.getSequence();
-            for (FileDicomSQItem item : seqItems) {
-                for (FileDicomTag curTag : item.getTagList().values()) {
-                    if (doesTagExistWithValue(needleTagKey, curTag)) {
-                        return true;
+            Object value = haystackTag.getValue(false);
+            
+            if (value instanceof FileDicomSQ) {
+                FileDicomSQ seqVal = (FileDicomSQ) value;
+                Vector<FileDicomSQItem> seqItems = seqVal.getSequence();
+                for (FileDicomSQItem item : seqItems) {
+                    for (FileDicomTag curTag : item.getTagList().values()) {
+                        if (doesTagExistWithValue(needleTagKey, curTag)) {
+                            return true;
+                        }
                     }
                 }
+            } else {
+                return true;
             }
         } else {
             if (haystackTag.getKey().toString().equals(needleTagKey) && haystackTag.getValue(true) != null && ! ((String) haystackTag.getValue(true)).trim().equals("")) {
