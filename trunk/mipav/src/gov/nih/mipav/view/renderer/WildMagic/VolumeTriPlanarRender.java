@@ -1119,7 +1119,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		shiftPressed = e.isShiftDown();
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.setShiftDown(shiftPressed);
+    		m_kVOIInterface.keyPressed(e);
     	}
 		altPressed = e.isAltDown();
 		if ( is3DSelectionEnabled() )
@@ -1246,7 +1246,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
     	if ( m_kVOIInterface != null )
     	{
-    		m_kVOIInterface.setShiftDown(e.isShiftDown());
+    		m_kVOIInterface.keyReleased(e);
     	}
 		super.keyReleased(e);
 	}
@@ -1278,6 +1278,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		shiftPressed = e.isShiftDown();
 		m_bMouseDrag = false;
 		setDefaultCursor();
+
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.mouseReleased(e);
+    	}
 	}
 
     public void setDefaultCursor( )

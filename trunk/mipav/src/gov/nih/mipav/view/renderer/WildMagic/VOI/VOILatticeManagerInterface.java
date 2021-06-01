@@ -21,6 +21,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.BitSet;
 import java.util.Vector;
@@ -511,7 +513,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	private boolean isShiftSelected = false;
 	public boolean isShift() { return isShiftSelected; }
-	public void setShiftDown( boolean isShift ) { isShiftSelected = isShift; }
 	
 	public void add3DMarker( VOI textVOI, boolean automaticLabel, boolean multiSelect, boolean isShift )
 	{
@@ -551,6 +552,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	
 	public void flipLattice() {
 		if ( latticeModel != null ) {
+			saveVOIs("flipLattice");
 			latticeModel.flipLattice();
 		}
 	}
@@ -777,11 +779,27 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 
-	
+
 	public TriMesh generateTriMesh( int stepsize ) {
 		if ( latticeModel != null )
 		{
 			return latticeModel.generateTriMesh( true, false );
+		}		
+		return null;
+	}
+	
+	public TriMesh[] generateMeshs( ) {
+		if ( latticeModel != null )
+		{
+			return latticeModel.generateMeshs( );
+		}		
+		return null;
+	}
+	
+	public TriMesh generateConvexHull( ) {
+		if ( latticeModel != null )
+		{
+			return latticeModel.generateConvexHull();
 		}		
 		return null;
 	}
@@ -1050,11 +1068,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	{
 		if ( latticeModel != null )
 		{
-			if ( !movingPickedPoint )
-			{
-				movingPickedPoint = true;
-				saveVOIs("selectLattice");
-			}
 			return latticeModel.selectLattice(startPt, endPt, pt, isShift);
 		}
 		return false;
@@ -1105,6 +1118,16 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel.updateAnnotation(new VOIWormAnnotation(annotation));
 		}
 	}
+	
+	public void updateLattice( boolean isLeft, VOIWormAnnotation text, VOIWormAnnotation newText) {
+
+		if ( latticeModel != null )
+		{
+			saveVOIs("updateLattice");
+			latticeModel.updateLattice(isLeft, text, newText);
+		}
+	}
+
 
 	private void setVoxelSize()
 	{
@@ -1129,7 +1152,20 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		MipavUtil.centerOnScreen(updateVoxelSize);
 		updateVoxelSize.setVisible(true);
 	}
+	
+    public void mouseReleased(MouseEvent e) {
+		movingPickedPoint = false;
+    }
 
+	public void keyPressed(KeyEvent e) {
+		isShiftSelected = e.isShiftDown();
+
+	}
+	
+	public void keyReleased(KeyEvent e) {
+		isShiftSelected = e.isShiftDown();
+		movingPickedPoint = false;
+	}
 	
 //	private void testSegmentation()
 //	{

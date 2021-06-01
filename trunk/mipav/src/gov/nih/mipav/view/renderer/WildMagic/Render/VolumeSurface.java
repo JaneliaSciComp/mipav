@@ -2206,7 +2206,7 @@ public class VolumeSurface extends VolumeObject
             for (int i = 0; i < nthreads; i++) {
                 final int start = i*nthreads;
                 final int stop = (i == (nthreads - 1)) ? iTQuantity : i*nthreads + step;
-                System.err.println( start + " " + stop );
+//                System.err.println( start + " " + stop );
                 final Runnable task = new Runnable() {
                     public void run() {
                     	computeSurfaceMask( mask, mesh, image, volume, trans, scale, start, stop );
