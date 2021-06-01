@@ -2537,6 +2537,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void saveVOIs( String kCommand )
     {    	
+//    	System.err.println("saveVOIs " + kCommand );
         if ( m_kUndoList.size() > m_iMaxUndo )
         {
         	while ( m_kUndoList.size() > m_iMaxUndo )
@@ -6176,6 +6177,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             return;
         }        
         String lastCommand = m_kUndoCommands.remove( m_kUndoCommands.size() -1 );
+//        System.err.println("undo " + lastCommand);
         m_kRedoCommands.add(lastCommand);
         if ( lastCommand.equals( CustomUIBuilder.PARAM_VOI_QUICK_AND_OP.getActionCommand() ) ||
                 lastCommand.equals( CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP.getActionCommand() ) )

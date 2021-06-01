@@ -1983,6 +1983,21 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			}
 		}
 	}
+	public void removeAll(String kSurfaceName) {
+		for (int i = 0; i < m_kDisplayList.size(); i++) {
+			if (m_kDisplayList.get(i).GetName() != null) {
+				if (m_kDisplayList.get(i).GetName().contains(kSurfaceName)) {
+					VolumeObject kObj = m_kDisplayList.remove(i);
+					if (kObj instanceof VolumeSurface) {
+						m_bSurfaceUpdate = true;
+						m_bSurfaceMaskUpdate = true;
+						m_kVolumeImageA.removeSurfaceMask(kSurfaceName);
+					}
+					m_kDeleteList.add(kObj);
+				}
+			}
+		}
+	}
 
 	/**
 	 * When the Geodesic object cuts the mesh along an open curve, the old mesh

@@ -193,6 +193,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JButton previewUntwisting;
 	private JCheckBox displayModel;
 	private JCheckBox displaySurface;
+	private JCheckBox convexHull;
 	private JCheckBox displayConflicts;
 
 	private int previewCount = 0;
@@ -405,6 +406,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( openHyperStack() ) {
 						displayModel.setVisible(true);
 						displaySurface.setVisible(true);
+						convexHull.setVisible(true);
 //						displayConflicts.setVisible(true);
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
@@ -422,6 +424,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if ( openHyperStack() ) {
 						displayModel.setVisible(true);
 						displaySurface.setVisible(true);	
+						convexHull.setVisible(true);
 //						displayConflicts.setVisible(true);
 						predict.setVisible(true);
 						previewUntwisting.setVisible(true);
@@ -583,6 +586,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					displayModel.setSelected(false);
 					latticeSelectionPanel.add(displaySurface);
 					displaySurface.setSelected(false);
+//					latticeSelectionPanel.add(convexHull);
+					convexHull.setSelected(false);
 					latticeSelectionPanel.add(previewUntwisting);
 					this.validate();
 				}
@@ -607,9 +612,43 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				if ( activeImage.voiManager != null )
 				{					
 					if ( displaySurface.isSelected() ) {
-						TriMesh mesh = activeImage.voiManager.generateTriMesh(5);
+						TriMesh mesh = activeImage.voiManager.generateTriMesh(0);
+						SurfaceState surface = new SurfaceState( mesh, "worm");
+						//						surface.Fill = WireframeState.FillMode.FM_LINE;
+						activeRenderer.addSurface( surface, false, true );
+						activeRenderer.displaySurface(true);
+						//						activeRenderer.setPolygonMode( "worm" + i, surface.Fill);
+						
+//						TriMesh[] mesh = activeImage.voiManager.generateMeshs();
+//						for ( int i = 0; i < mesh.length; i++ ) {
+////							System.err.println( "displaySurface " + mesh );
+//							SurfaceState surface = new SurfaceState( mesh[i], "worm" + i);
+//							surface.Fill = WireframeState.FillMode.FM_LINE;
+//							activeRenderer.addSurface( surface, false, true );
+//							activeRenderer.displaySurface(true);
+//							activeRenderer.setPolygonMode( "worm" + i, surface.Fill);
+//						}
+						updateSurfacePanels();
+					}
+					else
+					{
+						activeRenderer.removeAll("worm");
+						activeRenderer.displaySurface(false);						
+					}
+				}
+			}
+			else if ( command.equals("convexHull") ) {
+
+				if ( activeImage.voiManager != null )
+				{					
+					if ( convexHull.isSelected() ) {
+						TriMesh mesh = activeImage.voiManager.generateConvexHull();
+						if ( mesh == null ) {
+							convexHull.setSelected(false);
+							return;
+						}
 //						System.err.println( "displaySurface " + mesh );
-						SurfaceState surface = new SurfaceState( mesh, "worm" );
+						SurfaceState surface = new SurfaceState( mesh, "wormHull" );
 //						surface.Fill = WireframeState.FillMode.FM_LINE;
 						activeRenderer.addSurface( surface, false, true );
 						activeRenderer.displaySurface(true);
@@ -618,7 +657,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					}
 					else
 					{
-						activeRenderer.removeSurface("worm");
+						activeRenderer.removeSurface("wormHull");
 						activeRenderer.displaySurface(false);						
 					}
 				}
@@ -1015,6 +1054,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			}
 			displayModel.setSelected(activeImage.voiManager.isModelDisplayed());
 			displaySurface.setSelected( activeRenderer.getSurface("worm") != null );
+			convexHull.setSelected(activeRenderer.getSurface("wormHull") != null);
 			
 			updateSurfacePanels();
 			updateClipPanel(activeImage, activeRenderer, true);    		
@@ -1777,6 +1817,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					displayModel.setSelected(false);
 					latticeSelectionPanel.add(displaySurface);
 					displaySurface.setSelected(false);
+//					latticeSelectionPanel.add(convexHull);
+					convexHull.setSelected(false);
 //					latticeSelectionPanel.add(displayConflicts);
 //					displayConflicts.setSelected(false);
 					if ( editMode == IntegratedEditing && (dualGPU != null)) {
@@ -2667,7 +2709,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		displaySurface.setActionCommand("displaySurface");
 		displaySurface.setVisible(false);
 		displaySurface.setEnabled(true);
-		latticeSelectionPanel.add(displaySurface);
+
+		convexHull = gui.buildCheckBox("convex hull", false);
+		convexHull.addActionListener(this);
+		convexHull.setActionCommand("convexHull");
+		convexHull.setVisible(false);
+		convexHull.setEnabled(true);
+//		latticeSelectionPanel.add(convexHull);
 
 //		displayConflicts = gui.buildCheckBox("Test Conflicts", false);
 //		displayConflicts.addActionListener(this);

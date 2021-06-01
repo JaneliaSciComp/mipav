@@ -239,21 +239,24 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 				if ( (row >= 0) && (row < left.getCurves().size()) )
 				{
 					VOIWormAnnotation text = (VOIWormAnnotation) left.getCurves().elementAt(row);
+					VOIWormAnnotation newText = new VOIWormAnnotation(text);
+					boolean changed = false;
 					if ( column == 0 ) {
-						if ( text != null ) {
+						if ( newText != null ) {
 							leftChanged = true;
 							newName = new String( annotationTable.getValueAt(row, column).toString() );
 
 							if ( newName.contains("H") || newName.contains("V") || newName.contains("T")  || newName.contains("Q") ) {
-								text.setSeamCell(true);
+								newText.setSeamCell(true);
 							}
 							else {
-								text.setSeamCell(false);
+								newText.setSeamCell(false);
 							}
-							text.setText( newName );
-							text.updateText();
-							text.update();
-							text.retwist(previewMode);
+							newText.setText( newName );
+							newText.updateText();
+							newText.update();
+							newText.retwist(previewMode);
+							changed = true;
 						}
 					}
 					else 
@@ -261,16 +264,20 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 						float value = Float.valueOf(annotationTable.getValueAt(row, column).toString());
 						if ( value >= 0 ) {
 							if ( column == 1 ) {
-								text.elementAt(0).X = value;
+								newText.elementAt(0).X = value;
 							}
 							else if ( column == 2 ) {
-								text.elementAt(0).Y = value;
+								newText.elementAt(0).Y = value;
 							}
 							else if ( column == 3 ) {
-								text.elementAt(0).Z = value;
+								newText.elementAt(0).Z = value;
 							}
-							text.retwist(previewMode);
+							newText.retwist(previewMode);
+							changed = true;
 						}
+					}
+					if ( changed ) {
+						voiManager.updateLattice(true, text, newText);
 					}
 				}
 			}
@@ -279,21 +286,24 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 				if ( (row >= 0) && (row < right.getCurves().size()) )
 				{
 					VOIWormAnnotation text = (VOIWormAnnotation) right.getCurves().elementAt(row);
+					VOIWormAnnotation newText = new VOIWormAnnotation(text);
+					boolean changed = false;
 					if ( column == 4 ) {
-						if ( text != null ) {
+						if ( newText != null ) {
 							rightChanged = true;
 							newName = new String( annotationTable.getValueAt(row, column).toString() );
 							if ( newName.contains("H") || newName.contains("V") || newName.contains("T")  || newName.contains("Q") ) {
-								text.setSeamCell(true);
+								newText.setSeamCell(true);
 							}
 							else {
-								text.setSeamCell(false);
+								newText.setSeamCell(false);
 							}
 
-							text.setText( newName );
-							text.updateText();
-							text.update();
-							text.retwist(previewMode);
+							newText.setText( newName );
+							newText.updateText();
+							newText.update();
+							newText.retwist(previewMode);
+							changed = true;
 						}
 					}
 					else 
@@ -301,16 +311,20 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 						float value = Float.valueOf(annotationTable.getValueAt(row, column).toString());
 						if ( value >= 0 ) {
 							if ( column == 5 ) {
-								text.elementAt(0).X = value;
+								newText.elementAt(0).X = value;
 							}
 							else if ( column == 6 ) {
-								text.elementAt(0).Y = value;
+								newText.elementAt(0).Y = value;
 							}
 							else if ( column == 7 ) {
-								text.elementAt(0).Z = value;
+								newText.elementAt(0).Z = value;
 							}
-							text.retwist(previewMode);
+							newText.retwist(previewMode);
+							changed = true;
 						}
+					}
+					if ( changed ) {
+						voiManager.updateLattice(false, text, newText);
 					}
 				}
 			}

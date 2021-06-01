@@ -340,7 +340,7 @@ public class WormSegmentation
 	}
 
 
-	public static int fill(final BitSet surfaceMask, final Vector<Vector3f> seedList, BitSet visited, int dimX, int dimY, int dimZ) {
+	public static int fill(final BitSet surfaceMask, final Vector<Vector3f> seedList, BitSet visited, Vector3f min, Vector3f max, int dimX, int dimY, int dimZ) {
 
 		int count = 0;
 		int size = dimX*dimY*dimZ;
@@ -351,6 +351,9 @@ public class WormSegmentation
 			final int z = Math.round(seed.Z);
 			final int y = Math.round(seed.Y);
 			final int x = Math.round(seed.X);
+			
+			if ( x < min.X || y < min.Y || z < min.Z || x > max.X || y > max.Y || z > max.Z ) continue;
+			
 			int index = z*dimY*dimX + y*dimX + x;			
 			
 

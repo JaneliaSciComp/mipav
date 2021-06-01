@@ -53,6 +53,18 @@ public class VOIWormAnnotation extends VOIText {
     	this.isCurveAnnotation = kVOI.isCurveAnnotation;
     	this.isSeamCell = kVOI.isSeamCell;
     }
+
+    public void copy( VOIWormAnnotation kVOI ) {
+    	// remove all but first element:
+    	for ( int i = 1; i < size(); i++ ) remove(i);
+    	elementAt(0).copy(kVOI.elementAt(0));
+    	this.retwist = kVOI.retwist;
+    	this.modified = kVOI.modified;
+    	this.latticeSegment = kVOI.latticeSegment;
+    	this.slice = kVOI.slice;
+    	this.isCurveAnnotation = kVOI.isCurveAnnotation;
+    	this.isSeamCell = kVOI.isSeamCell;
+    }
     
 	public VOIWormAnnotation clone() {
         return new VOIWormAnnotation(this);
