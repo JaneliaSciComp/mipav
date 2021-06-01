@@ -2,8 +2,12 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
+import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblem;
+import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverOptions;
+import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverSummary;
 import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
+import gov.nih.mipav.model.algorithms.CeresSolverTest.Rosenbrock;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -271,7 +275,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	gauss2FittingData[2*i+1] = (double)prob[i];
 	    }
 	    
-	    double xp[] = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+	    double xp[] = new double[] {(double)prob[gauss2FittingObservations/3], intensity[gauss2FittingObservations/3], 1.0, 
+	    		(double)prob[2*gauss2FittingObservations/3], intensity[2*gauss2FittingObservations/3], 1.0};
 	    CostFunction cost_function = new gauss2FittingFunctorExample();
 	    ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, xp);
@@ -292,6 +297,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("b2 = " + xp[4] + "\n");
 		    UI.setDataText("c2 = " + xp[5] + "\n");
 		}
+		
+		  double parameters[] = new double[]{(xp[1] + xp[4])/2.0};
+
+		  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+		  options.minimizer_progress_to_stdout = true;
+
+		  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+		  GradientProblem gradientProblem = new GradientProblem(new diffGaussians(xp));
+		  Solve(options, gradientProblem, parameters, summary);
+
+	      System.out.println(summary.BriefReport());
+	      UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4])/2.0) + "\n");
+	      UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + parameters[0] + "\n");
 	}
 	
 	    // f(x) = a1*exp(-((x-b1)/c1)^2) - a2*exp(-((x-b2)/c2)^2)
@@ -316,7 +334,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		  }
 
 		  public int NumParameters() { return 1; }
-		} // class diff
+		} // class diffGaussians
 	
 	public boolean fitToExternalFunction(double x[], double residuals[], double jacobian[][]) {
 		return true;
