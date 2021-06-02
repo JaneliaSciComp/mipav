@@ -155,6 +155,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private int gauss2FittingObservations;
     private double gauss2FittingData[];
     boolean doCurveIntersect = false;
+    double x_out[];
+    double y_out[];
+    double x_loc[];
+    double y_loc[];
 	
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
 		this.volumes = volumes;
@@ -301,7 +305,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		
 		if (doCurveIntersect) {
-		    double threshold_array[] = curveIntersect(intensity, xp);	
+		    curveIntersect(intensity, xp);
+		    mask_threshold = x_out[0];
 		}
 		else {
 		  double parameters[] = new double[]{(xp[1] + xp[4])/2.0};
@@ -312,24 +317,43 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
 		  GradientProblem gradientProblem = new GradientProblem(new diffGaussians(xp));
 		  Solve(options, gradientProblem, parameters, summary);
-
-	      System.out.println(summary.BriefReport());
-	      UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4])/2.0) + "\n");
-	      UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + parameters[0] + "\n");
-	      mask_threshold = parameters[0];
+		  mask_threshold = parameters[0];
+          if (display > 0) {
+		      System.out.println(summary.BriefReport());
+		      UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4])/2.0) + "\n");
+          }
+		}
+		if (display > 0) {
+		    UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + mask_threshold + "\n");
 		}
 	}
 	
-	public double[] curveIntersect(double intensity[], double param[]) {
+	public void curveIntersect(double x[], double param[]) {
 	    int i;
-	    double x_loc = 0.0;
-	    double y_loc = 0.0;
-	    double diff_x[] = new double[intensity.length-1];
-	    for (i = 0; i < intensity.length-1; i++) {
-	    	diff_x[i] = intensity[i+1] - intensity[i];
+	    x_out = null;
+	    y_out = null;
+	    double y1[] = new double[x.length];
+	    for (i = 0; i < x.length; i++) {
+	    	double val1 = (x[i] - param[1])/param[2];
+	    	y1[i] = param[0]*Math.exp(-val1*val1);
 	    }
-	    int ind_x[] = new int[intensity.length-1];
-	    for (i = 0; i < intensity.length-1; i++) {
+	    double y2[] = new double[x.length];
+	    for (i = 0; i < x.length; i++) {
+	    	double val2 = (x[i] - param[4])/param[5];
+	    	y1[i] = param[3]*Math.exp(-val2*val2);
+	    }
+	    double x1in[];
+	    double y1in[];
+	    double x2in[];
+	    double y2in[];
+	    double ymin;
+	    double ymax;
+	    double diff_x[] = new double[x.length-1];
+	    for (i = 0; i < x.length-1; i++) {
+	    	diff_x[i] = x[i+1] - x[i];
+	    }
+	    int ind_x[] = new int[x.length-1];
+	    for (i = 0; i < x.length-1; i++) {
 	    	if (diff_x[i] > 0) {
 	    		ind_x[i] = 1;
 	    	}
@@ -342,7 +366,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    
 	    int ind1 = 0;
-	    while (ind1 < intensity.length-1) {
+	    while (ind1 < x.length-1) {
 	    	boolean found = false;
 	        int ind_max = ind1 - 1;
 	        for (i = ind1 + 1; (i < ind_x.length) && (!found); i++) {
@@ -352,7 +376,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        	}
 	        }
 	        if (ind_max <= ind1) {
-	        	ind_max = intensity.length-1;
+	        	ind_max = x.length-1;
 	        }
 	        int[] ind1_array = new int[ind_max - ind1 + 1];
 	        for (i = 0; i < ind1_array.length; i++) {
@@ -360,7 +384,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        }
 	        
 	        int ind2 = 0;
-	        while (ind2 < intensity.length-1) {
+	        while (ind2 < x.length-1) {
 	            found = false;
 	            ind_max = ind2 - 1;
 	            for (i = ind2 + 1; (i < ind_x.length) && (!found); i++) {
@@ -370,7 +394,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	            	}
 	            }
 	            if (ind_max <= ind2) {
-	            	ind_max = intensity.length-1;
+	            	ind_max = x.length-1;
 	            }
 	            int[] ind2_array = new int[ind_max - ind2 + 1];
 		        for (i = 0; i < ind2_array.length; i++) {
@@ -378,20 +402,310 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		        }
 		        
 		        if ((ind_x[ind1_array[0]] == 0) && (ind_x[ind2_array[0]] != 0)) {
-		            x_loc = intensity[ind1_array[0]];	
+		        	x_loc = new double[1];
+		            x_loc[0] = x[ind1_array[0]];
+		            x2in = new double[ind2_array.length];
+		            for (i = 0; i < ind2_array.length; i++) {
+		            	x2in[i] = x[ind2_array[i]];
+		            }
+		            y2in = new double[ind2_array.length];
+		            for (i = 0; i < ind2_array.length; i++) {
+		            	y2in[i] = y2[ind2_array[i]];
+		            }
+		            y_loc = interp1(x2in, y2in, x_loc);
+		            ymin = Double.MAX_VALUE;
+		            ymax = -Double.MAX_VALUE;
+		            for (i = 0; i < ind1_array.length; i++) {
+		            	if (y1[ind1_array[i]] < ymin) {
+		            		ymin = y1[ind1_array[i]];
+		            	}
+		            	if (y1[ind1_array[i]] > ymax) {
+		            		ymax = y1[ind1_array[i]];
+		            	}
+		            }
+		            if (!((y_loc[0] >= ymin) && (y_loc[0] <= ymax))) {
+		            	y_loc = null;
+		            	x_loc = null;
+		            }
 		        }
 		        else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] != 0)) {
-		        	
+		        	x_loc = new double[1];
+		        	x_loc[0] = x[ind2_array[0]];
+		        	x1in = new double[ind1_array.length];
+		            for (i = 0; i < ind1_array.length; i++) {
+		            	x1in[i] = x[ind1_array[i]];
+		            }
+		            y1in = new double[ind1_array.length];
+		            for (i = 0; i < ind1_array.length; i++) {
+		            	y1in[i] = y1[ind1_array[i]];
+		            }
+		            y_loc = interp1(x1in, y1in, x_loc);
+		            ymin = Double.MAX_VALUE;
+		            ymax = -Double.MAX_VALUE;
+		            for (i = 0; i < ind2_array.length; i++) {
+		            	if (y2[ind2_array[i]] < ymin) {
+		            		ymin = y2[ind2_array[i]];
+		            	}
+		            	if (y2[ind2_array[i]] > ymax) {
+		            		ymax = y2[ind2_array[i]];
+		            	}
+		            }
+		            if (!((y_loc[0] >= ymin) && (y_loc[0] <= ymax))) {
+		            	y_loc = null;
+		            	x_loc = null;
+		            }
 		        }
                 else if ((ind_x[ind2_array[0]] != 0) && (ind_x[ind1_array[0]] != 0)) {
-		        	
+                	x1in = new double[ind1_array.length];
+		            for (i = 0; i < ind1_array.length; i++) {
+		            	x1in[i] = x[ind1_array[i]];
+		            }
+		            y1in = new double[ind1_array.length];
+		            for (i = 0; i < ind1_array.length; i++) {
+		            	y1in[i] = y1[ind1_array[i]];
+		            }
+		            x2in = new double[ind2_array.length];
+		            for (i = 0; i < ind2_array.length; i++) {
+		            	x2in[i] = x[ind2_array[i]];
+		            }
+		            y2in = new double[ind2_array.length];
+		            for (i = 0; i < ind2_array.length; i++) {
+		            	y2in[i] = y2[ind2_array[i]];
+		            }
+		            curveintersect_local(x1in, y1in, x2in, y2in);
 		        }
                 else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] == 0)) {
-		        	
+		        	x_loc = null;
+		        	y_loc = null;
 		        }
+		        if ((x_out == null) && (x_loc != null)) {
+		        	x_out = new double[x_loc.length];
+		        	for (i = 0; i < x_loc.length; i++) {
+		        		x_out[i] = x_loc[i];
+		        	}
+		        }
+		        else if ((x_out != null) && (x_loc != null)) {
+		        	double temp[] = new double[x_out.length];
+		        	for (i = 0; i < x_out.length; i++) {
+		        		temp[i] = x_out[i];
+		        	}
+		        	x_out = null;
+		        	x_out = new double[temp.length + x_loc.length];
+		        	for (i = 0; i < temp.length; i++) {
+		        		x_out[i] = temp[i];
+		        	}
+		        	for (i = 0; i < x_loc.length; i++) {
+		        		x_out[temp.length + i] = x_loc[i];
+		        	}
+		        	temp = null;
+		        }
+		        if ((y_out == null) && (y_loc != null)) {
+		        	y_out = new double[y_loc.length];
+		        	for (i = 0; i < y_loc.length; i++) {
+		        		y_out[i] = y_loc[i];
+		        	}
+		        }
+		        else if ((y_out != null) && (y_loc != null)) {
+		        	double temp[] = new double[y_out.length];
+		        	for (i = 0; i < y_out.length; i++) {
+		        		temp[i] = y_out[i];
+		        	}
+		        	y_out = null;
+		        	y_out = new double[temp.length + y_loc.length];
+		        	for (i = 0; i < temp.length; i++) {
+		        		y_out[i] = temp[i];
+		        	}
+		        	for (i = 0; i < y_loc.length; i++) {
+		        		y_out[temp.length + i] = y_loc[i];
+		        	}
+		        	temp = null;
+		        }
+		        ind2 = ind2_array[ind2_array.length-1];
+	        }
+	        ind1 = ind1_array[ind1_array.length-1];
+	    }
+	}
+	
+	public void curveintersect_local(double x1[], double y1[], double x2[], double y2[]) {
+		int i, j;
+	    boolean equalX = true;
+	    if (x1.length != x2.length) {
+	    	equalX = false;
+	    }
+	    else {
+	    	for (i = 0; i < x1.length; i++) {
+	    		if (x1[i] != x2[i]) {
+	    			equalX = false;
+	    		}
+	    	}
+	    }
+	    double xx[];
+	    double yy[];
+	    if (!equalX) {
+	    	double minx1 = Double.MAX_VALUE;
+	    	double maxx1 = -Double.MAX_VALUE;
+	    	double minx2 = Double.MAX_VALUE;
+	    	double maxx2 = -Double.MAX_VALUE;
+	    	for (i = 0; i < x1.length; i++) {
+	    		if (x1[i] < minx1) {
+	    			minx1 = x1[i];
+	    		}
+	    		if (x1[i] > maxx1) {
+	    			maxx1 = x1[i];
+	    		}
+	    	}
+	    	for (i = 0; i < x2.length; i++) {
+	    		if (x2[i] < minx2) {
+	    			minx2 = x2[i];
+	    		}
+	    		if (x2[i] > maxx2) {
+	    			maxx2 = x2[i];
+	    		}
+	    	}
+	    	double maxmin = Math.max(minx1, minx2);
+	    	double minmax = Math.min(maxx1, maxx2);
+	    	Vector<Double>xxVec = new Vector<Double>();
+	    	for (i = 0; i < x1.length; i++)  {
+	    		xxVec.add(x1[i]);
+	    	}
+	    	boolean unique;
+	    	for (i = 0; i < x2.length; i++) {
+	    		unique = true;
+	    		for (j = 0; j < x1.length; j++) {
+	    			if (x2[i] == x1[j]) {
+	    				unique = false;
+	    			}
+	    		}
+	    		if (unique && (x2[i] >= maxmin) && (x2[i] <= minmax)) {
+	    			xxVec.add(x2[i]);
+	    		}
+	    	}
+	    	if (xxVec.size() < 2) {
+	    		x_loc = null;
+	    		y_loc = null;
+	    		return;
+	    	}
+	    	Collections.sort(xxVec);
+	    	xx = new double[xxVec.size()];
+	    	for (i = 0; i < xx.length; i++) {
+	    		xx[i] = xxVec.get(i);
+	    	}
+	    	double yy1[] = interp1(x1,y1,xx);
+	    	double yy2[] = interp1(x2,y2,xx);
+	    	yy = new double[yy1.length];
+	    	for (i = 0; i < yy.length; i++) {
+	    		yy[i] = yy1[i] - yy2[i];
+	    	}
+	    }
+	    else {
+	        xx = x1;
+	        yy = new double[y1.length];
+	        for (i = 0; i < yy.length; i++) {
+	        	yy[i] = y1[i] - y2[i];
 	        }
 	    }
-	    return null;
+	    mminvinterp(xx,yy,0.0); // find zero crossings of difference
+	    if ((x_loc != null) && (x_loc.length > 0)) {
+	        y_loc = interp1(x1, y1, x_loc);	
+	    }
+	    else {
+	    	x_loc = null;
+	    	y_loc = null;
+	    }
+	}
+	
+	public void mminvinterp(double x[], double y[], double yo) { 
+		int i;
+		if (x.length != y.length) {
+			System.err.println("x.length != y.length in mminvinterp");
+			return;
+		}
+		int n = y.length;
+		
+		// Quick exit if no values exist
+	    double miny = Double.MAX_VALUE;
+	    double maxy = -Double.MAX_VALUE;
+	    for (i = 0; i < n; i++) {
+	    	if (y[i] < miny) {
+	    		miny = y[i];
+	    	}
+	    	if (y[i] > maxy) {
+	    		maxy = y[i];
+	    	}
+	    }
+	    if ((yo < miny) || (yo > maxy)) {
+	    	x_loc = null;
+	    	y_loc = null;
+	    	return;
+	    }
+	    
+	    // Find the desired points
+	    boolean below[] = new boolean[n];
+	    boolean above[] = new boolean[n];
+	    boolean on[] = new boolean[n];
+	    for (i = 0; i < n; i++) {
+	    	if (y[i] < yo) {
+	    		below[i] = true;
+	    	}
+	    	else if (y[i] > yo) {
+	    		above[i] = true;
+	    	}
+	    	else {
+	    		on[i] = true;
+	    	}
+	    }
+	    
+	    boolean kth[] = new boolean[n-1]; // point k
+	    for (i = 0; i < n-1; i++) {
+	    	kth[i] = ((below[i] & above[i+1]) | (above[i] & below[i+1]));
+	    }
+	    boolean kp1[] = new boolean[n]; // point k+1
+	    kp1[0] = false;
+	    for (i = 1; i < n; i++) {
+	    	kp1[i] = kth[i-1];
+	    }
+	    
+	    Vector<Double> xo = new Vector<Double>(); // distance between x[k+1] and x[k]
+	    for (i = 0; i < n-1; i++) {
+	    	if (kth[i]) {
+	    		double alpha = (yo - y[i])/(y[i+1] - y[i]);
+	    		xo.add(alpha*(x[i+1] - x[i]) + x[i]);
+	    	}
+	    }
+	    for (i = 0; i < n; i++) {
+	    	if (on[i]) {
+	    		xo.add(x[i]);
+	    	}
+	    }
+	    Collections.sort(xo);
+	    // Add points, which are directly on the line
+	    x_loc = new double[xo.size()];
+	    for (i = 0; i < x_loc.length; i++) {
+	    	x_loc[i] = xo.get(i);
+	    }
+	    // Duplicate yo, to match xo points found
+	    y_loc = new double[x_loc.length];
+	    for (i = 0; i < y_loc.length; i++) {
+	    	y_loc[i] = yo;
+	    }
+	}
+	
+	public double[] interp1(double x[], double y[], double x_loc[]) {
+		int i,j;
+		double y_interp[] = new double[x_loc.length];
+		int len = x.length;
+		for (i = 0; i < x_loc.length; i++) {
+			y_interp[i] = -Double.MAX_VALUE;
+			for (j = 0; j < len; j++) {
+				if (x[j] == x_loc[i]) {
+				    y_interp[i] = y[j];
+				}
+				else if ((j < x.length-1) && (x_loc[i] > x[j])) {
+					y_interp[i] = (y[j] + (y[j+1] - y[j])*(x_loc[i] - x[j])/(x[j+1] - x[j]));
+				}
+			}
+		}
+		return y_interp;
 	}
 	
 	    // f(x) = a1*exp(-((x-b1)/c1)^2) - a2*exp(-((x-b2)/c2)^2)
