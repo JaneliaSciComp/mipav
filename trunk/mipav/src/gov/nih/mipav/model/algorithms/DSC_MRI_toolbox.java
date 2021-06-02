@@ -154,6 +154,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	
 	private int gauss2FittingObservations;
     private double gauss2FittingData[];
+    boolean doCurveIntersect = false;
 	
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
 		this.volumes = volumes;
@@ -194,6 +195,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	
 	public void DSC_mri_mask() {
 		int i, x, y, z, t;
+		double mask_threshold;
 	    if (display > 0) {
 	    	UI.setDataText("Masking data...");
 	    }
@@ -298,6 +300,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("c2 = " + xp[5] + "\n");
 		}
 		
+		if (doCurveIntersect) {
+		    double threshold_array[] = curveIntersect(intensity, xp);	
+		}
+		else {
 		  double parameters[] = new double[]{(xp[1] + xp[4])/2.0};
 
 		  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
@@ -310,6 +316,82 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	      System.out.println(summary.BriefReport());
 	      UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4])/2.0) + "\n");
 	      UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + parameters[0] + "\n");
+	      mask_threshold = parameters[0];
+		}
+	}
+	
+	public double[] curveIntersect(double intensity[], double param[]) {
+	    int i;
+	    double x_loc = 0.0;
+	    double y_loc = 0.0;
+	    double diff_x[] = new double[intensity.length-1];
+	    for (i = 0; i < intensity.length-1; i++) {
+	    	diff_x[i] = intensity[i+1] - intensity[i];
+	    }
+	    int ind_x[] = new int[intensity.length-1];
+	    for (i = 0; i < intensity.length-1; i++) {
+	    	if (diff_x[i] > 0) {
+	    		ind_x[i] = 1;
+	    	}
+	    	else if (diff_x[i] == 0.0) {
+	    		ind_x[i] = 0;
+	    	}
+	    	else {
+	    		ind_x[i] = -1;
+	    	}
+	    }
+	    
+	    int ind1 = 0;
+	    while (ind1 < intensity.length-1) {
+	    	boolean found = false;
+	        int ind_max = ind1 - 1;
+	        for (i = ind1 + 1; (i < ind_x.length) && (!found); i++) {
+	        	if (ind_x[i] != ind_x[ind1]) {
+	        		found = true;
+	        		ind_max = ind1 + i -1;
+	        	}
+	        }
+	        if (ind_max <= ind1) {
+	        	ind_max = intensity.length-1;
+	        }
+	        int[] ind1_array = new int[ind_max - ind1 + 1];
+	        for (i = 0; i < ind1_array.length; i++) {
+	        	ind1_array[i] = ind1 + i;
+	        }
+	        
+	        int ind2 = 0;
+	        while (ind2 < intensity.length-1) {
+	            found = false;
+	            ind_max = ind2 - 1;
+	            for (i = ind2 + 1; (i < ind_x.length) && (!found); i++) {
+	            	if (ind_x[i] != ind_x[ind2]) {
+	            		found = true;
+	            		ind_max = ind2 + i - 1;
+	            	}
+	            }
+	            if (ind_max <= ind2) {
+	            	ind_max = intensity.length-1;
+	            }
+	            int[] ind2_array = new int[ind_max - ind2 + 1];
+		        for (i = 0; i < ind2_array.length; i++) {
+		        	ind2_array[i] = ind2 + i;
+		        }
+		        
+		        if ((ind_x[ind1_array[0]] == 0) && (ind_x[ind2_array[0]] != 0)) {
+		            x_loc = intensity[ind1_array[0]];	
+		        }
+		        else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] != 0)) {
+		        	
+		        }
+                else if ((ind_x[ind2_array[0]] != 0) && (ind_x[ind1_array[0]] != 0)) {
+		        	
+		        }
+                else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] == 0)) {
+		        	
+		        }
+	        }
+	    }
+	    return null;
 	}
 	
 	    // f(x) = a1*exp(-((x-b1)/c1)^2) - a2*exp(-((x-b2)/c2)^2)
