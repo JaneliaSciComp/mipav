@@ -163,6 +163,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
     double y_out[];
     double x_loc[];
     double y_loc[];
+    
+    boolean readTestImage = true;
+    
+    public DSC_MRI_toolbox() {
+    	
+    }
 	
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
 		this.volumes = volumes;
@@ -171,6 +177,43 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	}
 	
 	public void runAlgorithm() {
+		if (readTestImage) {
+			int x, y, z, t;
+			final FileIO io = new FileIO();
+		    io.setQuiet(true);
+	        io.setSuppressProgressBar(true);
+	        ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator +
+	        		"dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
+	        if (img.getNDims() != 4) {
+	        	System.err.println("img.getNDims() = " + img.getNDims());
+	        	return;
+	        }
+	        nR = img.getExtents()[0];
+	        nC = img.getExtents()[1];
+	        nS = img.getExtents()[2];
+	        nT = img.getExtents()[3];
+	        int length = nR * nC;
+	        int vol = length * nS;
+	        int buffer_size = vol*nT;
+	        short buffer[] = new short[buffer_size];
+	        try {
+	        	img.exportData(0, buffer_size, buffer);
+	        }
+	        catch (IOException e) {
+	        	System.err.println("IOException " + e);
+	        	return;
+	        }
+	        volumes = new double[nR][nC][nS][nT];
+	        for (x = 0; x < nR; x++) {
+	        	for (y = 0; y < nC; y++) {
+	        		for (z = 0; z < nS; z++) {
+	        			for (t = 0; t < nT; t++) {
+	        				volumes[x][y][z][t] = buffer[x + y*nR + z*length + t*vol];
+	        			}
+	        		}
+	        	}
+	        }
+		}
 		DSC_mri_core();
 	}
 	
@@ -198,6 +241,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			UI.setDataText("Samples = " + nT + "\n");
 			UI.setDataText("Echo time = " + te + "\n");
 			UI.setDataText("Repetition time = " + tr + "\n");
+		}
+		
+		if (conc == 0) {
+			DSC_mri_mask();
 		}
 	}
 	
@@ -285,20 +332,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	gauss2FittingData[2*i+1] = (double)prob[i];
 	    }
 	    
-	    double xp[] = new double[] {(double)prob[gauss2FittingObservations/3], intensity[gauss2FittingObservations/3], 1.0, 
-	    		(double)prob[2*gauss2FittingObservations/3], intensity[2*gauss2FittingObservations/3], 1.0};
-	    CostFunction cost_function = new gauss2FittingFunctorExample();
+	    double xp[] = new double[] {(double)prob[gauss2FittingObservations/3], intensity[gauss2FittingObservations/3], 1.0E3, 
+	    		(double)prob[2*gauss2FittingObservations/3], intensity[2*gauss2FittingObservations/3], 1.0E3};
+	    CostFunction cost_function = new gauss2FittingCostFunction();
 	    ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, xp);
 
 		// Run the solver!
 		SolverOptions solverOptions = new SolverOptions();
 		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		solverOptions.max_num_consecutive_invalid_steps = 100;
 		solverOptions.minimizer_progress_to_stdout = true;
 		SolverSummary solverSummary = new SolverSummary();
 		Solve(solverOptions, problem, solverSummary);
 		if (display > 0) {
-		    UI.setDataText(solverSummary.BriefReport());
+		    UI.setDataText(solverSummary.BriefReport() + "\n");
 		    UI.setDataText("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
 		    UI.setDataText("a1 = " + xp[0] + "\n");
 		    UI.setDataText("b1 = " + xp[1] + "\n");
@@ -306,6 +354,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("a2 = " + xp[3] + "\n");
 		    UI.setDataText("b2 = " + xp[4] + "\n");
 		    UI.setDataText("c2 = " + xp[5] + "\n");
+		}
+		
+		boolean stopEarly = true;
+		if (stopEarly) {
+			return;
 		}
 		
 		if (doCurveIntersect) {
@@ -797,28 +850,68 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		} // class diffGaussians
 	
 	public boolean fitToExternalFunction(double x[], double residuals[], double jacobian[][]) {
+		int i;
+		for (i = 0; i < x.length; i++) {
+			UI.setDataText("unexpected fit x["+i+"] = " + x[i] + "\n");
+		}
 		return true;
 	}
 	
-	class gauss2FittingFunctorExample extends SizedCostFunction {
+	class gauss2FittingCostFunction extends SizedCostFunction {
 		
-		public gauss2FittingFunctorExample() {
-			// number of resdiuals
+		public gauss2FittingCostFunction() {
+			// number of residuals
 			// size of first parameter
 			super(gauss2FittingObservations, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
 
-		public boolean fitToExternalFunction(double x[], double residual[], double jacobian[][]) {
+		
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
 			for (i = 0; i < gauss2FittingObservations; i++) {
 				double val1 = (gauss2FittingData[2*i] - x[1])/x[2];
 				double val2 = (gauss2FittingData[2*i] - x[4])/x[5];
 				double value = x[0]*Math.exp(-val1*val1) + x[3]*Math.exp(-val2*val2);
-			    residual[i] = gauss2FittingData[2*i+1] - value;
+			    residuals[i] = gauss2FittingData[2*i+1] - value;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][6*i] = -Math.exp(-val1*val1);
+					jacobians[0][6*i+1] = -2.0*x[0]*val1*Math.exp(-val1*val1)/x[2];
+					jacobians[0][6*i+2] = -2.0*x[0]*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
+					jacobians[0][6*i+3] = -Math.exp(-val2*val2);
+					jacobians[0][6*i+4] = -2.0*x[3]*val2*Math.exp(-val2*val2)/x[5];
+					jacobians[0][6*i+5] = -2.0*x[3]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[4])/(x[5]*x[5]);
+			    }
 			}
 
 			return true;
-		}
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < gauss2FittingObservations; i++) {
+				double val1 = (gauss2FittingData[2*i] - x[1])/x[2];
+				double val2 = (gauss2FittingData[2*i] - x[4])/x[5];
+				double value = x[0]*Math.exp(-val1*val1) + x[3]*Math.exp(-val2*val2);
+			    residuals[i] = gauss2FittingData[2*i+1] - value;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0] + 6*i] = -Math.exp(-val1*val1);
+					jacobians[0][jacobians_offset[0] + 6*i+1] = -2.0*x[0]*val1*Math.exp(-val1*val1)/x[2];
+					jacobians[0][jacobians_offset[0] + 6*i+2] = -2.0*x[0]*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
+					jacobians[0][jacobians_offset[0] + 6*i+3] = -Math.exp(-val2*val2);
+					jacobians[0][jacobians_offset[0] + 6*i+4] = -2.0*x[3]*val2*Math.exp(-val2*val2)/x[5];
+					jacobians[0][jacobians_offset[0] + 6*i+5] = -2.0*x[3]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[4])/(x[5]*x[5]);
+			    }
+			}
+
+			return true;
+	  }
 	};
 	
 } 
