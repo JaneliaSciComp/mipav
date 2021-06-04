@@ -10,8 +10,12 @@ import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolverTest.Rosenbrock;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewJComponentGraph;
+import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewUserInterface;
 
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.io.*;
 
 import java.util.*;
@@ -326,6 +330,66 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		if (display > 0) {
 		    UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + mask_threshold + "\n");
 		}
+		
+		if (display > 1) {
+			float intensityf[] = new float[intensity.length];
+			for (i = 0; i < intensity.length; i++) {
+				intensityf[i] = (float)intensity[i];
+			}
+			double y1[] = new double[intensity.length];
+		    for (i = 0; i < intensity.length; i++) {
+		    	double val1 = (intensity[i] - xp[1])/xp[2];
+		    	y1[i] = xp[0]*Math.exp(-val1*val1);
+		    }
+		    double y2[] = new double[intensity.length];
+		    for (i = 0; i < intensity.length; i++) {
+		    	double val2 = (intensity[i] - xp[4])/xp[5];
+		    	y2[i] = xp[3]*Math.exp(-val2*val2);
+		    }
+		    float fitf[] = new float[intensity.length];
+		    for (i = 0; i < intensity.length; i++) {
+		    	fitf[i] = (float)(y1[i] + y2[i]);
+		    }
+		    ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity", "Fitted Gaussians");
+		    fittedGaussiansGraph.setVisible(true);
+		    ViewJComponentGraph graph = fittedGaussiansGraph.getGraph();
+		    Rectangle graphBounds = graph.getGraphBounds();
+		    Graphics g = graph.getGraphics();
+		    double axlim[] = new double[4];
+		    axlim[0] = Double.MAX_VALUE;
+			axlim[1] = -Double.MAX_VALUE;
+			axlim[2] = Double.MAX_VALUE;
+			axlim[3] = -Double.MAX_VALUE;
+			for (i = 0; i < gauss2FittingObservations; i++) {
+				if (intensityf[i] < axlim[0]) {
+	    	    	axlim[0] = intensityf[i];
+	    	    }
+	    	    if (intensityf[i] > axlim[1]) {
+	    	    	axlim[1] = intensityf[i];
+	    	    }
+	    	    if (fitf[i] < axlim[2]) {
+	    	    	axlim[2] = fitf[i];
+	    	    }
+	    	    if (fitf[i] > axlim[3]) {
+	    	    	axlim[3] = fitf[i];
+	    	    }
+			}
+		    double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+	        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+		    int xthresh =  (int)Math.round(graphBounds.x + xScale*(mask_threshold - axlim[0]));
+		    int y1t =  (int)Math.round(graphBounds.y + yScale*(0 - axlim[2]));
+		    y1t = -y1t + 2*graphBounds.y + graphBounds.height;
+		    double maxprob = -Double.MAX_VALUE;
+		    for (i = 0; i < gauss2FittingObservations; i++) {
+		    	if (prob[i] > maxprob) {
+		    		maxprob = prob[i];
+		    	}
+		    }
+		    int y2t =  (int)Math.round(graphBounds.y + yScale*(Math.min(1.05*maxprob,axlim[3]) - axlim[2]));
+		    y2t = -y2t + 2*graphBounds.y + graphBounds.height;
+		    graph.drawLine(g, xthresh, y1t, xthresh, y2t);
+		    graph.paintComponent(g);
+		}
 	}
 	
 	public void curveIntersect(double x[], double param[]) {
@@ -340,7 +404,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    double y2[] = new double[x.length];
 	    for (i = 0; i < x.length; i++) {
 	    	double val2 = (x[i] - param[4])/param[5];
-	    	y1[i] = param[3]*Math.exp(-val2*val2);
+	    	y2[i] = param[3]*Math.exp(-val2*val2);
 	    }
 	    double x1in[];
 	    double y1in[];
