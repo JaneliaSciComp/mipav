@@ -165,6 +165,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
     double y_loc[];
     
     boolean readTestImage = true;
+    boolean test2PerfectGaussians = false;
+    /** Storage location of the second derivative of the Gaussian in the X direction. */
+    private double[] GxxData;
+    private double sigmas[] = new double[] {1.0};
     
     public DSC_MRI_toolbox() {
     	
@@ -327,13 +331,42 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    
 	    gauss2FittingObservations = nbin-1-ind_max;
 	    gauss2FittingData = new double[2*gauss2FittingObservations];
+	    double ySum = 0.0;
 	    for (i = 0; i < gauss2FittingObservations; i++) {
 	    	gauss2FittingData[2*i] = intensity[i];
 	    	gauss2FittingData[2*i+1] = (double)prob[i];
+	    	ySum += (double)prob[i];
 	    }
 	    
-	    double xp[] = new double[] {(double)prob[gauss2FittingObservations/3], intensity[gauss2FittingObservations/3], 1.0E3, 
-	    		(double)prob[2*gauss2FittingObservations/3], intensity[2*gauss2FittingObservations/3], 1.0E3};
+	    // Simple intialization scheme does not work
+	    double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
+	    		ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
+	    if (test2PerfectGaussians) {
+	    	double a1 = 1000.0;
+	    	double b1 = 3.0;
+	    	double c1 = 1.0;
+	    	double a2 = 2000.0;
+	    	double b2 = 7.0;
+	    	double c2 = 2.0;
+	    	gauss2FittingObservations = 100;
+	    	gauss2FittingData = new double[200];
+	    	for (i = 0; i < 100; i++) {
+	    		gauss2FittingData[2*i] = 0.1*i;
+	    		double val1 = (0.1*i - b1)/c1;
+	    		double val2 = (0.1*i - b2)/c2;
+	    		gauss2FittingData[2*i+1] = a1*Math.exp(-val1*val1) + a2*Math.exp(-val2*val2);
+	    		xp = new double[] {990.0, 3.1, 1.03, 2010.0, 6.98, 1.87};
+	    		// Works for perfect Gaussians
+	    		// Masking data...Ceres Solver Report: Iterations: 13, Initial cost: 1.533271e+05, Final cost: 3.140075e-08, Termination: CONVERGENCE
+	    		// Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
+	    		// a1 = 999.9999968100649
+	    		// b1 = 3.000000045424291
+	    		// c1 = 1.0000000440082
+	    		// a2 = 2000.0000374351666
+	    		// b2 = 7.000000004248233
+	    		// c2 = 1.9999999207638912
+	    	}
+	    }
 	    CostFunction cost_function = new gauss2FittingCostFunction();
 	    ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, xp);
@@ -444,6 +477,109 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    graph.paintComponent(g);
 		}
 	}
+	
+	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
+	public byte[] calcZeroX(double[] buffer) {
+        makeKernels1D();
+        double[] resultBuffer = new double[buffer.length];
+        convolve(buffer, GxxData, resultBuffer);
+        return edgeDetect(buffer);
+    }
+	
+	public byte[] edgeDetect(double buffer[]) {
+		int i;
+		double x0;
+		double x1;
+		int xDim = buffer.length;
+		int xxDim = xDim - 1;
+		byte edgeDetectBuffer[] = new byte[xDim];
+		for (i = 0; i < xxDim; i++) {
+			 x0 = buffer[i];
+             x1 = buffer[i+1];
+             if ((x0 >= 0) && (x1 >= 0)) {
+            	 edgeDetectBuffer[i] = 0;
+             }
+             else if ((x0 <= 0) && (x1 <= 0)) {
+            	 edgeDetectBuffer[i] = 0;
+             }
+             else if ((x0 < 0) && (x1 > 0)) {
+            	 edgeDetectBuffer[i] = 1;
+             }
+             else if ((x0 > 0) && (x1 < 0)) {
+            	 edgeDetectBuffer[i] = -1;
+             }
+		}
+		return edgeDetectBuffer;
+	}
+	
+	/**
+     * Creates Gaussian derivative kernels.
+     */
+    private void makeKernels1D() {
+        int xkDim;
+        int[] derivOrder = new int[1];
+
+        int kExtents[] = new int[1];
+        derivOrder[0] = 2;
+
+        xkDim = (int)Math.round(8 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+
+        GxxData = new double[xkDim];
+
+        GenerateDGaussian Gxx = new GenerateDGaussian(GxxData, kExtents, sigmas, derivOrder);
+
+        Gxx.calc(false);
+        Gxx.finalize();
+        Gxx = null;  
+    }
+	
+	/**
+     * Perform one-dimension convolution.
+     * 
+     * @param imageBuffer
+     * @param kernelBuffer
+     * @param resultBuffer
+     */
+    private void convolve(final double[] imageBuffer, final double[] kernelBuffer, final double[] resultBuffer) {
+
+        final int kernelDim = kernelBuffer.length;
+        final int halfKernelDim = kernelDim / 2;
+        for (int i = 0; i < imageBuffer.length; i++) {
+                int count = 0;
+                double sum = 0;
+                double norm = 0;
+                int start = i - halfKernelDim;
+                int end = start + kernelDim;
+                if (start < 0) {
+                    count = count - start;
+                    start = 0;
+                }
+                if (end > imageBuffer.length) {
+                    end = imageBuffer.length;
+                }
+                for (int j = start; j < end; j++) {
+                    sum += kernelBuffer[count] * imageBuffer[j];
+                    if (kernelBuffer[count] > 0) {
+                        norm += kernelBuffer[count];
+                    } else {
+                        norm -= kernelBuffer[count];
+                    }
+                    count++;
+                }
+                resultBuffer[i] = sum / norm;
+            
+        }
+    }
 	
 	public void curveIntersect(double x[], double param[]) {
 	    int i;
