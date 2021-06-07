@@ -763,7 +763,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         textAmpFact = createTextField("1.0");
         algoPanel.add(textAmpFact);
 
-        nonLinearCheckBox = WidgetFactory.buildCheckBox("Use nonlinear Laplcian", false, this);
+        nonLinearCheckBox = WidgetFactory.buildCheckBox("Use nonlinear Laplacian", false, this);
         if (image.getNDims() == 2) {
             nonLinearCheckBox.setEnabled(true);
         } else {
