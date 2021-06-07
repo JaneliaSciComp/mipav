@@ -166,7 +166,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
     
     boolean readTestImage = true;
     boolean test2PerfectGaussians = false;
-    /** Storage location of the second derivative of the Gaussian in the X direction. */
+    private double[] GxData;
     private double[] GxxData;
     private double sigmas[] = new double[] {1.0};
     
@@ -253,7 +253,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	}
 	
 	public void DSC_mri_mask() {
-		int i, x, y, z, t;
+		int i, j, x, y, z, t;
 		double mask_threshold;
 	    if (display > 0) {
 	    	UI.setDataText("Masking data...");
@@ -314,9 +314,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	tempInt[i-ind_max-1] = prob[i];
 	    }
 	    prob = null;
-	    prob = new int[nbin-1-ind_max];
+	    double probDouble[] = new double[nbin-1-ind_max];
 	    for (i = 0; i < nbin-1-ind_max; i++) {
-	    	prob[i] = tempInt[i];
+	    	probDouble[i] = (double)tempInt[i];
 	    }
 	    
 	    double tempDouble[] = new double[nbin-1-ind_max];
@@ -334,13 +334,65 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    double ySum = 0.0;
 	    for (i = 0; i < gauss2FittingObservations; i++) {
 	    	gauss2FittingData[2*i] = intensity[i];
-	    	gauss2FittingData[2*i+1] = (double)prob[i];
-	    	ySum += (double)prob[i];
+	    	gauss2FittingData[2*i+1] = probDouble[i];
+	    	ySum += probDouble[i];
 	    }
 	    
+	    double xp[] = null;
 	    // Simple intialization scheme does not work
-	    double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
-	    		ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
+	    //double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
+	    		//ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
+	    byte zeroCrossing[][] = new byte[100][];
+	    int numberPositiveZeroCrossings[] = new int[100];
+	    int numberNegativeZeroCrossings[] = new int[100];
+	    int firstFourIndex = -1;
+	    int firstTwoIndex = -1;
+	    for (i = 1; i <= 100; i++) {
+	    	sigmas[0] = i * (intensity[intensity.length - 1] - intensity[0])/100.0;
+	    	zeroCrossing[i-1] = calcZeroX(probDouble);
+	    	for (j = 0; j < zeroCrossing[i-1].length; i++) {
+	    		if (zeroCrossing[i-1][j] == 1) {
+	    			numberPositiveZeroCrossings[i-1]++;
+	    		}
+	    		else if (zeroCrossing[i-1][j] == -1) {
+	    			numberNegativeZeroCrossings[i-1]++;
+	    		}
+	    	}
+	    	if ((firstFourIndex == -1) && (numberPositiveZeroCrossings[i-1] == 2) && (numberNegativeZeroCrossings[i-1] == 2)) {
+	    		firstFourIndex = i;
+	    	}
+	    	else if ((firstTwoIndex == -1) && (numberPositiveZeroCrossings[i-1] == 1) && (numberNegativeZeroCrossings[i-1] == 1)) {
+	    		firstTwoIndex = i;
+	    	}
+	    }
+	    if (firstFourIndex == -1) {
+	    	System.err.println("No scale space with 2 positive and 2 negative zero crossings found in initializing sum of Gaussians");
+	    	return;
+	    }
+	    if (firstTwoIndex == -1) {
+	    	System.err.println("No scale space with 1 positive and 1 negative zero crossing found in initializing sum of Gaussians");
+	    	return;
+	    }
+	    int twoIndexPositiveLocation = -1;
+	    int twoIndexNegativeLocation = -1;
+	    for (j = 0; j < zeroCrossing[firstTwoIndex-1].length; j++) {
+	    	if (zeroCrossing[firstTwoIndex-1][j] == 1) {
+	    	    twoIndexPositiveLocation = j;	
+	    	}
+	    	if (zeroCrossing[firstTwoIndex-1][j] == -1) {
+	    		twoIndexNegativeLocation = j;
+	    	}
+	    }
+	    int firstGaussianPositiveLocation = -1;
+	    int firstGaussianPositiveDistance = Integer.MAX_VALUE;
+	    int firstGaussianNegativeLocation = -1;
+	    int firstGaussianNegativeDistance = Integer.MAX_VALUE;
+	    for (i = 0; i < zeroCrossing[0].length; i++) {
+	    	if (zeroCrossing[0][i-1] == 1) {
+	    		
+	    	}
+	    }
+	    	
 	    if (test2PerfectGaussians) {
 	    	double a1 = 1000.0;
 	    	double b1 = 3.0;
@@ -481,21 +533,23 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
         makeKernels1D();
-        double[] resultBuffer = new double[buffer.length];
-        convolve(buffer, GxxData, resultBuffer);
-        return edgeDetect(buffer);
+        double[] secondDerivBuffer = new double[buffer.length];
+        convolve(buffer, GxxData, secondDerivBuffer);
+        double[] firstDerivBuffer = new double[buffer.length];
+        convolve(buffer, GxData, firstDerivBuffer);
+        return edgeDetect(firstDerivBuffer, secondDerivBuffer);
     }
 	
-	public byte[] edgeDetect(double buffer[]) {
+	public byte[] edgeDetect(double firstDerivBuffer[], double secondDerivBuffer[]) {
 		int i;
 		double x0;
 		double x1;
-		int xDim = buffer.length;
+		int xDim = secondDerivBuffer.length;
 		int xxDim = xDim - 1;
 		byte edgeDetectBuffer[] = new byte[xDim];
 		for (i = 0; i < xxDim; i++) {
-			 x0 = buffer[i];
-             x1 = buffer[i+1];
+			 x0 = secondDerivBuffer[i];
+             x1 = secondDerivBuffer[i+1];
              if ((x0 >= 0) && (x1 >= 0)) {
             	 edgeDetectBuffer[i] = 0;
              }
@@ -503,10 +557,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
             	 edgeDetectBuffer[i] = 0;
              }
              else if ((x0 < 0) && (x1 > 0)) {
-            	 edgeDetectBuffer[i] = 1;
+            	 if (firstDerivBuffer[i] >= 0) {
+            	     edgeDetectBuffer[i] = 1;
+            	 }
+            	 else {
+            		 edgeDetectBuffer[i] = -1;
+            	 }
              }
              else if ((x0 > 0) && (x1 < 0)) {
-            	 edgeDetectBuffer[i] = -1;
+            	 if (firstDerivBuffer[i] >= 0) {
+            	     edgeDetectBuffer[i] = 1;
+            	 }
+            	 else {
+            		 edgeDetectBuffer[i] = -1;
+            	 }
              }
 		}
 		return edgeDetectBuffer;
@@ -541,6 +605,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
         Gxx.calc(false);
         Gxx.finalize();
         Gxx = null;  
+        
+        GxData = new double[xkDim];
+        derivOrder[0] = 1;
+        GenerateDGaussian Gx = new GenerateDGaussian(GxData, kExtents, sigmas, derivOrder);
+        Gx.calc(false);
+        Gx.finalize();
+        Gx = null;
     }
 	
 	/**
