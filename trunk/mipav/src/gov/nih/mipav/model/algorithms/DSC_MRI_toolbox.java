@@ -348,7 +348,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    int firstFourIndex = -1;
 	    int firstTwoIndex = -1;
 	    for (i = 1; i <= gauss2FittingObservations; i++) {
-	    	sigmas[0] = i * (intensity[gauss2FittingObservations - 1] - intensity[0])/gauss2FittingObservations;
+	    	sigmas[0] = i;
 	    	zeroCrossing[i-1] = calcZeroX(probDouble);
 	    	for (j = 0; j < zeroCrossing[i-1].length; j++) {
 	    		if (zeroCrossing[i-1][j] == 1) {
@@ -646,28 +646,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		for (i = 0; i < xxDim; i++) {
 			 x0 = secondDerivBuffer[i];
              x1 = secondDerivBuffer[i+1];
-             if ((x0 >= 0) && (x1 >= 0)) {
+             if ((x0 > 0) && (x1 > 0)) {
             	 edgeDetectBuffer[i] = 0;
              }
-             else if ((x0 <= 0) && (x1 <= 0)) {
+             else if ((x0 < 0) && (x1 < 0)) {
             	 edgeDetectBuffer[i] = 0;
              }
-             else if ((x0 < 0) && (x1 > 0)) {
-            	 if (firstDerivBuffer[i] >= 0) {
+             else {
+            	 if (firstDerivBuffer[i] > 0) {
             	     edgeDetectBuffer[i] = 1;
             	 }
-            	 else {
+            	 else if (firstDerivBuffer[i] < 0){
             		 edgeDetectBuffer[i] = -1;
             	 }
              }
-             else if ((x0 > 0) && (x1 < 0)) {
-            	 if (firstDerivBuffer[i] >= 0) {
-            	     edgeDetectBuffer[i] = 1;
-            	 }
-            	 else {
-            		 edgeDetectBuffer[i] = -1;
-            	 }
-             }
+             
 		}
 		return edgeDetectBuffer;
 	}
