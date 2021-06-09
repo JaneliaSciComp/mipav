@@ -337,8 +337,42 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	gauss2FittingData[2*i+1] = probDouble[i];
 	    	ySum += probDouble[i];
 	    }
-	    
 	    double xp[] = null;
+	    if (test2PerfectGaussians) {
+	    	double a1 = 1000.0;
+	    	double b1 = 3.0;
+	    	double c1 = 1.0;
+	    	double a2 = 2000.0;
+	    	double b2 = 7.0;
+	    	double c2 = 2.0;
+	    	gauss2FittingObservations = 100;
+	    	gauss2FittingData = new double[200];
+	    	for (i = 0; i < 100; i++) {
+	    		gauss2FittingData[2*i] = 0.1*i;
+	    		intensity[i] = 0.1*i;
+	    		double val1 = (0.1*i - b1)/c1;
+	    		double val2 = (0.1*i - b2)/c2;
+	    		gauss2FittingData[2*i+1] = a1*Math.exp(-val1*val1) + a2*Math.exp(-val2*val2);
+	    		probDouble[i] = gauss2FittingData[2*i+1];
+	    		//Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
+	    		//a1 = 2014.0515679050666
+	    		//b1 = 7.0
+	    		//c1 = 1.9798989873223332
+	    		//a2 = 1004.2121919422965
+	    		//b2 = 2.9000000000000004
+	    		//c2 = 0.9899494936611666
+	    		//Ceres Solver Report: Iterations: 10, Initial cost: 7.261461e+04, Final cost: 1.129515e-07, Termination: CONVERGENCE
+	    		//Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
+	    		//a1 = 2000.0000318008936
+	    		//b1 = 6.9999999825169725
+	    		//c1 = 1.9999999839278295
+	    		//a2 = 1000.0000306581111
+	    		//b2 = 2.99999987472384
+	    		//c2 = 0.9999999590528206
+	    	}
+	    }
+	    
+	    
 	    // Simple intialization scheme does not work
 	    //double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
 	    		//ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
@@ -365,6 +399,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		firstTwoIndex = i-1;
 	    	}
 	    }
+	    for (i = 0; i < gauss2FittingObservations; i++) {
+	    	System.err.println("i = " + (i+1) + " pos = " + numberPositiveZeroCrossings[i] + " neg = " + numberNegativeZeroCrossings[i]);
+	    }
 	    if (firstFourIndex == -1) {
 	    	System.err.println("No scale space with 2 positive and 2 negative zero crossings found in initializing sum of Gaussians");
 	    	return;
@@ -373,72 +410,61 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	System.err.println("No scale space with 1 positive and 1 negative zero crossing found in initializing sum of Gaussians");
 	    	return;
 	    }
-	    int twoIndexPositiveLocation = -1;
-	    int twoIndexNegativeLocation = -1;
+	    int twoIndexPositiveLocation[] = new int[firstTwoIndex+1];
+	    int twoIndexNegativeLocation[] = new int[firstTwoIndex+1];
 	    for (j = 0; j < zeroCrossing[firstTwoIndex].length; j++) {
 	    	if (zeroCrossing[firstTwoIndex][j] == 1) {
-	    	    twoIndexPositiveLocation = j;	
+	    	    twoIndexPositiveLocation[firstTwoIndex] = j;	
 	    	}
 	    	if (zeroCrossing[firstTwoIndex][j] == -1) {
-	    		twoIndexNegativeLocation = j;
+	    		twoIndexNegativeLocation[firstTwoIndex] = j;
 	    	}
 	    }
-	    int firstGaussianPositiveLocation = -1;
-	    int firstGaussianPositiveDistance = Integer.MAX_VALUE;
-	    int firstGaussianNegativeLocation = -1;
-	    int firstGaussianNegativeDistance = Integer.MAX_VALUE;
-	    for (i = 0; i < zeroCrossing[0].length; i++) {
-	    	if ((zeroCrossing[0][i] == 1) && (Math.abs(i - twoIndexPositiveLocation) < firstGaussianPositiveDistance)) {
-	    		firstGaussianPositiveLocation = i;
-	    		firstGaussianPositiveDistance = Math.abs(i - twoIndexPositiveLocation);
-	    	}
-	    	else if ((zeroCrossing[0][i] == -1) && (Math.abs(i - twoIndexNegativeLocation) < firstGaussianNegativeDistance)) {
-	    		firstGaussianNegativeLocation = i;
-	    		firstGaussianNegativeDistance = Math.abs(i - twoIndexNegativeLocation);
-	    	}
+	  
+	    for (j = firstTwoIndex-1; j >= 0; j--) {
+		    int firstGaussianPositiveDistance = Integer.MAX_VALUE;
+		    int firstGaussianNegativeDistance = Integer.MAX_VALUE;
+		    for (i = 0; i < zeroCrossing[j].length; i++) {
+		    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexPositiveLocation[j+1]) < firstGaussianPositiveDistance)) {
+		    		twoIndexPositiveLocation[j] = i;
+		    		firstGaussianPositiveDistance = Math.abs(i - twoIndexPositiveLocation[j+1]);
+		    	}
+		    	else if ((zeroCrossing[j][i] == -1) && (Math.abs(i - twoIndexNegativeLocation[j+1]) < firstGaussianNegativeDistance)) {
+		    		twoIndexNegativeLocation[j] = i;
+		    		firstGaussianNegativeDistance = Math.abs(i - twoIndexNegativeLocation[j+1]);
+		    	}
+		    }
 	    }
-	    int fourIndexExcludePositiveLocation = -1;
-	    int fourIndexExcludePositiveDistance = Integer.MAX_VALUE;
-	    int fourIndexExcludeNegativeLocation = -1;
-	    int fourIndexExcludeNegativeDistance = Integer.MAX_VALUE;
-	    for (i = 0; i < zeroCrossing[firstFourIndex].length; i++) {
-	    	if ((zeroCrossing[firstFourIndex][i] == 1) && (Math.abs(i - twoIndexPositiveLocation) < fourIndexExcludePositiveDistance)) {
-	    		fourIndexExcludePositiveLocation = i;
-	    		fourIndexExcludePositiveDistance = Math.abs(i - twoIndexPositiveLocation);
-	    	}
-	    	else if ((zeroCrossing[firstFourIndex][i] == -1) && (Math.abs(i - twoIndexNegativeLocation) < fourIndexExcludeNegativeDistance)) {
-	    		fourIndexExcludeNegativeLocation = i;
-	    		fourIndexExcludeNegativeDistance = Math.abs(i - twoIndexNegativeLocation);
-	    	}
-	    }
-	    int fourIndexPositiveLocation = -1;
-	    int fourIndexNegativeLocation = -1;
+	    int fourIndexPositiveLocation[] = new int[firstFourIndex+1];
+	    int fourIndexNegativeLocation[] = new int[firstFourIndex+1];
 	    for (j = 0; j < zeroCrossing[firstFourIndex].length; j++) {
-	    	if ((zeroCrossing[firstFourIndex][j] == 1) && (zeroCrossing[firstFourIndex][j] != fourIndexExcludePositiveLocation)) {
-	    	    fourIndexPositiveLocation = j;	
+	    	if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexPositiveLocation[firstFourIndex])) {
+	    	    fourIndexPositiveLocation[firstFourIndex] = j;	
 	    	}
-	    	if ((zeroCrossing[firstFourIndex][j] == -1) && (zeroCrossing[firstFourIndex][j] != fourIndexExcludeNegativeLocation)) {
-	    		fourIndexNegativeLocation = j;
-	    	}
-	    }
-	    int secondGaussianPositiveLocation = -1;
-	    int secondGaussianPositiveDistance = Integer.MAX_VALUE;
-	    int secondGaussianNegativeLocation = -1;
-	    int secondGaussianNegativeDistance = Integer.MAX_VALUE;	
-	    for (i = 0; i < zeroCrossing[0].length; i++) {
-	    	if ((zeroCrossing[0][i] == 1) && (i != firstGaussianPositiveLocation) && (Math.abs(i - fourIndexPositiveLocation) < secondGaussianPositiveDistance)) {
-	    		secondGaussianPositiveLocation = i;
-	    		secondGaussianPositiveDistance = Math.abs(i - fourIndexPositiveLocation);
-	    	}
-	    	else if ((zeroCrossing[0][i] == -1) && (i != firstGaussianNegativeLocation) && (Math.abs(i - fourIndexNegativeLocation) < secondGaussianNegativeDistance)) {
-	    		secondGaussianNegativeLocation = i;
-	    		secondGaussianNegativeDistance = Math.abs(i - fourIndexNegativeLocation);
+	    	if ((zeroCrossing[firstFourIndex][j] == -1) && (j != twoIndexNegativeLocation[firstFourIndex])) {
+	    		fourIndexNegativeLocation[firstFourIndex] = j;
 	    	}
 	    }
-	    double firstGaussianMean = ((double)(firstGaussianPositiveLocation + firstGaussianNegativeLocation))/2.0;
-	    double firstGaussianStandardDeviation = ((double)Math.abs(firstGaussianPositiveLocation - firstGaussianNegativeLocation))/2.0;
-	    double secondGaussianMean = ((double)(secondGaussianPositiveLocation + secondGaussianNegativeLocation))/2.0;
-	    double secondGaussianStandardDeviation = ((double)Math.abs(secondGaussianPositiveLocation - secondGaussianNegativeLocation))/2.0;
+	    
+	    for (j = firstFourIndex-1; j >= 0; j--) {
+		    int secondGaussianPositiveDistance = Integer.MAX_VALUE;
+		    int secondGaussianNegativeDistance = Integer.MAX_VALUE;
+		    for (i = 0; i < zeroCrossing[j].length; i++) {
+		    	if ((zeroCrossing[j][i] == 1) && (j != twoIndexPositiveLocation[j]) && (Math.abs(i - fourIndexPositiveLocation[j+1]) < secondGaussianPositiveDistance)) {
+		    		fourIndexPositiveLocation[j] = i;
+		    		secondGaussianPositiveDistance = Math.abs(i - fourIndexPositiveLocation[j+1]);
+		    	}
+		    	else if ((zeroCrossing[j][i] == -1) && (j != twoIndexNegativeLocation[j]) && (Math.abs(i - fourIndexNegativeLocation[j+1]) < secondGaussianNegativeDistance)) {
+		    		fourIndexNegativeLocation[j] = i;
+		    		secondGaussianNegativeDistance = Math.abs(i - fourIndexNegativeLocation[j+1]);
+		    	}
+		    }
+	    }
+	    
+	    double firstGaussianMean = ((double)(intensity[twoIndexPositiveLocation[0]] + intensity[twoIndexNegativeLocation[0]]))/2.0;
+	    double firstGaussianStandardDeviation = ((double)Math.abs(intensity[twoIndexPositiveLocation[0]] - intensity[twoIndexNegativeLocation[0]]))/2.0;
+	    double secondGaussianMean = ((double)(intensity[fourIndexPositiveLocation[0]] + intensity[fourIndexNegativeLocation[0]]))/2.0;
+	    double secondGaussianStandardDeviation = ((double)Math.abs(intensity[fourIndexPositiveLocation[0]] - intensity[fourIndexNegativeLocation[0]]))/2.0;
 	    // a11*firstGaussianAmplitude + a12*secondGaussianAmplitude = b1
 	    // a21*firstGaussianAmplitude + a22*secondGaussianAmplitude = b2;
 	    double a11 = 0.0;
@@ -457,7 +483,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    double a22 = 0.0;
 	    for (k = 0; k < gauss2FittingObservations; k++) {
 	    	double val = (intensity[k] - secondGaussianMean)/secondGaussianStandardDeviation;
-	    	a11 += Math.exp(-val * val);
+	    	a22 += Math.exp(-val * val);
 	    }
 	    double b1 = 0.0;
 	    for (k = 0; k < gauss2FittingObservations; k++) {
@@ -475,7 +501,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	return;
 	    }
 	    double det1 = b1*a22 - b2*a12;
-	    double det2 = a11*b1 - a21*b2;
+	    double det2 = a11*b2 - a21*b1;
 	    double firstGaussianAmplitude = det1/det;
 	    double secondGaussianAmplitude = det2/det;
 	    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
@@ -489,32 +515,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("b2 = " + xp[4] + "\n");
 		    UI.setDataText("c2 = " + xp[5] + "\n");
 	    }
-	    if (test2PerfectGaussians) {
-	    	double a1 = 1000.0;
-	    	b1 = 3.0;
-	    	double c1 = 1.0;
-	    	double a2 = 2000.0;
-	    	b2 = 7.0;
-	    	double c2 = 2.0;
-	    	gauss2FittingObservations = 100;
-	    	gauss2FittingData = new double[200];
-	    	for (i = 0; i < 100; i++) {
-	    		gauss2FittingData[2*i] = 0.1*i;
-	    		double val1 = (0.1*i - b1)/c1;
-	    		double val2 = (0.1*i - b2)/c2;
-	    		gauss2FittingData[2*i+1] = a1*Math.exp(-val1*val1) + a2*Math.exp(-val2*val2);
-	    		xp = new double[] {990.0, 3.1, 1.03, 2010.0, 6.98, 1.87};
-	    		// Works for perfect Gaussians
-	    		// Masking data...Ceres Solver Report: Iterations: 13, Initial cost: 1.533271e+05, Final cost: 3.140075e-08, Termination: CONVERGENCE
-	    		// Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
-	    		// a1 = 999.9999968100649
-	    		// b1 = 3.000000045424291
-	    		// c1 = 1.0000000440082
-	    		// a2 = 2000.0000374351666
-	    		// b2 = 7.000000004248233
-	    		// c2 = 1.9999999207638912
-	    	}
-	    }
+	   
 	    CostFunction cost_function = new gauss2FittingCostFunction();
 	    ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, xp);
