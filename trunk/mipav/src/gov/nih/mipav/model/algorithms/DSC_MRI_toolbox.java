@@ -169,6 +169,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
     private double[] GxData;
     private double[] GxxData;
     private double sigmas[] = new double[] {1.0};
+    private double zeroDetectLevel = 0.0;
     
     public DSC_MRI_toolbox() {
     	
@@ -331,11 +332,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    
 	    gauss2FittingObservations = nbin-1-ind_max;
 	    gauss2FittingData = new double[2*gauss2FittingObservations];
-	    double ySum = 0.0;
+	    //double ySum = 0.0;
 	    for (i = 0; i < gauss2FittingObservations; i++) {
 	    	gauss2FittingData[2*i] = intensity[i];
 	    	gauss2FittingData[2*i+1] = probDouble[i];
-	    	ySum += probDouble[i];
+	    	//ySum += probDouble[i];
 	    }
 	    double xp[] = null;
 	    if (test2PerfectGaussians) {
@@ -401,6 +402,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    for (i = 0; i < gauss2FittingObservations; i++) {
 	    	System.err.println("i = " + (i+1) + " pos = " + numberPositiveZeroCrossings[i] + " neg = " + numberNegativeZeroCrossings[i]);
+	    }
+	    if ((firstFourIndex == -1) && (firstTwoIndex == -1)) {
+	    	System.err.println("No scale space with 2 positive and 2 negative zero crossings found in initializing sum of Gaussians");
+	    	System.err.println("No scale space with 1 positive and 1 negative zero crossing found in initializing sum of Gaussians");
+	    	return;
 	    }
 	    if (firstFourIndex == -1) {
 	    	System.err.println("No scale space with 2 positive and 2 negative zero crossings found in initializing sum of Gaussians");
@@ -653,6 +659,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
              else if ((x0 < 0) && (x1 < 0)) {
             	 edgeDetectBuffer[i] = 0;
              }
+             else if (Math.abs(x1 - x0) < zeroDetectLevel) {
+            	 edgeDetectBuffer[i] = 0;
+             }
+             else if (i == 0) {
+            	 // A false contour is easy to detect because it always appears
+            	 // in either the first or the last column of the space-scale
+            	 // image in high resolution.
+            	 edgeDetectBuffer[i] = 0;
+             }
              else {
             	 if (firstDerivBuffer[i] > 0) {
             	     edgeDetectBuffer[i] = 1;
@@ -710,9 +725,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
      * @param imageBuffer
      * @param kernelBuffer
      * @param resultBuffer
+     * Problem is huge border effects.  Convolution uses kernels of length going from 9 to 801 on buffer of length 100.
      */
     private void convolve(final double[] imageBuffer, final double[] kernelBuffer, final double[] resultBuffer) {
-
         final int kernelDim = kernelBuffer.length;
         final int halfKernelDim = kernelDim / 2;
         for (int i = 0; i < imageBuffer.length; i++) {
@@ -738,7 +753,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
                     count++;
                 }
                 resultBuffer[i] = sum / norm;
-            
         }
     }
 	
