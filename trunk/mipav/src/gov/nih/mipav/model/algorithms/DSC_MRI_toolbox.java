@@ -10,6 +10,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
 import gov.nih.mipav.model.algorithms.CeresSolverTest.Rosenbrock;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentGraph;
 import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -380,6 +381,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    byte zeroCrossing[][] = new byte[gauss2FittingObservations][];
 	    int numberPositiveZeroCrossings[] = new int[gauss2FittingObservations];
 	    int numberNegativeZeroCrossings[] = new int[gauss2FittingObservations];
+	    int numberZeroCrossings[] = new int[gauss2FittingObservations];
 	    int firstFourIndex = -1;
 	    int firstTwoIndex = -1;
 	    for (i = 1; i <= gauss2FittingObservations; i++) {
@@ -387,90 +389,151 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	zeroCrossing[i-1] = calcZeroX(probDouble);
 	    	for (j = 0; j < zeroCrossing[i-1].length; j++) {
 	    		if (zeroCrossing[i-1][j] == 1) {
-	    			numberPositiveZeroCrossings[i-1]++;
+	    			numberZeroCrossings[i-1]++;
 	    		}
-	    		else if (zeroCrossing[i-1][j] == -1) {
-	    			numberNegativeZeroCrossings[i-1]++;
-	    		}
+	    		
 	    	}
-	    	if ((firstFourIndex == -1) && (numberPositiveZeroCrossings[i-1] == 2) && (numberNegativeZeroCrossings[i-1] == 2)) {
+	    	if ((firstFourIndex == -1) && (numberZeroCrossings[i-1] == 4)) {
 	    		firstFourIndex = i-1;
 	    	}
-	    	else if ((firstTwoIndex == -1) && (numberPositiveZeroCrossings[i-1] == 1) && (numberNegativeZeroCrossings[i-1] == 1)) {
+	    	else if ((firstTwoIndex == -1) && (numberZeroCrossings[i-1] == 2)) {
 	    		firstTwoIndex = i-1;
 	    	}
 	    }
 	    for (i = 0; i < gauss2FittingObservations; i++) {
-	    	System.err.println("i = " + (i+1) + " pos = " + numberPositiveZeroCrossings[i] + " neg = " + numberNegativeZeroCrossings[i]);
+	    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
+	    			Preferences.DEBUG_ALGORITHM);
 	    }
 	    if ((firstFourIndex == -1) && (firstTwoIndex == -1)) {
-	    	System.err.println("No scale space with 2 positive and 2 negative zero crossings found in initializing sum of Gaussians");
-	    	System.err.println("No scale space with 1 positive and 1 negative zero crossing found in initializing sum of Gaussians");
+	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
+	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
 	    if (firstFourIndex == -1) {
-	    	System.err.println("No scale space with 2 positive and 2 negative zero crossings found in initializing sum of Gaussians");
+	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
 	    if (firstTwoIndex == -1) {
-	    	System.err.println("No scale space with 1 positive and 1 negative zero crossing found in initializing sum of Gaussians");
+	    	System.err.println("No scale space with 2 zero crossing found in initializing sum of Gaussians");
 	    	return;
 	    }
-	    int twoIndexPositiveLocation[] = new int[firstTwoIndex+1];
-	    int twoIndexNegativeLocation[] = new int[firstTwoIndex+1];
+	    int twoIndexLowLocation[] = new int[firstTwoIndex+1];
+	    int twoIndexHighLocation[] = new int[firstTwoIndex+1];
+	    for (j = 0; j < firstTwoIndex+1; j++) {
+	    	twoIndexLowLocation[j] = -1;
+	    	twoIndexHighLocation[j] = -1;
+	    }
 	    for (j = 0; j < zeroCrossing[firstTwoIndex].length; j++) {
-	    	if (zeroCrossing[firstTwoIndex][j] == 1) {
-	    	    twoIndexPositiveLocation[firstTwoIndex] = j;	
+	    	if ((zeroCrossing[firstTwoIndex][j] == 1) && (twoIndexLowLocation[firstTwoIndex] == -1)) {
+	    	    twoIndexLowLocation[firstTwoIndex] = j;	
 	    	}
-	    	if (zeroCrossing[firstTwoIndex][j] == -1) {
-	    		twoIndexNegativeLocation[firstTwoIndex] = j;
+	    	else if (zeroCrossing[firstTwoIndex][j] == 1) {
+	    		twoIndexHighLocation[firstTwoIndex] = j;
 	    	}
 	    }
 	  
 	    for (j = firstTwoIndex-1; j >= 0; j--) {
-		    int firstGaussianPositiveDistance = Integer.MAX_VALUE;
-		    int firstGaussianNegativeDistance = Integer.MAX_VALUE;
+		    int firstGaussianLowDistance = Integer.MAX_VALUE;
+		    int firstGaussianHighDistance = Integer.MAX_VALUE;
 		    for (i = 0; i < zeroCrossing[j].length; i++) {
-		    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexPositiveLocation[j+1]) < firstGaussianPositiveDistance)) {
-		    		twoIndexPositiveLocation[j] = i;
-		    		firstGaussianPositiveDistance = Math.abs(i - twoIndexPositiveLocation[j+1]);
+		    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexLowLocation[j+1]) < firstGaussianLowDistance)) {
+		    		twoIndexLowLocation[j] = i;
+		    		firstGaussianLowDistance = Math.abs(i - twoIndexLowLocation[j+1]);
 		    	}
-		    	else if ((zeroCrossing[j][i] == -1) && (Math.abs(i - twoIndexNegativeLocation[j+1]) < firstGaussianNegativeDistance)) {
-		    		twoIndexNegativeLocation[j] = i;
-		    		firstGaussianNegativeDistance = Math.abs(i - twoIndexNegativeLocation[j+1]);
+		    	else if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexHighLocation[j+1]) < firstGaussianHighDistance)) {
+		    		twoIndexHighLocation[j] = i;
+		    		firstGaussianHighDistance = Math.abs(i - twoIndexHighLocation[j+1]);
 		    	}
 		    }
 	    }
-	    int fourIndexPositiveLocation[] = new int[firstFourIndex+1];
-	    int fourIndexNegativeLocation[] = new int[firstFourIndex+1];
+	    
+	    sigmas[0] = 1.0;
+	    makeGxKernels1D();
+        double[] firstDerivBuffer = new double[probDouble.length];
+        convolve(probDouble, GxData, firstDerivBuffer);
+	    
+	    int twoIndexLowSlope = 0;
+        if (firstDerivBuffer[twoIndexLowLocation[0]] > 0) {
+	         twoIndexLowSlope = 1;	
+	    }
+        else if (firstDerivBuffer[twoIndexLowLocation[0]] < 0) {
+        	twoIndexLowSlope = -1;
+        }
+        int twoIndexHighSlope = 0;
+        if (firstDerivBuffer[twoIndexHighLocation[0]] > 0) {
+	         twoIndexHighSlope = 1;	
+	    }
+        else if (firstDerivBuffer[twoIndexHighLocation[0]] < 0) {
+        	twoIndexHighSlope = -1;
+        }
+        if ((twoIndexLowSlope > 0) && (twoIndexHighSlope > 0)) {
+        	System.err.println("In scale space with 2 zero crossings both crossings are positive");
+        	return;
+        }
+        if ((twoIndexLowSlope < 0) && (twoIndexHighSlope < 0)) {
+        	System.err.println("In scale space with 2 zero crossings both crossings are negative");
+        	return;
+        }
+	    int fourIndexLowLocation[] = new int[firstFourIndex+1];
+	    int fourIndexHighLocation[] = new int[firstFourIndex+1];
+	    for (j = 0; j < firstFourIndex+1; j++) {
+	    	fourIndexLowLocation[j] = -1;
+	    	fourIndexHighLocation[j] = -1;
+	    }
 	    for (j = 0; j < zeroCrossing[firstFourIndex].length; j++) {
-	    	if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexPositiveLocation[firstFourIndex])) {
-	    	    fourIndexPositiveLocation[firstFourIndex] = j;	
+	    	if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex]) &&
+	    		(fourIndexLowLocation[firstFourIndex] == -1)) {
+	    	    fourIndexLowLocation[firstFourIndex] = j;	
 	    	}
-	    	if ((zeroCrossing[firstFourIndex][j] == -1) && (j != twoIndexNegativeLocation[firstFourIndex])) {
-	    		fourIndexNegativeLocation[firstFourIndex] = j;
+	    	else if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex])) {
+	    		fourIndexHighLocation[firstFourIndex] = j;
 	    	}
 	    }
 	    
 	    for (j = firstFourIndex-1; j >= 0; j--) {
-		    int secondGaussianPositiveDistance = Integer.MAX_VALUE;
-		    int secondGaussianNegativeDistance = Integer.MAX_VALUE;
+		    int secondGaussianLowDistance = Integer.MAX_VALUE;
+		    int secondGaussianHighDistance = Integer.MAX_VALUE;
 		    for (i = 0; i < zeroCrossing[j].length; i++) {
-		    	if ((zeroCrossing[j][i] == 1) && (j != twoIndexPositiveLocation[j]) && (Math.abs(i - fourIndexPositiveLocation[j+1]) < secondGaussianPositiveDistance)) {
-		    		fourIndexPositiveLocation[j] = i;
-		    		secondGaussianPositiveDistance = Math.abs(i - fourIndexPositiveLocation[j+1]);
+		    	if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
+		    			(Math.abs(i - fourIndexLowLocation[j+1]) < secondGaussianLowDistance)) {
+		    		fourIndexLowLocation[j] = i;
+		    		secondGaussianLowDistance = Math.abs(i - fourIndexLowLocation[j+1]);
 		    	}
-		    	else if ((zeroCrossing[j][i] == -1) && (j != twoIndexNegativeLocation[j]) && (Math.abs(i - fourIndexNegativeLocation[j+1]) < secondGaussianNegativeDistance)) {
-		    		fourIndexNegativeLocation[j] = i;
-		    		secondGaussianNegativeDistance = Math.abs(i - fourIndexNegativeLocation[j+1]);
+		    	else if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
+		    			(Math.abs(i - fourIndexHighLocation[j+1]) < secondGaussianHighDistance)) {
+		    		fourIndexHighLocation[j] = i;
+		    		secondGaussianHighDistance = Math.abs(i - fourIndexHighLocation[j+1]);
 		    	}
 		    }
 	    }
 	    
-	    double firstGaussianMean = ((double)(intensity[twoIndexPositiveLocation[0]] + intensity[twoIndexNegativeLocation[0]]))/2.0;
-	    double firstGaussianStandardDeviation = ((double)Math.abs(intensity[twoIndexPositiveLocation[0]] - intensity[twoIndexNegativeLocation[0]]))/2.0;
-	    double secondGaussianMean = ((double)(intensity[fourIndexPositiveLocation[0]] + intensity[fourIndexNegativeLocation[0]]))/2.0;
-	    double secondGaussianStandardDeviation = ((double)Math.abs(intensity[fourIndexPositiveLocation[0]] - intensity[fourIndexNegativeLocation[0]]))/2.0;
+	    int fourIndexLowSlope = 0;
+        if (firstDerivBuffer[fourIndexLowLocation[0]] > 0) {
+	         fourIndexLowSlope = 1;	
+	    }
+        else if (firstDerivBuffer[fourIndexLowLocation[0]] < 0) {
+        	fourIndexLowSlope = -1;
+        }
+        int fourIndexHighSlope = 0;
+        if (firstDerivBuffer[fourIndexHighLocation[0]] > 0) {
+	         fourIndexHighSlope = 1;	
+	    }
+        else if (firstDerivBuffer[fourIndexHighLocation[0]] < 0) {
+        	fourIndexHighSlope = -1;
+        }
+        if ((fourIndexLowSlope > 0) && (fourIndexHighSlope > 0)) {
+        	System.err.println("In scale space with 4 zero crossings 3 crossings are positive");
+        	return;
+        }
+        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope < 0)) {
+        	System.err.println("In scale space with 4 zero crossings 3 crossings are negative");
+        	return;
+        }
+	    
+	    double firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
+	    double firstGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
+	    double secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
+	    double secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
 	    // a11*firstGaussianAmplitude + a12*secondGaussianAmplitude = b1
 	    // a21*firstGaussianAmplitude + a22*secondGaussianAmplitude = b2;
 	    double a11 = 0.0;
@@ -635,15 +698,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
-        makeKernels1D();
+        makeGxxKernels1D();
         double[] secondDerivBuffer = new double[buffer.length];
         convolve(buffer, GxxData, secondDerivBuffer);
-        double[] firstDerivBuffer = new double[buffer.length];
-        convolve(buffer, GxData, firstDerivBuffer);
-        return edgeDetect(firstDerivBuffer, secondDerivBuffer);
+        return edgeDetect(secondDerivBuffer);
     }
 	
-	public byte[] edgeDetect(double firstDerivBuffer[], double secondDerivBuffer[]) {
+	public byte[] edgeDetect(double secondDerivBuffer[]) {
 		int i;
 		double x0;
 		double x1;
@@ -669,12 +730,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
             	 edgeDetectBuffer[i] = 0;
              }
              else {
-            	 if (firstDerivBuffer[i] > 0) {
-            	     edgeDetectBuffer[i] = 1;
-            	 }
-            	 else if (firstDerivBuffer[i] < 0){
-            		 edgeDetectBuffer[i] = -1;
-            	 }
+            	 edgeDetectBuffer[i] = 1;
              }
              
 		}
@@ -684,14 +740,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	/**
      * Creates Gaussian derivative kernels.
      */
-    private void makeKernels1D() {
+    private void makeGxxKernels1D() {
         int xkDim;
         int[] derivOrder = new int[1];
 
         int kExtents[] = new int[1];
         derivOrder[0] = 2;
 
-        xkDim = (int)Math.round(8 * sigmas[0]);
+        // For buffer all 1.0 values:
+        // Sum of 9 GxxData coefficients = -7.2e-5 for sigmas[0] = 1.0;
+        // Sum of 17 GxxData coefficients = -2.11E-7 for sigmas[0] = 1.0;
+        xkDim = (int)Math.round(16 * sigmas[0]);
 
         if ((xkDim % 2) == 0) {
             xkDim++;
@@ -705,16 +764,35 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
         GxxData = new double[xkDim];
 
-        GenerateDGaussian Gxx = new GenerateDGaussian(GxxData, kExtents, sigmas, derivOrder);
+        GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas, derivOrder);
 
-        Gxx.calc(false);
+        Gxx.dcalc(false);
         Gxx.finalize();
         Gxx = null;  
+    }
+    
+    private void makeGxKernels1D() {
+        int xkDim;
+        int[] derivOrder = new int[1];
+
+        int kExtents[] = new int[1];
+        derivOrder[0] = 1;
+
+        xkDim = (int)Math.round(16 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
         
         GxData = new double[xkDim];
-        derivOrder[0] = 1;
-        GenerateDGaussian Gx = new GenerateDGaussian(GxData, kExtents, sigmas, derivOrder);
-        Gx.calc(false);
+        GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
+        Gx.dcalc(false);
         Gx.finalize();
         Gx = null;
     }
