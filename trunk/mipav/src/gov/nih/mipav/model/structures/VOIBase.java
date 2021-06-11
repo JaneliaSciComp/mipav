@@ -1072,7 +1072,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         else if ( m_iPlane == XPLANE )
         {
-
             int iYMin = (int)(m_akImageMinMax[0].Y);
             int iYMax = (int)(m_akImageMinMax[1].Y);
 
@@ -1808,11 +1807,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
         if ( m_bUpdateBounds )
         {
         	
+        	boolean copied = false;
             for ( int i = 0; i < size(); i++ )
             {
+            	if (elementAt(i).X < 0.0f) {
+            		continue;
+            	}
                 Vector3f kVolumePt = elementAt(i);
-                if ( i == 0 )
+                if (!copied)
                 {
+                	copied = true;
                     m_akImageMinMax[0].copy(kVolumePt);
                     m_akImageMinMax[1].copy(kVolumePt);
                 }
