@@ -559,6 +559,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
         	System.err.println("In scale space with 2 zero crossings both crossings are negative");
         	return;
         }
+        
 	    int fourIndexLowLocation[] = new int[firstFourIndex+1];
 	    int fourIndexHighLocation[] = new int[firstFourIndex+1];
 	    for (j = 0; j < firstFourIndex+1; j++) {
@@ -694,6 +695,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		if (doCurveIntersect) {
 		    curveIntersect(intensity, xp);
+		    if (x_out == null) {
+		    	System.err.println("x_out == null because curveIntersect found no intersection");
+		    	return;
+		    }
 		    mask_threshold = x_out[0];
 		}
 		else {
