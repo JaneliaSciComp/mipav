@@ -15,6 +15,7 @@ import gov.nih.mipav.view.ViewJComponentGraph;
 import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewUserInterface;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.io.*;
@@ -159,18 +160,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	
 	private int gauss2FittingObservations;
     private double gauss2FittingData[];
-    boolean doCurveIntersect = false;
+    // For 2 ideal Gaussians with doCurveIntersect = true;
+    // Final calculation for intensity at which 2 Gaussians intersect = 4.154614002693739
+    // For 2 ideal Gaussians with doCurveIntersect = false solving a one parameter search problem
+    // Final calculation for intensity at which 2 Gaussians intersect = 4.154017548758297
+    boolean doCurveIntersect = true;
     double x_out[];
     double y_out[];
     double x_loc[];
     double y_loc[];
     
     boolean readTestImage = true;
-    boolean test2PerfectGaussians = false;
+    boolean test2PerfectGaussians = true;
     private double[] GxData;
     private double[] GxxData;
     private double sigmas[] = new double[] {1.0};
-    private double zeroDetectLevel = 0.0;
     
     public DSC_MRI_toolbox() {
     	
@@ -378,14 +382,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    // Simple intialization scheme does not work
 	    //double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
 	    		//ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
-	    byte zeroCrossing[][] = new byte[gauss2FittingObservations][];
-	    int numberPositiveZeroCrossings[] = new int[gauss2FittingObservations];
-	    int numberNegativeZeroCrossings[] = new int[gauss2FittingObservations];
-	    int numberZeroCrossings[] = new int[gauss2FittingObservations];
+	    byte zeroCrossing[][] = new byte[3*gauss2FittingObservations][];
+	    int numberZeroCrossings[] = new int[3*gauss2FittingObservations];
+	    int firstFiveIndex = -1;
 	    int firstFourIndex = -1;
+	    int firstThreeIndex = -1;
 	    int firstTwoIndex = -1;
-	    for (i = 1; i <= gauss2FittingObservations; i++) {
-	    	sigmas[0] = i;
+	    int firstOneIndex = -1;
+	    for (i = 1; i <= 3*gauss2FittingObservations; i++) {
+	    	sigmas[0] = 1 + (i-1)*0.1;
 	    	zeroCrossing[i-1] = calcZeroX(probDouble);
 	    	for (j = 0; j < zeroCrossing[i-1].length; j++) {
 	    		if (zeroCrossing[i-1][j] == 1) {
@@ -393,30 +398,110 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    		
 	    	}
-	    	if ((firstFourIndex == -1) && (numberZeroCrossings[i-1] == 4)) {
+	    	if ((firstFiveIndex == -1) && (numberZeroCrossings[i-1] == 5)) {
+	    		firstFiveIndex = i-1;
+	    	}
+	    	else if ((firstFourIndex == -1) && (numberZeroCrossings[i-1] == 4)) {
 	    		firstFourIndex = i-1;
+	    	}
+	    	else if ((firstThreeIndex == -1) && (numberZeroCrossings[i-1] == 3)) {
+	    		firstThreeIndex = i-1;
 	    	}
 	    	else if ((firstTwoIndex == -1) && (numberZeroCrossings[i-1] == 2)) {
 	    		firstTwoIndex = i-1;
 	    	}
+	    	else if ((firstOneIndex == -1) && (numberZeroCrossings[i-1] == 1)) {
+	    		firstOneIndex = i-1;
+	    	}
 	    }
-	    for (i = 0; i < gauss2FittingObservations; i++) {
+	    for (i = 0; i < 3*gauss2FittingObservations; i++) {
 	    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
 	    			Preferences.DEBUG_ALGORITHM);
+	    	int numberDisplayed = 0;
+	    	for (j = 0; j < zeroCrossing[i].length; j++) {
+	    		if (zeroCrossing[i][j] == 1) {
+		    		if (numberDisplayed == numberZeroCrossings[i]-1) {
+		    			Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM);
+		    		}
+		    		else {
+		    			Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM);
+		    		}
+		    		numberDisplayed++;
+	    		}		
+	    	}
 	    }
-	    if ((firstFourIndex == -1) && (firstTwoIndex == -1)) {
+	    if ((firstFourIndex == -1) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
-	    if (firstFourIndex == -1) {
+	    if ((firstFourIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
-	    if (firstTwoIndex == -1) {
-	    	System.err.println("No scale space with 2 zero crossing found in initializing sum of Gaussians");
+	    if ((firstTwoIndex == -1) && (firstOneIndex == -1)) {
+	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
+	    if (((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) {
+	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
+	        int zeroCrossingsToEliminate[] = new int[firstOneIndex+1];
+	        for (j = 0; j < zeroCrossing[firstOneIndex].length; j++) {
+	        	if (zeroCrossing[firstOneIndex][j] == 1) {
+	        		zeroCrossingsToEliminate[firstOneIndex] = j;
+	        	}
+	        }
+	        for (j = firstOneIndex-1; j >= 0; j--) {
+	        	int distance = Integer.MAX_VALUE;
+	        	for (i = 0; i < zeroCrossing[j].length; i++) {
+	        		if ((zeroCrossing[j][i] == 1) && (Math.abs(i - zeroCrossingsToEliminate[j+1]) < distance)) {
+	        			zeroCrossingsToEliminate[j] = i;
+	        			distance = Math.abs(i - zeroCrossingsToEliminate[j+1]);
+	        		}
+	        	}
+	        }
+	        for (j = 3*gauss2FittingObservations-1; j > firstOneIndex; j--) {
+	        	for (i = 0; i < zeroCrossing[j].length; i++) {
+	        		zeroCrossing[j][i] = 0;
+	        	}
+	        	numberZeroCrossings[j] = 0;
+	        }
+	        for (j = 0; j <= firstOneIndex; j++) {
+	        	zeroCrossing[j][zeroCrossingsToEliminate[j]] = 0;
+	        	numberZeroCrossings[j]--;
+	        }
+	        firstFourIndex = firstFiveIndex;
+	        firstTwoIndex = firstThreeIndex;
+	        for (i = 0; i < 3*gauss2FittingObservations; i++) {
+		    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
+		    			Preferences.DEBUG_ALGORITHM);
+		    	int numberDisplayed = 0;
+		    	for (j = 0; j < zeroCrossing[i].length; j++) {
+		    		if (zeroCrossing[i][j] == 1) {
+			    		if (numberDisplayed == numberZeroCrossings[i]-1) {
+			    			Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM);
+			    		}
+			    		else {
+			    			Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM);
+			    		}
+			    		numberDisplayed++;
+		    		}		
+		    	}
+		    }
+		    if ((firstFourIndex == -1) && (firstTwoIndex == -1)) {
+		    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
+		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+		    	return;
+		    }
+		    if (firstFourIndex == -1) {
+		    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
+		    	return;
+		    }
+		    if (firstTwoIndex == -1) {
+		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+		    	return;
+		    }
+	    } // if (((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0))
 	    int twoIndexLowLocation[] = new int[firstTwoIndex+1];
 	    int twoIndexHighLocation[] = new int[firstTwoIndex+1];
 	    for (j = 0; j < firstTwoIndex+1; j++) {
@@ -607,11 +692,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("c2 = " + xp[5] + "\n");
 		}
 		
-		boolean stopEarly = true;
-		if (stopEarly) {
-			return;
-		}
-		
 		if (doCurveIntersect) {
 		    curveIntersect(intensity, xp);
 		    mask_threshold = x_out[0];
@@ -657,8 +737,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity", "Fitted Gaussians");
 		    fittedGaussiansGraph.setVisible(true);
 		    ViewJComponentGraph graph = fittedGaussiansGraph.getGraph();
-		    Rectangle graphBounds = graph.getGraphBounds();
 		    Graphics g = graph.getGraphics();
+		    graph.paintComponent(g);
+		    Rectangle graphBounds = graph.getGraphBounds();
 		    double axlim[] = new double[4];
 		    axlim[0] = Double.MAX_VALUE;
 			axlim[1] = -Double.MAX_VALUE;
@@ -685,14 +766,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    y1t = -y1t + 2*graphBounds.y + graphBounds.height;
 		    double maxprob = -Double.MAX_VALUE;
 		    for (i = 0; i < gauss2FittingObservations; i++) {
-		    	if (prob[i] > maxprob) {
-		    		maxprob = prob[i];
+		    	if (probDouble[i] > maxprob) {
+		    		maxprob = probDouble[i];
 		    	}
 		    }
 		    int y2t =  (int)Math.round(graphBounds.y + yScale*(Math.min(1.05*maxprob,axlim[3]) - axlim[2]));
 		    y2t = -y2t + 2*graphBounds.y + graphBounds.height;
-		    graph.drawLine(g, xthresh, y1t, xthresh, y2t);
-		    graph.paintComponent(g);
+		    g = graph.getGraphics();
+		    g.setColor(Color.BLUE);
+		    graph.drawLine(g,xthresh, y1t, xthresh, y2t);
+		    graph.plotGraph(g);
 		}
 	}
 	
@@ -705,7 +788,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
     }
 	
 	public byte[] edgeDetect(double secondDerivBuffer[]) {
-		int i;
+		int i,j;
 		double x0;
 		double x1;
 		int xDim = secondDerivBuffer.length;
@@ -718,9 +801,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
             	 edgeDetectBuffer[i] = 0;
              }
              else if ((x0 < 0) && (x1 < 0)) {
-            	 edgeDetectBuffer[i] = 0;
-             }
-             else if (Math.abs(x1 - x0) < zeroDetectLevel) {
             	 edgeDetectBuffer[i] = 0;
              }
              else if (i == 0) {
@@ -1228,9 +1308,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    final double x = parameters[0];
             double val1 = (x - xp[1])/xp[2];
             double val2 = (x - xp[4])/xp[5];
-		    cost[0] = xp[0]*Math.exp(-val1*val1) - xp[3]*Math.exp(-val2*val2);
+            double part1 = xp[0]*Math.exp(-val1*val1);
+            double part2 = xp[3]*Math.exp(-val2*val2);
+		    cost[0] = Math.abs(xp[0]*Math.exp(-val1*val1) - xp[3]*Math.exp(-val2*val2));
 		    if (gradient != null) {
-		      gradient[0] = -2.0*xp[0]*(val1/xp[2])*Math.exp(-val1*val1) + 2.0*xp[3]*(val2/xp[5])*Math.exp(-val2*val2);
+		    	if (part1 > part2) {
+		            gradient[0] = -2.0*part1*(val1/xp[2]) + 2.0*part2*(val2/xp[5]);
+		    	}
+		    	else {
+		    		gradient[0] = 2.0*part1*(val1/xp[2]) - 2.0*part2*(val2/xp[5]);
+		    	}
 		    }
 		    return true;
 		  }
