@@ -1041,7 +1041,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 // graphBounds.x + (int)Math.round(i*(xTick/10)),
                 // graphBounds.y + graphBounds.height + 2);
                 g.drawLine(graphBounds.x + (int) Math.round(i * (xTick / 10)), graphBounds.y + graphBounds.height,
-                           graphBounds.x + (int) Math.round(i * (xTick / 10)), graphBounds.y + graphBounds.height + 4);
+                           graphBounds.x  + (int) Math.round(i * (xTick / 10)), graphBounds.y + graphBounds.height + 4);
             }
 
             for (int i = (yGridLines * 10) - 1; i > 0; i--) {
@@ -1819,7 +1819,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
      *
      * @param  g  graphics to draw in
      */
-    private void plotGraph(Graphics g) {
+    public void plotGraph(Graphics g) {
         int i;
         int index, indexExp;
         float tmp;
