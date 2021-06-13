@@ -559,6 +559,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
         	System.err.println("In scale space with 2 zero crossings both crossings are negative");
         	return;
         }
+        if ((twoIndexLowSlope < 0) && (twoIndexHighSlope > 0)) {
+        	System.err.println("In scale space with 2 zero crossings low crossing is negative and high crossing is positive");
+        	return;
+        }
         
 	    int fourIndexLowLocation[] = new int[firstFourIndex+1];
 	    int fourIndexHighLocation[] = new int[firstFourIndex+1];
@@ -613,6 +617,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
         }
         if ((fourIndexLowSlope < 0) && (fourIndexHighSlope < 0)) {
         	System.err.println("In scale space with 4 zero crossings 3 crossings are negative");
+        	return;
+        }
+        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope > 0)) {
+        	System.err.println("In scale space with 4 zero crossings second Gaussian low crossing is negative and second Gaussian high crossing is positive");
         	return;
         }
 	    
@@ -877,7 +885,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
         
         GxData = new double[xkDim];
         GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
-        Gx.dcalc(false);
+        Gx.dcalc(true);
         Gx.finalize();
         Gx = null;
     }
