@@ -164,17 +164,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
     // Final calculation for intensity at which 2 Gaussians intersect = 4.154614002693739
     // For 2 ideal Gaussians with doCurveIntersect = false solving a one parameter search problem
     // Final calculation for intensity at which 2 Gaussians intersect = 4.154017548758297
-    boolean doCurveIntersect = true;
+    boolean doCurveIntersect = false;
     double x_out[];
     double y_out[];
     double x_loc[];
     double y_loc[];
     
     boolean readTestImage = true;
-    boolean test2PerfectGaussians = true;
+    boolean test2PerfectGaussians = false;
     private double[] GxData;
     private double[] GxxData;
     private double sigmas[] = new double[] {1.0};
+    double firstGaussianMean;
+    double firstGaussianAmplitude;
+    double firstGaussianHeights[] = new double[4];
     
     public DSC_MRI_toolbox() {
     	
@@ -335,12 +338,27 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	intensity[i] = tempDouble[i];
 	    }
 	    
+	    // The first Gaussian at the extreme left is found by highest amplitude
+	    firstGaussianMean = -1.0;
+	    firstGaussianAmplitude = -Double.MAX_VALUE; 
+	    for (i = 0; i < intensity.length; i++)  {
+	    	if (probDouble[i] > firstGaussianAmplitude) {
+	    		firstGaussianAmplitude = probDouble[i];
+	    		firstGaussianMean = (double)i;
+	    	}
+	    }
+	    // Calculate c1 from amplitude of best fit of highest channel and next 3 channels to the right
+	    for (i = (int)firstGaussianMean; i <= (int)firstGaussianMean + 3; i++) {
+	    	firstGaussianHeights[i - (int)firstGaussianMean] = probDouble[i];
+	    }
+	    
 	    gauss2FittingObservations = nbin-1-ind_max;
 	    gauss2FittingData = new double[2*gauss2FittingObservations];
 	    //double ySum = 0.0;
 	    for (i = 0; i < gauss2FittingObservations; i++) {
 	    	gauss2FittingData[2*i] = intensity[i];
 	    	gauss2FittingData[2*i+1] = probDouble[i];
+	    	System.err.println("probDouble["+i+"] = " + probDouble[i]);
 	    	//ySum += probDouble[i];
 	    }
 	    double xp[] = null;
@@ -624,7 +642,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
         	return;
         }
 	    
-	    double firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
+	    firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
 	    double firstGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
 	    double secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
 	    double secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
@@ -665,7 +683,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    double det1 = b1*a22 - b2*a12;
 	    double det2 = a11*b2 - a21*b1;
-	    double firstGaussianAmplitude = det1/det;
+	    firstGaussianAmplitude = det1/det;
 	    double secondGaussianAmplitude = det2/det;
 	    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
 	    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
@@ -729,6 +747,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		
 		if (display > 1) {
+			float probFloat[] = new float[probDouble.length];
+			for (i = 0; i < probDouble.length; i++) {
+				probFloat[i] = (float)probDouble[i];
+			}
 			float intensityf[] = new float[intensity.length];
 			for (i = 0; i < intensity.length; i++) {
 				intensityf[i] = (float)intensity[i];
@@ -747,6 +769,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    for (i = 0; i < intensity.length; i++) {
 		    	fitf[i] = (float)(y1[i] + y2[i]);
 		    }
+		    ViewJFrameGraph actualDataGraph = new ViewJFrameGraph(intensityf, probFloat, "Raw data", "Intensity", "Amplitudes");
+		    actualDataGraph.setVisible(true);
 		    ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity", "Fitted Gaussians");
 		    fittedGaussiansGraph.setVisible(true);
 		    ViewJComponentGraph graph = fittedGaussiansGraph.getGraph();
@@ -816,12 +840,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
              else if ((x0 < 0) && (x1 < 0)) {
             	 edgeDetectBuffer[i] = 0;
              }
-             else if (i == 0) {
+             //else if (i == 0) {
             	 // A false contour is easy to detect because it always appears
             	 // in either the first or the last column of the space-scale
             	 // image in high resolution.
-            	 edgeDetectBuffer[i] = 0;
-             }
+            	 //edgeDetectBuffer[i] = 0;
+             //}
              else {
             	 edgeDetectBuffer[i] = 1;
              }
@@ -1344,6 +1368,47 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			UI.setDataText("unexpected fit x["+i+"] = " + x[i] + "\n");
 		}
 		return true;
+	}
+	
+	class gauss1FittingCostFunction extends SizedCostFunction {
+		
+		public gauss1FittingCostFunction() {
+			// number of resdiuals
+			// size of first parameter
+			super(4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = (int)firstGaussianMean; i <= (int)firstGaussianMean+3; i++) {
+				double val1 = (i - firstGaussianMean)/x[0];
+				double value = firstGaussianAmplitude*Math.exp(-val1*val1);
+				residuals[i-(int)firstGaussianMean] = firstGaussianHeights[i-(int)firstGaussianMean] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][i] = -2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(i - firstGaussianMean)/(x[0]*x[0]);
+				}
+			}
+			return true;
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = (int)firstGaussianMean; i <= (int)firstGaussianMean+3; i++) {
+				double val1 = (i - firstGaussianMean)/x[0];
+				double value = firstGaussianAmplitude*Math.exp(-val1*val1);
+				residuals[i-(int)firstGaussianMean] = firstGaussianHeights[i-(int)firstGaussianMean] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+i] = -2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(i - firstGaussianMean)/(x[0]*x[0]);
+				}
+			}
+			return true;
+		}
 	}
 	
 	class gauss2FittingCostFunction extends SizedCostFunction {
