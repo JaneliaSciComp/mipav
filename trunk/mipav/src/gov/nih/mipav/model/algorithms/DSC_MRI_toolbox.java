@@ -176,8 +176,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
     private double[] GxxData;
     private double sigmas[] = new double[] {1.0};
     double firstGaussianMean;
+    int firstGaussianMeanBin;
     double firstGaussianAmplitude;
-    double firstGaussianHeights[] = new double[4];
+    double firstGaussianStandardDeviation;
+    double c1;
     
     public DSC_MRI_toolbox() {
     	
@@ -338,34 +340,64 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	intensity[i] = tempDouble[i];
 	    }
 	    
-	    // The first Gaussian at the extreme left is found by highest amplitude
-	    firstGaussianMean = -1.0;
-	    firstGaussianAmplitude = -Double.MAX_VALUE; 
-	    for (i = 0; i < intensity.length; i++)  {
-	    	if (probDouble[i] > firstGaussianAmplitude) {
-	    		firstGaussianAmplitude = probDouble[i];
-	    		firstGaussianMean = (double)i;
-	    	}
-	    }
-	    // Calculate c1 from amplitude of best fit of highest channel and next 3 channels to the right
-	    for (i = (int)firstGaussianMean; i <= (int)firstGaussianMean + 3; i++) {
-	    	firstGaussianHeights[i - (int)firstGaussianMean] = probDouble[i];
-	    }
-	    
 	    gauss2FittingObservations = nbin-1-ind_max;
 	    gauss2FittingData = new double[2*gauss2FittingObservations];
 	    //double ySum = 0.0;
 	    for (i = 0; i < gauss2FittingObservations; i++) {
 	    	gauss2FittingData[2*i] = intensity[i];
 	    	gauss2FittingData[2*i+1] = probDouble[i];
-	    	System.err.println("probDouble["+i+"] = " + probDouble[i]);
+	    	Preferences.debug("probDouble["+i+"] = " + probDouble[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	    	//ySum += probDouble[i];
 	    }
 	    double xp[] = null;
+	    
+	    if (!test2PerfectGaussians) {
+		    // The first Gaussian at the extreme left is found by highest amplitude
+		    firstGaussianMeanBin = -1;
+		    firstGaussianAmplitude = -Double.MAX_VALUE; 
+		    for (i = 0; i < intensity.length; i++)  {
+		    	if (probDouble[i] > firstGaussianAmplitude) {
+		    		firstGaussianAmplitude = probDouble[i];
+		    		firstGaussianMeanBin = i;
+		    	}
+		    }
+		    firstGaussianMean = intensity[firstGaussianMeanBin];
+		    UI.setDataText("First Gaussian amplitude = " + firstGaussianAmplitude + "\n");
+		    UI.setDataText("First Gaussian mean = " + firstGaussianMean + "\n");
+		    // Calculate c1 from amplitude of best fit of highest channel and next 3 channels to the right
+		    
+		    // Initial estimate of c1 = sqrt(2) * standard deviation
+		    double xp1[] = new double[1];
+		    double ratio = probDouble[firstGaussianMeanBin + 3]/probDouble[firstGaussianMeanBin];
+		    double diff = (intensity[firstGaussianMeanBin+3] - firstGaussianMean);
+		    // exp(-((x-mean)/c1)^2) = ratio
+		    // -(intensity[firstGaussianMeanBin+3] - firstGaussianMean)^2/(c1*c1) = ln(ratio)
+		    xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
+		    CostFunction cost_function1 = new gaussStandardDeviationFittingCostFunction();
+		    ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function1, null, xp1);
+	
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+			solverOptions.max_num_consecutive_invalid_steps = 100;
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			c1 = xp1[0];
+			firstGaussianStandardDeviation = Math.sqrt(2.0) * c1;
+			if (display > 0) {
+			    UI.setDataText(solverSummary.BriefReport() + "\n");
+			    UI.setDataText("Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)\n");
+			    UI.setDataText("c1 = " + xp1[0] + "\n");
+			}
+	    } // if (!test2PerfectGaussians)
+	    
+	   
 	    if (test2PerfectGaussians) {
 	    	double a1 = 1000.0;
 	    	double b1 = 3.0;
-	    	double c1 = 1.0;
+	    	c1 = 1.0;
 	    	double a2 = 2000.0;
 	    	double b2 = 7.0;
 	    	double c2 = 2.0;
@@ -448,12 +480,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}		
 	    	}
 	    }
-	    if ((firstFourIndex == -1) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
+	    if (test2PerfectGaussians && (firstFourIndex == -1) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
-	    if ((firstFourIndex == -1) && (firstOneIndex == -1)) {
+	    if (test2PerfectGaussians && (firstFourIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
@@ -461,7 +493,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 	    	return;
 	    }
-	    if (((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) {
+	    if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) {
 	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
 	        int zeroCrossingsToEliminate[] = new int[firstOneIndex+1];
 	        for (j = 0; j < zeroCrossing[firstOneIndex].length; j++) {
@@ -519,7 +551,56 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 		    	return;
 		    }
-	    } // if (((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0))
+	    } // if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0))
+	    if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex > 0)) {
+	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
+	        int zeroCrossingsToEliminate[] = new int[firstOneIndex+1];
+	        for (j = 0; j < zeroCrossing[firstOneIndex].length; j++) {
+	        	if (zeroCrossing[firstOneIndex][j] == 1) {
+	        		zeroCrossingsToEliminate[firstOneIndex] = j;
+	        	}
+	        }
+	        for (j = firstOneIndex-1; j >= 0; j--) {
+	        	int distance = Integer.MAX_VALUE;
+	        	for (i = 0; i < zeroCrossing[j].length; i++) {
+	        		if ((zeroCrossing[j][i] == 1) && (Math.abs(i - zeroCrossingsToEliminate[j+1]) < distance)) {
+	        			zeroCrossingsToEliminate[j] = i;
+	        			distance = Math.abs(i - zeroCrossingsToEliminate[j+1]);
+	        		}
+	        	}
+	        }
+	        for (j = 3*gauss2FittingObservations-1; j > firstOneIndex; j--) {
+	        	for (i = 0; i < zeroCrossing[j].length; i++) {
+	        		zeroCrossing[j][i] = 0;
+	        	}
+	        	numberZeroCrossings[j] = 0;
+	        }
+	        for (j = 0; j <= firstOneIndex; j++) {
+	        	zeroCrossing[j][zeroCrossingsToEliminate[j]] = 0;
+	        	numberZeroCrossings[j]--;
+	        }
+	        firstTwoIndex = firstThreeIndex;
+	        for (i = 0; i < 3*gauss2FittingObservations; i++) {
+		    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
+		    			Preferences.DEBUG_ALGORITHM);
+		    	int numberDisplayed = 0;
+		    	for (j = 0; j < zeroCrossing[i].length; j++) {
+		    		if (zeroCrossing[i][j] == 1) {
+			    		if (numberDisplayed == numberZeroCrossings[i]-1) {
+			    			Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM);
+			    		}
+			    		else {
+			    			Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM);
+			    		}
+			    		numberDisplayed++;
+		    		}		
+		    	}
+		    }
+		    if (firstTwoIndex == -1) {
+		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+		    	return;
+		    }
+	    } // if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex > 0))
 	    int twoIndexLowLocation[] = new int[firstTwoIndex+1];
 	    int twoIndexHighLocation[] = new int[firstTwoIndex+1];
 	    for (j = 0; j < firstTwoIndex+1; j++) {
@@ -536,16 +617,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	  
 	    for (j = firstTwoIndex-1; j >= 0; j--) {
-		    int firstGaussianLowDistance = Integer.MAX_VALUE;
-		    int firstGaussianHighDistance = Integer.MAX_VALUE;
+		    int GaussianLowDistance = Integer.MAX_VALUE;
+		    int GaussianHighDistance = Integer.MAX_VALUE;
 		    for (i = 0; i < zeroCrossing[j].length; i++) {
-		    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexLowLocation[j+1]) < firstGaussianLowDistance)) {
+		    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexLowLocation[j+1]) < GaussianLowDistance)) {
 		    		twoIndexLowLocation[j] = i;
-		    		firstGaussianLowDistance = Math.abs(i - twoIndexLowLocation[j+1]);
+		    		GaussianLowDistance = Math.abs(i - twoIndexLowLocation[j+1]);
 		    	}
-		    	else if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexHighLocation[j+1]) < firstGaussianHighDistance)) {
+		    	else if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexHighLocation[j+1]) < GaussianHighDistance)) {
 		    		twoIndexHighLocation[j] = i;
-		    		firstGaussianHighDistance = Math.abs(i - twoIndexHighLocation[j+1]);
+		    		GaussianHighDistance = Math.abs(i - twoIndexHighLocation[j+1]);
 		    	}
 		    }
 	    }
@@ -582,142 +663,194 @@ public class DSC_MRI_toolbox extends CeresSolver {
         	return;
         }
         
-	    int fourIndexLowLocation[] = new int[firstFourIndex+1];
-	    int fourIndexHighLocation[] = new int[firstFourIndex+1];
-	    for (j = 0; j < firstFourIndex+1; j++) {
-	    	fourIndexLowLocation[j] = -1;
-	    	fourIndexHighLocation[j] = -1;
-	    }
-	    for (j = 0; j < zeroCrossing[firstFourIndex].length; j++) {
-	    	if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex]) &&
-	    		(fourIndexLowLocation[firstFourIndex] == -1)) {
-	    	    fourIndexLowLocation[firstFourIndex] = j;	
-	    	}
-	    	else if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex])) {
-	    		fourIndexHighLocation[firstFourIndex] = j;
-	    	}
-	    }
-	    
-	    for (j = firstFourIndex-1; j >= 0; j--) {
-		    int secondGaussianLowDistance = Integer.MAX_VALUE;
-		    int secondGaussianHighDistance = Integer.MAX_VALUE;
-		    for (i = 0; i < zeroCrossing[j].length; i++) {
-		    	if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
-		    			(Math.abs(i - fourIndexLowLocation[j+1]) < secondGaussianLowDistance)) {
-		    		fourIndexLowLocation[j] = i;
-		    		secondGaussianLowDistance = Math.abs(i - fourIndexLowLocation[j+1]);
+	    if (test2PerfectGaussians) {
+	        int fourIndexLowLocation[] = new int[firstFourIndex+1];
+		    int fourIndexHighLocation[] = new int[firstFourIndex+1];
+		    for (j = 0; j < firstFourIndex+1; j++) {
+		    	fourIndexLowLocation[j] = -1;
+		    	fourIndexHighLocation[j] = -1;
+		    }
+		    for (j = 0; j < zeroCrossing[firstFourIndex].length; j++) {
+		    	if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex]) &&
+		    		(fourIndexLowLocation[firstFourIndex] == -1)) {
+		    	    fourIndexLowLocation[firstFourIndex] = j;	
 		    	}
-		    	else if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
-		    			(Math.abs(i - fourIndexHighLocation[j+1]) < secondGaussianHighDistance)) {
-		    		fourIndexHighLocation[j] = i;
-		    		secondGaussianHighDistance = Math.abs(i - fourIndexHighLocation[j+1]);
+		    	else if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex])) {
+		    		fourIndexHighLocation[firstFourIndex] = j;
 		    	}
 		    }
-	    }
+		    
+		    for (j = firstFourIndex-1; j >= 0; j--) {
+			    int secondGaussianLowDistance = Integer.MAX_VALUE;
+			    int secondGaussianHighDistance = Integer.MAX_VALUE;
+			    for (i = 0; i < zeroCrossing[j].length; i++) {
+			    	if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
+			    			(Math.abs(i - fourIndexLowLocation[j+1]) < secondGaussianLowDistance)) {
+			    		fourIndexLowLocation[j] = i;
+			    		secondGaussianLowDistance = Math.abs(i - fourIndexLowLocation[j+1]);
+			    	}
+			    	else if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
+			    			(Math.abs(i - fourIndexHighLocation[j+1]) < secondGaussianHighDistance)) {
+			    		fourIndexHighLocation[j] = i;
+			    		secondGaussianHighDistance = Math.abs(i - fourIndexHighLocation[j+1]);
+			    	}
+			    }
+		    }
+		    
+		    int fourIndexLowSlope = 0;
+	        if (firstDerivBuffer[fourIndexLowLocation[0]] > 0) {
+		         fourIndexLowSlope = 1;	
+		    }
+	        else if (firstDerivBuffer[fourIndexLowLocation[0]] < 0) {
+	        	fourIndexLowSlope = -1;
+	        }
+	        int fourIndexHighSlope = 0;
+	        if (firstDerivBuffer[fourIndexHighLocation[0]] > 0) {
+		         fourIndexHighSlope = 1;	
+		    }
+	        else if (firstDerivBuffer[fourIndexHighLocation[0]] < 0) {
+	        	fourIndexHighSlope = -1;
+	        }
+	        if ((fourIndexLowSlope > 0) && (fourIndexHighSlope > 0)) {
+	        	System.err.println("In scale space with 4 zero crossings 3 crossings are positive");
+	        	return;
+	        }
+	        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope < 0)) {
+	        	System.err.println("In scale space with 4 zero crossings 3 crossings are negative");
+	        	return;
+	        }
+	        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope > 0)) {
+	        	System.err.println("In scale space with 4 zero crossings second Gaussian low crossing is negative and second Gaussian high crossing is positive");
+	        	return;
+	        }
 	    
-	    int fourIndexLowSlope = 0;
-        if (firstDerivBuffer[fourIndexLowLocation[0]] > 0) {
-	         fourIndexLowSlope = 1;	
-	    }
-        else if (firstDerivBuffer[fourIndexLowLocation[0]] < 0) {
-        	fourIndexLowSlope = -1;
-        }
-        int fourIndexHighSlope = 0;
-        if (firstDerivBuffer[fourIndexHighLocation[0]] > 0) {
-	         fourIndexHighSlope = 1;	
-	    }
-        else if (firstDerivBuffer[fourIndexHighLocation[0]] < 0) {
-        	fourIndexHighSlope = -1;
-        }
-        if ((fourIndexLowSlope > 0) && (fourIndexHighSlope > 0)) {
-        	System.err.println("In scale space with 4 zero crossings 3 crossings are positive");
-        	return;
-        }
-        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope < 0)) {
-        	System.err.println("In scale space with 4 zero crossings 3 crossings are negative");
-        	return;
-        }
-        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope > 0)) {
-        	System.err.println("In scale space with 4 zero crossings second Gaussian low crossing is negative and second Gaussian high crossing is positive");
-        	return;
-        }
-	    
-	    firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
-	    double firstGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
-	    double secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
-	    double secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
-	    // a11*firstGaussianAmplitude + a12*secondGaussianAmplitude = b1
-	    // a21*firstGaussianAmplitude + a22*secondGaussianAmplitude = b2;
-	    double a11 = 0.0;
-	    for (k = 0; k < gauss2FittingObservations; k++) {
-	    	double val = (intensity[k] - firstGaussianMean)/firstGaussianStandardDeviation;
-	    	a11 += Math.exp(-val * val);
-	    }
-	    double a12 = 0;
-	    for (k = 0; k < gauss2FittingObservations; k++) {
-	    	double diff1 = (intensity[k] - firstGaussianMean);
-	    	double diff2 = (intensity[k] - secondGaussianMean);
-	    	a12 += Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation) 
-	    			        -diff2*diff2/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
-	    }
-	    double a21 = a12;
-	    double a22 = 0.0;
-	    for (k = 0; k < gauss2FittingObservations; k++) {
-	    	double val = (intensity[k] - secondGaussianMean)/secondGaussianStandardDeviation;
-	    	a22 += Math.exp(-val * val);
-	    }
-	    double b1 = 0.0;
-	    for (k = 0; k < gauss2FittingObservations; k++) {
-	    	double diff = (intensity[k] - firstGaussianMean);
-	    	b1 += probDouble[k]*Math.exp(-diff*diff/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation));
-	    }
-	    double b2 = 0;
-	    for (k = 0; k < gauss2FittingObservations; k++) {
-	    	double diff = (intensity[k] - secondGaussianMean);
-	    	b2 += probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
-	    }
-	    double det = a11*a22 - a21*a12;
-	    if (det == 0.0) {
-	    	System.err.println("Cannot solve linear equations for Gaussian amplitudes because determinant is zero");
-	    	return;
-	    }
-	    double det1 = b1*a22 - b2*a12;
-	    double det2 = a11*b2 - a21*b1;
-	    firstGaussianAmplitude = det1/det;
-	    double secondGaussianAmplitude = det2/det;
-	    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
-	    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
-	    if (display > 0) {
-	    	UI.setDataText("Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
-		    UI.setDataText("a1 = " + xp[0] + "\n");
-		    UI.setDataText("b1 = " + xp[1] + "\n");
-		    UI.setDataText("c1 = " + xp[2] + "\n");
-		    UI.setDataText("a2 = " + xp[3] + "\n");
-		    UI.setDataText("b2 = " + xp[4] + "\n");
-		    UI.setDataText("c2 = " + xp[5] + "\n");
-	    }
-	   
-	    CostFunction cost_function = new gauss2FittingCostFunction();
-	    ProblemImpl problem = new ProblemImpl();
-		problem.AddResidualBlock(cost_function, null, xp);
-
-		// Run the solver!
-		SolverOptions solverOptions = new SolverOptions();
-		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
-		solverOptions.max_num_consecutive_invalid_steps = 100;
-		solverOptions.minimizer_progress_to_stdout = true;
-		SolverSummary solverSummary = new SolverSummary();
-		Solve(solverOptions, problem, solverSummary);
-		if (display > 0) {
-		    UI.setDataText(solverSummary.BriefReport() + "\n");
-		    UI.setDataText("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
-		    UI.setDataText("a1 = " + xp[0] + "\n");
-		    UI.setDataText("b1 = " + xp[1] + "\n");
-		    UI.setDataText("c1 = " + xp[2] + "\n");
-		    UI.setDataText("a2 = " + xp[3] + "\n");
-		    UI.setDataText("b2 = " + xp[4] + "\n");
-		    UI.setDataText("c2 = " + xp[5] + "\n");
-		}
+		    firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
+		    firstGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
+		    double secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
+		    double secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
+		    // a11*firstGaussianAmplitude + a12*secondGaussianAmplitude = b1
+		    // a21*firstGaussianAmplitude + a22*secondGaussianAmplitude = b2;
+		    double a11 = 0.0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double val = (intensity[k] - firstGaussianMean)/firstGaussianStandardDeviation;
+		    	a11 += Math.exp(-val * val);
+		    }
+		    double a12 = 0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double diff1 = (intensity[k] - firstGaussianMean);
+		    	double diff2 = (intensity[k] - secondGaussianMean);
+		    	a12 += Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation) 
+		    			        -diff2*diff2/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
+		    }
+		    double a21 = a12;
+		    double a22 = 0.0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double val = (intensity[k] - secondGaussianMean)/secondGaussianStandardDeviation;
+		    	a22 += Math.exp(-val * val);
+		    }
+		    double b1 = 0.0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double diff = (intensity[k] - firstGaussianMean);
+		    	b1 += probDouble[k]*Math.exp(-diff*diff/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation));
+		    }
+		    double b2 = 0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double diff = (intensity[k] - secondGaussianMean);
+		    	b2 += probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
+		    }
+		    double det = a11*a22 - a21*a12;
+		    if (det == 0.0) {
+		    	System.err.println("Cannot solve linear equations for Gaussian amplitudes because determinant is zero");
+		    	return;
+		    }
+		    double det1 = b1*a22 - b2*a12;
+		    double det2 = a11*b2 - a21*b1;
+		    firstGaussianAmplitude = det1/det;
+		    double secondGaussianAmplitude = det2/det;
+		    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
+		    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
+		    if (display > 0) {
+		    	UI.setDataText("Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
+			    UI.setDataText("a1 = " + xp[0] + "\n");
+			    UI.setDataText("b1 = " + xp[1] + "\n");
+			    UI.setDataText("c1 = " + xp[2] + "\n");
+			    UI.setDataText("a2 = " + xp[3] + "\n");
+			    UI.setDataText("b2 = " + xp[4] + "\n");
+			    UI.setDataText("c2 = " + xp[5] + "\n");
+		    }
+		   
+		    CostFunction cost_function = new gauss2FittingCostFunction();
+		    ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, xp);
+	
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+			solverOptions.max_num_consecutive_invalid_steps = 100;
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			if (display > 0) {
+			    UI.setDataText(solverSummary.BriefReport() + "\n");
+			    UI.setDataText("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
+			    UI.setDataText("a1 = " + xp[0] + "\n");
+			    UI.setDataText("b1 = " + xp[1] + "\n");
+			    UI.setDataText("c1 = " + xp[2] + "\n");
+			    UI.setDataText("a2 = " + xp[3] + "\n");
+			    UI.setDataText("b2 = " + xp[4] + "\n");
+			    UI.setDataText("c2 = " + xp[5] + "\n");
+			}
+	    } // if (test2PerfectGaussians)
+	    else { // !test2PerfectGaussians
+	    	double secondGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
+		    double secondGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
+		    // secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22
+		    double a21 = 0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double diff1 = (intensity[k] - firstGaussianMean);
+		    	double diff2 = (intensity[k] - secondGaussianMean);
+		    	a21 += Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation) 
+		    			        -diff2*diff2/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
+		    }
+		    double a22 = 0.0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double val = (intensity[k] - secondGaussianMean)/secondGaussianStandardDeviation;
+		    	a22 += Math.exp(-val * val);
+		    }
+		    double b2 = 0;
+		    for (k = 0; k < gauss2FittingObservations; k++) {
+		    	double diff = (intensity[k] - secondGaussianMean);
+		    	b2 += probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
+		    }
+		    double secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22;
+		    double xp1[] = new double[] {secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
+		    if (display > 0) {
+		    	UI.setDataText("Initial estimates for a2*exp(-((x-b2)/c2)^2)\n");
+			    UI.setDataText("a2 = " + xp1[0] + "\n");
+			    UI.setDataText("b2 = " + xp1[1] + "\n");
+			    UI.setDataText("c2 = " + xp1[2] + "\n");
+		    }
+		   
+		    CostFunction cost_function = new gauss1FittingCostFunction();
+		    ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, xp1);
+	
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+			solverOptions.max_num_consecutive_invalid_steps = 100;
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, xp1[0], xp1[1], xp1[2]};
+			if (display > 0) {
+			    UI.setDataText(solverSummary.BriefReport() + "\n");
+			    UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
+			    UI.setDataText("a2 = " + xp1[0] + "\n");
+			    UI.setDataText("b2 = " + xp1[1] + "\n");
+			    UI.setDataText("c2 = " + xp1[2] + "\n");
+			}
+	    } // else !test2PerfectGaussians
 		
 		if (doCurveIntersect) {
 		    curveIntersect(intensity, xp);
@@ -850,6 +983,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
             	 edgeDetectBuffer[i] = 1;
              }
              
+		}
+		if (!test2PerfectGaussians) {
+			for (i = 0; i <= firstGaussianMeanBin+3; i++) {
+				edgeDetectBuffer[i] = 0;
+			}
 		}
 		return edgeDetectBuffer;
 	}
@@ -1370,9 +1508,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		return true;
 	}
 	
-	class gauss1FittingCostFunction extends SizedCostFunction {
+	class gaussStandardDeviationFittingCostFunction extends SizedCostFunction {
 		
-		public gauss1FittingCostFunction() {
+		public gaussStandardDeviationFittingCostFunction() {
 			// number of resdiuals
 			// size of first parameter
 			super(4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -1383,12 +1521,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
 			
-			for (i = (int)firstGaussianMean; i <= (int)firstGaussianMean+3; i++) {
-				double val1 = (i - firstGaussianMean)/x[0];
+			for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin+3; i++) {
+				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/x[0];
 				double value = firstGaussianAmplitude*Math.exp(-val1*val1);
-				residuals[i-(int)firstGaussianMean] = firstGaussianHeights[i-(int)firstGaussianMean] - value;
+				residuals[i-firstGaussianMeanBin] = gauss2FittingData[2*i+1] - value;
 				if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][i] = -2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(i - firstGaussianMean)/(x[0]*x[0]);
+					jacobians[0][i-firstGaussianMeanBin] = -2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - firstGaussianMean)/(x[0]*x[0]);
 				}
 			}
 			return true;
@@ -1399,17 +1537,69 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
 			
-			for (i = (int)firstGaussianMean; i <= (int)firstGaussianMean+3; i++) {
-				double val1 = (i - firstGaussianMean)/x[0];
+			for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin+3; i++) {
+				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/x[0];
 				double value = firstGaussianAmplitude*Math.exp(-val1*val1);
-				residuals[i-(int)firstGaussianMean] = firstGaussianHeights[i-(int)firstGaussianMean] - value;
+				residuals[i-firstGaussianMeanBin] = gauss2FittingData[2*i+1] - value;
 				if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][jacobians_offset[0]+i] = -2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(i - firstGaussianMean)/(x[0]*x[0]);
+					jacobians[0][jacobians_offset[0]+i-firstGaussianMeanBin] = 
+							-2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - firstGaussianMean)/(x[0]*x[0]);
 				}
 			}
 			return true;
 		}
 	}
+	
+    class gauss1FittingCostFunction extends SizedCostFunction {
+		
+		public gauss1FittingCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(gauss2FittingObservations, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < gauss2FittingObservations; i++) {
+				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/c1;
+				double val2 = (gauss2FittingData[2*i] - x[1])/x[2];
+				double value = firstGaussianAmplitude*Math.exp(-val1*val1) + x[0]*Math.exp(-val2*val2);
+			    residuals[i] = gauss2FittingData[2*i+1] - value;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][3*i] = -Math.exp(-val2*val2);
+					jacobians[0][3*i+1] = -2.0*x[0]*val2*Math.exp(-val2*val2)/x[2];
+					jacobians[0][3*i+2] = -2.0*x[0]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
+			    }
+			}
+
+			return true;
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < gauss2FittingObservations; i++) {
+				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/c1;
+				double val2 = (gauss2FittingData[2*i] - x[1])/x[2];
+				double value = firstGaussianAmplitude*Math.exp(-val1*val1) + x[0]*Math.exp(-val2*val2);
+			    residuals[i] = gauss2FittingData[2*i+1] - value;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0] + 3*i] = -Math.exp(-val2*val2);
+					jacobians[0][jacobians_offset[0] + 3*i+1] = -2.0*x[0]*val2*Math.exp(-val2*val2)/x[2];
+					jacobians[0][jacobians_offset[0] + 3*i+2] = -2.0*x[0]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
+			    }	
+			}
+
+			return true;
+	  }
+	};
 	
 	class gauss2FittingCostFunction extends SizedCostFunction {
 		
