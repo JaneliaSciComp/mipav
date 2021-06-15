@@ -1,26 +1,27 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
-import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblem;
-import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverOptions;
-import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverSummary;
-import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
-import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
-import gov.nih.mipav.model.algorithms.CeresSolverTest.Rosenbrock;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Vector;
+
+import javax.imageio.ImageIO;
+
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentGraph;
 import gov.nih.mipav.view.ViewJFrameGraph;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
-
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Rectangle;
-import java.io.*;
-
-import java.util.*;
 
 /*
 MIT License
@@ -55,6 +56,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private int nC;
 	private int nS;
 	private int nT;
+	private int length;
 	private double time[];
 	// echo time in seconds
 	private double te = 0.025;
@@ -180,6 +182,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
     double firstGaussianAmplitude;
     double firstGaussianStandardDeviation;
     double c1;
+    private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator +
+    		"dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator;
+    private String outputPrefix = "";
     
     public DSC_MRI_toolbox() {
     	
@@ -207,7 +212,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        nC = img.getExtents()[1];
 	        nS = img.getExtents()[2];
 	        nT = img.getExtents()[3];
-	        int length = nR * nC;
+	        length = nR * nC;
 	        int vol = length * nS;
 	        int buffer_size = vol*nT;
 	        short buffer[] = new short[buffer_size];
@@ -947,6 +952,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    graph.plotGraph(g);
 		} // if (display > 1)
 		mask_aif = new byte[nR][nC][nS];
+		mask_data = new byte[nR][nC][nS];
 	    for (x = 0; x < nR; x++) {
 	    	for (y = 0; y < nC; y++) {
 	    		for (z = 0; z < nS; z++) {
@@ -957,17 +963,204 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	}
 	    }
 	    
-	    byte temp[][] = new byte[nR][nC];
+	    byte temp[] = new byte[length];
+	    int extents2D[] = new int[] {nR, nC};
+	    ModelImage idImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "idImage");
+	    ModelImage tempImage = null;
+	    if (display > 1) {
+	    	tempImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "tempImage");
+	    }
 	    for (s = 0; s < nS; s++) {
 	        // I cover any "holes" created by thresholding
 	    	for (x = 0; x < nR; x++) {
 		    	for (y = 0; y < nC; y++) {
-		    		temp[x][y] = mask_aif[x][y][s];
+		    		temp[x + y*nR] = mask_aif[x][y][s];
 		    	}
 	    	}
-	    	
 	    	// I delete the minor connected components and leave the major ones of options.mask.pixel intact
+	    	try {
+	    	    idImage.importData(0, temp, true);	
+	    	}
+	    	catch(IOException e) {
+	    		System.err.println("IOException " + e);
+	    		return;
+	    	}
+	    	
+	    	int numPruningPixels = 0;
+	        int edgingType = 0;    
+	        int kernel = AlgorithmMorphology2D.CONNECTED8;
+	        float circleDiameter = 0.0f;
+	        int method = AlgorithmMorphology2D.ID_OBJECTS;
+	        int itersDilation = 0;
+	        int itersErosion = 0;
+	        boolean wholeImage = true;
+	        AlgorithmMorphology2D idObjectsAlgo2D = new AlgorithmMorphology2D(idImage, kernel, circleDiameter, method, itersDilation,
+	                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
+	        idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+	        idObjectsAlgo2D.run();
+	        idObjectsAlgo2D.finalize();
+	        idObjectsAlgo2D = null;
+
+	        idImage.calcMinMax();
+	        int numObjects = (int) idImage.getMax();
+
+	        
+	        byte IDArray[] = new byte[length];
+
+	        try {
+	            idImage.exportData(0, length, IDArray);
+	        } catch (IOException error) {
+	        	System.err.println("IOException " + error);
+	    		return;
+	        }
+	        
+	        int objectSize[] = new int[numObjects+1];
+	        for (i = 0; i < length; i++) {
+	        	objectSize[IDArray[i]]++;
+	        }
+	        int maxObjectSize = 0;
+	        for (i = 1; i <= numObjects; i++) {
+	        	if (objectSize[i] > maxObjectSize) {
+	        		maxObjectSize = objectSize[i];
+	        	}
+	        }
+	        
+	        for (i = 1; i <= numObjects; i++) {
+	        	if ((maxObjectSize > objectSize[i]) && (objectSize[i] < mask_npixel)) {
+	        		for (j = 0; j < length; j++) {
+	        			if (IDArray[j] == i) {
+	        				temp[j] = 0;
+	        			}
+	        		}
+	        	}
+	        } // for (i = 1; i <= numObjects; i++)
+	        
+	        try {
+	            idImage.importData(0, temp, true);
+	        }
+	        catch (IOException error) {
+	        	System.err.println("IOException " + error);
+	            return;
+	        }
+	        
+	        AlgorithmMorphology2D fillHolesAlgo2D = new AlgorithmMorphology2D(idImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
+                    wholeImage);
+			fillHolesAlgo2D.run();
+			fillHolesAlgo2D.finalize();
+			fillHolesAlgo2D = null;
+			
+			try {
+	            idImage.exportData(0, length, IDArray);
+	        } catch (IOException error) {
+	        	System.err.println("IOException " + error);
+	    		return;
+	        }
+			
+			for (x = 0; x < nR; x++) {
+		    	for (y = 0; y < nC; y++) {
+		    	    mask_data[x][y][s] = IDArray[x + y*nR];
+		    	}
+		    }
+			
+			if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)))) {
+				 try {
+					 tempImage.importData(0, temp, true);
+				 }
+				 catch (IOException error) {
+			        	System.err.println("IOException " + error);
+			    		return;
+			     }
+				 AlgorithmVOIExtraction algoVOIExtraction = new AlgorithmVOIExtraction(tempImage);
+				 algoVOIExtraction.run();
+			     algoVOIExtraction.finalize();
+			     algoVOIExtraction = null;
+
+				 ModelImage volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE,extents2D,"volume_sum_sliceImage_"+s);
+				 volume_sum_sliceImage.setVOIs(tempImage.getVOIs());
+				 tempDouble = new double[length];
+				 for (x = 0; x < nR; x++) {
+				    	for (y = 0; y < nC; y++) {
+				            tempDouble[x + y*nR] = volume_sum[x][y][s];	
+				    	}
+				 }
+			    try {
+			    	volume_sum_sliceImage.importData(0, tempDouble, true);
+			    }
+			    catch (IOException e) {
+			    	System.err.println("IOException " + e);
+		    		return;
+			    }
+			    ViewJFrameImage vFrame = new ViewJFrameImage(volume_sum_sliceImage);
+			    Component component = vFrame.getComponent(0);
+			    Rectangle rect = component.getBounds();
+		    	String format = "png";
+	  	        BufferedImage captureImage =
+	  	                new BufferedImage(rect.width, rect.height,
+	  	                                    BufferedImage.TYPE_INT_ARGB);
+	  	        component.paint(captureImage.getGraphics());
+	  	        
+	  	        File volume_sum_sliceFile = new File(outputFilePath + outputPrefix + "maskedDataForAIFSelection_"+s+".png");
+	  	        boolean foundWriter;
+	  	        try {
+	  	            foundWriter = ImageIO.write(captureImage, format, volume_sum_sliceFile);
+	  	        }
+	  	        catch (IOException e) {
+	  	        	System.err.println("IOException " + e);
+		    		return;
+	  	        }
+	  	        if (!foundWriter) {
+	  	        	System.err.println("No appropriate writer for maskedDataForAIFSelection_"+s+".png");
+	  	        	return;
+	  	        }
+	  	        tempImage.disposeLocal();
+	  	        captureImage.flush();
+	  	        vFrame.dispose();
+	  	        
+	  	        algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
+				algoVOIExtraction.run();
+			    algoVOIExtraction.finalize();
+			    algoVOIExtraction = null;
+			    volume_sum_sliceImage.resetVOIs();
+			    volume_sum_sliceImage.setVOIs(idImage.getVOIs());
+			    vFrame = new ViewJFrameImage(volume_sum_sliceImage);
+			    component = vFrame.getComponent(0);
+			    rect = component.getBounds();
+		        format = "png";
+	  	        captureImage =
+	  	                new BufferedImage(rect.width, rect.height,
+	  	                                    BufferedImage.TYPE_INT_ARGB);
+	  	        component.paint(captureImage.getGraphics());
+	  	        
+	  	        volume_sum_sliceFile = new File(outputFilePath + outputPrefix + "maskedData_"+s+".png");
+	  	        try {
+	  	            foundWriter = ImageIO.write(captureImage, format, volume_sum_sliceFile);
+	  	        }
+	  	        catch (IOException e) {
+	  	        	System.err.println("IOException " + e);
+		    		return;
+	  	        }
+	  	        if (!foundWriter) {
+	  	        	System.err.println("No appropriate writer for maskedData_"+s+".png");
+	  	        	return;
+	  	        }
+	  	        captureImage.flush();
+	  	        vFrame.dispose();
+			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS))))
 	    } // for (s = 0; s < nS; s++)
+	    idImage.disposeLocal();
+	    idImage = null;
+	    if (tempImage != null) {
+	    	tempImage.disposeLocal();
+	    	tempImage = null;
+	    }
+	    
+	    for (x = 0; x < nR; x++) {
+	    	for (y = 0; y < nC; y++) {
+	    		for (z = 0; z < nS; z++) {
+	    		    mask_aif[x][y][z] = (byte)(mask_aif[x][y][z] * mask_data[x][y][z]);	
+	    		}
+	    	}
+	    }
 	}
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
