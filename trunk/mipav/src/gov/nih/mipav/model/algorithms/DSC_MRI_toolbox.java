@@ -264,7 +264,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	}
 	
 	public void DSC_mri_mask() {
-		int i, j, k, x, y, z, t;
+		int i, j, k, x, y, z, t, s;
 		double mask_threshold;
 	    if (display > 0) {
 	    	UI.setDataText("Masking data...");
@@ -289,7 +289,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    	}
 	    }
-	    mask_data = new byte[nR][nC][nS];
 	    mask_data = new byte[nR][nC][nS];
 	    double intensity[] = new double[nbin];
 	    int prob[] = new int[nbin];
@@ -946,7 +945,29 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    g.setColor(Color.BLUE);
 		    graph.drawLine(g,xthresh, y1t, xthresh, y2t);
 		    graph.plotGraph(g);
-		}
+		} // if (display > 1)
+		mask_aif = new byte[nR][nC][nS];
+	    for (x = 0; x < nR; x++) {
+	    	for (y = 0; y < nC; y++) {
+	    		for (z = 0; z < nS; z++) {
+	    			if (volume_sum[x][y][z] > mask_threshold) {
+	    				mask_aif[x][y][z] = 1;
+	    			}
+	    		}
+	    	}
+	    }
+	    
+	    byte temp[][] = new byte[nR][nC];
+	    for (s = 0; s < nS; s++) {
+	        // I cover any "holes" created by thresholding
+	    	for (x = 0; x < nR; x++) {
+		    	for (y = 0; y < nC; y++) {
+		    		temp[x][y] = mask_aif[x][y][s];
+		    	}
+	    	}
+	    	
+	    	// I delete the minor connected components and leave the major ones of options.mask.pixel intact
+	    } // for (s = 0; s < nS; s++)
 	}
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
