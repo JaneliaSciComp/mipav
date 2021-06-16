@@ -45,6 +45,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+References:
+Curve Fitting by a Sum of Gaussians, Ardeshir Goshtasby and William D. O'Neill,
+CVGIP: Graphical Models and Image Processing, Vol. 56, No. 4, July, pp. 281-288, 1994.
 */
 
 
@@ -52,10 +55,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private ViewUserInterface UI;
 	// 4D matrix with raw GRE-DSC acquisition
 	private double volumes[][][][];
+	private double conc[][][][];
 	private int nR;
 	private int nC;
 	private int nS;
 	private int nT;
+	private int extents2D[] = new int[2];
 	private int length;
 	private double time[];
 	// echo time in seconds
@@ -74,7 +79,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	// from the image
 	private int mask_npixel = 300;
 	// 0: The data provided is a signal, 1: The data provided are concentrations
-	private int conc = 0;
+	private int options_conc = 0;
 	
 	// Minimum number of initial scans on which to calculate S0
 	private int S0_nSamplesMin = 3;
@@ -185,6 +190,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
     private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator +
     		"dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator;
     private String outputPrefix = "";
+    double S0map[][][];
+    int bolus[];
     
     public DSC_MRI_toolbox() {
     	
@@ -215,6 +222,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        length = nR * nC;
 	        int vol = length * nS;
 	        int buffer_size = vol*nT;
+	        extents2D[0] = nR;
+	        extents2D[1] = nC;
 	        short buffer[] = new short[buffer_size];
 	        try {
 	        	img.exportData(0, buffer_size, buffer);
@@ -223,6 +232,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        	System.err.println("IOException " + e);
 	        	return;
 	        }
+	        img.disposeLocal();
+	        img = null;
 	        volumes = new double[nR][nC][nS][nT];
 	        for (x = 0; x < nR; x++) {
 	        	for (y = 0; y < nC; y++) {
@@ -263,12 +274,50 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			UI.setDataText("Repetition time = " + tr + "\n");
 		}
 		
-		if (conc == 0) {
+		if (options_conc == 0) {
 			DSC_mri_mask();
+			
+			// Calculations of Concentrations and S0
+			DSC_mri_conc();
 		}
 	}
 	
 	public void DSC_mri_mask() {
+		// Original MATLAB code was last modified by Marco Castallaro 08/07/2010
+		// Author of original MATLAB code: Marco Castallaro - Universita di Padova - DEI
+		//
+		// Calculate DSC-MRI exam masks
+		//
+		// Input parameters: volumes (4D matrix) which contains the trends of the DSC signals
+		// of all voxels.
+		// And the structure that contains the method options, the significant ones are:
+		// 
+		// mask_npixel: represents the number of minimum pixels of a connected component that
+		// is used as a threshold to exclude the scalp and adjacent areas outside the brain
+		// from the image.
+		//
+		// display: Level 1 shows the processing progress
+		//          Level 2 shows the masks and information on the threshold and intensity of
+		//          the images to be masked.
+		//
+		// Output parameters: Structure mask, which contains:
+		// mask_aif: Mask optimized for the arterial input function
+		// mask_data: Mask optimized for masking the entire brain
+		// mask_threshold: Threshold calculated and supplied at the output
+		//
+		// For the supplied sample image only the right half of the first Gaussian is present, so find the
+		// mean and amplitude of the first Gaussian with a simple search for the highest peak.
+		// Use the ratio of the amplitude 3 channels to right of the mean to the amplitude of the
+		// mean to obtain an initial estimate of the standard deviation.  Use a 1 parameter search over the
+		// 4 channels from the mean to 3 channels right of the mean to obtain a refined value of the first
+		// Gaussian standard deviation.  Since a half Gaussian will not produce 2 paired in scaled space, 
+		// eliminate all zero crossings to 3 channels right of the 
+		// first Gaussian mean over all scales.  Use scale space to find the amplitude, mean, and standard deviation
+		// of the second Gaussian.  Find the smallest sigma for which only 2 branches are present and
+		// follow them scale by scale to the down to the zero crossings at the smallest sigma.  If there is
+		// no sigma for which only 2 branches are present,  find the lowest sigma for which only one branch
+		// is present, and follow it down and eliminate all zero crossings for the unpaired lone branch.  Then
+		// look for the new smallest sigma at which only 2 branches are present.
 		int i, j, k, x, y, z, t, s;
 		double mask_threshold;
 	    if (display > 0) {
@@ -908,6 +957,31 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    }
 		    ViewJFrameGraph actualDataGraph = new ViewJFrameGraph(intensityf, probFloat, "Raw data", "Intensity", "Amplitudes");
 		    actualDataGraph.setVisible(true);
+		    try {
+		       actualDataGraph.save(outputFilePath + outputPrefix + "actualDataGraph.plt");
+		    }
+		    catch (IOException e) {
+		    	System.err.println("IOException " + e);
+		    	return;
+		    }
+	    	Component component = actualDataGraph.getComponent(0);
+	    	Rectangle rect = component.getBounds();
+	    	String format = "png";
+	        BufferedImage captureImage =
+	                new BufferedImage(rect.width, rect.height,
+	                                    BufferedImage.TYPE_INT_ARGB);
+	        component.paint(captureImage.getGraphics());
+	 
+	        File actualDataGraphFile = new File(outputFilePath + outputPrefix + "actualDataGraph.png");
+	        try {
+	            ImageIO.write(captureImage, format, actualDataGraphFile);
+	        }
+	        catch (IOException e) {
+		    	System.err.println("IOException " + e);
+		    	return;
+		    }
+	        actualDataGraph.dispose();
+	        captureImage.flush();
 		    ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity", "Fitted Gaussians");
 		    fittedGaussiansGraph.setVisible(true);
 		    ViewJComponentGraph graph = fittedGaussiansGraph.getGraph();
@@ -950,6 +1024,31 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    g.setColor(Color.BLUE);
 		    graph.drawLine(g,xthresh, y1t, xthresh, y2t);
 		    graph.plotGraph(g);
+		    try {
+		       fittedGaussiansGraph.save(outputFilePath + outputPrefix + "fittedGaussiansGraph.plt");
+		    }
+		    catch (IOException e) {
+		    	System.err.println("IOException " + e);
+		    	return;
+		    }
+	    	component = actualDataGraph.getComponent(0);
+	    	rect = component.getBounds();
+	    	format = "png";
+	        captureImage =
+	                new BufferedImage(rect.width, rect.height,
+	                                    BufferedImage.TYPE_INT_ARGB);
+	        component.paint(captureImage.getGraphics());
+	 
+	        File fittedGaussiansGraphFile = new File(outputFilePath + outputPrefix + "fittedGaussiansGraph.png");
+	        try {
+	            ImageIO.write(captureImage, format, fittedGaussiansGraphFile);
+	        }
+	        catch (IOException e) {
+		    	System.err.println("IOException " + e);
+		    	return;
+		    }
+	        fittedGaussiansGraph.dispose();
+	        captureImage.flush();
 		} // if (display > 1)
 		mask_aif = new byte[nR][nC][nS];
 		mask_data = new byte[nR][nC][nS];
@@ -964,7 +1063,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    
 	    byte temp[] = new byte[length];
-	    int extents2D[] = new int[] {nR, nC};
 	    ModelImage idImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "idImage");
 	    ModelImage tempImage = null;
 	    if (display > 1) {
@@ -1062,7 +1160,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	}
 		    }
 			
-			if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)))) {
+			if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1))) {
 				 try {
 					 tempImage.importData(0, temp, true);
 				 }
@@ -1113,14 +1211,22 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        	return;
 	  	        }
 	  	        tempImage.disposeLocal();
+	  	        volume_sum_sliceImage.disposeLocal();
 	  	        captureImage.flush();
-	  	        vFrame.dispose();
+	  	        vFrame.closeWithNoCheck();
 	  	        
 	  	        algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
 				algoVOIExtraction.run();
 			    algoVOIExtraction.finalize();
 			    algoVOIExtraction = null;
-			    volume_sum_sliceImage.resetVOIs();
+			    volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE,extents2D,"volume_sum_sliceImage_"+s);
+			    try {
+			    	volume_sum_sliceImage.importData(0, tempDouble, true);
+			    }
+			    catch (IOException e) {
+			    	System.err.println("IOException " + e);
+		    		return;
+			    }
 			    volume_sum_sliceImage.setVOIs(idImage.getVOIs());
 			    vFrame = new ViewJFrameImage(volume_sum_sliceImage);
 			    component = vFrame.getComponent(0);
@@ -1144,8 +1250,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        	return;
 	  	        }
 	  	        captureImage.flush();
-	  	        vFrame.dispose();
-			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS))))
+	  	        volume_sum_sliceImage.disposeLocal();
+	  	        vFrame.closeWithNoCheck();
+			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1)))
 	    } // for (s = 0; s < nS; s++)
 	    idImage.disposeLocal();
 	    idImage = null;
@@ -1161,7 +1268,227 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    	}
 	    }
-	}
+	}  // public void DSC_mri_mask()
+	
+	public void DSC_mri_conc() {
+	    // Original MATLAB version last modified by Denis Peruzzo 07/06/2010
+		// Author for original MATLAB version: Marco Castellaro - Universit di Padova - DEI
+		//
+		// Calculate the map of concentrations of S0 in DSC-MRI exams.
+		//
+		// Input parameters:
+		// volumes (4D matrix) which contains the trends of the DSC signal of all the voxels
+		// mask (3D matrix) contains the matrix for masking the voxels not of interest for the study
+		//
+		// Options The structure that contains the method options, the signficiant ones are:
+		//
+		// par_kvoi - Proportionality constant for the calculation of the tracer concentration in the VOI,
+		//            by default considered unknown and set to 1.
+		//
+		// S0 Series of parameters to identify the calculation threshold of S0.
+		// S0_nSamplesMin - n of the samples that I consider definitely acquired before injection
+		// S0_nSamplesMax - n of the samples after which I stop anyway.
+		// S0_thresh - I add a sample if its diefference from the mean is less than threshold
+		//
+		// display - Level 1 shows the processing progress
+		//           Level 2 shows the maps of S0 and the average signal on which it is estimated.
+		//
+		// Output parameters:
+		// conc: 4D matrix of concentrations
+		// S0map 3D S0 matrix
+		int x, y, z, t;
+		
+		if (display > 0) {
+			UI.setDataText("Calculating concentration...\n");
+		}
+		
+		DSC_mri_S0();
+		
+		conc = new double[nR][nC][nS][nT];
+		double step1;
+		for (t = 0; t < nT; t++) {
+			for (x = 0; x < nR; x++) {
+				for (y = 0; y < nC; y++) {
+					for (z = 0; z < nS; z++) {
+						if (mask_data[x][y][z] == 1) {
+						    step1 = volumes[x][y][z][t]/S0map[x][y][z];
+						    conc[x][y][z][t] = -(par_kvoi/te) * Math.log(step1);
+						}
+					}
+				}
+			}
+		} // for (t = 0; t < nT; t++)
+	} // public void DSC_mri_conc()
+	
+	public void DSC_mri_S0() {
+	    // Author of original MATLAB version Marco Castellaro - Universit di Padova - DEI
+		//
+		// The function calculates the bolus instant and the S0 from the data.
+		// 1.) On the average trend I calculate the inection of the bolus.  I calculate the
+		// average of the first n samples and add the n+1 if its percentage difference from
+		// the average is less than a given threshold.
+		// 2.) Calculate S0 as the mean of the first n samples for all voxels.
+		//
+		// Definition of parameters
+		// n of the samples that I consider definitely acquired before injection
+		int nSamplesMin = S0_nSamplesMin;
+		// n of samples after which I stop anyway
+		int nSamplesMax = S0_nSamplesMax;
+		// I add a sample if its difference from the mean is less than threshold
+		double thresh = S0_thresh;
+		//
+		// 1.) Calculation of the moment of injection of the bolus.
+		// 1.1) Calculation of the average trend
+		int i, x, y, s, t;
+		boolean cycle;
+		int pos;
+		double mean_val;
+		
+		double mean_signal[][] = new double[nS][nT];
+		double signalSum;
+		int signalNumber;
+		double valSum;
+		for (s = 0; s < nS; s++) {
+			for (t = 0; t < nT; t++) {
+			    signalSum = 0.0;
+			    signalNumber = 0;
+			    for (x = 0; x < nR; x++) {
+			    	for (y = 0; y < nC; y++) {
+			    		if (mask_data[x][y][s] == 1) {
+			    			signalSum += volumes[x][y][s][t];
+			    			signalNumber++;
+			    		}
+			    	}
+			    }
+			    if (signalNumber > 0) {
+			        mean_signal[s][t] = signalSum/signalNumber;
+			    }
+			}
+		} // for (s = 0; s < nS; s++)
+		
+		S0map = new double[nR][nC][nS];
+		bolus = new int[nS];
+		double S0mapSum;
+		for (s = 0; s < nS; s++) {
+		    // 1.2) calculation of the moment of injection of the bolus
+			cycle = true;
+			pos = nSamplesMin;
+			while (cycle) {
+			    valSum = 0.0;
+			    for (t = 0; t < pos; t++) {
+			    	valSum += mean_signal[s][t];
+			    }
+			    mean_val = valSum/pos;
+			    if (Math.abs((mean_val - mean_signal[s][pos])/mean_val) < thresh) {
+			    	pos = pos + 1;
+			    }
+			    else {
+			    	cycle = false;
+			    	// Conservative choice, I do not consider the last sample before injection
+			    	pos = pos - 1;
+			    }
+			    if (pos == nSamplesMax) {
+			    	cycle = false;
+			    	pos = pos - 1;
+			    }
+			} // while (cycle)
+			
+			if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1))) {
+				float timef[] = new float[nT];
+				for (i = 0; i < nT; i++) {
+					timef[i] = (float)time[i];
+				}
+				float mean_signalf[] = new float[nT];
+				for (i = 0; i < nT; i++) {
+					mean_signalf[i] = (float)mean_signal[s][i];
+				}
+				ViewJFrameGraph meanSignalGraph = new ViewJFrameGraph(timef, mean_signalf, "S0 computed from first " + pos + " samples",
+						"Time", "Mean Signal slice " + s);
+			    meanSignalGraph.setVisible(true);
+			    try {
+			       meanSignalGraph.save(outputFilePath + outputPrefix + "meanSignal_"+s+"Graph.plt");
+			    }
+			    catch (IOException e) {
+			    	System.err.println("IOException " + e);
+			    	return;
+			    }
+		    	Component component = meanSignalGraph.getComponent(0);
+		    	Rectangle rect = component.getBounds();
+		    	String format = "png";
+		        BufferedImage captureImage =
+		                new BufferedImage(rect.width, rect.height,
+		                                    BufferedImage.TYPE_INT_ARGB);
+		        component.paint(captureImage.getGraphics());
+		 
+		        File meanSignalGraphFile = new File(outputFilePath + outputPrefix + "meanSignal_"+s+"Graph.png");
+		        try {
+		            ImageIO.write(captureImage, format, meanSignalGraphFile);
+		        }
+		        catch (IOException e) {
+			    	System.err.println("IOException " + e);
+			    	return;
+			    }
+		        meanSignalGraph.dispose();
+		        captureImage.flush();
+			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
+			
+			// 2.) Calculation of S0
+			for (x = 0; x < nR; x++) {
+				for (y = 0; y < nC; y++) {
+					if (mask_data[x][y][s] == 1) {
+						S0mapSum = 0.0;
+						for (t = 0; t < pos; t++) {
+							S0mapSum += volumes[x][y][s][t];
+						}
+						S0map[x][y][s] = S0mapSum/pos;
+					}
+				}
+			}
+			
+			if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1))) {
+				ModelImage S0mapImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "S0mapImage");
+				double tempDouble[] = new double[length];
+				for (x = 0; x < nR; x++) {
+			    	for (y = 0; y < nC; y++) {
+			            tempDouble[x + y*nR] = S0map[x][y][s];	
+			    	}
+			 }
+		    try {
+		        S0mapImage.importData(0, tempDouble, true);
+		    }
+		    catch (IOException e) {
+		    	System.err.println("IOException " + e);
+	    		return;
+		    }
+		    ViewJFrameImage vFrame = new ViewJFrameImage(S0mapImage);
+		    Component component = vFrame.getComponent(0);
+		    Rectangle rect = component.getBounds();
+	    	String format = "png";
+  	        BufferedImage captureImage =
+  	                new BufferedImage(rect.width, rect.height,
+  	                                    BufferedImage.TYPE_INT_ARGB);
+  	        component.paint(captureImage.getGraphics());
+  	        
+  	        File S0mapFile = new File(outputFilePath + outputPrefix + "S0map_"+s+".png");
+  	        boolean foundWriter;
+  	        try {
+  	            foundWriter = ImageIO.write(captureImage, format, S0mapFile);
+  	        }
+  	        catch (IOException e) {
+  	        	System.err.println("IOException " + e);
+	    		return;
+  	        }
+  	        if (!foundWriter) {
+  	        	System.err.println("No appropriate writer for S0map_"+s+".png");
+  	        	return;
+  	        }
+  	        captureImage.flush();
+  	        S0mapImage.disposeLocal();
+  	        vFrame.closeWithNoCheck();
+			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
+			bolus[s] = pos;
+		} // for (s = 0; s < nS; s++)
+	} // public void DSC_mri_S0()
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
