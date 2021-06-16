@@ -2825,51 +2825,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void removeComponentListener() {
     	removeComponentListener(this);
     }
-    
-    /**
-     * Closes window and disposes of frame and component.
-     */
-    public void closeWithNoCheck() {
-    	removeComponentListener(this);
-        isClosing = true;
-
-        ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
-        ProvenanceRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
-
-        if ( (imageA != null) && (imageA.getHistogramFrame() != null)) {
-            imageA.getHistogramFrame().closeFrame();
-        }
-
-        // Get all imageA frames
-        if (imageA != null) {
-            final Vector<ViewImageUpdateInterface> frameListA = imageA.getImageFrameVector();
-
-            if (frameListA != null) {
-                for (int i = 0; i < frameListA.size(); i++) {
-                    if (frameListA.elementAt(i) instanceof ViewJFrameBase) {
-                        if ( ((ViewJFrameBase) frameListA.elementAt(i)) != this && ! ((ViewJFrameBase) frameListA.elementAt(i)).isClosing) {
-                            ((ViewJFrameBase) frameListA.elementAt(i)).setVisible(false);
-                            ((ViewJFrameBase) frameListA.elementAt(i)).close();
-                            i--;
-                        }
-                    }
-                }
-            }
-        }
-
-        isClosing = true;
-
-        try {
-            this.finalize();
-        } catch (final Throwable t) {
-            MipavUtil.displayError("Error encountered cleaning up image frame: " + t);
-        }
-
-        System.gc();
-
-        isClosing = false;
-    }
-
+   
     /**
      * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
      * that were masked with the intensity value that is currently active.
