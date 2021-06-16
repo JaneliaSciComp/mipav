@@ -1213,7 +1213,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        tempImage.disposeLocal();
 	  	        volume_sum_sliceImage.disposeLocal();
 	  	        captureImage.flush();
-	  	        vFrame.closeWithNoCheck();
+	  	        vFrame.removeComponentListener();
+	  	        vFrame.dispose();
 	  	        
 	  	        algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
 				algoVOIExtraction.run();
@@ -1251,7 +1252,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        }
 	  	        captureImage.flush();
 	  	        volume_sum_sliceImage.disposeLocal();
-	  	        vFrame.closeWithNoCheck();
+	  	        vFrame.removeComponentListener();
+	  	        vFrame.dispose();
 			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1)))
 	    } // for (s = 0; s < nS; s++)
 	    idImage.disposeLocal();
@@ -1484,7 +1486,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
   	        }
   	        captureImage.flush();
   	        S0mapImage.disposeLocal();
-  	        vFrame.closeWithNoCheck();
+  	        vFrame.removeComponentListener();
+  	        vFrame.dispose();
 			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
 			bolus[s] = pos;
 		} // for (s = 0; s < nS; s++)
