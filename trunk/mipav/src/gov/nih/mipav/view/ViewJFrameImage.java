@@ -2826,6 +2826,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Closes window and disposes of frame and component.
      */
     public void closeWithNoCheck() {
+    	removeComponentListener(this);
         isClosing = true;
 
         ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
