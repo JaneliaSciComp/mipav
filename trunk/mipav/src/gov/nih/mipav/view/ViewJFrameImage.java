@@ -2822,6 +2822,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         isClosing = false;
     }
     
+    public void removeComponentListener() {
+    	removeComponentListener(this);
+    }
+    
     /**
      * Closes window and disposes of frame and component.
      */
@@ -2852,8 +2856,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
             }
         }
-
-        super.close();
 
         isClosing = true;
 
