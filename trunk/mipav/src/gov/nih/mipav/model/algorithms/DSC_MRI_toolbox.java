@@ -280,6 +280,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// Calculations of Concentrations and S0
 			DSC_mri_conc();
 		}
+		
+	    // AIF extraction
+		if (aif_enable == 1) {
+			DSC_mri_aif();
+		}
 	}
 	
 	public void DSC_mri_mask() {
@@ -1492,6 +1497,58 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			bolus[s] = pos;
 		} // for (s = 0; s < nS; s++)
 	} // public void DSC_mri_S0()
+	
+	public void DSC_mri_aif() {
+		// Last modification of original MATLAB code: Denis Peruzzo 08/06/2010
+		// Author of original MATLAB code: Denis Peruzzo - Universit di Padova - DEI
+		//
+		// Locate the AIF for the DSC-MRI exam.  The method is designed to identify the middle
+		// cerebral artery (MCA) in the slices immediately superior to the corpus callosum.
+		//
+		// Input parameters:
+		// conc (4D matrix) which contains the concentration trends of all the voxels
+		// mask_aif (3D matrix) contains the mask of each slice.  The mask is not the one used
+		//          for the calculation of concentrations, but a restricted version of it.
+		//          (The fill function was not used.)
+		// options The structure that contains the options of the method, the significant
+		//         ones are:
+		// aif_enable: flag that enables the AIF search (default = 1).
+		//
+		// aif_semiMajorAxis: Allows you to identify the AIF search area.  The elliptical search zone
+		//                    has the semi major axis greater than or equal to twice the portion
+		//                    indicated by this option of the size of the brain (default = 0.35)
+		//
+		// aif_semiMinorAxis: Like the semi major axis, but realtive to the other semiaxis of the
+		//                    search region (default = 0.15)
+		//
+		// aif_pArea: Percentage of candidate voxels based on area under the curve
+		//
+		// aif_pTTP: Percentage of candidate voxels excluded on basis of time to peak (default = 0.4)
+		//
+		// aif_pReg: Percentage of candidate voxels excluded based on irregularity of the curve (default = 0.05)
+		//
+		// aif_diffPeak: 0.0400
+		//
+		// aif_nVoxelMax: Maximum number of arterial voxels accepted (default = 6).
+		//
+		// aif_nVoxelMin: Minimum number of arterial voxels accepted (default = 4)
+		//
+		// Output parameters: AIF structure, which contains
+		// - ROI
+		
+		if (display > 0) {
+			UI.setDataText("AIF extraction...\n");
+		}
+		
+		// AIF slice selection
+		if ((aif_nSlice < 0) || (aif_nSlice >= nS)) {
+		    aif_nSlice = DSC_mri_slice_selection_figure();	
+		}
+	} // public DSC_mri_aif()
+	
+	public int DSC_mri_slice_selection_figure() {
+		return -1;
+	} // public int DSC_mri_slice_selection_figure()
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
