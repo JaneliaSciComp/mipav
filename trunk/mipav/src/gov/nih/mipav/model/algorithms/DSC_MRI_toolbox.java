@@ -8,6 +8,7 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Vector;
 
@@ -16,6 +17,8 @@ import javax.imageio.ImageIO;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentGraph;
@@ -56,8 +59,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	// 4D matrix with raw GRE-DSC acquisition
 	private double volumes[][][][];
 	private double conc[][][][];
-	private int nR;
+	private double AIFslice[][][];
 	private int nC;
+	private int nR;
 	private int nS;
 	private int nT;
 	private int extents2D[] = new int[2];
@@ -100,7 +104,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private int aif_nSlice = -1;
 	
 	// Dimension of the semimajor axis for the search area
-	private double aif_semiMajorAixs = 0.35;
+	private double aif_semiMajorAxis = 0.35;
 	
 	// Dimension of the semiminor axis for the search area
 	private double aif_semiMinorAxis = 0.15;
@@ -164,6 +168,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private byte mask_data[][][];
 	// Mask optimized for finding the arterial input function
 	private byte mask_aif[][][];
+	private byte mask_aif_slice[][];
 	
 	private int gauss2FittingObservations;
     private double gauss2FittingData[];
@@ -215,15 +220,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        	System.err.println("img.getNDims() = " + img.getNDims());
 	        	return;
 	        }
-	        nR = img.getExtents()[0];
-	        nC = img.getExtents()[1];
+	        nC = img.getExtents()[0];
+	        nR = img.getExtents()[1];
 	        nS = img.getExtents()[2];
 	        nT = img.getExtents()[3];
-	        length = nR * nC;
+	        length = nC * nR;
 	        int vol = length * nS;
 	        int buffer_size = vol*nT;
-	        extents2D[0] = nR;
-	        extents2D[1] = nC;
+	        extents2D[0] = nC;
+	        extents2D[1] = nR;
 	        short buffer[] = new short[buffer_size];
 	        try {
 	        	img.exportData(0, buffer_size, buffer);
@@ -234,12 +239,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        }
 	        img.disposeLocal();
 	        img = null;
-	        volumes = new double[nR][nC][nS][nT];
-	        for (x = 0; x < nR; x++) {
-	        	for (y = 0; y < nC; y++) {
+	        volumes = new double[nC][nR][nS][nT];
+	        for (x = 0; x < nC; x++) {
+	        	for (y = 0; y < nR; y++) {
 	        		for (z = 0; z < nS; z++) {
 	        			for (t = 0; t < nT; t++) {
-	        				volumes[x][y][z][t] = buffer[x + y*nR + z*length + t*vol];
+	        				volumes[x][y][z][t] = buffer[x + y*nC + z*length + t*vol];
 	        			}
 	        		}
 	        	}
@@ -254,8 +259,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		if (display > 0) {
 			UI.setDataText("Checking data...\n");
 		}
-		nR = volumes.length;
-		nC = volumes[0].length;
+		nC = volumes.length;
+		nR = volumes[0].length;
 		nS = volumes[0][0].length;
 		nT = volumes[0][0][0].length;
 		
@@ -266,8 +271,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		if (display > 0) {
 			UI.setDataText("DATA SIZE\n");
-			UI.setDataText("Rows = " + nR + "\n");
 			UI.setDataText("Columns = " + nC + "\n");
+			UI.setDataText("Rows = " + nR + "\n");
 			UI.setDataText("Slices = " + nS + "\n");
 			UI.setDataText("Samples = " + nT + "\n");
 			UI.setDataText("Echo time = " + te + "\n");
@@ -330,11 +335,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    
 	    int nbin = 100;
-	    double volume_sum[][][] = new double[nR][nC][nS];
+	    double volume_sum[][][] = new double[nC][nR][nS];
 	    double maxSum = -Double.MAX_VALUE;
 	    double minSum = Double.MAX_VALUE;
-	    for (x = 0; x < nR; x++) {
-	    	for (y = 0; y < nC; y++) {
+	    for (x = 0; x < nC; x++) {
+	    	for (y = 0; y < nR; y++) {
 	    		for (z = 0; z < nS; z++) {
 	    			for (t = 0; t < nT; t++) {
 	    				volume_sum[x][y][z] += volumes[x][y][z][t];
@@ -348,15 +353,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    	}
 	    }
-	    mask_data = new byte[nR][nC][nS];
+	    mask_data = new byte[nC][nR][nS];
 	    double intensity[] = new double[nbin];
 	    int prob[] = new int[nbin];
 	    for (i = 0; i < nbin; i++) {
 	    	intensity[i] = minSum + ((2.0*i + 1.0)/2.0)*((maxSum - minSum)/nbin);
 	    }
 	    int binNum = 0;
-	    for (x = 0; x < nR; x++) {
-	    	for (y = 0; y < nC; y++) {
+	    for (x = 0; x < nC; x++) {
+	    	for (y = 0; y < nR; y++) {
 	    		for (z = 0; z < nS; z++) {
 	    		    binNum = (int)(((volume_sum[x][y][z] - minSum)/(maxSum - minSum))*nbin);
 	    		    if (binNum == nbin) {
@@ -1055,10 +1060,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        fittedGaussiansGraph.dispose();
 	        captureImage.flush();
 		} // if (display > 1)
-		mask_aif = new byte[nR][nC][nS];
-		mask_data = new byte[nR][nC][nS];
-	    for (x = 0; x < nR; x++) {
-	    	for (y = 0; y < nC; y++) {
+		mask_aif = new byte[nC][nR][nS];
+		mask_data = new byte[nC][nR][nS];
+	    for (x = 0; x < nC; x++) {
+	    	for (y = 0; y < nR; y++) {
 	    		for (z = 0; z < nS; z++) {
 	    			if (volume_sum[x][y][z] > mask_threshold) {
 	    				mask_aif[x][y][z] = 1;
@@ -1075,9 +1080,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    for (s = 0; s < nS; s++) {
 	        // I cover any "holes" created by thresholding
-	    	for (x = 0; x < nR; x++) {
-		    	for (y = 0; y < nC; y++) {
-		    		temp[x + y*nR] = mask_aif[x][y][s];
+	    	for (x = 0; x < nC; x++) {
+		    	for (y = 0; y < nR; y++) {
+		    		temp[x + y*nC] = mask_aif[x][y][s];
 		    	}
 	    	}
 	    	// I delete the minor connected components and leave the major ones of options.mask.pixel intact
@@ -1159,9 +1164,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		return;
 	        }
 			
-			for (x = 0; x < nR; x++) {
-		    	for (y = 0; y < nC; y++) {
-		    	    mask_data[x][y][s] = IDArray[x + y*nR];
+			for (x = 0; x < nC; x++) {
+		    	for (y = 0; y < nR; y++) {
+		    	    mask_data[x][y][s] = IDArray[x + y*nC];
 		    	}
 		    }
 			
@@ -1181,9 +1186,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				 ModelImage volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE,extents2D,"volume_sum_sliceImage_"+s);
 				 volume_sum_sliceImage.setVOIs(tempImage.getVOIs());
 				 tempDouble = new double[length];
-				 for (x = 0; x < nR; x++) {
-				    	for (y = 0; y < nC; y++) {
-				            tempDouble[x + y*nR] = volume_sum[x][y][s];	
+				 for (x = 0; x < nC; x++) {
+				    	for (y = 0; y < nR; y++) {
+				            tempDouble[x + y*nC] = volume_sum[x][y][s];	
 				    	}
 				 }
 			    try {
@@ -1268,8 +1273,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	tempImage = null;
 	    }
 	    
-	    for (x = 0; x < nR; x++) {
-	    	for (y = 0; y < nC; y++) {
+	    for (x = 0; x < nC; x++) {
+	    	for (y = 0; y < nR; y++) {
 	    		for (z = 0; z < nS; z++) {
 	    		    mask_aif[x][y][z] = (byte)(mask_aif[x][y][z] * mask_data[x][y][z]);	
 	    		}
@@ -1311,11 +1316,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		DSC_mri_S0();
 		
-		conc = new double[nR][nC][nS][nT];
+		conc = new double[nC][nR][nS][nT];
 		double step1;
 		for (t = 0; t < nT; t++) {
-			for (x = 0; x < nR; x++) {
-				for (y = 0; y < nC; y++) {
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
 					for (z = 0; z < nS; z++) {
 						if (mask_data[x][y][z] == 1) {
 						    step1 = volumes[x][y][z][t]/S0map[x][y][z];
@@ -1359,8 +1364,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			for (t = 0; t < nT; t++) {
 			    signalSum = 0.0;
 			    signalNumber = 0;
-			    for (x = 0; x < nR; x++) {
-			    	for (y = 0; y < nC; y++) {
+			    for (x = 0; x < nC; x++) {
+			    	for (y = 0; y < nR; y++) {
 			    		if (mask_data[x][y][s] == 1) {
 			    			signalSum += volumes[x][y][s][t];
 			    			signalNumber++;
@@ -1373,7 +1378,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		} // for (s = 0; s < nS; s++)
 		
-		S0map = new double[nR][nC][nS];
+		S0map = new double[nC][nR][nS];
 		bolus = new int[nS];
 		double S0mapSum;
 		for (s = 0; s < nS; s++) {
@@ -1440,8 +1445,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
 			
 			// 2.) Calculation of S0
-			for (x = 0; x < nR; x++) {
-				for (y = 0; y < nC; y++) {
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
 					if (mask_data[x][y][s] == 1) {
 						S0mapSum = 0.0;
 						for (t = 0; t < pos; t++) {
@@ -1455,9 +1460,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1))) {
 				ModelImage S0mapImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "S0mapImage");
 				double tempDouble[] = new double[length];
-				for (x = 0; x < nR; x++) {
-			    	for (y = 0; y < nC; y++) {
-			            tempDouble[x + y*nR] = S0map[x][y][s];	
+				for (x = 0; x < nC; x++) {
+			    	for (y = 0; y < nR; y++) {
+			            tempDouble[x + y*nC] = S0map[x][y][s];	
 			    	}
 			 }
 		    try {
@@ -1535,6 +1540,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		//
 		// Output parameters: AIF structure, which contains
 		// - ROI
+		int i, x, y, t;
 		
 		if (display > 0) {
 			UI.setDataText("AIF extraction...\n");
@@ -1544,11 +1550,263 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		if ((aif_nSlice < 0) || (aif_nSlice >= nS)) {
 		    aif_nSlice = DSC_mri_slice_selection_figure();	
 		}
+		
+		AIFslice = new double[nC][nR][nT];
+		mask_aif_slice = new byte[nC][nR];
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				mask_aif_slice[x][y] = mask_aif[x][y][aif_nSlice];
+				for (t = 0; t < nT; t++) {
+					AIFslice[x][y][t] = conc[x][y][aif_nSlice][t];
+				}
+			}
+		}
+		extractAIF();
 	} // public DSC_mri_aif()
-	
 	public int DSC_mri_slice_selection_figure() {
 		return -1;
 	} // public int DSC_mri_slice_selection_figure()
+	
+	public void extractAIF() {
+		// Extract the AIF from the supplied slice
+		// 1.) Find the region containing the AIF
+		// 2.) Decimation of the candidate voxel
+		// 3.) Apply the hierarchical cluster algorithm to locate arterial voxels
+		// 4.) Prepare the output
+		double semiMajorAxis;
+		double semiMinorAxis;
+		double pArea;
+		double pTTP;
+		double pReg;
+		int nVoxelMax;
+		int nVoxelMin;
+		double diffPeak;
+		byte mask[][] = new byte[nC][nR];
+		double immagine_img[][] = new double[nC][nR];
+		int x,y,t;
+		double vettImmagine[];
+		double immagine_bound[] = new double[2];
+		boolean cycle;
+		int r;
+		int minR = 0;
+		int maxR = nR-1;
+		int c;
+		int minC = 0;
+		int maxC = nC-1;
+		int maskSum;
+		double center[] = new double[2];
+		double semiAxisA;
+		double semiAxisB;
+		byte ROI[][] = new byte[nC][nR];
+		double rdiff;
+		double cdiff;
+		byte ROIInitialized[][] = new byte[nC][nR];
+		
+		// Preparation of accessory variables and parameters
+		semiMajorAxis = aif_semiMajorAxis;
+		semiMinorAxis = aif_semiMinorAxis;
+		pArea = aif_pArea;
+		pTTP = aif_pTTP;
+		pReg = aif_pReg;
+		nVoxelMax = aif_nVoxelMax;
+		nVoxelMin = aif_nVoxelMin;
+		diffPeak = aif_diffPeak;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				mask[x][y] = mask_aif_slice[x][y];
+				for (t = 0; t < nT; t++) {
+				    immagine_img[x][y] += AIFslice[x][y][t];	
+				}
+			}
+		}
+		
+		// I prepare the image for any visualizations
+		vettImmagine = new double[length];
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				vettImmagine[x + y*nC] = immagine_img[x][y];
+			}
+		}
+		Arrays.sort(vettImmagine);
+		immagine_bound[0] = 0.0;
+		immagine_bound[1] = vettImmagine[(int)Math.round(0.95*length)-1];
+		vettImmagine = null;
+		
+		// 1.) Identification of the ROI containing the AIF
+		// 1.1) Identification of extremes of the mask
+		if (display > 0) {
+			UI.setDataText(" Brain bound detection\n");
+		}
+		cycle = true;
+		r = 0;
+		while (cycle) {
+		    maskSum = 0;
+		    for (x = 0; x < nC; x++) {
+		    	maskSum += mask[x][r];
+		    }
+		    if (maskSum != 0) {
+		    	minR = r;
+		    	cycle = false;
+		    }
+		    else {
+		    	r = r+1;
+		    }
+		} // while(cycle)
+		cycle = true;
+		r = nR-1;
+		while (cycle) {
+			maskSum = 0;
+			for (x = 0; x < nC; x++) {
+				maskSum += mask[x][r];
+			}
+			if (maskSum != 0) {
+				maxR = r;
+				cycle = false;
+			}
+			else {
+				r = r-1;
+			}
+		} // while (cycle)
+		
+		cycle = true;
+		c = 0;
+		while (cycle) {
+			maskSum = 0;
+			for (y = 0; y < nR; y++) {
+				maskSum += mask[c][y];
+			}
+			if (maskSum != 0) {
+				minC = c;
+				cycle = false;
+			}
+			else {
+				c = c+1;
+			}
+		} // while (cycle)
+		cycle = true;
+		c = nC-1;
+		while (cycle) {
+			maskSum = 0;
+			for (y = 0; y < nR; y++) {
+				maskSum += mask[c][y];
+			}
+			if (maskSum != 0) {
+				maxC = c;
+				cycle = false;
+			}
+			else {
+				c = c-1;
+			}
+		} // while (cycle)
+		
+		if (display > 2) {
+			ModelImage mask_aif_sliceImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "mask_aif_sliceImage");
+			byte tempByte[] = new byte[length];
+			for (x = 0; x < nC; x++) {
+		    	for (y = 0; y < nR; y++) {
+		            tempByte[x + y*nC] = mask[x][y];	
+		    	}
+			 }
+		    try {
+		        mask_aif_sliceImage.importData(0, tempByte, true);
+		    }
+		    catch (IOException e) {
+		    	System.err.println("IOException " + e);
+	    		return;
+		    }
+		    float xArr[] = new float[2];
+            float yArr[] = new float[2];
+            float zArr[] = new float[2];
+            xArr[0] = 0;
+            xArr[1] = nC-1;
+            yArr[0] = minR;
+            yArr[1] = minR;
+            VOI boundLowYVOI = new VOI((short) 0, "boundLowYLine", VOI.LINE, -1.0f);
+            boundLowYVOI.importCurve(xArr, yArr, zArr);
+            mask_aif_sliceImage.registerVOI(boundLowYVOI);
+            boundLowYVOI.setFixed(true);
+            boundLowYVOI.setColor(Color.green);
+            yArr[0] = maxR;
+            yArr[1] = maxR;
+            VOI boundHighYVOI = new VOI((short) 0, "boundHighYLine", VOI.LINE, -1.0f);
+            boundHighYVOI.importCurve(xArr, yArr, zArr);
+            mask_aif_sliceImage.registerVOI(boundHighYVOI);
+            boundHighYVOI.setFixed(true);
+            boundHighYVOI.setColor(Color.green);
+            xArr[0] = minC;
+            xArr[1] = minC;
+            yArr[0] = 0;
+            yArr[1] = nR-1;
+            VOI boundLowXVOI = new VOI((short) 0, "boundLowXLine", VOI.LINE, -1.0f);
+            boundLowXVOI.importCurve(xArr, yArr, zArr);
+            mask_aif_sliceImage.registerVOI(boundLowXVOI);
+            boundLowXVOI.setFixed(true);
+            boundLowXVOI.setColor(Color.green);
+            xArr[0] = maxC;
+            xArr[1] = maxC;
+            VOI boundHighXVOI = new VOI((short) 0, "boundHighXLine", VOI.LINE, -1.0f);
+            boundHighXVOI.importCurve(xArr, yArr, zArr);
+            mask_aif_sliceImage.registerVOI(boundHighXVOI);
+            boundHighXVOI.setFixed(true);
+            boundHighXVOI.setColor(Color.green);
+		    ViewJFrameImage vFrame = new ViewJFrameImage(mask_aif_sliceImage);
+		    Component component = vFrame.getComponent(0);
+		    Rectangle rect = component.getBounds();
+	    	String format = "png";
+	        BufferedImage captureImage =
+	                new BufferedImage(rect.width, rect.height,
+	                                    BufferedImage.TYPE_INT_ARGB);
+	        component.paint(captureImage.getGraphics());
+	        
+	        File mask_aif_sliceFile = new File(outputFilePath + outputPrefix + "mask_aif_slice.png");
+	        boolean foundWriter;
+	        try {
+	            foundWriter = ImageIO.write(captureImage, format, mask_aif_sliceFile);
+	        }
+	        catch (IOException e) {
+	        	System.err.println("IOException " + e);
+    		return;
+	        }
+	        if (!foundWriter) {
+	        	System.err.println("No appropriate writer for mask_aif_slice.png");
+	        	return;
+	        }
+	        captureImage.flush();
+	        mask_aif_sliceImage.disposeLocal();
+	        vFrame.removeComponentListener();
+	        vFrame.dispose();	
+		} // if (display > 2)
+		
+		// 1.2) ROI design
+		if (display > 0 ) {
+			UI.setDataText("Definition of the AIF extraction searching area\n");
+		}
+		// Y coordinate of the center (calculated on the rows)
+		center[1] = 0.5*(minR+maxR);
+		// X coordinate of the center (calculated on the columns)
+		center[0] = 0.5*(minC+maxC);
+		
+		// The semimajor axis.  Along the anterior-posterior direction and then from
+		// left to right on the image.
+		semiAxisB = semiMajorAxis*(maxC-minC);
+		semiAxisA = semiMinorAxis*(maxR-minR);
+		for (r = 0; r < nR; r++) {
+			for (c = 0; c < nC; c++) {
+			    rdiff = r - center[1];
+			    cdiff = c - center[0];
+			    if (((rdiff*rdiff)/(semiAxisA*semiAxisA) + (cdiff*cdiff)/(semiAxisB*semiAxisB)) <= 1.0) {
+			    	ROI[c][r] = 1;
+			    }
+			}
+		}
+		for (r = 0; r < nR; r++) {
+			for (c = 0; c < nC; c++) {
+		        ROI[c][r] = (byte)(ROI[c][r] * mask[c][r]);	
+		        ROIInitialized[c][r] = ROI[c][r];
+			}
+		}
+		// Of the values of the ROI I keep only those also present in the mask
+	}
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
