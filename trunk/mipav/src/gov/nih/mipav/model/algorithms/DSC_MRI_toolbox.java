@@ -1608,6 +1608,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double yROI[];
 		int k;
 		double diffX;
+		int totalCandidates;
+		int totalCandidatesToKeep;
+		double AUC[][] = new double[nC][nR];
+		int nCycles;
+		double AUCdown;
+		double AUCup;
+		double threshold = 0.0;
+		int nCandidates;
+		byte ROIauc[][] = new byte[nC][nR];
 		
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
@@ -1824,17 +1833,157 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		yROI = new double[2*nL];
 		for (k = 0; k < nL; k++) {
 			diffX = xROI[k] - center[0];
-			yROI[k] = semiAxisA*(Math.sqrt(1 - (diffX*diffX)/(semiAxisB*semiAxisB))) + center[1];
+			yROI[k] = semiAxisA*(Math.sqrt(Math.max(0.0,(1 - (diffX*diffX)/(semiAxisB*semiAxisB))))) + center[1];
 		}
 		for (k = 1; k <= nL; k++) {
 			xROI[nL+k-1] = xROI[nL-k];
 		}
 		
 		diffX = xROI[2*nL-1] - center[0];
-		yROI[2*nL-1] = -semiAxisA*(Math.sqrt(1 - (diffX*diffX)/(semiAxisB*semiAxisB))) + center[1];
+		yROI[2*nL-1] = -semiAxisA*(Math.sqrt(Math.max(0.0,(1 - (diffX*diffX)/(semiAxisB*semiAxisB))))) + center[1];
 		
+		if (display > 2) {
+			vettImmagine = new double[length];
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					vettImmagine[x + y*nC] = immagine_img[x][y];
+				}
+			}
+			ModelImage immagineImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "immagineImage");
+			try {
+				immagineImage.importData(0, vettImmagine, true);
+			}
+			catch (IOException e) {
+		    	System.err.println("IOException " + e);
+	    		return;
+		    }
+		    float xArr[] = new float[1];
+            float yArr[] = new float[1];
+            float zArr[] = new float[1];
+            for (i = 0; i < 2*nL; i++) {
+	    		VOI ROIPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
+	    		ROIPtVOI.setColor(Color.red);
+	    		xArr[0] = (float)xROI[i];
+	    		yArr[0] = (float)yROI[i];
+	    		ROIPtVOI.importCurve(xArr, yArr, zArr);
+	            ((VOIPoint) (ROIPtVOI.getCurves().elementAt(0))).setFixed(true);
+	            immagineImage.registerVOI(ROIPtVOI);
+	    	}
+            VOI centerPtVOI = new VOI((short)(2*nL), "center", VOI.POINT, -1.0f);
+            centerPtVOI.setColor(Color.green);
+            xArr[0] = (float)center[0];
+            yArr[0] = (float)center[1];
+            centerPtVOI.importCurve(xArr, yArr, zArr);
+            ((VOIPoint) (centerPtVOI.getCurves().elementAt(0))).setFixed(true);
+            immagineImage.registerVOI(centerPtVOI);
+            ViewJFrameImage vFrame = new ViewJFrameImage(immagineImage);
+		    Component component = vFrame.getComponent(0);
+		    Rectangle rect = component.getBounds();
+	    	String format = "png";
+	        BufferedImage captureImage =
+	                new BufferedImage(rect.width, rect.height,
+	                                    BufferedImage.TYPE_INT_ARGB);
+	        component.paint(captureImage.getGraphics());
+	        
+	        File immagineFile = new File(outputFilePath + outputPrefix + "immagine.png");
+	        boolean foundWriter;
+	        try {
+	            foundWriter = ImageIO.write(captureImage, format, immagineFile);
+	        }
+	        catch (IOException e) {
+	        	System.err.println("IOException " + e);
+    		return;
+	        }
+	        if (!foundWriter) {
+	        	System.err.println("No appropriate writer for immagine.png");
+	        	return;
+	        }
+	        captureImage.flush();
+	        immagineImage.disposeLocal();
+	        vFrame.removeComponentListener();
+	        vFrame.dispose();	
+		} // if (display > 2)
 		
-	}
+		// 2.) Decimation of candidate voxels
+		if (display > 0) {
+			UI.setDataText("Candidate voxel analysis\n");
+		}
+		// 2.1) Selection due to area under the curve
+		totalCandidates = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				totalCandidates += ROI[x][y];
+			}
+		}
+		totalCandidatesToKeep = (int)Math.ceil(totalCandidates*(1.0 - pArea));
+		// I calculate the area under the curve of each voxel.
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				for (t = 0; t < nT; t++) {
+					AUC[x][y] += AIFslice[x][y][t];
+				}
+				AUC[x][y] = AUC[x][y] * ROI[x][y];
+				if (Double.isInfinite(AUC[x][y])) {
+					AUC[x][y] = 0.0;
+				}
+			}
+		}
+		
+		cycle = true;
+		nCycles = 0;
+		AUCdown = Double.MAX_VALUE;
+		AUCup = -Double.MAX_VALUE;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (AUC[x][y] < AUCdown) {
+					AUCdown = AUC[x][y];
+				}
+				if (AUC[x][y] > AUCup) {
+					AUCup = AUC[x][y];
+				}
+			}
+		}
+		while (cycle) {
+			nCycles = nCycles+1;
+			threshold = 0.5*(AUCup+AUCdown);
+			nCandidates = 0;
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					if (AUC[x][y] > threshold) {
+						nCandidates++;
+					}
+				}
+			}
+			
+			if (nCandidates == totalCandidatesToKeep) {
+				cycle = false;
+			}
+			else if (nCandidates > totalCandidatesToKeep) {
+				AUCdown = threshold;
+			}
+			else {
+				AUCup = threshold;
+			}
+			if (((AUCup - AUCdown) < 0.01) || (nCycles > 100)) {
+				cycle = false;
+			}
+		} // while (cycle)
+		
+		// Values 2 for discarded voxels, 1 for kept voxels
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (AUC[x][y] > threshold) {
+					ROIauc[x][y] = ROI[x][y];
+				}
+				else {
+					ROIauc[x][y] = (byte)(2 * ROI[x][y]);
+				}
+			}
+		}
+		if (display > 2) {
+			
+		} // if (display > 2)
+	} // public void extractAIF()
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
