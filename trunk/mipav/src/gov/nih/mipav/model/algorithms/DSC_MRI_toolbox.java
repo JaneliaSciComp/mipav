@@ -1601,6 +1601,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double rdiff;
 		double cdiff;
 		byte ROIInitialized[][] = new byte[nC][nR];
+		double xROI[];
+		int nL;
+		int i;
+		double val;
+		double yROI[];
+		int k;
+		double diffX;
 		
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
@@ -1799,13 +1806,34 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    }
 			}
 		}
+		// Of the values of the ROI I keep only those also present in the mask
 		for (r = 0; r < nR; r++) {
 			for (c = 0; c < nC; c++) {
 		        ROI[c][r] = (byte)(ROI[c][r] * mask[c][r]);	
 		        ROIInitialized[c][r] = ROI[c][r];
 			}
 		}
-		// Of the values of the ROI I keep only those also present in the mask
+		
+		nL = (int)(center[0]/0.01) + 1;
+		xROI = new double[2*nL];
+		for (i = 0, val  = semiAxisB; val <= center[0] + semiAxisB; i++) {
+			val = semiAxisB + 0.01*i;
+			xROI[i] = center[0] - val;
+		}
+		
+		yROI = new double[2*nL];
+		for (k = 0; k < nL; k++) {
+			diffX = xROI[k] - center[0];
+			yROI[k] = semiAxisA*(Math.sqrt(1 - (diffX*diffX)/(semiAxisB*semiAxisB))) + center[1];
+		}
+		for (k = 1; k <= nL; k++) {
+			xROI[nL+k-1] = xROI[nL-k];
+		}
+		
+		diffX = xROI[2*nL-1] - center[0];
+		yROI[2*nL-1] = -semiAxisA*(Math.sqrt(1 - (diffX*diffX)/(semiAxisB*semiAxisB))) + center[1];
+		
+		
 	}
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
