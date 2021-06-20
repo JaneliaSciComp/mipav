@@ -1794,7 +1794,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        mask_aif_sliceImage.disposeLocal();
 	        vFrame.removeComponentListener();
 	        vFrame.removeMouseMotionListener();
-	        component.invalidate();
 	        try {
   	        	vFrame.finalize();
   	        }
@@ -1913,7 +1912,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        immagineImage.disposeLocal();
 	        vFrame.removeComponentListener();
 	        vFrame.removeMouseMotionListener();
-	        component.invalidate();
 	        try {
   	        	vFrame.finalize();
   	        }
