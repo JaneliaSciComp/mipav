@@ -1235,6 +1235,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        volume_sum_sliceImage.disposeLocal();
 	  	        captureImage.flush();
 	  	        vFrame.removeComponentListener();
+	  	        vFrame.removeMouseMotionListener();
 	  	        try {
 	  	        	vFrame.finalize();
 	  	        }
@@ -1280,6 +1281,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        captureImage.flush();
 	  	        volume_sum_sliceImage.disposeLocal();
 	  	        vFrame.removeComponentListener();
+	  	        vFrame.removeMouseMotionListener();
 	  	        try {
 	  	        	vFrame.finalize();
 	  	        }
@@ -1791,6 +1793,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        captureImage.flush();
 	        mask_aif_sliceImage.disposeLocal();
 	        vFrame.removeComponentListener();
+	        vFrame.removeMouseMotionListener();
+	        component.invalidate();
 	        try {
   	        	vFrame.finalize();
   	        }
@@ -1908,6 +1912,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        captureImage.flush();
 	        immagineImage.disposeLocal();
 	        vFrame.removeComponentListener();
+	        vFrame.removeMouseMotionListener();
+	        component.invalidate();
 	        try {
   	        	vFrame.finalize();
   	        }
