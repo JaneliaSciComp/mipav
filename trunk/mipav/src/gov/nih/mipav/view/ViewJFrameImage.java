@@ -2825,6 +2825,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void removeComponentListener() {
     	removeComponentListener(this);
     }
+    
+    public void removeMouseMotionListener() {
+    	removeMouseMotionListener(this);
+    }
    
     /**
      * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
