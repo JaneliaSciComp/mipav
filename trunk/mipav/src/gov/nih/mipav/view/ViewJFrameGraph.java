@@ -4728,4 +4728,8 @@ public class ViewJFrameGraph extends JFrame
     	Graphics g = getGraphics();
     	return g;
     }
+    
+    public void removeComponentListener() {
+    	removeComponentListener(this);
+    }
 }
