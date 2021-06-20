@@ -15,6 +15,9 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileTypeTable;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
@@ -73,7 +76,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private double tr = 1.55;
 	
 	// DISPLAY OPTIONS
-	private int display = 2; // 0:off, 1:notify (text), 2:notify (images), 3:debug
+	private int display = 3; // 0:off, 1:notify (text), 2:notify (images), 3:debug
 	private int waitbar = 1; // 0:off, 1:on
 	
 	// DATA PREPARATION OPTIONS
@@ -195,6 +198,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
     private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator +
     		"dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator;
     private String outputPrefix = "";
+    private FileIO fileIO = null;
+    
+    private int saveFileFormat = FileUtility.NIFTI;
+    // used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
+    private boolean doSaveAllOutputs = true;
     double S0map[][][];
     int bolus[];
     
@@ -224,6 +232,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        nR = img.getExtents()[1];
 	        nS = img.getExtents()[2];
 	        nT = img.getExtents()[3];
+	        // Temporarily for development
+	        aif_nSlice = nS/2;
 	        length = nC * nR;
 	        int vol = length * nS;
 	        int buffer_size = vol*nT;
@@ -990,6 +1000,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	System.err.println("IOException " + e);
 		    	return;
 		    }
+	        actualDataGraph.removeComponentListener();
 	        actualDataGraph.dispose();
 	        captureImage.flush();
 		    ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity", "Fitted Gaussians");
@@ -1057,6 +1068,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	System.err.println("IOException " + e);
 		    	return;
 		    }
+	        fittedGaussiansGraph.removeComponentListener();
 	        fittedGaussiansGraph.dispose();
 	        captureImage.flush();
 		} // if (display > 1)
@@ -1220,10 +1232,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        	System.err.println("No appropriate writer for maskedDataForAIFSelection_"+s+".png");
 	  	        	return;
 	  	        }
-	  	        tempImage.disposeLocal();
 	  	        volume_sum_sliceImage.disposeLocal();
 	  	        captureImage.flush();
 	  	        vFrame.removeComponentListener();
+	  	        try {
+	  	        	vFrame.finalize();
+	  	        }
+	  	        catch (Throwable e) {
+	  	        	
+	  	        }
 	  	        vFrame.dispose();
 	  	        
 	  	        algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
@@ -1263,6 +1280,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        captureImage.flush();
 	  	        volume_sum_sliceImage.disposeLocal();
 	  	        vFrame.removeComponentListener();
+	  	        try {
+	  	        	vFrame.finalize();
+	  	        }
+	  	        catch (Throwable e) {
+	  	        	
+	  	        }  
 	  	        vFrame.dispose();
 			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1)))
 	    } // for (s = 0; s < nS; s++)
@@ -1440,6 +1463,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    	System.err.println("IOException " + e);
 			    	return;
 			    }
+		        meanSignalGraph.removeComponentListener();
 		        meanSignalGraph.dispose();
 		        captureImage.flush();
 			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
@@ -1464,40 +1488,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    	for (y = 0; y < nR; y++) {
 			            tempDouble[x + y*nC] = S0map[x][y][s];	
 			    	}
-			 }
-		    try {
-		        S0mapImage.importData(0, tempDouble, true);
-		    }
-		    catch (IOException e) {
-		    	System.err.println("IOException " + e);
-	    		return;
-		    }
-		    ViewJFrameImage vFrame = new ViewJFrameImage(S0mapImage);
-		    Component component = vFrame.getComponent(0);
-		    Rectangle rect = component.getBounds();
-	    	String format = "png";
-  	        BufferedImage captureImage =
-  	                new BufferedImage(rect.width, rect.height,
-  	                                    BufferedImage.TYPE_INT_ARGB);
-  	        component.paint(captureImage.getGraphics());
-  	        
-  	        File S0mapFile = new File(outputFilePath + outputPrefix + "S0map_"+s+".png");
-  	        boolean foundWriter;
-  	        try {
-  	            foundWriter = ImageIO.write(captureImage, format, S0mapFile);
-  	        }
-  	        catch (IOException e) {
-  	        	System.err.println("IOException " + e);
-	    		return;
-  	        }
-  	        if (!foundWriter) {
-  	        	System.err.println("No appropriate writer for S0map_"+s+".png");
-  	        	return;
-  	        }
-  	        captureImage.flush();
-  	        S0mapImage.disposeLocal();
-  	        vFrame.removeComponentListener();
-  	        vFrame.dispose();
+				}
+			    try {
+			        S0mapImage.importData(0, tempDouble, true);
+			    }
+			    catch (IOException e) {
+			    	System.err.println("IOException " + e);
+		    		return;
+			    }
+			    saveImageFile(S0mapImage, outputFilePath, outputPrefix + "S0map_"+s, saveFileFormat);
+		        S0mapImage.disposeLocal();
 			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
 			bolus[s] = pos;
 		} // for (s = 0; s < nS; s++)
@@ -1617,6 +1617,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double threshold = 0.0;
 		int nCandidates;
 		byte ROIauc[][] = new byte[nC][nR];
+		int ROISum;
 		
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
@@ -1790,6 +1791,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        captureImage.flush();
 	        mask_aif_sliceImage.disposeLocal();
 	        vFrame.removeComponentListener();
+	        try {
+  	        	vFrame.finalize();
+  	        }
+  	        catch (Throwable e) {
+  	        	
+  	        }
 	        vFrame.dispose();	
 		} // if (display > 2)
 		
@@ -1901,6 +1908,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        captureImage.flush();
 	        immagineImage.disposeLocal();
 	        vFrame.removeComponentListener();
+	        try {
+  	        	vFrame.finalize();
+  	        }
+  	        catch (Throwable e) {
+  	        	
+  	        }
 	        vFrame.dispose();	
 		} // if (display > 2)
 		
@@ -1981,9 +1994,90 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
 		if (display > 2) {
-			
+			UI.setDataText("Candidate voxel selection via AUC criteria\n");
+			UI.setDataText("Voxel initial amounmt: " + totalCandidates + "\n");
+			ROISum = 0;
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					ROISum += ROI[x][y];
+				}
+			}
+			UI.setDataText("Survived voxels: " + ROISum + "\n");
+			byte temp[] = new byte[length];
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					temp[x + y*nC] = ROIauc[x][y];
+				}
+			}
+			ModelImage ROIaucImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "ROIaucImage");
+			try {
+				ROIaucImage.importData(0, temp, true);
+			}
+			catch (IOException e) {
+		    	System.err.println("IOException " + e);
+	    		return;
+		    }
+			saveImageFile(ROIaucImage, outputFilePath, outputPrefix + "ROIauc", saveFileFormat);
+	        ROIaucImage.disposeLocal();
 		} // if (display > 2)
+		
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (AUC[x][y] <= threshold) {
+					ROI[x][y] = 0;
+				}
+			}
+		}
+		
+		// 2.2) Selection due to the TTP
+		totalCandidates = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				
+			}
+		}
 	} // public void extractAIF()
+	
+	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
+        return saveImageFile(img, dir, fileBasename, fileType, false);
+    }
+    
+    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType, boolean alwaysSave) {
+        if (fileIO == null) {
+            fileIO = new FileIO();
+            fileIO.setQuiet(true);
+        }
+        
+        // if no directory specified, skip writing out images
+        // or if option is set and this is a file that is optionally written out
+        if (dir == null || (!alwaysSave && !doSaveAllOutputs)) {
+        	return null;
+        }
+        
+        FileWriteOptions opts = new FileWriteOptions(true);
+        opts.setFileDirectory(dir);
+
+        if (img.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(img.getExtents()[2] - 1);
+        } else if (img.getNDims() == 4) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(img.getExtents()[2] - 1);
+            opts.setBeginTime(0);
+            opts.setEndTime(img.getExtents()[3] - 1);
+        }
+
+        opts.setFileType(fileType);
+        final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+        opts.setFileName(fileBasename + ext);
+
+        opts.setOptionsSet(true);
+        opts.setMultiFile(false);
+        
+        fileIO.writeImage(img, opts, false, false);
+        
+        return new File(dir + File.separator + fileBasename + ext);
+    }
 	
 	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
 	public byte[] calcZeroX(double[] buffer) {
