@@ -2944,6 +2944,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         
         // remove the componentListener so this function will not be called twice
         removeComponentListener(this);
+        
+        if ((componentImage == null) || (componentImage.getActiveImage() == null) || (componentImage.getActiveImage().getExtents() == null)) {
+        	return;
+        }
 
         boolean imageSizeSmall = false;
         // check to see if the image width is SMALLER than the minimum frame width
