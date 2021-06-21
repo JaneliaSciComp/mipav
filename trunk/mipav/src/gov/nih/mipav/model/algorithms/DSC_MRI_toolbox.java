@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -56,7 +55,6 @@ Curve Fitting by a Sum of Gaussians, Ardeshir Goshtasby and William D. O'Neill,
 CVGIP: Graphical Models and Image Processing, Vol. 56, No. 4, July, pp. 281-288, 1994.
 */
 
-
 public class DSC_MRI_toolbox extends CeresSolver {
 	private ViewUserInterface UI;
 	// 4D matrix with raw GRE-DSC acquisition
@@ -74,195 +72,198 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private double te = 0.025;
 	// repetition time in seconds
 	private double tr = 1.55;
-	
+
 	// DISPLAY OPTIONS
 	private int display = 3; // 0:off, 1:notify (text), 2:notify (images), 3:debug
 	private int waitbar = 1; // 0:off, 1:on
-	
+
 	// DATA PREPARATION OPTIONS
-	
+
 	// Represents the number of minimum pixels of a connected component that is used
 	// as a threshold to exclude the scalp and adjacent areas outside the brain
 	// from the image
 	private int mask_npixel = 300;
 	// 0: The data provided is a signal, 1: The data provided are concentrations
 	private int options_conc = 0;
-	
+
 	// Minimum number of initial scans on which to calculate S0
 	private int S0_nSamplesMin = 3;
 	// Maximum number of initial scans on whcih to caclulate s0
 	private int S0_nSamplesMax = 3;
-	
+
 	// Threshold used to choose the instant of appearance of the tracer
 	private double S0_thresh = 0.05;
-	
+
 	// OPTIONS FOR THE IDENTIFICATION PHASE OF THE AIF
 	// 0: It does not calculate the AIF, 1: It does calculate the AIF
 	private int aif_enable = 1;
-	
+
 	// 0: It does not take recirculation into account, 1: Fits the recirculation
 	private int aif_recirculation = 1;
-	
-	// Slice on which to search for the AIF (-1 : Makes the operator select the slice)
+
+	// Slice on which to search for the AIF (-1 : Makes the operator select the
+	// slice)
 	private int aif_nSlice = -1;
-	
+
 	// Dimension of the semimajor axis for the search area
 	private double aif_semiMajorAxis = 0.35;
-	
+
 	// Dimension of the semiminor axis for the search area
 	private double aif_semiMinorAxis = 0.15;
-	
+
 	// Fraction of voxels discarded due to area under curve
 	private double aif_pArea = 0.4;
-	
+
 	// Fraction of voxels discarded due to TTP
 	private double aif_pTTP = 0.4;
-	
+
 	// Fraction of voxels discarded due to the regularity of the trend
 	private double aif_pReg = 0.05;
-	
+
 	// Threshold to decide whether to select cluster based on peak or TTP
 	private double aif_diffPeak = 0.04;
-	
+
 	// Maximum voxels chosen for AIF
 	private int aif_nVoxelMax = 6;
-	
+
 	// Minimum voxels chosen for AIF
 	private int aif_nVoxelMin = 4;
-	
-	// Correction of the formula for calculating the concentration from the 
+
+	// Correction of the formula for calculating the concentration from the
 	// signal in the case of calculating the AIF
 	// 0: Does not apply the correction, 1: Applies the correction
 	private int qr_enable = 0;
 	private double qr_b = 5.74E-4;
 	private double qr_a = 0.0076;
 	private double qr_r = 0.044;
-	
+
 	// OPTIONS FOR DECONVOLUTION METHODS
 	// SVD threshold
 	private double deconv_SVD_threshold = 0.2;
 	// 0: Does not save residuals, 1: Save residuals
 	private int deconv_SVD_residual = 1;
-	
+
 	// CSVD threshold (0.1 applies to data obtained at 1.5T)
 	private double deconv_cSVD_threshold = 0.1;
 	// 0: Does not save residuals, 1: Saves residuals
 	private int deconv_csVD_residual = 1;
-	
+
 	// Threshold of 10% with Ostergaard and Calamante
 	private double deconv_oSVD_OIthres = 0.035;
 	private int deconv_oSVD_OIcounter = 1;
 	// 0: Does not save residuals, 1: Saves residuals
 	private int deconv_oSVD_residual = 1;
-	
+
 	// TO ADD PARAMETERS FOR STABLE SPLINE
 	private int deconv_SS_residual = 1;
-	
+
 	// Methods to be applied for perfusion calculation
 	// "SVD", "cSVD", "oSVD"
 	private String deconv_method = "cSVD";
-	
+
 	// Constants ofproportionality
 	private double par_kh = 1.0;
 	private double par_rho = 1.0;
 	private double par_kvoi = 1.0;
-	
+
 	// Mask optimized for masking the entire brain
 	private byte mask_data[][][];
 	// Mask optimized for finding the arterial input function
 	private byte mask_aif[][][];
 	private byte mask_aif_slice[][];
-	
+
 	private int gauss2FittingObservations;
-    private double gauss2FittingData[];
-    // For 2 ideal Gaussians with doCurveIntersect = true;
-    // Final calculation for intensity at which 2 Gaussians intersect = 4.154614002693739
-    // For 2 ideal Gaussians with doCurveIntersect = false solving a one parameter search problem
-    // Final calculation for intensity at which 2 Gaussians intersect = 4.154017548758297
-    boolean doCurveIntersect = false;
-    double x_out[];
-    double y_out[];
-    double x_loc[];
-    double y_loc[];
-    
-    boolean readTestImage = true;
-    boolean test2PerfectGaussians = false;
-    private double[] GxData;
-    private double[] GxxData;
-    private double sigmas[] = new double[] {1.0};
-    double firstGaussianMean;
-    int firstGaussianMeanBin;
-    double firstGaussianAmplitude;
-    double firstGaussianStandardDeviation;
-    double c1;
-    private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator +
-    		"dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator;
-    private String outputPrefix = "";
-    private FileIO fileIO = null;
-    
-    private int saveFileFormat = FileUtility.NIFTI;
-    // used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
-    private boolean doSaveAllOutputs = true;
-    double S0map[][][];
-    int bolus[];
-    
-    public DSC_MRI_toolbox() {
-    	
-    }
-	
+	private double gauss2FittingData[];
+	// For 2 ideal Gaussians with doCurveIntersect = true;
+	// Final calculation for intensity at which 2 Gaussians intersect =
+	// 4.154614002693739
+	// For 2 ideal Gaussians with doCurveIntersect = false solving a one parameter
+	// search problem
+	// Final calculation for intensity at which 2 Gaussians intersect =
+	// 4.154017548758297
+	boolean doCurveIntersect = false;
+	double x_out[];
+	double y_out[];
+	double x_loc[];
+	double y_loc[];
+
+	boolean readTestImage = true;
+	boolean test2PerfectGaussians = false;
+	private double[] GxData;
+	private double[] GxxData;
+	private double sigmas[] = new double[] { 1.0 };
+	double firstGaussianMean;
+	int firstGaussianMeanBin;
+	double firstGaussianAmplitude;
+	double firstGaussianStandardDeviation;
+	double c1;
+	private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator + "dsc-mri-toolbox-master"
+			+ File.separator + "demo-data" + File.separator;
+	private String outputPrefix = "";
+	private FileIO fileIO = null;
+
+	private int saveFileFormat = FileUtility.NIFTI;
+	// used by CoreTool to only save AIF/sliceAIF pngs, if chosen by the user
+	private boolean doSaveAllOutputs = true;
+	double S0map[][][];
+	int bolus[];
+
+	public DSC_MRI_toolbox() {
+
+	}
+
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
 		this.volumes = volumes;
 		this.te = te;
 		this.tr = tr;
 	}
-	
+
 	public void runAlgorithm() {
 		if (readTestImage) {
 			int x, y, z, t;
 			final FileIO io = new FileIO();
-		    io.setQuiet(true);
-	        io.setSuppressProgressBar(true);
-	        ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator +
-	        		"dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
-	        if (img.getNDims() != 4) {
-	        	System.err.println("img.getNDims() = " + img.getNDims());
-	        	return;
-	        }
-	        nC = img.getExtents()[0];
-	        nR = img.getExtents()[1];
-	        nS = img.getExtents()[2];
-	        nT = img.getExtents()[3];
-	        // Temporarily for development
-	        aif_nSlice = nS/2;
-	        length = nC * nR;
-	        int vol = length * nS;
-	        int buffer_size = vol*nT;
-	        extents2D[0] = nC;
-	        extents2D[1] = nR;
-	        short buffer[] = new short[buffer_size];
-	        try {
-	        	img.exportData(0, buffer_size, buffer);
-	        }
-	        catch (IOException e) {
-	        	System.err.println("IOException " + e);
-	        	return;
-	        }
-	        img.disposeLocal();
-	        img = null;
-	        volumes = new double[nC][nR][nS][nT];
-	        for (x = 0; x < nC; x++) {
-	        	for (y = 0; y < nR; y++) {
-	        		for (z = 0; z < nS; z++) {
-	        			for (t = 0; t < nT; t++) {
-	        				volumes[x][y][z][t] = buffer[x + y*nC + z*length + t*vol];
-	        			}
-	        		}
-	        	}
-	        }
+			io.setQuiet(true);
+			io.setSuppressProgressBar(true);
+			ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
+					+ "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
+			if (img.getNDims() != 4) {
+				System.err.println("img.getNDims() = " + img.getNDims());
+				return;
+			}
+			nC = img.getExtents()[0];
+			nR = img.getExtents()[1];
+			nS = img.getExtents()[2];
+			nT = img.getExtents()[3];
+			// Temporarily for development
+			aif_nSlice = nS / 2;
+			length = nC * nR;
+			int vol = length * nS;
+			int buffer_size = vol * nT;
+			extents2D[0] = nC;
+			extents2D[1] = nR;
+			short buffer[] = new short[buffer_size];
+			try {
+				img.exportData(0, buffer_size, buffer);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			img.disposeLocal();
+			img = null;
+			volumes = new double[nC][nR][nS][nT];
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					for (z = 0; z < nS; z++) {
+						for (t = 0; t < nT; t++) {
+							volumes[x][y][z][t] = buffer[x + y * nC + z * length + t * vol];
+						}
+					}
+				}
+			}
 		}
 		DSC_mri_core();
 	}
-	
+
 	public void DSC_mri_core() {
 		int i;
 		UI = ViewUserInterface.getReference();
@@ -273,12 +274,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		nR = volumes[0].length;
 		nS = volumes[0][0].length;
 		nT = volumes[0][0][0].length;
-		
+
 		time = new double[nT];
 		for (i = 0; i < nT; i++) {
-			time[i] = i*tr;
+			time[i] = i * tr;
 		}
-		
+
 		if (display > 0) {
 			UI.setDataText("DATA SIZE\n");
 			UI.setDataText("Columns = " + nC + "\n");
@@ -288,20 +289,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			UI.setDataText("Echo time = " + te + "\n");
 			UI.setDataText("Repetition time = " + tr + "\n");
 		}
-		
+
 		if (options_conc == 0) {
 			DSC_mri_mask();
-			
+
 			// Calculations of Concentrations and S0
 			DSC_mri_conc();
 		}
-		
-	    // AIF extraction
+
+		// AIF extraction
 		if (aif_enable == 1) {
 			DSC_mri_aif();
 		}
 	}
-	
+
 	public void DSC_mri_mask() {
 		// Original MATLAB code was last modified by Marco Castallaro 08/07/2010
 		// Author of original MATLAB code: Marco Castallaro - Universita di Padova - DEI
@@ -1090,7 +1091,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    if (display > 1) {
 	    	tempImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "tempImage");
 	    }
+	    System.out.println("nS = " + nS);
 	    for (s = 0; s < nS; s++) {
+	    	System.out.println("s = " + s);
 	        // I cover any "holes" created by thresholding
 	    	for (x = 0; x < nC; x++) {
 		    	for (y = 0; y < nR; y++) {
@@ -1232,17 +1235,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        	System.err.println("No appropriate writer for maskedDataForAIFSelection_"+s+".png");
 	  	        	return;
 	  	        }
-	  	        volume_sum_sliceImage.disposeLocal();
 	  	        captureImage.flush();
+	  	        component.setEnabled(false);
+	  	        component.setVisible(false);
+	  	        component.setIgnoreRepaint(true);
 	  	        vFrame.removeComponentListener();
+	  	        vFrame.removeWindowListener();
 	  	        vFrame.removeMouseMotionListener();
-	  	        try {
-	  	        	vFrame.finalize();
-	  	        }
-	  	        catch (Throwable e) {
-	  	        	
-	  	        }
-	  	        vFrame.dispose();
+	  	        vFrame.removeMouseListener();
+	  	        vFrame.removeKeyListener();
+	  	        vFrame.close(false);
+	  	        volume_sum_sliceImage.disposeLocal();
 	  	        
 	  	        algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
 				algoVOIExtraction.run();
@@ -1279,18 +1282,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	  	        	return;
 	  	        }
 	  	        captureImage.flush();
-	  	        volume_sum_sliceImage.disposeLocal();
+	  	        component.setEnabled(false);
+	  	        component.setVisible(false);
+	  	        component.setIgnoreRepaint(true);
 	  	        vFrame.removeComponentListener();
+	  	        vFrame.removeWindowListener();
 	  	        vFrame.removeMouseMotionListener();
-	  	        try {
-	  	        	vFrame.finalize();
-	  	        }
-	  	        catch (Throwable e) {
-	  	        	
-	  	        }  
-	  	        vFrame.dispose();
+	  	        vFrame.removeMouseListener();
+	  	        vFrame.removeKeyListener();
+	  	        vFrame.close(false);
+	  	        volume_sum_sliceImage.disposeLocal();
 			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1)))
 	    } // for (s = 0; s < nS; s++)
+	    System.out.println("Finished s loop");
 	    idImage.disposeLocal();
 	    idImage = null;
 	    if (tempImage != null) {
@@ -1305,42 +1309,49 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    	}
 	    }
-	}  // public void DSC_mri_mask()
-	
+	} // public void DSC_mri_mask()
+
 	public void DSC_mri_conc() {
-	    // Original MATLAB version last modified by Denis Peruzzo 07/06/2010
-		// Author for original MATLAB version: Marco Castellaro - Universit di Padova - DEI
+		// Original MATLAB version last modified by Denis Peruzzo 07/06/2010
+		// Author for original MATLAB version: Marco Castellaro - Universit di Padova -
+		// DEI
 		//
 		// Calculate the map of concentrations of S0 in DSC-MRI exams.
 		//
 		// Input parameters:
-		// volumes (4D matrix) which contains the trends of the DSC signal of all the voxels
-		// mask (3D matrix) contains the matrix for masking the voxels not of interest for the study
+		// volumes (4D matrix) which contains the trends of the DSC signal of all the
+		// voxels
+		// mask (3D matrix) contains the matrix for masking the voxels not of interest
+		// for the study
 		//
-		// Options The structure that contains the method options, the signficiant ones are:
+		// Options The structure that contains the method options, the signficiant ones
+		// are:
 		//
-		// par_kvoi - Proportionality constant for the calculation of the tracer concentration in the VOI,
-		//            by default considered unknown and set to 1.
+		// par_kvoi - Proportionality constant for the calculation of the tracer
+		// concentration in the VOI,
+		// by default considered unknown and set to 1.
 		//
 		// S0 Series of parameters to identify the calculation threshold of S0.
-		// S0_nSamplesMin - n of the samples that I consider definitely acquired before injection
+		// S0_nSamplesMin - n of the samples that I consider definitely acquired before
+		// injection
 		// S0_nSamplesMax - n of the samples after which I stop anyway.
-		// S0_thresh - I add a sample if its diefference from the mean is less than threshold
+		// S0_thresh - I add a sample if its diefference from the mean is less than
+		// threshold
 		//
 		// display - Level 1 shows the processing progress
-		//           Level 2 shows the maps of S0 and the average signal on which it is estimated.
+		// Level 2 shows the maps of S0 and the average signal on which it is estimated.
 		//
 		// Output parameters:
 		// conc: 4D matrix of concentrations
 		// S0map 3D S0 matrix
 		int x, y, z, t;
-		
+
 		if (display > 0) {
 			UI.setDataText("Calculating concentration...\n");
 		}
-		
+
 		DSC_mri_S0();
-		
+
 		conc = new double[nC][nR][nS][nT];
 		double step1;
 		for (t = 0; t < nT; t++) {
@@ -1348,21 +1359,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				for (y = 0; y < nR; y++) {
 					for (z = 0; z < nS; z++) {
 						if (mask_data[x][y][z] == 1) {
-						    step1 = volumes[x][y][z][t]/S0map[x][y][z];
-						    conc[x][y][z][t] = -(par_kvoi/te) * Math.log(step1);
+							step1 = volumes[x][y][z][t] / S0map[x][y][z];
+							conc[x][y][z][t] = -(par_kvoi / te) * Math.log(step1);
 						}
 					}
 				}
 			}
 		} // for (t = 0; t < nT; t++)
 	} // public void DSC_mri_conc()
-	
+
 	public void DSC_mri_S0() {
-	    // Author of original MATLAB version Marco Castellaro - Universit di Padova - DEI
+		// Author of original MATLAB version Marco Castellaro - Universit di Padova -
+		// DEI
 		//
 		// The function calculates the bolus instant and the S0 from the data.
-		// 1.) On the average trend I calculate the inection of the bolus.  I calculate the
-		// average of the first n samples and add the n+1 if its percentage difference from
+		// 1.) On the average trend I calculate the inection of the bolus. I calculate
+		// the
+		// average of the first n samples and add the n+1 if its percentage difference
+		// from
 		// the average is less than a given threshold.
 		// 2.) Calculate S0 as the mean of the first n samples for all voxels.
 		//
@@ -1380,96 +1394,91 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		boolean cycle;
 		int pos;
 		double mean_val;
-		
+
 		double mean_signal[][] = new double[nS][nT];
 		double signalSum;
 		int signalNumber;
 		double valSum;
 		for (s = 0; s < nS; s++) {
 			for (t = 0; t < nT; t++) {
-			    signalSum = 0.0;
-			    signalNumber = 0;
-			    for (x = 0; x < nC; x++) {
-			    	for (y = 0; y < nR; y++) {
-			    		if (mask_data[x][y][s] == 1) {
-			    			signalSum += volumes[x][y][s][t];
-			    			signalNumber++;
-			    		}
-			    	}
-			    }
-			    if (signalNumber > 0) {
-			        mean_signal[s][t] = signalSum/signalNumber;
-			    }
+				signalSum = 0.0;
+				signalNumber = 0;
+				for (x = 0; x < nC; x++) {
+					for (y = 0; y < nR; y++) {
+						if (mask_data[x][y][s] == 1) {
+							signalSum += volumes[x][y][s][t];
+							signalNumber++;
+						}
+					}
+				}
+				if (signalNumber > 0) {
+					mean_signal[s][t] = signalSum / signalNumber;
+				}
 			}
 		} // for (s = 0; s < nS; s++)
-		
+
 		S0map = new double[nC][nR][nS];
 		bolus = new int[nS];
 		double S0mapSum;
 		for (s = 0; s < nS; s++) {
-		    // 1.2) calculation of the moment of injection of the bolus
+			// 1.2) calculation of the moment of injection of the bolus
 			cycle = true;
 			pos = nSamplesMin;
 			while (cycle) {
-			    valSum = 0.0;
-			    for (t = 0; t < pos; t++) {
-			    	valSum += mean_signal[s][t];
-			    }
-			    mean_val = valSum/pos;
-			    if (Math.abs((mean_val - mean_signal[s][pos])/mean_val) < thresh) {
-			    	pos = pos + 1;
-			    }
-			    else {
-			    	cycle = false;
-			    	// Conservative choice, I do not consider the last sample before injection
-			    	pos = pos - 1;
-			    }
-			    if (pos == nSamplesMax) {
-			    	cycle = false;
-			    	pos = pos - 1;
-			    }
+				valSum = 0.0;
+				for (t = 0; t < pos; t++) {
+					valSum += mean_signal[s][t];
+				}
+				mean_val = valSum / pos;
+				if (Math.abs((mean_val - mean_signal[s][pos]) / mean_val) < thresh) {
+					pos = pos + 1;
+				} else {
+					cycle = false;
+					// Conservative choice, I do not consider the last sample before injection
+					pos = pos - 1;
+				}
+				if (pos == nSamplesMax) {
+					cycle = false;
+					pos = pos - 1;
+				}
 			} // while (cycle)
-			
-			if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1))) {
+
+			if ((display > 2) || ((s == (int) Math.round(0.5 * nS) - 1) && (display > 1))) {
 				float timef[] = new float[nT];
 				for (i = 0; i < nT; i++) {
-					timef[i] = (float)time[i];
+					timef[i] = (float) time[i];
 				}
 				float mean_signalf[] = new float[nT];
 				for (i = 0; i < nT; i++) {
-					mean_signalf[i] = (float)mean_signal[s][i];
+					mean_signalf[i] = (float) mean_signal[s][i];
 				}
-				ViewJFrameGraph meanSignalGraph = new ViewJFrameGraph(timef, mean_signalf, "S0 computed from first " + pos + " samples",
-						"Time", "Mean Signal slice " + s);
-			    meanSignalGraph.setVisible(true);
-			    try {
-			       meanSignalGraph.save(outputFilePath + outputPrefix + "meanSignal_"+s+"Graph.plt");
-			    }
-			    catch (IOException e) {
-			    	System.err.println("IOException " + e);
-			    	return;
-			    }
-		    	Component component = meanSignalGraph.getComponent(0);
-		    	Rectangle rect = component.getBounds();
-		    	String format = "png";
-		        BufferedImage captureImage =
-		                new BufferedImage(rect.width, rect.height,
-		                                    BufferedImage.TYPE_INT_ARGB);
-		        component.paint(captureImage.getGraphics());
-		 
-		        File meanSignalGraphFile = new File(outputFilePath + outputPrefix + "meanSignal_"+s+"Graph.png");
-		        try {
-		            ImageIO.write(captureImage, format, meanSignalGraphFile);
-		        }
-		        catch (IOException e) {
-			    	System.err.println("IOException " + e);
-			    	return;
-			    }
-		        meanSignalGraph.removeComponentListener();
-		        meanSignalGraph.dispose();
-		        captureImage.flush();
+				ViewJFrameGraph meanSignalGraph = new ViewJFrameGraph(timef, mean_signalf,
+						"S0 computed from first " + pos + " samples", "Time", "Mean Signal slice " + s);
+				meanSignalGraph.setVisible(true);
+				try {
+					meanSignalGraph.save(outputFilePath + outputPrefix + "meanSignal_" + s + "Graph.plt");
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				Component component = meanSignalGraph.getComponent(0);
+				Rectangle rect = component.getBounds();
+				String format = "png";
+				BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+				component.paint(captureImage.getGraphics());
+
+				File meanSignalGraphFile = new File(outputFilePath + outputPrefix + "meanSignal_" + s + "Graph.png");
+				try {
+					ImageIO.write(captureImage, format, meanSignalGraphFile);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				meanSignalGraph.removeComponentListener();
+				meanSignalGraph.dispose();
+				captureImage.flush();
 			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
-			
+
 			// 2.) Calculation of S0
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
@@ -1478,61 +1487,68 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						for (t = 0; t < pos; t++) {
 							S0mapSum += volumes[x][y][s][t];
 						}
-						S0map[x][y][s] = S0mapSum/pos;
+						S0map[x][y][s] = S0mapSum / pos;
 					}
 				}
 			}
-			
-			if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1))) {
+
+			if ((display > 2) || ((s == (int) Math.round(0.5 * nS) - 1) && (display > 1))) {
 				ModelImage S0mapImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "S0mapImage");
 				double tempDouble[] = new double[length];
 				for (x = 0; x < nC; x++) {
-			    	for (y = 0; y < nR; y++) {
-			            tempDouble[x + y*nC] = S0map[x][y][s];	
-			    	}
+					for (y = 0; y < nR; y++) {
+						tempDouble[x + y * nC] = S0map[x][y][s];
+					}
 				}
-			    try {
-			        S0mapImage.importData(0, tempDouble, true);
-			    }
-			    catch (IOException e) {
-			    	System.err.println("IOException " + e);
-		    		return;
-			    }
-			    saveImageFile(S0mapImage, outputFilePath, outputPrefix + "S0map_"+s, saveFileFormat);
-		        S0mapImage.disposeLocal();
+				try {
+					S0mapImage.importData(0, tempDouble, true);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				saveImageFile(S0mapImage, outputFilePath, outputPrefix + "S0map_" + s, saveFileFormat);
+				S0mapImage.disposeLocal();
 			} // if ((display > 2) || ((s == (int)Math.round(0.5*nS)-1) && (display > 1)))
 			bolus[s] = pos;
 		} // for (s = 0; s < nS; s++)
 	} // public void DSC_mri_S0()
-	
+
 	public void DSC_mri_aif() {
 		// Last modification of original MATLAB code: Denis Peruzzo 08/06/2010
 		// Author of original MATLAB code: Denis Peruzzo - Universit di Padova - DEI
 		//
-		// Locate the AIF for the DSC-MRI exam.  The method is designed to identify the middle
-		// cerebral artery (MCA) in the slices immediately superior to the corpus callosum.
+		// Locate the AIF for the DSC-MRI exam. The method is designed to identify the
+		// middle
+		// cerebral artery (MCA) in the slices immediately superior to the corpus
+		// callosum.
 		//
 		// Input parameters:
 		// conc (4D matrix) which contains the concentration trends of all the voxels
-		// mask_aif (3D matrix) contains the mask of each slice.  The mask is not the one used
-		//          for the calculation of concentrations, but a restricted version of it.
-		//          (The fill function was not used.)
-		// options The structure that contains the options of the method, the significant
-		//         ones are:
+		// mask_aif (3D matrix) contains the mask of each slice. The mask is not the one
+		// used
+		// for the calculation of concentrations, but a restricted version of it.
+		// (The fill function was not used.)
+		// options The structure that contains the options of the method, the
+		// significant
+		// ones are:
 		// aif_enable: flag that enables the AIF search (default = 1).
 		//
-		// aif_semiMajorAxis: Allows you to identify the AIF search area.  The elliptical search zone
-		//                    has the semi major axis greater than or equal to twice the portion
-		//                    indicated by this option of the size of the brain (default = 0.35)
+		// aif_semiMajorAxis: Allows you to identify the AIF search area. The elliptical
+		// search zone
+		// has the semi major axis greater than or equal to twice the portion
+		// indicated by this option of the size of the brain (default = 0.35)
 		//
-		// aif_semiMinorAxis: Like the semi major axis, but realtive to the other semiaxis of the
-		//                    search region (default = 0.15)
+		// aif_semiMinorAxis: Like the semi major axis, but realtive to the other
+		// semiaxis of the
+		// search region (default = 0.15)
 		//
 		// aif_pArea: Percentage of candidate voxels based on area under the curve
 		//
-		// aif_pTTP: Percentage of candidate voxels excluded on basis of time to peak (default = 0.4)
+		// aif_pTTP: Percentage of candidate voxels excluded on basis of time to peak
+		// (default = 0.4)
 		//
-		// aif_pReg: Percentage of candidate voxels excluded based on irregularity of the curve (default = 0.05)
+		// aif_pReg: Percentage of candidate voxels excluded based on irregularity of
+		// the curve (default = 0.05)
 		//
 		// aif_diffPeak: 0.0400
 		//
@@ -1543,16 +1559,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// Output parameters: AIF structure, which contains
 		// - ROI
 		int i, x, y, t;
-		
+
 		if (display > 0) {
 			UI.setDataText("AIF extraction...\n");
 		}
-		
+
 		// AIF slice selection
 		if ((aif_nSlice < 0) || (aif_nSlice >= nS)) {
-		    aif_nSlice = DSC_mri_slice_selection_figure();	
+			aif_nSlice = DSC_mri_slice_selection_figure();
 		}
-		
+
 		AIFslice = new double[nC][nR][nT];
 		mask_aif_slice = new byte[nC][nR];
 		for (x = 0; x < nC; x++) {
@@ -1565,10 +1581,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		extractAIF();
 	} // public DSC_mri_aif()
+
 	public int DSC_mri_slice_selection_figure() {
 		return -1;
 	} // public int DSC_mri_slice_selection_figure()
-	
+
 	public void extractAIF() {
 		// Extract the AIF from the supplied slice
 		// 1.) Find the region containing the AIF
@@ -1585,16 +1602,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double diffPeak;
 		byte mask[][] = new byte[nC][nR];
 		double immagine_img[][] = new double[nC][nR];
-		int x,y,t;
+		int x, y, t;
 		double vettImmagine[];
 		double immagine_bound[] = new double[2];
 		boolean cycle;
 		int r;
 		int minR = 0;
-		int maxR = nR-1;
+		int maxR = nR - 1;
 		int c;
 		int minC = 0;
-		int maxC = nC-1;
+		int maxC = nC - 1;
 		int maskSum;
 		double center[] = new double[2];
 		double semiAxisA;
@@ -1620,7 +1637,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		int nCandidates;
 		byte ROIauc[][] = new byte[nC][nR];
 		int ROISum;
-		
+
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
 		semiMinorAxis = aif_semiMinorAxis;
@@ -1634,23 +1651,23 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			for (y = 0; y < nR; y++) {
 				mask[x][y] = mask_aif_slice[x][y];
 				for (t = 0; t < nT; t++) {
-				    immagine_img[x][y] += AIFslice[x][y][t];	
+					immagine_img[x][y] += AIFslice[x][y][t];
 				}
 			}
 		}
-		
+
 		// I prepare the image for any visualizations
 		vettImmagine = new double[length];
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
-				vettImmagine[x + y*nC] = immagine_img[x][y];
+				vettImmagine[x + y * nC] = immagine_img[x][y];
 			}
 		}
 		Arrays.sort(vettImmagine);
 		immagine_bound[0] = 0.0;
-		immagine_bound[1] = vettImmagine[(int)Math.round(0.95*length)-1];
+		immagine_bound[1] = vettImmagine[(int) Math.round(0.95 * length) - 1];
 		vettImmagine = null;
-		
+
 		// 1.) Identification of the ROI containing the AIF
 		// 1.1) Identification of extremes of the mask
 		if (display > 0) {
@@ -1659,20 +1676,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		cycle = true;
 		r = 0;
 		while (cycle) {
-		    maskSum = 0;
-		    for (x = 0; x < nC; x++) {
-		    	maskSum += mask[x][r];
-		    }
-		    if (maskSum != 0) {
-		    	minR = r;
-		    	cycle = false;
-		    }
-		    else {
-		    	r = r+1;
-		    }
+			maskSum = 0;
+			for (x = 0; x < nC; x++) {
+				maskSum += mask[x][r];
+			}
+			if (maskSum != 0) {
+				minR = r;
+				cycle = false;
+			} else {
+				r = r + 1;
+			}
 		} // while(cycle)
 		cycle = true;
-		r = nR-1;
+		r = nR - 1;
 		while (cycle) {
 			maskSum = 0;
 			for (x = 0; x < nC; x++) {
@@ -1681,12 +1697,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			if (maskSum != 0) {
 				maxR = r;
 				cycle = false;
-			}
-			else {
-				r = r-1;
+			} else {
+				r = r - 1;
 			}
 		} // while (cycle)
-		
+
 		cycle = true;
 		c = 0;
 		while (cycle) {
@@ -1697,13 +1712,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			if (maskSum != 0) {
 				minC = c;
 				cycle = false;
-			}
-			else {
-				c = c+1;
+			} else {
+				c = c + 1;
 			}
 		} // while (cycle)
 		cycle = true;
-		c = nC-1;
+		c = nC - 1;
 		while (cycle) {
 			maskSum = 0;
 			for (y = 0; y < nR; y++) {
@@ -1712,215 +1726,208 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			if (maskSum != 0) {
 				maxC = c;
 				cycle = false;
-			}
-			else {
-				c = c-1;
+			} else {
+				c = c - 1;
 			}
 		} // while (cycle)
-		
+
 		if (display > 2) {
 			ModelImage mask_aif_sliceImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "mask_aif_sliceImage");
 			byte tempByte[] = new byte[length];
 			for (x = 0; x < nC; x++) {
-		    	for (y = 0; y < nR; y++) {
-		            tempByte[x + y*nC] = mask[x][y];	
-		    	}
-			 }
-		    try {
-		        mask_aif_sliceImage.importData(0, tempByte, true);
-		    }
-		    catch (IOException e) {
-		    	System.err.println("IOException " + e);
-	    		return;
-		    }
-		    float xArr[] = new float[2];
-            float yArr[] = new float[2];
-            float zArr[] = new float[2];
-            xArr[0] = 0;
-            xArr[1] = nC-1;
-            yArr[0] = minR;
-            yArr[1] = minR;
-            VOI boundLowYVOI = new VOI((short) 0, "boundLowYLine", VOI.LINE, -1.0f);
-            boundLowYVOI.importCurve(xArr, yArr, zArr);
-            mask_aif_sliceImage.registerVOI(boundLowYVOI);
-            boundLowYVOI.setFixed(true);
-            boundLowYVOI.setColor(Color.green);
-            yArr[0] = maxR;
-            yArr[1] = maxR;
-            VOI boundHighYVOI = new VOI((short) 0, "boundHighYLine", VOI.LINE, -1.0f);
-            boundHighYVOI.importCurve(xArr, yArr, zArr);
-            mask_aif_sliceImage.registerVOI(boundHighYVOI);
-            boundHighYVOI.setFixed(true);
-            boundHighYVOI.setColor(Color.green);
-            xArr[0] = minC;
-            xArr[1] = minC;
-            yArr[0] = 0;
-            yArr[1] = nR-1;
-            VOI boundLowXVOI = new VOI((short) 0, "boundLowXLine", VOI.LINE, -1.0f);
-            boundLowXVOI.importCurve(xArr, yArr, zArr);
-            mask_aif_sliceImage.registerVOI(boundLowXVOI);
-            boundLowXVOI.setFixed(true);
-            boundLowXVOI.setColor(Color.green);
-            xArr[0] = maxC;
-            xArr[1] = maxC;
-            VOI boundHighXVOI = new VOI((short) 0, "boundHighXLine", VOI.LINE, -1.0f);
-            boundHighXVOI.importCurve(xArr, yArr, zArr);
-            mask_aif_sliceImage.registerVOI(boundHighXVOI);
-            boundHighXVOI.setFixed(true);
-            boundHighXVOI.setColor(Color.green);
-		    ViewJFrameImage vFrame = new ViewJFrameImage(mask_aif_sliceImage);
-		    Component component = vFrame.getComponent(0);
-		    Rectangle rect = component.getBounds();
-	    	String format = "png";
-	        BufferedImage captureImage =
-	                new BufferedImage(rect.width, rect.height,
-	                                    BufferedImage.TYPE_INT_ARGB);
-	        component.paint(captureImage.getGraphics());
-	        
-	        File mask_aif_sliceFile = new File(outputFilePath + outputPrefix + "mask_aif_slice.png");
-	        boolean foundWriter;
-	        try {
-	            foundWriter = ImageIO.write(captureImage, format, mask_aif_sliceFile);
-	        }
-	        catch (IOException e) {
-	        	System.err.println("IOException " + e);
-    		return;
-	        }
-	        if (!foundWriter) {
-	        	System.err.println("No appropriate writer for mask_aif_slice.png");
-	        	return;
-	        }
-	        captureImage.flush();
-	        mask_aif_sliceImage.disposeLocal();
-	        vFrame.removeComponentListener();
-	        vFrame.removeMouseMotionListener();
-	        try {
-  	        	vFrame.finalize();
-  	        }
-  	        catch (Throwable e) {
-  	        	
-  	        }
-	        vFrame.dispose();	
+				for (y = 0; y < nR; y++) {
+					tempByte[x + y * nC] = mask[x][y];
+				}
+			}
+			try {
+				mask_aif_sliceImage.importData(0, tempByte, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			float xArr[] = new float[2];
+			float yArr[] = new float[2];
+			float zArr[] = new float[2];
+			xArr[0] = 0;
+			xArr[1] = nC - 1;
+			yArr[0] = minR;
+			yArr[1] = minR;
+			VOI boundLowYVOI = new VOI((short) 0, "boundLowYLine", VOI.LINE, -1.0f);
+			boundLowYVOI.importCurve(xArr, yArr, zArr);
+			mask_aif_sliceImage.registerVOI(boundLowYVOI);
+			boundLowYVOI.setFixed(true);
+			boundLowYVOI.setColor(Color.green);
+			yArr[0] = maxR;
+			yArr[1] = maxR;
+			VOI boundHighYVOI = new VOI((short) 0, "boundHighYLine", VOI.LINE, -1.0f);
+			boundHighYVOI.importCurve(xArr, yArr, zArr);
+			mask_aif_sliceImage.registerVOI(boundHighYVOI);
+			boundHighYVOI.setFixed(true);
+			boundHighYVOI.setColor(Color.green);
+			xArr[0] = minC;
+			xArr[1] = minC;
+			yArr[0] = 0;
+			yArr[1] = nR - 1;
+			VOI boundLowXVOI = new VOI((short) 0, "boundLowXLine", VOI.LINE, -1.0f);
+			boundLowXVOI.importCurve(xArr, yArr, zArr);
+			mask_aif_sliceImage.registerVOI(boundLowXVOI);
+			boundLowXVOI.setFixed(true);
+			boundLowXVOI.setColor(Color.green);
+			xArr[0] = maxC;
+			xArr[1] = maxC;
+			VOI boundHighXVOI = new VOI((short) 0, "boundHighXLine", VOI.LINE, -1.0f);
+			boundHighXVOI.importCurve(xArr, yArr, zArr);
+			mask_aif_sliceImage.registerVOI(boundHighXVOI);
+			boundHighXVOI.setFixed(true);
+			boundHighXVOI.setColor(Color.green);
+			ViewJFrameImage vFrame = new ViewJFrameImage(mask_aif_sliceImage);
+			Component component = vFrame.getComponent(0);
+			Rectangle rect = component.getBounds();
+			String format = "png";
+			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File mask_aif_sliceFile = new File(outputFilePath + outputPrefix + "mask_aif_slice.png");
+			boolean foundWriter;
+			try {
+				foundWriter = ImageIO.write(captureImage, format, mask_aif_sliceFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			if (!foundWriter) {
+				System.err.println("No appropriate writer for mask_aif_slice.png");
+				return;
+			}
+			captureImage.flush();
+			component.setEnabled(false);
+			component.setVisible(false);
+  	        component.setIgnoreRepaint(true);
+			vFrame.removeComponentListener();
+			vFrame.removeWindowListener();
+			vFrame.removeMouseMotionListener();
+			vFrame.removeMouseListener();
+  	        vFrame.removeKeyListener();
+  	        vFrame.close(false);
+  	        mask_aif_sliceImage.disposeLocal();
 		} // if (display > 2)
-		
+
 		// 1.2) ROI design
-		if (display > 0 ) {
+		if (display > 0) {
 			UI.setDataText("Definition of the AIF extraction searching area\n");
 		}
 		// Y coordinate of the center (calculated on the rows)
-		center[1] = 0.5*(minR+maxR);
+		center[1] = 0.5 * (minR + maxR);
 		// X coordinate of the center (calculated on the columns)
-		center[0] = 0.5*(minC+maxC);
-		
-		// The semimajor axis.  Along the anterior-posterior direction and then from
+		center[0] = 0.5 * (minC + maxC);
+
+		// The semimajor axis. Along the anterior-posterior direction and then from
 		// left to right on the image.
-		semiAxisB = semiMajorAxis*(maxC-minC);
-		semiAxisA = semiMinorAxis*(maxR-minR);
+		semiAxisB = semiMajorAxis * (maxC - minC);
+		semiAxisA = semiMinorAxis * (maxR - minR);
 		for (r = 0; r < nR; r++) {
 			for (c = 0; c < nC; c++) {
-			    rdiff = r - center[1];
-			    cdiff = c - center[0];
-			    if (((rdiff*rdiff)/(semiAxisA*semiAxisA) + (cdiff*cdiff)/(semiAxisB*semiAxisB)) <= 1.0) {
-			    	ROI[c][r] = 1;
-			    }
+				rdiff = r - center[1];
+				cdiff = c - center[0];
+				if (((rdiff * rdiff) / (semiAxisA * semiAxisA) + (cdiff * cdiff) / (semiAxisB * semiAxisB)) <= 1.0) {
+					ROI[c][r] = 1;
+				}
 			}
 		}
 		// Of the values of the ROI I keep only those also present in the mask
 		for (r = 0; r < nR; r++) {
 			for (c = 0; c < nC; c++) {
-		        ROI[c][r] = (byte)(ROI[c][r] * mask[c][r]);	
-		        ROIInitialized[c][r] = ROI[c][r];
+				ROI[c][r] = (byte) (ROI[c][r] * mask[c][r]);
+				ROIInitialized[c][r] = ROI[c][r];
 			}
 		}
-		
-		nL = (int)(center[0]/0.01) + 1;
-		xROI = new double[2*nL];
-		for (i = 0, val  = semiAxisB; val <= center[0] + semiAxisB; i++) {
-			val = semiAxisB + 0.01*i;
+
+		nL = (int) (center[0] / 0.01) + 1;
+		xROI = new double[2 * nL];
+		for (i = 0, val = semiAxisB; val <= center[0] + semiAxisB; i++) {
+			val = semiAxisB + 0.01 * i;
 			xROI[i] = center[0] - val;
 		}
-		
-		yROI = new double[2*nL];
+
+		yROI = new double[2 * nL];
 		for (k = 0; k < nL; k++) {
 			diffX = xROI[k] - center[0];
-			yROI[k] = semiAxisA*(Math.sqrt(Math.max(0.0,(1 - (diffX*diffX)/(semiAxisB*semiAxisB))))) + center[1];
+			yROI[k] = semiAxisA * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
+					+ center[1];
 		}
 		for (k = 1; k <= nL; k++) {
-			xROI[nL+k-1] = xROI[nL-k];
+			xROI[nL + k - 1] = xROI[nL - k];
 		}
-		
-		diffX = xROI[2*nL-1] - center[0];
-		yROI[2*nL-1] = -semiAxisA*(Math.sqrt(Math.max(0.0,(1 - (diffX*diffX)/(semiAxisB*semiAxisB))))) + center[1];
-		
+
+		diffX = xROI[2 * nL - 1] - center[0];
+		yROI[2 * nL - 1] = -semiAxisA * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
+				+ center[1];
+
 		if (display > 2) {
 			vettImmagine = new double[length];
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
-					vettImmagine[x + y*nC] = immagine_img[x][y];
+					vettImmagine[x + y * nC] = immagine_img[x][y];
 				}
 			}
 			ModelImage immagineImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "immagineImage");
 			try {
 				immagineImage.importData(0, vettImmagine, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
 			}
-			catch (IOException e) {
-		    	System.err.println("IOException " + e);
-	    		return;
-		    }
-		    float xArr[] = new float[1];
-            float yArr[] = new float[1];
-            float zArr[] = new float[1];
-            for (i = 0; i < 2*nL; i++) {
-	    		VOI ROIPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
-	    		ROIPtVOI.setColor(Color.red);
-	    		xArr[0] = (float)xROI[i];
-	    		yArr[0] = (float)yROI[i];
-	    		ROIPtVOI.importCurve(xArr, yArr, zArr);
-	            ((VOIPoint) (ROIPtVOI.getCurves().elementAt(0))).setFixed(true);
-	            immagineImage.registerVOI(ROIPtVOI);
-	    	}
-            VOI centerPtVOI = new VOI((short)(2*nL), "center", VOI.POINT, -1.0f);
-            centerPtVOI.setColor(Color.green);
-            xArr[0] = (float)center[0];
-            yArr[0] = (float)center[1];
-            centerPtVOI.importCurve(xArr, yArr, zArr);
-            ((VOIPoint) (centerPtVOI.getCurves().elementAt(0))).setFixed(true);
-            immagineImage.registerVOI(centerPtVOI);
-            ViewJFrameImage vFrame = new ViewJFrameImage(immagineImage);
-		    Component component = vFrame.getComponent(0);
-		    Rectangle rect = component.getBounds();
-	    	String format = "png";
-	        BufferedImage captureImage =
-	                new BufferedImage(rect.width, rect.height,
-	                                    BufferedImage.TYPE_INT_ARGB);
-	        component.paint(captureImage.getGraphics());
-	        
-	        File immagineFile = new File(outputFilePath + outputPrefix + "immagine.png");
-	        boolean foundWriter;
-	        try {
-	            foundWriter = ImageIO.write(captureImage, format, immagineFile);
-	        }
-	        catch (IOException e) {
-	        	System.err.println("IOException " + e);
-    		return;
-	        }
-	        if (!foundWriter) {
-	        	System.err.println("No appropriate writer for immagine.png");
-	        	return;
-	        }
-	        captureImage.flush();
-	        immagineImage.disposeLocal();
-	        vFrame.removeComponentListener();
-	        vFrame.removeMouseMotionListener();
-	        try {
-  	        	vFrame.finalize();
-  	        }
-  	        catch (Throwable e) {
-  	        	
-  	        }
-	        vFrame.dispose();	
+			float xArr[] = new float[1];
+			float yArr[] = new float[1];
+			float zArr[] = new float[1];
+			for (i = 0; i < 2 * nL; i++) {
+				VOI ROIPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
+				ROIPtVOI.setColor(Color.red);
+				xArr[0] = (float) xROI[i];
+				yArr[0] = (float) yROI[i];
+				ROIPtVOI.importCurve(xArr, yArr, zArr);
+				((VOIPoint) (ROIPtVOI.getCurves().elementAt(0))).setFixed(true);
+				immagineImage.registerVOI(ROIPtVOI);
+			}
+			VOI centerPtVOI = new VOI((short) (2 * nL), "center", VOI.POINT, -1.0f);
+			centerPtVOI.setColor(Color.green);
+			xArr[0] = (float) center[0];
+			yArr[0] = (float) center[1];
+			centerPtVOI.importCurve(xArr, yArr, zArr);
+			((VOIPoint) (centerPtVOI.getCurves().elementAt(0))).setFixed(true);
+			immagineImage.registerVOI(centerPtVOI);
+			ViewJFrameImage vFrame = new ViewJFrameImage(immagineImage);
+			Component component = vFrame.getComponent(0);
+			Rectangle rect = component.getBounds();
+			String format = "png";
+			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File immagineFile = new File(outputFilePath + outputPrefix + "immagine.png");
+			boolean foundWriter;
+			try {
+				foundWriter = ImageIO.write(captureImage, format, immagineFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			if (!foundWriter) {
+				System.err.println("No appropriate writer for immagine.png");
+				return;
+			}
+			captureImage.flush();
+			component.setEnabled(false);
+			component.setVisible(false);
+  	        component.setIgnoreRepaint(true);
+			vFrame.removeComponentListener();
+			vFrame.removeWindowListener();
+			vFrame.removeMouseMotionListener();
+			vFrame.removeMouseListener();
+  	        vFrame.removeKeyListener();
+  	        vFrame.close(false);
+  	        immagineImage.disposeLocal();
 		} // if (display > 2)
-		
+
 		// 2.) Decimation of candidate voxels
 		if (display > 0) {
 			UI.setDataText("Candidate voxel analysis\n");
@@ -1932,7 +1939,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				totalCandidates += ROI[x][y];
 			}
 		}
-		totalCandidatesToKeep = (int)Math.ceil(totalCandidates*(1.0 - pArea));
+		totalCandidatesToKeep = (int) Math.ceil(totalCandidates * (1.0 - pArea));
 		// I calculate the area under the curve of each voxel.
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
@@ -1945,7 +1952,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-		
+
 		cycle = true;
 		nCycles = 0;
 		AUCdown = Double.MAX_VALUE;
@@ -1961,8 +1968,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
 		while (cycle) {
-			nCycles = nCycles+1;
-			threshold = 0.5*(AUCup+AUCdown);
+			nCycles = nCycles + 1;
+			threshold = 0.5 * (AUCup + AUCdown);
 			nCandidates = 0;
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
@@ -1971,29 +1978,26 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					}
 				}
 			}
-			
+
 			if (nCandidates == totalCandidatesToKeep) {
 				cycle = false;
-			}
-			else if (nCandidates > totalCandidatesToKeep) {
+			} else if (nCandidates > totalCandidatesToKeep) {
 				AUCdown = threshold;
-			}
-			else {
+			} else {
 				AUCup = threshold;
 			}
 			if (((AUCup - AUCdown) < 0.01) || (nCycles > 100)) {
 				cycle = false;
 			}
 		} // while (cycle)
-		
+
 		// Values 2 for discarded voxels, 1 for kept voxels
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
 				if (AUC[x][y] > threshold) {
 					ROIauc[x][y] = ROI[x][y];
-				}
-				else {
-					ROIauc[x][y] = (byte)(2 * ROI[x][y]);
+				} else {
+					ROIauc[x][y] = (byte) (2 * ROI[x][y]);
 				}
 			}
 		}
@@ -2010,21 +2014,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			byte temp[] = new byte[length];
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
-					temp[x + y*nC] = ROIauc[x][y];
+					temp[x + y * nC] = ROIauc[x][y];
 				}
 			}
 			ModelImage ROIaucImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "ROIaucImage");
 			try {
 				ROIaucImage.importData(0, temp, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
 			}
-			catch (IOException e) {
-		    	System.err.println("IOException " + e);
-	    		return;
-		    }
 			saveImageFile(ROIaucImage, outputFilePath, outputPrefix + "ROIauc", saveFileFormat);
-	        ROIaucImage.disposeLocal();
+			ROIaucImage.disposeLocal();
 		} // if (display > 2)
-		
+
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
 				if (AUC[x][y] <= threshold) {
@@ -2032,764 +2035,758 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-		
+
 		// 2.2) Selection due to the TTP
 		totalCandidates = 0;
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
-				
+
 			}
 		}
 	} // public void extractAIF()
-	
+
 	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
-        return saveImageFile(img, dir, fileBasename, fileType, false);
-    }
-    
-    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType, boolean alwaysSave) {
-        if (fileIO == null) {
-            fileIO = new FileIO();
-            fileIO.setQuiet(true);
-        }
-        
-        // if no directory specified, skip writing out images
-        // or if option is set and this is a file that is optionally written out
-        if (dir == null || (!alwaysSave && !doSaveAllOutputs)) {
-        	return null;
-        }
-        
-        FileWriteOptions opts = new FileWriteOptions(true);
-        opts.setFileDirectory(dir);
+		return saveImageFile(img, dir, fileBasename, fileType, false);
+	}
 
-        if (img.getNDims() == 3) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(img.getExtents()[2] - 1);
-        } else if (img.getNDims() == 4) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(img.getExtents()[2] - 1);
-            opts.setBeginTime(0);
-            opts.setEndTime(img.getExtents()[3] - 1);
-        }
+	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType,
+			boolean alwaysSave) {
+		if (fileIO == null) {
+			fileIO = new FileIO();
+			fileIO.setQuiet(true);
+		}
 
-        opts.setFileType(fileType);
-        final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
-        opts.setFileName(fileBasename + ext);
+		// if no directory specified, skip writing out images
+		// or if option is set and this is a file that is optionally written out
+		if (dir == null || (!alwaysSave && !doSaveAllOutputs)) {
+			return null;
+		}
 
-        opts.setOptionsSet(true);
-        opts.setMultiFile(false);
-        
-        fileIO.writeImage(img, opts, false, false);
-        
-        return new File(dir + File.separator + fileBasename + ext);
-    }
-	
-	// Output zero edge crossings of second order derivative of 1D Gaussian of buffer
+		FileWriteOptions opts = new FileWriteOptions(true);
+		opts.setFileDirectory(dir);
+
+		if (img.getNDims() == 3) {
+			opts.setBeginSlice(0);
+			opts.setEndSlice(img.getExtents()[2] - 1);
+		} else if (img.getNDims() == 4) {
+			opts.setBeginSlice(0);
+			opts.setEndSlice(img.getExtents()[2] - 1);
+			opts.setBeginTime(0);
+			opts.setEndTime(img.getExtents()[3] - 1);
+		}
+
+		opts.setFileType(fileType);
+		final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+		opts.setFileName(fileBasename + ext);
+
+		opts.setOptionsSet(true);
+		opts.setMultiFile(false);
+
+		fileIO.writeImage(img, opts, false, false);
+
+		return new File(dir + File.separator + fileBasename + ext);
+	}
+
+	// Output zero edge crossings of second order derivative of 1D Gaussian of
+	// buffer
 	public byte[] calcZeroX(double[] buffer) {
-        makeGxxKernels1D();
-        double[] secondDerivBuffer = new double[buffer.length];
-        convolve(buffer, GxxData, secondDerivBuffer);
-        return edgeDetect(secondDerivBuffer);
-    }
-	
+		makeGxxKernels1D();
+		double[] secondDerivBuffer = new double[buffer.length];
+		convolve(buffer, GxxData, secondDerivBuffer);
+		return edgeDetect(secondDerivBuffer);
+	}
+
 	public byte[] edgeDetect(double secondDerivBuffer[]) {
-		int i,j;
+		int i, j;
 		double x0;
 		double x1;
 		int xDim = secondDerivBuffer.length;
 		int xxDim = xDim - 1;
 		byte edgeDetectBuffer[] = new byte[xDim];
 		for (i = 0; i < xxDim; i++) {
-			 x0 = secondDerivBuffer[i];
-             x1 = secondDerivBuffer[i+1];
-             if ((x0 > 0) && (x1 > 0)) {
-            	 edgeDetectBuffer[i] = 0;
-             }
-             else if ((x0 < 0) && (x1 < 0)) {
-            	 edgeDetectBuffer[i] = 0;
-             }
-             //else if (i == 0) {
-            	 // A false contour is easy to detect because it always appears
-            	 // in either the first or the last column of the space-scale
-            	 // image in high resolution.
-            	 //edgeDetectBuffer[i] = 0;
-             //}
-             else {
-            	 edgeDetectBuffer[i] = 1;
-             }
-             
+			x0 = secondDerivBuffer[i];
+			x1 = secondDerivBuffer[i + 1];
+			if ((x0 > 0) && (x1 > 0)) {
+				edgeDetectBuffer[i] = 0;
+			} else if ((x0 < 0) && (x1 < 0)) {
+				edgeDetectBuffer[i] = 0;
+			}
+			// else if (i == 0) {
+			// A false contour is easy to detect because it always appears
+			// in either the first or the last column of the space-scale
+			// image in high resolution.
+			// edgeDetectBuffer[i] = 0;
+			// }
+			else {
+				edgeDetectBuffer[i] = 1;
+			}
+
 		}
 		if (!test2PerfectGaussians) {
-			for (i = 0; i <= firstGaussianMeanBin+3; i++) {
+			for (i = 0; i <= firstGaussianMeanBin + 3; i++) {
 				edgeDetectBuffer[i] = 0;
 			}
 		}
 		return edgeDetectBuffer;
 	}
-	
+
 	/**
-     * Creates Gaussian derivative kernels.
-     */
-    private void makeGxxKernels1D() {
-        int xkDim;
-        int[] derivOrder = new int[1];
+	 * Creates Gaussian derivative kernels.
+	 */
+	private void makeGxxKernels1D() {
+		int xkDim;
+		int[] derivOrder = new int[1];
 
-        int kExtents[] = new int[1];
-        derivOrder[0] = 2;
+		int kExtents[] = new int[1];
+		derivOrder[0] = 2;
 
-        // For buffer all 1.0 values:
-        // Sum of 9 GxxData coefficients = -7.2e-5 for sigmas[0] = 1.0;
-        // Sum of 17 GxxData coefficients = -2.11E-7 for sigmas[0] = 1.0;
-        xkDim = (int)Math.round(16 * sigmas[0]);
+		// For buffer all 1.0 values:
+		// Sum of 9 GxxData coefficients = -7.2e-5 for sigmas[0] = 1.0;
+		// Sum of 17 GxxData coefficients = -2.11E-7 for sigmas[0] = 1.0;
+		xkDim = (int) Math.round(16 * sigmas[0]);
 
-        if ((xkDim % 2) == 0) {
-            xkDim++;
-        }
+		if ((xkDim % 2) == 0) {
+			xkDim++;
+		}
 
-        if (xkDim < 3) {
-            xkDim = 3;
-        }
+		if (xkDim < 3) {
+			xkDim = 3;
+		}
 
-        kExtents[0] = xkDim;
+		kExtents[0] = xkDim;
 
-        GxxData = new double[xkDim];
+		GxxData = new double[xkDim];
 
-        GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas, derivOrder);
+		GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas, derivOrder);
 
-        Gxx.dcalc(false);
-        Gxx.finalize();
-        Gxx = null;  
-    }
-    
-    private void makeGxKernels1D() {
-        int xkDim;
-        int[] derivOrder = new int[1];
-
-        int kExtents[] = new int[1];
-        derivOrder[0] = 1;
-
-        xkDim = (int)Math.round(16 * sigmas[0]);
-
-        if ((xkDim % 2) == 0) {
-            xkDim++;
-        }
-
-        if (xkDim < 3) {
-            xkDim = 3;
-        }
-
-        kExtents[0] = xkDim;
-        
-        GxData = new double[xkDim];
-        GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
-        Gx.dcalc(true);
-        Gx.finalize();
-        Gx = null;
-    }
-	
-	/**
-     * Perform one-dimension convolution.
-     * 
-     * @param imageBuffer
-     * @param kernelBuffer
-     * @param resultBuffer
-     * Problem is huge border effects.  Convolution uses kernels of length going from 9 to 801 on buffer of length 100.
-     */
-    private void convolve(final double[] imageBuffer, final double[] kernelBuffer, final double[] resultBuffer) {
-        final int kernelDim = kernelBuffer.length;
-        final int halfKernelDim = kernelDim / 2;
-        for (int i = 0; i < imageBuffer.length; i++) {
-                int count = 0;
-                double sum = 0;
-                double norm = 0;
-                int start = i - halfKernelDim;
-                int end = start + kernelDim;
-                if (start < 0) {
-                    count = count - start;
-                    start = 0;
-                }
-                if (end > imageBuffer.length) {
-                    end = imageBuffer.length;
-                }
-                for (int j = start; j < end; j++) {
-                    sum += kernelBuffer[count] * imageBuffer[j];
-                    if (kernelBuffer[count] > 0) {
-                        norm += kernelBuffer[count];
-                    } else {
-                        norm -= kernelBuffer[count];
-                    }
-                    count++;
-                }
-                resultBuffer[i] = sum / norm;
-        }
-    }
-	
-	public void curveIntersect(double x[], double param[]) {
-	    int i;
-	    x_out = null;
-	    y_out = null;
-	    double y1[] = new double[x.length];
-	    for (i = 0; i < x.length; i++) {
-	    	double val1 = (x[i] - param[1])/param[2];
-	    	y1[i] = param[0]*Math.exp(-val1*val1);
-	    }
-	    double y2[] = new double[x.length];
-	    for (i = 0; i < x.length; i++) {
-	    	double val2 = (x[i] - param[4])/param[5];
-	    	y2[i] = param[3]*Math.exp(-val2*val2);
-	    }
-	    double x1in[];
-	    double y1in[];
-	    double x2in[];
-	    double y2in[];
-	    double ymin;
-	    double ymax;
-	    double diff_x[] = new double[x.length-1];
-	    for (i = 0; i < x.length-1; i++) {
-	    	diff_x[i] = x[i+1] - x[i];
-	    }
-	    int ind_x[] = new int[x.length-1];
-	    for (i = 0; i < x.length-1; i++) {
-	    	if (diff_x[i] > 0) {
-	    		ind_x[i] = 1;
-	    	}
-	    	else if (diff_x[i] == 0.0) {
-	    		ind_x[i] = 0;
-	    	}
-	    	else {
-	    		ind_x[i] = -1;
-	    	}
-	    }
-	    
-	    int ind1 = 0;
-	    while (ind1 < x.length-1) {
-	    	boolean found = false;
-	        int ind_max = ind1 - 1;
-	        for (i = ind1 + 1; (i < ind_x.length) && (!found); i++) {
-	        	if (ind_x[i] != ind_x[ind1]) {
-	        		found = true;
-	        		ind_max = ind1 + i -1;
-	        	}
-	        }
-	        if (ind_max <= ind1) {
-	        	ind_max = x.length-1;
-	        }
-	        int[] ind1_array = new int[ind_max - ind1 + 1];
-	        for (i = 0; i < ind1_array.length; i++) {
-	        	ind1_array[i] = ind1 + i;
-	        }
-	        
-	        int ind2 = 0;
-	        while (ind2 < x.length-1) {
-	            found = false;
-	            ind_max = ind2 - 1;
-	            for (i = ind2 + 1; (i < ind_x.length) && (!found); i++) {
-	            	if (ind_x[i] != ind_x[ind2]) {
-	            		found = true;
-	            		ind_max = ind2 + i - 1;
-	            	}
-	            }
-	            if (ind_max <= ind2) {
-	            	ind_max = x.length-1;
-	            }
-	            int[] ind2_array = new int[ind_max - ind2 + 1];
-		        for (i = 0; i < ind2_array.length; i++) {
-		        	ind2_array[i] = ind2 + i;
-		        }
-		        
-		        if ((ind_x[ind1_array[0]] == 0) && (ind_x[ind2_array[0]] != 0)) {
-		        	x_loc = new double[1];
-		            x_loc[0] = x[ind1_array[0]];
-		            x2in = new double[ind2_array.length];
-		            for (i = 0; i < ind2_array.length; i++) {
-		            	x2in[i] = x[ind2_array[i]];
-		            }
-		            y2in = new double[ind2_array.length];
-		            for (i = 0; i < ind2_array.length; i++) {
-		            	y2in[i] = y2[ind2_array[i]];
-		            }
-		            y_loc = interp1(x2in, y2in, x_loc);
-		            ymin = Double.MAX_VALUE;
-		            ymax = -Double.MAX_VALUE;
-		            for (i = 0; i < ind1_array.length; i++) {
-		            	if (y1[ind1_array[i]] < ymin) {
-		            		ymin = y1[ind1_array[i]];
-		            	}
-		            	if (y1[ind1_array[i]] > ymax) {
-		            		ymax = y1[ind1_array[i]];
-		            	}
-		            }
-		            if (!((y_loc[0] >= ymin) && (y_loc[0] <= ymax))) {
-		            	y_loc = null;
-		            	x_loc = null;
-		            }
-		        }
-		        else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] != 0)) {
-		        	x_loc = new double[1];
-		        	x_loc[0] = x[ind2_array[0]];
-		        	x1in = new double[ind1_array.length];
-		            for (i = 0; i < ind1_array.length; i++) {
-		            	x1in[i] = x[ind1_array[i]];
-		            }
-		            y1in = new double[ind1_array.length];
-		            for (i = 0; i < ind1_array.length; i++) {
-		            	y1in[i] = y1[ind1_array[i]];
-		            }
-		            y_loc = interp1(x1in, y1in, x_loc);
-		            ymin = Double.MAX_VALUE;
-		            ymax = -Double.MAX_VALUE;
-		            for (i = 0; i < ind2_array.length; i++) {
-		            	if (y2[ind2_array[i]] < ymin) {
-		            		ymin = y2[ind2_array[i]];
-		            	}
-		            	if (y2[ind2_array[i]] > ymax) {
-		            		ymax = y2[ind2_array[i]];
-		            	}
-		            }
-		            if (!((y_loc[0] >= ymin) && (y_loc[0] <= ymax))) {
-		            	y_loc = null;
-		            	x_loc = null;
-		            }
-		        }
-                else if ((ind_x[ind2_array[0]] != 0) && (ind_x[ind1_array[0]] != 0)) {
-                	x1in = new double[ind1_array.length];
-		            for (i = 0; i < ind1_array.length; i++) {
-		            	x1in[i] = x[ind1_array[i]];
-		            }
-		            y1in = new double[ind1_array.length];
-		            for (i = 0; i < ind1_array.length; i++) {
-		            	y1in[i] = y1[ind1_array[i]];
-		            }
-		            x2in = new double[ind2_array.length];
-		            for (i = 0; i < ind2_array.length; i++) {
-		            	x2in[i] = x[ind2_array[i]];
-		            }
-		            y2in = new double[ind2_array.length];
-		            for (i = 0; i < ind2_array.length; i++) {
-		            	y2in[i] = y2[ind2_array[i]];
-		            }
-		            curveintersect_local(x1in, y1in, x2in, y2in);
-		        }
-                else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] == 0)) {
-		        	x_loc = null;
-		        	y_loc = null;
-		        }
-		        if ((x_out == null) && (x_loc != null)) {
-		        	x_out = new double[x_loc.length];
-		        	for (i = 0; i < x_loc.length; i++) {
-		        		x_out[i] = x_loc[i];
-		        	}
-		        }
-		        else if ((x_out != null) && (x_loc != null)) {
-		        	double temp[] = new double[x_out.length];
-		        	for (i = 0; i < x_out.length; i++) {
-		        		temp[i] = x_out[i];
-		        	}
-		        	x_out = null;
-		        	x_out = new double[temp.length + x_loc.length];
-		        	for (i = 0; i < temp.length; i++) {
-		        		x_out[i] = temp[i];
-		        	}
-		        	for (i = 0; i < x_loc.length; i++) {
-		        		x_out[temp.length + i] = x_loc[i];
-		        	}
-		        	temp = null;
-		        }
-		        if ((y_out == null) && (y_loc != null)) {
-		        	y_out = new double[y_loc.length];
-		        	for (i = 0; i < y_loc.length; i++) {
-		        		y_out[i] = y_loc[i];
-		        	}
-		        }
-		        else if ((y_out != null) && (y_loc != null)) {
-		        	double temp[] = new double[y_out.length];
-		        	for (i = 0; i < y_out.length; i++) {
-		        		temp[i] = y_out[i];
-		        	}
-		        	y_out = null;
-		        	y_out = new double[temp.length + y_loc.length];
-		        	for (i = 0; i < temp.length; i++) {
-		        		y_out[i] = temp[i];
-		        	}
-		        	for (i = 0; i < y_loc.length; i++) {
-		        		y_out[temp.length + i] = y_loc[i];
-		        	}
-		        	temp = null;
-		        }
-		        ind2 = ind2_array[ind2_array.length-1];
-	        }
-	        ind1 = ind1_array[ind1_array.length-1];
-	    }
+		Gxx.dcalc(false);
+		Gxx.finalize();
+		Gxx = null;
 	}
-	
+
+	private void makeGxKernels1D() {
+		int xkDim;
+		int[] derivOrder = new int[1];
+
+		int kExtents[] = new int[1];
+		derivOrder[0] = 1;
+
+		xkDim = (int) Math.round(16 * sigmas[0]);
+
+		if ((xkDim % 2) == 0) {
+			xkDim++;
+		}
+
+		if (xkDim < 3) {
+			xkDim = 3;
+		}
+
+		kExtents[0] = xkDim;
+
+		GxData = new double[xkDim];
+		GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
+		Gx.dcalc(true);
+		Gx.finalize();
+		Gx = null;
+	}
+
+	/**
+	 * Perform one-dimension convolution.
+	 * 
+	 * @param imageBuffer
+	 * @param kernelBuffer
+	 * @param resultBuffer Problem is huge border effects. Convolution uses kernels
+	 *                     of length going from 9 to 801 on buffer of length 100.
+	 */
+	private void convolve(final double[] imageBuffer, final double[] kernelBuffer, final double[] resultBuffer) {
+		final int kernelDim = kernelBuffer.length;
+		final int halfKernelDim = kernelDim / 2;
+		for (int i = 0; i < imageBuffer.length; i++) {
+			int count = 0;
+			double sum = 0;
+			double norm = 0;
+			int start = i - halfKernelDim;
+			int end = start + kernelDim;
+			if (start < 0) {
+				count = count - start;
+				start = 0;
+			}
+			if (end > imageBuffer.length) {
+				end = imageBuffer.length;
+			}
+			for (int j = start; j < end; j++) {
+				sum += kernelBuffer[count] * imageBuffer[j];
+				if (kernelBuffer[count] > 0) {
+					norm += kernelBuffer[count];
+				} else {
+					norm -= kernelBuffer[count];
+				}
+				count++;
+			}
+			resultBuffer[i] = sum / norm;
+		}
+	}
+
+	public void curveIntersect(double x[], double param[]) {
+		int i;
+		x_out = null;
+		y_out = null;
+		double y1[] = new double[x.length];
+		for (i = 0; i < x.length; i++) {
+			double val1 = (x[i] - param[1]) / param[2];
+			y1[i] = param[0] * Math.exp(-val1 * val1);
+		}
+		double y2[] = new double[x.length];
+		for (i = 0; i < x.length; i++) {
+			double val2 = (x[i] - param[4]) / param[5];
+			y2[i] = param[3] * Math.exp(-val2 * val2);
+		}
+		double x1in[];
+		double y1in[];
+		double x2in[];
+		double y2in[];
+		double ymin;
+		double ymax;
+		double diff_x[] = new double[x.length - 1];
+		for (i = 0; i < x.length - 1; i++) {
+			diff_x[i] = x[i + 1] - x[i];
+		}
+		int ind_x[] = new int[x.length - 1];
+		for (i = 0; i < x.length - 1; i++) {
+			if (diff_x[i] > 0) {
+				ind_x[i] = 1;
+			} else if (diff_x[i] == 0.0) {
+				ind_x[i] = 0;
+			} else {
+				ind_x[i] = -1;
+			}
+		}
+
+		int ind1 = 0;
+		while (ind1 < x.length - 1) {
+			boolean found = false;
+			int ind_max = ind1 - 1;
+			for (i = ind1 + 1; (i < ind_x.length) && (!found); i++) {
+				if (ind_x[i] != ind_x[ind1]) {
+					found = true;
+					ind_max = ind1 + i - 1;
+				}
+			}
+			if (ind_max <= ind1) {
+				ind_max = x.length - 1;
+			}
+			int[] ind1_array = new int[ind_max - ind1 + 1];
+			for (i = 0; i < ind1_array.length; i++) {
+				ind1_array[i] = ind1 + i;
+			}
+
+			int ind2 = 0;
+			while (ind2 < x.length - 1) {
+				found = false;
+				ind_max = ind2 - 1;
+				for (i = ind2 + 1; (i < ind_x.length) && (!found); i++) {
+					if (ind_x[i] != ind_x[ind2]) {
+						found = true;
+						ind_max = ind2 + i - 1;
+					}
+				}
+				if (ind_max <= ind2) {
+					ind_max = x.length - 1;
+				}
+				int[] ind2_array = new int[ind_max - ind2 + 1];
+				for (i = 0; i < ind2_array.length; i++) {
+					ind2_array[i] = ind2 + i;
+				}
+
+				if ((ind_x[ind1_array[0]] == 0) && (ind_x[ind2_array[0]] != 0)) {
+					x_loc = new double[1];
+					x_loc[0] = x[ind1_array[0]];
+					x2in = new double[ind2_array.length];
+					for (i = 0; i < ind2_array.length; i++) {
+						x2in[i] = x[ind2_array[i]];
+					}
+					y2in = new double[ind2_array.length];
+					for (i = 0; i < ind2_array.length; i++) {
+						y2in[i] = y2[ind2_array[i]];
+					}
+					y_loc = interp1(x2in, y2in, x_loc);
+					ymin = Double.MAX_VALUE;
+					ymax = -Double.MAX_VALUE;
+					for (i = 0; i < ind1_array.length; i++) {
+						if (y1[ind1_array[i]] < ymin) {
+							ymin = y1[ind1_array[i]];
+						}
+						if (y1[ind1_array[i]] > ymax) {
+							ymax = y1[ind1_array[i]];
+						}
+					}
+					if (!((y_loc[0] >= ymin) && (y_loc[0] <= ymax))) {
+						y_loc = null;
+						x_loc = null;
+					}
+				} else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] != 0)) {
+					x_loc = new double[1];
+					x_loc[0] = x[ind2_array[0]];
+					x1in = new double[ind1_array.length];
+					for (i = 0; i < ind1_array.length; i++) {
+						x1in[i] = x[ind1_array[i]];
+					}
+					y1in = new double[ind1_array.length];
+					for (i = 0; i < ind1_array.length; i++) {
+						y1in[i] = y1[ind1_array[i]];
+					}
+					y_loc = interp1(x1in, y1in, x_loc);
+					ymin = Double.MAX_VALUE;
+					ymax = -Double.MAX_VALUE;
+					for (i = 0; i < ind2_array.length; i++) {
+						if (y2[ind2_array[i]] < ymin) {
+							ymin = y2[ind2_array[i]];
+						}
+						if (y2[ind2_array[i]] > ymax) {
+							ymax = y2[ind2_array[i]];
+						}
+					}
+					if (!((y_loc[0] >= ymin) && (y_loc[0] <= ymax))) {
+						y_loc = null;
+						x_loc = null;
+					}
+				} else if ((ind_x[ind2_array[0]] != 0) && (ind_x[ind1_array[0]] != 0)) {
+					x1in = new double[ind1_array.length];
+					for (i = 0; i < ind1_array.length; i++) {
+						x1in[i] = x[ind1_array[i]];
+					}
+					y1in = new double[ind1_array.length];
+					for (i = 0; i < ind1_array.length; i++) {
+						y1in[i] = y1[ind1_array[i]];
+					}
+					x2in = new double[ind2_array.length];
+					for (i = 0; i < ind2_array.length; i++) {
+						x2in[i] = x[ind2_array[i]];
+					}
+					y2in = new double[ind2_array.length];
+					for (i = 0; i < ind2_array.length; i++) {
+						y2in[i] = y2[ind2_array[i]];
+					}
+					curveintersect_local(x1in, y1in, x2in, y2in);
+				} else if ((ind_x[ind2_array[0]] == 0) && (ind_x[ind1_array[0]] == 0)) {
+					x_loc = null;
+					y_loc = null;
+				}
+				if ((x_out == null) && (x_loc != null)) {
+					x_out = new double[x_loc.length];
+					for (i = 0; i < x_loc.length; i++) {
+						x_out[i] = x_loc[i];
+					}
+				} else if ((x_out != null) && (x_loc != null)) {
+					double temp[] = new double[x_out.length];
+					for (i = 0; i < x_out.length; i++) {
+						temp[i] = x_out[i];
+					}
+					x_out = null;
+					x_out = new double[temp.length + x_loc.length];
+					for (i = 0; i < temp.length; i++) {
+						x_out[i] = temp[i];
+					}
+					for (i = 0; i < x_loc.length; i++) {
+						x_out[temp.length + i] = x_loc[i];
+					}
+					temp = null;
+				}
+				if ((y_out == null) && (y_loc != null)) {
+					y_out = new double[y_loc.length];
+					for (i = 0; i < y_loc.length; i++) {
+						y_out[i] = y_loc[i];
+					}
+				} else if ((y_out != null) && (y_loc != null)) {
+					double temp[] = new double[y_out.length];
+					for (i = 0; i < y_out.length; i++) {
+						temp[i] = y_out[i];
+					}
+					y_out = null;
+					y_out = new double[temp.length + y_loc.length];
+					for (i = 0; i < temp.length; i++) {
+						y_out[i] = temp[i];
+					}
+					for (i = 0; i < y_loc.length; i++) {
+						y_out[temp.length + i] = y_loc[i];
+					}
+					temp = null;
+				}
+				ind2 = ind2_array[ind2_array.length - 1];
+			}
+			ind1 = ind1_array[ind1_array.length - 1];
+		}
+	}
+
 	public void curveintersect_local(double x1[], double y1[], double x2[], double y2[]) {
 		int i, j;
-	    boolean equalX = true;
-	    if (x1.length != x2.length) {
-	    	equalX = false;
-	    }
-	    else {
-	    	for (i = 0; i < x1.length; i++) {
-	    		if (x1[i] != x2[i]) {
-	    			equalX = false;
-	    		}
-	    	}
-	    }
-	    double xx[];
-	    double yy[];
-	    if (!equalX) {
-	    	double minx1 = Double.MAX_VALUE;
-	    	double maxx1 = -Double.MAX_VALUE;
-	    	double minx2 = Double.MAX_VALUE;
-	    	double maxx2 = -Double.MAX_VALUE;
-	    	for (i = 0; i < x1.length; i++) {
-	    		if (x1[i] < minx1) {
-	    			minx1 = x1[i];
-	    		}
-	    		if (x1[i] > maxx1) {
-	    			maxx1 = x1[i];
-	    		}
-	    	}
-	    	for (i = 0; i < x2.length; i++) {
-	    		if (x2[i] < minx2) {
-	    			minx2 = x2[i];
-	    		}
-	    		if (x2[i] > maxx2) {
-	    			maxx2 = x2[i];
-	    		}
-	    	}
-	    	double maxmin = Math.max(minx1, minx2);
-	    	double minmax = Math.min(maxx1, maxx2);
-	    	Vector<Double>xxVec = new Vector<Double>();
-	    	for (i = 0; i < x1.length; i++)  {
-	    		xxVec.add(x1[i]);
-	    	}
-	    	boolean unique;
-	    	for (i = 0; i < x2.length; i++) {
-	    		unique = true;
-	    		for (j = 0; j < x1.length; j++) {
-	    			if (x2[i] == x1[j]) {
-	    				unique = false;
-	    			}
-	    		}
-	    		if (unique && (x2[i] >= maxmin) && (x2[i] <= minmax)) {
-	    			xxVec.add(x2[i]);
-	    		}
-	    	}
-	    	if (xxVec.size() < 2) {
-	    		x_loc = null;
-	    		y_loc = null;
-	    		return;
-	    	}
-	    	Collections.sort(xxVec);
-	    	xx = new double[xxVec.size()];
-	    	for (i = 0; i < xx.length; i++) {
-	    		xx[i] = xxVec.get(i);
-	    	}
-	    	double yy1[] = interp1(x1,y1,xx);
-	    	double yy2[] = interp1(x2,y2,xx);
-	    	yy = new double[yy1.length];
-	    	for (i = 0; i < yy.length; i++) {
-	    		yy[i] = yy1[i] - yy2[i];
-	    	}
-	    }
-	    else {
-	        xx = x1;
-	        yy = new double[y1.length];
-	        for (i = 0; i < yy.length; i++) {
-	        	yy[i] = y1[i] - y2[i];
-	        }
-	    }
-	    mminvinterp(xx,yy,0.0); // find zero crossings of difference
-	    if ((x_loc != null) && (x_loc.length > 0)) {
-	        y_loc = interp1(x1, y1, x_loc);	
-	    }
-	    else {
-	    	x_loc = null;
-	    	y_loc = null;
-	    }
+		boolean equalX = true;
+		if (x1.length != x2.length) {
+			equalX = false;
+		} else {
+			for (i = 0; i < x1.length; i++) {
+				if (x1[i] != x2[i]) {
+					equalX = false;
+				}
+			}
+		}
+		double xx[];
+		double yy[];
+		if (!equalX) {
+			double minx1 = Double.MAX_VALUE;
+			double maxx1 = -Double.MAX_VALUE;
+			double minx2 = Double.MAX_VALUE;
+			double maxx2 = -Double.MAX_VALUE;
+			for (i = 0; i < x1.length; i++) {
+				if (x1[i] < minx1) {
+					minx1 = x1[i];
+				}
+				if (x1[i] > maxx1) {
+					maxx1 = x1[i];
+				}
+			}
+			for (i = 0; i < x2.length; i++) {
+				if (x2[i] < minx2) {
+					minx2 = x2[i];
+				}
+				if (x2[i] > maxx2) {
+					maxx2 = x2[i];
+				}
+			}
+			double maxmin = Math.max(minx1, minx2);
+			double minmax = Math.min(maxx1, maxx2);
+			Vector<Double> xxVec = new Vector<Double>();
+			for (i = 0; i < x1.length; i++) {
+				xxVec.add(x1[i]);
+			}
+			boolean unique;
+			for (i = 0; i < x2.length; i++) {
+				unique = true;
+				for (j = 0; j < x1.length; j++) {
+					if (x2[i] == x1[j]) {
+						unique = false;
+					}
+				}
+				if (unique && (x2[i] >= maxmin) && (x2[i] <= minmax)) {
+					xxVec.add(x2[i]);
+				}
+			}
+			if (xxVec.size() < 2) {
+				x_loc = null;
+				y_loc = null;
+				return;
+			}
+			Collections.sort(xxVec);
+			xx = new double[xxVec.size()];
+			for (i = 0; i < xx.length; i++) {
+				xx[i] = xxVec.get(i);
+			}
+			double yy1[] = interp1(x1, y1, xx);
+			double yy2[] = interp1(x2, y2, xx);
+			yy = new double[yy1.length];
+			for (i = 0; i < yy.length; i++) {
+				yy[i] = yy1[i] - yy2[i];
+			}
+		} else {
+			xx = x1;
+			yy = new double[y1.length];
+			for (i = 0; i < yy.length; i++) {
+				yy[i] = y1[i] - y2[i];
+			}
+		}
+		mminvinterp(xx, yy, 0.0); // find zero crossings of difference
+		if ((x_loc != null) && (x_loc.length > 0)) {
+			y_loc = interp1(x1, y1, x_loc);
+		} else {
+			x_loc = null;
+			y_loc = null;
+		}
 	}
-	
-	public void mminvinterp(double x[], double y[], double yo) { 
+
+	public void mminvinterp(double x[], double y[], double yo) {
 		int i;
 		if (x.length != y.length) {
 			System.err.println("x.length != y.length in mminvinterp");
 			return;
 		}
 		int n = y.length;
-		
+
 		// Quick exit if no values exist
-	    double miny = Double.MAX_VALUE;
-	    double maxy = -Double.MAX_VALUE;
-	    for (i = 0; i < n; i++) {
-	    	if (y[i] < miny) {
-	    		miny = y[i];
-	    	}
-	    	if (y[i] > maxy) {
-	    		maxy = y[i];
-	    	}
-	    }
-	    if ((yo < miny) || (yo > maxy)) {
-	    	x_loc = null;
-	    	y_loc = null;
-	    	return;
-	    }
-	    
-	    // Find the desired points
-	    boolean below[] = new boolean[n];
-	    boolean above[] = new boolean[n];
-	    boolean on[] = new boolean[n];
-	    for (i = 0; i < n; i++) {
-	    	if (y[i] < yo) {
-	    		below[i] = true;
-	    	}
-	    	else if (y[i] > yo) {
-	    		above[i] = true;
-	    	}
-	    	else {
-	    		on[i] = true;
-	    	}
-	    }
-	    
-	    boolean kth[] = new boolean[n-1]; // point k
-	    for (i = 0; i < n-1; i++) {
-	    	kth[i] = ((below[i] & above[i+1]) | (above[i] & below[i+1]));
-	    }
-	    boolean kp1[] = new boolean[n]; // point k+1
-	    kp1[0] = false;
-	    for (i = 1; i < n; i++) {
-	    	kp1[i] = kth[i-1];
-	    }
-	    
-	    Vector<Double> xo = new Vector<Double>(); // distance between x[k+1] and x[k]
-	    for (i = 0; i < n-1; i++) {
-	    	if (kth[i]) {
-	    		double alpha = (yo - y[i])/(y[i+1] - y[i]);
-	    		xo.add(alpha*(x[i+1] - x[i]) + x[i]);
-	    	}
-	    }
-	    for (i = 0; i < n; i++) {
-	    	if (on[i]) {
-	    		xo.add(x[i]);
-	    	}
-	    }
-	    Collections.sort(xo);
-	    // Add points, which are directly on the line
-	    x_loc = new double[xo.size()];
-	    for (i = 0; i < x_loc.length; i++) {
-	    	x_loc[i] = xo.get(i);
-	    }
-	    // Duplicate yo, to match xo points found
-	    y_loc = new double[x_loc.length];
-	    for (i = 0; i < y_loc.length; i++) {
-	    	y_loc[i] = yo;
-	    }
+		double miny = Double.MAX_VALUE;
+		double maxy = -Double.MAX_VALUE;
+		for (i = 0; i < n; i++) {
+			if (y[i] < miny) {
+				miny = y[i];
+			}
+			if (y[i] > maxy) {
+				maxy = y[i];
+			}
+		}
+		if ((yo < miny) || (yo > maxy)) {
+			x_loc = null;
+			y_loc = null;
+			return;
+		}
+
+		// Find the desired points
+		boolean below[] = new boolean[n];
+		boolean above[] = new boolean[n];
+		boolean on[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			if (y[i] < yo) {
+				below[i] = true;
+			} else if (y[i] > yo) {
+				above[i] = true;
+			} else {
+				on[i] = true;
+			}
+		}
+
+		boolean kth[] = new boolean[n - 1]; // point k
+		for (i = 0; i < n - 1; i++) {
+			kth[i] = ((below[i] & above[i + 1]) | (above[i] & below[i + 1]));
+		}
+		boolean kp1[] = new boolean[n]; // point k+1
+		kp1[0] = false;
+		for (i = 1; i < n; i++) {
+			kp1[i] = kth[i - 1];
+		}
+
+		Vector<Double> xo = new Vector<Double>(); // distance between x[k+1] and x[k]
+		for (i = 0; i < n - 1; i++) {
+			if (kth[i]) {
+				double alpha = (yo - y[i]) / (y[i + 1] - y[i]);
+				xo.add(alpha * (x[i + 1] - x[i]) + x[i]);
+			}
+		}
+		for (i = 0; i < n; i++) {
+			if (on[i]) {
+				xo.add(x[i]);
+			}
+		}
+		Collections.sort(xo);
+		// Add points, which are directly on the line
+		x_loc = new double[xo.size()];
+		for (i = 0; i < x_loc.length; i++) {
+			x_loc[i] = xo.get(i);
+		}
+		// Duplicate yo, to match xo points found
+		y_loc = new double[x_loc.length];
+		for (i = 0; i < y_loc.length; i++) {
+			y_loc[i] = yo;
+		}
 	}
-	
+
 	public double[] interp1(double x[], double y[], double x_loc[]) {
-		int i,j;
+		int i, j;
 		double y_interp[] = new double[x_loc.length];
 		int len = x.length;
 		for (i = 0; i < x_loc.length; i++) {
 			y_interp[i] = -Double.MAX_VALUE;
 			for (j = 0; j < len; j++) {
 				if (x[j] == x_loc[i]) {
-				    y_interp[i] = y[j];
-				}
-				else if ((j < x.length-1) && (x_loc[i] > x[j])) {
-					y_interp[i] = (y[j] + (y[j+1] - y[j])*(x_loc[i] - x[j])/(x[j+1] - x[j]));
+					y_interp[i] = y[j];
+				} else if ((j < x.length - 1) && (x_loc[i] > x[j])) {
+					y_interp[i] = (y[j] + (y[j + 1] - y[j]) * (x_loc[i] - x[j]) / (x[j + 1] - x[j]));
 				}
 			}
 		}
 		return y_interp;
 	}
-	
-	    // f(x) = a1*exp(-((x-b1)/c1)^2) - a2*exp(-((x-b2)/c2)^2)
-		class diffGaussians extends FirstOrderFunction {
-		  double xp[];
-		  public diffGaussians(double xp[]) {
-			  super();
-			  this.xp = xp;
-		  }
 
-		  public boolean Evaluate(double[] parameters,
-		                        double[] cost,
-		                        double[] gradient) {
-		    final double x = parameters[0];
-            double val1 = (x - xp[1])/xp[2];
-            double val2 = (x - xp[4])/xp[5];
-            double part1 = xp[0]*Math.exp(-val1*val1);
-            double part2 = xp[3]*Math.exp(-val2*val2);
-		    cost[0] = Math.abs(xp[0]*Math.exp(-val1*val1) - xp[3]*Math.exp(-val2*val2));
-		    if (gradient != null) {
-		    	if (part1 > part2) {
-		            gradient[0] = -2.0*part1*(val1/xp[2]) + 2.0*part2*(val2/xp[5]);
-		    	}
-		    	else {
-		    		gradient[0] = 2.0*part1*(val1/xp[2]) - 2.0*part2*(val2/xp[5]);
-		    	}
-		    }
-		    return true;
-		  }
+	// f(x) = a1*exp(-((x-b1)/c1)^2) - a2*exp(-((x-b2)/c2)^2)
+	class diffGaussians extends FirstOrderFunction {
+		double xp[];
 
-		  public int NumParameters() { return 1; }
-		} // class diffGaussians
-	
+		public diffGaussians(double xp[]) {
+			super();
+			this.xp = xp;
+		}
+
+		public boolean Evaluate(double[] parameters, double[] cost, double[] gradient) {
+			final double x = parameters[0];
+			double val1 = (x - xp[1]) / xp[2];
+			double val2 = (x - xp[4]) / xp[5];
+			double part1 = xp[0] * Math.exp(-val1 * val1);
+			double part2 = xp[3] * Math.exp(-val2 * val2);
+			cost[0] = Math.abs(xp[0] * Math.exp(-val1 * val1) - xp[3] * Math.exp(-val2 * val2));
+			if (gradient != null) {
+				if (part1 > part2) {
+					gradient[0] = -2.0 * part1 * (val1 / xp[2]) + 2.0 * part2 * (val2 / xp[5]);
+				} else {
+					gradient[0] = 2.0 * part1 * (val1 / xp[2]) - 2.0 * part2 * (val2 / xp[5]);
+				}
+			}
+			return true;
+		}
+
+		public int NumParameters() {
+			return 1;
+		}
+	} // class diffGaussians
+
 	public boolean fitToExternalFunction(double x[], double residuals[], double jacobian[][]) {
 		int i;
 		for (i = 0; i < x.length; i++) {
-			UI.setDataText("unexpected fit x["+i+"] = " + x[i] + "\n");
+			UI.setDataText("unexpected fit x[" + i + "] = " + x[i] + "\n");
 		}
 		return true;
 	}
-	
+
 	class gaussStandardDeviationFittingCostFunction extends SizedCostFunction {
-		
+
 		public gaussStandardDeviationFittingCostFunction() {
 			// number of resdiuals
 			// size of first parameter
 			super(4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
-		
+
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
-			
-			for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin+3; i++) {
-				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/x[0];
-				double value = firstGaussianAmplitude*Math.exp(-val1*val1);
-				residuals[i-firstGaussianMeanBin] = gauss2FittingData[2*i+1] - value;
+
+			for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin + 3; i++) {
+				double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / x[0];
+				double value = firstGaussianAmplitude * Math.exp(-val1 * val1);
+				residuals[i - firstGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;
 				if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][i-firstGaussianMeanBin] = -2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - firstGaussianMean)/(x[0]*x[0]);
+					jacobians[0][i - firstGaussianMeanBin] = -2.0 * firstGaussianAmplitude * val1
+							* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - firstGaussianMean) / (x[0] * x[0]);
 				}
 			}
 			return true;
 		}
-		
-		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
+				int jacobians_offset[]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
-			
-			for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin+3; i++) {
-				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/x[0];
-				double value = firstGaussianAmplitude*Math.exp(-val1*val1);
-				residuals[i-firstGaussianMeanBin] = gauss2FittingData[2*i+1] - value;
+
+			for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin + 3; i++) {
+				double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / x[0];
+				double value = firstGaussianAmplitude * Math.exp(-val1 * val1);
+				residuals[i - firstGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;
 				if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][jacobians_offset[0]+i-firstGaussianMeanBin] = 
-							-2.0*firstGaussianAmplitude*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - firstGaussianMean)/(x[0]*x[0]);
+					jacobians[0][jacobians_offset[0] + i - firstGaussianMeanBin] = -2.0 * firstGaussianAmplitude * val1
+							* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - firstGaussianMean) / (x[0] * x[0]);
 				}
 			}
 			return true;
 		}
 	}
-	
-    class gauss1FittingCostFunction extends SizedCostFunction {
-		
+
+	class gauss1FittingCostFunction extends SizedCostFunction {
+
 		public gauss1FittingCostFunction() {
 			// number of residuals
 			// size of first parameter
 			super(gauss2FittingObservations, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
 
-		
-		
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
-			
+
 			for (i = 0; i < gauss2FittingObservations; i++) {
-				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/c1;
-				double val2 = (gauss2FittingData[2*i] - x[1])/x[2];
-				double value = firstGaussianAmplitude*Math.exp(-val1*val1) + x[0]*Math.exp(-val2*val2);
-			    residuals[i] = gauss2FittingData[2*i+1] - value;
-			    if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][3*i] = -Math.exp(-val2*val2);
-					jacobians[0][3*i+1] = -2.0*x[0]*val2*Math.exp(-val2*val2)/x[2];
-					jacobians[0][3*i+2] = -2.0*x[0]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
-			    }
+				double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / c1;
+				double val2 = (gauss2FittingData[2 * i] - x[1]) / x[2];
+				double value = firstGaussianAmplitude * Math.exp(-val1 * val1) + x[0] * Math.exp(-val2 * val2);
+				residuals[i] = gauss2FittingData[2 * i + 1] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][3 * i] = -Math.exp(-val2 * val2);
+					jacobians[0][3 * i + 1] = -2.0 * x[0] * val2 * Math.exp(-val2 * val2) / x[2];
+					jacobians[0][3 * i + 2] = -2.0 * x[0] * val2 * Math.exp(-val2 * val2)
+							* (gauss2FittingData[2 * i] - x[1]) / (x[2] * x[2]);
+				}
 			}
 
 			return true;
-	  }
-		
-		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
+				int jacobians_offset[]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
-			
+
 			for (i = 0; i < gauss2FittingObservations; i++) {
-				double val1 = (gauss2FittingData[2*i] - firstGaussianMean)/c1;
-				double val2 = (gauss2FittingData[2*i] - x[1])/x[2];
-				double value = firstGaussianAmplitude*Math.exp(-val1*val1) + x[0]*Math.exp(-val2*val2);
-			    residuals[i] = gauss2FittingData[2*i+1] - value;
-			    if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][jacobians_offset[0] + 3*i] = -Math.exp(-val2*val2);
-					jacobians[0][jacobians_offset[0] + 3*i+1] = -2.0*x[0]*val2*Math.exp(-val2*val2)/x[2];
-					jacobians[0][jacobians_offset[0] + 3*i+2] = -2.0*x[0]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
-			    }	
+				double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / c1;
+				double val2 = (gauss2FittingData[2 * i] - x[1]) / x[2];
+				double value = firstGaussianAmplitude * Math.exp(-val1 * val1) + x[0] * Math.exp(-val2 * val2);
+				residuals[i] = gauss2FittingData[2 * i + 1] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0] + 3 * i] = -Math.exp(-val2 * val2);
+					jacobians[0][jacobians_offset[0] + 3 * i + 1] = -2.0 * x[0] * val2 * Math.exp(-val2 * val2) / x[2];
+					jacobians[0][jacobians_offset[0] + 3 * i + 2] = -2.0 * x[0] * val2 * Math.exp(-val2 * val2)
+							* (gauss2FittingData[2 * i] - x[1]) / (x[2] * x[2]);
+				}
 			}
 
 			return true;
-	  }
+		}
 	};
-	
+
 	class gauss2FittingCostFunction extends SizedCostFunction {
-		
+
 		public gauss2FittingCostFunction() {
 			// number of residuals
 			// size of first parameter
 			super(gauss2FittingObservations, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
 
-		
-		
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
-			
+
 			for (i = 0; i < gauss2FittingObservations; i++) {
-				double val1 = (gauss2FittingData[2*i] - x[1])/x[2];
-				double val2 = (gauss2FittingData[2*i] - x[4])/x[5];
-				double value = x[0]*Math.exp(-val1*val1) + x[3]*Math.exp(-val2*val2);
-			    residuals[i] = gauss2FittingData[2*i+1] - value;
-			    if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][6*i] = -Math.exp(-val1*val1);
-					jacobians[0][6*i+1] = -2.0*x[0]*val1*Math.exp(-val1*val1)/x[2];
-					jacobians[0][6*i+2] = -2.0*x[0]*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
-					jacobians[0][6*i+3] = -Math.exp(-val2*val2);
-					jacobians[0][6*i+4] = -2.0*x[3]*val2*Math.exp(-val2*val2)/x[5];
-					jacobians[0][6*i+5] = -2.0*x[3]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[4])/(x[5]*x[5]);
-			    }
+				double val1 = (gauss2FittingData[2 * i] - x[1]) / x[2];
+				double val2 = (gauss2FittingData[2 * i] - x[4]) / x[5];
+				double value = x[0] * Math.exp(-val1 * val1) + x[3] * Math.exp(-val2 * val2);
+				residuals[i] = gauss2FittingData[2 * i + 1] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][6 * i] = -Math.exp(-val1 * val1);
+					jacobians[0][6 * i + 1] = -2.0 * x[0] * val1 * Math.exp(-val1 * val1) / x[2];
+					jacobians[0][6 * i + 2] = -2.0 * x[0] * val1 * Math.exp(-val1 * val1)
+							* (gauss2FittingData[2 * i] - x[1]) / (x[2] * x[2]);
+					jacobians[0][6 * i + 3] = -Math.exp(-val2 * val2);
+					jacobians[0][6 * i + 4] = -2.0 * x[3] * val2 * Math.exp(-val2 * val2) / x[5];
+					jacobians[0][6 * i + 5] = -2.0 * x[3] * val2 * Math.exp(-val2 * val2)
+							* (gauss2FittingData[2 * i] - x[4]) / (x[5] * x[5]);
+				}
 			}
 
 			return true;
-	  }
-		
-		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
+				int jacobians_offset[]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
-			
+
 			for (i = 0; i < gauss2FittingObservations; i++) {
-				double val1 = (gauss2FittingData[2*i] - x[1])/x[2];
-				double val2 = (gauss2FittingData[2*i] - x[4])/x[5];
-				double value = x[0]*Math.exp(-val1*val1) + x[3]*Math.exp(-val2*val2);
-			    residuals[i] = gauss2FittingData[2*i+1] - value;
-			    if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][jacobians_offset[0] + 6*i] = -Math.exp(-val1*val1);
-					jacobians[0][jacobians_offset[0] + 6*i+1] = -2.0*x[0]*val1*Math.exp(-val1*val1)/x[2];
-					jacobians[0][jacobians_offset[0] + 6*i+2] = -2.0*x[0]*val1*Math.exp(-val1*val1)*(gauss2FittingData[2*i] - x[1])/(x[2]*x[2]);
-					jacobians[0][jacobians_offset[0] + 6*i+3] = -Math.exp(-val2*val2);
-					jacobians[0][jacobians_offset[0] + 6*i+4] = -2.0*x[3]*val2*Math.exp(-val2*val2)/x[5];
-					jacobians[0][jacobians_offset[0] + 6*i+5] = -2.0*x[3]*val2*Math.exp(-val2*val2)*(gauss2FittingData[2*i] - x[4])/(x[5]*x[5]);
-			    }
+				double val1 = (gauss2FittingData[2 * i] - x[1]) / x[2];
+				double val2 = (gauss2FittingData[2 * i] - x[4]) / x[5];
+				double value = x[0] * Math.exp(-val1 * val1) + x[3] * Math.exp(-val2 * val2);
+				residuals[i] = gauss2FittingData[2 * i + 1] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0] + 6 * i] = -Math.exp(-val1 * val1);
+					jacobians[0][jacobians_offset[0] + 6 * i + 1] = -2.0 * x[0] * val1 * Math.exp(-val1 * val1) / x[2];
+					jacobians[0][jacobians_offset[0] + 6 * i + 2] = -2.0 * x[0] * val1 * Math.exp(-val1 * val1)
+							* (gauss2FittingData[2 * i] - x[1]) / (x[2] * x[2]);
+					jacobians[0][jacobians_offset[0] + 6 * i + 3] = -Math.exp(-val2 * val2);
+					jacobians[0][jacobians_offset[0] + 6 * i + 4] = -2.0 * x[3] * val2 * Math.exp(-val2 * val2) / x[5];
+					jacobians[0][jacobians_offset[0] + 6 * i + 5] = -2.0 * x[3] * val2 * Math.exp(-val2 * val2)
+							* (gauss2FittingData[2 * i] - x[4]) / (x[5] * x[5]);
+				}
 			}
 
 			return true;
-	  }
+		}
 	};
-	
-} 
+
+}
