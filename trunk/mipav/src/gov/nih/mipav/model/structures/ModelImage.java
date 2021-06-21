@@ -2376,7 +2376,7 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ( (frameList.elementAt(i) instanceof ViewJFrameBase)) {
+            if ((frameList.elementAt(i) != null) && (frameList.elementAt(i) instanceof ViewJFrameBase)) {
                 frameList.elementAt(i).updateImages();
             }
         }
