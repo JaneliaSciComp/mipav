@@ -763,6 +763,30 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         
         isClosing = false;
     }
+    
+    /**
+     * Closes both image A and image B (if it exists). It ensures the images are un-registered from the main-frame then
+     * removes any display listeners.
+     */
+    public void close(boolean closeAll) {
+    	isClosing = true;
+    	
+        setVisible(false);
+
+        userInterface.unregisterFrame(this, closeAll);
+
+        if (imageA != null) {
+            imageA.removeImageDisplayListener(this);
+        }
+
+        if (imageB != null) {
+            imageB.removeImageDisplayListener(this);
+        }
+
+        dispose();
+        
+        isClosing = false;
+    }
 
     /**
      * Removes image B from the frame and resets image A to be the active frame for all image controls. Ensures the
