@@ -329,6 +329,9 @@ public abstract class ViewJComponentBase extends JComponent {
      * @return  dimension with the size
      */
     public Dimension getPreferredSize() {
+    	if (imageDim == null) {
+    		return null;
+    	}
 
         try {
             return new Dimension(Math.round(zoomX * imageDim.width * resolutionX),
