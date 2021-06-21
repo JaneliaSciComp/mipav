@@ -3622,6 +3622,49 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         imageFrameVector.trimToSize();
 
     }
+    
+    /**
+     * Method that unregisters an image frame by removing it from the image frame vector.
+     * 
+     * @param frame Frame to be unregistered with this the main UI.
+     */
+    public void unregisterFrame(final Frame frame, boolean closeAll) {
+        Frame topFrame;
+
+        // System.out.println("VUI.unregisterFrame");
+        if (imageFrameVector.size() == 0) {
+            return;
+        }
+
+        if (closeAll) { 
+	        if (frame instanceof ViewJFrameBase) {
+	            ((ViewJFrameBase) (frame)).removeControls();
+	        }
+        }
+
+        imageFrameVector.removeElement(frame);
+
+        if (imageFrameVector.size() == 0) {
+            setControls();
+            setTitle(" ");
+        } else {
+            topFrame = imageFrameVector.elementAt(0);
+
+            if (closeAll) {
+	            if (topFrame instanceof ViewJFrameBase) {
+	            	((ViewJFrameBase)topFrame).setControls();
+	            }
+            }
+
+            // mainFrame.setTitle("MIPAV: " + topFrame.getTitle());
+            setTitle(topFrame.getTitle());
+        }
+
+        setMessageText("");
+        imageFrameVector.trimToSize();
+
+    }
+
 
     /**
      * Unregister image model by removing it from the image hashtable. Assume that the imageName is the key to the
