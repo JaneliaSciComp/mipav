@@ -207,6 +207,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private boolean doSaveAllOutputs = true;
 	double S0map[][][];
 	int bolus[];
+	boolean equalTimeSpacing;
 
 	public DSC_MRI_toolbox() {
 
@@ -279,6 +280,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		for (i = 0; i < nT; i++) {
 			time[i] = i * tr;
 		}
+		equalTimeSpacing = true;
 
 		if (display > 0) {
 			UI.setDataText("DATA SIZE\n");
@@ -1645,6 +1647,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		byte ROIttp[][] = new byte[nC][nR];
 		int survivedVoxels;
 		double REG[][];
+		double REGdown;
+		double REGup;
+		byte ROIreg[][] = new byte[nC][nR];
+		double dati2D[][];
+		byte maskAIF[][] = new byte[nC][nR];
+		int nCluster;
+		double centroidi[][];
 
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
@@ -2146,7 +2155,140 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		totalCandidatesToKeep = (int)Math.ceil(totalCandidates * (1.0-pReg));
 		REG = calculateREG(ROI);
+		
+		cycle = true;
+		nCycles = 0;
+		REGdown = Double.MAX_VALUE;
+		REGup = -Double.MAX_VALUE;
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				if (REG[c][r] < REGdown) {
+					REGdown = REG[c][r];
+				}
+				if (REG[c][r] > REGup) {
+					REGup = REG[c][r];
+				}
+			}
+		} // for (c = 0; c < nC; c++)
+		while (cycle) {
+		    nCycles = nCycles + 1;
+		    threshold = 0.5*(REGup + REGdown);
+		    nCandidates = 0;
+		    for (c = 0; c < nC; c++) {
+		    	for (r = 0; r < nR; r++) {
+		    		if (REG[c][r] > threshold) {
+		    			nCandidates++;
+		    		}
+		    	}
+		    }
+		    
+		    if (nCandidates == totalCandidatesToKeep) {
+		        cycle = false;	
+		    }
+		    else if (nCandidates < totalCandidatesToKeep) {
+		    	REGup = threshold;
+		    }
+		    else {
+		    	REGdown = threshold;
+		    }
+		    if (((REGup - REGdown) < 0.001) || (nCycles >= 100)) {
+		    	cycle = false;
+		    }
+ 		} // while (cycle)
+		
+		// Values 2 for discarded voxels, 1 for kept voxels
+		survivedVoxels = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (REG[x][y] > threshold) {
+					ROIreg[x][y] = ROI[x][y];
+					if (ROI[x][y] == 1) {
+						survivedVoxels++;
+					}
+				}
+				else {
+					ROIreg[x][y] = (byte)(2 * ROI[x][y]);
+				}
+			}
+		}
+		
+		if (display > 2) {
+			UI.setDataText("Candidate voxel selection via regularity criteria\n");
+			UI.setDataText("Voxel initial amount = " + totalCandidates + "\n");
+			UI.setDataText("Survived voxels = " + survivedVoxels + "\n");
+			byte temp[] = new byte[length];
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					temp[x + y * nC] = ROIreg[x][y];
+				}
+			}
+			ModelImage ROIregImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "ROIregImage");
+			try {
+				ROIregImage.importData(0, temp, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			saveImageFile(ROIregImage, outputFilePath, outputPrefix + "ROIreg", saveFileFormat);
+			ROIregImage.disposeLocal();
+		}
+		
+		ROISum = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (REG[x][y] <= threshold) {
+					ROI[x][y] = 0;
+				}
+				if (ROI[x][y] == 1) {
+					ROISum++;
+				}
+			}
+		}
+		
+		// 3.) Application of the cluster algorithm to search for the arterial
+		if (display > 0) {
+			UI.setDataText("Arterial voxels extraction\n");
+		}
+		// 3.1) Preparation of the matrix containing the data
+		dati2D = new double[ROISum][nT];
+		for (i = 0, c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				if (ROI[c][r] == 1) {
+					for (t = 0; t < nT; t++) {
+						dati2D[i][t] = AIFslice[c][r][t];
+					}
+					i++;
+				}
+			}
+		}
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		maskAIF[c][r] = ROI[c][r];
+	    	}
+	    }
+	    
+	    // 3.2) I apply the hierarchical cluster algorithm recursively
+	    
+	    cycle = true;
+	    nCycles = 0;
+	    
+	    while (cycle) {
+	    	nCycles = nCycles + 1;
+	    	if (display > 2) {
+	    	    UI.setDataText("Cycle number = " + nCycles + '\n');
+	    	}
+	    } // while (cycle)
+	    
+	    // I apply the hierarchical cluster
+	    nCluster = 2;
+	    centroidi = new double[nCluster][nT];
 	} // public void extractAIF()
+	
+	private void clusterHierarchical(double dati[][], int nCluster, double centroidi[][]) {
+		// Apply the hierarchical cluster algorithm to the data and divide it into nCluster.
+		// Returns a vector containing the number of the cluster to which each voxel has
+		// been assigned and the centroid of that cluster.
+	}
 	
 	private double[][] calculateREG(byte mask[][]) {
 		// Caclulates the irregularity index of the concentration curve for each voxel.
@@ -2155,8 +2297,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// The formula used to calculate the index:
 		// CTC = Integral((C"(t)^2 dt)
 		double y[][][] = new double[nC][nR][nT];
+		double derivative2[][][] = new double[nC][nR][nT];
 		double AUC;
 		int c, r, t;
+		double timeDiff;
+		double REG[][];
 		
 		for (c = 0; c < nC; c++) {
 			for (r = 0; r < nR; r++) {
@@ -2175,8 +2320,71 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		
 		// Calculation of the second derivative
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				if (mask[c][r] == 1) {
+					for (t = 0; t < nT; t++) {
+						if ((t > 0) && (t < nT-1)) {
+							// Standard case
+							derivative2[c][r][t] = (y[c][r][t+1] - y[c][r][t])/(time[t+1] - time[t]) 
+									- (y[c][r][t] - y[c][r][t-1])/(time[t] - time[t-1]);
+						}
+						else if (t == 0) {
+							// The previous sample is missing
+							timeDiff = time[t+1] - time[t];
+							derivative2[c][r][t] = (y[c][r][t+1] - y[c][r][t])/(timeDiff * timeDiff);
+						}
+						else {
+							// The next sample is missing
+							timeDiff = time[t] - time[t-1];
+							derivative2[c][r][t] = (y[c][r][t] - y[c][r][t-1])/(timeDiff * timeDiff);
+						}
+					}
+				}
+			}
+		} // for (c = 0; c < nC; c++)
 		
-		return null;
+		// Calculation of the irregularity index
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (t = 0; t < nT; t++) {
+					derivative2[c][r][t] = derivative2[c][r][t] * derivative2[c][r][t];
+				}
+			}
+		} // for (c = 0; c < nC; c++)
+		
+		REG = trapz(derivative2);
+		return REG;
+	}
+	
+	private double[][] trapz(double f[][][]) {
+		double REG[][] = new double[nC][nR];
+		int c, r, t;
+		double sum;
+		double scale;
+		if (equalTimeSpacing) {
+			scale = (time[nT-1] - time[0])/(2.0*nT);
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					sum = f[c][r][0] + f[c][r][nT-1];
+					for (t = 1; t < nT-1; t++) {
+						sum += 2.0*f[c][r][t];
+					}
+					REG[c][r] = scale * sum;
+				}
+			}
+		} // if (equalTimeSpacing)
+		else {
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (t = 0; t < nT-1; t++) {
+						REG[c][r] += (time[t+1] - time[t])*(f[c][r][t] + f[c][r][t+1]);
+					}
+					REG[r][r] = 0.5*REG[c][r];
+				}
+			}
+		}
+		return REG;
 	}
 
 	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
