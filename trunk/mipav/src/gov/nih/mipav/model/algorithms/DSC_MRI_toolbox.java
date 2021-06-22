@@ -1637,6 +1637,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		int nCandidates;
 		byte ROIauc[][] = new byte[nC][nR];
 		int ROISum;
+		short TTP[][] = new short[nC][nR];
+		double AIFsliceMaxValue;
+		int AIFsliceTIndex;
+		int numTTPEqualMinus1;
+		int numTTPLessThreshold;
+		byte ROIttp[][] = new byte[nC][nR];
+		int survivedVoxels;
+		double REG[][];
 
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
@@ -2040,10 +2048,136 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		totalCandidates = 0;
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
-
+                totalCandidates += ROI[x][y];
 			}
 		}
+		totalCandidatesToKeep = (int)Math.ceil(totalCandidates * (1-pTTP));
+		numTTPEqualMinus1 = length;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				AIFsliceMaxValue = -Double.MAX_VALUE;
+				AIFsliceTIndex = -1;
+				TTP[x][y] = -1;
+				for (t = 0; t < nT; t++) {
+					if (AIFslice[x][y][t] > AIFsliceMaxValue) {
+						AIFsliceMaxValue = AIFslice[x][y][t];
+						AIFsliceTIndex = t;
+					}
+				}
+				if (ROI[x][y] == 1) {
+				    TTP[x][y] = (short)AIFsliceTIndex;
+				    numTTPEqualMinus1--;
+				}
+			}
+		}
+		
+		cycle = true;
+		threshold = 0.0;
+		while (cycle) {
+			numTTPLessThreshold = 0;
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					if (TTP[x][y] < threshold) { 
+						numTTPLessThreshold++;
+					}
+				}
+			}
+			if ((numTTPLessThreshold - numTTPEqualMinus1) > totalCandidatesToKeep) {
+				cycle = false;
+			}
+			else {
+				threshold = threshold + 1.0;
+			}
+		}
+		
+		// Values 2 for discarded voxels, 1 for kept voxels
+		survivedVoxels = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (TTP[x][y] < threshold) {
+					ROIttp[x][y] = ROI[x][y];
+					if (ROI[x][y] == 1) {
+						survivedVoxels++;
+					}
+				}
+				else {
+					ROIttp[x][y] = (byte)(2 * ROI[x][y]);
+				}
+			}
+		}
+		
+		if (display > 2) {
+			UI.setDataText("Candidate voxel selection via TTP criteria\n");
+			UI.setDataText("Voxel initial amount = " + totalCandidates + "\n");
+			UI.setDataText("Survived voxels = " + survivedVoxels + "\n");
+			byte temp[] = new byte[length];
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					temp[x + y * nC] = ROIauc[x][y];
+				}
+			}
+			ModelImage ROIttpImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "ROIttpImage");
+			try {
+				ROIttpImage.importData(0, temp, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			saveImageFile(ROIttpImage, outputFilePath, outputPrefix + "ROIttp", saveFileFormat);
+			ROIttpImage.disposeLocal();
+		}
+		
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (TTP[x][y] >= threshold) {
+					ROI[x][y] = 0;
+				}
+			}
+		}
+		
+		// Select on the basis of the irregualrity index
+		totalCandidates = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				if (ROI[x][y] == 1) {
+					totalCandidates++;
+				}
+			}
+		}
+		totalCandidatesToKeep = (int)Math.ceil(totalCandidates * (1.0-pReg));
+		REG = calculateREG(ROI);
 	} // public void extractAIF()
+	
+	private double[][] calculateREG(byte mask[][]) {
+		// Caclulates the irregularity index of the concentration curve for each voxel.
+		// The index is calculated by normalizing the area so as not to penalize areas
+		// with elevated voxels.
+		// The formula used to calculate the index:
+		// CTC = Integral((C"(t)^2 dt)
+		double y[][][] = new double[nC][nR][nT];
+		double AUC;
+		int c, r, t;
+		
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				AUC = 0.0;
+				for (t = 0; t < nT; t++) {
+					y[c][r][t] = AIFslice[c][r][t];
+					AUC += y[c][r][t];
+				}
+				if (AUC == 0.0) {
+					AUC = 1.0;
+				}
+				for (t = 0; t < nT; t++) {
+					y[c][r][t] = y[c][r][t]/AUC;
+				}
+			}
+		}
+		
+		// Calculation of the second derivative
+		
+		return null;
+	}
 
 	private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
 		return saveImageFile(img, dir, fileBasename, fileType, false);
