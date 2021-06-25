@@ -2282,12 +2282,73 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    // I apply the hierarchical cluster
 	    nCluster = 2;
 	    centroidi = new double[nCluster][nT];
+	    AlgorithmKMeans kMeansAlgo;
+	    ModelImage kMeansImage = null;
+	    int algoSelection = AlgorithmKMeans.K_MEANS;
+	    int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+	    // Reverse order of indices for pos;
+	    double pos[][] = new double[nT][ROISum];
+	    for (t = 0; t < nT; t++) {
+	    	for (i = 0; i < ROISum; i++) {
+	    		pos[t][i] = dati2D[i][t];
+	    	}
+	    }
+	    double scale[] = new double[nT];
+	    for (t = 0; t < nT; t++) {
+	    	scale[t] = 1.0;
+	    }
+	    int vettNumber[] = new int[ROISum];
+	    // vettNumber in extract correponds to groupNum in AlgorithmKMeans
+	    double weight[] = new double[ROISum];
+	    for (i = 0; i < ROISum; i++) {
+	    	weight[i] = 1.0;
+	    }
+	    double centroidPos[][] = new double[nT][nCluster];
+	    String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+	    int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+	    float redBuffer[] = null;
+	    float greenBuffer[] = null;
+	    float blueBuffer[] = null;
+	    double scaleMax = 255.0;
+	    boolean useColorHistogram = false;
+	    boolean scaleVariablesToUnitVariance = false;
+        double axesRatio[] = null;
+        boolean bwSegmentedImage = false;
+        double doubleBuffer[] = null;
+        boolean showKMeansSegmentedImage = false;
+        boolean followBatchWithIncremental = false; 
+        // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
+        boolean colorSegmentInRGB = false;
+	    kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos,
+	    		scale, vettNumber, weight, centroidPos, resultsFileName, initSelection, 
+	    		redBuffer, greenBuffer, blueBuffer, scaleMax, useColorHistogram, scaleVariablesToUnitVariance,
+	    		axesRatio, bwSegmentedImage, doubleBuffer, showKMeansSegmentedImage, 
+	    		followBatchWithIncremental, colorSegmentInRGB);
+	    kMeansAlgo.run();
+	    kMeansAlgo.finalize();
+        kMeansAlgo = null;
+        
 	} // public void extractAIF()
 	
 	private void clusterHierarchical(double dati[][], int nCluster, double centroidi[][]) {
 		// Apply the hierarchical cluster algorithm to the data and divide it into nCluster.
 		// Returns a vector containing the number of the cluster to which each voxel has
 		// been assigned and the centroid of that cluster.
+		int distanceNumber = dati.length*(dati.length-1)/2;
+		double distance[] = new double[distanceNumber];
+		int i,j,t,index;
+		double distanceSquared;
+		double diff;
+		/*for (index = 0, i = 0; i < dati.length-1; i++) {
+			for (j = i+1; j < dati.length; j++) {
+				distanceSquared = 0.0;
+				for (t = 0; t < nT; t++) {
+					diff = dati[i][t] - dati[j][t];
+					distanceSquared += diff*diff;
+				}
+				distance[index++] = Math.sqrt(distanceSquared);
+			}
+		}*/
 	}
 	
 	private double[][] calculateREG(byte mask[][]) {
