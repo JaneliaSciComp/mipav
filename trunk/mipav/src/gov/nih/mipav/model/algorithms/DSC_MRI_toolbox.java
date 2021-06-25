@@ -1654,6 +1654,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		byte maskAIF[][] = new byte[nC][nR];
 		int nCluster;
 		double centroidi[][];
+		int selectedCluster = 0;
+		int otherCluster = 1;
+		int j;
 
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
@@ -2277,56 +2280,176 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	if (display > 2) {
 	    	    UI.setDataText("Cycle number = " + nCycles + '\n');
 	    	}
-	    } // while (cycle)
 	    
-	    // I apply the hierarchical cluster
-	    nCluster = 2;
-	    centroidi = new double[nCluster][nT];
-	    AlgorithmKMeans kMeansAlgo;
-	    ModelImage kMeansImage = null;
-	    int algoSelection = AlgorithmKMeans.K_MEANS;
-	    int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
-	    // Reverse order of indices for pos;
-	    double pos[][] = new double[nT][ROISum];
-	    for (t = 0; t < nT; t++) {
-	    	for (i = 0; i < ROISum; i++) {
-	    		pos[t][i] = dati2D[i][t];
-	    	}
-	    }
-	    double scale[] = new double[nT];
-	    for (t = 0; t < nT; t++) {
-	    	scale[t] = 1.0;
-	    }
-	    int vettNumber[] = new int[ROISum];
-	    // vettNumber in extract correponds to groupNum in AlgorithmKMeans
-	    double weight[] = new double[ROISum];
-	    for (i = 0; i < ROISum; i++) {
-	    	weight[i] = 1.0;
-	    }
-	    double centroidPos[][] = new double[nT][nCluster];
-	    String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
-	    int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
-	    float redBuffer[] = null;
-	    float greenBuffer[] = null;
-	    float blueBuffer[] = null;
-	    double scaleMax = 255.0;
-	    boolean useColorHistogram = false;
-	    boolean scaleVariablesToUnitVariance = false;
-        double axesRatio[] = null;
-        boolean bwSegmentedImage = false;
-        double doubleBuffer[] = null;
-        boolean showKMeansSegmentedImage = false;
-        boolean followBatchWithIncremental = false; 
-        // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
-        boolean colorSegmentInRGB = false;
-	    kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos,
-	    		scale, vettNumber, weight, centroidPos, resultsFileName, initSelection, 
-	    		redBuffer, greenBuffer, blueBuffer, scaleMax, useColorHistogram, scaleVariablesToUnitVariance,
-	    		axesRatio, bwSegmentedImage, doubleBuffer, showKMeansSegmentedImage, 
-	    		followBatchWithIncremental, colorSegmentInRGB);
-	    kMeansAlgo.run();
-	    kMeansAlgo.finalize();
-        kMeansAlgo = null;
+		    // I apply the hierarchical cluster
+	    	// Use AlgorithmKMeans instead of MATLAB hierarchical clustering
+		    nCluster = 2;
+		    centroidi = new double[nCluster][nT];
+		    AlgorithmKMeans kMeansAlgo;
+		    ModelImage kMeansImage = null;
+		    int algoSelection = AlgorithmKMeans.K_MEANS;
+		    int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+		    // Reverse order of indices for pos;
+		    double pos[][] = new double[nT][ROISum];
+		    for (t = 0; t < nT; t++) {
+		    	for (i = 0; i < ROISum; i++) {
+		    		pos[t][i] = dati2D[i][t];
+		    	}
+		    }
+		    double scale[] = new double[nT];
+		    for (t = 0; t < nT; t++) {
+		    	scale[t] = 1.0;
+		    }
+		    int vettCluster[] = new int[ROISum];
+		    // vettCluster in extract correponds to groupNum in AlgorithmKMeans
+		    double weight[] = new double[ROISum];
+		    for (i = 0; i < ROISum; i++) {
+		    	weight[i] = 1.0;
+		    }
+		    double centroidPos[][] = new double[nT][nCluster];
+		    String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+		    int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+		    float redBuffer[] = null;
+		    float greenBuffer[] = null;
+		    float blueBuffer[] = null;
+		    double scaleMax = 255.0;
+		    boolean useColorHistogram = false;
+		    boolean scaleVariablesToUnitVariance = false;
+	        double axesRatio[] = null;
+	        boolean bwSegmentedImage = false;
+	        double doubleBuffer[] = null;
+	        boolean showKMeansSegmentedImage = false;
+	        boolean followBatchWithIncremental = false; 
+	        // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
+	        boolean colorSegmentInRGB = false;
+		    kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos,
+		    		scale, vettCluster, weight, centroidPos, resultsFileName, initSelection, 
+		    		redBuffer, greenBuffer, blueBuffer, scaleMax, useColorHistogram, scaleVariablesToUnitVariance,
+		    		axesRatio, bwSegmentedImage, doubleBuffer, showKMeansSegmentedImage, 
+		    		followBatchWithIncremental, colorSegmentInRGB);
+		    kMeansAlgo.run();
+		    // groupMean[nDims][numberClusters]
+		    double[][] groupMean = kMeansAlgo.getGroupMean();
+		    kMeansAlgo.finalize();
+	        kMeansAlgo = null;
+	        for (i = 0; i < nCluster; i++) {
+	        	for (t = 0; t < nT; t++) {
+	        		centroidi[i][t] = groupMean[t][i];
+	        	}
+	        }
+	        
+	        // I compare the clusters and choose which one to keep
+	        double MC1 = -Double.MAX_VALUE;
+	        int TTP1 = -1;
+	        double MC2 = -Double.MAX_VALUE;
+	        int TTP2 = -1;
+	        for (t = 0; t < nT; t++) {
+	        	if (centroidi[0][t] > MC1) {
+	        		TTP1 = t;
+	        		MC1 = centroidi[0][t];
+	        	}
+	        	if (centroidi[1][t] > MC2) {
+	        		TTP2 = t;
+	        		MC2 = centroidi[1][t];
+	        	}
+	        }
+	        double maxMC = Math.max(MC1, MC2);
+	        double minMC = Math.min(MC1, MC2);
+	        if ((((maxMC - minMC)/maxMC) < diffPeak) && (TTP1 != TTP2)) {
+	        	// When the difference between the peaks is less than the threshold,
+	        	// I choose based on the TTP
+	        	// The result is 1 if TTP1 > TTP2 and 0 if TTP2 < TTP1
+	        	if (TTP1 > TTP2) {
+	        		selectedCluster = 1;
+	        		otherCluster = 0;
+	        	}
+	        	else {
+	        		selectedCluster = 0;
+	        		otherCluster = 1;
+	        	}
+	        	if (display > 2) {
+	        		UI.setDataText("Cluster selected via TTP criteria\n");
+	        		UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+	        	}
+	        } // if ((((maxMC - minMC)/maxMC) < diffPeak) && (TTP1 != TTP2))
+	        else {
+	        	// I choose based on the difference between the peaks
+	        	// The result is 0 if MC1 > MC2 and 1 if MC2 > MC1
+	        	if (MC2 > MC1) {
+	        		selectedCluster = 1;
+	        		otherCluster = 0;
+	        	}
+	        	else {
+	        		selectedCluster = 0;
+	        		otherCluster = 1;
+	        	}
+	        	if (display > 2) {
+	        		UI.setDataText("Cluster selected via MC criteria\n");
+	        		UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+	        	}
+	        }
+	        int numberSelectedCluster = 0;
+	        int numberOtherCluster = 0;
+	        for (i = 0; i < ROISum; i++) {
+	        	if (vettCluster[i] == selectedCluster) {
+	        		numberSelectedCluster++;
+	        	}
+	        	else {
+	        		numberOtherCluster++;
+	        	}
+	        }
+	        if ((numberSelectedCluster < nVoxelMin) && (numberOtherCluster >= nVoxelMin)) {
+	        	// I choose the other cluster
+	        	i = selectedCluster;
+	        	selectedCluster = otherCluster;
+	        	otherCluster = i;
+	        	i = numberSelectedCluster;
+	        	numberSelectedCluster = numberOtherCluster;
+	        	numberOtherCluster = i;
+		        if (display > 2) {
+		        	UI.setDataText("Cluster selected switched because of minimum voxel bound\n");
+		        	UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+		        }
+	        } // if ((numberSelectedCluster < nVoxelMin) && (numberOtherCluster >= nVoxelMin))
+	        
+	        // I only keep the data relating to the chosen cluster
+	        for (i = 0, c = 0; c < nC; c++) {
+		    	for (r = 0; r < nR; r++) {
+		    		if (maskAIF[c][r] == 1) {
+		    			if (vettCluster[i++] == otherCluster) {
+		    				maskAIF[c][r] = 0;
+		    			}
+		    		}
+		    	}
+		    }
+	        
+	        double dati2Dold[][] = new double[ROISum][nT];
+			for (i = 0; i < ROISum; i++) {
+				for (t = 0; t < nT; t++) {
+					dati2Dold[i][t] = dati2D[i][t];
+				}
+			}
+			dati2D = new double[numberSelectedCluster][nT];
+			for (j = 0, i = 0; i < ROISum; i++) {
+				if (vettCluster[i] == selectedCluster) {
+					for (t = 0; t < nT; t++) {
+						dati2D[j][t] = dati2Dold[i][t];
+					}
+					j++;
+				}
+			}
+			
+			if (display > 2) {
+				UI.setDataText("Resume cycle # " + nCycles + "\n");
+				UI.setDataText("Voxel initial amount: " + ROISum + "\n");
+				UI.setDataText("Survived voxels: " + numberSelectedCluster + "\n");
+			    UI.setDataText("Cluster 0: MC = " + MC1 + "\n");
+			    UI.setDataText("Cluster 0 TTP = " + TTP1 + "\n");
+			    if (selectedCluster == 0) {
+			    	UI.setDataText("Cluater 1 voxel number = " + numberSelectedCluster + "\n");
+			    }
+			} // if (display > 2)
+	    } // while (cycle)
         
 	} // public void extractAIF()
 	
