@@ -1379,6 +1379,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	case BRADLEY_FAYYAD_INIT:
     		subsampleNumber = 10;
     		subsampleSize = nPoints/10;
+    		if (subsampleSize == 0) {
+    		    System.err.println("In AlgorithmKMeans BRADLEY_FAYYAD_INIT cannot be used with nPoints < 10");
+    		    System.err.println("subsampleSize = nPoints/10 is set to 0");
+    		    setCompleted(false);
+    		    return;
+    		}
     		subsampleIndex = new int[subsampleSize];
     		startingPointIndex = new int[numberClusters];
     		subsampleWeight = new double[subsampleSize];
@@ -2985,6 +2991,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	case BRADLEY_FAYYAD_INIT:
     		subsampleNumber = 10;
     		subsampleSize = nPoints/10;
+    		if (subsampleSize == 0) {
+    		    System.err.println("In AlgorithmKMeans BRADLEY_FAYYAD_INIT cannot be used with nPoints < 10");
+    		    System.err.println("subsampleSize = nPoints/10 is set to 0");
+    		    setCompleted(false);
+    		    return;
+    		}
     		subsampleIndex = new int[subsampleSize];
     		startingPointIndex = new int[numberClusters];
     		subsampleWeight = new double[subsampleSize];
@@ -4577,6 +4589,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	case BRADLEY_FAYYAD_INIT:
     		subsampleNumber = 10;
     		subsampleSize = nPoints/10;
+    		if (subsampleSize == 0) {
+    		    System.err.println("In AlgorithmKMeans BRADLEY_FAYYAD_INIT cannot be used with nPoints < 10");
+    		    System.err.println("subsampleSize = nPoints/10 is set to 0");
+    		    setCompleted(false);
+    		    return;
+    		}
     		subsampleIndex = new int[subsampleSize];
     		startingPointIndex = new int[numberClusters];
     		subsampleWeight = new double[subsampleSize];
@@ -5982,6 +6000,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	case BRADLEY_FAYYAD_INIT:
     		subsampleNumber = 10;
     		subsampleSize = nPoints/10;
+    		if (subsampleSize == 0) {
+    		    System.err.println("In AlgorithmKMeans BRADLEY_FAYYAD_INIT cannot be used with nPoints < 10");
+    		    System.err.println("subsampleSize = nPoints/10 is set to 0");
+    		    setCompleted(false);
+    		    return;
+    		}
     		subsampleIndex = new int[subsampleSize];
     		startingPointIndex = new int[numberClusters];
     		subsampleWeight = new double[subsampleSize];
