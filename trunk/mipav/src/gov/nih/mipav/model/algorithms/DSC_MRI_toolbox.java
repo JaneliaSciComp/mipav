@@ -208,6 +208,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double S0map[][][];
 	int bolus[];
 	boolean equalTimeSpacing;
+	byte AIF_ROI[][];
+	double AIF_ROI_x[];
+	double AIF_ROI_y[];
+	double AIF_conc[];
+	int AIF_voxels[][];
 
 	public DSC_MRI_toolbox() {
 
@@ -2275,6 +2280,32 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    cycle = true;
 	    nCycles = 0;
 	    
+	    nCluster = 2;
+	    centroidi = new double[nCluster][nT];
+	    AlgorithmKMeans kMeansAlgo;
+	    ModelImage kMeansImage = null;
+	    int algoSelection = AlgorithmKMeans.K_MEANS;
+	    int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+	    double scale[] = new double[nT];
+	    for (t = 0; t < nT; t++) {
+	    	scale[t] = 1.0;
+	    }
+	    String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+	    int initSelection;
+	    float redBuffer[] = null;
+	    float greenBuffer[] = null;
+	    float blueBuffer[] = null;
+	    double scaleMax = 255.0;
+	    boolean useColorHistogram = false;
+	    boolean scaleVariablesToUnitVariance = false;
+        double axesRatio[] = null;
+        boolean bwSegmentedImage = false;
+        double doubleBuffer[] = null;
+        boolean showKMeansSegmentedImage = false;
+        boolean followBatchWithIncremental = false; 
+        // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
+        boolean colorSegmentInRGB = false;
+        double centroidPos[][] = new double[nT][nCluster];
 	    while (cycle) {
 	    	nCycles = nCycles + 1;
 	    	if (display > 2) {
@@ -2283,45 +2314,27 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    
 		    // I apply the hierarchical cluster
 	    	// Use AlgorithmKMeans instead of MATLAB hierarchical clustering
-		    nCluster = 2;
-		    centroidi = new double[nCluster][nT];
-		    AlgorithmKMeans kMeansAlgo;
-		    ModelImage kMeansImage = null;
-		    int algoSelection = AlgorithmKMeans.K_MEANS;
-		    int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+		    
 		    // Reverse order of indices for pos;
-		    double pos[][] = new double[nT][ROISum];
+		    double pos[][] = new double[nT][dati2D.length];
 		    for (t = 0; t < nT; t++) {
-		    	for (i = 0; i < ROISum; i++) {
+		    	for (i = 0; i < dati2D.length; i++) {
 		    		pos[t][i] = dati2D[i][t];
 		    	}
 		    }
-		    double scale[] = new double[nT];
-		    for (t = 0; t < nT; t++) {
-		    	scale[t] = 1.0;
-		    }
-		    int vettCluster[] = new int[ROISum];
+		    
+		    int vettCluster[] = new int[dati2D.length];
 		    // vettCluster in extract correponds to groupNum in AlgorithmKMeans
-		    double weight[] = new double[ROISum];
-		    for (i = 0; i < ROISum; i++) {
+		    double weight[] = new double[dati2D.length];
+		    for (i = 0; i < dati2D.length; i++) {
 		    	weight[i] = 1.0;
 		    }
-		    double centroidPos[][] = new double[nT][nCluster];
-		    String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
-		    int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
-		    float redBuffer[] = null;
-		    float greenBuffer[] = null;
-		    float blueBuffer[] = null;
-		    double scaleMax = 255.0;
-		    boolean useColorHistogram = false;
-		    boolean scaleVariablesToUnitVariance = false;
-	        double axesRatio[] = null;
-	        boolean bwSegmentedImage = false;
-	        double doubleBuffer[] = null;
-	        boolean showKMeansSegmentedImage = false;
-	        boolean followBatchWithIncremental = false; 
-	        // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
-	        boolean colorSegmentInRGB = false;
+		    if (dati2D.length >= 10) {
+		    	initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+		    }
+		    else {
+		        initSelection = AlgorithmKMeans.HIERARCHICAL_GROUPING_INIT;
+		    }
 		    kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos,
 		    		scale, vettCluster, weight, centroidPos, resultsFileName, initSelection, 
 		    		redBuffer, greenBuffer, blueBuffer, scaleMax, useColorHistogram, scaleVariablesToUnitVariance,
@@ -2390,7 +2403,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        }
 	        int numberSelectedCluster = 0;
 	        int numberOtherCluster = 0;
-	        for (i = 0; i < ROISum; i++) {
+	        for (i = 0; i < dati2D.length; i++) {
 	        	if (vettCluster[i] == selectedCluster) {
 	        		numberSelectedCluster++;
 	        	}
@@ -2423,14 +2436,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	}
 		    }
 	        
-	        double dati2Dold[][] = new double[ROISum][nT];
-			for (i = 0; i < ROISum; i++) {
+	        double dati2Dold[][] = new double[dati2D.length][nT];
+			for (i = 0; i < dati2D.length; i++) {
 				for (t = 0; t < nT; t++) {
 					dati2Dold[i][t] = dati2D[i][t];
 				}
 			}
 			dati2D = new double[numberSelectedCluster][nT];
-			for (j = 0, i = 0; i < ROISum; i++) {
+			for (j = 0, i = 0; i < dati2D.length; i++) {
 				if (vettCluster[i] == selectedCluster) {
 					for (t = 0; t < nT; t++) {
 						dati2D[j][t] = dati2Dold[i][t];
@@ -2441,17 +2454,130 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			
 			if (display > 2) {
 				UI.setDataText("Resume cycle # " + nCycles + "\n");
-				UI.setDataText("Voxel initial amount: " + ROISum + "\n");
+				UI.setDataText("Voxel initial amount: " + dati2D.length + "\n");
 				UI.setDataText("Survived voxels: " + numberSelectedCluster + "\n");
 			    UI.setDataText("Cluster 0: MC = " + MC1 + "\n");
 			    UI.setDataText("Cluster 0 TTP = " + TTP1 + "\n");
 			    if (selectedCluster == 0) {
-			    	UI.setDataText("Cluater 1 voxel number = " + numberSelectedCluster + "\n");
+			    	UI.setDataText("Cluster 0 voxel number = " + numberSelectedCluster + "\n");
 			    }
+			    else {
+			    	UI.setDataText("Cluster 0 voxel number = " + numberOtherCluster + "\n");
+			    }
+			    UI.setDataText("Cluster 1: MC = " + MC2 + "\n");
+			    UI.setDataText("Cluster 1 TTP = " + TTP2 + "\n");
+			    if (selectedCluster == 1) {
+			    	UI.setDataText("Cluster 1 voxel number = " + numberSelectedCluster + "\n");
+			    }
+			    else {
+			    	UI.setDataText("Cluster 1 voxel number = " + numberOtherCluster + "\n");
+			    }
+			    UI.setDataText("Selected cluster: " + selectedCluster + "\n");
 			} // if (display > 2)
+			
+			// Check the exit criterial
+			if ((numberSelectedCluster <= nVoxelMax) || (nCycles >= 100)) {
+				cycle = false;
+			}
 	    } // while (cycle)
+	    
+	    // 4.) Output preparation
+	    
+	    // 4.1) Save the search ROI
+	    AIF_ROI = new byte[nC][nR];
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		AIF_ROI[c][r] = ROI[c][r];
+	    	}
+	    }
+	    AIF_ROI_x = new double[xROI.length];
+	    for (i = 0; i < xROI.length; i++) {
+	    	AIF_ROI_x[i] = xROI[i];
+	    }
+	    AIF_ROI_y = new double[yROI.length];
+	    for (i = 0; i < yROI.length; i++) {
+	    	AIF_ROI_y[i] = yROI[i];
+	    }
         
+	    // 4.2) Save the position of the chosen voxels and the average concentration
+	    // Concentration standards for AIF
+	    double AIFconc[] = new double[nT];
+	    AIF_conc = new double[nT];
+	    for (t = 0; t < nT; t++) {
+	    	AIFconc[t] = centroidi[selectedCluster][t];
+	    	AIF_conc[t] = AIFconc[t];
+	    }
+	    int numMaskAIF = 0;
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		if (maskAIF[c][r] == 1) {
+	    			numMaskAIF++;
+	    		}
+	    	}
+	    }
+	    
+	    AIF_voxels = new int[numMaskAIF][2];
+	    int pos = 0;
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r <nR; r++) {
+	    		if (maskAIF[c][r] == 1) {
+	    			AIF_voxels[pos][0] = c;
+	    			AIF_voxels[pos][1] = r;
+	    			pos++;
+	    		}
+	    	}
+	    }
+	    
+	    // 4.3) Calculate the fit of the arterial with the gamma-variate (with recirculation)
+	    if (display > 0) {
+	    	UI.setDataText("Gamma variate fit computation\n");
+	    }
+	    
+	    // Weights for the calculation of the fit
+	    double weights[] = new double[nT];
+	    for (t = 0; t < nT; t++) {
+	    	weights[i] = 0.01 + Math.exp(-AIFconc[t]);
+	    }
+	    
+	    double MC = -Double.MAX_VALUE;
+	    int WTTP = -1;
+	    for (t = 0; t < nT; t++) {
+	        if (AIFconc[t] > MC) {
+	        	WTTP = t;
+	        	MC = AIFconc[t];
+	        }
+	    }
+	    weights[WTTP] = weights[WTTP]/10.0;
+	    weights[WTTP-1] = weights[WTTP-1]/5.0;
+	    weights[WTTP+1] = weights[WTTP+1]/2.0;
+	    
+	    fitGV_peak1(AIFconc, weights);
 	} // public void extractAIF()
+	
+	private void fitGV_peak1(double dati[], double weights[]) {
+		// Calculate the fit of the first peak with a gamma variate function
+		// The function used is described by the formula:
+		
+		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+		
+		// c(t) = FP(t)
+		
+		
+		// Parameters: p = [t0 alpha beta A]
+		
+		// The last parameter returned represents the exit flag,
+		// which can take the following values:
+		//      1  LSQNONLIN converged to a solution X.
+		//      2  Change in X smaller than the specified tolerance.
+		//      3  Change in the residual smaller than the specified tolerance.
+		//      4  Magnitude search direction smaller than the specified tolerance.
+		//      5  Voxel nullo
+		//      0  Maximum number of function evaluations or of iterations reached.
+		//     -1  Algorithm terminated by the output function.
+		//     -2  Bounds are inconsistent.
+		//     -4  Line search cannot sufficiently decrease the residual along the
+		//         current search direction.
+	}
 	
 	private void clusterHierarchical(double dati[][], int nCluster, double centroidi[][]) {
 		// Apply the hierarchical cluster algorithm to the data and divide it into nCluster.
