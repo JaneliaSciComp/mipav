@@ -213,6 +213,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double AIF_ROI_y[];
 	double AIF_conc[];
 	int AIF_voxels[][];
+	double data_peak1[];
+	double weights_peak1[];
 
 	public DSC_MRI_toolbox() {
 
@@ -2554,7 +2556,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    fitGV_peak1(AIFconc, weights);
 	} // public void extractAIF()
 	
-	private void fitGV_peak1(double dati[], double weights[]) {
+	private void fitGV_peak1(double dati[], double orgWeights[]) {
 		// Calculate the fit of the first peak with a gamma variate function
 		// The function used is described by the formula:
 		
@@ -2566,17 +2568,111 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// Parameters: p = [t0 alpha beta A]
 		
 		// The last parameter returned represents the exit flag,
-		// which can take the following values:
-		//      1  LSQNONLIN converged to a solution X.
-		//      2  Change in X smaller than the specified tolerance.
-		//      3  Change in the residual smaller than the specified tolerance.
-		//      4  Magnitude search direction smaller than the specified tolerance.
-		//      5  Voxel nullo
-		//      0  Maximum number of function evaluations or of iterations reached.
-		//     -1  Algorithm terminated by the output function.
-		//     -2  Bounds are inconsistent.
-		//     -4  Line search cannot sufficiently decrease the residual along the
-		//         current search direction.
+		int i;
+		double weights[] = new double[orgWeights.length];
+		for (i = 0; i < orgWeights.length; i++) {
+			weights[i] = orgWeights[i]; 
+		}
+		
+		// Initial parameter estimates (modification of Denis)
+		// Alpha is set to 5
+		double alpha_init = 5.0;
+		// t0 is estimated on the initial data.  It is calculated as the last instant at
+		// which the data remains less than 5% of the peak.
+		double MCdati = -Double.MAX_VALUE;
+		int TTPpos = -1;
+		int t;
+		for (t = 0; t < nT; t++) {
+			if (dati[t] > MCdati) {
+				MCdati = dati[t];
+				TTPpos = t;
+			}
+		}
+		double TTPdati = time[TTPpos];
+		int lastIndex = -1;
+		for (t = 0; t < TTPpos; t++) {
+		    if (dati[t] <= 0.05 *MCdati) {
+		    	lastIndex = t;
+		    }
+		}
+		if (lastIndex == -1) {
+			System.err.println("In fitGV_peak1 found no time for which dati[t] <= 0.05 * MCdati");
+			System.exit(0);
+		}
+		double t0_init = time[lastIndex];
+		
+		// beta was estimated using the relation that TTP = t0 + alpha*beta
+		double beta_init = (TTPdati - t0_init)/alpha_init;
+		
+		// Initialize the parameters [t0 alpha beta] and choose A so that the initial estimate
+		// and the data have the same maximum
+		double p[] = new double[] {t0_init, alpha_init, beta_init, 1.0};
+		double GV[] = GVfunction_peak1(p);
+		double maxGV = -Double.MAX_VALUE;
+		for (t = 0; t < nT; t++) {
+			if (GV[t] > maxGV) {
+				maxGV = GV[t];
+			}
+		}
+		double A_init = MCdati/maxGV;
+		
+		// Initial values of parameters in the estimate
+		double p0[] = new double[] {t0_init, alpha_init, beta_init, A_init};
+		double lb[] = new double[] {0.1*t0_init, 0.1*alpha_init, 0.1*beta_init, 0.1*A_init};
+		double ub[] = new double[] {10.0*t0_init, 10.0*alpha_init, 10.0*beta_init, 10.0*A_init};
+		
+	    // In extractAIF already have:
+		//weights[WTTP] = weights[WTTP]/10.0;
+	    //weights[WTTP-1] = weights[WTTP-1]/5.0;
+		//weights[WTTP+1] = weights[WTTP+1]/2.0;
+		// so don't implement duplicative:
+		// Marco
+		// I increase the precision of the weight
+		// weight[TTPpos] = weight[TTPpos]/10.0;
+		// weight[TTPpos-1] = weight[TTPPos-1]/2.0;
+		
+		// I find the end of the first peak (20% maximum value)
+		i = TTPpos;
+		while (dati[i] > 0.2*dati[TTPpos]) {
+			i++;
+		}
+		
+		// Suitable data for "first peak only"
+		data_peak1 = new double[nT];
+		for (t = 0; t <= i; t++) {
+			data_peak1[t] = dati[t];
+		}
+		
+		weights_peak1 = new double[nT];
+		for (t = 0; t <= i; t++) {
+			weights_peak1[t] = weights[t];
+		}
+		for (t = i+1; t < nT; t++) {
+			weights_peak1[t] = 0.01;
+		}
+	} // fitGV_peak1
+	
+	private double[] GVfunction_peak1(double p[]) {
+		// Compute the gamma-variate function defined by the parameters contained in p.
+		// The gamma-variate function defined by the formula:
+		
+		// GV[t] = A*((t_t0)^alpha)*exp(-(t-t0)/beta)
+		
+		// parameters : p = [t0 alpha beta A]
+		double t0 = p[0];
+		double alpha = p[1];
+		double beta = p[2];
+		double A = p[3];
+		
+		double GV[] = new double[nT];
+		int cont;
+		for (cont = 0; cont < nT; cont++) {
+			double t = time[cont];
+			if (t > t0) {
+				GV[cont] = A*Math.pow((t-t0),alpha) * Math.exp(-(t-t0)/beta);
+			}
+		}
+		return GV;
 	}
 	
 	private void clusterHierarchical(double dati[][], int nCluster, double centroidi[][]) {
@@ -3440,5 +3536,48 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	};
+	
+	class GVFittingCostFunction extends SizedCostFunction {
+
+		public GVFittingCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(nT, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			double t0 = x[0];
+			double alpha = x[1];
+			double beta = x[2];
+			double A = x[3];
+			double GV;
+			for (i = 0; i < nT; i++) {
+				double t = time[i];
+				if (t > t0) {
+					GV = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				}
+				else {
+					GV = 0.0;
+				}
+				residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
+				if (jacobians != null && jacobians[0] != null) {
+					
+				}
+			}
+			return true;
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
+				int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			return true;
+		}
+	}
+
 
 }
