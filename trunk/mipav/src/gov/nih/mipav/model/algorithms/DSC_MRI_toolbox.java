@@ -215,6 +215,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	int AIF_voxels[][];
 	double data_peak1[];
 	double weights_peak1[];
+	double fitParameters_peak1[];
 
 	public DSC_MRI_toolbox() {
 
@@ -2538,7 +2539,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    // Weights for the calculation of the fit
 	    double weights[] = new double[nT];
 	    for (t = 0; t < nT; t++) {
-	    	weights[i] = 0.01 + Math.exp(-AIFconc[t]);
+	    	weights[t] = 0.01 + Math.exp(-AIFconc[t]);
 	    }
 	    
 	    double MC = -Double.MAX_VALUE;
@@ -2550,7 +2551,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        }
 	    }
 	    weights[WTTP] = weights[WTTP]/10.0;
-	    weights[WTTP-1] = weights[WTTP-1]/5.0;
+	    if (WTTP >= 1) {
+	        weights[WTTP-1] = weights[WTTP-1]/5.0;
+	    }
 	    weights[WTTP+1] = weights[WTTP+1]/2.0;
 	    
 	    fitGV_peak1(AIFconc, weights);
@@ -2617,9 +2620,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double A_init = MCdati/maxGV;
 		
 		// Initial values of parameters in the estimate
-		double p0[] = new double[] {t0_init, alpha_init, beta_init, A_init};
-		double lb[] = new double[] {0.1*t0_init, 0.1*alpha_init, 0.1*beta_init, 0.1*A_init};
-		double ub[] = new double[] {10.0*t0_init, 10.0*alpha_init, 10.0*beta_init, 10.0*A_init};
+		fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
 		
 	    // In extractAIF already have:
 		//weights[WTTP] = weights[WTTP]/10.0;
@@ -2649,6 +2650,42 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		for (t = i+1; t < nT; t++) {
 			weights_peak1[t] = 0.01;
+		}
+		if (display > 0) {
+	    	UI.setDataText("Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+		    UI.setDataText("t0 = " + fitParameters_peak1[0] + "\n");
+		    UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
+		    UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
+		    UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
+	    }
+	   
+	    CostFunction cost_function = new GVFittingCostFunction();
+	    ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, fitParameters_peak1);
+		problem.AddParameterBlock(fitParameters_peak1,4);
+		problem.SetParameterLowerBound(fitParameters_peak1, 0, 0.1*t0_init);
+		problem.SetParameterUpperBound(fitParameters_peak1, 0, 10.0*t0_init);
+        problem.SetParameterLowerBound(fitParameters_peak1, 1, 0.1*alpha_init);
+        problem.SetParameterUpperBound(fitParameters_peak1, 1, 10.0*alpha_init);
+        problem.SetParameterLowerBound(fitParameters_peak1, 2, 0.1*beta_init);
+        problem.SetParameterUpperBound(fitParameters_peak1, 2, 10.0*beta_init);
+        problem.SetParameterLowerBound(fitParameters_peak1, 3, 0.1*A_init);
+        problem.SetParameterUpperBound(fitParameters_peak1, 3, 10.0*A_init);
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		solverOptions.max_num_consecutive_invalid_steps = 1000;
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		if (display > 0) {
+		    UI.setDataText(solverSummary.BriefReport() + "\n");
+		    UI.setDataText("Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+		    UI.setDataText("t0 = " + fitParameters_peak1[0] + "\n");
+		    UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
+		    UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
+		    UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
+		    
 		}
 	} // fitGV_peak1
 	
@@ -3564,7 +3601,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 				residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
 				if (jacobians != null && jacobians[0] != null) {
-					
+				    if (t > t0) {
+				    	jacobians[0][4*i] = (A/weights_peak1[i])*((alpha*Math.pow((t-t0),(alpha-1.0))*Math.exp(-(t-t0)/beta)) -
+				    			(Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta)/beta));
+				    	jacobians[0][4*i+1] = -(A/weights_peak1[i])*Math.log(t-t0)*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				    	jacobians[0][4*i+2] = -(A/weights_peak1[i])*((t-t0)/(beta*beta))*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				    	jacobians[0][4*i+3] = -(1.0/weights_peak1[i])*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				    }
+				    else {
+				    	jacobians[0][4*i] = 0.0;
+				    	jacobians[0][4*i+1] = 0.0;
+				    	jacobians[0][4*i+2] = 0.0;
+				    	jacobians[0][4*i+3] = 0.0;
+				    }
 				}
 			}
 			return true;
@@ -3575,6 +3624,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			int i;
 			// Called by ResidualBlock.Evaluate
 			double x[] = parameters.get(0);
+			double t0 = x[0];
+			double alpha = x[1];
+			double beta = x[2];
+			double A = x[3];
+			double GV;
+			for (i = 0; i < nT; i++) {
+				double t = time[i];
+				if (t > t0) {
+					GV = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				}
+				else {
+					GV = 0.0;
+				}
+				residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
+				if (jacobians != null && jacobians[0] != null) {
+				    if (t > t0) {
+				    	jacobians[0][jacobians_offset[0] + 4*i] = (A/weights_peak1[i])*((alpha*Math.pow((t-t0),(alpha-1.0))*Math.exp(-(t-t0)/beta)) -
+				    			(Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta)/beta));
+				    	jacobians[0][jacobians_offset[0] + 4*i+1] = -(A/weights_peak1[i])*Math.log(t-t0)*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				    	jacobians[0][jacobians_offset[0] + 4*i+2] = -(A/weights_peak1[i])*((t-t0)/(beta*beta))*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				    	jacobians[0][jacobians_offset[0] + 4*i+3] = -(1.0/weights_peak1[i])*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				    }
+				    else {
+				    	jacobians[0][jacobians_offset[0] + 4*i] = 0.0;
+				    	jacobians[0][jacobians_offset[0] + 4*i+1] = 0.0;
+				    	jacobians[0][jacobians_offset[0] + 4*i+2] = 0.0;
+				    	jacobians[0][jacobians_offset[0] + 4*i+3] = 0.0;
+				    }
+				}
+			}
 			return true;
 		}
 	}
