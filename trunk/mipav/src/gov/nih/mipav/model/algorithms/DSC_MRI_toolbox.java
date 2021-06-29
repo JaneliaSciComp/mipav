@@ -13,6 +13,7 @@ import java.util.Vector;
 
 import javax.imageio.ImageIO;
 
+import Jama.Matrix;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileTypeTable;
 import gov.nih.mipav.model.file.FileUtility;
@@ -216,6 +217,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double data_peak1[];
 	double weights_peak1[];
 	double fitParameters_peak1[];
+	double cv_est_parGV_peak1[];
 
 	public DSC_MRI_toolbox() {
 
@@ -2557,6 +2559,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    weights[WTTP+1] = weights[WTTP+1]/2.0;
 	    
 	    fitGV_peak1(AIFconc, weights);
+	    if (aif_recirculation == 1) {
+	    	fitGV_peak2(AIFconc, weights);
+	    } // if (aif_recirculation == 1)
 	} // public void extractAIF()
 	
 	private void fitGV_peak1(double dati[], double orgWeights[]) {
@@ -2687,12 +2692,273 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
 		    
 		}
+		double t0 = fitParameters_peak1[0];
+		double alpha = fitParameters_peak1[1];
+		double beta = fitParameters_peak1[2];
+		double A = fitParameters_peak1[3];
+		double tm;
+		double J[][] = new double[nT][4];
+		for (i = 0; i < nT; i++) {
+			tm = time[i];
+		    if (tm > t0) {
+		    	J[i][0] = (A/weights_peak1[i])*((alpha*Math.pow((tm-t0),(alpha-1.0))*Math.exp(-(tm-t0)/beta)) -
+		    			(Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta)/beta));
+		    	J[i][1] = -(A/weights_peak1[i])*Math.log(tm-t0)*Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta);
+		    	J[i][2] = -(A/weights_peak1[i])*((tm-t0)/(beta*beta))*Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta);
+		    	J[i][3] = -(1.0/weights_peak1[i])*Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta);
+		    }
+		    else {
+		        J[i][0] = 0.0;
+		    	J[i][1] = 0.0;
+		    	J[i][2] = 0.0;
+		    	J[i][3] = 0.0;
+		    }
+		}
+		Matrix matJ = new Matrix(J);
+		double covp[][] = (((matJ.transpose()).times(matJ)).inverse()).getArray();
+		double var[] = new double[] {covp[0][0], covp[1][1], covp[2][2], covp[3][3]};
+		double sd[] = new double[] {Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2]), Math.sqrt(var[3])};
+		cv_est_parGV_peak1 = new double[4];
+		for (i = 0; i < 4; i++) {
+			cv_est_parGV_peak1[i] = sd[i]/fitParameters_peak1[i]*100.0;
+		}
+		if (display > 2) {
+			GV = GVfunction_peak1(fitParameters_peak1);	
+			float timef[] = new float[nT];
+			for (i = 0; i < nT; i++) {
+				timef[i] = (float) time[i];
+			}
+			float GVf[] = new float[nT];
+			for (i = 0; i < nT; i++) {
+				GVf[i] = (float) GV[i];
+			}
+			ViewJFrameGraph firstPeakGraph = new ViewJFrameGraph(timef, GVf,
+					"First peak final fit", "Time", "GV fit");
+			firstPeakGraph.setVisible(true);
+			try {
+				firstPeakGraph.save(outputFilePath + outputPrefix + "firstPeakGraph.plt");
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			Component component = firstPeakGraph.getComponent(0);
+			Rectangle rect = component.getBounds();
+			String format = "png";
+			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File firstPeakGraphFile = new File(outputFilePath + outputPrefix + "firstPeakGraph.png");
+			try {
+				ImageIO.write(captureImage, format, firstPeakGraphFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			firstPeakGraph.removeComponentListener();
+			firstPeakGraph.dispose();
+			captureImage.flush();
+		} // if (display > 2)
 	} // fitGV_peak1
 	
+	private void fitGV_peak2(double dati[], double weights[]) {
+		// Calculate the fit with a gamma variate function
+		// The function used described by the formula:
+		
+		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+		
+		// c(t) = FP(t) + FP(t-td) conv K*exp(-t/tao)
+		
+		// Parameters: p = [t0 alpha beta A td K tao]
+		
+		// I fill in the data for the fit
+		double peak1[] = GVfunction_peak1(fitParameters_peak1);
+		// The data to fit are the residues of the first fit
+		int t;
+		double dati_peak2[] = new double[nT];
+		for (t = 0; t < nT; t++) {
+			dati_peak2[t] = dati[t] - peak1[t];
+		}
+		
+		// Uniform weights for the calculation of the fit
+		double weights_peak2[] = new double[nT];
+		for (t = 0; t < nT; t++) {
+			weights_peak2[t] = 1.0;
+		}
+		
+		double maxDati = -Double.MAX_VALUE;
+		int maxT = -1;
+		for (t = 0; t < nT; t++) {
+			if (dati[t] > maxDati) {
+				maxDati = dati[t];
+				maxT = t;
+			}
+		}
+		int lastT = -1;
+		for (t = 0; t < nT; t++) {
+			if (dati[t] > 0.4*maxDati) {
+				lastT = t;
+			}
+		}
+		int posTaglioWeights = Math.min(lastT, maxT+3);
+		// I reduce the weight of the data before the main peak.  I arrive
+		// until the concentration has dropped below 40% of the peak to avoid cases
+		// where the main peak does not fit well the post-peak data abd the
+		// residuals may show a bogus peak.
+		//for (t = 0; t <= posTaglioWeights; t++) {
+		//	weights_peak2[t] = 1.0;
+		//}
+		
+		// Parameter initialization
+		// Data based search for initial points.  I only consider data from the instant in 
+		// which the concentrations fall below 40% of the peak to avoid too much noisy residues
+		// not related to the recirculation.  The fit is done with all the residues.
+		double dati_x_stime_init[] = new double[nT];
+		for (t = 0; t < nT; t++) {
+			dati_x_stime_init[t] = dati_peak2[t];
+		}
+		for (t = 0; t <= posTaglioWeights; t++) {
+			dati_x_stime_init[t] = 0;
+		}
+		for (t = posTaglioWeights+1; t < nT; t++) {
+			if (dati_x_stime_init[t] < 0) {
+				dati_x_stime_init[t] = 0;
+			}
+		}
+		// td_init is calculated as the distance between the instant of the main peak and the
+		// distance of the recirculation peak.  The recirculation peak wa identified as the data
+		// peak minus the prediction of the main peak.
+		double maxPeak2 = -Double.MAX_VALUE;
+		int TTPpeak2 = -1;
+		for (t = 0; t < nT; t++) {
+			if (dati_x_stime_init[t] > maxPeak2) {
+				maxPeak2 = dati_x_stime_init[t];
+				TTPpeak2 = t;
+			}
+		}
+		int t0peak2 = -1;
+		for (t = 0; t <= TTPpeak2; t++) {
+			if (dati_x_stime_init[t] < 0.1*maxPeak2) {
+				t0peak2 = t;
+			}
+		}
+		double td_init = time[t0peak2] - fitParameters_peak1[0];
+		
+		// The initial estimate of tao fixed.  100 mamnages to give a well spread
+		// recirculation and that with the bounds can become both a zero dispersion
+		// and lead to an almost complete dispersion.
+		double tao_init = 40.0;
+		// The estimate of K is made so that the maxima of the predicted
+		// recirculation and of the fitted data are equal.
+		double xp[] = new double[] {fitParameters_peak1[0], fitParameters_peak1[1],
+				fitParameters_peak1[2], fitParameters_peak1[3], td_init, 1.0,
+				tao_init};
+		double recirculation[] = GVfunction_recirculation(xp);
+		double maxRecirculation = -Double.MAX_VALUE;
+		for (t = 0; t < nT; t++) {
+			if (recirculation[t] > maxRecirculation) {
+				maxRecirculation = recirculation[t];
+			}
+		}
+		double K_init = maxPeak2/maxRecirculation;
+		
+		double p[] = new double[] {td_init, K_init, tao_init}; // Initial values
+	} // fitGV_peak2
+	
+	private double[] GVfunction_recirculation(double p[]) {
+		// Compute the gamma-variate function that describes the recirculation of
+		// concentrations and defined by the parameters contained in p.
+		// The gamma-variate function defined by the formula:
+		
+		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+		
+		// recirculation(t) = FP(t-td) conv K*exp(-t/tao)
+		
+		// The parameters are passed in the following order:
+		// p = [t0 alpha beta A td K tao]
+		
+		// Since the formula predicts a convolution, the time grid
+		// along which the much denser gamma variate than the final grid is calculated
+		double t0 = p[0];
+		double alpha = p[1];
+		double beta = p[2];
+		double A = p[3];
+		double td = p[4];
+		double K = p[5];
+		double tao = p[6];
+		
+		// 1.) Definition of the virtual grid necessary for convolution
+		double TR = time[1] - time[0];
+		double Tmax = -Double.MAX_VALUE;
+		double Tmin = Double.MAX_VALUE;
+		int i, j, t;
+		for (t = 0; t < nT; t++) {
+			if (time[t] < Tmin) {
+				Tmin = time[t];
+			}
+			if (time[t] > Tmax) {
+				Tmax = time[t];
+			}
+		}
+		
+		double TRfine = TR/10.0;
+		int nTfine = 1 + (int)((2*Tmax - Tmin)/TRfine);
+		double tGrid[] = new double[nTfine];
+		for (t = 0; t < nTfine; t++) {
+			tGrid[t] = Tmin + t*TRfine;
+		}
+		
+		// Calculate the funcions necessary for the recirculation calculation
+		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+		// disp(t) = exp(-t/tao)
+		// recirculation(t) = K * [FP(t-td) convolution disp(t)]
+		
+		// Vector initialization
+		double peak2[] = new double[nTfine]; // Peak of recirculation
+		double disp[] = new double[nTfine]; // Dispersion of recirculation
+		
+		double tg;
+		for (i = 0; i < nTfine; i++) {
+			tg = tGrid[i];
+			
+			if (tg > (t0+td)) {
+				// Calculation of FP(t-td)
+				peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+			}
+			
+			// Calculation of disp(t)
+			disp[i] = Math.exp(-tg/tao);
+		}
+		
+		// 3.) I assemble the components to obtainthe GV calculated on the fine grid
+		double recirculation_fine[] = new double[nTfine];
+		for (i = 0; i < nTfine; i++) {
+			for (j = 0; j <= i; j++) {
+				recirculation_fine[i] += peak2[j] * disp[i - j];
+			}
+			recirculation_fine[i] *= TRfine;
+		}
+		
+		// 4.) I'm going to sample GV on the time instants requeted in time
+		double recirculation[] = new double[nT];
+		for (t = 0; t < nT; t++) {
+			double pos = (time[t] - Tmin)/TRfine;
+			int lowIndex = (int)Math.floor(pos);
+			int highIndex = (int)Math.ceil(pos);
+			if (lowIndex == highIndex) {
+				recirculation[t] = recirculation_fine[lowIndex];
+			}
+			else {
+				double lowFraction = pos - lowIndex;
+				double highFraction = highIndex - pos;
+				recirculation[t] = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+			}
+		}
+		return recirculation;
+	}
 	private double[] GVfunction_peak1(double p[]) {
 		// Compute the gamma-variate function defined by the parameters contained in p.
 		// The gamma-variate function defined by the formula:
-		
+		  
 		// GV[t] = A*((t_t0)^alpha)*exp(-(t-t0)/beta)
 		
 		// parameters : p = [t0 alpha beta A]
