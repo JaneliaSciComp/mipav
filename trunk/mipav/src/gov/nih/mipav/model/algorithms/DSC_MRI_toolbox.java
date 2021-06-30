@@ -218,6 +218,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double weights_peak1[];
 	double fitParameters_peak1[];
 	double cv_est_parGV_peak1[];
+	double TR;
+	double Tmax;
+	double Tmin;
+	double TRfine;
+	int nTfine;
+	double tGrid[];
+	double dati_peak2[];
+	double weights_peak2[];
+	double fitParameters_peak2[];
+	double cv_est_parGV_peak2[];
 
 	public DSC_MRI_toolbox() {
 
@@ -289,6 +299,27 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		time = new double[nT];
 		for (i = 0; i < nT; i++) {
 			time[i] = i * tr;
+		}
+		// 1.) Definition of the virtual grid necessary for convolution
+		// Prevent repetition in GVfunction_recirculation
+		TR = time[1] - time[0];
+		Tmax = -Double.MAX_VALUE;
+		Tmin = Double.MAX_VALUE;
+		int t;
+		for (t = 0; t < nT; t++) {
+			if (time[t] < Tmin) {
+				Tmin = time[t];
+			}
+			if (time[t] > Tmax) {
+				Tmax = time[t];
+			}
+		}
+		
+		TRfine = TR/10.0;
+		nTfine = 1 + (int)((2*Tmax - Tmin)/TRfine);
+		tGrid = new double[nTfine];
+		for (t = 0; t < nTfine; t++) {
+			tGrid[t] = Tmin + t*TRfine;
 		}
 		equalTimeSpacing = true;
 
@@ -2773,14 +2804,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// I fill in the data for the fit
 		double peak1[] = GVfunction_peak1(fitParameters_peak1);
 		// The data to fit are the residues of the first fit
-		int t;
-		double dati_peak2[] = new double[nT];
+		int i, j, t;
+		dati_peak2 = new double[nT];
 		for (t = 0; t < nT; t++) {
 			dati_peak2[t] = dati[t] - peak1[t];
 		}
 		
 		// Uniform weights for the calculation of the fit
-		double weights_peak2[] = new double[nT];
+		weights_peak2 = new double[nT];
 		for (t = 0; t < nT; t++) {
 			weights_peak2[t] = 1.0;
 		}
@@ -2861,7 +2892,118 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		double K_init = maxPeak2/maxRecirculation;
 		
-		double p[] = new double[] {td_init, K_init, tao_init}; // Initial values
+		fitParameters_peak2 = new double[] {td_init, K_init, tao_init}; // Initial values
+		if (display > 0) {
+	    	UI.setDataText("Initial estimates for FP(t-td) convolution K*exp(-t/tao)\n");
+	    	UI.setDataText("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+		    UI.setDataText("td = " + fitParameters_peak2[0] + "\n");
+		    UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
+		    UI.setDataText("tao = " + fitParameters_peak2[2] + "\n");
+	    }
+	   
+	    CostFunction cost_function = new GVRecirculationCostFunction();
+	    ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, fitParameters_peak2);
+		problem.AddParameterBlock(fitParameters_peak1,3);
+		problem.SetParameterLowerBound(fitParameters_peak2, 0, 0.1*td_init);
+		problem.SetParameterUpperBound(fitParameters_peak2, 0, 10.0*td_init);
+        problem.SetParameterLowerBound(fitParameters_peak2, 1, 0.1*K_init);
+        problem.SetParameterUpperBound(fitParameters_peak2, 1, 10.0*K_init);
+        problem.SetParameterLowerBound(fitParameters_peak2, 2, 0.1*tao_init);
+        problem.SetParameterUpperBound(fitParameters_peak2, 2, 10.0*tao_init);
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		solverOptions.max_num_consecutive_invalid_steps = 1000;
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		if (display > 0) {
+		    UI.setDataText(solverSummary.BriefReport() + "\n");
+		    UI.setDataText("Solved answer for FP(t-td) convolution K*exp(-t/tao)\n");
+		    UI.setDataText("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+		    UI.setDataText("td = " + fitParameters_peak2[0] + "\n");
+		    UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
+		    UI.setDataText("tao = " + fitParameters_peak2[2] + "\n"); 
+		}
+		double t0 = fitParameters_peak1[0];
+		double alpha = fitParameters_peak1[1];
+		double beta = fitParameters_peak1[2];
+		double td = fitParameters_peak2[0];
+		double K = fitParameters_peak2[1];
+		double tao = fitParameters_peak2[2];
+		double J[][] = new double[nT][3];
+
+		// Vector initialization
+		double peak2[] = new double[nTfine]; // Peak of recirculation
+		double disp[] = new double[nTfine]; // Dispersion of recirculation
+		
+		double tg;
+		for (i = 0; i < nTfine; i++) {
+			tg = tGrid[i];
+			
+			if (tg > (t0+td)) {
+				// Calculation of FP(t-td)
+				peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+			}
+			
+			// Calculation of disp(t)
+			disp[i] = Math.exp(-tg/tao);
+		}
+		
+		
+		double dpeak2dtd[] = new double[nTfine]; 
+		double dpeak2dK[] = new double[nTfine];
+		double ddispdtao[] = new double[nTfine];
+		for (i = 0; i < nTfine; i++) {
+			tg = tGrid[i];
+			
+			if (tg > (t0+td)) {
+				// Calculation of FP(t-td)
+				dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
+						- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+				dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+			}
+			
+			// Calculation of disp(t)
+			ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+		}
+		
+		// 3.) I assemble the components to obtainthe GV calculated on the fine grid
+		double recirculation_fine_td[] = new double[nTfine];
+		double recirculation_fine_K[] = new double[nTfine];
+		double recirculation_fine_tao[] = new double[nTfine];
+		for (i = 0; i < nTfine; i++) {
+			for (j = 0; j <= i; j++) {
+				recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
+				recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
+				recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+			}
+			recirculation_fine_td[i] *= TRfine;
+			recirculation_fine_K[i] *= TRfine;
+			recirculation_fine_tao[i] *= TRfine;
+		}
+		
+		for (t = 0; t < nT; t++) {
+			double pos = (time[t] - Tmin)/TRfine;
+			int lowIndex = (int)Math.floor(pos);
+			int highIndex = (int)Math.ceil(pos);
+			if (lowIndex == highIndex) {
+				J[t][0] = recirculation_fine_td[lowIndex]/weights_peak2[t];
+				J[t][1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
+				J[t][2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
+			}
+			else {
+				double lowFraction = pos - lowIndex;
+				double highFraction = highIndex - pos;
+				J[t][0] = (lowFraction*recirculation_fine_td[highIndex] 
+						+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
+				J[t][1] = (lowFraction*recirculation_fine_K[highIndex] 
+						+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
+				J[t][2] = (lowFraction*recirculation_fine_tao[highIndex] 
+						+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+			}
+		}
 	} // fitGV_peak2
 	
 	private double[] GVfunction_recirculation(double p[]) {
@@ -2885,27 +3027,29 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double td = p[4];
 		double K = p[5];
 		double tao = p[6];
+		int i, j, t;
 		
 		// 1.) Definition of the virtual grid necessary for convolution
-		double TR = time[1] - time[0];
-		double Tmax = -Double.MAX_VALUE;
-		double Tmin = Double.MAX_VALUE;
-		int i, j, t;
-		for (t = 0; t < nT; t++) {
-			if (time[t] < Tmin) {
-				Tmin = time[t];
-			}
-			if (time[t] > Tmax) {
-				Tmax = time[t];
-			}
-		}
+		// Performed in DSC_mri_core to prevent unnecessary repetitions
+		//double TR = time[1] - time[0];
+		//double Tmax = -Double.MAX_VALUE;
+		//double Tmin = Double.MAX_VALUE;
 		
-		double TRfine = TR/10.0;
-		int nTfine = 1 + (int)((2*Tmax - Tmin)/TRfine);
-		double tGrid[] = new double[nTfine];
-		for (t = 0; t < nTfine; t++) {
-			tGrid[t] = Tmin + t*TRfine;
-		}
+		//for (t = 0; t < nT; t++) {
+		//	if (time[t] < Tmin) {
+		//		Tmin = time[t];
+		//	}
+		//	if (time[t] > Tmax) {
+		//		Tmax = time[t];
+		//	}
+		//}
+		
+		//double TRfine = TR/10.0;
+		//int nTfine = 1 + (int)((2*Tmax - Tmin)/TRfine);
+		//double tGrid[] = new double[nTfine];
+		//for (t = 0; t < nTfine; t++) {
+		//	tGrid[t] = Tmin + t*TRfine;
+		//}
 		
 		// Calculate the funcions necessary for the recirculation calculation
 		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
@@ -3839,6 +3983,235 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	};
+	
+	class GVRecirculationCostFunction extends SizedCostFunction {
+		public GVRecirculationCostFunction() {
+			// number of residuals
+		    // size of first parameter
+		    super(nT, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i, j, t;
+			double t0 = fitParameters_peak1[0];
+			double alpha = fitParameters_peak1[1];
+			double beta = fitParameters_peak1[2];
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			double td = x[0];
+			double K = x[1];
+			double tao = x[2];
+	
+			// Vector initialization
+			double peak2[] = new double[nTfine]; // Peak of recirculation
+			double disp[] = new double[nTfine]; // Dispersion of recirculation
+			
+			double tg;
+			for (i = 0; i < nTfine; i++) {
+				tg = tGrid[i];
+				
+				if (tg > (t0+td)) {
+					// Calculation of FP(t-td)
+					peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+				}
+				
+				// Calculation of disp(t)
+				disp[i] = Math.exp(-tg/tao);
+			}
+			
+			// 3.) I assemble the components to obtain the GV calculated on the fine grid
+			double recirculation_fine[] = new double[nTfine];
+			for (i = 0; i < nTfine; i++) {
+				for (j = 0; j <= i; j++) {
+					recirculation_fine[i] += peak2[j] * disp[i - j];
+				}
+				recirculation_fine[i] *= TRfine;
+			}
+			
+			// 4.) I'm going to sample GV on the time instants requeted in time
+			double recirculation;
+			for (t = 0; t < nT; t++) {
+				double pos = (time[t] - Tmin)/TRfine;
+				int lowIndex = (int)Math.floor(pos);
+				int highIndex = (int)Math.ceil(pos);
+				if (lowIndex == highIndex) {
+					recirculation = recirculation_fine[lowIndex];
+				}
+				else {
+					double lowFraction = pos - lowIndex;
+					double highFraction = highIndex - pos;
+					recirculation = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+				}
+				residuals[t] = (dati_peak2[t] - recirculation)/weights_peak2[t];
+			}
+			if (jacobians != null && jacobians[0] != null) {
+				double dpeak2dtd[] = new double[nTfine]; 
+				double dpeak2dK[] = new double[nTfine];
+				double ddispdtao[] = new double[nTfine];
+				for (i = 0; i < nTfine; i++) {
+					tg = tGrid[i];
+					
+					if (tg > (t0+td)) {
+						// Calculation of FP(t-td)
+						dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
+								- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+						dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+					}
+					
+					// Calculation of disp(t)
+					ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+				}
+				
+				// 3.) I assemble the components to obtainthe GV calculated on the fine grid
+				double recirculation_fine_td[] = new double[nTfine];
+				double recirculation_fine_K[] = new double[nTfine];
+				double recirculation_fine_tao[] = new double[nTfine];
+				for (i = 0; i < nTfine; i++) {
+					for (j = 0; j <= i; j++) {
+						recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
+						recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
+						recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+					}
+					recirculation_fine_td[i] *= TRfine;
+					recirculation_fine_K[i] *= TRfine;
+					recirculation_fine_tao[i] *= TRfine;
+				}
+				
+				for (t = 0; t < nT; t++) {
+					double pos = (time[t] - Tmin)/TRfine;
+					int lowIndex = (int)Math.floor(pos);
+					int highIndex = (int)Math.ceil(pos);
+					if (lowIndex == highIndex) {
+						jacobians[0][3*t] = recirculation_fine_td[lowIndex]/weights_peak2[t];
+						jacobians[0][3*t+1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
+						jacobians[0][3*t+2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
+					}
+					else {
+						double lowFraction = pos - lowIndex;
+						double highFraction = highIndex - pos;
+						jacobians[0][3*t] = (lowFraction*recirculation_fine_td[highIndex] 
+								+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
+						jacobians[0][3*t+1] = (lowFraction*recirculation_fine_K[highIndex] 
+								+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
+						jacobians[0][3*t+2] = (lowFraction*recirculation_fine_tao[highIndex] 
+								+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+					}
+				}
+			}
+			return true;
+		}
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
+				int jacobians_offset[]) {
+			int i,j,t;
+			double t0 = fitParameters_peak1[0];
+			double alpha = fitParameters_peak1[1];
+			double beta = fitParameters_peak1[2];
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			double td = x[0];
+			double K = x[1];
+			double tao = x[2];
+	
+			// Vector initialization
+			double peak2[] = new double[nTfine]; // Peak of recirculation
+			double disp[] = new double[nTfine]; // Dispersion of recirculation
+			
+			double tg;
+			for (i = 0; i < nTfine; i++) {
+				tg = tGrid[i];
+				
+				if (tg > (t0+td)) {
+					// Calculation of FP(t-td)
+					peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+				}
+				
+				// Calculation of disp(t)
+				disp[i] = Math.exp(-tg/tao);
+			}
+			
+			// 3.) I assemble the components to obtain the GV calculated on the fine grid
+			double recirculation_fine[] = new double[nTfine];
+			for (i = 0; i < nTfine; i++) {
+				for (j = 0; j <= i; j++) {
+					recirculation_fine[i] += peak2[j] * disp[i - j];
+				}
+				recirculation_fine[i] *= TRfine;
+			}
+			
+			// 4.) I'm going to sample GV on the time instants requeted in time
+			double recirculation;
+			for (t = 0; t < nT; t++) {
+				double pos = (time[t] - Tmin)/TRfine;
+				int lowIndex = (int)Math.floor(pos);
+				int highIndex = (int)Math.ceil(pos);
+				if (lowIndex == highIndex) {
+					recirculation = recirculation_fine[lowIndex];
+				}
+				else {
+					double lowFraction = pos - lowIndex;
+					double highFraction = highIndex - pos;
+					recirculation = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+				}
+				residuals[t] = (dati_peak2[t] - recirculation)/weights_peak2[t];
+			}
+			if (jacobians != null && jacobians[0] != null) {
+				double dpeak2dtd[] = new double[nTfine]; 
+				double dpeak2dK[] = new double[nTfine];
+				double ddispdtao[] = new double[nTfine];
+				for (i = 0; i < nTfine; i++) {
+					tg = tGrid[i];
+					
+					if (tg > (t0+td)) {
+						// Calculation of FP(t-td)
+						dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
+								- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+						dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+					}
+					
+					// Calculation of disp(t)
+					ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+				}
+				
+				// 3.) I assemble the components to obtainthe GV calculated on the fine grid
+				double recirculation_fine_td[] = new double[nTfine];
+				double recirculation_fine_K[] = new double[nTfine];
+				double recirculation_fine_tao[] = new double[nTfine];
+				for (i = 0; i < nTfine; i++) {
+					for (j = 0; j <= i; j++) {
+						recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
+						recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
+						recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+					}
+					recirculation_fine_td[i] *= TRfine;
+					recirculation_fine_K[i] *= TRfine;
+					recirculation_fine_tao[i] *= TRfine;
+				}
+				
+				for (t = 0; t < nT; t++) {
+					double pos = (time[t] - Tmin)/TRfine;
+					int lowIndex = (int)Math.floor(pos);
+					int highIndex = (int)Math.ceil(pos);
+					if (lowIndex == highIndex) {
+						jacobians[0][jacobians_offset[0] + 3*t] = recirculation_fine_td[lowIndex]/weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3*t+1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3*t+2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
+					}
+					else {
+						double lowFraction = pos - lowIndex;
+						double highFraction = highIndex - pos;
+						jacobians[0][jacobians_offset[0] + 3*t] = (lowFraction*recirculation_fine_td[highIndex] 
+								+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3*t+1] = (lowFraction*recirculation_fine_K[highIndex] 
+								+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3*t+2] = (lowFraction*recirculation_fine_tao[highIndex] 
+								+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+					}
+				}
+			}
+			return true;
+		}
+	}
 	
 	class GVFittingCostFunction extends SizedCostFunction {
 
