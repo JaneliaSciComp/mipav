@@ -228,6 +228,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double weights_peak2[];
 	double fitParameters_peak2[];
 	double cv_est_parGV_peak2[];
+	double AIF_fit_weights[];
+	double AIF_fit_parameters[];
+	double AIF_fit_cv_est_parGV[];
+	double AIF_fit_gv[];
 
 	public DSC_MRI_toolbox() {
 
@@ -2537,11 +2541,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
         
 	    // 4.2) Save the position of the chosen voxels and the average concentration
 	    // Concentration standards for AIF
-	    double AIFconc[] = new double[nT];
 	    AIF_conc = new double[nT];
 	    for (t = 0; t < nT; t++) {
-	    	AIFconc[t] = centroidi[selectedCluster][t];
-	    	AIF_conc[t] = AIFconc[t];
+	    	AIF_conc[t] = centroidi[selectedCluster][t];
 	    }
 	    int numMaskAIF = 0;
 	    for (c = 0; c < nC; c++) {
@@ -2570,30 +2572,205 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    
 	    // Weights for the calculation of the fit
-	    double weights[] = new double[nT];
+	    AIF_fit_weights = new double[nT];
 	    for (t = 0; t < nT; t++) {
-	    	weights[t] = 0.01 + Math.exp(-AIFconc[t]);
+	    	AIF_fit_weights[t] = 0.01 + Math.exp(-AIF_conc[t]);
 	    }
 	    
 	    double MC = -Double.MAX_VALUE;
 	    int WTTP = -1;
 	    for (t = 0; t < nT; t++) {
-	        if (AIFconc[t] > MC) {
+	        if (AIF_conc[t] > MC) {
 	        	WTTP = t;
-	        	MC = AIFconc[t];
+	        	MC = AIF_conc[t];
 	        }
 	    }
-	    weights[WTTP] = weights[WTTP]/10.0;
+	    AIF_fit_weights[WTTP] = AIF_fit_weights[WTTP]/10.0;
 	    if (WTTP >= 1) {
-	        weights[WTTP-1] = weights[WTTP-1]/5.0;
+	        AIF_fit_weights[WTTP-1] = AIF_fit_weights[WTTP-1]/5.0;
 	    }
-	    weights[WTTP+1] = weights[WTTP+1]/2.0;
+	    AIF_fit_weights[WTTP+1] = AIF_fit_weights[WTTP+1]/2.0;
 	    
-	    fitGV_peak1(AIFconc, weights);
+	    double fitParameters[];
+	    double cv_est_parGV[];
+	    fitGV_peak1(AIF_conc, AIF_fit_weights);
 	    if (aif_recirculation == 1) {
-	    	fitGV_peak2(AIFconc, weights);
+	    	fitGV_peak2(AIF_conc, AIF_fit_weights);
+	    	AIF_fit_parameters = new double[7];
+	    	AIF_fit_cv_est_parGV = new double[7];
+	    	for (i = 0; i < 4; i++) {
+	    		AIF_fit_parameters[i] = fitParameters_peak1[i];
+	    		AIF_fit_cv_est_parGV[i] = cv_est_parGV_peak1[i];
+	    	}
+	    	for (i = 0; i < 3; i++) {
+	    		AIF_fit_parameters[i+4] = fitParameters_peak2[i];
+	    		AIF_fit_cv_est_parGV[i+4] = cv_est_parGV_peak2[i];
+	    	}
+	    	AIF_fit_gv = GVfunction(AIF_fit_parameters);
 	    } // if (aif_recirculation == 1)
+	    else {
+	    	AIF_fit_parameters = new double[4];
+	    	AIF_fit_cv_est_parGV = new double[4];
+	    	for (i = 0; i < 4; i++) {
+	    		AIF_fit_parameters[i] = fitParameters_peak1[i];
+	    		AIF_fit_cv_est_parGV[i] = cv_est_parGV_peak1[i];
+	    	}
+	    	AIF_fit_gv = GVfunction_peak1(AIF_fit_parameters);
+	    }
+	    
+	    if (display > 1) {
+			vettImmagine = new double[length];
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					vettImmagine[x + y * nC] = immagine_img[x][y];
+				}
+			}
+			ModelImage immagineImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "immagineImage");
+			try {
+				immagineImage.importData(0, vettImmagine, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			float xArr[] = new float[1];
+			float yArr[] = new float[1];
+			float zArr[] = new float[1];
+			for (i = 0; i < numMaskAIF; i++) {
+				VOI AIFPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
+				AIFPtVOI.setColor(Color.red);
+				xArr[0] = (float) AIF_voxels[i][0];
+				yArr[0] = (float) AIF_voxels[i][1];
+				AIFPtVOI.importCurve(xArr, yArr, zArr);
+				((VOIPoint) (AIFPtVOI.getCurves().elementAt(0))).setFixed(true);
+				immagineImage.registerVOI(AIFPtVOI);
+			}
+			ViewJFrameImage vFrame = new ViewJFrameImage(immagineImage);
+			Component component = vFrame.getComponent(0);
+			Rectangle rect = component.getBounds();
+			String format = "png";
+			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File immagineFile = new File(outputFilePath + outputPrefix + "AIF.png");
+			boolean foundWriter;
+			try {
+				foundWriter = ImageIO.write(captureImage, format, immagineFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			if (!foundWriter) {
+				System.err.println("No appropriate writer for AIF.png");
+				return;
+			}
+			captureImage.flush();
+			component.setEnabled(false);
+			component.setVisible(false);
+  	        component.setIgnoreRepaint(true);
+			vFrame.removeComponentListener();
+			vFrame.removeWindowListener();
+			vFrame.removeMouseMotionListener();
+			vFrame.removeMouseListener();
+  	        vFrame.removeKeyListener();
+  	        vFrame.close(false);
+  	        immagineImage.disposeLocal();
+		} // if (display > 1)
 	} // public void extractAIF()
+	
+	private double[] GVfunction(double p[]) {
+		// Compute the gamma-variate function defined by the parameters contained in p.
+		// The gamma-variate function defined by the formula:
+		
+		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+		
+		// c(t) = FP(t) + FP(t-td) conv K*exp(-t/tao)
+		
+		// The parameters are passed in the following order:
+		// p = [t0 alpha beta A td K tao]
+		
+		// Since the formula predicts a convolution, the time grid
+		// along which the much denser gamma variate than the final grid is calculated
+		double t0 = p[0];
+		double alpha = p[1];
+		double beta = p[2];
+		double A = p[3];
+		double td = p[4];
+		double K = p[5];
+		double tao = p[6];
+		int i, j, t;
+		
+		// 1.) Definition of the virtual grid necessary for convolution
+		// Performed in DSC_mri_core to prevent unnecessary repetitions
+		//double TR = time[1] - time[0];
+		//double Tmax = -Double.MAX_VALUE;
+		//double Tmin = Double.MAX_VALUE;
+		
+		//for (t = 0; t < nT; t++) {
+		//	if (time[t] < Tmin) {
+		//		Tmin = time[t];
+		//	}
+		//	if (time[t] > Tmax) {
+		//		Tmax = time[t];
+		//	}
+		//}
+		
+		//double TRfine = TR/10.0;
+		nTfine = 1 + (int)((2*Tmax)/TRfine);
+		tGrid = new double[nTfine];
+		for (t = 0; t < nTfine; t++) {
+			tGrid[t] = t*TRfine;
+		}
+		
+		// Calculation of the components of GV
+		// I divide the GV into its main components
+		double peak1[] = new double[nTfine]; // Main peak
+		double peak2[] = new double[nTfine]; // Peak of recirculation
+		double disp[] = new double[nTfine]; // Dispersion of recirculation
+		
+		double tg;
+		for (i = 0; i < nTfine; i++) {
+			tg = tGrid[i];
+			
+			if (tg > t0) {
+				peak1[i] = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+			}
+			
+			if (tg > (t0+td)) {
+				// Calculation of FP(t-td)
+				peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+			}
+			
+			// Calculation of disp(t)
+			disp[i] = Math.exp(-tg/tao);
+		}
+		
+		// 3.) I assemble the components to obtain the GV calculated on the fine grid
+		double recirculation_fine[] = new double[nTfine];
+		double conc[] = new double[nTfine];
+		for (i = 0; i < nTfine; i++) {
+			for (j = 0; j <= i; j++) {
+				recirculation_fine[i] += peak2[j] * disp[i - j];
+			}
+			recirculation_fine[i] *= TRfine;
+			conc[i] = peak1[i] + recirculation_fine[i];
+		}
+		
+		// 4.) I'm going to sample GV on the time instants requeted in time
+		double GV[] = new double[nT];
+		for (t = 0; t < nT; t++) {
+			int pos = -1;
+			double minValue = Double.MAX_VALUE;
+			for (i = 0; i < nTfine; i++) {
+			    double absValue = Math.abs(tGrid[i] - time[t]);
+			    if (absValue < minValue) {
+			    	minValue = absValue;
+			    	pos = i;
+			    }
+			}
+			GV[t] = conc[pos];
+		}
+		return GV;
+	}
 	
 	private void fitGV_peak1(double dati[], double orgWeights[]) {
 		// Calculate the fit of the first peak with a gamma variate function
@@ -3004,6 +3181,57 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
 			}
 		}
+		Matrix matJ = new Matrix(J);
+		double covp[][] = (((matJ.transpose()).times(matJ)).inverse()).getArray();
+		double var[] = new double[] {covp[0][0], covp[1][1], covp[2][2]};
+		double sd[] = new double[] {Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2])};
+		cv_est_parGV_peak2 = new double[3];
+		for (i = 0; i < 3; i++) {
+			cv_est_parGV_peak2[i] = sd[i]/fitParameters_peak2[i]*100.0;
+		}
+		if (display > 2) {
+			double p[] = new double[7];
+			for (i = 0; i < 4; i++) {
+				p[i] = fitParameters_peak1[i];
+			}
+			for (i = 0; i < 3; i++) {
+				p[i+4] = fitParameters_peak2[i];
+			}
+			double[] GV = GVfunction_recirculation(p);	
+			float timef[] = new float[nT];
+			for (i = 0; i < nT; i++) {
+				timef[i] = (float) time[i];
+			}
+			float GVf[] = new float[nT];
+			for (i = 0; i < nT; i++) {
+				GVf[i] = (float) GV[i];
+			}
+			ViewJFrameGraph recirculationGraph = new ViewJFrameGraph(timef, GVf,
+					"Recirculation final fit", "Time", "GVrecirculation fit");
+			recirculationGraph.setVisible(true);
+			try {
+				recirculationGraph.save(outputFilePath + outputPrefix + "recirculationGraph.plt");
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			Component component = recirculationGraph.getComponent(0);
+			Rectangle rect = component.getBounds();
+			String format = "png";
+			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File recirculationGraphFile = new File(outputFilePath + outputPrefix + "recirculationGraph.png");
+			try {
+				ImageIO.write(captureImage, format, recirculationGraphFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			recirculationGraph.removeComponentListener();
+			recirculationGraph.dispose();
+			captureImage.flush();
+		} // if (display > 2)
 	} // fitGV_peak2
 	
 	private double[] GVfunction_recirculation(double p[]) {
