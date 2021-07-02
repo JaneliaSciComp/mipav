@@ -287,6 +287,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
 		DSC_mri_core();
+		
+		System.out.println("Finished AIF extraction code");
 	}
 
 	public void DSC_mri_core() {
@@ -1400,6 +1402,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		DSC_mri_S0();
 
 		conc = new double[nC][nR][nS][nT];
+		// Note that if volumes[x][y][z][t] = 0 that step1 = 0 and conc[x][y][z][t] = infinity
+		// The MATLAB DSC_mri_aif.m code has:
+		// [aif_old]=estraiAIF(reshape(conc(:,:,options.aif.nSlice,:),options.nR,options.nC,options.nT),mask(:,:,options.aif.nSlice),options);
+		// function [AIF]=estraiAIF(AIFslice,mask,options)
+		// AUC=sum(AIFslice,3); % calcolo l'AUC di ogni voxel.
+		// AUC=AUC.*ROI;
+		// where ROI is always 0 or 1
+		// AUC(isinf(AUC))=0;
+		// This would only be the case if an infinity in conc passes an infinity to AUC.
+		// So the original MATLAB code expects conc[x][y][z][t] to be set to infinity for volumes[x][y][z][t] = 0
 		double step1;
 		for (t = 0; t < nT; t++) {
 			for (x = 0; x < nC; x++) {
