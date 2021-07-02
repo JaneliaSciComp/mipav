@@ -232,6 +232,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double AIF_fit_parameters[];
 	double AIF_fit_cv_est_parGV[];
 	double AIF_fit_gv[];
+	boolean gaussStandardDeviationCheck = false;
 
 	public DSC_MRI_toolbox() {
 
@@ -513,6 +514,37 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    UI.setDataText(solverSummary.BriefReport() + "\n");
 			    UI.setDataText("Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)\n");
 			    UI.setDataText("c1 = " + xp1[0] + "\n");
+			}
+			
+			if (gaussStandardDeviationCheck) {
+				// Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)
+				// Ceres Solver Report: Iterations: 4, Initial cost: 7.957407e+09, Final cost: 6.387359e+07, Termination: CONVERGENCE
+				// c1 = 755.8417495326521
+
+				// ******* Elsunc Fit Gauss Standard Deviation Fitting ********* 
+				// analyticalJacobian = true
+				// Number of iterations: 5
+				// Chi-squared: 1.2774713914732091E8
+				// a0 755.7982689862721
+				// ******* Elsunc Fit Gauss Standard Deviation Fitting ********* 
+				// analyticalJacobian = false
+				//Number of iterations: 5
+				// Chi-squared: 1.2774713914732091E8
+				//a0 755.7982689862721
+				System.out.println("Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)\n");
+				System.out.println(solverSummary.BriefReport());
+			    System.out.println("c1 = " + xp1[0] + "\n");
+				boolean doAnalytical = true;
+				xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
+			    gaussStandardDeviationFitting gsd = new gaussStandardDeviationFitting(xp1, doAnalytical);	
+			    gsd.driver();
+			    gsd.dumpResults();
+			    doAnalytical = false;
+				xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
+			    gsd = new gaussStandardDeviationFitting(xp1, doAnalytical);	
+			    gsd.driver();
+			    gsd.dumpResults();
+			    System.exit(0);
 			}
 	    } // if (!test2PerfectGaussians)
 	    
@@ -2603,8 +2635,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    }
 	    AIF_fit_weights[WTTP+1] = AIF_fit_weights[WTTP+1]/2.0;
 	    
-	    double fitParameters[];
-	    double cv_est_parGV[];
 	    fitGV_peak1(AIF_conc, AIF_fit_weights);
 	    if (aif_recirculation == 1) {
 	    	fitGV_peak2(AIF_conc, AIF_fit_weights);
@@ -4066,6 +4096,100 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			UI.setDataText("unexpected fit x[" + i + "] = " + x[i] + "\n");
 		}
 		return true;
+	}
+	
+	class gaussStandardDeviationFitting extends NLConstrainedEngine {
+		
+		public gaussStandardDeviationFitting(double x0[], boolean doAnalytical) {
+			// nPoints, params
+        	super(4, 1);
+        	
+        	bounds = 0; // bounds = 0 means unconstrained
+        	analyticalJacobian = doAnalytical;
+        	//bl[0] = -Double.MAX_VALUE;
+        	//bu[0] = Double.MAX_VALUE;
+        	//bl[1] = 1.0E-10;
+        	//bu[1] = 74.999999;
+
+        	
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+        	
+        	
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < x0.length; i++) {
+				gues[i] = x0[i];
+			}
+		}
+		
+		/**
+		 * Fit to function.
+		 * 
+		 * @param a
+		 *            The x value of the data point.
+		 * @param residuals
+		 *            The best guess parameter values.
+		 * @param covarMat
+		 *            The derivative values of y with respect to fitting
+		 *            parameters.
+		 */
+		public void fitToFunction(double[] a, double[] residuals,
+				double[][] covarMat) {
+			int ctrl;
+			int i;
+			
+			try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+					for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin + 3; i++) {
+						double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / a[0];
+						double value = firstGaussianAmplitude * Math.exp(-val1 * val1);
+						residuals[i - firstGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;	
+					}
+				}
+				else if (ctrl == 2) {
+					for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin + 3; i++) {
+						double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / a[0];
+					    covarMat[i - firstGaussianMeanBin][0] = -2.0 * firstGaussianAmplitude * val1
+								* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - firstGaussianMean) / (a[0] * a[0]);
+					}
+				}
+			}
+			catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+		
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of gaussStandardDeviationFitting.
+		 */
+		public void dumpResults() {
+			System.out.println(" ******* Elsunc Fit Gauss Standard Deviation Fitting ********* ");
+			System.out.println("analyticalJacobian = " + analyticalJacobian);
+			System.out.println("Number of iterations: " + String.valueOf(iters));
+			System.out.println("Chi-squared: " + String.valueOf(getChiSquared()));
+			System.out.println("a0 " + String.valueOf(a[0]));
+		}
 	}
 
 	class gaussStandardDeviationFittingCostFunction extends SizedCostFunction {
