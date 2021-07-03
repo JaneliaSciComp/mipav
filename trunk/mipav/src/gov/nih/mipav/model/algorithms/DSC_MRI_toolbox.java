@@ -234,6 +234,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double AIF_fit_gv[];
 	boolean gaussStandardDeviationCheck = false;
 	boolean gauss1FittingCheck = false;
+	boolean gauss2FittingCheck = false;
 
 	public DSC_MRI_toolbox() {
 
@@ -955,6 +956,58 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    UI.setDataText("a2 = " + xp[3] + "\n");
 			    UI.setDataText("b2 = " + xp[4] + "\n");
 			    UI.setDataText("c2 = " + xp[5] + "\n");
+			}
+			if (gauss2FittingCheck) {
+				// Ceres Solver Report: Iterations: 10, Initial cost: 7.261461e+04, Final cost: 1.129515e-07, Termination: CONVERGENCE
+				// Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
+				// a1 = 2000.0000318008936
+				// b1 = 6.9999999825169725
+				// c1 = 1.9999999839278295
+				// a2 = 1000.0000306581111
+				// b2 = 2.99999987472384
+				// c2 = 0.9999999590528206
+				//  ******* Elsunc 2 Gaussian Curve Fitting ********* 
+				// analyticalJacobian = true
+				// Number of iterations: 4
+				// Chi-squared: 0.0
+				// a0 2000.0
+				// a1 7.0
+				// a2 2.0
+				// a3 1000.0
+				// a4 3.0
+				// a5 1.0
+				// ******* Elsunc 2 Gaussian Curve Fitting ********* 
+				// analyticalJacobian = false
+				// Number of iterations: 4
+				// Chi-squared: 0.0
+				// a0 2000.0
+				// a1 7.0
+				// a2 2.0
+				// a3 1000.0
+				// a4 3.0
+				// a5 1.0
+				System.out.println(solverSummary.BriefReport());
+			    System.out.println("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)");
+			    System.out.println("a1 = " + xp[0]);
+			    System.out.println("b1 = " + xp[1]);
+			    System.out.println("c1 = " + xp[2]);
+			    System.out.println("a2 = " + xp[3]);
+			    System.out.println("b2 = " + xp[4]);
+			    System.out.println("c2 = " + xp[5]);
+			    
+			    boolean doAnalytical = true;
+			    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
+			    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
+			    gauss2Fitting g2 = new gauss2Fitting(xp, doAnalytical);	
+			    g2.driver();
+			    g2.dumpResults();
+			    doAnalytical = false;
+			    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
+			    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
+			    g2 = new gauss2Fitting(xp, doAnalytical);	
+			    g2.driver();
+			    g2.dumpResults();
+			    System.exit(0);
 			}
 	    } // if (test2PerfectGaussians)
 	    else { // !test2PerfectGaussians
@@ -4436,6 +4489,118 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	};
+	
+    class gauss2Fitting extends NLConstrainedEngine {
+		
+		public gauss2Fitting(double x0[], boolean doAnalytical) {
+			// nPoints, params
+        	super(gauss2FittingObservations, 6);
+        	
+        	bounds = 0; // bounds = 0 means unconstrained
+        	analyticalJacobian = doAnalytical;
+        	//bl[0] = -Double.MAX_VALUE;
+        	//bu[0] = Double.MAX_VALUE;
+        	//bl[1] = 1.0E-10;
+        	//bu[1] = 74.999999;
+
+        	
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+        	
+        	
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < x0.length; i++) {
+				gues[i] = x0[i];
+			}	
+		}
+		
+		/**
+		 * Fit to function.
+		 * 
+		 * @param a
+		 *            The x value of the data point.
+		 * @param residuals
+		 *            The best guess parameter values.
+		 * @param covarMat
+		 *            The derivative values of y with respect to fitting
+		 *            parameters.
+		 */
+		public void fitToFunction(double[] a, double[] residuals,
+				double[][] covarMat) {
+			int ctrl;
+			int i;
+			
+			try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+					for (i = 0; i < gauss2FittingObservations; i++) {
+						double val1 = (gauss2FittingData[2 * i] - a[1]) / a[2];
+						double val2 = (gauss2FittingData[2 * i] - a[4]) / a[5];
+						double value = a[0] * Math.exp(-val1 * val1) + a[3] * Math.exp(-val2 * val2);
+						residuals[i] = gauss2FittingData[2 * i + 1] - value;
+					}
+				}
+				else if (ctrl == 2) {
+					if (analyticalJacobian) {
+						for (i = 0; i < gauss2FittingObservations; i++) {
+							double val1 = (gauss2FittingData[2 * i] - a[1]) / a[2];
+							double val2 = (gauss2FittingData[2 * i] - a[4]) / a[5];
+							covarMat[i][0] = -Math.exp(-val1 * val1);
+							covarMat[i][1] = -2.0 * a[0] * val1 * Math.exp(-val1 * val1) / a[2];
+							covarMat[i][2] = -2.0 * a[0] * val1 * Math.exp(-val1 * val1)
+									* (gauss2FittingData[2 * i] - a[1]) / (a[2] * a[2]);
+							covarMat[i][3] = -Math.exp(-val2 * val2);
+							covarMat[i][4] = -2.0 * a[3] * val2 * Math.exp(-val2 * val2) / a[5];
+							covarMat[i][5] = -2.0 * a[3] * val2 * Math.exp(-val2 * val2)
+									* (gauss2FittingData[2 * i] - a[4]) / (a[5] * a[5]);
+						}
+					}
+					else {
+						ctrlMat[0] = 0;
+					}
+				}
+			}
+			catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+		
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of gauss 2 curve Fitting.
+		 */
+		public void dumpResults() {
+			System.out.println(" ******* Elsunc 2 Gaussian Curve Fitting ********* ");
+			System.out.println("analyticalJacobian = " + analyticalJacobian);
+			System.out.println("Number of iterations: " + String.valueOf(iters));
+			System.out.println("Chi-squared: " + String.valueOf(getChiSquared()));
+			System.out.println("a0 " + String.valueOf(a[0]));
+			System.out.println("a1 " + String.valueOf(a[1]));
+			System.out.println("a2 " + String.valueOf(a[2]));
+			System.out.println("a3 " + String.valueOf(a[3]));
+			System.out.println("a4 " + String.valueOf(a[4]));
+			System.out.println("a5 " + String.valueOf(a[5]));
+		}
+	}
 
 	class gauss2FittingCostFunction extends SizedCostFunction {
 
