@@ -232,9 +232,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double AIF_fit_parameters[];
 	double AIF_fit_cv_est_parGV[];
 	double AIF_fit_gv[];
+	double t0_init;
+	double alpha_init;
+	double beta_init;
+	double A_init;
 	boolean gaussStandardDeviationCheck = false;
 	boolean gauss1FittingCheck = false;
 	boolean gauss2FittingCheck = false;
+	boolean GVFittingCheck = false;
 
 	public DSC_MRI_toolbox() {
 
@@ -2927,7 +2932,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		// Initial parameter estimates (modification of Denis)
 		// Alpha is set to 5
-		double alpha_init = 5.0;
+		alpha_init = 5.0;
 		// t0 is estimated on the initial data.  It is calculated as the last instant at
 		// which the data remains less than 5% of the peak.
 		double MCdati = -Double.MAX_VALUE;
@@ -2950,10 +2955,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			System.err.println("In fitGV_peak1 found no time for which dati[t] <= 0.05 * MCdati");
 			System.exit(0);
 		}
-		double t0_init = time[lastIndex];
+		t0_init = time[lastIndex];
 		
 		// beta was estimated using the relation that TTP = t0 + alpha*beta
-		double beta_init = (TTPdati - t0_init)/alpha_init;
+		beta_init = (TTPdati - t0_init)/alpha_init;
 		
 		// Initialize the parameters [t0 alpha beta] and choose A so that the initial estimate
 		// and the data have the same maximum
@@ -2965,7 +2970,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				maxGV = GV[t];
 			}
 		}
-		double A_init = MCdati/maxGV;
+	    A_init = MCdati/maxGV;
 		
 		// Initial values of parameters in the estimate
 		fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
@@ -3023,6 +3028,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		SolverOptions solverOptions = new SolverOptions();
 		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
 		solverOptions.max_num_consecutive_invalid_steps = 1000;
+		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.parameter_tolerance = 1.0E-10;
 		solverOptions.minimizer_progress_to_stdout = true;
 		SolverSummary solverSummary = new SolverSummary();
 		Solve(solverOptions, problem, solverSummary);
@@ -3033,8 +3040,62 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
 		    UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
 		    UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
-		    
 		}
+		if (GVFittingCheck) {
+			// Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+			// t0_init = 23.25
+			// alpha_init = 5.0
+			// beta_init = 0.9300000000000004
+			// A_init = 3.597861389964149
+			// Ceres Solver Report: Iterations: 351, Initial cost: 2.477412e+06, Final cost: 8.551629e+04, Termination: CONVERGENCE
+			// Function tolerance reached. 
+			// |cost_change|/cost: 2.189536e-09 <= 1.000000e-08
+			// Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+			// t0 = 21.90196100375891
+			// alpha = 6.211813046079057
+			// beta = 0.9739564489051871
+			// A = 0.36594936256478594
+			// ******* Elsunc gamma-variate Curve Fitting ********* 
+			// analyticalJacobian = true
+			// Number of iterations: 210
+			// Chi-squared: 170852.8625953145
+			// t0 21.89645002369929
+			// // alpha 6.2260791592529925
+			// beta 0.9725966077201533
+			// A 0.35978613899641493
+			// ******* Elsunc gamma-variate Curve Fitting ********* 
+			// analyticalJacobian = false
+			// Number of iterations: 210
+			// Chi-squared: 170852.8625953156
+			// t0 21.89645002617124
+			// alpha 6.226079163642488
+			// beta 0.9725966064905736
+			// A 0.35978613899641493
+			System.out.println("Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
+		    System.out.println("t0_init = " + t0_init);
+		    System.out.println("alpha_init = " + alpha_init);
+		    System.out.println("beta_init = " + beta_init);
+		    System.out.println("A_init = " + A_init);
+			System.out.println(solverSummary.BriefReport());
+			System.out.println(solverSummary.message[0]);
+		    System.out.println("Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
+		    System.out.println("t0 = " + fitParameters_peak1[0]);
+		    System.out.println("alpha = " + fitParameters_peak1[1]);
+		    System.out.println("beta = " + fitParameters_peak1[2]);
+		    System.out.println("A = " + fitParameters_peak1[3]);
+		    
+		    boolean doAnalytical = true;
+		    fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
+		    GVFitting gv = new GVFitting(fitParameters_peak1, doAnalytical);	
+		    gv.driver();
+		    gv.dumpResults();
+		    doAnalytical = false;
+		    fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
+		    gv = new GVFitting(fitParameters_peak1, doAnalytical);	
+		    gv.driver();
+		    gv.dumpResults();
+		    System.exit(0);
+		} // if (GVFittingCheck)
 		double t0 = fitParameters_peak1[0];
 		double alpha = fitParameters_peak1[1];
 		double beta = fitParameters_peak1[2];
@@ -4888,6 +4949,136 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 			return true;
+		}
+	}
+	
+    class GVFitting extends NLConstrainedEngine {
+		
+		public GVFitting(double x0[], boolean doAnalytical) {
+			// nPoints, params
+        	super(nT, 4);
+        	
+        	bounds = 2; // bounds = 0 means unconstrained
+        	analyticalJacobian = doAnalytical;
+        	bl[0] = 0.1*t0_init;
+        	bu[0] = 10.0*t0_init;
+        	bl[1] = 0.1*alpha_init;
+        	bu[1] = 10.0*alpha_init;
+            bl[2] = 0.1*beta_init;
+            bu[2] = 10.0*beta_init;
+            bl[3] = 0.1*A_init;
+        	bu[3] = 10.0*A_init;
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+        	
+        	
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < x0.length; i++) {
+				gues[i] = x0[i];
+			}	
+		}
+		
+		/**
+		 * Fit to function.
+		 * 
+		 * @param a
+		 *            The x value of the data point.
+		 * @param residuals
+		 *            The best guess parameter values.
+		 * @param covarMat
+		 *            The derivative values of y with respect to fitting
+		 *            parameters.
+		 */
+		public void fitToFunction(double[] a, double[] residuals,
+				double[][] covarMat) {
+			int ctrl;
+			int i;
+			
+			try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+					double t0 = a[0];
+					double alpha = a[1];
+					double beta = a[2];
+					double A = a[3];
+					double GV;
+					for (i = 0; i < nT; i++) {
+						double t = time[i];
+						if (t > t0) {
+							GV = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+						}
+						else {
+							GV = 0.0;
+						}
+						residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
+					}
+				}
+				else if (ctrl == 2) {
+					if (analyticalJacobian) {
+						double t0 = a[0];
+						double alpha = a[1];
+						double beta = a[2];
+						double A = a[3];
+						double GV;
+						for (i = 0; i < nT; i++) {
+							double t = time[i];
+						    if (t > t0) {
+						    	covarMat[i][0] = (A/weights_peak1[i])*((alpha*Math.pow((t-t0),(alpha-1.0))*Math.exp(-(t-t0)/beta)) -
+						    			(Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta)/beta));
+						    	covarMat[i][1] = -(A/weights_peak1[i])*Math.log(t-t0)*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+						    	covarMat[i][2] = -(A/weights_peak1[i])*((t-t0)/(beta*beta))*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+						    	covarMat[i][3] = -(1.0/weights_peak1[i])*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+						    }
+						    else {
+						    	covarMat[i][0] = 0.0;
+						    	covarMat[i][1] = 0.0;
+						    	covarMat[i][2] = 0.0;
+						    	covarMat[i][3] = 0.0;
+						    }
+						}
+					}
+					else {
+						ctrlMat[0] = 0;
+					}
+				}
+			}
+			catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+		
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of gammma-variate curve Fitting.
+		 */
+		public void dumpResults() {
+			System.out.println(" ******* Elsunc gamma-variate Curve Fitting ********* ");
+			System.out.println("analyticalJacobian = " + analyticalJacobian);
+			System.out.println("Number of iterations: " + String.valueOf(iters));
+			System.out.println("Chi-squared: " + String.valueOf(getChiSquared()));
+			System.out.println("t0 " + String.valueOf(a[0]));
+			System.out.println("alpha " + String.valueOf(a[1]));
+			System.out.println("beta " + String.valueOf(a[2]));
+			System.out.println("A " + String.valueOf(a[3]));
 		}
 	}
 	
