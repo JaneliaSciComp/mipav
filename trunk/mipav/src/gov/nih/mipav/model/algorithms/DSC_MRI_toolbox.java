@@ -75,7 +75,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private double tr = 1.55;
 
 	// DISPLAY OPTIONS
-	private int display = 3; // 0:off, 1:notify (text), 2:notify (images), 3:debug
+	private int display = 0; // 0:off, 1:notify (text), 2:notify (images), 3:debug
 	private int waitbar = 1; // 0:off, 1:on
 
 	// DATA PREPARATION OPTIONS
@@ -256,6 +256,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	}
 
 	public void runAlgorithm() {
+		final long startTime = System.currentTimeMillis();
 		if (readTestImage) {
 			int x, y, z, t;
 			final FileIO io = new FileIO();
@@ -300,7 +301,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		DSC_mri_core();
 		
-		System.out.println("Finished AIF extraction code");
+		long totalTime = System.currentTimeMillis() - startTime;
+		System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
+		
 	}
 
 	public void DSC_mri_core() {
@@ -2515,12 +2518,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    for (i = 0; i < dati2D.length; i++) {
 		    	weight[i] = 1.0;
 		    }
+		    System.out.println("groupNum = " + dati2D.length);
 		    if (dati2D.length >= 10) {
 		    	initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+		    	System.out.println("Running BRADLEY_FAYYAD_INIT");
 		    }
 		    else {
 		        initSelection = AlgorithmKMeans.HIERARCHICAL_GROUPING_INIT;
+		        System.out.println("Running HIERARCHICAL_GROUPING_INIT");
 		    }
+		    long startKMeansTime = System.currentTimeMillis();
 		    kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos,
 		    		scale, vettCluster, weight, centroidPos, resultsFileName, initSelection, 
 		    		redBuffer, greenBuffer, blueBuffer, scaleMax, useColorHistogram, scaleVariablesToUnitVariance,
@@ -2531,6 +2538,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    double[][] groupMean = kMeansAlgo.getGroupMean();
 		    kMeansAlgo.finalize();
 	        kMeansAlgo = null;
+	        long KMeanRunTime = System.currentTimeMillis() - startKMeansTime;
+	        System.out.println("KMeans run time in milliseconds = " + KMeanRunTime);
 	        for (i = 0; i < nCluster; i++) {
 	        	for (t = 0; t < nT; t++) {
 	        		centroidi[i][t] = groupMean[t][i];
@@ -2629,7 +2638,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 			dati2D = new double[numberSelectedCluster][nT];
-			for (j = 0, i = 0; i < dati2D.length; i++) {
+			for (j = 0, i = 0; i < dati2Dold.length; i++) {
 				if (vettCluster[i] == selectedCluster) {
 					for (t = 0; t < nT; t++) {
 						dati2D[j][t] = dati2Dold[i][t];
