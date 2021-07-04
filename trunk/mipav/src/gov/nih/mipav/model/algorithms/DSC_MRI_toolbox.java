@@ -236,10 +236,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double alpha_init;
 	double beta_init;
 	double A_init;
+	double td_init;
+	double K_init;
+	double tao_init;
 	boolean gaussStandardDeviationCheck = false;
 	boolean gauss1FittingCheck = false;
 	boolean gauss2FittingCheck = false;
 	boolean GVFittingCheck = false;
+	boolean GVRecirculationCheck = false;
 
 	public DSC_MRI_toolbox() {
 
@@ -3245,12 +3249,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				t0peak2 = t;
 			}
 		}
-		double td_init = time[t0peak2] - fitParameters_peak1[0];
+		td_init = time[t0peak2] - fitParameters_peak1[0];
 		
 		// The initial estimate of tao fixed.  100 mamnages to give a well spread
 		// recirculation and that with the bounds can become both a zero dispersion
 		// and lead to an almost complete dispersion.
-		double tao_init = 40.0;
+		tao_init = 40.0;
 		// The estimate of K is made so that the maxima of the predicted
 		// recirculation and of the fitted data are equal.
 		double xp[] = new double[] {fitParameters_peak1[0], fitParameters_peak1[1],
@@ -3263,7 +3267,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				maxRecirculation = recirculation[t];
 			}
 		}
-		double K_init = maxPeak2/maxRecirculation;
+		K_init = maxPeak2/maxRecirculation;
 		
 		fitParameters_peak2 = new double[] {td_init, K_init, tao_init}; // Initial values
 		if (display > 0) {
@@ -3288,6 +3292,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		SolverOptions solverOptions = new SolverOptions();
 		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
 		solverOptions.max_num_consecutive_invalid_steps = 1000;
+		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.parameter_tolerance = 1.0E-10;
 		solverOptions.minimizer_progress_to_stdout = true;
 		SolverSummary solverSummary = new SolverSummary();
 		Solve(solverOptions, problem, solverSummary);
@@ -3299,6 +3305,59 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
 		    UI.setDataText("tao = " + fitParameters_peak2[2] + "\n"); 
 		}
+		if (GVRecirculationCheck) {
+			// Initial estimates for FP(t-td) convolution K*exp(-t/tao)
+			// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
+			// td_init = 19.948038996241092
+			// K_init = 0.008833745635228252
+			// tao_init = 40.0
+			// Ceres Solver Report: Iterations: 6, Initial cost: 8.261292e+01, Final cost: 2.419706e+01, Termination: CONVERGENCE
+			// Function tolerance reached. 
+			// |cost_change|/cost: 1.523165e-10 <= 1.000000e-08
+			// Solved answer for FP(t-td) convolution K*exp(-t/tao)
+			// td = 14.18141920988466
+			// K = 0.00538449411736939
+			// tao = 83.57564899685595
+			// ******* Elsunc GV recirculation Curve Fitting ********* 
+			// analyticalJacobian = true
+			// Number of iterations: 9
+			// Chi-squared: 48.394109926550954
+			// td 14.181088621322544
+			// K 0.0053843278049710225
+			// tao 83.58076831600675
+			// ******* Elsunc GV recirculation Curve Fitting ********* 
+			// analyticalJacobian = false
+			// Number of iterations: 9
+			// Chi-squared: 48.39410992655094
+			// td 14.181088662797078
+			// K 0.005384327864133199
+			// tao 83.58076569371698
+			
+			System.out.println("Initial estimates for FP(t-td) convolution K*exp(-t/tao)");
+			System.out.println("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
+		    System.out.println("td_init = " + td_init);
+		    System.out.println("K_init = " + K_init);
+		    System.out.println("tao_init = " + tao_init);
+			System.out.println(solverSummary.BriefReport());
+			System.out.println(solverSummary.message[0]);
+		    System.out.println("Solved answer for FP(t-td) convolution K*exp(-t/tao)");
+		    System.out.println("td = " + fitParameters_peak2[0]);
+		    System.out.println("K = " + fitParameters_peak2[1]);
+		    System.out.println("tao = " + fitParameters_peak2[2]);
+		    
+		    boolean doAnalytical = true;
+		    fitParameters_peak2 = new double[] {td_init, K_init, tao_init};
+		    GVRecirculation gv = new GVRecirculation(fitParameters_peak2, doAnalytical);	
+		    gv.driver();
+		    gv.dumpResults();
+		    doAnalytical = false;
+		    fitParameters_peak2 = new double[] {td_init, K_init, tao_init};
+		    gv = new GVRecirculation(fitParameters_peak2, doAnalytical);	
+		    gv.driver();
+		    gv.dumpResults();
+		    System.exit(0);
+		} // if (GVRecirculationCheck)
+		
 		double t0 = fitParameters_peak1[0];
 		double alpha = fitParameters_peak1[1];
 		double beta = fitParameters_peak1[2];
@@ -4722,6 +4781,222 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	};
+	
+    class GVRecirculation extends NLConstrainedEngine {
+		
+		public GVRecirculation(double x0[], boolean doAnalytical) {
+			// nPoints, params
+        	super(nT, 3);
+        	
+        	bounds = 2; // bounds = 0 means unconstrained
+        	analyticalJacobian = doAnalytical;
+        	bl[0] = 0.1*td_init;
+        	bu[0] = 10.0*td_init;
+        	bl[1] = 0.1*K_init;
+        	bu[1] = 10.0*K_init;
+            bl[2] = 0.1*tao_init;
+            bu[2] = 10.0*tao_init;
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+        	
+        	
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < x0.length; i++) {
+				gues[i] = x0[i];
+			}	
+		}
+		
+		/**
+		 * Fit to function.
+		 * 
+		 * @param a
+		 *            The x value of the data point.
+		 * @param residuals
+		 *            The best guess parameter values.
+		 * @param covarMat
+		 *            The derivative values of y with respect to fitting
+		 *            parameters.
+		 */
+		public void fitToFunction(double[] a, double[] residuals,
+				double[][] covarMat) {
+			int ctrl;
+			int i, j, t;
+			
+			try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+					double t0 = fitParameters_peak1[0];
+					double alpha = fitParameters_peak1[1];
+					double beta = fitParameters_peak1[2];
+					double td = a[0];
+					double K = a[1];
+					double tao = a[2];
+					
+					// Vector initialization
+					double peak2[] = new double[nTfine]; // Peak of recirculation
+					double disp[] = new double[nTfine]; // Dispersion of recirculation
+					
+					double tg;
+					for (i = 0; i < nTfine; i++) {
+						tg = tGrid[i];
+						
+						if (tg > (t0+td)) {
+							// Calculation of FP(t-td)
+							peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+						}
+						
+						// Calculation of disp(t)
+						disp[i] = Math.exp(-tg/tao);
+					}
+					
+					// 3.) I assemble the components to obtain the GV calculated on the fine grid
+					double recirculation_fine[] = new double[nTfine];
+					for (i = 0; i < nTfine; i++) {
+						for (j = 0; j <= i; j++) {
+							recirculation_fine[i] += peak2[j] * disp[i - j];
+						}
+						recirculation_fine[i] *= TRfine;
+					}
+					
+					// 4.) I'm going to sample GV on the time instants requeted in time
+					double recirculation;
+					for (t = 0; t < nT; t++) {
+						double pos = (time[t] - Tmin)/TRfine;
+						int lowIndex = (int)Math.floor(pos);
+						int highIndex = (int)Math.ceil(pos);
+						if (lowIndex == highIndex) {
+							recirculation = recirculation_fine[lowIndex];
+						}
+						else {
+							double lowFraction = pos - lowIndex;
+							double highFraction = highIndex - pos;
+							recirculation = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+						}
+						residuals[t] = (dati_peak2[t] - recirculation)/weights_peak2[t];
+					}
+				}
+				else if (ctrl == 2) {
+					if (analyticalJacobian) {
+						double t0 = fitParameters_peak1[0];
+						double alpha = fitParameters_peak1[1];
+						double beta = fitParameters_peak1[2];
+						double td = a[0];
+						double K = a[1];
+						double tao = a[2];
+						double tg;
+						
+						// Vector initialization
+						double peak2[] = new double[nTfine]; // Peak of recirculation
+						double disp[] = new double[nTfine]; // Dispersion of recirculation
+						
+						for (i = 0; i < nTfine; i++) {
+							tg = tGrid[i];
+							
+							if (tg > (t0+td)) {
+								// Calculation of FP(t-td)
+								peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+							}
+							
+							// Calculation of disp(t)
+							disp[i] = Math.exp(-tg/tao);
+						}
+						
+						double dpeak2dtd[] = new double[nTfine]; 
+						double dpeak2dK[] = new double[nTfine];
+						double ddispdtao[] = new double[nTfine];
+						for (i = 0; i < nTfine; i++) {
+							tg = tGrid[i];
+							
+							if (tg > (t0+td)) {
+								// Calculation of FP(t-td)
+								dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
+										- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+								dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+							}
+							
+							// Calculation of disp(t)
+							ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+						}
+						
+						// 3.) I assemble the components to obtainthe GV calculated on the fine grid
+						double recirculation_fine_td[] = new double[nTfine];
+						double recirculation_fine_K[] = new double[nTfine];
+						double recirculation_fine_tao[] = new double[nTfine];
+						for (i = 0; i < nTfine; i++) {
+							for (j = 0; j <= i; j++) {
+								recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
+								recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
+								recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+							}
+							recirculation_fine_td[i] *= TRfine;
+							recirculation_fine_K[i] *= TRfine;
+							recirculation_fine_tao[i] *= TRfine;
+						}
+						
+						for (t = 0; t < nT; t++) {
+							double pos = (time[t] - Tmin)/TRfine;
+							int lowIndex = (int)Math.floor(pos);
+							int highIndex = (int)Math.ceil(pos);
+							if (lowIndex == highIndex) {
+								covarMat[t][0] = recirculation_fine_td[lowIndex]/weights_peak2[t];
+								covarMat[t][1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
+								covarMat[t][2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
+							}
+							else {
+								double lowFraction = pos - lowIndex;
+								double highFraction = highIndex - pos;
+								covarMat[t][0] = (lowFraction*recirculation_fine_td[highIndex] 
+										+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
+								covarMat[t][1] = (lowFraction*recirculation_fine_K[highIndex] 
+										+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
+								covarMat[t][2] = (lowFraction*recirculation_fine_tao[highIndex] 
+										+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+							}
+						}
+					}
+					else {
+						ctrlMat[0] = 0;
+					}
+				}
+			}
+			catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+		
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of GV recirculation curve Fitting.
+		 */
+		public void dumpResults() {
+			System.out.println(" ******* Elsunc GV recirculation Curve Fitting ********* ");
+			System.out.println("analyticalJacobian = " + analyticalJacobian);
+			System.out.println("Number of iterations: " + String.valueOf(iters));
+			System.out.println("Chi-squared: " + String.valueOf(getChiSquared()));
+			System.out.println("td " + String.valueOf(a[0]));
+			System.out.println("K " + String.valueOf(a[1]));
+			System.out.println("tao " + String.valueOf(a[2]));
+		}
+	}
 	
 	class GVRecirculationCostFunction extends SizedCostFunction {
 		public GVRecirculationCostFunction() {
