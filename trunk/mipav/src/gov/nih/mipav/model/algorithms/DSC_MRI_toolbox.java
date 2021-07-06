@@ -54,6 +54,16 @@ SOFTWARE.
 References:
 Curve Fitting by a Sum of Gaussians, Ardeshir Goshtasby and William D. O'Neill,
 CVGIP: Graphical Models and Image Processing, Vol. 56, No. 4, July, pp. 281-288, 1994.
+## Features
+
+### Semi-automatic AIF selection
+
+The method is based on dicotomic hierarchical clustering method, it only need to select
+ the slice where it will look for the best AIF. Please cite [1] if you use the AIF extraction tool:
+
+[1] **Peruzzo Denis**,  Bertoldo Alessandra, Zanderigo Francesca and Cobelli Claudio, “[Automatic selection
+ of arterial input function on dynamic contrast-enhanced MR images][paper1]”, *Computer methods and programs
+  in biomedicine, 104:e148-e157 (2011)*.
 */
 
 public class DSC_MRI_toolbox extends CeresSolver {
@@ -298,12 +308,27 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					}
 				}
 			}
+		
+		    DSC_mri_core();
+		
+		    long totalTime = System.currentTimeMillis() - startTime;
+		    System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
 		}
+		
+	}
+	
+	public int[][] runTransferAlgorithm() {
+		nC = volumes.length;
+		nR = volumes[0].length;
+		nS = volumes[0][0].length;
+		nT = volumes[0][0][0].length;
 		DSC_mri_core();
-		
-		long totalTime = System.currentTimeMillis() - startTime;
-		System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
-		
+		aif_nSlice = nS / 2; // aif_nSlice = 0 for nS = 1;
+		length = nC * nR;
+		extents2D[0] = nC;
+		extents2D[1] = nR;
+		DSC_mri_core();
+		return AIF_voxels;
 	}
 
 	public void DSC_mri_core() {
