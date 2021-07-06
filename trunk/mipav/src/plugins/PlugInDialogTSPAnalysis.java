@@ -197,9 +197,11 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         	sigmaXText.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaYLabel.setEnabled(spatialSmoothingCheckBox.isSelected());
         	sigmaYText.setEnabled(spatialSmoothingCheckBox.isSelected());
-        } else if ((source == autoButton) || (source == autoRAPIDButton) || (source == pickButton)) {
+        } else if ((source == autoButton) || (source == autoRAPIDButton) || (source == pickButton) || (source == DSCMRIToolboxButton)) {
         	edgeLabel.setEnabled(autoRAPIDButton.isSelected());
         	edgeText.setEnabled(autoRAPIDButton.isSelected());
+        	zSliceLabel.setEnabled(DSCMRIToolboxButton.isSelected());
+        	zSliceText.setEnabled(DSCMRIToolboxButton.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -372,6 +374,29 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         AIFGroup.add(autoButton);
         autoButton.addActionListener(this);
         inputPanel.add(autoButton, gbc);
+        
+        gbc.gridy++;
+        DSCMRIToolboxButton = new JRadioButton("Obtain AIF from DSC_MRI_Toolbox", false);
+        DSCMRIToolboxButton.setFont(serif12);
+        DSCMRIToolboxButton.setForeground(Color.black);
+        AIFGroup.add(DSCMRIToolboxButton);
+        DSCMRIToolboxButton.addActionListener(this);
+        inputPanel.add(DSCMRIToolboxButton);
+        
+        gbc.gridy++;
+        zSliceLabel = new JLabel("Selected Z slice for AIF (0 to zDim-1)");
+        zSliceLabel.setFont(serif12);
+        zSliceLabel.setForeground(Color.black);
+        zSliceLabel.setEnabled(false);
+        inputPanel.add(zSliceLabel, gbc);
+        
+        gbc.gridx = 1;
+        zSliceText = new JTextField(10);
+        zSliceText.setText("10");
+        zSliceText.setFont(serif12);
+        zSliceText.setForeground(Color.black);
+        zSliceText.setEnabled(false);
+        inputPanel.add(zSliceText, gbc);   
         
         gbc.gridy++;
         autoRAPIDButton = new JRadioButton("Experiemental RAPID auto AIF Calculation", false);
@@ -605,6 +630,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCorrelation = scriptParameters.getParams().getBoolean("calc_correlation");
     	calculateCBFCBVMTT = scriptParameters.getParams().getBoolean("calc_CBFCBVMTT");
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
+    	findAIFInfoWithDSCMRIToolbox = scriptParameters.getParams().getBoolean("AIF_DSC_MRI_Toolbox");
+    	selectedAIFZSlice = scriptParameters.getParams().getInt("z_slice");
     	experimentalRAPIDAIF = scriptParameters.getParams().getBoolean("experimental_aif");
     	edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel");
     	saveOriginalData = scriptParameters.getParams().getBoolean("save_original");
@@ -632,6 +659,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_correlation", calculateCorrelation));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_CBFCBVMTT", calculateCBFCBVMTT));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("AIF_DSC_MRI_Toolbox", findAIFInfoWithDSCMRIToolbox));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("z_slice", selectedAIFZSlice));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalRAPIDAIF));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel", edgeKernelSize));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("save_original", saveOriginalData));
@@ -773,6 +802,26 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	}
     	
     	autoAIFCalculation = autoButton.isSelected();
+    	findAIFInfoWithDSCMRIToolbox = DSCMRIToolboxButton.isSelected();
+    	if (findAIFInfoWithDSCMRIToolbox) {
+    	    tmpStr = zSliceText.getText();
+    	    try {
+    	    	selectedAIFZSlice = Integer.valueOf(tmpStr).intValue();
+    	    }
+    	    catch (NumberFormatException e) {
+        	    MipavUtil.displayError("Selected AIF Z slice does not have a proper integer number");
+        	    zSliceText.requestFocus();
+        	    zSliceText.selectAll();
+        	    return false;
+        	}
+        	if (selectedAIFZSlice < 0) {
+        		MipavUtil.displayError("Selected AIF Z slice must be >= 0");
+        		zSliceText.requestFocus();
+        	    zSliceText.selectAll();
+        	    return false;
+        	}	
+    	} // if (findAIFInfoWithDSCMRIToolbox)
+    	
     	experimentalRAPIDAIF = autoRAPIDButton.isSelected();
     	if (experimentalRAPIDAIF) {
     		tmpStr = edgeText.getText();
