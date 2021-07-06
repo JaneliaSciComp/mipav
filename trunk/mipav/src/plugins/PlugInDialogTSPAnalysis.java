@@ -398,6 +398,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         zSliceText.setEnabled(false);
         inputPanel.add(zSliceText, gbc);   
         
+        gbc.gridx = 0;
         gbc.gridy++;
         autoRAPIDButton = new JRadioButton("Experiemental RAPID auto AIF Calculation", false);
         autoRAPIDButton.setFont(serif12);
