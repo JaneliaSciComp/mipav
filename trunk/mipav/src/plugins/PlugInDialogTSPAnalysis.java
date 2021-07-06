@@ -81,11 +81,21 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private JRadioButton autoButton;
 	
+	private JRadioButton DSCMRIToolboxButton;
+	
 	private JRadioButton autoRAPIDButton;
 	
 	private JRadioButton pickButton;
 	
 	private boolean autoAIFCalculation = true;
+	
+	private boolean findAIFInfoWithDSCMRIToolbox = false;
+	
+	private JLabel zSliceLabel;
+	
+	private JTextField zSliceText;
+	
+	private int selectedAIFZSlice = -1;
 	
 	private JCheckBox plotAIFCheckBox;
 	
@@ -537,7 +547,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase, experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection,
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, findAIFInfoWithDSCMRIToolbox, selectedAIFZSlice,
+            		experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection,
             		saveOriginalData);
 
             // This is very important. Adding this object as a listener allows the algorithm to
