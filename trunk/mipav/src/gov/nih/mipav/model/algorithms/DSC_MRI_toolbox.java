@@ -2544,7 +2544,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	weight[i] = 1.0;
 		    }
 		    System.out.println("groupNum = " + dati2D.length);
-		    if (dati2D.length >= 10) {
+		    // 588 points originally
+		    // First BRADLEY_FAYYAD_INIT takes 588 points to 97 or 98 points
+		    // AIF extraction times in seconds:
+		    // BRADLEY_FAYYAD_INIT for >= 10:  75, 67.655, 62.992
+		    // BRADLEY_FAYYAD_INIT for >= 20:  52.262, 53.049, 52.637
+		    // BRADLAY_FAYYAD_INIT for >= 40:  52.002, 51.892, 52.385
+		    // BRADLEY_FAYYAD_INIT for >= 80:  51.801, 55.007, 51.387
+		    // BRADLEY_FAYYAD_INIT for >= 100: 56.133, 57.772, 57.067
+		    // BRADLEY_FAYYAD_INIT for >= 600: Still working on first HIERARCHICAL_GROUPING_INIT after 10 minutes
+		    if (dati2D.length >= 100) {
 		    	initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
 		    	System.out.println("Running BRADLEY_FAYYAD_INIT");
 		    }
