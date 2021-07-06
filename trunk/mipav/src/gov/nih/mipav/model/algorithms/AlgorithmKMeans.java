@@ -1422,7 +1422,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     			for (j = 0; j < subsampleSize; j++) {
     				subsampleIndex[j] = -1;
     			}
-    			for (j = 0; j < subsampleSize; j++) {
+    			for (j = 0; j < nPoints; j++) {
     				groupNum[j] = -1;
     			}
                 for (j = 0; j < subsampleSize; j++) {
@@ -1786,7 +1786,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		localFM = new double[nDims][numberClusters][subsampleNumber];
     		
             for (i = 0; i < subsampleNumber; i++) {
-            	for (j = 0; j < subsampleSize; j++) {
+            	for (j = 0; j < nPoints; j++) {
             		groupNum[j] = -1;
             	}
             	for (j = 0; j < numberClusters; j++) {
