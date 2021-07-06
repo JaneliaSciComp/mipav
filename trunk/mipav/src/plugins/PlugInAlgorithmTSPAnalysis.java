@@ -202,7 +202,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	private int zSlice;
 	
 	private boolean findAVInfo = false;
-    private boolean findAIFInfoWithDSCMRIToolbox = true;
+    private boolean findAIFInfoWithDSCMRIToolbox = false;
     private int selectedAIFZSlice = 12;
 
 	private String caseString = "EVTcase24_no_time_averaging.txt";
@@ -223,7 +223,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			float sigmay, boolean calculateMaskingThreshold, int masking_threshold, double TSP_threshold, int TSP_iter,
 			double Psvd, boolean autoAIFCalculation, boolean plotAIF, boolean multiThreading, int search,
 			boolean calculateCorrelation, boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase,
-			boolean experimentalAIF, float edgeKernelSize, boolean doN4MRIBiasFieldCorrection,
+			boolean findAIFInfoWithDSCMRIToolbox, int selectedAIFZSlice, boolean experimentalAIF,
+			float edgeKernelSize, boolean doN4MRIBiasFieldCorrection,
 			boolean saveOriginalData) {
 		// super(resultImage, srcImg);
 		this.pwiImageFileDirectory = pwiImageFileDirectory;
@@ -244,6 +245,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		this.calculateCBFCBVMTT = calculateCBFCBVMTT;
 		this.calculateBounds = calculateBounds;
 		this.fileNameBase = fileNameBase;
+		this.findAIFInfoWithDSCMRIToolbox = findAIFInfoWithDSCMRIToolbox;
+		this.selectedAIFZSlice = selectedAIFZSlice;
 		this.experimentalAIF = experimentalAIF;
 		this.edgeKernelSize = edgeKernelSize;
 		this.doN4MRIBiasFieldCorrection = doN4MRIBiasFieldCorrection;
@@ -477,6 +480,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int numArterialZ;
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
+        int AIF_voxels[][] = null;
         
         
         if (findAVInfo) {
@@ -806,7 +810,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		}
     		
     		DSC_MRI_toolbox dmt = new DSC_MRI_toolbox(volumes, 1.0E-3*TE, 1.0E-3*TR);
-    		int AIF_voxels[][] = dmt.runTransferAlgorithm();
+    		AIF_voxels = dmt.runTransferAlgorithm();
     	} // if (findAIFInfoWithDSCMRIToolbox)
     	
     	if (saveOriginalData) {
@@ -2686,6 +2690,59 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    	fwhm  = null;
 	    	indexValueList = null;
     	} // if (experimentalAIF)
+		else if (findAIFInfoWithDSCMRIToolbox) {
+			autoaif = new double[tDim];
+		    minautoaif = Double.MAX_VALUE;
+			int numcountt = 0;
+			for (i = 0; i < AIF_voxels.length; i++) {
+			    x = AIF_voxels[i][0];
+			    y = AIF_voxels[i][1];
+			    for (t = 0; t < tDim; t++) {
+			        sumt = 0;
+			        countt = 0;
+			        if (peaks[selectedAIFZSlice][y][x] != 0) {
+						if (t == 0) {
+							sumcount++;
+							xsum += x;
+							ysum += y;
+							xsumsquared += (x*x);
+							ysumsquared += (y*y);
+						}
+					    sumt += data[selectedAIFZSlice][y][x][t];
+					    countt++;
+					}
+			        if (t == 0) {
+			        	xmean = xsum/sumcount;
+			        	ymean = ysum/sumcount;
+			        	if (sumcount > 1) {
+			        	    xstd = Math.sqrt((xsumsquared - xsum*xsum/sumcount)/(sumcount - 1.0));
+			        	    ystd = Math.sqrt((ysumsquared - ysum*ysum/sumcount)/(sumcount - 1.0));
+			        	    zstd = 0.0;
+			        	    System.out.println("AIF selection point standard deviations in voxels:");
+			        	    System.out.println("x standard deviation = " + xstd);
+			        	    System.out.println("y standard deviation = " + ystd);
+			        	    System.out.println("z standard deviation = " + 0);
+			        	} // if (sumcount > 1)
+			        } // if (t == 0)
+			        if (countt == 0) {
+			        	System.err.println("No AIF selection pixels found for t = " + t);
+			        	numcountt++;
+			        }
+			        autoaif[t] = (double)sumt/(double)countt;
+			        if (autoaif[t] < minautoaif) {
+			        	minautoaif = autoaif[t];
+			        }
+			    } // for (t = 0; t < tDim; t++)
+			    if (numcountt > 0) {
+			    	 MipavUtil.displayError("No AIF selection pixels found at " + numcountt + " out of " + tDim + " times");
+			    	 setCompleted(false);
+			    	 return;
+			    }
+			    for (t = 0; t < tDim; t++) {
+			    	S[t] = autoaif[t] - minautoaif + 1;
+			    }
+			}
+		} // else if (findAIFInfoWithDSCMRIToolbox)
 		else if (autoAIFCalculation) {
 	    	// Auto AIF Calculation
 	    	// AIF is average signal of pixels with the largest SI deviations
