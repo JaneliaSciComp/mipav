@@ -381,7 +381,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         DSCMRIToolboxButton.setForeground(Color.black);
         AIFGroup.add(DSCMRIToolboxButton);
         DSCMRIToolboxButton.addActionListener(this);
-        inputPanel.add(DSCMRIToolboxButton);
+        inputPanel.add(DSCMRIToolboxButton, gbc);
         
         gbc.gridy++;
         zSliceLabel = new JLabel("Selected Z slice for AIF (0 to zDim-1)");
