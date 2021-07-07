@@ -208,6 +208,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double firstGaussianAmplitude;
 	double firstGaussianStandardDeviation;
 	double c1;
+	int secondGaussianMeanBin;
+	double secondGaussianAmplitude;
+	double secondGaussianStandardDeviation;
+	double secondGaussianMean;
+	double c2;
+	double minSum;
+	double maxSum;
 	private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator + "dsc-mri-toolbox-master"
 			+ File.separator + "demo-data" + File.separator;
 	private String outputPrefix = "";
@@ -442,8 +449,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    
 	    int nbin = 100;
 	    double volume_sum[][][] = new double[nC][nR][nS];
-	    double maxSum = -Double.MAX_VALUE;
-	    double minSum = Double.MAX_VALUE;
+	    maxSum = -Double.MAX_VALUE;
+	    minSum = Double.MAX_VALUE;
 	    for (x = 0; x < nC; x++) {
 	    	for (y = 0; y < nR; y++) {
 	    		for (z = 0; z < nS; z++) {
@@ -600,7 +607,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	c1 = 1.0;
 	    	double a2 = 2000.0;
 	    	double b2 = 7.0;
-	    	double c2 = 2.0;
+	    	c2 = 2.0;
 	    	gauss2FittingObservations = 100;
 	    	gauss2FittingData = new double[200];
 	    	for (i = 0; i < 100; i++) {
@@ -926,8 +933,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    
 		    firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
 		    firstGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
-		    double secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
-		    double secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
+		    secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
+		    secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
 		    // a11*firstGaussianAmplitude + a12*secondGaussianAmplitude = b1
 		    // a21*firstGaussianAmplitude + a22*secondGaussianAmplitude = b2;
 		    double a11 = 0.0;
@@ -966,7 +973,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    double det1 = b1*a22 - b2*a12;
 		    double det2 = a11*b2 - a21*b1;
 		    firstGaussianAmplitude = det1/det;
-		    double secondGaussianAmplitude = det2/det;
+		    secondGaussianAmplitude = det2/det;
 		    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
 		    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
 		    if (display > 0) {
@@ -1054,8 +1061,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 	    } // if (test2PerfectGaussians)
 	    else { // !test2PerfectGaussians
-	    	double secondGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
-		    double secondGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
+	    	secondGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
+		    secondGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
+		    c2 = Math.sqrt(2.0) * secondGaussianStandardDeviation;
 		    // secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22
 		    double a21 = 0;
 		    for (k = 0; k < gauss2FittingObservations; k++) {
@@ -1074,8 +1082,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	double diff = (intensity[k] - secondGaussianMean);
 		    	b2 += probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
 		    }
-		    double secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22;
-		    double xp1[] = new double[] {secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
+		    secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22;
+		    double xp1[] = new double[] {secondGaussianAmplitude, secondGaussianMean, c2};
 		    if (display > 0) {
 		    	UI.setDataText("Initial estimates for a2*exp(-((x-b2)/c2)^2)\n");
 			    UI.setDataText("a2 = " + xp1[0] + "\n");
@@ -1086,6 +1094,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    CostFunction cost_function = new gauss1FittingCostFunction();
 		    ProblemImpl problem = new ProblemImpl();
 			problem.AddResidualBlock(cost_function, null, xp1);
+			problem.AddParameterBlock(xp1,3);
+			problem.SetParameterLowerBound(xp1, 0, 0.1*secondGaussianAmplitude);
+			problem.SetParameterUpperBound(xp1, 0, 10.0*secondGaussianAmplitude);
+			problem.SetParameterLowerBound(xp1, 1, Math.max(0.1*secondGaussianMean, firstGaussianMean + 0.5*c1));
+			problem.SetParameterUpperBound(xp1, 1, Math.min(10.0*secondGaussianMean, maxSum));
+			problem.SetParameterLowerBound(xp1, 2, 0.1*c2);
+			problem.SetParameterUpperBound(xp1, 2, 10.0*c2);
 	
 			// Run the solver!
 			SolverOptions solverOptions = new SolverOptions();
@@ -1097,6 +1112,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, xp1[0], xp1[1], xp1[2]};
 			if (xp1[1] < minSum) {
 				System.err.println("Second gaussian mean = " + xp1[1] + " < minimum volume_sum value = " + minSum);
+				System.err.println("Second gaussian amplitude = " + xp1[0]);
+				System.err.println("Second gaussian c2 = " + xp1[2]);
 				System.err.println("First gaussian mean was at " + firstGaussianMean);
 				System.err.println("First gaussian amplitude was at " + firstGaussianAmplitude);
 				System.err.println("First gaussian c1 was at " + c1);
@@ -3355,7 +3372,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    CostFunction cost_function = new GVRecirculationCostFunction();
 	    ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, fitParameters_peak2);
-		problem.AddParameterBlock(fitParameters_peak1,3);
+		problem.AddParameterBlock(fitParameters_peak2,3);
 		problem.SetParameterLowerBound(fitParameters_peak2, 0, 0.1*td_init);
 		problem.SetParameterUpperBound(fitParameters_peak2, 0, 10.0*td_init);
         problem.SetParameterLowerBound(fitParameters_peak2, 1, 0.1*K_init);
@@ -4534,13 +4551,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// nPoints, params
         	super(gauss2FittingObservations, 3);
         	
-        	bounds = 0; // bounds = 0 means unconstrained
+        	bounds = 2; // bounds = 0 means unconstrained
         	analyticalJacobian = doAnalytical;
-        	//bl[0] = -Double.MAX_VALUE;
-        	//bu[0] = Double.MAX_VALUE;
-        	//bl[1] = 1.0E-10;
-        	//bu[1] = 74.999999;
-
+        	bl[0] = 0.1*secondGaussianAmplitude;
+        	bu[0] = 10.0*secondGaussianAmplitude;
+        	bl[1] = Math.max(0.1*secondGaussianMean, firstGaussianMean + 0.5*c1);
+        	bu[1] = Math.min(10.0*secondGaussianMean, maxSum);
+            bl[2] = 0.1*c2;
+            bu[2] = 10.0*c2;
         	
 
 			// bounds = 1 means same lower and upper bounds for
