@@ -1098,7 +1098,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			if (xp1[1] < minSum) {
 				System.err.println("Second gaussian mean = " + xp1[1] + " < minimum volume_sum value = " + minSum);
 				System.err.println("First gaussian mean was at " + firstGaussianMean);
-				System.err.println("First gaussian amplitude was at  + firstGaussianAmplitude");
+				System.err.println("First gaussian amplitude was at " + firstGaussianAmplitude);
 				System.err.println("First gaussian c1 was at " + c1);
 				System.err.println("Initial guess for secondGaussianMean was " + secondGaussianMean);
 				System.err.println("Initial guess for secondGaussianAmplitude was " + secondGaussianAmplitude);
