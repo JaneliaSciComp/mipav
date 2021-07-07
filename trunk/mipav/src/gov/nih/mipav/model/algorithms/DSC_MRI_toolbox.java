@@ -198,7 +198,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double x_loc[];
 	double y_loc[];
 
-	boolean readTestImage = true;
+	boolean readTestImage = false;
 	boolean test2PerfectGaussians = false;
 	private double[] GxData;
 	private double[] GxxData;
@@ -254,6 +254,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	boolean gauss2FittingCheck = false;
 	boolean GVFittingCheck = false;
 	boolean GVRecirculationCheck = false;
+	boolean doTransfer = true;
 
 	public DSC_MRI_toolbox() {
 
@@ -263,6 +264,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		this.volumes = volumes;
 		this.te = te;
 		this.tr = tr;
+		doTransfer = true;
 	}
 
 	public void runAlgorithm() {
@@ -314,22 +316,25 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    long totalTime = System.currentTimeMillis() - startTime;
 		    System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
 		}
+		else if (doTransfer) {
+			nC = volumes.length;
+			nR = volumes[0].length;
+			nS = volumes[0][0].length;
+			nT = volumes[0][0][0].length;
+			aif_nSlice = nS / 2; // aif_nSlice = 0 for nS = 1;
+			length = nC * nR;
+			extents2D[0] = nC;
+			extents2D[1] = nR;
+			DSC_mri_core();	
+		}
 		
 	}
 	
-	public int[][] runTransferAlgorithm() {
-		nC = volumes.length;
-		nR = volumes[0].length;
-		nS = volumes[0][0].length;
-		nT = volumes[0][0][0].length;
-		DSC_mri_core();
-		aif_nSlice = nS / 2; // aif_nSlice = 0 for nS = 1;
-		length = nC * nR;
-		extents2D[0] = nC;
-		extents2D[1] = nR;
-		DSC_mri_core();
+	public int[][] getAIF_voxels() {
 		return AIF_voxels;
 	}
+	
+	
 
 	public void DSC_mri_core() {
 		int i;
