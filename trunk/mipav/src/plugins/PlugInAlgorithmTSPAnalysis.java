@@ -810,7 +810,9 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		}
     		
     		DSC_MRI_toolbox dmt = new DSC_MRI_toolbox(volumes, 1.0E-3*TE, 1.0E-3*TR);
-    		AIF_voxels = dmt.runTransferAlgorithm();
+    		dmt.runAlgorithm();
+    		AIF_voxels = dmt.getAIF_voxels();
+    		System.out.println("Number of AIF voxels = " + AIF_voxels.length);
     	} // if (findAIFInfoWithDSCMRIToolbox)
     	
     	if (saveOriginalData) {
