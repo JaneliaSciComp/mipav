@@ -269,8 +269,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 	public void runAlgorithm() {
 		final long startTime = System.currentTimeMillis();
+		int x, y, z, t;
 		if (readTestImage) {
-			int x, y, z, t;
 			final FileIO io = new FileIO();
 			io.setQuiet(true);
 			io.setSuppressProgressBar(true);
@@ -313,8 +313,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		    DSC_mri_core();
 		
-		    long totalTime = System.currentTimeMillis() - startTime;
-		    System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
+		    
 		}
 		else if (doTransfer) {
 			nC = volumes.length;
@@ -327,6 +326,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			extents2D[1] = nR;
 			DSC_mri_core();	
 		}
+		long totalTime = System.currentTimeMillis() - startTime;
+	    System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
 		
 	}
 	
@@ -1094,6 +1095,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			SolverSummary solverSummary = new SolverSummary();
 			Solve(solverOptions, problem, solverSummary);
 			xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, xp1[0], xp1[1], xp1[2]};
+			if (xp1[1] < minSum) {
+				System.err.println("Second gaussian mean = " + xp1[1] + " < minimum volume_sum value = " + minSum);
+				System.err.println("First gaussian mean was at " + firstGaussianMean);
+				System.err.println("First gaussian amplitude was at  + firstGaussianAmplitude");
+				System.err.println("First gaussian c1 was at " + c1);
+				System.err.println("Initial guess for secondGaussianMean was " + secondGaussianMean);
+				System.err.println("Initial guess for secondGaussianAmplitude was " + secondGaussianAmplitude);
+				System.err.println("Initial guess for c2 was " + (Math.sqrt(2.0)*secondGaussianStandardDeviation));
+				System.exit(0);
+			}
 			if (display > 0) {
 			    UI.setDataText(solverSummary.BriefReport() + "\n");
 			    UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
@@ -1160,6 +1171,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		  GradientProblem gradientProblem = new GradientProblem(new diffGaussians(xp));
 		  Solve(options, gradientProblem, parameters, summary);
 		  mask_threshold = parameters[0];
+		  if (mask_threshold < minSum) {
+			  System.err.println("mask_threshold = " + mask_threshold + " < minimum volume_sum value = " + minSum);
+			  System.err.println("First gaussian mean was at " + xp[1]);
+			  System.err.println("Second gaussian mean was at " + xp[4]);
+			  System.exit(0);
+		  }
           if (display > 0) {
 		      System.out.println(summary.BriefReport());
 		      UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4])/2.0) + "\n");
@@ -1291,6 +1308,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		} // if (display > 1)
 		mask_aif = new byte[nC][nR][nS];
 		mask_data = new byte[nC][nR][nS];
+		for (x = 0; x < nC; x++) {
+	    	for (y = 0; y < nR; y++) {
+	    		for (z = 0; z < nS; z++) {
+	    			if (volume_sum[x][y][z] > mask_threshold) {
+	    				mask_aif[x][y][z] = 1;
+	    			}
+	    		}
+	    	}
+	    }
 	    for (x = 0; x < nC; x++) {
 	    	for (y = 0; y < nR; y++) {
 	    		for (z = 0; z < nS; z++) {
