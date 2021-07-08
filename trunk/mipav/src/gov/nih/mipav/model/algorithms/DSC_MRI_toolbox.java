@@ -1149,7 +1149,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				// Chi-squared: 7.115862477050937E8
 				// a0 3473.075759678535
 				// a1 54725.282764237934
-				// a2 12843.4017294626
+				// a2 12843.401729462
+				
 				System.out.println(solverSummary.BriefReport());
 			    System.out.println("Solved answer for a2*exp(-((x-b2)/c2)^2)");
 			    System.out.println("a2 = " + xp1[0]);
@@ -3399,30 +3400,30 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		if (GVRecirculationCheck) {
 			// Initial estimates for FP(t-td) convolution K*exp(-t/tao)
 			// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
-			// td_init = 19.948038996241092
-			// K_init = 0.008833745635228252
+			// td_init = 19.76651061960303
+			// K_init = 0.018402223739224195
 			// tao_init = 40.0
-			// Ceres Solver Report: Iterations: 6, Initial cost: 8.261292e+01, Final cost: 2.419706e+01, Termination: CONVERGENCE
-			// Function tolerance reached. 
-			// |cost_change|/cost: 1.523165e-10 <= 1.000000e-08
+			// Ceres Solver Report: Iterations: 31, Initial cost: 5.944661e+02, Final cost: 2.525571e+02, Termination: CONVERGENCE
+			// Minimum trust region radius reached. 
+			// Trust region radius: 3.895532391309105E-35 <=  1.0E-32
 			// Solved answer for FP(t-td) convolution K*exp(-t/tao)
-			// td = 14.18141920988466
-			// K = 0.00538449411736939
-			// tao = 83.57564899685595
+			// td = 15.18426191214277
+			// K = 0.012837854971044015
+			// tao = 38.10774224717836
 			// ******* Elsunc GV recirculation Curve Fitting ********* 
 			// analyticalJacobian = true
-			// Number of iterations: 9
-			// Chi-squared: 48.394109926550954
-			// td 14.181088621322544
-			// K 0.0053843278049710225
-			// tao 83.58076831600675
-			// ******* Elsunc GV recirculation Curve Fitting ********* 
+			// Number of iterations: 8
+			// Chi-squared: 505.0804959002924
+			// td 15.191393614623278
+			// K 0.012944380197663731
+			// tao 37.61800971361649
+			//  ******* Elsunc GV recirculation Curve Fitting ********* 
 			// analyticalJacobian = false
-			// Number of iterations: 9
-			// Chi-squared: 48.39410992655094
-			// td 14.181088662797078
-			// K 0.005384327864133199
-			// tao 83.58076569371698
+			// Number of iterations: 8
+			// Chi-squared: 505.08049590029225
+			// td 15.191393550184474
+			// K 0.012944380101420678
+			// tao 37.61801026358771	
 			
 			System.out.println("Initial estimates for FP(t-td) convolution K*exp(-t/tao)");
 			System.out.println("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
