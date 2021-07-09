@@ -263,6 +263,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	boolean GVRecirculationCheck = false;
 	boolean doTransfer = true;
 	boolean errorInMaskRoutine = false;
+	double intensity[] = null;
+	double probDouble[] = null;
 	
 	public DSC_MRI_toolbox() {
 
@@ -282,8 +284,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			final FileIO io = new FileIO();
 			io.setQuiet(true);
 			io.setSuppressProgressBar(true);
+			//ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
+					//+ "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
 			ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
-					+ "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
+					+ "EVTcase#4-baseline PWI" + File.separator + "baseline PWI" + File.separator + "ST000001" +
+					File.separator + "SE000001Original.nii");
 			if (img.getNDims() != 4) {
 				System.err.println("img.getNDims() = " + img.getNDims());
 				return;
@@ -293,7 +298,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			nS = img.getExtents()[2];
 			nT = img.getExtents()[3];
 			// Temporarily for development
-			aif_nSlice = nS / 2;
+			aif_nSlice = 7;
 			length = nC * nR;
 			int vol = length * nS;
 			int buffer_size = vol * nT;
@@ -450,6 +455,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// is present, and follow it down and eliminate all zero crossings for the unpaired lone branch.  Then
 		// look for the new smallest sigma at which only 2 branches are present.
 		int i, j, k, x, y, z, t, s;
+		boolean doneBackupSecondGaussian = false;
+		double[] firstDerivBuffer = null;
+		int twoIndexLowLocation[] = null;
+	    int twoIndexHighLocation[] = null;
 		double mask_threshold;
 	    if (display > 0) {
 	    	UI.setDataText("Masking data...");
@@ -475,7 +484,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	}
 	    }
 	    mask_data = new byte[nC][nR][nS];
-	    double intensity[] = new double[nbin];
+	    intensity = new double[nbin];
 	    int prob[] = new int[nbin];
 	    for (i = 0; i < nbin; i++) {
 	    	intensity[i] = minSum + ((2.0*i + 1.0)/2.0)*((maxSum - minSum)/nbin);
@@ -509,7 +518,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	tempInt[i-ind_max-1] = prob[i];
 	    }
 	    prob = null;
-	    double probDouble[] = new double[nbin-1-ind_max];
+	    probDouble = new double[nbin-1-ind_max];
 	    for (i = 0; i < nbin-1-ind_max; i++) {
 	    	probDouble[i] = (double)tempInt[i];
 	    }
@@ -641,7 +650,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		//b2 = 2.99999987472384
 	    		//c2 = 0.9999999590528206
 	    	}
-	    }
+	    } // if (test2PerfectGaussians)
 	    
 	    
 	    // Simple intialization scheme does not work
@@ -706,10 +715,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	errorInMaskRoutine = true;
 	    	return;
 	    }
-	    if ((firstTwoIndex == -1) && (firstOneIndex == -1)) {
+	    if (test2PerfectGaussians && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
 	    	errorInMaskRoutine = true;
 	    	return;
+	    }
+	    if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
+	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+	    	backupSecondGaussianRoutine();
+        	doneBackupSecondGaussian = true;
 	    }
 	    if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) {
 	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
@@ -773,7 +787,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	return;
 		    }
 	    } // if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0))
-	    if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex > 0)) {
+	    if ((!test2PerfectGaussians) && (!doneBackupSecondGaussian) && (firstTwoIndex == -1) && (firstOneIndex > 0)) {
 	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
 	        int zeroCrossingsToEliminate[] = new int[firstOneIndex+1];
 	        for (j = 0; j < zeroCrossing[firstOneIndex].length; j++) {
@@ -819,74 +833,76 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    }
 		    if (firstTwoIndex == -1) {
 		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-		    	errorInMaskRoutine = true;
-		    	return;
+		    	backupSecondGaussianRoutine();
+	        	doneBackupSecondGaussian = true;
 		    }
-	    } // if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex > 0))
-	    int twoIndexLowLocation[] = new int[firstTwoIndex+1];
-	    int twoIndexHighLocation[] = new int[firstTwoIndex+1];
-	    for (j = 0; j < firstTwoIndex+1; j++) {
-	    	twoIndexLowLocation[j] = -1;
-	    	twoIndexHighLocation[j] = -1;
-	    }
-	    for (j = 0; j < zeroCrossing[firstTwoIndex].length; j++) {
-	    	if ((zeroCrossing[firstTwoIndex][j] == 1) && (twoIndexLowLocation[firstTwoIndex] == -1)) {
-	    	    twoIndexLowLocation[firstTwoIndex] = j;	
-	    	}
-	    	else if (zeroCrossing[firstTwoIndex][j] == 1) {
-	    		twoIndexHighLocation[firstTwoIndex] = j;
-	    	}
-	    }
-	  
-	    for (j = firstTwoIndex-1; j >= 0; j--) {
-		    int GaussianLowDistance = Integer.MAX_VALUE;
-		    int GaussianHighDistance = Integer.MAX_VALUE;
-		    for (i = 0; i < zeroCrossing[j].length; i++) {
-		    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexLowLocation[j+1]) < GaussianLowDistance)) {
-		    		twoIndexLowLocation[j] = i;
-		    		GaussianLowDistance = Math.abs(i - twoIndexLowLocation[j+1]);
+	    } // if ((!test2PerfectGaussians) && (!doneBackupSecondGaussian) && (firstTwoIndex == -1) && (firstOneIndex > 0))
+	    if (!doneBackupSecondGaussian) {
+		    twoIndexLowLocation = new int[firstTwoIndex+1];
+		    twoIndexHighLocation = new int[firstTwoIndex+1];
+		    for (j = 0; j < firstTwoIndex+1; j++) {
+		    	twoIndexLowLocation[j] = -1;
+		    	twoIndexHighLocation[j] = -1;
+		    }
+		    for (j = 0; j < zeroCrossing[firstTwoIndex].length; j++) {
+		    	if ((zeroCrossing[firstTwoIndex][j] == 1) && (twoIndexLowLocation[firstTwoIndex] == -1)) {
+		    	    twoIndexLowLocation[firstTwoIndex] = j;	
 		    	}
-		    	else if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexHighLocation[j+1]) < GaussianHighDistance)) {
-		    		twoIndexHighLocation[j] = i;
-		    		GaussianHighDistance = Math.abs(i - twoIndexHighLocation[j+1]);
+		    	else if (zeroCrossing[firstTwoIndex][j] == 1) {
+		    		twoIndexHighLocation[firstTwoIndex] = j;
 		    	}
 		    }
-	    }
-	    
-	    sigmas[0] = 1.0;
-	    makeGxKernels1D();
-        double[] firstDerivBuffer = new double[probDouble.length];
-        convolve(probDouble, GxData, firstDerivBuffer);
-	    
-	    int twoIndexLowSlope = 0;
-        if (firstDerivBuffer[twoIndexLowLocation[0]] > 0) {
-	         twoIndexLowSlope = 1;	
-	    }
-        else if (firstDerivBuffer[twoIndexLowLocation[0]] < 0) {
-        	twoIndexLowSlope = -1;
-        }
-        int twoIndexHighSlope = 0;
-        if (firstDerivBuffer[twoIndexHighLocation[0]] > 0) {
-	         twoIndexHighSlope = 1;	
-	    }
-        else if (firstDerivBuffer[twoIndexHighLocation[0]] < 0) {
-        	twoIndexHighSlope = -1;
-        }
-        if ((twoIndexLowSlope > 0) && (twoIndexHighSlope > 0)) {
-        	System.err.println("In scale space with 2 zero crossings both crossings are positive");
-        	errorInMaskRoutine = true;
-        	return;
-        }
-        if ((twoIndexLowSlope < 0) && (twoIndexHighSlope < 0)) {
-        	System.err.println("In scale space with 2 zero crossings both crossings are negative");
-        	errorInMaskRoutine = true;
-        	return;
-        }
-        if ((twoIndexLowSlope < 0) && (twoIndexHighSlope > 0)) {
-        	System.err.println("In scale space with 2 zero crossings low crossing is negative and high crossing is positive");
-        	errorInMaskRoutine = true;
-        	return;
-        }
+		  
+		    for (j = firstTwoIndex-1; j >= 0; j--) {
+			    int GaussianLowDistance = Integer.MAX_VALUE;
+			    int GaussianHighDistance = Integer.MAX_VALUE;
+			    for (i = 0; i < zeroCrossing[j].length; i++) {
+			    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexLowLocation[j+1]) < GaussianLowDistance)) {
+			    		twoIndexLowLocation[j] = i;
+			    		GaussianLowDistance = Math.abs(i - twoIndexLowLocation[j+1]);
+			    	}
+			    	else if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexHighLocation[j+1]) < GaussianHighDistance)) {
+			    		twoIndexHighLocation[j] = i;
+			    		GaussianHighDistance = Math.abs(i - twoIndexHighLocation[j+1]);
+			    	}
+			    }
+		    }
+		    
+		    sigmas[0] = 1.0;
+		    makeGxKernels1D();
+	        firstDerivBuffer = new double[probDouble.length];
+	        convolve(probDouble, GxData, firstDerivBuffer);
+		    
+		    int twoIndexLowSlope = 0;
+	        if (firstDerivBuffer[twoIndexLowLocation[0]] > 0) {
+		         twoIndexLowSlope = 1;	
+		    }
+	        else if (firstDerivBuffer[twoIndexLowLocation[0]] < 0) {
+	        	twoIndexLowSlope = -1;
+	        }
+	        int twoIndexHighSlope = 0;
+	        if (firstDerivBuffer[twoIndexHighLocation[0]] > 0) {
+		         twoIndexHighSlope = 1;	
+		    }
+	        else if (firstDerivBuffer[twoIndexHighLocation[0]] < 0) {
+	        	twoIndexHighSlope = -1;
+	        }
+	        if ((twoIndexLowSlope > 0) && (twoIndexHighSlope > 0)) {
+	        	System.err.println("In scale space with 2 zero crossings both crossings are positive");
+	        	backupSecondGaussianRoutine();
+	        	doneBackupSecondGaussian = true;
+	        }
+	        else if ((twoIndexLowSlope < 0) && (twoIndexHighSlope < 0)) {
+	        	System.err.println("In scale space with 2 zero crossings both crossings are negative");
+	        	backupSecondGaussianRoutine();
+	        	doneBackupSecondGaussian = true;
+	        }
+	        else if ((twoIndexLowSlope < 0) && (twoIndexHighSlope > 0)) {
+	        	System.err.println("In scale space with 2 zero crossings low crossing is negative and high crossing is positive");
+	        	backupSecondGaussianRoutine();
+	        	doneBackupSecondGaussian = true;
+	        }
+	    } // if (!doneBackupSecondGaussian)
         
 	    if (test2PerfectGaussians) {
 	        int fourIndexLowLocation[] = new int[firstFourIndex+1];
@@ -1081,7 +1097,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    System.exit(0);
 			}
 	    } // if (test2PerfectGaussians)
-	    else { // !test2PerfectGaussians
+	    else if (!doneBackupSecondGaussian){
 	    	secondGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
 		    secondGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
 		    c2 = Math.sqrt(2.0) * secondGaussianStandardDeviation;
@@ -1190,7 +1206,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    g1.dumpResults();
 			    System.exit(0);
 			}
-	    } // else !test2PerfectGaussians
+	    } // else if (!doneBackupSecondGaussian)
+	    else if (doneBackupSecondGaussian) {
+	    	xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, secondGaussianAmplitude, secondGaussianMean, c2};
+	    }
 		
 		if (doCurveIntersect) {
 		    curveIntersect(intensity, xp);
@@ -1591,6 +1610,48 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	}
 	    }
 	} // public void DSC_mri_mask()
+	
+	private void backupSecondGaussianRoutine() {
+		int i;
+		secondGaussianMeanBin = -1;
+	    secondGaussianAmplitude = -Double.MAX_VALUE; 
+	    for (i = firstGaussianMeanBin+4; i < intensity.length; i++)  {
+	    	if ((probDouble[i] > secondGaussianAmplitude) && (probDouble[i] > probDouble[i-3])) {
+	    		secondGaussianAmplitude = probDouble[i];
+	    		secondGaussianMeanBin = i;
+	    	}
+	    }
+	    secondGaussianMean = intensity[secondGaussianMeanBin];
+	    UI.setDataText("Second Gaussian amplitude = " + secondGaussianAmplitude + "\n");
+	    UI.setDataText("Second Gaussian mean = " + secondGaussianMean + "\n");
+	    // Calculate c2 from amplitude of best fit of highest channel and next 3 channels to the right
+	    
+	    // Initial estimate of c1 = sqrt(2) * standard deviation
+	    double xp1[] = new double[1];
+	    double ratio = probDouble[secondGaussianMeanBin + 3]/probDouble[secondGaussianMeanBin];
+	    double diff = (intensity[secondGaussianMeanBin+3] - secondGaussianMean);
+	    // exp(-((x-mean)/c1)^2) = ratio
+	    // -(intensity[secondGaussianMeanBin+3] - secondGaussianMean)^2/(c2*c2) = ln(ratio)
+	    xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
+	    CostFunction cost_function1 = new gaussSecondStandardDeviationFittingCostFunction();
+	    ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function1, null, xp1);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		solverOptions.max_num_consecutive_invalid_steps = 100;
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		c2 = xp1[0];
+		secondGaussianStandardDeviation = Math.sqrt(2.0) * c2;
+		if (display > 0) {
+		    UI.setDataText(solverSummary.BriefReport() + "\n");
+		    UI.setDataText("Solved answer for secondGaussianAmplitude*exp(-((x-secondGaussianMean)/c2)^2)\n");
+		    UI.setDataText("c2 = " + xp1[0] + "\n");
+		}	
+	}
 
 	public void DSC_mri_conc() {
 		// Original MATLAB version last modified by Denis Peruzzo 07/06/2010
@@ -4521,6 +4582,50 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			System.out.println("Number of iterations: " + String.valueOf(iters));
 			System.out.println("Chi-squared: " + String.valueOf(getChiSquared()));
 			System.out.println("a0 " + String.valueOf(a[0]));
+		}
+	}
+	
+	class gaussSecondStandardDeviationFittingCostFunction extends SizedCostFunction {
+
+		public gaussSecondStandardDeviationFittingCostFunction() {
+			// number of resdiuals
+			// size of first parameter
+			super(4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+
+			for (i = secondGaussianMeanBin; i <= secondGaussianMeanBin + 3; i++) {
+				double val1 = (gauss2FittingData[2 * i] - secondGaussianMean) / x[0];
+				double value = secondGaussianAmplitude * Math.exp(-val1 * val1);
+				residuals[i - secondGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][i - secondGaussianMeanBin] = -2.0 * secondGaussianAmplitude * val1
+							* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - secondGaussianMean) / (x[0] * x[0]);
+				}
+			}
+			return true;
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
+				int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+
+			for (i = secondGaussianMeanBin; i <= secondGaussianMeanBin + 3; i++) {
+				double val1 = (gauss2FittingData[2 * i] - secondGaussianMean) / x[0];
+				double value = secondGaussianAmplitude * Math.exp(-val1 * val1);
+				residuals[i - secondGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;
+				if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0] + i - secondGaussianMeanBin] = -2.0 * secondGaussianAmplitude * val1
+							* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - secondGaussianMean) / (x[0] * x[0]);
+				}
+			}
+			return true;
 		}
 	}
 
