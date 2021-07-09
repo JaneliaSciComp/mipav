@@ -914,57 +914,59 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	        new ViewJFrameImage(image);
     		}
     	    
-    	    Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
-        	System.out.println("Putting results in " + resultsFileName);
-    	    file = new File(resultsFileName);
-        	try {
-        	raFile = new RandomAccessFile( file, "rw" );
-        	}
-        	catch(FileNotFoundException e) {
-        		MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
-        		setCompleted(false);
-        		return;
-        	}
-    	    
-    	    // Necessary so that if this is an overwritten file there isn't any junk at the end
-        	try {
-        	    raFile.setLength( 0 );
-        	}
-        	catch (IOException e) {
-        		MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
-        		setCompleted(false);
-        		return;	
-        	}
-        	for (i = 0; i < numberClusters; i++) {
-        		
-        		if (totalWeight[i] <= 1.0E-10) {
-        			dataString += "Cluster centroid " + (i+1) + " has no points.\n";	
-        		}
-        		else {
-        			dataString += "Cluster centroid " + (i+1) + " :\n";
-	        		for (j = 0; j < nDims; j++) {
-	        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+    	    if (resultsFileName != null) {
+	    		Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
+	        	System.out.println("Putting results in " + resultsFileName);
+	    	    file = new File(resultsFileName);
+	        	try {
+	        	raFile = new RandomAccessFile( file, "rw" );
+	        	}
+	        	catch(FileNotFoundException e) {
+	        		MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
+	        		setCompleted(false);
+	        		return;
+	        	}
+	    	    
+	    	    // Necessary so that if this is an overwritten file there isn't any junk at the end
+	        	try {
+	        	    raFile.setLength( 0 );
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
+	        		setCompleted(false);
+	        		return;	
+	        	}
+	        	for (i = 0; i < numberClusters; i++) {
+	        		
+	        		if (totalWeight[i] <= 1.0E-10) {
+	        			dataString += "Cluster centroid " + (i+1) + " has no points.\n";	
 	        		}
-	        		dataString += "\n";
-        		}
-        	}
-        	
-        	try {
-        	    raFile.write(dataString.getBytes());
-        	}
-        	catch (IOException e) {
-        		MipavUtil.displayError("raFile.write gave IOException " + e);
-        		setCompleted(false);
-        		return;		
-        	}
-        	try {
-        	    raFile.close();
-        	}
-        	catch (IOException e) {
-        		MipavUtil.displayError("raFile.close gave IOException " + e);
-        		setCompleted(false);
-        		return;		
-        	}
+	        		else {
+	        			dataString += "Cluster centroid " + (i+1) + " :\n";
+		        		for (j = 0; j < nDims; j++) {
+		        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+		        		}
+		        		dataString += "\n";
+	        		}
+	        	}
+	        	
+	        	try {
+	        	    raFile.write(dataString.getBytes());
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("raFile.write gave IOException " + e);
+	        		setCompleted(false);
+	        		return;		
+	        	}
+	        	try {
+	        	    raFile.close();
+	        	}
+	        	catch (IOException e) {
+	        		MipavUtil.displayError("raFile.close gave IOException " + e);
+	        		setCompleted(false);
+	        		return;		
+	        	}
+    	    } // if (resultsFileName != null)
         	
     	    setCompleted(true);
     	    return;
@@ -1029,230 +1031,231 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	new ViewJFrameImage(image);
     	} // if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)
  
-    	
-    	Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
-    	System.out.println("Putting results in " + resultsFileName);
-    	file = new File(resultsFileName);
-    	try {
-    	raFile = new RandomAccessFile( file, "rw" );
-    	}
-    	catch(FileNotFoundException e) {
-    		MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
-    		setCompleted(false);
-    		return;
-    	}
-    	// Necessary so that if this is an overwritten file there isn't any junk at the end
-    	try {
-    	    raFile.setLength( 0 );
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
-    		setCompleted(false);
-    		return;	
-    	}
-    	i = resultsFileName.indexOf(".");
-		if (i > 0) {
-			extension = resultsFileName.substring(i+1);
-			if (extension.equalsIgnoreCase("CSV")) {
-				haveCSV = true;
+    	if (resultsFileName != null) {
+	    	Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
+	    	System.out.println("Putting results in " + resultsFileName);
+	    	file = new File(resultsFileName);
+	    	try {
+	    	raFile = new RandomAccessFile( file, "rw" );
+	    	}
+	    	catch(FileNotFoundException e) {
+	    		MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
+	    		setCompleted(false);
+	    		return;
+	    	}
+	    	// Necessary so that if this is an overwritten file there isn't any junk at the end
+	    	try {
+	    	    raFile.setLength( 0 );
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
+	    		setCompleted(false);
+	    		return;	
+	    	}
+	    	i = resultsFileName.indexOf(".");
+			if (i > 0) {
+				extension = resultsFileName.substring(i+1);
+				if (extension.equalsIgnoreCase("CSV")) {
+					haveCSV = true;
+				}
 			}
-		}
-    	switch(algoSelection) {
-    	case K_MEANS:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Algorithm selection = k-means\n";
-    		switch(initSelection) {
-    		case RANDOM_INIT:
-    			if (haveCSV) {
-        			dataString += "#";
-        		}
-    			dataString += "Initialization selection = random initialization\n";
-    			break;
-    		case BRADLEY_FAYYAD_INIT:
-    			if (haveCSV) {
-        			dataString += "#";
-        		}
-    			dataString += "Initialization selection = Bradley-Fayyad refinement initialization\n";
-    			break;
-    		case HIERARCHICAL_GROUPING_INIT:
-    			if (haveCSV) {
-        			dataString += "#";
-        		}
-    		    dataString += "Initialization selection = hierarchical grouping\n";
-    		    break;
-    		case MAXMIN_INIT:
-    			if (haveCSV) {
-        			dataString += "#";
-        		}
-    			dataString += "Initialization selection = maxmin\n";
-    			break;
-    		}
-    		break;
-    	case GLOBAL_K_MEANS:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Algorithm selection = global k-means\n";
-    		break;
-    	case FAST_GLOBAL_K_MEANS:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Algorithm selection = fast global k-means\n";
-    		break;
-    	}
-    	switch(distanceMeasure) {
-    	case EUCLIDEAN_SQUARED:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Distance measure = Euclidean squared distances with mean centroids\n";
-    		break;
-    	case CITY_BLOCK:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Distance measure = city block distances with median centroids\n";
-    		break;
-    	case MAHALANOBIS_SQUARED:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Distance measure = Mahalanobis squared distances with mean centroids\n";
-    		break;
-    	case S_METRIC:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Distance measure = S for ellipsoidal clusters with different orientations same size\n";
-    		break;
-    	case SPHERES_DIFFERENT_SIZES:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Distance measure = nk*log tr(Wk/nk) for spheres of different sizes\n";
-    		break;
-    	case S_STAR_METRIC:
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Distance measure = S* for ellipsoidal clusters with different orientations different sizes\n";
-    		break;
-    	}
-    	
-    	if (scaleVariablesToUnitVariance) {
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Variables scaled to unit variance\n";
-    	}
-    	else {
-    		if (haveCSV) {
-    			dataString += "#";
-    		}
-    		dataString += "Variables not scaled to unit variance\n";
-    	}
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n\n";
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "Sum of squared deviations from cluster centroids = " +
-    	               String.valueOf(sumOfSquaredDeviationsFromClusterCentroids) + "\n";
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "Calinski and Harabasz figure of merit for number of clusters = " + 
-    	               String.valueOf(CalinskiAndHarabaszFigureOfMerit) +"\n";
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "The ideal number of clusters should give the largest figure of merit\n\n";
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "Marriott figure of merit for the number of clusters = ";
-    	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix) = " + 
-    	              String.valueOf(MarriottFigureOfMerit) + "\n";
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "The ideal number of clusters should give the lowest value\n";
-    	if (haveCSV) {
-			dataString += "#";
-		}
-    	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix)/determinant(totalSquaresMatrix) = " + 
-    	              String.valueOf(MarriottFigureOfMerit/totalSquaresDeterminant) + "\n";
-    	if (haveCSV) {
-    		dataString += "#If this value is constant and equal to 1 for all numbers of clusters then the population is uniform\n";
-		}
-    	else {
-    	    dataString += "If this value is constant and equal to 1 for all numbers of clusters, then the population is uniform\n";
-    	}
-    	if (haveCSV) {
-    		dataString += "#If this value > 1 for all numbers of clusters then only a single group is present\n\n";
-		}
-    	else {
-    	    dataString += "If this value > 1 for all numbers of clusters, then only a single group is present\n\n";
-    	}
-    	
-    	for (i = 0; i < numberClusters; i++) {
-    		
-    		if (totalWeight[i] <= 1.0E-10) {
-    			if (haveCSV) {
-        			dataString += "#";
-        		}
-    			dataString += "Cluster centroid " + (i+1) + " has no points.\n";	
-    		}
-    		else {
-    			if (haveCSV) {
-        			dataString += "#";
-        		}
-    			dataString += "Cluster centroid " + (i+1) + " :\n";
-        		for (j = 0; j < nDims; j++) {
-        			if (haveCSV) {
-            			dataString += "#";
-            		}
-        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
-        		}
-        		dataString += "\n";
-    		}
-    	}
-    	
-    	for (i = 0; i < nPoints; i++) {
-    		if (haveCSV) {
-    			// z x y
-    		    dataString += String.valueOf(pos[2][i]) + "," + String.valueOf(pos[0][i]) + "," +
-    			String.valueOf(pos[1][i]) + "," + String.valueOf(groupNum[i] + 1) + "\n";
-    		} // if (haveCSV)
-    		else {
-	    		dataString += "Point number " + String.valueOf(i+1) + "  Location  ";
-	    		for (j = 0; j < nDims; j++) {
-	    		    dataString += String.valueOf(pos[j][i]) + "  ";	
+	    	switch(algoSelection) {
+	    	case K_MEANS:
+	    		if (haveCSV) {
+	    			dataString += "#";
 	    		}
-	    		dataString += "Cluster  " + String.valueOf(groupNum[i]+1) + "\n";
-    		}
-    	}
-    	try {
-    	    raFile.write(dataString.getBytes());
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("raFile.write gave IOException " + e);
-    		setCompleted(false);
-    		return;		
-    	}
-    	try {
-    	    raFile.close();
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("raFile.close gave IOException " + e);
-    		setCompleted(false);
-    		return;		
-    	}
+	    		dataString += "Algorithm selection = k-means\n";
+	    		switch(initSelection) {
+	    		case RANDOM_INIT:
+	    			if (haveCSV) {
+	        			dataString += "#";
+	        		}
+	    			dataString += "Initialization selection = random initialization\n";
+	    			break;
+	    		case BRADLEY_FAYYAD_INIT:
+	    			if (haveCSV) {
+	        			dataString += "#";
+	        		}
+	    			dataString += "Initialization selection = Bradley-Fayyad refinement initialization\n";
+	    			break;
+	    		case HIERARCHICAL_GROUPING_INIT:
+	    			if (haveCSV) {
+	        			dataString += "#";
+	        		}
+	    		    dataString += "Initialization selection = hierarchical grouping\n";
+	    		    break;
+	    		case MAXMIN_INIT:
+	    			if (haveCSV) {
+	        			dataString += "#";
+	        		}
+	    			dataString += "Initialization selection = maxmin\n";
+	    			break;
+	    		}
+	    		break;
+	    	case GLOBAL_K_MEANS:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Algorithm selection = global k-means\n";
+	    		break;
+	    	case FAST_GLOBAL_K_MEANS:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Algorithm selection = fast global k-means\n";
+	    		break;
+	    	}
+	    	switch(distanceMeasure) {
+	    	case EUCLIDEAN_SQUARED:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Distance measure = Euclidean squared distances with mean centroids\n";
+	    		break;
+	    	case CITY_BLOCK:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Distance measure = city block distances with median centroids\n";
+	    		break;
+	    	case MAHALANOBIS_SQUARED:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Distance measure = Mahalanobis squared distances with mean centroids\n";
+	    		break;
+	    	case S_METRIC:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Distance measure = S for ellipsoidal clusters with different orientations same size\n";
+	    		break;
+	    	case SPHERES_DIFFERENT_SIZES:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Distance measure = nk*log tr(Wk/nk) for spheres of different sizes\n";
+	    		break;
+	    	case S_STAR_METRIC:
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Distance measure = S* for ellipsoidal clusters with different orientations different sizes\n";
+	    		break;
+	    	}
+	    	
+	    	if (scaleVariablesToUnitVariance) {
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Variables scaled to unit variance\n";
+	    	}
+	    	else {
+	    		if (haveCSV) {
+	    			dataString += "#";
+	    		}
+	    		dataString += "Variables not scaled to unit variance\n";
+	    	}
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n\n";
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "Sum of squared deviations from cluster centroids = " +
+	    	               String.valueOf(sumOfSquaredDeviationsFromClusterCentroids) + "\n";
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "Calinski and Harabasz figure of merit for number of clusters = " + 
+	    	               String.valueOf(CalinskiAndHarabaszFigureOfMerit) +"\n";
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "The ideal number of clusters should give the largest figure of merit\n\n";
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "Marriott figure of merit for the number of clusters = ";
+	    	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix) = " + 
+	    	              String.valueOf(MarriottFigureOfMerit) + "\n";
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "The ideal number of clusters should give the lowest value\n";
+	    	if (haveCSV) {
+				dataString += "#";
+			}
+	    	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix)/determinant(totalSquaresMatrix) = " + 
+	    	              String.valueOf(MarriottFigureOfMerit/totalSquaresDeterminant) + "\n";
+	    	if (haveCSV) {
+	    		dataString += "#If this value is constant and equal to 1 for all numbers of clusters then the population is uniform\n";
+			}
+	    	else {
+	    	    dataString += "If this value is constant and equal to 1 for all numbers of clusters, then the population is uniform\n";
+	    	}
+	    	if (haveCSV) {
+	    		dataString += "#If this value > 1 for all numbers of clusters then only a single group is present\n\n";
+			}
+	    	else {
+	    	    dataString += "If this value > 1 for all numbers of clusters, then only a single group is present\n\n";
+	    	}
+	    	
+	    	for (i = 0; i < numberClusters; i++) {
+	    		
+	    		if (totalWeight[i] <= 1.0E-10) {
+	    			if (haveCSV) {
+	        			dataString += "#";
+	        		}
+	    			dataString += "Cluster centroid " + (i+1) + " has no points.\n";	
+	    		}
+	    		else {
+	    			if (haveCSV) {
+	        			dataString += "#";
+	        		}
+	    			dataString += "Cluster centroid " + (i+1) + " :\n";
+	        		for (j = 0; j < nDims; j++) {
+	        			if (haveCSV) {
+	            			dataString += "#";
+	            		}
+	        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+	        		}
+	        		dataString += "\n";
+	    		}
+	    	}
+	    	
+	    	for (i = 0; i < nPoints; i++) {
+	    		if (haveCSV) {
+	    			// z x y
+	    		    dataString += String.valueOf(pos[2][i]) + "," + String.valueOf(pos[0][i]) + "," +
+	    			String.valueOf(pos[1][i]) + "," + String.valueOf(groupNum[i] + 1) + "\n";
+	    		} // if (haveCSV)
+	    		else {
+		    		dataString += "Point number " + String.valueOf(i+1) + "  Location  ";
+		    		for (j = 0; j < nDims; j++) {
+		    		    dataString += String.valueOf(pos[j][i]) + "  ";	
+		    		}
+		    		dataString += "Cluster  " + String.valueOf(groupNum[i]+1) + "\n";
+	    		}
+	    	}
+	    	try {
+	    	    raFile.write(dataString.getBytes());
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("raFile.write gave IOException " + e);
+	    		setCompleted(false);
+	    		return;		
+	    	}
+	    	try {
+	    	    raFile.close();
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("raFile.close gave IOException " + e);
+	    		setCompleted(false);
+	    		return;		
+	    	}
+    	} // if (resultsFileName != null)
     	
         setCompleted(true);
         return;
