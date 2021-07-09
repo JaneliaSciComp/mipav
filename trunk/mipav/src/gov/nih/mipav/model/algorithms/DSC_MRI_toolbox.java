@@ -262,7 +262,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	boolean GVFittingCheck = false;
 	boolean GVRecirculationCheck = false;
 	boolean doTransfer = true;
-
+	boolean errorInMaskRoutine = false;
+	
 	public DSC_MRI_toolbox() {
 
 	}
@@ -332,6 +333,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			extents2D[0] = nC;
 			extents2D[1] = nR;
 			DSC_mri_core();	
+			if (errorInMaskRoutine) {
+				AIF_voxels = null;
+				return;
+			}
 		}
 		long totalTime = System.currentTimeMillis() - startTime;
 	    System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
@@ -394,6 +399,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 		if (options_conc == 0) {
 			DSC_mri_mask();
+			if (errorInMaskRoutine) {
+				return;
+			}
 
 			// Calculations of Concentrations and S0
 			DSC_mri_conc();
@@ -690,14 +698,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    if (test2PerfectGaussians && (firstFourIndex == -1) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+	    	errorInMaskRoutine = true;
 	    	return;
 	    }
 	    if (test2PerfectGaussians && (firstFourIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
+	    	errorInMaskRoutine = true;
 	    	return;
 	    }
 	    if ((firstTwoIndex == -1) && (firstOneIndex == -1)) {
 	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+	    	errorInMaskRoutine = true;
 	    	return;
 	    }
 	    if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) {
@@ -748,14 +759,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    if ((firstFourIndex == -1) && (firstTwoIndex == -1)) {
 		    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
 		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+		    	errorInMaskRoutine = true;
 		    	return;
 		    }
 		    if (firstFourIndex == -1) {
 		    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
+		    	errorInMaskRoutine = true;
 		    	return;
 		    }
 		    if (firstTwoIndex == -1) {
 		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+		    	errorInMaskRoutine = true;
 		    	return;
 		    }
 	    } // if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0))
@@ -805,6 +819,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    }
 		    if (firstTwoIndex == -1) {
 		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
+		    	errorInMaskRoutine = true;
 		    	return;
 		    }
 	    } // if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex > 0))
@@ -859,14 +874,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
         }
         if ((twoIndexLowSlope > 0) && (twoIndexHighSlope > 0)) {
         	System.err.println("In scale space with 2 zero crossings both crossings are positive");
+        	errorInMaskRoutine = true;
         	return;
         }
         if ((twoIndexLowSlope < 0) && (twoIndexHighSlope < 0)) {
         	System.err.println("In scale space with 2 zero crossings both crossings are negative");
+        	errorInMaskRoutine = true;
         	return;
         }
         if ((twoIndexLowSlope < 0) && (twoIndexHighSlope > 0)) {
         	System.err.println("In scale space with 2 zero crossings low crossing is negative and high crossing is positive");
+        	errorInMaskRoutine = true;
         	return;
         }
         
@@ -920,14 +938,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        }
 	        if ((fourIndexLowSlope > 0) && (fourIndexHighSlope > 0)) {
 	        	System.err.println("In scale space with 4 zero crossings 3 crossings are positive");
+	        	errorInMaskRoutine = true;
 	        	return;
 	        }
 	        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope < 0)) {
 	        	System.err.println("In scale space with 4 zero crossings 3 crossings are negative");
+	        	errorInMaskRoutine = true;
 	        	return;
 	        }
 	        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope > 0)) {
 	        	System.err.println("In scale space with 4 zero crossings second Gaussian low crossing is negative and second Gaussian high crossing is positive");
+	        	errorInMaskRoutine = true;
 	        	return;
 	        }
 	    
@@ -2553,7 +2574,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    for (t = 0; t < nT; t++) {
 	    	scale[t] = 1.0;
 	    }
-	    String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+	    //String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+	    String resultsFileName = null;
 	    int initSelection;
 	    float redBuffer[] = null;
 	    float greenBuffer[] = null;
