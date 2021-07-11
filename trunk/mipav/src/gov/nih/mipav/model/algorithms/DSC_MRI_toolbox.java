@@ -287,7 +287,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			//ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
 					//+ "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
 			ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
-					+ "EVTcase#4-baseline PWI" + File.separator + "baseline PWI" + File.separator + "ST000001" +
+					+ "EVTcase#1-baseline PWI" + File.separator + "baseline PWI" + File.separator + "ST000001" +
 					File.separator + "SE000001Original.nii");
 			if (img.getNDims() != 4) {
 				System.err.println("img.getNDims() = " + img.getNDims());
@@ -614,7 +614,46 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			    gsd.driver();
 			    gsd.dumpResults();
 			    System.exit(0);
-			}
+			}  // if (gaussStandardDeviationCheck)
+			
+			secondGaussianMeanBin = -1;
+		    secondGaussianAmplitude = -Double.MAX_VALUE; 
+		    for (i = firstGaussianMeanBin+4; i < intensity.length; i++)  {
+		    	if ((probDouble[i] > secondGaussianAmplitude) && (probDouble[i] > probDouble[i-3])) {
+		    		secondGaussianAmplitude = probDouble[i];
+		    		secondGaussianMeanBin = i;
+		    	}
+		    }
+		    secondGaussianMean = intensity[secondGaussianMeanBin];
+		    UI.setDataText("Second Gaussian amplitude = " + secondGaussianAmplitude + "\n");
+		    UI.setDataText("Second Gaussian mean = " + secondGaussianMean + "\n");
+		    // Calculate c2 from amplitude of best fit of highest channel and next 3 channels to the right
+		    
+		    // Initial estimate of c1 = sqrt(2) * standard deviation
+		    ratio = probDouble[secondGaussianMeanBin + 3]/probDouble[secondGaussianMeanBin];
+		    diff = (intensity[secondGaussianMeanBin+3] - secondGaussianMean);
+		    // exp(-((x-mean)/c1)^2) = ratio
+		    // -(intensity[secondGaussianMeanBin+3] - secondGaussianMean)^2/(c2*c2) = ln(ratio)
+		    xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
+		    cost_function1 = new gaussSecondStandardDeviationFittingCostFunction();
+		    problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function1, null, xp1);
+
+			// Run the solver!
+			solverOptions = new SolverOptions();
+			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+			solverOptions.max_num_consecutive_invalid_steps = 100;
+			solverOptions.minimizer_progress_to_stdout = true;
+			solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			c2 = xp1[0];
+			secondGaussianStandardDeviation = Math.sqrt(2.0) * c2;
+			if (display > 0) {
+			    UI.setDataText(solverSummary.BriefReport() + "\n");
+			    UI.setDataText("Solved answer for secondGaussianAmplitude*exp(-((x-secondGaussianMean)/c2)^2)\n");
+			}	
+			UI.setDataText("c2 = " + xp1[0] + "\n");
+			xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, secondGaussianAmplitude, secondGaussianMean, c2};
 	    } // if (!test2PerfectGaussians)
 	    
 	   
@@ -656,7 +695,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    // Simple intialization scheme does not work
 	    //double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
 	    		//ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
-	    byte zeroCrossing[][] = new byte[3*gauss2FittingObservations][];
+	    /*byte zeroCrossing[][] = new byte[3*gauss2FittingObservations][];
 	    int numberZeroCrossings[] = new int[3*gauss2FittingObservations];
 	    int firstFiveIndex = -1;
 	    int firstFourIndex = -1;
@@ -1209,7 +1248,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    } // else if (!doneBackupSecondGaussian)
 	    else if (doneBackupSecondGaussian) {
 	    	xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, secondGaussianAmplitude, secondGaussianMean, c2};
-	    }
+	    	if (display > 0) {
+			    UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
+			    UI.setDataText("a2 = " + xp[3] + "\n");
+			    UI.setDataText("b2 = " + xp[4] + "\n");
+			    UI.setDataText("c2 = " + xp[5] + "\n");
+			}
+	    } */
 		
 		if (doCurveIntersect) {
 		    curveIntersect(intensity, xp);
