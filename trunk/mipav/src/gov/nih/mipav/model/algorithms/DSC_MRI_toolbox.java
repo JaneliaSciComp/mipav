@@ -265,7 +265,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	boolean errorInMaskRoutine = false;
 	double intensity[] = null;
 	double probDouble[] = null;
-	
+
 	public DSC_MRI_toolbox() {
 
 	}
@@ -284,11 +284,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			final FileIO io = new FileIO();
 			io.setQuiet(true);
 			io.setSuppressProgressBar(true);
-			//ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
-					//+ "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator + "GRE_DSC.nii.gz");
-			ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" + File.separator
-					+ "EVTcase#1-baseline PWI" + File.separator + "baseline PWI" + File.separator + "ST000001" +
-					File.separator + "SE000001Original.nii");
+			// ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" +
+			// File.separator
+			// + "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator +
+			// "GRE_DSC.nii.gz");
+			ModelImage img = io.readImage(
+					"C:" + File.separator + "TSP datasets" + File.separator + "EVTcase#1-baseline PWI" + File.separator
+							+ "baseline PWI" + File.separator + "ST000001" + File.separator + "SE000001Original.nii");
 			if (img.getNDims() != 4) {
 				System.err.println("img.getNDims() = " + img.getNDims());
 				return;
@@ -323,12 +325,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					}
 				}
 			}
-		
-		    DSC_mri_core();
-		
-		    
-		}
-		else if (doTransfer) {
+
+			DSC_mri_core();
+
+		} else if (doTransfer) {
 			nC = volumes.length;
 			nR = volumes[0].length;
 			nS = volumes[0][0].length;
@@ -337,22 +337,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			length = nC * nR;
 			extents2D[0] = nC;
 			extents2D[1] = nR;
-			DSC_mri_core();	
+			DSC_mri_core();
 			if (errorInMaskRoutine) {
 				AIF_voxels = null;
 				return;
 			}
 		}
 		long totalTime = System.currentTimeMillis() - startTime;
-	    System.out.println("AIF extraction execution time in seconds = " + (totalTime/1000.0));
-		
+		System.out.println("AIF extraction execution time in seconds = " + (totalTime / 1000.0));
+
 	}
-	
+
 	public int[][] getAIF_voxels() {
 		return AIF_voxels;
 	}
-	
-	
 
 	public void DSC_mri_core() {
 		int i;
@@ -383,12 +381,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				Tmax = time[t];
 			}
 		}
-		
-		TRfine = TR/10.0;
-		nTfine = 1 + (int)((2*Tmax - Tmin)/TRfine);
+
+		TRfine = TR / 10.0;
+		nTfine = 1 + (int) ((2 * Tmax - Tmin) / TRfine);
 		tGrid = new double[nTfine];
 		for (t = 0; t < nTfine; t++) {
-			tGrid[t] = Tmin + t*TRfine;
+			tGrid[t] = Tmin + t * TRfine;
 		}
 		equalTimeSpacing = true;
 
@@ -424,152 +422,168 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		//
 		// Calculate DSC-MRI exam masks
 		//
-		// Input parameters: volumes (4D matrix) which contains the trends of the DSC signals
+		// Input parameters: volumes (4D matrix) which contains the trends of the DSC
+		// signals
 		// of all voxels.
 		// And the structure that contains the method options, the significant ones are:
-		// 
-		// mask_npixel: represents the number of minimum pixels of a connected component that
-		// is used as a threshold to exclude the scalp and adjacent areas outside the brain
+		//
+		// mask_npixel: represents the number of minimum pixels of a connected component
+		// that
+		// is used as a threshold to exclude the scalp and adjacent areas outside the
+		// brain
 		// from the image.
 		//
 		// display: Level 1 shows the processing progress
-		//          Level 2 shows the masks and information on the threshold and intensity of
-		//          the images to be masked.
+		// Level 2 shows the masks and information on the threshold and intensity of
+		// the images to be masked.
 		//
 		// Output parameters: Structure mask, which contains:
 		// mask_aif: Mask optimized for the arterial input function
 		// mask_data: Mask optimized for masking the entire brain
 		// mask_threshold: Threshold calculated and supplied at the output
 		//
-		// For the supplied sample image only the right half of the first Gaussian is present, so find the
-		// mean and amplitude of the first Gaussian with a simple search for the highest peak.
-		// Use the ratio of the amplitude 3 channels to right of the mean to the amplitude of the
-		// mean to obtain an initial estimate of the standard deviation.  Use a 1 parameter search over the
-		// 4 channels from the mean to 3 channels right of the mean to obtain a refined value of the first
-		// Gaussian standard deviation.  Since a half Gaussian will not produce 2 paired in scaled space, 
-		// eliminate all zero crossings to 3 channels right of the 
-		// first Gaussian mean over all scales.  Use scale space to find the amplitude, mean, and standard deviation
-		// of the second Gaussian.  Find the smallest sigma for which only 2 branches are present and
-		// follow them scale by scale to the down to the zero crossings at the smallest sigma.  If there is
-		// no sigma for which only 2 branches are present,  find the lowest sigma for which only one branch
-		// is present, and follow it down and eliminate all zero crossings for the unpaired lone branch.  Then
+		// For the supplied sample image only the right half of the first Gaussian is
+		// present, so find the
+		// mean and amplitude of the first Gaussian with a simple search for the highest
+		// peak.
+		// Use the ratio of the amplitude 3 channels to right of the mean to the
+		// amplitude of the
+		// mean to obtain an initial estimate of the standard deviation. Use a 1
+		// parameter search over the
+		// 4 channels from the mean to 3 channels right of the mean to obtain a refined
+		// value of the first
+		// Gaussian standard deviation. Since a half Gaussian will not produce 2 paired
+		// in scaled space,
+		// eliminate all zero crossings to 3 channels right of the
+		// first Gaussian mean over all scales. Use scale space to find the amplitude,
+		// mean, and standard deviation
+		// of the second Gaussian. Find the smallest sigma for which only 2 branches are
+		// present and
+		// follow them scale by scale to the down to the zero crossings at the smallest
+		// sigma. If there is
+		// no sigma for which only 2 branches are present, find the lowest sigma for
+		// which only one branch
+		// is present, and follow it down and eliminate all zero crossings for the
+		// unpaired lone branch. Then
 		// look for the new smallest sigma at which only 2 branches are present.
 		int i, j, k, x, y, z, t, s;
 		boolean doneBackupSecondGaussian = false;
 		double[] firstDerivBuffer = null;
 		int twoIndexLowLocation[] = null;
-	    int twoIndexHighLocation[] = null;
+		int twoIndexHighLocation[] = null;
 		double mask_threshold;
-	    if (display > 0) {
-	    	UI.setDataText("Masking data...");
-	    }
-	    
-	    int nbin = 100;
-	    double volume_sum[][][] = new double[nC][nR][nS];
-	    maxSum = -Double.MAX_VALUE;
-	    minSum = Double.MAX_VALUE;
-	    for (x = 0; x < nC; x++) {
-	    	for (y = 0; y < nR; y++) {
-	    		for (z = 0; z < nS; z++) {
-	    			for (t = 0; t < nT; t++) {
-	    				volume_sum[x][y][z] += volumes[x][y][z][t];
-	    			}
-	    			if (volume_sum[x][y][z] <  minSum) {
-	    				minSum = volume_sum[x][y][z];
-	    			}
-	    			if (volume_sum[x][y][z] > maxSum) {
-	    				maxSum = volume_sum[x][y][z];
-	    			}
-	    		}
-	    	}
-	    }
-	    mask_data = new byte[nC][nR][nS];
-	    intensity = new double[nbin];
-	    int prob[] = new int[nbin];
-	    for (i = 0; i < nbin; i++) {
-	    	intensity[i] = minSum + ((2.0*i + 1.0)/2.0)*((maxSum - minSum)/nbin);
-	    }
-	    int binNum = 0;
-	    for (x = 0; x < nC; x++) {
-	    	for (y = 0; y < nR; y++) {
-	    		for (z = 0; z < nS; z++) {
-	    		    binNum = (int)(((volume_sum[x][y][z] - minSum)/(maxSum - minSum))*nbin);
-	    		    if (binNum == nbin) {
-	    		    	binNum =  nbin -1;
-	    		    }
-	    		    prob[binNum]++;
-	    		}
-	    	}
-	    }
-	    
-	    int ind_max = -1;
-	    int maxProb = -1;
-	    for (i = 0; i < binNum; i++) {
-	    	if (prob[i] > maxProb) {
-	    		ind_max = i;
-	    		maxProb = prob[i];
-	    	}
-	    }
-	    if (((double)prob[ind_max + 1])/((double)maxProb) > 0.3) {
-	        ind_max = ind_max-1;	
-	    }
-	    int tempInt[] = new int[nbin-1-ind_max];
-	    for (i = ind_max+1; i <= nbin-1; i++) {
-	    	tempInt[i-ind_max-1] = prob[i];
-	    }
-	    prob = null;
-	    probDouble = new double[nbin-1-ind_max];
-	    for (i = 0; i < nbin-1-ind_max; i++) {
-	    	probDouble[i] = (double)tempInt[i];
-	    }
-	    
-	    double tempDouble[] = new double[nbin-1-ind_max];
-	    for (i = ind_max+1; i <=nbin-1; i++) {
-	    	tempDouble[i-ind_max-1] = intensity[i];
-	    }
-	    intensity = null;
-	    intensity = new double[nbin-1-ind_max];
-	    for (i = 0; i < nbin-1-ind_max; i++) {
-	    	intensity[i] = tempDouble[i];
-	    }
-	    
-	    gauss2FittingObservations = nbin-1-ind_max;
-	    gauss2FittingData = new double[2*gauss2FittingObservations];
-	    //double ySum = 0.0;
-	    for (i = 0; i < gauss2FittingObservations; i++) {
-	    	gauss2FittingData[2*i] = intensity[i];
-	    	gauss2FittingData[2*i+1] = probDouble[i];
-	    	Preferences.debug("probDouble["+i+"] = " + probDouble[i] + "\n", Preferences.DEBUG_ALGORITHM);
-	    	//ySum += probDouble[i];
-	    }
-	    double xp[] = null;
-	    
-	    if (!test2PerfectGaussians) {
-		    // The first Gaussian at the extreme left is found by highest amplitude
-		    firstGaussianMeanBin = -1;
-		    firstGaussianAmplitude = -Double.MAX_VALUE; 
-		    for (i = 0; i < intensity.length; i++)  {
-		    	if (probDouble[i] > firstGaussianAmplitude) {
-		    		firstGaussianAmplitude = probDouble[i];
-		    		firstGaussianMeanBin = i;
-		    	}
-		    }
-		    firstGaussianMean = intensity[firstGaussianMeanBin];
-		    UI.setDataText("First Gaussian amplitude = " + firstGaussianAmplitude + "\n");
-		    UI.setDataText("First Gaussian mean = " + firstGaussianMean + "\n");
-		    // Calculate c1 from amplitude of best fit of highest channel and next 3 channels to the right
-		    
-		    // Initial estimate of c1 = sqrt(2) * standard deviation
-		    double xp1[] = new double[1];
-		    double ratio = probDouble[firstGaussianMeanBin + 3]/probDouble[firstGaussianMeanBin];
-		    double diff = (intensity[firstGaussianMeanBin+3] - firstGaussianMean);
-		    // exp(-((x-mean)/c1)^2) = ratio
-		    // -(intensity[firstGaussianMeanBin+3] - firstGaussianMean)^2/(c1*c1) = ln(ratio)
-		    xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
-		    CostFunction cost_function1 = new gaussStandardDeviationFittingCostFunction();
-		    ProblemImpl problem = new ProblemImpl();
+		if (display > 0) {
+			UI.setDataText("Masking data...");
+		}
+
+		int nbin = 100;
+		double volume_sum[][][] = new double[nC][nR][nS];
+		maxSum = -Double.MAX_VALUE;
+		minSum = Double.MAX_VALUE;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				for (z = 0; z < nS; z++) {
+					for (t = 0; t < nT; t++) {
+						volume_sum[x][y][z] += volumes[x][y][z][t];
+					}
+					if (volume_sum[x][y][z] < minSum) {
+						minSum = volume_sum[x][y][z];
+					}
+					if (volume_sum[x][y][z] > maxSum) {
+						maxSum = volume_sum[x][y][z];
+					}
+				}
+			}
+		}
+		mask_data = new byte[nC][nR][nS];
+		intensity = new double[nbin];
+		int prob[] = new int[nbin];
+		for (i = 0; i < nbin; i++) {
+			intensity[i] = minSum + ((2.0 * i + 1.0) / 2.0) * ((maxSum - minSum) / nbin);
+		}
+		int binNum = 0;
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				for (z = 0; z < nS; z++) {
+					binNum = (int) (((volume_sum[x][y][z] - minSum) / (maxSum - minSum)) * nbin);
+					if (binNum == nbin) {
+						binNum = nbin - 1;
+					}
+					prob[binNum]++;
+				}
+			}
+		}
+
+		int ind_max = -1;
+		int maxProb = -1;
+		for (i = 0; i < binNum; i++) {
+			if (prob[i] > maxProb) {
+				ind_max = i;
+				maxProb = prob[i];
+			}
+		}
+		if (((double) prob[ind_max + 1]) / ((double) maxProb) > 0.3) {
+			ind_max = ind_max - 1;
+		}
+		int tempInt[] = new int[nbin - 1 - ind_max];
+		for (i = ind_max + 1; i <= nbin - 1; i++) {
+			tempInt[i - ind_max - 1] = prob[i];
+		}
+		prob = null;
+		probDouble = new double[nbin - 1 - ind_max];
+		for (i = 0; i < nbin - 1 - ind_max; i++) {
+			probDouble[i] = (double) tempInt[i];
+		}
+
+		double tempDouble[] = new double[nbin - 1 - ind_max];
+		for (i = ind_max + 1; i <= nbin - 1; i++) {
+			tempDouble[i - ind_max - 1] = intensity[i];
+		}
+		intensity = null;
+		intensity = new double[nbin - 1 - ind_max];
+		for (i = 0; i < nbin - 1 - ind_max; i++) {
+			intensity[i] = tempDouble[i];
+		}
+
+		gauss2FittingObservations = nbin - 1 - ind_max;
+		gauss2FittingData = new double[2 * gauss2FittingObservations];
+		// double ySum = 0.0;
+		for (i = 0; i < gauss2FittingObservations; i++) {
+			gauss2FittingData[2 * i] = intensity[i];
+			gauss2FittingData[2 * i + 1] = probDouble[i];
+			Preferences.debug("probDouble[" + i + "] = " + probDouble[i] + "\n", Preferences.DEBUG_ALGORITHM);
+			// ySum += probDouble[i];
+		}
+		double xp[] = null;
+
+		if (!test2PerfectGaussians) {
+			// The first Gaussian at the extreme left is found by highest amplitude
+			firstGaussianMeanBin = -1;
+			firstGaussianAmplitude = -Double.MAX_VALUE;
+			for (i = 0; i < intensity.length; i++) {
+				if (probDouble[i] > firstGaussianAmplitude) {
+					firstGaussianAmplitude = probDouble[i];
+					firstGaussianMeanBin = i;
+				}
+			}
+			firstGaussianMean = intensity[firstGaussianMeanBin];
+			UI.setDataText("First Gaussian amplitude = " + firstGaussianAmplitude + "\n");
+			UI.setDataText("First Gaussian mean = " + firstGaussianMean + "\n");
+			// Calculate c1 from amplitude of best fit of highest channel and next 3
+			// channels to the right
+
+			// Initial estimate of c1 = sqrt(2) * standard deviation
+			double xp1[] = new double[1];
+			double ratio = probDouble[firstGaussianMeanBin + 3] / probDouble[firstGaussianMeanBin];
+			double diff = (intensity[firstGaussianMeanBin + 3] - firstGaussianMean);
+			// exp(-((x-mean)/c1)^2) = ratio
+			// -(intensity[firstGaussianMeanBin+3] - firstGaussianMean)^2/(c1*c1) =
+			// ln(ratio)
+			xp1[0] = Math.sqrt(-(diff * diff) / Math.log(ratio));
+			CostFunction cost_function1 = new gaussStandardDeviationFittingCostFunction();
+			ProblemImpl problem = new ProblemImpl();
 			problem.AddResidualBlock(cost_function1, null, xp1);
-	
+
 			// Run the solver!
 			SolverOptions solverOptions = new SolverOptions();
 			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
@@ -580,63 +594,66 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			c1 = xp1[0];
 			firstGaussianStandardDeviation = Math.sqrt(2.0) * c1;
 			if (display > 0) {
-			    UI.setDataText(solverSummary.BriefReport() + "\n");
-			    UI.setDataText("Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)\n");
-			    UI.setDataText("c1 = " + xp1[0] + "\n");
+				UI.setDataText(solverSummary.BriefReport() + "\n");
+				UI.setDataText("Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)\n");
+				UI.setDataText("c1 = " + xp1[0] + "\n");
 			}
-			
+
 			if (gaussStandardDeviationCheck) {
 				// Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)
-				// Ceres Solver Report: Iterations: 4, Initial cost: 7.957407e+09, Final cost: 6.387359e+07, Termination: CONVERGENCE
+				// Ceres Solver Report: Iterations: 4, Initial cost: 7.957407e+09, Final cost:
+				// 6.387359e+07, Termination: CONVERGENCE
 				// c1 = 755.8417495326521
 
-				// ******* Elsunc Fit Gauss Standard Deviation Fitting ********* 
+				// ******* Elsunc Fit Gauss Standard Deviation Fitting *********
 				// analyticalJacobian = true
 				// Number of iterations: 5
 				// Chi-squared: 1.2774713914732091E8
 				// a0 755.7982689862721
-				// ******* Elsunc Fit Gauss Standard Deviation Fitting ********* 
+				// ******* Elsunc Fit Gauss Standard Deviation Fitting *********
 				// analyticalJacobian = false
-				//Number of iterations: 5
+				// Number of iterations: 5
 				// Chi-squared: 1.2774713914732087E8
 				// a0 755.7982690260098
 				System.out.println("Solved answer for firstGaussianAmplitude*exp(-((x-firstGaussianMean)/c1)^2)\n");
 				System.out.println(solverSummary.BriefReport());
-			    System.out.println("c1 = " + xp1[0] + "\n");
+				System.out.println("c1 = " + xp1[0] + "\n");
 				boolean doAnalytical = true;
-				xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
-			    gaussStandardDeviationFitting gsd = new gaussStandardDeviationFitting(xp1, doAnalytical);	
-			    gsd.driver();
-			    gsd.dumpResults();
-			    doAnalytical = false;
-				xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
-			    gsd = new gaussStandardDeviationFitting(xp1, doAnalytical);	
-			    gsd.driver();
-			    gsd.dumpResults();
-			    System.exit(0);
-			}  // if (gaussStandardDeviationCheck)
-			
+				xp1[0] = Math.sqrt(-(diff * diff) / Math.log(ratio));
+				gaussStandardDeviationFitting gsd = new gaussStandardDeviationFitting(xp1, doAnalytical);
+				gsd.driver();
+				gsd.dumpResults();
+				doAnalytical = false;
+				xp1[0] = Math.sqrt(-(diff * diff) / Math.log(ratio));
+				gsd = new gaussStandardDeviationFitting(xp1, doAnalytical);
+				gsd.driver();
+				gsd.dumpResults();
+				System.exit(0);
+			} // if (gaussStandardDeviationCheck)
+
 			secondGaussianMeanBin = -1;
-		    secondGaussianAmplitude = -Double.MAX_VALUE; 
-		    for (i = firstGaussianMeanBin+4; i < intensity.length; i++)  {
-		    	if ((probDouble[i] > secondGaussianAmplitude) && (probDouble[i] > probDouble[i-3])) {
-		    		secondGaussianAmplitude = probDouble[i];
-		    		secondGaussianMeanBin = i;
-		    	}
-		    }
-		    secondGaussianMean = intensity[secondGaussianMeanBin];
-		    UI.setDataText("Second Gaussian amplitude = " + secondGaussianAmplitude + "\n");
-		    UI.setDataText("Second Gaussian mean = " + secondGaussianMean + "\n");
-		    // Calculate c2 from amplitude of best fit of highest channel and next 3 channels to the right
-		    
-		    // Initial estimate of c1 = sqrt(2) * standard deviation
-		    ratio = probDouble[secondGaussianMeanBin + 3]/probDouble[secondGaussianMeanBin];
-		    diff = (intensity[secondGaussianMeanBin+3] - secondGaussianMean);
-		    // exp(-((x-mean)/c1)^2) = ratio
-		    // -(intensity[secondGaussianMeanBin+3] - secondGaussianMean)^2/(c2*c2) = ln(ratio)
-		    xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
-		    cost_function1 = new gaussSecondStandardDeviationFittingCostFunction();
-		    problem = new ProblemImpl();
+			secondGaussianAmplitude = -Double.MAX_VALUE;
+			for (i = firstGaussianMeanBin + 4; i < intensity.length; i++) {
+				if ((probDouble[i] > secondGaussianAmplitude) && (probDouble[i] > probDouble[i - 3])) {
+					secondGaussianAmplitude = probDouble[i];
+					secondGaussianMeanBin = i;
+				}
+			}
+			secondGaussianMean = intensity[secondGaussianMeanBin];
+			UI.setDataText("Second Gaussian amplitude = " + secondGaussianAmplitude + "\n");
+			UI.setDataText("Second Gaussian mean = " + secondGaussianMean + "\n");
+			// Calculate c2 from amplitude of best fit of highest channel and next 3
+			// channels to the right
+
+			// Initial estimate of c1 = sqrt(2) * standard deviation
+			ratio = probDouble[secondGaussianMeanBin + 3] / probDouble[secondGaussianMeanBin];
+			diff = (intensity[secondGaussianMeanBin + 3] - secondGaussianMean);
+			// exp(-((x-mean)/c1)^2) = ratio
+			// -(intensity[secondGaussianMeanBin+3] - secondGaussianMean)^2/(c2*c2) =
+			// ln(ratio)
+			xp1[0] = Math.sqrt(-(diff * diff) / Math.log(ratio));
+			cost_function1 = new gaussSecondStandardDeviationFittingCostFunction();
+			problem = new ProblemImpl();
 			problem.AddResidualBlock(cost_function1, null, xp1);
 
 			// Run the solver!
@@ -649,442 +666,39 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			c2 = xp1[0];
 			secondGaussianStandardDeviation = Math.sqrt(2.0) * c2;
 			if (display > 0) {
-			    UI.setDataText(solverSummary.BriefReport() + "\n");
-			    UI.setDataText("Solved answer for secondGaussianAmplitude*exp(-((x-secondGaussianMean)/c2)^2)\n");
-			}	
-			UI.setDataText("c2 = " + xp1[0] + "\n");
-			xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, secondGaussianAmplitude, secondGaussianMean, c2};
-	    } // if (!test2PerfectGaussians)
-	    
-	   
-	    if (test2PerfectGaussians) {
-	    	double a1 = 1000.0;
-	    	double b1 = 3.0;
-	    	c1 = 1.0;
-	    	double a2 = 2000.0;
-	    	double b2 = 7.0;
-	    	c2 = 2.0;
-	    	gauss2FittingObservations = 100;
-	    	gauss2FittingData = new double[200];
-	    	for (i = 0; i < 100; i++) {
-	    		gauss2FittingData[2*i] = 0.1*i;
-	    		intensity[i] = 0.1*i;
-	    		double val1 = (0.1*i - b1)/c1;
-	    		double val2 = (0.1*i - b2)/c2;
-	    		gauss2FittingData[2*i+1] = a1*Math.exp(-val1*val1) + a2*Math.exp(-val2*val2);
-	    		probDouble[i] = gauss2FittingData[2*i+1];
-	    		//Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
-	    		//a1 = 2014.0515679050666
-	    		//b1 = 7.0
-	    		//c1 = 1.9798989873223332
-	    		//a2 = 1004.2121919422965
-	    		//b2 = 2.9000000000000004
-	    		//c2 = 0.9899494936611666
-	    		//Ceres Solver Report: Iterations: 10, Initial cost: 7.261461e+04, Final cost: 1.129515e-07, Termination: CONVERGENCE
-	    		//Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
-	    		//a1 = 2000.0000318008936
-	    		//b1 = 6.9999999825169725
-	    		//c1 = 1.9999999839278295
-	    		//a2 = 1000.0000306581111
-	    		//b2 = 2.99999987472384
-	    		//c2 = 0.9999999590528206
-	    	}
-	    } // if (test2PerfectGaussians)
-	    
-	    
-	    // Simple intialization scheme does not work
-	    //double xp[] = new double[] {ySum/gauss2FittingObservations, intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0, 
-	    		//ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3], (intensity[intensity.length -1] - intensity[0])/3.0};
-	    /*byte zeroCrossing[][] = new byte[3*gauss2FittingObservations][];
-	    int numberZeroCrossings[] = new int[3*gauss2FittingObservations];
-	    int firstFiveIndex = -1;
-	    int firstFourIndex = -1;
-	    int firstThreeIndex = -1;
-	    int firstTwoIndex = -1;
-	    int firstOneIndex = -1;
-	    for (i = 1; i <= 3*gauss2FittingObservations; i++) {
-	    	sigmas[0] = 1 + (i-1)*0.1;
-	    	zeroCrossing[i-1] = calcZeroX(probDouble);
-	    	for (j = 0; j < zeroCrossing[i-1].length; j++) {
-	    		if (zeroCrossing[i-1][j] == 1) {
-	    			numberZeroCrossings[i-1]++;
-	    		}
-	    		
-	    	}
-	    	if ((firstFiveIndex == -1) && (numberZeroCrossings[i-1] == 5)) {
-	    		firstFiveIndex = i-1;
-	    	}
-	    	else if ((firstFourIndex == -1) && (numberZeroCrossings[i-1] == 4)) {
-	    		firstFourIndex = i-1;
-	    	}
-	    	else if ((firstThreeIndex == -1) && (numberZeroCrossings[i-1] == 3)) {
-	    		firstThreeIndex = i-1;
-	    	}
-	    	else if ((firstTwoIndex == -1) && (numberZeroCrossings[i-1] == 2)) {
-	    		firstTwoIndex = i-1;
-	    	}
-	    	else if ((firstOneIndex == -1) && (numberZeroCrossings[i-1] == 1)) {
-	    		firstOneIndex = i-1;
-	    	}
-	    }
-	    for (i = 0; i < 3*gauss2FittingObservations; i++) {
-	    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
-	    			Preferences.DEBUG_ALGORITHM);
-	    	int numberDisplayed = 0;
-	    	for (j = 0; j < zeroCrossing[i].length; j++) {
-	    		if (zeroCrossing[i][j] == 1) {
-		    		if (numberDisplayed == numberZeroCrossings[i]-1) {
-		    			Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM);
-		    		}
-		    		else {
-		    			Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM);
-		    		}
-		    		numberDisplayed++;
-	    		}		
-	    	}
-	    }
-	    if (test2PerfectGaussians && (firstFourIndex == -1) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
-	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
-	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-	    	errorInMaskRoutine = true;
-	    	return;
-	    }
-	    if (test2PerfectGaussians && (firstFourIndex == -1) && (firstOneIndex == -1)) {
-	    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
-	    	errorInMaskRoutine = true;
-	    	return;
-	    }
-	    if (test2PerfectGaussians && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
-	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-	    	errorInMaskRoutine = true;
-	    	return;
-	    }
-	    if ((!test2PerfectGaussians) && (firstTwoIndex == -1) && (firstOneIndex == -1)) {
-	    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-	    	backupSecondGaussianRoutine();
-        	doneBackupSecondGaussian = true;
-	    }
-	    if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) {
-	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
-	        int zeroCrossingsToEliminate[] = new int[firstOneIndex+1];
-	        for (j = 0; j < zeroCrossing[firstOneIndex].length; j++) {
-	        	if (zeroCrossing[firstOneIndex][j] == 1) {
-	        		zeroCrossingsToEliminate[firstOneIndex] = j;
-	        	}
-	        }
-	        for (j = firstOneIndex-1; j >= 0; j--) {
-	        	int distance = Integer.MAX_VALUE;
-	        	for (i = 0; i < zeroCrossing[j].length; i++) {
-	        		if ((zeroCrossing[j][i] == 1) && (Math.abs(i - zeroCrossingsToEliminate[j+1]) < distance)) {
-	        			zeroCrossingsToEliminate[j] = i;
-	        			distance = Math.abs(i - zeroCrossingsToEliminate[j+1]);
-	        		}
-	        	}
-	        }
-	        for (j = 3*gauss2FittingObservations-1; j > firstOneIndex; j--) {
-	        	for (i = 0; i < zeroCrossing[j].length; i++) {
-	        		zeroCrossing[j][i] = 0;
-	        	}
-	        	numberZeroCrossings[j] = 0;
-	        }
-	        for (j = 0; j <= firstOneIndex; j++) {
-	        	zeroCrossing[j][zeroCrossingsToEliminate[j]] = 0;
-	        	numberZeroCrossings[j]--;
-	        }
-	        firstFourIndex = firstFiveIndex;
-	        firstTwoIndex = firstThreeIndex;
-	        for (i = 0; i < 3*gauss2FittingObservations; i++) {
-		    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
-		    			Preferences.DEBUG_ALGORITHM);
-		    	int numberDisplayed = 0;
-		    	for (j = 0; j < zeroCrossing[i].length; j++) {
-		    		if (zeroCrossing[i][j] == 1) {
-			    		if (numberDisplayed == numberZeroCrossings[i]-1) {
-			    			Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM);
-			    		}
-			    		else {
-			    			Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM);
-			    		}
-			    		numberDisplayed++;
-		    		}		
-		    	}
-		    }
-		    if ((firstFourIndex == -1) && (firstTwoIndex == -1)) {
-		    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
-		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-		    	errorInMaskRoutine = true;
-		    	return;
-		    }
-		    if (firstFourIndex == -1) {
-		    	System.err.println("No scale space with 4 zero crossings found in initializing sum of Gaussians");
-		    	errorInMaskRoutine = true;
-		    	return;
-		    }
-		    if (firstTwoIndex == -1) {
-		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-		    	errorInMaskRoutine = true;
-		    	return;
-		    }
-	    } // if (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0))
-	    if ((!test2PerfectGaussians) && (!doneBackupSecondGaussian) && (firstTwoIndex == -1) && (firstOneIndex > 0)) {
-	    	Preferences.debug("Removing unpaired branch in Gaussian initialization\n", Preferences.DEBUG_ALGORITHM);
-	        int zeroCrossingsToEliminate[] = new int[firstOneIndex+1];
-	        for (j = 0; j < zeroCrossing[firstOneIndex].length; j++) {
-	        	if (zeroCrossing[firstOneIndex][j] == 1) {
-	        		zeroCrossingsToEliminate[firstOneIndex] = j;
-	        	}
-	        }
-	        for (j = firstOneIndex-1; j >= 0; j--) {
-	        	int distance = Integer.MAX_VALUE;
-	        	for (i = 0; i < zeroCrossing[j].length; i++) {
-	        		if ((zeroCrossing[j][i] == 1) && (Math.abs(i - zeroCrossingsToEliminate[j+1]) < distance)) {
-	        			zeroCrossingsToEliminate[j] = i;
-	        			distance = Math.abs(i - zeroCrossingsToEliminate[j+1]);
-	        		}
-	        	}
-	        }
-	        for (j = 3*gauss2FittingObservations-1; j > firstOneIndex; j--) {
-	        	for (i = 0; i < zeroCrossing[j].length; i++) {
-	        		zeroCrossing[j][i] = 0;
-	        	}
-	        	numberZeroCrossings[j] = 0;
-	        }
-	        for (j = 0; j <= firstOneIndex; j++) {
-	        	zeroCrossing[j][zeroCrossingsToEliminate[j]] = 0;
-	        	numberZeroCrossings[j]--;
-	        }
-	        firstTwoIndex = firstThreeIndex;
-	        for (i = 0; i < 3*gauss2FittingObservations; i++) {
-		    	Preferences.debug("i = " + (i+1) + " number zero crossings = " + numberZeroCrossings[i] + "\n",
-		    			Preferences.DEBUG_ALGORITHM);
-		    	int numberDisplayed = 0;
-		    	for (j = 0; j < zeroCrossing[i].length; j++) {
-		    		if (zeroCrossing[i][j] == 1) {
-			    		if (numberDisplayed == numberZeroCrossings[i]-1) {
-			    			Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM);
-			    		}
-			    		else {
-			    			Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM);
-			    		}
-			    		numberDisplayed++;
-		    		}		
-		    	}
-		    }
-		    if (firstTwoIndex == -1) {
-		    	System.err.println("No scale space with 2 zero crossings found in initializing sum of Gaussians");
-		    	backupSecondGaussianRoutine();
-	        	doneBackupSecondGaussian = true;
-		    }
-	    } // if ((!test2PerfectGaussians) && (!doneBackupSecondGaussian) && (firstTwoIndex == -1) && (firstOneIndex > 0))
-	    if (!doneBackupSecondGaussian) {
-		    twoIndexLowLocation = new int[firstTwoIndex+1];
-		    twoIndexHighLocation = new int[firstTwoIndex+1];
-		    for (j = 0; j < firstTwoIndex+1; j++) {
-		    	twoIndexLowLocation[j] = -1;
-		    	twoIndexHighLocation[j] = -1;
-		    }
-		    for (j = 0; j < zeroCrossing[firstTwoIndex].length; j++) {
-		    	if ((zeroCrossing[firstTwoIndex][j] == 1) && (twoIndexLowLocation[firstTwoIndex] == -1)) {
-		    	    twoIndexLowLocation[firstTwoIndex] = j;	
-		    	}
-		    	else if (zeroCrossing[firstTwoIndex][j] == 1) {
-		    		twoIndexHighLocation[firstTwoIndex] = j;
-		    	}
-		    }
-		  
-		    for (j = firstTwoIndex-1; j >= 0; j--) {
-			    int GaussianLowDistance = Integer.MAX_VALUE;
-			    int GaussianHighDistance = Integer.MAX_VALUE;
-			    for (i = 0; i < zeroCrossing[j].length; i++) {
-			    	if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexLowLocation[j+1]) < GaussianLowDistance)) {
-			    		twoIndexLowLocation[j] = i;
-			    		GaussianLowDistance = Math.abs(i - twoIndexLowLocation[j+1]);
-			    	}
-			    	else if ((zeroCrossing[j][i] == 1) && (Math.abs(i - twoIndexHighLocation[j+1]) < GaussianHighDistance)) {
-			    		twoIndexHighLocation[j] = i;
-			    		GaussianHighDistance = Math.abs(i - twoIndexHighLocation[j+1]);
-			    	}
-			    }
-		    }
-		    
-		    sigmas[0] = 1.0;
-		    makeGxKernels1D();
-	        firstDerivBuffer = new double[probDouble.length];
-	        convolve(probDouble, GxData, firstDerivBuffer);
-		    
-		    int twoIndexLowSlope = 0;
-	        if (firstDerivBuffer[twoIndexLowLocation[0]] > 0) {
-		         twoIndexLowSlope = 1;	
-		    }
-	        else if (firstDerivBuffer[twoIndexLowLocation[0]] < 0) {
-	        	twoIndexLowSlope = -1;
-	        }
-	        int twoIndexHighSlope = 0;
-	        if (firstDerivBuffer[twoIndexHighLocation[0]] > 0) {
-		         twoIndexHighSlope = 1;	
-		    }
-	        else if (firstDerivBuffer[twoIndexHighLocation[0]] < 0) {
-	        	twoIndexHighSlope = -1;
-	        }
-	        if ((twoIndexLowSlope > 0) && (twoIndexHighSlope > 0)) {
-	        	System.err.println("In scale space with 2 zero crossings both crossings are positive");
-	        	backupSecondGaussianRoutine();
-	        	doneBackupSecondGaussian = true;
-	        }
-	        else if ((twoIndexLowSlope < 0) && (twoIndexHighSlope < 0)) {
-	        	System.err.println("In scale space with 2 zero crossings both crossings are negative");
-	        	backupSecondGaussianRoutine();
-	        	doneBackupSecondGaussian = true;
-	        }
-	        else if ((twoIndexLowSlope < 0) && (twoIndexHighSlope > 0)) {
-	        	System.err.println("In scale space with 2 zero crossings low crossing is negative and high crossing is positive");
-	        	backupSecondGaussianRoutine();
-	        	doneBackupSecondGaussian = true;
-	        }
-	    } // if (!doneBackupSecondGaussian)
-        
-	    if (test2PerfectGaussians) {
-	        int fourIndexLowLocation[] = new int[firstFourIndex+1];
-		    int fourIndexHighLocation[] = new int[firstFourIndex+1];
-		    for (j = 0; j < firstFourIndex+1; j++) {
-		    	fourIndexLowLocation[j] = -1;
-		    	fourIndexHighLocation[j] = -1;
-		    }
-		    for (j = 0; j < zeroCrossing[firstFourIndex].length; j++) {
-		    	if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex]) &&
-		    		(fourIndexLowLocation[firstFourIndex] == -1)) {
-		    	    fourIndexLowLocation[firstFourIndex] = j;	
-		    	}
-		    	else if ((zeroCrossing[firstFourIndex][j] == 1) && (j != twoIndexLowLocation[firstFourIndex]) && (j != twoIndexHighLocation[firstFourIndex])) {
-		    		fourIndexHighLocation[firstFourIndex] = j;
-		    	}
-		    }
-		    
-		    for (j = firstFourIndex-1; j >= 0; j--) {
-			    int secondGaussianLowDistance = Integer.MAX_VALUE;
-			    int secondGaussianHighDistance = Integer.MAX_VALUE;
-			    for (i = 0; i < zeroCrossing[j].length; i++) {
-			    	if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
-			    			(Math.abs(i - fourIndexLowLocation[j+1]) < secondGaussianLowDistance)) {
-			    		fourIndexLowLocation[j] = i;
-			    		secondGaussianLowDistance = Math.abs(i - fourIndexLowLocation[j+1]);
-			    	}
-			    	else if ((zeroCrossing[j][i] == 1) && (j != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) &&
-			    			(Math.abs(i - fourIndexHighLocation[j+1]) < secondGaussianHighDistance)) {
-			    		fourIndexHighLocation[j] = i;
-			    		secondGaussianHighDistance = Math.abs(i - fourIndexHighLocation[j+1]);
-			    	}
-			    }
-		    }
-		    
-		    int fourIndexLowSlope = 0;
-	        if (firstDerivBuffer[fourIndexLowLocation[0]] > 0) {
-		         fourIndexLowSlope = 1;	
-		    }
-	        else if (firstDerivBuffer[fourIndexLowLocation[0]] < 0) {
-	        	fourIndexLowSlope = -1;
-	        }
-	        int fourIndexHighSlope = 0;
-	        if (firstDerivBuffer[fourIndexHighLocation[0]] > 0) {
-		         fourIndexHighSlope = 1;	
-		    }
-	        else if (firstDerivBuffer[fourIndexHighLocation[0]] < 0) {
-	        	fourIndexHighSlope = -1;
-	        }
-	        if ((fourIndexLowSlope > 0) && (fourIndexHighSlope > 0)) {
-	        	System.err.println("In scale space with 4 zero crossings 3 crossings are positive");
-	        	errorInMaskRoutine = true;
-	        	return;
-	        }
-	        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope < 0)) {
-	        	System.err.println("In scale space with 4 zero crossings 3 crossings are negative");
-	        	errorInMaskRoutine = true;
-	        	return;
-	        }
-	        if ((fourIndexLowSlope < 0) && (fourIndexHighSlope > 0)) {
-	        	System.err.println("In scale space with 4 zero crossings second Gaussian low crossing is negative and second Gaussian high crossing is positive");
-	        	errorInMaskRoutine = true;
-	        	return;
-	        }
-	    
-		    firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
-		    firstGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
-		    secondGaussianMean = ((double)(intensity[fourIndexLowLocation[0]] + intensity[fourIndexHighLocation[0]]))/2.0;
-		    secondGaussianStandardDeviation = ((double)(intensity[fourIndexHighLocation[0]] - intensity[fourIndexLowLocation[0]]))/2.0;
-		    // a11*firstGaussianAmplitude + a12*secondGaussianAmplitude = b1
-		    // a21*firstGaussianAmplitude + a22*secondGaussianAmplitude = b2;
-		    double a11 = 0.0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double val = (intensity[k] - firstGaussianMean)/firstGaussianStandardDeviation;
-		    	a11 += Math.exp(-val * val);
-		    }
-		    double a12 = 0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double diff1 = (intensity[k] - firstGaussianMean);
-		    	double diff2 = (intensity[k] - secondGaussianMean);
-		    	a12 += Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation) 
-		    			        -diff2*diff2/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
-		    }
-		    double a21 = a12;
-		    double a22 = 0.0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double val = (intensity[k] - secondGaussianMean)/secondGaussianStandardDeviation;
-		    	a22 += Math.exp(-val * val);
-		    }
-		    double b1 = 0.0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double diff = (intensity[k] - firstGaussianMean);
-		    	b1 += probDouble[k]*Math.exp(-diff*diff/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation));
-		    }
-		    double b2 = 0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double diff = (intensity[k] - secondGaussianMean);
-		    	b2 += probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
-		    }
-		    double det = a11*a22 - a21*a12;
-		    if (det == 0.0) {
-		    	System.err.println("Cannot solve linear equations for Gaussian amplitudes because determinant is zero");
-		    	return;
-		    }
-		    double det1 = b1*a22 - b2*a12;
-		    double det2 = a11*b2 - a21*b1;
-		    firstGaussianAmplitude = det1/det;
-		    secondGaussianAmplitude = det2/det;
-		    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
-		    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
-		    if (display > 0) {
-		    	UI.setDataText("Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
-			    UI.setDataText("a1 = " + xp[0] + "\n");
-			    UI.setDataText("b1 = " + xp[1] + "\n");
-			    UI.setDataText("c1 = " + xp[2] + "\n");
-			    UI.setDataText("a2 = " + xp[3] + "\n");
-			    UI.setDataText("b2 = " + xp[4] + "\n");
-			    UI.setDataText("c2 = " + xp[5] + "\n");
-		    }
-		   
-		    CostFunction cost_function = new gauss2FittingCostFunction();
-		    ProblemImpl problem = new ProblemImpl();
-			problem.AddResidualBlock(cost_function, null, xp);
-	
-			// Run the solver!
-			SolverOptions solverOptions = new SolverOptions();
-			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
-			solverOptions.max_num_consecutive_invalid_steps = 100;
-			solverOptions.minimizer_progress_to_stdout = true;
-			SolverSummary solverSummary = new SolverSummary();
-			Solve(solverOptions, problem, solverSummary);
-			if (display > 0) {
-			    UI.setDataText(solverSummary.BriefReport() + "\n");
-			    UI.setDataText("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n");
-			    UI.setDataText("a1 = " + xp[0] + "\n");
-			    UI.setDataText("b1 = " + xp[1] + "\n");
-			    UI.setDataText("c1 = " + xp[2] + "\n");
-			    UI.setDataText("a2 = " + xp[3] + "\n");
-			    UI.setDataText("b2 = " + xp[4] + "\n");
-			    UI.setDataText("c2 = " + xp[5] + "\n");
+				UI.setDataText(solverSummary.BriefReport() + "\n");
+				UI.setDataText("Solved answer for secondGaussianAmplitude*exp(-((x-secondGaussianMean)/c2)^2)\n");
 			}
-			if (gauss2FittingCheck) {
-				// Ceres Solver Report: Iterations: 10, Initial cost: 7.261461e+04, Final cost: 1.129515e-07, Termination: CONVERGENCE
+			UI.setDataText("c2 = " + xp1[0] + "\n");
+			xp = new double[] { firstGaussianAmplitude, firstGaussianMean, c1, secondGaussianAmplitude,
+					secondGaussianMean, c2 };
+		} // if (!test2PerfectGaussians)
+
+		if (test2PerfectGaussians) {
+			double a1 = 1000.0;
+			double b1 = 3.0;
+			c1 = 1.0;
+			double a2 = 2000.0;
+			double b2 = 7.0;
+			c2 = 2.0;
+			gauss2FittingObservations = 100;
+			gauss2FittingData = new double[200];
+			for (i = 0; i < 100; i++) {
+				gauss2FittingData[2 * i] = 0.1 * i;
+				intensity[i] = 0.1 * i;
+				double val1 = (0.1 * i - b1) / c1;
+				double val2 = (0.1 * i - b2) / c2;
+				gauss2FittingData[2 * i + 1] = a1 * Math.exp(-val1 * val1) + a2 * Math.exp(-val2 * val2);
+				probDouble[i] = gauss2FittingData[2 * i + 1];
+				// Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
+				// a1 = 2014.0515679050666
+				// b1 = 7.0
+				// c1 = 1.9798989873223332
+				// a2 = 1004.2121919422965
+				// b2 = 2.9000000000000004
+				// c2 = 0.9899494936611666
+				// Ceres Solver Report: Iterations: 10, Initial cost: 7.261461e+04, Final cost:
+				// 1.129515e-07, Termination: CONVERGENCE
 				// Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)
 				// a1 = 2000.0000318008936
 				// b1 = 6.9999999825169725
@@ -1092,594 +706,784 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				// a2 = 1000.0000306581111
 				// b2 = 2.99999987472384
 				// c2 = 0.9999999590528206
-				//  ******* Elsunc 2 Gaussian Curve Fitting ********* 
-				// analyticalJacobian = true
-				// Number of iterations: 4
-				// Chi-squared: 0.0
-				// a0 2000.0
-				// a1 7.0
-				// a2 2.0
-				// a3 1000.0
-				// a4 3.0
-				// a5 1.0
-				// ******* Elsunc 2 Gaussian Curve Fitting ********* 
-				// analyticalJacobian = false
-				// Number of iterations: 4
-				// Chi-squared: 0.0
-				// a0 2000.0
-				// a1 7.0
-				// a2 2.0
-				// a3 1000.0
-				// a4 3.0
-				// a5 1.0
-				System.out.println(solverSummary.BriefReport());
-			    System.out.println("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)");
-			    System.out.println("a1 = " + xp[0]);
-			    System.out.println("b1 = " + xp[1]);
-			    System.out.println("c1 = " + xp[2]);
-			    System.out.println("a2 = " + xp[3]);
-			    System.out.println("b2 = " + xp[4]);
-			    System.out.println("c2 = " + xp[5]);
-			    
-			    boolean doAnalytical = true;
-			    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
-			    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
-			    gauss2Fitting g2 = new gauss2Fitting(xp, doAnalytical);	
-			    g2.driver();
-			    g2.dumpResults();
-			    doAnalytical = false;
-			    xp = new double[] {firstGaussianAmplitude, firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
-			    		secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
-			    g2 = new gauss2Fitting(xp, doAnalytical);	
-			    g2.driver();
-			    g2.dumpResults();
-			    System.exit(0);
 			}
-	    } // if (test2PerfectGaussians)
-	    else if (!doneBackupSecondGaussian){
-	    	secondGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] + intensity[twoIndexHighLocation[0]]))/2.0;
-		    secondGaussianStandardDeviation = ((double)(intensity[twoIndexHighLocation[0]] - intensity[twoIndexLowLocation[0]]))/2.0;
-		    c2 = Math.sqrt(2.0) * secondGaussianStandardDeviation;
-		    // secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22
-		    double a21 = 0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double diff1 = (intensity[k] - firstGaussianMean);
-		    	double diff2 = (intensity[k] - secondGaussianMean);
-		    	a21 += Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*firstGaussianStandardDeviation) 
-		    			        -diff2*diff2/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
-		    }
-		    double a22 = 0.0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double val = (intensity[k] - secondGaussianMean)/secondGaussianStandardDeviation;
-		    	a22 += Math.exp(-val * val);
-		    }
-		    double b2 = 0;
-		    for (k = 0; k < gauss2FittingObservations; k++) {
-		    	double diff = (intensity[k] - secondGaussianMean);
-		    	b2 += probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*secondGaussianStandardDeviation));
-		    }
-		    secondGaussianAmplitude = (b2 - a21*firstGaussianAmplitude)/a22;
-		    double xp1[] = new double[] {secondGaussianAmplitude, secondGaussianMean, c2};
-		    if (display > 0) {
-		    	UI.setDataText("Initial estimates for a2*exp(-((x-b2)/c2)^2)\n");
-			    UI.setDataText("a2 = " + xp1[0] + "\n");
-			    UI.setDataText("b2 = " + xp1[1] + "\n");
-			    UI.setDataText("c2 = " + xp1[2] + "\n");
-		    }
-		   
-		    CostFunction cost_function = new gauss1FittingCostFunction();
-		    ProblemImpl problem = new ProblemImpl();
-			problem.AddResidualBlock(cost_function, null, xp1);
-			problem.AddParameterBlock(xp1,3);
-			problem.SetParameterLowerBound(xp1, 0, 0.1*secondGaussianAmplitude);
-			problem.SetParameterUpperBound(xp1, 0, 10.0*secondGaussianAmplitude);
-			problem.SetParameterLowerBound(xp1, 1, Math.max(0.1*secondGaussianMean, firstGaussianMean + 0.5*c1));
-			problem.SetParameterUpperBound(xp1, 1, Math.min(10.0*secondGaussianMean, maxSum));
-			problem.SetParameterLowerBound(xp1, 2, 0.1*c2);
-			problem.SetParameterUpperBound(xp1, 2, 10.0*c2);
-	
-			// Run the solver!
-			SolverOptions solverOptions = new SolverOptions();
-			solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
-			solverOptions.max_num_consecutive_invalid_steps = 100;
-			solverOptions.minimizer_progress_to_stdout = true;
-			SolverSummary solverSummary = new SolverSummary();
-			Solve(solverOptions, problem, solverSummary);
-			xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, xp1[0], xp1[1], xp1[2]};
-			if (xp1[1] < minSum) {
-				System.err.println("Second gaussian mean = " + xp1[1] + " < minimum volume_sum value = " + minSum);
-				System.err.println("Second gaussian amplitude = " + xp1[0]);
-				System.err.println("Second gaussian c2 = " + xp1[2]);
-				System.err.println("First gaussian mean was at " + firstGaussianMean);
-				System.err.println("First gaussian amplitude was at " + firstGaussianAmplitude);
-				System.err.println("First gaussian c1 was at " + c1);
-				System.err.println("Initial guess for secondGaussianMean was " + secondGaussianMean);
-				System.err.println("Initial guess for secondGaussianAmplitude was " + secondGaussianAmplitude);
-				System.err.println("Initial guess for c2 was " + (Math.sqrt(2.0)*secondGaussianStandardDeviation));
+		} // if (test2PerfectGaussians)
+
+		// Simple intialization scheme does not work
+		// double xp[] = new double[] {ySum/gauss2FittingObservations,
+		// intensity[gauss2FittingObservations/3], (intensity[intensity.length -1] -
+		// intensity[0])/3.0,
+		// ySum/gauss2FittingObservations, intensity[2*gauss2FittingObservations/3],
+		// (intensity[intensity.length -1] - intensity[0])/3.0};
+		/*
+		 * byte zeroCrossing[][] = new byte[3*gauss2FittingObservations][]; int
+		 * numberZeroCrossings[] = new int[3*gauss2FittingObservations]; int
+		 * firstFiveIndex = -1; int firstFourIndex = -1; int firstThreeIndex = -1; int
+		 * firstTwoIndex = -1; int firstOneIndex = -1; for (i = 1; i <=
+		 * 3*gauss2FittingObservations; i++) { sigmas[0] = 1 + (i-1)*0.1;
+		 * zeroCrossing[i-1] = calcZeroX(probDouble); for (j = 0; j <
+		 * zeroCrossing[i-1].length; j++) { if (zeroCrossing[i-1][j] == 1) {
+		 * numberZeroCrossings[i-1]++; }
+		 * 
+		 * } if ((firstFiveIndex == -1) && (numberZeroCrossings[i-1] == 5)) {
+		 * firstFiveIndex = i-1; } else if ((firstFourIndex == -1) &&
+		 * (numberZeroCrossings[i-1] == 4)) { firstFourIndex = i-1; } else if
+		 * ((firstThreeIndex == -1) && (numberZeroCrossings[i-1] == 3)) {
+		 * firstThreeIndex = i-1; } else if ((firstTwoIndex == -1) &&
+		 * (numberZeroCrossings[i-1] == 2)) { firstTwoIndex = i-1; } else if
+		 * ((firstOneIndex == -1) && (numberZeroCrossings[i-1] == 1)) { firstOneIndex =
+		 * i-1; } } for (i = 0; i < 3*gauss2FittingObservations; i++) {
+		 * Preferences.debug("i = " + (i+1) + " number zero crossings = " +
+		 * numberZeroCrossings[i] + "\n", Preferences.DEBUG_ALGORITHM); int
+		 * numberDisplayed = 0; for (j = 0; j < zeroCrossing[i].length; j++) { if
+		 * (zeroCrossing[i][j] == 1) { if (numberDisplayed == numberZeroCrossings[i]-1)
+		 * { Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM); } else {
+		 * Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM); } numberDisplayed++;
+		 * } } } if (test2PerfectGaussians && (firstFourIndex == -1) && (firstTwoIndex
+		 * == -1) && (firstOneIndex == -1)) { System.err.
+		 * println("No scale space with 4 zero crossings found in initializing sum of Gaussians"
+		 * ); System.err.
+		 * println("No scale space with 2 zero crossings found in initializing sum of Gaussians"
+		 * ); errorInMaskRoutine = true; return; } if (test2PerfectGaussians &&
+		 * (firstFourIndex == -1) && (firstOneIndex == -1)) { System.err.
+		 * println("No scale space with 4 zero crossings found in initializing sum of Gaussians"
+		 * ); errorInMaskRoutine = true; return; } if (test2PerfectGaussians &&
+		 * (firstTwoIndex == -1) && (firstOneIndex == -1)) { System.err.
+		 * println("No scale space with 2 zero crossings found in initializing sum of Gaussians"
+		 * ); errorInMaskRoutine = true; return; } if ((!test2PerfectGaussians) &&
+		 * (firstTwoIndex == -1) && (firstOneIndex == -1)) { System.err.
+		 * println("No scale space with 2 zero crossings found in initializing sum of Gaussians"
+		 * ); backupSecondGaussianRoutine(); doneBackupSecondGaussian = true; } if
+		 * (test2PerfectGaussians && ((firstFourIndex == -1) || (firstTwoIndex == -1))
+		 * && (firstOneIndex > 0)) {
+		 * Preferences.debug("Removing unpaired branch in Gaussian initialization\n",
+		 * Preferences.DEBUG_ALGORITHM); int zeroCrossingsToEliminate[] = new
+		 * int[firstOneIndex+1]; for (j = 0; j < zeroCrossing[firstOneIndex].length;
+		 * j++) { if (zeroCrossing[firstOneIndex][j] == 1) {
+		 * zeroCrossingsToEliminate[firstOneIndex] = j; } } for (j = firstOneIndex-1; j
+		 * >= 0; j--) { int distance = Integer.MAX_VALUE; for (i = 0; i <
+		 * zeroCrossing[j].length; i++) { if ((zeroCrossing[j][i] == 1) && (Math.abs(i -
+		 * zeroCrossingsToEliminate[j+1]) < distance)) { zeroCrossingsToEliminate[j] =
+		 * i; distance = Math.abs(i - zeroCrossingsToEliminate[j+1]); } } } for (j =
+		 * 3*gauss2FittingObservations-1; j > firstOneIndex; j--) { for (i = 0; i <
+		 * zeroCrossing[j].length; i++) { zeroCrossing[j][i] = 0; }
+		 * numberZeroCrossings[j] = 0; } for (j = 0; j <= firstOneIndex; j++) {
+		 * zeroCrossing[j][zeroCrossingsToEliminate[j]] = 0; numberZeroCrossings[j]--; }
+		 * firstFourIndex = firstFiveIndex; firstTwoIndex = firstThreeIndex; for (i = 0;
+		 * i < 3*gauss2FittingObservations; i++) { Preferences.debug("i = " + (i+1) +
+		 * " number zero crossings = " + numberZeroCrossings[i] + "\n",
+		 * Preferences.DEBUG_ALGORITHM); int numberDisplayed = 0; for (j = 0; j <
+		 * zeroCrossing[i].length; j++) { if (zeroCrossing[i][j] == 1) { if
+		 * (numberDisplayed == numberZeroCrossings[i]-1) { Preferences.debug(j + "\n",
+		 * Preferences.DEBUG_ALGORITHM); } else { Preferences.debug(j + " ",
+		 * Preferences.DEBUG_ALGORITHM); } numberDisplayed++; } } } if ((firstFourIndex
+		 * == -1) && (firstTwoIndex == -1)) { System.err.
+		 * println("No scale space with 4 zero crossings found in initializing sum of Gaussians"
+		 * ); System.err.
+		 * println("No scale space with 2 zero crossings found in initializing sum of Gaussians"
+		 * ); errorInMaskRoutine = true; return; } if (firstFourIndex == -1) {
+		 * System.err.
+		 * println("No scale space with 4 zero crossings found in initializing sum of Gaussians"
+		 * ); errorInMaskRoutine = true; return; } if (firstTwoIndex == -1) {
+		 * System.err.
+		 * println("No scale space with 2 zero crossings found in initializing sum of Gaussians"
+		 * ); errorInMaskRoutine = true; return; } } // if (test2PerfectGaussians &&
+		 * ((firstFourIndex == -1) || (firstTwoIndex == -1)) && (firstOneIndex > 0)) if
+		 * ((!test2PerfectGaussians) && (!doneBackupSecondGaussian) && (firstTwoIndex ==
+		 * -1) && (firstOneIndex > 0)) {
+		 * Preferences.debug("Removing unpaired branch in Gaussian initialization\n",
+		 * Preferences.DEBUG_ALGORITHM); int zeroCrossingsToEliminate[] = new
+		 * int[firstOneIndex+1]; for (j = 0; j < zeroCrossing[firstOneIndex].length;
+		 * j++) { if (zeroCrossing[firstOneIndex][j] == 1) {
+		 * zeroCrossingsToEliminate[firstOneIndex] = j; } } for (j = firstOneIndex-1; j
+		 * >= 0; j--) { int distance = Integer.MAX_VALUE; for (i = 0; i <
+		 * zeroCrossing[j].length; i++) { if ((zeroCrossing[j][i] == 1) && (Math.abs(i -
+		 * zeroCrossingsToEliminate[j+1]) < distance)) { zeroCrossingsToEliminate[j] =
+		 * i; distance = Math.abs(i - zeroCrossingsToEliminate[j+1]); } } } for (j =
+		 * 3*gauss2FittingObservations-1; j > firstOneIndex; j--) { for (i = 0; i <
+		 * zeroCrossing[j].length; i++) { zeroCrossing[j][i] = 0; }
+		 * numberZeroCrossings[j] = 0; } for (j = 0; j <= firstOneIndex; j++) {
+		 * zeroCrossing[j][zeroCrossingsToEliminate[j]] = 0; numberZeroCrossings[j]--; }
+		 * firstTwoIndex = firstThreeIndex; for (i = 0; i < 3*gauss2FittingObservations;
+		 * i++) { Preferences.debug("i = " + (i+1) + " number zero crossings = " +
+		 * numberZeroCrossings[i] + "\n", Preferences.DEBUG_ALGORITHM); int
+		 * numberDisplayed = 0; for (j = 0; j < zeroCrossing[i].length; j++) { if
+		 * (zeroCrossing[i][j] == 1) { if (numberDisplayed == numberZeroCrossings[i]-1)
+		 * { Preferences.debug(j + "\n", Preferences.DEBUG_ALGORITHM); } else {
+		 * Preferences.debug(j + " ", Preferences.DEBUG_ALGORITHM); } numberDisplayed++;
+		 * } } } if (firstTwoIndex == -1) { System.err.
+		 * println("No scale space with 2 zero crossings found in initializing sum of Gaussians"
+		 * ); backupSecondGaussianRoutine(); doneBackupSecondGaussian = true; } } // if
+		 * ((!test2PerfectGaussians) && (!doneBackupSecondGaussian) && (firstTwoIndex ==
+		 * -1) && (firstOneIndex > 0)) if (!doneBackupSecondGaussian) {
+		 * twoIndexLowLocation = new int[firstTwoIndex+1]; twoIndexHighLocation = new
+		 * int[firstTwoIndex+1]; for (j = 0; j < firstTwoIndex+1; j++) {
+		 * twoIndexLowLocation[j] = -1; twoIndexHighLocation[j] = -1; } for (j = 0; j <
+		 * zeroCrossing[firstTwoIndex].length; j++) { if
+		 * ((zeroCrossing[firstTwoIndex][j] == 1) && (twoIndexLowLocation[firstTwoIndex]
+		 * == -1)) { twoIndexLowLocation[firstTwoIndex] = j; } else if
+		 * (zeroCrossing[firstTwoIndex][j] == 1) { twoIndexHighLocation[firstTwoIndex] =
+		 * j; } }
+		 * 
+		 * for (j = firstTwoIndex-1; j >= 0; j--) { int GaussianLowDistance =
+		 * Integer.MAX_VALUE; int GaussianHighDistance = Integer.MAX_VALUE; for (i = 0;
+		 * i < zeroCrossing[j].length; i++) { if ((zeroCrossing[j][i] == 1) &&
+		 * (Math.abs(i - twoIndexLowLocation[j+1]) < GaussianLowDistance)) {
+		 * twoIndexLowLocation[j] = i; GaussianLowDistance = Math.abs(i -
+		 * twoIndexLowLocation[j+1]); } else if ((zeroCrossing[j][i] == 1) &&
+		 * (Math.abs(i - twoIndexHighLocation[j+1]) < GaussianHighDistance)) {
+		 * twoIndexHighLocation[j] = i; GaussianHighDistance = Math.abs(i -
+		 * twoIndexHighLocation[j+1]); } } }
+		 * 
+		 * sigmas[0] = 1.0; makeGxKernels1D(); firstDerivBuffer = new
+		 * double[probDouble.length]; convolve(probDouble, GxData, firstDerivBuffer);
+		 * 
+		 * int twoIndexLowSlope = 0; if (firstDerivBuffer[twoIndexLowLocation[0]] > 0) {
+		 * twoIndexLowSlope = 1; } else if (firstDerivBuffer[twoIndexLowLocation[0]] <
+		 * 0) { twoIndexLowSlope = -1; } int twoIndexHighSlope = 0; if
+		 * (firstDerivBuffer[twoIndexHighLocation[0]] > 0) { twoIndexHighSlope = 1; }
+		 * else if (firstDerivBuffer[twoIndexHighLocation[0]] < 0) { twoIndexHighSlope =
+		 * -1; } if ((twoIndexLowSlope > 0) && (twoIndexHighSlope > 0)) { System.err.
+		 * println("In scale space with 2 zero crossings both crossings are positive");
+		 * backupSecondGaussianRoutine(); doneBackupSecondGaussian = true; } else if
+		 * ((twoIndexLowSlope < 0) && (twoIndexHighSlope < 0)) { System.err.
+		 * println("In scale space with 2 zero crossings both crossings are negative");
+		 * backupSecondGaussianRoutine(); doneBackupSecondGaussian = true; } else if
+		 * ((twoIndexLowSlope < 0) && (twoIndexHighSlope > 0)) { System.err.
+		 * println("In scale space with 2 zero crossings low crossing is negative and high crossing is positive"
+		 * ); backupSecondGaussianRoutine(); doneBackupSecondGaussian = true; } } // if
+		 * (!doneBackupSecondGaussian)
+		 * 
+		 * if (test2PerfectGaussians) { int fourIndexLowLocation[] = new
+		 * int[firstFourIndex+1]; int fourIndexHighLocation[] = new
+		 * int[firstFourIndex+1]; for (j = 0; j < firstFourIndex+1; j++) {
+		 * fourIndexLowLocation[j] = -1; fourIndexHighLocation[j] = -1; } for (j = 0; j
+		 * < zeroCrossing[firstFourIndex].length; j++) { if
+		 * ((zeroCrossing[firstFourIndex][j] == 1) && (j !=
+		 * twoIndexLowLocation[firstFourIndex]) && (j !=
+		 * twoIndexHighLocation[firstFourIndex]) &&
+		 * (fourIndexLowLocation[firstFourIndex] == -1)) {
+		 * fourIndexLowLocation[firstFourIndex] = j; } else if
+		 * ((zeroCrossing[firstFourIndex][j] == 1) && (j !=
+		 * twoIndexLowLocation[firstFourIndex]) && (j !=
+		 * twoIndexHighLocation[firstFourIndex])) {
+		 * fourIndexHighLocation[firstFourIndex] = j; } }
+		 * 
+		 * for (j = firstFourIndex-1; j >= 0; j--) { int secondGaussianLowDistance =
+		 * Integer.MAX_VALUE; int secondGaussianHighDistance = Integer.MAX_VALUE; for (i
+		 * = 0; i < zeroCrossing[j].length; i++) { if ((zeroCrossing[j][i] == 1) && (j
+		 * != twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) && (Math.abs(i -
+		 * fourIndexLowLocation[j+1]) < secondGaussianLowDistance)) {
+		 * fourIndexLowLocation[j] = i; secondGaussianLowDistance = Math.abs(i -
+		 * fourIndexLowLocation[j+1]); } else if ((zeroCrossing[j][i] == 1) && (j !=
+		 * twoIndexLowLocation[j]) && (j != twoIndexHighLocation[j]) && (Math.abs(i -
+		 * fourIndexHighLocation[j+1]) < secondGaussianHighDistance)) {
+		 * fourIndexHighLocation[j] = i; secondGaussianHighDistance = Math.abs(i -
+		 * fourIndexHighLocation[j+1]); } } }
+		 * 
+		 * int fourIndexLowSlope = 0; if (firstDerivBuffer[fourIndexLowLocation[0]] > 0)
+		 * { fourIndexLowSlope = 1; } else if (firstDerivBuffer[fourIndexLowLocation[0]]
+		 * < 0) { fourIndexLowSlope = -1; } int fourIndexHighSlope = 0; if
+		 * (firstDerivBuffer[fourIndexHighLocation[0]] > 0) { fourIndexHighSlope = 1; }
+		 * else if (firstDerivBuffer[fourIndexHighLocation[0]] < 0) { fourIndexHighSlope
+		 * = -1; } if ((fourIndexLowSlope > 0) && (fourIndexHighSlope > 0)) {
+		 * System.err.
+		 * println("In scale space with 4 zero crossings 3 crossings are positive");
+		 * errorInMaskRoutine = true; return; } if ((fourIndexLowSlope < 0) &&
+		 * (fourIndexHighSlope < 0)) { System.err.
+		 * println("In scale space with 4 zero crossings 3 crossings are negative");
+		 * errorInMaskRoutine = true; return; } if ((fourIndexLowSlope < 0) &&
+		 * (fourIndexHighSlope > 0)) { System.err.
+		 * println("In scale space with 4 zero crossings second Gaussian low crossing is negative and second Gaussian high crossing is positive"
+		 * ); errorInMaskRoutine = true; return; }
+		 * 
+		 * firstGaussianMean = ((double)(intensity[twoIndexLowLocation[0]] +
+		 * intensity[twoIndexHighLocation[0]]))/2.0; firstGaussianStandardDeviation =
+		 * ((double)(intensity[twoIndexHighLocation[0]] -
+		 * intensity[twoIndexLowLocation[0]]))/2.0; secondGaussianMean =
+		 * ((double)(intensity[fourIndexLowLocation[0]] +
+		 * intensity[fourIndexHighLocation[0]]))/2.0; secondGaussianStandardDeviation =
+		 * ((double)(intensity[fourIndexHighLocation[0]] -
+		 * intensity[fourIndexLowLocation[0]]))/2.0; // a11*firstGaussianAmplitude +
+		 * a12*secondGaussianAmplitude = b1 // a21*firstGaussianAmplitude +
+		 * a22*secondGaussianAmplitude = b2; double a11 = 0.0; for (k = 0; k <
+		 * gauss2FittingObservations; k++) { double val = (intensity[k] -
+		 * firstGaussianMean)/firstGaussianStandardDeviation; a11 += Math.exp(-val *
+		 * val); } double a12 = 0; for (k = 0; k < gauss2FittingObservations; k++) {
+		 * double diff1 = (intensity[k] - firstGaussianMean); double diff2 =
+		 * (intensity[k] - secondGaussianMean); a12 +=
+		 * Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*
+		 * firstGaussianStandardDeviation)
+		 * -diff2*diff2/(2.0*secondGaussianStandardDeviation*
+		 * secondGaussianStandardDeviation)); } double a21 = a12; double a22 = 0.0; for
+		 * (k = 0; k < gauss2FittingObservations; k++) { double val = (intensity[k] -
+		 * secondGaussianMean)/secondGaussianStandardDeviation; a22 += Math.exp(-val *
+		 * val); } double b1 = 0.0; for (k = 0; k < gauss2FittingObservations; k++) {
+		 * double diff = (intensity[k] - firstGaussianMean); b1 +=
+		 * probDouble[k]*Math.exp(-diff*diff/(2.0*firstGaussianStandardDeviation*
+		 * firstGaussianStandardDeviation)); } double b2 = 0; for (k = 0; k <
+		 * gauss2FittingObservations; k++) { double diff = (intensity[k] -
+		 * secondGaussianMean); b2 +=
+		 * probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*
+		 * secondGaussianStandardDeviation)); } double det = a11*a22 - a21*a12; if (det
+		 * == 0.0) { System.err.
+		 * println("Cannot solve linear equations for Gaussian amplitudes because determinant is zero"
+		 * ); return; } double det1 = b1*a22 - b2*a12; double det2 = a11*b2 - a21*b1;
+		 * firstGaussianAmplitude = det1/det; secondGaussianAmplitude = det2/det; xp =
+		 * new double[] {firstGaussianAmplitude, firstGaussianMean,
+		 * Math.sqrt(2.0)*firstGaussianStandardDeviation, secondGaussianAmplitude,
+		 * secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation}; if
+		 * (display > 0) { UI.
+		 * setDataText("Initial estimates for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n"
+		 * ); UI.setDataText("a1 = " + xp[0] + "\n"); UI.setDataText("b1 = " + xp[1] +
+		 * "\n"); UI.setDataText("c1 = " + xp[2] + "\n"); UI.setDataText("a2 = " + xp[3]
+		 * + "\n"); UI.setDataText("b2 = " + xp[4] + "\n"); UI.setDataText("c2 = " +
+		 * xp[5] + "\n"); }
+		 * 
+		 * CostFunction cost_function = new gauss2FittingCostFunction(); ProblemImpl
+		 * problem = new ProblemImpl(); problem.AddResidualBlock(cost_function, null,
+		 * xp);
+		 * 
+		 * // Run the solver! SolverOptions solverOptions = new SolverOptions();
+		 * solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		 * solverOptions.max_num_consecutive_invalid_steps = 100;
+		 * solverOptions.minimizer_progress_to_stdout = true; SolverSummary
+		 * solverSummary = new SolverSummary(); Solve(solverOptions, problem,
+		 * solverSummary); if (display > 0) { UI.setDataText(solverSummary.BriefReport()
+		 * + "\n"); UI.
+		 * setDataText("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)\n"
+		 * ); UI.setDataText("a1 = " + xp[0] + "\n"); UI.setDataText("b1 = " + xp[1] +
+		 * "\n"); UI.setDataText("c1 = " + xp[2] + "\n"); UI.setDataText("a2 = " + xp[3]
+		 * + "\n"); UI.setDataText("b2 = " + xp[4] + "\n"); UI.setDataText("c2 = " +
+		 * xp[5] + "\n"); } if (gauss2FittingCheck) { // Ceres Solver Report:
+		 * Iterations: 10, Initial cost: 7.261461e+04, Final cost: 1.129515e-07,
+		 * Termination: CONVERGENCE // Solved answer for a1*exp(-((x-b1)/c1)^2) +
+		 * a2*exp(-((x-b2)/c2)^2) // a1 = 2000.0000318008936 // b1 = 6.9999999825169725
+		 * // c1 = 1.9999999839278295 // a2 = 1000.0000306581111 // b2 =
+		 * 2.99999987472384 // c2 = 0.9999999590528206 // ******* Elsunc 2 Gaussian
+		 * Curve Fitting ********* // analyticalJacobian = true // Number of iterations:
+		 * 4 // Chi-squared: 0.0 // a0 2000.0 // a1 7.0 // a2 2.0 // a3 1000.0 // a4 3.0
+		 * // a5 1.0 // ******* Elsunc 2 Gaussian Curve Fitting ********* //
+		 * analyticalJacobian = false // Number of iterations: 4 // Chi-squared: 0.0 //
+		 * a0 2000.0 // a1 7.0 // a2 2.0 // a3 1000.0 // a4 3.0 // a5 1.0
+		 * System.out.println(solverSummary.BriefReport()); System.out.
+		 * println("Solved answer for a1*exp(-((x-b1)/c1)^2) + a2*exp(-((x-b2)/c2)^2)");
+		 * System.out.println("a1 = " + xp[0]); System.out.println("b1 = " + xp[1]);
+		 * System.out.println("c1 = " + xp[2]); System.out.println("a2 = " + xp[3]);
+		 * System.out.println("b2 = " + xp[4]); System.out.println("c2 = " + xp[5]);
+		 * 
+		 * boolean doAnalytical = true; xp = new double[] {firstGaussianAmplitude,
+		 * firstGaussianMean, Math.sqrt(2.0)*firstGaussianStandardDeviation,
+		 * secondGaussianAmplitude, secondGaussianMean,
+		 * Math.sqrt(2.0)*secondGaussianStandardDeviation}; gauss2Fitting g2 = new
+		 * gauss2Fitting(xp, doAnalytical); g2.driver(); g2.dumpResults(); doAnalytical
+		 * = false; xp = new double[] {firstGaussianAmplitude, firstGaussianMean,
+		 * Math.sqrt(2.0)*firstGaussianStandardDeviation, secondGaussianAmplitude,
+		 * secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation}; g2 = new
+		 * gauss2Fitting(xp, doAnalytical); g2.driver(); g2.dumpResults();
+		 * System.exit(0); } } // if (test2PerfectGaussians) else if
+		 * (!doneBackupSecondGaussian){ secondGaussianMean =
+		 * ((double)(intensity[twoIndexLowLocation[0]] +
+		 * intensity[twoIndexHighLocation[0]]))/2.0; secondGaussianStandardDeviation =
+		 * ((double)(intensity[twoIndexHighLocation[0]] -
+		 * intensity[twoIndexLowLocation[0]]))/2.0; c2 = Math.sqrt(2.0) *
+		 * secondGaussianStandardDeviation; // secondGaussianAmplitude = (b2 -
+		 * a21*firstGaussianAmplitude)/a22 double a21 = 0; for (k = 0; k <
+		 * gauss2FittingObservations; k++) { double diff1 = (intensity[k] -
+		 * firstGaussianMean); double diff2 = (intensity[k] - secondGaussianMean); a21
+		 * += Math.exp(-diff1*diff1/(2.0*firstGaussianStandardDeviation*
+		 * firstGaussianStandardDeviation)
+		 * -diff2*diff2/(2.0*secondGaussianStandardDeviation*
+		 * secondGaussianStandardDeviation)); } double a22 = 0.0; for (k = 0; k <
+		 * gauss2FittingObservations; k++) { double val = (intensity[k] -
+		 * secondGaussianMean)/secondGaussianStandardDeviation; a22 += Math.exp(-val *
+		 * val); } double b2 = 0; for (k = 0; k < gauss2FittingObservations; k++) {
+		 * double diff = (intensity[k] - secondGaussianMean); b2 +=
+		 * probDouble[k]*Math.exp(-diff*diff/(2.0*secondGaussianStandardDeviation*
+		 * secondGaussianStandardDeviation)); } secondGaussianAmplitude = (b2 -
+		 * a21*firstGaussianAmplitude)/a22; double xp1[] = new double[]
+		 * {secondGaussianAmplitude, secondGaussianMean, c2}; if (display > 0) {
+		 * UI.setDataText("Initial estimates for a2*exp(-((x-b2)/c2)^2)\n");
+		 * UI.setDataText("a2 = " + xp1[0] + "\n"); UI.setDataText("b2 = " + xp1[1] +
+		 * "\n"); UI.setDataText("c2 = " + xp1[2] + "\n"); }
+		 * 
+		 * CostFunction cost_function = new gauss1FittingCostFunction(); ProblemImpl
+		 * problem = new ProblemImpl(); problem.AddResidualBlock(cost_function, null,
+		 * xp1); problem.AddParameterBlock(xp1,3); problem.SetParameterLowerBound(xp1,
+		 * 0, 0.1*secondGaussianAmplitude); problem.SetParameterUpperBound(xp1, 0,
+		 * 10.0*secondGaussianAmplitude); problem.SetParameterLowerBound(xp1, 1,
+		 * Math.max(0.1*secondGaussianMean, firstGaussianMean + 0.5*c1));
+		 * problem.SetParameterUpperBound(xp1, 1, Math.min(10.0*secondGaussianMean,
+		 * maxSum)); problem.SetParameterLowerBound(xp1, 2, 0.1*c2);
+		 * problem.SetParameterUpperBound(xp1, 2, 10.0*c2);
+		 * 
+		 * // Run the solver! SolverOptions solverOptions = new SolverOptions();
+		 * solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
+		 * solverOptions.max_num_consecutive_invalid_steps = 100;
+		 * solverOptions.minimizer_progress_to_stdout = true; SolverSummary
+		 * solverSummary = new SolverSummary(); Solve(solverOptions, problem,
+		 * solverSummary); xp = new double[] {firstGaussianAmplitude, firstGaussianMean,
+		 * c1, xp1[0], xp1[1], xp1[2]}; if (xp1[1] < minSum) {
+		 * System.err.println("Second gaussian mean = " + xp1[1] +
+		 * " < minimum volume_sum value = " + minSum);
+		 * System.err.println("Second gaussian amplitude = " + xp1[0]);
+		 * System.err.println("Second gaussian c2 = " + xp1[2]);
+		 * System.err.println("First gaussian mean was at " + firstGaussianMean);
+		 * System.err.println("First gaussian amplitude was at " +
+		 * firstGaussianAmplitude); System.err.println("First gaussian c1 was at " +
+		 * c1); System.err.println("Initial guess for secondGaussianMean was " +
+		 * secondGaussianMean);
+		 * System.err.println("Initial guess for secondGaussianAmplitude was " +
+		 * secondGaussianAmplitude); System.err.println("Initial guess for c2 was " +
+		 * (Math.sqrt(2.0)*secondGaussianStandardDeviation)); System.exit(0); } if
+		 * (display > 0) { UI.setDataText(solverSummary.BriefReport() + "\n");
+		 * UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
+		 * UI.setDataText("a2 = " + xp1[0] + "\n"); UI.setDataText("b2 = " + xp1[1] +
+		 * "\n"); UI.setDataText("c2 = " + xp1[2] + "\n"); }
+		 * 
+		 * if (gauss1FittingCheck) { // Ceres Solver Report: Iterations: 7, Initial
+		 * cost: 3.846540e+08, Final cost: 3.557932e+08, Termination: CONVERGENCE //
+		 * Solved answer for a2*exp(-((x-b2)/c2)^2) // a2 = 3476.2601728215 // b2 =
+		 * 54719.31365217361 // c2 = 12820.182141802445 // ******* Elsunc Gauss 1 Curve
+		 * Fitting ********* // analyticalJacobian = true // Number of iterations: 7 //
+		 * Chi-squared: 7.115862477050933E8 // a0 3473.0758151809737 // a1
+		 * 54725.28268304309 // a2 12843.401190193323 // ******* Elsunc Gauss 1 Curve
+		 * Fitting ********* // analyticalJacobian = false // Number of iterations: 7 //
+		 * Chi-squared: 7.115862477050937E8 // a0 3473.075759678535 // a1
+		 * 54725.282764237934 // a2 12843.401729462
+		 * 
+		 * System.out.println(solverSummary.BriefReport());
+		 * System.out.println("Solved answer for a2*exp(-((x-b2)/c2)^2)");
+		 * System.out.println("a2 = " + xp1[0]); System.out.println("b2 = " + xp1[1]);
+		 * System.out.println("c2 = " + xp1[2]);
+		 * 
+		 * boolean doAnalytical = true; xp1 = new double[] {secondGaussianAmplitude,
+		 * secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
+		 * gauss1Fitting g1 = new gauss1Fitting(xp1, doAnalytical); g1.driver();
+		 * g1.dumpResults(); doAnalytical = false; xp1 = new double[]
+		 * {secondGaussianAmplitude, secondGaussianMean,
+		 * Math.sqrt(2.0)*secondGaussianStandardDeviation}; g1 = new gauss1Fitting(xp1,
+		 * doAnalytical); g1.driver(); g1.dumpResults(); System.exit(0); } } // else if
+		 * (!doneBackupSecondGaussian) else if (doneBackupSecondGaussian) { xp = new
+		 * double[] {firstGaussianAmplitude, firstGaussianMean, c1,
+		 * secondGaussianAmplitude, secondGaussianMean, c2}; if (display > 0) {
+		 * UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
+		 * UI.setDataText("a2 = " + xp[3] + "\n"); UI.setDataText("b2 = " + xp[4] +
+		 * "\n"); UI.setDataText("c2 = " + xp[5] + "\n"); } }
+		 */
+
+		if (doCurveIntersect) {
+			curveIntersect(intensity, xp);
+			if (x_out == null) {
+				System.err.println("x_out == null because curveIntersect found no intersection");
+				return;
+			}
+			mask_threshold = x_out[0];
+		} else {
+			double parameters[] = new double[] { (xp[1] + xp[4]) / 2.0 };
+
+			GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+			options.minimizer_progress_to_stdout = true;
+
+			GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+			GradientProblem gradientProblem = new GradientProblem(new diffGaussians(xp));
+			Solve(options, gradientProblem, parameters, summary);
+			mask_threshold = parameters[0];
+			if (mask_threshold < minSum) {
+				System.err.println("mask_threshold = " + mask_threshold + " < minimum volume_sum value = " + minSum);
+				System.err.println("First gaussian mean was at " + xp[1]);
+				System.err.println("Second gaussian mean was at " + xp[4]);
 				System.exit(0);
 			}
 			if (display > 0) {
-			    UI.setDataText(solverSummary.BriefReport() + "\n");
-			    UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
-			    UI.setDataText("a2 = " + xp1[0] + "\n");
-			    UI.setDataText("b2 = " + xp1[1] + "\n");
-			    UI.setDataText("c2 = " + xp1[2] + "\n");
+				System.out.println(summary.BriefReport());
+				UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4]) / 2.0)
+						+ "\n");
 			}
-			
-			if (gauss1FittingCheck) {
-				// Ceres Solver Report: Iterations: 7, Initial cost: 3.846540e+08, Final cost: 3.557932e+08, Termination: CONVERGENCE
-				// Solved answer for a2*exp(-((x-b2)/c2)^2)
-				// a2 = 3476.2601728215
-				// b2 = 54719.31365217361
-				// c2 = 12820.182141802445
-				// ******* Elsunc Gauss 1 Curve Fitting ********* 
-				// analyticalJacobian = true
-				// Number of iterations: 7
-				// Chi-squared: 7.115862477050933E8
-				// a0 3473.0758151809737
-				// a1 54725.28268304309
-				// a2 12843.401190193323
-				// ******* Elsunc Gauss 1 Curve Fitting ********* 
-				// analyticalJacobian = false
-				// Number of iterations: 7
-				// Chi-squared: 7.115862477050937E8
-				// a0 3473.075759678535
-				// a1 54725.282764237934
-				// a2 12843.401729462
-				
-				System.out.println(solverSummary.BriefReport());
-			    System.out.println("Solved answer for a2*exp(-((x-b2)/c2)^2)");
-			    System.out.println("a2 = " + xp1[0]);
-			    System.out.println("b2 = " + xp1[1]);
-			    System.out.println("c2 = " + xp1[2]);
-			    
-			    boolean doAnalytical = true;
-			    xp1 = new double[] {secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
-			    gauss1Fitting g1 = new gauss1Fitting(xp1, doAnalytical);	
-			    g1.driver();
-			    g1.dumpResults();
-			    doAnalytical = false;
-			    xp1 = new double[] {secondGaussianAmplitude, secondGaussianMean, Math.sqrt(2.0)*secondGaussianStandardDeviation};
-			    g1 = new gauss1Fitting(xp1, doAnalytical);	
-			    g1.driver();
-			    g1.dumpResults();
-			    System.exit(0);
-			}
-	    } // else if (!doneBackupSecondGaussian)
-	    else if (doneBackupSecondGaussian) {
-	    	xp = new double[] {firstGaussianAmplitude, firstGaussianMean, c1, secondGaussianAmplitude, secondGaussianMean, c2};
-	    	if (display > 0) {
-			    UI.setDataText("Solved answer for a2*exp(-((x-b2)/c2)^2)\n");
-			    UI.setDataText("a2 = " + xp[3] + "\n");
-			    UI.setDataText("b2 = " + xp[4] + "\n");
-			    UI.setDataText("c2 = " + xp[5] + "\n");
-			}
-	    } */
-		
-		if (doCurveIntersect) {
-		    curveIntersect(intensity, xp);
-		    if (x_out == null) {
-		    	System.err.println("x_out == null because curveIntersect found no intersection");
-		    	return;
-		    }
-		    mask_threshold = x_out[0];
-		}
-		else {
-		  double parameters[] = new double[]{(xp[1] + xp[4])/2.0};
-
-		  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
-		  options.minimizer_progress_to_stdout = true;
-
-		  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
-		  GradientProblem gradientProblem = new GradientProblem(new diffGaussians(xp));
-		  Solve(options, gradientProblem, parameters, summary);
-		  mask_threshold = parameters[0];
-		  if (mask_threshold < minSum) {
-			  System.err.println("mask_threshold = " + mask_threshold + " < minimum volume_sum value = " + minSum);
-			  System.err.println("First gaussian mean was at " + xp[1]);
-			  System.err.println("Second gaussian mean was at " + xp[4]);
-			  System.exit(0);
-		  }
-          if (display > 0) {
-		      System.out.println(summary.BriefReport());
-		      UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4])/2.0) + "\n");
-          }
 		}
 		if (display > 0) {
-		    UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + mask_threshold + "\n");
+			UI.setDataText("Final calculation for intensity at which 2 Gaussians intersect = " + mask_threshold + "\n");
 		}
-		
+
 		if (display > 1) {
 			float probFloat[] = new float[probDouble.length];
 			for (i = 0; i < probDouble.length; i++) {
-				probFloat[i] = (float)probDouble[i];
+				probFloat[i] = (float) probDouble[i];
 			}
 			float intensityf[] = new float[intensity.length];
 			for (i = 0; i < intensity.length; i++) {
-				intensityf[i] = (float)intensity[i];
+				intensityf[i] = (float) intensity[i];
 			}
 			double y1[] = new double[intensity.length];
-		    for (i = 0; i < intensity.length; i++) {
-		    	double val1 = (intensity[i] - xp[1])/xp[2];
-		    	y1[i] = xp[0]*Math.exp(-val1*val1);
-		    }
-		    double y2[] = new double[intensity.length];
-		    for (i = 0; i < intensity.length; i++) {
-		    	double val2 = (intensity[i] - xp[4])/xp[5];
-		    	y2[i] = xp[3]*Math.exp(-val2*val2);
-		    }
-		    float fitf[] = new float[intensity.length];
-		    for (i = 0; i < intensity.length; i++) {
-		    	fitf[i] = (float)(y1[i] + y2[i]);
-		    }
-		    ViewJFrameGraph actualDataGraph = new ViewJFrameGraph(intensityf, probFloat, "Raw data", "Intensity", "Amplitudes");
-		    actualDataGraph.setVisible(true);
-		    try {
-		       actualDataGraph.save(outputFilePath + outputPrefix + "actualDataGraph.plt");
-		    }
-		    catch (IOException e) {
-		    	System.err.println("IOException " + e);
-		    	return;
-		    }
-	    	Component component = actualDataGraph.getComponent(0);
-	    	Rectangle rect = component.getBounds();
-	    	String format = "png";
-	        BufferedImage captureImage =
-	                new BufferedImage(rect.width, rect.height,
-	                                    BufferedImage.TYPE_INT_ARGB);
-	        component.paint(captureImage.getGraphics());
-	 
-	        File actualDataGraphFile = new File(outputFilePath + outputPrefix + "actualDataGraph.png");
-	        try {
-	            ImageIO.write(captureImage, format, actualDataGraphFile);
-	        }
-	        catch (IOException e) {
-		    	System.err.println("IOException " + e);
-		    	return;
-		    }
-	        actualDataGraph.removeComponentListener();
-	        actualDataGraph.dispose();
-	        captureImage.flush();
-		    ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity", "Fitted Gaussians");
-		    fittedGaussiansGraph.setVisible(true);
-		    ViewJComponentGraph graph = fittedGaussiansGraph.getGraph();
-		    Graphics g = graph.getGraphics();
-		    graph.paintComponent(g);
-		    Rectangle graphBounds = graph.getGraphBounds();
-		    double axlim[] = new double[4];
-		    axlim[0] = Double.MAX_VALUE;
+			for (i = 0; i < intensity.length; i++) {
+				double val1 = (intensity[i] - xp[1]) / xp[2];
+				y1[i] = xp[0] * Math.exp(-val1 * val1);
+			}
+			double y2[] = new double[intensity.length];
+			for (i = 0; i < intensity.length; i++) {
+				double val2 = (intensity[i] - xp[4]) / xp[5];
+				y2[i] = xp[3] * Math.exp(-val2 * val2);
+			}
+			float fitf[] = new float[intensity.length];
+			for (i = 0; i < intensity.length; i++) {
+				fitf[i] = (float) (y1[i] + y2[i]);
+			}
+			ViewJFrameGraph actualDataGraph = new ViewJFrameGraph(intensityf, probFloat, "Raw data", "Intensity",
+					"Amplitudes");
+			actualDataGraph.setVisible(true);
+			try {
+				actualDataGraph.save(outputFilePath + outputPrefix + "actualDataGraph.plt");
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			Component component = actualDataGraph.getComponent(0);
+			Rectangle rect = component.getBounds();
+			String format = "png";
+			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File actualDataGraphFile = new File(outputFilePath + outputPrefix + "actualDataGraph.png");
+			try {
+				ImageIO.write(captureImage, format, actualDataGraphFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			actualDataGraph.removeComponentListener();
+			actualDataGraph.dispose();
+			captureImage.flush();
+			ViewJFrameGraph fittedGaussiansGraph = new ViewJFrameGraph(intensityf, fitf, "2 Gaussians fit", "Intensity",
+					"Fitted Gaussians");
+			fittedGaussiansGraph.setVisible(true);
+			ViewJComponentGraph graph = fittedGaussiansGraph.getGraph();
+			Graphics g = graph.getGraphics();
+			graph.paintComponent(g);
+			Rectangle graphBounds = graph.getGraphBounds();
+			double axlim[] = new double[4];
+			axlim[0] = Double.MAX_VALUE;
 			axlim[1] = -Double.MAX_VALUE;
 			axlim[2] = Double.MAX_VALUE;
 			axlim[3] = -Double.MAX_VALUE;
 			for (i = 0; i < gauss2FittingObservations; i++) {
 				if (intensityf[i] < axlim[0]) {
-	    	    	axlim[0] = intensityf[i];
-	    	    }
-	    	    if (intensityf[i] > axlim[1]) {
-	    	    	axlim[1] = intensityf[i];
-	    	    }
-	    	    if (fitf[i] < axlim[2]) {
-	    	    	axlim[2] = fitf[i];
-	    	    }
-	    	    if (fitf[i] > axlim[3]) {
-	    	    	axlim[3] = fitf[i];
-	    	    }
+					axlim[0] = intensityf[i];
+				}
+				if (intensityf[i] > axlim[1]) {
+					axlim[1] = intensityf[i];
+				}
+				if (fitf[i] < axlim[2]) {
+					axlim[2] = fitf[i];
+				}
+				if (fitf[i] > axlim[3]) {
+					axlim[3] = fitf[i];
+				}
 			}
-		    double xScale = graphBounds.width / (axlim[1] - axlim[0]);
-	        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
-		    int xthresh =  (int)Math.round(graphBounds.x + xScale*(mask_threshold - axlim[0]));
-		    int y1t =  (int)Math.round(graphBounds.y + yScale*(0 - axlim[2]));
-		    y1t = -y1t + 2*graphBounds.y + graphBounds.height;
-		    double maxprob = -Double.MAX_VALUE;
-		    for (i = 0; i < gauss2FittingObservations; i++) {
-		    	if (probDouble[i] > maxprob) {
-		    		maxprob = probDouble[i];
-		    	}
-		    }
-		    int y2t =  (int)Math.round(graphBounds.y + yScale*(Math.min(1.05*maxprob,axlim[3]) - axlim[2]));
-		    y2t = -y2t + 2*graphBounds.y + graphBounds.height;
-		    g = graph.getGraphics();
-		    g.setColor(Color.BLUE);
-		    graph.drawLine(g,xthresh, y1t, xthresh, y2t);
-		    graph.plotGraph(g);
-		    try {
-		       fittedGaussiansGraph.save(outputFilePath + outputPrefix + "fittedGaussiansGraph.plt");
-		    }
-		    catch (IOException e) {
-		    	System.err.println("IOException " + e);
-		    	return;
-		    }
-	    	component = actualDataGraph.getComponent(0);
-	    	rect = component.getBounds();
-	    	format = "png";
-	        captureImage =
-	                new BufferedImage(rect.width, rect.height,
-	                                    BufferedImage.TYPE_INT_ARGB);
-	        component.paint(captureImage.getGraphics());
-	 
-	        File fittedGaussiansGraphFile = new File(outputFilePath + outputPrefix + "fittedGaussiansGraph.png");
-	        try {
-	            ImageIO.write(captureImage, format, fittedGaussiansGraphFile);
-	        }
-	        catch (IOException e) {
-		    	System.err.println("IOException " + e);
-		    	return;
-		    }
-	        fittedGaussiansGraph.removeComponentListener();
-	        fittedGaussiansGraph.dispose();
-	        captureImage.flush();
+			double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+			double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+			int xthresh = (int) Math.round(graphBounds.x + xScale * (mask_threshold - axlim[0]));
+			int y1t = (int) Math.round(graphBounds.y + yScale * (0 - axlim[2]));
+			y1t = -y1t + 2 * graphBounds.y + graphBounds.height;
+			double maxprob = -Double.MAX_VALUE;
+			for (i = 0; i < gauss2FittingObservations; i++) {
+				if (probDouble[i] > maxprob) {
+					maxprob = probDouble[i];
+				}
+			}
+			int y2t = (int) Math.round(graphBounds.y + yScale * (Math.min(1.05 * maxprob, axlim[3]) - axlim[2]));
+			y2t = -y2t + 2 * graphBounds.y + graphBounds.height;
+			g = graph.getGraphics();
+			g.setColor(Color.BLUE);
+			graph.drawLine(g, xthresh, y1t, xthresh, y2t);
+			graph.plotGraph(g);
+			try {
+				fittedGaussiansGraph.save(outputFilePath + outputPrefix + "fittedGaussiansGraph.plt");
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			component = actualDataGraph.getComponent(0);
+			rect = component.getBounds();
+			format = "png";
+			captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+			component.paint(captureImage.getGraphics());
+
+			File fittedGaussiansGraphFile = new File(outputFilePath + outputPrefix + "fittedGaussiansGraph.png");
+			try {
+				ImageIO.write(captureImage, format, fittedGaussiansGraphFile);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
+			fittedGaussiansGraph.removeComponentListener();
+			fittedGaussiansGraph.dispose();
+			captureImage.flush();
 		} // if (display > 1)
 		mask_aif = new byte[nC][nR][nS];
 		mask_data = new byte[nC][nR][nS];
 		for (x = 0; x < nC; x++) {
-	    	for (y = 0; y < nR; y++) {
-	    		for (z = 0; z < nS; z++) {
-	    			if (volume_sum[x][y][z] > mask_threshold) {
-	    				mask_aif[x][y][z] = 1;
-	    			}
-	    		}
-	    	}
-	    }
-	    for (x = 0; x < nC; x++) {
-	    	for (y = 0; y < nR; y++) {
-	    		for (z = 0; z < nS; z++) {
-	    			if (volume_sum[x][y][z] > mask_threshold) {
-	    				mask_aif[x][y][z] = 1;
-	    			}
-	    		}
-	    	}
-	    }
-	    
-	    byte temp[] = new byte[length];
-	    ModelImage idImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "idImage");
-	    ModelImage tempImage = null;
-	    if (display > 1) {
-	    	tempImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "tempImage");
-	    }
-	    System.out.println("nS = " + nS);
-	    for (s = 0; s < nS; s++) {
-	    	System.out.println("s = " + s);
-	        // I cover any "holes" created by thresholding
-	    	for (x = 0; x < nC; x++) {
-		    	for (y = 0; y < nR; y++) {
-		    		temp[x + y*nC] = mask_aif[x][y][s];
-		    	}
-	    	}
-	    	// I delete the minor connected components and leave the major ones of options.mask.pixel intact
-	    	try {
-	    	    idImage.importData(0, temp, true);	
-	    	}
-	    	catch(IOException e) {
-	    		System.err.println("IOException " + e);
-	    		return;
-	    	}
-	    	
-	    	int numPruningPixels = 0;
-	        int edgingType = 0;    
-	        int kernel = AlgorithmMorphology2D.CONNECTED8;
-	        float circleDiameter = 0.0f;
-	        int method = AlgorithmMorphology2D.ID_OBJECTS;
-	        int itersDilation = 0;
-	        int itersErosion = 0;
-	        boolean wholeImage = true;
-	        AlgorithmMorphology2D idObjectsAlgo2D = new AlgorithmMorphology2D(idImage, kernel, circleDiameter, method, itersDilation,
-	                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
-	        idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
-	        idObjectsAlgo2D.run();
-	        idObjectsAlgo2D.finalize();
-	        idObjectsAlgo2D = null;
+			for (y = 0; y < nR; y++) {
+				for (z = 0; z < nS; z++) {
+					if (volume_sum[x][y][z] > mask_threshold) {
+						mask_aif[x][y][z] = 1;
+					}
+				}
+			}
+		}
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				for (z = 0; z < nS; z++) {
+					if (volume_sum[x][y][z] > mask_threshold) {
+						mask_aif[x][y][z] = 1;
+					}
+				}
+			}
+		}
 
-	        idImage.calcMinMax();
-	        int numObjects = (int) idImage.getMax();
+		byte temp[] = new byte[length];
+		ModelImage idImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "idImage");
+		ModelImage tempImage = null;
+		if (display > 1) {
+			tempImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "tempImage");
+		}
+		System.out.println("nS = " + nS);
+		for (s = 0; s < nS; s++) {
+			System.out.println("s = " + s);
+			// I cover any "holes" created by thresholding
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					temp[x + y * nC] = mask_aif[x][y][s];
+				}
+			}
+			// I delete the minor connected components and leave the major ones of
+			// options.mask.pixel intact
+			try {
+				idImage.importData(0, temp, true);
+			} catch (IOException e) {
+				System.err.println("IOException " + e);
+				return;
+			}
 
-	        
-	        byte IDArray[] = new byte[length];
+			int numPruningPixels = 0;
+			int edgingType = 0;
+			int kernel = AlgorithmMorphology2D.CONNECTED8;
+			float circleDiameter = 0.0f;
+			int method = AlgorithmMorphology2D.ID_OBJECTS;
+			int itersDilation = 0;
+			int itersErosion = 0;
+			boolean wholeImage = true;
+			AlgorithmMorphology2D idObjectsAlgo2D = new AlgorithmMorphology2D(idImage, kernel, circleDiameter, method,
+					itersDilation, itersErosion, numPruningPixels, edgingType, wholeImage);
+			idObjectsAlgo2D.setMinMax(1, Integer.MAX_VALUE);
+			idObjectsAlgo2D.run();
+			idObjectsAlgo2D.finalize();
+			idObjectsAlgo2D = null;
 
-	        try {
-	            idImage.exportData(0, length, IDArray);
-	        } catch (IOException error) {
-	        	System.err.println("IOException " + error);
-	    		return;
-	        }
-	        
-	        int objectSize[] = new int[numObjects+1];
-	        for (i = 0; i < length; i++) {
-	        	objectSize[IDArray[i]]++;
-	        }
-	        int maxObjectSize = 0;
-	        for (i = 1; i <= numObjects; i++) {
-	        	if (objectSize[i] > maxObjectSize) {
-	        		maxObjectSize = objectSize[i];
-	        	}
-	        }
-	        
-	        for (i = 1; i <= numObjects; i++) {
-	        	if ((maxObjectSize > objectSize[i]) && (objectSize[i] < mask_npixel)) {
-	        		for (j = 0; j < length; j++) {
-	        			if (IDArray[j] == i) {
-	        				temp[j] = 0;
-	        			}
-	        		}
-	        	}
-	        } // for (i = 1; i <= numObjects; i++)
-	        
-	        try {
-	            idImage.importData(0, temp, true);
-	        }
-	        catch (IOException error) {
-	        	System.err.println("IOException " + error);
-	            return;
-	        }
-	        
-	        AlgorithmMorphology2D fillHolesAlgo2D = new AlgorithmMorphology2D(idImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
-                    wholeImage);
+			idImage.calcMinMax();
+			int numObjects = (int) idImage.getMax();
+
+			byte IDArray[] = new byte[length];
+
+			try {
+				idImage.exportData(0, length, IDArray);
+			} catch (IOException error) {
+				System.err.println("IOException " + error);
+				return;
+			}
+
+			int objectSize[] = new int[numObjects + 1];
+			for (i = 0; i < length; i++) {
+				objectSize[IDArray[i]]++;
+			}
+			int maxObjectSize = 0;
+			for (i = 1; i <= numObjects; i++) {
+				if (objectSize[i] > maxObjectSize) {
+					maxObjectSize = objectSize[i];
+				}
+			}
+
+			for (i = 1; i <= numObjects; i++) {
+				if ((maxObjectSize > objectSize[i]) && (objectSize[i] < mask_npixel)) {
+					for (j = 0; j < length; j++) {
+						if (IDArray[j] == i) {
+							temp[j] = 0;
+						}
+					}
+				}
+			} // for (i = 1; i <= numObjects; i++)
+
+			try {
+				idImage.importData(0, temp, true);
+			} catch (IOException error) {
+				System.err.println("IOException " + error);
+				return;
+			}
+
+			AlgorithmMorphology2D fillHolesAlgo2D = new AlgorithmMorphology2D(idImage, 0, 0,
+					AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0, wholeImage);
 			fillHolesAlgo2D.run();
 			fillHolesAlgo2D.finalize();
 			fillHolesAlgo2D = null;
-			
-			try {
-	            idImage.exportData(0, length, IDArray);
-	        } catch (IOException error) {
-	        	System.err.println("IOException " + error);
-	    		return;
-	        }
-			
-			for (x = 0; x < nC; x++) {
-		    	for (y = 0; y < nR; y++) {
-		    	    mask_data[x][y][s] = IDArray[x + y*nC];
-		    	}
-		    }
-			
-			if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1))) {
-				 try {
-					 tempImage.importData(0, temp, true);
-				 }
-				 catch (IOException error) {
-			        	System.err.println("IOException " + error);
-			    		return;
-			     }
-				 AlgorithmVOIExtraction algoVOIExtraction = new AlgorithmVOIExtraction(tempImage);
-				 algoVOIExtraction.run();
-			     algoVOIExtraction.finalize();
-			     algoVOIExtraction = null;
 
-				 ModelImage volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE,extents2D,"volume_sum_sliceImage_"+s);
-				 volume_sum_sliceImage.setVOIs(tempImage.getVOIs());
-				 tempDouble = new double[length];
-				 for (x = 0; x < nC; x++) {
-				    	for (y = 0; y < nR; y++) {
-				            tempDouble[x + y*nC] = volume_sum[x][y][s];	
-				    	}
-				 }
-			    try {
-			    	volume_sum_sliceImage.importData(0, tempDouble, true);
-			    }
-			    catch (IOException e) {
-			    	System.err.println("IOException " + e);
-		    		return;
-			    }
-			    ViewJFrameImage vFrame = new ViewJFrameImage(volume_sum_sliceImage);
-			    Component component = vFrame.getComponent(0);
-			    Rectangle rect = component.getBounds();
-		    	String format = "png";
-	  	        BufferedImage captureImage =
-	  	                new BufferedImage(rect.width, rect.height,
-	  	                                    BufferedImage.TYPE_INT_ARGB);
-	  	        component.paint(captureImage.getGraphics());
-	  	        
-	  	        File volume_sum_sliceFile = new File(outputFilePath + outputPrefix + "maskedDataForAIFSelection_"+s+".png");
-	  	        boolean foundWriter;
-	  	        try {
-	  	            foundWriter = ImageIO.write(captureImage, format, volume_sum_sliceFile);
-	  	        }
-	  	        catch (IOException e) {
-	  	        	System.err.println("IOException " + e);
-		    		return;
-	  	        }
-	  	        if (!foundWriter) {
-	  	        	System.err.println("No appropriate writer for maskedDataForAIFSelection_"+s+".png");
-	  	        	return;
-	  	        }
-	  	        captureImage.flush();
-	  	        component.setEnabled(false);
-	  	        component.setVisible(false);
-	  	        component.setIgnoreRepaint(true);
-	  	        vFrame.removeComponentListener();
-	  	        vFrame.removeWindowListener();
-	  	        vFrame.removeMouseMotionListener();
-	  	        vFrame.removeMouseListener();
-	  	        vFrame.removeKeyListener();
-	  	        vFrame.close(false);
-	  	        volume_sum_sliceImage.disposeLocal();
-	  	        
-	  	        algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
+			try {
+				idImage.exportData(0, length, IDArray);
+			} catch (IOException error) {
+				System.err.println("IOException " + error);
+				return;
+			}
+
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					mask_data[x][y][s] = IDArray[x + y * nC];
+				}
+			}
+
+			if ((display > 2) || ((display > 1) && (s == (int) Math.round(0.5 * nS) - 1))) {
+				try {
+					tempImage.importData(0, temp, true);
+				} catch (IOException error) {
+					System.err.println("IOException " + error);
+					return;
+				}
+				AlgorithmVOIExtraction algoVOIExtraction = new AlgorithmVOIExtraction(tempImage);
 				algoVOIExtraction.run();
-			    algoVOIExtraction.finalize();
-			    algoVOIExtraction = null;
-			    volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE,extents2D,"volume_sum_sliceImage_"+s);
-			    try {
-			    	volume_sum_sliceImage.importData(0, tempDouble, true);
-			    }
-			    catch (IOException e) {
-			    	System.err.println("IOException " + e);
-		    		return;
-			    }
-			    volume_sum_sliceImage.setVOIs(idImage.getVOIs());
-			    vFrame = new ViewJFrameImage(volume_sum_sliceImage);
-			    component = vFrame.getComponent(0);
-			    rect = component.getBounds();
-		        format = "png";
-	  	        captureImage =
-	  	                new BufferedImage(rect.width, rect.height,
-	  	                                    BufferedImage.TYPE_INT_ARGB);
-	  	        component.paint(captureImage.getGraphics());
-	  	        
-	  	        volume_sum_sliceFile = new File(outputFilePath + outputPrefix + "maskedData_"+s+".png");
-	  	        try {
-	  	            foundWriter = ImageIO.write(captureImage, format, volume_sum_sliceFile);
-	  	        }
-	  	        catch (IOException e) {
-	  	        	System.err.println("IOException " + e);
-		    		return;
-	  	        }
-	  	        if (!foundWriter) {
-	  	        	System.err.println("No appropriate writer for maskedData_"+s+".png");
-	  	        	return;
-	  	        }
-	  	        captureImage.flush();
-	  	        component.setEnabled(false);
-	  	        component.setVisible(false);
-	  	        component.setIgnoreRepaint(true);
-	  	        vFrame.removeComponentListener();
-	  	        vFrame.removeWindowListener();
-	  	        vFrame.removeMouseMotionListener();
-	  	        vFrame.removeMouseListener();
-	  	        vFrame.removeKeyListener();
-	  	        vFrame.close(false);
-	  	        volume_sum_sliceImage.disposeLocal();
-			} // if ((display > 2) || ((display > 1)  && (s == (int)Math.round(0.5 * nS)-1)))
-	    } // for (s = 0; s < nS; s++)
-	    System.out.println("Finished s loop");
-	    idImage.disposeLocal();
-	    idImage = null;
-	    if (tempImage != null) {
-	    	tempImage.disposeLocal();
-	    	tempImage = null;
-	    }
-	    
-	    for (x = 0; x < nC; x++) {
-	    	for (y = 0; y < nR; y++) {
-	    		for (z = 0; z < nS; z++) {
-	    		    mask_aif[x][y][z] = (byte)(mask_aif[x][y][z] * mask_data[x][y][z]);	
-	    		}
-	    	}
-	    }
+				algoVOIExtraction.finalize();
+				algoVOIExtraction = null;
+
+				ModelImage volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D,
+						"volume_sum_sliceImage_" + s);
+				volume_sum_sliceImage.setVOIs(tempImage.getVOIs());
+				tempDouble = new double[length];
+				for (x = 0; x < nC; x++) {
+					for (y = 0; y < nR; y++) {
+						tempDouble[x + y * nC] = volume_sum[x][y][s];
+					}
+				}
+				try {
+					volume_sum_sliceImage.importData(0, tempDouble, true);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				ViewJFrameImage vFrame = new ViewJFrameImage(volume_sum_sliceImage);
+				Component component = vFrame.getComponent(0);
+				Rectangle rect = component.getBounds();
+				String format = "png";
+				BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+				component.paint(captureImage.getGraphics());
+
+				File volume_sum_sliceFile = new File(
+						outputFilePath + outputPrefix + "maskedDataForAIFSelection_" + s + ".png");
+				boolean foundWriter;
+				try {
+					foundWriter = ImageIO.write(captureImage, format, volume_sum_sliceFile);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				if (!foundWriter) {
+					System.err.println("No appropriate writer for maskedDataForAIFSelection_" + s + ".png");
+					return;
+				}
+				captureImage.flush();
+				component.setEnabled(false);
+				component.setVisible(false);
+				component.setIgnoreRepaint(true);
+				vFrame.removeComponentListener();
+				vFrame.removeWindowListener();
+				vFrame.removeMouseMotionListener();
+				vFrame.removeMouseListener();
+				vFrame.removeKeyListener();
+				vFrame.close(false);
+				volume_sum_sliceImage.disposeLocal();
+
+				algoVOIExtraction = new AlgorithmVOIExtraction(idImage);
+				algoVOIExtraction.run();
+				algoVOIExtraction.finalize();
+				algoVOIExtraction = null;
+				volume_sum_sliceImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D,
+						"volume_sum_sliceImage_" + s);
+				try {
+					volume_sum_sliceImage.importData(0, tempDouble, true);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				volume_sum_sliceImage.setVOIs(idImage.getVOIs());
+				vFrame = new ViewJFrameImage(volume_sum_sliceImage);
+				component = vFrame.getComponent(0);
+				rect = component.getBounds();
+				format = "png";
+				captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+				component.paint(captureImage.getGraphics());
+
+				volume_sum_sliceFile = new File(outputFilePath + outputPrefix + "maskedData_" + s + ".png");
+				try {
+					foundWriter = ImageIO.write(captureImage, format, volume_sum_sliceFile);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				if (!foundWriter) {
+					System.err.println("No appropriate writer for maskedData_" + s + ".png");
+					return;
+				}
+				captureImage.flush();
+				component.setEnabled(false);
+				component.setVisible(false);
+				component.setIgnoreRepaint(true);
+				vFrame.removeComponentListener();
+				vFrame.removeWindowListener();
+				vFrame.removeMouseMotionListener();
+				vFrame.removeMouseListener();
+				vFrame.removeKeyListener();
+				vFrame.close(false);
+				volume_sum_sliceImage.disposeLocal();
+			} // if ((display > 2) || ((display > 1) && (s == (int)Math.round(0.5 * nS)-1)))
+		} // for (s = 0; s < nS; s++)
+		System.out.println("Finished s loop");
+		idImage.disposeLocal();
+		idImage = null;
+		if (tempImage != null) {
+			tempImage.disposeLocal();
+			tempImage = null;
+		}
+
+		for (x = 0; x < nC; x++) {
+			for (y = 0; y < nR; y++) {
+				for (z = 0; z < nS; z++) {
+					mask_aif[x][y][z] = (byte) (mask_aif[x][y][z] * mask_data[x][y][z]);
+				}
+			}
+		}
 	} // public void DSC_mri_mask()
-	
+
 	private void backupSecondGaussianRoutine() {
 		int i;
 		secondGaussianMeanBin = -1;
-	    secondGaussianAmplitude = -Double.MAX_VALUE; 
-	    for (i = firstGaussianMeanBin+4; i < intensity.length; i++)  {
-	    	if ((probDouble[i] > secondGaussianAmplitude) && (probDouble[i] > probDouble[i-3])) {
-	    		secondGaussianAmplitude = probDouble[i];
-	    		secondGaussianMeanBin = i;
-	    	}
-	    }
-	    secondGaussianMean = intensity[secondGaussianMeanBin];
-	    UI.setDataText("Second Gaussian amplitude = " + secondGaussianAmplitude + "\n");
-	    UI.setDataText("Second Gaussian mean = " + secondGaussianMean + "\n");
-	    // Calculate c2 from amplitude of best fit of highest channel and next 3 channels to the right
-	    
-	    // Initial estimate of c1 = sqrt(2) * standard deviation
-	    double xp1[] = new double[1];
-	    double ratio = probDouble[secondGaussianMeanBin + 3]/probDouble[secondGaussianMeanBin];
-	    double diff = (intensity[secondGaussianMeanBin+3] - secondGaussianMean);
-	    // exp(-((x-mean)/c1)^2) = ratio
-	    // -(intensity[secondGaussianMeanBin+3] - secondGaussianMean)^2/(c2*c2) = ln(ratio)
-	    xp1[0] = Math.sqrt(-(diff * diff)/Math.log(ratio));
-	    CostFunction cost_function1 = new gaussSecondStandardDeviationFittingCostFunction();
-	    ProblemImpl problem = new ProblemImpl();
+		secondGaussianAmplitude = -Double.MAX_VALUE;
+		for (i = firstGaussianMeanBin + 4; i < intensity.length; i++) {
+			if ((probDouble[i] > secondGaussianAmplitude) && (probDouble[i] > probDouble[i - 3])) {
+				secondGaussianAmplitude = probDouble[i];
+				secondGaussianMeanBin = i;
+			}
+		}
+		secondGaussianMean = intensity[secondGaussianMeanBin];
+		UI.setDataText("Second Gaussian amplitude = " + secondGaussianAmplitude + "\n");
+		UI.setDataText("Second Gaussian mean = " + secondGaussianMean + "\n");
+		// Calculate c2 from amplitude of best fit of highest channel and next 3
+		// channels to the right
+
+		// Initial estimate of c1 = sqrt(2) * standard deviation
+		double xp1[] = new double[1];
+		double ratio = probDouble[secondGaussianMeanBin + 3] / probDouble[secondGaussianMeanBin];
+		double diff = (intensity[secondGaussianMeanBin + 3] - secondGaussianMean);
+		// exp(-((x-mean)/c1)^2) = ratio
+		// -(intensity[secondGaussianMeanBin+3] - secondGaussianMean)^2/(c2*c2) =
+		// ln(ratio)
+		xp1[0] = Math.sqrt(-(diff * diff) / Math.log(ratio));
+		CostFunction cost_function1 = new gaussSecondStandardDeviationFittingCostFunction();
+		ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function1, null, xp1);
 
 		// Run the solver!
@@ -1692,10 +1496,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		c2 = xp1[0];
 		secondGaussianStandardDeviation = Math.sqrt(2.0) * c2;
 		if (display > 0) {
-		    UI.setDataText(solverSummary.BriefReport() + "\n");
-		    UI.setDataText("Solved answer for secondGaussianAmplitude*exp(-((x-secondGaussianMean)/c2)^2)\n");
-		    UI.setDataText("c2 = " + xp1[0] + "\n");
-		}	
+			UI.setDataText(solverSummary.BriefReport() + "\n");
+			UI.setDataText("Solved answer for secondGaussianAmplitude*exp(-((x-secondGaussianMean)/c2)^2)\n");
+			UI.setDataText("c2 = " + xp1[0] + "\n");
+		}
 	}
 
 	public void DSC_mri_conc() {
@@ -1740,7 +1544,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		DSC_mri_S0();
 
 		conc = new double[nC][nR][nS][nT];
-		// Note that if volumes[x][y][z][t] = 0 that step1 = 0 and conc[x][y][z][t] = infinity
+		// Note that if volumes[x][y][z][t] = 0 that step1 = 0 and conc[x][y][z][t] =
+		// infinity
 		// The MATLAB DSC_mri_aif.m code has:
 		// [aif_old]=estraiAIF(reshape(conc(:,:,options.aif.nSlice,:),options.nR,options.nC,options.nT),mask(:,:,options.aif.nSlice),options);
 		// function [AIF]=estraiAIF(AIFslice,mask,options)
@@ -1749,7 +1554,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// where ROI is always 0 or 1
 		// AUC(isinf(AUC))=0;
 		// This would only be the case if an infinity in conc passes an infinity to AUC.
-		// So the original MATLAB code expects conc[x][y][z][t] to be set to infinity for volumes[x][y][z][t] = 0
+		// So the original MATLAB code expects conc[x][y][z][t] to be set to infinity
+		// for volumes[x][y][z][t] = 0
 		double step1;
 		for (t = 0; t < nT; t++) {
 			for (x = 0; x < nC; x++) {
@@ -2217,14 +2023,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			captureImage.flush();
 			component.setEnabled(false);
 			component.setVisible(false);
-  	        component.setIgnoreRepaint(true);
+			component.setIgnoreRepaint(true);
 			vFrame.removeComponentListener();
 			vFrame.removeWindowListener();
 			vFrame.removeMouseMotionListener();
 			vFrame.removeMouseListener();
-  	        vFrame.removeKeyListener();
-  	        vFrame.close(false);
-  	        mask_aif_sliceImage.disposeLocal();
+			vFrame.removeKeyListener();
+			vFrame.close(false);
+			mask_aif_sliceImage.disposeLocal();
 		} // if (display > 2)
 
 		// 1.2) ROI design
@@ -2333,14 +2139,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			captureImage.flush();
 			component.setEnabled(false);
 			component.setVisible(false);
-  	        component.setIgnoreRepaint(true);
+			component.setIgnoreRepaint(true);
 			vFrame.removeComponentListener();
 			vFrame.removeWindowListener();
 			vFrame.removeMouseMotionListener();
 			vFrame.removeMouseListener();
-  	        vFrame.removeKeyListener();
-  	        vFrame.close(false);
-  	        immagineImage.disposeLocal();
+			vFrame.removeKeyListener();
+			vFrame.close(false);
+			immagineImage.disposeLocal();
 		} // if (display > 2)
 
 		// 2.) Decimation of candidate voxels
@@ -2455,10 +2261,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		totalCandidates = 0;
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
-                totalCandidates += ROI[x][y];
+				totalCandidates += ROI[x][y];
 			}
 		}
-		totalCandidatesToKeep = (int)Math.ceil(totalCandidates * (1-pTTP));
+		totalCandidatesToKeep = (int) Math.ceil(totalCandidates * (1 - pTTP));
 		numTTPEqualMinus1 = length;
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
@@ -2472,31 +2278,30 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					}
 				}
 				if (ROI[x][y] == 1) {
-				    TTP[x][y] = (short)AIFsliceTIndex;
-				    numTTPEqualMinus1--;
+					TTP[x][y] = (short) AIFsliceTIndex;
+					numTTPEqualMinus1--;
 				}
 			}
 		}
-		
+
 		cycle = true;
 		threshold = 0.0;
 		while (cycle) {
 			numTTPLessThreshold = 0;
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
-					if (TTP[x][y] < threshold) { 
+					if (TTP[x][y] < threshold) {
 						numTTPLessThreshold++;
 					}
 				}
 			}
 			if ((numTTPLessThreshold - numTTPEqualMinus1) > totalCandidatesToKeep) {
 				cycle = false;
-			}
-			else {
+			} else {
 				threshold = threshold + 1.0;
 			}
 		}
-		
+
 		// Values 2 for discarded voxels, 1 for kept voxels
 		survivedVoxels = 0;
 		for (x = 0; x < nC; x++) {
@@ -2506,13 +2311,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					if (ROI[x][y] == 1) {
 						survivedVoxels++;
 					}
-				}
-				else {
-					ROIttp[x][y] = (byte)(2 * ROI[x][y]);
+				} else {
+					ROIttp[x][y] = (byte) (2 * ROI[x][y]);
 				}
 			}
 		}
-		
+
 		if (display > 2) {
 			UI.setDataText("Candidate voxel selection via TTP criteria\n");
 			UI.setDataText("Voxel initial amount = " + totalCandidates + "\n");
@@ -2533,7 +2337,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			saveImageFile(ROIttpImage, outputFilePath, outputPrefix + "ROIttp", saveFileFormat);
 			ROIttpImage.disposeLocal();
 		}
-		
+
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
 				if (TTP[x][y] >= threshold) {
@@ -2541,7 +2345,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-		
+
 		// Select on the basis of the irregualrity index
 		totalCandidates = 0;
 		for (x = 0; x < nC; x++) {
@@ -2551,9 +2355,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-		totalCandidatesToKeep = (int)Math.ceil(totalCandidates * (1.0-pReg));
+		totalCandidatesToKeep = (int) Math.ceil(totalCandidates * (1.0 - pReg));
 		REG = calculateREG(ROI);
-		
+
 		cycle = true;
 		nCycles = 0;
 		REGdown = Double.MAX_VALUE;
@@ -2569,31 +2373,29 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		} // for (c = 0; c < nC; c++)
 		while (cycle) {
-		    nCycles = nCycles + 1;
-		    threshold = 0.5*(REGup + REGdown);
-		    nCandidates = 0;
-		    for (c = 0; c < nC; c++) {
-		    	for (r = 0; r < nR; r++) {
-		    		if (REG[c][r] > threshold) {
-		    			nCandidates++;
-		    		}
-		    	}
-		    }
-		    
-		    if (nCandidates == totalCandidatesToKeep) {
-		        cycle = false;	
-		    }
-		    else if (nCandidates < totalCandidatesToKeep) {
-		    	REGup = threshold;
-		    }
-		    else {
-		    	REGdown = threshold;
-		    }
-		    if (((REGup - REGdown) < 0.001) || (nCycles >= 100)) {
-		    	cycle = false;
-		    }
- 		} // while (cycle)
-		
+			nCycles = nCycles + 1;
+			threshold = 0.5 * (REGup + REGdown);
+			nCandidates = 0;
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					if (REG[c][r] > threshold) {
+						nCandidates++;
+					}
+				}
+			}
+
+			if (nCandidates == totalCandidatesToKeep) {
+				cycle = false;
+			} else if (nCandidates < totalCandidatesToKeep) {
+				REGup = threshold;
+			} else {
+				REGdown = threshold;
+			}
+			if (((REGup - REGdown) < 0.001) || (nCycles >= 100)) {
+				cycle = false;
+			}
+		} // while (cycle)
+
 		// Values 2 for discarded voxels, 1 for kept voxels
 		survivedVoxels = 0;
 		for (x = 0; x < nC; x++) {
@@ -2603,13 +2405,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					if (ROI[x][y] == 1) {
 						survivedVoxels++;
 					}
-				}
-				else {
-					ROIreg[x][y] = (byte)(2 * ROI[x][y]);
+				} else {
+					ROIreg[x][y] = (byte) (2 * ROI[x][y]);
 				}
 			}
 		}
-		
+
 		if (display > 2) {
 			UI.setDataText("Candidate voxel selection via regularity criteria\n");
 			UI.setDataText("Voxel initial amount = " + totalCandidates + "\n");
@@ -2630,7 +2431,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			saveImageFile(ROIregImage, outputFilePath, outputPrefix + "ROIreg", saveFileFormat);
 			ROIregImage.disposeLocal();
 		}
-		
+
 		ROISum = 0;
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
@@ -2642,7 +2443,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-		
+
 		// 3.) Application of the cluster algorithm to search for the arterial
 		if (display > 0) {
 			UI.setDataText("Arterial voxels extraction\n");
@@ -2659,190 +2460,187 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-	    for (c = 0; c < nC; c++) {
-	    	for (r = 0; r < nR; r++) {
-	    		maskAIF[c][r] = ROI[c][r];
-	    	}
-	    }
-	    
-	    // 3.2) I apply the hierarchical cluster algorithm recursively
-	    
-	    cycle = true;
-	    nCycles = 0;
-	    
-	    nCluster = 2;
-	    centroidi = new double[nCluster][nT];
-	    AlgorithmKMeans kMeansAlgo;
-	    ModelImage kMeansImage = null;
-	    int algoSelection = AlgorithmKMeans.K_MEANS;
-	    int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
-	    double scale[] = new double[nT];
-	    for (t = 0; t < nT; t++) {
-	    	scale[t] = 1.0;
-	    }
-	    //String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
-	    String resultsFileName = null;
-	    int initSelection;
-	    float redBuffer[] = null;
-	    float greenBuffer[] = null;
-	    float blueBuffer[] = null;
-	    double scaleMax = 255.0;
-	    boolean useColorHistogram = false;
-	    boolean scaleVariablesToUnitVariance = false;
-        double axesRatio[] = null;
-        boolean bwSegmentedImage = false;
-        double doubleBuffer[] = null;
-        boolean showKMeansSegmentedImage = false;
-        boolean followBatchWithIncremental = false; 
-        // If true, three dimensional color segmenting in RGB.  If false, two dimensional color segmenting in CIELAB
-        boolean colorSegmentInRGB = false;
-        double centroidPos[][] = new double[nT][nCluster];
-	    while (cycle) {
-	    	nCycles = nCycles + 1;
-	    	if (display > 2) {
-	    	    UI.setDataText("Cycle number = " + nCycles + '\n');
-	    	}
-	    
-		    // I apply the hierarchical cluster
-	    	// Use AlgorithmKMeans instead of MATLAB hierarchical clustering
-		    
-		    // Reverse order of indices for pos;
-		    double pos[][] = new double[nT][dati2D.length];
-		    for (t = 0; t < nT; t++) {
-		    	for (i = 0; i < dati2D.length; i++) {
-		    		pos[t][i] = dati2D[i][t];
-		    	}
-		    }
-		    
-		    int vettCluster[] = new int[dati2D.length];
-		    // vettCluster in extract correponds to groupNum in AlgorithmKMeans
-		    double weight[] = new double[dati2D.length];
-		    for (i = 0; i < dati2D.length; i++) {
-		    	weight[i] = 1.0;
-		    }
-		    System.out.println("groupNum = " + dati2D.length);
-		    // 588 points originally
-		    // First BRADLEY_FAYYAD_INIT takes 588 points to 97 or 98 points
-		    // AIF extraction times in seconds:
-		    // BRADLEY_FAYYAD_INIT for >= 10:  75, 67.655, 62.992
-		    // BRADLEY_FAYYAD_INIT for >= 20:  52.262, 53.049, 52.637
-		    // BRADLAY_FAYYAD_INIT for >= 40:  52.002, 51.892, 52.385
-		    // BRADLEY_FAYYAD_INIT for >= 80:  51.801, 55.007, 51.387
-		    // BRADLEY_FAYYAD_INIT for >= 100: 56.133, 57.772, 57.067
-		    // BRADLEY_FAYYAD_INIT for >= 600: Still working on first HIERARCHICAL_GROUPING_INIT after 10 minutes
-		    if (dati2D.length >= 100) {
-		    	initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
-		    	System.out.println("Running BRADLEY_FAYYAD_INIT");
-		    }
-		    else {
-		        initSelection = AlgorithmKMeans.HIERARCHICAL_GROUPING_INIT;
-		        System.out.println("Running HIERARCHICAL_GROUPING_INIT");
-		    }
-		    long startKMeansTime = System.currentTimeMillis();
-		    kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos,
-		    		scale, vettCluster, weight, centroidPos, resultsFileName, initSelection, 
-		    		redBuffer, greenBuffer, blueBuffer, scaleMax, useColorHistogram, scaleVariablesToUnitVariance,
-		    		axesRatio, bwSegmentedImage, doubleBuffer, showKMeansSegmentedImage, 
-		    		followBatchWithIncremental, colorSegmentInRGB);
-		    kMeansAlgo.run();
-		    // groupMean[nDims][numberClusters]
-		    double[][] groupMean = kMeansAlgo.getGroupMean();
-		    kMeansAlgo.finalize();
-	        kMeansAlgo = null;
-	        long KMeanRunTime = System.currentTimeMillis() - startKMeansTime;
-	        System.out.println("KMeans run time in milliseconds = " + KMeanRunTime);
-	        for (i = 0; i < nCluster; i++) {
-	        	for (t = 0; t < nT; t++) {
-	        		centroidi[i][t] = groupMean[t][i];
-	        	}
-	        }
-	        
-	        // I compare the clusters and choose which one to keep
-	        double MC1 = -Double.MAX_VALUE;
-	        int TTP1 = -1;
-	        double MC2 = -Double.MAX_VALUE;
-	        int TTP2 = -1;
-	        for (t = 0; t < nT; t++) {
-	        	if (centroidi[0][t] > MC1) {
-	        		TTP1 = t;
-	        		MC1 = centroidi[0][t];
-	        	}
-	        	if (centroidi[1][t] > MC2) {
-	        		TTP2 = t;
-	        		MC2 = centroidi[1][t];
-	        	}
-	        }
-	        double maxMC = Math.max(MC1, MC2);
-	        double minMC = Math.min(MC1, MC2);
-	        if ((((maxMC - minMC)/maxMC) < diffPeak) && (TTP1 != TTP2)) {
-	        	// When the difference between the peaks is less than the threshold,
-	        	// I choose based on the TTP
-	        	// The result is 1 if TTP1 > TTP2 and 0 if TTP2 < TTP1
-	        	if (TTP1 > TTP2) {
-	        		selectedCluster = 1;
-	        		otherCluster = 0;
-	        	}
-	        	else {
-	        		selectedCluster = 0;
-	        		otherCluster = 1;
-	        	}
-	        	if (display > 2) {
-	        		UI.setDataText("Cluster selected via TTP criteria\n");
-	        		UI.setDataText("Selected cluster: " + selectedCluster + "\n");
-	        	}
-	        } // if ((((maxMC - minMC)/maxMC) < diffPeak) && (TTP1 != TTP2))
-	        else {
-	        	// I choose based on the difference between the peaks
-	        	// The result is 0 if MC1 > MC2 and 1 if MC2 > MC1
-	        	if (MC2 > MC1) {
-	        		selectedCluster = 1;
-	        		otherCluster = 0;
-	        	}
-	        	else {
-	        		selectedCluster = 0;
-	        		otherCluster = 1;
-	        	}
-	        	if (display > 2) {
-	        		UI.setDataText("Cluster selected via MC criteria\n");
-	        		UI.setDataText("Selected cluster: " + selectedCluster + "\n");
-	        	}
-	        }
-	        int numberSelectedCluster = 0;
-	        int numberOtherCluster = 0;
-	        for (i = 0; i < dati2D.length; i++) {
-	        	if (vettCluster[i] == selectedCluster) {
-	        		numberSelectedCluster++;
-	        	}
-	        	else {
-	        		numberOtherCluster++;
-	        	}
-	        }
-	        if ((numberSelectedCluster < nVoxelMin) && (numberOtherCluster >= nVoxelMin)) {
-	        	// I choose the other cluster
-	        	i = selectedCluster;
-	        	selectedCluster = otherCluster;
-	        	otherCluster = i;
-	        	i = numberSelectedCluster;
-	        	numberSelectedCluster = numberOtherCluster;
-	        	numberOtherCluster = i;
-		        if (display > 2) {
-		        	UI.setDataText("Cluster selected switched because of minimum voxel bound\n");
-		        	UI.setDataText("Selected cluster: " + selectedCluster + "\n");
-		        }
-	        } // if ((numberSelectedCluster < nVoxelMin) && (numberOtherCluster >= nVoxelMin))
-	        
-	        // I only keep the data relating to the chosen cluster
-	        for (i = 0, c = 0; c < nC; c++) {
-		    	for (r = 0; r < nR; r++) {
-		    		if (maskAIF[c][r] == 1) {
-		    			if (vettCluster[i++] == otherCluster) {
-		    				maskAIF[c][r] = 0;
-		    			}
-		    		}
-		    	}
-		    }
-	        
-	        double dati2Dold[][] = new double[dati2D.length][nT];
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				maskAIF[c][r] = ROI[c][r];
+			}
+		}
+
+		// 3.2) I apply the hierarchical cluster algorithm recursively
+
+		cycle = true;
+		nCycles = 0;
+
+		nCluster = 2;
+		centroidi = new double[nCluster][nT];
+		AlgorithmKMeans kMeansAlgo;
+		ModelImage kMeansImage = null;
+		int algoSelection = AlgorithmKMeans.K_MEANS;
+		int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+		double scale[] = new double[nT];
+		for (t = 0; t < nT; t++) {
+			scale[t] = 1.0;
+		}
+		// String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+		String resultsFileName = null;
+		int initSelection;
+		float redBuffer[] = null;
+		float greenBuffer[] = null;
+		float blueBuffer[] = null;
+		double scaleMax = 255.0;
+		boolean useColorHistogram = false;
+		boolean scaleVariablesToUnitVariance = false;
+		double axesRatio[] = null;
+		boolean bwSegmentedImage = false;
+		double doubleBuffer[] = null;
+		boolean showKMeansSegmentedImage = false;
+		boolean followBatchWithIncremental = false;
+		// If true, three dimensional color segmenting in RGB. If false, two dimensional
+		// color segmenting in CIELAB
+		boolean colorSegmentInRGB = false;
+		double centroidPos[][] = new double[nT][nCluster];
+		while (cycle) {
+			nCycles = nCycles + 1;
+			if (display > 2) {
+				UI.setDataText("Cycle number = " + nCycles + '\n');
+			}
+
+			// I apply the hierarchical cluster
+			// Use AlgorithmKMeans instead of MATLAB hierarchical clustering
+
+			// Reverse order of indices for pos;
+			double pos[][] = new double[nT][dati2D.length];
+			for (t = 0; t < nT; t++) {
+				for (i = 0; i < dati2D.length; i++) {
+					pos[t][i] = dati2D[i][t];
+				}
+			}
+
+			int vettCluster[] = new int[dati2D.length];
+			// vettCluster in extract correponds to groupNum in AlgorithmKMeans
+			double weight[] = new double[dati2D.length];
+			for (i = 0; i < dati2D.length; i++) {
+				weight[i] = 1.0;
+			}
+			System.out.println("groupNum = " + dati2D.length);
+			// 588 points originally
+			// First BRADLEY_FAYYAD_INIT takes 588 points to 97 or 98 points
+			// AIF extraction times in seconds:
+			// BRADLEY_FAYYAD_INIT for >= 10: 75, 67.655, 62.992
+			// BRADLEY_FAYYAD_INIT for >= 20: 52.262, 53.049, 52.637
+			// BRADLAY_FAYYAD_INIT for >= 40: 52.002, 51.892, 52.385
+			// BRADLEY_FAYYAD_INIT for >= 80: 51.801, 55.007, 51.387
+			// BRADLEY_FAYYAD_INIT for >= 100: 56.133, 57.772, 57.067
+			// BRADLEY_FAYYAD_INIT for >= 600: Still working on first
+			// HIERARCHICAL_GROUPING_INIT after 10 minutes
+			if (dati2D.length >= 100) {
+				initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
+				System.out.println("Running BRADLEY_FAYYAD_INIT");
+			} else {
+				initSelection = AlgorithmKMeans.HIERARCHICAL_GROUPING_INIT;
+				System.out.println("Running HIERARCHICAL_GROUPING_INIT");
+			}
+			long startKMeansTime = System.currentTimeMillis();
+			kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos, scale, vettCluster,
+					weight, centroidPos, resultsFileName, initSelection, redBuffer, greenBuffer, blueBuffer, scaleMax,
+					useColorHistogram, scaleVariablesToUnitVariance, axesRatio, bwSegmentedImage, doubleBuffer,
+					showKMeansSegmentedImage, followBatchWithIncremental, colorSegmentInRGB);
+			kMeansAlgo.run();
+			// groupMean[nDims][numberClusters]
+			double[][] groupMean = kMeansAlgo.getGroupMean();
+			kMeansAlgo.finalize();
+			kMeansAlgo = null;
+			long KMeanRunTime = System.currentTimeMillis() - startKMeansTime;
+			System.out.println("KMeans run time in milliseconds = " + KMeanRunTime);
+			for (i = 0; i < nCluster; i++) {
+				for (t = 0; t < nT; t++) {
+					centroidi[i][t] = groupMean[t][i];
+				}
+			}
+
+			// I compare the clusters and choose which one to keep
+			double MC1 = -Double.MAX_VALUE;
+			int TTP1 = -1;
+			double MC2 = -Double.MAX_VALUE;
+			int TTP2 = -1;
+			for (t = 0; t < nT; t++) {
+				if (centroidi[0][t] > MC1) {
+					TTP1 = t;
+					MC1 = centroidi[0][t];
+				}
+				if (centroidi[1][t] > MC2) {
+					TTP2 = t;
+					MC2 = centroidi[1][t];
+				}
+			}
+			double maxMC = Math.max(MC1, MC2);
+			double minMC = Math.min(MC1, MC2);
+			if ((((maxMC - minMC) / maxMC) < diffPeak) && (TTP1 != TTP2)) {
+				// When the difference between the peaks is less than the threshold,
+				// I choose based on the TTP
+				// The result is 1 if TTP1 > TTP2 and 0 if TTP2 < TTP1
+				if (TTP1 > TTP2) {
+					selectedCluster = 1;
+					otherCluster = 0;
+				} else {
+					selectedCluster = 0;
+					otherCluster = 1;
+				}
+				if (display > 2) {
+					UI.setDataText("Cluster selected via TTP criteria\n");
+					UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+				}
+			} // if ((((maxMC - minMC)/maxMC) < diffPeak) && (TTP1 != TTP2))
+			else {
+				// I choose based on the difference between the peaks
+				// The result is 0 if MC1 > MC2 and 1 if MC2 > MC1
+				if (MC2 > MC1) {
+					selectedCluster = 1;
+					otherCluster = 0;
+				} else {
+					selectedCluster = 0;
+					otherCluster = 1;
+				}
+				if (display > 2) {
+					UI.setDataText("Cluster selected via MC criteria\n");
+					UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+				}
+			}
+			int numberSelectedCluster = 0;
+			int numberOtherCluster = 0;
+			for (i = 0; i < dati2D.length; i++) {
+				if (vettCluster[i] == selectedCluster) {
+					numberSelectedCluster++;
+				} else {
+					numberOtherCluster++;
+				}
+			}
+			if ((numberSelectedCluster < nVoxelMin) && (numberOtherCluster >= nVoxelMin)) {
+				// I choose the other cluster
+				i = selectedCluster;
+				selectedCluster = otherCluster;
+				otherCluster = i;
+				i = numberSelectedCluster;
+				numberSelectedCluster = numberOtherCluster;
+				numberOtherCluster = i;
+				if (display > 2) {
+					UI.setDataText("Cluster selected switched because of minimum voxel bound\n");
+					UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+				}
+			} // if ((numberSelectedCluster < nVoxelMin) && (numberOtherCluster >= nVoxelMin))
+
+			// I only keep the data relating to the chosen cluster
+			for (i = 0, c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					if (maskAIF[c][r] == 1) {
+						if (vettCluster[i++] == otherCluster) {
+							maskAIF[c][r] = 0;
+						}
+					}
+				}
+			}
+
+			double dati2Dold[][] = new double[dati2D.length][nT];
 			for (i = 0; i < dati2D.length; i++) {
 				for (t = 0; t < nT; t++) {
 					dati2Dold[i][t] = dati2D[i][t];
@@ -2857,132 +2655,131 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					j++;
 				}
 			}
-			
+
 			if (display > 2) {
 				UI.setDataText("Resume cycle # " + nCycles + "\n");
 				UI.setDataText("Voxel initial amount: " + dati2D.length + "\n");
 				UI.setDataText("Survived voxels: " + numberSelectedCluster + "\n");
-			    UI.setDataText("Cluster 0: MC = " + MC1 + "\n");
-			    UI.setDataText("Cluster 0 TTP = " + TTP1 + "\n");
-			    if (selectedCluster == 0) {
-			    	UI.setDataText("Cluster 0 voxel number = " + numberSelectedCluster + "\n");
-			    }
-			    else {
-			    	UI.setDataText("Cluster 0 voxel number = " + numberOtherCluster + "\n");
-			    }
-			    UI.setDataText("Cluster 1: MC = " + MC2 + "\n");
-			    UI.setDataText("Cluster 1 TTP = " + TTP2 + "\n");
-			    if (selectedCluster == 1) {
-			    	UI.setDataText("Cluster 1 voxel number = " + numberSelectedCluster + "\n");
-			    }
-			    else {
-			    	UI.setDataText("Cluster 1 voxel number = " + numberOtherCluster + "\n");
-			    }
-			    UI.setDataText("Selected cluster: " + selectedCluster + "\n");
+				UI.setDataText("Cluster 0: MC = " + MC1 + "\n");
+				UI.setDataText("Cluster 0 TTP = " + TTP1 + "\n");
+				if (selectedCluster == 0) {
+					UI.setDataText("Cluster 0 voxel number = " + numberSelectedCluster + "\n");
+				} else {
+					UI.setDataText("Cluster 0 voxel number = " + numberOtherCluster + "\n");
+				}
+				UI.setDataText("Cluster 1: MC = " + MC2 + "\n");
+				UI.setDataText("Cluster 1 TTP = " + TTP2 + "\n");
+				if (selectedCluster == 1) {
+					UI.setDataText("Cluster 1 voxel number = " + numberSelectedCluster + "\n");
+				} else {
+					UI.setDataText("Cluster 1 voxel number = " + numberOtherCluster + "\n");
+				}
+				UI.setDataText("Selected cluster: " + selectedCluster + "\n");
 			} // if (display > 2)
-			
+
 			// Check the exit criterial
 			if ((numberSelectedCluster <= nVoxelMax) || (nCycles >= 100)) {
 				cycle = false;
 			}
-	    } // while (cycle)
-	    
-	    // 4.) Output preparation
-	    
-	    // 4.1) Save the search ROI
-	    AIF_ROI = new byte[nC][nR];
-	    for (c = 0; c < nC; c++) {
-	    	for (r = 0; r < nR; r++) {
-	    		AIF_ROI[c][r] = ROI[c][r];
-	    	}
-	    }
-	    AIF_ROI_x = new double[xROI.length];
-	    for (i = 0; i < xROI.length; i++) {
-	    	AIF_ROI_x[i] = xROI[i];
-	    }
-	    AIF_ROI_y = new double[yROI.length];
-	    for (i = 0; i < yROI.length; i++) {
-	    	AIF_ROI_y[i] = yROI[i];
-	    }
-        
-	    // 4.2) Save the position of the chosen voxels and the average concentration
-	    // Concentration standards for AIF
-	    AIF_conc = new double[nT];
-	    for (t = 0; t < nT; t++) {
-	    	AIF_conc[t] = centroidi[selectedCluster][t];
-	    }
-	    int numMaskAIF = 0;
-	    for (c = 0; c < nC; c++) {
-	    	for (r = 0; r < nR; r++) {
-	    		if (maskAIF[c][r] == 1) {
-	    			numMaskAIF++;
-	    		}
-	    	}
-	    }
-	    
-	    AIF_voxels = new int[numMaskAIF][2];
-	    int pos = 0;
-	    for (c = 0; c < nC; c++) {
-	    	for (r = 0; r <nR; r++) {
-	    		if (maskAIF[c][r] == 1) {
-	    			AIF_voxels[pos][0] = c;
-	    			AIF_voxels[pos][1] = r;
-	    			pos++;
-	    		}
-	    	}
-	    }
-	    
-	    // 4.3) Calculate the fit of the arterial with the gamma-variate (with recirculation)
-	    if (display > 0) {
-	    	UI.setDataText("Gamma variate fit computation\n");
-	    }
-	    
-	    // Weights for the calculation of the fit
-	    AIF_fit_weights = new double[nT];
-	    for (t = 0; t < nT; t++) {
-	    	AIF_fit_weights[t] = 0.01 + Math.exp(-AIF_conc[t]);
-	    }
-	    
-	    double MC = -Double.MAX_VALUE;
-	    int WTTP = -1;
-	    for (t = 0; t < nT; t++) {
-	        if (AIF_conc[t] > MC) {
-	        	WTTP = t;
-	        	MC = AIF_conc[t];
-	        }
-	    }
-	    AIF_fit_weights[WTTP] = AIF_fit_weights[WTTP]/10.0;
-	    if (WTTP >= 1) {
-	        AIF_fit_weights[WTTP-1] = AIF_fit_weights[WTTP-1]/5.0;
-	    }
-	    AIF_fit_weights[WTTP+1] = AIF_fit_weights[WTTP+1]/2.0;
-	    
-	    fitGV_peak1(AIF_conc, AIF_fit_weights);
-	    if (aif_recirculation == 1) {
-	    	fitGV_peak2(AIF_conc, AIF_fit_weights);
-	    	AIF_fit_parameters = new double[7];
-	    	AIF_fit_cv_est_parGV = new double[7];
-	    	for (i = 0; i < 4; i++) {
-	    		AIF_fit_parameters[i] = fitParameters_peak1[i];
-	    		AIF_fit_cv_est_parGV[i] = cv_est_parGV_peak1[i];
-	    	}
-	    	for (i = 0; i < 3; i++) {
-	    		AIF_fit_parameters[i+4] = fitParameters_peak2[i];
-	    		AIF_fit_cv_est_parGV[i+4] = cv_est_parGV_peak2[i];
-	    	}
-	    	AIF_fit_gv = GVfunction(AIF_fit_parameters);
-	    } // if (aif_recirculation == 1)
-	    else {
-	    	AIF_fit_parameters = new double[4];
-	    	AIF_fit_cv_est_parGV = new double[4];
-	    	for (i = 0; i < 4; i++) {
-	    		AIF_fit_parameters[i] = fitParameters_peak1[i];
-	    		AIF_fit_cv_est_parGV[i] = cv_est_parGV_peak1[i];
-	    	}
-	    	AIF_fit_gv = GVfunction_peak1(AIF_fit_parameters);
-	    }
-	    
-	    if (display > 1) {
+		} // while (cycle)
+
+		// 4.) Output preparation
+
+		// 4.1) Save the search ROI
+		AIF_ROI = new byte[nC][nR];
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				AIF_ROI[c][r] = ROI[c][r];
+			}
+		}
+		AIF_ROI_x = new double[xROI.length];
+		for (i = 0; i < xROI.length; i++) {
+			AIF_ROI_x[i] = xROI[i];
+		}
+		AIF_ROI_y = new double[yROI.length];
+		for (i = 0; i < yROI.length; i++) {
+			AIF_ROI_y[i] = yROI[i];
+		}
+
+		// 4.2) Save the position of the chosen voxels and the average concentration
+		// Concentration standards for AIF
+		AIF_conc = new double[nT];
+		for (t = 0; t < nT; t++) {
+			AIF_conc[t] = centroidi[selectedCluster][t];
+		}
+		int numMaskAIF = 0;
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				if (maskAIF[c][r] == 1) {
+					numMaskAIF++;
+				}
+			}
+		}
+
+		AIF_voxels = new int[numMaskAIF][2];
+		int pos = 0;
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				if (maskAIF[c][r] == 1) {
+					AIF_voxels[pos][0] = c;
+					AIF_voxels[pos][1] = r;
+					pos++;
+				}
+			}
+		}
+
+		// 4.3) Calculate the fit of the arterial with the gamma-variate (with
+		// recirculation)
+		if (display > 0) {
+			UI.setDataText("Gamma variate fit computation\n");
+		}
+
+		// Weights for the calculation of the fit
+		AIF_fit_weights = new double[nT];
+		for (t = 0; t < nT; t++) {
+			AIF_fit_weights[t] = 0.01 + Math.exp(-AIF_conc[t]);
+		}
+
+		double MC = -Double.MAX_VALUE;
+		int WTTP = -1;
+		for (t = 0; t < nT; t++) {
+			if (AIF_conc[t] > MC) {
+				WTTP = t;
+				MC = AIF_conc[t];
+			}
+		}
+		AIF_fit_weights[WTTP] = AIF_fit_weights[WTTP] / 10.0;
+		if (WTTP >= 1) {
+			AIF_fit_weights[WTTP - 1] = AIF_fit_weights[WTTP - 1] / 5.0;
+		}
+		AIF_fit_weights[WTTP + 1] = AIF_fit_weights[WTTP + 1] / 2.0;
+
+		fitGV_peak1(AIF_conc, AIF_fit_weights);
+		if (aif_recirculation == 1) {
+			fitGV_peak2(AIF_conc, AIF_fit_weights);
+			AIF_fit_parameters = new double[7];
+			AIF_fit_cv_est_parGV = new double[7];
+			for (i = 0; i < 4; i++) {
+				AIF_fit_parameters[i] = fitParameters_peak1[i];
+				AIF_fit_cv_est_parGV[i] = cv_est_parGV_peak1[i];
+			}
+			for (i = 0; i < 3; i++) {
+				AIF_fit_parameters[i + 4] = fitParameters_peak2[i];
+				AIF_fit_cv_est_parGV[i + 4] = cv_est_parGV_peak2[i];
+			}
+			AIF_fit_gv = GVfunction(AIF_fit_parameters);
+		} // if (aif_recirculation == 1)
+		else {
+			AIF_fit_parameters = new double[4];
+			AIF_fit_cv_est_parGV = new double[4];
+			for (i = 0; i < 4; i++) {
+				AIF_fit_parameters[i] = fitParameters_peak1[i];
+				AIF_fit_cv_est_parGV[i] = cv_est_parGV_peak1[i];
+			}
+			AIF_fit_gv = GVfunction_peak1(AIF_fit_parameters);
+		}
+
+		if (display > 1) {
 			vettImmagine = new double[length];
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
@@ -3030,28 +2827,28 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			captureImage.flush();
 			component.setEnabled(false);
 			component.setVisible(false);
-  	        component.setIgnoreRepaint(true);
+			component.setIgnoreRepaint(true);
 			vFrame.removeComponentListener();
 			vFrame.removeWindowListener();
 			vFrame.removeMouseMotionListener();
 			vFrame.removeMouseListener();
-  	        vFrame.removeKeyListener();
-  	        vFrame.close(false);
-  	        immagineImage.disposeLocal();
+			vFrame.removeKeyListener();
+			vFrame.close(false);
+			immagineImage.disposeLocal();
 		} // if (display > 1)
 	} // public void extractAIF()
-	
+
 	private double[] GVfunction(double p[]) {
 		// Compute the gamma-variate function defined by the parameters contained in p.
 		// The gamma-variate function defined by the formula:
-		
+
 		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
-		
+
 		// c(t) = FP(t) + FP(t-td) conv K*exp(-t/tao)
-		
+
 		// The parameters are passed in the following order:
 		// p = [t0 alpha beta A td K tao]
-		
+
 		// Since the formula predicts a convolution, the time grid
 		// along which the much denser gamma variate than the final grid is calculated
 		double t0 = p[0];
@@ -3062,52 +2859,52 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double K = p[5];
 		double tao = p[6];
 		int i, j, t;
-		
+
 		// 1.) Definition of the virtual grid necessary for convolution
 		// Performed in DSC_mri_core to prevent unnecessary repetitions
-		//double TR = time[1] - time[0];
-		//double Tmax = -Double.MAX_VALUE;
-		//double Tmin = Double.MAX_VALUE;
-		
-		//for (t = 0; t < nT; t++) {
-		//	if (time[t] < Tmin) {
-		//		Tmin = time[t];
-		//	}
-		//	if (time[t] > Tmax) {
-		//		Tmax = time[t];
-		//	}
-		//}
-		
-		//double TRfine = TR/10.0;
-		nTfine = 1 + (int)((2*Tmax)/TRfine);
+		// double TR = time[1] - time[0];
+		// double Tmax = -Double.MAX_VALUE;
+		// double Tmin = Double.MAX_VALUE;
+
+		// for (t = 0; t < nT; t++) {
+		// if (time[t] < Tmin) {
+		// Tmin = time[t];
+		// }
+		// if (time[t] > Tmax) {
+		// Tmax = time[t];
+		// }
+		// }
+
+		// double TRfine = TR/10.0;
+		nTfine = 1 + (int) ((2 * Tmax) / TRfine);
 		tGrid = new double[nTfine];
 		for (t = 0; t < nTfine; t++) {
-			tGrid[t] = t*TRfine;
+			tGrid[t] = t * TRfine;
 		}
-		
+
 		// Calculation of the components of GV
 		// I divide the GV into its main components
 		double peak1[] = new double[nTfine]; // Main peak
 		double peak2[] = new double[nTfine]; // Peak of recirculation
 		double disp[] = new double[nTfine]; // Dispersion of recirculation
-		
+
 		double tg;
 		for (i = 0; i < nTfine; i++) {
 			tg = tGrid[i];
-			
+
 			if (tg > t0) {
-				peak1[i] = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
+				peak1[i] = A * Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
 			}
-			
-			if (tg > (t0+td)) {
+
+			if (tg > (t0 + td)) {
 				// Calculation of FP(t-td)
-				peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+				peak2[i] = K * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 			}
-			
+
 			// Calculation of disp(t)
-			disp[i] = Math.exp(-tg/tao);
+			disp[i] = Math.exp(-tg / tao);
 		}
-		
+
 		// 3.) I assemble the components to obtain the GV calculated on the fine grid
 		double recirculation_fine[] = new double[nTfine];
 		double conc[] = new double[nTfine];
@@ -3118,46 +2915,45 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			recirculation_fine[i] *= TRfine;
 			conc[i] = peak1[i] + recirculation_fine[i];
 		}
-		
+
 		// 4.) I'm going to sample GV on the time instants requeted in time
 		double GV[] = new double[nT];
 		for (t = 0; t < nT; t++) {
 			int pos = -1;
 			double minValue = Double.MAX_VALUE;
 			for (i = 0; i < nTfine; i++) {
-			    double absValue = Math.abs(tGrid[i] - time[t]);
-			    if (absValue < minValue) {
-			    	minValue = absValue;
-			    	pos = i;
-			    }
+				double absValue = Math.abs(tGrid[i] - time[t]);
+				if (absValue < minValue) {
+					minValue = absValue;
+					pos = i;
+				}
 			}
 			GV[t] = conc[pos];
 		}
 		return GV;
 	}
-	
+
 	private void fitGV_peak1(double dati[], double orgWeights[]) {
 		// Calculate the fit of the first peak with a gamma variate function
 		// The function used is described by the formula:
-		
+
 		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
-		
+
 		// c(t) = FP(t)
-		
-		
+
 		// Parameters: p = [t0 alpha beta A]
-		
+
 		// The last parameter returned represents the exit flag,
 		int i;
 		double weights[] = new double[orgWeights.length];
 		for (i = 0; i < orgWeights.length; i++) {
-			weights[i] = orgWeights[i]; 
+			weights[i] = orgWeights[i];
 		}
-		
+
 		// Initial parameter estimates (modification of Denis)
 		// Alpha is set to 5
 		alpha_init = 5.0;
-		// t0 is estimated on the initial data.  It is calculated as the last instant at
+		// t0 is estimated on the initial data. It is calculated as the last instant at
 		// which the data remains less than 5% of the peak.
 		double MCdati = -Double.MAX_VALUE;
 		int TTPpos = -1;
@@ -3171,22 +2967,23 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double TTPdati = time[TTPpos];
 		int lastIndex = -1;
 		for (t = 0; t < TTPpos; t++) {
-		    if (dati[t] <= 0.05 *MCdati) {
-		    	lastIndex = t;
-		    }
+			if (dati[t] <= 0.05 * MCdati) {
+				lastIndex = t;
+			}
 		}
 		if (lastIndex == -1) {
 			System.err.println("In fitGV_peak1 found no time for which dati[t] <= 0.05 * MCdati");
 			System.exit(0);
 		}
 		t0_init = time[lastIndex];
-		
+
 		// beta was estimated using the relation that TTP = t0 + alpha*beta
-		beta_init = (TTPdati - t0_init)/alpha_init;
-		
-		// Initialize the parameters [t0 alpha beta] and choose A so that the initial estimate
+		beta_init = (TTPdati - t0_init) / alpha_init;
+
+		// Initialize the parameters [t0 alpha beta] and choose A so that the initial
+		// estimate
 		// and the data have the same maximum
-		double p[] = new double[] {t0_init, alpha_init, beta_init, 1.0};
+		double p[] = new double[] { t0_init, alpha_init, beta_init, 1.0 };
 		double GV[] = GVfunction_peak1(p);
 		double maxGV = -Double.MAX_VALUE;
 		for (t = 0; t < nT; t++) {
@@ -3194,60 +2991,60 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				maxGV = GV[t];
 			}
 		}
-	    A_init = MCdati/maxGV;
-		
+		A_init = MCdati / maxGV;
+
 		// Initial values of parameters in the estimate
-		fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
-		
-	    // In extractAIF already have:
-		//weights[WTTP] = weights[WTTP]/10.0;
-	    //weights[WTTP-1] = weights[WTTP-1]/5.0;
-		//weights[WTTP+1] = weights[WTTP+1]/2.0;
+		fitParameters_peak1 = new double[] { t0_init, alpha_init, beta_init, A_init };
+
+		// In extractAIF already have:
+		// weights[WTTP] = weights[WTTP]/10.0;
+		// weights[WTTP-1] = weights[WTTP-1]/5.0;
+		// weights[WTTP+1] = weights[WTTP+1]/2.0;
 		// so don't implement duplicative:
 		// Marco
 		// I increase the precision of the weight
 		// weight[TTPpos] = weight[TTPpos]/10.0;
 		// weight[TTPpos-1] = weight[TTPPos-1]/2.0;
-		
+
 		// I find the end of the first peak (20% maximum value)
 		i = TTPpos;
-		while (dati[i] > 0.2*dati[TTPpos]) {
+		while (dati[i] > 0.2 * dati[TTPpos]) {
 			i++;
 		}
-		
+
 		// Suitable data for "first peak only"
 		data_peak1 = new double[nT];
 		for (t = 0; t <= i; t++) {
 			data_peak1[t] = dati[t];
 		}
-		
+
 		weights_peak1 = new double[nT];
 		for (t = 0; t <= i; t++) {
 			weights_peak1[t] = weights[t];
 		}
-		for (t = i+1; t < nT; t++) {
+		for (t = i + 1; t < nT; t++) {
 			weights_peak1[t] = 0.01;
 		}
 		if (display > 0) {
-	    	UI.setDataText("Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
-		    UI.setDataText("t0 = " + fitParameters_peak1[0] + "\n");
-		    UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
-		    UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
-		    UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
-	    }
-	   
-	    CostFunction cost_function = new GVFittingCostFunction();
-	    ProblemImpl problem = new ProblemImpl();
+			UI.setDataText("Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+			UI.setDataText("t0 = " + fitParameters_peak1[0] + "\n");
+			UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
+			UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
+			UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
+		}
+
+		CostFunction cost_function = new GVFittingCostFunction();
+		ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, fitParameters_peak1);
-		problem.AddParameterBlock(fitParameters_peak1,4);
-		problem.SetParameterLowerBound(fitParameters_peak1, 0, 0.1*t0_init);
-		problem.SetParameterUpperBound(fitParameters_peak1, 0, 10.0*t0_init);
-        problem.SetParameterLowerBound(fitParameters_peak1, 1, 0.1*alpha_init);
-        problem.SetParameterUpperBound(fitParameters_peak1, 1, 10.0*alpha_init);
-        problem.SetParameterLowerBound(fitParameters_peak1, 2, 0.1*beta_init);
-        problem.SetParameterUpperBound(fitParameters_peak1, 2, 10.0*beta_init);
-        problem.SetParameterLowerBound(fitParameters_peak1, 3, 0.1*A_init);
-        problem.SetParameterUpperBound(fitParameters_peak1, 3, 10.0*A_init);
+		problem.AddParameterBlock(fitParameters_peak1, 4);
+		problem.SetParameterLowerBound(fitParameters_peak1, 0, 0.1 * t0_init);
+		problem.SetParameterUpperBound(fitParameters_peak1, 0, 10.0 * t0_init);
+		problem.SetParameterLowerBound(fitParameters_peak1, 1, 0.1 * alpha_init);
+		problem.SetParameterUpperBound(fitParameters_peak1, 1, 10.0 * alpha_init);
+		problem.SetParameterLowerBound(fitParameters_peak1, 2, 0.1 * beta_init);
+		problem.SetParameterUpperBound(fitParameters_peak1, 2, 10.0 * beta_init);
+		problem.SetParameterLowerBound(fitParameters_peak1, 3, 0.1 * A_init);
+		problem.SetParameterUpperBound(fitParameters_peak1, 3, 10.0 * A_init);
 		// Run the solver!
 		SolverOptions solverOptions = new SolverOptions();
 		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
@@ -3258,12 +3055,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		SolverSummary solverSummary = new SolverSummary();
 		Solve(solverOptions, problem, solverSummary);
 		if (display > 0) {
-		    UI.setDataText(solverSummary.BriefReport() + "\n");
-		    UI.setDataText("Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
-		    UI.setDataText("t0 = " + fitParameters_peak1[0] + "\n");
-		    UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
-		    UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
-		    UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
+			UI.setDataText(solverSummary.BriefReport() + "\n");
+			UI.setDataText("Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+			UI.setDataText("t0 = " + fitParameters_peak1[0] + "\n");
+			UI.setDataText("alpha = " + fitParameters_peak1[1] + "\n");
+			UI.setDataText("beta = " + fitParameters_peak1[2] + "\n");
+			UI.setDataText("A = " + fitParameters_peak1[3] + "\n");
 		}
 		if (GVFittingCheck) {
 			// Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)
@@ -3271,15 +3068,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// alpha_init = 5.0
 			// beta_init = 0.9300000000000004
 			// A_init = 3.597861389964149
-			// Ceres Solver Report: Iterations: 351, Initial cost: 2.477412e+06, Final cost: 8.551629e+04, Termination: CONVERGENCE
-			// Function tolerance reached. 
+			// Ceres Solver Report: Iterations: 351, Initial cost: 2.477412e+06, Final cost:
+			// 8.551629e+04, Termination: CONVERGENCE
+			// Function tolerance reached.
 			// |cost_change|/cost: 2.189536e-09 <= 1.000000e-08
 			// Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)
 			// t0 = 21.90196100375891
 			// alpha = 6.211813046079057
 			// beta = 0.9739564489051871
 			// A = 0.36594936256478594
-			// ******* Elsunc gamma-variate Curve Fitting ********* 
+			// ******* Elsunc gamma-variate Curve Fitting *********
 			// analyticalJacobian = true
 			// Number of iterations: 210
 			// Chi-squared: 170852.8625953145
@@ -3287,7 +3085,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// // alpha 6.2260791592529925
 			// beta 0.9725966077201533
 			// A 0.35978613899641493
-			// ******* Elsunc gamma-variate Curve Fitting ********* 
+			// ******* Elsunc gamma-variate Curve Fitting *********
 			// analyticalJacobian = false
 			// Number of iterations: 210
 			// Chi-squared: 170852.8625953156
@@ -3296,29 +3094,29 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// beta 0.9725966064905736
 			// A 0.35978613899641493
 			System.out.println("Initial estimates for A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
-		    System.out.println("t0_init = " + t0_init);
-		    System.out.println("alpha_init = " + alpha_init);
-		    System.out.println("beta_init = " + beta_init);
-		    System.out.println("A_init = " + A_init);
+			System.out.println("t0_init = " + t0_init);
+			System.out.println("alpha_init = " + alpha_init);
+			System.out.println("beta_init = " + beta_init);
+			System.out.println("A_init = " + A_init);
 			System.out.println(solverSummary.BriefReport());
 			System.out.println(solverSummary.message[0]);
-		    System.out.println("Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
-		    System.out.println("t0 = " + fitParameters_peak1[0]);
-		    System.out.println("alpha = " + fitParameters_peak1[1]);
-		    System.out.println("beta = " + fitParameters_peak1[2]);
-		    System.out.println("A = " + fitParameters_peak1[3]);
-		    
-		    boolean doAnalytical = true;
-		    fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
-		    GVFitting gv = new GVFitting(fitParameters_peak1, doAnalytical);	
-		    gv.driver();
-		    gv.dumpResults();
-		    doAnalytical = false;
-		    fitParameters_peak1 = new double[] {t0_init, alpha_init, beta_init, A_init};
-		    gv = new GVFitting(fitParameters_peak1, doAnalytical);	
-		    gv.driver();
-		    gv.dumpResults();
-		    System.exit(0);
+			System.out.println("Solved answer for A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
+			System.out.println("t0 = " + fitParameters_peak1[0]);
+			System.out.println("alpha = " + fitParameters_peak1[1]);
+			System.out.println("beta = " + fitParameters_peak1[2]);
+			System.out.println("A = " + fitParameters_peak1[3]);
+
+			boolean doAnalytical = true;
+			fitParameters_peak1 = new double[] { t0_init, alpha_init, beta_init, A_init };
+			GVFitting gv = new GVFitting(fitParameters_peak1, doAnalytical);
+			gv.driver();
+			gv.dumpResults();
+			doAnalytical = false;
+			fitParameters_peak1 = new double[] { t0_init, alpha_init, beta_init, A_init };
+			gv = new GVFitting(fitParameters_peak1, doAnalytical);
+			gv.driver();
+			gv.dumpResults();
+			System.exit(0);
 		} // if (GVFittingCheck)
 		double t0 = fitParameters_peak1[0];
 		double alpha = fitParameters_peak1[1];
@@ -3328,30 +3126,32 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double J[][] = new double[nT][4];
 		for (i = 0; i < nT; i++) {
 			tm = time[i];
-		    if (tm > t0) {
-		    	J[i][0] = (A/weights_peak1[i])*((alpha*Math.pow((tm-t0),(alpha-1.0))*Math.exp(-(tm-t0)/beta)) -
-		    			(Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta)/beta));
-		    	J[i][1] = -(A/weights_peak1[i])*Math.log(tm-t0)*Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta);
-		    	J[i][2] = -(A/weights_peak1[i])*((tm-t0)/(beta*beta))*Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta);
-		    	J[i][3] = -(1.0/weights_peak1[i])*Math.pow((tm-t0),alpha)*Math.exp(-(tm-t0)/beta);
-		    }
-		    else {
-		        J[i][0] = 0.0;
-		    	J[i][1] = 0.0;
-		    	J[i][2] = 0.0;
-		    	J[i][3] = 0.0;
-		    }
+			if (tm > t0) {
+				J[i][0] = (A / weights_peak1[i])
+						* ((alpha * Math.pow((tm - t0), (alpha - 1.0)) * Math.exp(-(tm - t0) / beta))
+								- (Math.pow((tm - t0), alpha) * Math.exp(-(tm - t0) / beta) / beta));
+				J[i][1] = -(A / weights_peak1[i]) * Math.log(tm - t0) * Math.pow((tm - t0), alpha)
+						* Math.exp(-(tm - t0) / beta);
+				J[i][2] = -(A / weights_peak1[i]) * ((tm - t0) / (beta * beta)) * Math.pow((tm - t0), alpha)
+						* Math.exp(-(tm - t0) / beta);
+				J[i][3] = -(1.0 / weights_peak1[i]) * Math.pow((tm - t0), alpha) * Math.exp(-(tm - t0) / beta);
+			} else {
+				J[i][0] = 0.0;
+				J[i][1] = 0.0;
+				J[i][2] = 0.0;
+				J[i][3] = 0.0;
+			}
 		}
 		Matrix matJ = new Matrix(J);
 		double covp[][] = (((matJ.transpose()).times(matJ)).inverse()).getArray();
-		double var[] = new double[] {covp[0][0], covp[1][1], covp[2][2], covp[3][3]};
-		double sd[] = new double[] {Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2]), Math.sqrt(var[3])};
+		double var[] = new double[] { covp[0][0], covp[1][1], covp[2][2], covp[3][3] };
+		double sd[] = new double[] { Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2]), Math.sqrt(var[3]) };
 		cv_est_parGV_peak1 = new double[4];
 		for (i = 0; i < 4; i++) {
-			cv_est_parGV_peak1[i] = sd[i]/fitParameters_peak1[i]*100.0;
+			cv_est_parGV_peak1[i] = sd[i] / fitParameters_peak1[i] * 100.0;
 		}
 		if (display > 2) {
-			GV = GVfunction_peak1(fitParameters_peak1);	
+			GV = GVfunction_peak1(fitParameters_peak1);
 			float timef[] = new float[nT];
 			for (i = 0; i < nT; i++) {
 				timef[i] = (float) time[i];
@@ -3360,8 +3160,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			for (i = 0; i < nT; i++) {
 				GVf[i] = (float) GV[i];
 			}
-			ViewJFrameGraph firstPeakGraph = new ViewJFrameGraph(timef, GVf,
-					"First peak final fit", "Time", "GV fit");
+			ViewJFrameGraph firstPeakGraph = new ViewJFrameGraph(timef, GVf, "First peak final fit", "Time", "GV fit");
 			firstPeakGraph.setVisible(true);
 			try {
 				firstPeakGraph.save(outputFilePath + outputPrefix + "firstPeakGraph.plt");
@@ -3387,17 +3186,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			captureImage.flush();
 		} // if (display > 2)
 	} // fitGV_peak1
-	
+
 	private void fitGV_peak2(double dati[], double weights[]) {
 		// Calculate the fit with a gamma variate function
 		// The function used described by the formula:
-		
+
 		// FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)
-		
+
 		// c(t) = FP(t) + FP(t-td) conv K*exp(-t/tao)
-		
+
 		// Parameters: p = [t0 alpha beta A td K tao]
-		
+
 		// I fill in the data for the fit
 		double peak1[] = GVfunction_peak1(fitParameters_peak1);
 		// The data to fit are the residues of the first fit
@@ -3406,13 +3205,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		for (t = 0; t < nT; t++) {
 			dati_peak2[t] = dati[t] - peak1[t];
 		}
-		
+
 		// Uniform weights for the calculation of the fit
 		weights_peak2 = new double[nT];
 		for (t = 0; t < nT; t++) {
 			weights_peak2[t] = 1.0;
 		}
-		
+
 		double maxDati = -Double.MAX_VALUE;
 		int maxT = -1;
 		for (t = 0; t < nT; t++) {
@@ -3423,23 +3222,25 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		int lastT = -1;
 		for (t = 0; t < nT; t++) {
-			if (dati[t] > 0.4*maxDati) {
+			if (dati[t] > 0.4 * maxDati) {
 				lastT = t;
 			}
 		}
-		int posTaglioWeights = Math.min(lastT, maxT+3);
-		// I reduce the weight of the data before the main peak.  I arrive
+		int posTaglioWeights = Math.min(lastT, maxT + 3);
+		// I reduce the weight of the data before the main peak. I arrive
 		// until the concentration has dropped below 40% of the peak to avoid cases
 		// where the main peak does not fit well the post-peak data abd the
 		// residuals may show a bogus peak.
-		//for (t = 0; t <= posTaglioWeights; t++) {
-		//	weights_peak2[t] = 1.0;
-		//}
-		
+		// for (t = 0; t <= posTaglioWeights; t++) {
+		// weights_peak2[t] = 1.0;
+		// }
+
 		// Parameter initialization
-		// Data based search for initial points.  I only consider data from the instant in 
-		// which the concentrations fall below 40% of the peak to avoid too much noisy residues
-		// not related to the recirculation.  The fit is done with all the residues.
+		// Data based search for initial points. I only consider data from the instant
+		// in
+		// which the concentrations fall below 40% of the peak to avoid too much noisy
+		// residues
+		// not related to the recirculation. The fit is done with all the residues.
 		double dati_x_stime_init[] = new double[nT];
 		for (t = 0; t < nT; t++) {
 			dati_x_stime_init[t] = dati_peak2[t];
@@ -3447,13 +3248,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		for (t = 0; t <= posTaglioWeights; t++) {
 			dati_x_stime_init[t] = 0;
 		}
-		for (t = posTaglioWeights+1; t < nT; t++) {
+		for (t = posTaglioWeights + 1; t < nT; t++) {
 			if (dati_x_stime_init[t] < 0) {
 				dati_x_stime_init[t] = 0;
 			}
 		}
-		// td_init is calculated as the distance between the instant of the main peak and the
-		// distance of the recirculation peak.  The recirculation peak wa identified as the data
+		// td_init is calculated as the distance between the instant of the main peak
+		// and the
+		// distance of the recirculation peak. The recirculation peak wa identified as
+		// the data
 		// peak minus the prediction of the main peak.
 		double maxPeak2 = -Double.MAX_VALUE;
 		int TTPpeak2 = -1;
@@ -3465,21 +3268,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		int t0peak2 = -1;
 		for (t = 0; t <= TTPpeak2; t++) {
-			if (dati_x_stime_init[t] < 0.1*maxPeak2) {
+			if (dati_x_stime_init[t] < 0.1 * maxPeak2) {
 				t0peak2 = t;
 			}
 		}
 		td_init = time[t0peak2] - fitParameters_peak1[0];
-		
-		// The initial estimate of tao fixed.  100 mamnages to give a well spread
+
+		// The initial estimate of tao fixed. 100 mamnages to give a well spread
 		// recirculation and that with the bounds can become both a zero dispersion
 		// and lead to an almost complete dispersion.
 		tao_init = 40.0;
 		// The estimate of K is made so that the maxima of the predicted
 		// recirculation and of the fitted data are equal.
-		double xp[] = new double[] {fitParameters_peak1[0], fitParameters_peak1[1],
-				fitParameters_peak1[2], fitParameters_peak1[3], td_init, 1.0,
-				tao_init};
+		double xp[] = new double[] { fitParameters_peak1[0], fitParameters_peak1[1], fitParameters_peak1[2],
+				fitParameters_peak1[3], td_init, 1.0, tao_init };
 		double recirculation[] = GVfunction_recirculation(xp);
 		double maxRecirculation = -Double.MAX_VALUE;
 		for (t = 0; t < nT; t++) {
@@ -3487,27 +3289,27 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				maxRecirculation = recirculation[t];
 			}
 		}
-		K_init = maxPeak2/maxRecirculation;
-		
-		fitParameters_peak2 = new double[] {td_init, K_init, tao_init}; // Initial values
+		K_init = maxPeak2 / maxRecirculation;
+
+		fitParameters_peak2 = new double[] { td_init, K_init, tao_init }; // Initial values
 		if (display > 0) {
-	    	UI.setDataText("Initial estimates for FP(t-td) convolution K*exp(-t/tao)\n");
-	    	UI.setDataText("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
-		    UI.setDataText("td = " + fitParameters_peak2[0] + "\n");
-		    UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
-		    UI.setDataText("tao = " + fitParameters_peak2[2] + "\n");
-	    }
-	   
-	    CostFunction cost_function = new GVRecirculationCostFunction();
-	    ProblemImpl problem = new ProblemImpl();
+			UI.setDataText("Initial estimates for FP(t-td) convolution K*exp(-t/tao)\n");
+			UI.setDataText("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+			UI.setDataText("td = " + fitParameters_peak2[0] + "\n");
+			UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
+			UI.setDataText("tao = " + fitParameters_peak2[2] + "\n");
+		}
+
+		CostFunction cost_function = new GVRecirculationCostFunction();
+		ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, fitParameters_peak2);
-		problem.AddParameterBlock(fitParameters_peak2,3);
-		problem.SetParameterLowerBound(fitParameters_peak2, 0, 0.1*td_init);
-		problem.SetParameterUpperBound(fitParameters_peak2, 0, 10.0*td_init);
-        problem.SetParameterLowerBound(fitParameters_peak2, 1, 0.1*K_init);
-        problem.SetParameterUpperBound(fitParameters_peak2, 1, 10.0*K_init);
-        problem.SetParameterLowerBound(fitParameters_peak2, 2, 0.1*tao_init);
-        problem.SetParameterUpperBound(fitParameters_peak2, 2, 10.0*tao_init);
+		problem.AddParameterBlock(fitParameters_peak2, 3);
+		problem.SetParameterLowerBound(fitParameters_peak2, 0, 0.1 * td_init);
+		problem.SetParameterUpperBound(fitParameters_peak2, 0, 10.0 * td_init);
+		problem.SetParameterLowerBound(fitParameters_peak2, 1, 0.1 * K_init);
+		problem.SetParameterUpperBound(fitParameters_peak2, 1, 10.0 * K_init);
+		problem.SetParameterLowerBound(fitParameters_peak2, 2, 0.1 * tao_init);
+		problem.SetParameterUpperBound(fitParameters_peak2, 2, 10.0 * tao_init);
 		// Run the solver!
 		SolverOptions solverOptions = new SolverOptions();
 		solverOptions.linear_solver_type = LinearSolverType.DENSE_QR;
@@ -3518,12 +3320,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		SolverSummary solverSummary = new SolverSummary();
 		Solve(solverOptions, problem, solverSummary);
 		if (display > 0) {
-		    UI.setDataText(solverSummary.BriefReport() + "\n");
-		    UI.setDataText("Solved answer for FP(t-td) convolution K*exp(-t/tao)\n");
-		    UI.setDataText("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
-		    UI.setDataText("td = " + fitParameters_peak2[0] + "\n");
-		    UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
-		    UI.setDataText("tao = " + fitParameters_peak2[2] + "\n"); 
+			UI.setDataText(solverSummary.BriefReport() + "\n");
+			UI.setDataText("Solved answer for FP(t-td) convolution K*exp(-t/tao)\n");
+			UI.setDataText("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)\n");
+			UI.setDataText("td = " + fitParameters_peak2[0] + "\n");
+			UI.setDataText("K = " + fitParameters_peak2[1] + "\n");
+			UI.setDataText("tao = " + fitParameters_peak2[2] + "\n");
 		}
 		if (GVRecirculationCheck) {
 			// Initial estimates for FP(t-td) convolution K*exp(-t/tao)
@@ -3531,53 +3333,54 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// td_init = 19.76651061960303
 			// K_init = 0.018402223739224195
 			// tao_init = 40.0
-			// Ceres Solver Report: Iterations: 31, Initial cost: 5.944661e+02, Final cost: 2.525571e+02, Termination: CONVERGENCE
-			// Minimum trust region radius reached. 
-			// Trust region radius: 3.895532391309105E-35 <=  1.0E-32
+			// Ceres Solver Report: Iterations: 31, Initial cost: 5.944661e+02, Final cost:
+			// 2.525571e+02, Termination: CONVERGENCE
+			// Minimum trust region radius reached.
+			// Trust region radius: 3.895532391309105E-35 <= 1.0E-32
 			// Solved answer for FP(t-td) convolution K*exp(-t/tao)
 			// td = 15.18426191214277
 			// K = 0.012837854971044015
 			// tao = 38.10774224717836
-			// ******* Elsunc GV recirculation Curve Fitting ********* 
+			// ******* Elsunc GV recirculation Curve Fitting *********
 			// analyticalJacobian = true
 			// Number of iterations: 8
 			// Chi-squared: 505.0804959002924
 			// td 15.191393614623278
 			// K 0.012944380197663731
 			// tao 37.61800971361649
-			//  ******* Elsunc GV recirculation Curve Fitting ********* 
+			// ******* Elsunc GV recirculation Curve Fitting *********
 			// analyticalJacobian = false
 			// Number of iterations: 8
 			// Chi-squared: 505.08049590029225
 			// td 15.191393550184474
 			// K 0.012944380101420678
-			// tao 37.61801026358771	
-			
+			// tao 37.61801026358771
+
 			System.out.println("Initial estimates for FP(t-td) convolution K*exp(-t/tao)");
 			System.out.println("FP(t) = A*((t-t0)^alpha)*exp(-(t-t0)/beta)");
-		    System.out.println("td_init = " + td_init);
-		    System.out.println("K_init = " + K_init);
-		    System.out.println("tao_init = " + tao_init);
+			System.out.println("td_init = " + td_init);
+			System.out.println("K_init = " + K_init);
+			System.out.println("tao_init = " + tao_init);
 			System.out.println(solverSummary.BriefReport());
 			System.out.println(solverSummary.message[0]);
-		    System.out.println("Solved answer for FP(t-td) convolution K*exp(-t/tao)");
-		    System.out.println("td = " + fitParameters_peak2[0]);
-		    System.out.println("K = " + fitParameters_peak2[1]);
-		    System.out.println("tao = " + fitParameters_peak2[2]);
-		    
-		    boolean doAnalytical = true;
-		    fitParameters_peak2 = new double[] {td_init, K_init, tao_init};
-		    GVRecirculation gv = new GVRecirculation(fitParameters_peak2, doAnalytical);	
-		    gv.driver();
-		    gv.dumpResults();
-		    doAnalytical = false;
-		    fitParameters_peak2 = new double[] {td_init, K_init, tao_init};
-		    gv = new GVRecirculation(fitParameters_peak2, doAnalytical);	
-		    gv.driver();
-		    gv.dumpResults();
-		    System.exit(0);
+			System.out.println("Solved answer for FP(t-td) convolution K*exp(-t/tao)");
+			System.out.println("td = " + fitParameters_peak2[0]);
+			System.out.println("K = " + fitParameters_peak2[1]);
+			System.out.println("tao = " + fitParameters_peak2[2]);
+
+			boolean doAnalytical = true;
+			fitParameters_peak2 = new double[] { td_init, K_init, tao_init };
+			GVRecirculation gv = new GVRecirculation(fitParameters_peak2, doAnalytical);
+			gv.driver();
+			gv.dumpResults();
+			doAnalytical = false;
+			fitParameters_peak2 = new double[] { td_init, K_init, tao_init };
+			gv = new GVRecirculation(fitParameters_peak2, doAnalytical);
+			gv.driver();
+			gv.dumpResults();
+			System.exit(0);
 		} // if (GVRecirculationCheck)
-		
+
 		double t0 = fitParameters_peak1[0];
 		double alpha = fitParameters_peak1[1];
 		double beta = fitParameters_peak1[2];
@@ -3589,38 +3392,37 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// Vector initialization
 		double peak2[] = new double[nTfine]; // Peak of recirculation
 		double disp[] = new double[nTfine]; // Dispersion of recirculation
-		
+
 		double tg;
 		for (i = 0; i < nTfine; i++) {
 			tg = tGrid[i];
-			
-			if (tg > (t0+td)) {
+
+			if (tg > (t0 + td)) {
 				// Calculation of FP(t-td)
-				peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+				peak2[i] = K * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 			}
-			
+
 			// Calculation of disp(t)
-			disp[i] = Math.exp(-tg/tao);
+			disp[i] = Math.exp(-tg / tao);
 		}
-		
-		
-		double dpeak2dtd[] = new double[nTfine]; 
+
+		double dpeak2dtd[] = new double[nTfine];
 		double dpeak2dK[] = new double[nTfine];
 		double ddispdtao[] = new double[nTfine];
 		for (i = 0; i < nTfine; i++) {
 			tg = tGrid[i];
-			
-			if (tg > (t0+td)) {
+
+			if (tg > (t0 + td)) {
 				// Calculation of FP(t-td)
-				dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
-						- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
-				dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+				dpeak2dtd[i] = K * alpha * Math.pow((tg - t0 - td), (alpha - 1.0)) * Math.exp(-(tg - t0 - td) / beta)
+						- (K / beta) * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
+				dpeak2dK[i] = (-1.0) * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 			}
-			
+
 			// Calculation of disp(t)
-			ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+			ddispdtao[i] = (-tg / (tao * tao)) * Math.exp(-tg / tao);
 		}
-		
+
 		// 3.) I assemble the components to obtainthe GV calculated on the fine grid
 		double recirculation_fine_td[] = new double[nTfine];
 		double recirculation_fine_K[] = new double[nTfine];
@@ -3628,41 +3430,41 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		for (i = 0; i < nTfine; i++) {
 			for (j = 0; j <= i; j++) {
 				recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
-				recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
-				recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+				recirculation_fine_K[i] += dpeak2dK[j] * disp[i - j];
+				recirculation_fine_tao[i] += peak2[j] * ddispdtao[i - j];
 			}
 			recirculation_fine_td[i] *= TRfine;
 			recirculation_fine_K[i] *= TRfine;
 			recirculation_fine_tao[i] *= TRfine;
 		}
-		
+
 		for (t = 0; t < nT; t++) {
-			double pos = (time[t] - Tmin)/TRfine;
-			int lowIndex = (int)Math.floor(pos);
-			int highIndex = (int)Math.ceil(pos);
+			double pos = 2.0 * (time[t] - Tmin) / TRfine;
+			int lowIndex = (int) Math.floor(pos);
+			int highIndex = Math.min((int) Math.ceil(pos), nTfine - 1);
 			if (lowIndex == highIndex) {
-				J[t][0] = recirculation_fine_td[lowIndex]/weights_peak2[t];
-				J[t][1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
-				J[t][2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
-			}
-			else {
+				J[t][0] = recirculation_fine_td[lowIndex] / weights_peak2[t];
+				J[t][1] = recirculation_fine_K[lowIndex] / weights_peak2[t];
+				J[t][2] = recirculation_fine_tao[lowIndex] / weights_peak2[t];
+			} else {
 				double lowFraction = pos - lowIndex;
 				double highFraction = highIndex - pos;
-				J[t][0] = (lowFraction*recirculation_fine_td[highIndex] 
-						+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
-				J[t][1] = (lowFraction*recirculation_fine_K[highIndex] 
-						+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
-				J[t][2] = (lowFraction*recirculation_fine_tao[highIndex] 
-						+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+				J[t][0] = (lowFraction * recirculation_fine_td[highIndex]
+						+ highFraction * recirculation_fine_td[lowIndex]) / weights_peak2[t];
+				J[t][1] = (lowFraction * recirculation_fine_K[highIndex]
+						+ highFraction * recirculation_fine_K[lowIndex]) / weights_peak2[t];
+				J[t][2] = (lowFraction * recirculation_fine_tao[highIndex]
+						+ highFraction * recirculation_fine_tao[lowIndex]) / weights_peak2[t];
 			}
 		}
+
 		Matrix matJ = new Matrix(J);
 		double covp[][] = (((matJ.transpose()).times(matJ)).inverse()).getArray();
-		double var[] = new double[] {covp[0][0], covp[1][1], covp[2][2]};
-		double sd[] = new double[] {Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2])};
+		double var[] = new double[] { covp[0][0], covp[1][1], covp[2][2] };
+		double sd[] = new double[] { Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2]) };
 		cv_est_parGV_peak2 = new double[3];
 		for (i = 0; i < 3; i++) {
-			cv_est_parGV_peak2[i] = sd[i]/fitParameters_peak2[i]*100.0;
+			cv_est_parGV_peak2[i] = sd[i] / fitParameters_peak2[i] * 100.0;
 		}
 		if (display > 2) {
 			double p[] = new double[7];
@@ -3670,9 +3472,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				p[i] = fitParameters_peak1[i];
 			}
 			for (i = 0; i < 3; i++) {
-				p[i+4] = fitParameters_peak2[i];
+				p[i + 4] = fitParameters_peak2[i];
 			}
-			double[] GV = GVfunction_recirculation(p);	
+			double[] GV = GVfunction_recirculation(p);
 			float timef[] = new float[nT];
 			for (i = 0; i < nT; i++) {
 				timef[i] = (float) time[i];
@@ -3681,8 +3483,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			for (i = 0; i < nT; i++) {
 				GVf[i] = (float) GV[i];
 			}
-			ViewJFrameGraph recirculationGraph = new ViewJFrameGraph(timef, GVf,
-					"Recirculation final fit", "Time", "GVrecirculation fit");
+			ViewJFrameGraph recirculationGraph = new ViewJFrameGraph(timef, GVf, "Recirculation final fit", "Time",
+					"GVrecirculation fit");
 			recirculationGraph.setVisible(true);
 			try {
 				recirculationGraph.save(outputFilePath + outputPrefix + "recirculationGraph.plt");
@@ -3708,7 +3510,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			captureImage.flush();
 		} // if (display > 2)
 	} // fitGV_peak2
-	
+
 	private double[] GVfunction_recirculation(double p[]) {
 		// Compute the gamma-variate function that describes the recirculation of
 		// concentrations and defined by the parameters contained in p.
@@ -3788,9 +3590,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// 4.) I'm going to sample GV on the time instants requeted in time
 		double recirculation[] = new double[nT];
 		for (t = 0; t < nT; t++) {
-			double pos = (time[t] - Tmin)/TRfine;
+			double pos = 2.0*(time[t] - Tmin)/TRfine;
 			int lowIndex = (int)Math.floor(pos);
-			int highIndex = (int)Math.ceil(pos);
+			int highIndex = Math.min((int)Math.ceil(pos),nTfine-1);
 			if (lowIndex == highIndex) {
 				recirculation[t] = recirculation_fine[lowIndex];
 			}
@@ -3802,50 +3604,48 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		return recirculation;
 	}
+
 	private double[] GVfunction_peak1(double p[]) {
 		// Compute the gamma-variate function defined by the parameters contained in p.
 		// The gamma-variate function defined by the formula:
-		  
+
 		// GV[t] = A*((t_t0)^alpha)*exp(-(t-t0)/beta)
-		
+
 		// parameters : p = [t0 alpha beta A]
 		double t0 = p[0];
 		double alpha = p[1];
 		double beta = p[2];
 		double A = p[3];
-		
+
 		double GV[] = new double[nT];
 		int cont;
 		for (cont = 0; cont < nT; cont++) {
 			double t = time[cont];
 			if (t > t0) {
-				GV[cont] = A*Math.pow((t-t0),alpha) * Math.exp(-(t-t0)/beta);
+				GV[cont] = A * Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
 			}
 		}
 		return GV;
 	}
-	
+
 	private void clusterHierarchical(double dati[][], int nCluster, double centroidi[][]) {
-		// Apply the hierarchical cluster algorithm to the data and divide it into nCluster.
+		// Apply the hierarchical cluster algorithm to the data and divide it into
+		// nCluster.
 		// Returns a vector containing the number of the cluster to which each voxel has
 		// been assigned and the centroid of that cluster.
-		int distanceNumber = dati.length*(dati.length-1)/2;
+		int distanceNumber = dati.length * (dati.length - 1) / 2;
 		double distance[] = new double[distanceNumber];
-		int i,j,t,index;
+		int i, j, t, index;
 		double distanceSquared;
 		double diff;
-		/*for (index = 0, i = 0; i < dati.length-1; i++) {
-			for (j = i+1; j < dati.length; j++) {
-				distanceSquared = 0.0;
-				for (t = 0; t < nT; t++) {
-					diff = dati[i][t] - dati[j][t];
-					distanceSquared += diff*diff;
-				}
-				distance[index++] = Math.sqrt(distanceSquared);
-			}
-		}*/
+		/*
+		 * for (index = 0, i = 0; i < dati.length-1; i++) { for (j = i+1; j <
+		 * dati.length; j++) { distanceSquared = 0.0; for (t = 0; t < nT; t++) { diff =
+		 * dati[i][t] - dati[j][t]; distanceSquared += diff*diff; } distance[index++] =
+		 * Math.sqrt(distanceSquared); } }
+		 */
 	}
-	
+
 	private double[][] calculateREG(byte mask[][]) {
 		// Caclulates the irregularity index of the concentration curve for each voxel.
 		// The index is calculated by normalizing the area so as not to penalize areas
@@ -3858,7 +3658,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		int c, r, t;
 		double timeDiff;
 		double REG[][];
-		
+
 		for (c = 0; c < nC; c++) {
 			for (r = 0; r < nR; r++) {
 				AUC = 0.0;
@@ -3870,36 +3670,34 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					AUC = 1.0;
 				}
 				for (t = 0; t < nT; t++) {
-					y[c][r][t] = y[c][r][t]/AUC;
+					y[c][r][t] = y[c][r][t] / AUC;
 				}
 			}
 		}
-		
+
 		// Calculation of the second derivative
 		for (c = 0; c < nC; c++) {
 			for (r = 0; r < nR; r++) {
 				if (mask[c][r] == 1) {
 					for (t = 0; t < nT; t++) {
-						if ((t > 0) && (t < nT-1)) {
+						if ((t > 0) && (t < nT - 1)) {
 							// Standard case
-							derivative2[c][r][t] = (y[c][r][t+1] - y[c][r][t])/(time[t+1] - time[t]) 
-									- (y[c][r][t] - y[c][r][t-1])/(time[t] - time[t-1]);
-						}
-						else if (t == 0) {
+							derivative2[c][r][t] = (y[c][r][t + 1] - y[c][r][t]) / (time[t + 1] - time[t])
+									- (y[c][r][t] - y[c][r][t - 1]) / (time[t] - time[t - 1]);
+						} else if (t == 0) {
 							// The previous sample is missing
-							timeDiff = time[t+1] - time[t];
-							derivative2[c][r][t] = (y[c][r][t+1] - y[c][r][t])/(timeDiff * timeDiff);
-						}
-						else {
+							timeDiff = time[t + 1] - time[t];
+							derivative2[c][r][t] = (y[c][r][t + 1] - y[c][r][t]) / (timeDiff * timeDiff);
+						} else {
 							// The next sample is missing
-							timeDiff = time[t] - time[t-1];
-							derivative2[c][r][t] = (y[c][r][t] - y[c][r][t-1])/(timeDiff * timeDiff);
+							timeDiff = time[t] - time[t - 1];
+							derivative2[c][r][t] = (y[c][r][t] - y[c][r][t - 1]) / (timeDiff * timeDiff);
 						}
 					}
 				}
 			}
 		} // for (c = 0; c < nC; c++)
-		
+
 		// Calculation of the irregularity index
 		for (c = 0; c < nC; c++) {
 			for (r = 0; r < nR; r++) {
@@ -3908,23 +3706,23 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		} // for (c = 0; c < nC; c++)
-		
+
 		REG = trapz(derivative2);
 		return REG;
 	}
-	
+
 	private double[][] trapz(double f[][][]) {
 		double REG[][] = new double[nC][nR];
 		int c, r, t;
 		double sum;
 		double scale;
 		if (equalTimeSpacing) {
-			scale = (time[nT-1] - time[0])/(2.0*nT);
+			scale = (time[nT - 1] - time[0]) / (2.0 * nT);
 			for (c = 0; c < nC; c++) {
 				for (r = 0; r < nR; r++) {
-					sum = f[c][r][0] + f[c][r][nT-1];
-					for (t = 1; t < nT-1; t++) {
-						sum += 2.0*f[c][r][t];
+					sum = f[c][r][0] + f[c][r][nT - 1];
+					for (t = 1; t < nT - 1; t++) {
+						sum += 2.0 * f[c][r][t];
 					}
 					REG[c][r] = scale * sum;
 				}
@@ -3933,10 +3731,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		else {
 			for (c = 0; c < nC; c++) {
 				for (r = 0; r < nR; r++) {
-					for (t = 0; t < nT-1; t++) {
-						REG[c][r] += (time[t+1] - time[t])*(f[c][r][t] + f[c][r][t+1]);
+					for (t = 0; t < nT - 1; t++) {
+						REG[c][r] += (time[t + 1] - time[t]) * (f[c][r][t] + f[c][r][t + 1]);
 					}
-					REG[r][r] = 0.5*REG[c][r];
+					REG[r][r] = 0.5 * REG[c][r];
 				}
 			}
 		}
@@ -4530,28 +4328,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		return true;
 	}
-	
+
 	class gaussStandardDeviationFitting extends NLConstrainedEngine {
-		
+
 		public gaussStandardDeviationFitting(double x0[], boolean doAnalytical) {
 			// nPoints, params
-        	super(4, 1);
-        	
-        	bounds = 0; // bounds = 0 means unconstrained
-        	analyticalJacobian = doAnalytical;
-        	//bl[0] = -Double.MAX_VALUE;
-        	//bu[0] = Double.MAX_VALUE;
-        	//bl[1] = 1.0E-10;
-        	//bu[1] = 74.999999;
+			super(4, 1);
 
-        	
+			bounds = 0; // bounds = 0 means unconstrained
+			analyticalJacobian = doAnalytical;
+			// bl[0] = -Double.MAX_VALUE;
+			// bu[0] = Double.MAX_VALUE;
+			// bl[1] = 1.0E-10;
+			// bu[1] = 74.999999;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -4563,23 +4357,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				gues[i] = x0[i];
 			}
 		}
-		
+
 		/**
 		 * Fit to function.
 		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
+		 * @param a         The x value of the data point.
+		 * @param residuals The best guess parameter values.
+		 * @param covarMat  The derivative values of y with respect to fitting
+		 *                  parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i;
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
@@ -4587,37 +4377,34 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin + 3; i++) {
 						double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / a[0];
 						double value = firstGaussianAmplitude * Math.exp(-val1 * val1);
-						residuals[i - firstGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;	
+						residuals[i - firstGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;
 					}
-				}
-				else if (ctrl == 2) {
+				} else if (ctrl == 2) {
 					if (analyticalJacobian) {
 						for (i = firstGaussianMeanBin; i <= firstGaussianMeanBin + 3; i++) {
 							double val1 = (gauss2FittingData[2 * i] - firstGaussianMean) / a[0];
-						    covarMat[i - firstGaussianMeanBin][0] = -2.0 * firstGaussianAmplitude * val1
-									* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - firstGaussianMean) / (a[0] * a[0]);
+							covarMat[i - firstGaussianMeanBin][0] = -2.0 * firstGaussianAmplitude * val1
+									* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - firstGaussianMean)
+									/ (a[0] * a[0]);
 						}
-					}
-					else {
+					} else {
 						ctrlMat[0] = 0;
 					}
 				}
-			}
-			catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
-		
+
 		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
 			super.driver();
 		}
-		
+
 		/**
 		 * Display results of gaussStandardDeviationFitting.
 		 */
@@ -4629,7 +4416,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			System.out.println("a0 " + String.valueOf(a[0]));
 		}
 	}
-	
+
 	class gaussSecondStandardDeviationFittingCostFunction extends SizedCostFunction {
 
 		public gaussSecondStandardDeviationFittingCostFunction() {
@@ -4666,8 +4453,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				double value = secondGaussianAmplitude * Math.exp(-val1 * val1);
 				residuals[i - secondGaussianMeanBin] = gauss2FittingData[2 * i + 1] - value;
 				if (jacobians != null && jacobians[0] != null) {
-					jacobians[0][jacobians_offset[0] + i - secondGaussianMeanBin] = -2.0 * secondGaussianAmplitude * val1
-							* Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - secondGaussianMean) / (x[0] * x[0]);
+					jacobians[0][jacobians_offset[0] + i - secondGaussianMeanBin] = -2.0 * secondGaussianAmplitude
+							* val1 * Math.exp(-val1 * val1) * (gauss2FittingData[2 * i] - secondGaussianMean)
+							/ (x[0] * x[0]);
 				}
 			}
 			return true;
@@ -4717,29 +4505,26 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	}
-	
+
 	class gauss1Fitting extends NLConstrainedEngine {
-		
+
 		public gauss1Fitting(double x0[], boolean doAnalytical) {
 			// nPoints, params
-        	super(gauss2FittingObservations, 3);
-        	
-        	bounds = 2; // bounds = 0 means unconstrained
-        	analyticalJacobian = doAnalytical;
-        	bl[0] = 0.1*secondGaussianAmplitude;
-        	bu[0] = 10.0*secondGaussianAmplitude;
-        	bl[1] = Math.max(0.1*secondGaussianMean, firstGaussianMean + 0.5*c1);
-        	bu[1] = Math.min(10.0*secondGaussianMean, maxSum);
-            bl[2] = 0.1*c2;
-            bu[2] = 10.0*c2;
-        	
+			super(gauss2FittingObservations, 3);
+
+			bounds = 2; // bounds = 0 means unconstrained
+			analyticalJacobian = doAnalytical;
+			bl[0] = 0.1 * secondGaussianAmplitude;
+			bu[0] = 10.0 * secondGaussianAmplitude;
+			bl[1] = Math.max(0.1 * secondGaussianMean, firstGaussianMean + 0.5 * c1);
+			bu[1] = Math.min(10.0 * secondGaussianMean, maxSum);
+			bl[2] = 0.1 * c2;
+			bu[2] = 10.0 * c2;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -4749,25 +4534,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			outputMes = false;
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
-			}	
+			}
 		}
-		
+
 		/**
 		 * Fit to function.
 		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
+		 * @param a         The x value of the data point.
+		 * @param residuals The best guess parameter values.
+		 * @param covarMat  The derivative values of y with respect to fitting
+		 *                  parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i;
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
@@ -4778,37 +4559,33 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						double value = firstGaussianAmplitude * Math.exp(-val1 * val1) + a[0] * Math.exp(-val2 * val2);
 						residuals[i] = gauss2FittingData[2 * i + 1] - value;
 					}
-				}
-				else if (ctrl == 2) {
+				} else if (ctrl == 2) {
 					if (analyticalJacobian) {
 						for (i = 0; i < gauss2FittingObservations; i++) {
 							double val2 = (gauss2FittingData[2 * i] - a[1]) / a[2];
-						    covarMat[i][0] = -Math.exp(-val2 * val2);
+							covarMat[i][0] = -Math.exp(-val2 * val2);
 							covarMat[i][1] = -2.0 * a[0] * val2 * Math.exp(-val2 * val2) / a[2];
-						    covarMat[i][2] = -2.0 * a[0] * val2 * Math.exp(-val2 * val2)
-										* (gauss2FittingData[2 * i] - a[1]) / (a[2] * a[2]);
+							covarMat[i][2] = -2.0 * a[0] * val2 * Math.exp(-val2 * val2)
+									* (gauss2FittingData[2 * i] - a[1]) / (a[2] * a[2]);
 						}
-					}
-					else {
+					} else {
 						ctrlMat[0] = 0;
 					}
 				}
-			}
-			catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
-		
+
 		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
 			super.driver();
 		}
-		
+
 		/**
 		 * Display results of gauss 1 curve Fitting.
 		 */
@@ -4874,28 +4651,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	};
-	
-    class gauss2Fitting extends NLConstrainedEngine {
-		
+
+	class gauss2Fitting extends NLConstrainedEngine {
+
 		public gauss2Fitting(double x0[], boolean doAnalytical) {
 			// nPoints, params
-        	super(gauss2FittingObservations, 6);
-        	
-        	bounds = 0; // bounds = 0 means unconstrained
-        	analyticalJacobian = doAnalytical;
-        	//bl[0] = -Double.MAX_VALUE;
-        	//bu[0] = Double.MAX_VALUE;
-        	//bl[1] = 1.0E-10;
-        	//bu[1] = 74.999999;
+			super(gauss2FittingObservations, 6);
 
-        	
+			bounds = 0; // bounds = 0 means unconstrained
+			analyticalJacobian = doAnalytical;
+			// bl[0] = -Double.MAX_VALUE;
+			// bu[0] = Double.MAX_VALUE;
+			// bl[1] = 1.0E-10;
+			// bu[1] = 74.999999;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -4905,25 +4678,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			outputMes = false;
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
-			}	
+			}
 		}
-		
+
 		/**
 		 * Fit to function.
 		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
+		 * @param a         The x value of the data point.
+		 * @param residuals The best guess parameter values.
+		 * @param covarMat  The derivative values of y with respect to fitting
+		 *                  parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i;
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
@@ -4934,8 +4703,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						double value = a[0] * Math.exp(-val1 * val1) + a[3] * Math.exp(-val2 * val2);
 						residuals[i] = gauss2FittingData[2 * i + 1] - value;
 					}
-				}
-				else if (ctrl == 2) {
+				} else if (ctrl == 2) {
 					if (analyticalJacobian) {
 						for (i = 0; i < gauss2FittingObservations; i++) {
 							double val1 = (gauss2FittingData[2 * i] - a[1]) / a[2];
@@ -4949,27 +4717,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 							covarMat[i][5] = -2.0 * a[3] * val2 * Math.exp(-val2 * val2)
 									* (gauss2FittingData[2 * i] - a[4]) / (a[5] * a[5]);
 						}
-					}
-					else {
+					} else {
 						ctrlMat[0] = 0;
 					}
 				}
-			}
-			catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
-		
+
 		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
 			super.driver();
 		}
-		
+
 		/**
 		 * Display results of gauss 2 curve Fitting.
 		 */
@@ -5046,28 +4811,26 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			return true;
 		}
 	};
-	
-    class GVRecirculation extends NLConstrainedEngine {
-		
+
+	class GVRecirculation extends NLConstrainedEngine {
+
 		public GVRecirculation(double x0[], boolean doAnalytical) {
 			// nPoints, params
-        	super(nT, 3);
-        	
-        	bounds = 2; // bounds = 0 means unconstrained
-        	analyticalJacobian = doAnalytical;
-        	bl[0] = 0.1*td_init;
-        	bu[0] = 10.0*td_init;
-        	bl[1] = 0.1*K_init;
-        	bu[1] = 10.0*K_init;
-            bl[2] = 0.1*tao_init;
-            bu[2] = 10.0*tao_init;
+			super(nT, 3);
+
+			bounds = 2; // bounds = 0 means unconstrained
+			analyticalJacobian = doAnalytical;
+			bl[0] = 0.1 * td_init;
+			bu[0] = 10.0 * td_init;
+			bl[1] = 0.1 * K_init;
+			bu[1] = 10.0 * K_init;
+			bl[2] = 0.1 * tao_init;
+			bu[2] = 10.0 * tao_init;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -5077,25 +4840,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			outputMes = false;
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
-			}	
+			}
 		}
-		
+
 		/**
 		 * Fit to function.
 		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
+		 * @param a         The x value of the data point.
+		 * @param residuals The best guess parameter values.
+		 * @param covarMat  The derivative values of y with respect to fitting
+		 *                  parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i, j, t;
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
@@ -5106,24 +4865,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					double td = a[0];
 					double K = a[1];
 					double tao = a[2];
-					
+
 					// Vector initialization
 					double peak2[] = new double[nTfine]; // Peak of recirculation
 					double disp[] = new double[nTfine]; // Dispersion of recirculation
-					
+
 					double tg;
 					for (i = 0; i < nTfine; i++) {
 						tg = tGrid[i];
-						
-						if (tg > (t0+td)) {
+
+						if (tg > (t0 + td)) {
 							// Calculation of FP(t-td)
-							peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+							peak2[i] = K * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 						}
-						
+
 						// Calculation of disp(t)
-						disp[i] = Math.exp(-tg/tao);
+						disp[i] = Math.exp(-tg / tao);
 					}
-					
+
 					// 3.) I assemble the components to obtain the GV calculated on the fine grid
 					double recirculation_fine[] = new double[nTfine];
 					for (i = 0; i < nTfine; i++) {
@@ -5132,25 +4891,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						}
 						recirculation_fine[i] *= TRfine;
 					}
-					
+
 					// 4.) I'm going to sample GV on the time instants requeted in time
 					double recirculation;
 					for (t = 0; t < nT; t++) {
-						double pos = (time[t] - Tmin)/TRfine;
-						int lowIndex = (int)Math.floor(pos);
-						int highIndex = (int)Math.ceil(pos);
+						double pos = 2.0*(time[t] - Tmin) / TRfine;
+						int lowIndex = (int) Math.floor(pos);
+						int highIndex = Math.min((int) Math.ceil(pos),nTfine-1);
 						if (lowIndex == highIndex) {
 							recirculation = recirculation_fine[lowIndex];
-						}
-						else {
+						} else {
 							double lowFraction = pos - lowIndex;
 							double highFraction = highIndex - pos;
-							recirculation = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+							recirculation = lowFraction * recirculation_fine[highIndex]
+									+ highFraction * recirculation_fine[lowIndex];
 						}
-						residuals[t] = (dati_peak2[t] - recirculation)/weights_peak2[t];
+						residuals[t] = (dati_peak2[t] - recirculation) / weights_peak2[t];
 					}
-				}
-				else if (ctrl == 2) {
+				} else if (ctrl == 2) {
 					if (analyticalJacobian) {
 						double t0 = fitParameters_peak1[0];
 						double alpha = fitParameters_peak1[1];
@@ -5159,40 +4917,43 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						double K = a[1];
 						double tao = a[2];
 						double tg;
-						
+
 						// Vector initialization
 						double peak2[] = new double[nTfine]; // Peak of recirculation
 						double disp[] = new double[nTfine]; // Dispersion of recirculation
-						
+
 						for (i = 0; i < nTfine; i++) {
 							tg = tGrid[i];
-							
-							if (tg > (t0+td)) {
+
+							if (tg > (t0 + td)) {
 								// Calculation of FP(t-td)
-								peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+								peak2[i] = K * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 							}
-							
+
 							// Calculation of disp(t)
-							disp[i] = Math.exp(-tg/tao);
+							disp[i] = Math.exp(-tg / tao);
 						}
-						
-						double dpeak2dtd[] = new double[nTfine]; 
+
+						double dpeak2dtd[] = new double[nTfine];
 						double dpeak2dK[] = new double[nTfine];
 						double ddispdtao[] = new double[nTfine];
 						for (i = 0; i < nTfine; i++) {
 							tg = tGrid[i];
-							
-							if (tg > (t0+td)) {
+
+							if (tg > (t0 + td)) {
 								// Calculation of FP(t-td)
-								dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
-										- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
-								dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+								dpeak2dtd[i] = K * alpha * Math.pow((tg - t0 - td), (alpha - 1.0))
+										* Math.exp(-(tg - t0 - td) / beta)
+										- (K / beta) * Math.pow((tg - t0 - td), alpha)
+												* Math.exp(-(tg - t0 - td) / beta);
+								dpeak2dK[i] = (-1.0) * Math.pow((tg - t0 - td), alpha)
+										* Math.exp(-(tg - t0 - td) / beta);
 							}
-							
+
 							// Calculation of disp(t)
-							ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+							ddispdtao[i] = (-tg / (tao * tao)) * Math.exp(-tg / tao);
 						}
-						
+
 						// 3.) I assemble the components to obtainthe GV calculated on the fine grid
 						double recirculation_fine_td[] = new double[nTfine];
 						double recirculation_fine_K[] = new double[nTfine];
@@ -5200,55 +4961,51 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						for (i = 0; i < nTfine; i++) {
 							for (j = 0; j <= i; j++) {
 								recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
-								recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
-								recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+								recirculation_fine_K[i] += dpeak2dK[j] * disp[i - j];
+								recirculation_fine_tao[i] += peak2[j] * ddispdtao[i - j];
 							}
 							recirculation_fine_td[i] *= TRfine;
 							recirculation_fine_K[i] *= TRfine;
 							recirculation_fine_tao[i] *= TRfine;
 						}
-						
+
 						for (t = 0; t < nT; t++) {
-							double pos = (time[t] - Tmin)/TRfine;
-							int lowIndex = (int)Math.floor(pos);
-							int highIndex = (int)Math.ceil(pos);
+							double pos = 2.0*(time[t] - Tmin) / TRfine;
+							int lowIndex = (int) Math.floor(pos);
+							int highIndex = Math.min((int) Math.ceil(pos),nTfine-1);
 							if (lowIndex == highIndex) {
-								covarMat[t][0] = recirculation_fine_td[lowIndex]/weights_peak2[t];
-								covarMat[t][1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
-								covarMat[t][2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
-							}
-							else {
+								covarMat[t][0] = recirculation_fine_td[lowIndex] / weights_peak2[t];
+								covarMat[t][1] = recirculation_fine_K[lowIndex] / weights_peak2[t];
+								covarMat[t][2] = recirculation_fine_tao[lowIndex] / weights_peak2[t];
+							} else {
 								double lowFraction = pos - lowIndex;
 								double highFraction = highIndex - pos;
-								covarMat[t][0] = (lowFraction*recirculation_fine_td[highIndex] 
-										+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
-								covarMat[t][1] = (lowFraction*recirculation_fine_K[highIndex] 
-										+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
-								covarMat[t][2] = (lowFraction*recirculation_fine_tao[highIndex] 
-										+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+								covarMat[t][0] = (lowFraction * recirculation_fine_td[highIndex]
+										+ highFraction * recirculation_fine_td[lowIndex]) / weights_peak2[t];
+								covarMat[t][1] = (lowFraction * recirculation_fine_K[highIndex]
+										+ highFraction * recirculation_fine_K[lowIndex]) / weights_peak2[t];
+								covarMat[t][2] = (lowFraction * recirculation_fine_tao[highIndex]
+										+ highFraction * recirculation_fine_tao[lowIndex]) / weights_peak2[t];
 							}
 						}
-					}
-					else {
+					} else {
 						ctrlMat[0] = 0;
 					}
 				}
-			}
-			catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
-		
+
 		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
 			super.driver();
 		}
-		
+
 		/**
 		 * Display results of GV recirculation curve Fitting.
 		 */
@@ -5262,14 +5019,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			System.out.println("tao " + String.valueOf(a[2]));
 		}
 	}
-	
+
 	class GVRecirculationCostFunction extends SizedCostFunction {
 		public GVRecirculationCostFunction() {
 			// number of residuals
-		    // size of first parameter
-		    super(nT, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			// size of first parameter
+			super(nT, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
-		
+
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			int i, j, t;
 			double t0 = fitParameters_peak1[0];
@@ -5280,24 +5037,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			double td = x[0];
 			double K = x[1];
 			double tao = x[2];
-	
+
 			// Vector initialization
 			double peak2[] = new double[nTfine]; // Peak of recirculation
 			double disp[] = new double[nTfine]; // Dispersion of recirculation
-			
+
 			double tg;
 			for (i = 0; i < nTfine; i++) {
 				tg = tGrid[i];
-				
-				if (tg > (t0+td)) {
+
+				if (tg > (t0 + td)) {
 					// Calculation of FP(t-td)
-					peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+					peak2[i] = K * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 				}
-				
+
 				// Calculation of disp(t)
-				disp[i] = Math.exp(-tg/tao);
+				disp[i] = Math.exp(-tg / tao);
 			}
-			
+
 			// 3.) I assemble the components to obtain the GV calculated on the fine grid
 			double recirculation_fine[] = new double[nTfine];
 			for (i = 0; i < nTfine; i++) {
@@ -5306,41 +5063,42 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 				recirculation_fine[i] *= TRfine;
 			}
-			
+
 			// 4.) I'm going to sample GV on the time instants requeted in time
 			double recirculation;
 			for (t = 0; t < nT; t++) {
-				double pos = (time[t] - Tmin)/TRfine;
-				int lowIndex = (int)Math.floor(pos);
-				int highIndex = (int)Math.ceil(pos);
+				double pos = 2.0*(time[t] - Tmin) / TRfine;
+				int lowIndex = (int) Math.floor(pos);
+				int highIndex = Math.min((int) Math.ceil(pos),nTfine-1);
 				if (lowIndex == highIndex) {
 					recirculation = recirculation_fine[lowIndex];
-				}
-				else {
+				} else {
 					double lowFraction = pos - lowIndex;
 					double highFraction = highIndex - pos;
-					recirculation = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+					recirculation = lowFraction * recirculation_fine[highIndex]
+							+ highFraction * recirculation_fine[lowIndex];
 				}
-				residuals[t] = (dati_peak2[t] - recirculation)/weights_peak2[t];
+				residuals[t] = (dati_peak2[t] - recirculation) / weights_peak2[t];
 			}
 			if (jacobians != null && jacobians[0] != null) {
-				double dpeak2dtd[] = new double[nTfine]; 
+				double dpeak2dtd[] = new double[nTfine];
 				double dpeak2dK[] = new double[nTfine];
 				double ddispdtao[] = new double[nTfine];
 				for (i = 0; i < nTfine; i++) {
 					tg = tGrid[i];
-					
-					if (tg > (t0+td)) {
+
+					if (tg > (t0 + td)) {
 						// Calculation of FP(t-td)
-						dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
-								- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
-						dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+						dpeak2dtd[i] = K * alpha * Math.pow((tg - t0 - td), (alpha - 1.0))
+								* Math.exp(-(tg - t0 - td) / beta)
+								- (K / beta) * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
+						dpeak2dK[i] = (-1.0) * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 					}
-					
+
 					// Calculation of disp(t)
-					ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+					ddispdtao[i] = (-tg / (tao * tao)) * Math.exp(-tg / tao);
 				}
-				
+
 				// 3.) I assemble the components to obtainthe GV calculated on the fine grid
 				double recirculation_fine_td[] = new double[nTfine];
 				double recirculation_fine_K[] = new double[nTfine];
@@ -5348,41 +5106,40 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				for (i = 0; i < nTfine; i++) {
 					for (j = 0; j <= i; j++) {
 						recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
-						recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
-						recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+						recirculation_fine_K[i] += dpeak2dK[j] * disp[i - j];
+						recirculation_fine_tao[i] += peak2[j] * ddispdtao[i - j];
 					}
 					recirculation_fine_td[i] *= TRfine;
 					recirculation_fine_K[i] *= TRfine;
 					recirculation_fine_tao[i] *= TRfine;
 				}
-				
+
 				for (t = 0; t < nT; t++) {
-					double pos = (time[t] - Tmin)/TRfine;
-					int lowIndex = (int)Math.floor(pos);
-					int highIndex = (int)Math.ceil(pos);
+					double pos = 2.0*(time[t] - Tmin) / TRfine;
+					int lowIndex = (int) Math.floor(pos);
+					int highIndex = Math.min((int) Math.ceil(pos),nTfine-1);
 					if (lowIndex == highIndex) {
-						jacobians[0][3*t] = recirculation_fine_td[lowIndex]/weights_peak2[t];
-						jacobians[0][3*t+1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
-						jacobians[0][3*t+2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
-					}
-					else {
+						jacobians[0][3 * t] = recirculation_fine_td[lowIndex] / weights_peak2[t];
+						jacobians[0][3 * t + 1] = recirculation_fine_K[lowIndex] / weights_peak2[t];
+						jacobians[0][3 * t + 2] = recirculation_fine_tao[lowIndex] / weights_peak2[t];
+					} else {
 						double lowFraction = pos - lowIndex;
 						double highFraction = highIndex - pos;
-						jacobians[0][3*t] = (lowFraction*recirculation_fine_td[highIndex] 
-								+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
-						jacobians[0][3*t+1] = (lowFraction*recirculation_fine_K[highIndex] 
-								+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
-						jacobians[0][3*t+2] = (lowFraction*recirculation_fine_tao[highIndex] 
-								+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+						jacobians[0][3 * t] = (lowFraction * recirculation_fine_td[highIndex]
+								+ highFraction * recirculation_fine_td[lowIndex]) / weights_peak2[t];
+						jacobians[0][3 * t + 1] = (lowFraction * recirculation_fine_K[highIndex]
+								+ highFraction * recirculation_fine_K[lowIndex]) / weights_peak2[t];
+						jacobians[0][3 * t + 2] = (lowFraction * recirculation_fine_tao[highIndex]
+								+ highFraction * recirculation_fine_tao[lowIndex]) / weights_peak2[t];
 					}
 				}
 			}
 			return true;
 		}
-		
+
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
 				int jacobians_offset[]) {
-			int i,j,t;
+			int i, j, t;
 			double t0 = fitParameters_peak1[0];
 			double alpha = fitParameters_peak1[1];
 			double beta = fitParameters_peak1[2];
@@ -5391,24 +5148,24 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			double td = x[0];
 			double K = x[1];
 			double tao = x[2];
-	
+
 			// Vector initialization
 			double peak2[] = new double[nTfine]; // Peak of recirculation
 			double disp[] = new double[nTfine]; // Dispersion of recirculation
-			
+
 			double tg;
 			for (i = 0; i < nTfine; i++) {
 				tg = tGrid[i];
-				
-				if (tg > (t0+td)) {
+
+				if (tg > (t0 + td)) {
 					// Calculation of FP(t-td)
-					peak2[i] = K*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+					peak2[i] = K * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 				}
-				
+
 				// Calculation of disp(t)
-				disp[i] = Math.exp(-tg/tao);
+				disp[i] = Math.exp(-tg / tao);
 			}
-			
+
 			// 3.) I assemble the components to obtain the GV calculated on the fine grid
 			double recirculation_fine[] = new double[nTfine];
 			for (i = 0; i < nTfine; i++) {
@@ -5417,41 +5174,42 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 				recirculation_fine[i] *= TRfine;
 			}
-			
+
 			// 4.) I'm going to sample GV on the time instants requeted in time
 			double recirculation;
 			for (t = 0; t < nT; t++) {
-				double pos = (time[t] - Tmin)/TRfine;
-				int lowIndex = (int)Math.floor(pos);
-				int highIndex = (int)Math.ceil(pos);
+				double pos = 2.0*(time[t] - Tmin) / TRfine;
+				int lowIndex = (int) Math.floor(pos);
+				int highIndex = Math.min((int) Math.ceil(pos), nTfine-1);
 				if (lowIndex == highIndex) {
 					recirculation = recirculation_fine[lowIndex];
-				}
-				else {
+				} else {
 					double lowFraction = pos - lowIndex;
 					double highFraction = highIndex - pos;
-					recirculation = lowFraction*recirculation_fine[highIndex] + highFraction*recirculation_fine[lowIndex];
+					recirculation = lowFraction * recirculation_fine[highIndex]
+							+ highFraction * recirculation_fine[lowIndex];
 				}
-				residuals[t] = (dati_peak2[t] - recirculation)/weights_peak2[t];
+				residuals[t] = (dati_peak2[t] - recirculation) / weights_peak2[t];
 			}
 			if (jacobians != null && jacobians[0] != null) {
-				double dpeak2dtd[] = new double[nTfine]; 
+				double dpeak2dtd[] = new double[nTfine];
 				double dpeak2dK[] = new double[nTfine];
 				double ddispdtao[] = new double[nTfine];
 				for (i = 0; i < nTfine; i++) {
 					tg = tGrid[i];
-					
-					if (tg > (t0+td)) {
+
+					if (tg > (t0 + td)) {
 						// Calculation of FP(t-td)
-						dpeak2dtd[i] = K*alpha*Math.pow((tg-t0-td),(alpha - 1.0))*Math.exp(-(tg-t0-td)/beta)
-								- (K/beta)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
-						dpeak2dK[i] = (-1.0)*Math.pow((tg-t0-td),alpha)*Math.exp(-(tg-t0-td)/beta);
+						dpeak2dtd[i] = K * alpha * Math.pow((tg - t0 - td), (alpha - 1.0))
+								* Math.exp(-(tg - t0 - td) / beta)
+								- (K / beta) * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
+						dpeak2dK[i] = (-1.0) * Math.pow((tg - t0 - td), alpha) * Math.exp(-(tg - t0 - td) / beta);
 					}
-					
+
 					// Calculation of disp(t)
-					ddispdtao[i] = (-tg/(tao*tao))*Math.exp(-tg/tao);
+					ddispdtao[i] = (-tg / (tao * tao)) * Math.exp(-tg / tao);
 				}
-				
+
 				// 3.) I assemble the components to obtainthe GV calculated on the fine grid
 				double recirculation_fine_td[] = new double[nTfine];
 				double recirculation_fine_K[] = new double[nTfine];
@@ -5459,62 +5217,61 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				for (i = 0; i < nTfine; i++) {
 					for (j = 0; j <= i; j++) {
 						recirculation_fine_td[i] += dpeak2dtd[j] * disp[i - j];
-						recirculation_fine_K[i] += dpeak2dK[j] *disp[i-j];
-						recirculation_fine_tao[i] += peak2[j] * ddispdtao[i-j];
+						recirculation_fine_K[i] += dpeak2dK[j] * disp[i - j];
+						recirculation_fine_tao[i] += peak2[j] * ddispdtao[i - j];
 					}
 					recirculation_fine_td[i] *= TRfine;
 					recirculation_fine_K[i] *= TRfine;
 					recirculation_fine_tao[i] *= TRfine;
 				}
-				
+
 				for (t = 0; t < nT; t++) {
-					double pos = (time[t] - Tmin)/TRfine;
-					int lowIndex = (int)Math.floor(pos);
-					int highIndex = (int)Math.ceil(pos);
+					double pos = 2.0*(time[t] - Tmin) / TRfine;
+					int lowIndex = (int) Math.floor(pos);
+					int highIndex = Math.min((int) Math.ceil(pos),nTfine-1);
 					if (lowIndex == highIndex) {
-						jacobians[0][jacobians_offset[0] + 3*t] = recirculation_fine_td[lowIndex]/weights_peak2[t];
-						jacobians[0][jacobians_offset[0] + 3*t+1] = recirculation_fine_K[lowIndex]/weights_peak2[t];
-						jacobians[0][jacobians_offset[0] + 3*t+2] = recirculation_fine_tao[lowIndex]/weights_peak2[t];
-					}
-					else {
+						jacobians[0][jacobians_offset[0] + 3 * t] = recirculation_fine_td[lowIndex] / weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3 * t + 1] = recirculation_fine_K[lowIndex]
+								/ weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3 * t + 2] = recirculation_fine_tao[lowIndex]
+								/ weights_peak2[t];
+					} else {
 						double lowFraction = pos - lowIndex;
 						double highFraction = highIndex - pos;
-						jacobians[0][jacobians_offset[0] + 3*t] = (lowFraction*recirculation_fine_td[highIndex] 
-								+ highFraction*recirculation_fine_td[lowIndex])/weights_peak2[t];
-						jacobians[0][jacobians_offset[0] + 3*t+1] = (lowFraction*recirculation_fine_K[highIndex] 
-								+ highFraction*recirculation_fine_K[lowIndex])/weights_peak2[t];
-						jacobians[0][jacobians_offset[0] + 3*t+2] = (lowFraction*recirculation_fine_tao[highIndex] 
-								+ highFraction*recirculation_fine_tao[lowIndex])/weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3 * t] = (lowFraction * recirculation_fine_td[highIndex]
+								+ highFraction * recirculation_fine_td[lowIndex]) / weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3 * t + 1] = (lowFraction * recirculation_fine_K[highIndex]
+								+ highFraction * recirculation_fine_K[lowIndex]) / weights_peak2[t];
+						jacobians[0][jacobians_offset[0] + 3 * t + 2] = (lowFraction * recirculation_fine_tao[highIndex]
+								+ highFraction * recirculation_fine_tao[lowIndex]) / weights_peak2[t];
 					}
 				}
 			}
 			return true;
 		}
 	}
-	
-    class GVFitting extends NLConstrainedEngine {
-		
+
+	class GVFitting extends NLConstrainedEngine {
+
 		public GVFitting(double x0[], boolean doAnalytical) {
 			// nPoints, params
-        	super(nT, 4);
-        	
-        	bounds = 2; // bounds = 0 means unconstrained
-        	analyticalJacobian = doAnalytical;
-        	bl[0] = 0.1*t0_init;
-        	bu[0] = 10.0*t0_init;
-        	bl[1] = 0.1*alpha_init;
-        	bu[1] = 10.0*alpha_init;
-            bl[2] = 0.1*beta_init;
-            bu[2] = 10.0*beta_init;
-            bl[3] = 0.1*A_init;
-        	bu[3] = 10.0*A_init;
+			super(nT, 4);
+
+			bounds = 2; // bounds = 0 means unconstrained
+			analyticalJacobian = doAnalytical;
+			bl[0] = 0.1 * t0_init;
+			bu[0] = 10.0 * t0_init;
+			bl[1] = 0.1 * alpha_init;
+			bu[1] = 10.0 * alpha_init;
+			bl[2] = 0.1 * beta_init;
+			bu[2] = 10.0 * beta_init;
+			bl[3] = 0.1 * A_init;
+			bu[3] = 10.0 * A_init;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
 			// bounds = 2 means different lower and upper bounds
 			// for all parameters
-        	
-        	
 
 			// The default is internalScaling = false
 			// To make internalScaling = true and have the columns of the
@@ -5524,25 +5281,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			outputMes = false;
 			for (int i = 0; i < x0.length; i++) {
 				gues[i] = x0[i];
-			}	
+			}
 		}
-		
+
 		/**
 		 * Fit to function.
 		 * 
-		 * @param a
-		 *            The x value of the data point.
-		 * @param residuals
-		 *            The best guess parameter values.
-		 * @param covarMat
-		 *            The derivative values of y with respect to fitting
-		 *            parameters.
+		 * @param a         The x value of the data point.
+		 * @param residuals The best guess parameter values.
+		 * @param covarMat  The derivative values of y with respect to fitting
+		 *                  parameters.
 		 */
-		public void fitToFunction(double[] a, double[] residuals,
-				double[][] covarMat) {
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
 			int ctrl;
 			int i;
-			
+
 			try {
 				ctrl = ctrlMat[0];
 
@@ -5555,15 +5308,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					for (i = 0; i < nT; i++) {
 						double t = time[i];
 						if (t > t0) {
-							GV = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-						}
-						else {
+							GV = A * Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+						} else {
 							GV = 0.0;
 						}
-						residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
+						residuals[i] = (data_peak1[i] - GV) / weights_peak1[i];
 					}
-				}
-				else if (ctrl == 2) {
+				} else if (ctrl == 2) {
 					if (analyticalJacobian) {
 						double t0 = a[0];
 						double alpha = a[1];
@@ -5572,41 +5323,41 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						double GV;
 						for (i = 0; i < nT; i++) {
 							double t = time[i];
-						    if (t > t0) {
-						    	covarMat[i][0] = (A/weights_peak1[i])*((alpha*Math.pow((t-t0),(alpha-1.0))*Math.exp(-(t-t0)/beta)) -
-						    			(Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta)/beta));
-						    	covarMat[i][1] = -(A/weights_peak1[i])*Math.log(t-t0)*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-						    	covarMat[i][2] = -(A/weights_peak1[i])*((t-t0)/(beta*beta))*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-						    	covarMat[i][3] = -(1.0/weights_peak1[i])*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-						    }
-						    else {
-						    	covarMat[i][0] = 0.0;
-						    	covarMat[i][1] = 0.0;
-						    	covarMat[i][2] = 0.0;
-						    	covarMat[i][3] = 0.0;
-						    }
+							if (t > t0) {
+								covarMat[i][0] = (A / weights_peak1[i])
+										* ((alpha * Math.pow((t - t0), (alpha - 1.0)) * Math.exp(-(t - t0) / beta))
+												- (Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta) / beta));
+								covarMat[i][1] = -(A / weights_peak1[i]) * Math.log(t - t0) * Math.pow((t - t0), alpha)
+										* Math.exp(-(t - t0) / beta);
+								covarMat[i][2] = -(A / weights_peak1[i]) * ((t - t0) / (beta * beta))
+										* Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+								covarMat[i][3] = -(1.0 / weights_peak1[i]) * Math.pow((t - t0), alpha)
+										* Math.exp(-(t - t0) / beta);
+							} else {
+								covarMat[i][0] = 0.0;
+								covarMat[i][1] = 0.0;
+								covarMat[i][2] = 0.0;
+								covarMat[i][3] = 0.0;
+							}
 						}
-					}
-					else {
+					} else {
 						ctrlMat[0] = 0;
 					}
 				}
-			}
-			catch (Exception e) {
-				Preferences.debug("function error: " + e.getMessage() + "\n",
-						Preferences.DEBUG_ALGORITHM);
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
 			}
 
 			return;
 		}
-		
+
 		/**
 		 * Starts the analysis.
 		 */
 		public void driver() {
 			super.driver();
 		}
-		
+
 		/**
 		 * Display results of gammma-variate curve Fitting.
 		 */
@@ -5621,7 +5372,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			System.out.println("A " + String.valueOf(a[3]));
 		}
 	}
-	
+
 	class GVFittingCostFunction extends SizedCostFunction {
 
 		public GVFittingCostFunction() {
@@ -5629,7 +5380,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			// size of first parameter
 			super(nT, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		}
-		
+
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
 			int i;
 			// Called by ResidualBlock.Evaluate
@@ -5642,31 +5393,33 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			for (i = 0; i < nT; i++) {
 				double t = time[i];
 				if (t > t0) {
-					GV = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				}
-				else {
+					GV = A * Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+				} else {
 					GV = 0.0;
 				}
-				residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
+				residuals[i] = (data_peak1[i] - GV) / weights_peak1[i];
 				if (jacobians != null && jacobians[0] != null) {
-				    if (t > t0) {
-				    	jacobians[0][4*i] = (A/weights_peak1[i])*((alpha*Math.pow((t-t0),(alpha-1.0))*Math.exp(-(t-t0)/beta)) -
-				    			(Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta)/beta));
-				    	jacobians[0][4*i+1] = -(A/weights_peak1[i])*Math.log(t-t0)*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				    	jacobians[0][4*i+2] = -(A/weights_peak1[i])*((t-t0)/(beta*beta))*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				    	jacobians[0][4*i+3] = -(1.0/weights_peak1[i])*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				    }
-				    else {
-				    	jacobians[0][4*i] = 0.0;
-				    	jacobians[0][4*i+1] = 0.0;
-				    	jacobians[0][4*i+2] = 0.0;
-				    	jacobians[0][4*i+3] = 0.0;
-				    }
+					if (t > t0) {
+						jacobians[0][4 * i] = (A / weights_peak1[i])
+								* ((alpha * Math.pow((t - t0), (alpha - 1.0)) * Math.exp(-(t - t0) / beta))
+										- (Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta) / beta));
+						jacobians[0][4 * i + 1] = -(A / weights_peak1[i]) * Math.log(t - t0) * Math.pow((t - t0), alpha)
+								* Math.exp(-(t - t0) / beta);
+						jacobians[0][4 * i + 2] = -(A / weights_peak1[i]) * ((t - t0) / (beta * beta))
+								* Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+						jacobians[0][4 * i + 3] = -(1.0 / weights_peak1[i]) * Math.pow((t - t0), alpha)
+								* Math.exp(-(t - t0) / beta);
+					} else {
+						jacobians[0][4 * i] = 0.0;
+						jacobians[0][4 * i + 1] = 0.0;
+						jacobians[0][4 * i + 2] = 0.0;
+						jacobians[0][4 * i + 3] = 0.0;
+					}
 				}
 			}
 			return true;
 		}
-		
+
 		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][],
 				int jacobians_offset[]) {
 			int i;
@@ -5680,31 +5433,32 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			for (i = 0; i < nT; i++) {
 				double t = time[i];
 				if (t > t0) {
-					GV = A*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				}
-				else {
+					GV = A * Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+				} else {
 					GV = 0.0;
 				}
-				residuals[i] = (data_peak1[i] - GV)/weights_peak1[i];
+				residuals[i] = (data_peak1[i] - GV) / weights_peak1[i];
 				if (jacobians != null && jacobians[0] != null) {
-				    if (t > t0) {
-				    	jacobians[0][jacobians_offset[0] + 4*i] = (A/weights_peak1[i])*((alpha*Math.pow((t-t0),(alpha-1.0))*Math.exp(-(t-t0)/beta)) -
-				    			(Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta)/beta));
-				    	jacobians[0][jacobians_offset[0] + 4*i+1] = -(A/weights_peak1[i])*Math.log(t-t0)*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				    	jacobians[0][jacobians_offset[0] + 4*i+2] = -(A/weights_peak1[i])*((t-t0)/(beta*beta))*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				    	jacobians[0][jacobians_offset[0] + 4*i+3] = -(1.0/weights_peak1[i])*Math.pow((t-t0),alpha)*Math.exp(-(t-t0)/beta);
-				    }
-				    else {
-				    	jacobians[0][jacobians_offset[0] + 4*i] = 0.0;
-				    	jacobians[0][jacobians_offset[0] + 4*i+1] = 0.0;
-				    	jacobians[0][jacobians_offset[0] + 4*i+2] = 0.0;
-				    	jacobians[0][jacobians_offset[0] + 4*i+3] = 0.0;
-				    }
+					if (t > t0) {
+						jacobians[0][jacobians_offset[0] + 4 * i] = (A / weights_peak1[i])
+								* ((alpha * Math.pow((t - t0), (alpha - 1.0)) * Math.exp(-(t - t0) / beta))
+										- (Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta) / beta));
+						jacobians[0][jacobians_offset[0] + 4 * i + 1] = -(A / weights_peak1[i]) * Math.log(t - t0)
+								* Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+						jacobians[0][jacobians_offset[0] + 4 * i + 2] = -(A / weights_peak1[i])
+								* ((t - t0) / (beta * beta)) * Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+						jacobians[0][jacobians_offset[0] + 4 * i + 3] = -(1.0 / weights_peak1[i])
+								* Math.pow((t - t0), alpha) * Math.exp(-(t - t0) / beta);
+					} else {
+						jacobians[0][jacobians_offset[0] + 4 * i] = 0.0;
+						jacobians[0][jacobians_offset[0] + 4 * i + 1] = 0.0;
+						jacobians[0][jacobians_offset[0] + 4 * i + 2] = 0.0;
+						jacobians[0][jacobians_offset[0] + 4 * i + 3] = 0.0;
+					}
 				}
 			}
 			return true;
 		}
 	}
-
 
 }
