@@ -3098,7 +3098,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
             
             executorService.shutdown();
             try {
-            	boolean tasksEnded = executorService.awaitTermination(30, TimeUnit.MINUTES);
+            	boolean tasksEnded = executorService.awaitTermination(60, TimeUnit.MINUTES);
             	if (!tasksEnded) {
             		MipavUtil.displayError("Time out while waiting for endCalc tasks to finish");
             		setCompleted(false);
