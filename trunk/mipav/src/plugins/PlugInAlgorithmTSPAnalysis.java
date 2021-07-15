@@ -2703,12 +2703,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			autoaif = new double[tDim];
 		    minautoaif = Double.MAX_VALUE;
 			int numcountt = 0;
-			for (i = 0; i < AIF_voxels.length; i++) {
-			    x = AIF_voxels[i][0];
-			    y = AIF_voxels[i][1];
-			    for (t = 0; t < tDim; t++) {
-			        sumt = 0;
-			        countt = 0;
+			
+		    for (t = 0; t < tDim; t++) {
+		        sumt = 0;
+		        countt = 0;
+		        for (i = 0; i < AIF_voxels.length; i++) {
+				    x = AIF_voxels[i][0];
+				    y = AIF_voxels[i][1];
 			        if (peaks[selectedAIFZSlice][y][x] != 0) {
 						if (t == 0) {
 							sumcount++;
@@ -2720,37 +2721,37 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					    sumt += data[selectedAIFZSlice][y][x][t];
 					    countt++;
 					}
-			        if (t == 0) {
-			        	xmean = xsum/sumcount;
-			        	ymean = ysum/sumcount;
-			        	if (sumcount > 1) {
-			        	    xstd = Math.sqrt((xsumsquared - xsum*xsum/sumcount)/(sumcount - 1.0));
-			        	    ystd = Math.sqrt((ysumsquared - ysum*ysum/sumcount)/(sumcount - 1.0));
-			        	    zstd = 0.0;
-			        	    System.out.println("AIF selection point standard deviations in voxels:");
-			        	    System.out.println("x standard deviation = " + xstd);
-			        	    System.out.println("y standard deviation = " + ystd);
-			        	    System.out.println("z standard deviation = " + 0);
-			        	} // if (sumcount > 1)
-			        } // if (t == 0)
-			        if (countt == 0) {
-			        	System.err.println("No AIF selection pixels found for t = " + t);
-			        	numcountt++;
-			        }
-			        autoaif[t] = (double)sumt/(double)countt;
-			        if (autoaif[t] < minautoaif) {
-			        	minautoaif = autoaif[t];
-			        }
-			    } // for (t = 0; t < tDim; t++)
-			    if (numcountt > 0) {
-			    	 MipavUtil.displayError("No AIF selection pixels found at " + numcountt + " out of " + tDim + " times");
-			    	 setCompleted(false);
-			    	 return;
-			    }
-			    for (t = 0; t < tDim; t++) {
-			    	S[t] = autoaif[t] - minautoaif + 1;
-			    }
-			}
+		        }
+		        if (t == 0) {
+		        	xmean = xsum/sumcount;
+		        	ymean = ysum/sumcount;
+		        	if (sumcount > 1) {
+		        	    xstd = Math.sqrt((xsumsquared - xsum*xsum/sumcount)/(sumcount - 1.0));
+		        	    ystd = Math.sqrt((ysumsquared - ysum*ysum/sumcount)/(sumcount - 1.0));
+		        	    zstd = 0.0;
+		        	    System.out.println("AIF selection point standard deviations in voxels:");
+		        	    System.out.println("x standard deviation = " + xstd);
+		        	    System.out.println("y standard deviation = " + ystd);
+		        	    System.out.println("z standard deviation = " + 0);
+		        	} // if (sumcount > 1)
+		        } // if (t == 0)
+		        if (countt == 0) {
+		        	System.err.println("No AIF selection pixels found for t = " + t);
+		        	numcountt++;
+		        }
+		        autoaif[t] = (double)sumt/(double)countt;
+		        if (autoaif[t] < minautoaif) {
+		        	minautoaif = autoaif[t];
+		        }
+		    } // for (t = 0; t < tDim; t++)
+		    if (numcountt > 0) {
+		    	 MipavUtil.displayError("No AIF selection pixels found at " + numcountt + " out of " + tDim + " times");
+		    	 setCompleted(false);
+		    	 return;
+		    }
+		    for (t = 0; t < tDim; t++) {
+		    	S[t] = autoaif[t] - minautoaif + 1;
+		    }
 		} // else if (findAIFInfoWithDSCMRIToolbox)
 		else if (autoAIFCalculation) {
 	    	// Auto AIF Calculation
