@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
+import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrix;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
@@ -79,6 +80,7 @@ public abstract class CeresSolver {
 	public CeresSolver() {
 		
 	}
+	private CeresSolver2 ce2 = new CeresSolver2();
 	private GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
 	private GeneralizedEigenvalue2 ge2 = new GeneralizedEigenvalue2();
 	private GeneralizedInverse2 gi2 = new GeneralizedInverse2();
@@ -9724,6 +9726,173 @@ public abstract class CeresSolver {
 	  }
 
 	} // class DenseJacobianWriter
+	
+	class CompressedRowJacobianWriter {
+		private Program program_;
+
+		public CompressedRowJacobianWriter(EvaluatorOptions options/* ignored */, Program program) {
+			program_ = program;
+		}
+
+		// Since the dense matrix has different layout than that assumed by the cost
+		// functions, use scratch space to store the jacobians temporarily then copy
+		// them over to the larger jacobian later.
+		public ScratchEvaluatePreparer[] CreateEvaluatePreparers(int num_threads) {
+			return Create(program_, num_threads);
+		}
+		
+		public void PopulateJacobianRowAndColumnBlockVectors(
+			    Program program, CompressedRowSparseMatrix jacobian) {
+			  final Vector<ParameterBlock> parameter_blocks =
+			      program.parameter_blocks();
+			  Vector<Integer> col_blocks = jacobian.mutable_col_blocks();
+			  while (col_blocks.size() > parameter_blocks.size()) {
+				  col_blocks.remove(col_blocks.size()-1);
+			  }
+			  while (col_blocks.size() < parameter_blocks.size()) {
+				  col_blocks.add(0);
+			  }
+			  for (int i = 0; i < parameter_blocks.size(); ++i) {
+			    col_blocks.set(i,parameter_blocks.get(i).LocalSize());
+			  }
+
+			  final Vector<ResidualBlock> residual_blocks =
+			      program.residual_blocks();
+			  Vector<Integer> row_blocks = jacobian.mutable_row_blocks();
+			  while (row_blocks.size() > residual_blocks.size()) {
+				  row_blocks.remove(row_blocks.size()-1);
+			  }
+			  while (row_blocks.size() < residual_blocks.size()) {
+				  row_blocks.add(0);
+			  }
+			  for (int i = 0; i < residual_blocks.size(); ++i) {
+			    row_blocks.set(i, residual_blocks.get(i).NumResiduals());
+			  }
+			}
+
+		
+		public SparseMatrix CreateJacobian() {
+			  final Vector<ResidualBlock> residual_blocks =
+			      program_.residual_blocks();
+
+			  int total_num_residuals = program_.NumResiduals();
+			  int total_num_effective_parameters = program_.NumEffectiveParameters();
+
+			  // Count the number of jacobian nonzeros.
+			  int num_jacobian_nonzeros = 0;
+			  for (int i = 0; i < residual_blocks.size(); ++i) {
+			    ResidualBlock residual_block = residual_blocks.get(i);
+			    final int num_residuals = residual_block.NumResiduals();
+			    final int num_parameter_blocks = residual_block.NumParameterBlocks();
+			    for (int j = 0; j < num_parameter_blocks; ++j) {
+			      ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+			      if (!parameter_block.IsConstant()) {
+			        num_jacobian_nonzeros += num_residuals * parameter_block.LocalSize();
+			      }
+			    }
+			  }
+
+			  // Allocate storage for the jacobian with some extra space at the end.
+			  // Allocate more space than needed to store the jacobian so that when the LM
+			  // algorithm adds the diagonal, no reallocation is necessary. This reduces
+			  // peak memory usage significantly.
+			  CompressedRowSparseMatrix jacobian =
+			      ce2.new CompressedRowSparseMatrix(
+			          total_num_residuals,
+			          total_num_effective_parameters,
+			          num_jacobian_nonzeros + total_num_effective_parameters);
+
+			  // At this stage, the CompressedRowSparseMatrix is an invalid state. But this
+			  // seems to be the only way to construct it without doing a memory copy.
+			  int rows[] = jacobian.mutable_rows();
+			  int[] cols = jacobian.mutable_cols();
+
+			  int row_pos = 0;
+			  rows[0] = 0;
+			  for (int i = 0; i < residual_blocks.size(); ++i) {
+			    final ResidualBlock residual_block = residual_blocks.get(i);
+			    final int num_parameter_blocks = residual_block.NumParameterBlocks();
+
+			    // Count the number of derivatives for a row of this residual block and
+			    // build a list of active parameter block indices.
+			    int num_derivatives = 0;
+			    Vector<Integer> parameter_indices = new Vector<Integer>();
+			    for (int j = 0; j < num_parameter_blocks; ++j) {
+			      ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+			      if (!parameter_block.IsConstant()) {
+			        parameter_indices.add(parameter_block.index());
+			        num_derivatives += parameter_block.LocalSize();
+			      }
+			    }
+
+			    // Sort the parameters by their position in the state vector.
+			    Collections.sort(parameter_indices);
+			    boolean duplicate_found = false;
+			    for (i = 0; i < parameter_indices.size()-1; i++) {
+			    	if (parameter_indices.get(i).intValue() == parameter_indices.get(i+1).intValue()) {
+			    		duplicate_found = true;
+			    	}
+			    }
+			    if (duplicate_found) {
+			      String parameter_block_description = null;
+			      for (int j = 0; j < num_parameter_blocks; ++j) {
+			        ParameterBlock parameter_block = residual_block.parameter_blocks()[j];
+			        if (parameter_block_description == null) {
+			            parameter_block_description = parameter_block.StringOutput();
+			        }
+			        else {
+			        	parameter_block_description = parameter_block_description.concat(parameter_block.StringOutput());
+			        }
+			      }
+			      
+			      System.err.println("Ceres internal error: ");
+			      System.err.println("Duplicate parameter blocks detected in a cost function. ");
+			      System.err.println("This should never happen. Please report this to the Ceres developers.");
+			      System.err.println("Residual Block index_: " + residual_block.toString());
+			      System.err.println("Parameter Blocks: " + parameter_block_description);
+			      System.exit(0);
+			    } // if (duplicate_found);
+
+			    // Update the row indices.
+			    final int num_residuals = residual_block.NumResiduals();
+			    for (int j = 0; j < num_residuals; ++j) {
+			      rows[row_pos + j + 1] = rows[row_pos + j] + num_derivatives;
+			    }
+
+			    // Iterate over parameter blocks in the order which they occur in the
+			    // parameter vector. This code mirrors that in Write(), where jacobian
+			    // values are updated.
+			    int col_pos = 0;
+			    for (int j = 0; j < parameter_indices.size(); ++j) {
+			      ParameterBlock parameter_block =
+			          program_.parameter_blocks().get(parameter_indices.get(j));
+			      final int parameter_block_size = parameter_block.LocalSize();
+
+			      for (int r = 0; r < num_residuals; ++r) {
+			        // This is the position in the values array of the jacobian where this
+			        // row of the jacobian block should go.
+			        final int column_block_begin = rows[row_pos + r] + col_pos;
+
+			        for (int c = 0; c < parameter_block_size; ++c) {
+			          cols[column_block_begin + c] = parameter_block.delta_offset() + c;
+			        }
+			      }
+			      col_pos += parameter_block_size;
+			    }
+			    row_pos += num_residuals;
+			  }
+			  if (num_jacobian_nonzeros != rows[total_num_residuals]) {
+				  System.err.println("In CompressedRowJacobianWriter SparseMatrix CreateJacobian num_jacobian_nonzeros != rows[total_num_residuals]");
+				  System.exit(0);
+			  }
+
+			  PopulateJacobianRowAndColumnBlockVectors(program_, jacobian);
+
+			  return jacobian;
+			}
+
+
+	} // class CompressedRowJacobianWriter
 
 	class DynamicCompressedRowJacobianWriter {
 		private Program program_;
@@ -10068,6 +10237,9 @@ public abstract class CeresSolver {
 						 (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
 					evaluate_preparers_ = (EvaluatePreparer[])((BlockJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
 				}
+				else if (options.linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
+					evaluate_preparers_ = (EvaluatePreparer[])((CompressedRowJacobianWriter)jacobian_writer_).CreateEvaluatePreparers(options.num_threads);
+				}
 			/*
 			 * #ifdef CERES_NO_THREADS if (options_.num_threads > 1) { LOG(WARNING) <<
 			 * "Neither OpenMP nor TBB support is compiled into this binary; " <<
@@ -10091,6 +10263,9 @@ public abstract class CeresSolver {
 					 (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
 					 (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
 				return ((BlockJacobianWriter)jacobian_writer_).CreateJacobian();
+			}
+			else if (options_.linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
+				return ((CompressedRowJacobianWriter)jacobian_writer_).CreateJacobian();
 			}
 			else {
 				System.err.println("In ProgramEvaluator CreateJacobian options_.linear_solver_type = " +
@@ -19888,6 +20063,10 @@ public abstract class CeresSolver {
 		public Vector<ResidualBlock> residual_blocks() {
 			return residual_blocks_;
 		}
+		
+		public void setResidualBlocks(Vector <ResidualBlock> rb) {
+			residual_blocks_ = rb;
+		}
 
 
 		public boolean ParameterBlocksAreFinite(String message[]) {
@@ -20936,6 +21115,221 @@ public abstract class CeresSolver {
 			  residual_blocks = program().residual_blocks();
 		}
 
+		public boolean Evaluate(EvaluateOptions evaluate_options,
+                double[] cost,
+                Vector<Double> residuals,
+                Vector<Double> gradient,
+                CRSMatrix jacobian) {
+		int i,j;
+		boolean found;
+		if (cost == null &&
+		residuals == null &&
+		gradient == null &&
+		jacobian == null) {
+			if (INFO <= MAX_LOG_LEVEL) {
+		        Preferences.debug("Nothing to do.\n", Preferences.DEBUG_ALGORITHM);
+			}
+		    return true;
+		}
+		
+		// If the user supplied residual blocks, then use them, otherwise
+		// take the residual blocks from the underlying program.
+		Program program = new Program();
+		
+		if (evaluate_options.residual_blocks.size() > 0) {
+			program.setResidualBlocks(evaluate_options.residual_blocks);
+		}
+		
+		Vector<double[]> parameter_block_ptrs =
+		evaluate_options.parameter_blocks;
+		
+		Vector<ParameterBlock> variable_parameter_blocks = new Vector<ParameterBlock>();
+		Vector<ParameterBlock> parameter_blocks =
+		program.mutable_parameter_blocks();
+		
+		if (parameter_block_ptrs.size() == 0) {
+		// The user did not provide any parameter blocks, so default to
+		// using all the parameter blocks in the order that they are in
+		// the underlying program object.
+		parameter_blocks = program_.parameter_blocks();
+		} else {
+		// The user supplied a vector of parameter blocks. Using this list
+		// requires a number of steps.
+		
+		// 1. Convert double* into ParameterBlock*
+		while (parameter_blocks.size() > parameter_block_ptrs.size()) {
+			parameter_blocks.remove(parameter_blocks.size()-1);
+		}
+		
+		for (i = 0; i < parameter_block_ptrs.size(); ++i) {
+			ParameterBlock pb = parameter_block_map_.get(parameter_block_ptrs.get(i));
+			if (pb == null) {
+				System.err.println("In ProblemImpl.Evaluate parameter_block_map_.get(parameter_block_ptrs.get("+i+") returned a null ParameterBlock");
+				System.exit(0);
+			}
+			if (i < parameter_blocks.size()) {
+				parameter_blocks.set(i,pb);
+			}
+			else {
+				parameter_blocks.add(pb);
+			}
+		
+		} // for (int i = 0; i < parameter_block_ptrs.size(); ++i) 
+		
+		// 2. The user may have only supplied a subset of parameter
+		// blocks, so identify the ones that are not supplied by the user
+		// and are NOT constant. These parameter blocks are stored in
+		// variable_parameter_blocks.
+		//
+		// To ensure that the parameter blocks are not included in the
+		// columns of the jacobian, we need to make sure that they are
+		// constant during evaluation and then make them variable again
+		// after we are done.
+		Vector<ParameterBlock> all_parameter_blocks  = new Vector<ParameterBlock>();
+		all_parameter_blocks.addAll(program_.parameter_blocks());
+		Vector<ParameterBlock> included_parameter_blocks = new Vector<ParameterBlock>();
+		included_parameter_blocks.addAll(program.parameter_blocks());
+		
+		Vector<ParameterBlock> excluded_parameter_blocks = new Vector<ParameterBlock>();
+		for (i = 0; i < all_parameter_blocks.size(); i++) {
+		    found = false;
+		    for (j = 0; j < included_parameter_blocks.size(); j++) {
+		    	if (all_parameter_blocks.get(i).equalsParameterBlock(included_parameter_blocks.get(j))) {
+		    	    found = true;	
+		    	}
+		    }
+		    if (!found) {
+		    	excluded_parameter_blocks.add(all_parameter_blocks.get(i));
+		    }
+		}
+		
+		variable_parameter_blocks.ensureCapacity(excluded_parameter_blocks.size());
+		for (i = 0; i < excluded_parameter_blocks.size(); ++i) {
+		ParameterBlock parameter_block = excluded_parameter_blocks.get(i);
+		if (!parameter_block.IsConstant()) {
+		variable_parameter_blocks.add(parameter_block);
+		parameter_block.SetConstant();
+		}
+		}
+		}
+		
+		// Setup the Parameter indices and offsets before an evaluator can
+		// be constructed and used.
+		program.SetParameterOffsetsAndIndex();
+		
+		EvaluatorOptions evaluator_options = new EvaluatorOptions();
+		
+		// Even though using SPARSE_NORMAL_CHOLESKY requires SuiteSparse or
+		// CXSparse, here it just being used for telling the evaluator to
+		// use a SparseRowCompressedMatrix for the jacobian. This is because
+		// the Evaluator decides the storage for the Jacobian based on the
+		// type of linear solver being used.
+		evaluator_options.linear_solver_type = LinearSolverType.SPARSE_NORMAL_CHOLESKY;
+		//#ifdef CERES_NO_THREADS
+		//LOG_IF(WARNING, evaluate_options.num_threads > 1)
+		//<< "Neither OpenMP nor TBB support is compiled into this binary; "
+		//<< "only evaluate_options.num_threads = 1 is supported. Switching "
+		//<< "to single threaded mode.";
+		evaluator_options.num_threads = 1;
+		//#else
+		//evaluator_options.num_threads = evaluate_options.num_threads;
+		//#endif  // CERES_NO_THREADS
+		
+		// The main thread also does work so we only need to launch num_threads - 1.
+		//context_impl_.EnsureMinimumThreads(evaluator_options.num_threads - 1);
+		evaluator_options.context = context_impl_;
+		
+		CompressedRowJacobianWriter crjw = new CompressedRowJacobianWriter(evaluator_options, program);
+		Evaluator evaluator = 
+		new ProgramEvaluator<ScratchEvaluatePreparer,
+		                CompressedRowJacobianWriter, NullJacobianFinalizer>(crjw, evaluator_options,
+		                                             program);
+		
+		if (residuals != null) {
+			while (residuals.size() > evaluator.NumResiduals()) {
+				residuals.remove(residuals.size()-1);
+			}
+			while (residuals.size() < evaluator.NumResiduals()) {
+				residuals.add(0.0);
+			}
+		}
+		
+		if (gradient != null) {
+			while (gradient.size() > evaluator.NumEffectiveParameters()) {
+				gradient.remove(gradient.size()-1);
+			}
+			while (gradient.size() < evaluator.NumEffectiveParameters()) {
+				gradient.add(0.0);
+			}
+		}
+		
+		CompressedRowSparseMatrix tmp_jacobian = null;
+		if (jacobian != null) {
+		    tmp_jacobian = (CompressedRowSparseMatrix)(evaluator.CreateJacobian());
+		}
+		
+		// Point the state pointers to the user state pointers. This is
+		// needed so that we can extract a parameter vector which is then
+		// passed to Evaluator::Evaluate.
+		program.SetParameterBlockStatePtrsToUserStatePtrs();
+		
+		// Copy the value of the parameter blocks into a vector, since the
+		// Evaluate::Evaluate method needs its input as such. The previous
+		// call to SetParameterBlockStatePtrsToUserStatePtrs ensures that
+		// these values are the ones corresponding to the actual state of
+		// the parameter blocks, rather than the temporary state pointer
+		// used for evaluation.
+		Vector<Double> parameters = new Vector<Double>(program.NumParameters());
+		program.ParameterBlocksToStateVector(parameters);
+		
+		double tmp_cost = 0;
+		
+	    EvaluateOptions evaluator_evaluate_options = new EvaluateOptions();
+		evaluator_evaluate_options.apply_loss_function =
+		evaluate_options.apply_loss_function;
+		double costArray[] = new double[] {tmp_cost};
+		Vector<Double> res0;
+		if (residuals == null) {
+			res0 = null;
+		}
+		else {
+			res0 = new Vector<Double>();
+			res0.add(residuals.get(0));
+		}
+		Vector<Double> grad0;
+		if (gradient == null) {
+			grad0 = null;
+		}
+		else {
+			grad0 = new Vector<Double>();
+			grad0.add(gradient.get(0));
+		}
+		boolean status = evaluator.Evaluate(evaluator_evaluate_options,
+		                         parameters,
+		                         costArray,
+		                         res0,
+		                         grad0,
+		                         tmp_jacobian);
+		
+		// Make the parameter blocks that were temporarily marked constant,
+		// variable again.
+		for (i = 0; i < variable_parameter_blocks.size(); ++i) {
+		variable_parameter_blocks.get(i).SetVarying();
+		}
+		
+		if (status) {
+			if (cost != null) {
+			    cost[0] = costArray[0];
+			}
+			if (jacobian != null) {
+			    jacobian = tmp_jacobian.ToCRSMatrix();	
+			}
+		}
+		
+		program_.SetParameterBlockStatePtrsToUserStatePtrs();
+		program_.SetParameterOffsetsAndIndex();
+		return status;
+    }
 
 
 	} // class ProblemImpl
@@ -21126,6 +21520,10 @@ public abstract class CeresSolver {
 		// switching from a ResidualBlock* to an index in the Program's array, needed
 		// to do efficient removals.
 		private int index_;
+		
+		public String toString() {
+			return String.valueOf(index_);
+		}
 
 		public ResidualBlock(CostFunction cost_function, LossFunction loss_function,
 				Vector<ParameterBlock> parameter_blocks, int index) {
@@ -21978,6 +22376,51 @@ public abstract class CeresSolver {
 			state_offset_ = -1;
 			delta_offset_ = -1;
 		}
+		
+		public boolean equalsParameterBlock(ParameterBlock pb) {
+			int i;
+			if (user_state_.length != pb.user_state_.length) {
+				return false;
+			}
+			for (i = 0; i < user_state_.length; i++) {
+				if (user_state_[i] != pb.user_state_[i]) {
+					return false;
+				}
+			}
+			if (size_ != pb.size_) {
+				return false;
+			}
+			if (index_ != pb.index_) {
+				return false;
+			}
+			if (is_constant_ != pb.is_constant_) {
+				return false;
+			}
+			if (state_.length != pb.state_.length) {
+				return false;
+			}
+			for (i = 0; i < state_.length; i++) {
+				if (state_[i] != pb.state_[i]) {
+					return false;
+				}
+			}
+		    if (state_start != pb.state_start) {
+		    	return false;
+		    }
+		    if ((local_parameterization_ == null) && (pb.local_parameterization_ != null)) {
+		    	return false;
+		    }
+		    if ((local_parameterization_ != null) && (pb.local_parameterization_ == null)) {
+		    	return false;
+		    }
+		    if (state_offset_ != pb.state_offset_) {
+		    	return false;
+		    }
+		    if (delta_offset_ != pb.delta_offset_) {
+		    	return false;
+		    }
+		    return true;
+		}
 
 		boolean UpdateLocalParameterizationJacobian() {
 			if (local_parameterization_ == null) {
@@ -22025,6 +22468,12 @@ public abstract class CeresSolver {
 			System.out.println("index_ = " + index_);
 			System.out.println("state_offset_ " + state_offset_);
 			System.out.println("delta_offset_ " + delta_offset_);
+		}
+		
+		public String StringOutput() {
+			return("size_ = " + size_ + "\n" + "is_constant_ = " + is_constant_ + "\n" +
+		            "index_ = " + index_ + "state_offset_ " + state_offset_ + "\n" +
+					"delta_offset_ = " + delta_offset_ + "\n");
 		}
 
 		void EnableResidualBlockDependencies() {
