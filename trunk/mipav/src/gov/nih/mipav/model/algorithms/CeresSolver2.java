@@ -3153,35 +3153,21 @@ public class CeresSolver2 extends CeresSolver {
 			  }
 
 			  CRSMatrix jacobian = new CRSMatrix();
-			  /*bool ProblemImpl::Evaluate(const Problem::EvaluateOptions& evaluate_options,
-                      double* cost,
-                      vector<double>* residuals,
-                      vector<double>* gradient,
-                      CRSMatrix* jacobian) 
-              has
-              // Even though using SPARSE_NORMAL_CHOLESKY requires SuiteSparse or
-			  // CXSparse, here it just being used for telling the evaluator to
-			  // use a SparseRowCompressedMatrix for the jacobian. This is because
-			  // the Evaluator decides the storage for the Jacobian based on the
-			  // type of linear solver being used.
-               evaluator_options.linear_solver_type = SPARSE_NORMAL_CHOLESKY;
-               //SparseRowCompressedMatrix is not implemented.
-               */
+			  
 
-			  /*problem_.Evaluate(evaluate_options_, null, null, null, jacobian);
+			  problem_.Evaluate(evaluate_options_, null, null, null, jacobian);
 			  event_logger.AddEvent("Evaluate");
 
-			  Matrix dense_jacobian(jacobian.num_rows, jacobian.num_cols);
-			  dense_jacobian.setZero();
+			  Matrix dense_jacobian = new Matrix(jacobian.num_rows, jacobian.num_cols, 0.0);
 			  for (int r = 0; r < jacobian.num_rows; ++r) {
-			    for (int idx = jacobian.rows[r]; idx < jacobian.rows[r + 1]; ++idx) {
-			      const int c = jacobian.cols[idx];
-			      dense_jacobian(r, c) = jacobian.values[idx];
+			    for (int idx = jacobian.rows.get(r); idx < jacobian.rows.get(r + 1); ++idx) {
+			      final int c = jacobian.cols.get(idx);
+			      dense_jacobian.set(r, c, jacobian.values.get(idx));
 			    }
 			  }
 			  event_logger.AddEvent("ConvertToDenseMatrix");
 
-			  Eigen::JacobiSVD<Matrix> svd(dense_jacobian,
+			  /*Eigen::JacobiSVD<Matrix> svd(dense_jacobian,
 			                               Eigen::ComputeThinU | Eigen::ComputeThinV);
 
 			  event_logger.AddEvent("SingularValueDecomposition");
@@ -3249,7 +3235,6 @@ public class CeresSolver2 extends CeresSolver {
 			  }
 			  event_logger.AddEvent("CopyToCovarianceMatrix");
 			  return true;*/
-			  System.err.println("ComputeCovarianceValuesUsingDenseSVD() cannot be implemented without SparseRowCompressedMatrix");
 			  return false;
 			}
 
