@@ -3146,6 +3146,7 @@ public class CeresSolver2 extends CeresSolver {
 		}
 		
 		boolean ComputeCovarianceValuesUsingDenseSVD() {
+			  int i;
 			  EventLogger event_logger = new EventLogger("CovarianceImpl::ComputeCovarianceValuesUsingDenseSVD");
 			  if (covariance_matrix_ == null) {
 			    // Nothing to do, all zeros covariance matrix.
@@ -3167,22 +3168,44 @@ public class CeresSolver2 extends CeresSolver {
 			  }
 			  event_logger.AddEvent("ConvertToDenseMatrix");
 
-			  /*Eigen::JacobiSVD<Matrix> svd(dense_jacobian,
-			                               Eigen::ComputeThinU | Eigen::ComputeThinV);
-
+			  int m = dense_jacobian.getRowDimension();
+			  int n = dense_jacobian.getColumnDimension();
+			  double A[][] = dense_jacobian.getArray();
+			  double singular_values[] = new double[Math.min(m,n)];
+			  int ldu = m;
+		      double U[][] = new double[ldu][Math.min(m,n)];
+		      int ldvt = Math.min(m,n);
+		      double VT[][] = new double[ldvt][n];
+		      double work[] = new double[1];
+		      int lwork = -1;
+		      int info[] = new int[1];
+			  svd.dgesvd('S','S',m,n,A,m,singular_values,U,ldu,VT,ldvt,work,lwork,info);
+			  lwork = (int)work[0];
+		      work = new double[lwork];
+		      svd.dgesvd('S','S',m,n,A,m,singular_values,U,ldu,VT,ldvt,work,lwork,info);
+		      if (info[0] < 0) {
+              	System.err.println("In svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+              	Preferences.debug("In svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+              	return false;
+              }
+	          if (info[0] > 0) {
+              	System.err.println("In svd.dgesvd dbdsqr did not converge.");
+              	Preferences.debug("In svd.dgesvd dbdsqr did not converge.\n",
+              			Preferences.DEBUG_ALGORITHM);
+              	return false;
+              }
+			  
 			  event_logger.AddEvent("SingularValueDecomposition");
 
-			  const Vector singular_values = svd.singularValues();
-			  const int num_singular_values = singular_values.rows();
-			  Vector inverse_squared_singular_values(num_singular_values);
-			  inverse_squared_singular_values.setZero();
+			  final int num_singular_values = singular_values.length;
+			  double inverse_squared_singular_values[] = new double[num_singular_values];
 
-			  const double max_singular_value = singular_values[0];
-			  const double min_singular_value_ratio =
-			      sqrt(options_.min_reciprocal_condition_number);
+			  final double max_singular_value = singular_values[0];
+			  final double min_singular_value_ratio =
+			      Math.sqrt(options_.min_reciprocal_condition_number);
 
-			  const bool automatic_truncation = (options_.null_space_rank < 0);
-			  const int max_rank = std::min(num_singular_values,
+			  final boolean automatic_truncation = (options_.null_space_rank < 0);
+			  final int max_rank = Math.min(num_singular_values,
 			                                num_singular_values - options_.null_space_rank);
 
 			  // Compute the squared inverse of the singular values. Truncate the
@@ -3190,8 +3213,8 @@ public class CeresSolver2 extends CeresSolver {
 			  // null_space_rank. When either of these two quantities are active,
 			  // the resulting covariance matrix is a Moore-Penrose inverse
 			  // instead of a regular inverse.
-			  for (int i = 0; i < max_rank; ++i) {
-			    const double singular_value_ratio = singular_values[i] / max_singular_value;
+			  for (i = 0; i < max_rank; ++i) {
+			    double singular_value_ratio = singular_values[i] / max_singular_value;
 			    if (singular_value_ratio < min_singular_value_ratio) {
 			      // Since the singular values are in decreasing order, if
 			      // automatic truncation is enabled, then from this point on
@@ -3200,14 +3223,12 @@ public class CeresSolver2 extends CeresSolver {
 			      if (automatic_truncation) {
 			        break;
 			      } else {
-			        LOG(ERROR) << "Error: Covariance matrix is near rank deficient "
-			                   << "and the user did not specify a non-zero"
-			                   << "Covariance::Options::null_space_rank "
-			                   << "to enable the computation of a Pseudo-Inverse. "
-			                   << "Reciprocal condition number: "
-			                   << singular_value_ratio * singular_value_ratio << " "
-			                   << "min_reciprocal_condition_number: "
-			                   << options_.min_reciprocal_condition_number;
+			        System.err.println("Error: Covariance matrix is near rank deficient ");
+			        System.err.println("and the user did not specify a non-zero");
+			        System.err.println("Covariance::Options::null_space_rank ");
+			        System.err.println("to enable the computation of a Pseudo-Inverse. ");
+			        System.err.println("Reciprocal condition number: " + (singular_value_ratio * singular_value_ratio));
+			        System.err.println("min_reciprocal_condition_number: " + options_.min_reciprocal_condition_number);
 			        return false;
 			      }
 			    }
@@ -3216,26 +3237,30 @@ public class CeresSolver2 extends CeresSolver {
 			        1.0 / (singular_values[i] * singular_values[i]);
 			  }
 
-			  Matrix dense_covariance =
-			      svd.matrixV() *
-			      inverse_squared_singular_values.asDiagonal() *
-			      svd.matrixV().transpose();
+			  Matrix matrixVT = new Matrix(VT);
+			  Matrix matrixV = matrixVT.transpose();
+			  double singularArr[][] = new double[num_singular_values][num_singular_values];
+			  for (i = 0; i < num_singular_values; i++) {
+			      singularArr[i][i] = inverse_squared_singular_values[i];  
+			  }
+			  Matrix singularMat = new Matrix(singularArr);
+			  Matrix dense_covariance =  (matrixV.times(singularMat)).times(matrixVT);
+			      
 			  event_logger.AddEvent("PseudoInverse");
 
-			  const int num_rows = covariance_matrix_->num_rows();
-			  const int* rows = covariance_matrix_->rows();
-			  const int* cols = covariance_matrix_->cols();
-			  double* values = covariance_matrix_->mutable_values();
+			  final int num_rows = covariance_matrix_.num_rows();
+			  final int[] rows = covariance_matrix_.rows();
+			  final int[] cols = covariance_matrix_.cols();
+			  double[] values = covariance_matrix_.mutable_values();
 
 			  for (int r = 0; r < num_rows; ++r) {
 			    for (int idx = rows[r]; idx < rows[r + 1]; ++idx) {
-			      const int c = cols[idx];
-			      values[idx] = dense_covariance(r, c);
+			      final int c = cols[idx];
+			      values[idx] = dense_covariance.get(r, c);
 			    }
 			  }
 			  event_logger.AddEvent("CopyToCovarianceMatrix");
-			  return true;*/
-			  return false;
+			  return true;
 			}
 
 
