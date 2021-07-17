@@ -86,7 +86,7 @@ public abstract class CeresSolver {
 	private GeneralizedInverse2 gi2 = new GeneralizedInverse2();
 	private LinearEquations le = new LinearEquations();
 	private LinearEquations2 le2 = new LinearEquations2();
-	private SVD svd = new SVD();
+	public SVD svd = new SVD();
 	private LinearSolverType requestedLinearSolverType = LinearSolverType.DENSE_QR;
 	// It is a near impossibility that user code generates this exact
 	// value in normal operation, thus we will use it to fill arrays
