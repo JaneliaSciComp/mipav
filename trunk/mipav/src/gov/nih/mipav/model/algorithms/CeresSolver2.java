@@ -2071,57 +2071,7 @@ public class CeresSolver2 extends CeresSolver {
 	 
 	};
 
-	public void TransposeForCompressedRowSparseStructure(int num_rows,
-            int num_cols,
-            int num_nonzeros,
-            int[] rows,
-            int[] cols,
-            double[] values,
-            int[] transpose_rows,
-            int[] transpose_cols,
-            double[] transpose_values) {
-		    int i, idx;
-				// Explicitly zero out transpose_rows.
-		        for (i = 0; i < num_cols + 1; i++) {
-		        	transpose_rows[i] = 0;
-		        }
-				
-				// Count the number of entries in each column of the original matrix
-				// and assign to transpose_rows[col + 1].
-				for (idx = 0; idx < num_nonzeros; ++idx) {
-				    ++transpose_rows[cols[idx] + 1];
-				}
-				
-				// Compute the starting position for each row in the transpose by
-				// computing the cumulative sum of the entries of transpose_rows.
-				for (i = 1; i < num_cols + 1; ++i) {
-				    transpose_rows[i] += transpose_rows[i - 1];
-				}
-				
-				// Populate transpose_cols and (optionally) transpose_values by
-				// walking the entries of the source matrices. For each entry that
-				// is added, the value of transpose_row is incremented allowing us
-				// to keep track of where the next entry for that row should go.
-				//
-				// As a result transpose_row is shifted to the left by one entry.
-				for (int r = 0; r < num_rows; ++r) {
-					for (idx = rows[r]; idx < rows[r + 1]; ++idx) {
-						final int c = cols[idx];
-						final int transpose_idx = transpose_rows[c]++;
-						transpose_cols[transpose_idx] = r;
-						if (values != null && transpose_values != null) {
-						    transpose_values[transpose_idx] = values[idx];
-						}
-					}
-				}
-				
-				// This loop undoes the left shift to transpose_rows introduced by
-				// the previous loop.
-				for (i = num_cols - 1; i > 0; --i) {
-				    transpose_rows[i] = transpose_rows[i - 1];
-				}
-				transpose_rows[0] = 0;
-			}
+	
 	
 	public void AddRandomBlock(int num_rows,
             int num_cols,
@@ -2387,428 +2337,7 @@ public class CeresSolver2 extends CeresSolver {
 		}
 
 	  
-	  public class CompressedRowSparseMatrix extends SparseMatrix {
-		  private int num_rows_;
-		  private int num_cols_;
-		  private int[] rows_;
-		  private int[] cols_;
-		  private double[] values_;
-		  private StorageType storage_type_;
-
-		  // If the matrix has an underlying block structure, then it can also
-		  // carry with it row and column block sizes. This is auxilliary and
-		  // optional information for use by algorithms operating on the
-		  // matrix. The class itself does not make use of this information in
-		  // any way.
-		  private Vector<Integer> row_blocks_;
-		  private Vector<Integer> col_blocks_; 
-		  
-		  public CompressedRowSparseMatrix() {
-			  super();
-		  }
-		  
-		 // This constructor gives you a semi-initialized CompressedRowSparseMatrix.
-		 public CompressedRowSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros) {
-			super();
-		    num_rows_ = num_rows;
-		    num_cols_ = num_cols;
-		    storage_type_ = StorageType. UNSYMMETRIC;
-		    rows_ = new int[num_rows + 1];
-		    cols_ = new int[max_num_nonzeros];
-		    values_ = new double[max_num_nonzeros];
-		    row_blocks_ = new Vector<Integer>();
-		    col_blocks_ = new Vector<Integer>();
-		    
-		    if (1 <= MAX_LOG_LEVEL) {
-		        Preferences.debug("# of rows: " + num_rows_ + "\n", Preferences.DEBUG_ALGORITHM);
-		        Preferences.debug("# of columns: " + num_cols_ + "\n", Preferences.DEBUG_ALGORITHM);
-		        Preferences.debug("max_num_nonzeros: " + cols_.length + "\n", Preferences.DEBUG_ALGORITHM);
-		    }
-
-		  }
-
-		 public CompressedRowSparseMatrix(double[] diagonal, int num_rows) {
-			super();
-			if (diagonal == null) {
-				System.err.println("In public CompressedRowSparseMatrix diagonal == null");
-				return;
-			}
-			
-			num_rows_ = num_rows;
-			num_cols_ = num_rows;
-			storage_type_ = StorageType.UNSYMMETRIC;
-			rows_ = new int[num_rows + 1];
-			cols_ = new int[num_rows];
-			values_ = new double[num_rows];
-			row_blocks_ = new Vector<Integer>();
-			col_blocks_ = new Vector<Integer>();
-			
-			rows_[0] = 0;
-			for (int i = 0; i < num_rows_; ++i) {
-				cols_[i] = i;
-				values_[i] = diagonal[i];
-				rows_[i + 1] = i + 1;
-			}
-			
-			if (num_nonzeros() != num_rows) {
-				System.err.println("In public CompressedRowSparseMatrix num_nonzeros() != num_rows");
-			}
-		}
- 
-		 
-		  public int num_rows() { return num_rows_; }
-		  public int num_cols() { return num_cols_; }
-		  public int num_nonzeros() { return rows_[num_rows_]; }
-		  public double[] values() { return values_; }
-		  public double[] mutable_values() { return values_; }
-		  
-		  // Non-destructive array resizing method.
-		  public void set_num_rows(int num_rows) { num_rows_ = num_rows; }
-		  public void set_num_cols(int num_cols) { num_cols_ = num_cols; }
-
-		  // Low level access methods that expose the structure of the matrix.
-		  public int[] cols() { return cols_; }
-		  public int[] mutable_cols() { return cols_; }
-
-		  public int[] rows() { return rows_; }
-		  public int[] mutable_rows() { return rows_; }
-
-		  public StorageType storage_type() { return storage_type_; }
-		  public void set_storage_type(StorageType storage_type) {
-		    storage_type_ = storage_type;
-		  }
-
-		  public Vector<Integer> row_blocks() { return row_blocks_; }
-		  public Vector<Integer> mutable_row_blocks() { return row_blocks_; }
-		  public void set_row_blocks(Vector<Integer> row_blocks) {
-			  row_blocks_ = row_blocks;
-		  }
-
-		  public Vector<Integer> col_blocks() { return col_blocks_; }
-		  public Vector<Integer> mutable_col_blocks() { return col_blocks_; }
-		  public void set_col_blocks(Vector<Integer> col_blocks) {
-			  col_blocks_ = col_blocks;
-		  }
-		  
-		  public void SquaredColumnNorm(double[] x) {
-			  int idx;
-			  if (x == null) {
-				  System.err.println("In CompressedRowSparseMatrix.SquaredColumnNorm x == null");
-				  return;
-			  }
-
-			  for (idx = 0; idx < num_cols_; idx++) {
-				  x[idx] = 0.0;
-			  }
-			  for (idx = 0; idx < rows_[num_rows_]; ++idx) {
-			    x[cols_[idx]] += values_[idx] * values_[idx];
-			  }
-			}
-
-		  public Matrix ToDenseMatrix() {
-			  Matrix dense_matrix = new Matrix(num_rows_, num_cols_, 0.0);
-
-			  for (int r = 0; r < num_rows_; ++r) {
-			    for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
-			      dense_matrix.set(r, cols_[idx],values_[idx]);
-			    }
-			  }
-			  return dense_matrix;
-			}
-		  
-		  public void SetZero() {
-			  for (int i = 0; i < values_.length; i++) {
-				  values_[i] = 0.0;
-			  }
-		  }
-
-		  public void LeftMultiply(double[] x, double[] y) {
-			  if (x == null) {
-				  System.err.println("In CompressedRowSparseMatrix LeftMultiply x == null");
-				  return;
-			  }
-			  if (y == null) {
-				  System.err.println("In CompressedRowSparseMatrix LeftMultiply y == null");
-				  return;
-			  }
-
-			  for (int r = 0; r < num_rows_; ++r) {
-			    for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
-			      y[cols_[idx]] += values_[idx] * x[r];
-			    }
-			  }
-			}
-		  
-		  public void RightMultiply(double[] x,
-                  double[] y) {
-			  if (x == null) {
-				  System.err.println("In CompressedRowSparseMatrix RightMultiply x == null");
-				  return;
-			  }
-			  if (y == null) {
-				  System.err.println("In CompressedRowSparseMatrix RightMultiply y == null");
-				  return;
-			  }
-				
-				for (int r = 0; r < num_rows_; ++r) {
-					for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
-					    y[r] += values_[idx] * x[cols_[idx]];
-					}
-				}
-			}
-
-		  public void ToTextFile(File file) {
-			  if (file == null) {
-				  System.err.println("In CompressedRowSparseMatrix ToTextFile file == null");
-				  return;
-			  }
-			  FileWriter fw = null;
-				try {
-					fw = new FileWriter(file);
-				} catch (IOException e) {
-					System.err.println("IOException in ToTextFile on new FileWriter(file)");
-					return;
-				}
-			  for (int r = 0; r < num_rows_; ++r) {
-			    for (int idx = rows_[r]; idx < rows_[r + 1]; ++idx) {
-			      String str = String.format("% 10d % 10d %17f\n", r, cols_[idx], values_[idx]);
-			      try {
-						fw.write(str, 0, str.length());
-					} catch (IOException e) {
-						System.err.println("IOException in ToTextFile on fw.write(str,0,str.length())");
-						return;
-					}
-			    }
-			  }
-			  try {
-			      fw.close();
-			  }
-			  catch (IOException e) {
-				  System.err.println("IOExcpetion in ToTextFIle on fw.close()");
-			  }
-			}
-		  
-		  public void ScaleColumns(double[] scale) {
-			  if (scale == null) {
-				  System.err.println("In CompressedRowSparseMatrix ScaleColumns scale == null");
-				  return;
-			  }
-
-			  for (int idx = 0; idx < rows_[num_rows_]; ++idx) {
-			    values_[idx] *= scale[cols_[idx]];
-			  }
-			}
-		  
-		  public void DeleteRows(int delta_rows) {
-			  int i;
-			  if (delta_rows < 0) {
-				  System.err.println("In CompressedRowSparseMatrix DeleteRows delta_rows < 0");
-				  return;
-			  }
-			  if (delta_rows > num_rows_) {
-				  System.err.println("In CompressedRowSparseMatrix DeleteRows delta_rows > num_rows_");
-				  return;
-			  }
-
-			  num_rows_ -= delta_rows;
-			  int rows_temp[] = new int[num_rows_ + 1];
-			  for (i = 0; i < num_rows_ + 1; i++) {
-				  rows_temp[i] = rows_[i];
-			  }
-			  rows_ = new int[num_rows_ + 1];
-			  for (i = 0; i < num_rows_ + 1; i++) {
-				  rows_[i] = rows_temp[i];
-			  }
-			  rows_temp = null;
-
-			  // The rest of the code updates the block information. Immediately
-			  // return in case of no block information.
-			  if (row_blocks_.isEmpty()) {
-			    return;
-			  }
-
-			  // Walk the list of row blocks until we reach the new number of rows
-			  // and the drop the rest of the row blocks.
-			  int num_row_blocks = 0;
-			  int num_rows = 0;
-			  while (num_row_blocks < row_blocks_.size() && num_rows < num_rows_) {
-			    num_rows += row_blocks_.get(num_row_blocks);
-			    ++num_row_blocks;
-			  }
-
-			  while (row_blocks_.size() > num_row_blocks) {
-				  row_blocks_.remove(row_blocks_.size() - 1);
-			  }
-		  }
-
-		  public void AppendRows(CompressedRowSparseMatrix m) {
-			  int i;
-			  if (m.num_cols() != num_cols_) {
-				  System.err.println("In CompressedRowSparseMatrix AppendRows m.num_cols() != num_cols_");
-				  return;
-			  }
-
-			  if ((row_blocks_.isEmpty() && !m.row_blocks().isEmpty()) ||
-			        (!row_blocks_.isEmpty() && m.row_blocks().isEmpty())) {
-			      System.err.println("Cannot append a matrix with row blocks to one without and vice versa.");
-			      System.err.println("This matrix has : " + row_blocks_.size() + " row blocks.");
-			      System.err.println("The matrix being appended has: " + m.row_blocks().size() + " row blocks.");
-			      return;
-			  }
-
-			  if (m.num_rows() == 0) {
-			    return;
-			  }
-
-			  if (cols_.length < num_nonzeros() + m.num_nonzeros()) {
-				int cols_temp[] = new int[cols_.length];
-				for (i = 0; i < cols_.length; i++) {
-					cols_temp[i] = cols_[i];
-				}
-			    cols_ = new int[num_nonzeros() + m.num_nonzeros()];
-			    for (i = 0; i < cols_temp.length; i++) {
-			    	cols_[i] = cols_temp[i];
-			    }
-			    cols_temp = null;
-			    double values_temp[] = new double[values_.length];
-			    for (i = 0; i < values_.length; i++) {
-			    	values_temp[i] = values_[i];
-			    }
-			    values_ = new double[num_nonzeros() + m.num_nonzeros()];
-			    for (i = 0; i < values_temp.length; i++) {
-			    	values_[i] = values_temp[i];
-			    }
-			    values_temp = null;
-			  }
-
-			  // Copy the contents of m into this matrix.
-			  if (num_nonzeros() >= cols_.length) {
-			      System.err.println("In CompressedRowSparseMatrix AppendRows (num_nonzeros() >= cols_.length");
-			      return;
-			  }
-			  if (m.num_nonzeros() > 0) {
-				for (i = 0; i < m.num_nonzeros(); i++) {
-				    cols_[num_nonzeros() + i] = m.cols()[i];
-				    values_[num_nonzeros() + i] = m.values()[i];
-				}
-			  }
-
-			  int rows_temp[] = new int[rows_.length];
-			  for (i = 0; i < rows_.length; i++) {
-				  rows_temp[i] = rows_[i];
-			  }
-			  rows_ = new int[num_rows_ + m.num_rows() + 1];
-			  for (i = 0; i < rows_temp.length; i++) {
-				  rows_[i] = rows_temp[i];
-			  }
-			  rows_temp = null;
-			  // new_rows = [rows_, m.row() + rows_[num_rows_]]
-			  for (i = num_rows_; i < num_rows_ + m.num_rows() + 1; i++) {
-				  rows_[i] = rows_[num_rows_];
-			  }
-			  
-
-			  for (int r = 0; r < m.num_rows() + 1; ++r) {
-			    rows_[num_rows_ + r] += m.rows()[r];
-			  }
-
-			  num_rows_ += m.num_rows();
-
-			  // The rest of the code updates the block information. Immediately
-			  // return in case of no block information.
-			  if (row_blocks_.isEmpty()) {
-			    return;
-			  }
-			  
-			  for (i = 0; i < m.row_blocks().size(); i++) {
-				  row_blocks_.add(m.row_blocks().get(i));
-			  }
-
-			}
-		  
-		  public CRSMatrix ToCRSMatrix() {
-			  int i;
-			  CRSMatrix matrix = new CRSMatrix();
-			  matrix.num_rows = num_rows_;
-			  matrix.num_cols = num_cols_;
-			  for (i = 0; i < matrix.num_rows +1; i++) {
-				  matrix.rows.add(rows_[i]);
-			  }
-			  for (i = 0; i < matrix.rows.get(matrix.num_rows); i++) {
-				  matrix.cols.add(cols_[i]);
-				  matrix.values.add(values_[i]);
-			  }
-			  return matrix;
-			}
-
-		  public void SetMaxNumNonZeros(int num_nonzeros) {
-			  int i;
-			  if (num_nonzeros < 0) {
-				  System.err.println("In CompressedRowSparseMatrix num_nonzeros < 0");
-				  return;
-			  }
-
-			  int cols_temp[] = new int[Math.min(num_nonzeros, cols_.length)];
-			  for (i = 0; i < cols_temp.length; i++) {
-				  cols_temp[i] = cols_[i];
-			  }
-			  cols_ = new int[num_nonzeros];
-			  for (i = 0; i < cols_temp.length; i++) {
-				  cols_[i] = cols_temp[i];
-			  }
-			  cols_temp = null;
-			  
-			  double values_temp[] = new double[Math.min(num_nonzeros, values_.length)];
-			  for (i = 0; i < values_temp.length; i++) {
-				  values_temp[i] = values_[i];
-			  }
-			  values_ = new double[num_nonzeros];
-			  for (i = 0; i < values_temp.length; i++) {
-				  values_[i] = values_temp[i];
-			  }
-			  values_temp = null;
-		  }
-		  
-		  public CompressedRowSparseMatrix Transpose() {
-			  CompressedRowSparseMatrix transpose =
-			      new CompressedRowSparseMatrix(num_cols_, num_rows_, num_nonzeros());
-
-			  switch (storage_type_) {
-			    case UNSYMMETRIC:
-			      transpose.set_storage_type(StorageType.UNSYMMETRIC);
-			      break;
-			    case LOWER_TRIANGULAR:
-			      transpose.set_storage_type(StorageType.UPPER_TRIANGULAR);
-			      break;
-			    case UPPER_TRIANGULAR:
-			      transpose.set_storage_type(StorageType.LOWER_TRIANGULAR);
-			      break;
-			    default:
-			      System.err.println("Unknown storage type: " + storage_type_);
-			      return null;
-			  };
-
-			  TransposeForCompressedRowSparseStructure(num_rows(),
-			                                           num_cols(),
-			                                           num_nonzeros(),
-			                                           rows(),
-			                                           cols(),
-			                                           values(),
-			                                           transpose.mutable_rows(),
-			                                           transpose.mutable_cols(),
-			                                           transpose.mutable_values());
-
-			  // The rest of the code updates the block information. Immediately
-			  // return in case of no block information.
-			  if (row_blocks_.isEmpty()) {
-			    return transpose;
-			  }
-
-			  transpose.set_row_blocks(col_blocks_);
-			  transpose.set_col_blocks(row_blocks_);
-			  return transpose;
-			}
-	  }
+	 
 	  
 	  public class DynamicCompressedRowSparseMatrix extends CompressedRowSparseMatrix {
 		  private Vector<Vector<Integer> > dynamic_cols_;
@@ -3062,9 +2591,16 @@ public class CeresSolver2 extends CeresSolver {
 			      }
 		     }
 
+		  evaluate_options_ = new EvaluateOptions();
 		  evaluate_options_.num_threads = options_.num_threads;
 		  evaluate_options_.apply_loss_function = options_.apply_loss_function;
+		  constant_parameter_blocks_ = new HashSet<double[]>();
+		  parameter_block_to_row_index_ = new HashMap<double[], Integer>();
 		}
+		  
+		  public CompressedRowSparseMatrix covariance_matrix() {
+			    return covariance_matrix_;
+		  }
 		  
 		  public void CheckForDuplicates(Vector<double[]> blocks) {
 		      // Pair can have first and second as the same array or as different arrays
@@ -3301,9 +2837,18 @@ public class CeresSolver2 extends CeresSolver {
 		    	System.err.println("In ComputeCovarianceSparsity parameter_map.get(parameter_block) returned null");
 		    	return false;
 		    }
+		    /*boolean contains_block = false;
+		    for (ParameterBlock pb: parameter_blocks_in_use) {
+		    	if (pb.equalsParameterBlock(block)) {
+		    		contains_block = true;
+		    	}
+		    }*/
 		    if (!block.IsConstant() && (parameter_blocks_in_use.contains(block))) {
+		    //if (!block.IsConstant() && contains_block) {
+		      System.err.println("active");
 		      active_parameter_blocks.add(parameter_block);
 		    } else {
+		      System.err.println("constant");
 		      constant_parameter_blocks_.add(parameter_block);
 		    }
 		  }
@@ -3315,7 +2860,7 @@ public class CeresSolver2 extends CeresSolver {
 			indexArrayComparator ic = new indexArrayComparator();
 			Collections.sort(ia, ic);
 			active_parameter_blocks.clear();
-			for (i = 0; i < active_parameter_blocks.size(); i++) {
+			for (i = 0; i < ia.size(); i++) {
 				active_parameter_blocks.add(ia.get(i).getArray());
 			}
 
@@ -3338,7 +2883,7 @@ public class CeresSolver2 extends CeresSolver {
 		  int num_nonzeros = 0;
 		  Vector<Pair<double[], double[]>> covariance_blocks = new Vector<Pair<double[], double[]>>();
 		  for (i = 0; i <  original_covariance_blocks.size(); ++i) {
-		    final Pair<double[], double[]> block_pair =
+		    Pair<double[], double[]> block_pair =
 		        original_covariance_blocks.get(i);
 		    if (constant_parameter_blocks_.contains(block_pair.first) ||
 		        constant_parameter_blocks_.contains(block_pair.second)) {
@@ -3390,7 +2935,7 @@ public class CeresSolver2 extends CeresSolver {
 			}
 			indexArrayArrayComparator icc = new indexArrayArrayComparator();
 			Collections.sort(iaa, icc);
-			for (i = 0; i < covariance_blocks.size(); i++) {
+			for (i = 0; i < iaa.size(); i++) {
 				covariance_blocks.add(new Pair<double[], double[]>(iaa.get(i).getArray1(), iaa.get(i).getArray2()));
 			}
 
@@ -3421,6 +2966,8 @@ public class CeresSolver2 extends CeresSolver {
 				final double[] row_block = darray_iterator.next();
 				final int row_block_size = problem.ParameterBlockLocalSize(row_block);
 				int row_begin = intValues_it.next();
+				System.err.println ("row_block_size = " + row_block_size);
+				System.err.println("row_begin = " + row_begin);
 				
 
 		    // Iterate over the covariance blocks contained in this row block
