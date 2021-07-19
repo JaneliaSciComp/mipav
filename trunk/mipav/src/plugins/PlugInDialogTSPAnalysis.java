@@ -91,11 +91,17 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
 	
 	private boolean findAIFInfoWithDSCMRIToolbox = false;
 	
-	private JLabel zSliceLabel;
+	private JLabel lowZSliceLabel;
 	
-	private JTextField zSliceText;
+	private JTextField lowZSliceText;
 	
-	private int selectedAIFZSlice = -1;
+	private int selectedAIFLowZSlice = -1;
+	
+    private JLabel highZSliceLabel;
+	
+	private JTextField highZSliceText;
+	
+	private int selectedAIFHighZSlice = -1;
 	
 	private JCheckBox plotAIFCheckBox;
 	
@@ -200,8 +206,10 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         } else if ((source == autoButton) || (source == autoRAPIDButton) || (source == pickButton) || (source == DSCMRIToolboxButton)) {
         	edgeLabel.setEnabled(autoRAPIDButton.isSelected());
         	edgeText.setEnabled(autoRAPIDButton.isSelected());
-        	zSliceLabel.setEnabled(DSCMRIToolboxButton.isSelected());
-        	zSliceText.setEnabled(DSCMRIToolboxButton.isSelected());
+        	lowZSliceLabel.setEnabled(DSCMRIToolboxButton.isSelected());
+        	lowZSliceText.setEnabled(DSCMRIToolboxButton.isSelected());
+        	highZSliceLabel.setEnabled(DSCMRIToolboxButton.isSelected());
+        	highZSliceText.setEnabled(DSCMRIToolboxButton.isSelected());
         } else {
             super.actionPerformed(event);
         }
@@ -384,19 +392,35 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         inputPanel.add(DSCMRIToolboxButton, gbc);
         
         gbc.gridy++;
-        zSliceLabel = new JLabel("Selected Z slice for AIF (0 to zDim-1)");
-        zSliceLabel.setFont(serif12);
-        zSliceLabel.setForeground(Color.black);
-        zSliceLabel.setEnabled(false);
-        inputPanel.add(zSliceLabel, gbc);
+        lowZSliceLabel = new JLabel("Selected low Z slice for AIF (0 to zDim-1)");
+        lowZSliceLabel.setFont(serif12);
+        lowZSliceLabel.setForeground(Color.black);
+        lowZSliceLabel.setEnabled(false);
+        inputPanel.add(lowZSliceLabel, gbc);
         
         gbc.gridx = 1;
-        zSliceText = new JTextField(10);
-        zSliceText.setText("10");
-        zSliceText.setFont(serif12);
-        zSliceText.setForeground(Color.black);
-        zSliceText.setEnabled(false);
-        inputPanel.add(zSliceText, gbc);   
+        lowZSliceText = new JTextField(10);
+        lowZSliceText.setText("7");
+        lowZSliceText.setFont(serif12);
+        lowZSliceText.setForeground(Color.black);
+        lowZSliceText.setEnabled(false);
+        inputPanel.add(lowZSliceText, gbc);  
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        highZSliceLabel = new JLabel("Selected high Z slice for AIF (0 to zDim-1)");
+        highZSliceLabel.setFont(serif12);
+        highZSliceLabel.setForeground(Color.black);
+        highZSliceLabel.setEnabled(false);
+        inputPanel.add(highZSliceLabel, gbc);
+        
+        gbc.gridx = 1;
+        highZSliceText = new JTextField(10);
+        highZSliceText.setText("10");
+        highZSliceText.setFont(serif12);
+        highZSliceText.setForeground(Color.black);
+        highZSliceText.setEnabled(false);
+        inputPanel.add(highZSliceText, gbc);  
         
         gbc.gridx = 0;
         gbc.gridy++;
@@ -573,8 +597,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
             TSPAnalysisAlgo = new PlugInAlgorithmTSPAnalysis(pwiImageFileDirectory, spatialSmoothing, sigmax,
             		sigmay, calculateMaskingThreshold, masking_threshold,
             		TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, multiThreading, search, calculateCorrelation,
-            		calculateCBFCBVMTT, calculateBounds, fileNameBase, findAIFInfoWithDSCMRIToolbox, selectedAIFZSlice,
-            		experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection,
+            		calculateCBFCBVMTT, calculateBounds, fileNameBase, findAIFInfoWithDSCMRIToolbox, selectedAIFLowZSlice,
+            		selectedAIFHighZSlice, experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection,
             		saveOriginalData);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -632,7 +656,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	calculateCBFCBVMTT = scriptParameters.getParams().getBoolean("calc_CBFCBVMTT");
     	calculateBounds = scriptParameters.getParams().getBoolean("calc_bounds");
     	findAIFInfoWithDSCMRIToolbox = scriptParameters.getParams().getBoolean("AIF_DSC_MRI_Toolbox");
-    	selectedAIFZSlice = scriptParameters.getParams().getInt("z_slice");
+    	selectedAIFLowZSlice = scriptParameters.getParams().getInt("low_z_slice");
+    	selectedAIFHighZSlice = scriptParameters.getParams().getInt("high_z_slice");
     	experimentalRAPIDAIF = scriptParameters.getParams().getBoolean("experimental_aif");
     	edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel");
     	saveOriginalData = scriptParameters.getParams().getBoolean("save_original");
@@ -661,7 +686,8 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_CBFCBVMTT", calculateCBFCBVMTT));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("calc_bounds", calculateBounds));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("AIF_DSC_MRI_Toolbox", findAIFInfoWithDSCMRIToolbox));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("z_slice", selectedAIFZSlice));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("low_z_slice", selectedAIFLowZSlice));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("high_z_slice", selectedAIFHighZSlice));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("experimental_aif", experimentalRAPIDAIF));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel", edgeKernelSize));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("save_original", saveOriginalData));
@@ -805,20 +831,37 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
     	autoAIFCalculation = autoButton.isSelected();
     	findAIFInfoWithDSCMRIToolbox = DSCMRIToolboxButton.isSelected();
     	if (findAIFInfoWithDSCMRIToolbox) {
-    	    tmpStr = zSliceText.getText();
+    	    tmpStr = lowZSliceText.getText();
     	    try {
-    	    	selectedAIFZSlice = Integer.valueOf(tmpStr).intValue();
+    	    	selectedAIFLowZSlice = Integer.valueOf(tmpStr).intValue();
     	    }
     	    catch (NumberFormatException e) {
-        	    MipavUtil.displayError("Selected AIF Z slice does not have a proper integer number");
-        	    zSliceText.requestFocus();
-        	    zSliceText.selectAll();
+        	    MipavUtil.displayError("Selected AIF low Z slice does not have a proper integer number");
+        	    lowZSliceText.requestFocus();
+        	    lowZSliceText.selectAll();
         	    return false;
         	}
-        	if (selectedAIFZSlice < 0) {
-        		MipavUtil.displayError("Selected AIF Z slice must be >= 0");
-        		zSliceText.requestFocus();
-        	    zSliceText.selectAll();
+        	if (selectedAIFLowZSlice < 0) {
+        		MipavUtil.displayError("Selected AIF low Z slice must be >= 0");
+        		lowZSliceText.requestFocus();
+        	    lowZSliceText.selectAll();
+        	    return false;
+        	}
+        	
+        	tmpStr = highZSliceText.getText();
+    	    try {
+    	    	selectedAIFHighZSlice = Integer.valueOf(tmpStr).intValue();
+    	    }
+    	    catch (NumberFormatException e) {
+        	    MipavUtil.displayError("Selected AIF high Z slice does not have a proper integer number");
+        	    highZSliceText.requestFocus();
+        	    highZSliceText.selectAll();
+        	    return false;
+        	}
+        	if (selectedAIFHighZSlice < selectedAIFLowZSlice) {
+        		MipavUtil.displayError("Selected AIF high Z slice must be >= selectedAIFLowZSlice");
+        		highZSliceText.requestFocus();
+        	    highZSliceText.selectAll();
         	    return false;
         	}	
     	} // if (findAIFInfoWithDSCMRIToolbox)
