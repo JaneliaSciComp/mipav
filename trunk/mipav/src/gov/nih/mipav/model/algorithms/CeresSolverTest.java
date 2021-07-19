@@ -22221,6 +22221,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		};
 
 		public void CovarianceImplTestComputeCovarianceSparsity() {
+			  // CovarianceImplTestComputeCovarianceSparsity() passed all tests
 			  String testName = "CovarianceImplTestComputeCovarianceSparsity()";
 			  boolean passed = true;
 			  double parameters[] = new double[10];
@@ -22333,6 +22334,229 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			if (passed) {
 				System.out.println(testName + " passed all tests");
 			}
+		}
+
+		public void CovarianceImplTestComputeCovarianceSparsityWithConstantParameterBlock() {
+			  // CovarianceImplTestComputeCovarianceSparsityWithConstantParameterBlock() passed all tests
+			  String testName = "CovarianceImplTestComputeCovarianceSparsityWithConstantParameterBlock()";
+			  boolean passed = true;
+			  double parameters[] = new double[10];
+
+			  //double* block1 = parameters;
+			  //double* block2 = block1 + 1;
+			  //double* block3 = block2 + 2;
+			  //double* block4 = block3 + 3;
+			  double block1[] = new double[1];
+			  double block2[] = new double[2];
+			  double block3[] = new double[3];
+			  double block4[] = new double[4];
+
+			  ProblemImpl problem = new ProblemImpl();
+
+			  // Add in random order
+			  double junk_jacobian[] = new double[10];
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 1, junk_jacobian), null, block1);
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 4, junk_jacobian), null, block4);
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 3, junk_jacobian), null, block3);
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 2, junk_jacobian), null, block2);
+			  problem.SetParameterBlockConstant(block3);
+			  
+
+			  // Sparsity pattern
+			  //
+			  // Note that the problem structure does not imply this sparsity
+			  // pattern since all the residual blocks are unary. But the
+			  // ComputeCovarianceSparsity function in its current incarnation
+			  // does not pay attention to this fact and only looks at the
+			  // parameter block pairs that the user provides.
+			  //
+			  //  X . . X X X X
+			  //  . X X . . . .
+			  //  . X X . . . .
+			  //  . . . X X X X
+			  //  . . . X X X X
+			  //  . . . X X X X
+			  //  . . . X X X X
+
+			  int expected_rows[] = new int[]{0, 5, 7, 9, 13, 17, 21, 25};
+			  int expected_cols[] = new int[]{0, 3, 4, 5, 6,
+			                         1, 2,
+			                         1, 2,
+			                         3, 4, 5, 6,
+			                         3, 4, 5, 6,
+			                         3, 4, 5, 6,
+			                         3, 4, 5, 6};
+
+			  
+			  Vector<Pair<double[], double[]> > covariance_blocks = new Vector<Pair<double[], double[]>>();
+			  covariance_blocks.add(new Pair<double[], double[]>(block1, block1));
+			  covariance_blocks.add(new Pair<double[], double[]>(block4, block4));
+			  covariance_blocks.add(new Pair<double[], double[]>(block2, block2));
+			  covariance_blocks.add(new Pair<double[], double[]>(block3, block3));
+			  covariance_blocks.add(new Pair<double[], double[]>(block2, block3));
+			  covariance_blocks.add(new Pair<double[], double[]>(block4, block1));  // reversed
+
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+			  CovarianceImpl covariance_impl = ce2.new CovarianceImpl(options);
+			  if (!covariance_impl.ComputeCovarianceSparsity(covariance_blocks, problem)) {
+				  System.err.println("covariance_impl.ComputeCovarianceSparsity(covariance_blocks, problem) = false");
+				  passed = false;
+			  }
+
+			  final CompressedRowSparseMatrix crsm = covariance_impl.covariance_matrix();
+			  
+			  if (crsm.num_rows() != 7) {
+				  System.err.println("crsm.num_rows() = " + crsm.num_rows() + " instead of the expected 7");
+				  passed = false;
+			  }
+			  if (crsm.num_cols() != 7) {
+				  System.err.println("crsm.num_cols() = " + crsm.num_cols() + " instead of the expected 7");
+				  passed = false;
+			  }
+			  if (crsm.num_nonzeros() != 25) {
+				  System.err.println("crsm.num_nonzeros() = " + crsm.num_nonzeros() + " instead of the expected 25");
+				  passed = false;
+			  }
+
+			  final int[] rows = crsm.rows();
+			  for (int r = 0; r < crsm.num_rows() + 1; ++r) {
+			    if (rows[r] != expected_rows[r]) {
+			    	System.err.println("r = " + r);
+			    	System.err.println("rows[r] = " + rows[r]);
+			    	System.err.println("expected_rows[r] = " + expected_rows[r]);
+			    	passed = false;
+			    }
+			        
+			  }
+
+			  final int[] cols = crsm.cols();
+			  for (int c = 0; c < crsm.num_nonzeros(); ++c) {
+			    if (cols[c] != expected_cols[c]) {
+			        System.err.println("c = " + c);
+			        System.err.println("cols[c] = " + cols[c]);
+			        System.err.println("expected_cols[c] = " + expected_cols[c]);
+			        passed = false;
+			  }
+			}
+			  
+			if (passed) {
+				System.out.println(testName + " passed all tests");
+			}
+			  
+
+		}
+		
+		public void CovarianceImplTestComputeCovarianceSparsityWithFreeParameterBlock() {
+			  // CovarianceImplTestComputeCovarianceSparsityWithFreeParameterBlock() passed all tests
+			  String testName = "CovarianceImplTestComputeCovarianceSparsityWithFreeParameterBlock()";
+			  boolean passed = true;
+			  double parameters[] = new double[10];
+
+			  //double* block1 = parameters;
+			  //double* block2 = block1 + 1;
+			  //double* block3 = block2 + 2;
+			  //double* block4 = block3 + 3;
+			  double block1[] = new double[1];
+			  double block2[] = new double[2];
+			  double block3[] = new double[3];
+			  double block4[] = new double[4];
+
+			  ProblemImpl problem = new ProblemImpl();
+
+			  // Add in random order
+			  double junk_jacobian[] = new double[10];
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 1, junk_jacobian), null, block1);
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 4, junk_jacobian), null, block4);
+			  problem.AddParameterBlock(block3, 3);
+			  problem.AddResidualBlock(
+			      new UnaryCostFunction3(1, 2, junk_jacobian), null, block2);
+			  
+			  // Sparsity pattern
+			  //
+			  // Note that the problem structure does not imply this sparsity
+			  // pattern since all the residual blocks are unary. But the
+			  // ComputeCovarianceSparsity function in its current incarnation
+			  // does not pay attention to this fact and only looks at the
+			  // parameter block pairs that the user provides.
+			  //
+			  //  X . . X X X X
+			  //  . X X . . . .
+			  //  . X X . . . .
+			  //  . . . X X X X
+			  //  . . . X X X X
+			  //  . . . X X X X
+			  //  . . . X X X X
+
+			  int expected_rows[] = {0, 5, 7, 9, 13, 17, 21, 25};
+			  int expected_cols[] = {0, 3, 4, 5, 6,
+			                         1, 2,
+			                         1, 2,
+			                         3, 4, 5, 6,
+			                         3, 4, 5, 6,
+			                         3, 4, 5, 6,
+			                         3, 4, 5, 6};
+			  
+			  Vector<Pair<double[], double[]> > covariance_blocks = new Vector<Pair<double[], double[]>>();
+			  covariance_blocks.add(new Pair<double[], double[]>(block1, block1));
+			  covariance_blocks.add(new Pair<double[], double[]>(block4, block4));
+			  covariance_blocks.add(new Pair<double[], double[]>(block2, block2));
+			  covariance_blocks.add(new Pair<double[], double[]>(block3, block3));
+			  covariance_blocks.add(new Pair<double[], double[]>(block2, block3));
+			  covariance_blocks.add(new Pair<double[], double[]>(block4, block1));  // reversed
+
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+			  CovarianceImpl covariance_impl = ce2.new CovarianceImpl(options);
+			  if (!covariance_impl.ComputeCovarianceSparsity(covariance_blocks, problem)) {
+				  System.err.println("covariance_impl.ComputeCovarianceSparsity(covariance_blocks, problem) = false");
+				  passed = false;
+			  }
+
+			  final CompressedRowSparseMatrix crsm = covariance_impl.covariance_matrix();
+			  
+			  if (crsm.num_rows() != 7) {
+				  System.err.println("crsm.num_rows() = " + crsm.num_rows() + " instead of the expected 7");
+				  passed = false;
+			  }
+			  if (crsm.num_cols() != 7) {
+				  System.err.println("crsm.num_cols() = " + crsm.num_cols() + " instead of the expected 7");
+				  passed = false;
+			  }
+			  if (crsm.num_nonzeros() != 25) {
+				  System.err.println("crsm.num_nonzeros() = " + crsm.num_nonzeros() + " instead of the expected 25");
+				  passed = false;
+			  }
+
+			  final int[] rows = crsm.rows();
+			  for (int r = 0; r < crsm.num_rows() + 1; ++r) {
+			    if (rows[r] != expected_rows[r]) {
+			    	System.err.println("r = " + r);
+			    	System.err.println("rows[r] = " + rows[r]);
+			    	System.err.println("expected_rows[r] = " + expected_rows[r]);
+			    	passed = false;
+			    }
+			        
+			  }
+
+			  final int[] cols = crsm.cols();
+			  for (int c = 0; c < crsm.num_nonzeros(); ++c) {
+			    if (cols[c] != expected_cols[c]) {
+			        System.err.println("c = " + c);
+			        System.err.println("cols[c] = " + cols[c]);
+			        System.err.println("expected_cols[c] = " + expected_cols[c]);
+			        passed = false;
+			  }
+			}
+			  
+			if (passed) {
+				System.out.println(testName + " passed all tests");
+			}
+			 
 		}
 
 
