@@ -203,7 +203,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	
 	private boolean findAVInfo = false;
     private boolean findAIFInfoWithDSCMRIToolbox = false;
-    private int selectedAIFZSlice = 12;
+    private int selectedAIFLowZSlice = 7;
+    private int selectedAIFHighZSlice = 10;
 
 	private String caseString = "EVTcase24_no_time_averaging.txt";
 	private int ax = 108;
@@ -223,7 +224,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			float sigmay, boolean calculateMaskingThreshold, int masking_threshold, double TSP_threshold, int TSP_iter,
 			double Psvd, boolean autoAIFCalculation, boolean plotAIF, boolean multiThreading, int search,
 			boolean calculateCorrelation, boolean calculateCBFCBVMTT, boolean calculateBounds, String fileNameBase,
-			boolean findAIFInfoWithDSCMRIToolbox, int selectedAIFZSlice, boolean experimentalAIF,
+			boolean findAIFInfoWithDSCMRIToolbox, int selectedAIFLowZSlice, int selectedAIFHighZSlice, boolean experimentalAIF,
 			float edgeKernelSize, boolean doN4MRIBiasFieldCorrection,
 			boolean saveOriginalData) {
 		// super(resultImage, srcImg);
@@ -246,7 +247,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		this.calculateBounds = calculateBounds;
 		this.fileNameBase = fileNameBase;
 		this.findAIFInfoWithDSCMRIToolbox = findAIFInfoWithDSCMRIToolbox;
-		this.selectedAIFZSlice = selectedAIFZSlice;
+		this.selectedAIFLowZSlice = selectedAIFLowZSlice;
+		this.selectedAIFHighZSlice = selectedAIFHighZSlice;
 		this.experimentalAIF = experimentalAIF;
 		this.edgeKernelSize = edgeKernelSize;
 		this.doN4MRIBiasFieldCorrection = doN4MRIBiasFieldCorrection;
@@ -480,7 +482,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
         int numArterialZ;
         boolean lookForZSlices = false;
         RandomAccessFile raAVFile = null;
-        int AIF_voxels[][] = null;
+        int AIF_voxels[][][] = null;
         
         
         if (findAVInfo) {
@@ -800,26 +802,31 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	
     	if (findAIFInfoWithDSCMRIToolbox) {
+    		int numberZSlices = selectedAIFHighZSlice - selectedAIFLowZSlice + 1;
+    		AIF_voxels = new int[numberZSlices][][];
     		double volumes[][][][] = new double[xDim][yDim][1][tDim];
-    		for (t = 0; t < tDim; t++) {
-				for (y = 0; y < yDim; y++) {
-					for (x = 0; x < xDim; x++) {
-					    volumes[x][y][0][t] = data[selectedAIFZSlice][y][x][t];	
+    		for (z = selectedAIFLowZSlice; z <= selectedAIFHighZSlice; z++) {
+	    		for (t = 0; t < tDim; t++) {
+					for (y = 0; y < yDim; y++) {
+						for (x = 0; x < xDim; x++) {
+						    volumes[x][y][0][t] = data[z][y][x][t];	
+						}
 					}
-				}
-    		}
-    		
-    		DSC_MRI_toolbox dmt = new DSC_MRI_toolbox(volumes, 1.0E-3*TE, 1.0E-3*TR);
-    		dmt.runAlgorithm();
-    		AIF_voxels = dmt.getAIF_voxels();
-    		if (AIF_voxels == null) {
-    			setCompleted(false);
-    			return;
-    		}
-    		System.out.println("Number of AIF voxels = " + AIF_voxels.length);
-    		for (i = 0; i < AIF_voxels.length; i++) {
-    			System.out.println("Voxel " + (i+1) + " x = " + AIF_voxels[i][0] + " y = " + AIF_voxels[i][1] + " z = " + selectedAIFZSlice);
-    		}
+	    		}
+	    		
+	    		DSC_MRI_toolbox dmt = new DSC_MRI_toolbox(volumes, 1.0E-3*TE, 1.0E-3*TR);
+	    		dmt.runAlgorithm();
+	    		AIF_voxels[z-selectedAIFLowZSlice] = dmt.getAIF_voxels();
+	    		if (AIF_voxels[z-selectedAIFLowZSlice] == null) {
+	    			setCompleted(false);
+	    			return;
+	    		}
+	    		System.out.println("Number of AIF voxels for z = " + z + " is "+ AIF_voxels[z-selectedAIFLowZSlice].length);
+	    		for (i = 0; i < AIF_voxels[z-selectedAIFLowZSlice].length; i++) {
+	    			System.out.println("Voxel " + (i+1) + " x = " + AIF_voxels[z-selectedAIFLowZSlice][i][0] 
+	    					+ " y = " + AIF_voxels[z-selectedAIFLowZSlice][i][1] + " z = " + z);
+	    		}
+    		} // for (z = selectedAIFLowZSlice; z <= selectedAIFHighZSlice; z++)
     	} // if (findAIFInfoWithDSCMRIToolbox)
     	
     	if (saveOriginalData) {
@@ -2708,31 +2715,37 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		        sumt = 0;
 		        countt = 0;
 		        for (i = 0; i < AIF_voxels.length; i++) {
-				    x = AIF_voxels[i][0];
-				    y = AIF_voxels[i][1];
-			        if (peaks[selectedAIFZSlice][y][x] != 0) {
-						if (t == 0) {
-							sumcount++;
-							xsum += x;
-							ysum += y;
-							xsumsquared += (x*x);
-							ysumsquared += (y*y);
+		        	z = selectedAIFLowZSlice + i;
+		        	for (j = 0; j < AIF_voxels[i].length; j++) {
+					    x = AIF_voxels[i][j][0];
+					    y = AIF_voxels[i][j][1];
+				        if (peaks[z][y][x] != 0) {
+							if (t == 0) {
+								sumcount++;
+								xsum += x;
+								ysum += y;
+								zsum += z;
+								xsumsquared += (x*x);
+								ysumsquared += (y*y);
+								zsumsquared += (z*z);
+							}
+						    sumt += data[z][y][x][t];
+						    countt++;
 						}
-					    sumt += data[selectedAIFZSlice][y][x][t];
-					    countt++;
-					}
+		        	}
 		        }
 		        if (t == 0) {
 		        	xmean = xsum/sumcount;
 		        	ymean = ysum/sumcount;
+		        	zmean = zsum/sumcount;
 		        	if (sumcount > 1) {
 		        	    xstd = Math.sqrt((xsumsquared - xsum*xsum/sumcount)/(sumcount - 1.0));
 		        	    ystd = Math.sqrt((ysumsquared - ysum*ysum/sumcount)/(sumcount - 1.0));
-		        	    zstd = 0.0;
+		        	    zstd = Math.sqrt((zsumsquared - zsum*zsum/sumcount)/(sumcount - 1.0));
 		        	    System.out.println("AIF selection point standard deviations in voxels:");
 		        	    System.out.println("x standard deviation = " + xstd);
 		        	    System.out.println("y standard deviation = " + ystd);
-		        	    System.out.println("z standard deviation = " + 0);
+		        	    System.out.println("z standard deviation = " + zstd);
 		        	} // if (sumcount > 1)
 		        } // if (t == 0)
 		        if (countt == 0) {
