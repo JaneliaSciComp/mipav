@@ -22743,6 +22743,170 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    column_bounds_.put(z, new Pair(5, 6));
 		  }
 
+		// Computes covariance in ambient space.
+		public void ComputeAndCompareCovarianceBlocks(CovarianceOptions options,
+		                                         double[] expected_covariance, boolean passed[]) {
+		    ComputeAndCompareCovarianceBlocksInTangentOrAmbientSpace(
+		        options,
+		        true,  // ambient
+		        expected_covariance, passed);
+		  }
+
+		  // Computes covariance in tangent space.
+		  public void ComputeAndCompareCovarianceBlocksInTangentSpace(
+		                                         CovarianceOptions options,
+		                                         double[] expected_covariance,
+		                                         boolean passed[]) {
+		    ComputeAndCompareCovarianceBlocksInTangentOrAmbientSpace(
+		        options,
+		        false,  // tangent
+		        expected_covariance, passed);
+		  }
+
+		  public void ComputeAndCompareCovarianceBlocksInTangentOrAmbientSpace(
+		      CovarianceOptions options,
+		      boolean lift_covariance_to_ambient_space,
+		      double[] expected_covariance, boolean passed[]) {
+		    // Generate all possible combination of block pairs and check if the
+		    // covariance computation is correct.
+		    for (int i = 0; i <= 64; ++i) {
+		      Vector<Pair<double[], double[]> > covariance_blocks = new Vector<Pair<double[], double[]>>();
+		      if ((i & 1) != 0) {
+		        covariance_blocks.add(all_covariance_blocks_.get(0));
+		      }
+
+		      if ((i & 2) != 0) {
+		        covariance_blocks.add(all_covariance_blocks_.get(1));
+		      }
+
+		      if ((i & 4) != 0) {
+		        covariance_blocks.add(all_covariance_blocks_.get(2));
+		      }
+
+		      if ((i & 8) != 0) {
+		        covariance_blocks.add(all_covariance_blocks_.get(3));
+		      }
+
+		      if ((i & 16) != 0) {
+		        covariance_blocks.add(all_covariance_blocks_.get(4));
+		      }
+
+		      if ((i & 32) != 0) {
+		        covariance_blocks.add(all_covariance_blocks_.get(5));
+		      }
+
+		      CovarianceImpl covariance = ce2.new CovarianceImpl(options);
+		      if (!covariance.pairCompute(covariance_blocks, problem_)) {
+		          System.err.println("covariance.pairCompute(covariance_blocks, problem_) = false");
+		          passed[0] = false;
+		      }
+
+		      for (int ii = 0; ii < covariance_blocks.size(); ++ii) {
+		        double[] block1 = covariance_blocks.get(ii).first;
+		        double[] block2 = covariance_blocks.get(ii).second;
+		        // block1, block2
+		        GetCovarianceBlockAndCompare(block1,
+		                                     block2,
+		                                     lift_covariance_to_ambient_space,
+		                                     covariance,
+		                                     expected_covariance, passed);
+		        // block2, block1
+		        GetCovarianceBlockAndCompare(block2,
+		                                     block1,
+		                                     lift_covariance_to_ambient_space,
+		                                     covariance,
+		                                     expected_covariance, passed);
+		      }
+		    }
+		  }
+
+		  void GetCovarianceBlockAndCompare(double[] block1,
+		                                    double[] block2,
+		                                    boolean lift_covariance_to_ambient_space,
+		                                    CovarianceImpl covariance,
+		                                    double[] expected_covariance, boolean passed[]) {
+			 int i, r, c;
+			 HashMap<double[], Pair<Integer, Integer> >  column_bounds = lift_covariance_to_ambient_space ?
+		        column_bounds_ : local_column_bounds_;
+			Pair<Integer, Integer> rowPair = column_bounds.get(block1);
+			if (rowPair == null) {
+				System.err.println("Pair rowPair == null");
+				passed[0] = false;
+				return;
+			}
+			final int row_begin = rowPair.first;
+			final int row_end = rowPair.second;
+			Pair<Integer, Integer> colPair = column_bounds.get(block2);
+			if (colPair == null) {
+				System.err.println("Pair colPair == null");
+				passed[0] = false;
+				return;
+			}
+		    final int col_begin = colPair.first;
+		    final int col_end = colPair.second;
+
+		    //Matrix actual(row_end - row_begin, col_end - col_begin);
+		    double actual[] = new double[(row_end - row_begin) * (col_end - col_begin)];
+		    if (lift_covariance_to_ambient_space) {
+		      if (!covariance.GetCovarianceBlock(block1, block2, actual)) {
+		    	  System.err.println("covariance.GetCovarianceBlock(block1, block2, actual) = false");
+		    	  passed[0] = false;
+		      }
+		    } else {
+		      if (!covariance.GetCovarianceBlockInTangentSpace(block1, block2, actual)) {
+		    	  System.err.println("covariance.GetCovarianceBlockInTangentSpace(block1, block2, actual) = false");
+		    	  passed[0] = false;
+		      }
+		    }
+		    double actual_array[][] = new double[row_end - row_begin][col_end - col_begin];
+		    for (i = 0, r = 0; r < row_end - row_begin; r++) {
+		    	for (c = 0; c < col_end - col_begin; c++, i++) {
+		    		actual_array[r][c] = actual[i];
+		    	}
+		    }
+
+		    int dof = 0;  // degrees of freedom = sum of LocalSize()s
+		    Collection<Pair<Integer, Integer>> PairValues = column_bounds.values();
+			Iterator<Pair<Integer, Integer>> PairValues_it = PairValues.iterator();
+			while (PairValues_it.hasNext()) {
+				Pair<Integer, Integer> pairValue = PairValues_it.next();
+				dof = Math.max(dof, pairValue.second);
+			}
+		    double expected[][] = new double[dof][dof];
+		    for (i = 0, r = 0; r < dof; r++) {
+		    	for (c = 0; c < dof; c++, i++) {
+		    		expected[r][c] = expected_covariance[i];
+		    	}
+		    }
+		    double diff[][] = new double[row_end - row_begin][col_end - col_begin];
+		    double diffSquared = 0.0;
+		    for ( r = 0; r < row_end - row_begin; r++) {
+		    	for (c = 0; c < col_end - col_begin; c++) {
+		    		diff[r][c] = expected[row_begin + r][col_begin + c] - actual_array[r][c];
+		    		diffSquared += (diff[r][c] * diff[r][c]);
+		    	}
+		    }
+		    double diff_norm = Math.sqrt(diffSquared);
+		   
+		    diff_norm /= (row_end - row_begin) * (col_end - col_begin);
+
+		    final double kTolerance = 1e-5;
+		    if (diff_norm > kTolerance) {
+		    	passed[0] = false;
+		    	System.err.println("row_begin = " + row_begin + " row_end = " + row_end);
+		    	System.err.println("col_begin = " + col_begin + " col_end = " + col_end);
+		    	for (r = 0; r < dof; r++) {
+		    		for (c = 0; c < dof; c++) {
+		    			System.err.println("expected["+r+"]["+c+"] = " + expected[r][c]);
+		    		}
+		    	}
+		        for (r = 0; r < row_end - row_begin; r++) {
+		        	for (c = 0; c < col_end - col_begin; c++) {
+		        		System.err.println("actual_array["+r+"]["+c+"] = " + actual_array[r][c]);
+		        	}
+		        }
+		    }
+		  }
 
 
 }
