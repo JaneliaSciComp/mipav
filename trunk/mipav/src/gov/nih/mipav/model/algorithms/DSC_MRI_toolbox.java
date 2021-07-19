@@ -61,8 +61,8 @@ CVGIP: Graphical Models and Image Processing, Vol. 56, No. 4, July, pp. 281-288,
 The method is based on dicotomic hierarchical clustering method, it only need to select
  the slice where it will look for the best AIF. Please cite [1] if you use the AIF extraction tool:
 
-[1] **Peruzzo Denis**,  Bertoldo Alessandra, Zanderigo Francesca and Cobelli Claudio, “[Automatic selection
- of arterial input function on dynamic contrast-enhanced MR images][paper1]”, *Computer methods and programs
+[1] **Peruzzo Denis**,  Bertoldo Alessandra, Zanderigo Francesca and Cobelli Claudio, "[Automatic selection
+ of arterial input function on dynamic contrast-enhanced MR images][paper1]", *Computer methods and programs
   in biomedicine, 104:e148-e157 (2011)*.
 */
 
