@@ -3013,6 +3013,182 @@ public class CeresSolver2 extends CeresSolver {
 		  
 		  return true;
 		}
+		
+		public boolean GetCovarianceBlock(double[] parameter_block1,
+                double[] parameter_block2,
+                double[] covariance_block) {
+                return GetCovarianceBlockInTangentOrAmbientSpace(parameter_block1,
+                                      parameter_block2,
+                                      true,  // ambient
+                                      covariance_block);
+        }
+		
+		public boolean GetCovarianceBlockInTangentSpace(
+			    double[] parameter_block1,
+			    double[] parameter_block2,
+			    double[] covariance_block) {
+			     return GetCovarianceBlockInTangentOrAmbientSpace(parameter_block1,
+			                                                          parameter_block2,
+			                                                          false,  // tangent
+			                                                          covariance_block);
+		}
+		
+		public boolean GetCovarianceBlockInTangentOrAmbientSpace(
+			    double[] original_parameter_block1,
+			    double[] original_parameter_block2,
+			    boolean lift_covariance_to_ambient_space,
+			    double[] covariance_block) {
+			    if (!is_computed_) {
+			      System.err.println("Covariance::GetCovarianceBlock called before Covariance::Compute");
+			      return false;
+			    }
+			    if (!is_valid_) {
+			      System.err.println("Covariance::GetCovarianceBlock called when Covariance::Compute returned false.");
+			      return false;
+		        }
+
+			  // If either of the two parameter blocks is constant, then the
+			  // covariance block is also zero.
+			  /*if (constant_parameter_blocks_.count(original_parameter_block1) > 0 ||
+			      constant_parameter_blocks_.count(original_parameter_block2) > 0) {
+			    const ProblemImpl::ParameterMap& parameter_map = problem_->parameter_map();
+			    ParameterBlock* block1 =
+			        FindOrDie(parameter_map,
+			                  const_cast<double*>(original_parameter_block1));
+
+			    ParameterBlock* block2 =
+			        FindOrDie(parameter_map,
+			                  const_cast<double*>(original_parameter_block2));
+
+			    const int block1_size = block1->Size();
+			    const int block2_size = block2->Size();
+			    const int block1_local_size = block1->LocalSize();
+			    const int block2_local_size = block2->LocalSize();
+			    if (!lift_covariance_to_ambient_space) {
+			      MatrixRef(covariance_block, block1_local_size, block2_local_size)
+			          .setZero();
+			    } else {
+			      MatrixRef(covariance_block, block1_size, block2_size).setZero();
+			    }
+			    return true;
+			  }
+
+			  const double* parameter_block1 = original_parameter_block1;
+			  const double* parameter_block2 = original_parameter_block2;
+			  const bool transpose = parameter_block1 > parameter_block2;
+			  if (transpose) {
+			    swap(parameter_block1, parameter_block2);
+			  }
+
+			  // Find where in the covariance matrix the block is located.
+			  const int row_begin =
+			      FindOrDie(parameter_block_to_row_index_, parameter_block1);
+			  const int col_begin =
+			      FindOrDie(parameter_block_to_row_index_, parameter_block2);
+			  const int* rows = covariance_matrix_->rows();
+			  const int* cols = covariance_matrix_->cols();
+			  const int row_size = rows[row_begin + 1] - rows[row_begin];
+			  const int* cols_begin = cols + rows[row_begin];
+
+			  // The only part that requires work is walking the compressed column
+			  // vector to determine where the set of columns correspnding to the
+			  // covariance block begin.
+			  int offset = 0;
+			  while (cols_begin[offset] != col_begin && offset < row_size) {
+			    ++offset;
+			  }
+
+			  if (offset == row_size) {
+			    LOG(ERROR) << "Unable to find covariance block for "
+			               << original_parameter_block1 << " "
+			               << original_parameter_block2;
+			    return false;
+			  }
+
+			  const ProblemImpl::ParameterMap& parameter_map = problem_->parameter_map();
+			  ParameterBlock* block1 =
+			      FindOrDie(parameter_map, const_cast<double*>(parameter_block1));
+			  ParameterBlock* block2 =
+			      FindOrDie(parameter_map, const_cast<double*>(parameter_block2));
+			  const LocalParameterization* local_param1 = block1->local_parameterization();
+			  const LocalParameterization* local_param2 = block2->local_parameterization();
+			  const int block1_size = block1->Size();
+			  const int block1_local_size = block1->LocalSize();
+			  const int block2_size = block2->Size();
+			  const int block2_local_size = block2->LocalSize();
+
+			  ConstMatrixRef cov(covariance_matrix_->values() + rows[row_begin],
+			                     block1_size,
+			                     row_size);
+
+			  // Fast path when there are no local parameterizations or if the
+			  // user does not want it lifted to the ambient space.
+			  if ((local_param1 == NULL && local_param2 == NULL) ||
+			      !lift_covariance_to_ambient_space) {
+			    if (transpose) {
+			      MatrixRef(covariance_block, block2_local_size, block1_local_size) =
+			          cov.block(0, offset, block1_local_size,
+			                    block2_local_size).transpose();
+			    } else {
+			      MatrixRef(covariance_block, block1_local_size, block2_local_size) =
+			          cov.block(0, offset, block1_local_size, block2_local_size);
+			    }
+			    return true;
+			  }
+
+			  // If local parameterizations are used then the covariance that has
+			  // been computed is in the tangent space and it needs to be lifted
+			  // back to the ambient space.
+			  //
+			  // This is given by the formula
+			  //
+			  //  C'_12 = J_1 C_12 J_2'
+			  //
+			  // Where C_12 is the local tangent space covariance for parameter
+			  // blocks 1 and 2. J_1 and J_2 are respectively the local to global
+			  // jacobians for parameter blocks 1 and 2.
+			  //
+			  // See Result 5.11 on page 142 of Hartley & Zisserman (2nd Edition)
+			  // for a proof.
+			  //
+			  // TODO(sameeragarwal): Add caching of local parameterization, so
+			  // that they are computed just once per parameter block.
+			  Matrix block1_jacobian(block1_size, block1_local_size);
+			  if (local_param1 == NULL) {
+			    block1_jacobian.setIdentity();
+			  } else {
+			    local_param1->ComputeJacobian(parameter_block1, block1_jacobian.data());
+			  }
+
+			  Matrix block2_jacobian(block2_size, block2_local_size);
+			  // Fast path if the user is requesting a diagonal block.
+			  if (parameter_block1 == parameter_block2) {
+			    block2_jacobian = block1_jacobian;
+			  } else {
+			    if (local_param2 == NULL) {
+			      block2_jacobian.setIdentity();
+			    } else {
+			      local_param2->ComputeJacobian(parameter_block2, block2_jacobian.data());
+			    }
+			  }
+
+			  if (transpose) {
+			    MatrixRef(covariance_block, block2_size, block1_size) =
+			        block2_jacobian *
+			        cov.block(0, offset, block1_local_size, block2_local_size).transpose() *
+			        block1_jacobian.transpose();
+			  } else {
+			    MatrixRef(covariance_block, block1_size, block2_size) =
+			        block1_jacobian *
+			        cov.block(0, offset, block1_local_size, block2_local_size) *
+			        block2_jacobian.transpose();
+			  }*/
+
+			  return true;
+			}
+
+
+
 
 
 
