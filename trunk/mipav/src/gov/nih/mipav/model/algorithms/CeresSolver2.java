@@ -2845,10 +2845,8 @@ public class CeresSolver2 extends CeresSolver {
 		    }*/
 		    if (!block.IsConstant() && (parameter_blocks_in_use.contains(block))) {
 		    //if (!block.IsConstant() && contains_block) {
-		      System.err.println("active");
 		      active_parameter_blocks.add(parameter_block);
 		    } else {
-		      System.err.println("constant");
 		      constant_parameter_blocks_.add(parameter_block);
 		    }
 		  }
@@ -2935,11 +2933,12 @@ public class CeresSolver2 extends CeresSolver {
 			}
 			indexArrayArrayComparator icc = new indexArrayArrayComparator();
 			Collections.sort(iaa, icc);
+			covariance_blocks.clear();
 			for (i = 0; i < iaa.size(); i++) {
 				covariance_blocks.add(new Pair<double[], double[]>(iaa.get(i).getArray1(), iaa.get(i).getArray2()));
 			}
 
-		  // Fill the sparsity pattern of the covariance matrix.
+		  // Fill the sparsity pattern of the covariance matrix.\
 		  covariance_matrix_ = new CompressedRowSparseMatrix(num_rows, num_rows, num_nonzeros);
 
 		  int[] rows = covariance_matrix_.mutable_rows();
@@ -2962,14 +2961,18 @@ public class CeresSolver2 extends CeresSolver {
 			Iterator<Integer> intValues_it = intValues.iterator();
 			Set<double[]> darraySet = parameter_block_to_row_index_.keySet();
 			Iterator<double[]> darray_iterator = darraySet.iterator();
+			ArrayList<indexIntegerdoubleArrayItem> iad = new ArrayList<indexIntegerdoubleArrayItem>();
 			while (darray_iterator.hasNext()) {
 				final double[] row_block = darray_iterator.next();
-				final int row_block_size = problem.ParameterBlockLocalSize(row_block);
 				int row_begin = intValues_it.next();
-				System.err.println ("row_block_size = " + row_block_size);
-				System.err.println("row_begin = " + row_begin);
-				
-
+				iad.add(new indexIntegerdoubleArrayItem(i,row_begin, row_block));
+			} 
+			indexIntegerdoubleArrayComparator icd = new indexIntegerdoubleArrayComparator();
+			Collections.sort(iad, icd);
+			for (int m = 0; m < iad.size(); m++) {
+				double[] row_block = iad.get(m).getArray();
+				final int row_block_size = problem.ParameterBlockLocalSize(row_block);
+				int row_begin = iad.get(m).getRowBegin();
 		    // Iterate over the covariance blocks contained in this row block
 		    // and count the number of columns in this row block.
 		    int num_col_blocks = 0;
@@ -3007,12 +3010,51 @@ public class CeresSolver2 extends CeresSolver {
 		  }
 
 		  rows[num_rows] = cursor;
+		  
 		  return true;
 		}
 
 
 
     }
+	  
+	  class indexIntegerdoubleArrayItem {
+		  private int index;
+		  private int row_begin;
+		  private double[] array;
+		  
+		  public indexIntegerdoubleArrayItem(int index, int row_begin, double array[]) {
+			  this.index = index;
+			  this.row_begin = row_begin;
+			  this.array = array;
+		  }
+		  
+		  public int getIndex() {
+			  return index;
+		  }
+		  
+		  public int getRowBegin() {
+			  return row_begin;
+		  }
+		  
+		  public double[] getArray() {
+			  return array;
+		  }
+	  }
+	  
+	  class indexIntegerdoubleArrayComparator implements Comparator<indexIntegerdoubleArrayItem> {
+		  public int compare(indexIntegerdoubleArrayItem o1, indexIntegerdoubleArrayItem o2) {
+			  int firstRowBegin = o1.getRowBegin();
+			  int secondRowBegin = o2.getRowBegin();
+			  if (firstRowBegin < secondRowBegin) {
+				  return -1;
+			  }
+			  if (firstRowBegin > secondRowBegin) {
+				  return 1;
+			  }
+			  return 0;
+		  }
+	  }
 	  
 	  private class indexArrayItem {
 		  private int index;
@@ -3064,105 +3106,35 @@ public class CeresSolver2 extends CeresSolver {
 			  double firstArray2[] = o1.getArray2();
 			  double secondArray1[] = o2.getArray1();
 			  double secondArray2[] = o2.getArray2();
-			  boolean equalFirstArrays = true;
-			  if (firstArray1.length != firstArray2.length) {
-				  equalFirstArrays = false;
-			  }
-			  if (equalFirstArrays) {
-			      for (i = 0; i < firstArray1.length && equalFirstArrays; i++) {
-			    	  if (firstArray1[i] != firstArray2[i]) {
-			    		  equalFirstArrays = false;
-			    	  }
-			      }
-			  }
-			  boolean equalSecondArrays = true;
-			  if (secondArray1.length != secondArray2.length) {
-				  equalSecondArrays = false;
-			  }
-			  if (equalSecondArrays) {
-			      for (i = 0; i < secondArray1.length && equalSecondArrays; i++) {
-			    	  if (secondArray1[i] != secondArray2[i]) {
-			    		  equalSecondArrays = false;
-			    	  }
-			      }
-			  }
-			  if (equalFirstArrays && (!equalSecondArrays)) {
+			  if (firstArray1.length < secondArray1.length) {
 				  return -1;
 			  }
-			  if ((!equalFirstArrays) && equalSecondArrays) {
+			  if (firstArray1.length > secondArray1.length) {
 				  return 1;
 			  }
-			  if (equalFirstArrays && equalSecondArrays) {
-				  if (firstArray1.length < secondArray1.length) {
+			  if (firstArray2.length < secondArray2.length) {
+				  return -1;
+			  }
+			  if (firstArray2.length > secondArray2.length) {
+				  return 1;
+			  }
+			  for (i = 0; i < firstArray1.length; i++) {
+				  if (firstArray1[i] < secondArray1[i]) {
 					  return -1;
 				  }
-				  if (firstArray1.length > secondArray1.length) {
+				  if (firstArray1[i] > secondArray1[i]) {
 					  return 1;
 				  }
-				  for (i = 0; i < firstArray1.length; i++) {
-					  if (firstArray1[i] < secondArray1[i]) {
-						  return -1;
-					  }
-					  if (firstArray1[i] > secondArray1[i]) {
-						  return 1;
-					  }
+			  }
+			  for (i = 0; i < firstArray2.length; i++) {
+				  if (firstArray2[i] < secondArray2[i]) {
+					  return -1;
 				  }
-				  return 0;
-			  } // if (equalFirstArrays && equalSecondArrays)
-			  int firstMinLength = Math.min(firstArray1.length,firstArray2.length);
-			  int firstMaxLength = Math.max(firstArray1.length,firstArray2.length);
-			  int secondMinLength = Math.min(secondArray1.length,secondArray2.length);
-			  int secondMaxLength = Math.max(secondArray1.length,secondArray2.length);
-			  if (firstMinLength < secondMinLength) {
-				  return -1;
-			  }
-			  if (firstMinLength > secondMinLength) {
-				  return 1;
-			  }
-			  if (firstMaxLength < secondMaxLength) {
-				  return -1;
-			  }
-			  if (firstMaxLength > secondMaxLength) {
-				  return 1;
-			  }
-			  if (firstArray1.length == secondArray1.length) {
-				  for (i = 0; i < firstArray1.length; i++) {
-					  if (firstArray1[i] < secondArray1[i]) {
-						  return -1;
-					  }
-					  if (firstArray1[i] > secondArray1[i]) {
-						  return 1;
-					  }
+				  if (firstArray2[i] > secondArray2[i]) {
+					  return 1;
 				  }
-				  for (i = 0; i < firstArray2.length; i++) {
-					  if (firstArray2[i] < secondArray2[i]) {
-						  return -1;
-					  }
-					  if (firstArray2[i] > secondArray2[i]) {
-						  return 1;
-					  }
-				  }
-				  return 0;
 			  }
-			  else {
-				  for (i = 0; i < firstArray1.length; i++) {
-					  if (firstArray1[i] < secondArray2[i]) {
-						  return -1;
-					  }
-					  if (firstArray1[i] > secondArray2[i]) {
-						  return 1;
-					  }
-				  }
-				  for (i = 0; i < firstArray2.length; i++) {
-					  if (firstArray2[i] < secondArray1[i]) {
-						  return -1;
-					  }
-					  if (firstArray2[i] > secondArray1[i]) {
-						  return 1;
-					  }
-				  }
-				  return 0;  
-			  }
+			  return 0;
 		  }
 	  }
 	  
