@@ -22191,9 +22191,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 	      if (jacobians[0] != null) {
 	    	for (i = 0; i < jacobian_.size(); i++) {
-	    		int parameter_num = i/residuals.length;
-	    		int residual_num = i % residuals.length;
-	    		jacobians[parameter_num][residual_num] = jacobian_.get(i);
+	    		jacobians[0][i] = jacobian_.get(i);
 	    	}
 	      }
 
@@ -22211,14 +22209,128 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 	      if (jacobians[0] != null) {
 	    	for (i = 0; i < jacobian_.size(); i++) {
-	    		int parameter_num = i/residuals.length;
-	    		int residual_num = i % residuals.length;
-	    		jacobians[parameter_num][jacobians_offset[parameter_num] + residual_num] = jacobian_.get(i);
+	    		jacobians[0][jacobians_offset[0] + i] = jacobian_.get(i);
 	    	}
 	      }
  		    return true;
  		  }
 		};
+		
+		class BinaryCostFunction3 extends CostFunction {
+			 private Vector<Double> jacobian1_;
+		     private Vector<Double> jacobian2_;
+		     int i;
+		     
+			 public BinaryCostFunction3(int num_residuals,
+			                     int parameter_block1_size,
+			                     int parameter_block2_size,
+			                     double[] jacobian1,
+			                     double[] jacobian2) {
+				  super();
+				  jacobian1_ = new Vector<Double>();
+				  jacobian2_ = new Vector<Double>();
+				  for (i = 0; i < num_residuals * parameter_block1_size; i++) {
+						jacobian1_.add(jacobian1[i]);
+				  }
+				  for (i = 0; i < num_residuals * parameter_block2_size; i++) {
+						jacobian2_.add(jacobian2[i]);
+				  }
+			      set_num_residuals(num_residuals);
+			      mutable_parameter_block_sizes().add(parameter_block1_size);
+			      mutable_parameter_block_sizes().add(parameter_block2_size);
+			  }
+
+			 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			    for (int i = 0; i < num_residuals(); ++i) {
+			      residuals[i] = 2;
+			    }
+
+			    if (jacobians == null) {
+			      return true;
+			    }
+			    
+			    if (jacobians[0] != null) {
+			    	for (i = 0; i < jacobian1_.size(); i++) {
+			    		jacobians[0][i] = jacobian1_.get(i);
+			    	}
+			    }
+			    
+			    if (jacobians[1] != null) {
+			    	for (i = 0; i < jacobian2_.size(); i++) {
+			    		jacobians[1][i] = jacobian2_.get(i);
+			    	}
+			    }
+
+			    return true;
+			  }
+			 
+			 public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int[] jacobians_offset) {
+				    for (int i = 0; i < num_residuals(); ++i) {
+				      residuals[i] = 2;
+				    }
+
+				    if (jacobians == null) {
+				      return true;
+				    }
+				    
+				    if (jacobians[0] != null) {
+				    	for (i = 0; i < jacobian1_.size(); i++) {
+				    		jacobians[0][jacobians_offset[0]+i] = jacobian1_.get(i);
+				    	}
+				    }
+				    
+				    if (jacobians[1] != null) {
+				    	for (i = 0; i < jacobian2_.size(); i++) {
+				    		jacobians[1][jacobians_offset[1]+i] = jacobian2_.get(i);
+				    	}
+				    }
+
+				    return true;
+				  }
+			
+			};
+			
+			// x_plus_delta = delta * x;
+			class PolynomialParameterization extends LocalParameterization {
+			 
+				public PolynomialParameterization() 
+				{super();
+				}
+
+			    public boolean Plus(double[] x,
+			                    double[] delta,
+			                    double[] x_plus_delta) {
+			    x_plus_delta[0] = delta[0] * x[0];
+			    x_plus_delta[1] = delta[0] * x[1];
+			    return true;
+			  }
+			    
+			    public boolean Plus(Vector<Double> x, int x_index,Vector<Double> delta, int delta_index,
+						  Vector<Double> x_plus_delta, int x_plus_delta_index) {
+					int i;
+				      for (i = 0; i < 2; i++) {
+				    	  x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i) + delta.get(delta_index + i));
+				      }
+				      return true;
+				    }
+
+			  public boolean ComputeJacobian(double[] x, double[] jacobian) {
+			    jacobian[0] = x[0];
+			    jacobian[1] = x[1];
+			    return true;
+			  }
+			  
+			  public boolean ComputeJacobian(double[] x, int x_start, double[][] jacobian) {
+				    jacobian[0][0] = x[0];
+				    jacobian[1][0] = x[1];
+				    return true;
+			  }
+
+			  public int GlobalSize() { return 2; }
+			  public int LocalSize() { return 1; }
+			};
+
+
 
 		public void CovarianceImplTestComputeCovarianceSparsity() {
 			  // CovarianceImplTestComputeCovarianceSparsity() passed all tests
@@ -22558,6 +22670,79 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			}
 			 
 		}
+		
+		  double parameters_[];
+		  ProblemImpl problem_;
+		  Vector<Pair<double[], double[]> > all_covariance_blocks_;
+		  HashMap<double[], Pair<Integer, Integer> > column_bounds_;
+		  HashMap<double[], Pair<Integer, Integer> > local_column_bounds_;
+
+		
+		public void CovarianceSetUp() {
+			parameters_ = new double[6];
+		    //double* x = parameters_;
+		    //double* y = x + 2;
+		    //double* z = y + 3;
+			double x[] = new double[2];
+			double y[] = new double[3];
+			double z[] = new double[1];
+
+		    x[0] = 1;
+		    x[1] = 1;
+		    y[0] = 2;
+		    y[1] = 2;
+		    y[2] = 2;
+		    z[0] = 3;
+
+		    {
+		      double jacobian[] = new double[]{ 1.0, 0.0, 0.0, 1.0};
+		      problem_.AddResidualBlock(new UnaryCostFunction3(2, 2, jacobian), null, x);
+		    }
+
+		    {
+		      double jacobian[] = new double[]{ 2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 2.0 };
+		      problem_.AddResidualBlock(new UnaryCostFunction3(3, 3, jacobian), null, y);
+		    }
+
+		    {
+		      double jacobian[] = new double[] {5.0};
+		      problem_.AddResidualBlock(new UnaryCostFunction3(1, 1, jacobian),
+		                                null,
+		                                z);
+		    }
+
+		    {
+		      double jacobian1[] = new double[]{ 1.0, 2.0, 3.0 };
+		      double jacobian2[] = new double[]{ -5.0, -6.0 };
+		      problem_.AddResidualBlock(
+		          new BinaryCostFunction3(1, 3, 2, jacobian1, jacobian2),
+		          null,
+		          y,
+		          x);
+		    }
+
+		    {
+		      double jacobian1[] = new double[]{2.0 };
+		      double jacobian2[] = new double[]{ 3.0, -2.0 };
+		      problem_.AddResidualBlock(
+		          new BinaryCostFunction3(1, 1, 2, jacobian1, jacobian2),
+		          null,
+		          z,
+		          x);
+		    }
+
+		    all_covariance_blocks_.add(new Pair(x, x));
+		    all_covariance_blocks_.add(new Pair(y, y));
+		    all_covariance_blocks_.add(new Pair(z, z));
+		    all_covariance_blocks_.add(new Pair(x, y));
+		    all_covariance_blocks_.add(new Pair(x, z));
+		    all_covariance_blocks_.add(new Pair(y, z));
+
+		    column_bounds_.put(x, new Pair(0, 2));
+		    column_bounds_.put(y, new Pair(2, 5));
+		    column_bounds_.put(z, new Pair(5, 6));
+		  }
+
 
 
 }
