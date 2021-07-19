@@ -22326,7 +22326,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			        System.err.println("c = " + c);
 			        System.err.println("cols[c] = " + cols[c]);
 			        System.err.println("expected_cols[c] = " + expected_cols[c]);
+			        passed = false;
 			  }
+			}
+			  
+			if (passed) {
+				System.out.println(testName + " passed all tests");
 			}
 		}
 
