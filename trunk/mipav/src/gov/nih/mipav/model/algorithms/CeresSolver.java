@@ -5448,6 +5448,23 @@ public abstract class CeresSolver {
 			  }
 			  return matrix;
 			}
+		  
+		  public void ToCRSMatrix(CRSMatrix matrix) {
+			  int i;
+			  matrix.num_rows = num_rows_;
+			  matrix.num_cols = num_cols_;
+			  matrix.rows.clear();
+			  matrix.cols.clear();
+			  matrix.values.clear();
+			  for (i = 0; i < matrix.num_rows +1; i++) {
+				  matrix.rows.add(rows_[i]);
+			  }
+			  for (i = 0; i < matrix.rows.get(matrix.num_rows); i++) {
+				  matrix.cols.add(cols_[i]);
+				  matrix.values.add(values_[i]);
+			  }
+			  return;
+			}
 
 		  public void SetMaxNumNonZeros(int num_nonzeros) {
 			  int i;
@@ -21757,6 +21774,9 @@ public abstract class CeresSolver {
 		// the parameter blocks, rather than the temporary state pointer
 		// used for evaluation.
 		Vector<Double> parameters = new Vector<Double>(program.NumParameters());
+		for (i = 0; i < program.NumParameters(); i++) {
+			parameters.add(0.0);
+		}
 		program.ParameterBlocksToStateVector(parameters);
 		
 		double tmp_cost = 0;
@@ -21799,7 +21819,7 @@ public abstract class CeresSolver {
 			    cost[0] = costArray[0];
 			}
 			if (jacobian != null) {
-			    jacobian = tmp_jacobian.ToCRSMatrix();	
+			    tmp_jacobian.ToCRSMatrix(jacobian);	
 			}
 		}
 		
