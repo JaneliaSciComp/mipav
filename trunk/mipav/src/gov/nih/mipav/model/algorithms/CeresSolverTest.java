@@ -22912,6 +22912,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		  
 		  public void CovarianceTestNormalBehavior() {
+			  // CovarianceTestNormalBehavior() passed all tests
 			  // J
 			  //
 			  //   1  0  0  0  0  0
