@@ -22696,6 +22696,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 		    {
 		      double jacobian[] = new double[]{ 1.0, 0.0, 0.0, 1.0};
+		      problem_ = new ProblemImpl();
 		      problem_.AddResidualBlock(new UnaryCostFunction3(2, 2, jacobian), null, x);
 		    }
 
@@ -22731,6 +22732,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		          x);
 		    }
 
+		    all_covariance_blocks_ = new Vector<Pair<double[], double[]> >();
 		    all_covariance_blocks_.add(new Pair(x, x));
 		    all_covariance_blocks_.add(new Pair(y, y));
 		    all_covariance_blocks_.add(new Pair(z, z));
@@ -22738,6 +22740,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    all_covariance_blocks_.add(new Pair(x, z));
 		    all_covariance_blocks_.add(new Pair(y, z));
 
+		    column_bounds_ = new HashMap<double[], Pair<Integer, Integer> >();
 		    column_bounds_.put(x, new Pair(0, 2));
 		    column_bounds_.put(y, new Pair(2, 5));
 		    column_bounds_.put(z, new Pair(5, 6));
@@ -22907,6 +22910,53 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		        }
 		    }
 		  }
+		  
+		  public void CovarianceTestNormalBehavior() {
+			  // J
+			  //
+			  //   1  0  0  0  0  0
+			  //   0  1  0  0  0  0
+			  //   0  0  2  0  0  0
+			  //   0  0  0  2  0  0
+			  //   0  0  0  0  2  0
+			  //   0  0  0  0  0  5
+			  //  -5 -6  1  2  3  0
+			  //   3 -2  0  0  0  2
+
+			  // J'J
+			  //
+			  //   35  24 -5 -10 -15  6
+			  //   24  41 -6 -12 -18 -4
+			  //   -5  -6  5   2   3  0
+			  //  -10 -12  2   8   6  0
+			  //  -15 -18  3   6  13  0
+			  //    6  -4  0   0   0 29
+
+			  // inv(J'J) computed using octave.
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestNormalBehavior()";
+			  CovarianceSetUp();
+			  double expected_covariance[] = new double[]{
+			     7.0747e-02,  -8.4923e-03,   1.6821e-02,   3.3643e-02,   5.0464e-02,  -1.5809e-02,
+			    -8.4923e-03,   8.1352e-02,   2.4758e-02,   4.9517e-02,   7.4275e-02,   1.2978e-02,
+			     1.6821e-02,   2.4758e-02,   2.4904e-01,  -1.9271e-03,  -2.8906e-03,  -6.5325e-05,
+			     3.3643e-02,   4.9517e-02,  -1.9271e-03,   2.4615e-01,  -5.7813e-03,  -1.3065e-04,
+			     5.0464e-02,   7.4275e-02,  -2.8906e-03,  -5.7813e-03,   2.4133e-01,  -1.9598e-04,
+			    -1.5809e-02,   1.2978e-02,  -6.5325e-05,  -1.3065e-04,  -1.9598e-04,   3.9544e-02,
+			  };
+
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+
+			
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocks(options, expected_covariance,passed);
+
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
+
 
 
 }
