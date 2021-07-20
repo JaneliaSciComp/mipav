@@ -21633,6 +21633,9 @@ public abstract class CeresSolver {
 		if (evaluate_options.residual_blocks.size() > 0) {
 			program.setResidualBlocks(evaluate_options.residual_blocks);
 		}
+		else {
+			program.setResidualBlocks(program_.residual_blocks());
+		}
 		
 		Vector<double[]> parameter_block_ptrs =
 		evaluate_options.parameter_blocks;
