@@ -3038,6 +3038,7 @@ public class CeresSolver2 extends CeresSolver {
 			    double[] original_parameter_block2,
 			    boolean lift_covariance_to_ambient_space,
 			    double[] covariance_block) {
+			    int i, r, c;
 			    if (!is_computed_) {
 			      System.err.println("Covariance::GetCovarianceBlock called before Covariance::Compute");
 			      return false;
@@ -3049,46 +3050,82 @@ public class CeresSolver2 extends CeresSolver {
 
 			  // If either of the two parameter blocks is constant, then the
 			  // covariance block is also zero.
-			  /*if (constant_parameter_blocks_.count(original_parameter_block1) > 0 ||
-			      constant_parameter_blocks_.count(original_parameter_block2) > 0) {
-			    const ProblemImpl::ParameterMap& parameter_map = problem_->parameter_map();
-			    ParameterBlock* block1 =
-			        FindOrDie(parameter_map,
-			                  const_cast<double*>(original_parameter_block1));
+			  if (constant_parameter_blocks_.contains(original_parameter_block1) ||
+			      constant_parameter_blocks_.contains(original_parameter_block2)) {
+			    final HashMap<double[], ParameterBlock> parameter_map = problem_.parameter_map();
+			    ParameterBlock block1 = parameter_map.get(original_parameter_block1);
+			    if (block1 == null) {
+			    	System.err.println("In GetCovarianceBlockInTangentOrAmbientSpace parameter_map.get(original_parameter_block1) returned null");
+			    	return false;
+			    }
+			   
+			    ParameterBlock block2 = parameter_map.get(original_parameter_block2);
+			    if (block2 == null) {
+			    	System.err.println("In GetCovarianceBlockInTangentOrAmbientSpace parameter_map.get(original_parameter_block2) returned null");
+			    	return false;
+			    } 
 
-			    ParameterBlock* block2 =
-			        FindOrDie(parameter_map,
-			                  const_cast<double*>(original_parameter_block2));
-
-			    const int block1_size = block1->Size();
-			    const int block2_size = block2->Size();
-			    const int block1_local_size = block1->LocalSize();
-			    const int block2_local_size = block2->LocalSize();
+			    final int block1_size = block1.Size();
+			    final int block2_size = block2.Size();
+			    final int block1_local_size = block1.LocalSize();
+			    final int block2_local_size = block2.LocalSize();
 			    if (!lift_covariance_to_ambient_space) {
-			      MatrixRef(covariance_block, block1_local_size, block2_local_size)
-			          .setZero();
+			      for (i = 0; i < block1_local_size * block2_local_size; i++) {
+			    	  covariance_block[i] = 0;
+			      }
 			    } else {
-			      MatrixRef(covariance_block, block1_size, block2_size).setZero();
+			      for (i = 0; i < block1_size * block2_size; i++) {
+			    	  covariance_block[i] = 0;
+			      }
 			    }
 			    return true;
 			  }
 
-			  const double* parameter_block1 = original_parameter_block1;
-			  const double* parameter_block2 = original_parameter_block2;
-			  const bool transpose = parameter_block1 > parameter_block2;
+			  double[] parameter_block1 = original_parameter_block1;
+			  double[] parameter_block2 = original_parameter_block2;
+			  boolean transpose = false;
+			  if (parameter_block1.length > parameter_block2.length) {
+				  transpose = true;
+			  }
+			  else if (parameter_block1.length == parameter_block2.length) {
+				  for (i = 0; i < parameter_block1.length; i++) {
+					  if (parameter_block1[i] > parameter_block2[i]) {
+						  transpose = true;
+						  break;
+					  }
+					  else if (parameter_block1[i] < parameter_block2[i]) {
+						  break;
+					  }
+				  }
+			  }
 			  if (transpose) {
-			    swap(parameter_block1, parameter_block2);
+				double temp[];
+				temp = parameter_block1;
+				parameter_block1 = parameter_block2;
+				parameter_block2 = temp;
 			  }
 
 			  // Find where in the covariance matrix the block is located.
-			  const int row_begin =
-			      FindOrDie(parameter_block_to_row_index_, parameter_block1);
-			  const int col_begin =
-			      FindOrDie(parameter_block_to_row_index_, parameter_block2);
-			  const int* rows = covariance_matrix_->rows();
-			  const int* cols = covariance_matrix_->cols();
-			  const int row_size = rows[row_begin + 1] - rows[row_begin];
-			  const int* cols_begin = cols + rows[row_begin];
+			  Integer row_begin_Integer = parameter_block_to_row_index_.get(parameter_block1);
+			  if (row_begin_Integer == null) {
+				  System.err.println("In GetCovarianceBlockInTangentOrAmbientSpace parameter_block_to_row_index_.get(parameter_block1) returned null");
+				  return false;
+			  }
+			  final int row_begin = row_begin_Integer.intValue();
+			  Integer col_begin_Integer = parameter_block_to_row_index_.get(parameter_block2);
+			  if (col_begin_Integer == null) {
+				  System.err.println("In GetCovarianceBlockInTangentOrAmbientSpace parameter_block_to_row_index_.get(parameter_block2) returned null");
+				  return false;
+			  }
+			  final int col_begin = col_begin_Integer.intValue();
+			  final int[] rows = covariance_matrix_.rows();
+			  final int[] cols = covariance_matrix_.cols();
+			  final int row_size = rows[row_begin + 1] - rows[row_begin];
+			  int cols_begin_length = cols.length - rows[row_begin];
+			  int cols_begin[] = new int[cols_begin_length];
+			  for (i = 0; i < cols_begin_length; i++) {
+				  cols_begin[i] = cols[rows[row_begin] + i];
+			  }
 
 			  // The only part that requires work is walking the compressed column
 			  // vector to determine where the set of columns correspnding to the
@@ -3099,39 +3136,62 @@ public class CeresSolver2 extends CeresSolver {
 			  }
 
 			  if (offset == row_size) {
-			    LOG(ERROR) << "Unable to find covariance block for "
-			               << original_parameter_block1 << " "
-			               << original_parameter_block2;
+			    System.err.println("Unable to find covariance block for:");
+			    for (i = 0; i < original_parameter_block1.length; i++) {
+			    	System.err.println("original_parameter_block1[" + i +"] = " + original_parameter_block1[i]);
+			    }
+			    for (i = 0; i < original_parameter_block2.length; i++) {
+			    	System.err.println("original_parameter_block2[" + i +"] = " + original_parameter_block2[i]);
+			    }
 			    return false;
 			  }
 
-			  const ProblemImpl::ParameterMap& parameter_map = problem_->parameter_map();
-			  ParameterBlock* block1 =
-			      FindOrDie(parameter_map, const_cast<double*>(parameter_block1));
-			  ParameterBlock* block2 =
-			      FindOrDie(parameter_map, const_cast<double*>(parameter_block2));
-			  const LocalParameterization* local_param1 = block1->local_parameterization();
-			  const LocalParameterization* local_param2 = block2->local_parameterization();
-			  const int block1_size = block1->Size();
-			  const int block1_local_size = block1->LocalSize();
-			  const int block2_size = block2->Size();
-			  const int block2_local_size = block2->LocalSize();
+			  final HashMap<double[], ParameterBlock> parameter_map = problem_.parameter_map();
+			  ParameterBlock block1 = parameter_map.get(parameter_block1);
+			    if (block1 == null) {
+			    	System.err.println("In GetCovarianceBlockInTangentOrAmbientSpace parameter_map.get(parameter_block1) returned null");
+			    	return false;
+			    }
+			   
+			    ParameterBlock block2 = parameter_map.get(parameter_block2);
+			    if (block2 == null) {
+			    	System.err.println("In GetCovarianceBlockInTangentOrAmbientSpace parameter_map.get(parameter_block2) returned null");
+			    	return false;
+			    } 
+			 
+			  final LocalParameterization local_param1 = block1.local_parameterization();
+			  final LocalParameterization local_param2 = block2.local_parameterization();
+			  final int block1_size = block1.Size();
+			  final int block1_local_size = block1.LocalSize();
+			  final int block2_size = block2.Size();
+			  final int block2_local_size = block2.LocalSize();
 
-			  ConstMatrixRef cov(covariance_matrix_->values() + rows[row_begin],
-			                     block1_size,
-			                     row_size);
+			  //ConstMatrixRef cov(covariance_matrix_->values() + rows[row_begin],
+			                     //block1_size,
+			                     //row_size);
+			  double cov[][] = new double[block1_size][row_size];
+			  for (i = 0, r = 0; r < block1_size; r++) {
+				  for (c = 0; c < row_size; c++, i++) {
+					  cov[r][c] = covariance_matrix_.values()[i + rows[row_begin]];
+				  }
+			  }
 
 			  // Fast path when there are no local parameterizations or if the
 			  // user does not want it lifted to the ambient space.
-			  if ((local_param1 == NULL && local_param2 == NULL) ||
+			  if ((local_param1 == null && local_param2 == null) ||
 			      !lift_covariance_to_ambient_space) {
 			    if (transpose) {
-			      MatrixRef(covariance_block, block2_local_size, block1_local_size) =
-			          cov.block(0, offset, block1_local_size,
-			                    block2_local_size).transpose();
+			          for (r = 0; r < block2_local_size; r++) {
+			        	  for (c = 0; c < block1_local_size; c++) {
+			        		  covariance_block[r*block1_local_size + c] = cov[c][r+offset];
+			        	  }
+			          }
 			    } else {
-			      MatrixRef(covariance_block, block1_local_size, block2_local_size) =
-			          cov.block(0, offset, block1_local_size, block2_local_size);
+			          for (r = 0; r < block1_local_size; r++) {
+			        	  for (c = 0; c < block2_local_size; c++) {
+			        		  covariance_block[r * block2_local_size + c] = cov[r][c + offset];
+			        	  }
+			          }
 			    }
 			    return true;
 			  }
@@ -3153,36 +3213,56 @@ public class CeresSolver2 extends CeresSolver {
 			  //
 			  // TODO(sameeragarwal): Add caching of local parameterization, so
 			  // that they are computed just once per parameter block.
-			  Matrix block1_jacobian(block1_size, block1_local_size);
-			  if (local_param1 == NULL) {
-			    block1_jacobian.setIdentity();
+			  int minLength;
+			  double block1_jacobian[][] = new double[block1_size][block1_local_size];
+			  if (local_param1 == null) {
+				minLength = Math.min(block1_size, block1_local_size);
+				for (i = 0; i < minLength; i++) {
+					block1_jacobian[i][i] = 1.0;
+				}
 			  } else {
-			    local_param1->ComputeJacobian(parameter_block1, block1_jacobian.data());
+			    local_param1.ComputeJacobian(parameter_block1, 0, block1_jacobian);
 			  }
 
-			  Matrix block2_jacobian(block2_size, block2_local_size);
+			  double block2_jacobian[][] = new double[block2_size][block2_local_size];
 			  // Fast path if the user is requesting a diagonal block.
 			  if (parameter_block1 == parameter_block2) {
 			    block2_jacobian = block1_jacobian;
 			  } else {
-			    if (local_param2 == NULL) {
-			      block2_jacobian.setIdentity();
+			    if (local_param2 == null) {
+			      minLength = Math.min(block2_size, block2_local_size);
+			      for (i = 0; i < minLength; i++) {
+			    	  block2_jacobian[i][i] = 1.0;
+			      }
 			    } else {
-			      local_param2->ComputeJacobian(parameter_block2, block2_jacobian.data());
+			      local_param2.ComputeJacobian(parameter_block2, 0, block2_jacobian);
 			    }
 			  }
 
+			  Matrix block1_jacobianMat = new Matrix(block1_jacobian);
+			  Matrix block2_jacobianMat = new Matrix(block2_jacobian);
+			  Matrix cov_blockMat = new Matrix(block1_local_size, block2_local_size);
+			  for (r = 0; r < block1_local_size; r++) {
+				  for (c = 0; c < block2_local_size; c++) {
+					  cov_blockMat.set(r, c, cov[r][c+offset]);
+				  }
+			  }
+			  Matrix multMat;
 			  if (transpose) {
-			    MatrixRef(covariance_block, block2_size, block1_size) =
-			        block2_jacobian *
-			        cov.block(0, offset, block1_local_size, block2_local_size).transpose() *
-			        block1_jacobian.transpose();
+				multMat = (block2_jacobianMat.times(cov_blockMat.transpose())).times(block1_jacobianMat.transpose());
+				for (i = 0, r = 0; r < block2_size; r++) {
+					for (c = 0; c < block1_size; c++, i++) {
+						covariance_block[i] = multMat.get(r,c);
+					}
+				}
 			  } else {
-			    MatrixRef(covariance_block, block1_size, block2_size) =
-			        block1_jacobian *
-			        cov.block(0, offset, block1_local_size, block2_local_size) *
-			        block2_jacobian.transpose();
-			  }*/
+				multMat = (block1_jacobianMat.times(cov_blockMat)).times(block2_jacobianMat.transpose());
+				for (i = 0, r = 0; r < block1_size; r++) {
+					for (c = 0; c < block2_size; c++, i++) {
+						covariance_block[i] = multMat.get(r,c);
+					}
+				}
+			  }
 
 			  return true;
 			}
