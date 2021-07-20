@@ -10321,8 +10321,8 @@ public abstract class CeresSolver {
 			    // Sort the parameters by their position in the state vector.
 			    Collections.sort(parameter_indices);
 			    boolean duplicate_found = false;
-			    for (i = 0; i < parameter_indices.size()-1; i++) {
-			    	if (parameter_indices.get(i).intValue() == parameter_indices.get(i+1).intValue()) {
+			    for (int ii = 0; ii < parameter_indices.size()-1; ii++) {
+			    	if (parameter_indices.get(ii).intValue() == parameter_indices.get(ii+1).intValue()) {
 			    		duplicate_found = true;
 			    	}
 			    }
