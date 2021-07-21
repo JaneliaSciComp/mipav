@@ -22680,6 +22680,12 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		
 		public void CovarianceSetUp() {
 			parameters_ = new double[6];
+			parameters_[0] = 1;
+		    parameters_[1] = 1;
+		    parameters_[2] = 2;
+		    parameters_[3] = 2;
+		    parameters_[4] = 2;
+		    parameters_[5] = 3;
 		    //double* x = parameters_;
 		    //double* y = x + 2;
 		    //double* z = y + 3;
@@ -22861,6 +22867,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    	  passed[0] = false;
 		      }
 		    }
+		    
 		    double actual_array[][] = new double[row_end - row_begin][col_end - col_begin];
 		    for (i = 0, r = 0; r < row_end - row_begin; r++) {
 		    	for (c = 0; c < col_end - col_begin; c++, i++) {
@@ -22898,11 +22905,11 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    	passed[0] = false;
 		    	System.err.println("row_begin = " + row_begin + " row_end = " + row_end);
 		    	System.err.println("col_begin = " + col_begin + " col_end = " + col_end);
-		    	for (r = 0; r < dof; r++) {
+		    	/*for (r = 0; r < dof; r++) {
 		    		for (c = 0; c < dof; c++) {
 		    			System.err.println("expected["+r+"]["+c+"] = " + expected[r][c]);
 		    		}
-		    	}
+		    	}*/
 		        for (r = 0; r < row_end - row_begin; r++) {
 		        	for (c = 0; c < col_end - col_begin; c++) {
 		        		System.err.println("actual_array["+r+"]["+c+"] = " + actual_array[r][c]);
@@ -22959,5 +22966,52 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			}
 
 
+		  public void CovarianceTestConstantParameterBlock() {
+
+			  // J
+			  //
+			  //  0  0  0  0  0  0
+			  //  0  0  0  0  0  0
+			  //  0  0  2  0  0  0
+			  //  0  0  0  2  0  0
+			  //  0  0  0  0  2  0
+			  //  0  0  0  0  0  5
+			  //  0  0  1  2  3  0
+			  //  0  0  0  0  0  2
+
+			  // J'J
+			  //
+			  //  0  0  0  0  0  0
+			  //  0  0  0  0  0  0
+			  //  0  0  5  2  3  0
+			  //  0  0  2  8  6  0
+			  //  0  0  3  6 13  0
+			  //  0  0  0  0  0 29
+
+			  // pinv(J'J) computed using octave.
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestConstantParameterBlock()";
+			  CovarianceSetUp();
+			  problem_.SetParameterBlockConstant(parameters_);
+			  double expected_covariance[] = new double[ ]{
+			              0,            0,            0,            0,            0,            0,  // NOLINT
+			              0,            0,            0,            0,            0,            0,  // NOLINT
+			              0,            0,      0.23611,     -0.02778,     -0.04167,     -0.00000,  // NOLINT
+			              0,            0,     -0.02778,      0.19444,     -0.08333,     -0.00000,  // NOLINT
+			              0,            0,     -0.04167,     -0.08333,      0.12500,     -0.00000,  // NOLINT
+			              0,            0,     -0.00000,     -0.00000,     -0.00000,      0.03448   // NOLINT
+			  };
+			  
+			  CovarianceOptions options = ce2.new CovarianceOptions();	
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocks(options, expected_covariance,passed);
+
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+
+			 
+			}
 
 }
