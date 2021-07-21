@@ -135,10 +135,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private double aif_diffPeak = 0.04;
 
 	// Maximum voxels chosen for AIF
-	private int aif_nVoxelMax = 6;
+	//private int aif_nVoxelMax = 6;
+	private int aif_nVoxelMax = 15;
 
 	// Minimum voxels chosen for AIF
-	private int aif_nVoxelMin = 4;
+	//private int aif_nVoxelMin = 4;
+	private int aif_nVoxelMin = 10;
 
 	// Correction of the formula for calculating the concentration from the
 	// signal in the case of calculating the AIF
