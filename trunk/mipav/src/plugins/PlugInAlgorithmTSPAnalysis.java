@@ -814,7 +814,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 					}
 	    		}
 	    		
-	    		DSC_MRI_toolbox dmt = new DSC_MRI_toolbox(volumes, 1.0E-3*TE, 1.0E-3*TR);
+	    		DSC_MRI_toolbox dmt = new DSC_MRI_toolbox(volumes, 1.0E-3*TE, 1.0E-3*TR, z, outputFilePath);
 	    		dmt.runAlgorithm();
 	    		AIF_voxels[z-selectedAIFLowZSlice] = dmt.getAIF_voxels();
 	    		if (AIF_voxels[z-selectedAIFLowZSlice] == null) {
