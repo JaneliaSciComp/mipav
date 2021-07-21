@@ -22970,7 +22970,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 
 		  public void CovarianceTestConstantParameterBlock() {
-
+              // CovarianceTestConstantParameterBlock() passed all tests
 			  // J
 			  //
 			  //  0  0  0  0  0  0
@@ -22996,8 +22996,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  String testName = "CovarianceTestConstantParameterBlock()";
 			  CovarianceSetUp();
 			  problem_.SetParameterBlockConstant(x);
-			  problem_.SetParameterBlockConstant(y);
-			  problem_.SetParameterBlockConstant(z);
 			  double expected_covariance[] = new double[ ]{
 			              0,            0,            0,            0,            0,            0,  // NOLINT
 			              0,            0,            0,            0,            0,            0,  // NOLINT
