@@ -215,6 +215,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double c2;
 	double minSum;
 	double maxSum;
+	private int sliceNumber = 0;
 	private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator + "dsc-mri-toolbox-master"
 			+ File.separator + "demo-data" + File.separator;
 	private String outputPrefix = "";
@@ -270,10 +271,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 	}
 
-	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr) {
+	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr, int sliceNumber, String outputFilePath) {
 		this.volumes = volumes;
 		this.te = te;
 		this.tr = tr;
+		this.sliceNumber = sliceNumber;
+		this.outputFilePath = outputFilePath;
 		doTransfer = true;
 	}
 
@@ -2779,7 +2782,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			AIF_fit_gv = GVfunction_peak1(AIF_fit_parameters);
 		}
 
-		if (display > 1) {
+		//if (display > 1) {
 			vettImmagine = new double[length];
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
@@ -2812,7 +2815,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
 			component.paint(captureImage.getGraphics());
 
-			File immagineFile = new File(outputFilePath + outputPrefix + "AIF.png");
+			File immagineFile = new File(outputFilePath + outputPrefix + "AIF_slice"+String.valueOf(sliceNumber)+".png");
 			boolean foundWriter;
 			try {
 				foundWriter = ImageIO.write(captureImage, format, immagineFile);
@@ -2821,7 +2824,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				return;
 			}
 			if (!foundWriter) {
-				System.err.println("No appropriate writer for AIF.png");
+				System.err.println("No appropriate writer for AIF_slice"+String.valueOf(sliceNumber)+".png");
 				return;
 			}
 			captureImage.flush();
@@ -2835,7 +2838,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			vFrame.removeKeyListener();
 			vFrame.close(false);
 			immagineImage.disposeLocal();
-		} // if (display > 1)
+		//} // if (display > 1)
 	} // public void extractAIF()
 
 	private double[] GVfunction(double p[]) {
