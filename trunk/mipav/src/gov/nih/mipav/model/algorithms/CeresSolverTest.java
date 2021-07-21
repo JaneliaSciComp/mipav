@@ -22676,6 +22676,9 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  Vector<Pair<double[], double[]> > all_covariance_blocks_;
 		  HashMap<double[], Pair<Integer, Integer> > column_bounds_;
 		  HashMap<double[], Pair<Integer, Integer> > local_column_bounds_;
+		  double x[];
+		  double y[];
+		  double z[];
 
 		
 		public void CovarianceSetUp() {
@@ -22689,9 +22692,9 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    //double* x = parameters_;
 		    //double* y = x + 2;
 		    //double* z = y + 3;
-			double x[] = new double[2];
-			double y[] = new double[3];
-			double z[] = new double[1];
+			x = new double[2];
+			y = new double[3];
+			z = new double[1];
 
 		    x[0] = 1;
 		    x[1] = 1;
@@ -22992,7 +22995,9 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  boolean passed[] = new boolean[] {true};
 			  String testName = "CovarianceTestConstantParameterBlock()";
 			  CovarianceSetUp();
-			  problem_.SetParameterBlockConstant(parameters_);
+			  problem_.SetParameterBlockConstant(x);
+			  problem_.SetParameterBlockConstant(y);
+			  problem_.SetParameterBlockConstant(z);
 			  double expected_covariance[] = new double[ ]{
 			              0,            0,            0,            0,            0,            0,  // NOLINT
 			              0,            0,            0,            0,            0,            0,  // NOLINT
