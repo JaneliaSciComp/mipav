@@ -26,6 +26,7 @@ import WildMagic.LibFoundation.Mathematics.Vector2d;
 import gov.nih.mipav.model.algorithms.CeresSolver.CRSMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.StorageType;
+import gov.nih.mipav.model.algorithms.CeresSolver2.indexIntegerdoubleArrayItem;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
@@ -10383,6 +10384,136 @@ public abstract class CeresSolver {
 
 			  return jacobian;
 			}
+		
+		public void GetOrderedParameterBlocks(
+			      Program program,
+			      int residual_id,
+			      Vector<Pair<Integer, Integer> > evaluated_jacobian_blocks) {
+			  int i;
+			  final ResidualBlock residual_block =
+			      program.residual_blocks().get(residual_id);
+			  final int num_parameter_blocks = residual_block.NumParameterBlocks();
+
+			  for (int j = 0; j < num_parameter_blocks; ++j) {
+			    final ParameterBlock parameter_block =
+			        residual_block.parameter_blocks()[j];
+			    if (!parameter_block.IsConstant()) {
+			      evaluated_jacobian_blocks.add(
+			          new Pair<Integer, Integer>(parameter_block.index(), j));
+			    }
+			  }
+			  ArrayList<indexintintItem> ia = new ArrayList<indexintintItem>();
+				for (i = 0; i < evaluated_jacobian_blocks.size(); i++) {
+					ia.add(new indexintintItem(i,evaluated_jacobian_blocks.get(i).first, evaluated_jacobian_blocks.get(i).second));
+				}
+				indexintintComparator ic = new indexintintComparator();
+				Collections.sort(ia, ic);
+				evaluated_jacobian_blocks.clear();
+				for (i = 0; i < ia.size(); i++) {
+					evaluated_jacobian_blocks.add(new Pair<Integer, Integer>(ia.get(i).getp1(),ia.get(i).getp2()));
+				}
+			}
+		
+		class indexintintItem {
+			  private int index;
+			  private int p1;
+			  private int p2;
+			  
+			  public indexintintItem(int index, int p1, int p2) {
+				  this.index = index;
+				  this.p1 = p1;
+				  this.p2 = p2;
+			  }
+			  
+			  public int getIndex() {
+				  return index;
+			  }
+			  
+			  public int getp1() {
+				  return p1;
+			  }
+			  
+			  public int getp2() {
+				  return p2;
+			  }
+		  }
+		
+		class indexintintComparator implements Comparator<indexintintItem> {
+			  public int compare(indexintintItem o1, indexintintItem o2) {
+				  int item1p1 = o1.getp1();
+				  int item1p2 = o1.getp2();
+				  int item2p1 = o2.getp1();
+				  int item2p2 = o2.getp2();
+				  if (item1p1 < item2p1) {
+					  return -1;
+				  }
+				  if (item1p1 > item2p1) {
+					  return 1;
+				  }
+				  if (item1p2 < item2p2) {
+					  return -1;
+				  }
+				  if (item1p2 > item2p2) {
+					  return 1;
+				  }
+				  return 0;
+			  }
+		  }
+
+		
+		public void Write(int residual_id,
+                int residual_offset,
+                double [][]jacobians,
+                SparseMatrix base_jacobian) {
+			CompressedRowSparseMatrix jacobian =
+			(CompressedRowSparseMatrix)(base_jacobian);
+			
+			double[] jacobian_values = jacobian.mutable_values();
+			final int[] jacobian_rows = jacobian.rows();
+			
+			final ResidualBlock residual_block =
+			program_.residual_blocks().get(residual_id);
+			final int num_residuals = residual_block.NumResiduals();
+			
+			Vector<Pair<Integer, Integer> > evaluated_jacobian_blocks = new Vector<Pair<Integer,Integer>>();
+			GetOrderedParameterBlocks(program_, residual_id, evaluated_jacobian_blocks);
+			
+			// Where in the current row does the jacobian for a parameter block begin.
+			int col_pos = 0;
+			
+			// Iterate over the jacobian blocks in increasing order of their
+			// positions in the reduced parameter vector.
+			for (int i = 0; i < evaluated_jacobian_blocks.size(); ++i) {
+			final ParameterBlock parameter_block =
+			program_.parameter_blocks().get(evaluated_jacobian_blocks.get(i).first);
+			final int argument = evaluated_jacobian_blocks.get(i).second;
+			final int parameter_block_size = parameter_block.LocalSize();
+			
+			// Copy one row of the jacobian block at a time.
+			for (int r = 0; r < num_residuals; ++r) {
+			// Position of the r^th row of the current jacobian block.
+			//final double[] block_row_begin =
+			//jacobians[argument] + r * parameter_block_size;
+			
+			// Position in the values array of the jacobian where this
+			// row of the jacobian block should go.
+			//double* column_block_begin =
+			//jacobian_values + jacobian_rows[residual_offset + r] + col_pos;
+				
+				//std::copy(block_row_begin,
+		                //block_row_begin + parameter_block_size,
+		                //column_block_begin);
+
+			
+			for (int j = 0; j < parameter_block_size; j++) {
+			    jacobian_values[jacobian_rows[residual_offset + r] + col_pos + j] = jacobians[argument][r * parameter_block_size + j];
+			}
+		    
+			}
+			col_pos += parameter_block_size;
+			}
+	  }
+
 
 
 	} // class CompressedRowJacobianWriter
@@ -10964,7 +11095,8 @@ public abstract class CeresSolver {
 	      int block_jacobians_offset[] = new int[scratch.jacobian_block_ptrs.length];
 	      if (jacobian != null || gradient != null) {
 	    	  if ((options_.linear_solver_type == LinearSolverType.DENSE_QR) ||
-	  				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY)) {
+	  				(options_.linear_solver_type == LinearSolverType.DENSE_NORMAL_CHOLESKY) ||
+	  				(options_.linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY)) {
 	        ((ScratchEvaluatePreparer)preparer).Prepare(residual_block,
 	                          i,
 	                          jacobian,
@@ -11023,6 +11155,12 @@ public abstract class CeresSolver {
 	    	  else if ((options_.linear_solver_type == LinearSolverType.CGNR) ||
 	    			   (options_.linear_solver_type == LinearSolverType.ITERATIVE_SCHUR) ||
 	    			   (options_.linear_solver_type == LinearSolverType.DENSE_SCHUR)) {
+	    	  }
+	    	  else if (options_.linear_solver_type == LinearSolverType.SPARSE_NORMAL_CHOLESKY) {
+	    		  ((CompressedRowJacobianWriter)jacobian_writer_).Write(i,
+                          residual_layout_.get(i),
+                          block_jacobians,
+                          jacobian);
 	    	  }
 
 	      }
