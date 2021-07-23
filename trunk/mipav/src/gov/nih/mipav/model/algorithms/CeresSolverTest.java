@@ -22309,7 +22309,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 						  Vector<Double> x_plus_delta, int x_plus_delta_index) {
 					int i;
 				      for (i = 0; i < 2; i++) {
-				    	  x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i) + delta.get(delta_index + i));
+				    	  x_plus_delta.set(x_plus_delta_index + i, x.get(x_index + i) * delta.get(delta_index + i));
 				      }
 				      return true;
 				    }
@@ -22321,8 +22321,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 			  
 			  public boolean ComputeJacobian(double[] x, int x_start, double[][] jacobian) {
-				    jacobian[0][0] = x[0];
-				    jacobian[1][0] = x[1];
+				    jacobian[0][0] = x[x_start + 0];
+				    jacobian[1][0] = x[x_start + 1];
 				    return true;
 			  }
 
@@ -22908,11 +22908,11 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		    	passed[0] = false;
 		    	System.err.println("row_begin = " + row_begin + " row_end = " + row_end);
 		    	System.err.println("col_begin = " + col_begin + " col_end = " + col_end);
-		    	/*for (r = 0; r < dof; r++) {
-		    		for (c = 0; c < dof; c++) {
+		    	for (r = row_begin; r < row_end; r++) {
+		    		for (c = col_begin; c < col_end; c++) {
 		    			System.err.println("expected["+r+"]["+c+"] = " + expected[r][c]);
 		    		}
-		    	}*/
+		    	}
 		        for (r = 0; r < row_end - row_begin; r++) {
 		        	for (c = 0; c < col_end - col_begin; c++) {
 		        		System.err.println("actual_array["+r+"]["+c+"] = " + actual_array[r][c]);
@@ -23016,5 +23016,59 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			 
 			}
+		  
+		  public void CovarianceTestLocalParameterization() {
+			  // CovarianceTestLocalParameterization() passed all tests
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestLocalParameterization()";
+			  CovarianceSetUp();
+			  problem_.SetParameterization(x, new PolynomialParameterization());
+
+			  Vector<Integer> subset = new Vector<Integer>();
+			  subset.add(2);
+			  problem_.SetParameterization(y, new SubsetParameterization(3, subset));
+
+			  // Raw Jacobian: J
+			  //
+			  //   1   0  0  0  0  0
+			  //   0   1  0  0  0  0
+			  //   0   0  2  0  0  0
+			  //   0   0  0  2  0  0
+			  //   0   0  0  0  2  0
+			  //   0   0  0  0  0  5
+			  //  -5  -6  1  2  3  0
+			  //   3  -2  0  0  0  2
+
+			  // Local to global jacobian: A
+			  //
+			  //  1   0   0   0
+			  //  1   0   0   0
+			  //  0   1   0   0
+			  //  0   0   1   0
+			  //  0   0   0   0
+			  //  0   0   0   1
+
+			  // A * inv((J*A)'*(J*A)) * A'
+			  // Computed using octave.
+			  double expected_covariance[] = new double[] {
+			    0.01766,   0.01766,   0.02158,   0.04316,   0.00000,  -0.00122,
+			    0.01766,   0.01766,   0.02158,   0.04316,   0.00000,  -0.00122,
+			    0.02158,   0.02158,   0.24860,  -0.00281,   0.00000,  -0.00149,
+			    0.04316,   0.04316,  -0.00281,   0.24439,   0.00000,  -0.00298,
+			    0.00000,   0.00000,   0.00000,   0.00000,   0.00000,   0.00000,
+			   -0.00122,  -0.00122,  -0.00149,  -0.00298,   0.00000,   0.03457
+			  };
+			  
+			  CovarianceOptions options = ce2.new CovarianceOptions();	
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocks(options, expected_covariance,passed);
+
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+
+			}
+
 
 }
