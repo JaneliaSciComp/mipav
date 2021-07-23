@@ -3722,7 +3722,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double sum;
 		double scale;
 		if (equalTimeSpacing) {
-			scale = (time[nT - 1] - time[0]) / (2.0 * nT);
+			scale = (time[nT - 1] - time[0]) / (2.0 * (nT-1));
 			for (c = 0; c < nC; c++) {
 				for (r = 0; r < nR; r++) {
 					sum = f[c][r][0] + f[c][r][nT - 1];
