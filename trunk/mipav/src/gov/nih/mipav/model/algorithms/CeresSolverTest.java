@@ -23069,6 +23069,64 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 
 			}
+		  
+		  public void CovarianceTestLocalParameterizationInTangentSpace() {
+			  // CovarianceTestLocalParameterizationInTangentSpace() passed all tests
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestLocalParameterizationInTangentSpace()";
+			  CovarianceSetUp();
+
+			  problem_.SetParameterization(x, new PolynomialParameterization());
+
+			  Vector<Integer> subset = new Vector<Integer>();
+			  subset.add(2);
+			  problem_.SetParameterization(y, new SubsetParameterization(3, subset));
+
+			  
+              local_column_bounds_ = new HashMap<double[], Pair<Integer, Integer> >();
+			  local_column_bounds_.put(x, new Pair<Integer, Integer>(0, 1));
+			  local_column_bounds_.put(y, new Pair<Integer, Integer>(1, 3));
+			  local_column_bounds_.put(z, new Pair<Integer, Integer>(3, 4));
+
+			  // Raw Jacobian: J
+			  //
+			  //   1   0  0  0  0  0
+			  //   0   1  0  0  0  0
+			  //   0   0  2  0  0  0
+			  //   0   0  0  2  0  0
+			  //   0   0  0  0  2  0
+			  //   0   0  0  0  0  5
+			  //  -5  -6  1  2  3  0
+			  //   3  -2  0  0  0  2
+
+			  // Local to global jacobian: A
+			  //
+			  //  1   0   0   0
+			  //  1   0   0   0
+			  //  0   1   0   0
+			  //  0   0   1   0
+			  //  0   0   0   0
+			  //  0   0   0   1
+
+			  // inv((J*A)'*(J*A))
+			  // Computed using octave.
+			  double expected_covariance[] = {
+			    0.01766,   0.02158,   0.04316,   -0.00122,
+			    0.02158,   0.24860,  -0.00281,   -0.00149,
+			    0.04316,  -0.00281,   0.24439,   -0.00298,
+			   -0.00122,  -0.00149,  -0.00298,    0.03457 
+			  };
+
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocksInTangentSpace(options, expected_covariance, passed);
+			  
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
+
 
 
 }
