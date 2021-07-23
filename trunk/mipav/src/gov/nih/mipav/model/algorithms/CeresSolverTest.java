@@ -23110,7 +23110,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
 			  // inv((J*A)'*(J*A))
 			  // Computed using octave.
-			  double expected_covariance[] = {
+			  double expected_covariance[] = new double[]{
 			    0.01766,   0.02158,   0.04316,   -0.00122,
 			    0.02158,   0.24860,  -0.00281,   -0.00149,
 			    0.04316,  -0.00281,   0.24439,   -0.00298,
@@ -23127,6 +23127,126 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 			}
 
+		  public void CovarianceTestLocalParameterizationInTangentSpaceWithConstantBlocks() {
+			  // CovarianceTestLocalParameterizationInTangentSpaceWithConstantBlocks() passed all tests
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestLocalParameterizationInTangentSpaceWithConstantBlocks()";
+			  CovarianceSetUp();
+
+			  problem_.SetParameterization(x, new PolynomialParameterization());
+			  problem_.SetParameterBlockConstant(x);
+
+			  Vector<Integer> subset = new Vector<Integer>();
+			  subset.add(2);
+			  problem_.SetParameterization(y, new SubsetParameterization(3, subset));
+			  problem_.SetParameterBlockConstant(y);
+
+			  
+              local_column_bounds_ = new HashMap<double[], Pair<Integer, Integer> >();
+			  local_column_bounds_.put(x, new Pair<Integer, Integer>(0, 1));
+			  local_column_bounds_.put(y, new Pair<Integer, Integer>(1, 3));
+			  local_column_bounds_.put(z, new Pair<Integer, Integer>(3, 4));
+
+			  // Raw Jacobian: J
+			  //
+			  //   1   0  0  0  0  0
+			  //   0   1  0  0  0  0
+			  //   0   0  2  0  0  0
+			  //   0   0  0  2  0  0
+			  //   0   0  0  0  2  0
+			  //   0   0  0  0  0  5
+			  //  -5  -6  1  2  3  0
+			  //   3  -2  0  0  0  2
+
+			  // Local to global jacobian: A
+			  //
+			  //  0   0   0   0
+			  //  0   0   0   0
+			  //  0   0   0   0
+			  //  0   0   0   0
+			  //  0   0   0   0
+			  //  0   0   0   1
+
+			  // pinv((J*A)'*(J*A))
+			  // Computed using octave.
+			  double expected_covariance[] = new double[]{
+			    0.0, 0.0, 0.0, 0.0,
+			    0.0, 0.0, 0.0, 0.0,
+			    0.0, 0.0, 0.0, 0.0,
+			    0.0, 0.0, 0.0, 0.034482 
+			  };
+			  
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocksInTangentSpace(options, expected_covariance, passed);
+			  
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+
+			  
+			}
+		  
+		  public void CovarianceTestTruncatedRank() {
+			  // CovarianceTestTruncatedRank() passed all tests
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestTruncatedRank()";
+			  CovarianceSetUp();
+			  // J
+			  //
+			  //   1  0  0  0  0  0
+			  //   0  1  0  0  0  0
+			  //   0  0  2  0  0  0
+			  //   0  0  0  2  0  0
+			  //   0  0  0  0  2  0
+			  //   0  0  0  0  0  5
+			  //  -5 -6  1  2  3  0
+			  //   3 -2  0  0  0  2
+
+			  // J'J
+			  //
+			  //   35  24 -5 -10 -15  6
+			  //   24  41 -6 -12 -18 -4
+			  //   -5  -6  5   2   3  0
+			  //  -10 -12  2   8   6  0
+			  //  -15 -18  3   6  13  0
+			  //    6  -4  0   0   0 29
+
+			  // 3.4142 is the smallest eigen value of J'J. The following matrix
+			  // was obtained by dropping the eigenvector corresponding to this
+			  // eigenvalue.
+			  double expected_covariance[] = new double[]{
+			     5.4135e-02,  -3.5121e-02,   1.7257e-04,   3.4514e-04,   5.1771e-04,  -1.6076e-02,  // NOLINT
+			    -3.5121e-02,   3.8667e-02,  -1.9288e-03,  -3.8576e-03,  -5.7864e-03,   1.2549e-02,  // NOLINT
+			     1.7257e-04,  -1.9288e-03,   2.3235e-01,  -3.5297e-02,  -5.2946e-02,  -3.3329e-04,  // NOLINT
+			     3.4514e-04,  -3.8576e-03,  -3.5297e-02,   1.7941e-01,  -1.0589e-01,  -6.6659e-04,  // NOLINT
+			     5.1771e-04,  -5.7864e-03,  -5.2946e-02,  -1.0589e-01,   9.1162e-02,  -9.9988e-04,  // NOLINT
+			    -1.6076e-02,   1.2549e-02,  -3.3329e-04,  -6.6659e-04,  -9.9988e-04,   3.9539e-02   // NOLINT
+			  };
+
+
+			  {
+			    CovarianceOptions options = ce2.new CovarianceOptions();
+			    options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			    // Force dropping of the smallest eigenvector.
+			    options.null_space_rank = 1;
+			    ComputeAndCompareCovarianceBlocks(options, expected_covariance, passed);
+			  }
+
+			  {
+			    CovarianceOptions options = ce2.new CovarianceOptions();
+			    options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			    // Force dropping of the smallest eigenvector via the ratio but
+			    // automatic truncation.
+			    options.min_reciprocal_condition_number = 0.044494;
+			    options.null_space_rank = -1;
+			    ComputeAndCompareCovarianceBlocks(options, expected_covariance, passed);
+			  }
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
 
 
 }
