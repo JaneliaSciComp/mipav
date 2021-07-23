@@ -3169,8 +3169,17 @@ public class CeresSolver2 extends CeresSolver {
 			  //ConstMatrixRef cov(covariance_matrix_->values() + rows[row_begin],
 			                     //block1_size,
 			                     //row_size);
-			  double cov[][] = new double[block1_size][row_size];
-			  for (i = 0, r = 0; r < block1_size; r++) {
+			  // Changed from original block1_size to block1_local_size because in ComputeCovarianceSparsity:
+			  // final int size1 = problem.ParameterBlockLocalSize(block_pair.first);
+			  // final int size2 = problem.ParameterBlockLocalSize(block_pair.second);
+			  // num_nonzeros += size1 * size2;
+              // covariance_matrix_ = new CompressedRowSparseMatrix(num_rows, num_rows, num_nonzeros);
+			  // and class CompressedRowSparseMatrix has:
+			  // public CompressedRowSparseMatrix(int num_rows, int num_cols, int max_num_nonzeros) {
+			  // values_ = new double[max_num_nonzeros];
+			  // so values_ can only have a length given by local sizes.
+			  double cov[][] = new double[block1_local_size][row_size];
+			  for (i = 0, r = 0; r < block1_local_size; r++) {
 				  for (c = 0; c < row_size; c++, i++) {
 					  cov[r][c] = covariance_matrix_.values()[i + rows[row_begin]];
 				  }
