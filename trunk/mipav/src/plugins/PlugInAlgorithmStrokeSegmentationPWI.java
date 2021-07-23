@@ -146,6 +146,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private boolean doPerfusionSymmetryRemoval = true;
     private int minPerfusionObjectSize = 100;
     
+    private float corrmapMaskThreshold = 0.5f;
+
+    private ModelImage lastCoreImg = null;
+    
     /**
      * Constructor.
      *
@@ -156,7 +160,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     		int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj,
     		int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir, boolean pwiMultiThreading, boolean pwiCalculateCorrelation,
     		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean spatialSmoothing, float sigmax, float sigmay, boolean doArtifactCleanup,
-    		float artMean, float artCloseSize, int artCloseIter, boolean doPerfSymmetry, int minPerfSize, float ventThresh) {
+    		float artMean, float artCloseSize, int artCloseIter, boolean doPerfSymmetry, int minPerfSize, float ventThresh, float corrThresh) {
         super();
         
         dwiImage = dwi;
@@ -206,6 +210,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         minPerfusionObjectSize = minPerfSize;
         
         ventricleRemovalMeanThreshold = ventThresh;
+        
+        corrmapMaskThreshold = corrThresh;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
@@ -405,6 +411,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 lightboxFileList.add(lightboxPass1);
             }
             
+            ModelImage coreImgForCorrmap = null;
+            if (lastCoreImg != null) {
+                coreImgForCorrmap = lastCoreImg;
+            }
+            
             File lightboxPass2 = null;
             
             if (havePWI) {
@@ -495,6 +506,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     lightboxFileList.add(lightboxPass2);
                 }
                 
+                if (lastCoreImg != null) {
+                    lastCoreImg.disposeLocal();
+                    lastCoreImg = null;
+                }
+                
                 File aifFile = tspAlgo.getAifFile();
                 File sliceAifFile = tspAlgo.getSliceAifFile();
                 if (aifFile != null) {
@@ -514,10 +530,20 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     lightboxObjectTable.put(sliceAifFile, maskList);
                 }
                 
-                // TODO corrmap
                 if (doPwiCalculateCorrelation) {
                     ModelImage corrmapImage = tspAlgo.getCorrmapImage();
-                    corrmapLightbox = generateLightbox(corrmapImage, null, coreLightboxColor, lightboxOpacity, false);
+                    
+                    ModelImage regCorrmapImage = transformImage(corrmapImage, adcImage, tmaxToAdcTransform);
+                    
+                    // generate mask starting from core, growing outwards to connected voxels < threshold (default .5), inside of dwi brain mask
+                    ModelImage corrmapMask = getCorrmapMask(regCorrmapImage, skullMaskImg, coreImgForCorrmap, corrmapMaskThreshold);
+                    
+                    if (coreImgForCorrmap != null) {
+                        coreImgForCorrmap.disposeLocal();
+                        coreImgForCorrmap = null;
+                    }
+                    
+                    corrmapLightbox = generateLightbox(regCorrmapImage, corrmapMask, coreLightboxColor, lightboxOpacity, false);
                     
                     File lightboxCorrmap = saveImageFile(corrmapLightbox, coreOutputDir, outputBasename + "_corrmap_lightbox", FileUtility.PNG, false);
                     
@@ -528,6 +554,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         obj.setCorrmapNoObject();
                         maskList.add(obj);
                         lightboxObjectTable.put(lightboxCorrmap, maskList);
+                    }
+                    
+                    if (regCorrmapImage != null) {
+                        regCorrmapImage.disposeLocal();
+                        regCorrmapImage = null;
                     }
                 }
             }
@@ -763,7 +794,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         final int volLength = sliceLength * extents[2];
         
         short[] threshBuffer = Arrays.copyOf(segBuffer, segBuffer.length);
-        ModelImage threshImg = (ModelImage) segImg.clone();
+        lastCoreImg = (ModelImage) segImg.clone();
         
         short[] removedBuffer = null;
         if (doSkip) {
@@ -810,10 +841,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
             
             try {
-                threshImg.importData(0, removedBuffer, true);
+                lastCoreImg.importData(0, removedBuffer, true);
             } catch (IOException error) {
-                if (threshImg != null) {
-                    threshImg.disposeLocal();
+                if (lastCoreImg != null) {
+                    lastCoreImg.disposeLocal();
                 }
                 
                 threshBuffer = null;
@@ -822,14 +853,14 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 return null;
             }
             
-            saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_init_pass" + passNum, FileUtility.XML);
+            saveImageFile(lastCoreImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_init_pass" + passNum, FileUtility.XML);
         }
         
         try {
-            threshImg.importData(0, threshBuffer, true);
+            lastCoreImg.importData(0, threshBuffer, true);
         } catch (IOException error) {
-            if (threshImg != null) {
-                threshImg.disposeLocal();
+            if (lastCoreImg != null) {
+                lastCoreImg.disposeLocal();
             }
             
             threshBuffer = null;
@@ -839,13 +870,13 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         // perform closing on threshold mask
-        close(threshImg, threshCloseIter, threshCloseSize, true);
+        close(lastCoreImg, threshCloseIter, threshCloseSize, true);
         
         try {
-            threshImg.exportData(0, volLength, threshBuffer);
+            lastCoreImg.exportData(0, volLength, threshBuffer);
         } catch (IOException error) {
-            if (threshImg != null) {
-                threshImg.disposeLocal();
+            if (lastCoreImg != null) {
+                lastCoreImg.disposeLocal();
             }
             
             threshBuffer = null;
@@ -854,11 +885,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             return null;
         }
         
-        saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_close_pass" + passNum, FileUtility.XML);
+        saveImageFile(lastCoreImg, coreOutputDir, outputBasename + "_ADC_thresh_close_pass" + passNum, FileUtility.XML);
         
         Vector<MaskObject> selectedObjectList = new Vector<MaskObject>();
         
-        short[] objectBuffer = chooseCoreObjects(threshImg, threshBuffer, removedBuffer, passNum, useDistanceSelection, selectedObjectList);
+        short[] objectBuffer = chooseCoreObjects(lastCoreImg, threshBuffer, removedBuffer, passNum, useDistanceSelection, selectedObjectList);
         
         // get pixels from ADC within closed object mask with intensity < 620, again - this time always from original ADC
         for (int i = 0; i < volLength; i++) {
@@ -883,10 +914,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         try {
-            threshImg.importData(0, objectBuffer, true);
+            lastCoreImg.importData(0, objectBuffer, true);
         } catch (IOException error) {
-            if (threshImg != null) {
-                threshImg.disposeLocal();
+            if (lastCoreImg != null) {
+                lastCoreImg.disposeLocal();
             }
             
             threshBuffer = null;
@@ -896,10 +927,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             return null;
         }
         
-        saveImageFile(threshImg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest_pass" + passNum, FileUtility.XML);
+        saveImageFile(lastCoreImg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest_pass" + passNum, FileUtility.XML);
         
         // combine core mask with ADC and save lightbox
-        ModelImage coreLightbox = generateLightbox(lightboxBgImg, threshImg, coreLightboxColor, lightboxOpacity, false);
+        ModelImage coreLightbox = generateLightbox(lightboxBgImg, lastCoreImg, coreLightboxColor, lightboxOpacity, false);
         
         lightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox_pass" + passNum, FileUtility.PNG);
         
@@ -908,10 +939,6 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         coreLightbox.disposeLocal();
-        
-        if (threshImg != null) {
-            threshImg.disposeLocal();
-        }
         
         return lightboxFile;
     }
@@ -2827,5 +2854,88 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         } else {
             return null;
         }
+    }
+    
+    private ModelImage getCorrmapMask(ModelImage regCorrmapImg, ModelImage skullMaskImg, ModelImage coreImg, float corrmapMaskThreshold) {
+        ModelImage regCorrmapMask = (ModelImage) coreImg.clone("corrmap_mask");
+        
+        int volLength = regCorrmapMask.getVolumeSize();
+        
+        // TODO
+        saveImageFile(regCorrmapImg, coreOutputDir, outputBasename + "_corrmap_reg", FileUtility.XML);
+        
+        // TODO generate mask starting from core, growing outwards to connected voxels < threshold (default .5), inside of dwi brain mask
+        
+        // start with mask within skull and lower than corrmap threshold
+        for (int i = 0; i < volLength; i++) {
+            if (skullMaskImg.getInt(i) != 0 && regCorrmapImg.getFloat(i) <= corrmapMaskThreshold) {
+                regCorrmapMask.set(i, 1);
+            } else {
+                regCorrmapMask.set(i, 0);
+            }
+        }
+        
+        // TODO
+        saveImageFile(regCorrmapMask, coreOutputDir, outputBasename + "_corrmap_thresh", FileUtility.XML);
+        
+        // TODO id objects on the regCorrmapMask
+        short[] maskBuffer = new short[volLength];
+        short[] processBuffer = new short[volLength];
+        
+        try {
+            regCorrmapMask.exportData(0, volLength, maskBuffer);
+        } catch (IOException error) {
+            maskBuffer = null;
+            displayError("Error on corrmap mask export: " + regCorrmapMask.getImageName());
+            
+            if (regCorrmapMask != null) {
+                regCorrmapMask.disposeLocal();
+                regCorrmapMask = null;
+            }
+            
+            setCompleted(false);
+            return null;
+        }
+        
+        MaskObject[] objects = findObjects(regCorrmapMask, maskBuffer, processBuffer, 100, 10000000);
+
+        // TODO select object(s) that contain the voxels of coreImg != 0 and zero out all other objects
+        Vector<Short> objIdsWithCore = new Vector<Short>();
+        for (int i = 0; i < volLength; i++) {
+            if (processBuffer[i] != 0 && !objIdsWithCore.contains(processBuffer[i]) && coreImg.getInt(i) != 0) {
+                objIdsWithCore.add(processBuffer[i]);
+                System.err.println("Corrmap id " + processBuffer[i]);
+            }
+        }
+        
+        for (int i = 0; i < volLength; i++) {
+            maskBuffer[i] = 0;
+            
+            for (final int id : objIdsWithCore) {
+                if (id == processBuffer[i]) {
+                    maskBuffer[i] = 1;
+                }
+            }
+        }
+        
+        try {
+            regCorrmapMask.importData(0, maskBuffer, true);
+        } catch (IOException error) {
+            if (regCorrmapMask != null) {
+                regCorrmapMask.disposeLocal();
+                regCorrmapMask = null;
+            }
+            
+            maskBuffer = null;
+            displayError("Error on corrmap mask importData");
+            setCompleted(false);
+            return null;
+        }
+        
+        if (regCorrmapMask != null) {
+            saveImageFile(regCorrmapMask, coreOutputDir, outputBasename + "_corrmap_mask", FileUtility.XML);
+        }
+        
+        return regCorrmapMask;
     }
 }

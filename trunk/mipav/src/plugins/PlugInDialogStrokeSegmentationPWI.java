@@ -109,6 +109,9 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private JCheckBox pwiCalcCorrMapCheckbox;
     private boolean doPwiCalcCorrMap = true;
     
+    private JTextField corrmapMaskThresholdField;
+    private float corrmapMaskThreshold = 0.5f;
+    
     private JCheckBox pwiCalcCBFCBVMTTCheckbox;
     private boolean doPwiCalcCBFCBVMTT = false;
     
@@ -458,9 +461,10 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         selectAdditionalObjPct = Integer.parseInt(selectAdditionalObjPctField.getText());
         
         doPwiMultithread = pwiMultithreadCheckbox.isSelected();
-        doPwiCalcCorrMap = pwiCalcCorrMapCheckbox.isSelected();
         doPwiCalcCBFCBVMTT = pwiCalcCBFCBVMTTCheckbox.isSelected();
         doPwiSaveOutputFiles = pwiSaveOutputFilesCheckbox.isSelected();
+        
+        corrmapMaskThreshold = Float.parseFloat(corrmapMaskThresholdField.getText());
         
         spatialSmoothing = spatialSmoothingCheckBox.isSelected();
         if (spatialSmoothing) {
@@ -524,7 +528,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
             		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, spatialSmoothing, 
             		sigmax, sigmay, doArtifactCleanup, meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize,
-            		ventricleMeanThresh);
+            		ventricleMeanThresh, corrmapMaskThreshold);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -606,6 +610,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         artifactCloseSize = scriptParameters.getParams().getFloat("pwi_artifact_close_kernel_size");
         artifactCloseIter = scriptParameters.getParams().getInt("pwi_artifact_close_iter_num");
         
+        corrmapMaskThreshold = scriptParameters.getParams().getFloat("pwi_corrmap_mask_threshold");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -638,6 +644,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_mean_thresh_val", meanThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_artifact_close_kernel_size", artifactCloseSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_artifact_close_iter_num", artifactCloseIter));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_corrmap_mask_threshold", corrmapMaskThreshold));
     }
     
     /**
@@ -835,12 +843,19 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         gbc.gridy++;
         gbc.gridx = 0;
         
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 1;
         
-        pwiCalcCorrMapCheckbox = new JCheckBox("Calculate PWI correlation maps", doPwiCalcCorrMap);
-        pwiCalcCorrMapCheckbox.setForeground(Color.black);
-        pwiCalcCorrMapCheckbox.setFont(serif12);
-        mainPanel.add(pwiCalcCorrMapCheckbox, gbc);
+        JLabel corrmapTheshLabel = new JLabel("Maximum value for corrmap segmentation starting from core region");
+        corrmapTheshLabel.setForeground(Color.black);
+        corrmapTheshLabel.setFont(serif12);
+        mainPanel.add(corrmapTheshLabel, gbc);
+        
+        corrmapMaskThresholdField = new JTextField(10);
+        corrmapMaskThresholdField.setText("" + corrmapMaskThreshold);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(corrmapMaskThresholdField, gbc);
+        
         
         gbc.gridy++;
         gbc.gridx = 0;
