@@ -3040,11 +3040,11 @@ public class CeresSolver2 extends CeresSolver {
 			    double[] covariance_block) {
 			    int i, r, c;
 			    if (!is_computed_) {
-			      System.err.println("Covariance::GetCovarianceBlock called before Covariance::Compute");
+			      System.err.println("Covariance::GetCovarianceBlockInTangentOrAmbientSpace called before Covariance::Compute");
 			      return false;
 			    }
 			    if (!is_valid_) {
-			      System.err.println("Covariance::GetCovarianceBlock called when Covariance::Compute returned false.");
+			      System.err.println("Covariance::GetCovarianceBlockInTangentOrAmbientSpace called when Covariance::Compute returned false.");
 			      return false;
 		        }
 
@@ -3277,8 +3277,193 @@ public class CeresSolver2 extends CeresSolver {
 			}
 
 
+		public boolean GetCovarianceMatrixInTangentOrAmbientSpace(
+			    Vector<double[]> parameters,
+			    boolean lift_covariance_to_ambient_space,
+			    double[] covariance_matrix) {
+			    int i,j,r,c;
+			    int ia[] = new int[1];
+			    int ja[] = new int[1];
+			    if (!is_computed_) {
+			      System.err.println("Covariance::GetCovarianceMatrixInTangentOrAmbientSpace called before Covariance::Compute");
+			      return false;
+			    }
+			    if (!is_valid_) {
+			      System.err.println("Covariance::GetCovarianceMatrixInTangentOrAmbientSpace called when Covariance::Compute returned false.");
+			      return false;
+		        }
+
+			  final HashMap<double[], ParameterBlock> parameter_map = problem_.parameter_map();
+			  // For OpenMP compatibility we need to define these vectors in advance
+			  final int num_parameters = parameters.size();
+			  Vector<Integer> parameter_sizes = new Vector<Integer>();
+			  for (i = 0; i < num_parameters; i++) {
+				  parameter_sizes.add(0);
+			  }
+			  Vector<Integer> cum_parameter_size = new Vector<Integer>();
+			  for (i = 0; i < num_parameters + 1; i++) {
+				  cum_parameter_size.add(0);
+			  }
+			  
+			  for (i = 0; i < num_parameters; ++i) {
+				  ParameterBlock block = parameter_map.get(parameters.get(i));
+				  if (block == null) {
+				    	System.err.println("In GetCovarianceMatrixInTangentOrAmbientSpace parameter_map.get(parameters.get(i)) returned null");
+				    	return false;
+				  }
+			    if (lift_covariance_to_ambient_space) {
+			      parameter_sizes.add(block.Size());
+			    } else {
+			      parameter_sizes.add(block.LocalSize());
+			    }
+			  }
+			  for (j = 0; j < parameter_sizes.size(); j++) {
+				  cum_parameter_size.set(j+1, cum_parameter_size.get(j) + parameter_sizes.get(j));
+			  }
+			  int max_covariance_block_size = 0;
+			  for (j = 0; j < parameter_sizes.size(); j++) {
+				  if (parameter_sizes.get(j) > max_covariance_block_size) {
+			          max_covariance_block_size = parameter_sizes.get(j);  
+				  }
+			  }
+			  final int covariance_size = cum_parameter_size.lastElement();
+
+			  // Assemble the blocks in the covariance matrix.
+			  //MatrixRef covariance(covariance_matrix, covariance_size, covariance_size);
+			  double covariance[][] = new double[covariance_size][covariance_size];
+			  for (i = 0, r = 0; r < covariance_size; r++) {
+		          for (c = 0; c < covariance_size; c++, i++) {
+		        	  covariance[r][c] = covariance_matrix[i];
+		          }
+			  }
+			  //const int num_threads = options_.num_threads;
+			  final int num_threads = 1;
+			  double workspace[] =
+			      new double[num_threads * max_covariance_block_size *
+			                 max_covariance_block_size];
+
+			  boolean success = true;
+
+			//#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			  //ThreadTokenProvider thread_token_provider(num_threads);
+			//#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+
+			  // Technically the following code is a double nested loop where
+			  // i = 1:n, j = i:n.
+			  int iteration_count = (num_parameters * (num_parameters + 1)) / 2;
+			//#if defined(CERES_USE_OPENMP)
+			//#    pragma omp parallel for num_threads(num_threads) schedule(dynamic)
+			//#endif // CERES_USE_OPENMP
+			//#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			  for (int k = 0; k < iteration_count; ++k) {
+			//#else
+			  //problem_->context()->EnsureMinimumThreads(num_threads);
+			  //ParallelFor(problem_->context(),
+			              //0,
+			              //iteration_count,
+			              //num_threads,
+			              //[&](int thread_id, int k) {
+			//#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			      LinearIndexToUpperTriangularIndex(k, num_parameters, ia, ja);
+
+			      int covariance_row_idx = cum_parameter_size.get(ia[0]);
+			      int covariance_col_idx = cum_parameter_size.get(ja[0]);
+			      int size_i = parameter_sizes.get(ia[0]);
+			      int size_j = parameter_sizes.get(ja[0]);
+			//#if !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			      //const ScopedThreadToken scoped_thread_token(&thread_token_provider);
+			      //const int thread_id = scoped_thread_token.token();
+			//#endif // !(defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS))
+			      //double* covariance_block =
+			          //workspace.get() +
+			          //thread_id * max_covariance_block_size * max_covariance_block_size;
+			      double[] covariance_block = workspace;
+			      if (!GetCovarianceBlockInTangentOrAmbientSpace(
+			              parameters.get(ia[0]), parameters.get(ja[0]), lift_covariance_to_ambient_space,
+			              covariance_block)) {
+			        success = false;
+			      }
+
+			      //covariance.block(covariance_row_idx, covariance_col_idx,
+			                       //size_i, size_j) =
+			          //MatrixRef(covariance_block, size_i, size_j);
+			      for (r = 0; r < size_i; r++) {
+			    	  for (c = 0; c < size_j; c++) {
+			    		  covariance[r + covariance_row_idx][c + covariance_col_idx] = covariance_block[r*size_j + c];
+			    	  }
+			      }
+
+			      if (ia[0] != ja[0]) {
+			        //covariance.block(covariance_col_idx, covariance_row_idx,
+			                         //size_j, size_i) =
+			            //MatrixRef(covariance_block, size_i, size_j).transpose();
+			        for (r = 0; r < size_i; r++) {
+			        	for (c = 0; c < size_j; c++) {
+			        		covariance[c + covariance_col_idx][r + covariance_row_idx] = covariance_block[r*size_j + c];
+			        	}
+			        }
+
+			      }
+			    }
+			//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			   //);
+			//#endif // defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
+			  return success;
+			}
 
 
+		void LinearIndexToUpperTriangularIndex(int k, int n, int i[], int j[]) {
+			  // This works by unfolding a rectangle into a triangle.
+			  // Say n is even. 4 is a nice even number. The 10 i,j pairs that we
+			  // want to produce are:
+			  // 0,0 0,1 0,2 0,3
+			  //     1,1 1,2 1,3
+			  //         2,2 2,3
+			  //             3,3
+			  // This triangle can be folded into a 5x2 rectangle:
+			  // 3,3 0,0 0,1 0,2 0,3
+			  // 2,2 2,3 1,1 1,2 1,3
+
+			  // If N is odd, say 5, then the 15 i,j pairs are:
+			  // 0,0 0,1 0,2 0,3 0,4
+			  //     1,1 1,2 1,3 1,4
+			  //         2,2 2,3 2,3
+			  //             3,3 3,4
+			  //                 4,4
+			  // which folds to a 5x3 rectangle:
+			  // 0,0 0,1 0,2 0,3 0,4
+			  // 4,4 1,1 1,2 1,3 1,4
+			  // 3,3 3,4 2,2 2,3 2,4
+
+			  // All this function does is map the linear iteration position to a
+			  // location in the rectangle and work out the appropriate (i, j) for that
+			  // location.
+			  if ((n & 1) != 0) {
+			    // Odd n. The tip of the triangle is on row 1.
+			    int w = n;  // Width of the rectangle to unfold
+			    int i0 = k / w;
+			    int j0 = k % w;
+			    if (j0 >= i0) {
+			      i[0] = i0;
+			      j[0] = j0;
+			    } else {
+			      i[0] = n - i0;
+			      j[0] = i[0] + j0;
+			    }
+			  } else {
+			    // Even n. The tip of the triangle is on row 0, making it one wider.
+			    int w = n + 1;
+			    int i0 = k / w;
+			    int j0 = k % w;
+			    if (j0 > i0) {
+			      i[0] = i0;
+			      j[0] = j0 - 1;
+			    } else {
+			      i[0] = n - 1 - i0;
+			      j[0] = i[0] + j0;
+			    }
+			  }
+			}
 
 
     }
