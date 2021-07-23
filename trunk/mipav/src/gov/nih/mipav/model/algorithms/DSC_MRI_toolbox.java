@@ -2068,12 +2068,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
 
-		nL = (int) (center[0] / 0.01) + 1;
+		nL = (int) (2 * semiAxisB / 0.01) + 1;
 		xROI = new double[2 * nL];
-		for (i = 0, val = semiAxisB; val <= center[0] + semiAxisB; i++) {
-			val = semiAxisB + 0.01 * i;
-			xROI[i] = center[0] - val;
+		for (i = 0; i < nL; i++) {
+			xROI[i] = center[0] - semiAxisB + 0.01*i;
 		}
+		xROI[2*nL-1] = 0.0;
 
 		yROI = new double[2 * nL];
 		for (k = 0; k < nL; k++) {
@@ -2083,11 +2083,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		for (k = 1; k <= nL; k++) {
 			xROI[nL + k - 1] = xROI[nL - k];
-		}
 
-		diffX = xROI[2 * nL - 1] - center[0];
-		yROI[2 * nL - 1] = -semiAxisA * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
+		    diffX = xROI[nL + k -1] - center[0];
+		    yROI[nL + k - 1] = -semiAxisA * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
 				+ center[1];
+		}
 
 		if (display > 2) {
 			vettImmagine = new double[length];
@@ -2300,7 +2300,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					}
 				}
 			}
-			if ((numTTPLessThreshold - numTTPEqualMinus1) > totalCandidatesToKeep) {
+			if ((numTTPLessThreshold - numTTPEqualMinus1) >= totalCandidatesToKeep) {
 				cycle = false;
 			} else {
 				threshold = threshold + 1.0;
