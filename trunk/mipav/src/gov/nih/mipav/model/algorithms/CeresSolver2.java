@@ -2602,10 +2602,11 @@ public class CeresSolver2 extends CeresSolver {
 			    return covariance_matrix_;
 		  }
 		  
-		  public void CheckForDuplicates(Vector<double[]> blocks) {
+		  public boolean CheckForDuplicates(Vector<double[]> blocks) {
 		      // Pair can have first and second as the same array or as different arrays
 		      // Pair can have arrays of the same or different lengths
 			int i;
+			boolean status = true;
 			ArrayList<indexArrayItem> ia = new ArrayList<indexArrayItem>();
 			for (i = 0; i < blocks.size(); i++) {
 				ia.add(new indexArrayItem(i,blocks.get(i)));
@@ -2614,17 +2615,19 @@ public class CeresSolver2 extends CeresSolver {
 			Collections.sort(ia, ic);
 			for (i = 0; i < blocks.size()-1; i++) {
 				if (ic.compare(ia.get(i), ia.get(i+1)) == 0) {
+					status = false;
 					System.err.println("Covariance::Compute called with duplicate blocks at indices " + ia.get(i).getIndex() + " and " + ia.get(i+1).getIndex());
 				}
 			}
-			return;
+			return status;
 			
 		}
 		  
-		public void CheckForPairDuplicates(Vector<Pair<double[], double[]>> blocks) {
+		public boolean CheckForPairDuplicates(Vector<Pair<double[], double[]>> blocks) {
 		      // Pair can have first and second as the same array or as different arrays
 		      // Pair can have arrays of the same or different lengths
 			int i;
+			boolean status = true;
 			ArrayList<indexArrayArrayItem> iaa = new ArrayList<indexArrayArrayItem>();
 			for (i = 0; i < blocks.size(); i++) {
 				iaa.add(new indexArrayArrayItem(i,blocks.get(i).getFirst(),blocks.get(i).getSecond()));
@@ -2633,16 +2636,20 @@ public class CeresSolver2 extends CeresSolver {
 			Collections.sort(iaa, ic);
 			for (i = 0; i < blocks.size()-1; i++) {
 				if (ic.compare(iaa.get(i), iaa.get(i+1)) == 0) {
+					status = false;
 					System.err.println("Covariance::pairCompute called with duplicate blocks at indices " + iaa.get(i).getIndex() + " and " + iaa.get(i+1).getIndex());
 				}
 			}
-			return;
+			return status;
 			
 		}
 		
 		public boolean Compute(Vector<double[]> parameter_blocks,
                 ProblemImpl problem) {
-			CheckForDuplicates(parameter_blocks);
+		    boolean status = CheckForDuplicates(parameter_blocks);
+		    if (!status) {
+		    	return false;
+		    }
 			Vector<Pair<double[], double[]>> covariance_blocks = new Vector<Pair<double[], double[]>>();
 			for (int i = 0; i < parameter_blocks.size(); ++i) {
 				for (int j = i; j < parameter_blocks.size(); ++j) {
@@ -2657,7 +2664,10 @@ public class CeresSolver2 extends CeresSolver {
 		
 		public boolean pairCompute(Vector<Pair<double[], double[]>> covariance_blocks,
 	                ProblemImpl problem) {
-				CheckForPairDuplicates(covariance_blocks);
+				boolean status = CheckForPairDuplicates(covariance_blocks);
+				if (!status) {
+					return false;
+				}
 				problem_ = problem;
 				parameter_block_to_row_index_.clear();
 				covariance_matrix_ = null;
@@ -3030,7 +3040,7 @@ public class CeresSolver2 extends CeresSolver {
 			     return GetCovarianceBlockInTangentOrAmbientSpace(parameter_block1,
 			                                                          parameter_block2,
 			                                                          false,  // tangent
-			                                                          covariance_block);
+                                                                  covariance_block);
 		}
 		
 		public boolean GetCovarianceBlockInTangentOrAmbientSpace(
