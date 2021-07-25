@@ -3275,6 +3275,24 @@ public class CeresSolver2 extends CeresSolver {
 
 			  return true;
 			}
+		
+		public boolean GetCovarianceMatrix(
+			    Vector<double[]> parameter_blocks,
+			    double[] covariance_matrix) {
+			  return GetCovarianceMatrixInTangentOrAmbientSpace(parameter_blocks,
+			                                                           true,  // ambient
+			                                                           covariance_matrix);
+		}
+		
+		public boolean GetCovarianceMatrixInTangentSpace(
+			    Vector<double []> parameter_blocks,
+			    double []covariance_matrix) {
+			  return GetCovarianceMatrixInTangentOrAmbientSpace(parameter_blocks,
+			                                                           false,  // tangent
+			                                                           covariance_matrix);
+			}
+
+
 
 
 		public boolean GetCovarianceMatrixInTangentOrAmbientSpace(
@@ -3296,10 +3314,7 @@ public class CeresSolver2 extends CeresSolver {
 			  final HashMap<double[], ParameterBlock> parameter_map = problem_.parameter_map();
 			  // For OpenMP compatibility we need to define these vectors in advance
 			  final int num_parameters = parameters.size();
-			  Vector<Integer> parameter_sizes = new Vector<Integer>();
-			  for (i = 0; i < num_parameters; i++) {
-				  parameter_sizes.add(0);
-			  }
+			  Vector<Integer> parameter_sizes = new Vector<Integer>(num_parameters);
 			  Vector<Integer> cum_parameter_size = new Vector<Integer>();
 			  for (i = 0; i < num_parameters + 1; i++) {
 				  cum_parameter_size.add(0);
@@ -3404,6 +3419,12 @@ public class CeresSolver2 extends CeresSolver {
 			        }
 
 			      }
+			      
+			      for (i = 0, r = 0; r < covariance_size; r++) {
+			          for (c = 0; c < covariance_size; c++, i++) {
+			        	  covariance_matrix[i] = covariance[r][c];
+			          }
+				  }
 			    }
 			//#if defined(CERES_USE_TBB) || defined(CERES_USE_CXX11_THREADS)
 			   //);
