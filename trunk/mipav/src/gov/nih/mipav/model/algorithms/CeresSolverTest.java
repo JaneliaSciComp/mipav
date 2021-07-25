@@ -23248,5 +23248,108 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 			}
 
+		  public void CovarianceTestDenseCovarianceMatrixFromSetOfParameters() {
+			  // CovarianceTestDenseCovarianceMatrixFromSetOfParameters()
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestDenseCovarianceMatrixFromSetOfParameters()";
+			  CovarianceSetUp();
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+			  CovarianceImpl covariance = ce2.new CovarianceImpl(options);
+			  //double* x = parameters_;
+			  //double* y = x + 2;
+			  //double* z = y + 3;
+			  Vector<double[]> parameter_blocks = new Vector<double[]>();
+			  parameter_blocks.add(x);
+			  parameter_blocks.add(y);
+			  parameter_blocks.add(z);
+			  covariance.Compute(parameter_blocks, problem_);
+			  double expected_covariance[] = new double[36];
+			  covariance.GetCovarianceMatrix(parameter_blocks, expected_covariance);
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocks(options, expected_covariance, passed);
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			  
+			}
+
+		  public void CovarianceTestDenseCovarianceMatrixFromSetOfParametersInTangentSpace() {
+			  // CovarianceTestDenseCovarianceMatrixFromSetOfParametersInTangentSpace() passed all tests
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "CovarianceTestDenseCovarianceMatrixFromSetOfParametersInTangentSpace()";
+			  CovarianceSetUp();
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+			  CovarianceImpl covariance = ce2.new CovarianceImpl(options);
+			  //double* x = parameters_;
+			  //double* y = x + 2;
+			  //double* z = y + 3;
+
+			  problem_.SetParameterization(x, new PolynomialParameterization());
+
+			  Vector<Integer> subset = new Vector<Integer>();
+			  subset.add(2);
+			  problem_.SetParameterization(y, new SubsetParameterization(3, subset));
+
+			  local_column_bounds_ = new HashMap<double[], Pair<Integer, Integer> >();
+			  local_column_bounds_.put(x, new Pair<Integer, Integer>(0, 1));
+			  local_column_bounds_.put(y, new Pair<Integer, Integer>(1, 3));
+			  local_column_bounds_.put(z, new Pair<Integer, Integer>(3, 4));
+
+			  Vector<double[]> parameter_blocks = new Vector<double[]>();
+			  parameter_blocks.add(x);
+			  parameter_blocks.add(y);
+			  parameter_blocks.add(z);
+			  covariance.Compute(parameter_blocks, problem_);
+			  double expected_covariance[] = new double[16];
+			  covariance.GetCovarianceMatrixInTangentSpace(parameter_blocks, expected_covariance);
+
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  ComputeAndCompareCovarianceBlocksInTangentSpace(options, expected_covariance, passed);
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			  
+			}
+		
+
+		public void CovarianceTestComputeCovarianceFailure() {
+			/*Covariance::Compute called with duplicate blocks at indices 0 and 1
+			Covariance::Compute called with duplicate blocks at indices 2 and 3
+			Covariance::pairCompute called with duplicate blocks at indices 0 and 1
+			Covariance::pairCompute called with duplicate blocks at indices 1 and 4
+			Covariance::pairCompute called with duplicate blocks at indices 2 and 3
+			Covariance::pairCompute called with duplicate blocks at indices 3 and 5
+			Covariance::pairCompute called with duplicate blocks at indices 5 and 6
+			Covariance::pairCompute called with duplicate blocks at indices 7 and 8
+			Covariance::pairCompute called with duplicate blocks at indices 8 and 9
+			Covariance::pairCompute called with duplicate blocks at indices 0 and 1
+			Covariance::pairCompute called with duplicate blocks at indices 2 and 3*/
+			boolean passed[] = new boolean[] {true};
+			String testName = "CovarianceTestComputeCovarianceFailure()";
+			CovarianceSetUp();
+			CovarianceOptions options = ce2.new CovarianceOptions();
+			CovarianceImpl covariance = ce2.new CovarianceImpl(options);
+		  //double* x = parameters_;
+		  //double* y = x + 2;
+			Vector<double[]> parameter_blocks = new Vector<double[]>();
+			  parameter_blocks.add(x);
+			  parameter_blocks.add(x);
+			  parameter_blocks.add(y);
+			  parameter_blocks.add(y);
+		      covariance.Compute(parameter_blocks, problem_);
+		  //EXPECT_DEATH_IF_SUPPORTED(covariance.Compute(parameter_blocks, &problem_),
+		                            //"Covariance::Compute called with duplicate blocks "
+		                    //"at indices \\(0, 1\\) and \\(2, 3\\)");
+		  Vector<Pair<double[], double[]> > covariance_blocks = new Vector<Pair<double[], double[] >>();
+		  covariance_blocks.add(new Pair<double[], double[]>(x, x));
+		  covariance_blocks.add(new Pair<double[], double[]>(x, x));
+		  covariance_blocks.add(new Pair<double[], double[]>(y, y));
+		  covariance_blocks.add(new Pair<double[], double[]>(y, y));
+		  covariance.pairCompute(covariance_blocks, problem_);
+		  //EXPECT_DEATH_IF_SUPPORTED(covariance.Compute(covariance_blocks, &problem_),
+		                            //"Covariance::Compute called with duplicate blocks "
+		                    //"at indices \\(0, 1\\) and \\(2, 3\\)");
+		}
 
 }
