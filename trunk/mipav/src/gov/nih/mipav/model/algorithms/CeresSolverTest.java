@@ -23314,24 +23314,16 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		
 
 		public void CovarianceTestComputeCovarianceFailure() {
-			/*Covariance::Compute called with duplicate blocks at indices 0 and 1
-			Covariance::Compute called with duplicate blocks at indices 2 and 3
-			Covariance::pairCompute called with duplicate blocks at indices 0 and 1
-			Covariance::pairCompute called with duplicate blocks at indices 1 and 4
-			Covariance::pairCompute called with duplicate blocks at indices 2 and 3
-			Covariance::pairCompute called with duplicate blocks at indices 3 and 5
-			Covariance::pairCompute called with duplicate blocks at indices 5 and 6
-			Covariance::pairCompute called with duplicate blocks at indices 7 and 8
-			Covariance::pairCompute called with duplicate blocks at indices 8 and 9
-			Covariance::pairCompute called with duplicate blocks at indices 0 and 1
-			Covariance::pairCompute called with duplicate blocks at indices 2 and 3*/
-			boolean passed[] = new boolean[] {true};
+			//Covariance::Compute called with duplicate blocks at indices 0 and 1
+			//Covariance::Compute called with duplicate blocks at indices 2 and 3
+			//Covariance::pairCompute called with duplicate blocks at indices 0 and 1
+            //Covariance::pairCompute called with duplicate blocks at indices 2 and 3
 			String testName = "CovarianceTestComputeCovarianceFailure()";
 			CovarianceSetUp();
 			CovarianceOptions options = ce2.new CovarianceOptions();
 			CovarianceImpl covariance = ce2.new CovarianceImpl(options);
 		  //double* x = parameters_;
-		  //double* y = x + 2;
+		  //double* y = x + 2
 			Vector<double[]> parameter_blocks = new Vector<double[]>();
 			  parameter_blocks.add(x);
 			  parameter_blocks.add(x);
@@ -23341,6 +23333,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  //EXPECT_DEATH_IF_SUPPORTED(covariance.Compute(parameter_blocks, &problem_),
 		                            //"Covariance::Compute called with duplicate blocks "
 		                    //"at indices \\(0, 1\\) and \\(2, 3\\)");
+		    
 		  Vector<Pair<double[], double[]> > covariance_blocks = new Vector<Pair<double[], double[] >>();
 		  covariance_blocks.add(new Pair<double[], double[]>(x, x));
 		  covariance_blocks.add(new Pair<double[], double[]>(x, x));
