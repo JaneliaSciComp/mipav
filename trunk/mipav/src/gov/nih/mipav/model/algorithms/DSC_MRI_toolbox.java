@@ -14,6 +14,7 @@ import java.util.Vector;
 import javax.imageio.ImageIO;
 
 import Jama.Matrix;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileTypeTable;
 import gov.nih.mipav.model.file.FileUtility;
@@ -22,6 +23,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIPoint;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentGraph;
@@ -2089,7 +2091,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				+ center[1];
 		}
 
-		if (display > 2) {
+		if (display >= 2) {
 			vettImmagine = new double[length];
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
@@ -2097,6 +2099,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 			ModelImage immagineImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "immagineImage");
+			VOIVector voiVector = immagineImage.getVOIs();
 			try {
 				immagineImage.importData(0, vettImmagine, true);
 			} catch (IOException e) {
@@ -2106,22 +2109,20 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			float xArr[] = new float[1];
 			float yArr[] = new float[1];
 			float zArr[] = new float[1];
-			for (i = 0; i < 2 * nL; i++) {
-				VOI ROIPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
-				ROIPtVOI.setColor(Color.red);
-				xArr[0] = (float) xROI[i];
-				yArr[0] = (float) yROI[i];
-				ROIPtVOI.importCurve(xArr, yArr, zArr);
-				((VOIPoint) (ROIPtVOI.getCurves().elementAt(0))).setFixed(true);
-				immagineImage.registerVOI(ROIPtVOI);
+			VOI ellipseVOI = new VOI((short)0, "ellipseVOI", VOI.CONTOUR, 0.0f);
+		    Vector3f ellipsePt[] = new Vector3f[2*nL];
+			for (i = 0; i < 2*nL; i++) {
+				 ellipsePt[i] = new Vector3f((float)xROI[i], (float)yROI[i], 0.0f);
 			}
+			ellipseVOI.importCurve(ellipsePt);
+			voiVector.add(ellipseVOI);
 			VOI centerPtVOI = new VOI((short) (2 * nL), "center", VOI.POINT, -1.0f);
 			centerPtVOI.setColor(Color.green);
 			xArr[0] = (float) center[0];
 			yArr[0] = (float) center[1];
 			centerPtVOI.importCurve(xArr, yArr, zArr);
 			((VOIPoint) (centerPtVOI.getCurves().elementAt(0))).setFixed(true);
-			immagineImage.registerVOI(centerPtVOI);
+			voiVector.add(centerPtVOI);
 			ViewJFrameImage vFrame = new ViewJFrameImage(immagineImage);
 			Component component = vFrame.getComponent(0);
 			Rectangle rect = component.getBounds();
@@ -2129,7 +2130,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
 			component.paint(captureImage.getGraphics());
 
-			File immagineFile = new File(outputFilePath + outputPrefix + "immagine.png");
+			File immagineFile = new File(outputFilePath + outputPrefix + "ellipse.png");
 			boolean foundWriter;
 			try {
 				foundWriter = ImageIO.write(captureImage, format, immagineFile);
@@ -2138,7 +2139,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				return;
 			}
 			if (!foundWriter) {
-				System.err.println("No appropriate writer for immagine.png");
+				System.err.println("No appropriate writer for ellipse.png");
 				return;
 			}
 			captureImage.flush();
@@ -2152,7 +2153,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			vFrame.removeKeyListener();
 			vFrame.close(false);
 			immagineImage.disposeLocal();
-		} // if (display > 2)
+		} // if (display >= 2)
 
 		// 2.) Decimation of candidate voxels
 		if (display > 0) {
