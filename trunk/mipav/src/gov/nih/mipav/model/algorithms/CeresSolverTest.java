@@ -23344,5 +23344,104 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		                            //"Covariance::Compute called with duplicate blocks "
 		                    //"at indices \\(0, 1\\) and \\(2, 3\\)");
 		}
+		
+		public void RankDeficientCovarianceTestAutomaticTruncation() {
+			  // RankDeficientCovarianceTestAutomaticTruncation() passed all tests
+			  boolean passed[] = new boolean[] {true};
+			  String testName = "RankDeficientCovarianceTestAutomaticTruncation()";
+			  double x[] = new double[2];
+			  double y[] = new double[3];
+			  double z[] = new double[1];
+			  problem_ = new ProblemImpl();
+
+			    {
+			      double jacobian[] = new double[]{ 1.0, 0.0, 0.0, 1.0};
+			      problem_.AddResidualBlock(new UnaryCostFunction3(2, 2, jacobian), null, x);
+			    }
+
+			    {
+			      double jacobian[] = new double[]{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+			      problem_.AddResidualBlock(new UnaryCostFunction3(3, 3, jacobian), null, y);
+			    }
+
+			    {
+			      double jacobian[] = new double[] {5.0};
+			      problem_.AddResidualBlock(new UnaryCostFunction3(1, 1, jacobian),
+			                                null,
+			                                z);
+			    }
+
+			    {
+			      double jacobian1[] = new double[]{ 0.0, 0.0, 0.0 };
+			      double jacobian2[] = new double[]{ -5.0, -6.0 };
+			      problem_.AddResidualBlock(
+			          new BinaryCostFunction3(1, 3, 2, jacobian1, jacobian2),
+			          null,
+			          y,
+			          x);
+			    }
+
+			    {
+			      double jacobian1[] = new double[]{2.0 };
+			      double jacobian2[] = new double[]{ 3.0, -2.0 };
+			      problem_.AddResidualBlock(
+			          new BinaryCostFunction3(1, 1, 2, jacobian1, jacobian2),
+			          null,
+			          z,
+			          x);
+			    }
+
+			    all_covariance_blocks_ = new Vector<Pair<double[], double[]> >();
+			    all_covariance_blocks_.add(new Pair(x, x));
+			    all_covariance_blocks_.add(new Pair(y, y));
+			    all_covariance_blocks_.add(new Pair(z, z));
+			    all_covariance_blocks_.add(new Pair(x, y));
+			    all_covariance_blocks_.add(new Pair(x, z));
+			    all_covariance_blocks_.add(new Pair(y, z));
+
+			    column_bounds_ = new HashMap<double[], Pair<Integer, Integer> >();
+			    column_bounds_.put(x, new Pair(0, 2));
+			    column_bounds_.put(y, new Pair(2, 5));
+			    column_bounds_.put(z, new Pair(5, 6));
+
+			  // J
+			  //
+			  //   1  0  0  0  0  0
+			  //   0  1  0  0  0  0
+			  //   0  0  0  0  0  0
+			  //   0  0  0  0  0  0
+			  //   0  0  0  0  0  0
+			  //   0  0  0  0  0  5
+			  //  -5 -6  0  0  0  0
+			  //   3 -2  0  0  0  2
+
+			  // J'J
+			  //
+			  //  35 24  0  0  0  6
+			  //  24 41  0  0  0 -4
+			  //   0  0  0  0  0  0
+			  //   0  0  0  0  0  0
+			  //   0  0  0  0  0  0
+			  //   6 -4  0  0  0 29
+
+			  // pinv(J'J) computed using octave.
+			  double expected_covariance[] = new double[]{
+			     0.053998,  -0.033145,   0.000000,   0.000000,   0.000000,  -0.015744,
+			    -0.033145,   0.045067,   0.000000,   0.000000,   0.000000,   0.013074,
+			     0.000000,   0.000000,   0.000000,   0.000000,   0.000000,   0.000000,
+			     0.000000,   0.000000,   0.000000,   0.000000,   0.000000,   0.000000,
+			     0.000000,   0.000000,   0.000000,   0.000000,   0.000000,   0.000000,
+			    -0.015744,   0.013074,   0.000000,   0.000000,   0.000000,   0.039543
+			  };
+
+			  CovarianceOptions options = ce2.new CovarianceOptions();
+			  options.algorithm_type = CovarianceAlgorithmType.DENSE_SVD;
+			  options.null_space_rank = -1;
+			  ComputeAndCompareCovarianceBlocks(options, expected_covariance,passed);
+			  if (passed[0]) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
+
 
 }
