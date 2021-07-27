@@ -119,10 +119,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private int aif_nSlice = -1;
 
 	// Dimension of the semimajor axis for the search area
-	private double aif_semiMajorAxis = 0.35;
+	private double aif_semiMajorAxis = 0.40;
 
-	// Dimension of the semiminor axis for the search area
-	private double aif_semiMinorAxis = 0.15;
+	// Dimension of the semiminor axis upper search area above the x axis of the ellipse
+	private double aif_semiMinorAxisUpper = 0.20;
+	
+	// Dimension of the semiminor axis lower search area below the x axis of the ellipse
+	private double aif_semiMinorAxisLower = 0.30;
 
 	// Fraction of voxels discarded due to area under curve
 	private double aif_pArea = 0.4;
@@ -1803,7 +1806,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// 3.) Apply the hierarchical cluster algorithm to locate arterial voxels
 		// 4.) Prepare the output
 		double semiMajorAxis;
-		double semiMinorAxis;
+		double semiMinorAxisUpper;
+		double semiMinorAxisLower;
 		double pArea;
 		double pTTP;
 		double pReg;
@@ -1824,7 +1828,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		int maxC = nC - 1;
 		int maskSum;
 		double center[] = new double[2];
-		double semiAxisA;
+		double semiAxisAUpper;
+		double semiAxisALower;
 		double semiAxisB;
 		byte ROI[][] = new byte[nC][nR];
 		double rdiff;
@@ -1868,7 +1873,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 		// Preparation of accessory variables and parameters
 		semiMajorAxis = aif_semiMajorAxis;
-		semiMinorAxis = aif_semiMinorAxis;
+		semiMinorAxisUpper = aif_semiMinorAxisUpper;
+		semiMinorAxisLower = aif_semiMinorAxisLower;
 		pArea = aif_pArea;
 		pTTP = aif_pTTP;
 		pReg = aif_pReg;
@@ -2052,13 +2058,21 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// The semimajor axis. Along the anterior-posterior direction and then from
 		// left to right on the image.
 		semiAxisB = semiMajorAxis * (maxC - minC);
-		semiAxisA = semiMinorAxis * (maxR - minR);
+		semiAxisAUpper = semiMinorAxisUpper * (maxR - minR);
+		semiAxisALower = semiMinorAxisLower * (maxR - minR);
 		for (r = 0; r < nR; r++) {
 			for (c = 0; c < nC; c++) {
 				rdiff = r - center[1];
 				cdiff = c - center[0];
-				if (((rdiff * rdiff) / (semiAxisA * semiAxisA) + (cdiff * cdiff) / (semiAxisB * semiAxisB)) <= 1.0) {
-					ROI[c][r] = 1;
+				if (r <= center[1]) {
+					if (((rdiff * rdiff) / (semiAxisAUpper * semiAxisAUpper) + (cdiff * cdiff) / (semiAxisB * semiAxisB)) <= 1.0) {
+						ROI[c][r] = 1;
+					}
+			    }
+				else {
+					if (((rdiff * rdiff) / (semiAxisALower * semiAxisALower) + (cdiff * cdiff) / (semiAxisB * semiAxisB)) <= 1.0) {
+						ROI[c][r] = 1;
+					}
 				}
 			}
 		}
@@ -2080,14 +2094,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		yROI = new double[2 * nL];
 		for (k = 0; k < nL; k++) {
 			diffX = xROI[k] - center[0];
-			yROI[k] = semiAxisA * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
+			yROI[k] = semiAxisALower * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
 					+ center[1];
 		}
 		for (k = 1; k <= nL; k++) {
 			xROI[nL + k - 1] = xROI[nL - k];
 
 		    diffX = xROI[nL + k -1] - center[0];
-		    yROI[nL + k - 1] = -semiAxisA * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
+		    yROI[nL + k - 1] = -semiAxisAUpper * (Math.sqrt(Math.max(0.0, (1 - (diffX * diffX) / (semiAxisB * semiAxisB)))))
 				+ center[1];
 		}
 
