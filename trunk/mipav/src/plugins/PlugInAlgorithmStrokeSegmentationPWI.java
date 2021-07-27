@@ -146,6 +146,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private boolean doPerfusionSymmetryRemoval = true;
     private int minPerfusionObjectSize = 100;
     
+    private boolean doCorrmapSymmetryRemoval = true;
+    private int minCorrmapObjectSize = 100;
+    
     private float corrmapMaskThreshold = 0.5f;
 
     private ModelImage lastCoreImg = null;
@@ -533,17 +536,20 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 if (doPwiCalculateCorrelation) {
                     ModelImage corrmapImage = tspAlgo.getCorrmapImage();
                     
-                    ModelImage regCorrmapImage = transformImage(corrmapImage, adcImage, tmaxToAdcTransform);
+                    //ModelImage regCorrmapImage = transformImage(corrmapImage, adcImage, tmaxToAdcTransform);
+                    ModelImage unregCoreImgForCorrmap = transformImage(coreImgForCorrmap, TmaxUnregImage, adcToTmaxTransform);
                     
                     // generate mask starting from core, growing outwards to connected voxels < threshold (default .5), inside of dwi brain mask
-                    ModelImage corrmapMask = getCorrmapMask(regCorrmapImage, skullMaskImg, coreImgForCorrmap, corrmapMaskThreshold);
+                    ModelImage corrmapMask = getCorrmapMask(corrmapImage, unregSkullMaskImg, unregVentrImg, unregCoreImgForCorrmap, corrmapMaskThreshold);
+                    
+                    cleanupMask(corrmapMask, doCorrmapSymmetryRemoval, minCorrmapObjectSize);
                     
                     if (coreImgForCorrmap != null) {
                         coreImgForCorrmap.disposeLocal();
                         coreImgForCorrmap = null;
                     }
                     
-                    corrmapLightbox = generateLightbox(regCorrmapImage, corrmapMask, coreLightboxColor, lightboxOpacity, false);
+                    corrmapLightbox = generateLightbox(corrmapImage, corrmapMask, coreLightboxColor, lightboxOpacity, false);
                     
                     File lightboxCorrmap = saveImageFile(corrmapLightbox, coreOutputDir, outputBasename + "_corrmap_lightbox", FileUtility.PNG, false);
                     
@@ -556,9 +562,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         lightboxObjectTable.put(lightboxCorrmap, maskList);
                     }
                     
-                    if (regCorrmapImage != null) {
-                        regCorrmapImage.disposeLocal();
-                        regCorrmapImage = null;
+                    if (unregCoreImgForCorrmap != null) {
+                        unregCoreImgForCorrmap.disposeLocal();
+                        unregCoreImgForCorrmap = null;
                     }
                 }
             }
@@ -2778,6 +2784,18 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             short[] processBuffer = new short[volLength];
     
             MaskObject[] objects = findObjects(maskImg, maskBuffer, processBuffer, minObjSize, 10000000);
+            
+//            ModelImage testImg = (ModelImage) maskImg.clone("corrmap_cleaned_mask_obj");
+//            try {
+//                testImg.importData(0, processBuffer, true);
+//            } catch (IOException error) {
+//                maskBuffer = null;
+//                displayError("Error on mask cleanup importData");
+//                setCompleted(false);
+//            }
+//            saveImageFile(maskImg, coreOutputDir, outputBasename + "_corrmap_cleaned_mask_obj", FileUtility.XML);
+//            testImg.disposeLocal();
+//            testImg = null;
     
             if (objects.length > 0) {
                 for (int i = 0; i < processBuffer.length; i++) {
@@ -2825,7 +2843,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 setCompleted(false);
             }
             
-            saveImageFile(maskImg, coreOutputDir, outputBasename + "_mask_cleanup_removed", FileUtility.XML);
+            saveImageFile(maskImg, coreOutputDir, outputBasename + maskImg.getImageName() + "_mask_cleanup_removed", FileUtility.XML);
             removedBuffer = null;
             
             if (maskBuffer != null) {
@@ -2839,7 +2857,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
         }
         
-        saveImageFile(maskImg, coreOutputDir, outputBasename + "_mask_cleaned", FileUtility.XML);
+        saveImageFile(maskImg, coreOutputDir, outputBasename + maskImg.getImageName() + "_mask_cleaned", FileUtility.XML);
     }
     
     private static final Color mapTmaxColor(final int tmaxVal) {
@@ -2856,7 +2874,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
     }
     
-    private ModelImage getCorrmapMask(ModelImage regCorrmapImg, ModelImage skullMaskImg, ModelImage coreImg, float corrmapMaskThreshold) {
+    private ModelImage getCorrmapMask(ModelImage regCorrmapImg, ModelImage skullMaskImg, ModelImage ventricleMaskImg, ModelImage coreImg, float corrmapMaskThreshold) {
         ModelImage regCorrmapMask = (ModelImage) coreImg.clone("corrmap_mask");
         
         int volLength = regCorrmapMask.getVolumeSize();
@@ -2868,7 +2886,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         // start with mask within skull and lower than corrmap threshold
         for (int i = 0; i < volLength; i++) {
-            if (skullMaskImg.getInt(i) != 0 && regCorrmapImg.getFloat(i) <= corrmapMaskThreshold) {
+            if (skullMaskImg.getBoolean(i) == true && ventricleMaskImg.getBoolean(i) == true && regCorrmapImg.getFloat(i) <= corrmapMaskThreshold) {
                 regCorrmapMask.set(i, 1);
             } else {
                 regCorrmapMask.set(i, 0);
