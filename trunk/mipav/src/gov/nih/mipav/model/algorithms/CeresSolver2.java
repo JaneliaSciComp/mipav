@@ -3499,6 +3499,113 @@ public class CeresSolver2 extends CeresSolver {
 
     }
 	  
+	// Find the connected component for a vertex implemented using the
+	// find and update operation for disjoint-set. Recursively traverse
+	// the disjoint set structure till you reach a vertex whose connected
+	// component has the same id as the vertex itself. Along the way
+	// update the connected components of all the vertices. This updating
+	// is what gives this data structure its efficiency.
+	public <Vertex> Vertex FindConnectedComponent(Vertex vertex,
+	                              HashMap<Vertex, Vertex> union_find) {
+	  Vertex second = union_find.get(vertex);
+	  if (second == null) {
+		  System.err.println("Null value for vertex key in FindConnectedComponent");
+		  return null;
+	  }
+	  if (second != vertex) {
+	    second = FindConnectedComponent(second, union_find);
+	  }
+
+	  return second;
+	}
+	
+	class SingleLinkageClusteringOptions {
+		   // Graph edges with edge weight less than min_similarity are ignored
+		  // during the clustering process.
+		  public double min_similarity;
+		  public SingleLinkageClusteringOptions() {
+		      min_similarity = 0.99;
+		  }
+  
+	};
+	
+	// Compute a partitioning of the vertices of the graph using the
+	// single linkage clustering algorithm. Edges with weight less than
+	// SingleLinkageClusteringOptions::min_similarity will be ignored.
+	//
+	// membership upon return will contain a mapping from the vertices of
+	// the graph to an integer indicating the identity of the cluster that
+	// it belongs to.
+	//
+	// The return value of this function is the number of clusters
+	// identified by the algorithm.
+	public int ComputeSingleLinkageClustering(
+	    SingleLinkageClusteringOptions options,
+	    WeightedGraph<Integer> graph,
+	    HashMap<Integer, Integer> membership) {
+		if (membership  == null) {
+			System.err.println("HashMap<Integer, Integer> membership == null in ComputeSingleLinkageClustering");
+			return -1;
+		}
+		membership.clear();
+
+		  // Initially each vertex is in its own cluster.
+		  final HashSet<Integer> vertices = graph.vertices();
+		  Iterator<Integer> it = vertices.iterator();
+		  while (it.hasNext()) {
+			  Integer IntNext = it.next();
+		      membership.put(IntNext, IntNext);
+		  }
+		  
+
+		  Iterator<Integer> it1 = vertices.iterator();
+		  while (it1.hasNext()) {
+			final int vertex1 = it1.next();
+		    final HashSet<Integer> neighbors = graph.Neighbors(vertex1);
+		    Iterator<Integer> it2 = neighbors.iterator();
+		    while (it2.hasNext()) {
+		      final int vertex2 = it2.next();
+
+		      // Since the graph is undirected, only pay attention to one side
+		      // of the edge and ignore weak edges.
+		      if ((vertex1 > vertex2) ||
+		          (graph.EdgeWeight(vertex1, vertex2) < options.min_similarity)) {
+		        continue;
+		      }
+
+		      // Use a union-find algorithm to keep track of the clusters.
+		      final int c1 = FindConnectedComponent(vertex1, membership);
+		      final int c2 = FindConnectedComponent(vertex2, membership);
+
+		      if (c1 == c2) {
+		        continue;
+		      }
+
+		      if (c1 < c2) {
+		        membership.put(c2,c1);
+		      } else {
+		        membership.put(c1,c2);
+		      }
+		    }
+		  }
+
+		  // Make sure that every vertex is connected directly to the vertex
+		  // identifying the cluster.
+		  int num_clusters = 0;
+		  Set<Integer> keySet = membership.keySet();
+		  Iterator<Integer> key_iterator = keySet.iterator();
+		  while (key_iterator.hasNext()) {
+			int nextKey = key_iterator.next();
+		    int nextValue = FindConnectedComponent(key_iterator.next(), membership);
+		    if (nextKey == nextValue) {
+		      ++num_clusters;
+		    }
+		  }
+
+		  return num_clusters;
+
+	}
+	  
 	  class indexIntegerdoubleArrayItem {
 		  private int index;
 		  private int row_begin;
