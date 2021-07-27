@@ -60,6 +60,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver2.CubicInterpolator;
 import gov.nih.mipav.model.algorithms.CeresSolver2.DynamicCompressedRowSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid1D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
+import gov.nih.mipav.model.algorithms.CeresSolver2.SingleLinkageClusteringOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrixRandomMatrixOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Triplet;
 import gov.nih.mipav.model.file.FileBase;
@@ -23443,5 +23444,205 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
 			}
 
+		public void SingleLinkageClusteringGraphHasTwoComponents() {
+			  // SingleLinkageClusteringGraphHasTwoComponents() passed all tests
+			  boolean passed = true;
+			  String testName = "SingleLinkageClusteringGraphHasTwoComponents()";
+			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+			  final int kNumVertices = 6;
+			  for (int i = 0; i < kNumVertices; ++i) {
+			    graph.AddVertex(i);
+			  }
+			  // Graph structure:
+			  //
+			  //  0-1-2-3 4-5
+			  graph.AddEdge(0, 1, 1.0);
+			  graph.AddEdge(1, 2, 1.0);
+			  graph.AddEdge(2, 3, 1.0);
+			  graph.AddEdge(4, 5, 1.0);
+
+			  SingleLinkageClusteringOptions options = ce2.new SingleLinkageClusteringOptions();
+			  HashMap<Integer, Integer> membership = new HashMap<Integer, Integer>();
+			  ce2.ComputeSingleLinkageClustering(options, graph, membership);
+			  if (membership.size() != kNumVertices) {
+				  System.err.println("In " + testName + " membership.size() != kNumVertices");
+				  System.err.println("membership.size() = " + membership.size());
+				  System.err.println("kNumVertices = " + kNumVertices);
+				  passed = false;
+			  }
+
+			  if (membership.get(1) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(1) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(1) = " + membership.get(1));
+				  passed = false;
+			  }
+			  if (membership.get(2) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(2) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(2) = " + membership.get(2));
+				  passed = false;
+			  }
+			  if (membership.get(3) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(3) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(3) = " + membership.get(3));
+				  passed = false;
+			  }
+			  if (membership.get(4) == membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(4) == membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(4) = " + membership.get(4));
+				  passed = false;
+			  }
+			  if (membership.get(5) == membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(5) == membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(5) = " + membership.get(5));
+				  passed = false;
+			  }
+			  if (membership.get(4) != membership.get(5)) {
+				  System.err.println("In " + testName + " membership.get(4) != membership.get(5)");
+				  System.err.println("membership.get(4) = " + membership.get(4));
+				  System.err.println("membership.get(5) = " + membership.get(5));
+				  passed = false;
+			  }
+			  
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+		}
+		
+		public void SingleLinkageClusteringComponentWithWeakLink() {
+			  // SingleLinkageClusteringComponentWithWeakLink() passed all tests
+			  boolean passed = true;
+			  String testName = "SingleLinkageClusteringComponentWithWeakLink()";
+			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+			  final int kNumVertices = 6;
+			  for (int i = 0; i < kNumVertices; ++i) {
+			    graph.AddVertex(i);
+			  }
+			  // Graph structure:
+			  //
+			  //  0-1-2-3 4-5
+			  graph.AddEdge(0, 1, 1.0);
+			  graph.AddEdge(1, 2, 1.0);
+			  graph.AddEdge(2, 3, 1.0);
+
+			  // This component should break up into two.
+			  graph.AddEdge(4, 5, 0.5);
+
+			  SingleLinkageClusteringOptions options = ce2.new SingleLinkageClusteringOptions();
+			  HashMap<Integer, Integer> membership = new HashMap<Integer, Integer>();
+			  ce2.ComputeSingleLinkageClustering(options, graph, membership);
+			  if (membership.size() != kNumVertices) {
+				  System.err.println("In " + testName + " membership.size() != kNumVertices");
+				  System.err.println("membership.size() = " + membership.size());
+				  System.err.println("kNumVertices = " + kNumVertices);
+				  passed = false;
+			  }
+
+			  if (membership.get(1) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(1) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(1) = " + membership.get(1));
+				  passed = false;
+			  }
+			  if (membership.get(2) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(2) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(2) = " + membership.get(2));
+				  passed = false;
+			  }
+			  if (membership.get(3) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(3) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(3) = " + membership.get(3));
+				  passed = false;
+			  }
+			  if (membership.get(4) == membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(4) == membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(4) = " + membership.get(4));
+				  passed = false;
+			  }
+			  if (membership.get(5) == membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(5) == membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(5) = " + membership.get(5));
+				  passed = false;
+			  }
+			  if (membership.get(4) == membership.get(5)) {
+				  System.err.println("In " + testName + " membership.get(4) == membership.get(5)");
+				  System.err.println("membership.get(4) = " + membership.get(4));
+				  System.err.println("membership.get(5) = " + membership.get(5));
+				  passed = false;
+			  }
+			  
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			  
+			}
+
+		public void SingleLinkageClusteringComponentWithWeakLinkAndStrongLink() {
+			  // SingleLinkageClusteringComponentWithWeakLinkAndStrongLink() passed all tests
+			  boolean passed = true;
+			  String testName = "SingleLinkageClusteringComponentWithWeakLinkAndStrongLink()";
+			  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+			  final int kNumVertices = 6;
+			  for (int i = 0; i < kNumVertices; ++i) {
+			    graph.AddVertex(i);
+			  }
+			  // Graph structure:
+			  //
+			  //  0-1-2-3 4-5
+			  graph.AddEdge(0, 1, 1.0);
+			  graph.AddEdge(1, 2, 1.0);
+			  graph.AddEdge(2, 3, 0.5);  // Weak link
+			  graph.AddEdge(0, 3, 1.0);
+
+			  // This component should break up into two.
+			  graph.AddEdge(4, 5, 1.0);
+
+			  SingleLinkageClusteringOptions options = ce2.new SingleLinkageClusteringOptions();
+			  HashMap<Integer, Integer> membership = new HashMap<Integer, Integer>();
+			  ce2.ComputeSingleLinkageClustering(options, graph, membership);
+			  if (membership.size() != kNumVertices) {
+				  System.err.println("In " + testName + " membership.size() != kNumVertices");
+				  System.err.println("membership.size() = " + membership.size());
+				  System.err.println("kNumVertices = " + kNumVertices);
+				  passed = false;
+			  }
+
+			  if (membership.get(1) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(1) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(1) = " + membership.get(1));
+				  passed = false;
+			  }
+			  if (membership.get(2) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(2) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(2) = " + membership.get(2));
+				  passed = false;
+			  }
+			  if (membership.get(3) != membership.get(0)) {
+				  System.err.println("In " + testName + " membership.get(3) != membership.get(0)");
+				  System.err.println("membership.get(0) = " + membership.get(0));
+				  System.err.println("membership.get(3) = " + membership.get(3));
+				  passed = false;
+			  }
+			  if (membership.get(4) != membership.get(5)) {
+				  System.err.println("In " + testName + " membership.get(4) != membership.get(5)");
+				  System.err.println("membership.get(4) = " + membership.get(4));
+				  System.err.println("membership.get(5) = " + membership.get(5));
+				  passed = false;
+			  }
+			  
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			}
 
 }
