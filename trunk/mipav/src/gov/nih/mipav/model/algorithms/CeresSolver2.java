@@ -3605,6 +3605,174 @@ public class CeresSolver2 extends CeresSolver {
 		  return num_clusters;
 
 	}
+	
+	// Compute a degree two constrained Maximum Spanning Tree/forest of
+	// the input graph. Caller owns the result.
+	//
+	// Finding degree 2 spanning tree of a graph is not always
+	// possible. For example a star graph, i.e. a graph with n-nodes
+	// where one node is connected to the other n-1 nodes does not have
+	// a any spanning trees of degree less than n-1.Even if such a tree
+	// exists, finding such a tree is NP-Hard.
+
+	// We get around both of these problems by using a greedy, degree
+	// constrained variant of Kruskal's algorithm. We start with a graph
+	// G_T with the same vertex set V as the input graph G(V,E) but an
+	// empty edge set. We then iterate over the edges of G in decreasing
+	// order of weight, adding them to G_T if doing so does not create a
+	// cycle in G_T} and the degree of all the vertices in G_T remains
+	// bounded by two. This O(|E|) algorithm results in a degree-2
+	// spanning forest, or a collection of linear paths that span the
+	// graph G.
+	public WeightedGraph<Integer> Degree2MaximumSpanningForest(WeightedGraph<Integer> graph) {
+	  int i;
+	  // Array of edges sorted in decreasing order of their weights.
+	  Vector<Pair<Double, Pair<Integer, Integer> > > weighted_edges = new Vector<Pair<Double, Pair<Integer, Integer>>>();
+	  WeightedGraph<Integer> forest = new WeightedGraph<Integer>();
+
+	  // Disjoint-set to keep track of the connected components in the
+	  // maximum spanning tree.
+	  HashMap<Integer, Integer> disjoint_set = new HashMap<Integer, Integer>();
+
+	  // Sort of the edges in the graph in decreasing order of their
+	  // weight. Also add the vertices of the graph to the Maximum
+	  // Spanning Tree graph and set each vertex to be its own connected
+	  // component in the disjoint_set structure.
+	  final HashSet<Integer> vertices = graph.vertices();
+	  Iterator<Integer> it = vertices.iterator();
+	  while (it.hasNext()) {
+	    final int vertex1 = it.next();
+	    forest.AddVertex(vertex1, graph.VertexWeight(vertex1));
+	    disjoint_set.put(vertex1,vertex1);
+
+	    final HashSet<Integer> neighbors = graph.Neighbors(vertex1);
+	    Iterator<Integer> it2 = neighbors.iterator();
+	    while (it2.hasNext()) {
+	      final int vertex2 = it2.next();
+	      if (vertex1 >= vertex2) {
+	        continue;
+	      }
+	      final double weight = graph.EdgeWeight(vertex1, vertex2);
+	      weighted_edges.add(
+	          new Pair<Double, Pair<Integer,Integer>>(weight, new Pair<Integer, Integer>(vertex1, vertex2)));
+	    }
+	  }
+
+	  // The elements of this vector, are pairs<edge_weight,
+	  // edge>. Sorting it using the reverse iterators gives us the edges
+	  // in decreasing order of edges.
+	  ArrayList <weighted_edgesItem> weList = new ArrayList<weighted_edgesItem>();
+	  for (i = 0; i < weighted_edges.size(); ++i) {
+		  weList.add(new weighted_edgesItem(i,weighted_edges.get(i).second.first.intValue(),
+				  weighted_edges.get(i).second.second.intValue(), weighted_edges.get(i).first));
+	  }
+	  Collections.sort(weList, new weighted_edgesComparator());
+	  weighted_edges.clear();
+	  for (i = 0; i < weighted_edges.size(); i++) {
+		  weighted_edges.add(new Pair<Double, Pair<Integer, Integer>>(weList.get(i).getWeight(), new Pair<Integer, Integer>(weList.get(i).getVertex1(),
+				  weList.get(i).getVertex2())));
+	  }
+
+	  // Greedily add edges to the spanning tree/forest as long as they do
+	  // not violate the degree/cycle constraint.
+	  for (i =0; i < weighted_edges.size(); ++i) {
+	    final Pair<Integer, Integer> edge = weighted_edges.get(i).second;
+	    final int vertex1 = edge.first;
+	    final int vertex2 = edge.second;
+
+	    // Check if either of the vertices are of degree 2 already, in
+	    // which case adding this edge will violate the degree 2
+	    // constraint.
+	    if ((forest.Neighbors(vertex1).size() == 2) ||
+	        (forest.Neighbors(vertex2).size() == 2)) {
+	      continue;
+	    }
+
+	    // Find the id of the connected component to which the two
+	    // vertices belong to. If the id is the same, it means that the
+	    // two of them are already connected to each other via some other
+	    // vertex, and adding this edge will create a cycle.
+	    int root1 = FindConnectedComponent(vertex1, disjoint_set);
+	    int root2 = FindConnectedComponent(vertex2, disjoint_set);
+
+	    if (root1 == root2) {
+	      continue;
+	    }
+
+	    // This edge can be added, add an edge in either direction with
+	    // the same weight as the original graph.
+	    final double edge_weight = graph.EdgeWeight(vertex1, vertex2);
+	    forest.AddEdge(vertex1, vertex2, edge_weight);
+	    forest.AddEdge(vertex2, vertex1, edge_weight);
+
+	    // Connected the two connected components by updating the
+	    // disjoint_set structure. Always connect the connected component
+	    // with the greater index with the connected component with the
+	    // smaller index. This should ensure shallower trees, for quicker
+	    // lookup.
+	    if (root2 < root1) {
+	      int temp = root1;
+	      root1 = root2;
+	      root2 = temp;
+	    }
+
+	    disjoint_set.put(root2,root1);
+	  }
+	  return forest;
+	}
+	
+	class weighted_edgesItem {
+		private int index;
+		private int vertex1;
+		private int vertex2;
+		private double weight;
+		
+		public weighted_edgesItem(int index, int vertex1, int vertex2, double weight) {
+			this.index = index;
+			this.vertex1 = vertex1;
+			this.vertex2 = vertex2;
+			this.weight = weight;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public int getVertex1() {
+			return vertex1;
+		}
+		
+		public int getVertex2() {
+		    return vertex2;	
+		}
+		
+		public double getWeight() {
+			return weight;
+		}
+	}
+	
+	class weighted_edgesComparator implements Comparator<weighted_edgesItem> {
+		// Reverse vertex order
+		public int compare(weighted_edgesItem o1, weighted_edgesItem o2) {
+			int firstVertex1 = o1.getVertex1();
+			int firstVertex2 = o1.getVertex2();
+			int secondVertex1 = o2.getVertex1();
+			int secondVertex2 = o2.getVertex2();
+			if (firstVertex1 < secondVertex1) {
+				return 1;
+			}
+			if (firstVertex1 > secondVertex1) {
+				return -1;
+			}
+			if (firstVertex2 < secondVertex2) {
+				return 1;
+			}
+			if (firstVertex2 > secondVertex2) {
+				return -1;
+			}
+			return 0;
+		}
+	}
 	  
 	  class indexIntegerdoubleArrayItem {
 		  private int index;
