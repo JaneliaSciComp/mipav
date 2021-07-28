@@ -23644,5 +23644,146 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				  System.out.println(testName + " passed all tests");
 			  }
 			}
+		
+		public void IndependentSetOrderingChain() {
+			  // IndependentSetOrderingChain() passed all tests
+			  boolean passed = true;
+			  String testName = "IndependentSetOrderingChain()";
+			  int i;
+			  Graph<Integer> graph = new Graph<Integer>();
+			  graph.AddVertex(0);
+			  graph.AddVertex(1);
+			  graph.AddVertex(2);
+			  graph.AddVertex(3);
+			  graph.AddVertex(4);
 
+			  graph.AddEdge(0, 1);
+			  graph.AddEdge(1, 2);
+			  graph.AddEdge(2, 3);
+			  graph.AddEdge(3, 4);
+
+			  // 0-1-2-3-4
+			  // 0, 2, 4 should be in the independent set.
+			  Vector<Integer> ordering = new Vector<Integer>();
+			  int independent_set_size = IndependentSetOrdering(graph, ordering);
+
+			  Vector<Integer> part = new Vector<Integer>();
+			  for (i = 0; i < 3; i++) {
+				  part.add(ordering.get(i));
+			  }
+			  Collections.sort(part);
+			  for (i = 0; i < 3; i++) {
+				  ordering.set(i, part.get(i));
+			  }
+			  part.clear();
+			  for (i = 3; i < ordering.size(); i++) {
+				  part.add(ordering.get(i));
+			  }
+			  Collections.sort(part);
+			  for (i = 3; i < ordering.size(); i++) {
+				  ordering.set(i, part.get(i-3));
+			  }
+
+			  if (independent_set_size != 3) {
+				  System.err.println("In " + testName + " independent_set_size = " + independent_set_size + " instead of the correct 3");
+				  passed = false;
+			  }
+			  if (ordering.size() != 5) {
+				  System.err.println("In " + testName + " ordering.size() = " + ordering.size() + " instead of the correct 5");
+				  passed = false;
+			  }
+			  if (ordering.get(0) != 0) {
+				  System.err.println("In " + testName + " ordering.get(0) = " + ordering.get(0) + " instead of the correct 0");
+				  passed = false;
+			  }
+			  if (ordering.get(1) != 2) {
+				  System.err.println("In " + testName + " ordering.get(1) = " + ordering.get(1) + " instead of the correct 2");
+				  passed = false;
+			  }
+			  if (ordering.get(2) != 4) {
+				  System.err.println("In " + testName + " ordering.get(2) = " + ordering.get(2) + " instead of the correct 4");
+				  passed = false;
+			  }
+			  if (ordering.get(3) != 1) {
+				  System.err.println("In " + testName + " ordering.get(3) = " + ordering.get(3) + " instead of the correct 1");
+				  passed = false;
+			  }
+			  if (ordering.get(4) != 3) {
+				  System.err.println("In " + testName + " ordering.get(4) = " + ordering.get(4) + " instead of the correct 3");
+				  passed = false;
+			  }
+			  
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+			  
+			}
+
+        public void IndependentSetOrderingStar() {
+        	  // IndependentSetOrderingStar() passed all tests
+        	  boolean passed = true;
+			  String testName = "IndependentSetOrderingStar()";
+			  int i;
+			  Graph<Integer> graph = new Graph<Integer>();
+        	  graph.AddVertex(0);
+        	  graph.AddVertex(1);
+        	  graph.AddVertex(2);
+        	  graph.AddVertex(3);
+        	  graph.AddVertex(4);
+
+        	  graph.AddEdge(0, 1);
+        	  graph.AddEdge(0, 2);
+        	  graph.AddEdge(0, 3);
+        	  graph.AddEdge(0, 4);
+
+        	  //      1
+        	  //      |
+        	  //    4-0-2
+        	  //      |
+        	  //      3
+        	  // 1, 2, 3, 4 should be in the independent set.
+        	  Vector<Integer> ordering = new Vector<Integer>();
+        	  int independent_set_size = IndependentSetOrdering(graph, ordering);
+        	  if (independent_set_size != 4) {
+				  System.err.println("In " + testName + " independent_set_size = " + independent_set_size + " instead of the correct 4");
+				  passed = false;
+			  }
+			  if (ordering.size() != 5) {
+				  System.err.println("In " + testName + " ordering.size() = " + ordering.size() + " instead of the correct 5");
+				  passed = false;
+			  }
+			  if (ordering.get(4) != 0) {
+				  System.err.println("In " + testName + " ordering.get(4) = " + ordering.get(4) + " instead of the correct 0");
+				  passed = false;
+			  }
+
+			  Vector<Integer> part = new Vector<Integer>();
+			  for (i = 0; i < 4; i++) {
+				  part.add(ordering.get(i));
+			  }
+			  Collections.sort(part);
+			  for (i = 0; i < 4; i++) {
+				  ordering.set(i, part.get(i));
+			  }
+			  if (ordering.get(0) != 1) {
+				  System.err.println("In " + testName + " ordering.get(0) = " + ordering.get(0) + " instead of the correct 1");
+				  passed = false;
+			  }
+			  if (ordering.get(1) != 2) {
+				  System.err.println("In " + testName + " ordering.get(1) = " + ordering.get(1) + " instead of the correct 2");
+				  passed = false;
+			  }
+			  if (ordering.get(2) != 3) {
+				  System.err.println("In " + testName + " ordering.get(2) = " + ordering.get(2) + " instead of the correct 3");
+				  passed = false;
+			  }
+			  if (ordering.get(3) != 4) {
+				  System.err.println("In " + testName + " ordering.get(3) = " + ordering.get(3) + " instead of the correct 4");
+				  passed = false;
+			  }
+
+			  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+        	}
 }
