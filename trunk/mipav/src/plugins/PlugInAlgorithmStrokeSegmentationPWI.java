@@ -2135,13 +2135,24 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         double TSP_threshold = 0.8;
         int TSP_iter = 4;
         double Psvd = 0.1;
-        boolean autoAIFCalculation = true;
+        // TODO changed for DSC
+        boolean autoAIFCalculation = false;
         boolean calculateBounds = false;
+        
+        boolean plotAIF = true;
+        boolean findAIFInfoWithDSCMRIToolbox = true;
+        int selectedAIFLowZSlice = 4;
+        int selectedAIFHighZSlice = 8;
+        boolean experimentalRAPIDAIF = false;
+        float edgeKernelSize = 0.5f;
+        boolean doN4MRIBiasFieldCorrection = false;
+        boolean saveOriginalData = false;
         
         int search = PlugInAlgorithmTSPAnalysis.ELSUNC_2D_SEARCH;
         
         tspAlgo = new PlugInAlgorithmTSPAnalysis(pwiImg, doPwiSpatialSmoothing, pwiSigmax, pwiSigmay, calculateMaskingThreshold, masking_threshold,
-                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, doPwiMultiThreading, search, doPwiCalculateCorrelation, doPwiCalculateCBFCBVMTT, calculateBounds);
+                TSP_threshold, TSP_iter, Psvd, autoAIFCalculation, plotAIF, doPwiMultiThreading, search, doPwiCalculateCorrelation, doPwiCalculateCBFCBVMTT, calculateBounds,
+                findAIFInfoWithDSCMRIToolbox, selectedAIFLowZSlice, selectedAIFHighZSlice, experimentalRAPIDAIF, edgeKernelSize, doN4MRIBiasFieldCorrection, saveOriginalData);
         
         tspAlgo.setSaveAllOutputs(doPwiSaveOutputs);
     	tspAlgo.setOutputFilePath(coreOutputDir);

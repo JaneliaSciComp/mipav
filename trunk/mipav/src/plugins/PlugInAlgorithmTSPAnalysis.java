@@ -257,8 +257,10 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 
 	public PlugInAlgorithmTSPAnalysis(ModelImage pwiImage, boolean spatialSmoothing, float sigmax, float sigmay,
 			boolean calculateMaskingThreshold, int masking_threshold, double TSP_threshold, int TSP_iter, double Psvd,
-			boolean autoAIFCalculation, boolean multiThreading, int search, boolean calculateCorrelation,
-			boolean calculateCBFCBVMTT, boolean calculateBounds) {
+			boolean autoAIFCalculation, boolean plotAIF, boolean multiThreading, int search, boolean calculateCorrelation,
+			boolean calculateCBFCBVMTT, boolean calculateBounds, boolean findAIFInfoWithDSCMRIToolbox, 
+			int selectedAIFLowZSlice, int selectedAIFHighZSlice, boolean experimentalAIF, float edgeKernelSize, 
+			boolean doN4MRIBiasFieldCorrection, boolean saveOriginalData) {
 		// super(resultImage, srcImg);
 		this.pwiImageFileDirectory = pwiImage.getImageDirectory();
 		this.pwiImage = pwiImage;
@@ -278,6 +280,16 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 		this.calculateCBFCBVMTT = calculateCBFCBVMTT;
 		this.calculateBounds = calculateBounds;
 		// this.fileNameBase = fileNameBase;
+		
+		this.plotAIF = plotAIF;
+		
+		this.findAIFInfoWithDSCMRIToolbox = findAIFInfoWithDSCMRIToolbox;
+        this.selectedAIFLowZSlice = selectedAIFLowZSlice;
+        this.selectedAIFHighZSlice = selectedAIFHighZSlice;
+        this.experimentalAIF = experimentalAIF;
+        this.edgeKernelSize = edgeKernelSize;
+        this.doN4MRIBiasFieldCorrection = doN4MRIBiasFieldCorrection;
+        this.saveOriginalData = saveOriginalData;
 	}
 
 	/**
