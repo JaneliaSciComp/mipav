@@ -400,7 +400,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         gbc.gridx = 1;
         lowZSliceText = new JTextField(10);
-        lowZSliceText.setText("7");
+        lowZSliceText.setText("4");
         lowZSliceText.setFont(serif12);
         lowZSliceText.setForeground(Color.black);
         lowZSliceText.setEnabled(false);
@@ -416,7 +416,7 @@ public class PlugInDialogTSPAnalysis extends JDialogStandaloneScriptablePlugin i
         
         gbc.gridx = 1;
         highZSliceText = new JTextField(10);
-        highZSliceText.setText("10");
+        highZSliceText.setText("8");
         highZSliceText.setFont(serif12);
         highZSliceText.setForeground(Color.black);
         highZSliceText.setEnabled(false);
