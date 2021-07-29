@@ -540,7 +540,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                     ModelImage unregCoreImgForCorrmap = transformImage(coreImgForCorrmap, TmaxUnregImage, adcToTmaxTransform);
                     
                     // generate mask starting from core, growing outwards to connected voxels < threshold (default .5), inside of dwi brain mask
-                    ModelImage corrmapMask = getCorrmapMask(corrmapImage, unregSkullMaskImg, unregVentrImg, unregCoreImgForCorrmap, corrmapMaskThreshold);
+                    ModelImage corrmapMask = getCorrmapMask(corrmapImage, unregSkullMaskImg, unregVentrImg, TmaxUnregImage, unregCoreImgForCorrmap, corrmapMaskThreshold);
                     
                     cleanupMask(corrmapMask, doCorrmapSymmetryRemoval, minCorrmapObjectSize);
                     
@@ -2885,19 +2885,21 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
     }
     
-    private ModelImage getCorrmapMask(ModelImage regCorrmapImg, ModelImage skullMaskImg, ModelImage ventricleMaskImg, ModelImage coreImg, float corrmapMaskThreshold) {
-        ModelImage regCorrmapMask = (ModelImage) coreImg.clone("corrmap_mask");
+    private ModelImage getCorrmapMask(ModelImage corrmapImg, ModelImage unregSkullMaskImg, ModelImage unregVentricleMaskImg, ModelImage unregTmaxImg, ModelImage unregCoreImg, float corrmapMaskThreshold) {
+        ModelImage regCorrmapMask = (ModelImage) unregCoreImg.clone("corrmap_mask");
         
         int volLength = regCorrmapMask.getVolumeSize();
         
         // TODO
-        saveImageFile(regCorrmapImg, coreOutputDir, outputBasename + "_corrmap_reg", FileUtility.XML);
+        saveImageFile(corrmapImg, coreOutputDir, outputBasename + "_corrmap_reg", FileUtility.XML);
         
-        // TODO generate mask starting from core, growing outwards to connected voxels < threshold (default .5), inside of dwi brain mask
+        // generate mask starting from core, growing outwards to connected voxels < threshold (default .5), inside of dwi brain mask
+        
+        // TODO maybe also limit corrmap area to be within areas w/ Tmax >= 2
         
         // start with mask within skull and lower than corrmap threshold
         for (int i = 0; i < volLength; i++) {
-            if (skullMaskImg.getBoolean(i) == true && ventricleMaskImg.getBoolean(i) == true && regCorrmapImg.getFloat(i) <= corrmapMaskThreshold) {
+            if (unregSkullMaskImg.getBoolean(i) == true && unregVentricleMaskImg.getBoolean(i) == true && unregTmaxImg.getInt(i) >= 2 && corrmapImg.getFloat(i) <= corrmapMaskThreshold) {
                 regCorrmapMask.set(i, 1);
             } else {
                 regCorrmapMask.set(i, 0);
@@ -2928,10 +2930,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         MaskObject[] objects = findObjects(regCorrmapMask, maskBuffer, processBuffer, 100, 10000000);
 
-        // TODO select object(s) that contain the voxels of coreImg != 0 and zero out all other objects
+        // select object(s) that contain the voxels of coreImg != 0 and zero out all other objects
         Vector<Short> objIdsWithCore = new Vector<Short>();
         for (int i = 0; i < volLength; i++) {
-            if (processBuffer[i] != 0 && !objIdsWithCore.contains(processBuffer[i]) && coreImg.getInt(i) != 0) {
+            if (processBuffer[i] != 0 && !objIdsWithCore.contains(processBuffer[i]) && unregCoreImg.getInt(i) != 0) {
                 objIdsWithCore.add(processBuffer[i]);
                 System.err.println("Corrmap id " + processBuffer[i]);
             }
