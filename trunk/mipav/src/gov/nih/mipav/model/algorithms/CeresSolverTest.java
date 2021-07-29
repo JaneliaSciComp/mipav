@@ -63,6 +63,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver2.Grid2D;
 import gov.nih.mipav.model.algorithms.CeresSolver2.SingleLinkageClusteringOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.CompressedRowSparseMatrixRandomMatrixOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver2.Triplet;
+import gov.nih.mipav.model.algorithms.CeresSolver2.VertexTotalOrderingInteger;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue2;
@@ -23785,5 +23786,240 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  if (passed) {
 				  System.out.println(testName + " passed all tests");
 			  }
+        }
+        
+        public void Degree2MaximumSpanningForestPreserveWeights() {
+        	  // Degree2MaximumSpanningForestPreserveWeights() passed all tests
+        	  boolean passed = true;
+			  String testName = "Degree2MaximumSpanningForestPreserveWeights()";
+        	  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+        	  graph.AddVertex(0, 1.0);
+        	  graph.AddVertex(1, 2.0);
+        	  graph.AddEdge(0, 1, 0.5);
+        	  graph.AddEdge(1, 0, 0.5);
+
+        	  WeightedGraph<Integer> forest = ce2.Degree2MaximumSpanningForest(graph);
+
+        	  final HashSet<Integer> vertices = forest.vertices();
+        	  if (vertices.size() != 2) {
+        		 System.err.println("In " + testName + " vertices.size() = " + vertices.size() + " instead of the correct 2");
+        		 passed = false;
+        	  }
+        	  if (forest.VertexWeight(0) != 1.0) {
+        		  System.err.println("In " + testName + " forest.VertexWeight(0) = " + forest.VertexWeight(0) + " instead of the correct 1.0");
+        		  passed = false;
+        	  }
+        	  if (forest.VertexWeight(1) != 2.0) {
+        		  System.err.println("In " + testName + " forest.VertexWeight(1) = " + forest.VertexWeight(1) + " instead of the correct 2.0");
+        		  passed = false;
+        	  }
+        	  if (forest.Neighbors(0).size() != 1) {
+        		  System.err.println("In " + testName + " forest.Neighbors(0).size() = " + forest.Neighbors(0).size() + " instead of the correct 1");
+        		  passed = false;
+        	  }
+        	  if (forest.EdgeWeight(0, 1) != 0.5) {
+        		  System.err.println("In " + testName + " forest.EdgeWeight(0, 1) = " + forest.EdgeWeight(0, 1) + " instead of the correct 0.5");
+        		  passed = false;
+        	  }
+        	  
+        	  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+        }
+        
+        public void Degree2MaximumSpanningForestStarGraph() {
+        	  // Degree2MaximumSpanningForestStarGraph() passed all tests
+        	  boolean passed = true;
+        	  String testName = "Degree2MaximumSpanningForestStarGraph()";
+        	  WeightedGraph<Integer> graph = new WeightedGraph<Integer>();
+        	  graph.AddVertex(0);
+        	  graph.AddVertex(1);
+        	  graph.AddVertex(2);
+        	  graph.AddVertex(3);
+        	  graph.AddVertex(4);
+
+        	  graph.AddEdge(0, 1, 1.0);
+        	  graph.AddEdge(0, 2, 2.0);
+        	  graph.AddEdge(0, 3, 3.0);
+        	  graph.AddEdge(0, 4, 4.0);
+
+        	  WeightedGraph<Integer> forest = ce2.Degree2MaximumSpanningForest(graph);
+        	  final HashSet<Integer> vertices = forest.vertices();
+        	  if (vertices.size() != 5) {
+         		 System.err.println("In " + testName + " vertices.size() = " + vertices.size() + " instead of the correct 5");
+         		 passed = false;
+         	  }
+
+        	  {
+        	    final HashSet<Integer> neighbors = forest.Neighbors(0);
+        	    if (neighbors.size() != 2) {
+          		  System.err.println("In " + testName + " neighbors.size() = " + neighbors.size() + " instead of the correct 2 for forest.Neighbors(0)");
+          		  passed = false;
+          	    }
+        	    if (!neighbors.contains(4)) {
+        	    	System.err.println("In " + testName + " neighbors.contains(4) == false for forest.Neighbors(0)");
+        	    	passed = false;
+        	    }
+        	    if (!neighbors.contains(3)) {
+        	    	System.err.println("In " + testName + " neighbors.contains(3) == false for forest.Neighbors(0)");
+        	    	passed = false;
+        	    }
+        	  }
+
+        	  {
+        	    final HashSet<Integer> neighbors = forest.Neighbors(3);
+        	    if (neighbors.size() != 1) {
+            		  System.err.println("In " + testName + " neighbors.size() = " + neighbors.size() + " instead of the correct 1 for forest.Neighbors(3)");
+            		  passed = false;
+            	    }
+          	    if (!neighbors.contains(0)) {
+          	    	System.err.println("In " + testName + " neighbors.contains(0) == false for forest.Neighbors(3)");
+          	    	passed = false;
+          	    }
+        	  }
+
+        	  {
+        	    final HashSet<Integer> neighbors = forest.Neighbors(4);
+        	    if (neighbors.size() != 1) {
+          		  System.err.println("In " + testName + " neighbors.size() = " + neighbors.size() + " instead of the correct 1 for forest.Neighbors(4)");
+          		  passed = false;
+          	    }
+        	    if (!neighbors.contains(0)) {
+        	    	System.err.println("In " + testName + " neighbors.contains(0) == false for forest.Neighbors(4)");
+        	    	passed = false;
+        	    }
+        	  }
+
+        	  {
+        	    final HashSet<Integer> neighbors = forest.Neighbors(1);
+    	        if (neighbors.size() != 0) {
+        		  System.err.println("In " + testName + " neighbors.size() = " + neighbors.size() + " instead of the correct 0 for forest.Neighbors(1)");
+        		  passed = false;
+        	    }
+        	  }
+
+        	  {
+        	    final HashSet<Integer> neighbors = forest.Neighbors(2);
+        	    if (neighbors.size() != 0) {
+          		  System.err.println("In " + testName + " neighbors.size() = " + neighbors.size() + " instead of the correct 0 for forest.Neighbors(2)");
+          		  passed = false;
+          	    }
+        	  }
+        	  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
         	}
+
+        public void VertexTotalOrderingTotalOrdering() {
+        	  // VertexTotalOrderingTotalOrdering() passed all tests
+        	  int i,j;
+        	  boolean passed = true;
+        	  String testName = "VertexTotalOrderingTotalOrdering()";
+        	  Graph<Integer> graph = new Graph<Integer>();
+        	  graph.AddVertex(0);
+        	  graph.AddVertex(1);
+        	  graph.AddVertex(2);
+        	  graph.AddVertex(3);
+
+        	  // 0-1
+        	  //   |
+        	  // 2-3
+        	  // 0,1 and 2 have degree 1 and 3 has degree 2.
+        	  graph.AddEdge(0, 1);
+        	  graph.AddEdge(2, 3);
+        	  VertexTotalOrderingInteger less_than = ce2.new VertexTotalOrderingInteger(graph);
+
+        	  for (i = 0; i < 4; ++i) {
+        	    if (less_than.operator(i, i)) {
+        	    	System.err.println("In " + testName + " Failing vertex: " + i);
+        	    	passed = false;
+        	    }
+        	    for (j = 0; j < 4; ++j) {
+        	      if (i != j) {
+        	        if (!(less_than.operator(i, j) || less_than.operator(j, i))) {
+        	           System.err.println("In " + testName + " Failing vertex pair: " + i + " " + j);
+        	           passed = false;
+        	        }
+        	      }
+        	    }
+        	  }
+
+        	  for (i = 0; i < 3; ++i) {
+        	    if (!less_than.operator(i, 3)) {
+        	    	System.err.println("In " + testName + " less_than.operator("+i+", 3) = false");
+        	    	passed = false;
+        	    }
+        	    if (less_than.operator(3, i)) {
+        	    	System.err.println("In " + testName + " less_than.operator(3, "+i+") = true");
+        	    	passed = false;
+        	    }
+        	  }
+        	  
+        	  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+        	}
+        
+        public void StableIndependentSetBreakTies() {
+        	  // StableIndependentSetBreakTies() passed all tests
+        	  boolean passed = true;
+        	  String testName = "StableIndependentSetBreakTies()";
+        	  Graph<Integer> graph = new Graph<Integer>();
+        	  graph.AddVertex(0);
+        	  graph.AddVertex(1);
+        	  graph.AddVertex(2);
+        	  graph.AddVertex(3);
+
+        	  graph.AddEdge(0, 1);
+        	  graph.AddEdge(0, 2);
+        	  graph.AddEdge(0, 3);
+        	  graph.AddEdge(1, 2);
+        	  graph.AddEdge(1, 3);
+        	  graph.AddEdge(2, 3);
+
+        	  // Since this is a completely connected graph, the independent set
+        	  // contains exactly one vertex. StableIndependentSetOrdering
+        	  // guarantees that it will always be the first vertex in the
+        	  // ordering vector.
+        	  {
+        	    Vector<Integer> ordering = new Vector<Integer>();
+        	    ordering.add(0);
+        	    ordering.add(1);
+        	    ordering.add(2);
+        	    ordering.add(3);
+        	    final int independent_set_size =
+        	        StableIndependentSetOrdering(graph, ordering);
+        	    if (independent_set_size != 1) {
+        	    	System.err.println("In " + testName + " independent_set_size = " + independent_set_size + " instead of the correct 1 for first ordering");
+        	    	passed = false;
+        	    }
+        	    if (ordering.get(0) != 0) {
+        	    	System.err.println("In " + testName + " ordering.get(0) = " + ordering.get(0) + " instead of the correct 0");
+        	    	passed = false;
+        	    }
+        	  }
+
+        	  {
+        	    Vector<Integer> ordering = new Vector<Integer>();
+        	    ordering.add(1);
+        	    ordering.add(0);
+        	    ordering.add(2);
+        	    ordering.add(3);
+        	    final int independent_set_size =
+        	        StableIndependentSetOrdering(graph, ordering);
+        	    if (independent_set_size != 1) {
+        	    	System.err.println("In " + testName + " independent_set_size = " + independent_set_size + " instead of the correct 1 for second ordering");
+        	    	passed = false;
+        	    }
+        	    if (ordering.get(0) != 1) {
+        	    	System.err.println("In " + testName + " ordering.get(0) = " + ordering.get(0) + " instead of the correct 1");
+        	    	passed = false;
+        	    }
+        	  }
+        	  if (passed) {
+				  System.out.println(testName + " passed all tests");
+			  }
+        	}
+
+
 }
