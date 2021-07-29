@@ -24021,5 +24021,219 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			  }
         	}
 
+     // Routine to check if ResidualBlock::Evaluate for unary CostFunction
+     // with one residual succeeds with true or dies.
+     public void CheckEvaluation(CostFunction cost_function, boolean is_good, String cost_functionName, boolean passed[]) {
+       double x[] = new double[] {1.0};
+       ParameterBlock parameter_block = new ParameterBlock(x, 1, -1);
+       Vector<ParameterBlock> parameter_blocks = new Vector<ParameterBlock>();
+       parameter_blocks.add(parameter_block);
+       ResidualBlock residual_block = new ResidualBlock(cost_function,
+                                    null,
+                                    parameter_blocks,
+                                    -1);
+
+       double scratch[] = 
+           new double[residual_block.NumScratchDoublesForEvaluate()];
+
+       double cost[] = new double[1];
+       double residuals[] = new double[1];
+       //double jacobian;
+       //double* jacobians[] = { &jacobian };
+       double jacobians[][] = new double[1][1];
+
+       if (residual_block.Evaluate(true,
+                                         cost,
+                                         residuals,
+                                         jacobians,
+                                         scratch) != is_good) {
+    	   System.err.println("For " + cost_functionName + " residual_block.Evaluate != " + is_good);
+    	   passed[0] = false;
+       }
+     }
+     
+  // A CostFunction that behaves normaly, i.e., it computes numerically
+  // valid residuals and jacobians.
+  class GoodCostFunction extends SizedCostFunction {
+	  public GoodCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      }
+
+      public boolean Evaluate(Vector<double[]> parameters,
+                          double[] residuals,
+                          double[][] jacobians) {
+	      residuals[0] = 1;
+	      if (jacobians != null && jacobians[0] != null) {
+	        jacobians[0][0] = 0.0;
+	      }
+	      return true;
+     }
+      
+      public boolean Evaluate(Vector<double[]> parameters,
+              double[] residuals,
+              double[][] jacobians, int jacobians_offset[]) {
+		residuals[0] = 1;
+		if (jacobians != null && jacobians[0] != null) {
+		jacobians[0][jacobians_offset[0]] = 0.0;
+		}
+		return true;
+	 }
+  };
+  
+		//The following four CostFunctions simulate the different ways in
+		//which user code can cause ResidualBlock::Evaluate to fail.
+		class NoResidualUpdateCostFunction extends SizedCostFunction {
+			public NoResidualUpdateCostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	        }
+			
+			public boolean Evaluate(Vector<double[]> parameters,
+                    double[] residuals,
+	                    double[][] jacobians) {
+				// Forget to update the residuals.
+			    //residuals[0] = 1;
+			    if (jacobians != null && jacobians[0] != null) {
+			      jacobians[0][0] = 0.0;
+			    }
+			    return true;
+		    }
+		
+		public boolean Evaluate(Vector<double[]> parameters,
+		        double[] residuals,
+		        double[][] jacobians, int jacobians_offset[]) {
+			// Forget to update the residuals.
+			//residuals[0] = 1;
+			if (jacobians != null && jacobians[0] != null) {
+			jacobians[0][jacobians_offset[0]] = 0.0;
+			}
+			return true;
+		}
+			 
+    };
+
+    class NoJacobianUpdateCostFunction extends SizedCostFunction {
+    	public NoJacobianUpdateCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+    	
+    	public boolean Evaluate(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians) {
+			residuals[0] = 1;
+			if (jacobians != null && jacobians[0] != null) {
+			  // Forget to update the jacobians
+			  // jacobians[0][0] = 0.0;
+			}
+			return true;
+		}
+			
+		public boolean Evaluate(Vector<double[]> parameters,
+			    double[] residuals,
+			    double[][] jacobians, int jacobians_offset[]) {
+			residuals[0] = 1;
+			if (jacobians != null && jacobians[0] != null) {
+				// Forget to update the jacobians
+			    // jacobians[0][jacobians_offset[0]] = 0.0;
+			}
+			return true;
+		}
+    	  
+    };
+
+    class BadResidualCostFunction extends SizedCostFunction {
+    	public BadResidualCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+    	
+    	public boolean Evaluate(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians) {
+			residuals[0] = Double.POSITIVE_INFINITY;
+			if (jacobians != null && jacobians[0] != null) {
+			  jacobians[0][0] = 0.0;
+			}
+			return true;
+		}
+			
+			public boolean Evaluate(Vector<double[]> parameters,
+			    double[] residuals,
+			    double[][] jacobians, int jacobians_offset[]) {
+			residuals[0] = Double.POSITIVE_INFINITY;
+			if (jacobians != null && jacobians[0] != null) {
+			jacobians[0][jacobians_offset[0]] = 0.0;
+			}
+			return true;
+		}
+    	 
+    };
+    
+    class BadJacobianCostFunction extends SizedCostFunction {
+    	public BadJacobianCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
+    	
+    	public boolean Evaluate(Vector<double[]> parameters,
+                double[] residuals,
+                double[][] jacobians) {
+			residuals[0] = 1;
+			if (jacobians != null && jacobians[0] != null) {
+			  jacobians[0][0] = Double.NaN;
+			}
+			return true;
+		}
+			
+			public boolean Evaluate(Vector<double[]> parameters,
+			    double[] residuals,
+			    double[][] jacobians, int jacobians_offset[]) {
+			residuals[0] = 1;
+			if (jacobians != null && jacobians[0] != null) {
+			jacobians[0][jacobians_offset[0]] = Double.NaN;
+			}
+			return true;
+		}
+    	  
+   };
+   
+		// Note: It is preferable to write the below test as:
+		//
+		//  CheckEvaluation(GoodCostFunction(), true);
+		//  CheckEvaluation(NoResidualUpdateCostFunction(), false);
+		//  CheckEvaluation(NoJacobianUpdateCostFunction(), false);
+		//  ...
+		//
+		// however, there is a bug in the version of GCC on Mac OS X we tested, which
+		// requires the objects get put into local variables instead of getting
+		// instantiated on the stack.
+		public void ResidualBlockUtilsCheckAllCombinationsOfBadness() {
+		  // ResidualBlockUtilsCheckAllCombinationsOfBadness() passed all tests
+		  boolean passed[] = new boolean[] {true};
+		  String testName = "ResidualBlockUtilsCheckAllCombinationsOfBadness()";
+		  GoodCostFunction good_fun = new GoodCostFunction();
+		  CheckEvaluation(good_fun, true, "good_fun", passed);
+		  NoResidualUpdateCostFunction no_residual = new NoResidualUpdateCostFunction();
+		  CheckEvaluation(no_residual, false, "no_residual", passed);
+		  NoJacobianUpdateCostFunction no_jacobian = new NoJacobianUpdateCostFunction();
+		  CheckEvaluation(no_jacobian, false, "no_jacobian", passed);
+		  BadResidualCostFunction bad_residual = new BadResidualCostFunction();
+		  CheckEvaluation(bad_residual, false, "bad_residual", passed);
+		  BadJacobianCostFunction bad_jacobian = new BadJacobianCostFunction();
+		  CheckEvaluation(bad_jacobian, false, "bad_jacobian", passed);
+		  
+		  if (passed[0]) {
+			  System.out.println(testName + " passed all tests");
+		  }
+		}
+
+
 
 }
