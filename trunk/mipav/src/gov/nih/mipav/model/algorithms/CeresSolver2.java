@@ -3668,7 +3668,7 @@ public class CeresSolver2 extends CeresSolver {
 	  }
 	  Collections.sort(weList, new weighted_edgesComparator());
 	  weighted_edges.clear();
-	  for (i = 0; i < weighted_edges.size(); i++) {
+	  for (i = 0; i < weList.size(); i++) {
 		  weighted_edges.add(new Pair<Double, Pair<Integer, Integer>>(weList.get(i).getWeight(), new Pair<Integer, Integer>(weList.get(i).getVertex1(),
 				  weList.get(i).getVertex2())));
 	  }
