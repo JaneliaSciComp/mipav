@@ -3721,6 +3721,23 @@ public class CeresSolver2 extends CeresSolver {
 	  return forest;
 	}
 	
+	// Compare two vertices of a graph by their degrees, if the degrees
+	// are equal then order them by their ids.
+	class VertexTotalOrderingInteger {
+	  private Graph<Integer> graph_;
+	  public VertexTotalOrderingInteger(Graph<Integer> graph) {
+	      graph_ = graph; 
+	  }
+
+	  public boolean operator(int lhs, int rhs) {
+	    if (graph_.Neighbors(lhs).size() == graph_.Neighbors(rhs).size()) {
+	      return lhs < rhs;
+	    }
+	    return graph_.Neighbors(lhs).size() < graph_.Neighbors(rhs).size();
+	  }
+
+	};
+	
 	class weighted_edgesItem {
 		private int index;
 		private int vertex1;
