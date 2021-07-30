@@ -66,6 +66,7 @@ import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
+import gov.nih.mipav.model.algorithms.AlgorithmKMeans;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.algorithms.DSC_MRI_toolbox;
 import gov.nih.mipav.model.algorithms.NLConstrainedEngine;
@@ -203,8 +204,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	
 	private boolean findAVInfo = false;
     private boolean findAIFInfoWithDSCMRIToolbox = false;
-    private int selectedAIFLowZSlice = 7;
-    private int selectedAIFHighZSlice = 10;
+    private int selectedAIFLowZSlice = 4;
+    private int selectedAIFHighZSlice = 8;
 
 	private String caseString = "EVTcase24_no_time_averaging.txt";
 	private int ax = 108;
@@ -817,6 +818,47 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		int numberZSlices = selectedAIFHighZSlice - selectedAIFLowZSlice + 1;
     		AIF_voxels = new int[numberZSlices][][];
     		double volumes[][][][] = new double[xDim][yDim][1][tDim];
+    		AlgorithmKMeans kMeansAlgo;
+    		ModelImage kMeansImage = null;
+    		int algoSelection = AlgorithmKMeans.K_MEANS;
+    		int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+    		// First subscript x = 0, y = 1
+    	    // Second subscript 0 to nPoints-1 for each point
+    	    // Value is the point position
+    		double[][] pos;
+    		// Take resolutions from any black and white image.
+    	    // Use 1.0 in every dimension if not scaled or if colored image.
+    	    // Subscript goes from 0 to nDims - 1 for black and white
+    		// and for 0 to 1 for color.
+    	    double scaleKMeans[] = new double[] {1.0,1.0};
+    	    // subscript goes from 0 to nPoints-1 for each point
+    	    // Value is the cluster number from 0 to numberClusters-1.
+    	    int[] groupNum;
+    	    // subscript goes form 0 to nPoints-1 for each point
+    		// Value is the weight or number of occurrences of each point
+    		double[] weight;
+    		int nClusters = 2;
+    		// First subscript x = 0, y = 1
+    	    // Second subscript 0 to numberClusters-1 for each cluster
+    	    // Value is the cluster position
+    	    double[][] centroidPos = new double[2][nClusters];
+    	    // String resultsFileName = outputFilePath + outputPrefix + "kmeans.txt";
+    		String resultsFileName = null;
+    		int initSelection = AlgorithmKMeans.HIERARCHICAL_GROUPING_INIT;
+    		float redBuffer[] = null;
+    		float greenBuffer[] = null;
+    		float blueBuffer[] = null;
+    		double scaleMax = 255.0;
+    		boolean useColorHistogram = false;
+    		boolean scaleVariablesToUnitVariance = false;
+    		double axesRatio[] = null;
+    		boolean bwSegmentedImage = false;
+    		double doubleBuffer[] = null;
+    		boolean showKMeansSegmentedImage = false;
+    		boolean followBatchWithIncremental = false;
+    		// If true, three dimensional color segmenting in RGB. If false, two dimensional
+    		// color segmenting in CIELAB
+    		boolean colorSegmentInRGB = false;
     		for (z = selectedAIFLowZSlice; z <= selectedAIFHighZSlice; z++) {
 	    		for (t = 0; t < tDim; t++) {
 					for (y = 0; y < yDim; y++) {
@@ -833,8 +875,106 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    			setCompleted(false);
 	    			return;
 	    		}
-	    		System.out.println("Number of AIF voxels for z = " + z + " is "+ AIF_voxels[z-selectedAIFLowZSlice].length);
-	    		for (i = 0; i < AIF_voxels[z-selectedAIFLowZSlice].length; i++) {
+	    		int numVoxels = AIF_voxels[z-selectedAIFLowZSlice].length;
+	    		System.out.println("Number of AIF voxels for z = " + z + " is "+ numVoxels);
+	    		for (i = 0; i < numVoxels; i++) {
+	    			System.out.println("Voxel " + (i+1) + " x = " + AIF_voxels[z-selectedAIFLowZSlice][i][0] 
+	    					+ " y = " + AIF_voxels[z-selectedAIFLowZSlice][i][1] + " z = " + z);
+	    		}
+	    		pos = new double[2][numVoxels];
+	    		groupNum = new int[numVoxels];
+	    		weight = new double[numVoxels];
+	    		for (i = 0; i < numVoxels; i++) {
+	    			pos[0][i] = AIF_voxels[z-selectedAIFLowZSlice][i][0];
+	    			pos[1][i] = AIF_voxels[z-selectedAIFLowZSlice][i][1];
+	    			weight[i] = 1.0;
+	    		}
+	    		kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos, scaleKMeans, groupNum,
+						weight, centroidPos, resultsFileName, initSelection, redBuffer, greenBuffer, blueBuffer, scaleMax,
+						useColorHistogram, scaleVariablesToUnitVariance, axesRatio, bwSegmentedImage, doubleBuffer,
+						showKMeansSegmentedImage, followBatchWithIncremental, colorSegmentInRGB);
+				kMeansAlgo.run();
+				kMeansAlgo.finalize();
+				kMeansAlgo = null;
+				int numberThreshold = (int)Math.ceil(2.0*numVoxels/3.0);
+				int cluster0Number = 0;
+				int cluster1Number = 0;
+				for (i = 0; i < numVoxels; i++) {
+					if (groupNum[i] == 0) {
+						cluster0Number++;
+					}
+					else {
+						cluster1Number++;
+					}
+				}
+				if (cluster0Number >= numberThreshold) {
+					// Take the voxels from cluster 0
+					AIF_voxels[z-selectedAIFLowZSlice] = new int[cluster0Number][2];
+					for (i = 0, j = 0; i < numVoxels; i++) {
+						if (groupNum[i] == 0) {
+							AIF_voxels[z-selectedAIFLowZSlice][j][0] = (int)Math.round(pos[0][i]);
+							AIF_voxels[z-selectedAIFLowZSlice][j++][1] = (int)Math.round(pos[1][i]);
+						}
+					}
+				}
+				else if (cluster1Number >= numberThreshold) {
+					// Take the voxels from cluster 1
+					AIF_voxels[z-selectedAIFLowZSlice] = new int[cluster1Number][2];
+					for (i = 0, j = 0; i < numVoxels; i++) {
+						if (groupNum[i] == 1) {
+							AIF_voxels[z-selectedAIFLowZSlice][j][0] = (int)Math.round(pos[0][i]);
+							AIF_voxels[z-selectedAIFLowZSlice][j++][1] = (int)Math.round(pos[1][i]);
+						}
+					}
+				}
+				else {
+					double diffX;
+					double diffY;
+					double distance;
+					double sum0Distance = 0.0;
+					double sum1Distance = 0.0;
+					double average0Distance;
+					double average1Distance;
+					for (i = 0; i < numVoxels; i++) {
+						if (groupNum[i] == 0) {
+							diffX = pos[0][i] - centroidPos[0][0];
+							diffY = pos[1][i] - centroidPos[1][0];
+							distance = Math.sqrt(diffX*diffX + diffY*diffY);
+							sum0Distance += distance;
+						}
+						else {
+							diffX = pos[0][i] - centroidPos[0][1];
+							diffY = pos[1][i] - centroidPos[1][1];
+							distance = Math.sqrt(diffX*diffX + diffY*diffY);
+							sum1Distance += distance;
+						}
+					}
+					average0Distance = sum0Distance/cluster0Number;
+					average1Distance = sum1Distance/cluster1Number;
+					if (average0Distance < average1Distance) {
+						// Take the voxels from cluster 0
+						AIF_voxels[z-selectedAIFLowZSlice] = new int[cluster0Number][2];
+						for (i = 0, j = 0; i < numVoxels; i++) {
+							if (groupNum[i] == 0) {
+								AIF_voxels[z-selectedAIFLowZSlice][j][0] = (int)Math.round(pos[0][i]);
+								AIF_voxels[z-selectedAIFLowZSlice][j++][1] = (int)Math.round(pos[1][i]);
+							}
+						}	
+					}
+					else {
+						// Take the voxels from cluster 1
+						AIF_voxels[z-selectedAIFLowZSlice] = new int[cluster1Number][2];
+						for (i = 0, j = 0; i < numVoxels; i++) {
+							if (groupNum[i] == 1) {
+								AIF_voxels[z-selectedAIFLowZSlice][j][0] = (int)Math.round(pos[0][i]);
+								AIF_voxels[z-selectedAIFLowZSlice][j++][1] = (int)Math.round(pos[1][i]);
+							}
+						}
+					}
+				} // else no cluster had >= numberThreshold
+				numVoxels = AIF_voxels[z-selectedAIFLowZSlice].length;
+	    		System.out.println("Number of AIF voxels for z = " + z + " after selecting 1 of 2 clusters is "+ numVoxels);
+	    		for (i = 0; i < numVoxels; i++) {
 	    			System.out.println("Voxel " + (i+1) + " x = " + AIF_voxels[z-selectedAIFLowZSlice][i][0] 
 	    					+ " y = " + AIF_voxels[z-selectedAIFLowZSlice][i][1] + " z = " + z);
 	    		}
