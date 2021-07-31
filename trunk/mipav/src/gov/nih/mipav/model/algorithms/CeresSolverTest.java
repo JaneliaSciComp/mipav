@@ -33,6 +33,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.CompressedRowBlockStructure;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunctorExample;
 import gov.nih.mipav.model.algorithms.CeresSolver.CurveFittingFunctorExample;
+import gov.nih.mipav.model.algorithms.CeresSolver.EasyFunctor;
 import gov.nih.mipav.model.algorithms.CeresSolver.EvaluateOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblem;
@@ -24234,6 +24235,123 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		}
 
+		
+			  
+		  class PowellsFunction extends SizedCostFunction {
+				 public PowellsFunction() {
+					 // number of residuals
+					 // size of first parameter
+					 super(4,1,1,1,1,0,0,0,0,0,0);
+				 }
+				 public boolean Evaluate(Vector<double[]> parameters,
+				                        double[] residuals,
+				                        double[][] jacobian){
+				    double x0 = parameters.get(0)[0];
+				    double x1 = parameters.get(1)[0];
+				    double x2 = parameters.get(2)[0];
+				    double x3 = parameters.get(3)[0];
+				    residuals[0] = x0 + 10.0*x1;
+				    residuals[1] = Math.sqrt(5.0) * (x2 - x3);
+				    residuals[2] = (x1 - 2.0 * x2) * (x1 - 2.0 * x2);
+                    residuals[3] = Math.sqrt(10.0)*(x0 - x3)*(x0 - x3);
+                    if (jacobian != null) {
+                    	jacobian[0][0] = 1.0;
+            		    jacobian[0][1] = 10.0;
+            		    jacobian[0][2] = 0.0;
+            		    jacobian[0][3] = 0.0;
+            		    jacobian[1][0] = 0.0;
+            		    jacobian[1][1] = 0.0;
+            		    jacobian[1][2] = Math.sqrt(5.0);
+            		    jacobian[1][3] = -Math.sqrt(5.0);
+            		    jacobian[2][0] = 0.0;
+            		    jacobian[2][1] = 2.0*x1 - 4.0*x2;
+            		    jacobian[2][2] = 8.0*x2 - 4.0*x1;
+            		    jacobian[2][3] = 0.0;
+            		    jacobian[3][0] = 2.0*Math.sqrt(10.0)*x0 - 2.0*Math.sqrt(10.0)*x3;
+            		    jacobian[3][1] = 0.0;
+            		    jacobian[3][2] = 0.0;
+            		    jacobian[3][3] = 2.0*Math.sqrt(10.0)*x3 - 2.0*Math.sqrt(10.0)*x0;
+                    }
+                    return true;
+				 }
+				 
+				 public boolean Evaluate(Vector<double[]> parameters,
+	                        double[] residuals,
+	                        double[][] jacobian, int jacobians_offset[]){
+					    double x0 = parameters.get(0)[0];
+					    double x1 = parameters.get(1)[0];
+					    double x2 = parameters.get(2)[0];
+					    double x3 = parameters.get(3)[0];
+					    residuals[0] = x0 + 10.0*x1;
+					    residuals[1] = Math.sqrt(5.0) * (x2 - x3);
+					    residuals[2] = (x1 - 2.0 * x2) * (x1 - 2.0 * x2);
+				        residuals[3] = Math.sqrt(10.0)*(x0 - x3)*(x0 - x3);
+				        if (jacobian != null) {
+				     	    jacobian[0][jacobians_offset[0]] = 1.0;
+						    jacobian[0][jacobians_offset[0]+1] = 10.0;
+						    jacobian[0][jacobians_offset[0]+2] = 0.0;
+						    jacobian[0][jacobians_offset[0]+3] = 0.0;
+						    jacobian[1][jacobians_offset[1]] = 0.0;
+						    jacobian[1][jacobians_offset[1]+1] = 0.0;
+						    jacobian[1][jacobians_offset[1]+2] = Math.sqrt(5.0);
+						    jacobian[1][jacobians_offset[1]+3] = -Math.sqrt(5.0);
+						    jacobian[2][jacobians_offset[2]] = 0.0;
+						    jacobian[2][jacobians_offset[2]+1] = 2.0*x1 - 4.0*x2;
+						    jacobian[2][jacobians_offset[2]+2] = 8.0*x2 - 4.0*x1;
+						    jacobian[2][jacobians_offset[2]+3] = 0.0;
+						    jacobian[3][jacobians_offset[3]] = 2.0*Math.sqrt(10.0)*x0 - 2.0*Math.sqrt(10.0)*x3;
+						    jacobian[3][jacobians_offset[3]+1] = 0.0;
+						    jacobian[3][jacobians_offset[3]+2] = 0.0;
+						    jacobian[3][jacobians_offset[3]+3] = 2.0*Math.sqrt(10.0)*x3 - 2.0*Math.sqrt(10.0)*x0;
+				     }
+				     return true;
+				}
+
+			};
+			
+			public void runPowellsFunctionExample() {
+				// From system_test.cc
+				// This class implements the SystemTestProblem interface and provides
+				// access to an implementation of Powell's singular function.
+				//
+				//   F = 1/2 (f1^2 + f2^2 + f3^2 + f4^2)
+				//
+				//   f1 = x1 + 10*x2;
+				//   f2 = sqrt(5) * (x3 - x4)
+				//   f3 = (x2 - 2*x3)^2
+				//   f4 = sqrt(10) * (x1 - x4)^2
+				//
+				// The starting values are x1 = 3, x2 = -1, x3 = 0, x4 = 1.
+				// The minimum is 0 at (x1, x2, x3, x4) = 0.
+				//
+				// From: Testing Unconstrained Optimization Software by Jorge J. More, Burton S.
+				// Garbow and Kenneth E. Hillstrom in ACM Transactions on Mathematical Software,
+				// Vol 7(1), March 1981.
+
+				double x0[] = new double[] {3.0};
+				double x1[] = new double[] {-1.0};
+				double x2[] = new double[] {0.0};
+				double x3[] = new double[] {1.0};
+				CostFunction cost_function = new PowellsFunction();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3);
+
+				// Run the solver!
+				Solver solver = new Solver();
+				solver.options.minimizer_progress_to_stdout = true;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solver.options, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer: ");
+					System.out.println("x0[0] = " + x0[0]);
+					System.out.println("x1[0] = " + x1[0]);
+					System.out.println("x2[0] = " + x2[0]);
+					System.out.println("x3[0] = " + x3[0]);
+					System.out.println("Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 0.0");
+				}
+			}			
 
 
 }
