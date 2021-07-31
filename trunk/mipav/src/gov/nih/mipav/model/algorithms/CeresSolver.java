@@ -21314,6 +21314,16 @@ public abstract class CeresSolver {
 			residual_parameters_.add(x2);
 			return AddResidualBlock(cost_function, loss_function, residual_parameters_);
 		}
+		
+		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function, double[] x0, double[] x1, double[] x2,
+				double[] x3) {
+			residual_parameters_.clear();
+			residual_parameters_.add(x0);
+			residual_parameters_.add(x1);
+			residual_parameters_.add(x2);
+			residual_parameters_.add(x3);
+			return AddResidualBlock(cost_function, loss_function, residual_parameters_);
+		}
 
 		public ResidualBlock AddResidualBlock(CostFunction cost_function, LossFunction loss_function,
 				Vector<double[]> parameter_blocks) {
