@@ -24235,6 +24235,108 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  if (passed[0]) {
 			  System.out.println(testName + " passed all tests");
 		  }
+
+		}
+		
+		class PowellSingularJacobianFunction extends SizedCostFunction {
+			public PowellSingularJacobianFunction() {
+				super(4,1,1,1,1,0,0,0,0,0,0);
+			}
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+				// Called by ResidualBlock.Evaluate
+				double x0 = parameters.get(0)[0];
+				double x1 = parameters.get(1)[0];
+				double x2 = parameters.get(2)[0];
+				double x3 = parameters.get(3)[0];
+				residuals[0] = x0 + 10.0*x1;
+				residuals[1] = Math.sqrt(5.0)*(x2 - x3);
+        	    residuals[2] = (x1 - 2.0*x2)*(x1 - 2.0*x2);
+        	    residuals[3] = Math.sqrt(10.0)*(x0 - x3)*(x0 - x3);
+        	    if (jacobian != null) {
+        	    	jacobian[0][0] = 1.0;
+        	    	jacobian[1][0] = 10.0;
+        		    jacobian[2][0] = 0.0;
+        		    jacobian[3][0] = 0.0;
+        		    jacobian[0][1] = 0.0;
+        		    jacobian[1][1] = 0.0;
+        		    jacobian[2][1] = Math.sqrt(5.0);
+        		    jacobian[3][1] = -Math.sqrt(5.0);
+        		    jacobian[0][2] = 0.0;
+        		    jacobian[1][2] = 2.0*x1 - 4.0*x2;
+        		    jacobian[2][2] = 8.0*x2 - 4.0*x1;
+        		    jacobian[3][2] = 0.0;
+        		    jacobian[0][3] = 2.0*Math.sqrt(10.0)*x0 - 2.0*Math.sqrt(10.0)*x3;
+        		    jacobian[1][3] = 0.0;
+        		    jacobian[2][3] = 0.0;
+        		    jacobian[3][3] = 2.0*Math.sqrt(10.0)*x3 - 2.0*Math.sqrt(10.0)*x0; 
+        	    }
+        	    return true;
+			}
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+					int jacobians_offset[]) {
+				// Called by ResidualBlock.Evaluate
+				double x0 = parameters.get(0)[0];
+				double x1 = parameters.get(1)[0];
+				double x2 = parameters.get(2)[0];
+				double x3 = parameters.get(3)[0];
+				residuals[0] = x0 + 10.0*x1;
+				residuals[1] = Math.sqrt(5.0)*(x2 - x3);
+        	    residuals[2] = (x1 - 2.0*x2)*(x1 - 2.0*x2);
+        	    residuals[3] = Math.sqrt(10.0)*(x0 - x3)*(x0 - x3);
+        	    if (jacobian != null) {
+        	    	jacobian[0][jacobians_offset[0]] = 1.0;
+        	    	jacobian[1][jacobians_offset[1]] = 10.0;
+        		    jacobian[2][jacobians_offset[2]] = 0.0;
+        		    jacobian[3][jacobians_offset[3]] = 0.0;
+        		    jacobian[0][jacobians_offset[0]+1] = 0.0;
+        		    jacobian[1][jacobians_offset[1]+1] = 0.0;
+        		    jacobian[2][jacobians_offset[2]+1] = Math.sqrt(5.0);
+        		    jacobian[3][jacobians_offset[3]+1] = -Math.sqrt(5.0);
+        		    jacobian[0][jacobians_offset[0]+2] = 0.0;
+        		    jacobian[1][jacobians_offset[1]+2] = 2.0*x1 - 4.0*x2;
+        		    jacobian[2][jacobians_offset[2]+2] = 8.0*x2 - 4.0*x1;
+        		    jacobian[3][jacobians_offset[3]+2] = 0.0;
+        		    jacobian[0][jacobians_offset[0]+3] = 2.0*Math.sqrt(10.0)*x0 - 2.0*Math.sqrt(10.0)*x3;
+        		    jacobian[1][jacobians_offset[1]+3] = 0.0;
+        		    jacobian[2][jacobians_offset[2]+3] = 0.0;
+        		    jacobian[3][jacobians_offset[3]+3] = 2.0*Math.sqrt(10.0)*x3 - 2.0*Math.sqrt(10.0)*x0; 
+        	    }
+        	    return true;
+			}
+		}
+		
+		public void runPowellSingularJacobianFunction() {
+			//Ceres Solver Report: Iterations: 928, Initial cost: 1.075000e+02, Final cost: 8.860116e-16, Termination: CONVERGENCE
+			//Solved answer x0[0] = 3.416173265839424E-6 x1[0] = -3.4161622848943484E-7 x2[0] = 9.20190933189993E-5 x3[0] = 9.201910612088222E-5
+			//Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 0.0
+			double x0[] = new double[] {3.0};
+			double x1[] = new double[] {-1.0};
+			double x2[] = new double[] {0.0};
+			double x3[] = new double[] {1.0};
+			CostFunction cost_function = new PowellSingularJacobianFunction();
+			ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3);
+            problem.AddParameterBlock(x0, 1);
+            problem.AddParameterBlock(x1, 1);
+            problem.AddParameterBlock(x2, 1);
+            problem.AddParameterBlock(x3, 1);
+			// Run the solver!
+			Solver solver = new Solver();
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.minimizer_progress_to_stdout = true;
+			solverOptions.max_num_iterations = 5000000;
+			solverOptions.max_num_consecutive_invalid_steps = 1000;
+			solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+			// Solver::Summary summary;
+			optionsValid = true;
+			Solve(solverOptions, problem, solver.summary);
+			if (optionsValid) {
+				System.out.println(solver.summary.BriefReport());
+				System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0]);
+				System.out.println("Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 0.0");
+			}	
 		}
 
 			
