@@ -39,6 +39,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.FirstOrderFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblem;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.GradientProblemSolverSummary;
+import gov.nih.mipav.model.algorithms.CeresSolver.LinearSolverType;
 import gov.nih.mipav.model.algorithms.CeresSolver.MyCostFunctor;
 import gov.nih.mipav.model.algorithms.CeresSolver.MyThreeParameterCostFunctor;
 import gov.nih.mipav.model.algorithms.CeresSolver.NumericDiffCostFunction;
@@ -49,6 +50,7 @@ import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
 import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
 import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.Solver;
+import gov.nih.mipav.model.algorithms.CeresSolver.SolverOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.SparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver.TripletSparseMatrix;
 import gov.nih.mipav.model.algorithms.CeresSolver2.BiCubicInterpolator;
@@ -24235,81 +24237,8 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 		  }
 		}
 
-		
-			  
-		  class PowellsFunction extends SizedCostFunction {
-				 public PowellsFunction() {
-					 // number of residuals
-					 // size of first parameter
-					 super(4,1,1,1,1,0,0,0,0,0,0);
-				 }
-				 public boolean Evaluate(Vector<double[]> parameters,
-				                        double[] residuals,
-				                        double[][] jacobian){
-				    double x0 = parameters.get(0)[0];
-				    double x1 = parameters.get(1)[0];
-				    double x2 = parameters.get(2)[0];
-				    double x3 = parameters.get(3)[0];
-				    residuals[0] = x0 + 10.0*x1;
-				    residuals[1] = Math.sqrt(5.0) * (x2 - x3);
-				    residuals[2] = (x1 - 2.0 * x2) * (x1 - 2.0 * x2);
-                    residuals[3] = Math.sqrt(10.0)*(x0 - x3)*(x0 - x3);
-                    if (jacobian != null) {
-                    	jacobian[0][0] = 1.0;
-            		    jacobian[0][1] = 10.0;
-            		    jacobian[0][2] = 0.0;
-            		    jacobian[0][3] = 0.0;
-            		    jacobian[1][0] = 0.0;
-            		    jacobian[1][1] = 0.0;
-            		    jacobian[1][2] = Math.sqrt(5.0);
-            		    jacobian[1][3] = -Math.sqrt(5.0);
-            		    jacobian[2][0] = 0.0;
-            		    jacobian[2][1] = 2.0*x1 - 4.0*x2;
-            		    jacobian[2][2] = 8.0*x2 - 4.0*x1;
-            		    jacobian[2][3] = 0.0;
-            		    jacobian[3][0] = 2.0*Math.sqrt(10.0)*x0 - 2.0*Math.sqrt(10.0)*x3;
-            		    jacobian[3][1] = 0.0;
-            		    jacobian[3][2] = 0.0;
-            		    jacobian[3][3] = 2.0*Math.sqrt(10.0)*x3 - 2.0*Math.sqrt(10.0)*x0;
-                    }
-                    return true;
-				 }
-				 
-				 public boolean Evaluate(Vector<double[]> parameters,
-	                        double[] residuals,
-	                        double[][] jacobian, int jacobians_offset[]){
-					    double x0 = parameters.get(0)[0];
-					    double x1 = parameters.get(1)[0];
-					    double x2 = parameters.get(2)[0];
-					    double x3 = parameters.get(3)[0];
-					    residuals[0] = x0 + 10.0*x1;
-					    residuals[1] = Math.sqrt(5.0) * (x2 - x3);
-					    residuals[2] = (x1 - 2.0 * x2) * (x1 - 2.0 * x2);
-				        residuals[3] = Math.sqrt(10.0)*(x0 - x3)*(x0 - x3);
-				        if (jacobian != null) {
-				     	    jacobian[0][jacobians_offset[0]] = 1.0;
-						    jacobian[0][jacobians_offset[0]+1] = 10.0;
-						    jacobian[0][jacobians_offset[0]+2] = 0.0;
-						    jacobian[0][jacobians_offset[0]+3] = 0.0;
-						    jacobian[1][jacobians_offset[1]] = 0.0;
-						    jacobian[1][jacobians_offset[1]+1] = 0.0;
-						    jacobian[1][jacobians_offset[1]+2] = Math.sqrt(5.0);
-						    jacobian[1][jacobians_offset[1]+3] = -Math.sqrt(5.0);
-						    jacobian[2][jacobians_offset[2]] = 0.0;
-						    jacobian[2][jacobians_offset[2]+1] = 2.0*x1 - 4.0*x2;
-						    jacobian[2][jacobians_offset[2]+2] = 8.0*x2 - 4.0*x1;
-						    jacobian[2][jacobians_offset[2]+3] = 0.0;
-						    jacobian[3][jacobians_offset[3]] = 2.0*Math.sqrt(10.0)*x0 - 2.0*Math.sqrt(10.0)*x3;
-						    jacobian[3][jacobians_offset[3]+1] = 0.0;
-						    jacobian[3][jacobians_offset[3]+2] = 0.0;
-						    jacobian[3][jacobians_offset[3]+3] = 2.0*Math.sqrt(10.0)*x3 - 2.0*Math.sqrt(10.0)*x0;
-				     }
-				     return true;
-				}
-
-			};
 			
-			public void runPowellsFunctionExample() {
+			class PowellSingularFunction extends FirstOrderFunction {
 				// From system_test.cc
 				// This class implements the SystemTestProblem interface and provides
 				// access to an implementation of Powell's singular function.
@@ -24327,31 +24256,60 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				// From: Testing Unconstrained Optimization Software by Jorge J. More, Burton S.
 				// Garbow and Kenneth E. Hillstrom in ACM Transactions on Mathematical Software,
 				// Vol 7(1), March 1981.
+			  public PowellSingularFunction() {
+				  super();
+			  }
 
-				double x0[] = new double[] {3.0};
-				double x1[] = new double[] {-1.0};
-				double x2[] = new double[] {0.0};
-				double x3[] = new double[] {1.0};
-				CostFunction cost_function = new PowellsFunction();
-				ProblemImpl problem = new ProblemImpl();
-				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3);
+			  public boolean Evaluate(double[] parameters,
+			                        double[] cost,
+			                        double[] gradient) {
+			    final double x0 = parameters[0];
+			    final double x1 = parameters[1];
+			    final double x2 = parameters[2];
+			    final double x3 = parameters[3];
 
-				// Run the solver!
-				Solver solver = new Solver();
-				solver.options.minimizer_progress_to_stdout = true;
-				// Solver::Summary summary;
-				optionsValid = true;
-				Solve(solver.options, problem, solver.summary);
-				if (optionsValid) {
-					System.out.println(solver.summary.BriefReport());
-					System.out.println("Solved answer: ");
-					System.out.println("x0[0] = " + x0[0]);
-					System.out.println("x1[0] = " + x1[0]);
-					System.out.println("x2[0] = " + x2[0]);
-					System.out.println("x3[0] = " + x3[0]);
-					System.out.println("Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 0.0");
-				}
-			}			
+			    cost[0] = Math.pow(x0 + 10.0*x1, 2.0) + 5.0*Math.pow(x2 - x3, 2.0) +
+			    		Math.pow(x1 - 2.0*x2,4) + 10.0*Math.pow(x0 - x3,4.0);
+			    if (gradient != null) {
+			      gradient[0] = 2.0*(x0 + 10.0*x1) + 40.0*Math.pow(x0-x3,3.0);
+			      gradient[1] = 20.0*(x0 + 10.0*x1) + 4.0*Math.pow(x1 - 2.0*x2,3);
+			      gradient[2] = 10.0*(x2 - x3) -8.0*Math.pow(x1 - 2.0*x2,3);
+			      gradient[3] = -10.0*(x2 - x3) -40.0*Math.pow(x0-x3,3.0);
+;			    }
+			    return true;
+			  }
+
+			  public int NumParameters() { return 4; }
+			} // class PowellSingularFunction
+			
+			public void runPowellSingularFunction() {
+				// For default options LBFGS and WOLFE: 
+			    //line_search_direction_type = LineSearchDirectionType.LBFGS
+			    //line_search_type = LineSearchType.WOLFE;
+				//Ceres GradientProblemSolver Report: Iterations: 1195040, Initial cost: 2.150000e+02, Final cost: 1.952269e-16, Termination: CONVERGENCE
+				//Initial x0: 3.0, x1: -1.0, x2: 0.0, x3: 1.0
+				//Final calculation x0: -3.404139976482311E-6 x1: 3.4041351881192123E-7 x2: 5.10549139208114E-5 x3: 5.105491901760127E-5
+
+				double parameters[] = new double[]{3.0, -1.0, 0.0, 1.0};
+
+				  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+				  options.minimizer_progress_to_stdout = true;
+				  options.max_num_iterations = 5000000;
+
+				  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+				  GradientProblem problem = new GradientProblem(new PowellSingularFunction());
+				  optionsValid = true;
+				  Solve(options, problem, parameters, summary);
+
+				  //std::cout << summary.FullReport() << "\n";
+				  if (optionsValid) {
+					  System.out.println(summary.BriefReport());
+					  System.out.println("Initial x0: 3.0, x1: -1.0, x2: 0.0, x3: 1.0");
+					  System.out.println("Final calculation x0: " + parameters[0]
+					            + " x1: " + parameters[1] + " x2: " + parameters[2] + " x3: " + parameters[3]);
+				  }
+			
+			}
 
 
 }
