@@ -24363,56 +24363,6 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					  System.out.println("Also Chi-squared = 48.9842... at x0 = 11.41..., x1 = -0.8968...");
 				  }	
 			}
-			
-			class PowellBadlyScaledFunction extends FirstOrderFunction {
-				public PowellBadlyScaledFunction() {
-					  super();
-				  }
-
-				  public boolean Evaluate(double[] parameters,
-				                        double[] cost,
-				                        double[] gradient) {
-				    final double x0 = parameters[0];
-				    final double x1 = parameters[1];
-				    double residual[] = new double[2];
-				    residual[0] = 10000.0 * x0 * x1 - 1.0;
-				    residual[1] = Math.exp(-x0) + Math.exp(-x1) - 1.0001;;
-
-
-				    cost[0] = residual[0]*residual[0] + residual[1]*residual[1];
-				    if (gradient != null) {
-				      gradient[0] = 20000.0*residual[0]*x1 -2.0*residual[1]*Math.exp(-x0);
-				      gradient[1] = 2.0*residual[0]*x0 - 2.0*residual[1]*Math.exp(-x1);
-	;			    }
-				    return true;
-				  }
-
-				  public int NumParameters() { return 2; }	
-			}
-			
-			public void runPowellBadlyScaledFunction() {
-				
-				double parameters[] = new double[]{0.0, 1.0};
-
-				  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
-				  options.minimizer_progress_to_stdout = true;
-				  options.max_num_iterations = 5000000;
-
-				  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
-				  GradientProblem problem = new GradientProblem(new PowellBadlyScaledFunction());
-				  problem.SetParameterLowerBound(parameters, 0, 0.0);
-				  optionsValid = true;
-				  Solve(options, problem, parameters, summary);
-
-				  //std::cout << summary.FullReport() << "\n";
-				  if (optionsValid) {
-					  System.out.println(summary.BriefReport());
-					  System.out.println("Initial x0: 0.0, x1: 1.0");
-					  System.out.println("Final calculation x0: " + parameters[0]
-					            + " x1: " + parameters[1]);
-					  System.out.println("Correct answer is chi-squared = 0 at x0 = 1.0E6 x1 = 2.0E-6");
-				  }	
-			}
 
 
 }
