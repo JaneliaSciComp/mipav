@@ -24310,6 +24310,109 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				  }
 			
 			}
+			
+			class FreudensteinAndRothFunction extends FirstOrderFunction {
+				public FreudensteinAndRothFunction() {
+					  super();
+				  }
+
+				  public boolean Evaluate(double[] parameters,
+				                        double[] cost,
+				                        double[] gradient) {
+				    final double x0 = parameters[0];
+				    final double x1 = parameters[1];
+				    double residual[] = new double[2];
+				    residual[0] = -13.0 + x0 + ((5.0 - x1) * x1 - 2.0) * x1;
+				    residual[1] = -29.0 + x0 + ((x1 + 1.0) * x1 - 14.0) * x1;
+
+
+				    cost[0] = residual[0]*residual[0] + residual[1]*residual[1];
+				    if (gradient != null) {
+				      gradient[0] = 2.0*residual[0] + 2.0*residual[1];
+				      gradient[1] = 2.0*residual[0]*(10.0*x1 -3.0*x1*x1 - 2.0)
+				    		       + 2.0*(residual[1])*(3.0*x1*x1 + 2.0*x1 -14.0);
+	;			    }
+				    return true;
+				  }
+
+				  public int NumParameters() { return 2; }	
+			}
+			
+			public void runFreudensteinAndRothFunction() {
+				// Ceres GradientProblemSolver Report: Iterations: 8, Initial cost: 4.005000e+02, Final cost: 4.898425e+01, Termination: CONVERGENCE
+				// Initial x0: 0.5, x1: -2.0
+				// Final calculation x0: 11.4127792592654 x1: -0.896805232459654
+				double parameters[] = new double[]{0.5, -2.0};
+
+				  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+				  options.minimizer_progress_to_stdout = true;
+				  options.max_num_iterations = 5000000;
+
+				  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+				  GradientProblem problem = new GradientProblem(new FreudensteinAndRothFunction());
+				  optionsValid = true;
+				  Solve(options, problem, parameters, summary);
+
+				  //std::cout << summary.FullReport() << "\n";
+				  if (optionsValid) {
+					  System.out.println(summary.BriefReport());
+					  System.out.println("Initial x0: 0.5, x1: -2.0");
+					  System.out.println("Final calculation x0: " + parameters[0]
+					            + " x1: " + parameters[1]);
+					  System.out.println("Correct answer is chi-squared = 0 at x0 = 5, x1 = 4");
+					  System.out.println("Also Chi-squared = 48.9842... at x0 = 11.41..., x1 = -0.8968...");
+				  }	
+			}
+			
+			class PowellBadlyScaledFunction extends FirstOrderFunction {
+				public PowellBadlyScaledFunction() {
+					  super();
+				  }
+
+				  public boolean Evaluate(double[] parameters,
+				                        double[] cost,
+				                        double[] gradient) {
+				    final double x0 = parameters[0];
+				    final double x1 = parameters[1];
+				    double residual[] = new double[2];
+				    residual[0] = 10000.0 * x0 * x1 - 1.0;
+				    residual[1] = Math.exp(-x0) + Math.exp(-x1) - 1.0001;;
+
+
+				    cost[0] = residual[0]*residual[0] + residual[1]*residual[1];
+				    if (gradient != null) {
+				      gradient[0] = 20000.0*residual[0]*x1 -2.0*residual[1]*Math.exp(-x0);
+				      gradient[1] = 2.0*residual[0]*x0 - 2.0*residual[1]*Math.exp(-x1);
+	;			    }
+				    return true;
+				  }
+
+				  public int NumParameters() { return 2; }	
+			}
+			
+			public void runPowellBadlyScaledFunction() {
+				
+				double parameters[] = new double[]{0.0, 1.0};
+
+				  GradientProblemSolverOptions options = new GradientProblemSolverOptions();
+				  options.minimizer_progress_to_stdout = true;
+				  options.max_num_iterations = 5000000;
+
+				  GradientProblemSolverSummary summary = new GradientProblemSolverSummary();
+				  GradientProblem problem = new GradientProblem(new PowellBadlyScaledFunction());
+				  problem.SetParameterLowerBound(parameters, 0, 0.0);
+				  optionsValid = true;
+				  Solve(options, problem, parameters, summary);
+
+				  //std::cout << summary.FullReport() << "\n";
+				  if (optionsValid) {
+					  System.out.println(summary.BriefReport());
+					  System.out.println("Initial x0: 0.0, x1: 1.0");
+					  System.out.println("Final calculation x0: " + parameters[0]
+					            + " x1: " + parameters[1]);
+					  System.out.println("Correct answer is chi-squared = 0 at x0 = 1.0E6 x1 = 2.0E-6");
+				  }	
+			}
 
 
 }
