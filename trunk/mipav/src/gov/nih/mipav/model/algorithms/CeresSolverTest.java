@@ -7914,7 +7914,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 
  				  // The minimum is at x1 = x2 = x3 = x4 = 0.
  				  boolean currentPass = true;
- 				  // Changed from > 0.001 to > 0.004
+ 				  // Changed from > 0.001 to > 0.004 for dogleg.  LevenbergMarquardt works for 0.001.
  				  if (Math.abs(parameters[0]) > 0.004) {
  					  System.err.println("Math.abs(parameters[0]) > 0.004");
  					  failed[0]++;
