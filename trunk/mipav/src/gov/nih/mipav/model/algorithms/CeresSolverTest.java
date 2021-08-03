@@ -25227,6 +25227,26 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					super(3,1,1,1,0,0,0,0,0,0,0);
 				}
 				
+				// Since NLConstreinedEngine gives the same results for numerical and analytical jacobians,
+				// the analytical jacobians are correct.  For NLConstrainedEngine:
+				        /*Internal scaling = false Numerical Jacobian used
+						Number of iterations: 14
+						Chi-squared: 3.445709892985739E-7
+						a0 = 0.03883668659685723
+						a1 = 2.5
+						a2 = -0.2787616778310813
+						Normal termination because we are computing at noise level
+						The last steps were computed with prank <> n at the termination point
+
+						Internal scaling = false Analytical Jacobian used
+						Number of iterations: 14
+						Chi-squared: 3.445709892987073E-7
+						a0 = 0.03883668632773395
+						a1 = 2.5
+						a2 = -0.2787616788314721
+						Normal termination because we are computing at noise level
+						The last steps were computed with prank <> n at the termination point*/
+
 				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
 					int i;
 					// Called by ResidualBlock.Evaluate
@@ -25296,6 +25316,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				// Ceres Solver Report: Iterations: 1, Initial cost: 4.700957e-01, Final cost: 7.000000e-04, Termination: CONVERGENCE
 				// Solved answer x0[0] = 4.970076126647026 x1[0] = 2.508977162005892 x2[0] = 1.15
 				// Correct answser is chi-squared = 0 at a0 = 50 a1 = 25 a2 = 1.5
+				// NLConstrainedEngine and LsqFit also don't arrive at the right answer
 				double x0[] = new double[] {5.0};
 				double x1[] = new double[] {2.5};
 				double x2[] = new double[] {0.15};
@@ -25319,6 +25340,219 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					System.out.println(solver.summary.BriefReport());
 					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0]);
 					System.out.println("Correct answser is chi-squared = 0 at a0 = 50 a1 = 25 a2 = 1.5");
+				}	
+			}
+			
+			class Box3DFunction extends SizedCostFunction {
+				public Box3DFunction() {
+					super(10,1,1,1,0,0,0,0,0,0,0);
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double t[] = new double[10];
+            		for (i = 0; i <10; i++) {
+            		    t[i] = 0.1*(i+1.0);	
+            		    residuals[i] = Math.exp(-x0*t[i]) - Math.exp(-x1*t[i])
+            		                   - x2*(Math.exp(-t[i]) - Math.exp(-10.0*t[i]));
+            		}	
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 10; i++) {
+                            jacobian[0][i] =  -t[i]*Math.exp(-x0*t[i]);
+                            jacobian[1][i] = t[i]*Math.exp(-x1*t[i]);
+                            jacobian[2][i] = Math.exp(-10.0*t[i]) - Math.exp(-t[i]);
+                        }
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double t[] = new double[10];
+            		for (i = 0; i <10; i++) {
+            		    t[i] = 0.1*(i+1.0);	
+            		    residuals[i] = Math.exp(-x0*t[i]) - Math.exp(-x1*t[i])
+            		                   - x2*(Math.exp(-t[i]) - Math.exp(-10.0*t[i]));
+            		}	
+
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 10; i++) {
+	        	    		 jacobian[0][jacobians_offset[0]+i] =  -t[i]*Math.exp(-x0*t[i]);
+	                         jacobian[1][jacobians_offset[1]+i] = t[i]*Math.exp(-x1*t[i]);
+	                         jacobian[2][jacobians_offset[2]+i] = Math.exp(-10.0*t[i]) - Math.exp(-t[i]);
+                        }
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runBox3DFunction() {
+				// Ceres Solver Report: Iterations: 40, Initial cost: 5.155769e+02, Final cost: 1.781781e-22, Termination: CONVERGENCE
+				// Solved answer x0[0] = 0.9999999999963682 x1[0] = 9.999999999525736 x2[0] = 0.9999999999908924
+				// Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1
+				// Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1
+				// Also chi-squared = 0 wherever a0 = a1 and a2 = 0
+				double x0[] = new double[] {0.0};
+				double x1[] = new double[] {10.0};
+				double x2[] = new double[] {20.0};
+				CostFunction cost_function = new Box3DFunction();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0]);
+					System.out.println("Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1");
+			        System.out.println("Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1");
+			        System.out.println("Also chi-squared = 0 wherever a0 = a1 and a2 = 0");
+				}	
+			}
+			
+			class WoodFunction extends SizedCostFunction {
+				public WoodFunction() {
+					super(6,1,1,1,1,0,0,0,0,0,0);
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					residuals[0] = 10.0*(x1 - x0*x0);
+                    residuals[1] = 1.0 - x0;
+                    residuals[2] = Math.sqrt(90.0)*(x3 - x2*x2);
+                    residuals[3] = 1.0 - x2;
+                    residuals[4] = Math.sqrt(10.0)*(x1 + x3 - 2.0);
+                    residuals[5] = (x1 - x3)/Math.sqrt(10.0);
+					
+	        	    if (jacobian != null) {
+		        	     jacobian[0][0] = -20.0*x0;
+	           		     jacobian[1][0] = 10.0;
+	           		     jacobian[2][0] = 0.0;
+	           		     jacobian[3][0] = 0.0;
+	           		     jacobian[0][1] = -1.0;
+	           		     jacobian[1][1] = 0.0;
+	           		     jacobian[2][1] = 0.0;
+	           		     jacobian[3][1] = 0.0;
+	           		     jacobian[0][2] = 0.0;
+	           		     jacobian[1][2] = 0.0;
+	           		     jacobian[2][2] = -2.0*Math.sqrt(90.0)*x2;
+	           		     jacobian[3][2] = Math.sqrt(90.0);
+	           		     jacobian[0][3] = 0.0;
+	           		     jacobian[1][3] = 0.0;
+	           		     jacobian[2][3] = -1.0;
+	           		     jacobian[3][3] = 0.0;
+	           		     jacobian[0][4] = 0.0;
+	           		     jacobian[1][4] = Math.sqrt(10.0);
+	           		     jacobian[2][4] = 0.0;
+	           		     jacobian[3][4] = Math.sqrt(10.0);
+	           		     jacobian[0][5] = 0.0;
+	           		     jacobian[1][5] = 1.0/Math.sqrt(10.0);
+	           		     jacobian[2][5] = 0.0;
+	           		     jacobian[3][5] = -1.0/Math.sqrt(10.0);
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					residuals[0] = 10.0*(x1 - x0*x0);
+                    residuals[1] = 1.0 - x0;
+                    residuals[2] = Math.sqrt(90.0)*(x3 - x2*x2);
+                    residuals[3] = 1.0 - x2;
+                    residuals[4] = Math.sqrt(10.0)*(x1 + x3 - 2.0);
+                    residuals[5] = (x1 - x3)/Math.sqrt(10.0);
+					
+	        	    if (jacobian != null) {
+	        	    	 jacobian[0][jacobians_offset[0]] = -20.0*x0;
+	           		     jacobian[1][jacobians_offset[1]] = 10.0;
+	           		     jacobian[2][jacobians_offset[2]] = 0.0;
+	           		     jacobian[3][jacobians_offset[3]] = 0.0;
+	           		     jacobian[0][jacobians_offset[0]+1] = -1.0;
+	           		     jacobian[1][jacobians_offset[1]+1] = 0.0;
+	           		     jacobian[2][jacobians_offset[2]+1] = 0.0;
+	           		     jacobian[3][jacobians_offset[3]+1] = 0.0;
+	           		     jacobian[0][jacobians_offset[0]+2] = 0.0;
+	           		     jacobian[1][jacobians_offset[1]+2] = 0.0;
+	           		     jacobian[2][jacobians_offset[2]+2] = -2.0*Math.sqrt(90.0)*x2;
+	           		     jacobian[3][jacobians_offset[3]+2] = Math.sqrt(90.0);
+	           		     jacobian[0][jacobians_offset[0]+3] = 0.0;
+	           		     jacobian[1][jacobians_offset[1]+3] = 0.0;
+	           		     jacobian[2][jacobians_offset[2]+3] = -1.0;
+	           		     jacobian[3][jacobians_offset[3]+3] = 0.0;
+	           		     jacobian[0][jacobians_offset[0]+4] = 0.0;
+	           		     jacobian[1][jacobians_offset[1]+4] = Math.sqrt(10.0);
+	           		     jacobian[2][jacobians_offset[2]+4] = 0.0;
+	           		     jacobian[3][jacobians_offset[3]+4] = Math.sqrt(10.0);
+	           		     jacobian[0][jacobians_offset[0]+5] = 0.0;
+	           		     jacobian[1][jacobians_offset[1]+5] = 1.0/Math.sqrt(10.0);
+	           		     jacobian[2][jacobians_offset[2]+5] = 0.0;
+	           		     jacobian[3][jacobians_offset[3]+5] = -1.0/Math.sqrt(10.0);
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runWoodFunction() {
+				// Ceres Solver Report: Iterations: 84, Initial cost: 9.596000e+03, Final cost: 6.696738e-20, Termination: CONVERGENCE
+				// Solved answer x0[0] = 1.0000000001512004 x1[0] = 1.0000000002925729 x2[0] = 0.9999999998631559 x3[0] = 0.999999999703269
+				// Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 1
+				double x0[] = new double[] {-3.0};
+				double x1[] = new double[] {-1.0};
+				double x2[] = new double[] {-3.0};
+				double x3[] = new double[] {-1.0};
+				CostFunction cost_function = new WoodFunction();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+	            problem.AddParameterBlock(x3, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				solverOptions.function_tolerance = 1.0E-8;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0]);
+					System.out.println("Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 1");
 				}	
 			}
 }
