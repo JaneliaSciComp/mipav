@@ -106,9 +106,42 @@ import gov.nih.mipav.view.*;
  *  POWELL_BADLY_SCALED OK.
  *  BROWN_BADLY_SCALED OK
  *  GAUSSIAN OK
- *  GULF_RESEARCH_AND_DEVELOPMENT OK with 2 different chi-squared = 0 solutions.  One for Internal scaling = true and one
- *  for internal scaling = false.  a0 = 50, a1 = 25, a2 = 1.5 with internal scaling = false and a0 = 0.213460 a1 = 61.4657
- *  a2 = -0.1769447 with internal scaling = true.
+ *  GULF_RESEARCH_AND_DEVELOPMENT gave:
+Internal scaling = false Numerical Jacobian used
+Number of iterations: 14
+Chi-squared: 3.445709892985739E-7
+a0 = 0.03883668659685723
+a1 = 2.5
+a2 = -0.2787616778310813
+Normal termination because we are computing at noise level
+The last steps were computed with prank <> n at the termination point
+
+Internal scaling = false Analytical Jacobian used
+Number of iterations: 14
+Chi-squared: 3.445709892987073E-7
+a0 = 0.03883668632773395
+a1 = 2.5
+a2 = -0.2787616788314721
+Normal termination because we are computing at noise level
+The last steps were computed with prank <> n at the termination point
+
+Internal scaling = true Numerical Jacobian used
+Number of iterations: 34
+Chi-squared: 3.44570989297661E-7
+a0 = 0.03051624851760246
+a1 = -5.937031016616358
+a2 = -0.2787616692706317
+Normal termination because we are computing at noise level
+The last steps were computed with prank <> n at the termination point
+
+Internal scaling = true Analytical Jacobian used
+Number of iterations: 14
+Chi-squared: 3.4457098930874807E-7
+a0 = 0.1051673997652516
+a1 = -0.07013531252961425
+a2 = -0.27876172575194913
+Normal termination because we are computing at noise level
+The last steps were computed with prank <> n at the termination point
     BIGGS_EXP6 OK with chi-squared = 0 solution.
  *  PENALTY_FUNCTION_I OK.
  *  PENALTY_FUNCTION_II OK with param = 4
@@ -4292,18 +4325,18 @@ public abstract class NLConstrainedEngine {
                 case GULF_RESEARCH_AND_DEVELOPMENT:
                     if ((ctrl == -1) || (ctrl == 1)) {
                     	for (i = 0; i < nPts; i++) {
-                    		residuals[i] = Math.exp(-Math.pow((Math.abs(ySeries[i]-a[1])),a[2])/a[0]) - xSeries[i];
+                    		residuals[i] = Math.exp(-Math.pow((Math.abs(ySeries[i]*nPts*(i+1)*a[1])),a[2])/a[0]) - xSeries[i];
                     	}	
                 	}
                 	else if (ctrl == 2) {
                 		if (analyticalJacobian) {
                 			for (i = 0; i < nPts; i++) {
-                        		double absVal = Math.abs(ySeries[i] - a[1]);
+                        		double absVal = Math.abs(ySeries[i]*nPts*(i+1)*a[1]);
                         		double abspow = Math.pow(absVal, a[2]);
                         		double absdiv = abspow/a[0];
                         		double absexp = Math.exp(-absdiv);
                         		jacobian[i][0] = abspow * absexp/(a[0]*a[0]);
-                        		jacobian[i][1] = -a[2]*absexp*abspow/(a[0]*(a[1] - ySeries[i]));
+                        		jacobian[i][1] = -a[2]*absexp*abspow/(a[0]*a[1]);
                         		jacobian[i][2] = -abspow * Math.log(absVal) * absexp/a[0];
                         	}	
                 		} // if (analyticalJacobian)
