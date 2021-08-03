@@ -2655,7 +2655,7 @@ end
             	break;
             case GULF_RESEARCH_AND_DEVELOPMENT:
             	for (i = 0; i < m ; i++) {
-            		residuals[i] = Math.exp(-Math.pow((Math.abs(ydata[i]-x[1])),x[2])/x[0]) - tdata[i];
+            		residuals[i] = Math.exp(-Math.pow((Math.abs(ydata[i]*m*(i+1)*x[1])),x[2])/x[0]) - tdata[i];
             	}
             	break;
             case BIGGS_EXP6:
@@ -3224,12 +3224,12 @@ end
             	break;
             case GULF_RESEARCH_AND_DEVELOPMENT:
             	for (i = 0; i < m; i++) {
-            		double absVal = Math.abs(ydata[i] - x[1]);
+            		double absVal = Math.abs(ydata[i]*m*(i+1)*x[1]);
             		double abspow = Math.pow(absVal, x[2]);
             		double absdiv = abspow/x[0];
             		double absexp = Math.exp(-absdiv);
             		J[i][0] = abspow * absexp/(x[0]*x[0]);
-            		J[i][1] = -x[2]*absexp*abspow/(x[0]*(x[1] - ydata[i]));
+            		J[i][1] = -x[2]*absexp*abspow/(x[0]*x[1]);
             		J[i][2] = -abspow * Math.log(absVal) * absexp/x[0];
             	}
             	break;
