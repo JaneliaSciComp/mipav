@@ -4256,7 +4256,7 @@ public abstract class NLConstrainedEngine {
                 		if (analyticalJacobian) {
                 			jacobian[0][0] = 1.0;
                         	jacobian[0][1] = 0.0;
-                        	jacobian[1][1] = 0.0;
+                        	jacobian[1][0] = 0.0;
                         	jacobian[1][1] = 1.0;
                         	jacobian[2][0] = a[1];
                         	jacobian[2][1] = a[0];	
