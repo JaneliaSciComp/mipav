@@ -25555,4 +25555,211 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					System.out.println("Actual answer x0[0] = x1[0] = x2[0] = x3[0] = 1");
 				}	
 			}
+			
+			class KowalikAndOsborneFunction extends SizedCostFunction {
+				public KowalikAndOsborneFunction() {
+					super(11,1,1,1,1,0,0,0,0,0,0);
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double xSeries[] = new double[]{4.0, 2.0, 1.0, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
+			        double ySeries[] = new double[]{0.1957, 0.1947, 0.1735, 0.1600, 0.0844, 0.0627, 0.0456, 0.0342, 
+			        		               0.0323, 0.0235, 0.0246};
+			        for (i = 0; i < 11; i++) {
+                        ymodel = x0*(xSeries[i]*xSeries[i] + x1*xSeries[i])/
+                                (xSeries[i]*xSeries[i] + x2*xSeries[i] + x3);
+                        residuals[i] = ymodel - ySeries[i];
+                    }
+					
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 11; i++) {
+                        	double denom = (xSeries[i]*xSeries[i] + x2*xSeries[i] + x3);
+                        	double top = (xSeries[i]*xSeries[i] + x1*xSeries[i]);
+                            jacobian[0][i] = top/denom;
+                            jacobian[1][i] = x0*xSeries[i]/denom;
+                            jacobian[2][i] = -x0*xSeries[i]*top/(denom*denom);
+                            jacobian[3][i]= -x0*top/(denom*denom);
+                        }
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double xSeries[] = new double[]{4.0, 2.0, 1.0, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625};
+			        double ySeries[] = new double[]{0.1957, 0.1947, 0.1735, 0.1600, 0.0844, 0.0627, 0.0456, 0.0342, 
+			        		               0.0323, 0.0235, 0.0246};
+			        for (i = 0; i < 11; i++) {
+                        ymodel = x0*(xSeries[i]*xSeries[i] + x1*xSeries[i])/
+                                (xSeries[i]*xSeries[i] + x2*xSeries[i] + x3);
+                        residuals[i] = ymodel - ySeries[i];
+                    }
+					
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 11; i++) {
+                        	double denom = (xSeries[i]*xSeries[i] + x2*xSeries[i] + x3);
+                        	double top = (xSeries[i]*xSeries[i] + x1*xSeries[i]);
+                            jacobian[0][jacobians_offset[0]+i] = top/denom;
+                            jacobian[1][jacobians_offset[1]+i] = x0*xSeries[i]/denom;
+                            jacobian[2][jacobians_offset[2]+i] = -x0*xSeries[i]*top/(denom*denom);
+                            jacobian[3][jacobians_offset[3]+i]= -x0*top/(denom*denom);
+                        }
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runKowalikAndOsborneFunction() {
+				// Ceres Solver Report: Iterations: 35, Initial cost: 2.656586e-03, Final cost: 1.537528e-04, Termination: CONVERGENCE
+				// Solved answer x0[0] = 0.1928069418889343 x1[0] = 0.19128175336757022 x2[0] = 0.12305590809407296 x3[0] = 0.13606211428370799
+				// Correct answer is x0 = 0.1928, x1 = 0.1913, x2 = 0.1231, x3 = 0.1361
+				// Correct answer has Chi-squared = 3.07505E-4
+				double x0[] = new double[] {0.25};
+				double x1[] = new double[] {0.39};
+				double x2[] = new double[] {0.415};
+				double x3[] = new double[] {0.39};
+				CostFunction cost_function = new KowalikAndOsborneFunction();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+	            problem.AddParameterBlock(x3, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				solverOptions.function_tolerance = 1.0E-8;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0]);
+					System.out.println("Correct answer is x0 = 0.1928, x1 = 0.1913, x2 = 0.1231, x3 = 0.1361");
+			        System.out.println("Correct answer has Chi-squared = 3.07505E-4");
+				}	
+			}
+			
+			class BrownAndDennisFunction extends SizedCostFunction {
+				public BrownAndDennisFunction() {
+					super(20,1,1,1,1,0,0,0,0,0,0);
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					int i;
+					double part1;
+					double part2;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double t[] = new double[20];
+            		for (i = 0; i <20; i++) {
+            		    t[i] = 0.2*(i+1.0);
+            		    part1 = x0 + x1*t[i] - Math.exp(t[i]);
+            		    part2 = x2 + x3*Math.sin(t[i]) - Math.cos(t[i]);
+            		    residuals[i] = part1*part1 + part2*part2;
+            		}
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 20; i++) {
+                 		    part1 = x0 + x1*t[i] - Math.exp(t[i]);
+                 		    part2 = x2 + x3*Math.sin(t[i]) - Math.cos(t[i]);
+	        	    		jacobian[0][i] = 2.0*part1;
+             		        jacobian[1][i] = 2.0*part1*t[i];
+             		        jacobian[2][i] = 2.0*part2;
+             		        jacobian[3][i] = 2.0*part2*Math.sin(t[i]);
+	        	    	}
+	        	    	
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					int i;
+					double part1;
+					double part2;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double t[] = new double[20];
+            		for (i = 0; i <20; i++) {
+            		    t[i] = 0.2*(i+1.0);
+            		    part1 = x0 + x1*t[i] - Math.exp(t[i]);
+            		    part2 = x2 + x3*Math.sin(t[i]) - Math.cos(t[i]);
+            		    residuals[i] = part1*part1 + part2*part2;
+            		}
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 20; i++) {
+	        	    		part1 = x0 + x1*t[i] - Math.exp(t[i]);
+	                 		part2 = x2 + x3*Math.sin(t[i]) - Math.cos(t[i]);
+	        	    		jacobian[0][jacobians_offset[0]+i] = 2.0*part1;
+             		        jacobian[1][jacobians_offset[1]+i] = 2.0*part1*t[i];
+             		        jacobian[2][jacobians_offset[2]+i] = 2.0*part2;
+             		        jacobian[3][jacobians_offset[3]+i] = 2.0*part2*Math.sin(t[i]);
+                        }
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runBrownAndDennisFunction() {
+				// Ceres Solver Report: Iterations: 28, Initial cost: 3.963347e+06, Final cost: 4.291110e+04, Termination: CONVERGENCE
+				// Solved answer x0[0] = -11.594439926839046 x1[0] = 13.203630059862618 x2[0] = -0.4034395183464789 x3[0] = 0.23677893402580358
+				// Correct answer has x0 = -11.59, x1 = 13.20, x2 = -0.4034, x3 = 0.2367
+				// Correct answer has chi-squared = 85822.2
+				double x0[] = new double[] {25.0};
+				double x1[] = new double[] {5.0};
+				double x2[] = new double[] {-5.0};
+				double x3[] = new double[] {-1.0};
+				CostFunction cost_function = new BrownAndDennisFunction();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+	            problem.AddParameterBlock(x3, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				solverOptions.function_tolerance = 1.0E-10;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0]);
+					System.out.println("Correct answer has x0 = -11.59, x1 = 13.20, x2 = -0.4034, x3 = 0.2367");
+			        System.out.println("Correct answer has chi-squared = 85822.2");
+				}	
+			}
 }
