@@ -859,6 +859,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     		// If true, three dimensional color segmenting in RGB. If false, two dimensional
     		// color segmenting in CIELAB
     		boolean colorSegmentInRGB = false;
+    		double vettImmagine[] = new double[length];
+    		extents2D = new int[] {xDim,yDim};
     		for (z = selectedAIFLowZSlice; z <= selectedAIFHighZSlice; z++) {
 	    		for (t = 0; t < tDim; t++) {
 					for (y = 0; y < yDim; y++) {
@@ -978,6 +980,65 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	    			System.out.println("Voxel " + (i+1) + " x = " + AIF_voxels[z-selectedAIFLowZSlice][i][0] 
 	    					+ " y = " + AIF_voxels[z-selectedAIFLowZSlice][i][1] + " z = " + z);
 	    		}
+	    		for (x = 0; x < xDim; x++) {
+	    			for (y = 0; y < yDim; y++) {
+	    				vettImmagine[x + y*xDim] = 0.0;
+	    				for (t = 0; t < tDim; t++) {
+	    					vettImmagine[x + y*xDim] += data[z][y][x][t];
+	    				}
+	    			}
+	    		}
+	    		
+	    		ModelImage immagineImage = new ModelImage(ModelStorageBase.DOUBLE, extents2D, "immagineImage");
+	    		
+				try {
+					immagineImage.importData(0, vettImmagine, true);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				float xArr[] = new float[1];
+				float yArr[] = new float[1];
+				float zArr[] = new float[1];
+				for (i = 0; i < numVoxels; i++) {
+					VOI AIFPtVOI = new VOI((short) (i), "", VOI.POINT, -1.0f);
+					AIFPtVOI.setColor(Color.red);
+					xArr[0] = (float) AIF_voxels[z-selectedAIFLowZSlice][i][0];
+					yArr[0] = (float) AIF_voxels[z-selectedAIFLowZSlice][i][1];
+					AIFPtVOI.importCurve(xArr, yArr, zArr);
+					((VOIPoint) (AIFPtVOI.getCurves().elementAt(0))).setFixed(true);
+					immagineImage.registerVOI(AIFPtVOI);
+				}
+				ViewJFrameImage vFrame = new ViewJFrameImage(immagineImage);
+				Component component = vFrame.getComponent(0);
+				Rectangle rect = component.getBounds();
+				String format = "png";
+				BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
+				component.paint(captureImage.getGraphics());
+
+				File immagineFile = new File(outputFilePath + outputPrefix + "finalAIF_slice"+String.valueOf(z)+".png");
+				boolean foundWriter;
+				try {
+					foundWriter = ImageIO.write(captureImage, format, immagineFile);
+				} catch (IOException e) {
+					System.err.println("IOException " + e);
+					return;
+				}
+				if (!foundWriter) {
+					System.err.println("No appropriate writer for finalAIF_slice"+String.valueOf(z)+".png");
+					return;
+				}
+				captureImage.flush();
+				component.setEnabled(false);
+				component.setVisible(false);
+				component.setIgnoreRepaint(true);
+				vFrame.removeComponentListener();
+				vFrame.removeWindowListener();
+				vFrame.removeMouseMotionListener();
+				vFrame.removeMouseListener();
+				vFrame.removeKeyListener();
+				vFrame.close(false);
+				immagineImage.disposeLocal();
     		} // for (z = selectedAIFLowZSlice; z <= selectedAIFHighZSlice; z++)
     	} // if (findAIFInfoWithDSCMRIToolbox)
     	
