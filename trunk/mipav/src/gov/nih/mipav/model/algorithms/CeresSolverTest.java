@@ -25762,4 +25762,434 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			        System.out.println("Correct answer has chi-squared = 85822.2");
 				}	
 			}
+			
+			class Osborne1Function extends SizedCostFunction {
+				public Osborne1Function() {
+					super(33,1,1,1,1,1,0,0,0,0,0);
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double x4 = parameters.get(4)[0];
+					double xSeries[] = new double[33];
+			        for (i = 1; i <= 33; i++) {
+			        	xSeries[i-1] = 10.0*(i-1);
+			        }
+			        double ySeries[] = new double[]{0.844, 0.908, 0.932, 0.936, 0.925, 0.908, 0.881, 0.850, 0.818,
+			        		  0.784, 0.751, 0.718, 0.685, 0.658, 0.628, 0.603, 0.580, 0.558, 0.538, 0.522,
+			        		  0.506, 0.490, 0.478, 0.467, 0.457, 0.448, 0.438, 0.431, 0.424, 0.420, 0.414,
+			        		  0.411, 0.406};
+			        for (i = 0; i < 33; i++) {
+                        ymodel = x0 + x1*Math.exp(-x3*xSeries[i]) + x2*Math.exp(-x4*xSeries[i]);
+                        residuals[i] = ymodel - ySeries[i];
+                    }
+					
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 33; i++) {
+	        	    		jacobian[0][i] = 1.0;
+                            jacobian[1][i] = Math.exp(-x3*xSeries[i]);
+                            jacobian[2][i] = Math.exp(-x4*xSeries[i]);
+                            jacobian[3][i] = -x1*xSeries[i]*Math.exp(-x3*xSeries[i]);
+                            jacobian[4][i] = -x2*xSeries[i]*Math.exp(-x4*xSeries[i]);
+	        	    	}
+	        	    	
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double x4 = parameters.get(4)[0];
+					double xSeries[] = new double[33];
+			        for (i = 1; i <= 33; i++) {
+			        	xSeries[i-1] = 10.0*(i-1);
+			        }
+			        double ySeries[] = new double[]{0.844, 0.908, 0.932, 0.936, 0.925, 0.908, 0.881, 0.850, 0.818,
+			        		  0.784, 0.751, 0.718, 0.685, 0.658, 0.628, 0.603, 0.580, 0.558, 0.538, 0.522,
+			        		  0.506, 0.490, 0.478, 0.467, 0.457, 0.448, 0.438, 0.431, 0.424, 0.420, 0.414,
+			        		  0.411, 0.406};
+			        for (i = 0; i < 33; i++) {
+                        ymodel = x0 + x1*Math.exp(-x3*xSeries[i]) + x2*Math.exp(-x4*xSeries[i]);
+                        residuals[i] = ymodel - ySeries[i];
+                    }
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 33; i++) {
+	        	    		jacobian[0][jacobians_offset[0]+i] = 1.0;
+                            jacobian[1][jacobians_offset[1]+i] = Math.exp(-x3*xSeries[i]);
+                            jacobian[2][jacobians_offset[2]+i] = Math.exp(-x4*xSeries[i]);
+                            jacobian[3][jacobians_offset[3]+i] = -x1*xSeries[i]*Math.exp(-x3*xSeries[i]);
+                            jacobian[4][jacobians_offset[4]+i] = -x2*xSeries[i]*Math.exp(-x4*xSeries[i]);
+                        }
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runOsborne1Function() {
+				// Ceres Solver Report: Iterations: 73, Initial cost: 4.395131e-01, Final cost: 2.732447e-05, Termination: CONVERGENCE
+				// Solved answer x0[0] = 0.37541005408908135 x1[0] = 1.9358472542226113 x2[0] = -1.4646874796237699 x3[0] = 0.012867535306632207 
+						// x4[0] = 0.022122698298337937
+				// Correct answer is x0 = 0.37541, x1 = 1.9358, x2 = -1.4647, x3 = 0.012868, x4 = 0.022123
+				// Correct answer has Chi-squared = 5.46489E-5
+				double x0[] = new double[] {0.5};
+				double x1[] = new double[] {1.5};
+				double x2[] = new double[] {-1.0};
+				double x3[] = new double[] {0.01};
+				double x4[] = new double[] {0.02};
+				CostFunction cost_function = new Osborne1Function();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3, x4);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+	            problem.AddParameterBlock(x3, 1);
+	            problem.AddParameterBlock(x4, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				solverOptions.function_tolerance = 1.0E-10;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0] + " x4[0] = " + x4[0]);
+					System.out.println("Correct answer is x0 = 0.37541, x1 = 1.9358, x2 = -1.4647, x3 = 0.012868, x4 = 0.022123");
+			        System.out.println("Correct answer has Chi-squared = 5.46489E-5");
+				}	
+			}
+			
+			class BIGGS_EXP6Function extends SizedCostFunction {
+				public BIGGS_EXP6Function() {
+					super(13,1,1,1,1,1,1,0,0,0,0);
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					int i;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double x4 = parameters.get(4)[0];
+					double x5 = parameters.get(5)[0];
+					double xSeries[] = new double[13];
+			        double ySeries[] = new double[13];
+			        for (i = 0; i < 13; i++) {
+			        	xSeries[i] = 0.1*(i+1.0);
+			        	ySeries[i] = Math.exp(-xSeries[i]) - 5.0 * Math.exp(-10.0 * xSeries[i]) + 3.0 * Math.exp(-4.0 * xSeries[i]);
+			        }
+					
+			        for (i = 0; i < 13; i++) {
+                		residuals[i] = x2*Math.exp(-xSeries[i]*x0) - x3*Math.exp(-xSeries[i]*x1)
+                				+ x5*Math.exp(-xSeries[i]*x4) - ySeries[i];
+                	}	
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 13; i++) {
+	        	    		jacobian[0][i] = -xSeries[i]*x2*Math.exp(-xSeries[i]*x0);
+                    		jacobian[1][i] = xSeries[i]*x3*Math.exp(-xSeries[i]*x1);
+                    		jacobian[2][i] = Math.exp(-xSeries[i]*x0);
+                    		jacobian[3][i] = -Math.exp(-xSeries[i]*x1);
+                    		jacobian[4][i] = -xSeries[i]*x5*Math.exp(-xSeries[i]*x4);
+                    		jacobian[5][i] = Math.exp(-xSeries[i]*x4);
+	        	    	}
+	        	    	
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					int i;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double x4 = parameters.get(4)[0];
+					double x5 = parameters.get(5)[0];
+					double xSeries[] = new double[13];
+			        double ySeries[] = new double[13];
+			        for (i = 0; i < 13; i++) {
+			        	xSeries[i] = 0.1*(i+1.0);
+			        	ySeries[i] = Math.exp(-xSeries[i]) - 5.0 * Math.exp(-10.0 * xSeries[i]) + 3.0 * Math.exp(-4.0 * xSeries[i]);
+			        }
+					
+			        for (i = 0; i < 13; i++) {
+                		residuals[i] = x2*Math.exp(-xSeries[i]*x0) - x3*Math.exp(-xSeries[i]*x1)
+                				+ x5*Math.exp(-xSeries[i]*x4) - ySeries[i];
+                	}	
+			        
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 13; i++) {
+	        	    		jacobian[0][jacobians_offset[0]+i] = -xSeries[i]*x2*Math.exp(-xSeries[i]*x0);
+                    		jacobian[1][jacobians_offset[1]+i] = xSeries[i]*x3*Math.exp(-xSeries[i]*x1);
+                    		jacobian[2][jacobians_offset[2]+i] = Math.exp(-xSeries[i]*x0);
+                    		jacobian[3][jacobians_offset[3]+i] = -Math.exp(-xSeries[i]*x1);
+                    		jacobian[4][jacobians_offset[4]+i] = -xSeries[i]*x5*Math.exp(-xSeries[i]*x4);
+                    		jacobian[5][jacobians_offset[5]+i] = Math.exp(-xSeries[i]*x4);
+                        }
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runBIGGS_EXP6Function() {
+				// Ceres Solver Report: Iterations: 44, Initial cost: 3.895350e-01, Final cost: 2.827825e-03, Termination: CONVERGENCE
+				// Solved answer x0[0] = 1.7114159997023897 x1[0] = 17.683197609424763 x2[0] = 1.1631436656890315 x3[0] = 5.186561235601443
+				// x4[0] = 1.7114159997023897 x5[0] = 1.1631436656890315
+				// Biggs EXP6 problem
+				// Correct answer has 2 minima with chi-squared = 0 and  chi-squared = 5.65565...E-3
+				double x0[] = new double[] {1.0};
+				double x1[] = new double[] {2.0};
+				double x2[] = new double[] {1.0};
+				double x3[] = new double[] {1.0};
+				double x4[] = new double[] {1.0};
+				double x5[] = new double[] {1.0};
+				CostFunction cost_function = new BIGGS_EXP6Function();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, x0, x1, x2, x3, x4, x5);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+	            problem.AddParameterBlock(x3, 1);
+	            problem.AddParameterBlock(x4, 1);
+	            problem.AddParameterBlock(x5, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				solverOptions.function_tolerance = 1.0E-10;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0]);
+					System.out.println("x4[0] = " + x4[0] + " x5[0] = " + x5[0]);
+					System.out.println("Biggs EXP6 problem");
+			        System.out.println("Correct answer has 2 minima with chi-squared = 0 and  chi-squared = 5.65565...E-3");
+				}	
+			}
+			
+			class Osborne2Function extends CostFunction {
+				public Osborne2Function() {
+					super();
+					set_num_residuals(65);
+					for (int i = 0; i < 11; i++) {
+						mutable_parameter_block_sizes().add(1);
+					}
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double x4 = parameters.get(4)[0];
+					double x5 = parameters.get(5)[0];
+					double x6 = parameters.get(6)[0];
+					double x7 = parameters.get(7)[0];
+					double x8 = parameters.get(8)[0];
+					double x9 = parameters.get(9)[0];
+					double x10 = parameters.get(10)[0];
+					double xSeries[] = new double[65];
+			        for (i = 1; i <= 65; i++) {
+			        	xSeries[i-1] = (i-1)/10.0;
+			        }
+			        double ySeries[] = new double[]{1.366, 1.191, 1.112, 1.013, 0.991, 0.885, 0.831, 0.847, 0.786,
+			        		  0.725, 0.746, 0.679, 0.608, 0.655, 0.616, 0.606, 0.602, 0.626, 0.651, 0.724,
+			        		  0.649, 0.649, 0.694, 0.644, 0.624, 0.661, 0.612, 0.558, 0.533, 0.495, 0.500,
+			        		  0.423, 0.395, 0.375, 0.372, 0.391, 0.396, 0.405, 0.428, 0.429, 0.523, 0.562,
+			        		  0.607, 0.653, 0.672, 0.708, 0.633, 0.668, 0.645, 0.632, 0.591, 0.559, 0.597,
+			        		  0.625, 0.739, 0.710, 0.729, 0.720, 0.636, 0.581, 0.428, 0.292, 0.162, 0.098,
+			        		  0.054};
+					
+			        for (i = 0; i < 65; i++) {
+			        	ymodel = x0*Math.exp(-x4*xSeries[i]) 
+                                + x1*Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8))
+                                + x2*Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9))
+                                + x3*Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                         residuals[i] = ymodel - ySeries[i];
+                	}	
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 65; i++) {
+	        	    		jacobian[0][i] = Math.exp(-x4*xSeries[i]);
+                            jacobian[1][i] = Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8));
+                            jacobian[2][i] = Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9));
+                            jacobian[3][i] = Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                            jacobian[4][i] = -x0*xSeries[i]*Math.exp(-x4*xSeries[i]) ;
+                            jacobian[5][i] = -x1*(xSeries[i] - x8)*(xSeries[i] - x8)
+                                             *Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8));
+                            jacobian[6][i] = -x2*(xSeries[i] - x9)*(xSeries[i] - x9)
+                                             *Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9));
+                            jacobian[7][i] = -x3*(xSeries[i] - x10)*(xSeries[i] - x10)
+                                             *Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                            jacobian[8][i] = 2.0*x1*x5*(xSeries[i] - x8)
+                                             *Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8));
+                            jacobian[9][i] = 2.0*x2*x6*(xSeries[i] - x9)
+                                             *Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9));
+                            jacobian[10][i] = 2.0*x3*x7*(xSeries[i] - x10)
+                                              *Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+	        	    	}
+	        	    	
+	        	    }
+	        	    return true;
+				}
+				
+				public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobian[][],
+						int jacobians_offset[]) {
+					int i;
+					double ymodel;
+					// Called by ResidualBlock.Evaluate
+					double x0 = parameters.get(0)[0];
+					double x1 = parameters.get(1)[0];
+					double x2 = parameters.get(2)[0];
+					double x3 = parameters.get(3)[0];
+					double x4 = parameters.get(4)[0];
+					double x5 = parameters.get(5)[0];
+					double x6 = parameters.get(6)[0];
+					double x7 = parameters.get(7)[0];
+					double x8 = parameters.get(8)[0];
+					double x9 = parameters.get(9)[0];
+					double x10 = parameters.get(10)[0];
+					double xSeries[] = new double[65];
+			        for (i = 1; i <= 65; i++) {
+			        	xSeries[i-1] = (i-1)/10.0;
+			        }
+			        double ySeries[] = new double[]{1.366, 1.191, 1.112, 1.013, 0.991, 0.885, 0.831, 0.847, 0.786,
+			        		  0.725, 0.746, 0.679, 0.608, 0.655, 0.616, 0.606, 0.602, 0.626, 0.651, 0.724,
+			        		  0.649, 0.649, 0.694, 0.644, 0.624, 0.661, 0.612, 0.558, 0.533, 0.495, 0.500,
+			        		  0.423, 0.395, 0.375, 0.372, 0.391, 0.396, 0.405, 0.428, 0.429, 0.523, 0.562,
+			        		  0.607, 0.653, 0.672, 0.708, 0.633, 0.668, 0.645, 0.632, 0.591, 0.559, 0.597,
+			        		  0.625, 0.739, 0.710, 0.729, 0.720, 0.636, 0.581, 0.428, 0.292, 0.162, 0.098,
+			        		  0.054};
+					
+			        for (i = 0; i < 65; i++) {
+			        	 ymodel = x0*Math.exp(-x4*xSeries[i]) 
+                                 + x1*Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8))
+                                 + x2*Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9))
+                                 + x3*Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                          residuals[i] = ymodel - ySeries[i];
+                		
+                	}	
+			        
+					
+	        	    if (jacobian != null) {
+	        	    	for (i = 0; i < 65; i++) {
+	        	    		jacobian[0][jacobians_offset[0]+i] = Math.exp(-x4*xSeries[i]);
+                            jacobian[1][jacobians_offset[1]+i] = Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8));
+                            jacobian[2][jacobians_offset[2]+i] = Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9));
+                            jacobian[3][jacobians_offset[3]+i] = Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                            jacobian[4][jacobians_offset[4]+i] = -x0*xSeries[i]*Math.exp(-x4*xSeries[i]) ;
+                            jacobian[5][jacobians_offset[5]+i] = -x1*(xSeries[i] - x8)*(xSeries[i] - x8)
+                                             *Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8));
+                            jacobian[6][jacobians_offset[6]+i] = -x2*(xSeries[i] - x9)*(xSeries[i] - x9)
+                                             *Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9));
+                            jacobian[7][jacobians_offset[7]+i] = -x3*(xSeries[i] - x10)*(xSeries[i] - x10)
+                                             *Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                            jacobian[8][jacobians_offset[8]+i] = 2.0*x1*x5*(xSeries[i] - x8)
+                                             *Math.exp(-x5*(xSeries[i] - x8)*(xSeries[i] - x8));
+                            jacobian[9][jacobians_offset[9]+i] = 2.0*x2*x6*(xSeries[i] - x9)
+                                             *Math.exp(-x6*(xSeries[i] - x9)*(xSeries[i] - x9));
+                            jacobian[10][jacobians_offset[10]+i] = 2.0*x3*x7*(xSeries[i] - x10)
+                                              *Math.exp(-x7*(xSeries[i] - x10)*(xSeries[i] - x10));
+                        }
+	        	    }
+	        	    return true;
+				}
+			}
+			
+			public void runOsborne2Function() {
+				// Ceres Solver Report: Iterations: 68, Initial cost: 1.046710e+00, Final cost: 2.006887e-02, Termination: CONVERGENCE
+				// Solved answer x0[0] = 1.3099772796057527 x1[0] = 0.4315541468460934 x2[0] = 0.6336619416022051 x3[0] = 0.599430276128409
+				// x4[0] = 0.7541839027812878 x5[0] = 0.9042887998840268 x6[0] = 1.3658108011492431 x7[0] = 4.8236981733759405
+				// x8[0] = 2.3986842536450474 x9[0] = 4.568874560786462 x10[0] = 5.6753415114288535
+				// Osborne2 problem
+				// Correct answer has Chi-squared = 4.01377E-2
+				double x0[] = new double[] {1.3};
+				double x1[] = new double[] {0.65};
+				double x2[] = new double[] {0.65};
+				double x3[] = new double[] {0.7};
+				double x4[] = new double[] {0.6};
+				double x5[] = new double[] {3.0};
+				double x6[] = new double[] {5.0};
+				double x7[] = new double[] {7.0};
+				double x8[] = new double[] {2.0};
+				double x9[] = new double[] {4.5};
+				double x10[] = new double[] {5.5};
+				Vector<double[]> parameter_blocks = new Vector<double[]>();
+				parameter_blocks.add(x0);
+				parameter_blocks.add(x1);
+				parameter_blocks.add(x2);
+				parameter_blocks.add(x3);
+				parameter_blocks.add(x4);
+				parameter_blocks.add(x5);
+				parameter_blocks.add(x6);
+				parameter_blocks.add(x7);
+				parameter_blocks.add(x8);
+				parameter_blocks.add(x9);
+				parameter_blocks.add(x10);
+				CostFunction cost_function = new Osborne2Function();
+				ProblemImpl problem = new ProblemImpl();
+				problem.AddResidualBlock(cost_function, null, parameter_blocks);
+	            problem.AddParameterBlock(x0, 1);
+	            problem.AddParameterBlock(x1, 1);
+	            problem.AddParameterBlock(x2, 1);
+	            problem.AddParameterBlock(x3, 1);
+	            problem.AddParameterBlock(x4, 1);
+	            problem.AddParameterBlock(x5, 1);
+	            problem.AddParameterBlock(x6, 1);
+	            problem.AddParameterBlock(x7, 1);
+	            problem.AddParameterBlock(x8, 1);
+	            problem.AddParameterBlock(x9, 1);
+	            problem.AddParameterBlock(x10, 1);
+				// Run the solver!
+				Solver solver = new Solver();
+				SolverOptions solverOptions = new SolverOptions();
+				solverOptions.minimizer_progress_to_stdout = true;
+				solverOptions.max_num_iterations = 5000000;
+				solverOptions.max_num_consecutive_invalid_steps = 1000;
+				solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
+				solverOptions.function_tolerance = 1.0E-10;
+				// Solver::Summary summary;
+				optionsValid = true;
+				Solve(solverOptions, problem, solver.summary);
+				if (optionsValid) {
+					System.out.println(solver.summary.BriefReport());
+					System.out.println("Solved answer x0[0] = " + x0[0] + " x1[0] = " + x1[0] + " x2[0] = " + x2[0] + " x3[0] = " + x3[0]);
+					System.out.println("x4[0] = " + x4[0] + " x5[0] = " + x5[0] + " x6[0] = " + x6[0] + " x7[0] = " + x7[0]);
+					System.out.println("x8[0] = " + x8[0] + " x9[0] = " + x9[0] + " x10[0] = " + x10[0]);
+					System.out.println("Osborne2 problem");
+			        System.out.println("Correct answer has Chi-squared = 4.01377E-2");
+				}	
+			}
 }
