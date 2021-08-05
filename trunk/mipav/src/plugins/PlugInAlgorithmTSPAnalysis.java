@@ -3181,10 +3181,11 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	  	        component.paint(captureImage.getGraphics());
 	  	        
 	  	        System.out.println("About to create File");
-	  	        sliceAifFile = new File(outputFilePath + outputPrefix + "sliceAIF.png");
+	  	        sliceAifFile = new File(outputFilePath + outputPrefix + 
+	  	        		"meanAIF_slice"+String.valueOf((int)Math.round(zmean))+".png");
 	  	        boolean foundWriter = ImageIO.write(captureImage, format, sliceAifFile);
 	  	        if (!foundWriter) {
-	  	        	System.err.println("No appropriate writer for sliceAIF.png");
+	  	        	System.err.println("No appropriate writer for meanAIF_slice"+String.valueOf((int)Math.round(zmean))+".png");
 	  	        	setCompleted(false);
 	  	        	return;
 	  	        }
