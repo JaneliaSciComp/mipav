@@ -266,10 +266,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	boolean gauss2FittingCheck = false;
 	boolean GVFittingCheck = false;
 	boolean GVRecirculationCheck = false;
-	boolean doTransfer = true;
+	boolean doAIFTransfer = true;
 	boolean errorInMaskRoutine = false;
 	double intensity[] = null;
 	double probDouble[] = null;
+	double cbv[][][] = null;
 
 	public DSC_MRI_toolbox() {
 
@@ -281,7 +282,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		this.tr = tr;
 		this.sliceNumber = sliceNumber;
 		this.outputFilePath = outputFilePath;
-		doTransfer = true;
+		doAIFTransfer = true;
 	}
 
 	public void runAlgorithm() {
@@ -335,7 +336,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 			DSC_mri_core();
 
-		} else if (doTransfer) {
+		} else if (doAIFTransfer) {
 			nC = volumes.length;
 			nR = volumes[0].length;
 			nS = volumes[0][0].length;
@@ -421,6 +422,17 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		if (aif_enable == 1) {
 			DSC_mri_aif();
 		}
+		
+		if (doAIFTransfer) {
+			return;
+		}
+		
+		if (display > 0) {
+			UI.setDataText("Calculating maps\n");
+		}
+		
+		// CBV calculation
+		DSC_mri_cbv();
 	}
 
 	public void DSC_mri_mask() {
@@ -1790,6 +1802,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
 		extractAIF();
+		
+		if (qr_enable == 1) {
+	        for (t = 0; t < nT; t++) {
+	            AIF_conc[t] =(qr_a*AIF_conc[t]+qr_b*AIF_conc[t]*AIF_conc[t])/qr_r;
+	        }
+		} // if (qr_enable == 1)
 	} // public DSC_mri_aif()
 
 	public int DSC_mri_slice_selection_figure() {
@@ -2846,6 +2864,57 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			immagineImage.disposeLocal();
 		//} // if (display > 1)
 	} // public void extractAIF()
+	
+	public void DSC_mri_cbv() {
+		// Original author Marco Castellaro - Universita di Padova - DEI
+		
+		// Calculate Cerebral Blood Volume parametric maps for a subject
+		
+		// Input parameters:
+		// conc (4D matrix) which contains the trends of the DSC concentrations of all the slices
+		// Options and the struct that contains the options of the method, the significant ones are:
+		
+		// options.time - It represents the vector of the times of the DSC exam (each sample represents
+		//                the acquisition of an entire brain volume.
+		
+		// options.par.kh - Parameter representing the hematocrit dependence of the Cerebral Blood
+		//                  Volume (CBV), by default set to 1, in this case relative estimates of
+		//                  the CBV parameter are obtained
+		
+		// options.par.rho - Parameter that represents the dependence on the blood density of the
+		//                   Cerebral Blood Volume (CBV), by default set to 1, in this case relative
+		//                   estimates of the CBV parameter are obtained.
+		
+		// Output parameters:
+		// cbv - (3D matrix) which contains the calculated parametric map
+		int c, r, s, t;
+		
+		if (display > 0) {
+			UI.setDataText("Calculating CBV\n");
+		}
+		
+		cbv = new double[nC][nR][nS];
+		
+		double coeff = par_kh/par_rho;
+		double conc_slice[][][] = new double[nC][nR][nT];
+		double trapz_aif = trapz(AIF_fit_gv);
+		double trapz_conc[][];
+		for (s = 0; s < nS; s++) {
+		    for (c = 0; c < nC; c++) {
+		    	for (r = 0; r < nR; r++) {
+		    		for (t = 0; t < nT; t++) {
+		    		    conc_slice[c][r][t] = conc[c][r][s][t];
+		    		} // for (t = 0; t < nT; t++)
+		    	} // for (r = 0; r < nR; r++)
+		    } // for (c = 0; c < nC; c++)
+		    trapz_conc = trapz(conc_slice);
+		    for (c = 0; c < nC; c++) {
+		    	for (r = 0; r < nR; r++) {
+		    		cbv[c][r][s] = coeff*mask_data[c][r][s]*trapz_conc[c][r]/trapz_aif;
+		    	}
+		    }
+		} // for (s = 0; s < nS; s++)
+	} // public void DSC_mri_cbv()
 
 	private double[] GVfunction(double p[]) {
 		// Compute the gamma-variate function defined by the parameters contained in p.
@@ -3717,6 +3786,29 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		} // for (c = 0; c < nC; c++)
 
 		REG = trapz(derivative2);
+		return REG;
+	}
+	
+	private double trapz(double f[]) {
+		double REG;
+		int t;
+		double sum;
+		double scale;
+		if (equalTimeSpacing) {
+			scale = (time[nT - 1] - time[0]) / (2.0 * (nT-1));
+			sum = f[0] + f[nT - 1];
+			for (t = 1; t < nT - 1; t++) {
+				sum += 2.0 * f[t];
+			}
+			REG = scale * sum;
+		} // if (equalTimeSpacing)
+		else {
+		    REG = 0.0;
+			for (t = 0; t < nT - 1; t++) {
+				REG += (time[t + 1] - time[t]) * (f[t] + f[t + 1]);
+			}
+			REG = 0.5 * REG;
+		}
 		return REG;
 	}
 
