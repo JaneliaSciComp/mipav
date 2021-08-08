@@ -24,6 +24,8 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentGraph;
@@ -2939,13 +2941,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		// Output parameters:
 		// cbv_lc - (3D matrix) which contains the calculated parametric map
-		int c, r, s, t, i, j, numUsed;
+		int c, r, s, t, i, j, numUsed, v;
+		double diff;
+		LinearEquations2 le2 = new LinearEquations2();
+		GeneralizedInverse2 gi2 = new GeneralizedInverse2();
 		
 		if (display > 0) {
 			UI.setDataText("Calculating leakage corrected CBV\n");
 		}	
 		
-	    cbv_lc = new double[nC][nR][nS];
+	    double cbv_prelc[][][] = new double[nC][nR][nS];
 		
 		// We next estimated R2*(t) by averaging R2*(t) for all pixels within the mask that
 		// did not demonstrate signal intensity enhancement (averaged over the final 10 time
@@ -2981,7 +2986,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	        	double sumSquared = 0.0;
 	        	for (j = 0; j <= floorMeanBolus; j++) {
 	        		if (!Double.isNaN(SD[i][j])) {
-	        			double diff = SD[i][j] - firstDimensionMean;
+	        			diff = SD[i][j] - firstDimensionMean;
 	        			sumSquared += diff * diff;
 	        		}
 	        	} // for (j = 0; j <= floorMeanBolus; j++) 
@@ -3090,6 +3095,190 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    
 	    double phat[][] = new double[Delta_R2star.length][2];
 	    double CVp[][] = new double[Delta_R2star.length][2];
+	    double cumtrapz_R2star[] = cumtrapz(R2star_AVG_not_enhancing);
+	    Matrix A = new Matrix(nT,2);
+	    for (t = 0; t < nT; t++) {
+	    	A.set(t, 0, -cumtrapz_R2star[t]);
+	    	A.set(t, 1, R2star_AVG_not_enhancing[t]);
+	    }
+	    double sigmaphat[][] = ((A.transpose()).times(A)).getArray();
+	    int min_bolus = Integer.MAX_VALUE;
+	    for (s = 0; s < nS; s++) {
+	    	if (bolus[s] < min_bolus) {
+	    		min_bolus = bolus[s];
+	    	}
+	    }
+	    
+	    double Delta_R2star_vett[] = new double[nT];
+	    double temp[][] = new double[2][2];
+	    for (v = 0; v < Delta_R2star.length; v++) {
+	    	double sumVett = 0.0;
+	        for (t = 0; t < nT; t++) {
+	        	Delta_R2star_vett[t] = Delta_R2star[v][t];
+	        	if (t <= min_bolus) {
+	        		sumVett += Delta_R2star_vett[t];
+	        	}
+	        }
+	        double meanVett = sumVett/(min_bolus+1);
+	        double sumSquaredVett = 0.0;
+	        for (t = 0; t <= min_bolus; t++) {
+	            diff = Delta_R2star_vett[t] - meanVett;
+	            sumSquaredVett += diff * diff;
+	        }
+	        double sigma2 = sumSquaredVett/min_bolus;
+	        double Acopy[][] = new double[nT][2];
+	        for (t = 0; t < nT; t++) {
+	        	Acopy[t][0] = A.get(t,0);
+	        	Acopy[t][1] = A.get(t,1);
+	        }
+	        int ipiv[] = new int[Math.min(nT,2)];
+	        int info[] = new int[1];
+	        boolean rankDeficient = false;
+	        int nrhs = 1; // number of columns of B
+	        le2.dgetrf(nT,2,Acopy,nT,ipiv,info);
+	        if (info[0] < 0) {
+		    	  System.err.println("In DSC_mri_cbv_lc dgetrf argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  return;
+		      }
+		      if (info[0] > 0) {
+		    	  //System.err.println("In DSC_mri_cbv_lc dgetrf U["+(info[0]-1)+
+		    			  //"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		      }
+		      if (!rankDeficient) {
+		    	  char trans = 'N'; // Solve A*X = B (no transpose)
+		    	  double rhs_array[][] = new double[nT][1];
+			      for (t = 0; t < nT; t++) {
+			    	  rhs_array[t][0] = Delta_R2star_vett[t];
+			      }
+			      le2.dgetrs(trans,2,nrhs,Acopy,nT,ipiv,rhs_array,nT,info);
+			      if (info[0] < 0) {
+			    	  System.err.println("In DSC_mri_cbv_lc dgetrs argument number " + 
+			      (-info[0]) + " is illegal");
+			    	  return;
+			      }
+			      for (i = 0; i < 2; i++) {
+			    	  phat[v][i] = rhs_array[i][0];
+			      }
+		      } // if (!rankDeficient)
+		      else {
+		    	  double B[][] = new double[nT][nrhs];
+				  for (t = 0; t < nT; t++) {
+					  B[t][0] = Delta_R2star_vett[t];
+				  }
+				  double sing[] = new double[Math.max(nT,2)];
+				  double rcond = -1.0; // Singular values s(i) <= RCOND*s[0] are treated as zero.
+					                   // If  rcond < 0, machine precision is used instead.
+				  int rank[] = new int[1];
+				  double work[] = new double[1];
+				  int lwork_query = -1;
+				  int lwork;
+				  Acopy = new double[nT][2];
+			        for (t = 0; t < nT; t++) {
+			        	Acopy[t][0] = A.get(t,0);
+			        	Acopy[t][1] = A.get(t,1);
+			        }
+				  gi2.dgelss(nT,2,nrhs,Acopy,nT,B,nT,sing,rcond,rank,work,lwork_query,info);
+				  if (info[0] != 0) {
+				        System.err.println("DSC_mri_cbv_lc: LAPACK dgelss work query error code = " + info[0]);
+				        return;
+					}
+					lwork = (int)work[0];
+		
+					// Allocate the workspace
+					try {
+						work = new double[lwork];
+					}
+					catch (OutOfMemoryError e) {
+						return;	
+					}
+					// This routine must handle rank deficient matrices
+					// since dgetrf does not handle rank deficient matrices.
+					gi2.dgelss(nT,2,nrhs,Acopy,nT,B,nT,sing,rcond,rank,work,lwork,info);
+					if (info[0] < 0) {
+						System.err.println("In DSC_mri_cbv_lc for dgelss the (-info[0]) argument had an illegal value");
+						return;
+					}
+					if (info[0] > 0) {
+						System.err.println("In DSC_mri_cbv_lc the algorithm for computing the SVD failed to converge");
+						System.err.println(info[0] + " off-diagonal elements of an intermediate bidiagonal form did not converge to zero.");
+						return;
+					}
+				    for (i = 0; i < 2; i++) {
+					   phat[v][i] = B[i][0];
+				    }
+		      }
+		      temp[0][0] = sigma2 * sigmaphat[0][0];
+		      temp[1][1] = sigma2 * sigmaphat[1][1];
+		      CVp[v][0] = 100.0 * Math.sqrt(temp[0][0])/Math.abs(phat[v][0]);
+		      CVp[v][1] = 100.0 * Math.sqrt(temp[1][1])/Math.abs(phat[v][1]);
+	    } // for (v = 0; v < Delta_R2star.length; v++)
+	    
+	    double K2_vett[] = new double[Delta_R2star.length];
+	    double K1_vett[] = new double[Delta_R2star.length];
+	    double K2_CV_vett[] = new double[Delta_R2star.length];
+	    double K1_CV_vett[] = new double[Delta_R2star.length];
+	    for (i = 0; i < Delta_R2star.length; i++) {
+	    	K2_vett[i] = phat[i][0];
+	    	K1_vett[i] = phat[i][1];
+	    	K2_CV_vett[i] = CVp[i][0];
+	    	K1_CV_vett[i] = CVp[i][1];
+	    }
+	    
+	    double K2_map[][][] = new double[nC][nR][nS];
+	    double K1_map[][][] = new double[nC][nR][nS];
+	    
+	    for (i = 0, c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (s = 0; s < nS; s++) {
+					if (mask_data[c][r][s] == 1) {
+						K2_map[c][r][s] = K2_vett[i];
+						K1_map[c][r][s] = K1_vett[i++];
+					}
+				}
+			}
+		}
+	    
+	    double K2_CV_map[][][] = new double[nC][nR][nS];
+	    double K1_CV_map[][][] = new double[nC][nR][nS];
+	    for (i = 0, c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (s = 0; s < nS; s++) {
+					if (mask_data[c][r][s] == 1) {
+						K2_CV_map[c][r][s] = K2_CV_vett[i];
+						K1_CV_map[c][r][s] = K1_CV_vett[i++];
+					}
+				}
+			}
+		}
+	    
+	    double conc_time[] = new double[nT];
+	    for (s = 0; s < nS; s++) {
+	    	for (c = 0; c < nC; c++) {
+	    		for (r = 0; r < nR; r++) {
+	    			for (t = 0; t < nT; t++) {
+	    				conc_time[t] = conc_infinities_removed[c][r][s][t];
+	    			}
+	    			cbv_prelc[c][r][s] = mask_data[c][r][s]*trapz(conc_time);
+	    		}
+	    	}
+	    }
+	    
+	    cbv_lc = new double[nC][nR][nS];
+	    double R2trapz = trapz(cumtrapz_R2star);
+	    double trapz_aif = trapz(AIF_fit_gv);
+	    double coeff = R2trapz/trapz_aif;
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		for (s = 0; s < nS; s++) {
+	    		    cbv_lc[c][r][s] = cbv_prelc[c][r][s];
+	    		    if (K2_CV_map[c][r][s] < 100.0) {
+	    		    	cbv_lc[c][r][s] += K2_map[c][r][s] * coeff;
+	    		    }
+	    		}
+	    	}
+	    }
 	} // public void DSC_mri_cbv_lc()
 	
 	private double[][] vol2mat(double data[][][][], byte selected[][][]) {
