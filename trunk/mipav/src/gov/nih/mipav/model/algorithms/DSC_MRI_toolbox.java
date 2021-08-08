@@ -271,6 +271,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double intensity[] = null;
 	double probDouble[] = null;
 	double cbv[][][] = null;
+	double cbv_lc[][][] = null;
 
 	public DSC_MRI_toolbox() {
 
@@ -2915,6 +2916,218 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    }
 		} // for (s = 0; s < nS; s++)
 	} // public void DSC_mri_cbv()
+	
+	public void DSC_mri_cbv_lc() {
+		// Original author Marco Castellaro - Universita di Padova - DEI
+		
+		// Calculate leakage corrected Cerebral Blood Volume parametric maps for a subject
+		
+		// Input parameters:
+		// conc (4D matrix) which contains the trends of the DSC concentrations of all the slices
+		// Options and the struct that contains the options of the method, the significant ones are:
+		
+		// options.time - It represents the vector of the times of the DSC exam (each sample represents
+		//                the acquisition of an entire brain volume.
+		
+		// options.par.kh - Parameter representing the hematocrit dependence of the Cerebral Blood
+		//                  Volume (CBV), by default set to 1, in this case relative estimates of
+		//                  the CBV parameter are obtained
+		
+		// options.par.rho - Parameter that represents the dependence on the blood density of the
+		//                   Cerebral Blood Volume (CBV), by default set to 1, in this case relative
+		//                   estimates of the CBV parameter are obtained.
+		
+		// Output parameters:
+		// cbv_lc - (3D matrix) which contains the calculated parametric map
+		int c, r, s, t, i, j, numUsed;
+		
+		if (display > 0) {
+			UI.setDataText("Calculating leakage corrected CBV\n");
+		}	
+		
+	    cbv_lc = new double[nC][nR][nS];
+		
+		// We next estimated R2*(t) by averaging R2*(t) for all pixels within the mask that
+		// did not demonstrate signal intensity enhancement (averaged over the final 10 time
+		// points) greater than 1 SD above that pixel’s
+		// average baseline and estimated by using trapezoidal integration over the 120
+		// acquired time points
+	    
+	    double SD[][] = vol2mat(conc, mask_data);
+	    double SDstd[] = new double[SD.length];
+	    double sumBolus = 0.0;
+	    for (s = 0; s < nS; s++) {
+	    	sumBolus += bolus[s];
+	    }
+	    double meanBolus = sumBolus/nS;
+	    int floorMeanBolus = (int)Math.floor(meanBolus);
+	    for (i = 0; i < SD.length; i++) {
+	    	numUsed = 0;
+	    	double firstDimensionTotal = 0.0;
+	        for (j = 0; j <= floorMeanBolus; j++) {
+	        	if (!Double.isNaN(SD[i][j])) {
+	        		firstDimensionTotal += SD[i][j];
+	        		numUsed++;
+	        	}
+	        } // for (j = 0; j <= floorMeanBolus; j++)
+	        if (numUsed == 0) {
+	        	SDstd[i] = Double.NaN;
+	        }
+	        else if (numUsed == 1) {
+	        	SDstd[i] = 0.0;
+	        }
+	        else {
+	        	double firstDimensionMean = firstDimensionTotal/numUsed;
+	        	double sumSquared = 0.0;
+	        	for (j = 0; j <= floorMeanBolus; j++) {
+	        		if (!Double.isNaN(SD[i][j])) {
+	        			double diff = SD[i][j] - firstDimensionMean;
+	        			sumSquared += diff * diff;
+	        		}
+	        	} // for (j = 0; j <= floorMeanBolus; j++) 
+	        	SDstd[i] = Math.sqrt(sumSquared/(numUsed - 1.0));
+	        }
+	    } // for (i = 0; i < SD.length; i++)
+	    double SD_map[][][] = new double[nC][nR][nS];
+	    for (i = 0, c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (s = 0; s < nS; s++) {
+					if (mask_data[c][r][s] == 1) {
+						SD_map[c][r][s] = SDstd[i++];
+					}
+				}
+			}
+		}
+	    
+	    // AVG is the same as SD
+	    Vector<Double>firstDimensionSamples = new Vector<Double>();
+	    double AVGmedian[] = new double[SD.length];
+	    for (i = 0; i < SD.length; i++) {
+	    	numUsed = 0;
+	    	firstDimensionSamples.clear();
+	    	for (t = nT - 10; t < nT; t++) {
+	    		if (!Double.isNaN(SD[i][t])) {
+	        		firstDimensionSamples.add(SD[i][t]);
+	        		numUsed++;
+	        	}	
+	    	} // for (t = nT - 10; t < nT; t++)
+	    	if (numUsed == 0) {
+	            AVGmedian[i] = Double.NaN;
+	        }
+	        else if (numUsed == 1) {
+	        	AVGmedian[i] = firstDimensionSamples.get(0);
+	        }
+	        else {
+	        	Collections.sort(firstDimensionSamples);
+	        	if ((numUsed % 2) == 1) {
+	        		AVGmedian[i] = firstDimensionSamples.get((numUsed-1)/2);
+	        	}
+	        	else {
+	        		AVGmedian[i] = (firstDimensionSamples.get(numUsed/2) + firstDimensionSamples.get((numUsed/2)-1))/2.0;
+	        	}
+	        }
+	    } // for (i = 0; i < SD.length; i++)
+	    double AVG_map[][][] = new double[nC][nR][nS];
+	    for (i = 0, c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (s = 0; s < nS; s++) {
+					if (mask_data[c][r][s] == 1) {
+						AVG_map[c][r][s] = AVGmedian[i++];
+					}
+				}
+			}
+		}
+	    
+	    byte mask_not_enhancing[][][] = new byte[nC][nR][nS];
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		for (s = 0; s < nS; s++) {
+	    			if (mask_data[c][r][s] == 1) {
+	    				if (!(Math.abs(AVG_map[c][r][s]) > 2.0 * SD_map[c][r][s])) {
+	    					mask_not_enhancing[c][r][s] = 1;
+	    				}
+	    			}
+	    		}
+	    	}
+	    }
+	    
+	    double conc_infinities_removed[][][][] = new double[nC][nR][nS][nT];
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		for (s = 0; s < nS; s++) {
+	    			for (t = 0; t < nT; t++) {
+	    				if (Double.isInfinite(conc[c][r][s][t])) {
+	    					conc_infinities_removed[c][r][s][t] = 0.0;
+	    				}
+	    				else {
+	    					conc_infinities_removed[c][r][s][t] = conc[c][r][s][t];
+	    				}
+	    			}
+	    		}
+	    	}
+	    }
+	    
+	    double concmat[][] = vol2mat(conc_infinities_removed, mask_not_enhancing);
+	    double R2star_AVG_not_enhancing[] = new double[nT];
+	    for (t = 0; t < nT; t++) {
+	    	double sum = 0.0;
+	    	numUsed = 0;
+	    	for (i = 0; i < concmat.length; i++) {
+	    	    if (!Double.isNaN(concmat[i][t])) {
+	    	    	sum += concmat[i][t];
+	    	    	numUsed++;
+	    	    }
+	    	}
+	    	if (numUsed == 0) {
+	    		R2star_AVG_not_enhancing[t] = Double.NaN;
+	    	}
+	    	else {
+	    		R2star_AVG_not_enhancing[t] = sum/numUsed;
+	    	}
+	    } // for (t = 0; t < nT; t++)
+	    
+	    double Delta_R2star[][] = vol2mat(conc_infinities_removed, mask_data);
+	    
+	    double phat[][] = new double[Delta_R2star.length][2];
+	    double CVp[][] = new double[Delta_R2star.length][2];
+	} // public void DSC_mri_cbv_lc()
+	
+	private double[][] vol2mat(double data[][][][], byte selected[][][]) {
+		int c,r,s,t,i;
+		int numSelected = 0;
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (s = 0; s < nS; s++) {
+					if (selected[c][r][s] == 1) {
+						numSelected++;
+					}
+				}
+			}
+		}
+		int N_samples = data[0][0][0].length;
+		double mat[][] = new double[numSelected][N_samples];
+		double vol_temp[][][] = new double[nC][nR][nS];
+		
+		for (t = 0; t < N_samples; t++) {
+		    for (c = 0; c < nC; c++) {
+		    	for (r = 0; r < nR; r++) {
+		    		for (s = 0; s < nS; s++) {
+		    			vol_temp[c][r][s] = data[c][r][s][t];
+		    		}
+		    	}
+		    } // for (c = 0; c < nC; c++)
+		    for (i = 0, c = 0; c < nC; c++) {
+		    	for (r = 0; r < nR; r++) {
+		    		for (s = 0; s < nS; s++) {
+		    			if (selected[c][r][s] == 1) {
+		    				mat[i++][t] = vol_temp[c][r][s];
+		    			}
+		    		}
+		    	}
+		    }
+		} // for (t = 0; t < N_samples; t++)
+		return mat;
+	}
 
 	private double[] GVfunction(double p[]) {
 		// Compute the gamma-variate function defined by the parameters contained in p.
@@ -3786,6 +3999,26 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		} // for (c = 0; c < nC; c++)
 
 		REG = trapz(derivative2);
+		return REG;
+	}
+	
+	private double[] cumtrapz(double f[]) {
+		double REG[] = new double[nT];
+		double scale;
+		int t;
+		double sum = 0.0;
+		if (equalTimeSpacing) {
+			scale = (time[nT-1] - time[0]) / (2.0* (nT-1));
+			for (t = 0; t < nT - 1; t++) {
+				REG[t+1] = REG[t] + scale * (f[t] + f[t+1]);
+			}
+		}
+		else {
+			for (t = 0; t < nT - 1; t++) {
+				scale = (time[t+1] - time[t])/2.0;
+				REG[t+1] = REG[t] + scale * (f[t] + f[t+1]);
+			}
+		}
 		return REG;
 	}
 	
