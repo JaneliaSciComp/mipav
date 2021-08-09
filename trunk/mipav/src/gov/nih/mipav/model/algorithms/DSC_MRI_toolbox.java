@@ -436,6 +436,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		// CBV calculation
 		DSC_mri_cbv();
+		
+		// CBV leakage correction
+		DSC_mri_cbv_lc();
 	}
 
 	public void DSC_mri_mask() {
@@ -3101,7 +3104,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	A.set(t, 0, -cumtrapz_R2star[t]);
 	    	A.set(t, 1, R2star_AVG_not_enhancing[t]);
 	    }
-	    double sigmaphat[][] = ((A.transpose()).times(A)).getArray();
+	    double sigmaphat[][] = ((A.transpose()).times(A)).inverse().getArray();
 	    int min_bolus = Integer.MAX_VALUE;
 	    for (s = 0; s < nS; s++) {
 	    	if (bolus[s] < min_bolus) {
@@ -3167,7 +3170,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				  for (t = 0; t < nT; t++) {
 					  B[t][0] = Delta_R2star_vett[t];
 				  }
-				  double sing[] = new double[Math.max(nT,2)];
+				  double sing[] = new double[Math.min(nT,2)];
 				  double rcond = -1.0; // Singular values s(i) <= RCOND*s[0] are treated as zero.
 					                   // If  rcond < 0, machine precision is used instead.
 				  int rank[] = new int[1];
