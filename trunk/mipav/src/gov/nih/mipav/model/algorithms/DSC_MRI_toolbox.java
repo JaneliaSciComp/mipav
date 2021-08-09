@@ -3371,7 +3371,42 @@ public class DSC_MRI_toolbox extends CeresSolver {
  	} // public void DSC_mri_cbf()
 	
 	public void DSC_mri_SVD() {
+	    // Original author: Marco Castellaro
 		
+		// Calculate the parametric Cerebral Blood Flow (CBF) and for deconvolution using the
+		// method of singular value decomposition with truncation
+		
+		// Input parameters:
+		// conc (4D matrix), which contains the trends of the DSC concentrations
+		//                   of all the voxels
+		// aif, trend of concentrations in the site chosen as arterial
+		// mask (3D matrix), contains the matrix used to mask the brain volume
+		//                   to be analyzed
+		
+		// Options and the struct that contains the options of the method, the
+		// significant ones are:
+		
+		// options.deconv.svd.threshold - Percentage truncation threshold, referred to the
+		// maximum eigenvalue, in Ostergaard and Calamante et al.  Set at 20%.
+		
+		// options.deconv.svd.residual - if at 1 it also produces the 4D matrix of residuals,
+		//                               otherwise they are not calculated
+		
+		int k;
+		
+		if (display > 1) {
+			UI.setDataText("Method: SVD\n");
+			UI.setDataText("deconv_SVD_threshold = " + deconv_SVD_threshold);
+		}
+		
+		// I create the matrix G
+		double aifVett[] = new double[nT];
+		aifVett[0] = AIF_fit_gv[0];
+		aifVett[nT-1] = AIF_fit_gv[nT-1];
+		
+		for (k = 1; k <= nT-2; k++) {
+			aifVett[k] = (AIF_fit_gv[k-1] + 4.0*AIF_fit_gv[k] + AIF_fit_gv[k+1])/6.0;
+		}
 	} // public void DSC_mri_SVD()
 	
 	public void DSC_mri_cSVD() {
