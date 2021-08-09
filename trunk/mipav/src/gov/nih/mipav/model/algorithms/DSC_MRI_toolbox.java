@@ -2960,7 +2960,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		// We next estimated R2*(t) by averaging R2*(t) for all pixels within the mask that
 		// did not demonstrate signal intensity enhancement (averaged over the final 10 time
-		// points) greater than 1 SD above that pixel’s
+		// points) greater than 1 SD above that pixel's
 		// average baseline and estimated by using trapezoidal integration over the 120
 		// acquired time points
 	    
