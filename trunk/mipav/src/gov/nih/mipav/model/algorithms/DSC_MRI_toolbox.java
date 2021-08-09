@@ -176,7 +176,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 	// Methods to be applied for perfusion calculation
 	// "SVD", "cSVD", "oSVD"
-	private String deconv_method = "cSVD";
+	private String[] deconv_method = new String[] {"cSVD"};
 
 	// Constants ofproportionality
 	private double par_kh = 1.0;
@@ -274,6 +274,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double probDouble[] = null;
 	double cbv[][][] = null;
 	double cbv_lc[][][] = null;
+	double cbf_svd[][][] = null;
+	double cbf_csvd[][][] = null;
+	double cbf_osvd[][][] = null;
 
 	public DSC_MRI_toolbox() {
 
@@ -3283,6 +3286,89 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	}
 	    }
 	} // public void DSC_mri_cbv_lc()
+	
+	public void DSC_mri_cbf() {
+		// Original author Marco Castellaro - Universita di Padova - DEI
+		
+		// Calculate parametric Cerebral Blood Flow (CBF) maps for a subject
+		
+		// Input parameters:
+		// conc (4D matrix), which contains the trends of the DSC concentrations
+		//                   of all the voxels
+		// aif, trend of concentrations in the site chosen as arterial
+		// mask (3D matrix), contains the matrix used to mask the brain volume
+		//                   to be analyzed
+		
+		// Options and the struct that contains the options of the method, the
+		// significant ones are:
+		
+		// The calculation of the CBF parameter requires a deconvolution operation,
+		// in the toolbox there are some suitable methodologies for this purpose:
+		// SVD, cSVD, oSVD (cSVD is block-circulant)
+		
+		// options.deconv.method - It must be a vector of cells that contains the names
+		//                         of the algorithms with which the analysis is to be
+		//                         carried out, for example, SVD, cSVD, or oSVD.
+		//
+		//                         For each method a struct with the characteristic parameters
+		//                         of the method itself must be inserted in the options, as in
+		//                         this example:
+		
+		//                         options.deconv.<method name>.<par_1>
+		//                         options.deconv.<method name>.<...>
+		//                         options.deconv.<method name>.<par_n>
+		
+		// options.time - It represents the vector of the times of the DSC exam (each sample
+		//                represents the acquistion of a cerebral internal volume).
+		
+		// options.display level 1 shows the processing progress
+		//                 level 2 It also gives information on the parameters set for the
+		//                         algorithms used
+		
+		// Output parameters:
+		// cbf - Different sub-structs, one for each method that you have chosen to use.
+		//       each sub-struct contains a map field that distinguishes the computed
+		//       cbf map, for example:
+		//       cbf.<method name>.map
+		
+		// residual, 4D matrix that contains the residuals (and an optional field that 
+		//           must be requested in the options parameter:
+		//           parameter options.deconv.<method name>.residual)
+		//           for example:
+		//           cbf.<method name>,residual
+		
+		// It is possible to add a method of deconvolution, in order to do this it is
+		// necessary to update the method variable, adding the string identifier and a 
+		// case for the call of the new method, in addition a function must be written
+		// that realizes the method and called DSC_mri_<method name>
+		
+		// Update if you intend to add a new method
+		
+		//String method[] = new String[] {"SVD","cSVD","oSVD"};
+		int i;
+		
+		if (display > 0) {
+			UI.setDataText("CBF\n");
+		}
+		
+		for (i = 0; i < deconv_method.length; i++) {
+			if (deconv_method[i].equalsIgnoreCase("SVD")) {
+				
+			}
+			else if (deconv_method[i].equalsIgnoreCase("cSVD")) {
+				
+			}
+			else if (deconv_method[i].equalsIgnoreCase("oSVD")) {
+				
+			}
+			// Update if you intend to add a new method
+			// otherwise unrecognized method
+			else {
+				System.err.println("In DSC_mri_cbf deconv_method["+i+"] = " + deconv_method[i] + " is unrecognized");
+				return;
+			}
+		}
+ 	} // public void DSC_mri_cbf()
 	
 	private double[][] vol2mat(double data[][][][], byte selected[][][]) {
 		int c,r,s,t,i;
