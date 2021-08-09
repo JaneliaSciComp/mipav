@@ -3353,13 +3353,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		for (i = 0; i < deconv_method.length; i++) {
 			if (deconv_method[i].equalsIgnoreCase("SVD")) {
-				
+				DSC_mri_SVD();
 			}
 			else if (deconv_method[i].equalsIgnoreCase("cSVD")) {
-				
+				DSC_mri_cSVD();
 			}
 			else if (deconv_method[i].equalsIgnoreCase("oSVD")) {
-				
+				DSC_mri_oSVD();
 			}
 			// Update if you intend to add a new method
 			// otherwise unrecognized method
@@ -3369,6 +3369,18 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
  	} // public void DSC_mri_cbf()
+	
+	public void DSC_mri_SVD() {
+		
+	} // public void DSC_mri_SVD()
+	
+	public void DSC_mri_cSVD() {
+		
+	} // public void DSC_mri_cSVD()
+	
+	public void DSC_mri_oSVD() {
+		
+	} // public void DSC_mri_oSVD()
 	
 	private double[][] vol2mat(double data[][][][], byte selected[][][]) {
 		int c,r,s,t,i;
