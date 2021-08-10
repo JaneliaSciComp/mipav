@@ -26,6 +26,7 @@ import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.model.structures.jama.SVD;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentGraph;
@@ -275,6 +276,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double cbv[][][] = null;
 	double cbv_lc[][][] = null;
 	double cbf_svd[][][] = null;
+	double cbf_svd_residual[][][][] = null;
 	double cbf_csvd[][][] = null;
 	double cbf_osvd[][][] = null;
 
@@ -3392,7 +3394,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// options.deconv.svd.residual - if at 1 it also produces the 4D matrix of residuals,
 		//                               otherwise they are not calculated
 		
-		int k;
+		int k, r, c, s, t;
+		SVD svd = new SVD();
 		
 		if (display > 1) {
 			UI.setDataText("Method: SVD\n");
@@ -3407,6 +3410,99 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		for (k = 1; k <= nT-2; k++) {
 			aifVett[k] = (AIF_fit_gv[k-1] + 4.0*AIF_fit_gv[k] + AIF_fit_gv[k+1])/6.0;
 		}
+		
+		// G is a toeplitz array
+		double G[][] = new double[nT][nT];
+		for (r = 0; r < nT; r++) {
+			G[r][0] = aifVett[r];
+	    }
+		for (r = 1; r < nT; r++) {
+			for (c = 1; c < nT; c++) {
+				G[r][c] = G[r-1][c-1];
+			}
+		}
+		
+		// 2.) I apply the SVD to calculate the inverse G
+		double eigenV[] = new double[nT];
+		double U[][] = new double[nT][nT];
+		double VT[][] = new double[nT][nT];
+		double work[] = new double[1];
+   	    int lwork = -1;
+   	    int info[] = new int[1];
+		svd.dgesvd('A','A',nT,nT,G,nT,eigenV,U,nT,VT,nT,work,lwork,info);
+		lwork = (int)work[0];
+        work = new double[lwork];
+        svd.dgesvd('A','A',nT,nT,G,nT,eigenV,U,nT,VT,nT,work,lwork,info);
+        if (info[0] < 0) {
+        	System.err.println("In DSC_mri_SVD() svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+        	Preferences.debug("In DSC_mri_SVD() svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+        	return;
+	     }
+	     if (info[0] > 0) {
+        	System.err.println("In DSC_mri_SVD() svd.dgesvd dbdsqr did not converge.");
+        	Preferences.debug("In DSC_mri_SVD() svd.dgesvd dbdsqr did not converge.\n",
+        			Preferences.DEBUG_ALGORITHM);
+        	return;
+         }
+	     
+	     // threshold of 10% in Ostergaard and Calamante
+	     // Note that the earlier comment gave 20%
+	     double threshold = deconv_SVD_threshold * eigenV[0];
+	     double newEigen[] = new double[nT];
+	     for (k = 0; k < nT; k++) {
+	         if (eigenV[k] >= threshold) {
+	        	 newEigen[k] = 1.0/eigenV[k];
+	         }
+	     } // for (k = 0; k < nT; k++)
+	     
+	     // G = U S VT
+	     // Ginv = V * Sinv * UT
+	     Matrix matVT = new Matrix(VT);
+	     Matrix matV = matVT.transpose();
+	     Matrix matU = new Matrix(U);
+	     Matrix matUT = matU.transpose();
+	     Matrix matSinv = new Matrix(nT,nT);
+	     for (k = 0; k < nT; k++) {
+	    	 matSinv.set(k, k, newEigen[k]);
+	     }
+	     double Ginv[][] = ((matV.times(matSinv)).times(matUT)).getArray();
+	     
+	     // 3.) I apply the Ginv to calculate the residual function and the
+	     //     CBF of each voxel
+	     cbf_svd = new double[nC][nR][nS];
+	     if (deconv_SVD_residual == 1) {
+	    	 cbf_svd_residual = new double[nC][nR][nS][nT];
+	     }
+	     
+	     double vettRes[] = new double[nT];
+	     for (c = 0; c < nC; c++) {
+	    	 for (r = 0; r < nR; r++) {
+	    		 for (s = 0; s < nS; s++) {
+	    			 if (mask_data[c][r][s] == 1) {
+	    				 // Compute the residual function
+	    				 for (t = 0; t < nT; t++) {
+	    					 vettRes[t] = 0.0;
+	    					 for (k = 0; k < nT; k++) {
+	    						 vettRes[t] += Ginv[t][k]*conc[c][r][s][k];
+	    					 }
+	    					 vettRes[t] = vettRes[t]/tr;
+	    				 } // for (t = 0; t < nT; t++)
+	    				 double maxAbsVettRes = 0.0;
+	    				 for (t = 0; t < nT; t++) {
+	    					 if (Math.abs(vettRes[t]) > maxAbsVettRes) {
+	    						 maxAbsVettRes = Math.abs(vettRes[t]);
+	    					 }
+	    				 } // for (t = 0; t < nT; t++)
+	    				 cbf_svd[c][r][c] = maxAbsVettRes;
+	    				 if (deconv_SVD_residual == 1) {
+	    					 for (t = 0; t < nT; t++) {
+	    						 cbf_svd_residual[c][r][s][t] = vettRes[t];
+	    					 }
+	    				 }
+	    			 }
+	    		 }
+	    	 }
+	     }
 	} // public void DSC_mri_SVD()
 	
 	public void DSC_mri_cSVD() {
@@ -3434,7 +3530,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		double vol_temp[][][] = new double[nC][nR][nS];
 		
 		for (t = 0; t < N_samples; t++) {
-		    for (c = 0; c < nC; c++) {
+		    for (c = 0; c < nC; c++) { 
 		    	for (r = 0; r < nR; r++) {
 		    		for (s = 0; s < nS; s++) {
 		    			vol_temp[c][r][s] = data[c][r][s][t];
