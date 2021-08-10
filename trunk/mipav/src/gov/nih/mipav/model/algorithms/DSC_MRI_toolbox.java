@@ -168,7 +168,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 	// Threshold of 10% with Ostergaard and Calamante
 	private double deconv_oSVD_OIthres = 0.035;
-	private int deconv_oSVD_OIcounter = 1;
+	//private int deconv_oSVD_OIcounter = 1;
 	// 0: Does not save residuals, 1: Saves residuals
 	private int deconv_oSVD_residual = 1;
 
@@ -280,6 +280,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double cbf_csvd[][][] = null;
 	double cbf_csvd_residual[][][][] = null;
 	double cbf_osvd[][][] = null;
+	double cbf_osvd_OI[][][] = null;
+	double cbf_osvd_residual[][][][] = null;
 
 	public DSC_MRI_toolbox() {
 
@@ -3648,7 +3650,156 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	} // public void DSC_mri_cSVD()
 	
 	public void DSC_mri_oSVD() {
+		// Last modfication to original code Marco Castellaro 10/03/2013
 		
+		// Original author: Marco Castellaro
+		
+		// Calculate the parametric Cerebral Blood Flow (CBF) and for deconvolution using the
+		// method of singular value decomposition block-circulant version with oscillation index
+		
+		// Input parameters:
+		// conc (4D matrix), which contains the trends of the DSC concentrations
+		//                   of all the voxels
+		// aif, trend of concentrations in the site chosen as arterial
+		// mask (3D matrix), contains the matrix used to mask the brain volume
+		//                   to be analyzed
+		
+		// Options and the struct that contains the options of the method, the
+		// significant ones are:
+		
+		// options.deconv.osvd.oi - Oscillation index - default 0.035
+		
+		// options.deconv.svd.residual - if at 1 it also produces the 4D matrix of residuals,
+		//                               otherwise they are not calculated
+		int k, r, c, s, t, threshold, nTpad, j1;
+		
+		if (display > 1) {
+			UI.setDataText("Method: oSVD\n");
+			UI.setDataText("deconv_oSVD_OIthres = " + deconv_oSVD_OIthres);
+		}
+		
+		// I create the matrix G
+		nTpad = 2 * nT;
+		double columnG[] = new double[nTpad];
+		columnG[0] = AIF_fit_gv[0];
+		columnG[nT-1] = (AIF_fit_gv[nT-2] + 4*AIF_fit_gv[nT-1])/6;
+		columnG[nT] = AIF_fit_gv[nT-1]/6;
+		for (k = 1; k <= nT-2; k++) {
+			columnG[k] = (AIF_fit_gv[k-1] + 4*AIF_fit_gv[k] + AIF_fit_gv[k+1])/6;
+		}
+		double rowG[] = new double[nTpad];
+		rowG[0] = columnG[0];
+		for (k = 2; k <= nTpad; k++) {
+			rowG[k-1] = columnG[nTpad + 1 - k];
+		}
+		
+		// G is a toeplitz array
+		double G[][] = new double[nTpad][nTpad];
+		for (r = 0; r < nTpad; r++) {
+			G[0][r] = columnG[r];
+		}
+		for (c = 1; c < nTpad; c++) {
+			G[c][0] = rowG[c];
+		}
+		for (r = 1; r < nTpad; r++) {
+			for (c = 1; c < nTpad; c++) {
+				G[c][r] = G[c-1][r-1];
+			}
+		}
+		
+		double OIthres = deconv_oSVD_OIthres;
+		// OIcounter = deconv_oSVD_OIcounter;
+		
+		// 3.) I apply the Ginv to calculate the residual function and the
+	     //     CBF of each voxel
+	     cbf_osvd = new double[nC][nR][nS];
+	     cbf_osvd_OI = new double[nC][nR][nS];
+	     if (deconv_oSVD_residual == 1) {
+	    	 cbf_osvd_residual = new double[nC][nR][nS][nTpad];
+	     }
+	     
+	     double eigenV[] = new double[nTpad];
+		double U[][] = new double[nTpad][nTpad];
+		double VT[][] = new double[nTpad][nTpad];
+		double work[] = new double[1];
+   	    int lwork = -1;
+   	    int info[] = new int[1];
+		svd.dgesvd('A','A',nTpad,nTpad,G,nTpad,eigenV,U,nTpad,VT,nTpad,work,lwork,info);
+		lwork = (int)work[0];
+        work = new double[lwork];
+        svd.dgesvd('A','A',nTpad,nTpad,G,nTpad,eigenV,U,nTpad,VT,nTpad,work,lwork,info);
+        if (info[0] < 0) {
+        	System.err.println("In DSC_mri_oSVD() svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+        	Preferences.debug("In DSC_mri_oSVD() svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+        	return;
+	     }
+	     if (info[0] > 0) {
+        	System.err.println("In DSC_mri_oSVD() svd.dgesvd dbdsqr did not converge.");
+        	Preferences.debug("In DSC_mri_oSVD() svd.dgesvd dbdsqr did not converge.\n",
+        			Preferences.DEBUG_ALGORITHM);
+        	return;
+         }
+	     double W[][] = new double[nTpad][nTpad];
+	     for (k = 0; k < nTpad; k++) {
+	    	 W[k][k] = 1.0/eigenV[k];
+	     }
+	     
+	     Matrix vettConcMat = new Matrix(nTpad, 1);
+	     Matrix W1Mat = new Matrix(nTpad, nTpad);
+	     Matrix matVT = new Matrix(VT);
+	     Matrix matV = matVT.transpose();
+	     Matrix matU = new Matrix(U);
+	     Matrix matUT = matU.transpose();
+	     double vettRes[][] = null;
+	     double vettResMax = -Double.MAX_VALUE;
+	     double O;
+	     double OI = 0.0;
+	     for (c = 0; c < nC; c++) {
+	    	 for (r = 0; r < nR; r++) {
+	    		 for (s = 0; s < nS; s++) {
+	    			 if (mask_data[c][r][s] == 1) {
+	    				 // Compute the residual function
+	    				 for (t = 0; t < nT; t++) {
+	    					 vettConcMat.set(t, 0, conc[c][r][s][t]);
+	    				 }
+	    				 for (k = 0; k < nTpad; k++) {
+	    					 W1Mat.set(k,k,W[k][k]);
+	    				 }
+	    				 for (threshold = 5; threshold <= 95; threshold += 5) {
+	    				     for (k = 0; k < nTpad; k++) {
+	    				    	 if (eigenV[k] < ((double)threshold)/100*eigenV[0]) {
+	    				    		 W1Mat.set(k,k,0.0);
+	    				    	 }
+	    				     }
+	    				     vettRes = ((matV.times(W1Mat)).times(matUT.times(vettConcMat))).getArray();
+	    				     O = 0.0;
+	    				     for (j1 = 2; j1 < nTpad; j1++) {
+	    				    	 O = O + Math.abs(vettRes[j1][0] -2*vettRes[j1-1][0] + vettRes[j1-2][0]);
+	    				     }
+	    				     vettResMax = -Double.MAX_VALUE;
+	    				     for (k = 0; k < nTpad; k++) {
+	    				    	 if (vettRes[k][0] > vettResMax) {
+	    				    		 vettResMax = vettRes[k][0];
+	    				    	 }
+	    				     }
+	    				     OI = (1.0/(double)nTpad)*(1.0/vettResMax)*O;
+	    				     
+	    				     if (OI < OIthres) {
+	    				    	 break;
+	    				     }
+	    				 } // for (threshold = 5; threshold <= 95; threshold += 5)
+	    				 
+	    				 cbf_osvd[c][r][s] = vettResMax;
+	    				 cbf_osvd_OI[c][r][s] = OI;
+	    				 if (deconv_oSVD_residual == 1) {
+	    				     for (t = 0; t < nTpad; t++) {
+	    				    	 cbf_osvd_residual[c][r][s][t] = vettRes[t][0];
+	    				     }
+	    				 }
+	    			 } // if (mask_data[c][r][s] == 1)
+	    		 }
+	    	 }
+	     }
 	} // public void DSC_mri_oSVD()
 	
 	private double[][] vol2mat(double data[][][][], byte selected[][][]) {
