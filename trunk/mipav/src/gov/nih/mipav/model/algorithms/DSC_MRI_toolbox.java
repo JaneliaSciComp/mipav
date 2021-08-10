@@ -164,7 +164,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	// CSVD threshold (0.1 applies to data obtained at 1.5T)
 	private double deconv_cSVD_threshold = 0.1;
 	// 0: Does not save residuals, 1: Saves residuals
-	private int deconv_csVD_residual = 1;
+	private int deconv_cSVD_residual = 1;
 
 	// Threshold of 10% with Ostergaard and Calamante
 	private double deconv_oSVD_OIthres = 0.035;
@@ -278,6 +278,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double cbf_svd[][][] = null;
 	double cbf_svd_residual[][][][] = null;
 	double cbf_csvd[][][] = null;
+	double cbf_csvd_residual[][][][] = null;
 	double cbf_osvd[][][] = null;
 
 	public DSC_MRI_toolbox() {
@@ -3414,11 +3415,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// G is a toeplitz array
 		double G[][] = new double[nT][nT];
 		for (r = 0; r < nT; r++) {
-			G[r][0] = aifVett[r];
+			G[0][r] = aifVett[r];
 	    }
 		for (r = 1; r < nT; r++) {
 			for (c = 1; c < nT; c++) {
-				G[r][c] = G[r-1][c-1];
+				G[c][r] = G[c-1][r-1];
 			}
 		}
 		
@@ -3493,7 +3494,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    						 maxAbsVettRes = Math.abs(vettRes[t]);
 	    					 }
 	    				 } // for (t = 0; t < nT; t++)
-	    				 cbf_svd[c][r][c] = maxAbsVettRes;
+	    				 cbf_svd[c][r][s] = maxAbsVettRes;
 	    				 if (deconv_SVD_residual == 1) {
 	    					 for (t = 0; t < nT; t++) {
 	    						 cbf_svd_residual[c][r][s][t] = vettRes[t];
@@ -3506,7 +3507,144 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	} // public void DSC_mri_SVD()
 	
 	public void DSC_mri_cSVD() {
+        // Last modfication to original code Denis Peruzzo 07/06/2010
 		
+		// Original author: Marco Castellaro
+		
+		// Calculate the parametric Cerebral Blood Flow (CBF) and for deconvolution using the
+		// method of singular value decomposition block-circulant version with truncation
+		
+		// Input parameters:
+		// conc (4D matrix), which contains the trends of the DSC concentrations
+		//                   of all the voxels
+		// aif, trend of concentrations in the site chosen as arterial
+		// mask (3D matrix), contains the matrix used to mask the brain volume
+		//                   to be analyzed
+		
+		// Options and the struct that contains the options of the method, the
+		// significant ones are:
+		
+		// options.deconv.svd.threshold - Percentage truncation threshold, referred to the
+		// maximum eigenvalue, in Ostergaard and Calamante et al.  Set at 10%.
+		
+		// options.deconv.svd.residual - if at 1 it also produces the 4D matrix of residuals,
+		//                               otherwise they are not calculated
+		int k, r, c, s, t, nTpad;
+		
+		if (display > 1) {
+			UI.setDataText("Method: cSVD\n");
+			UI.setDataText("deconv_cSVD_threshold = " + deconv_cSVD_threshold);
+		}
+		
+		// I create the matrix G
+		nTpad = 2 * nT;
+		double columnG[] = new double[nTpad];
+		columnG[0] = AIF_fit_gv[0];
+		columnG[nT-1] = (AIF_fit_gv[nT-2] + 4*AIF_fit_gv[nT-1])/6;
+		columnG[nT] = AIF_fit_gv[nT-1]/6;
+		for (k = 1; k <= nT-2; k++) {
+			columnG[k] = (AIF_fit_gv[k-1] + 4*AIF_fit_gv[k] + AIF_fit_gv[k+1])/6;
+		}
+		double rowG[] = new double[nTpad];
+		rowG[0] = columnG[0];
+		for (k = 2; k <= nTpad; k++) {
+			rowG[k-1] = columnG[nTpad + 1 - k];
+		}
+		
+		// G is a toeplitz array
+		double G[][] = new double[nTpad][nTpad];
+		for (r = 0; r < nTpad; r++) {
+			G[0][r] = columnG[r];
+		}
+		for (c = 1; c < nTpad; c++) {
+			G[c][0] = rowG[c];
+		}
+		for (r = 1; r < nTpad; r++) {
+			for (c = 1; c < nTpad; c++) {
+				G[c][r] = G[c-1][r-1];
+			}
+		}
+		
+		// 2.) I apply the SVD to calculate the inverse G
+		double eigenV[] = new double[nTpad];
+		double U[][] = new double[nTpad][nTpad];
+		double VT[][] = new double[nTpad][nTpad];
+		double work[] = new double[1];
+   	    int lwork = -1;
+   	    int info[] = new int[1];
+		svd.dgesvd('A','A',nTpad,nTpad,G,nTpad,eigenV,U,nTpad,VT,nTpad,work,lwork,info);
+		lwork = (int)work[0];
+        work = new double[lwork];
+        svd.dgesvd('A','A',nTpad,nTpad,G,nTpad,eigenV,U,nTpad,VT,nTpad,work,lwork,info);
+        if (info[0] < 0) {
+        	System.err.println("In DSC_mri_cSVD() svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+        	Preferences.debug("In DSC_mri_cSVD() svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+        	return;
+	     }
+	     if (info[0] > 0) {
+        	System.err.println("In DSC_mri_cSVD() svd.dgesvd dbdsqr did not converge.");
+        	Preferences.debug("In DSC_mri_cSVD() svd.dgesvd dbdsqr did not converge.\n",
+        			Preferences.DEBUG_ALGORITHM);
+        	return;
+         }
+	     
+	     // threshold of 10% in Ostergaard and Calamante
+	     double threshold = deconv_cSVD_threshold * eigenV[0];
+	     double newEigen[] = new double[nTpad];
+	     for (k = 0; k < nTpad; k++) {
+	         if (eigenV[k] >= threshold) {
+	        	 newEigen[k] = 1.0/eigenV[k];
+	         }
+	     } // for (k = 0; k < nTpad; k++)
+	     
+	     // G = U S VT
+	     // Ginv = V * Sinv * UT
+	     Matrix matVT = new Matrix(VT);
+	     Matrix matV = matVT.transpose();
+	     Matrix matU = new Matrix(U);
+	     Matrix matUT = matU.transpose();
+	     Matrix matSinv = new Matrix(nTpad,nTpad);
+	     for (k = 0; k < nTpad; k++) {
+	    	 matSinv.set(k, k, newEigen[k]);
+	     }
+	     double Ginv[][] = ((matV.times(matSinv)).times(matUT)).getArray();
+	     
+	     // 3.) I apply the Ginv to calculate the residual function and the
+	     //     CBF of each voxel
+	     cbf_csvd = new double[nC][nR][nS];
+	     if (deconv_cSVD_residual == 1) {
+	    	 cbf_csvd_residual = new double[nC][nR][nS][nTpad];
+	     }
+	     
+	     double vettRes[] = new double[nTpad];
+	     for (c = 0; c < nC; c++) {
+	    	 for (r = 0; r < nR; r++) {
+	    		 for (s = 0; s < nS; s++) {
+	    			 if (mask_data[c][r][s] == 1) {
+	    				 // Compute the residual function
+	    				 for (t = 0; t < nTpad; t++) {
+	    					 vettRes[t] = 0.0;
+	    					 for (k = 0; k < nT; k++) {
+	    						 vettRes[t] += Ginv[t][k]*conc[c][r][s][k];
+	    					 }
+	    					 vettRes[t] = vettRes[t]/tr;
+	    				 } // for (t = 0; t < nTpad; t++)
+	    				 double maxAbsVettRes = 0.0;
+	    				 for (t = 0; t < nTpad; t++) {
+	    					 if (Math.abs(vettRes[t]) > maxAbsVettRes) {
+	    						 maxAbsVettRes = Math.abs(vettRes[t]);
+	    					 }
+	    				 } // for (t = 0; t < nTpad; t++)
+	    				 cbf_csvd[c][r][s] = maxAbsVettRes;
+	    				 if (deconv_cSVD_residual == 1) {
+	    					 for (t = 0; t < nTpad; t++) {
+	    						 cbf_csvd_residual[c][r][s][t] = vettRes[t];
+	    					 }
+	    				 }
+	    			 }
+	    		 }
+	    	 }
+	     }
 	} // public void DSC_mri_cSVD()
 	
 	public void DSC_mri_oSVD() {
