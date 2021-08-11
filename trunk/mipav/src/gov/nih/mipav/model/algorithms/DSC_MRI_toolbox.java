@@ -205,7 +205,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double x_loc[];
 	double y_loc[];
 
-	boolean readTestImage = false;
+	boolean readTestImage = true;
 	boolean test2PerfectGaussians = false;
 	private double[] GxData;
 	private double[] GxxData;
@@ -282,6 +282,11 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double cbf_osvd[][][] = null;
 	double cbf_osvd_OI[][][] = null;
 	double cbf_osvd_residual[][][][] = null;
+	double mtt_svd[][][] = null;
+	double mtt_csvd[][][] = null;
+	double mtt_osvd[][][] = null;
+	short ttp[][][] = null;
+	double fwhm[][][] = null;
 
 	public DSC_MRI_toolbox() {
 
@@ -294,6 +299,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		this.sliceNumber = sliceNumber;
 		this.outputFilePath = outputFilePath;
 		doAIFTransfer = true;
+		readTestImage = false;
 	}
 
 	public void runAlgorithm() {
@@ -447,6 +453,18 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		
 		// CBV leakage correction
 		DSC_mri_cbv_lc();
+		
+		// CBF calculation
+		DSC_mri_cbf();
+		
+		// MTT calculation
+		DSC_mri_mtt();
+		
+		// TTP calculation
+		DSC_mri_ttp();
+		
+		// fwhm calculation
+		DSC_mri_fwhm();
 	}
 
 	public void DSC_mri_mask() {
@@ -3801,6 +3819,191 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    	 }
 	     }
 	} // public void DSC_mri_oSVD()
+	
+	public void DSC_mri_mtt() {
+        int i, c, r, s;
+		
+		if (display > 0) {
+			UI.setDataText("MTT\n");
+		}
+		
+		for (i = 0; i < deconv_method.length; i++) {
+			if (deconv_method[i].equalsIgnoreCase("SVD")) {
+				mtt_svd = new double[nC][nR][nS];
+				for (c = 0; c < nC; c++) {
+					for (r = 0; r < nR; r++) {
+						for (s = 0; s < nS; s++) {
+							mtt_svd[c][r][s] = cbv_lc[c][r][s]/cbf_svd[c][r][s];
+						}
+					}
+				}
+			}
+			else if (deconv_method[i].equalsIgnoreCase("cSVD")) {
+				mtt_csvd = new double[nC][nR][nS];
+				for (c = 0; c < nC; c++) {
+					for (r = 0; r < nR; r++) {
+						for (s = 0; s < nS; s++) {
+							mtt_csvd[c][r][s] = cbv_lc[c][r][s]/cbf_csvd[c][r][s];
+						}
+					}
+				}
+			}
+			else if (deconv_method[i].equalsIgnoreCase("oSVD")) {
+				mtt_osvd = new double[nC][nR][nS];
+				for (c = 0; c < nC; c++) {
+					for (r = 0; r < nR; r++) {
+						for (s = 0; s < nS; s++) {
+							mtt_osvd[c][r][s] = cbv_lc[c][r][s]/cbf_osvd[c][r][s];
+						}
+					}
+				}
+			}
+			// Update if you intend to add a new method
+			// otherwise unrecognized method
+			else {
+				System.err.println("In DSC_mri_mtt deconv_method["+i+"] = " + deconv_method[i] + " is unrecognized");
+				return;
+			}
+		}	
+	} // public void DSC_mri_mtt()
+	
+	public void DSC_mri_ttp() {
+		int c, r, s, t;
+		double maxConc;
+		short maxt;
+	    ttp = new short[nC][nR][nS];
+	    for (c = 0; c < nC; c++) {
+	    	for (r = 0; r < nR; r++) {
+	    		for (s = 0; s < nS; s++) {
+	    			if (mask_data[c][r][s] == 0) {
+	    				ttp[c][r][s] = -1;
+	    			}
+	    			else {
+	    				maxConc = -Double.MAX_VALUE;
+	    				maxt = -1;
+	    				for (t = 0; t < nT; t++) {
+	    				    if (conc[c][r][s][t] > maxConc) {
+	    				    	maxConc = conc[c][r][s][t];
+	    				    	maxt = (short)t;
+	    				    }
+	    				}
+	    				ttp[c][r][s] = maxt;
+	    			}
+	    		}
+	    	}
+	    }
+	} // public void DSC_mri_ttp;
+	
+	public void DSC_mri_fwhm() {
+		int i, c, r, s;
+	    double conc_vect[][] = vol2mat(conc,mask_data);	
+	    double fwhm_vect[] = new double[conc_vect.length];
+	    
+	    for (r = 0; r < conc_vect.length; r++) {
+	        fwhm_vect[r] = fwhm(time, conc_vect[r]);
+	        if (Double.isNaN(fwhm_vect[r])) {
+	        	fwhm_vect[r] = 0.0;
+	        }
+	    } // for (r = 0; r < conc_vect.length; r++)
+	    
+	    fwhm = new double[nC][nR][nS];
+	    for (i = 0, c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				for (s = 0; s < nS; s++) {
+					if (mask_data[c][r][s] == 1) {
+						fwhm[c][r][s] = fwhm_vect[i++];
+					}
+				}
+			}
+		}
+	} // public void DSC_mri_fwhm
+	
+	double fwhm(double x[], double yorg[]) {
+		// function width = fwhm(x,y)
+		
+		// Full-Width at Half-Maximum (FWHM) of the waveform y(x)
+		// and its polarity.
+		// The FWHM result in 'width' will be in units of 'x'
+		
+		
+		// Rev 1.2, April 2006 (Patrick Egan)
+		int i;
+		int N;
+		double miny;
+		double maxy;
+		int centerindex;
+		double interp;
+		double tlead;
+		double ttrail;
+		double width;
+
+        maxy = -Double.MAX_VALUE;
+        N = yorg.length;
+        double y[] = new double[N];
+        for (i = 0; i < N; i++) {
+        	y[i] = yorg[i];
+        	if (y[i] > maxy) {
+        		maxy = y[i];
+        	}
+        }
+        for (i = 0; i < N; i++) {
+		    y[i] = y[i] / maxy;
+        }
+	
+		double lev50 = 0.5;
+		// find index of center (max or min) of pulse
+		if (y[0] < lev50) {
+			maxy = -Double.MAX_VALUE;
+			centerindex = -1;
+			for (i = 0; i < N; i++) {
+	        	if (y[i] > maxy) {
+	        		maxy = y[i];
+	        		centerindex = i;
+	        	}
+	        }
+		    //Pol = +1;
+		    //UI.setDataText("Pulse Polarity = Positive\n");
+		}
+		else {
+			miny = Double.MAX_VALUE;
+			centerindex = -1;
+			for (i = 0; i < N; i++) {
+				if (y[i] < miny) {
+					miny = y[i];
+					centerindex = i;
+				}
+			}
+		    //Pol = -1;
+		    //UI.setDataText("Pulse Polarity = Negative\n");
+		}
+		i = 1;
+		while (Math.signum(y[i]-lev50) == Math.signum(y[i-1]-lev50)) {
+		    i = i+1;
+		}                                  
+		// first crossing is between v(i-1) & v(i)
+		interp = (lev50-y[i-1]) / (y[i]-y[i-1]);
+		tlead = x[i-1] + interp*(x[i]-x[i-1]);
+		// start search for next crossing at center
+		i = centerindex+1;                    
+		while ((Math.signum(y[i]-lev50) == Math.signum(y[i-1]-lev50)) & (i < N-1)) {
+		    i = i+1;
+		}
+		if (i != N-1) {
+		    //Ptype = 1;  
+		    //UI.setDataText("Pulse is Impulse or Rectangular with 2 edges\n");
+		    interp = (lev50-y[i-1]) / (y[i]-y[i-1]);
+		    ttrail = x[i-1] + interp*(x[i]-x[i-1]);
+		    width = ttrail - tlead;
+		}
+		else {
+		    //Ptype = 2; 
+		    //UI.setDataText("Step-Like Pulse, no second edge\n");
+		    //ttrail = Double.NaN;
+		    width = Double.NaN;
+		}
+		return width;
+
+	}
 	
 	private double[][] vol2mat(double data[][][][], byte selected[][][]) {
 		int c,r,s,t,i;
