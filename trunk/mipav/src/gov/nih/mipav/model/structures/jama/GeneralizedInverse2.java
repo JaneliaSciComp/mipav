@@ -6368,6 +6368,7 @@ ib = Math.min(nb, k-i+1);
         double v4[];
         double work1[][];
         double work2[][];
+        double work2a[][];
         int dimv;
         
         // Test the input parameters
@@ -6451,8 +6452,10 @@ ib = Math.min(nb, k-i+1);
             v3 = new double[nb];
             v4 = new double[nb];
             work1 = new double[ldwrkx][nb];
-            work2 = new double[ldwrky][nb];
-            dlabrd(m-i+1, n-i+1, nb, array1, row1, v1, v2, v3, v4, work1, ldwrkx, work2, ldwrky);
+            work2 = new double[n-i+1][nb];
+            work2a = new double[n-i-nb+1][nb];
+            
+            dlabrd(m-i+1, n-i+1, nb, array1, row1, v1, v2, v3, v4, work1, ldwrkx, work2, n-i+1);
             for (j = 0; j < row1; j++) {
                 for (k = 0; k < n-i+1; k++) {
                     A[i-1+j][i-1+k] = array1[j][k];
@@ -6469,9 +6472,9 @@ ib = Math.min(nb, k-i+1);
                     work[j + k*ldwrkx] = work1[j][k];
                 }
             }
-            for (j = 0; j < ldwrky; j++) {
+            for (j = 0; j < n-i-nb+1; j++) {
                 for (k = 0; k < nb; k++) {
-                    work[j + k*ldwrky + ldwrkx*nb] = work2[j][k];
+                    work2a[j][k] = work2[j+nb][k];
                 }
             }
             
@@ -6485,18 +6488,14 @@ ib = Math.min(nb, k-i+1);
                     array1[j][k] = A[i+nb-1+j][i-1+k];
                 }
             }
-            for (j = 0; j < ldwrky; j++) {
-                for (k = 0; k < nb; k++) {
-                    work2[j][k] = work[j + k*ldwrky + ldwrkx*nb+nb];
-                }
-            }
+            
             array2 = new double[row1][n-i-nb+1];
             for (j = 0; j < row1; j++) {
                 for (k = 0; k < n-i-nb+1; k++) {
                     array2[j][k] = A[i+nb-1+j][i+nb-1+k];
                 }
             }
-            ge.dgemm('N', 'T', m-i-nb+1, n-i-nb+1, nb, -1.0, array1, row1, work2, ldwrky, 1.0,
+            ge.dgemm('N', 'T', m-i-nb+1, n-i-nb+1, nb, -1.0, array1, row1, work2a, n-i-nb+1, 1.0,
                   array2, row1);
             for (j = 0; j < row1; j++) {
                 for (k = 0; k < n-i-nb+1; k++) {
