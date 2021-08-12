@@ -269,7 +269,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	boolean gauss2FittingCheck = false;
 	boolean GVFittingCheck = false;
 	boolean GVRecirculationCheck = false;
-	boolean doAIFTransfer = true;
+	boolean doAIFTransfer = false;
 	boolean errorInMaskRoutine = false;
 	double intensity[] = null;
 	double probDouble[] = null;
@@ -309,13 +309,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			final FileIO io = new FileIO();
 			io.setQuiet(true);
 			io.setSuppressProgressBar(true);
-			// ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" +
-			// File.separator
-			// + "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator +
-			// "GRE_DSC.nii.gz");
-			ModelImage img = io.readImage(
-					"C:" + File.separator + "TSP datasets" + File.separator + "EVTcase#1-baseline PWI" + File.separator
-							+ "baseline PWI" + File.separator + "ST000001" + File.separator + "SE000001Original.nii");
+			 ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" +
+			 File.separator
+			 + "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator +
+			 "GRE_DSC.nii.gz");
+			//ModelImage img = io.readImage(
+			//		"C:" + File.separator + "TSP datasets" + File.separator + "EVTcase#1-baseline PWI" + File.separator
+			//				+ "baseline PWI" + File.separator + "ST000001" + File.separator + "SE000001Original.nii");
 			if (img.getNDims() != 4) {
 				System.err.println("img.getNDims() = " + img.getNDims());
 				return;
@@ -369,7 +369,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			}
 		}
 		long totalTime = System.currentTimeMillis() - startTime;
-		System.out.println("AIF extraction execution time in seconds = " + (totalTime / 1000.0));
+		if (doAIFTransfer) {
+		    System.out.println("AIF extraction execution time in seconds = " + (totalTime / 1000.0));
+		}
+		else {
+			System.out.println("DSC_mri_core() execution time in seconds = " + (totalTime / 1000.0));
+		}
 
 	}
 
@@ -3985,10 +3990,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		tlead = x[i-1] + interp*(x[i]-x[i-1]);
 		// start search for next crossing at center
 		i = centerindex+1;                    
-		while ((Math.signum(y[i]-lev50) == Math.signum(y[i-1]-lev50)) & (i < N-1)) {
+		while ((i < N-1) && (Math.signum(y[i]-lev50) == Math.signum(y[i-1]-lev50))) {
 		    i = i+1;
 		}
-		if (i != N-1) {
+		if (i < N-1) {
 		    //Ptype = 1;  
 		    //UI.setDataText("Pulse is Impulse or Rectangular with 2 edges\n");
 		    interp = (lev50-y[i-1]) / (y[i]-y[i-1]);
