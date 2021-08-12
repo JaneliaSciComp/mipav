@@ -16,6 +16,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.DSC_MRI_toolbox;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -46,11 +50,15 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
 	
 	private double te;
 	
+	private String TEString = "0.025";
+	
 	private JLabel trLabel;
 	
 	private JTextField trText;
 	
 	private double tr;
+	
+	private String TRString = "1.55";
 	
 	private JLabel aif_nSliceLabel;
 	
@@ -71,6 +79,14 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
 	private ViewUserInterface userInterface;
 	
 	private int nS;
+	
+	private int svdMethodsSelected = 0;
+	
+	private boolean do_svd = false;
+	
+	private boolean do_csvd = true;
+	
+	private boolean do_osvd = false;
 	
 	 /**
      * Empty constructor needed for dynamic instantiation.
@@ -120,6 +136,25 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+    	if (image.getFileInfo()[0] instanceof FileInfoDicom) {
+    		FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
+        	FileDicomTagTable tagTable = dicomInfo.getTagTable();
+        	if (tagTable.getValue("0018,0081") != null) {
+            	// Echo time in milliseconds
+                FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0081"));
+                String TEInMillisecondsString = (String)tag.getValue(false);
+                te = Double.valueOf(TEInMillisecondsString).doubleValue()/1000.0;
+                TEString = String.valueOf(te);
+            }
+        	
+        	if (tagTable.getValue("0018,0080") != null) {
+            	// Repetition time in milliseconds
+            	FileDicomTag tag = tagTable.get(new FileDicomKey("0018,0080"));
+            	String TRInMillisecondsString = (String)tag.getValue(false);
+            	tr = Double.valueOf(TRInMillisecondsString).doubleValue()/1000.0;
+            	TRString = String.valueOf(tr);
+            }
+    	} // if (image.getFileInfo()[0] instanceof FileInfoDicom)
         setForeground(Color.black);
         setTitle("DSC_MRI_toolbox");
         
@@ -153,7 +188,7 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
         
         gbc.gridx = 1;
         teText = new JTextField(10);
-        teText.setText("0.025");
+        teText.setText(TEString);
         teText.setFont(serif12);
         teText.setForeground(Color.black);
         inputPanel.add(teText, gbc);
@@ -167,7 +202,7 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
         
         gbc.gridx = 1;
         trText = new JTextField(10);
-        trText.setText("1.55");
+        trText.setText(TRString);
         trText.setFont(serif12);
         trText.setForeground(Color.black);
         inputPanel.add(trText, gbc);
@@ -298,15 +333,27 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
     	    return false;
     	}
     	
-    	int svdMethodsSelected = 0;
+    	svdMethodsSelected = 0;
     	if (svdCheckBox.isSelected()) {
+    		do_svd = true;
     		svdMethodsSelected++;
+    	}
+    	else {
+    		do_svd = false;
     	}
     	if (csvdCheckBox.isSelected()) {
+    		do_csvd = true;
     		svdMethodsSelected++;
     	}
+    	else {
+    		do_csvd = false;
+    	}
     	if (osvdCheckBox.isSelected()) {
+    		do_osvd = true;
     		svdMethodsSelected++;
+    	}
+    	else {
+    		do_osvd = false;
     	}
     	
     	if (svdMethodsSelected == 0) {
@@ -314,22 +361,21 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
     		return false;
     	}
     	
-    	deconv_method = new String[svdMethodsSelected];
-    	int index = 0;
-    	if (svdCheckBox.isSelected()) {
-    		deconv_method[index++] = "SVD";
-    	}
-    	if (csvdCheckBox.isSelected()) {
-    		deconv_method[index++] = "cSVD";
-    	}
-    	if (osvdCheckBox.isSelected()) {
-    		deconv_method[index++] = "oSVD";
-    	}
-    	
     	return true;
     }
     
     protected void callAlgorithm() {
+    	deconv_method = new String[svdMethodsSelected];
+    	int index = 0;
+    	if (do_svd) {
+    		deconv_method[index++] = "SVD";
+    	}
+    	if (do_csvd) {
+    		deconv_method[index++] = "cSVD";
+    	}
+    	if (do_osvd) {
+    		deconv_method[index++] = "oSVD";
+    	}
     	dsc = new DSC_MRI_toolbox(image, outputFileDirectory, te, tr, aif_nSlice, deconv_method);
     	
     	setVisible(false); // Hide dialog
@@ -338,16 +384,24 @@ public class JDialogDSC_MRI_toolbox extends JDialogScriptableBase {
     }
     
     protected void setGUIFromParams() {
+    	image = scriptParameters.retrieveInputImage();
     	outputFileDirectory = scriptParameters.getParams().getString("outputFileDirectory");
     	te = scriptParameters.getParams().getDouble("TE");
     	tr = scriptParameters.getParams().getDouble("TR");
     	aif_nSlice = scriptParameters.getParams().getInt("AIF_NSLICE");
+    	do_svd = scriptParameters.getParams().getBoolean("svd");
+    	do_csvd = scriptParameters.getParams().getBoolean("csvd");
+    	do_osvd = scriptParameters.getParams().getBoolean("osvd");
     }
     
     protected void storeParamsFromGUI() throws ParserException {
+    	scriptParameters.storeInputImage(image);
     	scriptParameters.getParams().put(ParameterFactory.newParameter("outputFileDirectory", outputFileDirectory));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("TE", te));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("TR", tr));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("AIF_NSLICE", aif_nSlice));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("svd", do_svd));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("csvd", do_csvd));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("osvd", do_osvd));
     }
 }
