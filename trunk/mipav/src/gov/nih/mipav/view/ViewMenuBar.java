@@ -170,6 +170,7 @@ public class ViewMenuBar {
 						menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false), }),
 				menuBuilder.buildMenuItem("BRISK", "BRISK", 0, null, false),
 				menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
+				menuBuilder.buildMenuItem("DSC_MRI_toolbox", "DSC_MRI_toolbox", 0, null, false),
 				menuBuilder.makeMenu("Edge detection", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
 								menuBuilder.buildMenuItem("Embedded confidence", "EmbeddedConfidenceEdgeDetection", 0, null, false),
@@ -1579,6 +1580,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
+			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D", true);
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
@@ -1629,6 +1631,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Graph Based", false);
 		} else if (numberOfDimensions == 2) {
+			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("SIFT", true);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D",false);
 			menuBuilder.setMenuItemEnabled("Align patient position", false);
@@ -1699,6 +1702,7 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
+			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
 			menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
 			menuBuilder.setMenuItemEnabled("Density based clustering", false);
