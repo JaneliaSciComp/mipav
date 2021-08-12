@@ -16270,7 +16270,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                             vector2[p] = T[p][i - 1];
                         }
 
-                        dgemv('N', i - 1, j - i + 1, -tau[i - 1], array1, i - 1, vector1, 1, 0.0, vector2, 1);
+                        dgemv('N', i - 1, j - i + 1, -tau[i - 1], array1, Math.max(1,i - 1), vector1, 1, 0.0, vector2, 1);
 
                         for (p = 0; p < (i - 1); p++) {
                             T[p][i - 1] = vector2[p];
