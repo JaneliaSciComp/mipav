@@ -1641,6 +1641,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogFRETEfficiency(this, getActiveImage());
         } else if (command.equals("Quantify")) {
             new JDialogQuantify(this, getActiveImage());
+        } else if (command.equals("DSC_MRI_toolbox")) {
+        	new JDialogDSC_MRI_toolbox(this, getActiveImage());
         } else if (command.equals("Patient Position")) {
 
             if (isMultipleImages() == true) {
