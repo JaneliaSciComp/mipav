@@ -78,6 +78,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private double volumes[][][][];
 	private double conc[][][][];
 	private double AIFslice[][][];
+	private ModelImage srcImage = null;
 	private int nC;
 	private int nR;
 	private int nS;
@@ -236,6 +237,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double maxSum;
 	private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator + "dsc-mri-toolbox-master"
 			+ File.separator + "demo-data" + File.separator;
+	private String inputFileName = null;
 	private String outputPrefix = "";
 	private FileIO fileIO = null;
 
@@ -302,6 +304,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	public DSC_MRI_toolbox() {
 
 	}
+	
+	public DSC_MRI_toolbox(ModelImage srcImage, String outputFilePath, double te, double tr, int aif_nSlice, 
+			String[] deconv_method) {
+		this.srcImage = srcImage;
+		this.outputFilePath = outputFilePath;
+		this.te = te;
+		this.tr = tr;
+		this.aif_nSlice = aif_nSlice;
+		this.deconv_method = deconv_method;
+		doAIFTransfer = false;
+		readTestImage = false;
+		doSaveAllOutputs = true;
+	}
 
 	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr, int aif_nSlice, String outputFilePath) {
 		this.volumes = volumes;
@@ -317,26 +332,30 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	public void runAlgorithm() {
 		final long startTime = System.currentTimeMillis();
 		int x, y, z, t;
-		if (readTestImage) {
-			final FileIO io = new FileIO();
-			io.setQuiet(true);
-			io.setSuppressProgressBar(true);
-			 ModelImage img = io.readImage("C:" + File.separator + "TSP datasets" +
-			 File.separator
-			 + "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator +
-			 "GRE_DSC.nii.gz");
-			//ModelImage img = io.readImage(
-			//		"C:" + File.separator + "TSP datasets" + File.separator + "EVTcase#1-baseline PWI" + File.separator
-			//				+ "baseline PWI" + File.separator + "ST000001" + File.separator + "SE000001Original.nii");
-			if (img.getNDims() != 4) {
-				System.err.println("img.getNDims() = " + img.getNDims());
+		
+		if (!doAIFTransfer) {
+			if (readTestImage) {
+				 final FileIO io = new FileIO();
+				 io.setQuiet(true);
+				 io.setSuppressProgressBar(true);
+				 srcImage = io.readImage("C:" + File.separator + "TSP datasets" +
+				 File.separator
+				 + "dsc-mri-toolbox-master" + File.separator + "demo-data" + File.separator +
+				 "GRE_DSC.nii.gz");
+				//srcImage = io.readImage(
+				//		"C:" + File.separator + "TSP datasets" + File.separator + "EVTcase#1-baseline PWI" + File.separator
+				//				+ "baseline PWI" + File.separator + "ST000001" + File.separator + "SE000001Original.nii");
+				 aif_nSlice = 7;
+			}
+			if (srcImage.getNDims() != 4) {
+				System.err.println("srcImage.getNDims() = " + srcImage.getNDims());
 				return;
 			}
-			nC = img.getExtents()[0];
-			nR = img.getExtents()[1];
-			nS = img.getExtents()[2];
-			nT = img.getExtents()[3];
-			float resolutions[] = img.getFileInfo()[0].getResolutions();
+			nC = srcImage.getExtents()[0];
+			nR = srcImage.getExtents()[1];
+			nS = srcImage.getExtents()[2];
+			nT = srcImage.getExtents()[3];
+			float resolutions[] = srcImage.getFileInfo()[0].getResolutions();
 			resolutions3D[0] = resolutions[0];
 			resolutions3D[1] = resolutions[1];
 			resolutions3D[2] = resolutions[2];
@@ -344,7 +363,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			resolutions4D[1] = resolutions[1];
 			resolutions4D[2] = resolutions[2];
 			resolutions4D[3] = resolutions[3];
-			int units[] = img.getFileInfo()[0].getUnitsOfMeasure();
+			int units[] = srcImage.getFileInfo()[0].getUnitsOfMeasure();
 			units3D[0] = units[0];
 			units3D[1] = units[1];
 			units3D[2] = units[2];
@@ -353,7 +372,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			units4D[2] = units[2];
 			units4D[3] = units[3];
 			// Temporarily for development
-			aif_nSlice = 7;
 			length = nC * nR;
 			volume = length * nS;
 			int buffer_size = volume * nT;
@@ -368,13 +386,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			extents4D[3] = nT;
 			short buffer[] = new short[buffer_size];
 			try {
-				img.exportData(0, buffer_size, buffer);
+				srcImage.exportData(0, buffer_size, buffer);
 			} catch (IOException e) {
 				System.err.println("IOException " + e);
 				return;
 			}
-			img.disposeLocal();
-			img = null;
+			if (readTestImage) {
+			    srcImage.disposeLocal();
+			    srcImage = null;
+			}
 			volumes = new double[nC][nR][nS][nT];
 			for (x = 0; x < nC; x++) {
 				for (y = 0; y < nR; y++) {
@@ -388,7 +408,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 			DSC_mri_core();
 
-		} else if (doAIFTransfer) {
+		} else  { // doAIFTransfer
 			nC = volumes.length;
 			nR = volumes[0].length;
 			nS = volumes[0][0].length;
