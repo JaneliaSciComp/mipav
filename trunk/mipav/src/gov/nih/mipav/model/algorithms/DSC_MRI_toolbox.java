@@ -371,7 +371,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			units4D[1] = units[1];
 			units4D[2] = units[2];
 			units4D[3] = units[3];
-			// Temporarily for development
 			length = nC * nR;
 			volume = length * nS;
 			int buffer_size = volume * nT;
