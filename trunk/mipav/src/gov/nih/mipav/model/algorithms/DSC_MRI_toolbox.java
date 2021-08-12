@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileTypeTable;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
@@ -82,7 +83,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	private int nS;
 	private int nT;
 	private int extents2D[] = new int[2];
+	private int extents3D[] = new int[3];
+	private int extents4D[] = new int[4];
+	float resolutions3D[] = new float[3];
+	int units3D[] = new int[3];
+	float resolutions4D[] = new float[4];
+	int units4D[] = new int[4];
 	private int length;
+	private int volume;
 	private double time[];
 	// echo time in seconds
 	private double te = 0.025;
@@ -178,6 +186,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	// Methods to be applied for perfusion calculation
 	// "SVD", "cSVD", "oSVD"
 	private String[] deconv_method = new String[] {"cSVD"};
+	// On GRE_DSC.nii.gz without file saves:
+	// For SVD DSC_mri_core() execution time in seconds = 20.403
+	// For cSVD DSC_mri_core() execution time in seconds = 20.141
+	// For oSVD DSC_mri_core() execution time in seconds = 552.111
 
 	// Constants ofproportionality
 	private double par_kh = 1.0;
@@ -222,7 +234,6 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	double c2;
 	double minSum;
 	double maxSum;
-	private int sliceNumber = 0;
 	private String outputFilePath = "C:" + File.separator + "TSP datasets" + File.separator + "dsc-mri-toolbox-master"
 			+ File.separator + "demo-data" + File.separator;
 	private String outputPrefix = "";
@@ -292,14 +303,15 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 	}
 
-	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr, int sliceNumber, String outputFilePath) {
+	public DSC_MRI_toolbox(double volumes[][][][], double te, double tr, int aif_nSlice, String outputFilePath) {
 		this.volumes = volumes;
 		this.te = te;
 		this.tr = tr;
-		this.sliceNumber = sliceNumber;
+		this.aif_nSlice = aif_nSlice;
 		this.outputFilePath = outputFilePath;
 		doAIFTransfer = true;
 		readTestImage = false;
+		doSaveAllOutputs = false;
 	}
 
 	public void runAlgorithm() {
@@ -324,13 +336,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			nR = img.getExtents()[1];
 			nS = img.getExtents()[2];
 			nT = img.getExtents()[3];
+			float resolutions[] = img.getFileInfo()[0].getResolutions();
+			resolutions3D[0] = resolutions[0];
+			resolutions3D[1] = resolutions[1];
+			resolutions3D[2] = resolutions[2];
+			resolutions4D[0] = resolutions[0];
+			resolutions4D[1] = resolutions[1];
+			resolutions4D[2] = resolutions[2];
+			resolutions4D[3] = resolutions[3];
+			int units[] = img.getFileInfo()[0].getUnitsOfMeasure();
+			units3D[0] = units[0];
+			units3D[1] = units[1];
+			units3D[2] = units[2];
+			units4D[0] = units[0];
+			units4D[1] = units[1];
+			units4D[2] = units[2];
+			units4D[3] = units[3];
 			// Temporarily for development
 			aif_nSlice = 7;
 			length = nC * nR;
-			int vol = length * nS;
-			int buffer_size = vol * nT;
+			volume = length * nS;
+			int buffer_size = volume * nT;
 			extents2D[0] = nC;
 			extents2D[1] = nR;
+			extents3D[0] = nC;
+			extents3D[1] = nR;
+			extents3D[2] = nS;
+			extents4D[0] = nC;
+			extents4D[1] = nR;
+			extents4D[2] = nS;
+			extents4D[3] = nT;
 			short buffer[] = new short[buffer_size];
 			try {
 				img.exportData(0, buffer_size, buffer);
@@ -345,7 +380,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				for (y = 0; y < nR; y++) {
 					for (z = 0; z < nS; z++) {
 						for (t = 0; t < nT; t++) {
-							volumes[x][y][z][t] = buffer[x + y * nC + z * length + t * vol];
+							volumes[x][y][z][t] = buffer[x + y * nC + z * length + t * volume];
 						}
 					}
 				}
@@ -360,8 +395,12 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			nT = volumes[0][0][0].length;
 			aif_nSlice = nS / 2; // aif_nSlice = 0 for nS = 1;
 			length = nC * nR;
+			volume = length * nS;
 			extents2D[0] = nC;
 			extents2D[1] = nR;
+			extents3D[0] = nC;
+			extents3D[1] = nR;
+			extents3D[2] = nS;
 			DSC_mri_core();
 			if (errorInMaskRoutine) {
 				AIF_voxels = null;
@@ -1512,6 +1551,63 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
+		
+		if (doSaveAllOutputs) {
+			byte maskBuffer[] = new byte[volume];
+			ModelImage mask_aifImage = new ModelImage(ModelStorageBase.BYTE, extents3D, "mask_aif");
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					for (z = 0; z < nS; z++) {
+						maskBuffer[x + y*nC + z*length] = mask_aif[x][y][z];
+					}
+				}
+			}
+			try {
+	    		mask_aifImage.importData(0, maskBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on mask_aifImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = mask_aifImage.getFileInfo();
+	    	for (i = 0; i < nS; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.BYTE);
+	    	}
+	    	
+	    	saveImageFile(mask_aifImage, outputFilePath, outputPrefix + "mask_aif", saveFileFormat);
+	    	mask_aifImage.disposeLocal();
+	    	mask_aifImage = null;
+	    	
+	    	ModelImage mask_dataImage = new ModelImage(ModelStorageBase.BYTE, extents3D, "mask_data");
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					for (z = 0; z < nS; z++) {
+						maskBuffer[x + y*nC + z*length] = mask_data[x][y][z];
+					}
+				}
+			}
+			try {
+	    		mask_dataImage.importData(0, maskBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on mask_dataImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			fileInfo = mask_dataImage.getFileInfo();
+	    	for (i = 0; i < nS; i++) {
+	    		fileInfo[i].setResolutions(resolutions3D);
+	    		fileInfo[i].setUnitsOfMeasure(units3D);
+	    		fileInfo[i].setDataType(ModelStorageBase.BYTE);
+	    	}
+	    	
+	    	saveImageFile(mask_dataImage, outputFilePath, outputPrefix + "mask_data", saveFileFormat);
+	    	mask_dataImage.disposeLocal();
+	    	mask_dataImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_mask()
 
 	private void backupSecondGaussianRoutine() {
@@ -1591,7 +1687,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// Output parameters:
 		// conc: 4D matrix of concentrations
 		// S0map 3D S0 matrix
-		int x, y, z, t;
+		int x, y, z, t, i;
 
 		if (display > 0) {
 			UI.setDataText("Calculating concentration...\n");
@@ -1625,6 +1721,38 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		} // for (t = 0; t < nT; t++)
+		
+		if (doSaveAllOutputs) {
+			double concBuffer[] = new double[volume*nT];
+			ModelImage concImage = new ModelImage(ModelStorageBase.DOUBLE, extents4D, "conc");
+			for (x = 0; x < nC; x++) {
+				for (y = 0; y < nR; y++) {
+					for (z = 0; z < nS; z++) {
+						for (t = 0; t < nT; t++) {
+						    concBuffer[x + y*nC + z*length + t*volume] = conc[x][y][z][t];
+						}
+					}
+				}
+			}
+			try {
+	    		concImage.importData(0, concBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on mask_concImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = concImage.getFileInfo();
+	    	for (i = 0; i < nS*nT; i++) {
+	    		fileInfo[i].setResolutions(resolutions4D);
+	    		fileInfo[i].setUnitsOfMeasure(units4D);
+	    		fileInfo[i].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(concImage, outputFilePath, outputPrefix + "conc", saveFileFormat);
+	    	concImage.disposeLocal();
+	    	concImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_conc()
 
 	public void DSC_mri_S0() {
@@ -2876,7 +3004,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			BufferedImage captureImage = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
 			component.paint(captureImage.getGraphics());
 
-			File immagineFile = new File(outputFilePath + outputPrefix + "AIF_slice"+String.valueOf(sliceNumber)+".png");
+			File immagineFile = new File(outputFilePath + outputPrefix + "AIF_slice"+String.valueOf(aif_nSlice)+".png");
 			boolean foundWriter;
 			try {
 				foundWriter = ImageIO.write(captureImage, format, immagineFile);
@@ -2885,7 +3013,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				return;
 			}
 			if (!foundWriter) {
-				System.err.println("No appropriate writer for AIF_slice"+String.valueOf(sliceNumber)+".png");
+				System.err.println("No appropriate writer for AIF_slice"+String.valueOf(aif_nSlice)+".png");
 				return;
 			}
 			captureImage.flush();
@@ -2951,6 +3079,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		    	}
 		    }
 		} // for (s = 0; s < nS; s++)
+		
+		if (doSaveAllOutputs) {
+			double cbvBuffer[] = new double[volume];
+			ModelImage cbvImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "cbv");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						cbvBuffer[c + r*nC + s*length] = cbv[c][r][s];
+					}
+				}
+			}
+			try {
+	    		cbvImage.importData(0, cbvBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on cbvImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = cbvImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(cbvImage, outputFilePath, outputPrefix + "cbv", saveFileFormat);
+	    	cbvImage.disposeLocal();
+	    	cbvImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_cbv()
 	
 	public void DSC_mri_cbv_lc() {
@@ -3313,6 +3471,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    	}
 	    }
+	    
+	    if (doSaveAllOutputs) {
+			double cbv_lcBuffer[] = new double[volume];
+			ModelImage cbv_lcImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "cbv_lc");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						cbv_lcBuffer[c + r*nC + s*length] = cbv_lc[c][r][s];
+					}
+				}
+			}
+			try {
+	    		cbv_lcImage.importData(0, cbv_lcBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on cbv_lcImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = cbv_lcImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(cbv_lcImage, outputFilePath, outputPrefix + "cbv_lc", saveFileFormat);
+	    	cbv_lcImage.disposeLocal();
+	    	cbv_lcImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_cbv_lc()
 	
 	public void DSC_mri_cbf() {
@@ -3529,6 +3717,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		 }
 	    	 }
 	     }
+	     
+	     if (doSaveAllOutputs) {
+			double cbf_svdBuffer[] = new double[volume];
+			ModelImage cbf_svdImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "cbf_svd");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						cbf_svdBuffer[c + r*nC + s*length] = cbf_svd[c][r][s];
+					}
+				}
+			}
+			try {
+	    		cbf_svdImage.importData(0, cbf_svdBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on cbf_svdImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = cbf_svdImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(cbf_svdImage, outputFilePath, outputPrefix + "cbf_svd", saveFileFormat);
+	    	cbf_svdImage.disposeLocal();
+	    	cbf_svdImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_SVD()
 	
 	public void DSC_mri_cSVD() {
@@ -3670,6 +3888,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		 }
 	    	 }
 	     }
+	     
+	     if (doSaveAllOutputs) {
+			double cbf_csvdBuffer[] = new double[volume];
+			ModelImage cbf_csvdImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "cbf_csvd");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						cbf_csvdBuffer[c + r*nC + s*length] = cbf_csvd[c][r][s];
+					}
+				}
+			}
+			try {
+	    		cbf_csvdImage.importData(0, cbf_csvdBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on cbf_csvdImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = cbf_csvdImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(cbf_csvdImage, outputFilePath, outputPrefix + "cbf_csvd", saveFileFormat);
+	    	cbf_csvdImage.disposeLocal();
+	    	cbf_csvdImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_cSVD()
 	
 	public void DSC_mri_oSVD() {
@@ -3823,6 +4071,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		 }
 	    	 }
 	     }
+	     
+	     if (doSaveAllOutputs) {
+			double cbf_osvdBuffer[] = new double[volume];
+			ModelImage cbf_osvdImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "cbf_osvd");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						cbf_osvdBuffer[c + r*nC + s*length] = cbf_osvd[c][r][s];
+					}
+				}
+			}
+			try {
+	    		cbf_osvdImage.importData(0, cbf_osvdBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on cbf_osvdImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = cbf_osvdImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(cbf_osvdImage, outputFilePath, outputPrefix + "cbf_osvd", saveFileFormat);
+	    	cbf_osvdImage.disposeLocal();
+	    	cbf_osvdImage = null;
+		} // if (doSaveAllOutputs)
 	} // public void DSC_mri_oSVD()
 	
 	public void DSC_mri_mtt() {
@@ -3842,6 +4120,35 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						}
 					}
 				}
+				if (doSaveAllOutputs) {
+					double mtt_svdBuffer[] = new double[volume];
+					ModelImage mtt_svdImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "mtt_svd");
+					for (c = 0; c < nC; c++) {
+						for (r = 0; r < nR; r++) {
+							for (s = 0; s < nS; s++) {
+								mtt_svdBuffer[c + r*nC + s*length] = mtt_svd[c][r][s];
+							}
+						}
+					}
+					try {
+			    		mtt_svdImage.importData(0, mtt_svdBuffer, true);
+			    	}
+			    	catch (IOException e) {
+			    		MipavUtil.displayError("IOException on mtt_svdImage");
+			    		//setCompleted(false);
+			    		return;
+			    	}
+					FileInfoBase fileInfo[] = mtt_svdImage.getFileInfo();
+			    	for (s = 0; s < nS; s++) {
+			    		fileInfo[s].setResolutions(resolutions3D);
+			    		fileInfo[s].setUnitsOfMeasure(units3D);
+			    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+			    	}
+			    	
+			    	saveImageFile(mtt_svdImage, outputFilePath, outputPrefix + "mtt_svd", saveFileFormat);
+			    	mtt_svdImage.disposeLocal();
+			    	mtt_svdImage = null;
+			  } // if (doSaveAllOutputs)
 			}
 			else if (deconv_method[i].equalsIgnoreCase("cSVD")) {
 				mtt_csvd = new double[nC][nR][nS];
@@ -3852,6 +4159,35 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						}
 					}
 				}
+				if (doSaveAllOutputs) {
+					double mtt_csvdBuffer[] = new double[volume];
+					ModelImage mtt_csvdImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "mtt_csvd");
+					for (c = 0; c < nC; c++) {
+						for (r = 0; r < nR; r++) {
+							for (s = 0; s < nS; s++) {
+								mtt_csvdBuffer[c + r*nC + s*length] = mtt_csvd[c][r][s];
+							}
+						}
+					}
+					try {
+			    		mtt_csvdImage.importData(0, mtt_csvdBuffer, true);
+			    	}
+			    	catch (IOException e) {
+			    		MipavUtil.displayError("IOException on mtt_csvdImage");
+			    		//setCompleted(false);
+			    		return;
+			    	}
+					FileInfoBase fileInfo[] = mtt_csvdImage.getFileInfo();
+			    	for (s = 0; s < nS; s++) {
+			    		fileInfo[s].setResolutions(resolutions3D);
+			    		fileInfo[s].setUnitsOfMeasure(units3D);
+			    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+			    	}
+			    	
+			    	saveImageFile(mtt_csvdImage, outputFilePath, outputPrefix + "mtt_csvd", saveFileFormat);
+			    	mtt_csvdImage.disposeLocal();
+			    	mtt_csvdImage = null;
+			  } // if (doSaveAllOutputs)
 			}
 			else if (deconv_method[i].equalsIgnoreCase("oSVD")) {
 				mtt_osvd = new double[nC][nR][nS];
@@ -3862,6 +4198,35 @@ public class DSC_MRI_toolbox extends CeresSolver {
 						}
 					}
 				}
+				if (doSaveAllOutputs) {
+					double mtt_osvdBuffer[] = new double[volume];
+					ModelImage mtt_osvdImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "mtt_osvd");
+					for (c = 0; c < nC; c++) {
+						for (r = 0; r < nR; r++) {
+							for (s = 0; s < nS; s++) {
+								mtt_osvdBuffer[c + r*nC + s*length] = mtt_osvd[c][r][s];
+							}
+						}
+					}
+					try {
+			    		mtt_osvdImage.importData(0, mtt_osvdBuffer, true);
+			    	}
+			    	catch (IOException e) {
+			    		MipavUtil.displayError("IOException on mtt_osvdImage");
+			    		//setCompleted(false);
+			    		return;
+			    	}
+					FileInfoBase fileInfo[] = mtt_osvdImage.getFileInfo();
+			    	for (s = 0; s < nS; s++) {
+			    		fileInfo[s].setResolutions(resolutions3D);
+			    		fileInfo[s].setUnitsOfMeasure(units3D);
+			    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+			    	}
+			    	
+			    	saveImageFile(mtt_osvdImage, outputFilePath, outputPrefix + "mtt_osvd", saveFileFormat);
+			    	mtt_osvdImage.disposeLocal();
+			    	mtt_osvdImage = null;
+			  } // if (doSaveAllOutputs)
 			}
 			// Update if you intend to add a new method
 			// otherwise unrecognized method
@@ -3897,6 +4262,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	    		}
 	    	}
 	    }
+	    
+	    if (doSaveAllOutputs) {
+			short ttpBuffer[] = new short[volume];
+			ModelImage ttpImage = new ModelImage(ModelStorageBase.SHORT, extents3D, "ttp");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						ttpBuffer[c + r*nC + s*length] = ttp[c][r][s];
+					}
+				}
+			}
+			try {
+	    		ttpImage.importData(0, ttpBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on ttpImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = ttpImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.SHORT);
+	    	}
+	    	
+	    	saveImageFile(ttpImage, outputFilePath, outputPrefix + "ttp", saveFileFormat);
+	    	ttpImage.disposeLocal();
+	    	ttpImage = null;
+	  } // if (doSaveAllOutputs)
 	} // public void DSC_mri_ttp;
 	
 	public void DSC_mri_fwhm() {
@@ -3921,6 +4316,36 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
+	    
+	    if (doSaveAllOutputs) {
+			double fwhmBuffer[] = new double[volume];
+			ModelImage fwhmImage = new ModelImage(ModelStorageBase.DOUBLE, extents3D, "fwhm");
+			for (c = 0; c < nC; c++) {
+				for (r = 0; r < nR; r++) {
+					for (s = 0; s < nS; s++) {
+						fwhmBuffer[c + r*nC + s*length] = fwhm[c][r][s];
+					}
+				}
+			}
+			try {
+	    		fwhmImage.importData(0, fwhmBuffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on fwhmImage");
+	    		//setCompleted(false);
+	    		return;
+	    	}
+			FileInfoBase fileInfo[] = fwhmImage.getFileInfo();
+	    	for (s = 0; s < nS; s++) {
+	    		fileInfo[s].setResolutions(resolutions3D);
+	    		fileInfo[s].setUnitsOfMeasure(units3D);
+	    		fileInfo[s].setDataType(ModelStorageBase.DOUBLE);
+	    	}
+	    	
+	    	saveImageFile(fwhmImage, outputFilePath, outputPrefix + "fwhm", saveFileFormat);
+	        fwhmImage.disposeLocal();
+	    	fwhmImage = null;
+	  } // if (doSaveAllOutputs)
 	} // public void DSC_mri_fwhm
 	
 	double fwhm(double x[], double yorg[]) {
