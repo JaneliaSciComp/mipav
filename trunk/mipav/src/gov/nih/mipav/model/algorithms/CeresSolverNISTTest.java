@@ -2341,5 +2341,150 @@ public class CeresSolverNISTTest extends CeresSolver {
 		System.out.println("Actual answer b1 = 4.3736970754E+02 b2 = 3.0227324449E-04");
 		} // for (i = 0; i < 2; i++)
 	}
+	
+	protected final int Lanczos1Observations = 24;
+	protected double Lanczos1Data[] = new double[]{
+			2.513400000000E+00,  0.000000000000E+00,
+		       2.044333373291E+00,  5.000000000000E-02,
+		       1.668404436564E+00,  1.000000000000E-01,
+		       1.366418021208E+00,  1.500000000000E-01,
+		       1.123232487372E+00,  2.000000000000E-01,
+		       9.268897180037E-01,  2.500000000000E-01,
+		       7.679338563728E-01,  3.000000000000E-01,
+		       6.388775523106E-01,  3.500000000000E-01,
+		       5.337835317402E-01,  4.000000000000E-01,
+		       4.479363617347E-01,  4.500000000000E-01,
+		       3.775847884350E-01,  5.000000000000E-01,
+		       3.197393199326E-01,  5.500000000000E-01,
+		       2.720130773746E-01,  6.000000000000E-01,
+		       2.324965529032E-01,  6.500000000000E-01,
+		       1.996589546065E-01,  7.000000000000E-01,
+		       1.722704126914E-01,  7.500000000000E-01,
+		       1.493405660168E-01,  8.000000000000E-01,
+		       1.300700206922E-01,  8.500000000000E-01,
+		       1.138119324644E-01,  9.000000000000E-01,
+		       1.000415587559E-01,  9.500000000000E-01,
+		       8.833209084540E-02,  1.000000000000E+00,
+		       7.833544019350E-02,  1.050000000000E+00,
+		       6.976693743449E-02,  1.100000000000E+00,
+		       6.239312536719E-02,  1.150000000000E+00
+	};
+	
+	class Lanczos1CostFunction extends SizedCostFunction {
+		public Lanczos1CostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(24, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Lanczos1Observations; i++) {
+			    residuals[i] = Lanczos1Data[2*i] - x[0]*Math.exp(-x[1]*Lanczos1Data[2*i+1])
+			    		- x[2]*Math.exp(-x[3]*Lanczos1Data[2*i+1]) - x[4]*Math.exp(-x[5]*Lanczos1Data[2*i+1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][6*i] = -Math.exp(-x[1]*Lanczos1Data[2*i+1]);
+					jacobians[0][6*i+1] = Lanczos1Data[2*i+1]*x[0]*Math.exp(-x[1]*Lanczos1Data[2*i+1]);
+					jacobians[0][6*i+2] = -Math.exp(-x[3]*Lanczos1Data[2*i+1]);
+					jacobians[0][6*i+3] = Lanczos1Data[2*i+1]* x[2]*Math.exp(-x[3]*Lanczos1Data[2*i+1]);
+					jacobians[0][6*i+4] = -Math.exp(-x[5]*Lanczos1Data[2*i+1]);
+					jacobians[0][6*i+5] = Lanczos1Data[2*i+1]* x[4]*Math.exp(-x[5]*Lanczos1Data[2*i+1]);
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Lanczos1Observations; i++) {
+			    residuals[i] = Lanczos1Data[2*i] - x[0]*Math.exp(-x[1]*Lanczos1Data[2*i+1])
+			    		- x[2]*Math.exp(-x[3]*Lanczos1Data[2*i+1]) - x[4]*Math.exp(-x[5]*Lanczos1Data[2*i+1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+6*i] = -Math.exp(-x[1]*Lanczos1Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+1] = Lanczos1Data[2*i+1]*x[0]*Math.exp(-x[1]*Lanczos1Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+2] = -Math.exp(-x[3]*Lanczos1Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+3] = Lanczos1Data[2*i+1]*x[2]*Math.exp(-x[3]*Lanczos1Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+4] = -Math.exp(-x[5]*Lanczos1Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+5] = Lanczos1Data[2*i+1]*x[4]*Math.exp(-x[5]*Lanczos1Data[2*i+1]);
+			    }
+			}
+
+			
+			return true;
+		
+	  }
+	} // class Lanczos1CostFunction
+	
+	public void runLanczos1CostFunctionExample() {
+		// Both near and far starting points converge to incorrect answers
+		// Ceres Solver Report: Iterations: 47, Initial cost: 3.939431e+01, Final cost: 2.963216e-06, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 0.07448466923452687 b2 = 0.7062324277780039 b3 = 1.51125763002183
+		// b4 = 3.4389635002688967 b5 = 0.9285337675757855 b6 = 5.667815151580054
+		// Actual answer b1 =  9.5100000027E-02 b2 = 1.0000000001E+00  b3 = 8.6070000013E-01
+		// b4 = 3.0000000002E+00  b5 = 1.5575999998E+00  b6 = 5.0000000001E+00
+
+		// Ceres Solver Report: Iterations: 37, Initial cost: 1.348752e+02, Final cost: 3.036389e-07, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 0.32933123055256236 b2 = 1.6680941351903433 b3 = 1.991488911340649
+		// b4 = 4.339499599646354 b5 = 0.1926996072410834 b6 = 6.608452836621712
+		// Actual answer b1 =  9.5100000027E-02 b2 = 1.0000000001E+00  b3 = 8.6070000013E-01
+		// b4 = 3.0000000002E+00  b5 = 1.5575999998E+00  b6 = 5.0000000001E+00
+
+		int i;
+		double x[] = new double[6];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 0.5;
+        	x[1] = 0.7;
+        	x[2] = 3.6;
+        	x[3] = 4.2;
+        	x[4] = 4.0;
+        	x[5] = 6.3;
+        }
+        else {
+        	x[0] = 1.2;
+        	x[1] = 0.3;
+        	x[2] = 5.6;
+        	x[3] = 5.5;
+        	x[4] = 6.5;
+        	x[5] = 7.6;
+        }
+        
+		CostFunction cost_function = new Lanczos1CostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+		System.out.println("Actual answer b1 =  9.5100000027E-02 b2 = 1.0000000001E+00  b3 = 8.6070000013E-01");
+		System.out.println("b4 = 3.0000000002E+00  b5 = 1.5575999998E+00  b6 = 5.0000000001E+00");
+		} // for (i = 0; i < 2; i++)			
+	}
 
 }
