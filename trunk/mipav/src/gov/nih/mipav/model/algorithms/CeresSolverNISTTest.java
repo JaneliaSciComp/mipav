@@ -1240,5 +1240,1106 @@ public class CeresSolverNISTTest extends CeresSolver {
 		System.out.println("b7 = 1.7899805021E+02 b8 = 1.8389389025E+01");
 		} // for (i = 0; i < 2; i++)			
 	}
+	
+	protected final int Gauss2Observations = 250;
+	protected double Gauss2Data[] = new double[]{
+			97.58776,    1.000000,
+		    97.76344,    2.000000,
+		    96.56705,    3.000000,
+		    92.52037,    4.000000,
+		    91.15097,    5.000000,
+		    95.21728,    6.000000,
+		    90.21355,    7.000000,
+		    89.29235,    8.000000,
+		    91.51479,    9.000000,
+		    89.60966,   10.000000,
+		    86.56187,    11.00000,
+		    85.55316,    12.00000,
+		    87.13054,    13.00000,
+		    85.67940,    14.00000,
+		    80.04851,    15.00000,
+		    82.18925,    16.00000,
+		    87.24081,    17.00000,
+		    80.79407,    18.00000,
+		    81.28570,    19.00000,
+		    81.56940,    20.00000,
+		    79.22715,    21.00000,
+		    79.43275,    22.00000,
+		    77.90195,    23.00000,
+		    76.75468,    24.00000,
+		    77.17377,    25.00000,
+		    74.27348,    26.00000,
+		    73.11900,    27.00000,
+		    73.84826,    28.00000,
+		    72.47870,    29.00000,
+		    71.92292,    30.00000,
+		    66.92176,    31.00000,
+		    67.93835,    32.00000,
+		    69.56207,    33.00000,
+		    69.07066,    34.00000,
+		    66.53983,    35.00000,
+		    63.87883,    36.00000,
+		    69.71537,    37.00000,
+		    63.60588,    38.00000,
+		    63.37154,    39.00000,
+		    60.01835,    40.00000,
+		    62.67481,    41.00000,
+		    65.80666,    42.00000,
+		    59.14304,    43.00000,
+		    56.62951,    44.00000,
+		    61.21785,    45.00000,
+		    54.38790,    46.00000,
+		    62.93443,    47.00000,
+		    56.65144,    48.00000,
+		    57.13362,    49.00000,
+		    58.29689,    50.00000,
+		    58.91744,    51.00000,
+		    58.50172,    52.00000,
+		    55.22885,    53.00000,
+		    58.30375,    54.00000,
+		    57.43237,    55.00000,
+		    51.69407,    56.00000,
+		    49.93132,    57.00000,
+		    53.70760,    58.00000,
+		    55.39712,    59.00000,
+		    52.89709,    60.00000,
+		    52.31649,    61.00000,
+		    53.98720,    62.00000,
+		    53.54158,    63.00000,
+		    56.45046,    64.00000,
+		    51.32276,    65.00000,
+		    53.11676,    66.00000,
+		    53.28631,    67.00000,
+		    49.80555,    68.00000,
+		    54.69564,    69.00000,
+		    56.41627,    70.00000,
+		    54.59362,    71.00000,
+		    54.38520,    72.00000,
+		    60.15354,    73.00000,
+		    59.78773,    74.00000,
+		    60.49995,    75.00000,
+		    65.43885,    76.00000,
+		    60.70001,    77.00000,
+		    63.71865,    78.00000,
+		    67.77139,    79.00000,
+		    64.70934,    80.00000,
+		    70.78193,    81.00000,
+		    70.38651,    82.00000,
+		    77.22359,    83.00000,
+		    79.52665,    84.00000,
+		    80.13077,    85.00000,
+		    85.67823,    86.00000,
+		    85.20647,    87.00000,
+		    90.24548,    88.00000,
+		    93.61953,    89.00000,
+		    95.86509,    90.00000,
+		    93.46992,    91.00000,
+		    105.8137,    92.00000,
+		    107.8269,    93.00000,
+		    114.0607,    94.00000,
+		    115.5019,    95.00000,
+		    118.5110,    96.00000,
+		    119.6177,    97.00000,
+		    122.1940,    98.00000,
+		    126.9903,    99.00000,
+		    125.7005,   100.00000,
+		    123.7447,   101.00000,
+		    130.6543,   102.00000,
+		    129.7168,   103.00000,
+		    131.8240,   104.00000,
+		    131.8759,   105.00000,
+		    131.9994,    106.0000,
+		    132.1221,    107.0000,
+		    133.4414,    108.0000,
+		    133.8252,    109.0000,
+		    133.6695,    110.0000,
+		    128.2851,    111.0000,
+		    126.5182,    112.0000,
+		    124.7550,    113.0000,
+		    118.4016,    114.0000,
+		    122.0334,    115.0000,
+		    115.2059,    116.0000,
+		    118.7856,    117.0000,
+		    110.7387,    118.0000,
+		    110.2003,    119.0000,
+		   105.17290,    120.0000,
+		   103.44720,    121.0000,
+		    94.54280,    122.0000,
+		    94.40526,    123.0000,
+		    94.57964,    124.0000,
+		    88.76605,    125.0000,
+		    87.28747,    126.0000,
+		    92.50443,    127.0000,
+		    86.27997,    128.0000,
+		    82.44307,    129.0000,
+		    80.47367,    130.0000,
+		    78.36608,    131.0000,
+		    78.74307,    132.0000,
+		    76.12786,    133.0000,
+		    79.13108,    134.0000,
+		    76.76062,    135.0000,
+		    77.60769,    136.0000,
+		    77.76633,    137.0000,
+		    81.28220,    138.0000,
+		    79.74307,    139.0000,
+		    81.97964,    140.0000,
+		    80.02952,    141.0000,
+		    85.95232,    142.0000,
+		    85.96838,    143.0000,
+		    79.94789,    144.0000,
+		    87.17023,    145.0000,
+		    90.50992,    146.0000,
+		    93.23373,    147.0000,
+		    89.14803,    148.0000,
+		    93.11492,    149.0000,
+		    90.34337,    150.0000,
+		    93.69421,    151.0000,
+		    95.74256,    152.0000,
+		    91.85105,    153.0000,
+		    96.74503,    154.0000,
+		    87.60996,    155.0000,
+		    90.47012,    156.0000,
+		    88.11690,    157.0000,
+		    85.70673,    158.0000,
+		    85.01361,    159.0000,
+		    78.53040,    160.0000,
+		    81.34148,    161.0000,
+		    75.19295,    162.0000,
+		    72.66115,    163.0000,
+		    69.85504,    164.0000,
+		    66.29476,    165.0000,
+		    63.58502,    166.0000,
+		    58.33847,    167.0000,
+		    57.50766,    168.0000,
+		    52.80498,    169.0000,
+		    50.79319,    170.0000,
+		    47.03490,    171.0000,
+		    46.47090,    172.0000,
+		    43.09016,    173.0000,
+		    34.11531,    174.0000,
+		    39.28235,    175.0000,
+		    32.68386,    176.0000,
+		    30.44056,    177.0000,
+		    31.98932,    178.0000,
+		    23.63330,    179.0000,
+		    23.69643,    180.0000,
+		    20.26812,    181.0000,
+		    19.07074,    182.0000,
+		    17.59544,    183.0000,
+		    16.08785,    184.0000,
+		    18.94267,    185.0000,
+		    18.61354,    186.0000,
+		    17.25800,    187.0000,
+		    16.62285,    188.0000,
+		    13.48367,    189.0000,
+		    15.37647,    190.0000,
+		    13.47208,    191.0000,
+		    15.96188,    192.0000,
+		    12.32547,    193.0000,
+		    16.33880,    194.0000,
+		   10.438330,    195.0000,
+		    9.628715,    196.0000,
+		    13.12268,    197.0000,
+		    8.772417,    198.0000,
+		    11.76143,    199.0000,
+		    12.55020,    200.0000,
+		    11.33108,    201.0000,
+		    11.20493,    202.0000,
+		    7.816916,    203.0000,
+		    6.800675,    204.0000,
+		    14.26581,    205.0000,
+		    10.66285,    206.0000,
+		    8.911574,    207.0000,
+		    11.56733,    208.0000,
+		    11.58207,    209.0000,
+		    11.59071,    210.0000,
+		    9.730134,    211.0000,
+		    11.44237,    212.0000,
+		    11.22912,    213.0000,
+		   10.172130,    214.0000,
+		    12.50905,    215.0000,
+		    6.201493,    216.0000,
+		    9.019605,    217.0000,
+		    10.80607,    218.0000,
+		    13.09625,    219.0000,
+		    3.914271,    220.0000,
+		    9.567886,    221.0000,
+		    8.038448,    222.0000,
+		   10.231040,    223.0000,
+		    9.367410,    224.0000,
+		    7.695971,    225.0000,
+		    6.118575,    226.0000,
+		    8.793207,    227.0000,
+		    7.796692,    228.0000,
+		    12.45065,    229.0000,
+		    10.61601,    230.0000,
+		    6.001003,    231.0000,
+		    6.765098,    232.0000,
+		    8.764653,    233.0000,
+		    4.586418,    234.0000,
+		    8.390783,    235.0000,
+		    7.209202,    236.0000,
+		   10.012090,    237.0000,
+		    7.327461,    238.0000,
+		    6.525136,    239.0000,
+		    2.840065,    240.0000,
+		   10.323710,    241.0000,
+		    4.790035,    242.0000,
+		    8.376431,    243.0000,
+		    6.263980,    244.0000,
+		    2.705892,    245.0000,
+		    8.362109,    246.0000,
+		    8.983507,    247.0000,
+		    3.362469,    248.0000,
+		    1.182678,    249.0000,
+		    4.875312,    250.0000
+	};
+	
+	class Gauss2CostFunction extends SizedCostFunction {
+		public Gauss2CostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(250, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Gauss2Observations; i++) {
+				double diff1 = Gauss2Data[2*i+1] - x[3];
+				double diff2 = Gauss2Data[2*i+1] - x[6];
+				double exp1 = Math.exp(-x[1]*Gauss2Data[2*i+1]);
+				double exp2 = Math.exp(-diff1*diff1/(x[4]*x[4]));
+				double exp3 = Math.exp(-diff2*diff2/(x[7]*x[7]));
+			    residuals[i] = Gauss2Data[2*i] - x[0]*exp1
+			    		- x[2]*exp2 - x[5]*exp2;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][8*i] = -exp1;
+					jacobians[0][8*i+1] = Gauss2Data[2*i+1]*x[0]*exp1;
+					jacobians[0][8*i+2] = -exp2;
+					jacobians[0][8*i+3] = -2.0*x[2]*(diff1/(x[4]*x[4]))*exp2;
+					jacobians[0][8*i+4] = -2.0*x[2]*(diff1*diff1/(x[4]*x[4]*x[4]))*exp2;
+					jacobians[0][8*i+5] = -exp3;
+					jacobians[0][8*i+6] = -2.0*x[5]*(diff2/(x[7]*x[7]))*exp3;
+					jacobians[0][8*i+7] = -2.0*x[5]*(diff2*diff2/(x[7]*x[7]*x[7]))*exp3;
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Gauss2Observations; i++) {
+				double diff1 = Gauss2Data[2*i+1] - x[3];
+				double diff2 = Gauss2Data[2*i+1] - x[6];
+				double exp1 = Math.exp(-x[1]*Gauss2Data[2*i+1]);
+				double exp2 = Math.exp(-diff1*diff1/(x[4]*x[4]));
+				double exp3 = Math.exp(-diff2*diff2/(x[7]*x[7]));
+			    residuals[i] = Gauss2Data[2*i] - x[0]*exp1
+			    		- x[2]*exp2 - x[5]*exp3;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+8*i] = -exp1;
+					jacobians[0][jacobians_offset[0]+8*i+1] = Gauss2Data[2*i+1]*x[0]*exp1;
+					jacobians[0][jacobians_offset[0]+8*i+2] = -exp2;
+					jacobians[0][jacobians_offset[0]+8*i+3] = -2.0*x[2]*(diff1/(x[4]*x[4]))*exp2;
+					jacobians[0][jacobians_offset[0]+8*i+4] = -2.0*x[2]*(diff1*diff1/(x[4]*x[4]*x[4]))*exp2;
+					jacobians[0][jacobians_offset[0]+8*i+5] = -exp3;
+					jacobians[0][jacobians_offset[0]+8*i+6] = -2.0*x[5]*(diff2/(x[7]*x[7]))*exp3;
+					jacobians[0][jacobians_offset[0]+8*i+7] = -2.0*x[5]*(diff2*diff2/(x[7]*x[7]*x[7]))*exp3;
+			    }
+			}
+
+			return true;
+		
+	  }
+	} // class Gauss2CostFunction
+	
+	public void runGauss2CostFunctionExample() {
+		// Correct answer for close and distant starting points
+		// Ceres Solver Report: Iterations: 13, Initial cost: 2.341565e+03, Final cost: 6.237641e+02, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 99.0179802851211 b2 = 0.01099483029051228 b3 = 101.88012890182267
+		// b4 = 107.03079571368134 b5 = 23.578334810932244 b6 = 72.04542073434712
+		// b7 = 153.2698595474825 b8 = 19.5262020097769
+		// Actual answer b1 = 9.9018328406E+01  b2 = 1.0994945399E-02  b3 = 1.0188022528E+02
+		// b4 = 1.0703095519E+02  b5 = 2.3578584029E+01  b6 = 7.2045589471E+01
+		// b7 = 1.5327010194E+02 b8 = 1.9525972636E+01
+
+		// Ceres Solver Report: Iterations: 7, Initial cost: 4.579070e+03, Final cost: 6.237641e+02, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 99.0180194542043 b2 = 0.010994824572809305 b3 = 101.8801378856425
+		// b4 = 107.0309064272946 b5 = 23.57838643733977 b6 = 72.0454712696249
+		// b7 = 153.2699742422434 b8 = 19.52600955176765
+		// Actual answer b1 = 9.9018328406E+01  b2 = 1.0994945399E-02  b3 = 1.0188022528E+02
+		// b4 = 1.0703095519E+02  b5 = 2.3578584029E+01  b6 = 7.2045589471E+01
+		// b7 = 1.5327010194E+02 b8 = 1.9525972636E+01
+	    int i;
+		double x[] = new double[8];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 98.0;
+        	x[1] = 0.0105;
+        	x[2] = 103.0;
+        	x[3] = 105.0;
+        	x[4] = 20.0;
+        	x[5] = 73.0;
+        	x[6] = 150.0;
+        	x[7] = 20.0;
+        }
+        else {
+        	x[0] = 96.0;
+        	x[1] = 0.009;
+        	x[2] = 103.0;
+        	x[3] = 106.0;
+        	x[4] = 18.0;
+        	x[5] = 72.0;
+        	x[6] = 151.0;
+        	x[7] = 18.0;
+        }
+        
+		CostFunction cost_function = new Gauss2CostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+		System.out.println("b7 = " + x[6] + " b8 = " + x[7]);
+		System.out.println("Actual answer b1 = 9.9018328406E+01  b2 = 1.0994945399E-02  b3 = 1.0188022528E+02");
+		System.out.println("b4 = 1.0703095519E+02  b5 = 2.3578584029E+01  b6 = 7.2045589471E+01");
+		System.out.println("b7 = 1.5327010194E+02 b8 = 1.9525972636E+01");
+		} // for (i = 0; i < 2; i++)			
+	}
+	
+	protected final int DanwoodObservations = 6;
+	protected double DanwoodData[] = new double[]{
+			2.138E0,        1.309E0,
+		      3.421E0,        1.471E0,
+		      3.597E0,        1.490E0,
+		      4.340E0,        1.565E0,
+		      4.882E0,        1.611E0,
+		      5.660E0,        1.680E0
+	};
+	
+	class DanwoodCostFunction extends SizedCostFunction {
+		public DanwoodCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < DanwoodObservations; i++) {
+			    residuals[i] = DanwoodData[2*i] - x[0]*Math.pow(DanwoodData[2*i+1], x[1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][2*i] = -Math.pow(DanwoodData[2*i+1], x[1]);
+					jacobians[0][2*i+1] = -x[0]*Math.log(DanwoodData[2*i+1])*Math.pow(DanwoodData[2*i+1],x[1]);
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < DanwoodObservations; i++) {
+			    residuals[i] = DanwoodData[2*i] - x[0]*Math.pow(DanwoodData[2*i+1], x[1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+2*i] = -Math.pow(DanwoodData[2*i+1], x[1]);
+					jacobians[0][jacobians_offset[0]+2*i+1] = -x[0]*Math.log(DanwoodData[2*i+1])*Math.pow(DanwoodData[2*i+1],x[1]);
+			    }
+			}
+
+			return true;
+		
+	  }
+	} // class DanwoodCostFunction
+	
+	public void runDanwoodCostFunctionExample() {
+		// Correct answer for close and distant starting points
+		// Ceres Solver Report: Iterations: 6, Initial cost: 5.188235e-02, Final cost: 2.158656e-03, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 0.7688262500918367 b2 = 3.8605071208652557
+		// Actual answer b1 = 7.6886226176E-01 b2 = 3.8604055871E+00
+		
+		// Ceres Solver Report: Iterations: 7, Initial cost: 7.485961e+01, Final cost: 2.158656e-03, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 0.7688403136201144 b2 = 3.8604770116261284
+		// Actual answer b1 = 7.6886226176E-01 b2 = 3.8604055871E+00
+		int i;
+		double x[] = new double[2];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 0.7;
+        	x[1] = 4.0;
+        }
+        else {
+        	x[0] = 1.0;
+        	x[1] = 5.0;
+        }
+		CostFunction cost_function = new DanwoodCostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1]);
+		}
+		System.out.println("Actual answer b1 = 7.6886226176E-01 b2 = 3.8604055871E+00");
+		} // for (i = 0; i < 2; i++)
+	}
+	
+	protected final int Gauss3Observations = 250;
+	protected double Gauss3Data[] = new double[]{
+			97.58776,    1.000000,
+		    97.76344,    2.000000,
+		    96.56705,    3.000000,
+		    92.52037,    4.000000,
+		    91.15097,    5.000000,
+		    95.21728,    6.000000,
+		    90.21355,    7.000000,
+		    89.29235,    8.0000,
+		    91.51479,    9.000000,
+		    89.60965,   10.000000,
+		    86.56187,    11.00000,
+		    85.55315,    12.00000,
+		    87.13053,    13.00000,
+		    85.67938,    14.00000,
+		    80.04849,    15.00000,
+		    82.18922,    16.00000,
+		    87.24078,    17.00000,
+		    80.79401,    18.00000,
+		    81.28564,    19.00000,
+		    81.56932,    20.00000,
+		    79.22703,    21.00000,
+		    79.43259,    22.00000,
+		    77.90174,    23.00000,
+		    76.75438,    24.00000,
+		    77.17338,    25.00000,
+		    74.27296,    26.00000,
+		    73.11830,    27.00000,
+		    73.84732,    28.00000,
+		    72.47746,    29.00000,
+		    71.92128,    30.00000,
+		    66.91962,    31.00000,
+		    67.93554,    32.00000,
+		    69.55841,    33.00000,
+		    69.06592,    34.00000,
+		    66.53371,    35.00000,
+		    63.87094,    36.00000,
+		    69.70526,    37.00000,
+		    63.59295,    38.00000,
+		    63.35509,    39.00000,
+		    59.99747,    40.00000,
+		    62.64843,    41.00000,
+		    65.77345,    42.00000,
+		    59.10141,    43.00000,
+		    56.57750,    44.00000,
+		    61.15313,    45.00000,
+		    54.30767,    46.00000,
+		    62.83535,    47.00000,
+		    56.52957,    48.00000,
+		    56.98427,    49.00000,
+		    58.11459,    50.00000,
+		    58.69576,    51.00000,
+		    58.23322,    52.00000,
+		    54.90490,    53.00000,
+		    57.91442,    54.00000,
+		    56.96629,    55.00000,
+		    51.13831,    56.00000,
+		    49.27123,    57.00000,
+		    52.92668,    58.00000,
+		    54.47693,    59.00000,
+		    51.81710,    60.00000,
+		    51.05401,    61.00000,
+		    52.51731,    62.00000,
+		    51.83710,    63.00000,
+		    54.48196,    64.00000,
+		    49.05859,    65.00000,
+		    50.52315,    66.00000,
+		    50.32755,    67.00000,
+		    46.44419,    68.00000,
+		    50.89281,    69.00000,
+		    52.13203,    70.00000,
+		    49.78741,    71.00000,
+		    49.01637,    72.00000,
+		    54.18198,    73.00000,
+		    53.17456,    74.00000,
+		    53.20827,    75.00000,
+		    57.43459,    76.00000,
+		    51.95282,    77.00000,
+		    54.20282,    78.00000,
+		    57.46687,    79.00000,
+		    53.60268,    80.00000,
+		    58.86728,    81.00000,
+		    57.66652,    82.00000,
+		    63.71034,    83.00000,
+		    65.24244,    84.00000,
+		    65.10878,    85.00000,
+		    69.96313,    86.00000,
+		    68.85475,    87.00000,
+		    73.32574,    88.00000,
+		    76.21241,    89.00000,
+		    78.06311,    90.00000,
+		    75.37701,    91.00000,
+		    87.54449,    92.00000,
+		    89.50588,    93.00000,
+		    95.82098,    94.00000,
+		    97.48390,    95.00000,
+		   100.86070,    96.00000,
+		   102.48510,    97.00000,
+		    105.7311,    98.00000,
+		    111.3489,    99.00000,
+		    111.0305,   100.00000,
+		    110.1920,   101.00000,
+		    118.3581,   102.00000,
+		    118.8086,   103.00000,
+		    122.4249,   104.00000,
+		    124.0953,   105.00000,
+		    125.9337,    106.0000,
+		    127.8533,    107.0000,
+		    131.0361,    108.0000,
+		    133.3343,    109.0000,
+		    135.1278,    110.0000,
+		    131.7113,    111.0000,
+		    131.9151,    112.0000,
+		    132.1107,    113.0000,
+		    127.6898,    114.0000,
+		    133.2148,    115.0000,
+		    128.2296,    116.0000,
+		    133.5902,    117.0000,
+		    127.2539,    118.0000,
+		    128.3482,    119.0000,
+		    124.8694,    120.0000,
+		    124.6031,    121.0000,
+		    117.0648,    122.0000,
+		    118.1966,    123.0000,
+		    119.5408,    124.0000,
+		    114.7946,    125.0000,
+		    114.2780,    126.0000,
+		    120.3484,    127.0000,
+		    114.8647,    128.0000,
+		    111.6514,    129.0000,
+		    110.1826,    130.0000,
+		    108.4461,    131.0000,
+		    109.0571,    132.0000,
+		    106.5308,    133.0000,
+		    109.4691,    134.0000,
+		    106.8709,    135.0000,
+		    107.3192,    136.0000,
+		    106.9000,    137.0000,
+		    109.6526,    138.0000,
+		    107.1602,    139.0000,
+		    108.2509,    140.0000,
+		   104.96310,    141.0000,
+		    109.3601,    142.0000,
+		    107.6696,    143.0000,
+		    99.77286,    144.0000,
+		   104.96440,    145.0000,
+		    106.1376,    146.0000,
+		    106.5816,    147.0000,
+		   100.12860,    148.0000,
+		   101.66910,    149.0000,
+		    96.44254,    150.0000,
+		    97.34169,    151.0000,
+		    96.97412,    152.0000,
+		    90.73460,    153.0000,
+		    93.37949,    154.0000,
+		    82.12331,    155.0000,
+		    83.01657,    156.0000,
+		    78.87360,    157.0000,
+		    74.86971,    158.0000,
+		    72.79341,    159.0000,
+		    65.14744,    160.0000,
+		    67.02127,    161.0000,
+		    60.16136,    162.0000,
+		    57.13996,    163.0000,
+		    54.05769,    164.0000,
+		    50.42265,    165.0000,
+		    47.82430,    166.0000,
+		    42.85748,    167.0000,
+		    42.45495,    168.0000,
+		    38.30808,    169.0000,
+		    36.95794,    170.0000,
+		    33.94543,    171.0000,
+		    34.19017,    172.0000,
+		    31.66097,    173.0000,
+		    23.56172,    174.0000,
+		    29.61143,    175.0000,
+		    23.88765,    176.0000,
+		    22.49812,    177.0000,
+		    24.86901,    178.0000,
+		    17.29481,    179.0000,
+		    18.09291,    180.0000,
+		    15.34813,    181.0000,
+		    14.77997,    182.0000,
+		    13.87832,    183.0000,
+		    12.88891,    184.0000,
+		    16.20763,    185.0000,
+		    16.29024,    186.0000,
+		    15.29712,    187.0000,
+		    14.97839,    188.0000,
+		    12.11330,    189.0000,
+		    14.24168,    190.0000,
+		    12.53824,    191.0000,
+		    15.19818,    192.0000,
+		    11.70478,    193.0000,
+		    15.83745,    194.0000,
+		   10.035850,    195.0000,
+		    9.307574,    196.0000,
+		    12.86800,    197.0000,
+		    8.571671,    198.0000,
+		    11.60415,    199.0000,
+		    12.42772,    200.0000,
+		    11.23627,    201.0000,
+		    11.13198,    202.0000,
+		    7.761117,    203.0000,
+		    6.758250,    204.0000,
+		    14.23375,    205.0000,
+		    10.63876,    206.0000,
+		    8.893581,    207.0000,
+		    11.55398,    208.0000,
+		    11.57221,    209.0000,
+		    11.58347,    210.0000,
+		    9.724857,    211.0000,
+		    11.43854,    212.0000,
+		    11.22636,    213.0000,
+		   10.170150,    214.0000,
+		    12.50765,    215.0000,
+		    6.200494,    216.0000,
+		    9.018902,    217.0000,
+		    10.80557,    218.0000,
+		    13.09591,    219.0000,
+		    3.914033,    220.0000,
+		    9.567723,    221.0000,
+		    8.038338,    222.0000,
+		   10.230960,    223.0000,
+		    9.367358,    224.0000,
+		    7.695937,    225.0000,
+		    6.118552,    226.0000,
+		    8.793192,    227.0000,
+		    7.796682,    228.0000,
+		    12.45064,    229.0000,
+		    10.61601,    230.0000,
+		    6.001000,    231.0000,
+		    6.765096,    232.0000,
+		    8.764652,    233.0000,
+		    4.586417,    234.0000,
+		    8.390782,    235.0000,
+		    7.209201,    236.0000,
+		   10.012090,    237.0000,
+		    7.327461,    238.0000,
+		    6.525136,    239.0000,
+		    2.840065,    240.0000,
+		   10.323710,    241.0000,
+		    4.790035,    242.0000,
+		    8.376431,    243.0000,
+		    6.263980,    244.0000,
+		    2.705892,    245.0000,
+		    8.362109,    246.0000,
+		    8.983507,    247.0000,
+		    3.362469,    248.0000,
+		    1.182678,    249.0000,
+		    4.875312,    250.0000
+	};
+	
+	class Gauss3CostFunction extends SizedCostFunction {
+		public Gauss3CostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(250, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Gauss3Observations; i++) {
+				double diff1 = Gauss3Data[2*i+1] - x[3];
+				double diff2 = Gauss3Data[2*i+1] - x[6];
+				double exp1 = Math.exp(-x[1]*Gauss3Data[2*i+1]);
+				double exp2 = Math.exp(-diff1*diff1/(x[4]*x[4]));
+				double exp3 = Math.exp(-diff2*diff2/(x[7]*x[7]));
+			    residuals[i] = Gauss3Data[2*i] - x[0]*exp1
+			    		- x[2]*exp2 - x[5]*exp2;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][8*i] = -exp1;
+					jacobians[0][8*i+1] = Gauss3Data[2*i+1]*x[0]*exp1;
+					jacobians[0][8*i+2] = -exp2;
+					jacobians[0][8*i+3] = -2.0*x[2]*(diff1/(x[4]*x[4]))*exp2;
+					jacobians[0][8*i+4] = -2.0*x[2]*(diff1*diff1/(x[4]*x[4]*x[4]))*exp2;
+					jacobians[0][8*i+5] = -exp3;
+					jacobians[0][8*i+6] = -2.0*x[5]*(diff2/(x[7]*x[7]))*exp3;
+					jacobians[0][8*i+7] = -2.0*x[5]*(diff2*diff2/(x[7]*x[7]*x[7]))*exp3;
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Gauss3Observations; i++) {
+				double diff1 = Gauss3Data[2*i+1] - x[3];
+				double diff2 = Gauss3Data[2*i+1] - x[6];
+				double exp1 = Math.exp(-x[1]*Gauss3Data[2*i+1]);
+				double exp2 = Math.exp(-diff1*diff1/(x[4]*x[4]));
+				double exp3 = Math.exp(-diff2*diff2/(x[7]*x[7]));
+			    residuals[i] = Gauss3Data[2*i] - x[0]*exp1
+			    		- x[2]*exp2 - x[5]*exp3;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+8*i] = -exp1;
+					jacobians[0][jacobians_offset[0]+8*i+1] = Gauss3Data[2*i+1]*x[0]*exp1;
+					jacobians[0][jacobians_offset[0]+8*i+2] = -exp2;
+					jacobians[0][jacobians_offset[0]+8*i+3] = -2.0*x[2]*(diff1/(x[4]*x[4]))*exp2;
+					jacobians[0][jacobians_offset[0]+8*i+4] = -2.0*x[2]*(diff1*diff1/(x[4]*x[4]*x[4]))*exp2;
+					jacobians[0][jacobians_offset[0]+8*i+5] = -exp3;
+					jacobians[0][jacobians_offset[0]+8*i+6] = -2.0*x[5]*(diff2/(x[7]*x[7]))*exp3;
+					jacobians[0][jacobians_offset[0]+8*i+7] = -2.0*x[5]*(diff2*diff2/(x[7]*x[7]*x[7]))*exp3;
+			    }
+			}
+
+			return true;
+		
+	  }
+	} // class Gauss3CostFunction
+	
+	public void runGauss3CostFunctionExample() {
+		// Correct answer for close and distant starting points
+		// Ceres Solver Report: Iterations: 17, Initial cost: 6.999460e+03, Final cost: 6.222423e+02, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 98.9403549287578 b2 = 0.010945851512644897 b3 = 100.69438333429856
+		// b4 = 111.63559912036472 b5 = 23.29994994837962 b6 = 73.7067435765268
+		// b7 = 147.76094244503523 b8 = 19.66879082124004
+		// Actual answer b1 = 9.8940368970E+01  b2 = 1.0945879335E-02  b3 = 1.0069553078E+02
+		// b4 = 1.1163619459E+02  b5 = 2.3300500029E+01  b6 = 7.3705031418E+01
+		// b7 = 1.4776164251E+02 b8 = 1.9668221230E+01
+		
+		// Ceres Solver Report: Iterations: 8, Initial cost: 9.452568e+03, Final cost: 6.222423e+02, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 98.94010078713973 b2 = 0.01094576508647728 b3 = 100.69444107882983
+		// b4 = 111.63569295839253 b5 = 23.299936931416177 b6 = 73.70647199677175
+		// b7 = 147.76097628581687 b8 = 19.66866197222553
+		// Actual answer b1 = 9.8940368970E+01  b2 = 1.0945879335E-02  b3 = 1.0069553078E+02
+		// b4 = 1.1163619459E+02  b5 = 2.3300500029E+01  b6 = 7.3705031418E+01
+		// b7 = 1.4776164251E+02 b8 = 1.9668221230E+01
+	    int i;
+		double x[] = new double[8];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 96.0;
+        	x[1] = 0.0096;
+        	x[2] = 80.0;
+        	x[3] = 110.0;
+        	x[4] = 25.0;
+        	x[5] = 74.0;
+        	x[6] = 139.0;
+        	x[7] = 25.0;
+        }
+        else {
+        	x[0] = 94.9;
+        	x[1] = 0.009;
+        	x[2] = 90.1;
+        	x[3] = 113.0;
+        	x[4] = 20.0;
+        	x[5] = 73.8;
+        	x[6] = 140.0;
+        	x[7] = 20.0;
+        }
+        
+		CostFunction cost_function = new Gauss3CostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+		System.out.println("b7 = " + x[6] + " b8 = " + x[7]);
+		System.out.println("Actual answer b1 = 9.8940368970E+01  b2 = 1.0945879335E-02  b3 = 1.0069553078E+02");
+		System.out.println("b4 = 1.1163619459E+02  b5 = 2.3300500029E+01  b6 = 7.3705031418E+01");
+		System.out.println("b7 = 1.4776164251E+02 b8 = 1.9668221230E+01");
+		} // for (i = 0; i < 2; i++)			
+	}
+	
+	protected final int MisralcObservations = 14;
+	protected double MisralcData[] = new double[]{
+			// y             x
+			10.07E0,      77.6E0,
+		      14.73E0,     114.9E0,
+		      17.94E0,     141.1E0,
+		      23.93E0,     190.8E0,
+		      29.61E0,     239.9E0,
+		      35.18E0,     289.0E0,
+		      40.02E0,     332.8E0,
+		      44.82E0,     378.4E0,
+		      50.76E0,     434.8E0,
+		      55.05E0,     477.3E0,
+		      61.01E0,     536.8E0,
+		      66.40E0,     593.1E0,
+		      75.47E0,     689.1E0,
+		      81.78E0,     760.0E0
+	};
+	
+	class MisralcCostFunction extends SizedCostFunction {
+		public MisralcCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(14, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < MisralcObservations; i++) {
+			    residuals[i] = MisralcData[2*i] - x[0]*(1.0 - 1.0/Math.sqrt(1.0 + 2.0*MisralcData[2*i+1]*x[1]));
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][2*i] = -(1.0 - 1.0/Math.sqrt(1.0 + 2.0*MisralcData[2*i+1]*x[1]));
+					jacobians[0][2*i+1] = -x[0]*MisralcData[2*i+1]*Math.pow((1.0 + 2.0*MisralcData[2*i+1]*x[1]),-1.5);
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < MisralcObservations; i++) {
+			    residuals[i] = MisralcData[2*i] - x[0]*(1.0 - 1.0/Math.sqrt(1.0 + 2.0*MisralcData[2*i+1]*x[1]));
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+2*i] = -(1.0 - 1.0/Math.sqrt(1.0 + 2.0*MisralcData[2*i+1]*x[1]));
+					jacobians[0][jacobians_offset[0]+2*i+1] = -x[0]*MisralcData[2*i+1]*Math.pow((1.0 + 2.0*MisralcData[2*i+1]*x[1]),-1.5);
+			    }
+			}
+
+			return true;
+		
+	  }
+	} // class MisralcCostFunction
+	
+	public void runMisralcCostFunctionExample() {
+		// Correct answer for close and distant starting points
+		// Ceres Solver Report: Iterations: 7, Initial cost: 1.312283e+02, Final cost: 2.048344e-02, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 636.4130842794502 b2 = 2.0814159183237546E-4
+		// Actual answer b1 = 6.3642725809E+02 b2 = 2.0813627256E-04
+		
+		// Ceres Solver Report: Iterations: 17, Initial cost: 5.801508e+03, Final cost: 2.048344e-02, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 636.4429437651382 b2 = 2.0813029162534678E-4
+		// Actual answer b1 = 6.3642725809E+02 b2 = 2.0813627256E-04
+		
+		int i;
+		double x[] = new double[2];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 600.0;
+        	x[1] = 2.0E-4;
+        }
+        else {
+        	x[0] = 500.0;
+        	x[1] = 1.0E-4;
+        }
+		CostFunction cost_function = new MisralcCostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1]);
+		}
+		System.out.println("Actual answer b1 = 6.3642725809E+02 b2 = 2.0813627256E-04");
+		} // for (i = 0; i < 2; i++)
+	}
+	
+	protected final int MisraldObservations = 14;
+	protected double MisraldData[] = new double[]{
+			// y             x
+			10.07E0,      77.6E0,
+		      14.73E0,     114.9E0,
+		      17.94E0,     141.1E0,
+		      23.93E0,     190.8E0,
+		      29.61E0,     239.9E0,
+		      35.18E0,     289.0E0,
+		      40.02E0,     332.8E0,
+		      44.82E0,     378.4E0,
+		      50.76E0,     434.8E0,
+		      55.05E0,     477.3E0,
+		      61.01E0,     536.8E0,
+		      66.40E0,     593.1E0,
+		      75.47E0,     689.1E0,
+		      81.78E0,     760.0E0
+	};
+	
+	class MisraldCostFunction extends SizedCostFunction {
+		public MisraldCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(14, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < MisraldObservations; i++) {
+			    residuals[i] = MisraldData[2*i] - x[0]*x[1]*MisraldData[2*i+1]/(1.0 + MisraldData[2*i+1]*x[1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][2*i] = -x[1]*MisraldData[2*i+1]/(1.0 + MisraldData[2*i+1]*x[1]);;
+					jacobians[0][2*i+1] = -x[0]*MisraldData[2*i+1]/Math.pow((1.0 + MisraldData[2*i+1]*x[1]),2.0);
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < MisraldObservations; i++) {
+			    residuals[i] = MisraldData[2*i] - x[0]*x[1]*MisraldData[2*i+1]/(1.0 + MisraldData[2*i+1]*x[1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+2*i] = -x[1]*MisraldData[2*i+1]/(1.0 + MisraldData[2*i+1]*x[1]);;
+					jacobians[0][jacobians_offset[0]+2*i+1] = -x[0]*MisraldData[2*i+1]/Math.pow((1.0 + MisraldData[2*i+1]*x[1]),2.0);
+			    }
+			}
+
+			return true;
+		
+	  }
+	} // class MisraldCostFunction
+	
+	public void runMisraldCostFunctionExample() {
+		// Correct answer for close and distant starting points
+		// Ceres Solver Report: Iterations: 10, Initial cost: 8.195109e+00, Final cost: 2.820968e-02, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 437.3842048137838 b2 = 3.022615947048088E-4
+		// Actual answer b1 = 4.3736970754E+02 b2 = 3.0227324449E-04
+		
+		// Ceres Solver Report: Iterations: 21, Initial cost: 5.601328e+03, Final cost: 2.820967e-02, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 437.3803979067243 b2 = 3.022646467847514E-4
+		// Actual answer b1 = 4.3736970754E+02 b2 = 3.0227324449E-04
+		
+		int i;
+		double x[] = new double[2];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 450.0;
+        	x[1] = 3.0E-4;
+        }
+        else {
+        	x[0] = 500.0;
+        	x[1] = 1.0E-4;
+        }
+		CostFunction cost_function = new MisraldCostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1]);
+		}
+		System.out.println("Actual answer b1 = 4.3736970754E+02 b2 = 3.0227324449E-04");
+		} // for (i = 0; i < 2; i++)
+	}
 
 }
