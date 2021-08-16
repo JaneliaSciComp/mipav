@@ -112,6 +112,9 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private JTextField corrmapMaskThresholdField;
     private float corrmapMaskThreshold = 0.5f;
     
+    private JCheckBox useTmaxInCorrmapMaskCheckbox;
+    private boolean useTmaxInCorrmapMask = false;
+    
     private JCheckBox pwiCalcCBFCBVMTTCheckbox;
     private boolean doPwiCalcCBFCBVMTT = false;
     
@@ -466,6 +469,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         
         corrmapMaskThreshold = Float.parseFloat(corrmapMaskThresholdField.getText());
         
+        useTmaxInCorrmapMask = useTmaxInCorrmapMaskCheckbox.isSelected();
+        
         spatialSmoothing = spatialSmoothingCheckBox.isSelected();
         if (spatialSmoothing) {
             String tmpStr = sigmaXText.getText();
@@ -528,7 +533,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
             		doSymmetryRemoval, symmetryRemovalMaxSlice, doSkullRemoval, threshCloseIter, threshCloseSize, doSelectAdditionalObj, selectAdditionalObjPct, 
             		requireMinCoreSize, minCoreSizeCC, outputDir, doPwiMultithread, doPwiCalcCorrMap, doPwiCalcCBFCBVMTT, doPwiSaveOutputFiles, spatialSmoothing, 
             		sigmax, sigmay, doArtifactCleanup, meanThreshold, artifactCloseSize, artifactCloseIter, doPerfusionSymmetryRemoval, minPerfusionObjectSize,
-            		ventricleMeanThresh, corrmapMaskThreshold);
+            		ventricleMeanThresh, corrmapMaskThreshold, useTmaxInCorrmapMask);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -612,6 +617,8 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         
         corrmapMaskThreshold = scriptParameters.getParams().getFloat("pwi_corrmap_mask_threshold");
         
+        useTmaxInCorrmapMask = scriptParameters.getParams().getBoolean("pwi_corrmap_use_tmax_mask");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -646,6 +653,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_artifact_close_iter_num", artifactCloseIter));
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_corrmap_mask_threshold", corrmapMaskThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pwi_corrmap_use_tmax_mask", useTmaxInCorrmapMask));
     }
     
     /**
@@ -856,6 +864,15 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         gbc.gridx++;
         mainPanel.add(corrmapMaskThresholdField, gbc);
         
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
+        
+        useTmaxInCorrmapMaskCheckbox = new JCheckBox("Use Tmax values to limit Corrmap segementation", useTmaxInCorrmapMask);
+        useTmaxInCorrmapMaskCheckbox.setForeground(Color.black);
+        useTmaxInCorrmapMaskCheckbox.setFont(serif12);
+        mainPanel.add(useTmaxInCorrmapMaskCheckbox, gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -1535,14 +1552,14 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     }
     
     public static final boolean isADC(final String imgType) {
-        return (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED"));
+        return (imgType != null && (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED")));
     }
     
     public static final boolean isDWI(final String imgType) {
-        return (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW"));
+        return (imgType != null && (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW")));
     }
     
     public static final boolean isPWI(final String imgType) {
-        return (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE") || imgType.equalsIgnoreCase("PERFUSION"));
+        return (imgType != null && (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE") || imgType.equalsIgnoreCase("PERFUSION")));
     }
 }
