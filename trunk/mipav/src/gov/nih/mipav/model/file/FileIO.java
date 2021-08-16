@@ -1800,17 +1800,9 @@ public class FileIO {
         // Determines if image is DWI then saves parameters to DTIParameters object
         final FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
         final FileDicomTagTable tagTable = dicomInfo.getTagTable();
-        studyDescription = (String) tagTable.getValue("0008,1030");
-        seriesDescription = (String) tagTable.getValue("0008,103E");
         scannerType = (String) tagTable.getValue("0008,0070");
-        
-        String imageType = (String) tagTable.getValue("0008,0008");
-        String protocolName = (String) tagTable.getValue("0018,1030");
 
-        if ( (studyDescription != null && studyDescription.toUpperCase().contains("DTI"))
-                || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))
-                || (protocolName != null && protocolName.toUpperCase().contains("DTI"))
-                || (imageType != null && imageType.toUpperCase().contains("DIFFUSION"))) {
+        if (isDiffusionSeries(dicomInfo)) {
             if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
                 // For Siemen's DWI 3D Mosaic Images
                 if (image.is3DImage()) {
@@ -2185,6 +2177,25 @@ public class FileIO {
         }
 
         return image;
+    }
+    
+    private boolean isDiffusionSeries(final FileInfoDicom dicomInfo) {
+        // Determines if image is DWI then saves parameters to DTIParameters object
+        final FileDicomTagTable tagTable = dicomInfo.getTagTable();
+        final String studyDescription = (String) tagTable.getValue("0008,1030");
+        final String seriesDescription = (String) tagTable.getValue("0008,103E");
+        
+        final String imageType = (String) tagTable.getValue("0008,0008");
+        final String protocolName = (String) tagTable.getValue("0018,1030");
+
+        if ( (studyDescription != null && studyDescription.toUpperCase().contains("DTI"))
+                || (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))
+                || (protocolName != null && protocolName.toUpperCase().contains("DTI"))
+                || (imageType != null && imageType.toUpperCase().contains("DIFFUSION"))) {
+            return true;
+        }
+        
+        return false;
     }
 
     private int sortDtiDicomData(final String studyDescription, final String seriesDescription, final String scannerType, final FileDicomTagTable tagTable,
