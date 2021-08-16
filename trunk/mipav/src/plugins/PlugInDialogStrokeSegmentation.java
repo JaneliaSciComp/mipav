@@ -1043,14 +1043,20 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     }
     
     public static final boolean isRegisteredVol(final String seriesDesc, final String protocolName) {
-        return (seriesDesc.toLowerCase().contains("reg") || protocolName.toLowerCase().contains("reg"));
+        if (seriesDesc != null && seriesDesc.toLowerCase().contains("reg")) {
+            return true;
+        } else if (protocolName != null && protocolName.toLowerCase().contains("reg")) {
+            return true;
+        }
+        
+        return false;
     }
     
     public static final boolean isADC(final String imgType) {
-        return (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED"));
+        return (imgType != null && (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED")));
     }
     
     public static final boolean isDWI(final String imgType) {
-        return (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW"));
+        return (imgType != null && (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW")));
     }
 }
