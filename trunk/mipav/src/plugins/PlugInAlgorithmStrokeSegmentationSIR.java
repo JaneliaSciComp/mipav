@@ -65,6 +65,12 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
     
     private ModelImage unregVentrImg = null;
     
+    private ModelImage dwiFindObjImg = null;
+    
+    private MaskObject[] dwiSortedObjects = null;
+    
+    private int dwiMinObjSizeSIR = 1;
+    
     private int adcThreshold;
     
     private boolean doFilter;
@@ -105,6 +111,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
     private int additionalObjectMaxDistance = 4;
     
     private boolean requireMinCoreSize;
+
     private float minCoreSizeCC;
     
     private FileIO fileIO;
@@ -121,6 +128,8 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
     private String coreOutputDir;
     
     private float lightboxOpacity = 0.5f;
+    
+    private float sirLightboxOpacity = 0.3f;
     
     private Color coreLightboxColor = Color.RED;
     
@@ -644,6 +653,11 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
 //                TmaxUnregImage.disposeLocal();
 //            }
             
+            if (dwiFindObjImg != null) {
+                dwiFindObjImg.disposeLocal(false);
+                dwiFindObjImg = null;
+            }
+            
             setCompleted(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -697,6 +711,11 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
 //            if (TmaxUnregImage != null) {
 //                TmaxUnregImage.disposeLocal();
 //            }
+            
+            if (dwiFindObjImg != null) {
+                dwiFindObjImg.disposeLocal(false);
+                dwiFindObjImg = null;
+            }
             
             setCompleted(false);
             return;
@@ -952,10 +971,10 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
     
     public short[] chooseCoreObjects(final ModelImage img, final short[] imgBuffer, final short[] removedBuffer, int passNum, boolean useDistanceSelection, Vector<MaskObject> selectedObjectList) {
         short[] processBuffer = new short[imgBuffer.length];
-        MaskObject[] sortedObjects = findObjects(img, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize);
+        dwiSortedObjects = findObjects(img, imgBuffer, processBuffer, minAdcObjectSize, maxAdcObjectSize);
         
         FileInfoBase fileInfo1;
-        ModelImage segImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), "find_objects");
+        dwiFindObjImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), "find_objects");
         fileInfo1 = (FileInfoBase) img.getFileInfo()[0].clone();
         fileInfo1.setResolutions(img.getResolutions(0).clone());
         fileInfo1.setUnitsOfMeasure(img.getUnitsOfMeasure().clone());
@@ -964,7 +983,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
         fileInfo1.setOrigin(img.getFileInfo(0).getOrigin().clone());
         fileInfo1.setSliceThickness(img.getFileInfo(0).getSliceThickness());
         for (int i = 0; i < img.getExtents()[2]; i++) {
-            segImg.setFileInfo(fileInfo1, i);
+            dwiFindObjImg.setFileInfo(fileInfo1, i);
         }
         
         // if we removed some cerebellum due to symmetry, remove attached objects
@@ -985,41 +1004,41 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
             }
             
             try {
-                segImg.importData(0, removedBuffer, true);
+                dwiFindObjImg.importData(0, removedBuffer, true);
             } catch (IOException error) {
-                if (segImg != null) {
-                    segImg.disposeLocal();
+                if (dwiFindObjImg != null) {
+                    dwiFindObjImg.disposeLocal();
                 }
                 
-                segImg = null;
+                dwiFindObjImg = null;
                 displayError("Error on mirrored removed data importData: " + adcImage.getImageName());
                 setCompleted(false);
                 return null;
             }
             
-            saveImageFile(segImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_pass" + passNum, FileUtility.XML);
+            saveImageFile(dwiFindObjImg, coreOutputDir, outputBasename + "_ADC_thresh_removed_pass" + passNum, FileUtility.XML);
         }
         
         try {
-            segImg.importData(0, processBuffer, true);
+            dwiFindObjImg.importData(0, processBuffer, true);
         } catch (IOException error) {
             processBuffer = null;
-            displayError("Error on importData: " + segImg.getImageName());
+            displayError("Error on importData: " + dwiFindObjImg.getImageName());
             setCompleted(false);
             return null;
         }
         
-        saveImageFile(segImg, coreOutputDir, outputBasename + "_find_objects_pass" + passNum, FileUtility.XML);
+        saveImageFile(dwiFindObjImg, coreOutputDir, outputBasename + "_find_objects_pass" + passNum, FileUtility.XML);
         
         // last object should be the largest
-        if (sortedObjects.length > 0) {
+        if (dwiSortedObjects.length > 0) {
             // check the number of core pixels in the top 5 objects and select the one with the most
-            int numObjectsToCheckCore = sortedObjects.length;
+            int numObjectsToCheckCore = dwiSortedObjects.length;
             int[] coreSizeList = new int[numObjectsToCheckCore];
             
             for (int i = 0; i < processBuffer.length; i++) {
                 for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
-                    if (processBuffer[i] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
+                    if (processBuffer[i] == dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].id) {
                         if (isADCFractional()) {
                             float adcFracThreshold = adcThreshold / 1000.0f;
                             if (adcImage.getFloat(i) < adcFracThreshold) {
@@ -1041,7 +1060,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
             for (int i = 0; i < coreSizeList.length; i++) {
                 int coreSize = coreSizeList[i];
                 
-                sortedObjects[sortedObjects.length - 1 - i].setCoreSize(coreSize);
+                dwiSortedObjects[dwiSortedObjects.length - 1 - i].setCoreSize(coreSize);
                 
                 if ((coreSize * resFactorCC) > coreSizeDistSelectionThreshold) {
                     allCoreSmallFlag = false;
@@ -1066,7 +1085,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
                     for (int y = 0; y < extents[1]; y++) {
                         for (int z = 0; z < extents[2]; z++) {
                             for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
-                                if (processBuffer[x + (y * extents[0]) + (z * sliceSize)] == sortedObjects[sortedObjects.length - 1 - objNum].id) {
+                                if (processBuffer[x + (y * extents[0]) + (z * sliceSize)] == dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].id) {
                                     Vector3f curPt = new Vector3f(x, y, z);
                                     double dist = MipavMath.distance(centerPt, curPt, adcImage.getResolutions(0));
                                     if (dist < coreDistList[objNum]) {
@@ -1080,18 +1099,18 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
                 
 //                    float[] coreDistList = new float[numObjectsToCheckCore];
                 for (int objNum = 0; objNum < numObjectsToCheckCore; objNum++) {
-                    System.err.println("Object distance: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + coreDistList[objNum]);
+                    System.err.println("Object distance: " + dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].id + "\t" + coreDistList[objNum]);
 //                        coreDistList[objNum] = skullMaskImg.getFloat(sortedObjects[sortedObjects.length -1 - objNum].index);
                 }
                 
                 int selectedObjectIndex = 0;
-                MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
-                System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0] + "\t" + coreDistList[0]);
+                MaskObject selectedObject = dwiSortedObjects[dwiSortedObjects.length - 1];
+                System.err.println("Object core: " + dwiSortedObjects[dwiSortedObjects.length - 1].id + "\t" + dwiSortedObjects[dwiSortedObjects.length - 1].size + "\t" + coreSizeList[0] + "\t" + coreDistList[0]);
                 for (int objNum = 1; objNum < numObjectsToCheckCore; objNum++) {
-                    System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + sortedObjects[sortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum] + "\t" + coreDistList[objNum]);
+                    System.err.println("Object core: " + dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].id + "\t" + dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum] + "\t" + coreDistList[objNum]);
                     if ((coreSizeList[objNum] * coreSelectionSizeWeight - coreDistList[objNum] * coreSelectionDistWeight) > (coreSizeList[selectedObjectIndex] * coreSelectionSizeWeight - coreDistList[selectedObjectIndex] * coreSelectionDistWeight)) {
                         selectedObjectIndex = objNum;
-                        selectedObject = sortedObjects[sortedObjects.length - 1 - objNum];
+                        selectedObject = dwiSortedObjects[dwiSortedObjects.length - 1 - objNum];
                     }
                 }
                 
@@ -1099,13 +1118,13 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
                 System.err.println("Selected object: " + selectedObject.id + "\t" + selectedObject.size + "\t" + coreDistList[selectedObjectIndex]);
             } else {
                 int selectedObjectIndex = 0;
-                MaskObject selectedObject = sortedObjects[sortedObjects.length - 1];
-                System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1].id + "\t" + sortedObjects[sortedObjects.length - 1].size + "\t" + coreSizeList[0]);
+                MaskObject selectedObject = dwiSortedObjects[dwiSortedObjects.length - 1];
+                System.err.println("Object core: " + dwiSortedObjects[dwiSortedObjects.length - 1].id + "\t" + dwiSortedObjects[dwiSortedObjects.length - 1].size + "\t" + coreSizeList[0]);
                 for (int objNum = 1; objNum < numObjectsToCheckCore; objNum++) {
-                    System.err.println("Object core: " + sortedObjects[sortedObjects.length - 1 - objNum].id + "\t" + sortedObjects[sortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum]);
+                    System.err.println("Object core: " + dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].id + "\t" + dwiSortedObjects[dwiSortedObjects.length - 1 - objNum].size + "\t" + coreSizeList[objNum]);
                     if (coreSizeList[objNum] > coreSizeList[selectedObjectIndex]) {
                         selectedObjectIndex = objNum;
-                        selectedObject = sortedObjects[sortedObjects.length - 1 - objNum];
+                        selectedObject = dwiSortedObjects[dwiSortedObjects.length - 1 - objNum];
                     }
                 }
                 
@@ -1169,10 +1188,10 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
 //        if (selectedObjectList.get(0).size <= additionalObjectSearchSize) {
             MaskObject primaryObject = selectedObjectList.get(0);
             int objectMinSize = (int) (primaryObject.coreSize * additionalObjectMinimumRatio);
-            int nextObjectIndex = sortedObjects.length - 1;
+            int nextObjectIndex = dwiSortedObjects.length - 1;
             MaskObject nextObject;
             while (nextObjectIndex >= 0) {
-                nextObject = sortedObjects[nextObjectIndex];
+                nextObject = dwiSortedObjects[nextObjectIndex];
                 if (nextObject.id != primaryObject.id && nextObject.coreSize >= objectMinSize) {
                     System.err.println("Added obj: " + nextObject.id + "\t" + nextObject.size + "\t" + nextObject.coreSize);
                     selectedObjectList.add(nextObject);
@@ -1195,11 +1214,6 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
             if (!found) {
                 processBuffer[i] = 0;
             }
-        }
-        
-        if (segImg != null) {
-            segImg.disposeLocal(false);
-            segImg = null;
         }
         
         return processBuffer;
@@ -1856,10 +1870,10 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
             for (int i = 0; i < mask1.getDataSize(); i++) {
                 if (mask1.getBoolean(i) == true) {
                     // TODO set value with opacity blending
-                    
-                    newRGB.setC(i, 1, mask1Color.getRed());
-                    newRGB.setC(i, 2, mask1Color.getGreen());
-                    newRGB.setC(i, 3, mask1Color.getBlue());
+
+                    newRGB.setC(i, 1, (newRGB.getC(i, 1).intValue() * (1 - blendingOpacity)) + (mask1Color.getRed() * blendingOpacity));
+                    newRGB.setC(i, 2, (newRGB.getC(i, 2).intValue() * (1 - blendingOpacity)) + (mask1Color.getGreen() * blendingOpacity));
+                    newRGB.setC(i, 3, (newRGB.getC(i, 3).intValue() * (1 - blendingOpacity)) + (mask1Color.getBlue() * blendingOpacity));
                 }
             }
         }
@@ -1870,9 +1884,9 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
                 if (mask2.getBoolean(i) == true) {
                     // TODO set value with opacity blending
                     
-                    newRGB.setC(i, 1, mask2Color.getRed());
-                    newRGB.setC(i, 2, mask2Color.getGreen());
-                    newRGB.setC(i, 3, mask2Color.getBlue());
+                    newRGB.setC(i, 1, (newRGB.getC(i, 1).intValue() * (1 - blendingOpacity)) + (mask2Color.getRed() * blendingOpacity));
+                    newRGB.setC(i, 2, (newRGB.getC(i, 2).intValue() * (1 - blendingOpacity)) + (mask2Color.getGreen() * blendingOpacity));
+                    newRGB.setC(i, 3, (newRGB.getC(i, 3).intValue() * (1 - blendingOpacity)) + (mask2Color.getBlue() * blendingOpacity));
                 }
             }
         }
@@ -2997,11 +3011,41 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
         ModelImage adcReg = transformImage(adcImage, flairImage, dwiToFlairTransform);
         saveImageFile(adcReg, coreOutputDir, outputBasename + "_adc_reg", FileUtility.XML);
         
-        // use transformation to also transform core mask
-        ModelImage coreReg = transformImage(coreImage, flairImage, dwiToFlairTransform);
-        saveImageFile(coreReg, coreOutputDir, outputBasename + "_core_reg", FileUtility.XML);
+        ModelImage sirRegionReg;
         
-        final int[] extents = coreReg.getExtents();
+        double resFactorCC = getResolutionFactorCC(dwiFindObjImg);
+        
+        System.out.println("SIR: " + dwiSortedObjects[dwiSortedObjects.length - 1].coreSize + "\t" + dwiSortedObjects[dwiSortedObjects.length - 1].size + "\t" + resFactorCC * dwiSortedObjects[dwiSortedObjects.length - 1].size);
+        
+        // if some core was found, use that for SIR. If no/small core, check largest object from DWI findObjects img and write to disk - if > 1 CC, use for SIR. Otherwise, no SIR.
+        if (dwiSortedObjects.length > 0 && dwiSortedObjects[dwiSortedObjects.length - 1].coreSize > 0) {
+            // use transformation to also transform core mask
+            sirRegionReg = transformImage(coreImage, flairImage, dwiToFlairTransform);
+        } else if (dwiSortedObjects.length > 0 && dwiSortedObjects[dwiSortedObjects.length - 1].coreSize <= 0 && (resFactorCC * dwiSortedObjects[dwiSortedObjects.length - 1].size) > dwiMinObjSizeSIR) {
+            // use largest dwi object
+            sirRegionReg = transformImage(dwiFindObjImg, flairImage, dwiToFlairTransform);
+            
+            final int[] extents = sirRegionReg.getExtents();
+            final int sliceLength = extents[0] * extents[1];
+            final int volLength = sliceLength * extents[2];
+            
+            int voxelCount = 0;
+            for (int i = 0; i < volLength; i++) {
+                if (sirRegionReg.getInt(i) == dwiSortedObjects[dwiSortedObjects.length - 1].id) {
+                    voxelCount++;
+                } else {
+                    sirRegionReg.set(i, 0);
+                }
+            }
+        } else {
+            // no SIR calc
+            adcReg.disposeLocal();
+            return;
+        }
+        
+        saveImageFile(sirRegionReg, coreOutputDir, outputBasename + "_sir_mask_reg", FileUtility.XML);
+
+        final int[] extents = sirRegionReg.getExtents();
         final int sliceLength = extents[0] * extents[1];
         final int volLength = sliceLength * extents[2];
         
@@ -3010,7 +3054,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
         long total = 0;
         int voxelCount = 0;
         for (int i = 0; i < volLength; i++) {
-            if (coreReg.getInt(i) > 0) {
+            if (sirRegionReg.getInt(i) > 0) {
                 total += flairImage.getInt(i);
                 voxelCount++;
             }
@@ -3020,7 +3064,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
             flairCoreMeanVal = total / voxelCount;
             
             // flip core mask across y axis
-            ModelImage coreFlipImage = flipImageAcrossY(coreReg);
+            ModelImage coreFlipImage = flipImageAcrossY(sirRegionReg);
             
             // get average intensity of flair voxels inside flipped mask
             double flairFlippedCoreMeanVal = 0;
@@ -3037,13 +3081,13 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
             }
             flairFlippedCoreMeanVal = total / voxelCount;
             
-            saveImageFile(coreFlipImage, coreOutputDir, outputBasename + "_core_reg_flip", FileUtility.XML);
+            saveImageFile(coreFlipImage, coreOutputDir, outputBasename + "_sir_mask_reg_flip", FileUtility.XML);
                     
             // SIR value = core avg. flair intensity / flipped core avg. flair intensity
             double sirValue = flairCoreMeanVal / flairFlippedCoreMeanVal;
             
             // generate lightbox with outline of core area in red (?) and flipped core in green (?)
-            ModelImage sirLightbox = generateLightbox(flairImage, coreReg, coreLightboxColor, coreFlipImage, flippedCoreLightboxColor, lightboxOpacity, false);
+            ModelImage sirLightbox = generateLightbox(flairImage, sirRegionReg, coreLightboxColor, coreFlipImage, flippedCoreLightboxColor, sirLightboxOpacity, false);
             
             File sirLightboxFile = saveImageFile(sirLightbox, coreOutputDir, outputBasename + "_SIR_lightbox", FileUtility.PNG, false);
             
@@ -3072,7 +3116,7 @@ public class PlugInAlgorithmStrokeSegmentationSIR extends AlgorithmBase {
         }
         
         adcReg.disposeLocal();
-        coreReg.disposeLocal();
+        sirRegionReg.disposeLocal();
     }
     
     private ModelImage flipImageAcrossY(final ModelImage img) {

@@ -150,6 +150,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     private int minCorrmapObjectSize = 100;
     
     private float corrmapMaskThreshold = 0.5f;
+    
+    private boolean useTmaxInCorrmapMask = false;
 
     private ModelImage lastCoreImg = null;
     
@@ -163,7 +165,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     		int cerebellumSkipMax, boolean symmetryRemoval, int symmetryMax, boolean removeSkull, int closeIter, float closeSize, boolean doAdditionalObj,
     		int additionalObjPct, boolean reqMinCore, float minCoreSize, String outputDir, boolean pwiMultiThreading, boolean pwiCalculateCorrelation,
     		boolean pwiCalculateCBFCBVMTT, boolean pwiSaveOutputs, boolean spatialSmoothing, float sigmax, float sigmay, boolean doArtifactCleanup,
-    		float artMean, float artCloseSize, int artCloseIter, boolean doPerfSymmetry, int minPerfSize, float ventThresh, float corrThresh) {
+    		float artMean, float artCloseSize, int artCloseIter, boolean doPerfSymmetry, int minPerfSize, float ventThresh, float corrThresh, boolean useTmaxCorrmap) {
         super();
         
         dwiImage = dwi;
@@ -215,6 +217,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         ventricleRemovalMeanThreshold = ventThresh;
         
         corrmapMaskThreshold = corrThresh;
+        
+        useTmaxInCorrmapMask = useTmaxCorrmap;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
@@ -2899,8 +2903,12 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         // start with mask within skull and lower than corrmap threshold
         for (int i = 0; i < volLength; i++) {
-            if (unregSkullMaskImg.getBoolean(i) == true && unregVentricleMaskImg.getBoolean(i) == true && unregTmaxImg.getInt(i) >= 2 && corrmapImg.getFloat(i) <= corrmapMaskThreshold) {
-                regCorrmapMask.set(i, 1);
+            if (unregSkullMaskImg.getBoolean(i) == true && unregVentricleMaskImg.getBoolean(i) == true && corrmapImg.getFloat(i) <= corrmapMaskThreshold) {
+                if (!useTmaxInCorrmapMask || (useTmaxInCorrmapMask && unregTmaxImg.getInt(i) >= 2)) {
+                    regCorrmapMask.set(i, 1);
+                } else {
+                    regCorrmapMask.set(i, 0);
+                }
             } else {
                 regCorrmapMask.set(i, 0);
             }
