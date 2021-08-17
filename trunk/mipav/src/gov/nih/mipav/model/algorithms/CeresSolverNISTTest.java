@@ -2486,5 +2486,423 @@ public class CeresSolverNISTTest extends CeresSolver {
 		System.out.println("b4 = 3.0000000002E+00  b5 = 1.5575999998E+00  b6 = 5.0000000001E+00");
 		} // for (i = 0; i < 2; i++)			
 	}
+	
+	protected final int Lanczos2Observations = 24;
+	protected double Lanczos2Data[] = new double[]{
+			2.51340E+00,  0.00000E+00,
+		       2.04433E+00,  5.00000E-02,
+		       1.66840E+00,  1.00000E-01,
+		       1.36642E+00,  1.50000E-01,
+		       1.12323E+00,  2.00000E-01,
+		       9.26890E-01,  2.50000E-01,
+		       7.67934E-01,  3.00000E-01,
+		       6.38878E-01,  3.50000E-01,
+		       5.33784E-01,  4.00000E-01,
+		       4.47936E-01,  4.50000E-01,
+		       3.77585E-01,  5.00000E-01,
+		       3.19739E-01,  5.50000E-01,
+		       2.72013E-01,  6.00000E-01,
+		       2.32497E-01,  6.50000E-01,
+		       1.99659E-01,  7.00000E-01,
+		       1.72270E-01,  7.50000E-01,
+		       1.49341E-01,  8.00000E-01,
+		       1.30070E-01,  8.50000E-01,
+		       1.13812E-01,  9.00000E-01,
+		       1.00042E-01,  9.50000E-01,
+		       8.83321E-02,  1.00000E+00,
+		       7.83354E-02,  1.05000E+00,
+		       6.97669E-02,  1.10000E+00,
+		       6.23931E-02,  1.15000E+00
+	};
+	
+	class Lanczos2CostFunction extends SizedCostFunction {
+		public Lanczos2CostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(24, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Lanczos2Observations; i++) {
+			    residuals[i] = Lanczos2Data[2*i] - x[0]*Math.exp(-x[1]*Lanczos2Data[2*i+1])
+			    		- x[2]*Math.exp(-x[3]*Lanczos2Data[2*i+1]) - x[4]*Math.exp(-x[5]*Lanczos2Data[2*i+1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][6*i] = -Math.exp(-x[1]*Lanczos2Data[2*i+1]);
+					jacobians[0][6*i+1] = Lanczos2Data[2*i+1]*x[0]*Math.exp(-x[1]*Lanczos2Data[2*i+1]);
+					jacobians[0][6*i+2] = -Math.exp(-x[3]*Lanczos2Data[2*i+1]);
+					jacobians[0][6*i+3] = Lanczos2Data[2*i+1]* x[2]*Math.exp(-x[3]*Lanczos2Data[2*i+1]);
+					jacobians[0][6*i+4] = -Math.exp(-x[5]*Lanczos2Data[2*i+1]);
+					jacobians[0][6*i+5] = Lanczos2Data[2*i+1]* x[4]*Math.exp(-x[5]*Lanczos2Data[2*i+1]);
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Lanczos2Observations; i++) {
+			    residuals[i] = Lanczos2Data[2*i] - x[0]*Math.exp(-x[1]*Lanczos2Data[2*i+1])
+			    		- x[2]*Math.exp(-x[3]*Lanczos2Data[2*i+1]) - x[4]*Math.exp(-x[5]*Lanczos2Data[2*i+1]);
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+6*i] = -Math.exp(-x[1]*Lanczos2Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+1] = Lanczos2Data[2*i+1]*x[0]*Math.exp(-x[1]*Lanczos2Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+2] = -Math.exp(-x[3]*Lanczos2Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+3] = Lanczos2Data[2*i+1]*x[2]*Math.exp(-x[3]*Lanczos2Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+4] = -Math.exp(-x[5]*Lanczos2Data[2*i+1]);
+					jacobians[0][jacobians_offset[0]+6*i+5] = Lanczos2Data[2*i+1]*x[4]*Math.exp(-x[5]*Lanczos2Data[2*i+1]);
+			    }
+			}
+
+			
+			return true;
+		
+	  }
+	} // class Lanczos2CostFunction
+	
+	public void runLanczos2CostFunctionExample() {
+		// Both near and far starting points converge to incorrect answers
+		// Ceres Solver Report: Iterations: 47, Initial cost: 3.939434e+01, Final cost: 2.958715e-06, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 0.0744512023369152 b2 = 0.7060012469294235 b3 = 1.5110409756535297
+		// b4 = 3.438703548045676 b5 = 0.9287832601570075 b6 = 5.6675744431833275
+		// Actual answer b1 =  9.6251029939E-02 b2 = 1.0057332849E+00  b3 = 8.6424689056E-01
+		// b4 = 3.0078283915E+00  b5 = 1.5529016879E+00  b6 = 5.0028798100E+00
+		
+		// Ceres Solver Report: Iterations: 37, Initial cost: 1.348752e+02, Final cost: 2.979472e-07, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 0.32918962985041195 b2 = 1.667868096013174 b3 = 1.9902758493789343
+		// b4 = 4.338568924175009 b5 = 0.19405323382598838 b6 = 6.601327751544162
+		// Actual answer b1 =  9.6251029939E-02 b2 = 1.0057332849E+00  b3 = 8.6424689056E-01
+		// b4 = 3.0078283915E+00  b5 = 1.5529016879E+00  b6 = 5.0028798100E+00
+
+		int i;
+		double x[] = new double[6];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 0.5;
+        	x[1] = 0.7;
+        	x[2] = 3.6;
+        	x[3] = 4.2;
+        	x[4] = 4.0;
+        	x[5] = 6.3;
+        }
+        else {
+        	x[0] = 1.2;
+        	x[1] = 0.3;
+        	x[2] = 5.6;
+        	x[3] = 5.5;
+        	x[4] = 6.5;
+        	x[5] = 7.6;
+        }
+        
+		CostFunction cost_function = new Lanczos2CostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+		System.out.println("Actual answer b1 =  9.6251029939E-02 b2 = 1.0057332849E+00  b3 = 8.6424689056E-01");
+		System.out.println("b4 = 3.0078283915E+00  b5 = 1.5529016879E+00  b6 = 5.0028798100E+00");
+		} // for (i = 0; i < 2; i++)			
+	}
+	
+	protected final int Kirby2Observations = 151;
+	protected double Kirby2Data[] = new double[]{
+			0.0082E0,      9.65E0,
+		       0.0112E0,     10.74E0,
+		       0.0149E0,     11.81E0,
+		       0.0198E0,     12.88E0,
+		       0.0248E0,     14.06E0,
+		       0.0324E0,     15.28E0,
+		       0.0420E0,     16.63E0,
+		       0.0549E0,     18.19E0,
+		       0.0719E0,     19.88E0,
+		       0.0963E0,     21.84E0,
+		       0.1291E0,     24.00E0,
+		       0.1710E0,     26.25E0,
+		       0.2314E0,     28.86E0,
+		       0.3227E0,     31.85E0,
+		       0.4809E0,     35.79E0,
+		       0.7084E0,     40.18E0,
+		       1.0220E0,     44.74E0,
+		       1.4580E0,     49.53E0,
+		       1.9520E0,     53.94E0,
+		       2.5410E0,     58.29E0,
+		       3.2230E0,     62.63E0,
+		       3.9990E0,     67.03E0,
+		       4.8520E0,     71.25E0,
+		       5.7320E0,     75.22E0,
+		       6.7270E0,     79.33E0,
+		       7.8350E0,     83.56E0,
+		       9.0250E0,     87.75E0,
+		      10.2670E0,     91.93E0,
+		      11.5780E0,     96.10E0,
+		      12.9440E0,    100.28E0,
+		      14.3770E0,    104.46E0,
+		      15.8560E0,    108.66E0,
+		      17.3310E0,    112.71E0,
+		      18.8850E0,    116.88E0,
+		      20.5750E0,    121.33E0,
+		      22.3200E0,    125.79E0,
+		      22.3030E0,    125.79E0,
+		      23.4600E0,    128.74E0,
+		      24.0600E0,    130.27E0,
+		      25.2720E0,    133.33E0,
+		      25.8530E0,    134.79E0,
+		      27.1100E0,    137.93E0,
+		      27.6580E0,    139.33E0,
+		      28.9240E0,    142.46E0,
+		      29.5110E0,    143.90E0,
+		      30.7100E0,    146.91E0,
+		      31.3500E0,    148.51E0,
+		      32.5200E0,    151.41E0,
+		      33.2300E0,    153.17E0,
+		      34.3300E0,    155.97E0,
+		      35.0600E0,    157.76E0,
+		      36.1700E0,    160.56E0,
+		      36.8400E0,    162.30E0,
+		      38.0100E0,    165.21E0,
+		      38.6700E0,    166.90E0,
+		      39.8700E0,    169.92E0,
+		      40.0300E0,    170.32E0,
+		      40.5000E0,    171.54E0,
+		      41.3700E0,    173.79E0,
+		      41.6700E0,    174.57E0,
+		      42.3100E0,    176.25E0,
+		      42.7300E0,    177.34E0,
+		      43.4600E0,    179.19E0,
+		      44.1400E0,    181.02E0,
+		      44.5500E0,    182.08E0,
+		      45.2200E0,    183.88E0,
+		      45.9200E0,    185.75E0,
+		      46.3000E0,    186.80E0,
+		      47.0000E0,    188.63E0,
+		      47.6800E0,    190.45E0,
+		      48.0600E0,    191.48E0,
+		      48.7400E0,    193.35E0,
+		      49.4100E0,    195.22E0,
+		      49.7600E0,    196.23E0,
+		      50.4300E0,    198.05E0,
+		      51.1100E0,    199.97E0,
+		      51.5000E0,    201.06E0,
+		      52.1200E0,    202.83E0,
+		      52.7600E0,    204.69E0,
+		      53.1800E0,    205.86E0,
+		      53.7800E0,    207.58E0,
+		      54.4600E0,    209.50E0,
+		      54.8300E0,    210.65E0,
+		      55.4000E0,    212.33E0,
+		      56.4300E0,    215.43E0,
+		      57.0300E0,    217.16E0,
+		      58.0000E0,    220.21E0,
+		      58.6100E0,    221.98E0,
+		      59.5800E0,    225.06E0,
+		      60.1100E0,    226.79E0,
+		      61.1000E0,    229.92E0,
+		      61.6500E0,    231.69E0,
+		      62.5900E0,    234.77E0,
+		      63.1200E0,    236.60E0,
+		      64.0300E0,    239.63E0,
+		      64.6200E0,    241.50E0,
+		      65.4900E0,    244.48E0,
+		      66.0300E0,    246.40E0,
+		      66.8900E0,    249.35E0,
+		      67.4200E0,    251.32E0,
+		      68.2300E0,    254.22E0,
+		      68.7700E0,    256.24E0,
+		      69.5900E0,    259.11E0,
+		      70.1100E0,    261.18E0,
+		      70.8600E0,    264.02E0,
+		      71.4300E0,    266.13E0,
+		      72.1600E0,    268.94E0,
+		      72.7000E0,    271.09E0,
+		      73.4000E0,    273.87E0,
+		      73.9300E0,    276.08E0,
+		      74.6000E0,    278.83E0,
+		      75.1600E0,    281.08E0,
+		      75.8200E0,    283.81E0,
+		      76.3400E0,    286.11E0,
+		      76.9800E0,    288.81E0,
+		      77.4800E0,    291.08E0,
+		      78.0800E0,    293.75E0,
+		      78.6000E0,    295.99E0,
+		      79.1700E0,    298.64E0,
+		      79.6200E0,    300.84E0,
+		      79.8800E0,    302.02E0,
+		      80.1900E0,    303.48E0,
+		      80.6600E0,    305.65E0,
+		      81.2200E0,    308.27E0,
+		      81.6600E0,    310.41E0,
+		      82.1600E0,    313.01E0,
+		      82.5900E0,    315.12E0,
+		      83.1400E0,    317.71E0,
+		      83.5000E0,    319.79E0,
+		      84.0000E0,    322.36E0,
+		      84.4000E0,    324.42E0,
+		      84.8900E0,    326.98E0,
+		      85.2600E0,    329.01E0,
+		      85.7400E0,    331.56E0,
+		      86.0700E0,    333.56E0,
+		      86.5400E0,    336.10E0,
+		      86.8900E0,    338.08E0,
+		      87.3200E0,    340.60E0,
+		      87.6500E0,    342.57E0,
+		      88.1000E0,    345.08E0,
+		      88.4300E0,    347.02E0,
+		      88.8300E0,    349.52E0,
+		      89.1200E0,    351.44E0,
+		      89.5400E0,    353.93E0,
+		      89.8500E0,    355.83E0,
+		      90.2500E0,    358.32E0,
+		      90.5500E0,    360.20E0,
+		      90.9300E0,    362.67E0,
+		      91.2000E0,    364.53E0,
+		      91.5500E0,    367.00E0,
+		      92.2000E0,    371.30E0
+	};
+	
+	class Kirby2CostFunction extends SizedCostFunction {
+		public Kirby2CostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(151, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Kirby2Observations; i++) {
+				double KSquared = Kirby2Data[2*i+1]*Kirby2Data[2*i+1];
+				double num = x[0] + x[1]*Kirby2Data[2*i+1] + x[2]*KSquared;
+				double denom = 1.0 + x[3]*Kirby2Data[2*i+1] + x[4]*KSquared;
+			    residuals[i] = Kirby2Data[2*i] - num/denom;
+			    if (jacobians != null && jacobians[0] != null) {
+			    	double denomSquared = denom*denom;
+					jacobians[0][5*i] = -1.0/denom;
+					jacobians[0][5*i+1] = -Kirby2Data[2*i+1]/denom;
+					jacobians[0][5*i+2] = -KSquared/denom;
+					jacobians[0][5*i+3] = num*Kirby2Data[2*i+1]/denomSquared;
+					jacobians[0][5*i+4] = num*KSquared/denomSquared;
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Kirby2Observations; i++) {
+				double KSquared = Kirby2Data[2*i+1]*Kirby2Data[2*i+1];
+				double num = x[0] + x[1]*Kirby2Data[2*i+1] + x[2]*KSquared;
+				double denom = 1.0 + x[3]*Kirby2Data[2*i+1] + x[4]*KSquared;
+			    residuals[i] = Kirby2Data[2*i] - num/denom;
+			    if (jacobians != null && jacobians[0] != null) {
+			    	double denomSquared = denom*denom;
+					jacobians[0][jacobians_offset[0]+5*i] = -1.0/denom;
+					jacobians[0][jacobians_offset[0]+5*i+1] = -Kirby2Data[2*i+1]/denom;
+					jacobians[0][jacobians_offset[0]+5*i+2] = -KSquared/denom;
+					jacobians[0][jacobians_offset[0]+5*i+3] = num*Kirby2Data[2*i+1]/denomSquared;
+					jacobians[0][jacobians_offset[0]+5*i+4] = num*KSquared/denomSquared;
+			    }
+			}
+			
+			return true;
+		
+	  }
+	} // class Kirby2CostFunction
+	
+	public void runKirby2CostFunctionExample() {
+		// Close starting point converges slightly away from the correct answer but distant starting point converges correctly
+		// Ceres Solver Report: Iterations: 37, Initial cost: 4.938605e+02, Final cost: 1.952821e+00, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 1.679027578741968 b2 = -0.1395832355062664 b3 = 0.0026000898975488858
+		// b4 = -0.0017165527020446113 b5 = 2.1677306774229906E-5
+		// Actual answer b1 = 1.6745063063E+00  b2 = -1.3927397867E-01  b3 = 2.5961181191E-03
+		// b4 = -1.7241811870E-03  b5 = 2.1664802578E-05
+		
+		// Ceres Solver Report: Iterations: 25, Initial cost: 1.866427e+05, Final cost: 1.952537e+00, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 1.6745055552863355 b2 = -0.13927394086401046 b3 = 0.002596117773416834
+		// b4 = -0.0017241814681833287 b5 = 2.1664800623609162E-5
+		// Actual answer b1 = 1.6745063063E+00  b2 = -1.3927397867E-01  b3 = 2.5961181191E-03
+		// b4 = -1.7241811870E-03  b5 = 2.1664802578E-05
+
+		int i;
+		double x[] = new double[6];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 1.5;
+        	x[1] = -0.15;
+        	x[2] = 0.0025;
+        	x[3] = -0.0015;
+        	x[4] = 2.0E-5;
+        }
+        else {
+        	x[0] = 2.0;
+        	x[1] = -0.1;
+        	x[2] = 0.003;
+        	x[3] = -0.001;
+        	x[4] = 1.0E-5;
+        }
+        
+		CostFunction cost_function = new Kirby2CostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-12;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("b4 = " + x[3] + " b5 = " + x[4]);
+		System.out.println("Actual answer b1 = 1.6745063063E+00  b2 = -1.3927397867E-01  b3 = 2.5961181191E-03");
+		System.out.println("b4 = -1.7241811870E-03  b5 = 2.1664802578E-05");
+		} // for (i = 0; i < 2; i++)			
+	}
 
 }
