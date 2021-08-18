@@ -3278,6 +3278,552 @@ public class CeresSolverNISTTest extends CeresSolver {
 		System.out.println("b7 = -1.2314450199E-07");
 		} // for (i = 0; i < 2; i++)			
 	}
+	
+	protected final int NelsonObservations = 128;
+	protected double NelsonData[] = new double[]{
+			// y              x1            x2
+		      15.00E0,         1E0,         180E0,
+		      17.00E0,         1E0,         180E0,
+		      15.50E0,         1E0,         180E0,
+		      16.50E0,         1E0,         180E0,
+		      15.50E0,         1E0,         225E0,
+		      15.00E0,         1E0,         225E0,
+		      16.00E0,         1E0,         225E0,
+		      14.50E0,         1E0,         225E0,
+		      15.00E0,         1E0,         250E0,
+		      14.50E0,         1E0,         250E0,
+		      12.50E0,         1E0,         250E0,
+		      11.00E0,         1E0,         250E0,
+		      14.00E0,         1E0,         275E0,
+		      13.00E0,         1E0,         275E0,
+		      14.00E0,         1E0,         275E0,
+		      11.50E0,         1E0,         275E0,
+		      14.00E0,         2E0,         180E0,
+		      16.00E0,         2E0,         180E0,
+		      13.00E0,         2E0,         180E0,
+		      13.50E0,         2E0,         180E0,
+		      13.00E0,         2E0,         225E0,
+		      13.50E0,         2E0,         225E0,
+		      12.50E0,         2E0,         225E0,
+		      12.50E0,         2E0,         225E0,
+		      12.50E0,         2E0,         250E0,
+		      12.00E0,         2E0,         250E0,
+		      11.50E0,         2E0,         250E0,
+		      12.00E0,         2E0,         250E0,
+		      13.00E0,         2E0,         275E0,
+		      11.50E0,         2E0,         275E0,
+		      13.00E0,         2E0,         275E0,
+		      12.50E0,         2E0,         275E0,
+		      13.50E0,         4E0,         180E0,
+		      17.50E0,         4E0,         180E0,
+		      17.50E0,         4E0,         180E0,
+		      13.50E0,         4E0,         180E0,
+		      12.50E0,         4E0,         225E0,
+		      12.50E0,         4E0,         225E0,
+		      15.00E0,         4E0,         225E0,
+		      13.00E0,         4E0,         225E0,
+		      12.00E0,         4E0,         250E0,
+		      13.00E0,         4E0,         250E0,
+		      12.00E0,         4E0,         250E0,
+		      13.50E0,         4E0,         250E0,
+		      10.00E0,         4E0,         275E0,
+		      11.50E0,         4E0,         275E0,
+		      11.00E0,         4E0,         275E0,
+		       9.50E0,         4E0,         275E0,
+		      15.00E0,         8E0,         180E0,
+		      15.00E0,         8E0,         180E0,
+		      15.50E0,         8E0,         180E0,
+		      16.00E0,         8E0,         180E0,
+		      13.00E0,         8E0,         225E0,
+		      10.50E0,         8E0,         225E0,
+		      13.50E0,         8E0,         225E0,
+		      14.00E0,         8E0,         225E0,
+		      12.50E0,         8E0,         250E0,
+		      12.00E0,         8E0,         250E0,
+		      11.50E0,         8E0,         250E0,
+		      11.50E0,         8E0,         250E0,
+		       6.50E0,         8E0,         275E0,
+		       5.50E0,         8E0,         275E0,
+		       6.00E0,         8E0,         275E0,
+		       6.00E0,         8E0,         275E0,
+		      18.50E0,        16E0,         180E0,
+		      17.00E0,        16E0,         180E0,
+		      15.30E0,        16E0,         180E0,
+		      16.00E0,        16E0,         180E0,
+		      13.00E0,        16E0,         225E0,
+		      14.00E0,        16E0,         225E0,
+		      12.50E0,        16E0,         225E0,
+		      11.00E0,        16E0,         225E0,
+		      12.00E0,        16E0,         250E0,
+		      12.00E0,        16E0,         250E0,
+		      11.50E0,        16E0,         250E0,
+		      12.00E0,        16E0,         250E0,
+		       6.00E0,        16E0,         275E0,
+		       6.00E0,        16E0,         275E0,
+		       5.00E0,        16E0,         275E0,
+		       5.50E0,        16E0,         275E0,
+		      12.50E0,        32E0,         180E0,
+		      13.00E0,        32E0,         180E0,
+		      16.00E0,        32E0,         180E0,
+		      12.00E0,        32E0,         180E0,
+		      11.00E0,        32E0,         225E0,
+		       9.50E0,        32E0,         225E0,
+		      11.00E0,        32E0,         225E0,
+		      11.00E0,        32E0,         225E0,
+		      11.00E0,        32E0,         250E0,
+		      10.00E0,        32E0,         250E0,
+		      10.50E0,        32E0,         250E0,
+		      10.50E0,        32E0,         250E0,
+		       2.70E0,        32E0,         275E0,
+		       2.70E0,        32E0,         275E0,
+		       2.50E0,        32E0,         275E0,
+		       2.40E0,        32E0,         275E0,
+		      13.00E0,        48E0,         180E0,
+		      13.50E0,        48E0,         180E0,
+		      16.50E0,        48E0,         180E0,
+		      13.60E0,        48E0,         180E0,
+		      11.50E0,        48E0,         225E0,
+		      10.50E0,        48E0,         225E0,
+		      13.50E0,        48E0,         225E0,
+		      12.00E0,        48E0,         225E0,
+		       7.00E0,        48E0,         250E0,
+		       6.90E0,        48E0,         250E0,
+		       8.80E0,        48E0,         250E0,
+		       7.90E0,        48E0,         250E0,
+		       1.20E0,        48E0,         275E0,
+		       1.50E0,        48E0,         275E0,
+		       1.00E0,        48E0,         275E0,
+		       1.50E0,        48E0,         275E0,
+		      13.00E0,        64E0,         180E0,
+		      12.50E0,        64E0,         180E0,
+		      16.50E0,        64E0,         180E0,
+		      16.00E0,        64E0,         180E0,
+		      11.00E0,        64E0,         225E0,
+		      11.50E0,        64E0,         225E0,
+		      10.50E0,        64E0,         225E0,
+		      10.00E0,        64E0,         225E0,
+		       7.27E0,        64E0,         250E0,
+		       7.50E0,        64E0,         250E0,
+		       6.70E0,        64E0,         250E0,
+		       7.60E0,        64E0,         250E0,
+		       1.50E0,        64E0,         275E0,
+		       1.00E0,        64E0,         275E0,
+		       1.20E0,        64E0,         275E0,
+		       1.20E0,        64E0,         275E0
 
+	};
+ 
+	class NelsonCostFunction extends SizedCostFunction {
+		public NelsonCostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(128, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
 
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < NelsonObservations; i++) {
+				double exp = Math.exp(-x[2]*NelsonData[3*i+2]);
+			    residuals[i] = Math.log(NelsonData[3*i]) - x[0] + x[1]*NelsonData[3*i+1]*exp;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][3*i] = -1.0;
+					jacobians[0][3*i+1] = NelsonData[3*i+1]*exp;
+					jacobians[0][3*i+2] = -x[1]*NelsonData[3*i+1]*NelsonData[3*i+2]*exp;
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < NelsonObservations; i++) {
+				double exp = Math.exp(-x[2]*NelsonData[3*i+2]);
+			    residuals[i] = Math.log(NelsonData[3*i]) - x[0] + x[1]*NelsonData[3*i+1]*exp;
+			    if (jacobians != null && jacobians[0] != null) {
+					jacobians[0][jacobians_offset[0]+3*i] = -1.0;
+					jacobians[0][jacobians_offset[0]+3*i+1] = NelsonData[3*i+1]*exp;
+					jacobians[0][jacobians_offset[0]+3*i+2] = -x[1]*NelsonData[3*i+1]*NelsonData[3*i+2]*exp;
+			    }
+			}
+			
+			
+			return true;
+		
+	  }
+	} // class NelsonCostFunction
+	
+	public void runNelsonCostFunctionExample() {
+		// Neither close nor distant starting points converge to the correct answer
+		// Ceres Solver Report: Iterations: 33, Initial cost: 2.424496e+01, Final cost: 2.047241e+00, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 2.563805346519076 b2 = 4.2631218361602805E-9 b3 = -0.05841564628351817
+		// Actual answer b1 = 2.5906836021E+00  b2 = 5.6177717026E-09  b3 = -5.7701013174E-02
+		
+		// Ceres Solver Report: Iterations: 30, Initial cost: 3.154177e+01, Final cost: 1.195081e+01, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 2.6155673565683832 b2 = 0.0013221537088540882 b3 = -0.010863921927359571
+		// Actual answer b1 = 2.5906836021E+00  b2 = 5.6177717026E-09  b3 = -5.7701013174E-02
+		int i;
+		double x[] = new double[3];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 2.5;
+        	x[1] = 5E-9;
+        	x[2] = -0.05;
+        }
+        else {
+        	x[0] = 2.0;
+        	x[1] = 1.0E-4;
+        	x[2] = -0.01;
+        }
+        
+		CostFunction cost_function = new NelsonCostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-12;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("Actual answer b1 = 2.5906836021E+00  b2 = 5.6177717026E-09  b3 = -5.7701013174E-02");
+		} // for (i = 0; i < 2; i++)
+	}
+		
+		final int Roszman1Observations = 25;
+		double Roszman1Data[] = new double[]{
+				0.252429,    -4868.68,
+			       0.252141,    -4868.09,
+			       0.251809,    -4867.41,
+			       0.297989,    -3375.19,
+			       0.296257,    -3373.14,
+			       0.295319,    -3372.03,
+			       0.339603,    -2473.74,
+			       0.337731,    -2472.35,
+			       0.333820,    -2469.45,
+			       0.389510,    -1894.65,
+			       0.386998,    -1893.40,
+			       0.438864,    -1497.24,
+			       0.434887,    -1495.85,
+			       0.427893,    -1493.41,
+			       0.471568,    -1208.68,
+			       0.461699,    -1206.18,
+			       0.461144,    -1206.04,
+			       0.513532,     -997.92,
+			       0.506641,     -996.61,
+			       0.505062,     -996.31,
+			       0.535648,     -834.94,
+			       0.533726,     -834.66,
+			       0.568064,     -710.03,
+			       0.612886,     -530.16,
+			       0.624169,     -464.17
+		};
+		
+		class Roszman1CostFunction extends SizedCostFunction {
+			public Roszman1CostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(25, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < Roszman1Observations; i++) {
+				    residuals[i] = Roszman1Data[2*i] - x[0] + x[1]*Roszman1Data[2*i+1] 
+				    		+ Math.atan2(x[2],Roszman1Data[2*i+1] - x[3])/Math.PI;
+				    if (jacobians != null && jacobians[0] != null) {
+				    	double denom = Roszman1Data[2*i+1] - x[3];
+				    	double ratio = x[2]/(Roszman1Data[2*i+1] - x[3]);
+				    	double ratioSquared = ratio * ratio;
+						jacobians[0][4*i] = -1.0;
+						jacobians[0][4*i+1] = Roszman1Data[2*i+1];
+						jacobians[0][4*i+2] = 1.0/(denom * (ratioSquared + 1.0) * Math.PI);
+						jacobians[0][4*i+3] = x[2]/((x[3]*x[3] - 2.0*Roszman1Data[2*i+1]*x[3] 
+								+ Roszman1Data[2*i+1]*Roszman1Data[2*i+1] + x[2]*x[2])*Math.PI);
+				    }
+				}
+
+				return true;
+			
+		  }
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < Roszman1Observations; i++) {
+				    residuals[i] = Roszman1Data[2*i] - x[0] + x[1]*Roszman1Data[2*i+1] 
+				    		+ Math.atan2(x[2],Roszman1Data[2*i+1] - x[3])/Math.PI;
+				    if (jacobians != null && jacobians[0] != null) {
+				    	double denom = Roszman1Data[2*i+1] - x[3];
+				    	double ratio = x[2]/(Roszman1Data[2*i+1] - x[3]);
+				    	double ratioSquared = ratio * ratio;
+						jacobians[0][jacobians_offset[0]+4*i] = -1.0;
+						jacobians[0][jacobians_offset[0]+4*i+1] = Roszman1Data[2*i+1];
+						jacobians[0][jacobians_offset[0]+4*i+2] = 1.0/(denom * (ratioSquared + 1.0) * Math.PI);
+						jacobians[0][jacobians_offset[0]+4*i+3] = x[2]/((x[3]*x[3] - 2.0*Roszman1Data[2*i+1]*x[3] 
+								+ Roszman1Data[2*i+1]*Roszman1Data[2*i+1] + x[2]*x[2])*Math.PI);
+				    }
+				}
+				
+				return true;
+			
+		  }
+		} // class Roszman1CostFunction
+		
+		public void runRoszman1CostFunctionExample() {
+			// Roszman1 converges correctly for both close and distant starting points
+			// Ceres Solver Report: Iterations: 50, Initial cost: 1.259393e+01, Final cost: 2.474242e-04, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 1.2019686238107419 b2 = -6.19534509350161E-6 b3 = 1204.4558151244883
+			// b4 = -181.34279331958928
+			// Actual answer b1 = 1.20196866396E00  b2 = -6.1953516256E-06  b3 = 1.2044556708E+03
+			// b4 = -1.8134269537E+02
+			
+			// Ceres Solver Report: Iterations: 28, Initial cost: 1.632464e+01, Final cost: 2.474242e-04, Termination: CONVERGENCE
+			// Solved answer for distant starting point b1 = 1.2019686211909493 b2 = -6.195344657727014E-6 b3 = 1204.455824049894
+			// b4 = -181.34279995474526
+			// Actual answer b1 = 1.20196866396E00  b2 = -6.1953516256E-06  b3 = 1.2044556708E+03
+			// b4 = -1.8134269537E+02
+			int i;
+			double x[] = new double[4];
+			for (i = 0; i < 2; i++) {
+	        if (i == 0) {
+	        	x[0] = 0.2;
+	        	x[1] = -5E-6;
+	        	x[2] = 1200;
+	        	x[3] = -150;
+	        }
+	        else {
+	        	x[0] = 0.1;
+	        	x[1] = -1.0E-5;
+	        	x[2] = 1000;
+	        	x[3] = -100;
+	        }
+	        
+			CostFunction cost_function = new Roszman1CostFunction();
+			ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, x);
+
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+			solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+			solverOptions.max_num_consecutive_invalid_steps = 200;
+			solverOptions.gradient_tolerance = epsilon;
+			solverOptions.parameter_tolerance = epsilon;
+			solverOptions.function_tolerance = 1.0E-14;
+			solverOptions.min_trust_region_radius = 1.0E-50;
+
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			System.out.println(solverSummary.BriefReport());
+			if (i == 0) {
+			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			else {
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			System.out.println("b4 = " + x[3]);
+			System.out.println("Actual answer b1 = 1.20196866396E00  b2 = -6.1953516256E-06  b3 = 1.2044556708E+03");
+			System.out.println("b4 = -1.8134269537E+02");
+			} // for (i = 0; i < 2; i++)
+		}
+		
+		final int ENSOObservations = 168;
+		double ENSOData[] = new double[]{
+				12.90000,    1.000000,
+			    11.30000,    2.000000,
+			    10.60000,    3.000000,
+			    11.20000,    4.000000,
+			    10.90000,    5.000000,
+			    7.500000,    6.000000,
+			    7.700000,    7.000000,
+			    11.70000,    8.000000,
+			    12.90000,    9.000000,
+			    14.30000,   10.000000,
+			    10.90000,    11.00000,
+			    13.70000,    12.00000,
+			    17.10000,    13.00000,
+			    14.00000,    14.00000,
+			    15.30000,    15.00000,
+			    8.500000,    16.00000,
+			    5.700000,    17.00000,
+			    5.500000,    18.00000,
+			    7.600000,    19.00000,
+			    8.600000,    20.00000,
+			    7.300000,    21.00000,
+			    7.600000,    22.00000,
+			    12.70000,    23.00000,
+			    11.00000,    24.00000,
+			    12.70000,    25.00000,
+			    12.90000,    26.00000,
+			    13.00000,    27.00000,
+			    10.90000,    28.00000,
+			   10.400000,    29.00000,
+			   10.200000,    30.00000,
+			    8.000000,    31.00000,
+			    10.90000,    32.00000,
+			    13.60000,    33.00000,
+			   10.500000,    34.00000,
+			    9.200000,    35.00000,
+			    12.40000,    36.00000,
+			    12.70000,    37.00000,
+			    13.30000,    38.00000,
+			   10.100000,    39.00000,
+			    7.800000,    40.00000,
+			    4.800000,    41.00000,
+			    3.000000,    42.00000,
+			    2.500000,    43.00000,
+			    6.300000,    44.00000,
+			    9.700000,    45.00000,
+			    11.60000,    46.00000,
+			    8.600000,    47.00000,
+			    12.40000,    48.00000,
+			   10.500000,    49.00000,
+			    13.30000,    50.00000,
+			   10.400000,    51.00000,
+			    8.100000,    52.00000,
+			    3.700000,    53.00000,
+			    10.70000,    54.00000,
+			    5.100000,    55.00000,
+			   10.400000,    56.00000,
+			    10.90000,    57.00000,
+			    11.70000,    58.00000,
+			    11.40000,    59.00000,
+			    13.70000,    60.00000,
+			    14.10000,    61.00000,
+			    14.00000,    62.00000,
+			    12.50000,    63.00000,
+			    6.300000,    64.00000,
+			    9.600000,    65.00000,
+			    11.70000,    66.00000,
+			    5.000000,    67.00000,
+			    10.80000,    68.00000,
+			    12.70000,    69.00000,
+			    10.80000,    70.00000,
+			    11.80000,    71.00000,
+			    12.60000,    72.00000,
+			    15.70000,    73.00000,
+			    12.60000,    74.00000,
+			    14.80000,    75.00000,
+			    7.800000,    76.00000,
+			    7.100000,    77.00000,
+			    11.20000,    78.00000,
+			    8.100000,    79.00000,
+			    6.400000,    80.00000,
+			    5.200000,    81.00000,
+			    12.00000,    82.00000,
+			   10.200000,    83.00000,
+			    12.70000,    84.00000,
+			   10.200000,    85.00000,
+			    14.70000,    86.00000,
+			    12.20000,    87.00000,
+			    7.100000,    88.00000,
+			    5.700000,    89.00000,
+			    6.700000,    90.00000,
+			    3.900000,    91.00000,
+			    8.500000,    92.00000,
+			    8.300000,    93.00000,
+			    10.80000,    94.00000,
+			    16.70000,    95.00000,
+			    12.60000,    96.00000,
+			    12.50000,    97.00000,
+			    12.50000,    98.00000,
+			    9.800000,    99.00000,
+			    7.200000,   100.00000,
+			    4.100000,   101.00000,
+			    10.60000,   102.00000,
+			   10.100000,   103.00000,
+			   10.100000,   104.00000,
+			    11.90000,   105.00000,
+			    13.60000,    106.0000,
+			    16.30000,    107.0000,
+			    17.60000,    108.0000,
+			    15.50000,    109.0000,
+			    16.00000,    110.0000,
+			    15.20000,    111.0000,
+			    11.20000,    112.0000,
+			    14.30000,    113.0000,
+			    14.50000,    114.0000,
+			    8.500000,    115.0000,
+			    12.00000,    116.0000,
+			    12.70000,    117.0000,
+			    11.30000,    118.0000,
+			    14.50000,    119.0000,
+			    15.10000,    120.0000,
+			   10.400000,    121.0000,
+			    11.50000,    122.0000,
+			    13.40000,    123.0000,
+			    7.500000,    124.0000,
+			   0.6000000,    125.0000,
+			   0.3000000,    126.0000,
+			    5.500000,    127.0000,
+			    5.000000,    128.0000,
+			    4.600000,    129.0000,
+			    8.200000,    130.0000,
+			    9.900000,    131.0000,
+			    9.200000,    132.0000,
+			    12.50000,    133.0000,
+			    10.90000,    134.0000,
+			    9.900000,    135.0000,
+			    8.900000,    136.0000,
+			    7.600000,    137.0000,
+			    9.500000,    138.0000,
+			    8.400000,    139.0000,
+			    10.70000,    140.0000,
+			    13.60000,    141.0000,
+			    13.70000,    142.0000,
+			    13.70000,    143.0000,
+			    16.50000,    144.0000,
+			    16.80000,    145.0000,
+			    17.10000,    146.0000,
+			    15.40000,    147.0000,
+			    9.500000,    148.0000,
+			    6.100000,    149.0000,
+			   10.100000,    150.0000,
+			    9.300000,    151.0000,
+			    5.300000,    152.0000,
+			    11.20000,    153.0000,
+			    16.60000,    154.0000,
+			    15.60000,    155.0000,
+			    12.00000,    156.0000,
+			    11.50000,    157.0000,
+			    8.600000,    158.0000,
+			    13.80000,    159.0000,
+			    8.700000,    160.0000,
+			    8.600000,    161.0000,
+			    8.600000,    162.0000,
+			    8.700000,    163.0000,
+			    12.80000,    164.0000,
+			    13.20000,    165.0000,
+			    14.00000,    166.0000,
+			    13.40000,    167.0000,
+			    14.80000,    168.0000
+		};
 }
