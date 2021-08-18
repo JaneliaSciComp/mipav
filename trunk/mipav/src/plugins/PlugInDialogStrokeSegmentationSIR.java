@@ -1531,18 +1531,18 @@ public class PlugInDialogStrokeSegmentationSIR extends JDialogStandaloneScriptab
     }
     
     public static final boolean isADC(final String imgType) {
-        return (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED"));
+        return (imgType != null && (imgType.equalsIgnoreCase("Average DC") || imgType.equalsIgnoreCase("ADC") || imgType.equalsIgnoreCase("ADC_UNSPECIFIED")));
     }
     
     public static final boolean isDWI(final String imgType) {
-        return (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW"));
+        return (imgType != null && (imgType.equalsIgnoreCase("SE") || imgType.equalsIgnoreCase("M_SE") || imgType.equalsIgnoreCase("TRACEW")));
     }
     
 //    public static final boolean isPWI(final String imgType) {
-//        return (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE") || imgType.equalsIgnoreCase("PERFUSION"));
+//        return (imgType != null && (imgType.equalsIgnoreCase("FFE") || imgType.equalsIgnoreCase("M_FFE") || imgType.equalsIgnoreCase("PERFUSION")));
 //    }
     
     public static final boolean isFlair(final String seriesDesc) {
-        return (seriesDesc.toUpperCase().contains("FLAIR"));
+        return (seriesDesc != null && (seriesDesc.toUpperCase().contains("FLAIR")));
     }
 }
