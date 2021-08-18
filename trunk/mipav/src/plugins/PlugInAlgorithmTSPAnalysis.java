@@ -216,6 +216,7 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	private int vy = 162;
 	private double vzd = 6.157;
 	private int vz = 8;
+	
 
 	/**
 	 * Constructor.
@@ -3849,8 +3850,6 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
     	}
     	D_inv = null;
     	
-    	System.out.println("Finished directory " + pwiImageFileDirectory);
-    	
     	setCompleted(true); 
     } // end runAlgorithm()
 
@@ -4460,13 +4459,13 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			this.b = b;
 			this.xdata = xdata;
 
-			bounds = 0; // bounds = 0 means unconstrained
-			// bl[0] = 1.0E-10;
-			// bu[0] = 74.999999;
+			// bounds = 0; // bounds = 0 means unconstrained
+			bl[0] = 0.1;
+			bu[0] = 74.9;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
-			// bounds = 2 means different lower and upper bounds
+			bounds = 2; // means different lower and upper bounds
 			// for all parameters
 
 			// The default is internalScaling = false
@@ -4613,15 +4612,15 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 			this.b = b;
 			this.xdata = xdata;
 
-			bounds = 0; // bounds = 0 means unconstrained
-			// bl[0] = -Double.MAX_VALUE;
-			// bu[0] = Double.MAX_VALUE;
-			// bl[1] = 1.0E-10;
-			// bu[1] = 74.999999;
+			// bounds = 0; // bounds = 0 means unconstrained
+			bl[0] = -Double.MAX_VALUE;
+			bu[0] = Double.MAX_VALUE;
+			bl[1] = 1.0E-1;
+			bu[1] = 74.9;
 
 			// bounds = 1 means same lower and upper bounds for
 			// all parameters
-			// bounds = 2 means different lower and upper bounds
+			 bounds = 2; // means different lower and upper bounds
 			// for all parameters
 
 			// The default is internalScaling = false
