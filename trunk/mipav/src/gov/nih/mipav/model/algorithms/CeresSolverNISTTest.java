@@ -2904,5 +2904,380 @@ public class CeresSolverNISTTest extends CeresSolver {
 		System.out.println("b4 = -1.7241811870E-03  b5 = 2.1664802578E-05");
 		} // for (i = 0; i < 2; i++)			
 	}
+	
+	protected final int Hahn1Observations = 236;
+	protected double Hahn1Data[] = new double[]{
+			.591E0,         24.41E0,  
+		       1.547E0,         34.82E0,  
+		       2.902E0,         44.09E0,  
+		       2.894E0,         45.07E0,  
+		       4.703E0,         54.98E0,  
+		       6.307E0,         65.51E0,  
+		       7.03E0,          70.53E0,  
+		       7.898E0,         75.70E0,  
+		       9.470E0,         89.57E0,  
+		       9.484E0,         91.14E0,  
+		      10.072E0,         96.40E0,  
+		      10.163E0,         97.19E0,  
+		      11.615E0,        114.26E0,  
+		      12.005E0,        120.25E0,  
+		      12.478E0,        127.08E0,  
+		      12.982E0,        133.55E0,  
+		      12.970E0,        133.61E0,  
+		      13.926E0,        158.67E0,  
+		      14.452E0,        172.74E0,  
+		      14.404E0,        171.31E0,  
+		      15.190E0,        202.14E0,  
+		      15.550E0,        220.55E0,  
+		      15.528E0,        221.05E0,  
+		      15.499E0,        221.39E0,  
+		      16.131E0,        250.99E0,  
+		      16.438E0,        268.99E0,  
+		      16.387E0,        271.80E0,  
+		      16.549E0,        271.97E0,  
+		      16.872E0,        321.31E0,  
+		      16.830E0,        321.69E0,  
+		      16.926E0,        330.14E0,  
+		      16.907E0,        333.03E0,  
+		      16.966E0,        333.47E0,  
+		      17.060E0,        340.77E0,  
+		      17.122E0,        345.65E0,  
+		      17.311E0,        373.11E0,  
+		      17.355E0,        373.79E0,  
+		      17.668E0,        411.82E0,  
+		      17.767E0,        419.51E0,  
+		      17.803E0,        421.59E0,  
+		      17.765E0,        422.02E0,  
+		      17.768E0,        422.47E0,  
+		      17.736E0,        422.61E0,  
+		      17.858E0,        441.75E0,  
+		      17.877E0,        447.41E0,  
+		      17.912E0,        448.7E0,   
+		      18.046E0,        472.89E0,  
+		      18.085E0,        476.69E0,  
+		      18.291E0,        522.47E0,  
+		      18.357E0,        522.62E0,  
+		      18.426E0,        524.43E0,  
+		      18.584E0,        546.75E0,  
+		      18.610E0,        549.53E0,  
+		      18.870E0,        575.29E0,  
+		      18.795E0,        576.00E0,  
+		      19.111E0,        625.55E0,  
+		        .367E0,         20.15E0,  
+		        .796E0,         28.78E0,  
+		       0.892E0,         29.57E0,  
+		       1.903E0,         37.41E0,  
+		       2.150E0,         39.12E0,  
+		       3.697E0,         50.24E0,  
+		       5.870E0,         61.38E0,  
+		       6.421E0,         66.25E0,  
+		       7.422E0,         73.42E0,  
+		       9.944E0,         95.52E0,  
+		      11.023E0,        107.32E0,  
+		      11.87E0,         122.04E0,  
+		      12.786E0,        134.03E0,  
+		      14.067E0,        163.19E0,  
+		      13.974E0,        163.48E0,  
+		      14.462E0,        175.70E0,  
+		      14.464E0,        179.86E0,  
+		      15.381E0,        211.27E0,  
+		      15.483E0,        217.78E0,  
+		      15.59E0,         219.14E0,  
+		      16.075E0,        262.52E0,  
+		      16.347E0,        268.01E0,  
+		      16.181E0,        268.62E0,  
+		      16.915E0,        336.25E0,  
+		      17.003E0,        337.23E0,  
+		      16.978E0,        339.33E0,  
+		      17.756E0,        427.38E0,  
+		      17.808E0,        428.58E0,  
+		      17.868E0,        432.68E0,  
+		      18.481E0,        528.99E0,  
+		      18.486E0,        531.08E0,  
+		      19.090E0,        628.34E0,  
+		      16.062E0,        253.24E0,  
+		      16.337E0,        273.13E0,  
+		      16.345E0,        273.66E0,  
+		      16.388E0,        282.10E0,  
+		      17.159E0,        346.62E0,  
+		      17.116E0,        347.19E0,  
+		      17.164E0,        348.78E0,  
+		      17.123E0,        351.18E0,  
+		      17.979E0,        450.10E0,  
+		      17.974E0,        450.35E0,  
+		      18.007E0,        451.92E0,  
+		      17.993E0,        455.56E0,  
+		      18.523E0,        552.22E0,  
+		      18.669E0,        553.56E0,  
+		      18.617E0,        555.74E0,  
+		      19.371E0,        652.59E0,  
+		      19.330E0,        656.20E0,  
+		       0.080E0,         14.13E0,  
+		       0.248E0,         20.41E0,  
+		       1.089E0,         31.30E0,  
+		       1.418E0,         33.84E0,  
+		       2.278E0,         39.70E0,  
+		       3.624E0,         48.83E0,  
+		       4.574E0,         54.50E0,  
+		       5.556E0,         60.41E0,  
+		       7.267E0,         72.77E0,  
+		       7.695E0,         75.25E0,  
+		       9.136E0,         86.84E0,  
+		       9.959E0,         94.88E0,  
+		       9.957E0,         96.40E0,  
+		      11.600E0,        117.37E0,  
+		      13.138E0,        139.08E0,  
+		      13.564E0,        147.73E0,  
+		      13.871E0,        158.63E0,  
+		      13.994E0,        161.84E0,  
+		      14.947E0,        192.11E0,  
+		      15.473E0,        206.76E0,  
+		      15.379E0,        209.07E0,  
+		      15.455E0,        213.32E0,  
+		      15.908E0,        226.44E0,  
+		      16.114E0,        237.12E0,  
+		      17.071E0,        330.90E0,  
+		      17.135E0,        358.72E0,  
+		      17.282E0,        370.77E0,  
+		      17.368E0,        372.72E0,  
+		      17.483E0,        396.24E0,  
+		      17.764E0,        416.59E0,  
+		      18.185E0,        484.02E0,  
+		      18.271E0,        495.47E0,  
+		      18.236E0,        514.78E0,  
+		      18.237E0,        515.65E0,  
+		      18.523E0,        519.47E0,  
+		      18.627E0,        544.47E0,  
+		      18.665E0,        560.11E0,  
+		      19.086E0,        620.77E0,  
+		       0.214E0,         18.97E0,  
+		       0.943E0,         28.93E0,  
+		       1.429E0,         33.91E0,  
+		       2.241E0,         40.03E0,  
+		       2.951E0,         44.66E0,  
+		       3.782E0,         49.87E0,  
+		       4.757E0,         55.16E0,  
+		       5.602E0,         60.90E0,  
+		       7.169E0,         72.08E0,  
+		       8.920E0,         85.15E0,  
+		      10.055E0,         97.06E0,  
+		      12.035E0,        119.63E0,  
+		      12.861E0,        133.27E0,  
+		      13.436E0,        143.84E0,  
+		      14.167E0,        161.91E0,  
+		      14.755E0,        180.67E0,  
+		      15.168E0,        198.44E0,  
+		      15.651E0,        226.86E0,  
+		      15.746E0,        229.65E0,  
+		      16.216E0,        258.27E0,  
+		      16.445E0,        273.77E0,  
+		      16.965E0,        339.15E0,  
+		      17.121E0,        350.13E0,  
+		      17.206E0,        362.75E0,  
+		      17.250E0,        371.03E0,  
+		      17.339E0,        393.32E0,  
+		      17.793E0,        448.53E0,  
+		      18.123E0,        473.78E0,  
+		      18.49E0,         511.12E0,  
+		      18.566E0,        524.70E0,  
+		      18.645E0,        548.75E0,  
+		      18.706E0,        551.64E0,  
+		      18.924E0,        574.02E0,  
+		      19.1E0,          623.86E0,  
+		       0.375E0,         21.46E0,  
+		       0.471E0,         24.33E0,  
+		       1.504E0,         33.43E0,  
+		       2.204E0,         39.22E0,  
+		       2.813E0,         44.18E0,  
+		       4.765E0,         55.02E0,  
+		       9.835E0,         94.33E0,  
+		      10.040E0,         96.44E0,  
+		      11.946E0,        118.82E0,  
+		      12.596E0,        128.48E0,  
+		      13.303E0,        141.94E0,  
+		      13.922E0,        156.92E0,  
+		      14.440E0,        171.65E0,  
+		      14.951E0,        190.00E0,  
+		      15.627E0,        223.26E0,  
+		      15.639E0,        223.88E0,  
+		      15.814E0,        231.50E0,  
+		      16.315E0,        265.05E0,  
+		      16.334E0,        269.44E0,  
+		      16.430E0,        271.78E0,  
+		      16.423E0,        273.46E0,  
+		      17.024E0,        334.61E0,  
+		      17.009E0,        339.79E0,  
+		      17.165E0,        349.52E0,  
+		      17.134E0,        358.18E0,  
+		      17.349E0,        377.98E0,  
+		      17.576E0,        394.77E0,  
+		      17.848E0,        429.66E0,  
+		      18.090E0,        468.22E0,  
+		      18.276E0,        487.27E0,  
+		      18.404E0,        519.54E0,  
+		      18.519E0,        523.03E0,  
+		      19.133E0,        612.99E0,  
+		      19.074E0,        638.59E0,  
+		      19.239E0,        641.36E0,  
+		      19.280E0,        622.05E0,  
+		      19.101E0,        631.50E0,  
+		      19.398E0,        663.97E0,  
+		      19.252E0,        646.9E0,   
+		      19.89E0,         748.29E0,  
+		      20.007E0,        749.21E0,  
+		      19.929E0,        750.14E0,  
+		      19.268E0,        647.04E0,  
+		      19.324E0,        646.89E0,  
+		      20.049E0,        746.9E0,   
+		      20.107E0,        748.43E0,  
+		      20.062E0,        747.35E0,  
+		      20.065E0,        749.27E0,  
+		      19.286E0,        647.61E0,  
+		      19.972E0,        747.78E0,  
+		      20.088E0,        750.51E0,  
+		      20.743E0,        851.37E0,  
+		      20.83E0,         845.97E0,  
+		      20.935E0,        847.54E0,  
+		      21.035E0,        849.93E0,  
+		      20.93E0,         851.61E0,  
+		      21.074E0,        849.75E0,  
+		      21.085E0,        850.98E0,  
+		      20.935E0,        848.23E0  
+	};
+	
+	class Hahn1CostFunction extends SizedCostFunction {
+		public Hahn1CostFunction() {
+			// number of residuals
+			// size of first parameter
+			super(236, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+		}
+
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Hahn1Observations; i++) {
+				double HSquared = Hahn1Data[2*i+1]*Hahn1Data[2*i+1];
+				double HCubed = HSquared*Hahn1Data[2*i+1];
+				double num = x[0] + x[1]*Hahn1Data[2*i+1] + x[2]*HSquared + x[3]*HCubed;
+				double denom = 1.0 + x[4]*Hahn1Data[2*i+1] + x[5]*HSquared + x[6]*HCubed;
+			    residuals[i] = Hahn1Data[2*i] - num/denom;
+			    if (jacobians != null && jacobians[0] != null) {
+			    	double denomSquared = denom*denom;
+					jacobians[0][7*i] = -1.0/denom;
+					jacobians[0][7*i+1] = -Hahn1Data[2*i+1]/denom;
+					jacobians[0][7*i+2] = -HSquared/denom;
+					jacobians[0][7*i+3] = -HCubed/denom;
+					jacobians[0][7*i+4] = num*Hahn1Data[2*i+1]/denomSquared;
+					jacobians[0][7*i+5] = num*HSquared/denomSquared;
+					jacobians[0][7*i+6] = num*HCubed/denomSquared;
+			    }
+			}
+
+			return true;
+		
+	  }
+		
+		public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+			int i;
+			// Called by ResidualBlock.Evaluate
+			double x[] = parameters.get(0);
+			
+			for (i = 0; i < Hahn1Observations; i++) {
+				double HSquared = Hahn1Data[2*i+1]*Hahn1Data[2*i+1];
+				double HCubed = HSquared*Hahn1Data[2*i+1];
+				double num = x[0] + x[1]*Hahn1Data[2*i+1] + x[2]*HSquared + x[3]*HCubed;
+				double denom = 1.0 + x[4]*Hahn1Data[2*i+1] + x[5]*HSquared + x[6]*HCubed;
+			    residuals[i] = Hahn1Data[2*i] - num/denom;
+			    if (jacobians != null && jacobians[0] != null) {
+			    	double denomSquared = denom*denom;
+					jacobians[0][jacobians_offset[0]+7*i] = -1.0/denom;
+					jacobians[0][jacobians_offset[0]+7*i+1] = -Hahn1Data[2*i+1]/denom;
+					jacobians[0][jacobians_offset[0]+7*i+2] = -HSquared/denom;
+					jacobians[0][jacobians_offset[0]+7*i+3] = -HCubed/denom;
+					jacobians[0][jacobians_offset[0]+7*i+4] = num*Hahn1Data[2*i+1]/denomSquared;
+					jacobians[0][jacobians_offset[0]+7*i+5] = num*HSquared/denomSquared;
+					jacobians[0][jacobians_offset[0]+7*i+6] = num*HCubed/denomSquared;
+			    }
+			}
+			
+			return true;
+		
+	  }
+	} // class Hahn1CostFunction
+	
+	public void runHahn1CostFunctionExample() {
+		// Both close and distant starting points converge to the correct answer
+		
+		// Ceres Solver Report: Iterations: 30, Initial cost: 1.046724e+06, Final cost: 7.662191e-01, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 1.0776411396714223 b2 = -0.12269337966454558 b3 = 0.0040863818178511375
+		// b4 = -1.4262672840184519E-6 b5 = -0.005760999802931795 b6 = 2.4053771652751907E-4
+		// b7 = -1.2314461110115458E-7
+		// Actual answer b1 = 1.0776351733E+00  b2 = -1.2269296921E-01  b3 = 4.0863750610E-03
+		// b4 = -1.4262662514E-06  b5 = -5.7609940901E-03  b6 = 2.4053735503E-04
+		// b7 = -1.2314450199E-07
+		
+		// Ceres Solver Report: Iterations: 30, Initial cost: 1.548778e+06, Final cost: 7.662191e-01, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 1.077657760149886 b2 = -0.12269467483612953 b3 = 0.0040864074618869
+		// b4 = -1.4262973146878373E-6 b5 = -0.005760992441341054 b6 = 2.4053887271245495E-4
+		// b7 = -1.2314606592047063E-7
+		//Actual answer b1 = 1.0776351733E+00  b2 = -1.2269296921E-01  b3 = 4.0863750610E-03
+		// b4 = -1.4262662514E-06  b5 = -5.7609940901E-03  b6 = 2.4053735503E-04
+		// b7 = -1.2314450199E-07
+		int i;
+		double x[] = new double[7];
+		for (i = 0; i < 2; i++) {
+        if (i == 0) {
+        	x[0] = 1.0;
+        	x[1] = -0.1;
+        	x[2] = 0.005;
+        	x[3] = -1.0E-6;
+        	x[4] = -0.005;
+        	x[5] = 1.0E-4;
+        	x[6] = -1.0E-7;
+        }
+        else {
+        	x[0] = 10.0;
+        	x[1] = -1.0;
+        	x[2] = 0.05;
+        	x[3] = -1.0E-5;
+        	x[4] = -0.05;
+        	x[5] = 0.001;
+        	x[6] = -1.0E-6;
+        }
+        
+		CostFunction cost_function = new Hahn1CostFunction();
+		ProblemImpl problem = new ProblemImpl();
+		problem.AddResidualBlock(cost_function, null, x);
+
+		// Run the solver!
+		SolverOptions solverOptions = new SolverOptions();
+		solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+		solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+		solverOptions.max_num_consecutive_invalid_steps = 200;
+		solverOptions.gradient_tolerance = epsilon;
+		solverOptions.parameter_tolerance = epsilon;
+		solverOptions.function_tolerance = 1.0E-12;
+		solverOptions.min_trust_region_radius = 1.0E-50;
+
+		solverOptions.minimizer_progress_to_stdout = true;
+		SolverSummary solverSummary = new SolverSummary();
+		Solve(solverOptions, problem, solverSummary);
+		System.out.println(solverSummary.BriefReport());
+		if (i == 0) {
+		    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		else {
+			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+		}
+		System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+		System.out.println("b7 = " + x[6]);
+		System.out.println("Actual answer b1 = 1.0776351733E+00  b2 = -1.2269296921E-01  b3 = 4.0863750610E-03");
+		System.out.println("b4 = -1.4262662514E-06  b5 = -5.7609940901E-03  b6 = 2.4053735503E-04");
+		System.out.println("b7 = -1.2314450199E-07");
+		} // for (i = 0; i < 2; i++)			
+	}
+
 
 }
