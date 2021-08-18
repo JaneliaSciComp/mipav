@@ -4908,7 +4908,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 		// td_init is calculated as the distance between the instant of the main peak
 		// and the
-		// distance of the recirculation peak. The recirculation peak wa identified as
+		// distance of the recirculation peak. The recirculation peak was identified as
 		// the data
 		// peak minus the prediction of the main peak.
 		double maxPeak2 = -Double.MAX_VALUE;
@@ -4924,6 +4924,16 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			if (dati_x_stime_init[t] < 0.1 * maxPeak2) {
 				t0peak2 = t;
 			}
+		}
+		// If not time is less than 0.1 * maxPeak2, use the time with the minimum value in this range
+		if (t0peak2 == -1) {
+		    double minPeak2 = Double.MAX_VALUE;
+		    for (t = 0; t <= TTPpeak2; t++) {
+		    	if (dati_x_stime_init[t] < minPeak2) {
+		    		minPeak2 = dati_x_stime_init[t];
+		    		t0peak2 = t;
+		    	}
+		    }
 		}
 		td_init = time[t0peak2] - fitParameters_peak1[0];
 
