@@ -4851,6 +4851,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		// Parameters: p = [t0 alpha beta A td K tao]
 
 		// I fill in the data for the fit
+		LinearEquations2 le2 = new LinearEquations2();
+		GeneralizedInverse2 gi2 = new GeneralizedInverse2();
 		double peak1[] = GVfunction_peak1(fitParameters_peak1);
 		// The data to fit are the residues of the first fit
 		int i, j, t;
@@ -5122,7 +5124,82 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 
 		Matrix matJ = new Matrix(J);
-		double covp[][] = (((matJ.transpose()).times(matJ)).inverse()).getArray();
+		double JtJ[][] = ((matJ.transpose()).times(matJ)).getArray();
+		double JtJcopy[][] = new double[3][3];
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
+				JtJcopy[i][j] = JtJ[i][j];
+			}
+		}
+		double covp[][] = new double[3][3];
+		for (i = 0; i < 3; i++) {
+	    	  covp[i][i] = 1.0;
+	    }
+		int ipiv[] = new int[Math.min(3,3)];
+        int info[] = new int[1];
+        boolean rankDeficient = false;
+        int nrhs = 3; // number of columns of B
+        le2.dgetrf(3,3,JtJcopy,3,ipiv,info);
+        if (info[0] < 0) {
+	    	  System.err.println("In fitGV_peak2 dgetrf argument number " + 
+	      (-info[0]) + " is illegal");
+	    	  return;
+	      }
+	      if (info[0] > 0) {
+	    	  //System.err.println("In fitGV_peak2 dgetrf U["+(info[0]-1)+
+	    			  //"]["+(info[0]-1)+"] is exactly 0");
+	    	  rankDeficient = true;
+	      }
+	      if (!rankDeficient) {
+	    	  char trans = 'N'; // Solve JtJ*X = Identity matrix (no transpose)
+		      le2.dgetrs(trans,3,nrhs,JtJcopy,3,ipiv,covp,3,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In fitGV_peak2 dgetrs argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  return;
+		      }
+	      } // if (!rankDeficient)
+	      else {
+			  double sing[] = new double[Math.min(3,3)];
+			  double rcond = -1.0; // Singular values s(i) <= RCOND*s[0] are treated as zero.
+				                   // If  rcond < 0, machine precision is used instead.
+			  int rank[] = new int[1];
+			  double work[] = new double[1];
+			  int lwork_query = -1;
+			  int lwork;
+		      for (i = 0; i < 3; i++) {
+		          for (j = 0; j < 3; j++) {
+		        	  JtJcopy[i][j] = JtJ[i][j];
+		          }
+		      }
+			  gi2.dgelss(3,3,nrhs,JtJcopy,3,covp,3,sing,rcond,rank,work,lwork_query,info);
+			  if (info[0] != 0) {
+			        System.err.println("fitGV_peak2: LAPACK dgelss work query error code = " + info[0]);
+			        return;
+				}
+				lwork = (int)work[0];
+	
+				// Allocate the workspace
+				try {
+					work = new double[lwork];
+				}
+				catch (OutOfMemoryError e) {
+					return;	
+				}
+				// This routine must handle rank deficient matrices
+				// since dgetrf does not handle rank deficient matrices.
+				gi2.dgelss(3,3,nrhs,JtJcopy,3,covp,3,sing,rcond,rank,work,lwork,info);
+				if (info[0] < 0) {
+					System.err.println("In fitGV_peak2 for dgelss the (-info[0]) argument had an illegal value");
+					return;
+				}
+				if (info[0] > 0) {
+					System.err.println("In fitGV_peak2 the algorithm for computing the SVD failed to converge");
+					System.err.println(info[0] + " off-diagonal elements of an intermediate bidiagonal form did not converge to zero.");
+					return;
+				}
+			    
+	      }
 		double var[] = new double[] { covp[0][0], covp[1][1], covp[2][2] };
 		double sd[] = new double[] { Math.sqrt(var[0]), Math.sqrt(var[1]), Math.sqrt(var[2]) };
 		cv_est_parGV_peak2 = new double[3];
