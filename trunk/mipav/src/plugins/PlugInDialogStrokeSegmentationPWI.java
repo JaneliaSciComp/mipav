@@ -330,10 +330,11 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         if (segAlgo instanceof PlugInAlgorithmStrokeSegmentationPWI) {
             System.err.println("Stroke segmentation Elapsed: " + segAlgo.getElapsedTime());
             
-            double resFactorCC = PlugInAlgorithmStrokeSegmentationPWI.getResolutionFactorCC(adcImage);
+            double resFactorCC = segAlgo.getAdcResolutionFactorCC();
+            double resFactorCCPWI = segAlgo.getPwiResolutionFactorCC();
             
             if (listenerParent != null) {
-                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), segAlgo.getTmaxTables(), resFactorCC);
+                listenerParent.emailReport(adcImage, segAlgo.getLightboxFileList(), segAlgo.getCoreObjectSizeTable(), segAlgo.getTmaxTables(), segAlgo.getCorrmapSegObjectSizeTable(), resFactorCC, resFactorCCPWI);
             }
 
             if (segAlgo.isCompleted()) {

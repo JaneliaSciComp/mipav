@@ -155,6 +155,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
 
     private ModelImage lastCoreImg = null;
     
+    private double adcResolutionFactorCC = 1;
+    
+    private double pwiResolutionFactorCC = 1;
+    
     /**
      * Constructor.
      *
@@ -561,7 +565,14 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         lightboxFileList.add(lightboxCorrmap);
                         Vector<MaskObject> maskList = new Vector<MaskObject>();
                         MaskObject obj = new MaskObject(0, (short) 0, 0);
-                        obj.setCorrmapNoObject();
+                        //obj.setCorrmapNoObject();
+                        int corrSize = 0;
+                        for (int i = 0; i < corrmapMask.getVolumeSize(); i++) {
+                            if (corrmapMask.getInt(i) != 0) {
+                                corrSize++;
+                            }
+                        }
+                        obj.setCorrmapSegSize(corrSize);
                         maskList.add(obj);
                         lightboxObjectTable.put(lightboxCorrmap, maskList);
                     }
@@ -945,6 +956,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         lightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox_pass" + passNum, FileUtility.PNG);
         
         if (lightboxFile != null) {
+            if (adcResolutionFactorCC == 1) {
+                adcResolutionFactorCC = getResolutionFactorCC(adcImage);
+            }
+            
             lightboxObjectTable.put(lightboxFile, selectedObjectList);
         }
         
@@ -1399,6 +1414,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         public boolean isPerfusion = false;
         
         public boolean isCorrmap = false;
+        
+        public int corrmapSegSize = 0;
 
         /**
          * Creates a new intObject object.
@@ -1418,6 +1435,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         	index = -1;
         	size = -1;
         	coreSize = -1;
+        	corrmapSegSize = -1;
         	isDwi = true;
         	isPerfusion = false;
         	isCorrmap = false;
@@ -1440,6 +1458,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         public void setPerfusionSize(final int tmaxVal, final int size) {
             isPerfusion = true;
         	tmaxSizeMap.put(tmaxVal, size);
+        }
+        
+        public void setCorrmapSegSize(final int size) {
+            isCorrmap = true;
+            corrmapSegSize = size;
         }
     }
     
@@ -1865,6 +1888,34 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return false;
     }
     
+    public Hashtable<File, Double> getCorrmapSegObjectSizeTable() {
+        Hashtable<File, Double> sizeTable = new Hashtable<File, Double>();
+        for (File file : lightboxObjectTable.keySet()) {
+            sizeTable.put(file, Double.valueOf(getCorrmapSegSize(file)));
+        }
+        
+        return sizeTable;
+    }
+    
+    public int getCorrmapSegSize(File lightboxFile) {
+        int totalSize = 0;
+        for (MaskObject obj : lightboxObjectTable.get(lightboxFile)) {
+            totalSize += obj.corrmapSegSize;
+        }
+        
+        return totalSize;
+    }
+    
+    public boolean isCorrmapLightbox(File lightboxFile) {
+        for (MaskObject obj : lightboxObjectTable.get(lightboxFile)) {
+            if (obj.isCorrmap) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     private void fillHoles(ModelImage img) {
         int kernel = AlgorithmMorphology3D.SIZED_SPHERE;
         boolean wholeImg = true;
@@ -2127,6 +2178,14 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         return resolCC[0] * resolCC[1] * resolCC[2];
     }
     
+    public double getAdcResolutionFactorCC() {
+        return adcResolutionFactorCC;
+    }
+    
+    public double getPwiResolutionFactorCC() {
+        return pwiResolutionFactorCC;
+    }
+    
     private boolean isADCFractional() {
         return (adcImage.getType() == ModelStorageBase.FLOAT);
     }
@@ -2241,6 +2300,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                 obj.setPerfusionSize(pwiThreshList[threshIndex], tmaxSizes[threshIndex]);
             }
             maskList.add(obj);
+
+            if (pwiResolutionFactorCC == 1) {
+                pwiResolutionFactorCC = getResolutionFactorCC(TmaxUnregImage);
+            }
             
             lightboxObjectTable.put(lightboxFile, maskList);
         }

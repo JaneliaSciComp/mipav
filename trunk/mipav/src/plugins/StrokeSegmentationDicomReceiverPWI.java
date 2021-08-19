@@ -1061,9 +1061,9 @@ public class StrokeSegmentationDicomReceiverPWI {
         System.out.println("*****\t" + line);
     }
     
-    public void emailReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, Hashtable<Integer, Hashtable<File, Double>> tmaxTable, double resFactorCC) {
+    public void emailReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, Hashtable<Integer, Hashtable<File, Double>> tmaxTable, Hashtable<File, Double> corrmapObjectTable, double resFactorCC, double resFactorCCPWI) {
         // generate report for website
-        String reportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, tmaxTable, resFactorCC, false);
+        String reportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, tmaxTable, corrmapObjectTable, resFactorCC, resFactorCCPWI, false);
         
         if (reportTxt == null) {
         	return;
@@ -1094,7 +1094,7 @@ public class StrokeSegmentationDicomReceiverPWI {
         }
         
         // email report has different metadata
-        String emailReportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, tmaxTable, resFactorCC, true);
+        String emailReportTxt = generateReport(adcImage, lightboxFileList, coreObjectTable, tmaxTable, corrmapObjectTable, resFactorCC, resFactorCCPWI, true);
         
         final String emailReportPath = outputDir + File.separator + "core_seg_report_email.html";
         
@@ -1195,7 +1195,7 @@ public class StrokeSegmentationDicomReceiverPWI {
         }
     }
     
-    private String generateReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, Hashtable<Integer, Hashtable<File, Double>> tmaxTable, double resFactorCC, boolean isEmailSafeReport) {
+    private String generateReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, Hashtable<Integer, Hashtable<File, Double>> tmaxTable, Hashtable<File, Double> corrmapObjectTable, double resFactorCC, double resFactorCCPWI, boolean isEmailSafeReport) {
         final DecimalFormat format = new DecimalFormat("#######.#");
         
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
@@ -1312,11 +1312,14 @@ public class StrokeSegmentationDicomReceiverPWI {
                     perfVolList[1] = perfVolList[2] + tmaxTable.get(6).get(lightboxFileList.get(i)).doubleValue();
                     perfVolList[0] = perfVolList[1] + tmaxTable.get(4).get(lightboxFileList.get(i)).doubleValue();
                     
-                    reportTxt += "<p>" + "<b>" + "Tmax > 4 volume (mL): " + "</b>" + format.format(perfVolList[0] * resFactorCC) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 6 volume (mL): " + "</b>" + format.format(perfVolList[1] * resFactorCC) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 8 volume (mL): " + "</b>" + format.format(perfVolList[2] * resFactorCC) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 10 volume (mL): " + "</b>" + format.format(perfVolList[3] * resFactorCC) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 4 volume (mL): " + "</b>" + format.format(perfVolList[0] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 6 volume (mL): " + "</b>" + format.format(perfVolList[1] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 8 volume (mL): " + "</b>" + format.format(perfVolList[2] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 10 volume (mL): " + "</b>" + format.format(perfVolList[3] * resFactorCCPWI) + "</p>\n";
                     reportTxt += "<p>" + "<b>" + "Hypoperfusion Index (Tmax > 10s / Tmax > 6s): " + "</b>" + format.format(perfVolList[3] / perfVolList[1]) + "</p>\n";
+                } else if (corrmapObjectTable.get(lightboxFileList.get(i)) > 0) {
+                    String corrmapSegVol = format.format(corrmapObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCCPWI);
+                    reportTxt += "<p>" + "<b>" + "Corrmap segmentation volume (mL): " + "</b>" + corrmapSegVol + "</p>\n";
                 } else if (passNum == 1 || passNum == 4) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
                 } else if (passNum == 2) {
