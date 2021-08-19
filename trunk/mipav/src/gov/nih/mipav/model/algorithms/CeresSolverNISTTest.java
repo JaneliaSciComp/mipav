@@ -3826,4 +3826,157 @@ public class CeresSolverNISTTest extends CeresSolver {
 			    13.40000,    167.0000,
 			    14.80000,    168.0000
 		};
+		
+		class ENSOCostFunction extends SizedCostFunction {
+			public ENSOCostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(168, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < ENSOObservations; i++) {
+					double cos2 = Math.cos(Math.PI*ENSOData[2*i+1]/6.0);
+					double sin2 = Math.sin(Math.PI*ENSOData[2*i+1]/6.0);
+					double cos5 = Math.cos(2.0 * Math.PI * ENSOData[2*i+1]/x[3]);
+					double sin5 = Math.sin(2.0 * Math.PI * ENSOData[2*i+1]/x[3]);
+					double cos8 = Math.cos(2.0 * Math.PI * ENSOData[2*i+1]/x[6]);
+					double sin8 = Math.sin(2.0 * Math.PI * ENSOData[2*i+1]/x[6]);
+				    residuals[i] = ENSOData[2*i] - x[0] - x[1]*cos2 - x[2]*sin2 
+				    		-x[4]*cos5 - x[5]*sin5 - x[7]*cos8 - x[8]*sin8;
+				    if (jacobians != null && jacobians[0] != null) {
+				    	double x3Squared = x[3]*x[3];
+				    	double x6Squared = x[6]*x[6];
+						jacobians[0][9*i] = -1.0;
+						jacobians[0][9*i+1] = -cos2;
+						jacobians[0][9*i+2] = -sin2;
+						jacobians[0][9*i+3] = -x[4]*sin5*2.0*Math.PI*ENSOData[2*i+1]/x3Squared
+					                          +x[5]*cos5*2.0*Math.PI*ENSOData[2*i+1]/x3Squared;
+					    jacobians[0][9*i+4] = -cos5;
+					    jacobians[0][9*i+5] = -sin5;
+					    jacobians[0][9*i+6] = -x[7]*sin8*2.0*Math.PI*ENSOData[2*i+1]/x6Squared
+					    		              +x[8]*cos8*2.0*Math.PI*ENSOData[2*i+1]/x6Squared;
+					    jacobians[0][9*i+7] = -cos8;
+					    jacobians[0][9*i+8] = -sin8;
+				    }
+				}
+
+				return true;
+			
+		  }
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < ENSOObservations; i++) {
+					double cos2 = Math.cos(Math.PI*ENSOData[2*i+1]/6.0);
+					double sin2 = Math.sin(Math.PI*ENSOData[2*i+1]/6.0);
+					double cos5 = Math.cos(2.0 * Math.PI * ENSOData[2*i+1]/x[3]);
+					double sin5 = Math.sin(2.0 * Math.PI * ENSOData[2*i+1]/x[3]);
+					double cos8 = Math.cos(2.0 * Math.PI * ENSOData[2*i+1]/x[6]);
+					double sin8 = Math.sin(2.0 * Math.PI * ENSOData[2*i+1]/x[6]);
+				    residuals[i] = ENSOData[2*i] - x[0] - x[1]*cos2 - x[2]*sin2 
+				    		-x[4]*cos5 - x[5]*sin5 - x[7]*cos8 - x[8]*sin8;
+				    if (jacobians != null && jacobians[0] != null) {
+				    	double x3Squared = x[3]*x[3];
+				    	double x6Squared = x[6]*x[6];
+						jacobians[0][jacobians_offset[0]+9*i] = -1.0;
+						jacobians[0][jacobians_offset[0]+9*i+1] = -cos2;
+						jacobians[0][jacobians_offset[0]+9*i+2] = -sin2;
+						jacobians[0][jacobians_offset[0]+9*i+3] = -x[4]*sin5*2.0*Math.PI*ENSOData[2*i+1]/x3Squared
+					                          +x[5]*cos5*2.0*Math.PI*ENSOData[2*i+1]/x3Squared;
+					    jacobians[0][jacobians_offset[0]+9*i+4] = -cos5;
+					    jacobians[0][jacobians_offset[0]+9*i+5] = -sin5;
+					    jacobians[0][jacobians_offset[0]+9*i+6] = -x[7]*sin8*2.0*Math.PI*ENSOData[2*i+1]/x6Squared
+					    		              +x[8]*cos8*2.0*Math.PI*ENSOData[2*i+1]/x6Squared;
+					    jacobians[0][jacobians_offset[0]+9*i+7] = -cos8;
+					    jacobians[0][jacobians_offset[0]+9*i+8] = -sin8;
+				    }
+				}
+				
+				return true;
+			
+		  }
+		} // class ENSOCostFunction
+		
+		public void runENSOCostFunctionExample() {
+			// close starting point comes very close to the correct answer but misses and the distant starting point misses
+			// Ceres Solver Report: Iterations: 33, Initial cost: 4.574878e+02, Final cost: 3.942700e+02, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 10.510689511420738 b2 = 3.076274580748052 b3 = 0.5328774751874514
+			// b4 = 44.3135489235551 b5 = -1.622966613656837 b6 = 0.5263209215635878
+			// b7 = 26.889145676562666 b8 = 0.21299293151186785 b9 = 1.4963896737694535
+			// Actual answer b1 = 1.0510749193E+01  b2 = 3.0762128085E+00  b3 = 5.3280138227E-01
+			// b4 = 4.4311088700E+01 b5 = -1.6231428586E+00 b6 = 5.2554493756E-01
+			// b7 = 2.6887614440E+01 b8 = 2.1232288488E-01 b9 = 1.4966870418E+00
+		
+			// Ceres Solver Report: Iterations: 32, Initial cost: 5.769720e+02, Final cost: 4.131780e+02, Termination: CONVERGENCE
+			// Solved answer for distant starting point b1 = 10.545209427214765 b2 = 3.089273228862537 b3 = 0.5488961070851492
+			// b4 = 43.106471438158295 b5 = -1.7843494506664854 b6 = -0.12063760308981292
+			// b7 = 26.36554804468142 b8 = -0.4442124911731743 b9 = 0.9328342427130647
+			// Actual answer b1 = 1.0510749193E+01  b2 = 3.0762128085E+00  b3 = 5.3280138227E-01
+			// b4 = 4.4311088700E+01 b5 = -1.6231428586E+00 b6 = 5.2554493756E-01
+			// b7 = 2.6887614440E+01 b8 = 2.1232288488E-01 b9 = 1.4966870418E+00
+			int i;
+			double x[] = new double[9];
+			for (i = 0; i < 2; i++) {
+	        if (i == 0) {
+	        	x[0] = 10.0;
+	        	x[1] = 3.0;
+	        	x[2] = 0.5;
+	        	x[3] = 44.0;
+	        	x[4] = -1.5;
+	        	x[5] = 0.5;
+	        	x[6] = 26.0;
+	        	x[7] = -0.1;
+	        	x[8] = 1.5;
+	        }
+	        else {
+	        	x[0] = 11.0;
+	        	x[1] = 3.0;
+	        	x[2] = 0.5;
+	        	x[3] = 40.0;
+	        	x[4] = -0.7;
+	        	x[5] = -1.3;
+	        	x[6] = 25.0;
+	        	x[7] = -0.3;
+	        	x[8] = 1.4;
+	        }
+	        
+			CostFunction cost_function = new ENSOCostFunction();
+			ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, x);
+
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+			solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+			solverOptions.max_num_consecutive_invalid_steps = 200;
+			solverOptions.gradient_tolerance = epsilon;
+			solverOptions.parameter_tolerance = epsilon;
+			solverOptions.function_tolerance = 1.0E-14;
+			solverOptions.min_trust_region_radius = 1.0E-60;
+
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			System.out.println(solverSummary.BriefReport());
+			if (i == 0) {
+			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			else {
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+			System.out.println("b7 = " + x[6] + " b8 = " + x[7] + " b9 = " + x[8]);
+			System.out.println("Actual answer b1 = 1.0510749193E+01  b2 = 3.0762128085E+00  b3 = 5.3280138227E-01");
+			System.out.println("b4 = 4.4311088700E+01 b5 = -1.6231428586E+00 b6 = 5.2554493756E-01");
+			System.out.println("b7 = 2.6887614440E+01 b8 = 2.1232288488E-01 b9 = 1.4966870418E+00");
+			} // for (i = 0; i < 2; i++)
+		}
 }
