@@ -1283,9 +1283,13 @@ public class StrokeSegmentationDicomReceiverPWI {
                     reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
                     
                     if (passNum == 1) {
-                        if (tmaxTable.get(6).get(lightboxFileList.get(1)) > 0) {
-                            double perfVol = tmaxTable.get(6).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(8).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(10).get(lightboxFileList.get(1)).doubleValue();
-                            
+                        File lightboxFile = lightboxFileList.get(1);
+                        double perfVol = 0;
+                        perfVol += tmaxTable.get(10).get(lightboxFile);
+                        perfVol += tmaxTable.get(8).get(lightboxFile);
+                        perfVol += tmaxTable.get(6).get(lightboxFile);
+                        
+                        if (perfVol > 0) {
                             double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
                             double noPwiCoreDiff = (perfVol - noPwiCore) * resFactorCC;
                             double noPwiCoreRatio = perfVol / noPwiCore;
@@ -1294,9 +1298,13 @@ public class StrokeSegmentationDicomReceiverPWI {
                             reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(noPwiCoreRatio) + "</p>\n";
                         }
                     } else if (passNum == 4) {
-                        if (tmaxTable.get(6).get(lightboxFileList.get(1)) > 0) {
-                            double perfVol = tmaxTable.get(6).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(8).get(lightboxFileList.get(1)).doubleValue() + tmaxTable.get(10).get(lightboxFileList.get(1)).doubleValue();
-                            
+                        File lightboxFile = lightboxFileList.get(1);
+                        double perfVol = 0;
+                        perfVol += tmaxTable.get(10).get(lightboxFile);
+                        perfVol += tmaxTable.get(8).get(lightboxFile);
+                        perfVol += tmaxTable.get(6).get(lightboxFile);
+                        
+                        if (perfVol > 0) {
                             double pwiCore = coreObjectTable.get(lightboxFileList.get(3)).doubleValue();
                             double pwiCoreDiff = (perfVol - pwiCore) * resFactorCC;
                             double pwiCoreRatio = perfVol / pwiCore;
@@ -1305,7 +1313,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                             reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(pwiCoreRatio) + "</p>\n";
                         }
                     }
-                } else if (tmaxTable.get(6).get(lightboxFileList.get(i)) > 0) {
+                } else if ((tmaxTable.get(6).get(lightboxFileList.get(i)) + tmaxTable.get(8).get(lightboxFileList.get(i)) + tmaxTable.get(10).get(lightboxFileList.get(i))) > 0) {
                     double[] perfVolList = new double[4];
                     perfVolList[3] = tmaxTable.get(10).get(lightboxFileList.get(i)).doubleValue();
                     perfVolList[2] = perfVolList[3] + tmaxTable.get(8).get(lightboxFileList.get(i)).doubleValue();
