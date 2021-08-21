@@ -4820,7 +4820,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
         int nrhs = 4; // number of columns of B
         le2.dgetrf(4,4,JtJcopy,4,ipiv,info);
         if (info[0] < 0) {
-	    	  System.err.println("In fitGV_peak2 dgetrf argument number " + 
+	    	  System.err.println("In fitGV_peak1 dgetrf argument number " + 
 	      (-info[0]) + " is illegal");
 	    	  return;
 	      }
@@ -4831,29 +4831,29 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	      }
 	      if (!rankDeficient) {
 	    	  char trans = 'N'; // Solve JtJ*X = Identity matrix (no transpose)
-		      le2.dgetrs(trans,3,nrhs,JtJcopy,3,ipiv,covp,3,info);
+		      le2.dgetrs(trans,4,nrhs,JtJcopy,4,ipiv,covp,4,info);
 		      if (info[0] < 0) {
-		    	  System.err.println("In fitGV_peak2 dgetrs argument number " + 
+		    	  System.err.println("In fitGV_peak1 dgetrs argument number " + 
 		      (-info[0]) + " is illegal");
 		    	  return;
 		      }
 	      } // if (!rankDeficient)
 	      else {
-			  double sing[] = new double[Math.min(3,3)];
+			  double sing[] = new double[Math.min(4,4)];
 			  double rcond = -1.0; // Singular values s(i) <= RCOND*s[0] are treated as zero.
 				                   // If  rcond < 0, machine precision is used instead.
 			  int rank[] = new int[1];
 			  double work[] = new double[1];
 			  int lwork_query = -1;
 			  int lwork;
-		      for (i = 0; i < 3; i++) {
-		          for (j = 0; j < 3; j++) {
+		      for (i = 0; i < 4; i++) {
+		          for (j = 0; j < 4; j++) {
 		        	  JtJcopy[i][j] = JtJ[i][j];
 		          }
 		      }
-			  gi2.dgelss(3,3,nrhs,JtJcopy,3,covp,3,sing,rcond,rank,work,lwork_query,info);
+			  gi2.dgelss(4,4,nrhs,JtJcopy,4,covp,4,sing,rcond,rank,work,lwork_query,info);
 			  if (info[0] != 0) {
-			        System.err.println("fitGV_peak2: LAPACK dgelss work query error code = " + info[0]);
+			        System.err.println("fitGV_peak1: LAPACK dgelss work query error code = " + info[0]);
 			        return;
 				}
 				lwork = (int)work[0];
@@ -4867,13 +4867,13 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 				// This routine must handle rank deficient matrices
 				// since dgetrf does not handle rank deficient matrices.
-				gi2.dgelss(3,3,nrhs,JtJcopy,3,covp,3,sing,rcond,rank,work,lwork,info);
+				gi2.dgelss(4,4,nrhs,JtJcopy,4,covp,4,sing,rcond,rank,work,lwork,info);
 				if (info[0] < 0) {
-					System.err.println("In fitGV_peak2 for dgelss the (-info[0]) argument had an illegal value");
+					System.err.println("In fitGV_peak1 for dgelss the (-info[0]) argument had an illegal value");
 					return;
 				}
 				if (info[0] > 0) {
-					System.err.println("In fitGV_peak2 the algorithm for computing the SVD failed to converge");
+					System.err.println("In fitGV_peak1 the algorithm for computing the SVD failed to converge");
 					System.err.println(info[0] + " off-diagonal elements of an intermediate bidiagonal form did not converge to zero.");
 					return;
 				}
