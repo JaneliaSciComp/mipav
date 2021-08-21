@@ -1203,13 +1203,19 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			GradientProblem gradientProblem = new GradientProblem(new diffGaussians(xp));
 			Solve(options, gradientProblem, parameters, summary);
 			mask_threshold = parameters[0];
-			if (mask_threshold < minSum) {
-				System.err.println("mask_threshold = " + mask_threshold + " < minimum volume_sum value = " + minSum);
-				System.err.println("First gaussian mean was at " + xp[1]);
-				System.err.println("Second gaussian mean was at " + xp[4]);
-				System.exit(0);
+			if ((mask_threshold < minSum) || (mask_threshold <= xp[1]) || (mask_threshold >= xp[4])) {
+				//System.err.println("mask_threshold = " + mask_threshold + " < minimum volume_sum value = " + minSum);
+				//System.err.println("First gaussian mean was at " + xp[1]);
+				//System.err.println("Second gaussian mean was at " + xp[4]);
+				//System.exit(0);
+				curveIntersect(intensity, xp);
+				if (x_out == null) {
+					System.err.println("x_out == null because curveIntersect found no intersection");
+					return;
+				}
+				mask_threshold = x_out[0];
 			}
-			if (display > 0) {
+			if ((display > 0) && (mask_threshold >= minSum)) {
 				System.out.println(summary.BriefReport());
 				UI.setDataText("Initial guess for intensity at which 2 Gaussians intersect = " + ((xp[1] + xp[4]) / 2.0)
 						+ "\n");
