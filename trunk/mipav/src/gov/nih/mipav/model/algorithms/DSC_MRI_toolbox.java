@@ -4674,7 +4674,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 
 		// I find the end of the first peak (20% maximum value)
 		i = TTPpos;
-		while (dati[i] > 0.2 * dati[TTPpos]) {
+		while ((i < dati.length-1) && (dati[i] > 0.2 * dati[TTPpos])) {
 			i++;
 		}
 
