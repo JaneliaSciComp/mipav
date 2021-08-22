@@ -3979,4 +3979,454 @@ public class CeresSolverNISTTest extends CeresSolver {
 			System.out.println("b7 = 2.6887614440E+01 b8 = 2.1232288488E-01 b9 = 1.4966870418E+00");
 			} // for (i = 0; i < 2; i++)
 		}
+		
+		final int ThurberObservations = 37;
+		double ThurberData[] = new double[]{
+				80.574E0,      -3.067E0,
+			      84.248E0,      -2.981E0,
+			      87.264E0,      -2.921E0,
+			      87.195E0,      -2.912E0,
+			      89.076E0,      -2.840E0,
+			      89.608E0,      -2.797E0,
+			      89.868E0,      -2.702E0,
+			      90.101E0,      -2.699E0,
+			      92.405E0,      -2.633E0,
+			      95.854E0,      -2.481E0,
+			     100.696E0,      -2.363E0,
+			     101.060E0,      -2.322E0,
+			     401.672E0,      -1.501E0,
+			     390.724E0,      -1.460E0,
+			     567.534E0,      -1.274E0,
+			     635.316E0,      -1.212E0,
+			     733.054E0,      -1.100E0,
+			     759.087E0,      -1.046E0,
+			     894.206E0,      -0.915E0,
+			     990.785E0,      -0.714E0,
+			    1090.109E0,      -0.566E0,
+			    1080.914E0,      -0.545E0,
+			    1122.643E0,      -0.400E0,
+			    1178.351E0,      -0.309E0,
+			    1260.531E0,      -0.109E0,
+			    1273.514E0,      -0.103E0,
+			    1288.339E0,       0.010E0,
+			    1327.543E0,       0.119E0,
+			    1353.863E0,       0.377E0,
+			    1414.509E0,       0.790E0,
+			    1425.208E0,       0.963E0,
+			    1421.384E0,       1.006E0,
+			    1442.962E0,       1.115E0,
+			    1464.350E0,       1.572E0,
+			    1468.705E0,       1.841E0,
+			    1447.894E0,       2.047E0,
+			    1457.628E0,       2.200E0
+		};
+		
+		class ThurberCostFunction extends SizedCostFunction {
+			public ThurberCostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(37, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < ThurberObservations; i++) {
+					double TSquared = ThurberData[2*i+1]*ThurberData[2*i+1];
+					double TCubed = TSquared*ThurberData[2*i+1];
+					double num = x[0] + x[1]*ThurberData[2*i+1] + x[2]*TSquared + x[3]*TCubed;
+					double denom = 1.0 + x[4]*ThurberData[2*i+1] + x[5]*TSquared + x[6]*TCubed;
+				    residuals[i] = ThurberData[2*i] - num/denom;
+				    if (jacobians != null && jacobians[0] != null) {
+				    	double denomSquared = denom*denom;
+						jacobians[0][7*i] = -1.0/denom;
+						jacobians[0][7*i+1] = -ThurberData[2*i+1]/denom;
+						jacobians[0][7*i+2] = -TSquared/denom;
+						jacobians[0][7*i+3] = -TCubed/denom;
+						jacobians[0][7*i+4] = num*ThurberData[2*i+1]/denomSquared;
+						jacobians[0][7*i+5] = num*TSquared/denomSquared;
+						jacobians[0][7*i+6] = num*TCubed/denomSquared;
+				    }
+				}
+
+				return true;
+			
+		  }
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < ThurberObservations; i++) {
+					double TSquared = ThurberData[2*i+1]*ThurberData[2*i+1];
+					double TCubed = TSquared*ThurberData[2*i+1];
+					double num = x[0] + x[1]*ThurberData[2*i+1] + x[2]*TSquared + x[3]*TCubed;
+					double denom = 1.0 + x[4]*ThurberData[2*i+1] + x[5]*TSquared + x[6]*TCubed;
+				    residuals[i] = ThurberData[2*i] - num/denom;
+				    if (jacobians != null && jacobians[0] != null) {
+				    	double denomSquared = denom*denom;
+						jacobians[0][jacobians_offset[0]+7*i] = -1.0/denom;
+						jacobians[0][jacobians_offset[0]+7*i+1] = -ThurberData[2*i+1]/denom;
+						jacobians[0][jacobians_offset[0]+7*i+2] = -TSquared/denom;
+						jacobians[0][jacobians_offset[0]+7*i+3] = -TCubed/denom;
+						jacobians[0][jacobians_offset[0]+7*i+4] = num*ThurberData[2*i+1]/denomSquared;
+						jacobians[0][jacobians_offset[0]+7*i+5] = num*TSquared/denomSquared;
+						jacobians[0][jacobians_offset[0]+7*i+6] = num*TCubed/denomSquared;
+				    }
+				}
+				
+				return true;
+			
+		  }
+		} // class ThurberCostFunction
+		
+		public void runThurberCostFunctionExample() {
+			// Close starting point does not converge correctly but distant starting point converges correctly
+			// Ceres Solver Report: Iterations: 26, Initial cost: 4.293687e+07, Final cost: 2.835423e+03, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 1288.2976156742648 b2 = 1491.5118668834182 b3 = 583.2272866856707
+			// b4 = 75.4722101925773 b5 = 0.9649226135303473 b6 = 0.39743586151259835
+			// b7 = 0.050812219452550225
+			// Actual answer b1 = 1.2881396800E+03  b2 = 1.4910792535E+03  b3 = 5.8323836877E+02
+			// b4 = 7.5416644291E+01  b5 = 9.6629502864E-01  b6 = 3.9797285797E-01
+			// b7 = 4.9727297349E-02
+	
+			// Ceres Solver Report: Iterations: 32, Initial cost: 2.264062e+06, Final cost: 2.821354e+03, Termination: CONVERGENCE
+			// Solved answer for distant starting point b1 = 1288.139682949544 b2 = 1491.0789699357167 b3 = 583.2381603137167
+			// b4 = 75.41660438249802 b5 = 0.9662947953772522 b6 = 0.39797274902159935
+			// b7 = 0.04972726589555047
+			// Actual answer b1 = 1.2881396800E+03  b2 = 1.4910792535E+03  b3 = 5.8323836877E+02
+			// b4 = 7.5416644291E+01  b5 = 9.6629502864E-01  b6 = 3.9797285797E-01
+			// b7 = 4.9727297349E-02
+
+			
+			int i;
+			double x[] = new double[7];
+			for (i = 0; i < 2; i++) {
+	        if (i == 0) {
+	        	x[0] = 1300;
+	        	x[1] = 1500;
+	        	x[2] = 500;
+	        	x[3] = 75;
+	        	x[4] = 1;
+	        	x[5] = 0.4;
+	        	x[6] = 0.05;
+	        }
+	        else {
+	        	x[0] = 1000;
+	        	x[1] = 1000;
+	        	x[2] = 400;
+	        	x[3] = 40;
+	        	x[4] = 0.7;
+	        	x[5] = 0.3;
+	        	x[6] = 0.03;
+	        }
+	        
+			CostFunction cost_function = new ThurberCostFunction();
+			ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, x);
+
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+			solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+			solverOptions.max_num_consecutive_invalid_steps = 200;
+			solverOptions.gradient_tolerance = epsilon;
+			solverOptions.parameter_tolerance = epsilon;
+			solverOptions.function_tolerance = 1.0E-12;
+			solverOptions.min_trust_region_radius = 1.0E-50;
+
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			System.out.println(solverSummary.BriefReport());
+			if (i == 0) {
+			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			else {
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
+			System.out.println("b7 = " + x[6]);
+			System.out.println("Actual answer b1 = 1.2881396800E+03  b2 = 1.4910792535E+03  b3 = 5.8323836877E+02");
+			System.out.println("b4 = 7.5416644291E+01  b5 = 9.6629502864E-01  b6 = 3.9797285797E-01");
+			System.out.println("b7 = 4.9727297349E-02");
+			} // for (i = 0; i < 2; i++)			
+		}
+		
+		final int BoxBODObservations = 6;
+		double BoxBODData[] = new double[]{
+				109,             1,
+			      149,             2,
+			      149,             3,
+			      191,             5,
+			      213,             7,
+			      224,            10
+		};
+		
+		class BoxBODCostFunction extends SizedCostFunction {
+			public BoxBODCostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < BoxBODObservations; i++) {
+					double exp = Math.exp(-x[1]*BoxBODData[2*i+1]);
+				    residuals[i] = BoxBODData[2*i] - x[0]*(1.0 - exp);
+				    if (jacobians != null && jacobians[0] != null) {
+						jacobians[0][2*i] = exp - 1.0;
+						jacobians[0][2*i+1] = -x[0]*exp*BoxBODData[2*i+1];
+				    }
+				}
+
+				return true;
+			
+		  }
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < BoxBODObservations; i++) {
+					double exp = Math.exp(-x[1]*BoxBODData[2*i+1]);
+				    residuals[i] = BoxBODData[2*i] - x[0]*(1.0 - exp);
+				    if (jacobians != null && jacobians[0] != null) {
+						jacobians[0][jacobians_offset[0]+2*i] = exp - 1.0;
+						jacobians[0][jacobians_offset[0]+2*i+1] = -x[0]*exp*BoxBODData[2*i+1];
+				    }
+				}
+				
+				return true;
+			
+		  }
+		} // class BoxBODCostFunction
+		
+		public void runBoxBODCostFunctionExample() {
+			// Close starting point converges to correct answer but distant starting point does not
+			// Ceres Solver Report: Iterations: 15, Initial cost: 2.439263e+04, Final cost: 5.840044e+02, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 213.80937962004887 b2 = 0.5472377008108861
+			// Actual answer b1 = 2.1380940889E+02  b2 = 5.4723748542E-01
+			
+			// Ceres Solver Report: Iterations: 36, Initial cost: 9.319119e+04, Final cost: 4.887770e+03, Termination: CONVERGENCE
+			// Solved answer for distant starting point b1 = 173.32052313996235 b2 = 4767.713101821059
+			// Actual answer b1 = 2.1380940889E+02  b2 = 5.4723748542E-01
+			
+			int i;
+			double x[] = new double[2];
+			for (i = 0; i < 2; i++) {
+	        if (i == 0) {
+	        	x[0] = 100;
+	        	x[1] = 0.75;
+	        }
+	        else {
+	        	x[0] = 1;
+	        	x[1] = 1;
+	        }
+	        
+			CostFunction cost_function = new BoxBODCostFunction();
+			ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, x);
+
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+			solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+			solverOptions.max_num_consecutive_invalid_steps = 200;
+			solverOptions.gradient_tolerance = epsilon;
+			solverOptions.parameter_tolerance = epsilon;
+			solverOptions.function_tolerance = 1.0E-12;
+			solverOptions.min_trust_region_radius = 1.0E-50;
+
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			System.out.println(solverSummary.BriefReport());
+			if (i == 0) {
+			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1]);
+			}
+			else {
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1]);
+			}
+			System.out.println("Actual answer b1 = 2.1380940889E+02  b2 = 5.4723748542E-01");
+			} // for (i = 0; i < 2; i++)			
+		}
+		
+		final int Rat42Observations = 9;
+		double Rat42Data[] = new double[]{
+				 8.930E0,        9.000E0,
+			      10.800E0,       14.000E0,
+			      18.590E0,       21.000E0,
+			      22.330E0,       28.000E0,
+			      39.350E0,       42.000E0,
+			      56.110E0,       57.000E0,
+			      61.730E0,       63.000E0,
+			      64.620E0,       70.000E0,
+			      67.080E0,       79.000E0
+		};
+		
+		class Rat42CostFunction extends SizedCostFunction {
+			public Rat42CostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(9, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < Rat42Observations; i++) {
+					double exp = Math.exp(x[1]-x[2]*Rat42Data[2*i+1]);
+					double denom = 1.0 + exp;
+				    residuals[i] = Rat42Data[2*i] - x[0]/denom;
+				    if (jacobians != null && jacobians[0] != null) {
+						jacobians[0][3*i] = -1.0/(1.0 + exp);
+						jacobians[0][3*i+1] = x[0]*exp/(denom*denom);
+						jacobians[0][3*i+2] = -x[0]*exp*Rat42Data[2*i+1]/(denom*denom);
+				    }
+				}
+
+				return true;
+			
+		  }
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < Rat42Observations; i++) {
+					double exp = Math.exp(x[1]-x[2]*Rat42Data[2*i+1]);
+					double denom = 1.0 + exp;
+				    residuals[i] = Rat42Data[2*i] - x[0]/denom;
+				    if (jacobians != null && jacobians[0] != null) {
+						jacobians[0][jacobians_offset[0]+3*i] = -1.0/(1.0 + exp);
+						jacobians[0][jacobians_offset[0]+3*i+1] = x[0]*exp/(denom*denom);
+						jacobians[0][jacobians_offset[0]+3*i+2] = -x[0]*exp*Rat42Data[2*i+1]/(denom*denom);
+				    }
+				}
+				
+				return true;
+			
+		  }
+		} // class Rat42CostFunction
+		
+		public void runRat42CostFunctionExample() {
+			// Correct answers for close and distant starting points
+			// Ceres Solver Report: Iterations: 18, Initial cost: 7.638101e+01, Final cost: 4.028261e+00, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 72.46224038410811 b2 = 2.618076685249202 b3 = 0.06735919327795407
+			// Actual answer b1 = 7.2462237576E+01 b2 = 2.6180768402E+00 b3 = 6.7359200066E-02
+	
+			// Ceres Solver Report: Iterations: 25, Initial cost: 9.957926e+03, Final cost: 4.028261e+00, Termination: CONVERGENCE
+			// Solved answer for distant starting point b1 = 72.46224028332767 b2 = 2.618076713458897b3 = 0.06735919398686918
+			// Actual answer b1 = 7.2462237576E+01  b2 = 2.6180768402E+00 b3 = 6.7359200066E-02
+			int i;
+			double x[] = new double[3];
+			for (i = 0; i < 2; i++) {
+	        if (i == 0) {
+	        	x[0] = 75;
+	        	x[1] = 2.5;
+	        	x[2] = 0.07;
+	        }
+	        else {
+	        	x[0] = 100;
+	        	x[1] = 1;
+	        	x[2] = 0.1;
+	        }
+	        
+			CostFunction cost_function = new Rat42CostFunction();
+			ProblemImpl problem = new ProblemImpl();
+			problem.AddResidualBlock(cost_function, null, x);
+
+			// Run the solver!
+			SolverOptions solverOptions = new SolverOptions();
+			solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
+			solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
+			solverOptions.max_num_consecutive_invalid_steps = 200;
+			solverOptions.gradient_tolerance = epsilon;
+			solverOptions.parameter_tolerance = epsilon;
+			solverOptions.function_tolerance = 1.0E-12;
+			solverOptions.min_trust_region_radius = 1.0E-50;
+
+			solverOptions.minimizer_progress_to_stdout = true;
+			SolverSummary solverSummary = new SolverSummary();
+			Solve(solverOptions, problem, solverSummary);
+			System.out.println(solverSummary.BriefReport());
+			if (i == 0) {
+			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
+			}
+			else {
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + "b3 = " + x[2]);
+			}
+			System.out.println("Actual answer b1 = 7.2462237576E+01  b2 = 2.6180768402E+00 b3 = 6.7359200066E-02");
+			} // for (i = 0; i < 2; i++)			
+		}
+		
+		final int Rat43Observations = 15;
+		double Rat43Data[] = new double[]{
+		16.08E0,     1.0E0,
+	      33.83E0,     2.0E0,
+	      65.80E0,     3.0E0,
+	      97.20E0,     4.0E0,
+	     191.55E0,     5.0E0,
+	     326.20E0,     6.0E0,
+	     386.87E0,     7.0E0,
+	     520.53E0,     8.0E0,
+	     590.03E0,     9.0E0,
+	     651.92E0,    10.0E0,
+	     724.93E0,    11.0E0,
+	     699.56E0,    12.0E0,
+	     689.96E0,    13.0E0,
+	     637.56E0,    14.0E0,
+	     717.41E0,    15.0E0
+		};
+		
+		class Rat43CostFunction extends SizedCostFunction {
+			public Rat43CostFunction() {
+				// number of residuals
+				// size of first parameter
+				super(15, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			}
+
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				for (i = 0; i < Rat43Observations; i++) {
+					double exp = Math.exp(x[1]-x[2]*Rat42Data[2*i+1]);
+					double denom = 1.0 + Math.pow(1.0 + exp,1.0/x[3]);
+				    residuals[i] = Rat43Data[2*i] - x[0]/denom;
+				    if (jacobians != null && jacobians[0] != null) {
+						jacobians[0][4*i] = -1.0/denom;
+						jacobians[0][4*i+1] = x[0]*Math.pow(1.0 + exp, 1.0/x[3] - 1.0)*exp/(denom*denom);
+						jacobians[0][4*i+2] = -x[0]*Math.pow(1.0 + exp, 1.0/x[3] - 1.0)*exp*Rat42Data[2*i+1]/(denom*denom);
+				    }
+				}
+
+				return true;
+			
+		  }
+			
+			public boolean Evaluate(Vector<double[]> parameters, double residuals[], double jacobians[][], int jacobians_offset[]) {
+				int i;
+				// Called by ResidualBlock.Evaluate
+				double x[] = parameters.get(0);
+				
+				
+				
+				return true;
+			
+		  }
+		} // class Rat43CostFunction
 }
