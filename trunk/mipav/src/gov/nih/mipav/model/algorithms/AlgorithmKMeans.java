@@ -1823,7 +1823,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        	    	    		groupNum[j] = k;
 	        	    	    	}
 	        	    	    } // for (k = 0; k < numberClusters; k++)
-	        	    	    totalWeight[groupNum[j]] += 1.0;
+	        	    	    if (groupNum[j] >= 0) {
+	        	    	        totalWeight[groupNum[j]] += 1.0;
+	        	    	    }
 	        	    	    if (originalGroupNum != groupNum[j]) {
 	        	    	    	changeOccurred = true;
 	        	    	    }
@@ -1844,7 +1846,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        	    	    		groupNum[j] = k;
 	        	    	    	}
 	        	    	    } // for (k = 0; k < numberClusters; k++)
-	        	    	    totalWeight[groupNum[j]] += 1.0;
+	        	    	    if (groupNum[j] >= 0) {
+	        	    	        totalWeight[groupNum[j]] += 1.0;
+	        	    	    }
 	        	    	    if (originalGroupNum != groupNum[j]) {
 	        	    	    	changeOccurred = true;
 	        	    	    }
