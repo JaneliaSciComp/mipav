@@ -154,11 +154,11 @@ public class PlugInDialogFITBIR extends JFrame
     private static boolean ddUseAuthService = false;
     
     private enum BricsInstance {
-        FITBIR, PDBP, NEI_BRICS, NINR, CNRM, CISTAR, GRDR, COVID19, NTRR;
+        FITBIR, PDBP, NEI_BRICS, NINR, CNRM, CISTAR, GRDR, COVID19, NTRR, BRICS;
     }
     
     private enum BricsEnv {
-        Prod, Demo, Stage, UAT, Dev;
+        Prod, Demo, Stage, UAT, Dev, Intramural;
     }
     
     private BricsInstance selectedDictionaryInstance = BricsInstance.FITBIR;
@@ -10036,6 +10036,10 @@ public class PlugInDialogFITBIR extends JFrame
             ddServer = dd;
             authServer = auth;
         }
+        
+        public String toString() {
+            return "DD Server: " + ddServer + "\tAuth Server: " + authServer;
+        }
     }
     
     protected void readCmdLineDictionarySelection() {
@@ -10094,6 +10098,8 @@ public class PlugInDialogFITBIR extends JFrame
                 return "COVID-19";
             case NTRR:
                 return "NTRR";
+            case BRICS:
+                return "BRICS";
             default:
                 return inst.toString();
         }
@@ -10118,6 +10124,8 @@ public class PlugInDialogFITBIR extends JFrame
             return BricsInstance.COVID19;
         } else if (inst.equalsIgnoreCase(BricsInstance.NTRR.toString()) || inst.equalsIgnoreCase("NTI")) {
             return BricsInstance.NTRR;
+        } else if (inst.equalsIgnoreCase(BricsInstance.BRICS.toString()) || inst.equalsIgnoreCase("BRICS")) {
+            return BricsInstance.BRICS;
         }
         
         throw new IllegalArgumentException("Unknown BRICS instance selection string: " + inst);
@@ -10134,6 +10142,8 @@ public class PlugInDialogFITBIR extends JFrame
             return BricsEnv.UAT;
         } else if (env.equalsIgnoreCase(BricsEnv.Dev.toString())) {
             return BricsEnv.Dev;
+        } else if (env.equalsIgnoreCase(BricsEnv.Intramural.toString())) {
+            return BricsEnv.Intramural;
         }
         
         throw new IllegalArgumentException("Unknown BRICS environment selection string: " + env);
@@ -10151,6 +10161,7 @@ public class PlugInDialogFITBIR extends JFrame
             case GRDR:
             case COVID19:
             case NTRR:
+            case BRICS:
             default:
                 return "All Diseases";
         }
@@ -10200,6 +10211,8 @@ public class PlugInDialogFITBIR extends JFrame
 //        }
         
         DictionaryConfigItem item = dictionaryConfigTable.get(instance.toString() + "_" + env.toString());
+        
+        //System.err.println(item);
         
         return item;
     }
