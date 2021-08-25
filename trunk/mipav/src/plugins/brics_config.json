@@ -68,8 +68,8 @@
 	 }],
 	 "NEI_BRICS_UAT": [
 	 {
-	 	"dictionaryServer": "",
-	 	"authServer": ""
+	 	"dictionaryServer": "https://bricsnei-dd-uat.cit.nih.gov/",
+	 	"authServer": "https://bricsnei-uat.cit.nih.gov/"
 	 }],
 	 "NEI_BRICS_Dev": [
 	 {
@@ -94,8 +94,8 @@
 	 }],
 	 "NINR_UAT": [
 	 {
-	 	"dictionaryServer": "",
-	 	"authServer": ""
+	 	"dictionaryServer": "https://cdrns-dd-uat.cit.nih.gov/",
+	 	"authServer": "https://cdrns-uat.cit.nih.gov"
 	 }],
 	 "NINR_Dev": [
 	 {
@@ -231,5 +231,16 @@
 	 {
 	 	"dictionaryServer": "",
 	 	"authServer": ""
+	 }],
+	 
+	 "BRICS_Intramural": [
+	 {
+	 	"dictionaryServer": "https://brics-dd-intramural.cit.nih.gov/",
+	 	"authServer": "https://brics-intramural.cit.nih.gov/"
+	 }],
+	 "BRICS_Demo": [
+	 {
+	 	"dictionaryServer": "https://brics-dd-demo.cit.nih.gov/",
+	 	"authServer": "https://brics-demo.cit.nih.gov/"
 	 }]
 }
