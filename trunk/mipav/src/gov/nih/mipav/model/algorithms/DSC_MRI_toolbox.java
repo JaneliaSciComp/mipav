@@ -2650,6 +2650,8 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		}
 
 		ROISum = 0;
+		int ROISumNoInfinity = 0;
+		boolean infinityFound;
 		for (x = 0; x < nC; x++) {
 			for (y = 0; y < nR; y++) {
 				if (REG[x][y] <= threshold) {
@@ -2658,6 +2660,23 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				if (ROI[x][y] == 1) {
 					ROISum++;
 				}
+				
+			}
+		}
+		
+		for (c = 0; c < nC; c++) {
+			for (r = 0; r < nR; r++) {
+				infinityFound = false;
+				for (t = 0; t < nT; t++) {
+					if (Double.isInfinite(AIFslice[c][r][t])) {
+						infinityFound = true;
+					}
+				}
+				if ((ROI[c][r] == 1) && (!infinityFound)) {
+					ROISumNoInfinity++;
+					maskAIF[c][r] = ROI[c][r];
+				}
+				
 			}
 		}
 
@@ -2666,10 +2685,10 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			UI.setDataText("Arterial voxels extraction\n");
 		}
 		// 3.1) Preparation of the matrix containing the data
-		dati2D = new double[ROISum][nT];
+		dati2D = new double[ROISumNoInfinity][nT];
 		for (i = 0, c = 0; c < nC; c++) {
 			for (r = 0; r < nR; r++) {
-				if (ROI[c][r] == 1) {
+				if (maskAIF[c][r] == 1) {
 					for (t = 0; t < nT; t++) {
 						dati2D[i][t] = AIFslice[c][r][t];
 					}
@@ -2677,11 +2696,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 				}
 			}
 		}
-		for (c = 0; c < nC; c++) {
-			for (r = 0; r < nR; r++) {
-				maskAIF[c][r] = ROI[c][r];
-			}
-		}
+		
 
 		// 3.2) I apply the hierarchical cluster algorithm recursively
 
