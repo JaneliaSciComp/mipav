@@ -1861,7 +1861,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         	    	}
         	    	for (j = 0; j < subsampleSize; j++) {
         	    		for (k = 0; k < nDims; k++) {
-        	    			centroidPos[k][groupNum[j]] += unionCM[k][j];
+        	    			if (groupNum[j] >= 0) {
+        	    			  centroidPos[k][groupNum[j]] += unionCM[k][j];
+        	    			}
         	    		}
         	    	}
         	    	clustersWithoutPoints = 0;
