@@ -2582,19 +2582,19 @@ public class CeresSolverNISTTest extends CeresSolver {
 	} // class Lanczos2CostFunction
 	
 	public void runLanczos2CostFunctionExample() {
-		// Both near and far starting points converge to incorrect answers
-		// Ceres Solver Report: Iterations: 47, Initial cost: 3.939434e+01, Final cost: 2.958715e-06, Termination: CONVERGENCE
-		// Solved answer for close starting point b1 = 0.0744512023369152 b2 = 0.7060012469294235 b3 = 1.5110409756535297
-		// b4 = 3.438703548045676 b5 = 0.9287832601570075 b6 = 5.6675744431833275
+		// Converges correctly for the close starting point but not for the distant starting point
+		// Ceres Solver Report: Iterations: 8, Initial cost: 3.939434e+01, Final cost: 1.114971e-11, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 0.09625113256640844 b2 = 1.00573380173742 b3 = 0.8642471671999898
+		// b4 = 3.0078290493705206 b5 = 1.5529013086563197 b6 = 5.002880034282495
+		// Actual answer b1 =  9.6251029939E-02 b2 = 1.0057332849E+00  b3 = 8.6424689056E-01
+		// b4 = 3.0078283915E+00  b5 = 1.5529016879E+00  b6 = 5.0028798100E+00
+	
+		// Ceres Solver Report: Iterations: 67, Initial cost: 1.348752e+02, Final cost: 2.870549e-08, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 0.2269482805104588 b2 = 1.4383523777226435 b3 = 1.5766616959013724
+		// b4 = 3.89805243254362 b5 = 0.7098550739015765 b6 = 5.634088644311919
 		// Actual answer b1 =  9.6251029939E-02 b2 = 1.0057332849E+00  b3 = 8.6424689056E-01
 		// b4 = 3.0078283915E+00  b5 = 1.5529016879E+00  b6 = 5.0028798100E+00
 		
-		// Ceres Solver Report: Iterations: 37, Initial cost: 1.348752e+02, Final cost: 2.979472e-07, Termination: CONVERGENCE
-		// Solved answer for distant starting point b1 = 0.32918962985041195 b2 = 1.667868096013174 b3 = 1.9902758493789343
-		// b4 = 4.338568924175009 b5 = 0.19405323382598838 b6 = 6.601327751544162
-		// Actual answer b1 =  9.6251029939E-02 b2 = 1.0057332849E+00  b3 = 8.6424689056E-01
-		// b4 = 3.0078283915E+00  b5 = 1.5529016879E+00  b6 = 5.0028798100E+00
-
 		int i;
 		double x[] = new double[6];
 		for (i = 0; i < 2; i++) {
@@ -2628,6 +2628,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 		solverOptions.parameter_tolerance = epsilon;
 		solverOptions.function_tolerance = 1.0E-8;
 		solverOptions.min_trust_region_radius = 1.0E-50;
+		solverOptions.initial_trust_region_radius = 1e12;
 
 		solverOptions.minimizer_progress_to_stdout = true;
 		SolverSummary solverSummary = new SolverSummary();
