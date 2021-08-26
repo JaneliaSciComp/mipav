@@ -3,11 +3,13 @@ package gov.nih.mipav.model.algorithms;
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
+import gov.nih.mipav.model.algorithms.CeresSolver.LevenbergMarquardtStrategy;
 import gov.nih.mipav.model.algorithms.CeresSolver.MinimizerType;
 import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
 import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.SolverOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.SolverSummary;
+import gov.nih.mipav.model.algorithms.CeresSolver.TrustRegionStrategyOptions;
 import gov.nih.mipav.model.algorithms.CeresSolver.TrustRegionStrategyType;
 import gov.nih.mipav.model.algorithms.CeresSolverTest.CurveFittingCostFunction;
 
@@ -787,18 +789,20 @@ public class CeresSolverNISTTest extends CeresSolver {
 	} // class Lanczos3CostFunction
 	
 	public void runLanczos3CostFunctionExample() {
-		// Both near and far starting points converge to incorrect answers
-		// Ceres Solver Report: Iterations: 53, Initial cost: 3.939461e+01, Final cost: 2.924861e-06, Termination: CONVERGENCE
-		// Solved answer for close starting point b1 = 0.07395951695875314 b2 = 0.7029289338395481 b3 = 1.5047932073070354
-		// b4 = 3.4330341994293527 b5 = 0.9355133905699761 b6 = 5.659476614670378
+		// Lanczos3 converges correctly from close starting point but not from distant starting point
+		// Ceres Solver Report: Iterations: 9, Initial cost: 3.939461e+01, Final cost: 8.058597e-09, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 0.08681645456885795 b2 = 0.9549812356369034 b3 = 0.8440078760768797
+		// b4 = 2.9515954390246435 b5 = 1.582568449130629 b6 = 4.986356592336097
 		// Actual answer b1 =  8.6816414977E-02  b2 = 9.5498101505E-01  b3 = 8.4400777463E-01
-		// b4 = 2.9515951832E+00  b5 = 1.5825685901E+00    b6 = 4.9863565084E+00
-		// Ceres Solver Report: Iterations: 39, Initial cost: 1.348757e+02, Final cost: 2.189192e-07, Termination: CONVERGENCE
-		// Solved answer for distant starting point b1 = 0.3156011255976063 b2 = 1.6410130068543172 b3 = 1.948137899383847
-		// b4 = 4.287347747370616 b5 = 0.24975840812820052 b6 = 6.392080193393909
+		// b4 = 2.9515951832E+00  b5 = 1.5825685901E+00  b6 = 4.9863565084E+00
+		// Correct answer has Final cost: 8.058597e-09
+	
+		// Ceres Solver Report: Iterations: 92, Initial cost: 1.348757e+02, Final cost: 3.376038e-08, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 0.21532361492891 b2 = 1.409987408162066 b3 = 1.4832539752847722
+		// b4 = 3.8193138589034064 b5 = 0.8148784505777017 b6 = 5.525754081429623
 		// Actual answer b1 =  8.6816414977E-02  b2 = 9.5498101505E-01  b3 = 8.4400777463E-01
-		// b4 = 2.9515951832E+00  b5 = 1.5825685901E+00    b6 = 4.9863565084E+00
-
+		// b4 = 2.9515951832E+00  b5 = 1.5825685901E+00  b6 = 4.9863565084E+00
+		// Correct answer has Final cost: 8.058597e-09
 		int i;
 		double x[] = new double[6];
 		for (i = 0; i < 2; i++) {
@@ -819,6 +823,7 @@ public class CeresSolverNISTTest extends CeresSolver {
         	x[5] = 7.6;
         }
         
+        
 		CostFunction cost_function = new Lanczos3CostFunction();
 		ProblemImpl problem = new ProblemImpl();
 		problem.AddResidualBlock(cost_function, null, x);
@@ -830,8 +835,11 @@ public class CeresSolverNISTTest extends CeresSolver {
 		solverOptions.max_num_consecutive_invalid_steps = 200;
 		solverOptions.gradient_tolerance = epsilon;
 		solverOptions.parameter_tolerance = epsilon;
-		solverOptions.function_tolerance = 1.0E-8;
+		solverOptions.function_tolerance = 1.0E-12;
 		solverOptions.min_trust_region_radius = 1.0E-50;
+		solverOptions.initial_trust_region_radius = 1e12;
+		solverOptions.min_relative_decrease = 1.0E-1;
+		solverOptions.min_lm_diagonal = 1E-9;
 
 		solverOptions.minimizer_progress_to_stdout = true;
 		SolverSummary solverSummary = new SolverSummary();
@@ -846,6 +854,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 		System.out.println("b4 = " + x[3] + " b5 = " + x[4] + " b6 = " + x[5]);
 		System.out.println("Actual answer b1 =  8.6816414977E-02  b2 = 9.5498101505E-01  b3 = 8.4400777463E-01");
 		System.out.println("b4 = 2.9515951832E+00  b5 = 1.5825685901E+00  b6 = 4.9863565084E+00");
+		System.out.println("Correct answer has Final cost: 8.058597e-09");
 		} // for (i = 0; i < 2; i++)			
 	}
 	
