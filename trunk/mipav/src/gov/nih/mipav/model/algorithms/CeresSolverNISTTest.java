@@ -2858,19 +2858,19 @@ public class CeresSolverNISTTest extends CeresSolver {
 	} // class Kirby2CostFunction
 	
 	public void runKirby2CostFunctionExample() {
-		// Close starting point converges slightly away from the correct answer but distant starting point converges correctly
-		// Ceres Solver Report: Iterations: 37, Initial cost: 4.938605e+02, Final cost: 1.952821e+00, Termination: CONVERGENCE
-		// Solved answer for close starting point b1 = 1.679027578741968 b2 = -0.1395832355062664 b3 = 0.0026000898975488858
-		// b4 = -0.0017165527020446113 b5 = 2.1677306774229906E-5
+		// Both close and distant starting points converge correctly
+		// Ceres Solver Report: Iterations: 7, Initial cost: 4.938605e+02, Final cost: 1.952537e+00, Termination: CONVERGENCE
+		// Solved answer for close starting point b1 = 1.674506089718086 b2 = -0.13927396597854952 b3 = 0.0025961179838818005
+		// b4 = -0.0017241813655015676 b5 = 2.1664801963951228E-5
+		// Actual answer b1 = 1.6745063063E+00  b2 = -1.3927397867E-01  b3 = 2.5961181191E-03
+		// b4 = -1.7241811870E-03  b5 = 2.1664802578E-05
+	
+		// Ceres Solver Report: Iterations: 8, Initial cost: 1.866427e+05, Final cost: 1.952537e+00, Termination: CONVERGENCE
+		// Solved answer for distant starting point b1 = 1.6745055906931134 b2 = -0.13927393672308427 b3 = 0.0025961176722667733
+		// b4 = -0.0017241817770806426 b5 = 2.1664800549879833E-5
 		// Actual answer b1 = 1.6745063063E+00  b2 = -1.3927397867E-01  b3 = 2.5961181191E-03
 		// b4 = -1.7241811870E-03  b5 = 2.1664802578E-05
 		
-		// Ceres Solver Report: Iterations: 25, Initial cost: 1.866427e+05, Final cost: 1.952537e+00, Termination: CONVERGENCE
-		// Solved answer for distant starting point b1 = 1.6745055552863355 b2 = -0.13927394086401046 b3 = 0.002596117773416834
-		// b4 = -0.0017241814681833287 b5 = 2.1664800623609162E-5
-		// Actual answer b1 = 1.6745063063E+00  b2 = -1.3927397867E-01  b3 = 2.5961181191E-03
-		// b4 = -1.7241811870E-03  b5 = 2.1664802578E-05
-
 		int i;
 		double x[] = new double[6];
 		for (i = 0; i < 2; i++) {
@@ -2902,6 +2902,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 		solverOptions.parameter_tolerance = epsilon;
 		solverOptions.function_tolerance = 1.0E-12;
 		solverOptions.min_trust_region_radius = 1.0E-50;
+		solverOptions.initial_trust_region_radius = 1e12;
 
 		solverOptions.minimizer_progress_to_stdout = true;
 		SolverSummary solverSummary = new SolverSummary();
@@ -3476,6 +3477,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 	
 	public void runNelsonCostFunctionExample() {
 		// Neither close nor distant starting points converge to the correct answer
+		
 		// Ceres Solver Report: Iterations: 33, Initial cost: 2.424496e+01, Final cost: 2.047241e+00, Termination: CONVERGENCE
 		// Solved answer for close starting point b1 = 2.563805346519076 b2 = 4.2631218361602805E-9 b3 = -0.05841564628351817
 		// Actual answer b1 = 2.5906836021E+00  b2 = 5.6177717026E-09  b3 = -5.7701013174E-02
@@ -3522,6 +3524,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 			System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
 		}
 		System.out.println("Actual answer b1 = 2.5906836021E+00  b2 = 5.6177717026E-09  b3 = -5.7701013174E-02");
+		System.out.println("Correct answer has Final cost: 1.898842e+00");
 		} // for (i = 0; i < 2; i++)
 	}
 		
@@ -3920,22 +3923,23 @@ public class CeresSolverNISTTest extends CeresSolver {
 		} // class ENSOCostFunction
 		
 		public void runENSOCostFunctionExample() {
-			// close starting point comes very close to the correct answer but misses and the distant starting point misses
-			// Ceres Solver Report: Iterations: 33, Initial cost: 4.574878e+02, Final cost: 3.942700e+02, Termination: CONVERGENCE
-			// Solved answer for close starting point b1 = 10.510689511420738 b2 = 3.076274580748052 b3 = 0.5328774751874514
-			// b4 = 44.3135489235551 b5 = -1.622966613656837 b6 = 0.5263209215635878
-			// b7 = 26.889145676562666 b8 = 0.21299293151186785 b9 = 1.4963896737694535
+			// Close starting point converges correctly but distant starting point does not
+			//Ceres Solver Report: Iterations: 32, Initial cost: 4.574878e+02, Final cost: 3.942699e+02, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 10.510749198082399 b2 = 3.0762128023156836 b3 = 0.5328013770728188
+			// b4 = 44.3110890932761 b5 = -1.6231428094361744 b6 = 0.5255450407232067
+			// b7 = 26.887614875083276 b8 = 0.21232327464416292 b9 = 1.4966869843238173
 			// Actual answer b1 = 1.0510749193E+01  b2 = 3.0762128085E+00  b3 = 5.3280138227E-01
 			// b4 = 4.4311088700E+01 b5 = -1.6231428586E+00 b6 = 5.2554493756E-01
 			// b7 = 2.6887614440E+01 b8 = 2.1232288488E-01 b9 = 1.4966870418E+00
 		
-			// Ceres Solver Report: Iterations: 32, Initial cost: 5.769720e+02, Final cost: 4.131780e+02, Termination: CONVERGENCE
-			// Solved answer for distant starting point b1 = 10.545209427214765 b2 = 3.089273228862537 b3 = 0.5488961070851492
-			// b4 = 43.106471438158295 b5 = -1.7843494506664854 b6 = -0.12063760308981292
-			// b7 = 26.36554804468142 b8 = -0.4442124911731743 b9 = 0.9328342427130647
+			// Ceres Solver Report: Iterations: 35, Initial cost: 5.769720e+02, Final cost: 4.016700e+02, Termination: CONVERGENCE
+			// Solved answer for distant starting point b1 = 10.534657448711986 b2 = 3.081814314579829 b3 = 0.5549784973981926
+			// b4 = 43.47667244910917 b5 = -1.728609115375931 b6 = 0.06440100739865869
+			// b7 = 26.652587002482342 b8 = -0.2234976889135844 b9 = 1.1998572898213142
 			// Actual answer b1 = 1.0510749193E+01  b2 = 3.0762128085E+00  b3 = 5.3280138227E-01
 			// b4 = 4.4311088700E+01 b5 = -1.6231428586E+00 b6 = 5.2554493756E-01
 			// b7 = 2.6887614440E+01 b8 = 2.1232288488E-01 b9 = 1.4966870418E+00
+			
 			int i;
 			double x[] = new double[9];
 			for (i = 0; i < 2; i++) {
@@ -3975,6 +3979,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 			solverOptions.parameter_tolerance = epsilon;
 			solverOptions.function_tolerance = 1.0E-14;
 			solverOptions.min_trust_region_radius = 1.0E-60;
+			solverOptions.initial_trust_region_radius = 1e12;
 
 			solverOptions.minimizer_progress_to_stdout = true;
 			SolverSummary solverSummary = new SolverSummary();
