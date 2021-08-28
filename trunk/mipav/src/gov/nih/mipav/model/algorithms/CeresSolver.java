@@ -12694,6 +12694,9 @@ public abstract class CeresSolver {
 
 		  double inner_iteration_start_time = 1.0E-3 * System.currentTimeMillis();
 		  ++solver_summary_.num_inner_iteration_steps;
+		  if (inner_iteration_x_ == null) {
+			  inner_iteration_x_ = new Vector<Double>();
+		  }
 		  inner_iteration_x_.clear();
 		  for (i = 0; i < candidate_x_.size(); i++) {
 			  inner_iteration_x_.add(candidate_x_.get(i));
