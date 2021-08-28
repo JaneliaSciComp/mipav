@@ -4103,15 +4103,15 @@ public class CeresSolverNISTTest extends CeresSolver {
 		} // class ThurberCostFunction
 		
 		public void runThurberCostFunctionExample() {
-			// Close starting point does not converge correctly but distant starting point converges correctly
-			// Ceres Solver Report: Iterations: 26, Initial cost: 4.293687e+07, Final cost: 2.835423e+03, Termination: CONVERGENCE
-			// Solved answer for close starting point b1 = 1288.2976156742648 b2 = 1491.5118668834182 b3 = 583.2272866856707
-			// b4 = 75.4722101925773 b5 = 0.9649226135303473 b6 = 0.39743586151259835
-			// b7 = 0.050812219452550225
+			// Converges correctly for close and distant starting points
+			// Ceres Solver Report: Iterations: 28, Initial cost: 4.293687e+07, Final cost: 2.821354e+03, Termination: CONVERGENCE
+			// Solved answer for close starting point b1 = 1288.1396791829395 b2 = 1491.0793947094453 b3 = 583.2384672770386
+			// b4 = 75.41666354796357 b5 = 0.9662951237848489 b6 = 0.39797290134914665
+			// b7 = 0.049727325710259486
 			// Actual answer b1 = 1.2881396800E+03  b2 = 1.4910792535E+03  b3 = 5.8323836877E+02
 			// b4 = 7.5416644291E+01  b5 = 9.6629502864E-01  b6 = 3.9797285797E-01
 			// b7 = 4.9727297349E-02
-	
+		
 			// Ceres Solver Report: Iterations: 32, Initial cost: 2.264062e+06, Final cost: 2.821354e+03, Termination: CONVERGENCE
 			// Solved answer for distant starting point b1 = 1288.139682949544 b2 = 1491.0789699357167 b3 = 583.2381603137167
 			// b4 = 75.41660438249802 b5 = 0.9662947953772522 b6 = 0.39797274902159935
@@ -4119,7 +4119,6 @@ public class CeresSolverNISTTest extends CeresSolver {
 			// Actual answer b1 = 1.2881396800E+03  b2 = 1.4910792535E+03  b3 = 5.8323836877E+02
 			// b4 = 7.5416644291E+01  b5 = 9.6629502864E-01  b6 = 3.9797285797E-01
 			// b7 = 4.9727297349E-02
-
 			
 			int i;
 			double x[] = new double[7];
@@ -4156,6 +4155,12 @@ public class CeresSolverNISTTest extends CeresSolver {
 			solverOptions.parameter_tolerance = epsilon;
 			solverOptions.function_tolerance = 1.0E-12;
 			solverOptions.min_trust_region_radius = 1.0E-50;
+			if (i == 0) {
+			    solverOptions.initial_trust_region_radius = 1e12;
+			}
+			else {
+				solverOptions.initial_trust_region_radius = 1e4;
+			}
 
 			solverOptions.minimizer_progress_to_stdout = true;
 			SolverSummary solverSummary = new SolverSummary();
@@ -4657,7 +4662,7 @@ public class CeresSolverNISTTest extends CeresSolver {
 			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
 			}
 			else {
-				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + "b3 = " + x[2]);
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
 			}
 			System.out.println("Actual answer b1 = 1.5543827178E+00  b2 = 4.0888321754E+00 b3 = 4.5154121844E+02");
 			} // for (i = 0; i < 2; i++)			
@@ -4912,9 +4917,10 @@ public class CeresSolverNISTTest extends CeresSolver {
 			    System.out.println("Solved answer for close starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
 			}
 			else {
-				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + "b3 = " + x[2]);
+				System.out.println("Solved answer for distant starting point b1 = " + x[0] + " b2 = " + x[1] + " b3 = " + x[2]);
 			}
 			System.out.println("Actual answer b1 = -2.5235058043E+03  b2 = 4.6736564644E+01 b3 = 9.3218483193E-01");
+			System.out.println("Correct answer has Final cost: 2.620237e-04");
 			} // for (i = 0; i < 2; i++)			
 		}
 }
