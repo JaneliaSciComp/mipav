@@ -25183,9 +25183,15 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	        	    if (jacobian != null) {
 	        	    	for (i = 0; i < 16; i++) {
 	        	    		double exponent = Math.exp(x1/(xSeries[i] + x2));
-                            jacobian[0][jacobians_offset[0]+i] = exponent;
-                            jacobian[1][jacobians_offset[1]+i] = (x0/(xSeries[i] + x2))* exponent;
-                            jacobian[2][jacobians_offset[2]+i] = -(x0*x1/((xSeries[i] + x2)*(xSeries[i] + x2))) * exponent;
+	        	    		if (jacobian[0] != null) {
+                                jacobian[0][jacobians_offset[0]+i] = exponent;
+	        	    		}
+	        	    		if (jacobian[1] != null) {
+                                jacobian[1][jacobians_offset[1]+i] = (x0/(xSeries[i] + x2))* exponent;
+	        	    		}
+	        	    		if (jacobian[2] != null) {
+                                jacobian[2][jacobians_offset[2]+i] = -(x0*x1/((xSeries[i] + x2)*(xSeries[i] + x2))) * exponent;
+	        	    		}
                         }
 	        	    }
 	        	    return true;
@@ -25232,6 +25238,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					x1[0] = 400000;
 					x2[0] = 25000;
 				}
+				
 				CostFunction cost_function = new MeyerFunction();
 				ProblemImpl problem = new ProblemImpl();
 				problem.AddResidualBlock(cost_function, null, x0, x1, x2);
@@ -25662,10 +25669,18 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 	        	    	for (i = 0; i < 11; i++) {
                         	double denom = (xSeries[i]*xSeries[i] + x2*xSeries[i] + x3);
                         	double top = (xSeries[i]*xSeries[i] + x1*xSeries[i]);
-                            jacobian[0][jacobians_offset[0]+i] = top/denom;
-                            jacobian[1][jacobians_offset[1]+i] = x0*xSeries[i]/denom;
-                            jacobian[2][jacobians_offset[2]+i] = -x0*xSeries[i]*top/(denom*denom);
-                            jacobian[3][jacobians_offset[3]+i]= -x0*top/(denom*denom);
+                        	if (jacobian[0] != null) {
+                                jacobian[0][jacobians_offset[0]+i] = top/denom;
+                        	}
+                        	if (jacobian[1] != null) {
+                                jacobian[1][jacobians_offset[1]+i] = x0*xSeries[i]/denom;
+                        	}
+                        	if (jacobian[2] != null) {
+                        		jacobian[2][jacobians_offset[2]+i] = -x0*xSeries[i]*top/(denom*denom);
+                        	}
+                        	if (jacobian[3] != null) {
+                                jacobian[3][jacobians_offset[3]+i]= -x0*top/(denom*denom);
+                        	}
                         }
 	        	    }
 	        	    return true;
