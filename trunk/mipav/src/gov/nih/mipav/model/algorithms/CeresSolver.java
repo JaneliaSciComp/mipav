@@ -22272,7 +22272,7 @@ public abstract class CeresSolver {
 				int state_start = parameter_blocks_[i].state_start();
 				if (i < num_parameter_blocks-1) {
 				    state_finish = parameter_blocks_[i+1].state_start() - 1;
-				    if (state_finish < state_start) {
+				    if ((state_finish < state_start) || (state_finish > parameter_blocks_[i].state().length-1)) {
 				    	state_finish = parameter_blocks_[i].state().length-1;	
 				    }
 				}
@@ -22417,7 +22417,7 @@ public abstract class CeresSolver {
 				int state_start = parameter_blocks_[i].state_start();
 				if (i < num_parameter_blocks-1) {
 				    state_finish = parameter_blocks_[i+1].state_start() - 1;
-				    if (state_finish < state_start) {
+				    if ((state_finish < state_start) || (state_finish > parameter_blocks_[i].state().length-1)){
 				    	state_finish = parameter_blocks_[i].state().length-1;	
 				    }
 				}
