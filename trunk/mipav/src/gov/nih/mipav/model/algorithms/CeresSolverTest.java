@@ -25207,15 +25207,16 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				// Correct answer has Chi-squared = 87.9458
 				
 				// For Levenberg Marquardt:
-				// Ceres Solver Report: Iterations: 35, Initial cost: 8.468039e+08, Final cost: 1.270867e+06, Termination: CONVERGENCE
-				// Close starting point solved answer x0[0] = 0.056786838931787834 x1[0] = 4171.215063448563 x2[0] = 262.569099962954
+				// Ceres Solver Report: Iterations: 55, Initial cost: 8.468039e+08, Final cost: 8.997266e+04, Termination: CONVERGENCE
+				// Close starting point solved answer x0[0] = 0.17730166629707034 x1[0] = 3648.793292602876 x2[0] = 249.31665059057914
 				// Correct answers are a0 = 5.6096364710E-03, a1 = 6.1813463463E+03, a2 = 3.4522363462E+02
 				// Correct answer has Chi-squared = 87.9458
-			
-				// Ceres Solver Report: Iterations: 34, Initial cost: 2.257621e+15, Final cost: 1.945382e+09, Termination: CONVERGENCE
-				// Distant starting point solved answer x0[0] = 16.140183805390848 x1[0] = 8479406.435294274 x2[0] = -284999.69838729803
+		
+				// Ceres Solver Report: Iterations: 58, Initial cost: 2.257621e+15, Final cost: 7.018985e+08, Termination: CONVERGENCE
+				// Distant starting point solved answer x0[0] = 5.2762423068794E-4 x1[0] = 1105377.7432702177 x2[0] = 64816.03191239937
 				// Correct answers are a0 = 5.6096364710E-03, a1 = 6.1813463463E+03, a2 = 3.4522363462E+02
 				// Correct answer has Chi-squared = 87.9458
+				
 				double x0[] = new double[1];
 				double x1[] = new double[1];
 				double x2[] = new double[1];
@@ -25250,6 +25251,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				solverOptions.gradient_tolerance = epsilon;
 				solverOptions.parameter_tolerance = epsilon;
 				solverOptions.min_trust_region_radius = 1.0E-100;
+				solverOptions.initial_trust_region_radius = 1e12;
 				// Solver::Summary summary;
 				optionsValid = true;
 				Solve(solverOptions, problem, solver.summary);
@@ -25685,15 +25687,16 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				// Correct answer has Chi-squared = 3.07505E-4
 				
 				// For Levenberg Marquardt:
-				// Ceres Solver Report: Iterations: 21, Initial cost: 2.656586e-03, Final cost: 3.586655e-04, Termination: CONVERGENCE
-				// Close starting point Solved answer x0[0] = 0.16922110916906416 x1[0] = 1.2672308065718392 x2[0] = 0.5549831466680701 x3[0] = 0.575404853749921
+				// Ceres Solver Report: Iterations: 30, Initial cost: 2.656586e-03, Final cost: 2.236023e-04, Termination: CONVERGENCE
+				// Close starting point Solved answer x0[0] = 0.18793370588239397 x1[0] = 0.5758780935570138 x2[0] = 0.29608404093961693 x3[0] = 0.30780612406332725
+				// Correct answer is x0 = 1.9280693458E-01, x1 = 1.9128232873E-01, x2 = 1.2305650693E-01, x3 = 1.3606233068E-01
+				// Correct answer has Chi-squared = 3.07505E-4
+			
+				// Ceres Solver Report: Iterations: 66, Initial cost: 4.487727e+02, Final cost: 1.286430e-03, Termination: CONVERGENCE
+				// Distant starting point Solved answer x0[0] = 8.15880274112077 x1[0] = 3271.7985119680097 x2[0] = 104947.69651530164 x3[0] = 58512.734934132866
 				// Correct answer is x0 = 1.9280693458E-01, x1 = 1.9128232873E-01, x2 = 1.2305650693E-01, x3 = 1.3606233068E-01
 				// Correct answer has Chi-squared = 3.07505E-4
 				
-				// Ceres Solver Report: Iterations: 31, Initial cost: 4.487727e+02, Final cost: 5.346575e-03, Termination: CONVERGENCE
-				// Distant starting point Solved answer x0[0] = -115.91060504498512 x1[0] = 9.169934970012138 x2[0] = -4759.465304212874 x3[0] = -2726.7862915183264
-				// Correct answer is x0 = 1.9280693458E-01, x1 = 1.9128232873E-01, x2 = 1.2305650693E-01, x3 = 1.3606233068E-01
-				// Correct answer has Chi-squared = 3.07505E-4
 				int i;
 				double x0[] = new double[1];
 				double x1[] = new double[1];
@@ -25725,12 +25728,15 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				solverOptions.minimizer_progress_to_stdout = true;
 				solverOptions.max_num_iterations = 5000000;
 				//solverOptions.minimizer_type = MinimizerType.LINE_SEARCH;
-				solverOptions.function_tolerance = 1.0E-10;
+				solverOptions.function_tolerance = 1.0E-12;
+				solverOptions.min_trust_region_radius = 1.0E-50;
 				solverOptions.minimizer_type = MinimizerType.TRUST_REGION;
 				solverOptions.trust_region_strategy_type = TrustRegionStrategyType.LEVENBERG_MARQUARDT;
 				solverOptions.max_num_consecutive_invalid_steps = 1000;
 				solverOptions.gradient_tolerance = epsilon;
 				solverOptions.parameter_tolerance = epsilon;
+				solverOptions.initial_trust_region_radius = 1e12;
+				solverOptions.min_lm_diagonal = 1E-9;
 				// Solver::Summary summary;
 				optionsValid = true;
 				Solve(solverOptions, problem, solver.summary);
@@ -25930,7 +25936,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 			
 			public void runOsborne1Function() {
 				// Line search works for close starting point but not for distant starting point
-				// Levenberg Marquardt does not work for either starting point
+				// Levenberg Marquardt works for close starting point but not for distant starting point
 				// For line search:
 				// Ceres Solver Report: Iterations: 73, Initial cost: 4.395131e-01, Final cost: 2.732447e-05, Termination: CONVERGENCE
 				// Close starting point solved answer x0[0] = 0.37541005408908135 x1[0] = 1.9358472542226113 x2[0] = -1.4646874796237699
@@ -25940,23 +25946,23 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				// Correct answer has Chi-squared = 5.46489E-5
 				
 				// Ceres Solver Report: Iterations: 9, Initial cost: 4.392443e+04, Final cost: 5.530168e-01, Termination: CONVERGENCE
-				///Distant starting point solved answer x0[0] = 0.6241560566648676 x1[0] = 125.10962892137356 x2[0] = -124.88978345687461
+				// Distant starting point solved answer x0[0] = 0.6241560566648676 x1[0] = 125.10962892137356 x2[0] = -124.88978345687461
 				// x3[0] = 1.7082432873229652 x4[0] = 2.000010374756421
 				// Correct answer is x0 = 3.7541005211E-01, x1 = 1.9358469127E+00, x2 = -1.4646871366E+00
 				// x3 = 1.2867534640E-02, x4 = 2.2122699662E-02
 				// Correct answer has Chi-squared = 5.46489E-5
 				
 				// For Levenberg Marquardt:
-				// Ceres Solver Report: Iterations: 40, Initial cost: 4.395131e-01, Final cost: 3.164271e-05, Termination: CONVERGENCE
-				// Close starting point solved answer x0[0] = 0.371391284091448 x1[0] = 1.609036919191998 x2[0] = -1.1347279637209189
-				// x3[0] = 0.0120578692776141 x4[0] = 0.02388085303300602
+				// Ceres Solver Report: Iterations: 63, Initial cost: 4.395131e-01, Final cost: 2.732447e-05, Termination: CONVERGENCE
+				// Close starting point solved answer x0[0] = 0.3754099497072591 x1[0] = 1.935834941911722 x2[0] = -1.4646750885904145
+				// x3[0] = 0.012867510378069302 x4[0] = 0.02212274812628205
 				// Correct answer is x0 = 3.7541005211E-01, x1 = 1.9358469127E+00, x2 = -1.4646871366E+00
 				// x3 = 1.2867534640E-02, x4 = 2.2122699662E-02
 				// Correct answer has Chi-squared = 5.46489E-5
 				
-				// Ceres Solver Report: Iterations: 70, Initial cost: 4.392443e+04, Final cost: 5.109438e-01, Termination: CONVERGENCE
-				// Distant starting point solved answer x0[0] = 0.6162899093599297 x1[0] = 47.38012598732723 x2[0] = -47.15432495363658
-				// x3[0] = 0.5114055749015398 x4[0] = 268456.4516946408
+				// Ceres Solver Report: Iterations: 4, Initial cost: 4.392443e+04, Final cost: 5.530181e-01, Termination: CONVERGENCE
+				// Distant starting point solved answer x0[0] = 0.6241562500964931 x1[0] = 361655.0644850558 x2[0] = -361654.8446413058
+				// x3[0] = 735479.9810527553 x4[0] = 5.685573340982963E8
 				// Correct answer is x0 = 3.7541005211E-01, x1 = 1.9358469127E+00, x2 = -1.4646871366E+00
 				// x3 = 1.2867534640E-02, x4 = 2.2122699662E-02
 				// Correct answer has Chi-squared = 5.46489E-5
@@ -26003,6 +26009,7 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 				solverOptions.gradient_tolerance = epsilon;
 				solverOptions.parameter_tolerance = epsilon;
 				solverOptions.min_trust_region_radius = 1.0E-100;
+				solverOptions.initial_trust_region_radius = 1e12;
 				// Solver::Summary summary;
 				optionsValid = true;
 				Solve(solverOptions, problem, solver.summary);
