@@ -25938,11 +25938,21 @@ class RegularizationCheckingLinearSolver extends TypedLinearSolver<DenseSparseMa
 					
 	        	    if (jacobian != null) {
 	        	    	for (i = 0; i < 33; i++) {
-	        	    		jacobian[0][jacobians_offset[0]+i] = 1.0;
-                            jacobian[1][jacobians_offset[1]+i] = Math.exp(-x3*xSeries[i]);
-                            jacobian[2][jacobians_offset[2]+i] = Math.exp(-x4*xSeries[i]);
-                            jacobian[3][jacobians_offset[3]+i] = -x1*xSeries[i]*Math.exp(-x3*xSeries[i]);
-                            jacobian[4][jacobians_offset[4]+i] = -x2*xSeries[i]*Math.exp(-x4*xSeries[i]);
+	        	    		if (jacobian[0] != null) {
+	        	    		    jacobian[0][jacobians_offset[0]+i] = 1.0;
+	        	    		}
+	        	    		if (jacobian[1] != null) {
+                              jacobian[1][jacobians_offset[1]+i] = Math.exp(-x3*xSeries[i]);
+	        	    		}
+	        	    		if (jacobian[2] != null) {
+                                jacobian[2][jacobians_offset[2]+i] = Math.exp(-x4*xSeries[i]);
+	        	    		}
+	        	    		if (jacobian[3] != null) {
+                                jacobian[3][jacobians_offset[3]+i] = -x1*xSeries[i]*Math.exp(-x3*xSeries[i]);
+	        	    		}
+	        	    		if (jacobian[4] != null) {
+                                jacobian[4][jacobians_offset[4]+i] = -x2*xSeries[i]*Math.exp(-x4*xSeries[i]);
+	        	    		}
                         }
 	        	    }
 	        	    return true;
