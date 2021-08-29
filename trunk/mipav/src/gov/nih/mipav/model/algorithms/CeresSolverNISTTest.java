@@ -5,6 +5,7 @@ import java.util.Vector;
 import gov.nih.mipav.model.algorithms.CeresSolver.CostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.LevenbergMarquardtStrategy;
 import gov.nih.mipav.model.algorithms.CeresSolver.MinimizerType;
+import gov.nih.mipav.model.algorithms.CeresSolver.PreconditionerType;
 import gov.nih.mipav.model.algorithms.CeresSolver.ProblemImpl;
 import gov.nih.mipav.model.algorithms.CeresSolver.SizedCostFunction;
 import gov.nih.mipav.model.algorithms.CeresSolver.SolverOptions;
@@ -14,6 +15,39 @@ import gov.nih.mipav.model.algorithms.CeresSolver.TrustRegionStrategyType;
 import gov.nih.mipav.model.algorithms.CeresSolverTest.CurveFittingCostFunction;
 
 public class CeresSolverNISTTest extends CeresSolver {
+	// Total score 37
+	// LOW_DIFFICULTY 14
+	// Misrala 1
+	// Chiwrut1 2
+	// Chiwrut2 2
+	// Lanczos3 1
+	// Gauss1 2
+	// Gauss2 2
+	// Danwood 2
+	// Misralb 2
+	
+	// MEDIUM_DIFFICULTY 16
+	// Kirby2 2 
+	// Hahn1 2
+	// Nelson 0
+	// MGH17 Osborne1 1
+	// Lanczos1 1
+	// Lanczos2 1
+	// Gauss3 2 
+	// Misralc 2
+	// Misrald 2
+	// Roszman1 2
+	// ENSO 1
+	
+	// HIGHER_DIFFICULTY 7
+	// MGH09 KOWALIK_AND_OSBORNE 0
+	// Thurber 2
+	// BoxBOD 1
+	// Rat42 2
+	// MGH10 MEYER 0
+	// Eckerle4  1
+	// Rat43 1
+	// Bennet5 0
 	CeresSolver2 ce2 = new CeresSolver2();
 	
 	public CeresSolverNISTTest() {
