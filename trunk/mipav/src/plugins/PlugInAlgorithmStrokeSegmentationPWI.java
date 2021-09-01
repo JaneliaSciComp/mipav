@@ -557,7 +557,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         coreImgForCorrmap = null;
                     }
                     
-                    corrmapLightbox = generateLightbox(corrmapImage, corrmapMask, coreLightboxColor, lightboxOpacity, false);
+                    // TODO no corrmap segmentation until cleanup is better
+                    //corrmapLightbox = generateLightbox(corrmapImage, corrmapMask, coreLightboxColor, lightboxOpacity, false);
+                    corrmapLightbox = generateLightbox(corrmapImage, null, coreLightboxColor, lightboxOpacity, false);
                     
                     File lightboxCorrmap = saveImageFile(corrmapLightbox, coreOutputDir, outputBasename + "_corrmap_lightbox", FileUtility.PNG, false);
                     
@@ -565,14 +567,15 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         lightboxFileList.add(lightboxCorrmap);
                         Vector<MaskObject> maskList = new Vector<MaskObject>();
                         MaskObject obj = new MaskObject(0, (short) 0, 0);
-                        //obj.setCorrmapNoObject();
-                        int corrSize = 0;
+                        // TODO no corrmap segmentation until cleanup is better
+                        obj.setCorrmapNoObject();
+                        /*int corrSize = 0;
                         for (int i = 0; i < corrmapMask.getVolumeSize(); i++) {
                             if (corrmapMask.getInt(i) != 0) {
                                 corrSize++;
                             }
                         }
-                        obj.setCorrmapSegSize(corrSize);
+                        obj.setCorrmapSegSize(corrSize);*/
                         maskList.add(obj);
                         lightboxObjectTable.put(lightboxCorrmap, maskList);
                     }

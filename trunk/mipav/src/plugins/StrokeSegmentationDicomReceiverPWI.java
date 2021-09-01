@@ -346,6 +346,9 @@ public class StrokeSegmentationDicomReceiverPWI {
                             studyDate = attr.getString(TagUtils.toTag(0x0008, 0x0020));
                             studyTime = attr.getString(TagUtils.toTag(0x0008, 0x0030));
                             
+                            // remove trailing zeros from study time - was inconsistently added to end of DWI data from Suburban
+                            studyTime = studyTime.indexOf(".") < 0 ? studyTime : studyTime.replaceAll("0*$", "").replaceAll("\\.$", "");
+                            
                             baseOutputDir = new File(storageDir + File.separator + studyDate + File.separator + studyDate + "." + studyTime + "_" + lastnameInitial + File.separator);
                             if (!baseOutputDir.exists()) {
                                 log("Creating output directory: " + baseOutputDir);
@@ -1291,8 +1294,8 @@ public class StrokeSegmentationDicomReceiverPWI {
                         
                         if (perfVol > 0) {
                             double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
-                            double noPwiCoreDiff = (perfVol - noPwiCore) * resFactorCC;
-                            double noPwiCoreRatio = perfVol / noPwiCore;
+                            double noPwiCoreDiff = perfVol * resFactorCCPWI - noPwiCore * resFactorCC;
+                            double noPwiCoreRatio = (perfVol * resFactorCCPWI) / (noPwiCore * resFactorCC);
                         
                             reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + format.format(noPwiCoreDiff) + "</p>\n";
                             reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(noPwiCoreRatio) + "</p>\n";
@@ -1306,8 +1309,8 @@ public class StrokeSegmentationDicomReceiverPWI {
                         
                         if (perfVol > 0) {
                             double pwiCore = coreObjectTable.get(lightboxFileList.get(3)).doubleValue();
-                            double pwiCoreDiff = (perfVol - pwiCore) * resFactorCC;
-                            double pwiCoreRatio = perfVol / pwiCore;
+                            double pwiCoreDiff = perfVol * resFactorCCPWI - pwiCore * resFactorCC;
+                            double pwiCoreRatio = (perfVol * resFactorCCPWI) / (pwiCore * resFactorCC);
                         
                             reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + format.format(pwiCoreDiff) + "</p>\n";
                             reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(pwiCoreRatio) + "</p>\n";
