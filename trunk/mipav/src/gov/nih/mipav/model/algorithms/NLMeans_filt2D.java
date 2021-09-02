@@ -77,11 +77,20 @@ import java.io.*;
 
 
 public class NLMeans_filt2D extends AlgorithmBase {
+	// NL-means filter parameters
 	private int ksize = 7; // Should be odd
 	private int ssize = 21; // Should be odd
 	private double sigmaX = 0.5;
 	private double sigmaY = 0.5;
 	private double noise_std;
+	
+	// Wavelet Transform Parameters
+	int Nlevels = 3;
+	int NoOfBands = 3*Nlevels+1;
+	String wname = "db8"; // db8 sym8 db16 coif5 bior6.8
+	String sorh = "s"; // s or h or t -> trimmed
+	
+	// Test on lena512.jpg, Barbara512.png, boat512.jpg, and baboon512.jpg
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -160,21 +169,21 @@ public class NLMeans_filt2D extends AlgorithmBase {
     		}
     	}
     	for (y = 0; y < half_ssize; y++) {
-    		for (x = 0; x < xm[0].length; x++) {
+    		for (x = 0; x < paddedXDim; x++) {
     			xm[y][x] = xm[ssize-1-y][x];
     		}
     	}
     	for (y = yDim + half_ssize, yInc = 0; y <= yDim + ssize - 2; y++, yInc++) {
-    		for (x = 0; x < xm[0].length; x++) {
+    		for (x = 0; x < paddedXDim; x++) {
     			xm[y][x] = xm[yDim + half_ssize-2-yInc][x];
     		}
     	}
-    	for (y = 0; y < xm.length; y++) {
+    	for (y = 0; y < paddedYDim; y++) {
     		for (x = 0; x < half_ssize; x++) {
     			xm[y][x] = xm[y][ssize-1-x];
     		}
     	}
-    	for (y = 0; y < xm.length; y++) {
+    	for (y = 0; y < paddedYDim; y++) {
     		for (x = xDim + half_ssize, xInc = 0; x <= xDim + ssize - 2; x++, xInc++) {
     		    xm[y][x] = xm[y][xDim + half_ssize - 2 - xInc];	
     		}
@@ -196,14 +205,14 @@ public class NLMeans_filt2D extends AlgorithmBase {
         im_rec = new double[yDim][xDim];
         for (ii=half_ssize; ii < paddedYDim-half_ssize; ii++) {
             for (jj=half_ssize; jj < paddedXDim-half_ssize; jj++) {
-                for (y = ii-half_ksize, yInc = 0; y <= ii + half_ksize; y++, yInc++) {
-                	for (x = jj-half_ksize, xInc = 0; x <= jj + half_ksize; x++, xInc++) {
+                for (y = 0, yInc = 0; y < ksize; y++, yInc++) {
+                	for (x = 0, xInc = 0; x < ksize; x++, xInc++) {
                 		xtemp[y][x] = xm[ii-half_ksize+yInc][jj-half_ksize+xInc];
                 	}
                 }
-                for (y = ii-half_ssize, yInc = 0; y <= ii + half_ssize; y++, yInc++) {
-                	for (x = jj-half_ssize, xInc = 0; x <= jj + half_ssize; x++, xInc++) {
-                		xtemp[y][x] = xm[ii-half_ssize+yInc][jj-half_ssize+xInc];
+                for (y = 0, yInc = 0; y < ssize; y++, yInc++) {
+                	for (x = 0, xInc = 0; x < ssize; x++, xInc++) {
+                		search_win[y][x] = xm[ii-half_ssize+yInc][jj-half_ssize+xInc];
                 	}
                 }
                 sum_wt = 0.0;
