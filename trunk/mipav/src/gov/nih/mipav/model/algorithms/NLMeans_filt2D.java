@@ -77,8 +77,11 @@ import java.io.*;
 
 
 public class NLMeans_filt2D extends AlgorithmBase {
-	private int ksize;
-	private int ssize;
+	private int ksize = 7; // Should be odd
+	private int ssize = 21; // Should be odd
+	private double sigmaX = 0.5;
+	private double sigmaY = 0.5;
+	private double noise_std;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -87,10 +90,14 @@ public class NLMeans_filt2D extends AlgorithmBase {
      */
     public NLMeans_filt2D() { }
     
-    public NLMeans_filt2D(ModelImage destImage, ModelImage srcImg, int ksize, int ssize) {
+    public NLMeans_filt2D(ModelImage destImage, ModelImage srcImg, double sigmaX, double sigmaY,
+    		int ksize, int ssize, double noise_std) {
     	super(destImage, srcImg);
+    	this.sigmaX = sigmaX;
+    	this.sigmaY = sigmaY;
     	this.ksize = ksize;
     	this.ssize = ssize;
+    	this.noise_std = noise_std;
     }
 	/**
      * Starts the program.
@@ -99,6 +106,24 @@ public class NLMeans_filt2D extends AlgorithmBase {
     	int x, y;
     	int xInc;
     	int yInc;
+    	double gauss_win[][];
+    	double filt_h;
+    	int paddedYDim;
+    	int paddedXDim;
+    	int ii, jj;
+    	double xtemp[][];
+    	double search_win[][];
+    	double euclid_dist[][];
+    	double wt_dist[][];
+    	int kr,kc;
+    	double sq_dist;
+    	double n2;
+    	double filth2;
+    	double weight[][];
+    	double sum_wt;
+    	double weightn[][];
+    	double sum_pix;
+    	double im_rec[][];
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -126,9 +151,9 @@ public class NLMeans_filt2D extends AlgorithmBase {
     	int half_ssize = (int)Math.floor(ssize/2);	
     	
     	// To take care of boundaries.'
-    	int N = srcImage.getExtents()[0];
-    	int M = srcImage.getExtents()[1];
-    	double xm[][] = new double[yDim+ssize-1][xDim+ssize-1];
+    	paddedYDim = yDim + ssize - 1;
+    	paddedXDim = xDim + ssize - 1;
+    	double xm[][] = new double[paddedYDim][paddedXDim];
     	for (y = half_ssize; y < yDim + half_ssize; y++) {
     		for (x = half_ssize; x < xDim + half_ssize; x++) {
     		    xm[y][x] = srcBuffer[(x - half_ssize) + (y - half_ssize)*xDim];	
@@ -149,17 +174,87 @@ public class NLMeans_filt2D extends AlgorithmBase {
     			xm[y][x] = xm[y][ssize-1-x];
     		}
     	}
-    	for (y = 0; y < xm.length; x++) {
+    	for (y = 0; y < xm.length; y++) {
     		for (x = xDim + half_ssize, xInc = 0; x <= xDim + ssize - 2; x++, xInc++) {
     		    xm[y][x] = xm[y][xDim + half_ssize - 2 - xInc];	
     		}
     	}
-    	/*xm(half_ssize+1:M+half_ssize,half_ssize+1:N+half_ssize)=xn;
-    	xm(1:half_ssize,:)=xm(ssize:-1:half_ssize+2,:);
-    	xm(M+half_ssize+1:M+ssize-1,:)=xm(M+half_ssize-1:-1:M,:);
-    	xm(:,1:half_ssize)=xm(:,ssize:-1:half_ssize+2);
-    	xm(:,N+half_ssize+1:N+ssize-1)=xm(:,N+half_ssize-1:-1:N);
-    	*/
-
+    	
+    	// Gaussian kernel generation
+        gauss_win = gauss_ker2D();    
+        
+        // NL-means Filter Implementation
+        filt_h = 0.55 * noise_std;
+        xtemp = new double[ksize][ksize];
+        search_win = new double[ssize][ssize];
+        euclid_dist = new double[ksize][ksize];
+        wt_dist = new double[ksize][ksize];
+        n2 = 2*noise_std*noise_std;
+        filth2 = filt_h*filt_h;
+        weight = new double[ssize-ksize+1][ssize-ksize+1];
+        weightn = new double[ssize-ksize+1][ssize-ksize+1];
+        im_rec = new double[yDim][xDim];
+        for (ii=half_ssize; ii < paddedYDim-half_ssize; ii++) {
+            for (jj=half_ssize; jj < paddedXDim-half_ssize; jj++) {
+                for (y = ii-half_ksize, yInc = 0; y <= ii + half_ksize; y++, yInc++) {
+                	for (x = jj-half_ksize, xInc = 0; x <= jj + half_ksize; x++, xInc++) {
+                		xtemp[y][x] = xm[ii-half_ksize+yInc][jj-half_ksize+xInc];
+                	}
+                }
+                for (y = ii-half_ssize, yInc = 0; y <= ii + half_ssize; y++, yInc++) {
+                	for (x = jj-half_ssize, xInc = 0; x <= jj + half_ssize; x++, xInc++) {
+                		xtemp[y][x] = xm[ii-half_ssize+yInc][jj-half_ssize+xInc];
+                	}
+                }
+                sum_wt = 0.0;
+                for (kr = 0; kr <= ssize - ksize; kr++) {
+                	for (kc = 0; kc <= ssize - ksize; kc++) {
+                		sq_dist = 0.0;
+                	    for (y = 0; y <= ksize-1; y++) {
+                	    	for (x = 0; x <= ksize-1; x++) {
+                	    		euclid_dist[y][x] = xtemp[y][x] - search_win[y+kr][x+kc];
+                	    		euclid_dist[y][x] = euclid_dist[y][x]*euclid_dist[y][x];
+                	    		wt_dist[y][x] = gauss_win[y][x]*euclid_dist[y][x];
+                	    		sq_dist += wt_dist[y][x];
+                	    	}
+                	    }
+                	    sq_dist = sq_dist/(ksize * ksize);
+                	    if (sq_dist > n2) {
+                	    	weight[kr][kc] = Math.exp(-(sq_dist - n2)/filth2);
+                	    }
+                	    else {
+                	    	weight[kr][kc] = 1.0;
+                	    }
+                	    sum_wt += weight[kr][kc];
+                	}
+                }
+                for (kr = 0; kr <= ssize - ksize; kr++) {
+                	for (kc = 0; kc <= ssize - ksize; kc++) {
+                		weightn[kr][kc] = weight[kr][kc]/sum_wt;
+                	}
+                }
+                sum_pix = 0.0;
+                for (y = half_ksize; y < ssize-half_ksize; y++) {
+                	for (x = half_ksize; x < ssize-half_ksize; x++) {
+                	    sum_pix += search_win[y][x]*weightn[y-half_ksize][x-half_ksize];	
+                	}
+                }
+                im_rec[ii-half_ssize][jj-half_ssize] = sum_pix;
+            }
+        }
+    }
+    
+    private double[][] gauss_ker2D() {
+    	int x,y;
+    	double expy;
+    	int half_length = (int)Math.floor(ksize/2);
+    	double window[][] = new double[ksize][ksize];
+    	for (y = -half_length; y <= half_length; y++) {
+    		expy = Math.exp(-y*y/(2.0*sigmaY*sigmaY));
+    		for (x = -half_length; x <= half_length; x++) {
+    		    window[y+half_length][x+half_length] = expy*Math.exp(-x*x/(2.0*sigmaX*sigmaX));	
+    		}
+    	}
+    	return window;
     }
 }
