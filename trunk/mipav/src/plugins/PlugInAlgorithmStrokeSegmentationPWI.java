@@ -584,6 +584,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
                         unregCoreImgForCorrmap.disposeLocal();
                         unregCoreImgForCorrmap = null;
                     }
+                    
+                    if (corrmapMask != null) {
+                        corrmapMask.disposeLocal();
+                        corrmapMask = null;
+                    }
                 }
             }
             
@@ -2786,6 +2791,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
 
         saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_add_bound", FileUtility.XML);
+        
+        if (boundaryImg != null) {
+            boundaryImg.disposeLocal();
+            boundaryImg = null;
+        }
         
         //dilate(pwiBrainMaskImg, 0.5f);
         
