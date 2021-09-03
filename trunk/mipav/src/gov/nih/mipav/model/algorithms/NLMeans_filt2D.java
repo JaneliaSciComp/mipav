@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -78,11 +79,12 @@ import java.io.*;
 
 public class NLMeans_filt2D extends AlgorithmBase {
 	// NL-means filter parameters
-	private int ksize = 7; // Should be odd
-	private int ssize = 21; // Should be odd
-	private double sigmaX = 0.5;
-	private double sigmaY = 0.5;
-	private double noise_std;
+	private int ksize = 7; // Neighbor window size Should be odd
+	private int ssize = 21; // Search window size Should be odd
+	// Sigmas for Gaussian kernel generation
+	private double sigmaX = 5.0;
+	private double sigmaY = 5.0;
+	private double noise_std = 20.0;
 	
 	// Wavelet Transform Parameters
 	int Nlevels = 3;
@@ -132,7 +134,7 @@ public class NLMeans_filt2D extends AlgorithmBase {
     	double sum_wt;
     	double weightn[][];
     	double sum_pix;
-    	double im_rec[][];
+    	double im_rec[];
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -145,14 +147,66 @@ public class NLMeans_filt2D extends AlgorithmBase {
     	int yDim = srcImage.getExtents()[1];
     	int length = xDim*yDim;
     	double srcBuffer[] = new double[length];
-    	try {
-    		srcImage.exportData(0, length, srcBuffer);
-    	}
-    	catch (IOException e) {
-    		MipavUtil.displayError("IOException on srcImage.exportData(0, length, srcBuffer");
-    		setCompleted(false);
-    		return;
-    	}
+    	
+       if (srcImage.isColorImage()) {
+    	// make grayscale
+	       AlgorithmRGBtoGray gAlgo;
+	       boolean intensityAverage = false;
+	       float threshold = 0.0f;
+	       boolean thresholdAverage = false;
+	       boolean equalRange = true;
+	       float redValue = 0.2989f;
+	       float greenValue = 0.5870f;
+	       float blueValue = 0.1140f;
+	       // minR, minG, minB, maxR, maxG, maxB not used
+	       float minR = 0.0f;
+	       float minG = 0.0f;
+	       float minB = 0.0f;
+	       float maxR = 255.0f;
+	       float maxG = 255.0f;
+	       float maxB = 255.0f;
+    	   ModelImage img = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray");
+    	   if (srcImage.getMinR() == srcImage.getMaxR()) {
+				redValue = 0.0f;
+				greenValue = 0.5f;
+				blueValue = 0.5f;
+			} else if (srcImage.getMinG() == srcImage.getMaxG()) {
+				redValue = 0.5f;
+				greenValue = 0.0f;
+				blueValue = 0.5f;
+			} else if (srcImage.getMinB() == srcImage.getMaxB()) {
+				redValue = 0.5f;
+				greenValue = 0.5f;
+				blueValue = 0.0f;
+			} 
+    	   
+			gAlgo = new AlgorithmRGBtoGray(img, srcImage,
+					redValue, greenValue, blueValue, thresholdAverage,
+					threshold, intensityAverage, equalRange, minR, maxR,
+					minG, maxG, minB, maxB);
+			gAlgo.run();
+			gAlgo.finalize();
+			try {
+	    		img.exportData(0, length, srcBuffer);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on img.exportData(0, length, srcBuffer");
+	    		setCompleted(false);
+	    		return;
+	    	}
+			img.disposeLocal();
+			img = null;
+       }
+       else {
+	    	try {
+	    		srcImage.exportData(0, length, srcBuffer);
+	    	}
+	    	catch (IOException e) {
+	    		MipavUtil.displayError("IOException on srcImage.exportData(0, length, srcBuffer");
+	    		setCompleted(false);
+	    		return;
+	    	}
+       }
     	
 
         fireProgressStateChanged(srcImage.getImageName(), "NLMeans_filt2D ...");
@@ -202,7 +256,7 @@ public class NLMeans_filt2D extends AlgorithmBase {
         filth2 = filt_h*filt_h;
         weight = new double[ssize-ksize+1][ssize-ksize+1];
         weightn = new double[ssize-ksize+1][ssize-ksize+1];
-        im_rec = new double[yDim][xDim];
+        im_rec = new double[length];
         for (ii=half_ssize; ii < paddedYDim-half_ssize; ii++) {
             for (jj=half_ssize; jj < paddedXDim-half_ssize; jj++) {
                 for (y = 0, yInc = 0; y < ksize; y++, yInc++) {
@@ -248,9 +302,32 @@ public class NLMeans_filt2D extends AlgorithmBase {
                 	    sum_pix += search_win[y][x]*weightn[y-half_ksize][x-half_ksize];	
                 	}
                 }
-                im_rec[ii-half_ssize][jj-half_ssize] = sum_pix;
+                im_rec[(ii-half_ssize)*xDim + (jj-half_ssize)] = sum_pix;
             }
         }
+        if (destImage != null) {
+        	try {
+        		destImage.importData(0, im_rec, true);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException on destImage.importData(0, im_rec, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        }
+        else {
+        	try {
+        		srcImage.importData(0, im_rec, true);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException on srcImage.importData(0, im_rec, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        }
+        
+        setCompleted(true);
+        return;
     }
     
     private double[][] gauss_ker2D() {
