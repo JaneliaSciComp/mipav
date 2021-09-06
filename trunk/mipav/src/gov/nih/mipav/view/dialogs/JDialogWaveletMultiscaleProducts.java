@@ -190,7 +190,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                             MipavUtil.displayError("waveletImage[" + i + "] is null");
                         }
                     } // for (i = 0; i < waveletImage.length; i++)
-                } else {
+                } else if (doWaveletImages || (maximumLevel > minimumLevel)){
                     MipavUtil.displayError("waveletImage array is null");
                 }
           
