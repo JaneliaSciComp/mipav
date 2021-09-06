@@ -111,27 +111,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private int maximumLevel;
     private int z;
     private boolean selfTest = false;
-    // Given by mrdwt.m for Leopold, signal length 8, Daubechies' length 4, minimum phase, number of levels 1
-    // Cannot reproduce but mrdwt and mirdwt return original picture and 1D signals.
-    //private double ylmrdwtm[] = new double[]{0.8365,0.4830, 0.0, 0.0, 0.0, 0.0, -0.1294, 0.2241};
-    //private double yhmrdwtm[] = new double[]{-0.2241, -0.1294, 0.0, 0.0, 0.0, 0.0, -0.4830, 0.8365};
-    // I get:
-    /*      Calculated yl[0] = 0.4182581518689039
-            Calculated yh[0] = 0.4182581518689039
-            Calculated yl[1] = 0.24148145657226708
-            Calculated yh[1] = 0.24148145657226708
-            Calculated yl[2] = 0.24148145657226708
-            Calculated yh[2] = -0.24148145657226708
-            Calculated yl[3] = -0.4182581518689039
-            Calculated yh[3] = 0.4182581518689039
-            Calculated yl[4] = 0.1120719340210067
-            Calculated yh[4] = -0.1120719340210067
-            Calculated yl[5] = 0.06470476127563018
-            Calculated yh[5] = -0.06470476127563018
-            Calculated yl[6] = -0.06470476127563018
-            Calculated yh[6] = -0.06470476127563018
-            Calculated yl[7] = 0.1120719340210067
-            Calculated yh[7] = 0.1120719340210067 */
+    private boolean test_mrdwt_1 = false;
+    
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
             int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel,
@@ -174,7 +155,53 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             sliceSize = 8;
             filterLength = 4;
             numberOfLevels = 1;
-            makeSig("Leopold",8);
+            maximumLevel = 1;
+            //makeSig("Leopold",8);
+            //makeSig("HeaviSine",8);
+            //makeSig("Bumps", 8);
+            //makeSig("Blocks",8);
+            //xDim = 12;
+            //sliceSize = 12;
+            //makeSig("Doppler",12);
+            //makeSig("Ramp",8);
+            //makeSig("Cusp",8);
+            //makeSig("Sing",8);
+            //makeSig("HiSine",8);
+            //makeSig("LoSine",8);
+            //makeSig("LinChirp",8);
+            //makeSig("TwoChirp",8);
+            //makeSig("QuadChirp",8);
+            //makeSig("MishMash",8);
+            makeSig("WernerSorrows",8);
+        }
+        else if (test_mrdwt_1) {
+	        //x = makesig("Leopold",8); // sets aArray
+        	makeSig("Leopold",8);
+	        //h = daubcqf(4,'min'); // sets scalingFilter and waveletFilter
+        	filterType = MINIMUM_PHASE;
+        	filterLength = 4;
+        	scalingFilter = new double[filterLength];
+            
+            waveletFilter = new double[filterLength];
+        	daubcqf();
+	        //L = 1;
+        	numberOfLevels = 1;
+        	nDims = 1;
+            xDim = 8;
+            yDim = 1;
+            sliceSize = 8;
+            maximumLevel = 1;
+	        // [yl, yh, L] = mrdwt(x, h, L);
+            // Create low pass wavelet component
+            yl = new double[sliceSize];
+            lhA = new double[numberOfLevels][sliceSize];
+            mrdwt();
+	        //yl_corr = [0.8365  0.4830 0 0 0 0 -0.1294 0.2241];
+	        //yh_corr = [-0.2241 -0.1294 0 0 0 0 -0.4830 0.8365];
+	        //L_corr = 1;
+	        //assertVectorsAlmostEqual(yl, yl_corr, 'relative', 0.001);
+	        //assertVectorsAlmostEqual(yh, yh_corr, 'relative', 0.001);
+	        // assertEqual(L, L_corr);
         }
         else {
         
@@ -321,8 +348,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         if (selfTest) {
             for (i = 0; i < xDim; i++)  {
                 Preferences.debug("aArray[" + i + "] = " + aArray[i] + "\n", Preferences.DEBUG_FILEIO);
-                Preferences.debug("Calculated yl["+i+"] = " + yl[i] + "\n", Preferences.DEBUG_FILEIO);
-                Preferences.debug("Calculated yh["+i+"] = " + lhA[0][i] + "\n", Preferences.DEBUG_FILEIO);
+                //Preferences.debug("Calculated yl["+i+"] = " + yl[i] + "\n", Preferences.DEBUG_FILEIO);
+                //Preferences.debug("Calculated yh["+i+"] = " + lhA[0][i] + "\n", Preferences.DEBUG_FILEIO);
             }
         }
         
@@ -350,7 +377,177 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     }
     
     private void makeSig(String sigName, int signalLength) {
-        int i;
+    	// Leopold calculated correctly:
+        // aArray[0] = 0.0
+		// aArray[1] = 1.0
+		// aArray[2] = 0.0
+		// aArray[3] = 0.0
+		// aArray[4] = 0.0
+		// aArray[5] = 0.0
+		// aArray[6] = 0.0
+		// aArray[7] = 0.0
+        // Correct aArray = [0     1     0     0     0     0     0     0];
+    	
+    	// Heavisine calculated correctly:
+    	// aArray[0] = 4.0
+		// aArray[1] = 4.440892098500626E-16
+		// aArray[2] = -6.0
+		// aArray[3] = -2.000000000000001
+		// aArray[4] = 2.0
+		// aArray[5] = 1.4432899320127035E-15
+		// aArray[6] = -4.0
+		// aArray[7] = -1.9984014443252818E-15
+	    // Correct aArray = [4.0000    0.0000   -6.0000   -2.0000    2.0000    0.0000   -4.0000   -0.0000];
+    	
+    	// Bumps calculated correctly:
+    	// aArray[0] = 0.32057129709958176
+		// aArray[1] = 5.052686334003055
+		// aArray[2] = 0.3726713834396781
+		// aArray[3] = 0.012873234114248008
+		// aArray[4] = 0.029514406018810786
+		// aArray[5] = 0.04889716017951243
+		// aArray[6] = 3.7177246433324436E-4
+		// aArray[7] = 3.4712645702268925E-5
+    	// Correct aArray = y = [0.3206    5.0527    0.3727    0.0129    0.0295    0.0489    0.0004    0.0000];
+    	
+    	// Blocks calculated correctly:
+    	// aArray[0] = 4.0
+		// aArray[1] = 0.5
+		// aArray[2] = 3.0
+		// aArray[3] = 0.8999999999999999
+		// aArray[4] = 0.8999999999999999
+		// aArray[5] = 5.199999999999999
+		// aArray[6] = -8.881784197001252E-16
+		// aArray[7] = -8.881784197001252E-16
+    	// Correct aArray = [4.0000    0.5000    3.0000    0.9000    0.9000    5.2000   -0.0000   -0.0000];
+    	
+    	// Doppler calculated correctly:
+    	// aArray[0] = -0.19543398999264275
+		// aArray[1] = -0.30670797808729855
+		// aArray[2] = 3.7120133355371736E-16
+		// aArray[3] = -0.4703055680484446
+		// aArray[4] = 0.4930066485916346
+		// aArray[5] = -0.2703204087277996
+		// aArray[6] = -0.4127286397614705
+		// aArray[7] = 0.10249756772553398
+		// aArray[8] = 0.400051572595633
+		// aArray[9] = 0.3453568260433621
+		// aArray[10] = 0.14249155862305468
+		// aArray[11] = -0.0
+    	// Correct aArray = [-0.1954 -0.3067 0.0000 -0.4703 0.4930 -0.2703 -0.4127 0.1025 0.4001 0.3454 0.1425 0];
+    	
+    	// Ramp calculated correctly:
+    	// aArray[0] = 0.125
+		// aArray[1] = 0.25
+		// aArray[2] = -0.625
+		// aArray[3] = -0.5
+		// aArray[4] = -0.375
+		// aArray[5] = -0.25
+		// aArray[6] = -0.125
+		// aArray[7] = 0.0
+    	// Correct aArray = = [0.1250    0.2500   -0.6250   -0.5000   -0.3750   -0.2500   -0.1250         0];
+    	
+    	// Cusp calculated correctly:
+    	// aArray[0] = 0.4949747468305833
+		// aArray[1] = 0.34641016151377546
+		// aArray[2] = 0.07071067811865478
+		// aArray[3] = 0.36055512754639896
+		// aArray[4] = 0.5049752469181039
+		// aArray[5] = 0.6164414002968976
+		// aArray[6] = 0.7106335201775947
+		// aArray[7] = 0.7937253933193772
+    	// Correct aArray = [0.4950    0.3464    0.0707    0.3606    0.5050    0.6164    0.7106    0.7937];
+    	
+    	// Sing calculated correctly:
+    	// aArray[0] = 5.333333333333333
+		// aArray[1] = 16.0
+		// aArray[2] = 16.0
+		// aArray[3] = 5.333333333333333
+		// aArray[4] = 3.2
+		// aArray[5] = 2.2857142857142856
+		// aArray[6] = 1.7777777777777777
+		// aArray[7] = 1.4545454545454546
+    	// Correct aArray = [5.3333   16.0000   16.0000    5.3333    3.2000    2.2857    1.7778    1.4545];
+    	
+    	// HiSine calculated correctly:
+    	// aArray[0] = 0.8267272436365299
+		// aArray[1] = -0.9302383506006373
+		// aArray[2] = 0.21998241252745854
+		// aArray[3] = 0.6827128478839758
+		// aArray[4] = -0.9881749191102808
+		// aArray[5] = 0.42918737547700503
+		// aArray[6] = 0.5052507632470037
+		// aArray[7] = -0.997698502043002
+    	// Correct aArray = [0.8267   -0.9302    0.2200    0.6827   -0.9882    0.4292    0.5053   -0.9977];
+    	
+    	// LoSine calculated correctly:
+    	// aArray[0] = 0.8659730391584588
+		// aArray[1] = 0.8661301045447303
+		// aArray[2] = 3.141592601914583E-4
+		// aArray[3] = -0.8658158883040749
+		// aArray[4] = -0.8662870844473873
+		// aArray[5] = -6.283184893766407E-4
+		// aArray[6] = 0.8656586519970885
+		// aArray[7] = 0.8664439788509374
+    	// Correct aArray = [0.865973039158459   0.866130104544730   0.000314159260191  -0.865815888304075 
+    	//                   -0.866287084447387  -0.000628318489377   0.865658651997088   0.866443978850937];
+    	
+    	// LinChirp calculated correctly:
+    	// aArray[0] = 0.049067674327418015
+		// aArray[1] = 0.19509032201612825
+		// aArray[2] = 0.4275550934302821
+		// aArray[3] = 0.7071067811865475
+		// aArray[4] = 0.9415440651830208
+		// aArray[5] = 0.9807852804032304
+		// aArray[6] = 0.6715589548470186
+		// aArray[7] = 1.2246467991473532E-16
+    	// Correct aArray = [0.0491    0.1951    0.4276    0.7071    0.9415    0.9808    0.6716    0.0000];
+    	
+    	// TwoChirp calculated correctly:
+    	// aArray[0] = 0.5132096245851414
+		// aArray[1] = 1.5
+		// aArray[2] = 0.5411961001461971
+		// aArray[3] = 0.8660254037844385
+		// aArray[4] = -0.5132096245851412
+		// aArray[5] = 0.0
+		// aArray[6] = 0.513209624585139
+		// aArray[7] = 0.8660254037844382
+    	// Correct aArray = [0.5132    1.5000    0.5412    0.8660   -0.5132         0    0.5132    0.8660];
+    	
+    	// QuadChirp calculated correctly:
+    	// aArray[0] = 0.01636173162648678
+		// aArray[1] = 0.13052619222005157
+		// aArray[2] = 0.4275550934302821
+		// aArray[3] = 0.8660254037844386
+		// aArray[4] = 0.8895160754218563
+		// aArray[5] = -0.38268343236508967
+		// aArray[6] = -0.6216605733700774
+		// aArray[7] = 0.8660254037844392
+    	// Correct aArray = [0.0164    0.1305    0.4276    0.8660    0.8895   -0.3827   -0.6217    0.8660];
+    	
+    	// MishMash calculated correctly:
+    	// aArray[0] = 0.8921566495904347
+		// aArray[1] = -0.6046218363644575
+		// aArray[2] = 1.0750925993880227
+		// aArray[3] = 2.2558450328549617
+		// aArray[4] = 0.8428852214945963
+		// aArray[5] = 1.0272892235151458
+		// aArray[6] = 0.5551491447239448
+		// aArray[7] = -0.13167309825856277
+    	// Correct aArray = [0.8922   -0.6046    1.0751    2.2558    0.8429    1.0273    0.5551   -0.1317];
+    	
+    	// WernerSorrows calculated correctly:
+    	// aArray[0] = 1.5545232016241137
+		// aArray[1] = 5.317538305418545
+		// aArray[2] = 0.8252019541826737
+		// aArray[3] = 1.6955860819982236
+		// aArray[4] = -1.2677793818568923
+		// aArray[5] = 0.6466149233539719
+		// aArray[6] = 1.7331595333261316
+		// aArray[7] = -0.9976637893973013
+    	// Correct aArray = [1.5545    5.3175    0.8252    1.6956   -1.2678    0.6466    1.7332   -0.9977];
+    	
+        int i, j;
         double t[] = new double[signalLength];
         aArray = new double[signalLength];
         for ( i = 1; i <= signalLength; i++) {
@@ -365,6 +562,104 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                     aArray[i] = 0.0;
                 }
             }
+        }
+        else if (sigName.equalsIgnoreCase("HeaviSine")) {
+        	for (i = 0; i < signalLength; i++) {
+        		aArray[i] = 4.0*Math.sin(4.0*Math.PI*t[i]);
+        		aArray[i] = aArray[i] - Math.signum(t[i] - 0.3) - Math.signum(0.72 - t[i]);
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("Bumps")) {
+        	double pos[] = new double[] { .1, .13, .15, .23, .25, .40, .44, .65, .76, .78, .81};
+        	double hgt[] = new double[] { 4,  5,   3,   4,  5,  4.2, 2.1, 4.3,  3.1, 5.1, 4.2};
+        	double wth[] = new double[] {.005, .005, .006, .01, .01, .03, .01, .01,  .005, .008, .005};
+        	for (i = 0; i < signalLength; i++) {
+	        	for (j = 0; j < pos.length; j++) {
+	        	    aArray[i] = aArray[i] + hgt[j]/Math.pow( 1 + Math.abs((t[i] - pos[j])/wth[j]),4.0);
+	        	}
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("Blocks")) {
+        	double pos[] = new double[] { .1, .13, .15, .23, .25, .40, .44, .65,  .76, .78, .81};
+        	double hgt[] = new double[] {4, (-5), 3, (-4), 5, (-4.2), 2.1, 4.3,  (-3.1), 2.1, (-4.2)};
+        	
+        	for (i = 0; i < signalLength; i++) {
+	        	for (j = 0; j < pos.length; j++) {
+        	        aArray[i] = aArray[i] + (1 + Math.signum(t[i]-pos[j]))*(hgt[j]/2) ;
+	        	}
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("Doppler")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sqrt(t[i]*(1-t[i]))*Math.sin((2*Math.PI*1.05) /(t[i]+.05));	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("Ramp")) {
+        	for (i = 0; i < signalLength; i++) {
+        		if (t[i] < 0.37) {
+        	        aArray[i] = t[i];
+        		}
+        		else {
+        			aArray[i] = t[i] - 1.0;
+        		}
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("Cusp")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sqrt(Math.abs(t[i] - .37));	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("Sing")) {
+        	int k = (int)Math.floor(signalLength * .37);
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = 1 /Math.abs(t[i] - (k+.5)/signalLength);	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("HiSine")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sin( Math.PI * (signalLength * .6902) * t[i]);	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("LoSine")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sin( Math.PI * (signalLength * .3333) * t[i]);	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("LinChirp")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sin(Math.PI * t[i] * ((signalLength * .125) * t[i]));	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("TwoChirp")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sin(Math.PI * t[i] * (signalLength * t[i])) + Math.sin((Math.PI/3) * t[i] * (signalLength * t[i]));	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("QuadChirp")) {
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sin( (Math.PI/3) * t[i] * (signalLength * t[i] * t[i]));	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("MishMash")) {
+        	// QuadChirp + LinChirp + HiSine
+        	for (i = 0; i < signalLength; i++) {
+        	    aArray[i] = Math.sin( (Math.PI/3) * t[i] * (signalLength * t[i] * t[i]));
+        	    aArray[i] += Math.sin( Math.PI * (signalLength * .6902) * t[i]);
+        	    aArray[i] += Math.sin(Math.PI * t[i] * ((signalLength * .125) * t[i]));	
+        	}
+        }
+        else if (sigName.equalsIgnoreCase("WernerSorrows")) {
+        	double pos[] = new double[] { .1, .13, .15, .23, .25, .40, .44, .65, .76, .78, .81};
+        	double hgt[] = new double[] { 4,  5,   3,   4,  5,  4.2, 2.1, 4.3,  3.1, 5.1, 4.2};
+        	double wth[] = new double[] {.005, .005, .006, .01, .01, .03, .01, .01,  .005, .008, .005};
+        	for (i = 0; i < signalLength; i++) {
+        		aArray[i] = Math.sin(Math.PI * t[i] * (signalLength/2.0 * t[i]*t[i])) ;
+        		aArray[i] = aArray[i] +  Math.sin(Math.PI * (signalLength * .6902) * t[i]);
+        		aArray[i] = aArray[i] +  Math.sin(Math.PI * t[i] * (signalLength * t[i]));
+	        	for (j = 0; j < pos.length; j++) {
+	        	    aArray[i] = aArray[i] + hgt[j]/Math.pow( 1 + Math.abs((t[i] - pos[j])/wth[j]),4.0);
+	        	}
+        	}
         }
     }
     
