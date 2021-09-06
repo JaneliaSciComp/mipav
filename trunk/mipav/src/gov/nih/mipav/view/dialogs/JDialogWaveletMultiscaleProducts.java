@@ -28,6 +28,12 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+	
+    public static final int MINIMUM_PHASE = 1;
+    
+    public static final int MID_PHASE = 2;
+    
+    public static final int MAXIMUM_PHASE = 3;
 
     private int filterLength;
     
@@ -60,6 +66,14 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private JRadioButton maximumLevelsButton;
     
     private JRadioButton userLevelsButton;
+    
+    private JRadioButton minimumButton;
+    
+    private JRadioButton midButton;
+    
+    private JRadioButton maximumButton;
+    
+    private int filterType = MINIMUM_PHASE;
     
     private JTextField textLevels;
     
@@ -256,7 +270,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             try {
                 // Make algorithm
                 waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
-                                  numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
+                                  numberOfLevels, doWaveletImages, minimumLevel, maximumLevel,
+                                  filterType);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -305,6 +320,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         doWaveletImages = scriptParameters.getParams().getBoolean("do_show_wavelet_images");
         minimumLevel = scriptParameters.getParams().getInt("minimum_level");
         maximumLevel = scriptParameters.getParams().getInt("maximum_level");
+        filterType = scriptParameters.getParams().getInt("filter_type");
     }
 
     /**
@@ -318,6 +334,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_wavelet_images", doWaveletImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("minimum_level", minimumLevel));
         scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_level", maximumLevel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
     }
 
     /**
@@ -403,12 +420,34 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         textMaximum.setText("2");
         gbc.gridx = 1;
         paramPanel.add(textMaximum, gbc);  
+        
+        ButtonGroup phaseGroup = new ButtonGroup();  
+        minimumButton = new JRadioButton("Minimum phase", true);
+        minimumButton.setFont(serif12);
+        phaseGroup.add(minimumButton);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        paramPanel.add(minimumButton, gbc);
+        
+        midButton = new JRadioButton("Mid phase", false);
+        midButton.setFont(serif12);
+        phaseGroup.add(midButton);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        paramPanel.add(midButton, gbc);
+        
+        maximumButton = new JRadioButton("Maximum phase", false);
+        maximumButton.setFont(serif12);
+        phaseGroup.add(maximumButton);
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        paramPanel.add(maximumButton, gbc);
 
         waveletCheckBox = new JCheckBox("Display individual level wavelet images");
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 9;
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
 
@@ -536,6 +575,16 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             
             return false;
         }
+        
+        if (minimumButton.isSelected()) {
+        	filterType = MINIMUM_PHASE;
+        }
+        else if (midButton.isSelected()) {
+        	filterType = MID_PHASE;
+        }
+        else {
+        	filterType = MAXIMUM_PHASE;
+        }
 
         if (waveletCheckBox.isSelected()) {
             doWaveletImages = true;
@@ -602,6 +651,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             table.put(new ParameterBoolean("do_show_wavelet_images", false));
             table.put(new ParameterInt("minimum_level", 1));
             table.put(new ParameterInt("maximum_level", 2));
+            table.put(new ParameterInt("filter_type, MINIMUM_PHASE"));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
