@@ -134,23 +134,26 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             Calculated yh[7] = 0.1120719340210067 */
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
-            int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel) {
+            int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel,
+            int filterType) {
         super(destImg, srcImg);
         this.filterLength = filterLength;
         this.numberOfLevels = numberOfLevels;
         this.doWaveletImages = doWaveletImages;
         this.minimumLevel = minimumLevel;
         this.maximumLevel = maximumLevel;
+        this.filterType = filterType;
     }
     
     public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, int numberOfLevels,
-            boolean doWaveletImages, int minimumLevel, int maximumLevel) {
+            boolean doWaveletImages, int minimumLevel, int maximumLevel, int filterType) {
         super(null, srcImg);
         this.filterLength = filterLength;
         this.numberOfLevels = numberOfLevels;
         this.doWaveletImages = doWaveletImages;
         this.minimumLevel = minimumLevel;
         this.maximumLevel = maximumLevel;
+        this.filterType = filterType;
     }
     
     
@@ -794,19 +797,49 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
        %Copyright (c) 2000 RICE UNIVERSITY. All rights reserved.
        %Created by Ramesh Gopinath, Department of ECE, Rice University. 
        
-       Correctly gives scaling and wavelet filters for filter length = 4 minimum phase:
-       Scaling filter:
+        Correctly gives scaling and wavelet filters for filter length = 4 minimum phase:
+        Calculated scaling filter:
         0.48296291314453416
         0.8365163037378078
         0.2241438680420134
         -0.12940952255126037
-        Wavelet filter:
+        Calculated Wavelet filter:
         0.12940952255126037
         0.2241438680420134
         -0.8365163037378078
         0.48296291314453416
+        Correct scaling filter = [0.482962913144534   0.836516303737808   0.224143868042013  -0.129409522551260];
+        Correct wavelet filter = [0.129409522551260   0.224143868042013  -0.836516303737808   0.482962913144534];
         
-       Correctly gives scaling and wavelet filters for filter length = 6 minimum phase
+        Correctly gives scaling and wavelet filters for filter length = 4 mid phase
+        Calculated scaling filter:
+		0.48296291314453416
+		0.8365163037378078
+		0.2241438680420134
+		-0.12940952255126037
+		Calculated wavelet filter:
+		0.12940952255126037
+		0.2241438680420134
+		-0.8365163037378078
+		0.48296291314453416
+		Correct scaling filter = [0.482962913144534   0.836516303737808   0.224143868042013  -0.129409522551260];
+        Corrct wavelet filter = [0.129409522551260   0.224143868042013  -0.836516303737808   0.482962913144534];
+        
+        Correctly gives scaling and wavelet filters for filter length = 4 maximum phase
+        Calculated scaling filter:
+		-0.12940952255126037
+		0.2241438680420134
+		0.8365163037378078
+		0.48296291314453416
+		Calculated wavelet filter:
+		-0.48296291314453416
+		0.8365163037378078
+		-0.2241438680420134
+		-0.12940952255126037
+		Correct scaling filter = [-0.129409522551260   0.224143868042013   0.836516303737808   0.482962913144534];
+        Correct wavelet filter = [-0.482962913144534   0.836516303737808  -0.224143868042013  -0.129409522551260];
+        
+        Correctly gives scaling and wavelet filters for filter length = 6 minimum phase
         Scaling filter:
         0.3326705529500828
         0.8068915093110931
@@ -821,6 +854,24 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         0.459877502118492
         -0.8068915093110931
         0.3326705529500828
+        
+        Correctly gives scaling and wavelet filters for filter length = 6 mid phase
+        Scaling filter:
+		0.3326705529500828
+		0.8068915093110931
+		0.459877502118492
+		-0.1350110200102549
+		-0.08544127388202716
+		0.03522629188570937
+		Wavelet filter:
+		-0.03522629188570937
+		-0.08544127388202716
+		0.1350110200102549
+		0.459877502118492
+		-0.8068915093110931
+		0.3326705529500828
+        Correct scaling filter = [0.332670552950083   0.806891509311093   0.459877502118491  -0.135011020010255  -0.085441273882027   0.035226291885710];
+        Correct wavelet filter = [-0.035226291885710  -0.085441273882027   0.135011020010255   0.459877502118491 -0.806891509311093   0.332670552950083];
      */
     private void daubcqf() {
         int j, m;
@@ -929,11 +980,11 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         if (filterType == MID_PHASE) {
             if ((k % 2) == 1) {
                 j = 0;
-                for (m = 0; m <= filterLength-1; m += 4) {
+                for (m = 0; m < filterLength-2; m += 4) {
                     qtR[j] = list.get(m).getReal();
                     qtI[j++] = list.get(m).getImaginary();
                 }
-                for (m = 1; m <= filterLength-1; m += 4) {
+                for (m = 1; m < filterLength-2; m += 4) {
                     qtR[j] = list.get(m).getReal();
                     qtI[j++] = list.get(m).getImaginary();
                 }
