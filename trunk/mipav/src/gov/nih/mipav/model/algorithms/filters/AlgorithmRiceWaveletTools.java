@@ -286,9 +286,14 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         hlA = new double[numberOfLevels][sliceSize];
         hhA = new double[numberOfLevels][sliceSize];
         if (doWaveletImages) {
-            waveletImage = new ModelImage[4*numberOfLevels+4];
+        	if (maximumLevel > minimumLevel) {
+                waveletImage = new ModelImage[4*numberOfLevels+4];
+        	}
+        	else {
+        		waveletImage = new ModelImage[4*numberOfLevels];
+        	}
         }
-        else {
+        else if (maximumLevel > minimumLevel) {
             waveletImage = new ModelImage[4];
         }
         
