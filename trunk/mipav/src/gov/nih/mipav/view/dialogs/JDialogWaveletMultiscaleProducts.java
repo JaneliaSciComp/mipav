@@ -37,6 +37,10 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
     private int filterLength;
     
+    private JRadioButton redundantButton;
+    private JRadioButton nonredundantButton;
+    private boolean redundant = true;
+    
 
     /** DOCUMENT ME! */
     private JTextField textFilterLength;
@@ -269,7 +273,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
             try {
                 // Make algorithm
-                waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
+                waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, redundant,
                                   numberOfLevels, doWaveletImages, minimumLevel, maximumLevel,
                                   filterType);
 
@@ -316,6 +320,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         parentFrame = image.getParentFrame();
 
         filterLength = scriptParameters.getParams().getInt("filter_length");
+        redundant = scriptParameters.getParams().getBoolean("redun");
         numberOfLevels = scriptParameters.getParams().getInt("number_of_levels");
         doWaveletImages = scriptParameters.getParams().getBoolean("do_show_wavelet_images");
         minimumLevel = scriptParameters.getParams().getInt("minimum_level");
@@ -330,6 +335,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         scriptParameters.storeInputImage(image);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_length", filterLength));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("redun", redundant));
         scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_levels", numberOfLevels));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_wavelet_images", doWaveletImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("minimum_level", minimumLevel));
@@ -364,11 +370,26 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         gbc.gridx = 1;
         paramPanel.add(textFilterLength, gbc);
         
+        ButtonGroup redundantGroup = new ButtonGroup();
+        redundantButton = new JRadioButton("Redundant with no sub-sampling",true);
+        redundantButton.setFont(serif12);
+        redundantGroup.add(redundantButton);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        paramPanel.add(redundantButton, gbc);
+        
+        nonredundantButton = new JRadioButton("Nonredundant with sub-sampling",false);
+        nonredundantButton.setFont(serif12);
+        redundantGroup.add(nonredundantButton);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        paramPanel.add(nonredundantButton, gbc);
+        
         JLabel levelsLabel = new JLabel("Number of levels:");
         levelsLabel.setForeground(Color.black);
         levelsLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         paramPanel.add(levelsLabel, gbc);
         
         ButtonGroup levelsGroup = new ButtonGroup();  
@@ -377,7 +398,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         userLevelsButton.addActionListener(this);
         levelsGroup.add(userLevelsButton);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 4;
         paramPanel.add(userLevelsButton, gbc);
         
         textLevels = new JTextField(10);
@@ -392,14 +413,14 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         maximumLevelsButton.addActionListener(this);
         levelsGroup.add(maximumLevelsButton);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         paramPanel.add(maximumLevelsButton, gbc);
         
         JLabel minimumLabel = new JLabel("Minimum level for multiplication (>=1):");
         minimumLabel.setForeground(Color.black);
         minimumLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         paramPanel.add(minimumLabel, gbc);
         
         textMinimum = new JTextField(10);
@@ -412,7 +433,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         maximumLabel.setForeground(Color.black);
         maximumLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         paramPanel.add(maximumLabel, gbc);
         
         textMaximum = new JTextField(10);
@@ -426,28 +447,28 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         minimumButton.setFont(serif12);
         phaseGroup.add(minimumButton);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 8;
         paramPanel.add(minimumButton, gbc);
         
         midButton = new JRadioButton("Mid phase", false);
         midButton.setFont(serif12);
         phaseGroup.add(midButton);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 9;
         paramPanel.add(midButton, gbc);
         
         maximumButton = new JRadioButton("Maximum phase", false);
         maximumButton.setFont(serif12);
         phaseGroup.add(maximumButton);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         paramPanel.add(maximumButton, gbc);
 
         waveletCheckBox = new JCheckBox("Display individual level wavelet images");
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 11;
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
 
@@ -503,6 +524,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             MipavUtil.displayError("Filter length must be even");
             return false;
         }
+        
+        redundant = redundantButton.isSelected();
         
         if (maximumLevelsButton.isSelected()) {
             i = xDim;
@@ -647,6 +670,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterInt("filter_Length", 4));
+            table.put(new ParameterBoolean("redun", true));
             table.put(new ParameterInt("number_of_levels", Integer.MAX_VALUE));
             table.put(new ParameterBoolean("do_show_wavelet_images", false));
             table.put(new ParameterInt("minimum_level", 1));
