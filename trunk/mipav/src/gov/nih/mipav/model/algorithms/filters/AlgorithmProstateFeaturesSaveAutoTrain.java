@@ -345,9 +345,10 @@ public class AlgorithmProstateFeaturesSaveAutoTrain extends AlgorithmBase implem
         boolean doWaveletImages = false; 
         int minimumLevel = 1; 
         int maximumLevel = 2;
+        boolean redundant = true;
         
         try {
-            waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
+            waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, redundant,
                               numberOfLevels, doWaveletImages, minimumLevel, maximumLevel, AlgorithmRiceWaveletTools.MINIMUM_PHASE);
             waveletAlgo.addListener(this);
             waveletAlgo.run();
