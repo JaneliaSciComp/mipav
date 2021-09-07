@@ -111,7 +111,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private int maximumLevel;
     private int z;
     private boolean selfTest = false;
-    private boolean test_mrdwt_1 = true;
+    private boolean test_mrdwt_1 = false;
+    private boolean test_mrdwt_2 = false;
+    private boolean test_mrdwt_2L2 = false;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
@@ -228,6 +230,339 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	        //assertVectorsAlmostEqual(yl, yl_corr, 'relative', 0.001);
 	        //assertVectorsAlmostEqual(yh, yh_corr, 'relative', 0.001);
 	        // assertEqual(L, L_corr);
+        }
+        else if (test_mrdwt_2) {
+        	  //x = [1 3 5 2; 3 4 8 1; 3 9 2 0; 1 2 3 0];
+        	  aArray = new double[] {1, 3, 5, 2, 3, 4, 8, 1, 3, 9, 2, 0, 1, 2, 3, 0};
+        	  //h = daubcqf(4, 'min'); // sets scalingFilter and waveletFilter
+        	  filterType = MINIMUM_PHASE;
+          	  filterLength = 4;
+          	  scalingFilter = new double[filterLength];
+              waveletFilter = new double[filterLength];
+          	  daubcqf();
+  	          //L = 1;
+          	  numberOfLevels = 1;
+          	  nDims = 2;
+              xDim = 4;
+              yDim = 4;
+              sliceSize = 16;
+              maximumLevel = 1;
+              
+              // Create low pass wavelet component
+              yl = new double[sliceSize];
+              // Save the low pass component for each level
+              llA = new double[numberOfLevels-1][sliceSize];
+              
+              // Create 3 high pass components for each level
+              lhA = new double[numberOfLevels][sliceSize];
+              hlA = new double[numberOfLevels][sliceSize];
+              hhA = new double[numberOfLevels][sliceSize];
+              mrdwt();
+              for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("yl["+i+"] = " + yl[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+              }
+              
+              for (i = 0; i < sliceSize; i++) {
+              	  Preferences.debug("lhA[0]["+i+"] = " + lhA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+              }
+              for (i = 0; i < sliceSize; i++) {
+                  Preferences.debug("hlA[0]["+i+"] = " + hlA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+              }
+              for (i = 0; i < sliceSize; i++) {
+                  Preferences.debug("hhA[0]["+i+"] = " + hhA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+              }
+              setCompleted(true);
+              return;
+              // yl and yl_corr match
+              // lhA and first 4 columns of yh_corr match
+              // hlA and middle 4 columns of yh_corr match
+              // hhA and last 4 columns of yh_corr match
+              // yl[0] = 9.011057158514985
+              // yl[1] = 10.779886545341357
+    		  // yl[2] = 5.879487298107779
+    		  // yl[3] = 4.110657911281409
+    		  // yl[4] = 11.139342088718587
+    		  // yl[5] = 8.776601615137755
+    		  // yl[6] = 2.550240473580836
+    		  // yl[7] = 4.91298094716167
+    		  // yl[8] = 6.946474596215561
+    		  // yl[9] = 5.757772228311383
+    		  // yl[10] = 1.6629809471616712
+    		  // yl[11] = 2.851683315065848
+    		  // yl[12] = 4.818189666011959
+    		  // yl[13] = 7.761057158514986
+    		  // yl[14] = 4.992227771688615
+    		  // yl[15] = 2.0493602791855876
+    		  // lhA[0][0] = 4.572354790610808
+    		  // lhA[0][1] = 0.42852540378443815
+    		  // lhA[0][2] = -1.8827722283113837
+    		  // lhA[0][3] = 2.261057158514986
+    		  // lhA[0][4] = -2.444069860407206
+    		  // lhA[0][5] = -2.431810333988042
+    		  // lhA[0][6] = -1.446474596215561
+    		  // lhA[0][7] = -1.4587341226347261
+    		  // lhA[0][8] = -1.7487976320958225
+    		  // lhA[0][9] = -0.5870190528383299
+    		  // lhA[0][10] = 0.5592150697963958
+    		  // lhA[0][11] = -0.6025635094610965
+    		  // lhA[0][12] = -0.37948729810778037
+    		  // lhA[0][13] = 2.5903039830419314
+    		  // lhA[0][14] = 2.7700317547305473
+    		  // lhA[0][15] = -0.1997595264191645
+    		  // hlA[0][0] = 4.871392896287467
+    		  // hlA[0][1] = -3.102563509461097
+    		  // hlA[0][2] = -1.7978357377724807
+    		  // hlA[0][3] = 0.029006350946109177
+    		  // hlA[0][4] = 1.886057158514987
+    		  // hlA[0][5] = -4.2487976320958225
+    		  // hlA[0][6] = -1.977563509461097
+    		  // hlA[0][7] = 4.340303983041931
+    		  // hlA[0][8] = 1.1662658773652737
+    		  // hlA[0][9] = -2.3549682452694523
+    		  // hlA[0][10] = -1.7398230358802615
+    		  // hlA[0][11] = 2.928525403784438
+    		  // hlA[0][12] = 4.151601615137754
+    		  // hlA[0][13] = -1.2087341226347261
+    		  // hlA[0][14] = -1.5600952641916448
+    		  // hlA[0][15] = -1.3827722283113837
+    		  // hhA[0][0] = -2.962019052838329
+    		  // hhA[0][1] = -1.1818103339880413
+    		  // hhA[0][2] = -1.1294872981077808
+    		  // hhA[0][3] = 5.273316684934151
+    		  // hhA[0][4] = -0.02331668493415151
+    		  // hhA[0][5] = 0.035576211353315984
+    		  // hhA[0][6] = 0.9497595264191645
+    		  // hhA[0][7] = -0.962019052838329
+    		  // hhA[0][8] = -0.6964745962155621
+    		  // hhA[0][9] = 1.8582531754730547
+    		  // hhA[0][10] = -0.7120190528383288
+    		  // hhA[0][11] = -0.44975952641916406
+    		  // hhA[0][12] = 3.6818103339880417
+    		  // hhA[0][13] = -0.7120190528383288
+    		  // hhA[0][14] = 0.8917468245269453
+    		  // hhA[0][15] = -3.861538105676658
+        	  /*[yl, yh, L] = mrdwt(x, h, 1);
+        	  //yl_corr = [
+        	      9.0111   10.7799    5.8795    4.1107;
+        	     11.1393    8.7766    2.5502    4.9130;
+        	      6.9465    5.7578    1.6630    2.8517;
+        	      4.8182    7.7611    4.9922    2.0494];
+        	  yh_corr = [
+        	      4.5724    0.4285   -1.8828    2.2611    4.8714   -3.1026   -1.7978    0.0290   -2.9620   -1.1818   -1.1295    5.2733;
+        	     -2.4441   -2.4318   -1.4465   -1.4587    1.8861   -4.2488   -1.9776    4.3403   -0.0233    0.0356    0.9498   -0.9620;
+        	     -1.7488   -0.5870    0.5592   -0.6026    1.1663   -2.3550   -1.7398    2.9285   -0.6965    1.8583   -0.7120   -0.4498;
+        	     -0.3795    2.5903    2.7700   -0.1998    4.1516   -1.2087   -1.5601   -1.3828    3.6818   -0.7120    0.8917   -3.8615];
+        	assertVectorsAlmostEqual(yl, yl_corr, 'relative', 0.001);
+        	assertVectorsAlmostEqual(yh, yh_corr, 'relative', 0.001);*/
+        }
+        else if (test_mrdwt_2L2) {
+      	  //x = [1 3 5 2; 3 4 8 1; 3 9 2 0; 1 2 3 0];
+      	  aArray = new double[] {1, 3, 5, 2, 3, 4, 8, 1, 3, 9, 2, 0, 1, 2, 3, 0};
+      	  //h = daubcqf(4, 'min'); // sets scalingFilter and waveletFilter
+      	  filterType = MINIMUM_PHASE;
+          filterLength = 4;
+          scalingFilter = new double[filterLength];
+          waveletFilter = new double[filterLength];
+          daubcqf();
+	      //L = 2;
+          numberOfLevels = 2;
+          nDims = 2;
+            xDim = 4;
+            yDim = 4;
+            sliceSize = 16;
+            maximumLevel = 2;
+            
+            // Create low pass wavelet component
+            yl = new double[sliceSize];
+            // Save the low pass component for each level
+            llA = new double[numberOfLevels-1][sliceSize];
+            
+            // Create 3 high pass components for each level
+            lhA = new double[numberOfLevels][sliceSize];
+            hlA = new double[numberOfLevels][sliceSize];
+            hhA = new double[numberOfLevels][sliceSize];
+            extents = new int[] {4,4};
+            waveletImage = new ModelImage[4];
+            mrdwt();
+            for (i = 0; i < sliceSize; i++) {
+            	Preferences.debug("yl["+i+"] = " + yl[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            
+            for (i = 0; i < sliceSize; i++) {
+            	  Preferences.debug("lhA[0]["+i+"] = " + lhA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            for (i = 0; i < sliceSize; i++) {
+                Preferences.debug("hlA[0]["+i+"] = " + hlA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            for (i = 0; i < sliceSize; i++) {
+                Preferences.debug("hhA[0]["+i+"] = " + hhA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            
+            for (i = 0; i < sliceSize; i++) {
+          	  Preferences.debug("llA[0]["+i+"] = " + llA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            for (i = 0; i < sliceSize; i++) {
+          	  Preferences.debug("lhA[1]["+i+"] = " + lhA[1][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+	        }
+	        for (i = 0; i < sliceSize; i++) {
+	           Preferences.debug("hlA[1]["+i+"] = " + hlA[1][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+	        }
+	        for (i = 0; i < sliceSize; i++) {
+	            Preferences.debug("hhA[1]["+i+"] = " + hhA[1][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+	        }
+            setCompleted(true);
+            return;
+            // yl and yl_corr match
+            // lhA[0] and yh_corr rows 1, 3, 5, and 7 and columns 1 to 4 match
+            // hlA[0] and yh_corr rows 1, 3, 5, and 7 and columns 5 to 8 match
+            // hhA[0] and yh_corr rows 1, 3, 5, and 7 and column 9 to 12 match
+            // lhA[1] and yh_corr rows 2, 4, 6, and 8 and columns 1 to 4 match
+            // hlA[1] and yh_corr rows 2, 4, 6, and 8 and columns 5 to 8 match
+            // hhA[1] and yh_corr rows 2, 4, 6, and 8 and columns 9 to 12 match
+            /*yl[0] = 11.749999999999998
+    		yl[1] = 11.750000000000002
+    		yl[2] = 11.749999999999996
+    		yl[3] = 11.749999999999998
+    		yl[4] = 11.749999999999998
+    		yl[5] = 11.75
+    		yl[6] = 11.749999999999998
+    		yl[7] = 11.749999999999998
+    		yl[8] = 11.749999999999996
+    		yl[9] = 11.749999999999998
+    		yl[10] = 11.749999999999995
+    		yl[11] = 11.749999999999998
+    		yl[12] = 11.749999999999996
+    		yl[13] = 11.75
+    		yl[14] = 11.749999999999996
+    		yl[15] = 11.749999999999996
+    		lhA[0][0] = 4.572354790610808
+    		lhA[0][1] = 0.42852540378443815
+    		lhA[0][2] = -1.8827722283113837
+    		lhA[0][3] = 2.261057158514986
+    		lhA[0][4] = -2.444069860407206
+    		lhA[0][5] = -2.431810333988042
+    		lhA[0][6] = -1.446474596215561
+    		lhA[0][7] = -1.4587341226347261
+    		lhA[0][8] = -1.7487976320958225
+    		lhA[0][9] = -0.5870190528383299
+    		lhA[0][10] = 0.5592150697963958
+    		lhA[0][11] = -0.6025635094610965
+    		lhA[0][12] = -0.37948729810778037
+    		lhA[0][13] = 2.5903039830419314
+    		lhA[0][14] = 2.7700317547305473
+    		lhA[0][15] = -0.1997595264191645
+    		hlA[0][0] = 4.871392896287467
+    		hlA[0][1] = -3.102563509461097
+    		hlA[0][2] = -1.7978357377724807
+    		hlA[0][3] = 0.029006350946109177
+    		hlA[0][4] = 1.886057158514987
+    		hlA[0][5] = -4.2487976320958225
+    		hlA[0][6] = -1.977563509461097
+    		hlA[0][7] = 4.340303983041931
+    		hlA[0][8] = 1.1662658773652737
+    		hlA[0][9] = -2.3549682452694523
+    		hlA[0][10] = -1.7398230358802615
+    		hlA[0][11] = 2.928525403784438
+    		hlA[0][12] = 4.151601615137754
+    		hlA[0][13] = -1.2087341226347261
+    		hlA[0][14] = -1.5600952641916448
+    		hlA[0][15] = -1.3827722283113837
+    		hhA[0][0] = -2.962019052838329
+    		hhA[0][1] = -1.1818103339880413
+    		hhA[0][2] = -1.1294872981077808
+    		hhA[0][3] = 5.273316684934151
+    		hhA[0][4] = -0.02331668493415151
+    		hhA[0][5] = 0.035576211353315984
+    		hhA[0][6] = 0.9497595264191645
+    		hhA[0][7] = -0.962019052838329
+    		hhA[0][8] = -0.6964745962155621
+    		hhA[0][9] = 1.8582531754730547
+    		hhA[0][10] = -0.7120190528383288
+    		hhA[0][11] = -0.44975952641916406
+    		hhA[0][12] = 3.6818103339880417
+    		hhA[0][13] = -0.7120190528383288
+    		hhA[0][14] = 0.8917468245269453
+    		hhA[0][15] = -3.861538105676658
+    		llA[0][0] = 9.011057158514985
+    		llA[0][1] = 10.779886545341357
+    		llA[0][2] = 5.879487298107779
+    		llA[0][3] = 4.110657911281409
+    		llA[0][4] = 11.139342088718587
+    		llA[0][5] = 8.776601615137755
+    		llA[0][6] = 2.550240473580836
+    		llA[0][7] = 4.91298094716167
+    		llA[0][8] = 6.946474596215561
+    		llA[0][9] = 5.757772228311383
+    		llA[0][10] = 1.6629809471616712
+    		llA[0][11] = 2.851683315065848
+    		llA[0][12] = 4.818189666011959
+    		llA[0][13] = 7.761057158514986
+    		llA[0][14] = 4.992227771688615
+    		llA[0][15] = 2.0493602791855876
+    		lhA[1][0] = 3.1405444566227634
+    		lhA[1][1] = 3.1405444566227674
+    		lhA[1][2] = 3.140544456622764
+    		lhA[1][3] = 3.1405444566227656
+    		lhA[1][4] = 1.9395825622994223
+    		lhA[1][5] = 1.939582562299428
+    		lhA[1][6] = 1.9395825622994245
+    		lhA[1][7] = 1.9395825622994245
+    		lhA[1][8] = -3.140544456622765
+    		lhA[1][9] = -3.1405444566227687
+    		lhA[1][10] = -3.140544456622766
+    		lhA[1][11] = -3.1405444566227674
+    		lhA[1][12] = -1.939582562299424
+    		lhA[1][13] = -1.939582562299429
+    		lhA[1][14] = -1.9395825622994263
+    		lhA[1][15] = -1.9395825622994263
+    		hlA[1][0] = 4.207531754730547
+    		hlA[1][1] = 4.7876587736527405
+    		hlA[1][2] = -4.207531754730549
+    		hlA[1][3] = -4.787658773652742
+    		hlA[1][4] = 4.207531754730548
+    		hlA[1][5] = 4.787658773652742
+    		hlA[1][6] = -4.207531754730548
+    		hlA[1][7] = -4.787658773652742
+    		hlA[1][8] = 4.207531754730547
+    		hlA[1][9] = 4.787658773652739
+    		hlA[1][10] = -4.207531754730549
+    		hlA[1][11] = -4.787658773652742
+    		hlA[1][12] = 4.207531754730547
+    		hlA[1][13] = 4.787658773652742
+    		hlA[1][14] = -4.207531754730548
+    		hlA[1][15] = -4.787658773652742
+    		hhA[1][0] = -1.0759618943233418
+    		hhA[1][1] = 1.8815698604072053
+    		hhA[1][2] = 1.075961894323341
+    		hhA[1][3] = -1.8815698604072058
+    		hhA[1][4] = 4.381569860407205
+    		hhA[1][5] = -0.9240381056766571
+    		hhA[1][6] = -4.381569860407203
+    		hhA[1][7] = 0.9240381056766567
+    		hhA[1][8] = 1.0759618943233416
+    		hhA[1][9] = -1.8815698604072062
+    		hhA[1][10] = -1.075961894323341
+    		hhA[1][11] = 1.8815698604072066
+    		hhA[1][12] = -4.381569860407205
+    		hhA[1][13] = 0.9240381056766567
+    		hhA[1][14] = 4.381569860407204
+    		hhA[1][15] = -0.9240381056766565*/
+            // yl_corr = [
+           // 11.7500   11.7500   11.7500   11.7500;
+           // 11.7500   11.7500   11.7500   11.7500;
+           // 11.7500   11.7500   11.7500   11.7500;
+           // 11.7500   11.7500   11.7500   11.7500];
+          // yh_corr = [
+            // 4.5724    0.4285   -1.8828    2.2611    4.8714   -3.1026   -1.7978    0.0290   -2.9620   -1.1818   -1.1295    5.2733 ...
+            // 3.1405    3.1405    3.1405    3.1405    4.2075    4.7877   -4.2075   -4.7877   -1.0760    1.8816    1.0760   -1.8816;
+           // -2.4441   -2.4318   -1.4465   -1.4587    1.8861   -4.2488   -1.9776    4.3403   -0.0233    0.0356    0.9498   -0.9620 ...
+            // 1.9396    1.9396    1.9396    1.9396    4.2075    4.7877   -4.2075   -4.7877    4.3816   -0.9240   -4.3816    0.9240;
+           // -1.7488   -0.5870    0.5592   -0.6026    1.1663   -2.3550   -1.7398    2.9285   -0.6965    1.8583   -0.7120   -0.4498 ...
+           // -3.1405   -3.1405   -3.1405   -3.1405    4.2075    4.7877   -4.2075   -4.7877    1.0760   -1.8816   -1.0760    1.8816;
+           // -0.3795    2.5903    2.7700   -0.1998    4.1516   -1.2087   -1.5601   -1.3828    3.6818   -0.7120    0.8917   -3.8615 ...
+           // -1.9396   -1.9396   -1.9396   -1.9396    4.2075    4.7877   -4.2075   -4.7877   -4.3816    0.9240    4.3816   -0.9240];
+        // assertVectorsAlmostEqual(yl, yl_corr, 'relative', 0.001);
+        // assertVectorsAlmostEqual(yh, yh_corr, 'relative', 0.001);
         }
         else {
         
@@ -690,6 +1025,22 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     }
     
     private void mrdwt() {
+    	//    Function computes the redundant discrete wavelet transform y
+    	//   for a 1D  or 2D input signal. (Redundant means here that the
+    	//    sub-sampling after each stage is omitted.) yl contains the
+    	//    lowpass and yh the highpass components. In the case of a 2D
+    	//    signal, the ordering in yh is 
+    	//    [lh hl hh lh hl ... ] (first letter refers to row, second to
+    	//    column filtering). 
+    	
+    	//    Input:
+    	//	     x : finite length 1D or 2D signal (implicitly periodized)
+    	//       h : scaling filter
+    	//       L : number of levels. In the case of a 1D 
+        //           length(x) must be  divisible by 2^L;
+        //           in the case of a 2D signal, the row and the
+    	//           column dimension must be divisible by 2^L.
+    	
         int i;
         int lh;
         double h0[];
@@ -800,15 +1151,6 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 if (actual_L < numberOfLevels) {
                     for (i = 0; i < sliceSize; i++) {
                         llA[actual_L-1][i] = yl[i];
-                    }
-                }
-                
-                if ((actual_L > minimumLevel) && (actual_L <= maximumLevel) && (maximumLevel > minimumLevel)) {
-                    for (i = 0; i < sliceSize; i++) {
-                        llA[minimumLevel-1][i] *= yl[i];
-                        lhA[minimumLevel-1][i] *= lhA[actual_L-1][i];
-                        hlA[minimumLevel-1][i] *= hlA[actual_L-1][i];
-                        hhA[minimumLevel-1][i] *= hhA[actual_L-1][i];
                     }
                 }
                 
