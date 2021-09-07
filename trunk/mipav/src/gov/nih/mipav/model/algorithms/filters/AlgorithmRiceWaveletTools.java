@@ -111,7 +111,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private int maximumLevel;
     private int z;
     private boolean selfTest = false;
-    private boolean test_mrdwt_1 = false;
+    private boolean test_mrdwt_1 = true;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
@@ -196,6 +196,32 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             yl = new double[sliceSize];
             lhA = new double[numberOfLevels][sliceSize];
             mrdwt();
+            for (i = 0; i < sliceSize; i++) {
+            	Preferences.debug("yl["+i+"] = " + yl[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            for (i = 0; i < sliceSize; i++) {
+            	Preferences.debug("lhA[0]["+i+"] = " + lhA[0][i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            setCompleted(true);
+            return;
+            // Correct values obtained:
+            // yl[0] = 0.8365163037378078
+    		// yl[1] = 0.48296291314453416
+    		// yl[2] = 0.0
+    		// yl[3] = 0.0
+    		// yl[4] = 0.0
+    		// yl[5] = 0.0
+    		// yl[6] = -0.12940952255126037
+    		// yl[7] = 0.2241438680420134
+    		// lhA[0][0] = -0.2241438680420134
+    		// lhA[0][1] = -0.12940952255126037
+    		// lhA[0][2] = 0.0
+    		// lhA[0][3] = 0.0
+    		// lhA[0][4] = 0.0
+    		// lhA[0][5] = 0.0
+    		// lhA[0][6] = -0.48296291314453416
+    		// lhA[0][7] = 0.8365163037378078
+            
 	        //yl_corr = [0.8365  0.4830 0 0 0 0 -0.1294 0.2241];
 	        //yh_corr = [-0.2241 -0.1294 0 0 0 0 -0.4830 0.8365];
 	        //L_corr = 1;
@@ -688,17 +714,15 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         int waveletImageIndex = 0;
         boolean calcMinMax = true;
         
-        lh = 2 * filterLength;
+        lh = filterLength;
         h0 = new double[lh];
         h1 = new double[lh];
+        // analysis lowpass and highpass
         for (i = 0; i < filterLength; i++) {
-            h0[i] = waveletFilter[filterLength - i - 1]/2;
-            h1[i] = scalingFilter[i]/2;
+            h0[i] = scalingFilter[filterLength - i - 1];
+            h1[i] = scalingFilter[i];
         }
-        for (i = 0; i < filterLength; i++) {
-            h0[filterLength + i] = scalingFilter[filterLength - i - 1]/2;
-            h1[filterLength + i] = waveletFilter[i]/2;
-        }
+        
         
         for (i = 0; i < lh; i += 2) {
             h1[i] = -h1[i];
