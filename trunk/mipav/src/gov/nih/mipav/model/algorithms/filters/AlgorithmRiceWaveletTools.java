@@ -97,6 +97,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     private int numberOfLevels;
     
+    private boolean redundant = false;
+    
     private boolean doWaveletImages;
     
     private ModelImage[] waveletImage = null;
@@ -109,6 +111,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private double lhA[][] = null;
     private double hlA[][] = null;
     private double hhA[][] = null;
+    // mdwt output
+    private double y[] = null;
     private int minimumLevel = 1;
     private int maximumLevel;
     private int z;
@@ -120,11 +124,12 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mirdwt_2D = false;
     
     
-    public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
+    public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
             int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel,
             int filterType) {
         super(destImg, srcImg);
         this.filterLength = filterLength;
+        this.redundant = redundant;
         this.numberOfLevels = numberOfLevels;
         this.doWaveletImages = doWaveletImages;
         this.minimumLevel = minimumLevel;
@@ -132,10 +137,11 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         this.filterType = filterType;
     }
     
-    public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, int numberOfLevels,
+    public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, boolean redundant, int numberOfLevels,
             boolean doWaveletImages, int minimumLevel, int maximumLevel, int filterType) {
         super(null, srcImg);
         this.filterLength = filterLength;
+        this.redundant = redundant;
         this.numberOfLevels = numberOfLevels;
         this.doWaveletImages = doWaveletImages;
         this.minimumLevel = minimumLevel;
@@ -792,44 +798,67 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             return;
         }
         
-        // Create low pass wavelet component
-        yl = new double[sliceSize];
-        // Savethe low pass component for each level
-        llA = new double[numberOfLevels-1][sliceSize];
+        if (redundant) {
+	        // Create low pass wavelet component
+	        yl = new double[sliceSize];
+	        // Savethe low pass component for each level
+	        llA = new double[numberOfLevels-1][sliceSize];
+	        
+	        // Create 3 high pass components for each level
+	        lhA = new double[numberOfLevels][sliceSize];
+	        hlA = new double[numberOfLevels][sliceSize];
+	        hhA = new double[numberOfLevels][sliceSize];
+	        if (doWaveletImages) {
+	        	if (maximumLevel > minimumLevel) {
+	                waveletImage = new ModelImage[4*numberOfLevels+4];
+	        	}
+	        	else {
+	        		waveletImage = new ModelImage[4*numberOfLevels];
+	        	}
+	        }
+	        else if (maximumLevel > minimumLevel) {
+	            waveletImage = new ModelImage[4];
+	        }
+	        
+	        for (z = 0; z < zDim; z++) {
+	            if (zDim > 1) {
+	                fireProgressStateChanged((z * 100)/(zDim - 1));
+	            }
+	            
+	            try {
+	                srcImage.exportData(z*sliceSize, sliceSize, aArray);
+	            } catch (final IOException error) {
+	                displayError("AlgorithmRiceWaveletTools: Source image is locked");
+	    
+	                setCompleted(false);
+	    
+	                return;
+	            }
+	        
+	            mrdwt();
+	        }
+        } // if (redundant)
+        else { // !redundant
+        	y = new double[sliceSize];
+        	waveletImage = new ModelImage[1];
+        	for (z = 0; z < zDim; z++) {
+                if (zDim > 1) {
+                    fireProgressStateChanged((z * 100)/(zDim - 1));
+                }
+                
+                try {
+                    srcImage.exportData(z*sliceSize, sliceSize, aArray);
+                } catch (final IOException error) {
+                    displayError("AlgorithmRiceWaveletTools: Source image is locked");
         
-        // Create 3 high pass components for each level
-        lhA = new double[numberOfLevels][sliceSize];
-        hlA = new double[numberOfLevels][sliceSize];
-        hhA = new double[numberOfLevels][sliceSize];
-        if (doWaveletImages) {
-        	if (maximumLevel > minimumLevel) {
-                waveletImage = new ModelImage[4*numberOfLevels+4];
-        	}
-        	else {
-        		waveletImage = new ModelImage[4*numberOfLevels];
-        	}
-        }
-        else if (maximumLevel > minimumLevel) {
-            waveletImage = new ModelImage[4];
-        }
+                    setCompleted(false);
         
-        for (z = 0; z < zDim; z++) {
-            if (zDim > 1) {
-                fireProgressStateChanged((z * 100)/(zDim - 1));
-            }
+                    return;
+                }
             
-            try {
-                srcImage.exportData(z*sliceSize, sliceSize, aArray);
-            } catch (final IOException error) {
-                displayError("AlgorithmRiceWaveletTools: Source image is locked");
-    
-                setCompleted(false);
-    
-                return;
+                mdwt();
             }
-        
-            mrdwt();
-        }
+        } // else !redundant
         
         if (selfTest) {
             for (i = 0; i < xDim; i++)  {
@@ -1149,6 +1178,127 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         }
     }
     
+    private void mdwt() {
+    	// function computes the discrete wavelet transform y for a 1D or 2D input
+    	// signal x.
+    	
+    	//    Input:
+    	//	x    : finite length 1D or 2D signal (implicitely periodized)
+        //       h    : scaling filter
+    	//       L    : number of levels. in case of a 1D signal length(x) must be
+        //              divisible by 2^L; in case of a 2D signal the row and the
+    	//              column dimension must be divisible by 2^L.
+    	
+    	// output y of length sliceSize
+    	
+    	int i;
+        int lh;
+        double h0[];
+        double h1[];
+        int actual_yDim;
+        int actual_xDim;
+        int lhm1;
+        int actual_L;
+        int r_o_a = 1;
+        int c_o_a;
+        double xdummy[];
+        int maxmn;
+        int ir;
+        double ydummyl[];
+        double ydummyh[];
+        int ic;
+        boolean calcMinMax = true;
+        double x[] = new double[sliceSize];
+        lh = filterLength;
+        
+        maxmn = Math.max(xDim,yDim);
+        xdummy = new double[maxmn+lh-1];
+        ydummyl = new double[maxmn];
+        ydummyh = new double[maxmn];
+        
+        h0 = new double[lh];
+        h1 = new double[lh];
+        // analysis lowpass and highpass
+        for (i = 0; i < filterLength; i++) {
+            h0[i] = scalingFilter[filterLength - i - 1];
+            h1[i] = scalingFilter[i];
+        }  
+        
+        for (i = 0; i < lh; i += 2) {
+            h1[i] = -h1[i];
+        }
+        
+        lhm1 = lh - 1;
+        actual_yDim = 2*yDim;
+        actual_xDim = 2*xDim;
+        for (i = 0; i < sliceSize; i++) {
+            x[i] = aArray[i];
+        }
+        
+        /* main loop */
+        for (actual_L=1; actual_L <= numberOfLevels; actual_L++){
+          if (yDim==1)
+            actual_yDim = 1;
+          else{
+            actual_yDim = actual_yDim/2;
+            r_o_a = actual_yDim/2;     
+          }
+          actual_xDim = actual_xDim/2;
+          c_o_a = actual_xDim/2;
+          
+
+          /* go by rows */
+          for (ir=0; ir<actual_yDim; ir++) {            /* loop over rows */
+            /* store in dummy variable */
+            for (i=0; i<actual_xDim; i++) {
+		      	if (actual_L==1) {  
+		      	  xdummy[i] = x[ir*xDim + i];  
+		      	}
+		      	else  {
+		      	  xdummy[i] = y[ir*xDim + i];  
+		      	} 
+            } // for (i=0; i<actual_xDim; i++) 
+	        /* perform filtering lowpass and highpass*/
+	        fpsconv(xdummy, actual_xDim, h0, h1, lhm1, ydummyl, ydummyh); 
+	        /* restore dummy variables in matrices */
+	        ic = c_o_a;
+	        for  (i=0; i<c_o_a; i++){    
+		      	y[ir*xDim + i] = ydummyl[i];  
+		      	y[ir*xDim + ic++] = ydummyh[i];  
+            } 
+          } // for (ir=0; ir<actual_yDim; ir++) 
+          
+          /* go by columns in case of a 2D signal*/
+          if (yDim>1){
+            for (ic=0; ic<actual_xDim; ic++){            /* loop over column */
+		      	/* store in dummy variables */
+		      	for (i=0; i<actual_yDim; i++) {
+		      	  xdummy[i] = y[i*xDim + ic];
+		      	}
+		      	/* perform filtering lowpass and highpass*/
+		      	fpsconv(xdummy, actual_yDim, h0, h1, lhm1, ydummyl, ydummyh); 
+		      	/* restore dummy variables in matrix */
+		      	ir = r_o_a;
+		      	for (i=0; i<r_o_a; i++){    
+		      	  y[i*xDim + ic] = ydummyl[i];  
+		      	  y[ir++ * xDim + ic] = ydummyh[i];  
+		      	}
+            }
+          }
+        } // for (actual_L=1; actual_L <= numberOfLevels; actual_L++)
+        if (z == 0) {
+            waveletImage[0] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_wavelet");
+        }
+        try {
+            waveletImage[0].importData(z*sliceSize, y, calcMinMax); 
+        }
+        catch(IOException  e) {
+            MipavUtil.displayError("IOException on waveletImage[0].importData(z*sliceSize, y, calcMinMax)");
+            setCompleted(false);
+            return;
+        }  
+    }
+    
     private void mrdwt() {
     	//    Function computes the redundant discrete wavelet transform y
     	//   for a 1D  or 2D input signal. (Redundant means here that the
@@ -1422,6 +1572,27 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             x_outh[i] = x1;
         } // for (i = 0; i < lx; i++)
     } // fpconv
+    
+    private void fpsconv(double x_in[], int lx, double h0[], double h1[], int lhm1,
+    		double x_outl[], double x_outh[]) {
+      int i, j, ind;
+      double x0, x1;
+
+      for (i=lx; i < lx+lhm1; i++) {
+        x_in[i] = x_in[i-lx];
+      }
+      ind = 0;
+      for (i=0; i < lx; i+=2) {
+        x0 = 0;
+        x1 = 0;
+        for (j=0; j<=lhm1; j++) {
+          x0 = x0 + x_in[i+j]*h0[lhm1-j];
+          x1 = x1 + x_in[i+j]*h1[lhm1-j];
+        }
+        x_outl[ind] = x0;
+        x_outh[ind++] = x1;
+      }
+    }
     
     public void mirdwt() {
         int i;
