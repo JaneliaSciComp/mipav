@@ -122,6 +122,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mrdwt_2L2 = false;
     private boolean test_mirdwt_1 = false;
     private boolean test_mirdwt_2D = false;
+    private boolean test_mdwt_1D = false;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
@@ -695,6 +696,45 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            // Test passes
 	            // The maximum possible number of levels = 9
 	            // maxDiff = 1.7337242752546445E-12
+        }
+        else if (test_mdwt_1D) {
+        	  // x = makesig('LinChirp', 8); // sets aArray
+        	  makeSig("LinChirp",8);
+        	  //h = daubcqf(4,'min'); // sets scalingFilter and waveletFilter
+          	  filterType = MINIMUM_PHASE;
+          	  filterLength = 4;
+          	  scalingFilter = new double[filterLength];
+              
+              waveletFilter = new double[filterLength];
+          	  daubcqf();
+        	  //L = 2;  % For 8 values in x we would normally be L=2 
+          	  numberOfLevels = 2;
+          	  nDims = 1;
+              xDim = 8;
+              yDim = 1;
+              sliceSize = 8;
+              y = new double[sliceSize];
+              waveletImage = null;
+        	  //[y, L] = mdwt(x, h, L);
+              mdwt();
+              for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("y["+i+"] = " + y[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+              }
+              // y and y_corr match
+              // y[0] = 1.1096922627375003
+    		  // y[1] = 0.8766618229593225
+    		  // y[2] = 0.8203918521066691
+    		  // y[3] = -0.5200740936425833
+    		  // y[4] = -0.03392766824720583
+    		  // y[5] = 0.10011069546128454
+    		  // y[6] = 0.22008824024609502
+    		  // y[7] = -0.14008160439760842
+        	  //y_corr = [1.1097 0.8767 0.8204 -0.5201 -0.0339 0.1001 0.2201 -0.1401];
+        	  //L_corr = 2;
+        	  //assertVectorsAlmostEqual(y, y_corr, 'relative', 0.001);
+        	  // assertEqual(L, L_corr);
+            setCompleted(true);
+            return;
         }
         else {
             nDims = srcImage.getNDims();
@@ -1286,17 +1326,19 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             }
           }
         } // for (actual_L=1; actual_L <= numberOfLevels; actual_L++)
-        if (z == 0) {
-            waveletImage[0] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_wavelet");
-        }
-        try {
-            waveletImage[0].importData(z*sliceSize, y, calcMinMax); 
-        }
-        catch(IOException  e) {
-            MipavUtil.displayError("IOException on waveletImage[0].importData(z*sliceSize, y, calcMinMax)");
-            setCompleted(false);
-            return;
-        }  
+        if (waveletImage != null) {
+	        if (z == 0) {
+	            waveletImage[0] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_wavelet");
+	        }
+	        try {
+	            waveletImage[0].importData(z*sliceSize, y, calcMinMax); 
+	        }
+	        catch(IOException  e) {
+	            MipavUtil.displayError("IOException on waveletImage[0].importData(z*sliceSize, y, calcMinMax)");
+	            setCompleted(false);
+	            return;
+	        } 
+        } // if (waveletImage != null)
     }
     
     private void mrdwt() {
