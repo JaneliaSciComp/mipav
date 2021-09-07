@@ -123,6 +123,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mirdwt_1 = false;
     private boolean test_mirdwt_2D = false;
     private boolean test_mdwt_1D = false;
+    private boolean test_mdwt_2D = false;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
@@ -736,6 +737,51 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             setCompleted(true);
             return;
         }
+        else if (test_mdwt_2D) {
+        	aArray = new double[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        	//h = daubcqf(4,'min'); // sets scalingFilter and waveletFilter
+      	  filterType = MINIMUM_PHASE;
+      	  filterLength = 4;
+      	  scalingFilter = new double[filterLength];
+          
+          waveletFilter = new double[filterLength];
+      	  daubcqf();
+          //y = mdwt(x, h);
+      	numberOfLevels = 2;
+  	    nDims = 2;
+        xDim = 4;
+        yDim = 4;
+        sliceSize = 16;
+        y = new double[sliceSize];
+        extents = new int[] {4,4};
+        waveletImage = new ModelImage[1];
+        mdwt();
+        for (i = 0; i < sliceSize; i++) {
+      	  Preferences.debug("y["+i+"] = " + y[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+        }
+        // y and y_corr match
+        // y[0] = 33.999999999999986
+		// y[1] = -3.464101615137755
+		// y[2] = -7.6194792136857E-16
+		// y[3] = -2.000000000000001
+		// y[4] = -13.856406460551018
+		// y[5] = -1.5543122344752192E-15
+		// y[6] = -1.5931907666570925E-15
+		// y[7] = -2.000000000000001
+		// y[8] = 1.7763568394002505E-15
+		// y[9] = -1.7763568394002505E-15
+		// y[10] = -9.287196608840452E-16
+		// y[11] = 1.1102230246251565E-16
+		// y[12] = -7.999999999999998
+		// y[13] = -8.0
+		// y[14] = 4.576919232789127E-16
+		// y[15] = 7.771561172376096E-16
+        // y_corr = [34.0000 -3.4641 0.0000 -2.0000; -13.8564 0.0000 0.0000 -2.0000; -0.0000 0.0000 -0.0000 -0.0000; -8.0000 -8.0000 0.0000 -0.0000];
+         //assertVectorsAlmostEqual(y, y_corr, 'relative', 0.001);
+      	    
+          setCompleted(true);
+          return;
+      }
         else {
             nDims = srcImage.getNDims();
             extents = srcImage.getExtents();
