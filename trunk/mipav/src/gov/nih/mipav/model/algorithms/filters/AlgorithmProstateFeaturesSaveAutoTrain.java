@@ -348,7 +348,7 @@ public class AlgorithmProstateFeaturesSaveAutoTrain extends AlgorithmBase implem
         
         try {
             waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
-                              numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
+                              numberOfLevels, doWaveletImages, minimumLevel, maximumLevel, AlgorithmRiceWaveletTools.MINIMUM_PHASE);
             waveletAlgo.addListener(this);
             waveletAlgo.run();
             
