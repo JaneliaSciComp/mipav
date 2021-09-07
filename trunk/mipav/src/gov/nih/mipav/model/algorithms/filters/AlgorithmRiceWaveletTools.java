@@ -2,11 +2,13 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -115,6 +117,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mrdwt_2 = false;
     private boolean test_mrdwt_2L2 = false;
     private boolean test_mirdwt_1 = false;
+    private boolean test_mirdwt_2D = false;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
@@ -604,8 +607,90 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             setCompleted(true);
             return;	
         }
+        else if (test_mirdwt_2D) {
+        	// load lena512; 
+            // x = lena512;
+            // h = daubcqf(6);
+            // [yl,yh,L] = mrdwt(x,h);
+            // assertEqual(L,9);
+            // [x_new,L] = mirdwt(yl,yh,h);
+            // assertEqual(L,9);
+            // assertVectorsAlmostEqual(x, x_new,'relative',0.0001);
+        	final FileIO io = new FileIO();
+			 io.setQuiet(true);
+			 io.setSuppressProgressBar(true);
+			 ModelImage image = io.readImage("C:" + File.separator + "Rice Wavelet Toolbox" +
+			 File.separator
+			 + "rwt-master" + File.separator + "tests" + File.separator +
+			 "lena512.mat");
+			 nDims = 2;
+			 xDim = 512;
+			 yDim = 512;
+			 sliceSize = xDim * yDim;
+			 double aArrayOriginal[] = new double[sliceSize];
+			 try {
+				 image.exportData(0, sliceSize, aArrayOriginal);
+			 }
+			 catch (IOException e) {
+				 MipavUtil.displayError("IOException on srcImage.exportData(0, sliceSize, aArrayOriginal");
+				 setCompleted(false);
+				 return;
+			 }
+			 image.disposeLocal();
+			 image = null;
+			 aArray = new double[sliceSize];
+			 for (i = 0; i < sliceSize; i++ ) {
+				 aArray[i] = aArrayOriginal[i];
+			 }
+			 i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            k = yDim;
+	            i = 0;
+	            while((k % 2) == 0) {
+	                k = (k >> 1);
+	                i++;
+	            }
+	            
+	            numberOfLevels = Math.min(i, j);
+	            maximumLevel = numberOfLevels;
+	            Preferences.debug("The maximum possible number of levels = " + numberOfLevels + "\n", Preferences.DEBUG_FILEIO);
+	            filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+	            // Create low pass wavelet component
+	            yl = new double[sliceSize];
+	            // Save the low pass component for each level
+	            llA = new double[numberOfLevels-1][sliceSize];
+	            
+	            // Create 3 high pass components for each level
+	            lhA = new double[numberOfLevels][sliceSize];
+	            hlA = new double[numberOfLevels][sliceSize];
+	            hhA = new double[numberOfLevels][sliceSize];
+	            extents = new int[] {512,512};
+	            waveletImage = new ModelImage[4];
+	            mrdwt();
+	            mirdwt();
+	            double maxDiff = 0;
+	            for (i = 0; i < sliceSize; i++) {
+	                double absDiff = Math.abs(aArrayOriginal[i] - aArray[i]);
+	                if (absDiff > maxDiff) {
+	                	maxDiff = absDiff;
+	                }
+	            }
+	            Preferences.debug("maxDiff = " + maxDiff + "\n", Preferences.DEBUG_ALGORITHM);
+	            setCompleted(true);
+	            return;
+	            // Test passes
+	            // The maximum possible number of levels = 9
+	            // maxDiff = 1.7337242752546445E-12
+        }
         else {
-        
             nDims = srcImage.getNDims();
             extents = srcImage.getExtents();
             xDim = extents[0];
