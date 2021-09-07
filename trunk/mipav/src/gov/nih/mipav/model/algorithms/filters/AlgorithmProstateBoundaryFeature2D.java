@@ -333,7 +333,7 @@ public class AlgorithmProstateBoundaryFeature2D extends AlgorithmBase implements
         
         try {
             waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
-                              numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
+                              numberOfLevels, doWaveletImages, minimumLevel, maximumLevel, AlgorithmRiceWaveletTools.MINIMUM_PHASE);
             waveletAlgo.addListener(this);
             waveletAlgo.run();
             
