@@ -114,6 +114,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mrdwt_1 = false;
     private boolean test_mrdwt_2 = false;
     private boolean test_mrdwt_2L2 = false;
+    private boolean test_mirdwt_1 = false;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
@@ -563,6 +564,45 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
            // -1.9396   -1.9396   -1.9396   -1.9396    4.2075    4.7877   -4.2075   -4.7877   -4.3816    0.9240    4.3816   -0.9240];
         // assertVectorsAlmostEqual(yl, yl_corr, 'relative', 0.001);
         // assertVectorsAlmostEqual(yh, yh_corr, 'relative', 0.001);
+        }
+        else if (test_mirdwt_1) {
+        	//x = makesig("Leopold",8); // sets aArray
+        	makeSig("Leopold",8);
+	        //h = daubcqf(4,'min'); // sets scalingFilter and waveletFilter
+        	filterType = MINIMUM_PHASE;
+        	filterLength = 4;
+        	scalingFilter = new double[filterLength];
+            
+            waveletFilter = new double[filterLength];
+        	daubcqf();
+	        //L = 1;
+        	numberOfLevels = 1;
+        	nDims = 1;
+            xDim = 8;
+            yDim = 1;
+            sliceSize = 8;
+            maximumLevel = 1;
+	        // [yl, yh, L] = mrdwt(x, h, L);
+            // Create low pass wavelet component
+            yl = new double[sliceSize];
+            lhA = new double[numberOfLevels][sliceSize];
+            mrdwt();
+            mirdwt();
+            for (i = 0; i < 8; i++) {
+                Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM);	
+            }
+            // Input and output aArray match
+            // aArray[0] = 5.204170427930421E-18
+            // aArray[1] = 0.9999999999999999
+    		// aArray[2] = 5.204170427930421E-18
+    		// aArray[3] = 2.7755575615628914E-17
+    		// aArray[4] = 0.0
+    		// aArray[5] = 0.0
+    		// aArray[6] = 0.0
+    		// aArray[7] = 2.7755575615628914E-17
+            // Correct aArray = [0     1     0     0     0     0     0     0];
+            setCompleted(true);
+            return;	
         }
         else {
         
@@ -1323,18 +1363,14 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         int n_cb;
         int n_c;
         
-        lh = 2 * filterLength;
+        lh = filterLength;
         g0 = new double[lh];
         g1 = new double[lh];
         
         /* analysis lowpass and highpass */
         for (i = 0; i < filterLength; i++) {
             g0[i] = scalingFilter[i]/2;
-            g1[i] = waveletFilter[filterLength - i - 1]/2;
-        }
-        for (i = 0; i < filterLength; i++) {
-            g0[filterLength + i] = waveletFilter[i]/2;
-            g1[filterLength + i] = scalingFilter[filterLength - i - 1]/2;
+            g1[i] = scalingFilter[filterLength - i - 1]/2;
         }
         
         for (i = 1; i < lh; i += 2) {
