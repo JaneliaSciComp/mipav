@@ -124,6 +124,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mirdwt_2D = false;
     private boolean test_mdwt_1D = false;
     private boolean test_mdwt_2D = false;
+    private boolean test_midwt_1D = false;
+    private boolean test_midwt_2D = false;
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
@@ -782,6 +784,133 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
           setCompleted(true);
           return;
       }
+        else if (test_midwt_1D) {
+      	  // x = makesig('LinChirp', 8); // sets aArray
+      	  makeSig("LinChirp",8);
+      	  double aArrayOriginal[] = new double[8];
+      	  for (i = 0; i < 8; i++) {
+      		  aArrayOriginal[i] = aArray[i];
+      	  }
+      	  //h = daubcqf(4,'min'); // sets scalingFilter and waveletFilter
+        	  filterType = MINIMUM_PHASE;
+        	  filterLength = 4;
+        	  scalingFilter = new double[filterLength];
+            
+            waveletFilter = new double[filterLength];
+        	  daubcqf();
+      	  //L = 2;  % For 8 values in x we would normally be L=2 
+        	  numberOfLevels = 2;
+        	  nDims = 1;
+            xDim = 8;
+            yDim = 1;
+            sliceSize = 8;
+            y = new double[sliceSize];
+            waveletImage = null;
+      	  //[y, L] = mdwt(x, h, L);
+            mdwt();
+            //[x_new,L] = midwt(y,h,L);
+            midwt();
+            for (i = 0; i < sliceSize; i++) {
+            	Preferences.debug("aArrayOriginal["+i+"] = " + aArrayOriginal[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            for (i = 0; i < sliceSize; i++) {
+            	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+            // aArrayOriginal and aArray match
+            // aArrayOriginal[0] = 0.049067674327418015
+    		// aArrayOriginal[1] = 0.19509032201612825
+    		// aArrayOriginal[2] = 0.4275550934302821
+    		// aArrayOriginal[3] = 0.7071067811865475
+    		// aArrayOriginal[4] = 0.9415440651830208
+    		// aArrayOriginal[5] = 0.9807852804032304
+    		// aArrayOriginal[6] = 0.6715589548470186
+    		// aArrayOriginal[7] = 1.2246467991473532E-16
+    		// aArray[0] = 0.04906767432741811
+    		// aArray[1] = 0.19509032201612841
+    		// aArray[2] = 0.42755509343028203
+    		// aArray[3] = 0.7071067811865474
+    		// aArray[4] = 0.9415440651830206
+    		// aArray[5] = 0.9807852804032302
+    		// aArray[6] = 0.6715589548470184
+    		// aArray[7] = 1.1102230246251565E-16
+          setCompleted(true);
+          return;
+      }
+        else if (test_midwt_2D) {
+        	// load lena512; 
+            // x = lena512;
+            // h = daubcqf(6);
+            // [yl,yh,L] = mrdwt(x,h);
+            // assertEqual(L,9);
+            // [x_new,L] = mirdwt(yl,yh,h);
+            // assertEqual(L,9);
+            // assertVectorsAlmostEqual(x, x_new,'relative',0.0001);
+        	final FileIO io = new FileIO();
+			 io.setQuiet(true);
+			 io.setSuppressProgressBar(true);
+			 ModelImage image = io.readImage("C:" + File.separator + "Rice Wavelet Toolbox" +
+			 File.separator
+			 + "rwt-master" + File.separator + "tests" + File.separator +
+			 "lena512.mat");
+			 nDims = 2;
+			 xDim = 512;
+			 yDim = 512;
+			 sliceSize = xDim * yDim;
+			 double aArrayOriginal[] = new double[sliceSize];
+			 try {
+				 image.exportData(0, sliceSize, aArrayOriginal);
+			 }
+			 catch (IOException e) {
+				 MipavUtil.displayError("IOException on srcImage.exportData(0, sliceSize, aArrayOriginal");
+				 setCompleted(false);
+				 return;
+			 }
+			 image.disposeLocal();
+			 image = null;
+			 aArray = new double[sliceSize];
+			 for (i = 0; i < sliceSize; i++ ) {
+				 aArray[i] = aArrayOriginal[i];
+			 }
+			 i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            k = yDim;
+	            i = 0;
+	            while((k % 2) == 0) {
+	                k = (k >> 1);
+	                i++;
+	            }
+	            
+	            numberOfLevels = Math.min(i, j);
+	            maximumLevel = numberOfLevels;
+	            Preferences.debug("The maximum possible number of levels = " + numberOfLevels + "\n", Preferences.DEBUG_FILEIO);
+	            filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+	            y = new double[sliceSize];
+	            extents = new int[] {512,512};
+	            waveletImage = new ModelImage[1];
+	            mdwt();
+	            midwt();
+	            double maxDiff = 0;
+	            for (i = 0; i < sliceSize; i++) {
+	                double absDiff = Math.abs(aArrayOriginal[i] - aArray[i]);
+	                if (absDiff > maxDiff) {
+	                	maxDiff = absDiff;
+	                }
+	            }
+	            Preferences.debug("maxDiff = " + maxDiff + "\n", Preferences.DEBUG_ALGORITHM);
+	            setCompleted(true);
+	            return;
+	            // Test passes
+	            // The maximum possible number of levels = 9
+	            // maxDiff = 2.0747847884194925E-12
+        }
         else {
             nDims = srcImage.getNDims();
             extents = srcImage.getExtents();
@@ -1682,6 +1811,98 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
       }
     }
     
+    public void midwt() {
+        int i;
+        int lh = filterLength;
+        double g0[] = new double[lh];
+        double g1[] = new double[lh];
+        int lhm1, lhhm1, sample_f, actual_xDim, actual_yDim;
+        int actual_L;
+        int r_o_a;
+        int c_o_a;
+        int ic, ir;
+        int maxmn = Math.max(xDim,yDim);
+        double xdummy[] = new double[maxmn];
+        double ydummyl[] = new double[maxmn+lh/2-1];
+        double ydummyh[] = new double[maxmn+lh/2-1];
+        
+        /* synthesis lowpass and highpass */
+        for (i = 0; i < filterLength; i++) {
+            g0[i] = scalingFilter[i];
+            g1[i] = scalingFilter[filterLength - i - 1];
+        }
+        
+        for (i = 1; i < lh; i += 2) {
+            g1[i] = -g1[i];
+        }
+        
+        lhm1 = lh - 1;
+        lhhm1 = lh/2 - 1;
+        /* 2^L */
+        sample_f = 1;
+        for (i = 1; i < numberOfLevels; i++) {
+            sample_f = sample_f * 2;
+        }
+        
+        if (yDim>1) {
+            actual_yDim = yDim/sample_f;
+        }
+        else { 
+            actual_yDim = 1;
+        }
+        actual_xDim = xDim/sample_f;
+        
+        for (i=0; i< sliceSize; i++) {
+            aArray[i] = y[i];
+        }
+          
+        /* main loop */
+        for (actual_L=numberOfLevels; actual_L >= 1; actual_L--) {
+          r_o_a = actual_yDim/2;
+          c_o_a = actual_xDim/2;
+          
+          /* go by columns in case of a 2D signal*/
+          if (yDim>1){
+            for (ic=0; ic<actual_xDim; ic++){            /* loop over column */
+		      	/* store in dummy variables */
+		      	ir = r_o_a;
+		      	for (i=0; i<r_o_a; i++){    
+		      	  ydummyl[i+lhhm1] = aArray[i*xDim + ic];  
+		      	  ydummyh[i+lhhm1] = aArray[ir++ * xDim + ic];  
+		      	}
+		      	/* perform filtering lowpass and highpass*/
+		      	bpsconv(xdummy, r_o_a, g0, g1, lhm1, lhhm1, ydummyl, ydummyh); 
+		      	/* restore dummy variables in matrix */
+		      	for (i=0; i<actual_yDim; i++) {
+		      	  aArray[i*xDim + ic] = xdummy[i]; 
+		      	}
+		     }
+          } // if (yDim > 1)
+          /* go by rows */
+          for (ir=0; ir<actual_yDim; ir++){            /* loop over rows */
+            /* store in dummy variable */
+            ic = c_o_a;
+            for  (i=0; i<c_o_a; i++){    
+      	        ydummyl[i+lhhm1] = aArray[ir*xDim + i];  
+      	        ydummyh[i+lhhm1] = aArray[ir*xDim + ic++];  
+            } 
+            /* perform filtering lowpass and highpass*/
+            bpsconv(xdummy, c_o_a, g0, g1, lhm1, lhhm1, ydummyl, ydummyh); 
+            /* restore dummy variables in matrices */
+            for (i=0; i<actual_xDim; i++) {
+              aArray[ir*xDim + i] = xdummy[i]; 
+            }
+          } // for (ir=0; ir<actual_yDim; ir++)  
+          if (yDim==1) {
+            actual_yDim = 1;
+          }
+          else {
+            actual_yDim = actual_yDim*2;
+          }
+          actual_xDim = actual_xDim*2;
+        } // for (actual_L=numberOfLevels; actual_L >= 1; actual_L--)  
+    }
+    
     public void mirdwt() {
         int i;
         int lh;
@@ -1711,7 +1932,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         g0 = new double[lh];
         g1 = new double[lh];
         
-        /* analysis lowpass and highpass */
+        /* synthesis lowpass and highpass */
         for (i = 0; i < filterLength; i++) {
             g0[i] = scalingFilter[i]/2;
             g1[i] = scalingFilter[filterLength - i - 1]/2;
@@ -1804,6 +2025,31 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             actual_xDim = actual_xDim * 2;
         } // for (actual_L = numberOfLevels; actual_L >= 1; actual_L--)
     } // mirdwt()
+    
+    private void bpsconv(double x_out[], int lx, double g0[], double g1[], int lhm1, int lhhm1,
+    		double x_inl[], double x_inh[]) {
+      int i, j, ind, tj;
+      double x0, x1;
+
+      for (i=lhhm1-1; i > -1; i--){
+        x_inl[i] = x_inl[lx+i];
+        x_inh[i] = x_inh[lx+i];
+      }
+      ind = 0;
+      for (i=0; i<(lx); i++){
+        x0 = 0;
+        x1 = 0;
+        tj = -2;
+        for (j=0; j<=lhhm1; j++){
+          tj+=2;
+          x0 = x0 + x_inl[i+j]*g0[lhm1-1-tj] + x_inh[i+j]*g1[lhm1-1-tj] ;
+          x1 = x1 + x_inl[i+j]*g0[lhm1-tj] + x_inh[i+j]*g1[lhm1-tj] ;
+        }
+        x_out[ind++] = x0;
+        x_out[ind++] = x1;
+      }
+    }
+
     
     private void bpconv(double x_out[], int lx, double g0[], double g1[], int lh, double x_inl[], double x_inh[]) {
         int i, j;
