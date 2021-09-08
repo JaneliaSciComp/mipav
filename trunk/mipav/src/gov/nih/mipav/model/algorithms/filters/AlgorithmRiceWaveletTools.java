@@ -71,6 +71,14 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     public static final int MAXIMUM_PHASE = 3;
     
+    public static final int MAD = 0; // Mean absolute deviation
+    
+    public static final int STD = 1; // Classical numerical std estimate
+    
+    public static final int SOFT_THRESHOLDING = 0;
+    
+    public static final int HARD_THRESHOLDING = 1;
+    
     private int filterLength;
     
     private int filterType = MINIMUM_PHASE;
@@ -126,6 +134,17 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mdwt_2D = false;
     private boolean test_midwt_1D = false;
     private boolean test_midwt_2D = false;
+    private boolean doDenoise = false;
+    // actual_threshold used if value is other than zero
+    private double actualThreshold = 0.0;
+    private int varianceEstimator = MAD;
+    // The threshold thld is computed as thld = c*MAD(noise_estimate);
+    // Defaults are 3.6 for undecimated or redundant based denoising
+    // and 3.0 if not decimated or redundant
+    private double thresholdMultiplier = 3.6;
+    // Defaults are SOFT_THRESHOLDING if not redundant and HARD_THRESHOLDING if redundant
+    private int thresholdingType = HARD_THRESHOLDING;
+    
     
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
@@ -157,6 +176,15 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     public void runAlgorithm() {
         int i, j, k;
         int divisor;
+        int numberValues;
+        double tmp[];
+        double median;
+        double thld;
+        double sum;
+        double mean;
+        double diff;
+        double variance;
+        double std;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -1051,6 +1079,57 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            }
 	        
 	            mrdwt();
+	            
+	            if (doDenoise) {
+	            	if (nDims == 1) {
+	            		if (actualThreshold == 0.0) {
+	            			numberValues = numberOfLevels*sliceSize;
+	            			tmp = new double[numberValues];
+	            			for (i = 0; i < numberOfLevels; i++) {
+	            				for (j = 0; j < sliceSize; j++) {
+	            					tmp[i*sliceSize + j] = Math.abs(lhA[i][j]);
+	            				}
+	            			}
+	            			if (varianceEstimator == MAD) {
+	            				Arrays.sort(tmp);
+	            				median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+	            				thld = thresholdMultiplier*median/.67;
+	            			}
+	            			else { // varianceEstimator == STD
+	            				sum = 0.0;
+	            				for (i = 0; i < numberValues; i++) {
+	            					sum += tmp[i];
+	            				}
+	            				mean = sum/numberValues;
+	            				sum = 0.0;
+	            				for (i = 0; i < numberValues; i++) {
+	            					diff = tmp[i] - mean;
+	            					sum += diff*diff;
+	            				}
+	            				variance = sum/(numberValues - 1);
+	            				std = Math.sqrt(variance);
+	            				thld = thresholdMultiplier*std;
+	            			}
+	            		} // if (actualThreshold == 0.0)
+	            		else {
+	            			thld = actualThreshold;
+	            		}
+	            		if (thresholdingType == SOFT_THRESHOLDING) {
+	            			
+	            		}
+	            	}
+	            	else {
+                        if (actualThreshold == 0.0) {
+                        	numberValues = numberOfLevels*sliceSize;
+	            			tmp = new double[numberValues];
+	            			for (i = 0; i < numberOfLevels; i++) {
+	            				for (j = 0; j < sliceSize; j++) {
+	            					tmp[i*sliceSize + j] = Math.abs(hhA[i][j]);
+	            				}
+	            			}
+	            		}
+	            	}
+	            } // if (doDenoise)
 	        }
         } // if (redundant)
         else { // !redundant
@@ -1074,6 +1153,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 mdwt();
             }
         } // else !redundant
+        
         
         if (selfTest) {
             for (i = 0; i < xDim; i++)  {
