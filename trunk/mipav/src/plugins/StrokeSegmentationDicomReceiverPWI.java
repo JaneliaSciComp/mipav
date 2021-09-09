@@ -1199,7 +1199,8 @@ public class StrokeSegmentationDicomReceiverPWI {
     }
     
     private String generateReport(ModelImage adcImage, Vector<File> lightboxFileList, Hashtable<File, Double> coreObjectTable, Hashtable<Integer, Hashtable<File, Double>> tmaxTable, Hashtable<File, Double> corrmapObjectTable, double resFactorCC, double resFactorCCPWI, boolean isEmailSafeReport) {
-        final DecimalFormat format = new DecimalFormat("#######.#");
+        final DecimalFormat formatOneDecimal = new DecimalFormat("#######.#");
+        final DecimalFormat formatTwoDecimal = new DecimalFormat("#######.##");
         
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
         
@@ -1253,7 +1254,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                 reportTxt += "<h3>" + passDescr + "</h3>\n";
                 
                 if (coreObjectTable.get(lightboxFileList.get(i)) > 0) {
-                    String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
+                    String coreSegVol = formatOneDecimal.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
                     reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
                 } else if (passNum == 1) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
@@ -1282,7 +1283,7 @@ public class StrokeSegmentationDicomReceiverPWI {
                 reportTxt += "<h3>" + passDescr + "</h3>\n";
                 
                 if (coreObjectTable.get(lightboxFileList.get(i)) > 0) {
-                    String coreSegVol = format.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
+                    String coreSegVol = formatOneDecimal.format(coreObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCC);
                     reportTxt += "<p>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</p>\n";
                     
                     if (passNum == 1) {
@@ -1292,13 +1293,15 @@ public class StrokeSegmentationDicomReceiverPWI {
                         perfVol += tmaxTable.get(8).get(lightboxFile);
                         perfVol += tmaxTable.get(6).get(lightboxFile);
                         
+                        double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
+                        double noPwiCoreDiff = perfVol * resFactorCCPWI - noPwiCore * resFactorCC;
+                        double noPwiCoreRatio = (perfVol * resFactorCCPWI) / (noPwiCore * resFactorCC);
+                    
+                        reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + formatOneDecimal.format(noPwiCoreDiff) + "</p>\n";
                         if (perfVol > 0) {
-                            double noPwiCore = coreObjectTable.get(lightboxFileList.get(0)).doubleValue();
-                            double noPwiCoreDiff = perfVol * resFactorCCPWI - noPwiCore * resFactorCC;
-                            double noPwiCoreRatio = (perfVol * resFactorCCPWI) / (noPwiCore * resFactorCC);
-                        
-                            reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + format.format(noPwiCoreDiff) + "</p>\n";
-                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(noPwiCoreRatio) + "</p>\n";
+                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + formatTwoDecimal.format(noPwiCoreRatio) + "</p>\n";
+                        } else {
+                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + "N/A" + "</p>\n";
                         }
                     } else if (passNum == 4) {
                         File lightboxFile = lightboxFileList.get(1);
@@ -1307,13 +1310,15 @@ public class StrokeSegmentationDicomReceiverPWI {
                         perfVol += tmaxTable.get(8).get(lightboxFile);
                         perfVol += tmaxTable.get(6).get(lightboxFile);
                         
+                        double pwiCore = coreObjectTable.get(lightboxFileList.get(3)).doubleValue();
+                        double pwiCoreDiff = perfVol * resFactorCCPWI - pwiCore * resFactorCC;
+                        double pwiCoreRatio = (perfVol * resFactorCCPWI) / (pwiCore * resFactorCC);
+                    
+                        reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + formatOneDecimal.format(pwiCoreDiff) + "</p>\n";
                         if (perfVol > 0) {
-                            double pwiCore = coreObjectTable.get(lightboxFileList.get(3)).doubleValue();
-                            double pwiCoreDiff = perfVol * resFactorCCPWI - pwiCore * resFactorCC;
-                            double pwiCoreRatio = (perfVol * resFactorCCPWI) / (pwiCore * resFactorCC);
-                        
-                            reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + format.format(pwiCoreDiff) + "</p>\n";
-                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + format.format(pwiCoreRatio) + "</p>\n";
+                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + formatTwoDecimal.format(pwiCoreRatio) + "</p>\n";
+                        } else {
+                            reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + "N/A" + "</p>\n";
                         }
                     }
                 } else if ((tmaxTable.get(6).get(lightboxFileList.get(i)) + tmaxTable.get(8).get(lightboxFileList.get(i)) + tmaxTable.get(10).get(lightboxFileList.get(i))) > 0) {
@@ -1323,16 +1328,27 @@ public class StrokeSegmentationDicomReceiverPWI {
                     perfVolList[1] = perfVolList[2] + tmaxTable.get(6).get(lightboxFileList.get(i)).doubleValue();
                     perfVolList[0] = perfVolList[1] + tmaxTable.get(4).get(lightboxFileList.get(i)).doubleValue();
                     
-                    reportTxt += "<p>" + "<b>" + "Tmax > 4 volume (mL): " + "</b>" + format.format(perfVolList[0] * resFactorCCPWI) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 6 volume (mL): " + "</b>" + format.format(perfVolList[1] * resFactorCCPWI) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 8 volume (mL): " + "</b>" + format.format(perfVolList[2] * resFactorCCPWI) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Tmax > 10 volume (mL): " + "</b>" + format.format(perfVolList[3] * resFactorCCPWI) + "</p>\n";
-                    reportTxt += "<p>" + "<b>" + "Hypoperfusion Index (Tmax > 10s / Tmax > 6s): " + "</b>" + format.format(perfVolList[3] / perfVolList[1]) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 4 volume (mL): " + "</b>" + formatOneDecimal.format(perfVolList[0] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 6 volume (mL): " + "</b>" + formatOneDecimal.format(perfVolList[1] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 8 volume (mL): " + "</b>" + formatOneDecimal.format(perfVolList[2] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Tmax > 10 volume (mL): " + "</b>" + formatOneDecimal.format(perfVolList[3] * resFactorCCPWI) + "</p>\n";
+                    reportTxt += "<p>" + "<b>" + "Hypoperfusion Index (Tmax > 10s / Tmax > 6s): " + "</b>" + formatOneDecimal.format(perfVolList[3] / perfVolList[1]) + "</p>\n";
                 } else if (corrmapObjectTable.get(lightboxFileList.get(i)) > 0) {
-                    String corrmapSegVol = format.format(corrmapObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCCPWI);
+                    String corrmapSegVol = formatOneDecimal.format(corrmapObjectTable.get(lightboxFileList.get(i)).doubleValue() * resFactorCCPWI);
                     reportTxt += "<p>" + "<b>" + "Corrmap segmentation volume (mL): " + "</b>" + corrmapSegVol + "</p>\n";
                 } else if (passNum == 1 || passNum == 4) {
                     reportTxt += "<p>" + "<b>" + "No core region found.</p>\n";
+                    
+                    File lightboxFile = lightboxFileList.get(1);
+                    double perfVol = 0;
+                    perfVol += tmaxTable.get(10).get(lightboxFile);
+                    perfVol += tmaxTable.get(8).get(lightboxFile);
+                    perfVol += tmaxTable.get(6).get(lightboxFile);
+
+                    if (perfVol > 0) {
+                        reportTxt += "<p>" + "<b>" + "Mismatch volume (mL): " + "</b>" + formatOneDecimal.format(perfVol * resFactorCCPWI) + "</p>\n";
+                        reportTxt += "<p>" + "<b>" + "Mismatch ratio: " + "</b>" + "infinity" + "</p>\n";
+                    }
                 } else if (passNum == 2) {
                     reportTxt += "<p>" + "<b>" + "No perfusion region found.</p>\n";
                 }
