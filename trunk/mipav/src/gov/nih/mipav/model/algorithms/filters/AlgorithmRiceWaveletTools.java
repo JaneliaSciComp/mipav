@@ -134,6 +134,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mdwt_2D = false;
     private boolean test_midwt_1D = false;
     private boolean test_midwt_2D = false;
+    private boolean test_noise_default = false;
     private boolean doDenoise = false;
     // actual_threshold used if value is other than zero
     private double actualThreshold = 0.0;
@@ -195,6 +196,10 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         int twoL;
         int ix;
         int jx;
+        int ixLow;
+        int jxLow;
+        int ix2;
+        int jx2;
         double ykeep[];
         
         if (srcImage == null) {
@@ -950,6 +955,125 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            // The maximum possible number of levels = 9
 	            // maxDiff = 2.0747847884194925E-12
         }
+        else if (test_noise_default) {
+        	  //signal = makesig('Doppler', 32); // sets aArray
+        	  makeSig("Doppler",32);
+        	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+        		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+        		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+        		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+        		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+        	  //with_noise = signal + noise / 10;
+        	  for (i = 0; i < 32; i++) {
+        		  aArray[i] += noise[i]/10.0;
+        	  }
+        	  nDims = 1;
+	            xDim = 32;
+	            yDim = 1;
+	            sliceSize = 32;
+	            y = new double[sliceSize];
+	            waveletImage = null;
+        	    i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            numberOfLevels = j;
+	            maximumLevel = numberOfLevels;
+        	    filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+        	  //h = daubcqf(6)
+        	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+	            mdwt();
+	            numX = xDim - (int)Math.floor(xDim/2);
+	            numberValues = numX;
+	            tmp = new double[numberValues];
+        		for (i = numX; i < xDim; i++) {
+        	        tmp[i-numX] = y[i];
+        		}
+        		for (i = 0; i < numberValues; i++) {
+					tmp[i] = Math.abs(tmp[i]);
+				}
+				Arrays.sort(tmp);
+				if ((numberValues %2) == 0) {
+				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+				}
+				else {
+					median = tmp[(numberValues - 1)/2];
+				}
+				thresholdMultiplier = 3.0;
+				thld = thresholdMultiplier*median/.67;
+				twoL = 1;
+            	for (i = 0; i < numberOfLevels; i++) {
+            		twoL = 2 * twoL;
+            	}
+        	    ix = xDim/twoL;
+        	    ykeep = new double[xDim];
+        	    for (i = 0; i < ix; i++) {
+        	    	ykeep[i] = y[i];
+        	    }
+        	    for (i = 0; i < sliceSize; i++) {
+			    	absVal = Math.abs(y[i]);
+			    	if (absVal <= thld) {
+			    		y[i] = 0.0;
+			    	}
+			    	else {
+			    		y[i] = Math.signum(y[i])*(absVal - thld);
+			    	}
+			    }
+        	    for (i = 0; i < ix; i++) {
+        	    	y[i] = ykeep[i];
+        	    }
+        	    midwt();
+        	    for (i = 0; i < sliceSize; i++) {
+                	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+                }
+        	    // aAArray and signal_denoised_corr match
+        	    /*aArray[0] = 0.0741827688375061
+	    		aArray[1] = 0.07917019025262682
+	    		aArray[2] = 0.07608426152723406
+	    		aArray[3] = 0.07504768317741797
+	    		aArray[4] = 0.1112797747795676
+	    		aArray[5] = 0.1634750532835444
+	    		aArray[6] = -0.04982638153505337
+	    		aArray[7] = 0.09460730882373157
+	    		aArray[8] = 0.1351265624869108
+	    		aArray[9] = -0.018609062095819452
+	    		aArray[10] = -0.07488124799912885
+	    		aArray[11] = -0.10347020605942651
+	    		aArray[12] = 0.023425484325177562
+	    		aArray[13] = 0.23977254083625654
+	    		aArray[14] = 0.09205833989623083
+	    		aArray[15] = -0.15218064036689205
+	    		aArray[16] = -0.11668207330615624
+	    		aArray[17] = -0.045938985076278145
+	    		aArray[18] = -0.002452400397783411
+	    		aArray[19] = 0.07557391641048371
+	    		aArray[20] = 0.10254833351221398
+	    		aArray[21] = 0.12109991174418425
+	    		aArray[22] = 0.17739050792162042
+	    		aArray[23] = 0.24038604155309365
+	    		aArray[24] = 0.23110593331715737
+	    		aArray[25] = 0.19821092449327385
+	    		aArray[26] = 0.1756728129907254
+	    		aArray[27] = 0.13882204961303488
+	    		aArray[28] = 0.1274916153878268
+	    		aArray[29] = 0.12140959718632514
+	    		aArray[30] = 0.09949353201307842
+	    		aArray[31] = 0.07600193408654268*/
+        	  //signal_denoised_corr = [0.0741827688375062 0.0791701902526268 0.0760842615272340 0.0750476831774179 0.111279774779568
+        	  //0.163475053283544 -0.0498263815350539 0.0946073088237311 0.135126562486911 -0.0186090620958193 -0.0748812479991294 -0.103470206059426
+        	  //0.0234254843251780 0.239772540836257 0.0920583398962312 -0.152180640366891 -0.116682073306156 -0.0459389850762785 -0.00245240039778375
+        	  // 0.0755739164104836 0.102548333512214 0.121099911744184 0.177390507921620 0.240386041553093 0.231105933317157 0.198210924493273
+        	  //0.175672812990725 0.138822049613034 0.127491615387826 0.121409597186325 0.0994935320130783 0.0760019340865427];
+        	  //assertVectorsAlmostEqual(signal_denoised, signal_denoised_corr, 'relative', 0.0001);
+        	  setCompleted(true);
+        	  return;
+        } // else if (test_noise_default)
         else {
             nDims = srcImage.getNDims();
             extents = srcImage.getExtents();
@@ -1259,20 +1383,58 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 		twoL = 2 * twoL;
                 	}
                 	jx = 0;
+                	jxLow = 0;
+                	jx2 = yDim;
                 	if (nDims == 1) {
-                	    ix = xDim/twoL;	
-                	    ykeep = new double[ix];
+                		ixLow = xDim/twoL;
+                	    ix = xDim/twoL;
+                	    ix2 = xDim;
+                	    if (minimumLevel > 1) {
+	                	    for (i = 0; i < (minimumLevel -1); i++) {
+	                	    	ix = ix * 2;
+	                	    }
+                	    } // if (minimumLevel > 1)
+                	    ykeep = new double[xDim];
                 	    for (i = 0; i < ix; i++) {
+                	    	ykeep[i] = y[i];
+                	    }
+                	    if (maximumLevel < numberOfLevels) {
+                	    	for (i = 0; i < (numberOfLevels - maximumLevel); i++) {
+                	    		ix2 = ix2/2;
+                	    	}
+                	    }
+                	    for (i = ix2; i < xDim; i++) {
                 	    	ykeep[i] = y[i];
                 	    }
                 	} // if (nDims == 1)
                 	else {
+                		ixLow = yDim/twoL;
+                	    jxLow = xDim/twoL;
                 		ix = yDim/twoL;
                 	    jx = xDim/twoL;
-                	    ykeep = new double[ix*jx];
+                	    ix2 = yDim;
+                	    jx2 = xDim;
+                	    ykeep = new double[sliceSize];
+                	    if (minimumLevel > 1) {
+	                	    for (i = 0; i < (minimumLevel -1); i++) {
+	                	    	ix = ix * 2;
+	                	    	jx = jx * 2;
+	                	    }
+                	    } // if (minimumLevel > 1)
                 	    for (i = 0; i < ix; i++) {
                 	    	for (j = 0; j < jx; j++) {
-                	    		ykeep[i*jx + j] = y[i*xDim + j];
+                	    		ykeep[i*xDim + j] = y[i*xDim + j];
+                	    	}
+                	    }
+                	    if (maximumLevel < numberOfLevels) {
+                	    	for (i = 0; i < (numberOfLevels - maximumLevel); i++) {
+                	    		ix2 = ix2/2;
+                	    		jx2 = jx2/2;
+                	    	}
+                	    }
+                	    for (i = ix2; i < yDim; i++) {
+                	    	for (j = jx2; j < xDim; j++) {
+                	    		ykeep[i*xDim+j] = y[i*xDim + j];
                 	    	}
                 	    }
                 	}
@@ -1297,18 +1459,38 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 	} // else threhsoldingType == HARD_THRESHOLDING
                 	if (!thresholdLowPass) {
                 	    if (nDims == 1) {
-                	    	for (i = 0; i < ix; i++) {
+                	    	for (i = 0; i < ixLow; i++) {
                     	    	y[i] = ykeep[i];
-                    	    }	
+                    	    }
                 	    }
                 	    else {
-                	    	for (i = 0; i < ix; i++) {
-                    	    	for (j = 0; j < jx; j++) {
-                    	    		y[i*xDim + j] = ykeep[i*jx + j];
+                	    	for (i = 0; i < ixLow; i++) {
+                    	    	for (j = 0; j < jxLow; j++) {
+                    	    		y[i*xDim + j] = ykeep[i*xDim + j];
                     	    	}
                     	    }	
                 	    }
                 	} // if (!thresholdLowPass)
+                	if (nDims == 1) {
+            	    	for (i = ixLow; i < ix; i++) {
+                	    	y[i] = ykeep[i];
+                	    }
+            	    	for (i = ix2; i < xDim; i++) {
+                	    	y[i] = ykeep[i];
+                	    }
+            	    }
+            	    else {
+            	    	for (i = ixLow; i < ix; i++) {
+                	    	for (j = jxLow; j < jx; j++) {
+                	    		y[i*xDim + j] = ykeep[i*xDim + j];
+                	    	}
+                	    }
+            	    	for (i = ix2; i < yDim; i++) {
+                	    	for (j = jx2; j < xDim; j++) {
+                	    		y[i*xDim+j] = ykeep[i*xDim + j];
+                	    	}
+                	    }
+            	    }
                 	midwt();
                 	
                 	if (destImage != null) {
