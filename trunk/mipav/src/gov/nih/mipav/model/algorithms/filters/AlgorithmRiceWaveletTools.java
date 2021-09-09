@@ -144,6 +144,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private double thresholdMultiplier = 3.6;
     // Defaults are SOFT_THRESHOLDING if not redundant and HARD_THRESHOLDING if redundant
     private int thresholdingType = HARD_THRESHOLDING;
+    // Default is don't threshold low pass components
+    private boolean thresholdLowPass = false;
     
     
     
@@ -185,6 +187,15 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         double diff;
         double variance;
         double std;
+        int thresholdingLevels;
+        double srchA[][] = null;
+        double absVal;
+        int numX;
+        int numY;
+        int twoL;
+        int ix;
+        int jx;
+        double ykeep[];
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -1081,54 +1092,102 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            mrdwt();
 	            
 	            if (doDenoise) {
+	            	thresholdingLevels = maximumLevel - minimumLevel + 1;
+	            	numberValues = thresholdingLevels*sliceSize;
 	            	if (nDims == 1) {
-	            		if (actualThreshold == 0.0) {
-	            			numberValues = numberOfLevels*sliceSize;
-	            			tmp = new double[numberValues];
-	            			for (i = 0; i < numberOfLevels; i++) {
-	            				for (j = 0; j < sliceSize; j++) {
-	            					tmp[i*sliceSize + j] = Math.abs(lhA[i][j]);
-	            				}
-	            			}
-	            			if (varianceEstimator == MAD) {
-	            				Arrays.sort(tmp);
-	            				median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
-	            				thld = thresholdMultiplier*median/.67;
-	            			}
-	            			else { // varianceEstimator == STD
-	            				sum = 0.0;
-	            				for (i = 0; i < numberValues; i++) {
-	            					sum += tmp[i];
-	            				}
-	            				mean = sum/numberValues;
-	            				sum = 0.0;
-	            				for (i = 0; i < numberValues; i++) {
-	            					diff = tmp[i] - mean;
-	            					sum += diff*diff;
-	            				}
-	            				variance = sum/(numberValues - 1);
-	            				std = Math.sqrt(variance);
-	            				thld = thresholdMultiplier*std;
-	            			}
-	            		} // if (actualThreshold == 0.0)
-	            		else {
-	            			thld = actualThreshold;
-	            		}
-	            		if (thresholdingType == SOFT_THRESHOLDING) {
-	            			
-	            		}
+	            		srchA = lhA;
 	            	}
 	            	else {
-                        if (actualThreshold == 0.0) {
-                        	numberValues = numberOfLevels*sliceSize;
-	            			tmp = new double[numberValues];
-	            			for (i = 0; i < numberOfLevels; i++) {
-	            				for (j = 0; j < sliceSize; j++) {
-	            					tmp[i*sliceSize + j] = Math.abs(hhA[i][j]);
-	            				}
-	            			}
-	            		}
+	            		srchA = hhA;
 	            	}
+            		if (actualThreshold == 0.0) {
+            			tmp = new double[numberValues];
+            			for (i = minimumLevel-1; i < maximumLevel; i++) {
+            				for (j = 0; j < sliceSize; j++) {
+            					tmp[(i-minimumLevel+1)*sliceSize + j] = srchA[i][j];
+            				}
+            			}
+            			if (varianceEstimator == MAD) {
+            				for (i = 0; i < numberValues; i++) {
+            					tmp[i] = Math.abs(tmp[i]);
+            				}
+            				Arrays.sort(tmp);
+            				median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+            				thld = thresholdMultiplier*median/.67;
+            			}
+            			else { // varianceEstimator == STD
+            				sum = 0.0;
+            				for (i = 0; i < numberValues; i++) {
+            					sum += tmp[i];
+            				}
+            				mean = sum/numberValues;
+            				sum = 0.0;
+            				for (i = 0; i < numberValues; i++) {
+            					diff = tmp[i] - mean;
+            					sum += diff*diff;
+            				}
+            				variance = sum/(numberValues - 1);
+            				std = Math.sqrt(variance);
+            				thld = thresholdMultiplier*std;
+            			}
+            		} // if (actualThreshold == 0.0)
+            		else {
+            			thld = actualThreshold;
+            		}
+            		if (thresholdingType == SOFT_THRESHOLDING) {
+            			for (i = minimumLevel-1; i < maximumLevel; i++) {
+            				for (j = 0; j < sliceSize; j++) {
+            					absVal = Math.abs(srchA[i][j]);
+            					if (absVal <= thld) {
+            						srchA[i][j] = 0.0;
+            					}
+            					else {
+            						srchA[i][j] = Math.signum(srchA[i][j])*(absVal - thld);
+            					}
+            				}
+            			}
+            			if (thresholdLowPass) {
+            			    for (i = 0; i < sliceSize; i++) {
+            			    	absVal = Math.abs(yl[i]);
+            			    	if (absVal <= thld) {
+            			    		yl[i] = 0.0;
+            			    	}
+            			    	else {
+            			    		yl[i] = Math.signum(yl[i])*(absVal - thld);
+            			    	}
+            			    }
+            			} // if (thresholdLowPass)
+            		} // if (thresholdingType == SOFT_THRESHOLDING)
+            		else { // thresholdingType == HARD_THRESHOLDING) {
+            			for (i = minimumLevel-1; i < maximumLevel; i++) {
+            				for (j = 0; j < sliceSize; j++) {
+            					absVal = Math.abs(srchA[i][j]);
+            					if (absVal <= thld) {
+            						srchA[i][j] = 0.0;
+            					}
+            				}
+            			}
+            			if (thresholdLowPass) {
+            			    for (i = 0; i < sliceSize; i++) {
+            			    	absVal = Math.abs(yl[i]);
+            			    	if (absVal <= thld) {
+            			    		yl[i] = 0.0;
+            			    	}
+            			    }
+            			} // if (thresholdLowPass)
+            		}
+            		mirdwt();
+            		
+            		if (destImage != null) {
+	            		try {
+	                        destImage.importData(0, aArray, true);
+	                    }
+	                    catch(IOException e) {
+	                        MipavUtil.displayError("IOException on destImage.importData(0, aArray, true)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+            		} // if (destImage != null)
 	            } // if (doDenoise)
 	        }
         } // if (redundant)
@@ -1151,6 +1210,118 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 }
             
                 mdwt();
+                
+                if (doDenoise) {
+                	if (actualThreshold == 0.0) {
+                		numX = xDim - (int)Math.floor(xDim/2);
+                		numY = yDim - (int)Math.floor(yDim/2);
+                		numberValues = numX*numY;
+                		tmp = new double[numberValues];
+                		for (i = numY; i < yDim; i++) {
+                			for (j = numX; j < xDim; j++) {
+                			    tmp[(i-numY)*numX + j-numX] = y[i*xDim + j];
+                			}
+                		}
+                		if (varianceEstimator == MAD) {
+            				for (i = 0; i < numberValues; i++) {
+            					tmp[i] = Math.abs(tmp[i]);
+            				}
+            				Arrays.sort(tmp);
+            				if ((numberValues %2) == 0) {
+            				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+            				}
+            				else {
+            					median = tmp[(numberValues - 1)/2];
+            				}
+            				thld = thresholdMultiplier*median/.67;
+            			}
+            			else { // varianceEstimator == STD
+            				sum = 0.0;
+            				for (i = 0; i < numberValues; i++) {
+            					sum += tmp[i];
+            				}
+            				mean = sum/numberValues;
+            				sum = 0.0;
+            				for (i = 0; i < numberValues; i++) {
+            					diff = tmp[i] - mean;
+            					sum += diff*diff;
+            				}
+            				variance = sum/(numberValues - 1);
+            				std = Math.sqrt(variance);
+            				thld = thresholdMultiplier*std;
+            			}
+                	} // if (actualThreshold == 0.0)
+                	else {
+            			thld = actualThreshold;
+            		}
+                	twoL = 1;
+                	for (i = 0; i < numberOfLevels; i++) {
+                		twoL = 2 * twoL;
+                	}
+                	jx = 0;
+                	if (nDims == 1) {
+                	    ix = xDim/twoL;	
+                	    ykeep = new double[ix];
+                	    for (i = 0; i < ix; i++) {
+                	    	ykeep[i] = y[i];
+                	    }
+                	} // if (nDims == 1)
+                	else {
+                		ix = yDim/twoL;
+                	    jx = xDim/twoL;
+                	    ykeep = new double[ix*jx];
+                	    for (i = 0; i < ix; i++) {
+                	    	for (j = 0; j < jx; j++) {
+                	    		ykeep[i*jx + j] = y[i*xDim + j];
+                	    	}
+                	    }
+                	}
+                	if (thresholdingType == SOFT_THRESHOLDING) {
+                		for (i = 0; i < sliceSize; i++) {
+        			    	absVal = Math.abs(y[i]);
+        			    	if (absVal <= thld) {
+        			    		y[i] = 0.0;
+        			    	}
+        			    	else {
+        			    		y[i] = Math.signum(y[i])*(absVal - thld);
+        			    	}
+        			    }	
+                	}
+                	else { // thresholdingType == HARD_THRESHOLDING
+                		for (i = 0; i < sliceSize; i++) {
+        			    	absVal = Math.abs(y[i]);
+        			    	if (absVal <= thld) {
+        			    		y[i] = 0.0;
+        			    	}
+        			    }		
+                	} // else threhsoldingType == HARD_THRESHOLDING
+                	if (!thresholdLowPass) {
+                	    if (nDims == 1) {
+                	    	for (i = 0; i < ix; i++) {
+                    	    	y[i] = ykeep[i];
+                    	    }	
+                	    }
+                	    else {
+                	    	for (i = 0; i < ix; i++) {
+                    	    	for (j = 0; j < jx; j++) {
+                    	    		y[i*xDim + j] = ykeep[i*jx + j];
+                    	    	}
+                    	    }	
+                	    }
+                	} // if (!thresholdLowPass)
+                	midwt();
+                	
+                	if (destImage != null) {
+	            		try {
+	                        destImage.importData(0, aArray, true);
+	                    }
+	                    catch(IOException e) {
+	                        MipavUtil.displayError("IOException on destImage.importData(0, aArray, true)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+            		} // if (destImage != null)
+                } // if (doDenoise)
             }
         } // else !redundant
         
