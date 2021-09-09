@@ -34,6 +34,14 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     public static final int MID_PHASE = 2;
     
     public static final int MAXIMUM_PHASE = 3;
+    
+    public static final int MAD = 0; // Mean absolute deviation
+    
+    public static final int STD = 1; // Classical numerical std estimate
+    
+    public static final int SOFT_THRESHOLDING = 0;
+    
+    public static final int HARD_THRESHOLDING = 1;
 
     private int filterLength;
     
@@ -59,6 +67,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
     /** DOCUMENT ME! */
     private JCheckBox waveletCheckBox;
+    
+    private ModelImage destImage = null;
 
     /** DOCUMENT ME! */
     private ModelImage[] waveletImage = null;
@@ -92,6 +102,19 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private JTextField textMinimum;
     
     private JTextField textMaximum;
+    
+    private boolean doDenoise = false;
+    // actual_threshold used if value is other than zero
+    private double actualThreshold = 0.0;
+    private int varianceEstimator = MAD;
+    // The threshold thld is computed as thld = c*MAD(noise_estimate);
+    // Defaults are 3.6 for undecimated or redundant based denoising
+    // and 3.0 if not decimated or redundant
+    private double thresholdMultiplier = 3.6;
+    // Defaults are SOFT_THRESHOLDING if not redundant and HARD_THRESHOLDING if redundant
+    private int thresholdingType = HARD_THRESHOLDING;
+    // Default is don't threshold low pass components
+    private boolean thresholdLowPass = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -166,13 +189,26 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         int i;
+        int j = 0;
 
         if (algorithm instanceof AlgorithmRiceWaveletTools) {
             image.clearMask();
 
             if (waveletAlgo.isCompleted()) {
                 
-
+                if (doDenoise && (destImage != null)) {
+                	updateFileInfo(image, destImage);
+                	
+                	try {
+                        new ViewJFrameImage(destImage, null, new Dimension(610, 220));
+                        j++;
+                    } catch (OutOfMemoryError error) {
+                        MipavUtil.displayError("Out of memory: Unable to open denoised image frame");
+                    }
+                }
+                else if (doDenoise) {
+                	MipavUtil.displayError("destImage is null");
+                }
                 
                 waveletImage = waveletAlgo.getWaveletImages();
 
@@ -185,7 +221,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                             updateFileInfo(image, waveletImage[i]);
     
                             try {
-                                new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (220 + i * 20)));
+                                new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (220 + (i +j)* 20)));
                             } catch (OutOfMemoryError error) {
                                 MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
                             }
@@ -270,10 +306,14 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             for (i = 0; i < image.getExtents().length; i++) {
                 destExtents[i] = image.getExtents()[i];    
             }
+            
+            if (doDenoise) {
+            	destImage = new ModelImage(image.getDataType(), destExtents, image.getImageName() + "_denoise");
+            }
 
             try {
                 // Make algorithm
-                waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, redundant,
+                waveletAlgo = new AlgorithmRiceWaveletTools(destImage, image, filterLength, redundant,
                                   numberOfLevels, doWaveletImages, minimumLevel, maximumLevel,
                                   filterType);
 
