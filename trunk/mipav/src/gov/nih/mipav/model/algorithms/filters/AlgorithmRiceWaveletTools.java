@@ -134,10 +134,16 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_mdwt_2D = false;
     private boolean test_midwt_1D = false;
     private boolean test_midwt_2D = false;
-    private boolean test_noise_default = false;
+    private boolean test_denoise_default = false;
     private boolean test_denoise_2D = false;
     private boolean test_denoise_udwt = false;
     private boolean test_denoise_udwt_2d = false;
+    private boolean test_denoise_threshold_low = false;
+    private boolean test_denoise_thresh_multiplier = false;
+    private boolean test_denoise_std = false;
+    private boolean test_denoise_hard = false;
+    private boolean test_denoise_levels = false;
+    private boolean test_denoise_actual_thresh = false;
     private boolean doDenoise = false;
     // actual_threshold used if value is other than zero
     private double actualThreshold = 0.0;
@@ -957,7 +963,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            // The maximum possible number of levels = 9
 	            // maxDiff = 2.0747847884194925E-12
         }
-        else if (test_noise_default) {
+        else if (test_denoise_default) {
         	  //signal = makesig('Doppler', 32); // sets aArray
         	  makeSig("Doppler",32);
         	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
@@ -1075,7 +1081,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         	  //assertVectorsAlmostEqual(signal_denoised, signal_denoised_corr, 'relative', 0.0001);
         	  setCompleted(true);
         	  return;
-        } // else if (test_noise_default)
+        } // else if (test_denoise_default)
         else if (test_denoise_2D) {
           //[signal_denoised, subtracted_noise, actual_options] = denoise(x, h);
         	  
@@ -1383,6 +1389,693 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 		   setCompleted(true);
 		   return;
         } // else if (test_denoise_udwt_2d)
+        else if (test_denoise_threshold_low) {
+      	  //signal = makesig('Doppler', 32); // sets aArray
+      	  makeSig("Doppler",32);
+      	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+      		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+      		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+      		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+      		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+      	  //with_noise = signal + noise / 10;
+      	  for (i = 0; i < 32; i++) {
+      		  aArray[i] += noise[i]/10.0;
+      	  }
+      	  nDims = 1;
+	            xDim = 32;
+	            yDim = 1;
+	            sliceSize = 32;
+	            y = new double[sliceSize];
+	            waveletImage = null;
+      	    i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            numberOfLevels = j;
+	            maximumLevel = numberOfLevels;
+      	    filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+      	  //h = daubcqf(6)
+      	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+	            thresholdLowPass = true;
+	            mdwt();
+	            numX = xDim - (int)Math.floor(xDim/2);
+	            numberValues = numX;
+	            tmp = new double[numberValues];
+      		for (i = numX; i < xDim; i++) {
+      	        tmp[i-numX] = y[i];
+      		}
+      		for (i = 0; i < numberValues; i++) {
+					tmp[i] = Math.abs(tmp[i]);
+				}
+				Arrays.sort(tmp);
+				if ((numberValues %2) == 0) {
+				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+				}
+				else {
+					median = tmp[(numberValues - 1)/2];
+				}
+				thresholdMultiplier = 3.0;
+				thld = thresholdMultiplier*median/.67;
+				twoL = 1;
+          	for (i = 0; i < numberOfLevels; i++) {
+          		twoL = 2 * twoL;
+          	}
+      	    ix = xDim/twoL;
+      	    ykeep = new double[xDim];
+      	    for (i = 0; i < ix; i++) {
+      	    	ykeep[i] = y[i];
+      	    }
+      	    for (i = 0; i < sliceSize; i++) {
+			    	absVal = Math.abs(y[i]);
+			    	if (absVal <= thld) {
+			    		y[i] = 0.0;
+			    	}
+			    	else {
+			    		y[i] = Math.signum(y[i])*(absVal - thld);
+			    	}
+			}
+      	    midwt();
+      	    for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+      	    // aArray and signal_denoised_corr match
+      	    /*aArray[0] = 0.018774235427834875
+			aArray[1] = 0.023761656842955597
+			aArray[2] = 0.020675728117562825
+			aArray[3] = 0.019639149767746722
+			aArray[4] = 0.05587124136989634
+			aArray[5] = 0.10806651987387313
+			aArray[6] = -0.10523491494472464
+			aArray[7] = 0.03919877541406031
+			aArray[8] = 0.07971802907723954
+			aArray[9] = -0.0740175955054907
+			aArray[10] = -0.1302897814088001
+			aArray[11] = -0.15887873946909772
+			aArray[12] = -0.03198304908449369
+			aArray[13] = 0.18436400742658526
+			aArray[14] = 0.03664980648655958
+			aArray[15] = -0.20758917377656327
+			aArray[16] = -0.17209060671582743
+			aArray[17] = -0.10134751848594939
+			aArray[18] = -0.05786093380745464
+			aArray[19] = 0.020165383000812456
+			aArray[20] = 0.047139800102542734
+			aArray[21] = 0.06569137833451298
+			aArray[22] = 0.12198197451194918
+			aArray[23] = 0.18497750814342243
+			aArray[24] = 0.17569739990748612
+			aArray[25] = 0.1428023910836026
+			aArray[26] = 0.12026427958105415
+			aArray[27] = 0.08341351620336362
+			aArray[28] = 0.07208308197815555
+			aArray[29] = 0.0660010637766539
+			aArray[30] = 0.04408499860340718
+			aArray[31] = 0.020593400676871456*/
+      	    //signal_denoised_corr = [0.0187742354278351 0.0237616568429558 0.0206757281175629 0.0196391497677469 0.0558712413698966
+      	    //0.108066519873873 -0.105234914944725 0.0391987754140600 0.0797180290772401 -0.0740175955054904 -0.130289781408801
+      	    //-0.158878739469097 -0.0319830490844931 0.184364007426586 0.0366498064865601 -0.207589173776562 -0.172090606715827
+      	    //-0.101347518485950 -0.0578609338074549 0.0201653830008125 0.0471398001025425 0.0656913783345127 0.121981974511949
+      	    //0.184977508143422 0.175697399907486 0.142802391083602 0.120264279581054 0.0834135162033633 0.0720830819781554
+      	    //0.0660010637766539 0.0440849986034073 0.0205934006768717];
+      	    setCompleted(true);
+      	    return;
+        } // else if (test_denoise_threshold_low)
+        else if (test_denoise_thresh_multiplier) {
+        	  //signal = makesig('Doppler', 32); // sets aArray
+        	  makeSig("Doppler",32);
+        	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+        		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+        		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+        		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+        		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+        	  //with_noise = signal + noise / 10;
+        	  for (i = 0; i < 32; i++) {
+        		  aArray[i] += noise[i]/10.0;
+        	  }
+        	  nDims = 1;
+  	            xDim = 32;
+  	            yDim = 1;
+  	            sliceSize = 32;
+  	            y = new double[sliceSize];
+  	            waveletImage = null;
+        	    i = xDim;
+  	            j = 0;
+  	            while ((i % 2) == 0) {
+  	                i = (i >> 1);
+  	                j++;
+  	            }
+  	            numberOfLevels = j;
+  	            maximumLevel = numberOfLevels;
+        	    filterType = MINIMUM_PHASE;
+  	            filterLength = 6;
+  	            scalingFilter = new double[filterLength];
+  	            waveletFilter = new double[filterLength];
+  	            daubcqf();
+        	  //h = daubcqf(6)
+        	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+  	            thresholdLowPass = true;
+  	            mdwt();
+  	            numX = xDim - (int)Math.floor(xDim/2);
+  	            numberValues = numX;
+  	            tmp = new double[numberValues];
+        		for (i = numX; i < xDim; i++) {
+        	        tmp[i-numX] = y[i];
+        		}
+        		for (i = 0; i < numberValues; i++) {
+  					tmp[i] = Math.abs(tmp[i]);
+  				}
+  				Arrays.sort(tmp);
+  				if ((numberValues %2) == 0) {
+  				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+  				}
+  				else {
+  					median = tmp[(numberValues - 1)/2];
+  				}
+  				thresholdMultiplier = 3.5;
+  				thld = thresholdMultiplier*median/.67;
+  				twoL = 1;
+            	for (i = 0; i < numberOfLevels; i++) {
+            		twoL = 2 * twoL;
+            	}
+        	    ix = xDim/twoL;
+        	    ykeep = new double[xDim];
+        	    for (i = 0; i < ix; i++) {
+        	    	ykeep[i] = y[i];
+        	    }
+        	    for (i = 0; i < sliceSize; i++) {
+  			    	absVal = Math.abs(y[i]);
+  			    	if (absVal <= thld) {
+  			    		y[i] = 0.0;
+  			    	}
+  			    	else {
+  			    		y[i] = Math.signum(y[i])*(absVal - thld);
+  			    	}
+  			    }
+        	    midwt();
+        	    for (i = 0; i < sliceSize; i++) {
+                	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+                }
+        	    // aArray and signal_denoised_corr match
+        	    /*aArray[0] = 0.005635270748034314
+	    		aArray[1] = 0.011085305240404526
+	    		aArray[2] = 0.01015901934719145
+	    		aArray[3] = 0.011678951854607196
+	    		aArray[4] = 0.03546256584432051
+	    		aArray[5] = 0.06919046064269771
+	    		aArray[6] = -0.06470102521879662
+	    		aArray[7] = 0.03934850970120357
+	    		aArray[8] = 0.030229774647826318
+	    		aArray[9] = -0.06582302964018759
+	    		aArray[10] = -0.0947938063374138
+	    		aArray[11] = -0.14794315185100945
+	    		aArray[12] = -0.0355607514547518
+	    		aArray[13] = 0.14302782780048917
+	    		aArray[14] = 0.012675297797007476
+	    		aArray[15] = -0.20057766382158412
+	    		aArray[16] = -0.1490592590076559
+	    		aArray[17] = -0.05644321019402142
+	    		aArray[18] = -0.028136507066194926
+	    		aArray[19] = 0.020102137187145888
+	    		aArray[20] = 0.04384127727873706
+	    		aArray[21] = 0.0596866399869514
+	    		aArray[22] = 0.09671019379894606
+	    		aArray[23] = 0.13645164191756548
+	    		aArray[24] = 0.13071630710708848
+	    		aArray[25] = 0.10914691438813172
+	    		aArray[26] = 0.09252008496534367
+	    		aArray[27] = 0.06576074173634136
+	    		aArray[28] = 0.05505849108988604
+	    		aArray[29] = 0.04696362314481811
+	    		aArray[30] = 0.027726848617731125
+	    		aArray[31] = 0.006671354073980545*/
+        	    //signal_denoised_corr = [0.00563527074803461 0.0110853052404048 0.0101590193471916 0.0116789518546074 0.0354625658443208
+        	    //0.0691904606426981 -0.0647010252187970 0.0393485097012034 0.0302297746478269 -0.0658230296401878 -0.0947938063374137
+        	    //-0.147943151851009 -0.0355607514547514 0.143027827800490 0.0126752977970079 -0.200577663821584 -0.149059259007655
+        	    //-0.0564432101940217 -0.0281365070661950 0.0201021371871464 0.0438412772787373 0.0596866399869512 0.0967101937989458
+        	    //0.136451641917565 0.130716307107088 0.109146914388131 0.0925200849653435 0.0657607417363412 0.0550584910898860
+        	    //0.0469636231448182 0.0277268486177313 0.00667135407398081];
+        	    setCompleted(true);
+        	    return;
+        } // else if (test_denoise_thresh_multiplier)
+        else if (test_denoise_std) {
+      	  //signal = makesig('Doppler', 32); // sets aArray
+      	  makeSig("Doppler",32);
+      	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+      		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+      		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+      		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+      		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+      	  //with_noise = signal + noise / 10;
+      	  for (i = 0; i < 32; i++) {
+      		  aArray[i] += noise[i]/10.0;
+      	  }
+      	  nDims = 1;
+	            xDim = 32;
+	            yDim = 1;
+	            sliceSize = 32;
+	            y = new double[sliceSize];
+	            waveletImage = null;
+      	    i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            numberOfLevels = j;
+	            maximumLevel = numberOfLevels;
+      	    filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+      	  //h = daubcqf(6)
+      	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+	            mdwt();
+	            numX = xDim - (int)Math.floor(xDim/2);
+	            numberValues = numX;
+	            tmp = new double[numberValues];
+      		for (i = numX; i < xDim; i++) {
+      	        tmp[i-numX] = y[i];
+      		}
+      		sum = 0.0;
+			for (i = 0; i < numberValues; i++) {
+				sum += tmp[i];
+			}
+			mean = sum/numberValues;
+			sum = 0.0;
+			for (i = 0; i < numberValues; i++) {
+				diff = tmp[i] - mean;
+				sum += diff*diff;
+			}
+			variance = sum/(numberValues - 1);
+			std = Math.sqrt(variance);
+			thresholdMultiplier = 3.0;
+			thld = thresholdMultiplier*std;
+				twoL = 1;
+          	for (i = 0; i < numberOfLevels; i++) {
+          		twoL = 2 * twoL;
+          	}
+      	    ix = xDim/twoL;
+      	    ykeep = new double[xDim];
+      	    for (i = 0; i < ix; i++) {
+      	    	ykeep[i] = y[i];
+      	    }
+      	    for (i = 0; i < sliceSize; i++) {
+			    	absVal = Math.abs(y[i]);
+			    	if (absVal <= thld) {
+			    		y[i] = 0.0;
+			    	}
+			    	else {
+			    		y[i] = Math.signum(y[i])*(absVal - thld);
+			    	}
+			}
+      	    for (i = 0; i < ix; i++) {
+      	    	y[i] = ykeep[i];
+      	    }
+      	    midwt();
+      	    for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+      	    // aArray and signal_denoised_corr match
+      	        /*aArray[0] = 0.06869260696580579
+      			aArray[1] = 0.07062160451964727
+      			aArray[2] = 0.07197690325297562
+      			aArray[3] = 0.07435683051310576
+      			aArray[4] = 0.07542519965346917
+      			aArray[5] = 0.07635491038556112
+      			aArray[6] = 0.07839727507444466
+      			aArray[7] = 0.08070921364755644
+      			aArray[8] = 0.07631099549980479
+      			aArray[9] = 0.06930176836042048
+      			aArray[10] = 0.06286975371913808
+      			aArray[11] = 0.05474925316775597
+      			aArray[12] = 0.07555194784015586
+      			aArray[13] = 0.10793125604665628
+      			aArray[14] = 0.08599597914648853
+      			aArray[15] = 0.04943761183392213
+      			aArray[16] = 0.06020593645954456
+      			aArray[17] = 0.07850772297383835
+      			aArray[18] = 0.07919996068422662
+      			aArray[19] = 0.08094106057775195
+      			aArray[20] = 0.08446521845489209
+      			aArray[21] = 0.08737490848819247
+      			aArray[22] = 0.09115352780857333
+      			aArray[23] = 0.09520273329512771
+      			aArray[24] = 0.09363160164684284
+      			aArray[25] = 0.0898878427420566
+      			aArray[26] = 0.08667341859170458
+      			aArray[27] = 0.08207096857449239
+      			aArray[28] = 0.07934814323230782
+      			aArray[29] = 0.07683069652692404
+      			aArray[30] = 0.07279957277923926
+      			aArray[31] = 0.06841965915660457*/
+      	    //signal_denoised_corr = [0.0686926069658060 0.0706216045196474 0.0719769032529757 0.0743568305131058 0.0754251996534692
+      	    //0.0763549103855611 0.0783972750744446 0.0807092136475563 0.0763109954998047 0.0693017683604205 0.0628697537191382
+      	    //0.0547492531677562 0.0755519478401559 0.107931256046656 0.0859959791464885 0.0494376118339224 0.0602059364595448
+      	    //0.0785077229738383 0.0791999606842265 0.0809410605777517 0.0844652184548917 0.0873749084881920 0.0911535278085727
+      	    //0.0952027332951270 0.0936316016468421 0.0898878427420561 0.0866734185917041 0.0820709685744921 0.0793481432323076
+      	    //0.0768306965269240 0.0727995727792393 0.0684196591566048];
+      	    setCompleted(true);
+      	    return;
+        } // else if (test_denoise_std)
+        else if (test_denoise_hard) {
+      	  //signal = makesig('Doppler', 32); // sets aArray
+      	  makeSig("Doppler",32);
+      	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+      		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+      		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+      		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+      		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+      	  //with_noise = signal + noise / 10;
+      	  for (i = 0; i < 32; i++) {
+      		  aArray[i] += noise[i]/10.0;
+      	  }
+      	  nDims = 1;
+	            xDim = 32;
+	            yDim = 1;
+	            sliceSize = 32;
+	            y = new double[sliceSize];
+	            waveletImage = null;
+      	    i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            numberOfLevels = j;
+	            maximumLevel = numberOfLevels;
+      	    filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+      	  //h = daubcqf(6)
+      	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+	            mdwt();
+	            numX = xDim - (int)Math.floor(xDim/2);
+	            numberValues = numX;
+	            tmp = new double[numberValues];
+      		for (i = numX; i < xDim; i++) {
+      	        tmp[i-numX] = y[i];
+      		}
+      		for (i = 0; i < numberValues; i++) {
+					tmp[i] = Math.abs(tmp[i]);
+				}
+				Arrays.sort(tmp);
+				if ((numberValues %2) == 0) {
+				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+				}
+				else {
+					median = tmp[(numberValues - 1)/2];
+				}
+				thresholdMultiplier = 3.0;
+				thld = thresholdMultiplier*median/.67;
+				twoL = 1;
+          	for (i = 0; i < numberOfLevels; i++) {
+          		twoL = 2 * twoL;
+          	}
+      	    ix = xDim/twoL;
+      	    ykeep = new double[xDim];
+      	    for (i = 0; i < ix; i++) {
+      	    	ykeep[i] = y[i];
+      	    }
+      	    for (i = 0; i < sliceSize; i++) {
+			    	absVal = Math.abs(y[i]);
+			    	if (absVal <= thld) {
+			    		y[i] = 0.0;
+			    	}
+			}
+      	    for (i = 0; i < ix; i++) {
+      	    	y[i] = ykeep[i];
+      	    }
+      	    midwt();
+      	    for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+      	    // aArray and signal_denoised_corr match
+      	        /*aArray[0] = 0.09773941601037227
+      			aArray[1] = 0.09941615609833866
+      			aArray[2] = 0.08324474078073844
+      			aArray[3] = 0.06669833116971875
+      			aArray[4] = 0.1774209715954132
+      			aArray[5] = 0.34023058389711025
+      			aArray[6] = -0.35459706967129556
+      			aArray[7] = 0.025001787227501595
+      			aArray[8] = 0.39441848534323853
+      			aArray[9] = -0.059574530437451215
+      			aArray[10] = -0.45240157079339977
+      			aArray[11] = -0.17570756085210207
+      			aArray[12] = -0.006223203251308512
+      			aArray[13] = 0.4378670654118161
+      			aArray[14] = 0.18748534658430582
+      			aArray[15] = -0.24106066468704962
+      			aArray[16] = -0.30628589612077417
+      			aArray[17] = -0.37394653646637077
+      			aArray[18] = -0.2461659244756577
+      			aArray[19] = 0.00210496326791014
+      			aArray[20] = 0.052862996606481714
+      			aArray[21] = 0.09673836569533485
+      			aArray[22] = 0.2754106936174399
+      			aArray[23] = 0.4872989261699707
+      			aArray[24] = 0.45498525371869025
+      			aArray[25] = 0.34860333139363237
+      			aArray[26] = 0.28820574394224924
+      			aArray[27] = 0.1868065964962613
+      			aArray[28] = 0.17214726040566036
+      			aArray[29] = 0.18005085171468163
+      			aArray[30] = 0.14213644582628845
+      			aArray[31] = 0.10448472540148152*/
+      	    //signal_denoised_corr = [0.0977394160103721 0.0994161560983385 0.0832447407807381 0.0666983311697188 0.177420971595413
+      	    //0.340230583897110 -0.354597069671295 0.0250017872275015 0.394418485343238 -0.0595745304374512 -0.452401570793399
+      	    //-0.175707560852101 -0.00622320325130765 0.437867065411816 0.187485346584306 -0.241060664687049 -0.306285896120773
+      	    //-0.373946536466370 -0.246165924475657 0.00210496326791051 0.0528629966064817 0.0967383656953347 0.275410693617439
+      	    //0.487298926169970 0.454985253718689 0.348603331393631 0.288205743942248 0.186806596496260 0.172147260405660 0.180050851714681
+      	    //0.142136445826288 0.104484725401481];
+      	    setCompleted(true);
+      	    return;
+        } // else if (test_denoise_hard)
+        else if (test_denoise_levels) {
+      	  //signal = makesig('Doppler', 32); // sets aArray
+      	  makeSig("Doppler",32);
+      	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+      		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+      		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+      		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+      		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+      	  //with_noise = signal + noise / 10;
+      	  for (i = 0; i < 32; i++) {
+      		  aArray[i] += noise[i]/10.0;
+      	  }
+      	  nDims = 1;
+	            xDim = 32;
+	            yDim = 1;
+	            sliceSize = 32;
+	            y = new double[sliceSize];
+	            waveletImage = null;
+	            numberOfLevels = 4;
+	            maximumLevel = numberOfLevels;
+      	    filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+      	  //h = daubcqf(6)
+      	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+	            mdwt();
+	            numX = xDim - (int)Math.floor(xDim/2);
+	            numberValues = numX;
+	            tmp = new double[numberValues];
+      		for (i = numX; i < xDim; i++) {
+      	        tmp[i-numX] = y[i];
+      		}
+      		for (i = 0; i < numberValues; i++) {
+					tmp[i] = Math.abs(tmp[i]);
+				}
+				Arrays.sort(tmp);
+				if ((numberValues %2) == 0) {
+				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+				}
+				else {
+					median = tmp[(numberValues - 1)/2];
+				}
+				thresholdMultiplier = 3.0;
+				thld = thresholdMultiplier*median/.67;
+				twoL = 1;
+          	for (i = 0; i < numberOfLevels; i++) {
+          		twoL = 2 * twoL;
+          	}
+      	    ix = xDim/twoL;
+      	    ykeep = new double[xDim];
+      	    for (i = 0; i < ix; i++) {
+      	    	ykeep[i] = y[i];
+      	    }
+      	    for (i = 0; i < sliceSize; i++) {
+			    	absVal = Math.abs(y[i]);
+			    	if (absVal <= thld) {
+			    		y[i] = 0.0;
+			    	}
+			    	else {
+			    		y[i] = Math.signum(y[i])*(absVal - thld);
+			    	}
+			}
+      	    for (i = 0; i < ix; i++) {
+      	    	y[i] = ykeep[i];
+      	    }
+      	    midwt();
+      	    for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+      	    // aArray and signal_dnoise_corr match
+      	        /*aArray[0] = 0.1642599928172618
+      			aArray[1] = 0.1563790712187119
+      			aArray[2] = 0.14221268567170295
+      			aArray[3] = 0.12503896357376165
+      			aArray[4] = 0.15029781525207322
+      			aArray[5] = 0.19153676797863603
+      			aArray[6] = -0.03816395807657292
+      			aArray[7] = 0.08810920321920991
+      			aArray[8] = 0.11962928445848599
+      			aArray[9] = -0.040609072536549225
+      			aArray[10] = -0.1056454267314928
+      			aArray[11] = -0.14182083199460246
+      			aArray[12] = -0.028031897720270954
+      			aArray[13] = 0.17317196012983155
+      			aArray[14] = 0.011753743728243699
+      			aArray[15] = -0.24711572995729425
+      			aArray[16] = -0.2067592972859119
+      			aArray[17] = -0.12314786604236322
+      			aArray[18] = -0.06858082454225228
+      			aArray[19] = 0.025582636014139976
+      			aArray[20] = 0.06353029303970834
+      			aArray[21] = 0.0930381970490926
+      			aArray[22] = 0.16572808446313997
+      			aArray[23] = 0.24688414715761528
+      			aArray[24] = 0.24660321134558214
+      			aArray[25] = 0.22021093493400362
+      			aArray[26] = 0.20643699172308932
+      			aArray[27] = 0.17717267554821084
+      			aArray[28] = 0.1789489974332753
+      			aArray[29] = 0.18801017789275004
+      			aArray[30] = 0.1797981281810655
+      			aArray[31] = 0.17093702367694485*/
+      	    //signal_denoised_corr = [0.164259992817262 0.156379071218712 0.142212685671703 0.125038963573761 0.150297815252073
+      	    //0.191536767978636 -0.0381639580765735 0.0881092032192094 0.119629284458486 -0.0406090725365491 -0.105645426731493
+      	    //-0.141820831994602 -0.0280318977202704 0.173171960129832 0.0117537437282443 -0.247115729957293 -0.206759297285911 
+      	    //-0.123147866042363 -0.0685808245422524 0.0255826360141400 0.0635302930397082 0.0930381970490923 0.165728084463140
+      	    //0.246884147157615 0.246603211345582 0.220210934934003 0.206436991723089 0.177172675548210 0.178948997433275 0.188010177892750
+      	    //0.179798128181065 0.170937023676945];
+      	    setCompleted(true);
+      	    return;
+        } // else if (test_denoise_levels)
+        else if (test_denoise_actual_thresh) {
+      	  //signal = makesig('Doppler', 32); // sets aArray
+      	  makeSig("Doppler",32);
+      	  double noise[] = new double [] {1.54421189550395, 0.0859311331754255, -1.49159031063761, -0.742301837259857, -1.06158173331999, 2.35045722400204,
+      		  -0.615601881466894, 0.748076783703985, -0.192418510588264, 0.888610425420721, -0.764849236567874, -1.40226896933876, -1.42237592509150,
+      		  0.488193909859941, -0.177375156618825, -0.196053487807333, 1.41931015064255, 0.291584373984183, 0.197811053464361, 1.58769908997406,
+      		  -0.804465956349547, 0.696624415849607, 0.835088165072682, -0.243715140377952, 0.215670086403744, -1.16584393148205, -1.14795277889859,
+      		  0.104874716016494, 0.722254032225002, 2.58549125261624, -0.666890670701386, 0.187331024578940};
+      	  //with_noise = signal + noise / 10;
+      	  for (i = 0; i < 32; i++) {
+      		  aArray[i] += noise[i]/10.0;
+      	  }
+      	  nDims = 1;
+	            xDim = 32;
+	            yDim = 1;
+	            sliceSize = 32;
+	            y = new double[sliceSize];
+	            waveletImage = null;
+      	    i = xDim;
+	            j = 0;
+	            while ((i % 2) == 0) {
+	                i = (i >> 1);
+	                j++;
+	            }
+	            numberOfLevels = j;
+	            maximumLevel = numberOfLevels;
+      	    filterType = MINIMUM_PHASE;
+	            filterLength = 6;
+	            scalingFilter = new double[filterLength];
+	            waveletFilter = new double[filterLength];
+	            daubcqf();
+      	  //h = daubcqf(6)
+      	  //[signal_denoised, subtracted_noise, actual_options] = denoise(with_noise, h);
+	            mdwt();
+	            actualThreshold = 0.5;
+				thld = actualThreshold;
+				twoL = 1;
+          	for (i = 0; i < numberOfLevels; i++) {
+          		twoL = 2 * twoL;
+          	}
+      	    ix = xDim/twoL;
+      	    ykeep = new double[xDim];
+      	    for (i = 0; i < ix; i++) {
+      	    	ykeep[i] = y[i];
+      	    }
+      	    for (i = 0; i < sliceSize; i++) {
+			    	absVal = Math.abs(y[i]);
+			    	if (absVal <= thld) {
+			    		y[i] = 0.0;
+			    	}
+			    	else {
+			    		y[i] = Math.signum(y[i])*(absVal - thld);
+			    	}
+			}
+      	    for (i = 0; i < ix; i++) {
+      	    	y[i] = ykeep[i];
+      	    }
+      	    midwt();
+      	    for (i = 0; i < sliceSize; i++) {
+              	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+      	    // aArray and signal_denoised_corr match
+      	        /*aArray[0] = 0.06070991839422943
+      			aArray[1] = 0.06543515211935236
+      			aArray[2] = 0.06841547598006095
+      			aArray[3] = 0.07420189341484545
+      			aArray[4] = 0.07588450053900132
+      			aArray[5] = 0.07695115306431106
+      			aArray[6] = 0.08108566067302526
+      			aArray[7] = 0.08580233753160371
+      			aArray[8] = 0.07047064433505186
+      			aArray[9] = 0.047206090604758597
+      			aArray[10] = 0.025432967951844247
+      			aArray[11] = -0.0015459094040531866
+      			aArray[12] = 0.05984551825793486
+      			aArray[13] = 0.15655670784187767
+      			aArray[14] = 0.0864272987162391
+      			aArray[15] = -0.028783533528049386
+      			aArray[16] = 0.006060171201546553
+      			aArray[17] = 0.06595925754329313
+      			aArray[18] = 0.07139580804955854
+      			aArray[19] = 0.08128917350764933
+      			aArray[20] = 0.09537019813471814
+      			aArray[21] = 0.10755457679123927
+      			aArray[22] = 0.12373914689559246
+      			aArray[23] = 0.14118042264072728
+      			aArray[24] = 0.13708504462260152
+      			aArray[25] = 0.12483836676008718
+      			aArray[26] = 0.11485295743723353
+      			aArray[27] = 0.09972940005717923
+      			aArray[28] = 0.0922174665178413
+      			aArray[29] = 0.08577589765576875
+      			aArray[30] = 0.07370526310313429
+      			aArray[31] = 0.06054705420902285*/
+      	    //signal_denoised_corr = [0.0607099183942295 0.0654351521193524 0.0684154759800610 0.0742018934148454 0.0758845005390013
+      	    //0.0769511530643110 0.0810856606730252 0.0858023375316036 0.0704706443350518 0.0472060906047587 0.0254329679518446
+      	    //-0.00154590940405266 0.0598455182579352 0.156556707841878 0.0864272987162393 -0.0287835335280487 0.00606017120154721
+      	    //0.0659592575432934 0.0713958080495586 0.0812891735076492 0.0953701981347179 0.107554576791239 0.123739146895592 0.141180422640726
+      	    //0.137085044622601 0.124838366760086 0.114852957437233 0.0997294000571788 0.0922174665178409 0.0857758976557685 0.0737052631031342
+      	    //0.0605470542090229];
+      	    setCompleted(true);
+      	    return;
+        } // else if (test_denoise_actual_thresh)
         else {
             nDims = srcImage.getNDims();
             extents = srcImage.getExtents();
