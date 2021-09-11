@@ -137,6 +137,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_noise_default = false;
     private boolean test_denoise_2D = false;
     private boolean test_denoise_udwt = false;
+    private boolean test_denoise_udwt_2d = false;
     private boolean doDenoise = false;
     // actual_threshold used if value is other than zero
     private double actualThreshold = 0.0;
@@ -1283,6 +1284,105 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            setCompleted(true);
 	            return;
         } // else if (test_denoise_udwt)
+        else if (test_denoise_udwt_2d) {
+        	aArray = new double[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10.09, 11, 12, 13, 13.91, 15, 16};
+        	//h = daubcqf(4,'min'); // sets scalingFilter and waveletFilter
+      	  filterType = MINIMUM_PHASE;
+      	  filterLength = 4;
+      	  scalingFilter = new double[filterLength];
+          
+          waveletFilter = new double[filterLength];
+      	  daubcqf();
+	      	numberOfLevels = 2;
+	      	maximumLevel = 2;
+	  	    nDims = 2;
+	        xDim = 4;
+	        yDim = 4;
+	        sliceSize = 16;	
+	        // Create low pass wavelet component
+	        yl = new double[sliceSize];
+	        // Savethe low pass component for each level
+	        llA = new double[numberOfLevels-1][sliceSize];
+	        
+	        // Create 3 high pass components for each level
+	        lhA = new double[numberOfLevels][sliceSize];
+	        hlA = new double[numberOfLevels][sliceSize];
+	        hhA = new double[numberOfLevels][sliceSize];
+	        extents = new int[] {4,4};
+	        waveletImage = null;
+	        destImage = null;
+	        mrdwt();
+	        srchA = hhA;
+	        tmp = new double[sliceSize];
+			for (i = 0; i < sliceSize; i++) {
+				tmp[i] = srchA[0][i];
+			}
+			for (i = 0; i < sliceSize; i++) {
+				tmp[i] = Math.abs(tmp[i]);
+			}
+			Arrays.sort(tmp);
+			if ((sliceSize % 2) == 0) {
+			    median = (tmp[sliceSize/2] + tmp[sliceSize/2 - 1])/2.0; 
+			}
+			else {
+				median = tmp[(sliceSize - 1)/2];
+			}
+			thresholdMultiplier = 3.6;
+			thld = thresholdMultiplier*median/.67;
+			for (i = minimumLevel-1; i < maximumLevel; i++) {
+				for (j = 0; j < sliceSize; j++) {
+					absVal = Math.abs(srchA[i][j]);
+					if (absVal <= thld) {
+						srchA[i][j] = 0.0;
+					}
+				}
+			}
+			for (i = minimumLevel-1; i < maximumLevel; i++) {
+				for (j = 0; j < sliceSize; j++) {
+					absVal = Math.abs(lhA[i][j]);
+					if (absVal <= thld) {
+						lhA[i][j] = 0.0;
+					}
+				}
+			}	
+			
+			for (i = minimumLevel-1; i < maximumLevel; i++) {
+				for (j = 0; j < sliceSize; j++) {
+					absVal = Math.abs(hlA[i][j]);
+					if (absVal <= thld) {
+						hlA[i][j] = 0.0;
+					}
+				}
+			}
+			mirdwt();
+			for (i = 0; i < sliceSize; i++) {
+            	Preferences.debug("aArray["+i+"] = " + aArray[i] + "\n", Preferences.DEBUG_ALGORITHM); 
+            }
+			// aArray and signal_denoised_corr match
+			/*aArray[0] = 1.0070404888661963
+			aArray[1] = 1.9934052745217659
+			aArray[2] = 3.0062684040300893
+			aArray[3] = 3.996424654030088
+			aArray[4] = 4.995935171857873
+			aArray[5] = 6.002401216530088
+			aArray[6] = 7.001252328142124
+			aArray[7] = 8.005847881693981
+			aArray[8] = 9.009508189685654
+			aArray[9] = 10.059981743374518
+			aArray[10] = 11.001190131625476
+			aArray[11] = 11.999030274521763
+			aArray[12] = 12.987516149590267
+			aArray[13] = 13.944211765573618
+			aArray[14] = 14.991289136202303
+			aArray[15] = 15.998697189754157*/
+	        // signal_denoised_corr = [
+            // 1.007040488866197   1.993405274521765   3.006268404030089   3.996424654030090;
+            // 4.995935171857875   6.002401216530091   7.001252328142127   8.005847881693983;
+            // 9.009508189685661  10.059981743374523  11.001190131625481  11.999030274521770;
+           // 12.987516149590270  13.944211765573623  14.991289136202310  15.998697189754166];
+		   setCompleted(true);
+		   return;
+        } // else if (test_denoise_udwt_2d)
         else {
             nDims = srcImage.getNDims();
             extents = srcImage.getExtents();
@@ -1480,6 +1580,31 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             					}
             				}
             			}
+            			if (nDims == 2) {
+            				for (i = minimumLevel-1; i < maximumLevel; i++) {
+                				for (j = 0; j < sliceSize; j++) {
+                					absVal = Math.abs(lhA[i][j]);
+                					if (absVal <= thld) {
+                						lhA[i][j] = 0.0;
+                					}
+                					else {
+                						lhA[i][j] = Math.signum(lhA[i][j])*(absVal - thld);
+                					}
+                				}
+                			}	
+            				
+            				for (i = minimumLevel-1; i < maximumLevel; i++) {
+                				for (j = 0; j < sliceSize; j++) {
+                					absVal = Math.abs(hlA[i][j]);
+                					if (absVal <= thld) {
+                						hlA[i][j] = 0.0;
+                					}
+                					else {
+                						hlA[i][j] = Math.signum(hlA[i][j])*(absVal - thld);
+                					}
+                				}
+                			}
+            			} // if (nDims == 2)
             			if (thresholdLowPass) {
             			    for (i = 0; i < sliceSize; i++) {
             			    	absVal = Math.abs(yl[i]);
@@ -1501,6 +1626,25 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             					}
             				}
             			}
+            			if (nDims == 2) {
+            				for (i = minimumLevel-1; i < maximumLevel; i++) {
+                				for (j = 0; j < sliceSize; j++) {
+                					absVal = Math.abs(lhA[i][j]);
+                					if (absVal <= thld) {
+                						lhA[i][j] = 0.0;
+                					}
+                				}
+                			}	
+            				
+            				for (i = minimumLevel-1; i < maximumLevel; i++) {
+                				for (j = 0; j < sliceSize; j++) {
+                					absVal = Math.abs(hlA[i][j]);
+                					if (absVal <= thld) {
+                						hlA[i][j] = 0.0;
+                					}
+                				}
+                			}
+            			} // if (nDims == 2)
             			if (thresholdLowPass) {
             			    for (i = 0; i < sliceSize; i++) {
             			    	absVal = Math.abs(yl[i]);
@@ -2289,123 +2433,125 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                     }
                 }
                 
-                if (z == (zDim - 1)) {
-                    calcMinMax = true;
-                }
-                else {
-                    calcMinMax = false;
-                }
-                
-                if ((actual_L == maximumLevel) && (maximumLevel > minimumLevel)) {
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mll");
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, llA[minimumLevel-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
-                        		" llA[minimumLevel-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }  
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mlh");
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, lhA[minimumLevel-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, " +
-                        		"lhA[minimumLevel-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }
-                    
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mhl"); 
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hlA[minimumLevel-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
-                        		" hlA[minimumLevel-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }
-                    
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mhh"); 
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hhA[minimumLevel-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
-                        		" hhA[minimumLevel-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }    
-                }
-                
-                if (doWaveletImages) {
-                    
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
-                            actual_L + "_ll");  
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, yl, calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, yl, calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
-                                                                       actual_L + "_lh");
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, lhA[actual_L-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
-                        		" lhA[actual_L-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }
-                    
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
-                            actual_L + "_hl");  
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hlA[actual_L-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, " +
-                        		"hlA[actual_L-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }
-                    
-                    if (z == 0) {
-                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
-                            actual_L + "_hh");
-                    }
-                    try {
-                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hhA[actual_L-1], calcMinMax);  
-                    }
-                    catch(IOException  e) {
-                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, " +
-                        		"hhA[actual_L-1], calcMinMax)");
-                        setCompleted(false);
-                        return;
-                    }
-                    
-                } // if (doWaveletImages)
+                if (waveletImage != null) {
+	                if (z == (zDim - 1)) {
+	                    calcMinMax = true;
+	                }
+	                else {
+	                    calcMinMax = false;
+	                }
+	                
+	                if ((actual_L == maximumLevel) && (maximumLevel > minimumLevel)) {
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mll");
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, llA[minimumLevel-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
+	                        		" llA[minimumLevel-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }  
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mlh");
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, lhA[minimumLevel-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, " +
+	                        		"lhA[minimumLevel-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+	                    
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mhl"); 
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hlA[minimumLevel-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
+	                        		" hlA[minimumLevel-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+	                    
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mhh"); 
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hhA[minimumLevel-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
+	                        		" hhA[minimumLevel-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }    
+	                }
+	                
+	                if (doWaveletImages) {
+	                    
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
+	                            actual_L + "_ll");  
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, yl, calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, yl, calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
+	                                                                       actual_L + "_lh");
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, lhA[actual_L-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize," +
+	                        		" lhA[actual_L-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+	                    
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
+	                            actual_L + "_hl");  
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hlA[actual_L-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, " +
+	                        		"hlA[actual_L-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+	                    
+	                    if (z == 0) {
+	                        waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_L" +
+	                            actual_L + "_hh");
+	                    }
+	                    try {
+	                        waveletImage[waveletImageIndex++].importData(z*sliceSize, hhA[actual_L-1], calcMinMax);  
+	                    }
+	                    catch(IOException  e) {
+	                        MipavUtil.displayError("IOException on waveletImage[waveletImageIndex++].importData(z*sliceSize, " +
+	                        		"hhA[actual_L-1], calcMinMax)");
+	                        setCompleted(false);
+	                        return;
+	                    }
+	                    
+	                } // if (doWaveletImages)
+                } // if (waveletImage != null)
             } // if (yDim > 1)
             sample_f = sample_f*2;
         } // for (actual_L = 1; actual_L <= numberOfLevels; actual_L++)
