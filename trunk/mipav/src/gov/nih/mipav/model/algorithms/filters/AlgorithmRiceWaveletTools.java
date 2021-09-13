@@ -167,7 +167,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
             int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel,
-            int filterType) {
+            int filterType, boolean doDenoise, double actualThreshold, int varianceEstimator, double thresholdMultiplier,
+            int thresholdingType, boolean thresholdLowPass) {
         super(destImg, srcImg);
         this.filterLength = filterLength;
         this.redundant = redundant;
@@ -176,10 +177,17 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         this.minimumLevel = minimumLevel;
         this.maximumLevel = maximumLevel;
         this.filterType = filterType;
+        this.doDenoise = doDenoise;
+        this.actualThreshold = actualThreshold;
+        this.varianceEstimator = varianceEstimator;
+        this.thresholdMultiplier = thresholdMultiplier;
+        this.thresholdingType = thresholdingType;
+        this.thresholdLowPass = thresholdLowPass;
     }
     
     public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, boolean redundant, int numberOfLevels,
-            boolean doWaveletImages, int minimumLevel, int maximumLevel, int filterType) {
+            boolean doWaveletImages, int minimumLevel, int maximumLevel, int filterType,boolean doDenoise, double actualThreshold, 
+            int varianceEstimator, double thresholdMultiplier, int thresholdingType, boolean thresholdLowPass) {
         super(null, srcImg);
         this.filterLength = filterLength;
         this.redundant = redundant;
@@ -188,6 +196,12 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         this.minimumLevel = minimumLevel;
         this.maximumLevel = maximumLevel;
         this.filterType = filterType;
+        this.doDenoise = doDenoise;
+        this.actualThreshold = actualThreshold;
+        this.varianceEstimator = varianceEstimator;
+        this.thresholdMultiplier = thresholdMultiplier;
+        this.thresholdingType = thresholdingType;
+        this.thresholdLowPass = thresholdLowPass;
     }
     
     
