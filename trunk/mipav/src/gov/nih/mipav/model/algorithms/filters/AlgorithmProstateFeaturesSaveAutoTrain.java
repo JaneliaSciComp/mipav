@@ -346,10 +346,18 @@ public class AlgorithmProstateFeaturesSaveAutoTrain extends AlgorithmBase implem
         int minimumLevel = 1; 
         int maximumLevel = 2;
         boolean redundant = true;
+        boolean doDenoise = false;
+        double actualThreshold = 0.0;
+        int varianceEstimator = AlgorithmRiceWaveletTools.MAD;
+        double thresholdMultiplier = 3.6;
+        int thresholdingType = AlgorithmRiceWaveletTools.HARD_THRESHOLDING;
+        boolean thresholdLowPass = false;
         
         try {
             waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, redundant,
-                              numberOfLevels, doWaveletImages, minimumLevel, maximumLevel, AlgorithmRiceWaveletTools.MINIMUM_PHASE);
+                              numberOfLevels, doWaveletImages, minimumLevel, maximumLevel, AlgorithmRiceWaveletTools.MINIMUM_PHASE,
+                              doDenoise,  actualThreshold, 
+                              varianceEstimator, thresholdMultiplier, thresholdingType, thresholdLowPass);
             waveletAlgo.addListener(this);
             waveletAlgo.run();
             
