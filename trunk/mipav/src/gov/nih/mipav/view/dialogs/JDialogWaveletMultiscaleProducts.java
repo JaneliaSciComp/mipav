@@ -48,7 +48,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private JRadioButton redundantButton;
     private JRadioButton nonredundantButton;
     private boolean redundant = true;
-    
 
     /** DOCUMENT ME! */
     private JTextField textFilterLength;
@@ -115,6 +114,21 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private int thresholdingType = HARD_THRESHOLDING;
     // Default is don't threshold low pass components
     private boolean thresholdLowPass = false;
+    
+    private JCheckBox denoiseCheckBox;
+    private JCheckBox thresholdLowPassCheckBox;
+    private JLabel thresholdMultiplierLabel;
+    private JTextField thresholdMultiplierText;
+    private JLabel varianceEstimatorLabel;
+    private ButtonGroup varianceGroup;
+    private JRadioButton MADButton;
+    private JRadioButton STDButton;
+    private JLabel thresholdingTypeLabel;
+    private ButtonGroup thresholdingTypeGroup;
+    private JRadioButton softButton;
+    private JRadioButton hardButton;
+    private JLabel actualThresholdLabel;
+    private JTextField actualThresholdText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -172,6 +186,17 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             else {
                 textLevels.setEnabled(true);
             }
+        } else if (source == denoiseCheckBox) {
+            doDenoise = denoiseCheckBox.isSelected();
+            thresholdLowPassCheckBox.setEnabled(doDenoise);
+            thresholdMultiplierLabel.setEnabled(doDenoise);
+            thresholdMultiplierText.setEnabled(doDenoise);
+            MADButton.setEnabled(doDenoise);
+            STDButton.setEnabled(doDenoise);
+            softButton.setEnabled(doDenoise);
+            hardButton.setEnabled(doDenoise);
+            actualThresholdLabel.setEnabled(doDenoise);
+            actualThresholdText.setEnabled(doDenoise);
         } else {
             super.actionPerformed(event);
         }
@@ -315,7 +340,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                 // Make algorithm
                 waveletAlgo = new AlgorithmRiceWaveletTools(destImage, image, filterLength, redundant,
                                   numberOfLevels, doWaveletImages, minimumLevel, maximumLevel,
-                                  filterType);
+                                  filterType, doDenoise,  actualThreshold, 
+                                  varianceEstimator, thresholdMultiplier, thresholdingType, thresholdLowPass);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -366,6 +392,12 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         minimumLevel = scriptParameters.getParams().getInt("minimum_level");
         maximumLevel = scriptParameters.getParams().getInt("maximum_level");
         filterType = scriptParameters.getParams().getInt("filter_type");
+        doDenoise = scriptParameters.getParams().getBoolean("do_denoise");
+        actualThreshold = scriptParameters.getParams().getDouble("actual_threshold");
+        varianceEstimator = scriptParameters.getParams().getInt("variance_estimator");
+        thresholdMultiplier = scriptParameters.getParams().getDouble("threshold_multiplier");
+        thresholdingType = scriptParameters.getParams().getInt("thresholding_type");
+        thresholdLowPass = scriptParameters.getParams().getBoolean("threshold_low_pass");
     }
 
     /**
@@ -381,6 +413,12 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         scriptParameters.getParams().put(ParameterFactory.newParameter("minimum_level", minimumLevel));
         scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_level", maximumLevel));
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_denoise", doDenoise));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("actual_threshold", actualThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("varianceEstimator", varianceEstimator));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_multiplier", thresholdMultiplier));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholding_type", thresholdingType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_low_pass", thresholdLowPass));
     }
 
     /**
@@ -511,6 +549,97 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         gbc.gridy = 11;
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
+        
+        denoiseCheckBox = new JCheckBox("Create denoised image");
+        denoiseCheckBox.setFont(serif12);
+        denoiseCheckBox.setSelected(true);
+        denoiseCheckBox.addActionListener(this);
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        gbc.gridwidth = 2;
+        paramPanel.add(denoiseCheckBox, gbc);
+        
+        thresholdLowPassCheckBox = new JCheckBox("Threshold low pass component");
+        thresholdLowPassCheckBox.setFont(serif12);
+        thresholdLowPassCheckBox.setSelected(false);
+        gbc.gridx = 0;
+        gbc.gridy = 13;
+        gbc.gridwidth = 2;
+        paramPanel.add(thresholdLowPassCheckBox, gbc);
+        
+        thresholdMultiplierLabel = new JLabel("Threshold multiplier");
+        thresholdMultiplierLabel.setForeground(Color.black);
+        thresholdMultiplierLabel.setFont(serif12);
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 14;
+        paramPanel.add(thresholdMultiplierLabel, gbc);
+        
+        thresholdMultiplierText = new JTextField(10);
+        thresholdMultiplierText.setFont(serif12);
+        thresholdMultiplierText.setText("3.6");
+        gbc.gridx = 1;
+        paramPanel.add(thresholdMultiplierText, gbc);
+        
+        varianceEstimatorLabel = new JLabel("Variance estimator type:");
+        varianceEstimatorLabel.setForeground(Color.black);
+        varianceEstimatorLabel.setFont(serif12);
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 15;
+        paramPanel.add(varianceEstimatorLabel, gbc);
+        
+        varianceGroup = new ButtonGroup();
+        MADButton = new JRadioButton("Mean absolute deviation",true);
+        MADButton.setFont(serif12);
+        varianceGroup.add(MADButton);
+        gbc.gridx = 0;
+        gbc.gridy = 16;
+        paramPanel.add(MADButton, gbc);
+        
+        STDButton = new JRadioButton("Numerical standard deviation", false);
+        STDButton.setFont(serif12);
+        varianceGroup.add(STDButton);
+        gbc.gridx = 0;
+        gbc.gridy = 17;
+        paramPanel.add(STDButton, gbc);
+        
+        thresholdingTypeLabel = new JLabel("Thresholding type:");
+        thresholdingTypeLabel.setForeground(Color.black);
+        thresholdingTypeLabel.setFont(serif12);
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 18;
+        paramPanel.add(thresholdingTypeLabel, gbc);
+        
+        thresholdingTypeGroup = new ButtonGroup();
+        softButton = new JRadioButton("Soft thresholding", false);
+        softButton.setFont(serif12);
+        thresholdingTypeGroup.add(softButton);
+        gbc.gridx = 0;
+        gbc.gridy = 19;
+        paramPanel.add(softButton, gbc);
+        
+        hardButton = new JRadioButton("Hard thresholding", true);
+        hardButton.setFont(serif12);
+        thresholdingTypeGroup.add(softButton);
+        gbc.gridx = 0;
+        gbc.gridy = 20;
+        paramPanel.add(hardButton, gbc);
+        
+        actualThresholdLabel = new JLabel("Actual threshold (if > 0.0)");
+        actualThresholdLabel.setForeground(Color.black);
+        actualThresholdLabel.setFont(serif12);
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 21;
+        paramPanel.add(actualThresholdLabel, gbc);
+        
+        actualThresholdText = new JTextField(10);
+        actualThresholdText.setFont(serif12);
+        actualThresholdText.setText("0.0");
+        gbc.gridx = 1;
+        paramPanel.add(actualThresholdText, gbc);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
@@ -654,6 +783,48 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         } else {
             doWaveletImages = false;
         }
+        
+        doDenoise = denoiseCheckBox.isSelected();
+        
+        if (doDenoise) {
+            thresholdLowPass = thresholdLowPassCheckBox.isSelected();
+            
+            tmpStr = thresholdMultiplierText.getText();
+            if (testParameter(tmpStr, Double.MIN_VALUE, Double.MAX_VALUE)) {
+                thresholdMultiplier = Double.valueOf(tmpStr).doubleValue();
+            }
+            else {
+                thresholdMultiplierText.requestFocus();
+                thresholdMultiplierText.selectAll();
+                
+                return false;
+            }
+            
+            if (MADButton.isSelected()) {
+            	varianceEstimator = MAD;
+            }
+            else {
+            	varianceEstimator = STD;
+            }
+            
+            if (softButton.isSelected()) {
+            	thresholdingType = SOFT_THRESHOLDING;
+            }
+            else {
+            	thresholdingType = HARD_THRESHOLDING;
+            }
+            
+            tmpStr = actualThresholdText.getText();
+            if (testParameter(tmpStr, 0.0, Double.MAX_VALUE)) {
+                actualThreshold = Double.valueOf(tmpStr).doubleValue();
+            }
+            else {
+                actualThresholdText.requestFocus();
+                actualThresholdText.selectAll();
+                
+                return false;
+            }
+        } // if (doDenoise)
 
         return true;
 
@@ -715,7 +886,13 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             table.put(new ParameterBoolean("do_show_wavelet_images", false));
             table.put(new ParameterInt("minimum_level", 1));
             table.put(new ParameterInt("maximum_level", 2));
-            table.put(new ParameterInt("filter_type, MINIMUM_PHASE"));
+            table.put(new ParameterInt("filter_type", MINIMUM_PHASE));
+            table.put(new ParameterBoolean("do_denoise", true));
+            table.put(new ParameterDouble("actual_threshold", 0.0));
+            table.put(new ParameterInt("variance_estimator", MAD));
+            table.put(new ParameterDouble("threshold_multiplier", 3.6));
+            table.put(new ParameterInt("thresholding_type", HARD_THRESHOLDING));
+            table.put(new ParameterBoolean("threshold_low_pass", false));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
