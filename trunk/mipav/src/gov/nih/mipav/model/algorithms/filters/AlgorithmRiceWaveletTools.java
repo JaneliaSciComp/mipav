@@ -150,7 +150,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean test_denoise_udwt_soft = false;
     private boolean test_denoise_udwt_levels = false;
     private boolean test_denoise_udwt_actual_thresh = false;
-    private boolean doDenoise = false;
+    private boolean doDenoise = true;
     // actual_threshold used if value is other than zero
     private double actualThreshold = 0.0;
     private int varianceEstimator = MAD;
