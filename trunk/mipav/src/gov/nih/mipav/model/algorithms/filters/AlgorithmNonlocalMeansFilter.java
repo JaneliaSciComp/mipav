@@ -106,6 +106,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         
         if ((srcImage.getNDims() == 2) && estimateNoiseStandardDeviation) {
         	double RiceNoiseStd[] = new double[1];
+        	// Obtain noise standard deviation with subband containing finest level diagonal details
         	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(srcImage, RiceNoiseStd);
         	riceAlgo.run();
         	noiseStandardDeviation = (float)RiceNoiseStd[0];
