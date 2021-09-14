@@ -35,6 +35,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
      */
     private int similarityWindowSide;
     
+    private boolean estimateNoiseStandardDeviation = true;
+    
     /**
      * Noise standard deviation
      */
@@ -60,16 +62,18 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
      * @param  srcImg            2D or 3D source image
      * @param  searchWindowSide  Side of the learning window of pixels which will be averaged
      * @param  similarityWindowSide Side of the comparsion window
+     * @param  estimateNoiseStandardDeviation
      * @param  noiseStandardDeviation   Noise standard deviation
      * @param  degreeOfFiltering degree of filtering - used only for Rician noise filter
      * @param  do25D             If true, do slice by slice filtering
      */
     public AlgorithmNonlocalMeansFilter(ModelImage destImage, ModelImage srcImg, int searchWindowSide, 
-                                       int similarityWindowSide, float noiseStandardDeviation, 
+                                       int similarityWindowSide, boolean estimateNoiseStandardDeviation, float noiseStandardDeviation, 
                                        float degreeOfFiltering, boolean doRician, boolean do25D) {
         super(destImage, srcImg);
         this.searchWindowSide = searchWindowSide;
         this.similarityWindowSide = similarityWindowSide;
+        this.estimateNoiseStandardDeviation = estimateNoiseStandardDeviation;
         this.noiseStandardDeviation = noiseStandardDeviation;
         this.degreeOfFiltering = degreeOfFiltering;
         this.doRician = doRician;
@@ -98,7 +102,17 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             displayError("Source Image is null");
 
             return;
-        } 
+        }
+        
+        if ((srcImage.getNDims() == 2) && estimateNoiseStandardDeviation) {
+        	double RiceNoiseStd[] = new double[1];
+        	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(srcImage, RiceNoiseStd);
+        	riceAlgo.run();
+        	noiseStandardDeviation = (float)RiceNoiseStd[0];
+        	System.out.println("Noise standard deviation estimated as " + noiseStandardDeviation);
+        	riceAlgo.finalize();
+        	riceAlgo = null;
+        }
         
         if ((srcImage.getNDims() == 2) || do25D){
             if (doRician) {
