@@ -162,6 +162,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private int thresholdingType = HARD_THRESHOLDING;
     // Default is don't threshold low pass components
     private boolean thresholdLowPass = false;
+    private double noiseStandardDeviation[] = null;
+    private boolean useNoiseStdConstructor = false;
     
     
     
@@ -204,6 +206,18 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         this.thresholdLowPass = thresholdLowPass;
     }
     
+    public AlgorithmRiceWaveletTools(ModelImage srcImg, double noiseStandardDeviation[]) {
+    	super(null, srcImg);
+    	this.noiseStandardDeviation = noiseStandardDeviation;
+    	numberOfLevels = Integer.MAX_VALUE;
+    	filterLength = 4;
+    	redundant = false;
+    	doDenoise = true;
+    	actualThreshold = 0.0;
+    	varianceEstimator = MAD;
+    	useNoiseStdConstructor = true;
+    }
+    
     
     public void runAlgorithm() {
         int i, j, k;
@@ -234,6 +248,11 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             displayError("Source Image is null");
 
             return;
+        }
+        
+        if (useNoiseStdConstructor && (noiseStandardDeviation == null)) {
+        	displayError("noiseStandardDeviation is null in AlgorithmRiceWaveletTools construtor");
+        	return;
         }
         
         if (selfTest) {
@@ -3042,7 +3061,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         } // if (redundant)
         else { // !redundant
         	y = new double[sliceSize];
-        	waveletImage = new ModelImage[1];
+        	if (noiseStandardDeviation == null) {
+        	    waveletImage = new ModelImage[1];
+        	}
         	for (z = 0; z < zDim; z++) {
                 if (zDim > 1) {
                     fireProgressStateChanged((z * 100)/(zDim - 1));
@@ -3082,6 +3103,11 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             				else {
             					median = tmp[(numberValues - 1)/2];
             				}
+            				if (noiseStandardDeviation != null) {
+            				    noiseStandardDeviation[0] = median/.6745;
+            				    setCompleted(true);
+            				    return;
+            				} // if (noiseStandardDeviation != null)
             				thld = thresholdMultiplier*median/.67;
             			}
             			else { // varianceEstimator == STD
