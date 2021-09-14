@@ -104,6 +104,10 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     private JCheckBox doRicianCheckBox;
     
     private boolean doRician = false;
+    
+    private JCheckBox estimateNoiseCheckBox = null;
+    
+    private boolean estimateNoiseStandardDeviation = false;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -161,6 +165,11 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 labelDegree.setEnabled(false);
                 textDegree.setEnabled(false);
             }
+        } else if (source == estimateNoiseCheckBox) {
+        	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
+        	labelNoiseStandardDeviation.setEnabled(!estimateNoiseStandardDeviation);
+        	textNoiseStandardDeviation.setEnabled(!estimateNoiseStandardDeviation);
+        	
         } else { // else if (source == thresholdCheckbox)
             super.actionPerformed(event);
         }
@@ -342,7 +351,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // resultImage.setImageName(name);
                 // Make algorithm
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(resultImage, image, searchWindowSide,
-                                         similarityWindowSide, noiseStandardDeviation, 
+                                         similarityWindowSide, estimateNoiseStandardDeviation, noiseStandardDeviation, 
                                          degreeOfFiltering, doRician, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -380,7 +389,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(null, image, searchWindowSide, 
-                                        similarityWindowSide, noiseStandardDeviation,
+                                        similarityWindowSide, estimateNoiseStandardDeviation, noiseStandardDeviation,
                                         degreeOfFiltering, doRician, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -449,6 +458,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         searchWindowSide = scriptParameters.getParams().getInt("search_window_side");
         similarityWindowSide = scriptParameters.getParams().getInt("similarity_window_side");
+        estimateNoiseStandardDeviation = scriptParameters.getParams().getBoolean("estimate_noise_std");
         noiseStandardDeviation = scriptParameters.getParams().getFloat("noise_standard_deviation");
         degreeOfFiltering = scriptParameters.getParams().getFloat("degree_of_filtering");
         doRician = scriptParameters.getParams().getBoolean("do_rician");
@@ -465,6 +475,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("search_window_side", searchWindowSide));
         scriptParameters.getParams().put(ParameterFactory.newParameter("similarity_window_side", similarityWindowSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("estimate_noise_std", estimateNoiseStandardDeviation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_standard_deviation", noiseStandardDeviation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("degree_of_filtering", degreeOfFiltering));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_rician", doRician));
@@ -518,25 +529,44 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         paramPanel.add(textSearchWindowSide, gbc2);
 
         gbc2.gridx = 0;
-        gbc2.gridy = 1;
+        gbc2.gridy++;
         labelSimilarityWindowSide = createLabel("Similarity window side (odd) ");
         paramPanel.add(labelSimilarityWindowSide, gbc2);
 
         gbc2.gridx = 1;
         textSimilarityWindowSide = createTextField("7");
         paramPanel.add(textSimilarityWindowSide, gbc2);
+        
+        if (image.getNDims() == 2) {
+        	gbc2.gridx = 0;
+            gbc2.gridy++;
+            gbc2.gridwidth = 2;
+
+            estimateNoiseCheckBox = new JCheckBox("Estimate noise standard deviation");
+            estimateNoiseCheckBox.setFont(serif12);
+            estimateNoiseCheckBox.addActionListener(this);
+            paramPanel.add(estimateNoiseCheckBox, gbc2);
+            estimateNoiseCheckBox.setSelected(true);	
+        } // if (image.getNDims() == 2)
 
         gbc2.gridx = 0;
-        gbc2.gridy = 2;
+        gbc2.gridy++;
+        gbc2.gridwidth = 1;
         labelNoiseStandardDeviation = createLabel("Noise standard deviation ");
+        if (image.getNDims() == 2) {
+        	labelNoiseStandardDeviation.setEnabled(false);
+        }
         paramPanel.add(labelNoiseStandardDeviation, gbc2);
 
         gbc2.gridx = 1;
         textNoiseStandardDeviation = createTextField("10.0");
+        if (image.getNDims() == 2) {
+        	textNoiseStandardDeviation.setEnabled(false);
+        }
         paramPanel.add(textNoiseStandardDeviation, gbc2);
 
         gbc2.gridx = 0;
-        gbc2.gridy = 3;
+        gbc2.gridy++;
         labelDegree = createLabel("Degree of filtering ");
         labelDegree.setEnabled(doRician);
         paramPanel.add(labelDegree, gbc2);
@@ -547,7 +577,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         paramPanel.add(textDegree, gbc2);
         
         gbc2.gridx = 0;
-        gbc2.gridy = 4;
+        gbc2.gridy++;
         doRicianCheckBox = new JCheckBox("Deal with Rician noise in MRI");
         doRicianCheckBox.setFont(serif12);
         doRicianCheckBox.setSelected(false);
@@ -556,7 +586,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         
         if (image.getNDims() > 2) {
             gbc2.gridx = 0;
-            gbc2.gridy = 5;
+            gbc2.gridy++;
             gbc2.gridwidth = 2;
 
             image25DCheckBox = new JCheckBox("Process each slice independently (2.5D)");
@@ -666,18 +696,24 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             textSimilarityWindowSide.selectAll();
             return false;
         }
-
-        tmpStr = textNoiseStandardDeviation.getText();
-
-        if (testParameter(tmpStr, 0.001, 1000.0)) {
-            noiseStandardDeviation = Float.valueOf(tmpStr).floatValue();
-        } else {
-            MipavUtil.displayError("Radius must be between 0.001 and 1000.0");
-            textNoiseStandardDeviation.requestFocus();
-            textNoiseStandardDeviation.selectAll();
-
-            return false;
+        
+        if (estimateNoiseCheckBox != null) {
+        	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
         }
+
+        if (!estimateNoiseStandardDeviation) {
+	        tmpStr = textNoiseStandardDeviation.getText();
+	
+	        if (testParameter(tmpStr, 0.001, 1000.0)) {
+	            noiseStandardDeviation = Float.valueOf(tmpStr).floatValue();
+	        } else {
+	            MipavUtil.displayError("Radius must be between 0.001 and 1000.0");
+	            textNoiseStandardDeviation.requestFocus();
+	            textNoiseStandardDeviation.selectAll();
+	
+	            return false;
+	        }
+        } // if (!estimateNoiseStandardDeviation)
         
         doRician = doRicianCheckBox.isSelected();
         
@@ -753,6 +789,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
             table.put(new ParameterInt("search_window_side", 15));
             table.put(new ParameterInt("similarity_window_side", 7));
+            table.put(new ParameterBoolean("estimate_noise_std", false));
             table.put(new ParameterFloat("noise_standard_deviation",10f));
             table.put(new ParameterFloat("degree_of_filtering",1.414f));
             table.put(new ParameterBoolean("do_rician", false));
