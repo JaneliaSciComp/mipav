@@ -207,6 +207,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     }
     
     public AlgorithmRiceWaveletTools(ModelImage srcImg, double noiseStandardDeviation[]) {
+    	// Obtain noise standard deviation with subband containing finest level diagonal details
     	super(null, srcImg);
     	this.noiseStandardDeviation = noiseStandardDeviation;
     	numberOfLevels = Integer.MAX_VALUE;
