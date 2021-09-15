@@ -206,6 +206,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	private PlugInDialogVolumeRenderDual parent;
 	private JTextField rangeFusionText;
+	private JCheckBox reverseSequence;
 	private JCheckBox loadLegacyLatticeCheck;
 	private JCheckBox loadLegacyAnnotationsCheck;
 
@@ -272,6 +273,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private boolean clipArbOn = false;
 
 		private int currentTab = -1;
+		private boolean displayRedAsGray = false;
+		private boolean displayGreenAsGray = false;
 
 		public IntegratedWormData() {}
 	};
@@ -860,6 +863,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		else if ( command.equals("displayChannel1") )
 		{
 			if ( activeRenderer != null ) {
+				activeImage.displayRedAsGray = false;
+				activeImage.displayGreenAsGray = true;
 				activeRenderer.setDisplayRedAsGray(false);
 				activeRenderer.setDisplayGreenAsGray(true);
 			}
@@ -867,6 +872,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		else if ( command.equals("displayChannel2") )
 		{
 			if ( activeRenderer != null ) {
+				activeImage.displayRedAsGray = true;
+				activeImage.displayGreenAsGray = false;
 				activeRenderer.setDisplayRedAsGray(true);
 				activeRenderer.setDisplayGreenAsGray(false);
 			}
@@ -874,6 +881,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		else if ( command.equals("displayBothChannels") )
 		{
 			if ( activeRenderer != null ) {
+				activeImage.displayRedAsGray = false;
+				activeImage.displayGreenAsGray = false;
 				activeRenderer.setDisplayRedAsGray(false);
 				activeRenderer.setDisplayGreenAsGray(false);
 			}
@@ -979,6 +988,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedPanel.setDividerLocation(0.5);
 			if ( activeImage != null && activeImage.annotationPanelUI != null ) activeImage.annotationPanelUI.configureListPanel();
 		}
+		
+		activeRenderer.setDisplayRedAsGray( activeImage.displayRedAsGray );
+		activeRenderer.setDisplayGreenAsGray( activeImage.displayGreenAsGray );
 		updateHistoLUTPanels(activeImage);
 		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
@@ -2551,6 +2563,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", " ");
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
+		gbc.gridx++;
+		reverseSequence = gui.buildCheckBox( "reverse orderr",  false);
+		inputsPanel.add(reverseSequence.getParent(), gbc);
+		gbc.gridx = 0;
 		gbc.gridy++;
 
 		loadLegacyAnnotationsCheck = gui.buildCheckBox( "convert legacy annotationVOIs.lbl", false);
@@ -3162,8 +3178,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			int endIndex = dualGPU == null ? imageIndex + 1 : imageIndex + 2;
 			for ( int i = imageIndex; i < endIndex; i++ )
 			{
-				//				System.err.println("saveAll " + i);
 				activeImage = imageStack[i];
+				System.err.println("saveAll " + i + " " + activeImage.wormImage.getImageName() );
 				saveIntegrated();
 			}
 		}
@@ -3462,6 +3478,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		{
 			includeRange = null;
 		}
+		if ( (includeRange != null) && reverseSequence.isSelected() ) {
+			// reverse the order of images:
+			int[] temp = new int[includeRange.size()];
+			int count = 0;
+			for ( int i = includeRange.size() -1; i >= 0; i-- ) {
+				temp[count++] = includeRange.remove(i);
+			}
+			for (int i = 0; i < temp.length; i++ ) {
+				includeRange.add(temp[i]);
+			}
+		}
 		imageIndex = 0;
 
 		return (includeRange != null);
@@ -3545,6 +3572,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.lutHistogramPanel.redrawFrames();
 		}
 		lutPanel.revalidate();
+		
+		integratedData.displayChannel1.setSelected(integratedData.displayRedAsGray);
+		integratedData.displayChannel2.setSelected(integratedData.displayGreenAsGray);
+		integratedData.displayBothChannels.setSelected(!integratedData.displayRedAsGray && !integratedData.displayGreenAsGray);
 	}
 
 
