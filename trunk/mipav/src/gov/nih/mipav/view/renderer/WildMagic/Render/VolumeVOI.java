@@ -1019,6 +1019,10 @@ public class VolumeVOI extends VolumeObject
 
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
 		{
+			if ( m_kVOI.size() == 0 ) {
+				System.err.println("error! " + kImageA.getImageName() );
+				return;
+			}
 			if ( m_kVOI.size() == 1 ) {
 				m_kVOI.add( m_kVOI.elementAt(0) );
 			}

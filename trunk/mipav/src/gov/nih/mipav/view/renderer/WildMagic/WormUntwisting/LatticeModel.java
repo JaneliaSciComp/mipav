@@ -410,13 +410,13 @@ public class LatticeModel {
 				VOI changed = annotationChanged( annotations, originalAnnotation );
 				if ( changed.getCurves().size() == 0 ) 
 				{
-					System.err.println("saveAnnotationsAsCSV no changes - no save required");
+//					System.err.println("saveAnnotationsAsCSV no changes - no save required");
 					return;
 				}
 			}
 		}
 		
-		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
+//		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
 		//		System.err.println("Saving annotations list: " + dir + "  " + fileName );
 		int numSaved = 0;
 		// check files, create new directories and delete any existing files:
@@ -432,7 +432,7 @@ public class LatticeModel {
 		if (file.exists()) {
 			if ( annotations == null || annotations.getCurves().size() == 0 ) {
 	            int result = JOptionPane.showConfirmDialog(null, "No annotations found, delete annotations File from: " + fileDir + "?", "Delete Annotations", JOptionPane.YES_NO_OPTION);
-	            System.err.println( "Delete answer " + (result == JOptionPane.YES_OPTION) );
+//	            System.err.println( "Delete answer " + (result == JOptionPane.YES_OPTION) );
 	            if (result != JOptionPane.YES_OPTION) {
 	            	return;
 	            }
@@ -4418,9 +4418,9 @@ public class LatticeModel {
 			}
 			if ( leftContour != null )  imageA.unregisterVOI(leftContour);
 			if ( rightContour != null ) imageA.unregisterVOI(rightContour);
-			if ( lattice != newLattice ) {
-				lattice.removeAllElements();
-			}
+//			if ( lattice != newLattice ) {
+//				lattice.removeAllElements();
+//			}
 		}		
 		
 		this.lattice = newLattice;
@@ -11739,11 +11739,11 @@ public class LatticeModel {
 
 	private static VOI annotationChanged( VOI annotationsNew, VOI annotationOld ) {
 		VOI annotationsChangeList = new VOI( (short)0, "changed annotations", VOI.ANNOTATION, 0 );
-    	System.err.println("annotationChanged");
+//    	System.err.println("annotationChanged");
 
 		for ( int i = 0; i < annotationsNew.getCurves().size(); i++ ) {
         	VOIWormAnnotation annotation = (VOIWormAnnotation) annotationsNew.getCurves().elementAt(i);
-        	System.err.println(annotation.getText());
+//        	System.err.println(annotation.getText());
         	// find match by name:
         	boolean found = false;
     		for ( int j = 0; j < annotationOld.getCurves().size(); j++ ) {
@@ -11763,7 +11763,7 @@ public class LatticeModel {
                 	if ( !pt.equals(ptO) ) {
                 		// point changed position - add to change list: 
                 		annotationsChangeList.getCurves().add(annotation);
-                		System.err.println("moved annotation " + annotation.getText() );
+//                		System.err.println("moved annotation " + annotation.getText() );
                 	}
             		found = true;
             		break;
@@ -11772,7 +11772,7 @@ public class LatticeModel {
     		if ( !found ) {
         		// new point - add to change list: 
         		annotationsChangeList.getCurves().add(annotation);
-        		System.err.println("new annotation " + annotation.getText() );
+//        		System.err.println("new annotation " + annotation.getText() );
     		}
 		}
 		

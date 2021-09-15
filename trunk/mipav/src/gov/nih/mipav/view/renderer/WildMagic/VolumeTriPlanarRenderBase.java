@@ -724,10 +724,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		{		
 			m_kSlices.SetDisplay(false);
 			m_kVolumeRayCast.SetDisplay(true);
+			
+			m_kVolumeRayCast.setDisplayRedAsGray(displayRedAsGray);
+			m_kVolumeRayCast.setDisplayGreenAsGray(displayGreenAsGray);
 		}
 		
-		Render(arg0);
-		UpdateFrameCount();
+//		Render(arg0);
+//		UpdateFrameCount();
 //		UpdateSceneRotation();
 		
 		if (m_bSurfaceUpdate) {
@@ -741,7 +744,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			UpdateSceneRotation();
 			updateLighting(m_akLights);
 		}
-		
+
+		Render(arg0);
+		UpdateFrameCount();
+//		UpdateSceneRotation();
 		
 		if (profile) {
 			// Profile.stop();
@@ -2490,20 +2496,24 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 	}
 
+	private boolean displayRedAsGray = false;
     public boolean getDisplayRedAsGray() {
 		if (m_kVolumeRayCast != null) {
 			return m_kVolumeRayCast.getDisplayRedAsGray();
 		}
-		return false;
+		return displayRedAsGray;
     }
 
     public void setDisplayRedAsGray(boolean display) {
+    	displayRedAsGray = display;
 		if (m_kVolumeRayCast != null) {
 			m_kVolumeRayCast.setDisplayRedAsGray(display);
 		}
     }
 
+    private boolean displayGreenAsGray = false;
     public void setDisplayGreenAsGray(boolean display) {
+    	displayGreenAsGray = display;
 		if (m_kVolumeRayCast != null) {
 			m_kVolumeRayCast.setDisplayGreenAsGray(display);
 		}
@@ -2513,7 +2523,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		if (m_kVolumeRayCast != null) {
 			return m_kVolumeRayCast.getDisplayGreenAsGray();
 		}
-		return false;
+		return displayGreenAsGray;
     }
 
     public void setDisplayBlueAsGray(boolean display) {
