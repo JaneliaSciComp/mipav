@@ -169,7 +169,14 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
         	labelNoiseStandardDeviation.setEnabled(!estimateNoiseStandardDeviation);
         	textNoiseStandardDeviation.setEnabled(!estimateNoiseStandardDeviation);
-        	
+        } else if (source == image25DCheckBox) {
+        	image25D = image25DCheckBox.isSelected();
+        	estimateNoiseCheckBox.setEnabled(image25D);
+        	if (!image25D) {
+        		estimateNoiseCheckBox.setSelected(false);
+        		labelNoiseStandardDeviation.setEnabled(true);
+            	textNoiseStandardDeviation.setEnabled(true);
+        	}
         } else { // else if (source == thresholdCheckbox)
             super.actionPerformed(event);
         }
@@ -537,17 +544,22 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         textSimilarityWindowSide = createTextField("7");
         paramPanel.add(textSimilarityWindowSide, gbc2);
         
-        if (image.getNDims() == 2) {
-        	gbc2.gridx = 0;
-            gbc2.gridy++;
-            gbc2.gridwidth = 2;
+    	gbc2.gridx = 0;
+        gbc2.gridy++;
+        gbc2.gridwidth = 2;
 
-            estimateNoiseCheckBox = new JCheckBox("Estimate noise standard deviation");
-            estimateNoiseCheckBox.setFont(serif12);
-            estimateNoiseCheckBox.addActionListener(this);
-            paramPanel.add(estimateNoiseCheckBox, gbc2);
-            estimateNoiseCheckBox.setSelected(true);	
-        } // if (image.getNDims() == 2)
+        estimateNoiseCheckBox = new JCheckBox("Estimate noise standard deviation");
+        estimateNoiseCheckBox.setFont(serif12);
+        estimateNoiseCheckBox.addActionListener(this);
+        paramPanel.add(estimateNoiseCheckBox, gbc2);
+        if (image.getNDims() == 3) {
+        	estimateNoiseCheckBox.setEnabled(false);
+        	estimateNoiseCheckBox.setSelected(false);
+        }
+        else {
+        	estimateNoiseCheckBox.setEnabled(true);
+            estimateNoiseCheckBox.setSelected(true);
+        }
 
         gbc2.gridx = 0;
         gbc2.gridy++;
@@ -591,6 +603,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
             image25DCheckBox = new JCheckBox("Process each slice independently (2.5D)");
             image25DCheckBox.setFont(serif12);
+            image25DCheckBox.addActionListener(this);
             paramPanel.add(image25DCheckBox, gbc2);
             image25DCheckBox.setSelected(false);
         } // if (image.getNDims > 2)
