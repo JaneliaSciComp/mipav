@@ -12,6 +12,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -148,6 +149,9 @@ public  class PyWavelets extends AlgorithmBase {
     private int SINGLE_LEVEL_DWT = 1; // Any number of axes
     private int MULTILEVEL_DWT = 2; // 2 axes for wavedec2 and 3 axes for wavedec3
     private int SWT = 3;
+    
+    private double noiseStandardDeviation[] = null;
+    private boolean useNoiseStdConstructor = false;
    
     
     private class ArrayInfo {
@@ -4135,6 +4139,37 @@ public  class PyWavelets extends AlgorithmBase {
     	}
     }
     
+    public PyWavelets(ModelImage srcImg, double noiseStandardDeviation[]) {
+    	// Obtain noise standard deviation with subband containing finest level diagonal details
+    	// Only applies to Gaussian noise
+    	super(null, srcImg);
+    	this.noiseStandardDeviation = noiseStandardDeviation;
+    	useNoiseStdConstructor = true;
+    	tType = SINGLE_LEVEL_DWT;
+    	int nDims = srcImage.getNDims();
+    	int i;
+    	axes = new int[nDims];
+    	for (i = 0; i < nDims; i++) {
+    		axes[i] = i;
+    	}
+    	modes = new PyWavelets.MODE[nDims];
+    	for (i = 0; i < nDims; i++) {
+    		modes[i] = PyWavelets.MODE.MODE_ZEROPAD;	
+    	}
+    	PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[nDims];
+    	for (i = 0; i <  nDims; i++) {
+    		names[i] = PyWavelets.WAVELET_NAME.DB;
+    	}
+    	int orders[] = new int[nDims];
+    	for (i = 0; i < nDims; i++) {
+    		orders[i] = 2;
+    	}
+    	wavelets = new DiscreteWavelet[names.length];
+    	for (i = 0; i < names.length; i++) {
+    		wavelets[i] = discrete_wavelet(names[i], orders[i]);
+    	}
+    }
+    
     public void runAlgorithm() {
     	int xDim;
     	int yDim;
@@ -4151,6 +4186,11 @@ public  class PyWavelets extends AlgorithmBase {
     	int index = 1;
     	int extentsn[];
     	int level;
+    	
+    	if (useNoiseStdConstructor && (noiseStandardDeviation == null)) {
+    		displayError("noiseStandardDeviation is null in PyWavelets construtor");
+        	return;	
+    	}
         
         // Make sure transforms will be well-defined.
         xDim = srcImage.getExtents()[0];
@@ -4192,6 +4232,26 @@ public  class PyWavelets extends AlgorithmBase {
             	HashMap<String, double[][]> coeffsMap = dwtn(bufxy, wavelets, modes, axes);
             	double arr[][][] = null;
             	if (axes.length == 2) {
+            		if (noiseStandardDeviation != null) {
+            			double median;
+            		    double cD[][] = coeffsMap.get("dd");	
+            		    buffer = new double[cD.length * cD[0].length];
+            		    for (y = 0; y < cD[0].length; y++) {
+    	            		for (x = 0; x < cD.length; x++) {
+    	            			buffer[x + y * cD.length] = Math.abs(cD[x][y]);
+    	            	    }
+    	            	}
+    	        		Arrays.sort(buffer);
+    	        		if ((buffer.length %2) == 0) {
+        				    median = (buffer[buffer.length/2] + buffer[buffer.length/2 - 1])/2.0; 
+        				}
+        				else {
+        					median = buffer[(buffer.length - 1)/2];
+        				}
+    	        		noiseStandardDeviation[0] = median/.6745;
+    	        		setCompleted(true);
+    				    return;
+            		} // if (noiseStandardDeviation != null)
                     arr = new double[4][][];
                     arr[0] = coeffsMap.get("aa");
                     arr[1] = coeffsMap.get("da");
@@ -4508,6 +4568,28 @@ public  class PyWavelets extends AlgorithmBase {
         	double arr[][][][] = null;
         	HashMap<String, double[][][]> coeffsMap = dwtn3(bufxyz, wavelets, modes, axes);
         	if (axes.length == 3) {
+        		if (noiseStandardDeviation != null) {
+        			double median;
+        		    double HHH[][][] = coeffsMap.get("ddd");	
+        		    buffer = new double[HHH.length * HHH[0].length * HHH[0][0].length];
+	        		for (z = 0; z < HHH[0][0].length; z++) {
+		                for (y = 0; y < HHH[0].length; y++) {
+		            		for (x = 0; x < HHH.length; x++) {
+		            			buffer[x + y * HHH.length + z*HHH.length*HHH[0].length] = Math.abs(HHH[x][y][z]);
+		            	    }
+		            	}
+	                }
+	        		Arrays.sort(buffer);
+	        		if ((buffer.length %2) == 0) {
+    				    median = (buffer[buffer.length/2] + buffer[buffer.length/2 - 1])/2.0; 
+    				}
+    				else {
+    					median = buffer[(buffer.length - 1)/2];
+    				}
+	        		noiseStandardDeviation[0] = median/.6745;
+	        		setCompleted(true);
+				    return;
+        		} // if (noiseStandardDeviation != null)
 	            arr = new double[8][][][];
 	            arr[0] = coeffsMap.get("aaa");
 	            arr[1] = coeffsMap.get("daa");
