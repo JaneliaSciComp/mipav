@@ -106,16 +106,28 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             return;
         }
         
-        if ((srcImage.getNDims() == 2) && estimateNoiseStandardDeviation) {
-        	double RiceNoiseStd[] = new double[1];
+        if (estimateNoiseStandardDeviation && (!do25D)) {
+        	double noiseStd[] = new double[1];
         	// Obtain noise standard deviation with subband containing finest level diagonal details
-        	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(srcImage, RiceNoiseStd);
+        	PyWavelets pAlgo = new PyWavelets(srcImage, noiseStd);
+        	pAlgo.run();
+        	noiseStandardDeviation = (float)noiseStd[0];
+        	System.out.println("Noise standard deviation estimated as " + noiseStandardDeviation);
+        	pAlgo.finalize();
+        	pAlgo = null;
+        }
+        
+        /*if ((srcImage.getNDims() == 2) && estimateNoiseStandardDeviation && (!do25D)) {
+        	double noiseStd[] = new double[1];
+        	// Obtain noise standard deviation with subband containing finest level diagonal details
+        	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(srcImage, noiseStd);
         	riceAlgo.run();
-        	noiseStandardDeviation = (float)RiceNoiseStd[0];
+        	noiseStandardDeviation = (float)noiseStd[0];
         	System.out.println("Noise standard deviation estimated as " + noiseStandardDeviation);
         	riceAlgo.finalize();
         	riceAlgo = null;
-        }
+        }*/
+        
         
         if ((srcImage.getNDims() == 2) || do25D){
             if (doRician) {
@@ -176,7 +188,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         double filterParameter;
         int extents[] = null;
         ModelImage sliceImage = null;
-        double RiceNoiseStd[] = null;
+        double noiseStd[] = null;
         
         time = System.currentTimeMillis();
         fireProgressStateChanged(0, srcImage.getImageName(), "Nonlocal means filter");
@@ -187,7 +199,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
             if (estimateNoiseStandardDeviation) {
-            	RiceNoiseStd = new double[1];
+            	noiseStd = new double[1];
 	            extents = new int[] {xDim,yDim};
 	            sliceImage = new ModelImage(srcImage.getDataType(), extents, "sliceImage");
             }
@@ -243,12 +255,12 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             	}
             	
             	// Obtain noise standard deviation with subband containing finest level diagonal details
-            	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(sliceImage, RiceNoiseStd);
-            	riceAlgo.run();
-            	noiseStandardDeviation = (float)RiceNoiseStd[0];
+            	PyWavelets pAlgo = new PyWavelets(sliceImage, noiseStd);
+            	pAlgo.run();
+            	noiseStandardDeviation = (float)noiseStd[0];
             	System.out.println("Noise standard deviation estimated as " + noiseStandardDeviation + " in slice " + z);
-            	riceAlgo.finalize();
-            	riceAlgo = null;
+            	pAlgo.finalize();
+            	pAlgo = null;
             }
             
             filterParameter = noiseStandardDeviation * noiseStandardDeviation;
