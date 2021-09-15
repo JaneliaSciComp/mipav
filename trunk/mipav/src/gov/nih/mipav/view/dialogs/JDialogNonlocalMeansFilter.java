@@ -51,7 +51,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private boolean image25D = true;
+    private boolean image25D = false;
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckBox;
@@ -107,7 +107,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     
     private JCheckBox estimateNoiseCheckBox = null;
     
-    private boolean estimateNoiseStandardDeviation = false;
+    private boolean estimateNoiseStandardDeviation = true;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -168,23 +168,12 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             else {
                 labelDegree.setEnabled(false);
                 textDegree.setEnabled(false);
-                image25D = image25DCheckBox.isSelected();
-                if ((image.getNDims() == 2) || image25D) {
-                	estimateNoiseCheckBox.setEnabled(true);
-                }
+                estimateNoiseCheckBox.setEnabled(true);
             }
         } else if (source == estimateNoiseCheckBox) {
         	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
         	labelNoiseStandardDeviation.setEnabled(!estimateNoiseStandardDeviation);
         	textNoiseStandardDeviation.setEnabled(!estimateNoiseStandardDeviation);
-        } else if (source == image25DCheckBox) {
-        	image25D = image25DCheckBox.isSelected();
-        	estimateNoiseCheckBox.setEnabled(image25D);
-        	if (!image25D) {
-        		estimateNoiseCheckBox.setSelected(false);
-        		labelNoiseStandardDeviation.setEnabled(true);
-            	textNoiseStandardDeviation.setEnabled(true);
-        	}
         } else { // else if (source == thresholdCheckbox)
             super.actionPerformed(event);
         }
@@ -560,29 +549,19 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         estimateNoiseCheckBox.setFont(serif12);
         estimateNoiseCheckBox.addActionListener(this);
         paramPanel.add(estimateNoiseCheckBox, gbc2);
-        if (image.getNDims() == 3) {
-        	estimateNoiseCheckBox.setEnabled(false);
-        	estimateNoiseCheckBox.setSelected(false);
-        }
-        else {
-        	estimateNoiseCheckBox.setEnabled(true);
-            estimateNoiseCheckBox.setSelected(true);
-        }
+        estimateNoiseCheckBox.setEnabled(true);
+        estimateNoiseCheckBox.setSelected(true);
 
         gbc2.gridx = 0;
         gbc2.gridy++;
         gbc2.gridwidth = 1;
         labelNoiseStandardDeviation = createLabel("Noise standard deviation ");
-        if (image.getNDims() == 2) {
-        	labelNoiseStandardDeviation.setEnabled(false);
-        }
+        labelNoiseStandardDeviation.setEnabled(false);
         paramPanel.add(labelNoiseStandardDeviation, gbc2);
 
         gbc2.gridx = 1;
         textNoiseStandardDeviation = createTextField("10.0");
-        if (image.getNDims() == 2) {
-        	textNoiseStandardDeviation.setEnabled(false);
-        }
+        textNoiseStandardDeviation.setEnabled(false);
         paramPanel.add(textNoiseStandardDeviation, gbc2);
 
         gbc2.gridx = 0;
@@ -611,7 +590,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
             image25DCheckBox = new JCheckBox("Process each slice independently (2.5D)");
             image25DCheckBox.setFont(serif12);
-            image25DCheckBox.addActionListener(this);
             paramPanel.add(image25DCheckBox, gbc2);
             image25DCheckBox.setSelected(false);
         } // if (image.getNDims > 2)
@@ -718,9 +696,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             return false;
         }
         
-        if (estimateNoiseCheckBox != null) {
-        	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
-        }
+        estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
 
         if (!estimateNoiseStandardDeviation) {
 	        tmpStr = textNoiseStandardDeviation.getText();
@@ -810,7 +786,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
             table.put(new ParameterInt("search_window_side", 15));
             table.put(new ParameterInt("similarity_window_side", 7));
-            table.put(new ParameterBoolean("estimate_noise_std", false));
+            table.put(new ParameterBoolean("estimate_noise_std", true));
             table.put(new ParameterFloat("noise_standard_deviation",10f));
             table.put(new ParameterFloat("degree_of_filtering",1.414f));
             table.put(new ParameterBoolean("do_rician", false));
