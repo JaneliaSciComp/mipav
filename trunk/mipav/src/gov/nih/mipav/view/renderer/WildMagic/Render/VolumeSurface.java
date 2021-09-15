@@ -2175,7 +2175,7 @@ public class VolumeSurface extends VolumeObject
 			float volume, Vector3f trans, Vector3f scale ) 
 	{
 
-		long time = System.currentTimeMillis();
+//		long time = System.currentTimeMillis();
 		
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;		
@@ -2204,8 +2204,8 @@ public class VolumeSurface extends VolumeObject
             final CountDownLatch doneSignal = new CountDownLatch(nthreads);
             int step = iTQuantity / nthreads;
             for (int i = 0; i < nthreads; i++) {
-                final int start = i*nthreads;
-                final int stop = (i == (nthreads - 1)) ? iTQuantity : i*nthreads + step;
+                final int start = i*step;
+                final int stop = (i == (nthreads - 1)) ? iTQuantity : (i+1)*step;
 //                System.err.println( start + " " + stop );
                 final Runnable task = new Runnable() {
                     public void run() {
@@ -2309,7 +2309,7 @@ public class VolumeSurface extends VolumeObject
                 }
             }			
         }
-		System.err.println( "surface mask " + AlgorithmBase.computeElapsedTime(time) + "  " + mask.cardinality() );
+//		System.err.println( "surface mask " + AlgorithmBase.computeElapsedTime(time) + "  " + mask.cardinality() );
 
 		return mask;
 	}
