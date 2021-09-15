@@ -668,7 +668,8 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 							text.setLatticeSegment(-1);
 						}
 					}
-					text.update();
+					text.update();		
+					text.updateSelected( imageA.GetImage() );
 					if ( text.getVolumeVOI() != null ) {
 						isChecked = text.getVolumeVOI().GetDisplay();
 						isClipped = text.getVolumeVOI().GetClipped();

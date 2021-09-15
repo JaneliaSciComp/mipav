@@ -1091,11 +1091,11 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	{
 		if ( latticeModel != null )
 		{
-			if ( !movingPickedPoint )
-			{
-				movingPickedPoint = true;
-				saveVOIs("selectAnnotations");
-			}
+//			if ( !movingPickedPoint )
+//			{
+//				movingPickedPoint = true;
+//				saveVOIs("selectAnnotations");
+//			}
 			return latticeModel.selectAnnotation(startPt, endPt, pt, rightMouse, multiSelect);
 		}
 		return false;
