@@ -160,10 +160,18 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             if (doRicianCheckBox.isSelected()) {
                 labelDegree.setEnabled(true);
                 textDegree.setEnabled(true);
+                estimateNoiseCheckBox.setEnabled(false);
+                estimateNoiseCheckBox.setSelected(false);
+                labelNoiseStandardDeviation.setEnabled(true);
+                textNoiseStandardDeviation.setEnabled(true);
             }
             else {
                 labelDegree.setEnabled(false);
                 textDegree.setEnabled(false);
+                image25D = image25DCheckBox.isSelected();
+                if ((image.getNDims() == 2) || image25D) {
+                	estimateNoiseCheckBox.setEnabled(true);
+                }
             }
         } else if (source == estimateNoiseCheckBox) {
         	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
@@ -548,7 +556,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         gbc2.gridy++;
         gbc2.gridwidth = 2;
 
-        estimateNoiseCheckBox = new JCheckBox("Estimate noise standard deviation");
+        estimateNoiseCheckBox = new JCheckBox("Estimate Gaussian noise standard deviation");
         estimateNoiseCheckBox.setFont(serif12);
         estimateNoiseCheckBox.addActionListener(this);
         paramPanel.add(estimateNoiseCheckBox, gbc2);
