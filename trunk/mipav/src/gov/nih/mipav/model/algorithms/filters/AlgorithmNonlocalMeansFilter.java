@@ -172,6 +172,9 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         double w;
         long time;
         double filterParameter;
+        int extents[] = null;
+        ModelImage sliceImage = null;
+        double RiceNoiseStd[] = null;
         
         time = System.currentTimeMillis();
         fireProgressStateChanged(0, srcImage.getImageName(), "Nonlocal means filter");
@@ -181,6 +184,11 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         input = new float[length];
         if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
+            if (estimateNoiseStandardDeviation) {
+            	RiceNoiseStd = new double[1];
+	            extents = new int[] {xDim,yDim};
+	            sliceImage = new ModelImage(srcImage.getDataType(), extents, "sliceImage");
+            }
         }
         else {
             zDim = 1;
@@ -211,7 +219,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             kernel[i] /= kernelSum;
         }
         
-        filterParameter = noiseStandardDeviation * noiseStandardDeviation;
+        
         for (z = 0; z < zDim; z++) {
             try {
                 srcImage.exportData(z*length, length, input);
@@ -221,6 +229,27 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                 setCompleted(false);
                 return;
             }
+            
+            if ((srcImage.getNDims() == 3) && estimateNoiseStandardDeviation) {
+            	try {
+            		sliceImage.importData(0, input, true);
+            	}
+            	catch (IOException e) {
+            		MipavUtil.displayError("IOException on sliceImage.importData(0, input, true)");
+            		setCompleted(false);
+            		return;
+            	}
+            	
+            	// Obtain noise standard deviation with subband containing finest level diagonal details
+            	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(sliceImage, RiceNoiseStd);
+            	riceAlgo.run();
+            	noiseStandardDeviation = (float)RiceNoiseStd[0];
+            	System.out.println("Noise standard deviation estimated as " + noiseStandardDeviation + " in slice " + z);
+            	riceAlgo.finalize();
+            	riceAlgo = null;
+            }
+            
+            filterParameter = noiseStandardDeviation * noiseStandardDeviation;
             
             for (y = 0; y < yDim; y++) {
                 for (x = 0; x < xDim; x++) {
@@ -328,6 +357,10 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                 return;
             }
         } // for (z = 0; z < zDim; z++)
+        if (sliceImage != null) {
+        	sliceImage.disposeLocal();
+        	sliceImage = null;
+        }
         if (destImage != null) {
             destImage.calcMinMax();
         }
@@ -387,6 +420,9 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         int xp1;
         double avConstant = 1.0/9.0;
         int pos;
+        int extents[] = null;
+        ModelImage sliceImage = null;
+        double RiceNoiseStd[] = null;
         
         time = System.currentTimeMillis();
         fireProgressStateChanged(0, srcImage.getImageName(), "Nonlocal means filter");
@@ -398,6 +434,11 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         sweight = new double[length];
         if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
+            if (estimateNoiseStandardDeviation) {
+            	RiceNoiseStd = new double[1];
+	            extents = new int[] {xDim,yDim};
+	            sliceImage = new ModelImage(srcImage.getDataType(), extents, "sliceImage");
+            }
         }
         else {
             zDim = 1;
@@ -429,9 +470,6 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             kernel[i] /= kernelSum;
         }
         
-        filterParameter = noiseStandardDeviation * degreeOfFiltering;
-        filterParameter = filterParameter * filterParameter;
-        s2 = 2.0 * noiseStandardDeviation * noiseStandardDeviation;
         for (z = 0; z < zDim; z++) {
             try {
                 srcImage.exportData(z*length, length, input);
@@ -441,6 +479,29 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                 setCompleted(false);
                 return;
             }
+            
+            if ((srcImage.getNDims() == 3) && estimateNoiseStandardDeviation) {
+            	try {
+            		sliceImage.importData(0, input, true);
+            	}
+            	catch (IOException e) {
+            		MipavUtil.displayError("IOException on sliceImage.importData(0, input, true)");
+            		setCompleted(false);
+            		return;
+            	}
+            	
+            	// Obtain noise standard deviation with subband containing finest level diagonal details
+            	AlgorithmRiceWaveletTools riceAlgo = new AlgorithmRiceWaveletTools(sliceImage, RiceNoiseStd);
+            	riceAlgo.run();
+            	noiseStandardDeviation = (float)RiceNoiseStd[0];
+            	System.out.println("Noise standard deviation estimated as " + noiseStandardDeviation + " in slice " + z);
+            	riceAlgo.finalize();
+            	riceAlgo = null;
+            }
+            
+            filterParameter = noiseStandardDeviation * degreeOfFiltering;
+            filterParameter = filterParameter * filterParameter;
+            s2 = 2.0 * noiseStandardDeviation * noiseStandardDeviation;
             
             for (y = 0; y < yDim; y++) {
                 for (x = 0; x < xDim; x++) {
@@ -586,6 +647,10 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                 return;
             }
         } // for (z = 0; z < zDim; z++)
+        if (sliceImage != null) {
+        	sliceImage.disposeLocal();
+        	sliceImage = null;
+        }
         if (destImage != null) {
             destImage.calcMinMax();
         }
