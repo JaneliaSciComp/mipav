@@ -152,6 +152,8 @@ public  class PyWavelets extends AlgorithmBase {
     
     private double noiseStandardDeviation[] = null;
     private boolean useNoiseStdConstructor = false;
+    
+    private boolean doBayesShrinkThresholdComputation = false;
    
     
     private class ArrayInfo {
@@ -4186,6 +4188,8 @@ public  class PyWavelets extends AlgorithmBase {
     	int index = 1;
     	int extentsn[];
     	int level;
+    	double noiseStandardDev;
+    	double noiseVariance = 0.0;
     	
     	if (useNoiseStdConstructor && (noiseStandardDeviation == null)) {
     		displayError("noiseStandardDeviation is null in PyWavelets construtor");
@@ -4257,6 +4261,25 @@ public  class PyWavelets extends AlgorithmBase {
                     arr[1] = coeffsMap.get("da");
                     arr[2] = coeffsMap.get("ad");
                     arr[3] = coeffsMap.get("dd");
+                    if (doBayesShrinkThresholdComputation) {
+                    	double median;
+            		    double cD[][] = coeffsMap.get("dd");	
+            		    buffer = new double[cD.length * cD[0].length];
+            		    for (y = 0; y < cD[0].length; y++) {
+    	            		for (x = 0; x < cD.length; x++) {
+    	            			buffer[x + y * cD.length] = Math.abs(cD[x][y]);
+    	            	    }
+    	            	}
+    	        		Arrays.sort(buffer);
+    	        		if ((buffer.length %2) == 0) {
+        				    median = (buffer[buffer.length/2] + buffer[buffer.length/2 - 1])/2.0; 
+        				}
+        				else {
+        					median = buffer[(buffer.length - 1)/2];
+        				}
+    	        		noiseStandardDev = median/.6745;
+    	        		noiseVariance = noiseStandardDev * noiseStandardDev;
+                    }
             	}
             	else {
             		arr = new double[2][][];
@@ -4367,6 +4390,9 @@ public  class PyWavelets extends AlgorithmBase {
        		    	    	for (x = 0; x < arr[0].length; x++) {
        		    	    		buffer[x + y * arr[0].length] = arr[i][x][y];
        		    	    	}
+       		    	    }
+       		    	    if (doBayesShrinkThresholdComputation) {
+       		    	        filterVal1[i] = BayesShrinkThresholdComputation(buffer, noiseVariance);
        		    	    }
        		    	    filter(buffer, filterType[i],filterVal1[i],filterVal2[i]);
        		    	    for (y = 0; y < arr[0][0].length; y++) {
@@ -4599,6 +4625,27 @@ public  class PyWavelets extends AlgorithmBase {
 	            arr[5] = coeffsMap.get("dad");
 	            arr[6] = coeffsMap.get("add");
 	            arr[7] = coeffsMap.get("ddd");
+	            if (doBayesShrinkThresholdComputation) {
+	            	double median;
+        		    double HHH[][][] = coeffsMap.get("ddd");	
+        		    buffer = new double[HHH.length * HHH[0].length * HHH[0][0].length];
+	        		for (z = 0; z < HHH[0][0].length; z++) {
+		                for (y = 0; y < HHH[0].length; y++) {
+		            		for (x = 0; x < HHH.length; x++) {
+		            			buffer[x + y * HHH.length + z*HHH.length*HHH[0].length] = Math.abs(HHH[x][y][z]);
+		            	    }
+		            	}
+	                }
+	        		Arrays.sort(buffer);
+	        		if ((buffer.length %2) == 0) {
+    				    median = (buffer[buffer.length/2] + buffer[buffer.length/2 - 1])/2.0; 
+    				}
+    				else {
+    					median = buffer[(buffer.length - 1)/2];
+    				}
+	        		noiseStandardDev = median/.6745;
+	        		noiseVariance = noiseStandardDev * noiseStandardDev;
+	            }
         	}
         	else if (axes.length == 2) {
         		arr = new double[4][][][];
@@ -4915,6 +4962,9 @@ public  class PyWavelets extends AlgorithmBase {
         				        buffer[z * arr[0].length * arr[0][0].length + y * arr[0].length + x] = arr[i][x][y][z];
         				    }
         			    }
+        		    }
+        		    if (doBayesShrinkThresholdComputation) {
+        		    	filterVal1[i] = BayesShrinkThresholdComputation(buffer, noiseVariance);
         		    }
         	        filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
         		    for (z = 0; z < arr[0][0][0].length; z++) {
@@ -8403,6 +8453,57 @@ public  class PyWavelets extends AlgorithmBase {
             return;
           } // else 3D
         } // else if (tType == SWT)
+    }
+    
+    private double BayesShrinkThresholdComputation(double data[], double noise_var) {
+    	// Bayes shrink threshold computation
+    	// Code derived from:
+    	// bayesthf.m
+        // Author : B.K. SHREYAMSHA KUMAR 
+        // Created on 31-12-2009.
+    	// Updated on 31-12-2009.
+    	
+    	/*
+    	Copyright (c) 2012 B. K. Shreyamsha Kumar 
+    	All rights reserved.
+    	 
+    	Permission is hereby granted, without written agreement and without license or royalty fees, to use, copy, modify, 
+    	and distribute this code (the source files) and its documentation for any purpose, provided that the copyright notice
+    	 in its entirety appear in all copies of this code, and the original source of this code, This should be acknowledged
+    	  in any publication that reports research using this code. The research
+    	is to be cited in the bibliography as:
+
+    	B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+    	 Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
+    	 */
+    	int i;
+    	double sum = 0.0;
+    	double mean;
+    	double diff;
+    	double data_var;
+    	double maxAbsVal = 0.0;
+    	double sigmax;
+    	double threshold;
+    	int len = data.length;
+    	for (i = 0; i < len; i++) {
+    		sum += data[i];
+    		if (Math.abs(data[i]) > maxAbsVal) {
+    			maxAbsVal = Math.abs(data[i]);
+    		}
+    	}
+    	mean = sum/len;
+    	sum = 0.0;
+    	for (i = 0; i < len; i++) {
+    		diff = data[i] - mean;
+    		sum += (diff * diff);
+    	}
+    	data_var = sum/len;
+    	if (noise_var >= data_var) {
+    	    return maxAbsVal;	
+    	}
+    	sigmax = Math.sqrt(data_var - noise_var);
+    	threshold = noise_var/sigmax;
+    	return threshold;
     }
     
     private void filter(double data[], int filterType, double filterVal1, double filterVal2) {
