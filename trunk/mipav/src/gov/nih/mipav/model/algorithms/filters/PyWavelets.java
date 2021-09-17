@@ -41,6 +41,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// For routine BayesShrinkThresholdComputation:
+//Code derived from:
+// bayesthf.m
+// Author : B.K. SHREYAMSHA KUMAR 
+// Created on 31-12-2009.
+// Updated on 31-12-2009.
+
+/*
+Copyright (c) 2012 B. K. Shreyamsha Kumar 
+All rights reserved.
+ 
+Permission is hereby granted, without written agreement and without license or royalty fees, to use, copy, modify, 
+and distribute this code (the source files) and its documentation for any purpose, provided that the copyright notice
+ in its entirety appear in all copies of this code, and the original source of this code, This should be acknowledged
+  in any publication that reports research using this code. The research
+is to be cited in the bibliography as:
+
+B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+ Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
+ */
+
 public  class PyWavelets extends AlgorithmBase {
 	
     private int tType;
