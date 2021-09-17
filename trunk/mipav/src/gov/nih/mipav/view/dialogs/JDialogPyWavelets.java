@@ -129,6 +129,9 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
 	private final int FILTER_GREATER = 4;
 	private final int FILTER_LESS = 5;
 	private final int FILTER_THRESHOLD_FIRM = 6;
+	
+	private JCheckBox BayesCheckBox;
+	private boolean doBayesShrinkThresholdComputation = false;
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -444,7 +447,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
 
             // Make algorithm
             waveletAlgo = new PyWavelets(resultImage, image, tType, names, orders, modes, axes, filterType, filterVal1, filterVal2,
-            		showTransform, showFilteredTransform, levels, start_level);
+            		showTransform, showFilteredTransform, levels, start_level, doBayesShrinkThresholdComputation);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -538,7 +541,7 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         
         pack();
         setVisible(true);
-        setResizable(false);
+        setResizable(true);
 
         System.gc();
     }
@@ -699,6 +702,14 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
              gbc.gridx = 1;
              transformTypePanel.add(comboBoxModeZ, gbc);	 
          }
+         
+         BayesCheckBox = new JCheckBox("Bayes shrink threshold computation");
+         BayesCheckBox.setFont(serif12);
+         BayesCheckBox.setForeground(Color.black);
+         BayesCheckBox.setSelected(false);
+         gbc.gridx = 0;
+         gbc.gridy++;
+         transformTypePanel.add(BayesCheckBox, gbc);
     	 return transformTypePanel;
     }
     
@@ -1332,6 +1343,8 @@ public class JDialogPyWavelets extends JDialogScriptableBase implements Algorith
         		}
         	}
         } // for (i = 0; i < numComponents; i++)
+        
+        doBayesShrinkThresholdComputation = BayesCheckBox.isSelected();
         return true;
     }
 }
