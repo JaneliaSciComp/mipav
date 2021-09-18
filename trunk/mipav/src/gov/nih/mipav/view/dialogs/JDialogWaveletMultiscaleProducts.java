@@ -129,6 +129,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private JRadioButton hardButton;
     private JLabel actualThresholdLabel;
     private JTextField actualThresholdText;
+    private JCheckBox BayesCheckBox;
+	private boolean doBayesShrinkThresholdComputation = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -189,14 +191,63 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         } else if (source == denoiseCheckBox) {
             doDenoise = denoiseCheckBox.isSelected();
             thresholdLowPassCheckBox.setEnabled(doDenoise);
-            thresholdMultiplierLabel.setEnabled(doDenoise);
-            thresholdMultiplierText.setEnabled(doDenoise);
+            if (redundantButton.isSelected()) {
+                BayesCheckBox.setEnabled(doDenoise);
+            }
+            else {
+            	BayesCheckBox.setEnabled(false);
+            	BayesCheckBox.setSelected(false);
+            }
+            if (BayesCheckBox.isSelected()) {
+            	thresholdMultiplierLabel.setEnabled(false);
+                thresholdMultiplierText.setEnabled(false);
+                actualThresholdLabel.setEnabled(false);
+                actualThresholdText.setEnabled(false);
+            }
+            else {
+	            thresholdMultiplierLabel.setEnabled(doDenoise);
+	            thresholdMultiplierText.setEnabled(doDenoise);
+	            actualThresholdLabel.setEnabled(doDenoise);
+	            actualThresholdText.setEnabled(doDenoise);
+            }
             MADButton.setEnabled(doDenoise);
             STDButton.setEnabled(doDenoise);
             softButton.setEnabled(doDenoise);
             hardButton.setEnabled(doDenoise);
-            actualThresholdLabel.setEnabled(doDenoise);
-            actualThresholdText.setEnabled(doDenoise);
+        } else if ((source == redundantButton) || (source == nonredundantButton)) {
+        	doDenoise = denoiseCheckBox.isSelected();
+        	if (redundantButton.isSelected()) {
+                BayesCheckBox.setEnabled(doDenoise);
+            }
+            else {
+            	BayesCheckBox.setEnabled(false);
+            	BayesCheckBox.setSelected(false);
+            }
+        	if (BayesCheckBox.isSelected()) {
+            	thresholdMultiplierLabel.setEnabled(false);
+                thresholdMultiplierText.setEnabled(false);
+                actualThresholdLabel.setEnabled(false);
+                actualThresholdText.setEnabled(false);
+            }
+            else {
+	            thresholdMultiplierLabel.setEnabled(doDenoise);
+	            thresholdMultiplierText.setEnabled(doDenoise);
+	            actualThresholdLabel.setEnabled(doDenoise);
+	            actualThresholdText.setEnabled(doDenoise);
+            }
+        } else if (source == BayesCheckBox) {
+        	if (BayesCheckBox.isSelected()) {
+            	thresholdMultiplierLabel.setEnabled(false);
+                thresholdMultiplierText.setEnabled(false);
+                actualThresholdLabel.setEnabled(false);
+                actualThresholdText.setEnabled(false);
+            }
+            else {
+	            thresholdMultiplierLabel.setEnabled(true);
+	            thresholdMultiplierText.setEnabled(true);
+	            actualThresholdLabel.setEnabled(true);
+	            actualThresholdText.setEnabled(true);
+            }
         } else {
             super.actionPerformed(event);
         }
@@ -341,7 +392,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                 waveletAlgo = new AlgorithmRiceWaveletTools(destImage, image, filterLength, redundant,
                                   numberOfLevels, doWaveletImages, minimumLevel, maximumLevel,
                                   filterType, doDenoise,  actualThreshold, 
-                                  varianceEstimator, thresholdMultiplier, thresholdingType, thresholdLowPass);
+                                  varianceEstimator, thresholdMultiplier, thresholdingType, thresholdLowPass,
+                                  doBayesShrinkThresholdComputation);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -398,6 +450,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         thresholdMultiplier = scriptParameters.getParams().getDouble("threshold_multiplier");
         thresholdingType = scriptParameters.getParams().getInt("thresholding_type");
         thresholdLowPass = scriptParameters.getParams().getBoolean("threshold_low_pass");
+        doBayesShrinkThresholdComputation = scriptParameters.getParams().getBoolean("do_Bayes");
     }
 
     /**
@@ -419,6 +472,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_multiplier", thresholdMultiplier));
         scriptParameters.getParams().put(ParameterFactory.newParameter("thresholding_type", thresholdingType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_low_pass", thresholdLowPass));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_Bayes", doBayesShrinkThresholdComputation));
     }
 
     /**
@@ -452,22 +506,24 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         redundantButton = new JRadioButton("Redundant with no sub-sampling",true);
         redundantButton.setFont(serif12);
         redundantGroup.add(redundantButton);
+        redundantButton.addActionListener(this);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy++;
         paramPanel.add(redundantButton, gbc);
         
         nonredundantButton = new JRadioButton("Nonredundant with sub-sampling",false);
         nonredundantButton.setFont(serif12);
         redundantGroup.add(nonredundantButton);
+        nonredundantButton.addActionListener(this);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy++;
         paramPanel.add(nonredundantButton, gbc);
         
         JLabel levelsLabel = new JLabel("Number of levels:");
         levelsLabel.setForeground(Color.black);
         levelsLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy++;
         paramPanel.add(levelsLabel, gbc);
         
         ButtonGroup levelsGroup = new ButtonGroup();  
@@ -476,7 +532,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         userLevelsButton.addActionListener(this);
         levelsGroup.add(userLevelsButton);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy++;
         paramPanel.add(userLevelsButton, gbc);
         
         textLevels = new JTextField(10);
@@ -485,20 +541,19 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         textLevels.setEnabled(true);
         gbc.gridx = 1;
         paramPanel.add(textLevels, gbc);
-        
         maximumLevelsButton = new JRadioButton("Maximum possible", false);
         maximumLevelsButton.setFont(serif12);
         maximumLevelsButton.addActionListener(this);
         levelsGroup.add(maximumLevelsButton);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy++;
         paramPanel.add(maximumLevelsButton, gbc);
         
         JLabel minimumLabel = new JLabel("Minimum level for multiplication (>=1):");
         minimumLabel.setForeground(Color.black);
         minimumLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy++;
         paramPanel.add(minimumLabel, gbc);
         
         textMinimum = new JTextField(10);
@@ -511,7 +566,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         maximumLabel.setForeground(Color.black);
         maximumLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy++;
         paramPanel.add(maximumLabel, gbc);
         
         textMaximum = new JTextField(10);
@@ -525,7 +580,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         minimumButton.setFont(serif12);
         phaseGroup.add(minimumButton);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy++;
         paramPanel.add(minimumButton, gbc);
         
         midButton = new JRadioButton("Mid phase", false);
@@ -546,7 +601,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy++;
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
         
@@ -555,7 +610,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         denoiseCheckBox.setSelected(true);
         denoiseCheckBox.addActionListener(this);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy++;
         gbc.gridwidth = 2;
         paramPanel.add(denoiseCheckBox, gbc);
         
@@ -563,7 +618,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         thresholdLowPassCheckBox.setFont(serif12);
         thresholdLowPassCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy++;
         gbc.gridwidth = 2;
         paramPanel.add(thresholdLowPassCheckBox, gbc);
         
@@ -572,7 +627,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         thresholdMultiplierLabel.setFont(serif12);
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy++;
         paramPanel.add(thresholdMultiplierLabel, gbc);
         
         thresholdMultiplierText = new JTextField(10);
@@ -586,7 +641,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         varianceEstimatorLabel.setFont(serif12);
         gbc.gridwidth = 2;
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy++;
         paramPanel.add(varianceEstimatorLabel, gbc);
         
         varianceGroup = new ButtonGroup();
@@ -594,14 +649,14 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         MADButton.setFont(serif12);
         varianceGroup.add(MADButton);
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy++;
         paramPanel.add(MADButton, gbc);
         
         STDButton = new JRadioButton("Numerical standard deviation", false);
         STDButton.setFont(serif12);
         varianceGroup.add(STDButton);
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy++;
         paramPanel.add(STDButton, gbc);
         
         thresholdingTypeLabel = new JLabel("Thresholding type:");
@@ -609,7 +664,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         thresholdingTypeLabel.setFont(serif12);
         gbc.gridwidth = 2;
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy++;
         paramPanel.add(thresholdingTypeLabel, gbc);
         
         thresholdingTypeGroup = new ButtonGroup();
@@ -617,22 +672,31 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         softButton.setFont(serif12);
         thresholdingTypeGroup.add(softButton);
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy++;
         paramPanel.add(softButton, gbc);
         
         hardButton = new JRadioButton("Hard thresholding", true);
         hardButton.setFont(serif12);
         thresholdingTypeGroup.add(softButton);
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy++;
         paramPanel.add(hardButton, gbc);
+        
+        BayesCheckBox = new JCheckBox("Bayes shrink threshold computation");
+        BayesCheckBox.setFont(serif12);
+        BayesCheckBox.setForeground(Color.black);
+        BayesCheckBox.setSelected(false);
+        BayesCheckBox.addActionListener(this);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        paramPanel.add(BayesCheckBox, gbc);
         
         actualThresholdLabel = new JLabel("Actual threshold (if > 0.0)");
         actualThresholdLabel.setForeground(Color.black);
         actualThresholdLabel.setFont(serif12);
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy++;
         paramPanel.add(actualThresholdLabel, gbc);
         
         actualThresholdText = new JTextField(10);
@@ -787,8 +851,11 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         doDenoise = denoiseCheckBox.isSelected();
         
         if (doDenoise) {
+        	doBayesShrinkThresholdComputation = BayesCheckBox.isSelected();
+        	 
             thresholdLowPass = thresholdLowPassCheckBox.isSelected();
             
+            if (!doBayesShrinkThresholdComputation) {
             tmpStr = thresholdMultiplierText.getText();
             if (testParameter(tmpStr, Double.MIN_VALUE, Double.MAX_VALUE)) {
                 thresholdMultiplier = Double.valueOf(tmpStr).doubleValue();
@@ -799,6 +866,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                 
                 return false;
             }
+            } // if (!doBayesShrinkThresholdComputation) 
             
             if (MADButton.isSelected()) {
             	varianceEstimator = MAD;
@@ -814,16 +882,18 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             	thresholdingType = HARD_THRESHOLDING;
             }
             
-            tmpStr = actualThresholdText.getText();
-            if (testParameter(tmpStr, 0.0, Double.MAX_VALUE)) {
-                actualThreshold = Double.valueOf(tmpStr).doubleValue();
-            }
-            else {
-                actualThresholdText.requestFocus();
-                actualThresholdText.selectAll();
-                
-                return false;
-            }
+            if (!doBayesShrinkThresholdComputation) {
+	            tmpStr = actualThresholdText.getText();
+	            if (testParameter(tmpStr, 0.0, Double.MAX_VALUE)) {
+	                actualThreshold = Double.valueOf(tmpStr).doubleValue();
+	            }
+	            else {
+	                actualThresholdText.requestFocus();
+	                actualThresholdText.selectAll();
+	                
+	                return false;
+	            }
+            } // if (!doBayesShrinkThresholdComputation) 
         } // if (doDenoise)
 
         return true;
@@ -893,6 +963,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             table.put(new ParameterDouble("threshold_multiplier", 3.6));
             table.put(new ParameterInt("thresholding_type", HARD_THRESHOLDING));
             table.put(new ParameterBoolean("threshold_low_pass", false));
+            table.put(new ParameterBoolean("do_Bayes", false));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
