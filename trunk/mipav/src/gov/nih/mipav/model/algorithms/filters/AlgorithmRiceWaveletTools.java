@@ -61,6 +61,27 @@ USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 For information on commercial licenses, contact Rice University's Office of 
 Technology Transfer at techtran@rice.edu or (713) 348-6173*/
 
+//For routine BayesShrinkThresholdComputation:
+//Code derived from:
+//bayesthf.m
+//Author : B.K. SHREYAMSHA KUMAR 
+//Created on 31-12-2009.
+//Updated on 31-12-2009.
+
+/*
+Copyright (c) 2012 B. K. Shreyamsha Kumar 
+All rights reserved.
+
+Permission is hereby granted, without written agreement and without license or royalty fees, to use, copy, modify, 
+and distribute this code (the source files) and its documentation for any purpose, provided that the copyright notice
+in its entirety appear in all copies of this code, and the original source of this code, This should be acknowledged
+in any publication that reports research using this code. The research
+is to be cited in the bibliography as:
+
+B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
+*/
+
 
 
 public class AlgorithmRiceWaveletTools extends AlgorithmBase {
@@ -138,6 +159,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     private boolean thresholdLowPass = false;
     private double noiseStandardDeviation[] = null;
     private boolean useNoiseStdConstructor = false;
+    private boolean doBayesShrinkThresholdComputation = false;
     
     public AlgorithmRiceWaveletTools() {
     	
@@ -148,7 +170,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, boolean redundant,
             int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel,
             int filterType, boolean doDenoise, double actualThreshold, int varianceEstimator, double thresholdMultiplier,
-            int thresholdingType, boolean thresholdLowPass) {
+            int thresholdingType, boolean thresholdLowPass, boolean doBayesShrinkThresholdComputation) {
         super(destImg, srcImg);
         this.filterLength = filterLength;
         this.redundant = redundant;
@@ -163,6 +185,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         this.thresholdMultiplier = thresholdMultiplier;
         this.thresholdingType = thresholdingType;
         this.thresholdLowPass = thresholdLowPass;
+        this.doBayesShrinkThresholdComputation = doBayesShrinkThresholdComputation;
     }
     
     public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, boolean redundant, int numberOfLevels,
@@ -2852,6 +2875,57 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
   	            //0.168720006300193 0.151066428184072];
   	            return;
           } // public void test_denoise_udwt_actual_thresh()
+          
+          private double BayesShrinkThresholdComputation(double data[], double noise_var) {
+          	// Bayes shrink threshold computation
+          	// Code derived from:
+          	// bayesthf.m
+              // Author : B.K. SHREYAMSHA KUMAR 
+              // Created on 31-12-2009.
+          	// Updated on 31-12-2009.
+          	
+          	/*
+          	Copyright (c) 2012 B. K. Shreyamsha Kumar 
+          	All rights reserved.
+          	 
+          	Permission is hereby granted, without written agreement and without license or royalty fees, to use, copy, modify, 
+          	and distribute this code (the source files) and its documentation for any purpose, provided that the copyright notice
+          	 in its entirety appear in all copies of this code, and the original source of this code, This should be acknowledged
+          	  in any publication that reports research using this code. The research
+          	is to be cited in the bibliography as:
+
+          	B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+          	 Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
+          	 */
+          	int i;
+          	double sum = 0.0;
+          	double mean;
+          	double diff;
+          	double data_var;
+          	double maxAbsVal = 0.0;
+          	double sigmax;
+          	double threshold;
+          	int len = data.length;
+          	for (i = 0; i < len; i++) {
+          		sum += data[i];
+          		if (Math.abs(data[i]) > maxAbsVal) {
+          			maxAbsVal = Math.abs(data[i]);
+          		}
+          	}
+          	mean = sum/len;
+          	sum = 0.0;
+          	for (i = 0; i < len; i++) {
+          		diff = data[i] - mean;
+          		sum += (diff * diff);
+          	}
+          	data_var = sum/len;
+          	if (noise_var >= data_var) {
+          	    return maxAbsVal;	
+          	}
+          	sigmax = Math.sqrt(data_var - noise_var);
+          	threshold = noise_var/sigmax;
+          	return threshold;
+          }
      
     public void runAlgorithm() {
         int i, j, k;
@@ -2859,7 +2933,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         int numberValues;
         double tmp[];
         double median;
-        double thld;
+        double thld = 0.0;
         double sum;
         double mean;
         double diff;
@@ -2877,6 +2951,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         int ix2;
         int jx2;
         double ykeep[];
+        double noiseStandardDev;
+        double noiseVariance = 0.0;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -3037,7 +3113,25 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 	            	else {
 	            		srchA = hhA;
 	            	}
-            		if (actualThreshold == 0.0) {
+	            	if (doBayesShrinkThresholdComputation) {
+	            		tmp = new double[sliceSize];
+            			for (i = 0; i < sliceSize; i++) {
+            				tmp[i] = srchA[0][i];
+            			}
+            			for (i = 0; i < sliceSize; i++) {
+        					tmp[i] = Math.abs(tmp[i]);
+        				}
+        				Arrays.sort(tmp);
+        				if ((sliceSize % 2) == 0) {
+        				    median = (tmp[sliceSize/2] + tmp[sliceSize/2 - 1])/2.0; 
+        				}
+        				else {
+        					median = tmp[(sliceSize - 1)/2];
+        				}
+		        		noiseStandardDev = median/.6745;
+		        		noiseVariance = noiseStandardDev * noiseStandardDev;
+	                } // if (doBayesShrinkThresholdComputation)
+	            	else if (actualThreshold == 0.0) {
             			tmp = new double[sliceSize];
             			for (i = 0; i < sliceSize; i++) {
             				tmp[i] = srchA[0][i];
@@ -3076,6 +3170,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             		}
             		if (thresholdingType == SOFT_THRESHOLDING) {
             			for (i = minimumLevel-1; i < maximumLevel; i++) {
+            				if (doBayesShrinkThresholdComputation) {
+           		    	        thld = BayesShrinkThresholdComputation(srchA[i], noiseVariance);
+           		    	    }
             				for (j = 0; j < sliceSize; j++) {
             					absVal = Math.abs(srchA[i][j]);
             					if (absVal <= thld) {
@@ -3088,6 +3185,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             			}
             			if (nDims == 2) {
             				for (i = minimumLevel-1; i < maximumLevel; i++) {
+            					if (doBayesShrinkThresholdComputation) {
+               		    	        thld = BayesShrinkThresholdComputation(lhA[i], noiseVariance);
+               		    	    }
                 				for (j = 0; j < sliceSize; j++) {
                 					absVal = Math.abs(lhA[i][j]);
                 					if (absVal <= thld) {
@@ -3100,6 +3200,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 			}	
             				
             				for (i = minimumLevel-1; i < maximumLevel; i++) {
+            					if (doBayesShrinkThresholdComputation) {
+               		    	        thld = BayesShrinkThresholdComputation(hlA[i], noiseVariance);
+               		    	    }
                 				for (j = 0; j < sliceSize; j++) {
                 					absVal = Math.abs(hlA[i][j]);
                 					if (absVal <= thld) {
@@ -3112,6 +3215,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 			}
             			} // if (nDims == 2)
             			if (thresholdLowPass) {
+            				if (doBayesShrinkThresholdComputation) {
+           		    	        thld = BayesShrinkThresholdComputation(yl, noiseVariance);
+           		    	    }
             			    for (i = 0; i < sliceSize; i++) {
             			    	absVal = Math.abs(yl[i]);
             			    	if (absVal <= thld) {
@@ -3125,6 +3231,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             		} // if (thresholdingType == SOFT_THRESHOLDING)
             		else { // thresholdingType == HARD_THRESHOLDING) {
             			for (i = minimumLevel-1; i < maximumLevel; i++) {
+            				if (doBayesShrinkThresholdComputation) {
+           		    	        thld = BayesShrinkThresholdComputation(srchA[i], noiseVariance);
+           		    	    }
             				for (j = 0; j < sliceSize; j++) {
             					absVal = Math.abs(srchA[i][j]);
             					if (absVal <= thld) {
@@ -3134,6 +3243,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             			}
             			if (nDims == 2) {
             				for (i = minimumLevel-1; i < maximumLevel; i++) {
+            					if (doBayesShrinkThresholdComputation) {
+               		    	        thld = BayesShrinkThresholdComputation(lhA[i], noiseVariance);
+               		    	    }
                 				for (j = 0; j < sliceSize; j++) {
                 					absVal = Math.abs(lhA[i][j]);
                 					if (absVal <= thld) {
@@ -3143,6 +3255,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 			}	
             				
             				for (i = minimumLevel-1; i < maximumLevel; i++) {
+            					if (doBayesShrinkThresholdComputation) {
+               		    	        thld = BayesShrinkThresholdComputation(hlA[i], noiseVariance);
+               		    	    }
                 				for (j = 0; j < sliceSize; j++) {
                 					absVal = Math.abs(hlA[i][j]);
                 					if (absVal <= thld) {
@@ -3152,6 +3267,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 			}
             			} // if (nDims == 2)
             			if (thresholdLowPass) {
+            				if (doBayesShrinkThresholdComputation) {
+           		    	        thld = BayesShrinkThresholdComputation(yl, noiseVariance);
+           		    	    }
             			    for (i = 0; i < sliceSize; i++) {
             			    	absVal = Math.abs(yl[i]);
             			    	if (absVal <= thld) {
