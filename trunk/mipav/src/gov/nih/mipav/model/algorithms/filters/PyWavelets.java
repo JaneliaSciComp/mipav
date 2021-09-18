@@ -7402,6 +7402,32 @@ public  class PyWavelets extends AlgorithmBase {
 	        	        arr[2*i+1] = coeffsMap[i].get("d");
 	        		}	
               	}
+              	if (doBayesShrinkThresholdComputation) {
+                   	double median;
+                   	double cD[][];
+                   	if (axes.length == 2) {
+           		        cD = coeffsMap[0].get("dd");
+                   	}
+                   	else {
+                   		cD = coeffsMap[0].get("d");
+                   	}
+           		    double bufBayes[] = new double[cD.length * cD[0].length];
+           		    for (y = 0; y < cD[0].length; y++) {
+   	            		for (x = 0; x < cD.length; x++) {
+   	            			bufBayes[x + y * cD.length] = Math.abs(cD[x][y]);
+   	            	    }
+   	            	}
+   	        		Arrays.sort(bufBayes);
+   	        		if ((bufBayes.length %2) == 0) {
+       				    median = (bufBayes[bufBayes.length/2] + bufBayes[bufBayes.length/2 - 1])/2.0; 
+       				}
+       				else {
+       					median = bufBayes[(bufBayes.length - 1)/2];
+       				}
+   	        		bufBayes = null;
+   	        		noiseStandardDev = median/.6745;
+   	        		noiseVariance = noiseStandardDev * noiseStandardDev;
+                   } // if (doBayesShrinkThresholdComputation)
               	if (showTransform) {
               		if (axes.length == 2) {
 	              	    for (i = 0; i < arr.length/4; i++) {
@@ -7519,6 +7545,9 @@ public  class PyWavelets extends AlgorithmBase {
                 				buffer[y*xDim + x] = arr[i][x][y];
                 			}
                 		}
+                		if (doBayesShrinkThresholdComputation) {
+         		    	    filterVal1[i] = BayesShrinkThresholdComputation(buffer, noiseVariance);
+         		        }
                 	    filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
                 		for (y = 0; y < yDim; y++) {
                 			for (x = 0; x < xDim; x++) {
@@ -7864,6 +7893,37 @@ public  class PyWavelets extends AlgorithmBase {
 	    	        arr[2*i+1] = coeffsMap[i].get("d");
 	    		}		
           	} // else if (axes.length == 1)
+          	if (doBayesShrinkThresholdComputation) {
+            	double median;
+            	double D[][][];
+            	if (axes.length == 3) {
+    		        D = coeffsMap[0].get("ddd");
+            	}
+            	else if (axes.length == 2) {
+            		D = coeffsMap[0].get("dd");
+            	}
+            	else {
+            		D = coeffsMap[0].get("d");
+            	}
+    		    double bufBayes[] = new double[D.length * D[0].length * D[0][0].length];
+        		for (z = 0; z < D[0][0].length; z++) {
+	                for (y = 0; y < D[0].length; y++) {
+	            		for (x = 0; x < D.length; x++) {
+	            			bufBayes[x + y * D.length + z*D.length*D[0].length] = Math.abs(D[x][y][z]);
+	            	    }
+	            	}
+                }
+        		Arrays.sort(bufBayes);
+        		if ((bufBayes.length %2) == 0) {
+				    median = (bufBayes[bufBayes.length/2] + bufBayes[bufBayes.length/2 - 1])/2.0; 
+				}
+				else {
+					median = bufBayes[(bufBayes.length - 1)/2];
+				}
+        		bufBayes = null;
+        		noiseStandardDev = median/.6745;
+        		noiseVariance = noiseStandardDev * noiseStandardDev;
+            } // if (doBayesShrinkThresholdComputation)
     		if (showTransform) {
     			if (axes.length == 3) {
 	    			for (i = 0; i < arr.length/8; i++) {
@@ -8150,6 +8210,9 @@ public  class PyWavelets extends AlgorithmBase {
             				}
             			}
             		}
+            		if (doBayesShrinkThresholdComputation) {
+     		    	    filterVal1[i] = BayesShrinkThresholdComputation(buffer, noiseVariance);
+     		        }
             	    filter(buffer, filterType[i], filterVal1[i], filterVal2[i]);
             		for (z = 0; z < zDim; z++) {
             			for (y = 0; y < yDim; y++) {
