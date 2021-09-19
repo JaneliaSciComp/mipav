@@ -74,10 +74,11 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
      * @param  noiseStandardDeviation   Noise standard deviation
      * @param  degreeOfFiltering degree of filtering - used only for Rician noise filter
      * @param  do25D             If true, do slice by slice filtering
+     * @param  doBayesShrinkThresholdComputation
      */
     public AlgorithmNonlocalMeansFilter(ModelImage destImage, ModelImage srcImg, int searchWindowSide, 
                                        int similarityWindowSide, boolean estimateNoiseStandardDeviation, float noiseStandardDeviation, 
-                                       float degreeOfFiltering, boolean doRician, boolean do25D) {
+                                       float degreeOfFiltering, boolean doRician, boolean do25D, boolean doBayesShrinkThresholdComputation) {
         super(destImage, srcImg);
         this.searchWindowSide = searchWindowSide;
         this.similarityWindowSide = similarityWindowSide;
@@ -86,6 +87,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         this.degreeOfFiltering = degreeOfFiltering;
         this.doRician = doRician;
         this.do25D = do25D;
+        this.doBayesShrinkThresholdComputation = doBayesShrinkThresholdComputation;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
