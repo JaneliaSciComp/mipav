@@ -352,7 +352,7 @@ public class AlgorithmProstateFeaturesSaveAutoTrain extends AlgorithmBase implem
         double thresholdMultiplier = 3.6;
         int thresholdingType = AlgorithmRiceWaveletTools.HARD_THRESHOLDING;
         boolean thresholdLowPass = false;
-        boolean doBayesShrinkThreesholdComputation = false;
+        boolean doBayesShrinkThresholdComputation = false;
         
         try {
             waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, redundant,
