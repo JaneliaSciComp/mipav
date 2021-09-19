@@ -191,13 +191,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         } else if (source == denoiseCheckBox) {
             doDenoise = denoiseCheckBox.isSelected();
             thresholdLowPassCheckBox.setEnabled(doDenoise);
-            if (redundantButton.isSelected()) {
-                BayesCheckBox.setEnabled(doDenoise);
-            }
-            else {
-            	BayesCheckBox.setEnabled(false);
-            	BayesCheckBox.setSelected(false);
-            }
+            BayesCheckBox.setEnabled(doDenoise);
             if (BayesCheckBox.isSelected()) {
             	thresholdMultiplierLabel.setEnabled(false);
                 thresholdMultiplierText.setEnabled(false);
@@ -214,27 +208,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             STDButton.setEnabled(doDenoise);
             softButton.setEnabled(doDenoise);
             hardButton.setEnabled(doDenoise);
-        } else if ((source == redundantButton) || (source == nonredundantButton)) {
-        	doDenoise = denoiseCheckBox.isSelected();
-        	if (redundantButton.isSelected()) {
-                BayesCheckBox.setEnabled(doDenoise);
-            }
-            else {
-            	BayesCheckBox.setEnabled(false);
-            	BayesCheckBox.setSelected(false);
-            }
-        	if (BayesCheckBox.isSelected()) {
-            	thresholdMultiplierLabel.setEnabled(false);
-                thresholdMultiplierText.setEnabled(false);
-                actualThresholdLabel.setEnabled(false);
-                actualThresholdText.setEnabled(false);
-            }
-            else {
-	            thresholdMultiplierLabel.setEnabled(doDenoise);
-	            thresholdMultiplierText.setEnabled(doDenoise);
-	            actualThresholdLabel.setEnabled(doDenoise);
-	            actualThresholdText.setEnabled(doDenoise);
-            }
         } else if (source == BayesCheckBox) {
         	if (BayesCheckBox.isSelected()) {
             	thresholdMultiplierLabel.setEnabled(false);
@@ -506,7 +479,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         redundantButton = new JRadioButton("Redundant with no sub-sampling",true);
         redundantButton.setFont(serif12);
         redundantGroup.add(redundantButton);
-        redundantButton.addActionListener(this);
         gbc.gridx = 0;
         gbc.gridy++;
         paramPanel.add(redundantButton, gbc);
@@ -514,7 +486,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         nonredundantButton = new JRadioButton("Nonredundant with sub-sampling",false);
         nonredundantButton.setFont(serif12);
         redundantGroup.add(nonredundantButton);
-        nonredundantButton.addActionListener(this);
         gbc.gridx = 0;
         gbc.gridy++;
         paramPanel.add(nonredundantButton, gbc);
