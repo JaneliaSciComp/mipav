@@ -190,7 +190,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, boolean redundant, int numberOfLevels,
             boolean doWaveletImages, int minimumLevel, int maximumLevel, int filterType,boolean doDenoise, double actualThreshold, 
-            int varianceEstimator, double thresholdMultiplier, int thresholdingType, boolean thresholdLowPass) {
+            int varianceEstimator, double thresholdMultiplier, int thresholdingType, boolean thresholdLowPass,
+            boolean doBayesShrinkThresholdComputation) {
         super(null, srcImg);
         this.filterLength = filterLength;
         this.redundant = redundant;
@@ -205,6 +206,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         this.thresholdMultiplier = thresholdMultiplier;
         this.thresholdingType = thresholdingType;
         this.thresholdLowPass = thresholdLowPass;
+        this.doBayesShrinkThresholdComputation = doBayesShrinkThresholdComputation;
     }
     
     public AlgorithmRiceWaveletTools(ModelImage srcImg, double noiseStandardDeviation[]) {
