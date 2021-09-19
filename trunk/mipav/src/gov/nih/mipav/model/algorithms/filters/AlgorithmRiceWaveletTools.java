@@ -2953,6 +2953,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         double ykeep[];
         double noiseStandardDev;
         double noiseVariance = 0.0;
+        int istart;
+        int jstart;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -3316,7 +3318,30 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 mdwt();
                 
                 if (doDenoise) {
-                	if (actualThreshold == 0.0) {
+                	if (doBayesShrinkThresholdComputation) {
+                		numX = xDim - (int)Math.floor(xDim/2);
+                		numY = yDim - (int)Math.floor(yDim/2);
+                		numberValues = numX*numY;
+                		tmp = new double[numberValues];
+                		for (i = numY; i < yDim; i++) {
+                			for (j = numX; j < xDim; j++) {
+                			    tmp[(i-numY)*numX + j-numX] = y[i*xDim + j];
+                			}
+                		}
+                		for (i = 0; i < numberValues; i++) {
+        					tmp[i] = Math.abs(tmp[i]);
+        				}
+        				Arrays.sort(tmp);
+        				if ((numberValues %2) == 0) {
+        				    median = (tmp[numberValues/2] + tmp[numberValues/2 - 1])/2.0; 
+        				}
+        				else {
+        					median = tmp[(numberValues - 1)/2];
+        				}
+        				noiseStandardDev = median/.6745;
+		        		noiseVariance = noiseStandardDev * noiseStandardDev;
+                	} // if (doBayesShrinkThresholdComputation)
+                	else if (actualThreshold == 0.0) {
                 		numX = xDim - (int)Math.floor(xDim/2);
                 		numY = yDim - (int)Math.floor(yDim/2);
                 		numberValues = numX*numY;
@@ -3423,25 +3448,207 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 	    	}
                 	    }
                 	}
-                	if (thresholdingType == SOFT_THRESHOLDING) {
-                		for (i = 0; i < sliceSize; i++) {
-        			    	absVal = Math.abs(y[i]);
-        			    	if (absVal <= thld) {
-        			    		y[i] = 0.0;
-        			    	}
-        			    	else {
-        			    		y[i] = Math.signum(y[i])*(absVal - thld);
-        			    	}
-        			    }	
-                	}
-                	else { // thresholdingType == HARD_THRESHOLDING
-                		for (i = 0; i < sliceSize; i++) {
-        			    	absVal = Math.abs(y[i]);
-        			    	if (absVal <= thld) {
-        			    		y[i] = 0.0;
-        			    	}
-        			    }		
-                	} // else threhsoldingType == HARD_THRESHOLDING
+                	if (doBayesShrinkThresholdComputation) {
+                		if (nDims == 1) {
+                			if (thresholdLowPass) {
+                				tmp = new double[ixLow];
+	                			for (i = 0; i < ixLow; i++) {
+	                			    tmp[i] = y[i];	
+	                			}
+	                			thld = BayesShrinkThresholdComputation(tmp, noiseVariance);
+	                			if (thresholdingType == SOFT_THRESHOLDING) {
+	    	                		for (i = 0; i < ixLow; i++) {
+	    	        			    	absVal = Math.abs(y[i]);
+	    	        			    	if (absVal <= thld) {
+	    	        			    		y[i] = 0.0;
+	    	        			    	}
+	    	        			    	else {
+	    	        			    		y[i] = Math.signum(y[i])*(absVal - thld);
+	    	        			    	}
+	    	        			    }	
+	    	                	}
+	    	                	else { // thresholdingType == HARD_THRESHOLDING
+	    	                		for (i = 0; i < ixLow; i++) {
+	    	        			    	absVal = Math.abs(y[i]);
+	    	        			    	if (absVal <= thld) {
+	    	        			    		y[i] = 0.0;
+	    	        			    	}
+	    	        			    }		
+	    	                	} // else thresholdingType == HARD_THRESHOLDING
+                			} // if (thresholdLowPass)
+                			for (istart = ix; istart <= ix2/2; istart = istart*2) {
+                				tmp = new double[istart];
+                				for (i = istart; i < 2*istart; i++) {
+                					tmp[i-istart] = y[i];
+                				}
+                				thld = BayesShrinkThresholdComputation(tmp, noiseVariance);
+	                			if (thresholdingType == SOFT_THRESHOLDING) {
+	    	                		for (i = istart; i < 2*istart; i++) {
+	    	        			    	absVal = Math.abs(y[i]);
+	    	        			    	if (absVal <= thld) {
+	    	        			    		y[i] = 0.0;
+	    	        			    	}
+	    	        			    	else {
+	    	        			    		y[i] = Math.signum(y[i])*(absVal - thld);
+	    	        			    	}
+	    	        			    }	
+	    	                	}
+	    	                	else { // thresholdingType == HARD_THRESHOLDING
+	    	                		for (i = 0; i < ixLow; i++) {
+	    	        			    	absVal = Math.abs(y[i]);
+	    	        			    	if (absVal <= thld) {
+	    	        			    		y[i] = 0.0;
+	    	        			    	}
+	    	        			    }		
+	    	                	} // else thresholdingType == HARD_THRESHOLDING
+                			} // for (istart = ix; istart <= ix2/2; istart = istart*2)
+                		} // if (nDims == 1)
+                		else { // if (nDims = 2)
+                		    if (thresholdLowPass) {
+                		        tmp = new double[ixLow*jxLow];
+                		        for (i = 0; i < ixLow; i++) {
+                		        	for (j = 0; j < jxLow; j++) {
+                		        		tmp[i*jxLow + j] = y[i*xDim + j];
+                		        	}
+                		        }
+                		        thld = BayesShrinkThresholdComputation(tmp, noiseVariance);
+                		        if (thresholdingType == SOFT_THRESHOLDING) {
+	    	                		for (i = 0; i < ixLow; i++) {
+	    	                			for (j = 0; j < jxLow; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+		    	        			    	else {
+		    	        			    		y[i*xDim + j] = Math.signum(y[i*xDim + j])*(absVal - thld);
+		    	        			    	}
+	    	                			}
+	    	        			    }	
+	    	                	}
+	    	                	else { // thresholdingType == HARD_THRESHOLDING
+	    	                		for (i = 0; i < ixLow; i++) {
+	    	                			for (j = 0; j < jxLow; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+	    	                			}
+	    	        			    }		
+	    	                	} // else thresholdingType == HARD_THRESHOLDING
+                		    } // if (threshLowPass)
+                		    for (istart = ix, jstart = jx; istart <= ix2/2; istart = istart*2, jstart = jstart*2) {
+                		        tmp = new double[istart*jstart];  
+                		        for (i = istart; i < 2*istart; i++) {
+                		        	for (j = 0; j < jstart; j++) {
+                		        		tmp[(i-istart)*jstart + j] = y[i*xDim+j];
+                		        	}
+                		        }
+                		        thld = BayesShrinkThresholdComputation(tmp, noiseVariance);
+                		        if (thresholdingType == SOFT_THRESHOLDING) {
+	    	                		for (i = istart; i < 2*istart; i++) {
+	    	                			for (j = 0; j < jstart; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+		    	        			    	else {
+		    	        			    		y[i*xDim + j] = Math.signum(y[i*xDim + j])*(absVal - thld);
+		    	        			    	}
+	    	                			}
+	    	        			    }	
+	    	                	}
+	    	                	else { // thresholdingType == HARD_THRESHOLDING
+	    	                		for (i = istart; i < 2*istart; i++) {
+	    	                			for (j = 0; j < jstart; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+	    	                			}
+	    	        			    }		
+	    	                	} // else thresholdingType == HARD_THRESHOLDING
+                		        for (i = 0; i < istart; i++) {
+                		        	for (j = jstart; j < 2*jstart; j++) {
+                		        		tmp[i*jstart + j-jstart] = y[i*xDim+j];
+                		        	}
+                		        }
+                		        thld = BayesShrinkThresholdComputation(tmp, noiseVariance);
+                		        if (thresholdingType == SOFT_THRESHOLDING) {
+	    	                		for (i = 0; i < istart; i++) {
+	    	                			for (j = jstart; j < 2*jstart; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+		    	        			    	else {
+		    	        			    		y[i*xDim + j] = Math.signum(y[i*xDim + j])*(absVal - thld);
+		    	        			    	}
+	    	                			}
+	    	        			    }	
+	    	                	}
+	    	                	else { // thresholdingType == HARD_THRESHOLDING
+	    	                		for (i = 0; i < istart; i++) {
+	    	                			for (j = jstart; j < 2*jstart; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+	    	                			}
+	    	        			    }		
+	    	                	} // else thresholdingType == HARD_THRESHOLDING
+                		        for (i = istart; i < 2*istart; i++) {
+                		        	for (j = jstart; j < 2*jstart; j++) {
+                		        		tmp[(i-istart)*jstart + j-jstart] = y[i*xDim+j];
+                		        	}
+                		        }
+                		        thld = BayesShrinkThresholdComputation(tmp, noiseVariance);
+                		        if (thresholdingType == SOFT_THRESHOLDING) {
+	    	                		for (i = istart; i < 2*istart; i++) {
+	    	                			for (j = jstart; j < 2*jstart; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+		    	        			    	else {
+		    	        			    		y[i*xDim + j] = Math.signum(y[i*xDim + j])*(absVal - thld);
+		    	        			    	}
+	    	                			}
+	    	        			    }	
+	    	                	}
+	    	                	else { // thresholdingType == HARD_THRESHOLDING
+	    	                		for (i = istart; i < 2*istart; i++) {
+	    	                			for (j = jstart; j < 2*jstart; j++) {
+		    	        			    	absVal = Math.abs(y[i*xDim + j]);
+		    	        			    	if (absVal <= thld) {
+		    	        			    		y[i*xDim + j] = 0.0;
+		    	        			    	}
+	    	                			}
+	    	        			    }		
+	    	                	} // else thresholdingType == HARD_THRESHOLDING
+                		    } // for (istart = ix, jstart = jx; istart <= ix2/2; istart = istart*2, jstart = jstart*2)
+                		} // else nDims == 2
+                	} // if (doBayesShrinkThresholdComputation)
+                	else { // not doBayesShrinkThresholdComputation
+	                	if (thresholdingType == SOFT_THRESHOLDING) {
+	                		for (i = 0; i < sliceSize; i++) {
+	        			    	absVal = Math.abs(y[i]);
+	        			    	if (absVal <= thld) {
+	        			    		y[i] = 0.0;
+	        			    	}
+	        			    	else {
+	        			    		y[i] = Math.signum(y[i])*(absVal - thld);
+	        			    	}
+	        			    }	
+	                	}
+	                	else { // thresholdingType == HARD_THRESHOLDING
+	                		for (i = 0; i < sliceSize; i++) {
+	        			    	absVal = Math.abs(y[i]);
+	        			    	if (absVal <= thld) {
+	        			    		y[i] = 0.0;
+	        			    	}
+	        			    }		
+	                	} // else thresholdingType == HARD_THRESHOLDING
+                	} // else not doBayesShrinkThresholdComputation
                 	if (!thresholdLowPass) {
                 	    if (nDims == 1) {
                 	    	for (i = 0; i < ixLow; i++) {
