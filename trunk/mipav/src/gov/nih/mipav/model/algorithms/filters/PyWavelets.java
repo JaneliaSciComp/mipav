@@ -76,13 +76,13 @@ public  class PyWavelets extends AlgorithmBase {
 	private int levels;
 	private int start_level;
 	
-	private final int FILTER_NONE = 0;
-	private final int FILTER_SOFT = 1;
-	private final int FILTER_NN_GARROTE = 2;
-	private final int FILTER_HARD = 3;
-	private final int FILTER_GREATER = 4;
-	private final int FILTER_LESS = 5;
-	private final int FILTER_THRESHOLD_FIRM = 6;
+	public static final int FILTER_NONE = 0;
+	public static final int FILTER_SOFT = 1;
+	public static final int FILTER_NN_GARROTE = 2;
+	public static final int FILTER_HARD = 3;
+	public static final int FILTER_GREATER = 4;
+	public static final int FILTER_LESS = 5;
+	public static final int FILTER_THRESHOLD_FIRM = 6;
 	
 	private ModelImage imageA = null;
 	private ModelImage imageH = null;
@@ -167,9 +167,9 @@ public  class PyWavelets extends AlgorithmBase {
     private ModelImage imageHHn_filter[] = null;
     private ModelImage imageLn_filter[] = null;
     
-    private int SINGLE_LEVEL_DWT = 1; // Any number of axes
-    private int MULTILEVEL_DWT = 2; // 2 axes for wavedec2 and 3 axes for wavedec3
-    private int SWT = 3;
+    public static int SINGLE_LEVEL_DWT = 1; // Any number of axes
+    public static int MULTILEVEL_DWT = 2; // 2 axes for wavedec2 and 3 axes for wavedec3
+    public static int SWT = 3;
     
     private double noiseStandardDeviation[] = null;
     private boolean useNoiseStdConstructor = false;
