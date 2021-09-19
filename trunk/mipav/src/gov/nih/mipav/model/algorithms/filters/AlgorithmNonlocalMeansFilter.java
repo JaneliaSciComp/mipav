@@ -17,6 +17,10 @@ import java.io.*;
  "MRI denoising using non-Local Means" by Jose Manjon, Jose Carbonell-Caballero, Juan J. Lull, 
  Gracian Garcia-Marti, Luis Marti-Bonmati, Montserratt Robles, Medical Image Analysis 12 (2008), 
  pp. 514-523.
+ 
+ For post processing with Bayes shrink threshold computation:
+ B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+ Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
  unbiased nonlocal means (value) = sqrt((nonlocal means (value))**2 - 2* sigma**2)
  For Rician noise standard deviation = sqrt(background mean/2)
  */
@@ -47,11 +51,13 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
     /** Used only with Rician noise filter.  Should theoretically be around sqrt(2). */
     private float degreeOfFiltering;
     
-    /** If treu, use unbiased version of NLM to deal with Rician noise in MRI */
+    /** If true, use unbiased version of NLM to deal with Rician noise in MRI */
     private boolean doRician;
 
     /** In 3D if do25D == true, process each slice separately. */
     private boolean do25D = true;
+    
+    private boolean doBayesShrinkThresholdComputation = false;
 
    
 
@@ -155,7 +161,9 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         int yDim;
         int zDim;
         int length;
-        float input[];
+        double input[];
+        double inputOriginal[] = null;
+        double inputDiff[] = null;
         double kernel[];
         int halfSimilarity;
         double input2[];
@@ -195,13 +203,19 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
-        input = new float[length];
+        input = new double[length];
+        extents = new int[] {xDim,yDim};
+        sliceImage = new ModelImage(ModelImage.DOUBLE, extents, "sliceImage");
+        ModelImage resultImage = null;
+        if (doBayesShrinkThresholdComputation) {
+        	inputOriginal = new double[length];
+        	inputDiff = new double[length];
+        	resultImage = new ModelImage(ModelImage.DOUBLE, extents, "waveletImage");
+        }
         if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
             if (estimateNoiseStandardDeviation) {
             	noiseStd = new double[1];
-	            extents = new int[] {xDim,yDim};
-	            sliceImage = new ModelImage(srcImage.getDataType(), extents, "sliceImage");
             }
         }
         else {
@@ -242,6 +256,12 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                 MipavUtil.displayError("IOException on srcImage.exportData(z*length, length, input)");
                 setCompleted(false);
                 return;
+            }
+            
+            if (doBayesShrinkThresholdComputation) {
+            	for (i = 0; i < length; i++) {
+            	    inputOriginal[i] = input[i];	
+            	}
             }
             
             if ((srcImage.getNDims() == 3) && estimateNoiseStandardDeviation) {
@@ -357,6 +377,72 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                     }
                 } // for (j = 1; j <= xDim; j++)
             } // for (i = 1; i <= yDim; i++) 
+            
+            if (doBayesShrinkThresholdComputation) {
+            	for (i = 0; i < length; i++) {
+            		inputDiff[i] = inputOriginal[i] - input[i];
+            	}
+            	
+            	try {
+            		sliceImage.importData(0, inputDiff, true);
+            	}
+            	catch (IOException e) {
+            		MipavUtil.displayError("IOException on sliceImage.importData(0, inputDiff, true)");
+            		setCompleted(false);
+            		return;
+            	}
+            	
+            	// Make result image
+            	
+            	int tType = PyWavelets.MULTILEVEL_DWT;
+            	int axes[] = new int[2];
+            	for (i = 0; i < 2; i++) {
+            		axes[i] = i;
+            	}
+            	PyWavelets.MODE modes[] = new PyWavelets.MODE[2];
+            	for (i = 0; i < 2; i++) {
+            		modes[i] = PyWavelets.MODE.MODE_ZEROPAD;	
+            	}
+            	PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[2];
+            	for (i = 0; i <  2; i++) {
+            		names[i] = PyWavelets.WAVELET_NAME.DB;
+            	}
+            	int orders[] = new int[2];
+            	for (i = 0; i < 2; i++) {
+            		orders[i] = 8;
+            	}
+            	int levels = 3;
+            	int numComponents = 3*levels + 1;
+            	int filterType[] = new int[numComponents];
+                double filterVal1[] = new double[numComponents];
+                double filterVal2[] = new double[numComponents];
+                int start_level = 0; // Only applies to PyWavelets.SWT
+                filterType[0] = PyWavelets.FILTER_NONE;
+            	for (i = 1; i < numComponents; i++) {
+            		filterType[i] = PyWavelets.FILTER_SOFT;
+            	}
+            	boolean showTransform = false;
+            	boolean showFilteredTransform = false;
+
+                // Make algorithm
+                PyWavelets waveletAlgo = new PyWavelets(resultImage, sliceImage, tType, names, orders, modes, axes, filterType, filterVal1, filterVal2,
+                		showTransform, showFilteredTransform, levels, start_level, doBayesShrinkThresholdComputation);
+                waveletAlgo.run();
+                try {
+                    resultImage.exportData(0, length, inputDiff);
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException on resultImage.exportData(0, length, inputDiff)");
+                    setCompleted(false);
+                    return;
+                }
+                
+                waveletAlgo.finalize();
+                waveletAlgo = null;
+                for (i = 0; i < length; i++) {
+                	input[i] = input[i] + inputDiff[i];
+                }
+            } // if (doBayesShrinkThresholdComputation)
             try {
                 if (destImage != null) {
                     destImage.importData(z*length, input, false);
@@ -374,6 +460,10 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         if (sliceImage != null) {
         	sliceImage.disposeLocal();
         	sliceImage = null;
+        }
+        if (resultImage != null) {
+        	resultImage.disposeLocal();
+        	resultImage = null;
         }
         if (destImage != null) {
             destImage.calcMinMax();
@@ -658,7 +748,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         int zDim;
         int sliceSize;
         int length;
-        float input[];
+        double input[];
+        double inputOriginal[] = null;
         double kernel[];
         int halfSimilarity;
         int similaritySquared;
@@ -699,6 +790,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         long time;
         double filterParameter;
         
+        
         time = System.currentTimeMillis();
         fireProgressStateChanged(0, srcImage.getImageName(), "Nonlocal means filter");
         xDim = srcImage.getExtents()[0];
@@ -706,7 +798,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         zDim = srcImage.getExtents()[2];
         sliceSize = xDim * yDim;
         length = sliceSize * zDim;
-        input = new float[length];
+        input = new double[length];
         halfSimilarity = (similarityWindowSide - 1)/2;
         similaritySquared = similarityWindowSide * similarityWindowSide;
         similarityCubed = similaritySquared * similarityWindowSide;
@@ -719,6 +811,9 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         kernel = new double[similarityCubed];
         W1 = new double[similarityCubed];
         W2 = new double[similarityCubed];
+        if (doBayesShrinkThresholdComputation) {
+        	inputOriginal = new double[length];
+        }
         for (d = 1; d <= halfSimilarity; d++) {
             value = 2*d + 1;
             value = value * value;
@@ -748,6 +843,13 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             MipavUtil.displayError("IOException on srcImage.exportData(0, length, input)");
             setCompleted(false);
             return;
+        }
+        
+        
+        if (doBayesShrinkThresholdComputation) {
+        	for (i = 0; i < length; i++) {
+        	    inputOriginal[i] = input[i];
+        	}
         }
         
         for (z = 0; z < zDim; z++) {
@@ -957,6 +1059,78 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                 } // for (j = 1; j <= xDim; j++)
             } // for (i = 1; i <= yDim; i++) 
         } // for (h = 1; j <= zDim; h++)
+        if (doBayesShrinkThresholdComputation) {
+        	double inputDiff[] = new double[length];
+        	for (i = 0; i < length; i++) {
+        		inputDiff[i] = inputOriginal[i] - input[i];
+        	}
+        	
+        	ModelImage diffImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "diffImage");
+        	try {
+        		diffImage.importData(0, inputDiff, true);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException on diffImage.importData(0, inputDiff, true)");
+        		setCompleted(false);
+        		return;
+        	}
+        	
+        	// Make result image
+        	
+        	int tType = PyWavelets.MULTILEVEL_DWT;
+        	int axes[] = new int[3];
+        	for (i = 0; i < 3; i++) {
+        		axes[i] = i;
+        	}
+        	PyWavelets.MODE modes[] = new PyWavelets.MODE[3];
+        	for (i = 0; i < 3; i++) {
+        		modes[i] = PyWavelets.MODE.MODE_ZEROPAD;	
+        	}
+        	PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[3];
+        	for (i = 0; i <  3; i++) {
+        		names[i] = PyWavelets.WAVELET_NAME.DB;
+        	}
+        	int orders[] = new int[3];
+        	for (i = 0; i < 3; i++) {
+        		orders[i] = 8;
+        	}
+        	int levels = 3;
+        	int numComponents = 7*levels + 1;
+        	int filterType[] = new int[numComponents];
+            double filterVal1[] = new double[numComponents];
+            double filterVal2[] = new double[numComponents];
+            int start_level = 0; // Only applies to PyWavelets.SWT
+            filterType[0] = PyWavelets.FILTER_NONE;
+        	for (i = 1; i < numComponents; i++) {
+        		filterType[i] = PyWavelets.FILTER_SOFT;
+        	}
+        	boolean showTransform = false;
+        	boolean showFilteredTransform = false;
+
+            // Make algorithm
+        	ModelImage resultImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "resultImage");
+            PyWavelets waveletAlgo = new PyWavelets(resultImage, diffImage, tType, names, orders, modes, axes, filterType, filterVal1, filterVal2,
+            		showTransform, showFilteredTransform, levels, start_level, doBayesShrinkThresholdComputation);
+            waveletAlgo.run();
+            try {
+                resultImage.exportData(0, length, inputDiff);
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException on resultImage.exportData(0, length, inputDiff)");
+                setCompleted(false);
+                return;
+            }
+            
+            waveletAlgo.finalize();
+            waveletAlgo = null;
+            diffImage.disposeLocal();
+            diffImage = null;
+            resultImage.disposeLocal();
+            resultImage = null;
+            for (i = 0; i < length; i++) {
+            	input[i] = input[i] + inputDiff[i];
+            }
+        } // if (doBayesShrinkThresholdComputation)
         try {
             if (destImage != null) {
                 destImage.importData(0, input, true);
