@@ -337,12 +337,14 @@ public class AlgorithmProstateBoundaryFeature2D extends AlgorithmBase implements
         double thresholdMultiplier = 3.6;
         int thresholdingType = AlgorithmRiceWaveletTools.HARD_THRESHOLDING;
         boolean thresholdLowPass = false;
+        boolean doBayesShrinkThresholdComputation = false;
         
         try {
             waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, redundant,
                               numberOfLevels, doWaveletImages, minimumLevel, maximumLevel, AlgorithmRiceWaveletTools.MINIMUM_PHASE,
                               doDenoise,  actualThreshold, 
-                              varianceEstimator, thresholdMultiplier, thresholdingType, thresholdLowPass);
+                              varianceEstimator, thresholdMultiplier, thresholdingType, thresholdLowPass,
+                              doBayesShrinkThresholdComputation);
             waveletAlgo.addListener(this);
             waveletAlgo.run();
             
