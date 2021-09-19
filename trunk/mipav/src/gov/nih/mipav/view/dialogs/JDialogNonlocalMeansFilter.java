@@ -114,6 +114,10 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private JCheckBox BayesCheckBox;
+	private boolean doBayesShrinkThresholdComputation = false;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -162,6 +166,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 textDegree.setEnabled(true);
                 estimateNoiseCheckBox.setEnabled(false);
                 estimateNoiseCheckBox.setSelected(false);
+                BayesCheckBox.setEnabled(false);
+                BayesCheckBox.setSelected(false);
                 labelNoiseStandardDeviation.setEnabled(true);
                 textNoiseStandardDeviation.setEnabled(true);
             }
@@ -169,6 +175,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 labelDegree.setEnabled(false);
                 textDegree.setEnabled(false);
                 estimateNoiseCheckBox.setEnabled(true);
+                BayesCheckBox.setEnabled(true);
             }
         } else if (source == estimateNoiseCheckBox) {
         	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
@@ -356,7 +363,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // Make algorithm
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(resultImage, image, searchWindowSide,
                                          similarityWindowSide, estimateNoiseStandardDeviation, noiseStandardDeviation, 
-                                         degreeOfFiltering, doRician, image25D);
+                                         degreeOfFiltering, doRician, image25D, doBayesShrinkThresholdComputation);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -394,7 +401,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // Make the algorithm class
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(null, image, searchWindowSide, 
                                         similarityWindowSide, estimateNoiseStandardDeviation, noiseStandardDeviation,
-                                        degreeOfFiltering, doRician, image25D);
+                                        degreeOfFiltering, doRician, image25D, doBayesShrinkThresholdComputation);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -467,6 +474,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         degreeOfFiltering = scriptParameters.getParams().getFloat("degree_of_filtering");
         doRician = scriptParameters.getParams().getBoolean("do_rician");
         image25D = scriptParameters.doProcess3DAs25D();
+        doBayesShrinkThresholdComputation = scriptParameters.getParams().getBoolean("do_Bayes");
     }
 
 
@@ -484,6 +492,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("degree_of_filtering", degreeOfFiltering));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_rician", doRician));
         scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_Bayes", doBayesShrinkThresholdComputation));
     }
 
     /**
@@ -582,6 +591,14 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         doRicianCheckBox.setSelected(false);
         doRicianCheckBox.addActionListener(this);
         paramPanel.add(doRicianCheckBox, gbc2);
+        
+        BayesCheckBox = new JCheckBox("Bayes shrink threshold computation");
+        BayesCheckBox.setFont(serif12);
+        BayesCheckBox.setForeground(Color.black);
+        BayesCheckBox.setSelected(false);
+        gbc2.gridx = 0;
+        gbc2.gridy++;
+        paramPanel.add(BayesCheckBox, gbc2);
         
         if (image.getNDims() > 2) {
             gbc2.gridx = 0;
@@ -729,6 +746,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         if (image.getNDims() > 2) {
             image25D = image25DCheckBox.isSelected();
         }
+        
+        doBayesShrinkThresholdComputation = BayesCheckBox.isSelected();
 
         return true;
     }
@@ -790,6 +809,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             table.put(new ParameterFloat("noise_standard_deviation",10f));
             table.put(new ParameterFloat("degree_of_filtering",1.414f));
             table.put(new ParameterBoolean("do_rician", false));
+            table.put(new ParameterBoolean("do_Bayes", false));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
