@@ -78,7 +78,7 @@ in its entirety appear in all copies of this code, and the original source of th
 in any publication that reports research using this code. The research
 is to be cited in the bibliography as:
 
-B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+B. K. Shreyamsha Kumar, "Image Denoising based on Non Local-means Filter and its Method Noise Thresholding", Signal,
 Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
 */
 
@@ -2896,7 +2896,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
           	  in any publication that reports research using this code. The research
           	is to be cited in the bibliography as:
 
-          	B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+          	B. K. Shreyamsha Kumar, "Image Denoising based on Non Local-means Filter and its Method Noise Thresholding", Signal,
           	 Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
           	 */
           	int i;

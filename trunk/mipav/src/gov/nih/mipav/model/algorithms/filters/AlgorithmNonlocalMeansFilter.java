@@ -19,7 +19,7 @@ import java.io.*;
  pp. 514-523.
  
  For post processing with Bayes shrink threshold computation:
- B. K. Shreyamsha Kumar, “Image Denoising based on Non Local-means Filter and its Method Noise Thresholding”, Signal,
+ B. K. Shreyamsha Kumar, "Image Denoising based on Non Local-means Filter and its Method Noise Thresholding", Signal,
  Image and Video Processing, Vol. 7, Issue 6, pp. 1211-1227, 2013. (doi: 10.1007/s11760-012-0389-y)
  unbiased nonlocal means (value) = sqrt((nonlocal means (value))**2 - 2* sigma**2)
  For Rician noise standard deviation = sqrt(background mean/2)
