@@ -5108,6 +5108,8 @@ public class PlugInAlgorithmTSPAnalysis extends AlgorithmBase implements MouseLi
 	 */
 	public void finalize() {
 		super.finalize();
+		
+		data = null;
 
 //        if (delay_mapImage != null) {
 //            delay_mapImage.disposeLocal();
