@@ -2548,7 +2548,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         //int dof = 9;
         //int dof = 12;
 
-        int searchAngle = 45;
+        int searchAngle = 30;
         int coarseAngle = 15;
         int fineAngle = 6;
 
