@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.file;
 
+
 import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
+
+import java.util.Collection;
+
 
 /**
  * A table containing dicom tags. Common tags are not stored here and instead
@@ -46,5 +50,14 @@ public class FileDicomSQItem extends FileDicomTagTable {
             return -1;
         }
         return getDataLength(includeTagInfo);
+    }
+    
+    /**
+     * Return the tag values store in this sequence tag. Does not return tags from the reference tag table.
+     * 
+     * @return A list of dicom tags contained in this sequence tag.
+     */
+    public Collection<FileDicomTag> getSequenceValues() {
+        return tagTable.values();
     }
 }

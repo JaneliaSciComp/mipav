@@ -3271,6 +3271,7 @@ public class FileDicom extends FileDicomBase {
             } else if ((nameSQ.matches(FileDicom.IMAGE_TAG)) || (nameSQ.matches(FileDicom.FLOAT_IMAGE_TAG)) ||
             		(nameSQ.matches(FileDicom.DOUBLE_IMAGE_TAG))) {
                 numEmbeddedImages++;
+                //dataSetflag = processNextTag(table, key, endianess, true);
                 seek(getFilePointer() + elementLength); // embedded image not displayed //TODO: make this image
                                                         // availbale in the dicom infobox
             }
@@ -4732,7 +4733,7 @@ public class FileDicom extends FileDicomBase {
         int samplesPerPixel = 1;
 
         if (fileInfo.getTagTable().getValue("0028,0002") != null) {
-            samplesPerPixel = ((Short) fileInfo.getTagTable().getTagList().get("0028,0002").getValue(false)).shortValue();
+            samplesPerPixel = ((Short) fileInfo.getTagTable().getValue("0028,0002", false)).shortValue();
         }
 
         final int imageLength = image.getSliceSize() * ((Short) fileInfo.getTagTable().getValue("0028,0100", false)).shortValue() / 8 * // bits

@@ -1939,13 +1939,13 @@ public class FileIO {
                             
                             Vector<FileDicomSQItem> seq = ((FileDicomSQ) tag4dTable.getValue("0018,9117", false)).getSequence();
                             for (FileDicomSQItem item : seq) {
-                                if (item.getTagList().containsKey(new FileDicomKey("0018,9087"))) {
-                                    String philipsBvalue = ((String) item.getTagList().get(new FileDicomKey("0018,9087")).getValue(true)).trim();
+                                if (item.containsTag(new FileDicomKey("0018,9087"))) {
+                                    String philipsBvalue = ((String) item.getValue("0018,9087", true)).trim();
                                     flBvalueArray[i] = getDoubleValOrAsciiVal(philipsBvalue);
                                 }
                                 
-                                if (item.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
-                                    String philipsGrads = ((String) item.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                if (item.containsTag(new FileDicomKey("0018,9089"))) {
+                                    String philipsGrads = ((String) item.getValue("0018,9089", true)).trim();
                                     final String grads = philipsGrads.replace('\\', '\t');
                                     final String[] arr2 = grads.split("\t");
                                     flGradientArray[i][0] = Double.valueOf(arr2[1]);
@@ -1954,11 +1954,11 @@ public class FileIO {
                                 }
                                 
                                 // DiffusionGradientDirectionSequence 0018,9076
-                                if (item.getTagList().containsKey(new FileDicomKey("0018,9076"))) {
+                                if (item.containsTag(new FileDicomKey("0018,9076"))) {
                                     Vector<FileDicomSQItem> seqGrad = ((FileDicomSQ) item.getValue("0018,9076", false)).getSequence();
                                     for (FileDicomSQItem itemGrad : seqGrad) {
-                                        if (itemGrad.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
-                                            String philipsGrads = ((String) itemGrad.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                        if (itemGrad.containsTag(new FileDicomKey("0018,9089"))) {
+                                            String philipsGrads = ((String) itemGrad.getValue("0018,9089", true)).trim();
                                             final String grads = philipsGrads.replace('\\', '\t');
                                             final String[] arr2 = grads.split("\t");
                                             flGradientArray[i][0] = Double.valueOf(arr2[1]);
@@ -2046,8 +2046,8 @@ public class FileIO {
                             
                             Vector<FileDicomSQItem> seq = ((FileDicomSQ) tagSliceTable.getValue("0018,9117", false)).getSequence();
                             for (FileDicomSQItem item : seq) {
-                                if (item.getTagList().containsKey(new FileDicomKey("0018,9087"))) {
-                                    final String philipsBvalue = ((String) item.getTagList().get(new FileDicomKey("0018,9087")).getValue(true)).trim();
+                                if (item.containsTag(new FileDicomKey("0018,9087"))) {
+                                    final String philipsBvalue = ((String) item.getValue("0018,9087", true)).trim();
                             
                                     boolean found = false;
                                     for (Double bVal : bValList) {
@@ -2061,8 +2061,8 @@ public class FileIO {
                                     }
 
                                     // Get Gradients from Philips Tags
-                                    if (item.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
-                                        String philipsGrads = ((String) item.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                    if (item.containsTag(new FileDicomKey("0018,9089"))) {
+                                        String philipsGrads = ((String) item.getValue("0018,9089", true)).trim();
                                         final String grads = philipsGrads.replace('\\', '\t');
                                         final String[] arr2 = grads.split("\t");
                                 
@@ -2086,11 +2086,11 @@ public class FileIO {
 
                                 
                                     // DiffusionGradientDirectionSequence 0018,9076
-                                    if (item.getTagList().containsKey(new FileDicomKey("0018,9076"))) {
+                                    if (item.containsTag(new FileDicomKey("0018,9076"))) {
                                         Vector<FileDicomSQItem> seqGrad = ((FileDicomSQ) item.getValue("0018,9076", false)).getSequence();
                                         for (FileDicomSQItem itemGrad : seqGrad) {
-                                            if (itemGrad.getTagList().containsKey(new FileDicomKey("0018,9089"))) {
-                                                String philipsGrads = ((String) itemGrad.getTagList().get(new FileDicomKey("0018,9089")).getValue(true)).trim();
+                                            if (itemGrad.containsTag(new FileDicomKey("0018,9089"))) {
+                                                String philipsGrads = ((String) itemGrad.getValue("0018,9089", true)).trim();
                                                 final String grads = philipsGrads.replace('\\', '\t');
                                                 final String[] arr2 = grads.split("\t");
                                                 

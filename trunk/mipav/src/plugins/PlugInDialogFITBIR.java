@@ -8756,13 +8756,7 @@ public class PlugInDialogFITBIR extends JFrame
 
             FileDicomTagTable tagTable = dicomInfo.getTagTable();
             
-            Vector<FileDicomTag> sequenceTags = new Vector<FileDicomTag>();
-            Hashtable<FileDicomKey, FileDicomTag> tagList = tagTable.getTagList();
-            for (FileDicomTag tag : tagList.values()) {
-                if (tag.getType() == FileDicomTagInfo.VR.SQ) {
-                    sequenceTags.add(tag);
-                }
-            }
+            Vector<FileDicomTag> sequenceTags = tagTable.getSeqTagList();
 
             for (String anonTagKey : anonymizeTagIDs) {
                 FileDicomTag tag = tagTable.get(anonTagKey);
@@ -8825,7 +8819,7 @@ public class PlugInDialogFITBIR extends JFrame
                 FileDicomSQ seqVal = (FileDicomSQ) value;
                 Vector<FileDicomSQItem> seqItems = seqVal.getSequence();
                 for (FileDicomSQItem item : seqItems) {
-                    for (FileDicomTag curTag : item.getTagList().values()) {
+                    for (FileDicomTag curTag : item.getSequenceValues()) {
                         if (doesTagExistWithValue(needleTagKey, curTag)) {
                             return true;
                         }

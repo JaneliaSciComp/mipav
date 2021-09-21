@@ -138,6 +138,53 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         return dicomTags;
     }
+    
+    /**
+     * Sorts the list of tags and returns it as an array in order.
+     *
+     * @param   tagList  A collection of tags to sort according to their keys.
+     *
+     * @return  The sorted list.
+     */
+    public static final FileDicomTag[] sortTagsList(Collection<FileDicomTag> tagList) {
+        FileDicomTag[] dicomTags;
+
+        try {
+            dicomTags = new FileDicomTag[tagList.size()];
+            int i = 0;
+            for (FileDicomTag t : tagList) {
+                dicomTags[i] = t;
+                i++;
+            }
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of Memory in FileInfoDicom.sortTagsList");
+
+            return null;
+        }
+
+        FileDicomTag temp;
+
+        for (int p = 1; p < dicomTags.length; p++) {
+            temp = dicomTags[p];
+
+            int gr = temp.getGroup();
+            int el = temp.getElement();
+            int j = p;
+
+            for (;
+                     (j > 0) &&
+                     ((gr < dicomTags[j - 1].getGroup()) ||
+                          ((gr == dicomTags[j - 1].getGroup()) && (el < dicomTags[j - 1].getElement()))); j--) {
+
+                dicomTags[j] = dicomTags[j - 1];
+            }
+
+            dicomTags[j] = temp;
+
+        }
+
+        return dicomTags;
+    }
 
     /**
      * Sets the list of tag tables which point to this as their reference tag table.
@@ -177,6 +224,34 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
+     * Returns whether the tag table contains a tag with the given key identifier, either in the reference tag table or the slice-specific table
+     *
+     * @param   keyStr  the string representing the key for this tag -- 'group,element'
+     *
+     * @return  whether a tag matching the given key is contained in this tag table (checks reference tag table).
+     */
+    public final boolean containsTag(String keyStr) {
+        return containsTag(new FileDicomKey(keyStr));
+    }
+
+    /**
+     * Returns whether the tag table contains a tag with the given key identifier, either in the reference tag table or the slice-specific table
+     *
+     * @param   key  the key for this tag
+     *
+     * @return  whether a tag matching the given key is contained in this tag table (checks reference tag table).
+     */
+    public final boolean containsTag(FileDicomKey key) {
+        if (tagTable.containsKey(key)) {
+            return true;
+        } else if (!isReferenceTagTable) {
+            return referenceTagTable.containsTag(key);
+        } else {
+            return false;
+        }
+    }
+    
+    /**
      * Returns whether this specific tag table contains a tag with the given key identifier, does not check the reference tag
      *          table
      *
@@ -184,7 +259,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @return  whether a tag matching the given key is contained in this tag table (does not check reference tag table).
      */
-    public final boolean containsTag(String keyStr) {
+    public final boolean containsUniqueTag(String keyStr) {
         return containsTag(new FileDicomKey(keyStr));
     }
 
@@ -197,7 +272,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @return  whether a tag matching the given key is contained in this tag table (does not check the reference tag
      *          table).
      */
-    public final boolean containsTag(FileDicomKey key) {
+    public final boolean containsUniqueTag(FileDicomKey key) {
         return tagTable.containsKey(key);
     }
 
@@ -293,13 +368,24 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * Returns a copy of all of the tags in this table, including tags from the reference tag table.
      *
      * @return  A copy of all of the dicom tags.
+     * 
+     * @deprecated See getTagListCopy()
+     */
+    public final Hashtable<FileDicomKey,FileDicomTag> getTagList() {
+        return getTagListCopy();
+    }
+    
+    /**
+     * Returns a copy of all of the tags in this table, including tags from the reference tag table.
+     *
+     * @return  A copy of all of the dicom tags.
      */
     @SuppressWarnings("unchecked")
-    public final Hashtable<FileDicomKey,FileDicomTag> getTagList() {
-	Hashtable<FileDicomKey,FileDicomTag> tagList;
+    public final Hashtable<FileDicomKey,FileDicomTag> getTagListCopy() {
+        Hashtable<FileDicomKey,FileDicomTag> tagList;
 
         if (!isReferenceTagTable) {
-            tagList = referenceTagTable.getTagList();
+            tagList = referenceTagTable.getTagListCopy();
 
             // merge (tags in this table take precedence)
             Enumeration<FileDicomKey> keys = this.tagTable.keys();
@@ -320,7 +406,62 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         return tagList;
     }
+    
+    /**
+     * Returns only the tags stored directly in this tag table, not including tags from the reference tag table.
+     *
+     * @return  The tags stored directly in this table.
+     */
+    public final Hashtable<FileDicomKey,FileDicomTag> getTagListUnique() {
+        return tagTable;
+    }
+    
+    /**
+     * Returns a list of the sequence tags in this tag table (and reference tag table).
+     *
+     * @return  A list of the sequence tags in this tag table (and reference tag table).
+     */
+    @SuppressWarnings("unchecked")
+    public final Vector<FileDicomTag> getSeqTagList() {
+        Vector<FileDicomTag> sequenceTags = new Vector<FileDicomTag>();
+        
+        if (!isReferenceTagTable) {
+            sequenceTags = referenceTagTable.getSeqTagList();
+            
+            Vector<FileDicomTag> refSeqTags = (Vector<FileDicomTag>) sequenceTags.clone();
 
+            // merge (tags in this table take precedence)
+            Collection<FileDicomTag> tags = this.tagTable.values();
+
+            for (FileDicomTag myTag : tags) {
+                // if the tag key was also in the reference table, remove it before replacing it with the non-reference one
+                for (FileDicomTag refTag : refSeqTags) {
+                    if (refTag.getKey().equals(myTag.getKey())) {
+                        sequenceTags.remove(refTag);
+                        refSeqTags.remove(refTag);
+                        break;
+                    }
+                }
+                
+                sequenceTags.add(myTag);
+            }
+        } else {
+            for (FileDicomTag tag : this.tagTable.values()) {
+                if (tag.getType() == FileDicomTagInfo.VR.SQ) {
+                    sequenceTags.add(tag);
+                }
+            }
+        }
+        
+//        //pixel data should never be an element in the tag list.
+//        @SuppressWarnings("unused")
+//        FileDicomTag t = tagList.remove(new FileDicomKey(0x7FE0,0x0010));
+//        t = tagList.remove(new FileDicomKey(0x7FE0,0x0008));
+//        t = tagList.remove(new FileDicomKey(0x7FE0,0x0009));
+
+        return sequenceTags;
+    }
+    
     /**
      * @return the referenceTagTable
      */
@@ -347,6 +488,27 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         return tag.getValue(true);
     }
+    
+    /**
+     * Returns the value matching the key as a Java data element
+     * <code>get(key).getValue(parse)</code>.
+     *
+     * @param   key  the key to search for
+     * @param   parse   whether to parse the tag value to a non-coded string
+     *
+     * @return  the value that this key matches to as a String for output
+     *
+     * @see     FileDicomTag#getValue(boolean)
+     */
+    public final Object getValue(FileDicomKey key, boolean parse) {
+        FileDicomTag tag = get(key);
+
+        if (tag == null) {
+            return null;
+        }
+
+        return tag.getValue(parse);
+    }
 
     /**
      * Returns the value matching the key as a meaningful (ie., non-coded) string . This is the equivalent of calling
@@ -367,6 +529,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * <code>get(keyStr).getValue(parse)</code>.
      *
      * @param   keyStr  the hexidecimal key to search for -- 'group,element'
+     * @param   parse   whether to parse the tag value to a non-coded string
      *
      * @return  the value that this key matches to as a String for output
      *
@@ -405,9 +568,9 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             // the reference table needs _all_ of the tags from the src dicom info, not just the ones unique to that
             // slice (in case the src dicom info is non-reference).  this direct assignment works since getTagList()
             // returns a deep copy of the tag Hashtable
-            tagTable = (Hashtable<FileDicomKey, FileDicomTag>) srcDicomInfo.getTagTable().getTagList();
+            tagTable = (Hashtable<FileDicomKey, FileDicomTag>) srcDicomInfo.getTagTable().getTagListCopy();
         } else {
-            Hashtable<FileDicomKey,FileDicomTag> srcTagList = srcDicomInfo.getTagTable().getTagList();
+            Hashtable<FileDicomKey,FileDicomTag> srcTagList = srcDicomInfo.getTagTable().getTagListCopy();
             Enumeration<FileDicomKey> srcTagKeys = srcTagList.keys();
 
             while (srcTagKeys.hasMoreElements()) {
@@ -716,6 +879,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     		tagTable.clear();
     	}
         tagTable = null;
-
+    }
+    
+    /**
+     * Returns true if this dicom tag table is a root tag table, not attached to a reference table.
+     * @return true if this dicom tag table is a root tag table, not attached to a reference table.
+     */
+    public boolean isReferenceTagTable() {
+        return isReferenceTagTable;
     }
 }
