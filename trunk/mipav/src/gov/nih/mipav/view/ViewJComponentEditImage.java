@@ -1757,7 +1757,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * 
      * @param flag if true garbage collector should be called.
      */
-    public void disposeLocal(final boolean flag) {
+    public void dispose(final boolean flag) {
         imageBufferA = null;
         imageBufferB = null;
         pixBuffer = null;
@@ -1801,6 +1801,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         //}
 
         //voiHandler = null;
+        
+        if (m_kPatientSlice != null) {
+            m_kPatientSlice.disposeLocal();
+            m_kPatientSlice = null;
+        }
 
         if (growDialog != null) {
 
@@ -1822,7 +1827,17 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if (flag == true) {
             super.disposeLocal();
         }
-
+    }
+    
+    /**
+     * Sets all variables to null, disposes, and garbage collects. Old method that does not match up with signature from VJCBase.
+     * 
+     * @param flag if true garbage collector should be called.
+     * 
+     * @deprecated Old method that does not match up with signature from VJCBase.
+     */
+    public void disposeLocal(final boolean flag) {
+        dispose(flag);
     }
 
     /**

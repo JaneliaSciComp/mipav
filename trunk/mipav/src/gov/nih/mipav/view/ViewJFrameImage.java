@@ -3347,7 +3347,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void finalize() throws Throwable {
 
         if (componentImage != null) {
-            componentImage.dispose(false);
+            componentImage.dispose(true);
         }
 
         componentImage = null;

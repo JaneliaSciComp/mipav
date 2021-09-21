@@ -826,9 +826,29 @@ public class FileInfoDicom extends FileInfoBase {
      */
     private final void setInfoFromTags(FileDicomTagTable tagTable, boolean insideSequenceTag) {
         HashMap<Integer, LengthStorageUnit> lengthComp = new HashMap<Integer, LengthStorageUnit>();
-        Iterator<Entry<FileDicomKey,FileDicomTag>> itr = tagTable.getTagList().entrySet().iterator();
+        
+        Iterator<Entry<FileDicomKey,FileDicomTag>> itr;
         FileDicomTag tag = null;
        
+        // pull tags from reference table if not in a sequence if this a child tag table
+        if (!insideSequenceTag && !tagTable.isReferenceTagTable()) {
+            itr = tagTable.getReferenceTagTable().getTagListUnique().entrySet().iterator();
+            while(itr.hasNext()) {
+                tag = itr.next().getValue();
+                if(!insideSequenceTag && tag.getElement() != 0) {
+                    appendLengthTag(tag, lengthComp);
+                }
+                if(tag.getValue(false) instanceof FileDicomSQ) {
+                    FileDicomSQ sq = (FileDicomSQ) tag.getValue(false);
+                    for(int i=0; i<sq.getSequence().size(); i++) {
+                        setInfoFromTags(sq.getSequence().get(i), true);
+                    }
+                }
+                setInfoFromTag(tag);
+            }
+        }
+        
+        itr = tagTable.getTagListUnique().entrySet().iterator();
         while(itr.hasNext()) {
             tag = itr.next().getValue();
             if(!insideSequenceTag && tag.getElement() != 0) {

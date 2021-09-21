@@ -145,7 +145,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
 
         for (int i = 0; i < sequence.size(); i++) {
             display.add("Sequence Element");
-            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(sequence.get(i).getTagList());
+            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(sequence.get(i).getSequenceValues());
             for(int j=0; j<tagList.length; j++) {
                 display.add(tagList[j].getKey()+": "+tagList[j].getKeyword()+"\t"+tagList[j].getValue(true));
             }
