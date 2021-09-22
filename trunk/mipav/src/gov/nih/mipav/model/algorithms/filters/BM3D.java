@@ -77,25 +77,25 @@ public class BM3D extends AlgorithmBase {
 	private double sigma; 
 	
 	// Hard thresholding search window size
-	private int n_H;
+	private int n_H = 16;
 	
 	// Hard thresholding patch size
-	private int k_H;
+	private int k_H = 8;
 	
 	// Hard thresholding maximum number of similar patches kept
-	private int N_H;
+	private int N_H = 16;
 	
 	// Hard thresholding  In order to speed up the processing, the loop over of the pixels of the
 	// image is done with a step p (integer) in row and column.  For example if p = 3 the algorithm
 	// is accelerated by a 9 factor.
-	private int p_H;
+	private int p_H = 3;
 	
 	// Hard thresholding maximum threshold for the distance between two similar patches
 	// tauMatch_H = 2500 if sigma < 40 and 5000 otherwise.  Moreover, if N_H >= 32, this
 	// threshold is multiplied by a factor of 5.
 	private double tauMatch_H;
 	
-	private boolean useSD_H;
+	private boolean useSD_H = false;
 	
 	// Threshold for 2D transform applied to each patch of the 3D group.  This threshold only
 	// appears for sigma > 40 since tau_2D_H = 0 for sigma <= 40.  Applying a theshold to the
@@ -104,50 +104,47 @@ public class BM3D extends AlgorithmBase {
 	// degraded.  tau_2D_H is a Bior1.5 transform whatever the value of sigma.  For the 
 	// bi-orthogonal spline wavelet the vanishing moments of the  decomposing and reconstructing
 	// wavelete functions are 1 and 5 repectively.
-	private double tau_2D_H;
+	private String tau_2D_H = "BIOR";
 	
-	// Coefficient thresholding level of the 3D group in the transform domain during the first
+	// Coefficient hard thresholding level of the 3D group in the transform domain during the first
 	// filtering sub-step.  The chosen value is 2.7.
-	private double lambda3D_H;
+	private double lambda3D_H = 2.7;
 	
 	// Wiener thresholding search window size
-    private int n_W;
+    private int n_W = 16;
     
     // Wiener thresholding patch size
- 	private int k_W;
+ 	private int k_W = 8;
  	
     // Wiener thresholding maximum number of similar patches kept
- 	private int N_W;
+ 	private int N_W = 32;
  	
     // Wiener thresholding  In order to speed up the processing, the loop over of the pixels of the
  	// image is done with a step p (integer) in row and column.  For example if p = 3 the algorithm
  	// is accelerated by a 9 factor.
- 	private int p_W;
+ 	private int p_W = 3;
  	
     // Wiener thresholding maximum threshold for the distance between two similar patches
  	// tauMatch_W = 400 is a good value for sigma between 0 and 40
  	private double tauMatch_W;
  	
- 	private boolean useSD_W;
+ 	private boolean useSD_W = true;
  	
     // Threshold for 2D transform applied to each patch of the 3D group.
  	// A 2D DCT transform is used.
- 	private double tau_2D_W;
+ 	private String tau_2D_W = "DCT";
 	
-	public BM3D(ModelImage destImage, ModelImage srcImg, double sigma, int n_H, int k_H, int N_H,
-			int p_H, double tauMatch_H, boolean useSD_H, double tau_2D_H, double lambda3D_H,
-			int n_W, int k_W, int N_W, int p_W, double tauMatch_W, boolean useSD_W, double tau_2D_W) {
+	public BM3D(ModelImage destImage, ModelImage srcImg, double sigma, int n_H, int N_H,
+			int p_H, boolean useSD_H, String tau_2D_H, double lambda3D_H,
+			int n_W, int N_W, int p_W, boolean useSD_W, String tau_2D_W) {
 		super(destImage, srcImg);
 		this.sigma = sigma;
 		this.n_H = n_H;
-		this.k_H = k_H;
 		this.p_H = p_H;
-		this.tauMatch_H = tauMatch_H;
 		this.useSD_H = useSD_H;
 		this.tau_2D_H = tau_2D_H;
 		this.lambda3D_H = lambda3D_H;
 		this.n_W = n_W;
-		this.k_W = k_W;
 		this.N_W = N_W;
 		this.p_W = p_W;
 		this.useSD_W = useSD_W;
@@ -155,6 +152,108 @@ public class BM3D extends AlgorithmBase {
 	}
 	
 	public void runAlgorithm() {
+		int x, y;
+		if (srcImage == null) {
+            displayError("Source Image is null");
+
+            return;
+        }
 		
+		if (sigma < 35.0) {
+		    tauMatch_H = 2500.0;	
+		}
+		else {
+			tauMatch_H = 5000.0;
+		}
+		
+		if (sigma < 35.0) {
+		    tauMatch_W = 400.0;	
+		}
+		else {
+			tauMatch_W = 3500.0;
+		}
+		
+		if ((tau_2D_H == "BIOR") || (sigma < 40.)) {
+			k_H = 8;
+		}
+		else {
+			k_H = 12;
+		}
+		
+		
+		if ((tau_2D_W == "BIOR") || (sigma < 40.)) {
+			k_W = 8;
+		}
+		else {
+			k_W = 12;
+		}
+		
+		int xDim = srcImage.getExtents()[0];
+		int yDim = srcImage.getExtents()[1];
+		int length = xDim * yDim;
+		double noisy_im[] = new double[length];
+		try {
+			srcImage.exportData(0, length, noisy_im);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOExcception on srcImage.exportData(0, length, noisy_im)");
+			setCompleted(false);
+			return;
+		}
+		
+		// Symmetric reflection padding
+		int paddedXDim = xDim + 2*n_H;
+		int paddedYDim = yDim + 2*n_H;
+		int paddedLength = paddedXDim * paddedYDim;
+		double noisy_im_p_buffer[] = new double[paddedLength];
+		for (y = 0; y < n_H; y++) {
+			for (x = 0; x < n_H; x++) {
+				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(n_H - 1 - y)*xDim + (n_H - 1 - x)];
+			}
+			
+			for (x = xDim + n_H; x < xDim + 2*n_H; x++) {
+				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(n_H - 1 - y)*xDim + 2*xDim + n_H - 1 - x];
+			}
+		}
+		
+		for (y = yDim + n_H; y < yDim + 2*n_H; y++) {
+			for (x = 0; x < n_H; x++) {
+				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(2*yDim + n_H - 1 - y)*xDim + (n_H - 1 - x)];
+			}
+			
+			for (x = xDim + n_H; x < xDim + 2*n_H; x++) {
+				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(2*yDim + n_H - 1 - y)*xDim + 2*xDim + n_H - 1 - x];
+			}
+		}
+		
+		for (y = n_H; y < yDim + n_H; y++) {
+			for (x = n_H; x < xDim + n_H; x++) {
+				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(y - n_H)*xDim + x - n_H];
+			}
+		}
+		
+		int paddedExtents[] = new int[] {paddedXDim, paddedYDim};
+		ModelImage noisy_im_p = new ModelImage(ModelStorageBase.DOUBLE, paddedExtents, "noisy_im_p");
+		try {
+			noisy_im_p.importData(0, noisy_im_p_buffer, true);
+		}
+		catch(IOException e) {
+			MipavUtil.displayError("IOException on noisy_im_p.importData(0, noisy_im_p_buffer, true)");
+			setCompleted(false);
+			return;
+		}
+		
+		double img_basic[] = bm3d_1st_step(sigma, noisy_im_p, n_H, k_H, N_H, p_H, lambda3D_H, tauMatch_H, useSD_H, tau_2D_H);
+	}
+	
+	private double[] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
+			double tauMatch, boolean useSD, String tau_2D) {
+	    int width = img_noisy.getExtents()[0];
+	    int height = img_noisy.getExtents()[1];
+	    int length = width*height;
+	    double numerator[] = new double[length];
+	    double denominator[] = new double[length];
+	    double img_basic[] = new double[length];
+	    return img_basic;
 	}
 }
