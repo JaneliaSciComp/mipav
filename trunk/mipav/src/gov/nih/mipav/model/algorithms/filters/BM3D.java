@@ -70,6 +70,7 @@ import java.io.*;
 	2012-08-08.
 
  */
+import java.util.Vector;
 
 public class BM3D extends AlgorithmBase {
 	
@@ -188,62 +189,66 @@ public class BM3D extends AlgorithmBase {
 			k_W = 12;
 		}
 		
-		int xDim = srcImage.getExtents()[0];
-		int yDim = srcImage.getExtents()[1];
+		ModelImage noisy_im_p = symetrize(srcImage, n_H);
+		
+		double img_basic[] = bm3d_1st_step(sigma, noisy_im_p, n_H, k_H, N_H, p_H, lambda3D_H, tauMatch_H, useSD_H, tau_2D_H);
+	}
+	
+	private ModelImage symetrize(ModelImage img, int pad) {
+		int x,y;
+		int xDim = img.getExtents()[0];
+		int yDim = img.getExtents()[1];
 		int length = xDim * yDim;
-		double noisy_im[] = new double[length];
+		double buf[] = new double[length];
 		try {
-			srcImage.exportData(0, length, noisy_im);
+			img.exportData(0, length, buf);
 		}
 		catch (IOException e) {
-			MipavUtil.displayError("IOExcception on srcImage.exportData(0, length, noisy_im)");
-			setCompleted(false);
-			return;
+			MipavUtil.displayError("IOException on img.exportData(0, length, buf)");
+			System.exit(-1);
 		}
 		
 		// Symmetric reflection padding
-		int paddedXDim = xDim + 2*n_H;
-		int paddedYDim = yDim + 2*n_H;
+		int paddedXDim = xDim + pad;
+		int paddedYDim = yDim + pad;
 		int paddedLength = paddedXDim * paddedYDim;
-		double noisy_im_p_buffer[] = new double[paddedLength];
-		for (y = 0; y < n_H; y++) {
-			for (x = 0; x < n_H; x++) {
-				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(n_H - 1 - y)*xDim + (n_H - 1 - x)];
+		double padBuf[] = new double[paddedLength];
+		for (y = 0; y < pad; y++) {
+			for (x = 0; x < pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(pad - 1 - y)*xDim + (pad - 1 - x)];
 			}
 			
-			for (x = xDim + n_H; x < xDim + 2*n_H; x++) {
-				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(n_H - 1 - y)*xDim + 2*xDim + n_H - 1 - x];
+			for (x = xDim + pad; x < xDim + 2*pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(pad - 1 - y)*xDim + 2*xDim + pad - 1 - x];
 			}
 		}
 		
-		for (y = yDim + n_H; y < yDim + 2*n_H; y++) {
-			for (x = 0; x < n_H; x++) {
-				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(2*yDim + n_H - 1 - y)*xDim + (n_H - 1 - x)];
+		for (y = yDim + pad; y < yDim + 2*pad; y++) {
+			for (x = 0; x < pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(2*yDim + pad - 1 - y)*xDim + (pad - 1 - x)];
 			}
 			
-			for (x = xDim + n_H; x < xDim + 2*n_H; x++) {
-				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(2*yDim + n_H - 1 - y)*xDim + 2*xDim + n_H - 1 - x];
+			for (x = xDim + pad; x < xDim + 2*pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(2*yDim + pad - 1 - y)*xDim + 2*xDim + pad - 1 - x];
 			}
 		}
 		
-		for (y = n_H; y < yDim + n_H; y++) {
-			for (x = n_H; x < xDim + n_H; x++) {
-				noisy_im_p_buffer[y*paddedXDim + x] = noisy_im[(y - n_H)*xDim + x - n_H];
+		for (y = pad; y < yDim + pad; y++) {
+			for (x = pad; x < xDim + pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(y - pad)*xDim + x - pad];
 			}
 		}
 		
 		int paddedExtents[] = new int[] {paddedXDim, paddedYDim};
-		ModelImage noisy_im_p = new ModelImage(ModelStorageBase.DOUBLE, paddedExtents, "noisy_im_p");
+		ModelImage padImage = new ModelImage(ModelStorageBase.DOUBLE, paddedExtents, "padImage");
 		try {
-			noisy_im_p.importData(0, noisy_im_p_buffer, true);
+			padImage.importData(0, padBuf, true);
 		}
 		catch(IOException e) {
-			MipavUtil.displayError("IOException on noisy_im_p.importData(0, noisy_im_p_buffer, true)");
-			setCompleted(false);
-			return;
+			MipavUtil.displayError("IOException on padImage.importData(0, padBuf, true)");
+			System.exit(-1);
 		}
-		
-		double img_basic[] = bm3d_1st_step(sigma, noisy_im_p, n_H, k_H, N_H, p_H, lambda3D_H, tauMatch_H, useSD_H, tau_2D_H);
+		return padImage;
 	}
 	
 	private double[] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
@@ -251,9 +256,77 @@ public class BM3D extends AlgorithmBase {
 	    int width = img_noisy.getExtents()[0];
 	    int height = img_noisy.getExtents()[1];
 	    int length = width*height;
+	    
+	    int row_ind[] = ind_initialize(height - kHard + 1, nHard, pHard);
+	    int column_ind[] = ind_initialize(width - kHard + 1, nHard, pHard);
+	    
+	    //kaiserWindow = get_kaiserWindow(kHard);
 	    double numerator[] = new double[length];
 	    double denominator[] = new double[length];
 	    double img_basic[] = new double[length];
 	    return img_basic;
+	}
+	
+	/*def get_kaiserWindow(kHW):
+	    k = np.kaiser(kHW, 2)
+	    k_2d = k[:, np.newaxis] @ k[np.newaxis, :]
+	    return k_2d*/
+	
+	private double[] kaiser(int M, double beta) {
+		// M is the number of points in the output window\
+		// If zero or less, an empty array is returned
+		
+		// beta shape parameter for window
+		
+		// Returns double[] out 
+		// The window with the maximum value normalized to one (the value one
+		// appears only if the number of samples is odd).
+		int i, n;
+		if (M <= 0) {
+			return null;
+		}
+		
+		double out[] = new double[M];
+		double realArg;
+		double imagArg = 0.0;
+		double initialOrder = 0.0;
+		int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+    	double realResult[] = new double[1];
+    	double imagResult[] = new double[1];
+    	int[] nz = new int[1];
+		int[] errorFlag = new int[1];
+		for (i = 0, n = -(M-1)/2; n <= (M-1)/2; i++, n++) {
+			realArg = beta*Math.sqrt(1.0 - 4.0*n*n/((M-1.0)*(M-1.0)));
+			Bessel numBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
+					Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+					nz, errorFlag);
+			numBessel.run();
+			double numResult = realResult[0];
+			realArg = beta;
+			Bessel denomBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
+					Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+					nz, errorFlag);
+			denomBessel.run();
+			double denomResult = realResult[0];
+			out[i] = numResult/denomResult;
+		}
+		return out;
+	}
+	
+	private int[] ind_initialize(int max_size, int N, int step) {
+		int i;
+		Vector<Integer>vecInd = new Vector<Integer>();
+		for (i = N; i < max_size - N; i += step) {
+			vecInd.add(i);
+		}
+		if (vecInd.lastElement() < max_size - N - 1) {
+		    vecInd.add(max_size - N - 1);
+		}
+		int ind[] = new int[vecInd.size()];
+		for (i = 0; i < vecInd.size(); i++) {
+			ind[i] = vecInd.get(i);
+		}
+	    vecInd.clear();
+	    return ind;
 	}
 }
