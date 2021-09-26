@@ -260,17 +260,55 @@ public class BM3D extends AlgorithmBase {
 	    int row_ind[] = ind_initialize(height - kHard + 1, nHard, pHard);
 	    int column_ind[] = ind_initialize(width - kHard + 1, nHard, pHard);
 	    
-	    //kaiserWindow = get_kaiserWindow(kHard);
+	    double kaiserWindow[][] = get_kaiserWindow(kHard);
+	    int threshold_count[] = new int[1];
+	    double ri_rj_N__ni_nj[][][] = precompute_BM(img_noisy, kHard, NHard, nHard, tauMatch, threshold_count);
 	    double numerator[] = new double[length];
 	    double denominator[] = new double[length];
 	    double img_basic[] = new double[length];
 	    return img_basic;
 	}
 	
-	/*def get_kaiserWindow(kHW):
-	    k = np.kaiser(kHW, 2)
-	    k_2d = k[:, np.newaxis] @ k[np.newaxis, :]
-	    return k_2d*/
+	private double[][][] precompute_BM(ModelImage img, int kHW, int NHW, int nHW, double tauMatch, int[] threshold_count) {
+		// search for similar patches
+	    // img: input image type ModelStorageBase.DOUBLE
+	    // kHW: length of side of patch
+	    // NHW: how many patches are stacked
+	    // nHW: length of side of search area
+	    // tauMatch: threshold determine whether two patches are similar
+	    // return ri_rj_N__ni_nj: The top N most similar patches to the referred patch
+	    // return threshold_count: according to tauMatch how many patches are similar to the referred one
+		int i,j,h,w;
+		int width = img.getExtents()[0];
+		int height = img.getExtents()[1];
+		int Ns = 2 * nHW + 1;
+	    double threshold = tauMatch * kHW * kHW;
+	    // di, dj, ph, pw
+	    double sum_table[][][][] = new double[Ns][Ns][height][width];
+	    for (i = 0; i < Ns; i++) {
+	    	for (j = 0; j < Ns; j++) {
+	    		for (h = 0; h < height; h++) {
+	    			for (w = 0; w < width; w++) {
+	    				sum_table[i][j][h][w] = 2 * threshold;
+	    			}
+	    		}
+	    	}
+	    }
+	    double ri_rj_N__ni_nj[][][] = null;
+	    return ri_rj_N__ni_nj;
+	}
+	
+	private double[][] get_kaiserWindow(int kHW) {
+	    int i,j;
+	    double k[] = kaiser(kHW, 2);
+	    double k_2d[][] = new double[k.length][k.length];
+	    for (i = 0; i < k.length; i++) {
+	    	for (j = 0; j < k.length; j++) {
+	    		k_2d[i][j] = k[i]*k[j];
+	    	}
+	    }
+	    return k_2d;
+	}
 	
 	private double[] kaiser(int M, double beta) {
 		// M is the number of points in the output window\
@@ -295,6 +333,7 @@ public class BM3D extends AlgorithmBase {
     	double imagResult[] = new double[1];
     	int[] nz = new int[1];
 		int[] errorFlag = new int[1];
+		double maxValue = - Double.MAX_VALUE;
 		for (i = 0, n = -(M-1)/2; n <= (M-1)/2; i++, n++) {
 			realArg = beta*Math.sqrt(1.0 - 4.0*n*n/((M-1.0)*(M-1.0)));
 			Bessel numBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
@@ -309,6 +348,14 @@ public class BM3D extends AlgorithmBase {
 			denomBessel.run();
 			double denomResult = realResult[0];
 			out[i] = numResult/denomResult;
+			if (out[i] > maxValue) {
+				maxValue = out[i];
+			}
+		}
+		if ((M % 2) == 1) {
+			for (i = 0; i < M; i++) {
+				out[i] = out[i]/maxValue;
+			}
 		}
 		return out;
 	}
