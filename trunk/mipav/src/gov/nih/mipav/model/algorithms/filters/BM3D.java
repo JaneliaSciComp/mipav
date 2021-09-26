@@ -7,6 +7,9 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 /*
  * This is a port of the GITHUB code BM3D_py-master.
  * The README.md file has:
@@ -71,6 +74,8 @@ import java.io.*;
 
  */
 import java.util.Vector;
+
+import Jama.Matrix;
 
 public class BM3D extends AlgorithmBase {
 	
@@ -278,9 +283,24 @@ public class BM3D extends AlgorithmBase {
 	    // tauMatch: threshold determine whether two patches are similar
 	    // return ri_rj_N__ni_nj: The top N most similar patches to the referred patch
 	    // return threshold_count: according to tauMatch how many patches are similar to the referred one
-		int i,j,h,w;
+		int i,j,h,w,di,dj;
 		int width = img.getExtents()[0];
 		int height = img.getExtents()[1];
+		int length = width * height;
+		double buf[] = new double[length];
+		try {
+			img.exportData(0, length, buf);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException on img.exportData(0, length, buf) in precompute_BM");
+			System.exit(-1);
+		}
+		double img_buf[][] = new double[height][width];
+		for (i = 0; i < height; i++) {
+			for (j = 0; j < width; j++) {
+				img_buf[i][j] = buf[i*width + j];
+			}
+		}
 		int Ns = 2 * nHW + 1;
 	    double threshold = tauMatch * kHW * kHW;
 	    // di, dj, ph, pw
@@ -294,8 +314,201 @@ public class BM3D extends AlgorithmBase {
 	    		}
 	    	}
 	    }
+	    double row_add_mat[][] = new double[height][height];
+	    double column_add_mat[][] = new double[width][width];
+	    get_add_patch_matrix(height, width, nHW, kHW, row_add_mat, column_add_mat);
+	    double diff_margin[][] = new double[height][width];
+	    for (i = nHW; i < height - nHW; i++) {
+	    	for (j = nHW; j < width - nHW; j++) {
+	    		diff_margin[i][j] = 1.0;
+	    	}
+	    }
+	    double sum_margin[][] = new double[height][width];
+	    for (i = 0; i < height; i++) {
+	    	for (j = 0; j < width; j++) {
+	    		sum_margin[i][j] = (1 - diff_margin[i][j]) * 2 * threshold;
+	    	}
+	    }
+	    
+	    double diff_table_2[][] = new double[height][width];
+	    double sum_diff_2[][];
+	    for (di = -nHW; di < nHW + 1; di++) {
+	        for (dj = -nHW; dj < nHW + 1; dj++) {
+	        	double t_img[][] = translation_2d_mat(img_buf, -dj, -di);
+	        	for (i = 0; i < height; i++) {
+	        		for (j = 0; j < width; j++) {
+	        			diff_table_2[i][j] = (img_buf[i][j]- t_img[i][j]) * (img_buf[i][j] - t_img[i][j]) * diff_margin[i][j];
+	        		}
+	        	}
+	        	
+	        	sum_diff_2 = (((new Matrix(row_add_mat)).times(new Matrix(diff_table_2))).times(new Matrix(column_add_mat))).getArray();
+	        	// # sum_table (2n+1, 2n+1, height, width)
+	        	for (i = 0; i < height; i++) {
+	        		for (j = 0; j < width; j++) {
+	        			sum_table[di + nHW][dj + nHW][i][j] = Math.max(sum_diff_2[i][j], sum_margin[i][j]);
+	        		}
+	        	}
+	        } // for (dj = -nHW; dj < nHW + 1; dj++)
+	    } // for (di = -nHW; di < nHW + 1; di++)
+	    // di_dj, ph_pw
+	    double sum_table_reshape[][] = new double[Ns * Ns][length];
+	    for (i = 0; i < Ns; i++) {
+	    	for (j = 0; j < Ns; j++) {
+	    		for (h = 0; h < height; h++) {
+	    			for (w = 0; w < width; w++) {
+	    				sum_table_reshape[i*Ns + j][h*width + w] = sum_table[i][j][h][w];
+	    			}
+	    		}
+	    	}
+	    }
+	    // ph_pw__di_dj
+	    double sum_table_T[][] = new double[length][Ns * Ns];
+	    for (i = 0; i < Ns * Ns; i++) {
+	    	for (j = 0; j < length; j++) {
+	    		sum_table_T[j][i] = sum_table_reshape[i][j];
+	    	}
+	    }
+	    int argsort[][] = new int[length][NHW];
+	    ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+	    for (i = 0; i < length; i++) {
+	    	indexValueList.clear();
+	    	for (j = 0; j < Ns * Ns; j++) {
+	    		indexValueList.add(new indexValueItem(j, sum_table_T[i][j]));
+	    	}
+	    	Collections.sort(indexValueList, new indexValueComparator());
+	    	for (j = 0; j < NHW; j++) {
+	    		argsort[i][j] = indexValueList.get(j).getIndex();
+	    	}
+	    }
+	    for (i = 0; i < length; i++) {
+	    	argsort[i][0] = (Ns * Ns - 1)/2;
+	    }
+	    int argsort_di[][] = new int[length][NHW];
+	    for (i = 0; i < length; i++) {
+	    	for (j = 0; j < NHW; j++) {
+	    		argsort_di[i][j] = argsort[i][j] / Ns - nHW;
+	    	}
+	    }
+	    int argsort_dj[][] = new int[length][NHW];
+	    for (i = 0; i < length; i++) {
+	    	for (j = 0; j < NHW; j++) {
+	    		argsort_dj[i][j] = argsort[i][j] % Ns - nHW;
+	    	}
+	    }
+	    //near_pi = argsort_di.reshape((height, width, -1)) + np.arange(height)[:, np.newaxis, np.newaxis]
 	    double ri_rj_N__ni_nj[][][] = null;
 	    return ri_rj_N__ni_nj;
+	}
+	
+	private class indexValueComparator implements Comparator<indexValueItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(indexValueItem o1, indexValueItem o2) {
+            double a = o1.getValue();
+            double b = o2.getValue();
+            int i = o1.getIndex();
+            int j = o2.getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else if (i < j) {
+            	return -1;
+            } else if (i > j) {
+            	return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+	
+	private class indexValueItem {
+		private int index;
+		private double value;
+		
+		public indexValueItem(int index, double value) {
+			this.index = index;
+			this.value = value;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public double getValue() {
+			return value;
+		}
+		
+		
+	}
+	
+	private void get_add_patch_matrix(int h, int w, int nHW, int kHW, double[][] row_add_mat, double[][] column_add_mat) {
+		int i, j, k;
+	    double row_add_pad[][] = new double[h][h];
+	    for (i = h; i < h - nHW; i++) {
+	    	row_add_pad[i][i] = 1.0;
+	    	row_add_mat[i][i] = 1.0;
+	    }
+	    for (k = 1; k < kHW; k++) {
+	    	double trans_mat[][] = translation_2d_mat(row_add_pad, k, 0);
+	    	for (i = 0; i < h; i++) {
+	    		for (j = 0; j < h; j++) {
+	    			row_add_mat[i][j] += trans_mat[i][j];
+	    		}
+	    	}
+	    } // for (k = 1; k < kHW; k++)
+	    
+	    double column_add_pad[][] = new double[w][w];
+	    for (i = w; i < w - nHW; i++) {
+	    	column_add_pad[i][i] = 1.0;
+	    	column_add_mat[i][i] = 1.0;
+	    }
+	    for (k = 1; k < kHW; k++) {
+	    	double trans_mat[][] = translation_2d_mat(column_add_pad, 0, k);
+	    	for (i = 0; i < w; i++) {
+	    		for (j = 0; j < w; j++) {
+	    			column_add_mat[i][j] += trans_mat[i][j];
+	    		}
+	    	}
+	    } // for (k = 1; k < kHW; k++)
+	}
+	
+	private double[][] translation_2d_mat(double mat[][], int right, int down) {
+		int i, j, iroll, jroll;
+		double roll_mat[][] = new double[mat.length][mat[0].length];
+		for (i = 0; i < mat.length; i++) {
+			if (down >= 0) {
+			    iroll = (i + down)%mat.length;
+			}
+			else {
+				iroll = i + down;
+				while (iroll < 0) {
+					iroll += mat.length;
+				}
+			}
+			for (j = 0; j < mat[0].length; j++) {
+				if (right >= 0) {
+				    jroll = (j + right)%mat[0].length;	
+				}
+				else {
+					jroll = j + right;
+					while (jroll < 0) {
+						jroll += mat[0].length;
+					}
+				}
+				roll_mat[iroll][jroll] = mat[i][j];
+			}
+		}
+		return roll_mat;
 	}
 	
 	private double[][] get_kaiserWindow(int kHW) {
