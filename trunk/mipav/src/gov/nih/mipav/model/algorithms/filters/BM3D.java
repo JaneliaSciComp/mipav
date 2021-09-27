@@ -258,6 +258,7 @@ public class BM3D extends AlgorithmBase {
 	
 	private double[] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
 			double tauMatch, boolean useSD, String tau_2D) {
+		int i,ii,h,k,n,w;
 	    int width = img_noisy.getExtents()[0];
 	    int height = img_noisy.getExtents()[1];
 	    int length = width*height;
@@ -266,15 +267,111 @@ public class BM3D extends AlgorithmBase {
 	    int column_ind[] = ind_initialize(width - kHard + 1, nHard, pHard);
 	    
 	    double kaiserWindow[][] = get_kaiserWindow(kHard);
-	    int threshold_count[] = new int[1];
-	    double ri_rj_N__ni_nj[][][] = precompute_BM(img_noisy, kHard, NHard, nHard, tauMatch, threshold_count);
+	    int threshold_count[][] = new int[height][width];
+	    int ri_rj_N__ni_nj[][][][] = precompute_BM(img_noisy, kHard, NHard, nHard, tauMatch, threshold_count);
+	    int group_len = 0;
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		group_len += threshold_count[h][w];
+	    	}
+	    }
+	    double group_3D_table[][][] = new double[group_len][kHard][kHard];
+	    double weight_table[][] = new double[height][width];
+	    
+	    // i_j_ipatch_jpatch__v
+	    Vector<double[][]>all_patches = image2patches(img_noisy, kHard, kHard);
+	    Vector<double[][]>fre_all_patches = new Vector<double[][]>();
+	    for (ii = 0; ii < all_patches.size(); ii++) {
+	    	double[][] current_patch = all_patches.get(ii);
+	    	if (tau_2D.equalsIgnoreCase("DCT")) {
+	    		double new_patch_1[][] = new double[current_patch.length][current_patch[0].length];
+	    		double new_patch_2[][] = new double[current_patch.length][current_patch[0].length];
+	    		double yk;
+	    		for (i = 0; i < current_patch[0].length; i++) {
+	    			for (k = 0; k < current_patch.length; k++) {
+	    				yk = 0.0;
+	    			    for (n = 0; n < current_patch.length; n++) {
+	    			        yk += 2.0*current_patch[n][i]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch.length));
+	    			        if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
+	    			        }
+	    			        else {
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
+	    			        }
+	    			        new_patch_1[k][i] = yk;
+	    			    }
+	    			}
+	    		}
+	    		for (i = 0; i < current_patch.length; i++) {
+	    			for (k = 0; k < current_patch[0].length; k++) {
+	    				yk = 0;
+	    				for (n = 0; n < current_patch[0].length; n++) {
+	    					yk += 2.0*new_patch_1[i][n]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch[0].length));
+	    				}
+	    				if (k == 0) {
+    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch[0].length));
+    			        }
+    			        else {
+    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch[0].length));
+    			        }
+    			        new_patch_2[i][k] = yk;
+	    			}
+	    		}
+	    		fre_all_patches.add(new_patch_2);
+	    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+	    	
+	    	else { // "BIOR"
+	    		
+	    	} // else "BIOR"
+	    } // for (ii = 0; ii < all_patches.size(); ii++)
 	    double numerator[] = new double[length];
 	    double denominator[] = new double[length];
 	    double img_basic[] = new double[length];
 	    return img_basic;
 	}
 	
-	private double[][][] precompute_BM(ModelImage img, int kHW, int NHW, int nHW, double tauMatch, int[] threshold_count) {
+	private Vector<double[][]> image2patches(ModelImage im, int patch_h, int patch_w) {
+	    
+	    // cut the image into patches
+		int i,j,k,m,r,s;
+	    int im_w = im.getExtents()[0];
+	    int im_h = im.getExtents()[1];
+	    int length = im_w * im_h;
+		double buf[] = new double[length];
+		try {
+			im.exportData(0, length, buf);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException on im.exportData(0, length, buf) in image2patches");
+			System.exit(-1);
+		}
+		double img_buf[][] = new double[im_h][im_w];
+		for (i = 0; i < im_h; i++) {
+			for (j = 0; j < im_w; j++) {
+				img_buf[i][j] = buf[i*im_w + j];
+			}
+		}
+	    
+	    Vector<double[][]> imVector= new Vector<double[][]>();
+	    for (i = 0; i < (im_h - patch_h + 1); i++) {
+	    	for (j = 0; j < (im_w - patch_w + 1); j++) {
+	    		for (k = 0; k < patch_h; k++) {
+	    			for (m = 0; m < patch_w; m++) {
+	    				double patch[][] = new double[k+1][m+1];
+	    				for (r = i; r <= i+k; r++) {
+	    					for (s = j; s <= j+m; s++) {
+	    						patch[r-i][s-j] = img_buf[r][s];
+	    					}
+	    				}
+	    				imVector.add(patch);
+	    			}
+	    		}
+	    	}
+	    }
+	    return imVector;
+	}
+	
+	private int[][][][] precompute_BM(ModelImage img, int kHW, int NHW, int nHW, double tauMatch, int[][] threshold_count) {
 		// search for similar patches
 	    // img: input image type ModelStorageBase.DOUBLE
 	    // kHW: length of side of patch
@@ -395,9 +492,78 @@ public class BM3D extends AlgorithmBase {
 	    		argsort_dj[i][j] = argsort[i][j] % Ns - nHW;
 	    	}
 	    }
-	    //near_pi = argsort_di.reshape((height, width, -1)) + np.arange(height)[:, np.newaxis, np.newaxis]
-	    double ri_rj_N__ni_nj[][][] = null;
+	    int near_pi[][][] = new int[height][width][NHW];
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		for (i = 0; i < NHW; i++) {
+	    			near_pi[h][w][i] = argsort_di[h*width + w][i] + h;
+	    		}
+	    	}
+	    }
+	    int near_pj[][][] = new int[height][width][NHW];
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		for (i = 0; i < NHW; i++) {
+	    			near_pj[h][w][i] = argsort_dj[h*width + w][i] + w;
+	    		}
+	    	}
+	    }
+	    int ri_rj_N__ni_nj[][][][] = new int[height][width][NHW][2];
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		for (i = 0; i < NHW; i++) {
+	    		    ri_rj_N__ni_nj[h][w][i][0] = near_pi[h][w][i];
+	    		    ri_rj_N__ni_nj[h][w][i][1] = near_pj[h][w][i];
+	    		}
+	    	}
+	    }
+	    byte sum_filter[][] = new byte[length][Ns * Ns];
+	    for (i = 0; i < length; i++) {
+	    	for (j = 0; j < Ns * Ns; j++) {
+	    		if (sum_table_T[i][j] < threshold) {
+	    			sum_filter[i][j] = 1;
+	    		}
+	    		else {
+	    			sum_filter[i][j] = 0;
+	    		}
+	    	}
+	    }
+	    int threshold_count_init[] = new int[length];
+	    for (i = 0; i < length; i++) {
+	    	for (j = 0; j < Ns * Ns; j++) {
+	    	    threshold_count_init[i] += sum_filter[i][j];	
+	    	}
+	    }
+	    int threshold_count_2[] = closest_power_of_2(threshold_count_init, NHW);
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		threshold_count[h][w] = threshold_count_2[h*width + w];
+	    	}
+	    }
 	    return ri_rj_N__ni_nj;
+	}
+	
+	private int[] closest_power_of_2(int[] M, int max_) {
+	    int i;
+	    int length = M.length;
+	    int M_out[] = new int[length];
+	    for (i = 0; i < length; i++) {
+	        if (M[i] > max_) {
+	        	M_out[i] = max_;
+	        }
+	        else {
+	        	M_out[i] = M[i];
+	        }
+	    }
+        while (max_ > 1) {
+        	for (i = 0; i < length; i++) {
+	        	if ((max_/2 < M_out[i]) && (max_ > M_out[i])) {
+	        		M_out[i] = max_/2;
+	        	}
+        	}
+        	max_ = max_/2;
+        }
+        return M_out;
 	}
 	
 	private class indexValueComparator implements Comparator<indexValueItem> {
