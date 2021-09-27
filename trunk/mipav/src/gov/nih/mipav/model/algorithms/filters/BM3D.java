@@ -258,7 +258,8 @@ public class BM3D extends AlgorithmBase {
 	
 	private double[] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
 			double tauMatch, boolean useSD, String tau_2D) {
-		int i,ii,h,k,n,w;
+		int i,ii,h,j,k,m,n,w,index, acc_pointer, i_r, j_r;
+		int nSx_r;
 	    int width = img_noisy.getExtents()[0];
 	    int height = img_noisy.getExtents()[1];
 	    int length = width*height;
@@ -284,6 +285,7 @@ public class BM3D extends AlgorithmBase {
 	    for (ii = 0; ii < all_patches.size(); ii++) {
 	    	double[][] current_patch = all_patches.get(ii);
 	    	if (tau_2D.equalsIgnoreCase("DCT")) {
+	    		// Forward 2D Discrete Cosine Transform
 	    		double new_patch_1[][] = new double[current_patch.length][current_patch[0].length];
 	    		double new_patch_2[][] = new double[current_patch.length][current_patch[0].length];
 	    		double yk;
@@ -321,18 +323,66 @@ public class BM3D extends AlgorithmBase {
 	    	} // if (tau_2D.equalsIgnoreCase("DCT"))
 	    	
 	    	else { // "BIOR"
+	    		if (current_patch.length != current_patch[0].length) {
+	    			System.err.println("current_patch.length != current_patch[0],length as required for BIOR");
+	    			return null;
+	    		}
+	    		//int iter_max = (int)log2(current_patch.length);
+	    		int iter_max[] = new int[1];
+	    		PyWavelets py = new PyWavelets();
+	    		double coeffs[][][] = py.BM3Dwavedec2(current_patch, iter_max);
+	    		double waveim[][] = new double[current_patch.length][current_patch.length];
 	    		
+	    		int N = 1;
+	    		waveim[0][0] = coeffs[0][0][0];
+	    		for (i = 1; i < iter_max[0] + 1; i++) {
+	    			for (index = 0,k = N; k < 2*N; k++) {
+	    				for (m = N; m < 2*N; m++, index++) {
+	    					waveim[k][m] = coeffs[i][2][index];
+	    				}
+	    			}
+	    			for (index = 0,k = 0; k < N; k++) {
+	    				for (m = N; m < 2*N; m++, index++) {
+	    					waveim[k][m] = -coeffs[i][1][index];
+	    				}
+	    			}
+	    			for (index = 0,k = N; k < 2*N; k++) {
+	    				for (m = 0; m < N; m++, index++) {
+	    					waveim[k][m] = -coeffs[i][0][index];
+	    				}
+	    			}
+	    			N *= 2;
+	    		} // for (i = 1; i < iter_max[0] + 1; i++)
+	    		fre_all_patches.add(waveim);
 	    	} // else "BIOR"
 	    } // for (ii = 0; ii < all_patches.size(); ii++)
+	    
+	    acc_pointer = 0;
+	    for (i = 0; i < row_ind.length; i++) {
+	    	i_r = row_ind[i];
+	    	for (j = 0; j < column_ind.length; j++) {
+	    		j_r = column_ind[j];
+	    		nSx_r = threshold_count[i_r][j_r];
+	    	} // for (j = 0; j < column_ind.length; j++)
+	    } // for (i = 0; i < row_ind.length; i++)
 	    double numerator[] = new double[length];
 	    double denominator[] = new double[length];
 	    double img_basic[] = new double[length];
 	    return img_basic;
 	}
 	
+	private double log2(double x) {
+    	return (Math.log(x)/Math.log(2));
+    }
+	
 	private Vector<double[][]> image2patches(ModelImage im, int patch_h, int patch_w) {
 	    
 	    // cut the image into patches
+		// BIOR requires square patches
+		if (patch_h != patch_w) {
+			System.err.println("patch_h != patch_w in image2patches as required for BIOR");
+			return null;
+		}
 		int i,j,k,m,r,s;
 	    int im_w = im.getExtents()[0];
 	    int im_h = im.getExtents()[1];
@@ -356,15 +406,13 @@ public class BM3D extends AlgorithmBase {
 	    for (i = 0; i < (im_h - patch_h + 1); i++) {
 	    	for (j = 0; j < (im_w - patch_w + 1); j++) {
 	    		for (k = 0; k < patch_h; k++) {
-	    			for (m = 0; m < patch_w; m++) {
-	    				double patch[][] = new double[k+1][m+1];
-	    				for (r = i; r <= i+k; r++) {
-	    					for (s = j; s <= j+m; s++) {
-	    						patch[r-i][s-j] = img_buf[r][s];
-	    					}
-	    				}
-	    				imVector.add(patch);
-	    			}
+    				double patch[][] = new double[k+1][k+1];
+    				for (r = i; r <= i+k; r++) {
+    					for (s = j; s <= j+k; s++) {
+    						patch[r-i][s-j] = img_buf[r][s];
+    					}
+    				}
+    				imVector.add(patch);
 	    		}
 	    	}
 	    }
