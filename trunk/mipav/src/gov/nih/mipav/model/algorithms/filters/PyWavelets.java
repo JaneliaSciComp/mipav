@@ -13039,12 +13039,16 @@ public  class PyWavelets extends AlgorithmBase {
        System.out.println("Number correct = " + numberCorrect + " number wrong = " + numberWrong);
 	}
 	
-	public double [][][] BM3Dwavedec2(double[][] patch) {
+	public double [][][] BM3Dwavedec2(double[][] patch, int level[]) {
 		DiscreteWavelet w  = discrete_wavelet(WAVELET_NAME.BIOR, 15);
 		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
 	    MODE modes[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
 	    int axes[] = new int[]{0,1};
 	    double coeffs[][][] = wavedec2(patch, wavelets, modes, -1, axes);
+	    int dec_lengths[] = new int[]{wavelets[0].dec_len,wavelets[1].dec_len};
+        int level0 = check_level(patch.length, dec_lengths[0], -1);
+        int level1 = check_level(patch[0].length, dec_lengths[1], -1);
+        level[0] = Math.min(level0, level1);
 	    return coeffs;
 	}
 	
