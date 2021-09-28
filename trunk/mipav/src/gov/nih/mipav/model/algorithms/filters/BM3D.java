@@ -258,8 +258,10 @@ public class BM3D extends AlgorithmBase {
 	
 	private double[] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
 			double tauMatch, boolean useSD, String tau_2D) {
-		int i,ii,h,j,k,m,n,w,index, acc_pointer, i_r, j_r;
+		int i,ii,h,j,jj,k,m,n,w,index, acc_pointer, i_r, j_r;
 		int nSx_r;
+		double group_3D[][][];
+		double weight[] = new double[1];
 	    int width = img_noisy.getExtents()[0];
 	    int height = img_noisy.getExtents()[1];
 	    int length = width*height;
@@ -280,81 +282,86 @@ public class BM3D extends AlgorithmBase {
 	    double weight_table[][] = new double[height][width];
 	    
 	    // i_j_ipatch_jpatch__v
-	    Vector<double[][]>all_patches = image2patches(img_noisy, kHard, kHard);
-	    Vector<double[][]>fre_all_patches = new Vector<double[][]>();
+	    Vector<Vector<double[][]>>all_patches = image2patches(img_noisy, kHard, kHard);
+	    Vector<Vector<double[][]>>fre_all_patches = new Vector<Vector<double[][]>>();
 	    for (ii = 0; ii < all_patches.size(); ii++) {
-	    	double[][] current_patch = all_patches.get(ii);
-	    	if (tau_2D.equalsIgnoreCase("DCT")) {
-	    		// Forward 2D Discrete Cosine Transform
-	    		double new_patch_1[][] = new double[current_patch.length][current_patch[0].length];
-	    		double new_patch_2[][] = new double[current_patch.length][current_patch[0].length];
-	    		double yk;
-	    		for (i = 0; i < current_patch[0].length; i++) {
-	    			for (k = 0; k < current_patch.length; k++) {
-	    				yk = 0.0;
-	    			    for (n = 0; n < current_patch.length; n++) {
-	    			        yk += 2.0*current_patch[n][i]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch.length));
-	    			        if (k == 0) {
-	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
+	    	Vector<double[][]> subVector = all_patches.get(ii);
+	    	Vector<double[][]> subfreVector = new Vector<double[][]>();
+	    	for (jj = 0; jj < subVector.size(); jj++) {
+	            double current_patch[][] = subVector.get(jj);
+		    	if (tau_2D.equalsIgnoreCase("DCT")) {
+		    		// Forward 2D Discrete Cosine Transform
+		    		double new_patch_1[][] = new double[current_patch.length][current_patch[0].length];
+		    		double new_patch_2[][] = new double[current_patch.length][current_patch[0].length];
+		    		double yk;
+		    		for (i = 0; i < current_patch[0].length; i++) {
+		    			for (k = 0; k < current_patch.length; k++) {
+		    				yk = 0.0;
+		    			    for (n = 0; n < current_patch.length; n++) {
+		    			        yk += 2.0*current_patch[n][i]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch.length));
+		    			        if (k == 0) {
+		    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
+		    			        }
+		    			        else {
+		    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
+		    			        }
+		    			        new_patch_1[k][i] = yk;
+		    			    }
+		    			}
+		    		}
+		    		for (i = 0; i < current_patch.length; i++) {
+		    			for (k = 0; k < current_patch[0].length; k++) {
+		    				yk = 0;
+		    				for (n = 0; n < current_patch[0].length; n++) {
+		    					yk += 2.0*new_patch_1[i][n]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch[0].length));
+		    				}
+		    				if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch[0].length));
 	    			        }
 	    			        else {
-	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch[0].length));
 	    			        }
-	    			        new_patch_1[k][i] = yk;
-	    			    }
-	    			}
-	    		}
-	    		for (i = 0; i < current_patch.length; i++) {
-	    			for (k = 0; k < current_patch[0].length; k++) {
-	    				yk = 0;
-	    				for (n = 0; n < current_patch[0].length; n++) {
-	    					yk += 2.0*new_patch_1[i][n]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch[0].length));
-	    				}
-	    				if (k == 0) {
-    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch[0].length));
-    			        }
-    			        else {
-    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch[0].length));
-    			        }
-    			        new_patch_2[i][k] = yk;
-	    			}
-	    		}
-	    		fre_all_patches.add(new_patch_2);
-	    	} // if (tau_2D.equalsIgnoreCase("DCT"))
-	    	
-	    	else { // "BIOR"
-	    		if (current_patch.length != current_patch[0].length) {
-	    			System.err.println("current_patch.length != current_patch[0],length as required for BIOR");
-	    			return null;
-	    		}
-	    		//int iter_max = (int)log2(current_patch.length);
-	    		int iter_max[] = new int[1];
-	    		PyWavelets py = new PyWavelets();
-	    		double coeffs[][][] = py.BM3Dwavedec2(current_patch, iter_max);
-	    		double waveim[][] = new double[current_patch.length][current_patch.length];
-	    		
-	    		int N = 1;
-	    		waveim[0][0] = coeffs[0][0][0];
-	    		for (i = 1; i < iter_max[0] + 1; i++) {
-	    			for (index = 0,k = N; k < 2*N; k++) {
-	    				for (m = N; m < 2*N; m++, index++) {
-	    					waveim[k][m] = coeffs[i][2][index];
-	    				}
-	    			}
-	    			for (index = 0,k = 0; k < N; k++) {
-	    				for (m = N; m < 2*N; m++, index++) {
-	    					waveim[k][m] = -coeffs[i][1][index];
-	    				}
-	    			}
-	    			for (index = 0,k = N; k < 2*N; k++) {
-	    				for (m = 0; m < N; m++, index++) {
-	    					waveim[k][m] = -coeffs[i][0][index];
-	    				}
-	    			}
-	    			N *= 2;
-	    		} // for (i = 1; i < iter_max[0] + 1; i++)
-	    		fre_all_patches.add(waveim);
-	    	} // else "BIOR"
+	    			        new_patch_2[i][k] = yk;
+		    			}
+		    		}
+		    		subfreVector.add(new_patch_2);
+		    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+		    	
+		    	else { // "BIOR"
+		    		if (current_patch.length != current_patch[0].length) {
+		    			System.err.println("current_patch.length != current_patch[0],length as required for BIOR");
+		    			return null;
+		    		}
+		    		//int iter_max = (int)log2(current_patch.length);
+		    		int iter_max[] = new int[1];
+		    		PyWavelets py = new PyWavelets();
+		    		double coeffs[][][] = py.BM3Dwavedec2(current_patch, iter_max);
+		    		double waveim[][] = new double[current_patch.length][current_patch.length];
+		    		
+		    		int N = 1;
+		    		waveim[0][0] = coeffs[0][0][0];
+		    		for (i = 1; i < iter_max[0] + 1; i++) {
+		    			for (index = 0,k = N; k < 2*N; k++) {
+		    				for (m = N; m < 2*N; m++, index++) {
+		    					waveim[k][m] = coeffs[i][2][index];
+		    				}
+		    			}
+		    			for (index = 0,k = 0; k < N; k++) {
+		    				for (m = N; m < 2*N; m++, index++) {
+		    					waveim[k][m] = -coeffs[i][1][index];
+		    				}
+		    			}
+		    			for (index = 0,k = N; k < 2*N; k++) {
+		    				for (m = 0; m < N; m++, index++) {
+		    					waveim[k][m] = -coeffs[i][0][index];
+		    				}
+		    			}
+		    			N *= 2;
+		    		} // for (i = 1; i < iter_max[0] + 1; i++)
+		    	    subfreVector.add(waveim);
+		    	} // else "BIOR"
+	    	} // for (jj = 0; jj < subVector.size(); jj++)
+	    	fre_all_patches.add(subfreVector);
 	    } // for (ii = 0; ii < all_patches.size(); ii++)
 	    
 	    acc_pointer = 0;
@@ -363,6 +370,8 @@ public class BM3D extends AlgorithmBase {
 	    	for (j = 0; j < column_ind.length; j++) {
 	    		j_r = column_ind[j];
 	    		nSx_r = threshold_count[i_r][j_r];
+	    		group_3D = build_3D_group(fre_all_patches, ri_rj_N__ni_nj[i_r][ j_r], nSx_r);
+	    		group_3D = ht_filtering_hadamard(group_3D, sigma, lambdaHard3D, !useSD, weight);
 	    	} // for (j = 0; j < column_ind.length; j++)
 	    } // for (i = 0; i < row_ind.length; i++)
 	    double numerator[] = new double[length];
@@ -371,18 +380,74 @@ public class BM3D extends AlgorithmBase {
 	    return img_basic;
 	}
 	
+	private double[][][] ht_filtering_hadamard(double group_3D[][][], double sigma, 
+			double lambdaHard3D, boolean doWeight, double weight[]) {
+		// hard threshold filtering after hadamard transform
+		// group_3D shape=(n*n, nSx_r)
+		int i,j,k;
+		int n = group_3D.length;
+		double group2D[][] = new double[n][n];
+		int nSx_r = group_3D[0][0].length;
+		double group_3D_h[][][] = new double[n][n][nSx_r];
+		double coef_norm = Math.sqrt(nSx_r);
+	    double coef = 1.0 / nSx_r;
+	    
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group2D[j][k] = group_3D[j][k][i];
+	        	}
+	        }
+	    }
+	    // Must determine if I use SEQUENCY, DYADIC, or NATURAL
+	    // in WalshHadamardTransform3
+	    return null;
+	}
+	
+	private double[][][] build_3D_group(Vector<Vector<double[][]>> fre_all_patches, int N__ni_nj[][], int nSx_r) {
+		// stack frequency patches into a 3D block
+	    // fre_all_patches: all frequency patches
+	    // N__ni_nj: the position of the N most similar patches
+	    // nSx_r: how many similar patches according to threshold
+	    // return: the 3D block
+		int i, j, n, ni, nj;
+		int k = fre_all_patches.get(0).get(0).length;
+		for (i = 0; i < fre_all_patches.size(); i++) {
+			Vector<double[][]>subVector = fre_all_patches.get(i);
+			for (j = 0; j < subVector.size(); j++) {
+				double patch[][] = subVector.get(j);
+				if ((patch.length != k) || (patch[0].length != k)) {
+					System.err.println("In build_3D_group not all patch.length and patch[0].length are the same");
+					return null;
+				}
+			}
+		}
+		double group_3D[][][] = new double[nSx_r][k][k];
+		for (n = 0; n < nSx_r; n++) {
+			ni = N__ni_nj[n][0];
+			nj = N__ni_nj[n][1];
+			group_3D[n] = fre_all_patches.get(ni).get(nj);
+		}
+		double group_3D_transpose[][][] = new double[k][k][nSx_r];
+		for (i = 0; i < k; i++) {
+			for (j = 0; j < k; j++) {
+				for (n = 0; n < nSx_r; n++) {
+					group_3D_transpose[i][j][n] = group_3D[n][i][j];
+				}
+			}
+		}
+		return group_3D_transpose;
+	}
+	
 	private double log2(double x) {
     	return (Math.log(x)/Math.log(2));
     }
 	
-	private Vector<double[][]> image2patches(ModelImage im, int patch_h, int patch_w) {
+	private Vector<Vector<double[][]>> image2patches(ModelImage im, int patch_h, int patch_w) {
 	    
 	    // cut the image into patches
-		// BIOR requires square patches
-		if (patch_h != patch_w) {
-			System.err.println("patch_h != patch_w in image2patches as required for BIOR");
-			return null;
-		}
+		// BIOR requires square patches, that is patch_h = patch_w
+		
 		int i,j,k,m,r,s;
 	    int im_w = im.getExtents()[0];
 	    int im_h = im.getExtents()[1];
@@ -402,19 +467,19 @@ public class BM3D extends AlgorithmBase {
 			}
 		}
 	    
-	    Vector<double[][]> imVector= new Vector<double[][]>();
+	    Vector<Vector<double[][]>> imVector= new Vector<Vector<double[][]>>();
 	    for (i = 0; i < (im_h - patch_h + 1); i++) {
+	    	Vector<double[][]> subVector = new Vector<double[][]>();
 	    	for (j = 0; j < (im_w - patch_w + 1); j++) {
-	    		for (k = 0; k < patch_h; k++) {
-    				double patch[][] = new double[k+1][k+1];
-    				for (r = i; r <= i+k; r++) {
-    					for (s = j; s <= j+k; s++) {
+    				double patch[][] = new double[patch_h][patch_w];
+    				for (r = i; r < i+patch_h; r++) {
+    					for (s = j; s < j+patch_w; s++) {
     						patch[r-i][s-j] = img_buf[r][s];
     					}
     				}
-    				imVector.add(patch);
-	    		}
+    				subVector.add(patch);
 	    	}
+	    	imVector.add(subVector);
 	    }
 	    return imVector;
 	}
