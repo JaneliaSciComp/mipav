@@ -391,17 +391,62 @@ public class BM3D extends AlgorithmBase {
 		double group_3D_h[][][] = new double[n][n][nSx_r];
 		double coef_norm = Math.sqrt(nSx_r);
 	    double coef = 1.0 / nSx_r;
+	    double dst[][] = new double[n][n];
+	    WalshHadamardTransform3 wht3 = new WalshHadamardTransform3();
 	    
 	    for (i = 0; i < nSx_r; i++) {
 	        for (j = 0; j < n; j++) {
 	        	for (k = 0; k < n; k++) {
 	        		group2D[j][k] = group_3D[j][k][i];
+	        		dst[j][k] = 0.0;
 	        	}
 	        }
-	    }
-	    // Must determine if I use SEQUENCY, DYADIC, or NATURAL
-	    // in WalshHadamardTransform3
-	    return null;
+	        wht3.fhtnat2D(n, n, group2D, dst, true);
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group_3D_h[j][k][i] = dst[j][k];
+	        	}
+	        }
+	    } // for (i = 0; i < nSx_r; i++)
+	    
+	    // hard threshold filtering in this block
+	    double T = lambdaHard3D * sigma * coef_norm;
+	    weight[0] = 0.0;
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		if (Math.abs(group_3D_h[j][k][i]) > T) {
+	        			weight[0] += 1.0;
+	        			group_3D_h[j][k][i] = 0.0;
+	        		}
+	        	}
+	        }
+	    } // for (i = 0; i < nSx_r; i++)
+	    
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group2D[j][k] = group_3D_h[j][k][i];
+	        		dst[j][k] = 0.0;
+	        	}
+	        }
+	        wht3.fhtnat2D(n, n, group2D, dst, false);
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group_3D[j][k][i] = dst[j][k] * coef;
+	        	}
+	        }
+	    } // for (i = 0; i < nSx_r; i++)
+	    
+	    if (doWeight) {
+	        if (weight[0] > 0.0) {
+	        	weight[0] = 1. / (sigma * sigma * weight[0]);	
+	        }
+	        else {
+	        	weight[0] = 1.0;
+	        }
+	    } // if (doWeight)
+	    return group_3D;
 	}
 	
 	private double[][][] build_3D_group(Vector<Vector<double[][]>> fre_all_patches, int N__ni_nj[][], int nSx_r) {
