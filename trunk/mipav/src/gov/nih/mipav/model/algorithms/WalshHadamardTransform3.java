@@ -9,9 +9,9 @@ import gov.nih.mipav.view.*;
 
 public class WalshHadamardTransform3 extends AlgorithmBase {
 	
-	public final static int SEQUENCY = 1;
-	public final static int DYADIC = 2;
-	public final static int NATURAL = 3;
+	public final static int SEQUENCY = 1; // Sequency or Walsh
+	public final static int DYADIC = 2; // Dyadic or Paley
+	public final static int NATURAL = 3; // Natural or Hadamard or Sylvester's construction
 	
 	private ModelImage transformImage;
 	private ModelImage inverseImage;
