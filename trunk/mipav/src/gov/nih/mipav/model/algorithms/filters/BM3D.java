@@ -410,7 +410,18 @@ public class BM3D extends AlgorithmBase {
 	    } // for (i = 0; i < nSx_r; i++)
 	    
 	    // hard threshold filtering in this block
-	    double T = lambdaHard3D * sigma * coef_norm;
+	    // In WalshHadamardTransform3 in the 1D transform in fhtnat we have:
+	    //if (forwardTransform) {
+		//	for (i1 = 0; i1 < N; i1++) {
+		//        x[i1]= (x[i1]/(double)N);
+		//	}
+	    //} // if (forwardTransform)
+	    // and fhtnat2D calls fhtnat twice, once for each dimension, so a multiplication of (1/(n*n)) is performed
+	    // on the forward transform but not on the reverse transform in WalshHadamardTransform3.
+	    // The python hadamard provides no information as to whether the call is a forward or inverse transform
+	    // so for python forward must scale by 1/n and inverse must scale by 1/n.
+	    // Therefore, T must be multiplied by 1/n to make the thresholds align for WalshHadamardTransform3
+	    double T = lambdaHard3D * sigma * coef_norm/n;
 	    weight[0] = 0.0;
 	    for (i = 0; i < nSx_r; i++) {
 	        for (j = 0; j < n; j++) {
