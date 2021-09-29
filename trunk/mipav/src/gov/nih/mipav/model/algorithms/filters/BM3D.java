@@ -261,6 +261,7 @@ public class BM3D extends AlgorithmBase {
 		int i,ii,h,j,jj,k,m,n,w,index, acc_pointer, i_r, j_r;
 		int nSx_r;
 		double group_3D[][][];
+		double group_3D_transpose[][][];
 		double weight[] = new double[1];
 	    int width = img_noisy.getExtents()[0];
 	    int height = img_noisy.getExtents()[1];
@@ -299,14 +300,14 @@ public class BM3D extends AlgorithmBase {
 		    				yk = 0.0;
 		    			    for (n = 0; n < current_patch.length; n++) {
 		    			        yk += 2.0*current_patch[n][i]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch.length));
-		    			        if (k == 0) {
-		    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
-		    			        }
-		    			        else {
-		    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
-		    			        }
-		    			        new_patch_1[k][i] = yk;
 		    			    }
+		    			    if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
+	    			        }
+	    			        else {
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
+	    			        }
+	    			        new_patch_1[k][i] = yk;
 		    			}
 		    		}
 		    		for (i = 0; i < current_patch.length; i++) {
@@ -332,15 +333,14 @@ public class BM3D extends AlgorithmBase {
 		    			System.err.println("current_patch.length != current_patch[0],length as required for BIOR");
 		    			return null;
 		    		}
-		    		//int iter_max = (int)log2(current_patch.length);
-		    		int iter_max[] = new int[1];
+		    		int iter_max = (int)log2(current_patch.length);
 		    		PyWavelets py = new PyWavelets();
 		    		double coeffs[][][] = py.BM3Dwavedec2(current_patch, iter_max);
 		    		double waveim[][] = new double[current_patch.length][current_patch.length];
 		    		
 		    		int N = 1;
 		    		waveim[0][0] = coeffs[0][0][0];
-		    		for (i = 1; i < iter_max[0] + 1; i++) {
+		    		for (i = 1; i < iter_max + 1; i++) {
 		    			for (index = 0,k = N; k < 2*N; k++) {
 		    				for (m = N; m < 2*N; m++, index++) {
 		    					waveim[k][m] = coeffs[i][2][index];
@@ -372,12 +372,120 @@ public class BM3D extends AlgorithmBase {
 	    		nSx_r = threshold_count[i_r][j_r];
 	    		group_3D = build_3D_group(fre_all_patches, ri_rj_N__ni_nj[i_r][ j_r], nSx_r);
 	    		group_3D = ht_filtering_hadamard(group_3D, sigma, lambdaHard3D, !useSD, weight);
+	    		group_3D_transpose = new double[nSx_r][group_3D.length][group_3D.length];
+	    		for (k = acc_pointer; k < acc_pointer + nSx_r; k++) {
+	    			for (m = 0; m < group_3D.length; m++) {
+	    				for (n = 0; n < group_3D.length; n++) {
+	    					group_3D_table[k][m][n] = group_3D[m][n][k-acc_pointer];
+	    					group_3D_transpose[k-acc_pointer][m][n] = group_3D[m][n][k-acc_pointer];
+	    				}
+	    			}
+	    		}
+	    		acc_pointer += nSx_r;
+	    		
+	    		if (useSD) {
+	                weight[0] = sd_weighting(group_3D_transpose);
+	    		}
+	    		
+	    		weight_table[i_r][j_r] = weight[0];
 	    	} // for (j = 0; j < column_ind.length; j++)
 	    } // for (i = 0; i < row_ind.length; i++)
-	    double numerator[] = new double[length];
-	    double denominator[] = new double[length];
+	    
+	    
+	    	if (tau_2D.equalsIgnoreCase("DCT")) {
+	    		// Reverse 2D Discrete Cosine Transform
+	    		double new_patch_1[][] = new double[kHard][kHard];
+	    		double yk;
+	    		for (i = 0; i < kHard; i++) {
+	    			for (k = 0; k < kHard; k++) {
+	    				yk = group_3D_table[ii][0][i]/Math.sqrt(kHard);
+	    			    for (n = 1; n < kHard; n++) {
+	    			        yk += Math.sqrt(2.0/kHard) * group_3D_table[ii][n][i]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kHard));  
+	    			    }
+    			        new_patch_1[k][i] = yk;
+	    			}
+	    		}
+	    		for (i = 0; i < kHard; i++) {
+	    			for (k = 0; k < kHard; k++) {
+	    				yk = new_patch_1[i][0]/Math.sqrt(kHard);
+	    				for (n = 1; n < kHard; n++) {
+	    					yk += Math.sqrt(2.0/kHard) * new_patch_1[i][n]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kHard));
+	    				}
+    			        group_3D_table[ii][i][k] = yk;
+	    			}
+	    		}
+	    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+	    	else { // "BIOR"
+	    		PyWavelets py = new PyWavelets();
+	    		int level = (int)log2(kHard);
+	    		double group_2D[][] = py.BM3Dwaverec2(group_3D_table[ii],level);
+	    		for (j = 0; j < kHard; j++) {
+	    			for (k = 0; k < kHard; k++) {
+	    				group_3D_table[ii][j][k] = group_2D[j][k];
+	    			}
+	    	} // else "BIOR"
+	    } // for (ii = 0; ii < group_len; ii++)
+	    	
+    	// group_3D_table = np.maximum(group_3D_table, 0)
+	    // for i in range(1000):
+	    //     patch = group_3D_table[i]
+	    //     print(i, '----------------------------')
+	    //     print(patch)
+	    //     print(np.min(patch))
+	    //     print(np.max(patch))
+	    //     print(np.sum(patch))
+	    //     cv2.imshow('', patch.astype(np.uint8))
+	    //     cv2.waitKey()
+
+	    // aggregation part
+	    double numerator[][] = new double[height][width];
+	    double denominator[][] = new double[height][width];
+	    for (i = 0; i < nHard; i++) {
+	    	for (j = 0; j < width; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    for (i = height - nHard; i < height; i++) {
+	    	for (j = 0; j < width; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    for (i = nHard; i < height - nHard; i++) {
+	    	for (j = 0; j < nHard; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    
+	    for (i = nHard; i < height - nHard; i++) {
+	    	for (j = width - nHard; j < width; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
 	    double img_basic[] = new double[length];
 	    return img_basic;
+	}
+	
+	private double sd_weighting(double group_3D[][][]) {
+		int i,j,k;
+	    int N = group_3D.length * group_3D[0].length * group_3D[0][0].length;
+	    
+	    double mean = 0.0;
+	    double std = 0.0;
+	    for (i = 0; i < group_3D.length; i++) {
+	    	for (j = 0; j < group_3D[0].length; j++) {
+	    		for (k = 0; k < group_3D[0][0].length; k++) {
+	    			mean += group_3D[i][j][k];
+	    			std += (group_3D[i][j][k] * group_3D[i][j][k]);
+	    		}
+	    	}
+	    }
+
+	    double res = (std - mean * mean / N) / (N - 1.0);
+	    double weight = 0.0;
+	    if (res > 0.0) {
+	    	weight = 1.0/Math.sqrt(res);
+	    }
+	    return weight;
 	}
 	
 	private double[][][] ht_filtering_hadamard(double group_3D[][][], double sigma, 
