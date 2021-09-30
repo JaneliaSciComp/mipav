@@ -568,6 +568,11 @@ public class BM3D extends AlgorithmBase {
 	    	} // for (j = 0; j < column_ind.length; j++)
 	    } // for (i = 0; i < row_ind.length; i++)
 	    double img_denoised_pad[][] = new double[height][width];
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		img_denoised_pad[h][w] = numerator[h][w]/denominator[h][w];
+	    	}
+	    }
 	    return img_denoised_pad;
 	}
 	
