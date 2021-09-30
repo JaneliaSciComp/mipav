@@ -1842,7 +1842,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					valSum += mean_signal[s][t];
 				}
 				mean_val = valSum / pos;
-				if (Math.abs((mean_val - mean_signal[s][pos+1]) / mean_val) < thresh) {
+				if (Math.abs((mean_val - mean_signal[s][pos]) / mean_val) < thresh) {
 					pos = pos + 1;
 				} else {
 					cycle = false;
