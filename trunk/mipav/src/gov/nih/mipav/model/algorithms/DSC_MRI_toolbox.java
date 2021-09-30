@@ -114,7 +114,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 	// Minimum number of initial scans on which to calculate S0
 	private int S0_nSamplesMin = 3;
 	// Maximum number of initial scans on whcih to caclulate s0
-	private int S0_nSamplesMax = 3;
+	private int S0_nSamplesMax = 12;
 
 	// Threshold used to choose the instant of appearance of the tracer
 	private double S0_thresh = 0.05;
@@ -1842,14 +1842,14 @@ public class DSC_MRI_toolbox extends CeresSolver {
 					valSum += mean_signal[s][t];
 				}
 				mean_val = valSum / pos;
-				if (Math.abs((mean_val - mean_signal[s][pos]) / mean_val) < thresh) {
+				if (Math.abs((mean_val - mean_signal[s][pos+1]) / mean_val) < thresh) {
 					pos = pos + 1;
 				} else {
 					cycle = false;
 					// Conservative choice, I do not consider the last sample before injection
 					pos = pos - 1;
 				}
-				if (pos == nSamplesMax) {
+				if (pos >= nSamplesMax) {
 					cycle = false;
 					pos = pos - 1;
 				}
