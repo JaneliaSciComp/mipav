@@ -196,7 +196,476 @@ public class BM3D extends AlgorithmBase {
 		
 		ModelImage noisy_im_p = symetrize(srcImage, n_H);
 		
-		double img_basic[] = bm3d_1st_step(sigma, noisy_im_p, n_H, k_H, N_H, p_H, lambda3D_H, tauMatch_H, useSD_H, tau_2D_H);
+		double img_basic_pad[][] = bm3d_1st_step(sigma, noisy_im_p, n_H, k_H, N_H, p_H, lambda3D_H, tauMatch_H, useSD_H, tau_2D_H);
+		double img_basic_arr[] = new double[srcImage.getExtents()[1]*srcImage.getExtents()[0]];
+		for (y = n_H; y < noisy_im_p.getExtents()[1] - n_H; y++) {
+			for (x = n_H; x < noisy_im_p.getExtents()[0] - n_H; x++) {
+				img_basic_arr[(y-n_H)*srcImage.getExtents()[0] + (x-n_H)] = img_basic_pad[y][x];
+				if (Double.isNaN(img_basic_arr[(y-n_H)*srcImage.getExtents()[0] + (x-n_H)])) {
+					System.err.println("NaN found in img_basic_arr at y = " + (y-n_H) + " x = " + (x-n_H));
+					setCompleted(false);
+					return;
+				}
+			}
+		}
+		
+		ModelImage img_basic = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "image_basic");
+		try {
+			img_basic.importData(0, img_basic_arr, true);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException on image_basic.importData(0, img_basic_arr, true)");
+			setCompleted(false);
+			return;
+		}
+		
+		ModelImage img_basic_p = symetrize(img_basic, n_W);
+		
+		noisy_im_p.disposeLocal();
+		noisy_im_p = null;
+		noisy_im_p = symetrize(srcImage, n_W);
+		double img_denoised_pad[][] = bm3d_2nd_step(sigma, noisy_im_p, img_basic_p, n_W, k_W, N_W, p_W, tauMatch_W, useSD_W, tau_2D_W);
+		double img_denoised_arr[] = new double[srcImage.getExtents()[1]*srcImage.getExtents()[0]];
+		for (y = n_W; y < noisy_im_p.getExtents()[1] - n_W; y++) {
+			for (x = n_W; x < noisy_im_p.getExtents()[0] - n_W; x++) {
+				img_denoised_arr[(y-n_W)*srcImage.getExtents()[0] + (x-n_W)] = img_denoised_pad[y][x];
+			}
+		}
+		
+		noisy_im_p.disposeLocal();
+		noisy_im_p = null;
+		img_basic_p.disposeLocal();
+		img_basic_p = null;
+		
+		try {
+			destImage.importData(0, img_denoised_arr, true);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException on destImage.importData(0, img_denoised_arr, true)");
+			setCompleted(false);
+			return;
+		}
+		
+		setCompleted(true);
+		return;
+	}
+	
+	private double[][] bm3d_2nd_step(double sigma, ModelImage img_noisy, ModelImage img_basic, int nWien, int kWien, 
+			int NWien, int pWien, double tauMatch, boolean useSD, String tau_2D) {
+		int ii,jj,h,i,j,k,m,n,w,index;
+		int acc_pointer, i_r, j_r, nSx_r;
+		int ni,nj;
+		double group_3D_img[][][];
+		double group_3D_est[][][];
+		double group_3D[][][];
+		double group_3D_transpose[][][];
+		double weight[] = new double[1];
+	    int height = img_noisy.getExtents()[1];
+	    int width = img_noisy.getExtents()[0];
+	    int row_ind[] = ind_initialize(height - kWien + 1, nWien, pWien);
+	    int column_ind[] = ind_initialize(width - kWien + 1, nWien, pWien);
+	    
+	    double kaiserWindow[][] = get_kaiserWindow(kWien);
+	    int threshold_count[][] = new int[height][width];
+	    int ri_rj_N__ni_nj[][][][] = precompute_BM(img_basic, kWien, NWien, nWien, tauMatch, threshold_count);
+	    int group_len = 0;
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		group_len += threshold_count[h][w];
+	    	}
+	    }
+	    double group_3D_table[][][] = new double[group_len][kWien][kWien];
+	    double weight_table[][] = new double[height][width];
+	    
+	    // i_j_ipatch_jpatch__v
+	    Vector<Vector<double[][]>>noisy_patches = image2patches(img_noisy, kWien, kWien);  
+	    // i_j_ipatch_jpatch__v
+	    Vector<Vector<double[][]>>basic_patches = image2patches(img_basic, kWien, kWien); 
+	    Vector<Vector<double[][]>>fre_noisy_patches = new Vector<Vector<double[][]>>();
+	    Vector<Vector<double[][]>>fre_basic_patches = new Vector<Vector<double[][]>>();
+	    for (ii = 0; ii < noisy_patches.size(); ii++) {
+	    	Vector<double[][]> subVector = noisy_patches.get(ii);
+	    	Vector<double[][]> subfreVector = new Vector<double[][]>();
+	    	for (jj = 0; jj < subVector.size(); jj++) {
+	            double current_patch[][] = subVector.get(jj);
+		    	if (tau_2D.equalsIgnoreCase("DCT")) {
+		    		// Forward 2D Discrete Cosine Transform
+		    		double new_patch_1[][] = new double[current_patch.length][current_patch[0].length];
+		    		double new_patch_2[][] = new double[current_patch.length][current_patch[0].length];
+		    		double yk;
+		    		for (i = 0; i < current_patch[0].length; i++) {
+		    			for (k = 0; k < current_patch.length; k++) {
+		    				yk = 0.0;
+		    			    for (n = 0; n < current_patch.length; n++) {
+		    			        yk += 2.0*current_patch[n][i]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch.length));
+		    			    }
+		    			    if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
+	    			        }
+	    			        else {
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
+	    			        }
+	    			        new_patch_1[k][i] = yk;
+		    			}
+		    		}
+		    		for (i = 0; i < current_patch.length; i++) {
+		    			for (k = 0; k < current_patch[0].length; k++) {
+		    				yk = 0;
+		    				for (n = 0; n < current_patch[0].length; n++) {
+		    					yk += 2.0*new_patch_1[i][n]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch[0].length));
+		    				}
+		    				if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch[0].length));
+	    			        }
+	    			        else {
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch[0].length));
+	    			        }
+	    			        new_patch_2[i][k] = yk;
+		    			}
+		    		}
+		    		subfreVector.add(new_patch_2);
+		    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+		    	
+		    	else { // "BIOR"
+		    		if (current_patch.length != current_patch[0].length) {
+		    			System.err.println("current_patch.length != current_patch[0],length as required for BIOR");
+		    			return null;
+		    		}
+		    		int iter_max = (int)log2(current_patch.length);
+		    		PyWavelets py = new PyWavelets();
+		    		double coeffs[][][] = py.BM3Dwavedec2(current_patch, iter_max);
+		    		double waveim[][] = new double[current_patch.length][current_patch.length];
+		    		
+		    		int N = 1;
+		    		waveim[0][0] = coeffs[0][0][0];
+		    		for (i = 1; i < iter_max + 1; i++) {
+		    			for (index = 0,k = N; k < 2*N; k++) {
+		    				for (m = N; m < 2*N; m++, index++) {
+		    					waveim[k][m] = coeffs[i][2][index];
+		    				}
+		    			}
+		    			for (index = 0,k = 0; k < N; k++) {
+		    				for (m = N; m < 2*N; m++, index++) {
+		    					waveim[k][m] = -coeffs[i][1][index];
+		    				}
+		    			}
+		    			for (index = 0,k = N; k < 2*N; k++) {
+		    				for (m = 0; m < N; m++, index++) {
+		    					waveim[k][m] = -coeffs[i][0][index];
+		    				}
+		    			}
+		    			N *= 2;
+		    		} // for (i = 1; i < iter_max[0] + 1; i++)
+		    	    subfreVector.add(waveim);
+		    	} // else "BIOR"
+	    	} // for (jj = 0; jj < subVector.size(); jj++)
+	    	fre_noisy_patches.add(subfreVector);
+	    } // for (ii = 0; ii < noisy_patches.size(); ii++)
+	    
+	    for (ii = 0; ii < basic_patches.size(); ii++) {
+	    	Vector<double[][]> subVector = basic_patches.get(ii);
+	    	Vector<double[][]> subfreVector = new Vector<double[][]>();
+	    	for (jj = 0; jj < subVector.size(); jj++) {
+	            double current_patch[][] = subVector.get(jj);
+		    	if (tau_2D.equalsIgnoreCase("DCT")) {
+		    		// Forward 2D Discrete Cosine Transform
+		    		double new_patch_1[][] = new double[current_patch.length][current_patch[0].length];
+		    		double new_patch_2[][] = new double[current_patch.length][current_patch[0].length];
+		    		double yk;
+		    		for (i = 0; i < current_patch[0].length; i++) {
+		    			for (k = 0; k < current_patch.length; k++) {
+		    				yk = 0.0;
+		    			    for (n = 0; n < current_patch.length; n++) {
+		    			        yk += 2.0*current_patch[n][i]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch.length));
+		    			    }
+		    			    if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch.length));
+	    			        }
+	    			        else {
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch.length));
+	    			        }
+	    			        new_patch_1[k][i] = yk;
+		    			}
+		    		}
+		    		for (i = 0; i < current_patch.length; i++) {
+		    			for (k = 0; k < current_patch[0].length; k++) {
+		    				yk = 0;
+		    				for (n = 0; n < current_patch[0].length; n++) {
+		    					yk += 2.0*new_patch_1[i][n]*Math.cos(Math.PI*k*(2*n+1)/(2.0*current_patch[0].length));
+		    				}
+		    				if (k == 0) {
+	    			        	yk = yk * Math.sqrt(1.0/(4.0*current_patch[0].length));
+	    			        }
+	    			        else {
+	    			        	yk = yk * Math.sqrt(1.0/(2.0*current_patch[0].length));
+	    			        }
+	    			        new_patch_2[i][k] = yk;
+		    			}
+		    		}
+		    		subfreVector.add(new_patch_2);
+		    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+		    	
+		    	else { // "BIOR"
+		    		if (current_patch.length != current_patch[0].length) {
+		    			System.err.println("current_patch.length != current_patch[0],length as required for BIOR");
+		    			return null;
+		    		}
+		    		int iter_max = (int)log2(current_patch.length);
+		    		PyWavelets py = new PyWavelets();
+		    		double coeffs[][][] = py.BM3Dwavedec2(current_patch, iter_max);
+		    		double waveim[][] = new double[current_patch.length][current_patch.length];
+		    		
+		    		int N = 1;
+		    		waveim[0][0] = coeffs[0][0][0];
+		    		for (i = 1; i < iter_max + 1; i++) {
+		    			for (index = 0,k = N; k < 2*N; k++) {
+		    				for (m = N; m < 2*N; m++, index++) {
+		    					waveim[k][m] = coeffs[i][2][index];
+		    				}
+		    			}
+		    			for (index = 0,k = 0; k < N; k++) {
+		    				for (m = N; m < 2*N; m++, index++) {
+		    					waveim[k][m] = -coeffs[i][1][index];
+		    				}
+		    			}
+		    			for (index = 0,k = N; k < 2*N; k++) {
+		    				for (m = 0; m < N; m++, index++) {
+		    					waveim[k][m] = -coeffs[i][0][index];
+		    				}
+		    			}
+		    			N *= 2;
+		    		} // for (i = 1; i < iter_max[0] + 1; i++)
+		    	    subfreVector.add(waveim);
+		    	} // else "BIOR"
+	    	} // for (jj = 0; jj < subVector.size(); jj++)
+	    	fre_basic_patches.add(subfreVector);
+	    } // for (ii = 0; ii < basic_patches.size(); ii++)
+	    
+	    acc_pointer = 0;
+	    for (i = 0; i < row_ind.length; i++) {
+	    	i_r = row_ind[i];
+	    	for (j = 0; j < column_ind.length; j++) {
+	    		j_r = column_ind[j];
+	    		nSx_r = threshold_count[i_r][j_r];
+	    		group_3D_img = build_3D_group(fre_noisy_patches, ri_rj_N__ni_nj[i_r][j_r], nSx_r);
+	    		group_3D_est = build_3D_group(fre_basic_patches, ri_rj_N__ni_nj[i_r][j_r], nSx_r);
+	    		group_3D = wiener_filtering_hadamard(group_3D_img, group_3D_est, sigma, !useSD,weight);
+	    		group_3D_transpose = new double[nSx_r][group_3D.length][group_3D.length];
+	    		for (k = acc_pointer; k < acc_pointer + nSx_r; k++) {
+	    			for (m = 0; m < group_3D.length; m++) {
+	    				for (n = 0; n < group_3D.length; n++) {
+	    					group_3D_table[k][m][n] = group_3D[m][n][k-acc_pointer];
+	    					group_3D_transpose[k-acc_pointer][m][n] = group_3D[m][n][k-acc_pointer];
+	    				}
+	    			}
+	    		}
+	    		acc_pointer += nSx_r;
+	    		
+	    		if (useSD) {
+	                weight[0] = sd_weighting(group_3D_transpose);
+	    		}
+	    		
+	    		weight_table[i_r][j_r] = weight[0];
+	    	} // for (j = 0; j < column_ind.length; j++)
+	    } // for (i = 0; i < row_ind.length; i++)
+	    
+	    if (tau_2D.equalsIgnoreCase("DCT")) {
+    		// Reverse 2D Discrete Cosine Transform
+    		double new_patch_1[][] = new double[kWien][kWien];
+    		double yk;
+    		for (i = 0; i < kWien; i++) {
+    			for (k = 0; k < kWien; k++) {
+    				yk = group_3D_table[ii][0][i]/Math.sqrt(kWien);
+    			    for (n = 1; n < kWien; n++) {
+    			        yk += Math.sqrt(2.0/kWien) * group_3D_table[ii][n][i]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kWien));  
+    			    }
+			        new_patch_1[k][i] = yk;
+    			}
+    		}
+    		for (i = 0; i < kWien; i++) {
+    			for (k = 0; k < kWien; k++) {
+    				yk = new_patch_1[i][0]/Math.sqrt(kWien);
+    				for (n = 1; n < kWien; n++) {
+    					yk += Math.sqrt(2.0/kWien) * new_patch_1[i][n]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kWien));
+    				}
+			        group_3D_table[ii][i][k] = yk;
+    			}
+    		}
+    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+    	else { // "BIOR"
+    		PyWavelets py = new PyWavelets();
+    		int level = (int)log2(kWien);
+    		double group_2D[][] = py.BM3Dwaverec2(group_3D_table[ii],level);
+    		for (j = 0; j < kWien; j++) {
+    			for (k = 0; k < kWien; k++) {
+    				group_3D_table[ii][j][k] = group_2D[j][k];
+    			}
+    		}
+    	} // else "BIOR"
+	    
+	    // for i in range(1000):
+        //     patch = group_3D_table[i]
+        //     print(i, '----------------------------')
+        //     print(patch)
+        //     cv2.imshow('', patch.astype(np.uint8))
+        //     cv2.waitKey()
+
+        // aggregation part
+	    double numerator[][] = new double[height][width];
+	    double denominator[][] = new double[height][width];
+	    for (i = 0; i < nWien; i++) {
+	    	for (j = 0; j < width; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    for (i = height - nWien; i < height; i++) {
+	    	for (j = 0; j < width; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    for (i = nWien; i < height - nWien; i++) {
+	    	for (j = 0; j < nWien; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    
+	    for (i = nWien; i < height - nWien; i++) {
+	    	for (j = width - nWien; j < width; j++) {
+	    		denominator[i][j] = 1.0;
+	    	}
+	    }
+	    acc_pointer = 0;
+	    double patch[][];
+	    for (i = 0; i < row_ind.length; i++) {
+	    	i_r = row_ind[i];
+	    	for (j = 0; j < column_ind.length; j++) {
+	    		j_r = column_ind[j];
+	    		nSx_r = threshold_count[i_r][j_r];
+	    		int N_ni_nj[][] = ri_rj_N__ni_nj[i_r][j_r];
+	    		group_3D = new double[nSx_r][kWien][kWien];
+	    		for (k = acc_pointer; k < acc_pointer + nSx_r; k++) {
+	    			for (m = 0; m < kWien; m++) {
+	    				for (n = 0; n < kWien; n++) {
+	    					group_3D[k-acc_pointer][m][n] = group_3D_table[k][m][n];
+	    				}
+	    			}
+	    		}
+	    		acc_pointer += nSx_r;
+	    		weight[0] = weight_table[i_r][j_r];
+	    		for (n = 0; n < nSx_r; n++) {
+	    			ni = N_ni_nj[n][0];
+	    			nj = N_ni_nj[n][1];
+	    			patch = group_3D[n];
+	    			
+	    			for (k = 0; k < kWien; k++) {
+	    				for (m = 0; m < kWien; m++) {
+	    					numerator[ni + k][nj + m] += patch[k][m] * kaiserWindow[k][m] * weight[0];
+	    					denominator[ni + k][nj + m] += kaiserWindow[k][m] * weight[0];
+	    				}
+	    			}
+	    			
+	    		} // for (n = 0; n < nSx_r; n++)
+	    	} // for (j = 0; j < column_ind.length; j++)
+	    } // for (i = 0; i < row_ind.length; i++)
+	    double img_denoised_pad[][] = new double[height][width];
+	    return img_denoised_pad;
+	}
+	
+	private double[][][] wiener_filtering_hadamard(double group_3D_img[][][], double group_3D_est[][][], double sigma,
+			boolean doWeight, double weight[]) {
+		// wiener_filtering after hadamard transform
+		int i,j,k;
+		double value;
+		int n = group_3D_img.length;
+		double group2D[][] = new double[n][n];
+		int nSx_r = group_3D_img[0][0].length;
+		double group_3D_img_h[][][] = new double[n][n][nSx_r];
+		double group_3D_est_h[][][] = new double[n][n][nSx_r];
+		double coef_norm = Math.sqrt(nSx_r);
+	    double coef = 1.0 / nSx_r;
+	    double dst[][] = new double[n][n];
+	    WalshHadamardTransform3 wht3 = new WalshHadamardTransform3();
+	    
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group2D[j][k] = group_3D_img[j][k][i];
+	        		dst[j][k] = 0.0;
+	        	}
+	        }
+	        wht3.fhtnat2D(n, n, group2D, dst, true);
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group_3D_img_h[j][k][i] = dst[j][k];
+	        	}
+	        }
+	    } // for (i = 0; i < nSx_r; i++)
+	    
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group2D[j][k] = group_3D_est[j][k][i];
+	        		dst[j][k] = 0.0;
+	        	}
+	        }
+	        wht3.fhtnat2D(n, n, group2D, dst, true);
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group_3D_est_h[j][k][i] = dst[j][k];
+	        	}
+	        }
+	    } // for (i = 0; i < nSx_r; i++)
+	    
+	    // hard threshold filtering in this block
+	    // In WalshHadamardTransform3 in the 1D transform in fhtnat we have:
+	    //if (forwardTransform) {
+		//	for (i1 = 0; i1 < N; i1++) {
+		//        x[i1]= (x[i1]/(double)N);
+		//	}
+	    //} // if (forwardTransform)
+	    // and fhtnat2D calls fhtnat twice, once for each dimension, so a multiplication of (1/(n*n)) is performed
+	    // on the forward transform but not on the reverse transform in WalshHadamardTransform3.
+	    // The python hadamard provides no information as to whether the call is a forward or inverse transform
+	    // so for python forward must scale by 1/n and inverse must scale by 1/n.
+	    // Therefore, sigma must be multiplied by 1/(n*n) to make the sigma align for WalshHadamardTransform3
+	    
+	    // wiener filtering in this block
+	    weight[0] = 0.0;
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		value = group_3D_est_h[j][k][i] * group_3D_est_h[j][k][i] * coef;
+	        		value /= (value + sigma * sigma/(n * n));
+	        		group_3D_est_h[j][k][i] = group_3D_img_h[j][k][i] * value * coef;
+	        		weight[0] += value;
+	        	}
+	        }
+	    }
+	    
+	    for (i = 0; i < nSx_r; i++) {
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group2D[j][k] = group_3D_est_h[j][k][i];
+	        		dst[j][k] = 0.0;
+	        	}
+	        }
+	        wht3.fhtnat2D(n, n, group2D, dst, false);
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		group_3D_est[j][k][i] = dst[j][k] * coef;
+	        	}
+	        }
+	    } // for (i = 0; i < nSx_r; i++)
+	    
+	    if (doWeight) {
+	        if (weight[0] > 0.0) {
+	        	weight[0] = 1. / (sigma * sigma * weight[0]);	
+	        }
+	        else {
+	        	weight[0] = 1.0;
+	        }
+	    } // if (doWeight)
+	    return group_3D_est;	
 	}
 	
 	private ModelImage symetrize(ModelImage img, int pad) {
@@ -256,10 +725,11 @@ public class BM3D extends AlgorithmBase {
 		return padImage;
 	}
 	
-	private double[] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
+	private double[][] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
 			double tauMatch, boolean useSD, String tau_2D) {
 		int i,ii,h,j,jj,k,m,n,w,index, acc_pointer, i_r, j_r;
 		int nSx_r;
+		int ni, nj;
 		double group_3D[][][];
 		double group_3D_transpose[][][];
 		double weight[] = new double[1];
@@ -423,8 +893,8 @@ public class BM3D extends AlgorithmBase {
 	    			for (k = 0; k < kHard; k++) {
 	    				group_3D_table[ii][j][k] = group_2D[j][k];
 	    			}
+	    		}
 	    	} // else "BIOR"
-	    } // for (ii = 0; ii < group_len; ii++)
 	    	
     	// group_3D_table = np.maximum(group_3D_table, 0)
 	    // for i in range(1000):
@@ -461,7 +931,45 @@ public class BM3D extends AlgorithmBase {
 	    		denominator[i][j] = 1.0;
 	    	}
 	    }
-	    double img_basic[] = new double[length];
+	    acc_pointer = 0;
+	    double patch[][];
+	    for (i = 0; i < row_ind.length; i++) {
+	    	i_r = row_ind[i];
+	    	for (j = 0; j < column_ind.length; j++) {
+	    		j_r = column_ind[j];
+	    		nSx_r = threshold_count[i_r][j_r];
+	    		int N_ni_nj[][] = ri_rj_N__ni_nj[i_r][j_r];
+	    		group_3D = new double[nSx_r][kHard][kHard];
+	    		for (k = acc_pointer; k < acc_pointer + nSx_r; k++) {
+	    			for (m = 0; m < kHard; m++) {
+	    				for (n = 0; n < kHard; n++) {
+	    					group_3D[k-acc_pointer][m][n] = group_3D_table[k][m][n];
+	    				}
+	    			}
+	    		}
+	    		acc_pointer += nSx_r;
+	    		weight[0] = weight_table[i_r][j_r];
+	    		for (n = 0; n < nSx_r; n++) {
+	    			ni = N_ni_nj[n][0];
+	    			nj = N_ni_nj[n][1];
+	    			patch = group_3D[n];
+	    			
+	    			for (k = 0; k < kHard; k++) {
+	    				for (m = 0; m < kHard; m++) {
+	    					numerator[ni + k][nj + m] += patch[k][m] * kaiserWindow[k][m] * weight[0];
+	    					denominator[ni + k][nj + m] += kaiserWindow[k][m] * weight[0];
+	    				}
+	    			}
+	    			
+	    		} // for (n = 0; n < nSx_r; n++)
+	    	} // for (j = 0; j < column_ind.length; j++)
+	    } // for (i = 0; i < row_ind.length; i++)
+	    double img_basic[][] = new double[height][width];
+	    for (h = 0; h < height; h++) {
+	    	for (w = 0; w < width; w++) {
+	    		img_basic[h][w] = numerator[h][w]/denominator[h][w];
+	    	}
+	    }
 	    return img_basic;
 	}
 	
