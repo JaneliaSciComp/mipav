@@ -143,8 +143,6 @@ public class BM3D extends AlgorithmBase {
     // Threshold for 2D transform applied to each patch of the 3D group.
  	// A 2D DCT transform is used.
  	private String tau_2D_W = "DCT";
- 	
- 	private ModelImage img_basic;
 	
 	public BM3D(ModelImage[] destImage, ModelImage srcImg, double sigma, int n_H, int N_H,
 			int p_H, boolean useSD_H, String tau_2D_H, double lambda3D_H,
@@ -225,7 +223,7 @@ public class BM3D extends AlgorithmBase {
 			return;
 		}
 		
-		ModelImage img_basic_p = symetrize(img_basic, n_W);
+		ModelImage img_basic_p = symetrize(destImage[0], n_W);
 		
 		noisy_im_p.disposeLocal();
 		noisy_im_p = null;
