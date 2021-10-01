@@ -13040,16 +13040,36 @@ public  class PyWavelets extends AlgorithmBase {
 	}
 	
 	public double [][][] BM3Dwavedec2(double[][] patch, int level) {
+		// BM3D is [y][x]
+		// PyWavelets is [x][y]
+		int i,x,y;
 		DiscreteWavelet w  = discrete_wavelet(WAVELET_NAME.BIOR, 15);
 		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
 	    MODE modes[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
 	    int axes[] = new int[]{0,1};
-	    double coeffs[][][] = wavedec2(patch, wavelets, modes, level, axes);
-	    return coeffs;
+	    double patchxy[][] = new double[patch[0].length][patch.length];
+	    for (y = 0; y < patch.length; y++) {
+	    	for (x = 0; x < patch[0].length; x++) {
+	    		patchxy[x][y] = patch[y][x];
+	    	}
+	    }
+	    double coeffs[][][] = wavedec2(patchxy, wavelets, modes, level, axes);
+	    double coeffsyx[][][] = new double[coeffs.length][][];
+	    for (i = 0; i < coeffs.length; i++) {
+	    	coeffsyx[i] = new double[coeffs[i][0].length][coeffs[i].length];
+	    	for (y = 0; y < coeffs[i][0].length; y++) {
+	    		for (x = 0; x < coeffs[i].length; x++) {
+	    			coeffsyx[i][y][x] = coeffs[i][x][y];
+	    		}
+	    	}
+	    }
+	    return coeffsyx;
 	}
 	
 	public double[][] BM3Dwaverec2(double bior_img[][], int level) {
-		int i, j, k;
+		// BM3D is [y][x]
+		// PyWavelets is [x][y]
+		int i, y, x;
 		DiscreteWavelet w  = discrete_wavelet(WAVELET_NAME.BIOR, 15);
 		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
 	    MODE modes[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
@@ -13059,31 +13079,37 @@ public  class PyWavelets extends AlgorithmBase {
         rec_coeffs[0] = new double[1][1];
         rec_coeffs[0][0][0] = bior_img[0][0];
         for (i = 0; i < level; i++) {
-        	// LH
+        	// HL or "da"
         	rec_coeffs[3*i+1] = new double[N][N];
-        	for (j = N; j < 2*N; j++) {
-        		for (k = 0; k < N; k++) {
-        		    rec_coeffs[3*i+1][j-N][k] = -bior_img[j][k];	
+        	for (y = 0; y < N; y++) {
+        		for (x = N; x < 2*N; x++) {
+        		    rec_coeffs[3*i+1][x-N][y] = -bior_img[y][x];	
         		}
         	}
-        	// HL
+        	// LH or "ad"
         	rec_coeffs[3*i+2] = new double[N][N];
-        	for (j = 0; j < N; j++) {
-        		for (k = N; k < 2*N; k++) {
-        			rec_coeffs[3*i+2][j][k-N] = -bior_img[j][k];
+        	for (y = N; y < 2*N; y++) {
+        		for (x = 0; x < N; x++) {
+        			rec_coeffs[3*i+2][x][y-N] = -bior_img[y][x];
         		}
         	}
-        	// LL
+        	// HH or "dd"
         	rec_coeffs[3*i+3] = new double[N][N];
-        	for (j = N; j < 2*N; j++) {
-        		for (k = N; k < 2*N; k++) {
-        			rec_coeffs[3*i+3][j-N][k-N] = bior_img[j][k];
+        	for (y = N; y < 2*N; y++) {
+        		for (x = N; x < 2*N; x++) {
+        			rec_coeffs[3*i+3][x-N][y-N] = bior_img[y][x];
         		}
         	}
         	N *= 2;
         }
         double rec[][] = waverec2(rec_coeffs, wavelets, modes, axes);
-        return rec;
+        double recyx[][] = new double[rec[0].length][rec.length];
+        for (y = 0; y < rec[0].length; y++) {
+        	for (x = 0; x < rec.length; x++) {
+        		recyx[y][x] = rec[x][y];
+        	}
+        }
+        return recyx;
 	}
 	
 	// 2d multilevel dwt function tests
