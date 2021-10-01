@@ -79,6 +79,10 @@ import Jama.Matrix;
 
 public class BM3D extends AlgorithmBase {
 	
+	// destImage[0] is output of stage 1 with hard thresholding
+	// destImage[1] is output of stage 2 with Wiener thresholding
+	private ModelImage[] destImage;
+	
 	// White Gaussian noise standard deviation
 	private double sigma; 
 	
@@ -139,11 +143,14 @@ public class BM3D extends AlgorithmBase {
     // Threshold for 2D transform applied to each patch of the 3D group.
  	// A 2D DCT transform is used.
  	private String tau_2D_W = "DCT";
+ 	
+ 	private ModelImage img_basic;
 	
-	public BM3D(ModelImage destImage, ModelImage srcImg, double sigma, int n_H, int N_H,
+	public BM3D(ModelImage[] destImage, ModelImage srcImg, double sigma, int n_H, int N_H,
 			int p_H, boolean useSD_H, String tau_2D_H, double lambda3D_H,
 			int n_W, int N_W, int p_W, boolean useSD_W, String tau_2D_W) {
-		super(destImage, srcImg);
+		super(null, srcImg);
+		this.destImage = destImage;
 		this.sigma = sigma;
 		this.n_H = n_H;
 		this.p_H = p_H;
@@ -209,12 +216,11 @@ public class BM3D extends AlgorithmBase {
 			}
 		}
 		
-		ModelImage img_basic = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), "image_basic");
 		try {
-			img_basic.importData(0, img_basic_arr, true);
+			destImage[0].importData(0, img_basic_arr, true);
 		}
 		catch (IOException e) {
-			MipavUtil.displayError("IOException on image_basic.importData(0, img_basic_arr, true)");
+			MipavUtil.displayError("IOException on destImage[1].importData(0, img_basic_arr, true)");
 			setCompleted(false);
 			return;
 		}
@@ -238,10 +244,10 @@ public class BM3D extends AlgorithmBase {
 		img_basic_p = null;
 		
 		try {
-			destImage.importData(0, img_denoised_arr, true);
+			destImage[1].importData(0, img_denoised_arr, true);
 		}
 		catch (IOException e) {
-			MipavUtil.displayError("IOException on destImage.importData(0, img_denoised_arr, true)");
+			MipavUtil.displayError("IOException on destImage[1].importData(0, img_denoised_arr, true)");
 			setCompleted(false);
 			return;
 		}
@@ -252,7 +258,7 @@ public class BM3D extends AlgorithmBase {
 	
 	private double[][] bm3d_2nd_step(double sigma, ModelImage img_noisy, ModelImage img_basic, int nWien, int kWien, 
 			int NWien, int pWien, double tauMatch, boolean useSD, String tau_2D) {
-		int ii,jj,h,i,j,k,m,n,w,index;
+		int ii,jj,h,i,j,k,m,n,w,x,y;
 		int acc_pointer, i_r, j_r, nSx_r;
 		int ni,nj;
 		double group_3D_img[][][];
@@ -338,24 +344,24 @@ public class BM3D extends AlgorithmBase {
 		    		
 		    		int N = 1;
 		    		waveim[0][0] = coeffs[0][0][0];
-		    		for (i = 1; i < iter_max + 1; i++) {
-		    			for (index = 0,k = N; k < 2*N; k++) {
-		    				for (m = N; m < 2*N; m++, index++) {
-		    					waveim[k][m] = coeffs[i][2][index];
+		    		for (i = 0; i < iter_max; i++) {
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = N; x < 2*N; x++) {
+		    					waveim[y][x] = coeffs[3*i+3][y-N][x-N];
 		    				}
 		    			}
-		    			for (index = 0,k = 0; k < N; k++) {
-		    				for (m = N; m < 2*N; m++, index++) {
-		    					waveim[k][m] = -coeffs[i][1][index];
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = 0; x < N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+2][y-N][x];
 		    				}
 		    			}
-		    			for (index = 0,k = N; k < 2*N; k++) {
-		    				for (m = 0; m < N; m++, index++) {
-		    					waveim[k][m] = -coeffs[i][0][index];
+		    			for (y = 0; y < N; y++) {
+		    				for (x = N; x < 2*N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+1][y][x-N];
 		    				}
 		    			}
 		    			N *= 2;
-		    		} // for (i = 1; i < iter_max[0] + 1; i++)
+		    		} // for (i = 0; i < iter_max; i++)
 		    	    subfreVector.add(waveim);
 		    	} // else "BIOR"
 	    	} // for (jj = 0; jj < subVector.size(); jj++)
@@ -417,24 +423,25 @@ public class BM3D extends AlgorithmBase {
 		    		
 		    		int N = 1;
 		    		waveim[0][0] = coeffs[0][0][0];
-		    		for (i = 1; i < iter_max + 1; i++) {
-		    			for (index = 0,k = N; k < 2*N; k++) {
-		    				for (m = N; m < 2*N; m++, index++) {
-		    					waveim[k][m] = coeffs[i][2][index];
+		    		for (i = 0; i < iter_max; i++) {
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = N; x < 2*N; x++) {
+		    					waveim[y][x] = coeffs[3*i+3][y-N][x-N];
 		    				}
 		    			}
-		    			for (index = 0,k = 0; k < N; k++) {
-		    				for (m = N; m < 2*N; m++, index++) {
-		    					waveim[k][m] = -coeffs[i][1][index];
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = 0; x < N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+2][y-N][x];
 		    				}
 		    			}
-		    			for (index = 0,k = N; k < 2*N; k++) {
-		    				for (m = 0; m < N; m++, index++) {
-		    					waveim[k][m] = -coeffs[i][0][index];
+		    			for (y = 0; y < N; y++) {
+		    				for (x = N; x < 2*N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+1][y][x-N];
 		    				}
 		    			}
 		    			N *= 2;
-		    		} // for (i = 1; i < iter_max[0] + 1; i++)
+		    		} // for (i = 0; i < iter_max; i++)
+		    		
 		    	    subfreVector.add(waveim);
 		    	} // else "BIOR"
 	    	} // for (jj = 0; jj < subVector.size(); jj++)
@@ -732,7 +739,7 @@ public class BM3D extends AlgorithmBase {
 	
 	private double[][] bm3d_1st_step(double sigma, ModelImage img_noisy, int nHard, int kHard, int NHard, int pHard, double lambdaHard3D,
 			double tauMatch, boolean useSD, String tau_2D) {
-		int i,ii,h,j,jj,k,m,n,w,index, acc_pointer, i_r, j_r;
+		int i,ii,h,j,jj,k,m,n,w,acc_pointer, i_r, j_r,x,y;
 		int nSx_r;
 		int ni, nj;
 		double group_3D[][][];
@@ -815,24 +822,25 @@ public class BM3D extends AlgorithmBase {
 		    		
 		    		int N = 1;
 		    		waveim[0][0] = coeffs[0][0][0];
-		    		for (i = 1; i < iter_max + 1; i++) {
-		    			for (index = 0,k = N; k < 2*N; k++) {
-		    				for (m = N; m < 2*N; m++, index++) {
-		    					waveim[k][m] = coeffs[i][2][index];
+		    		for (i = 0; i < iter_max; i++) {
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = N; x < 2*N; x++) {
+		    					waveim[y][x] = coeffs[3*i+3][y-N][x-N];
 		    				}
 		    			}
-		    			for (index = 0,k = 0; k < N; k++) {
-		    				for (m = N; m < 2*N; m++, index++) {
-		    					waveim[k][m] = -coeffs[i][1][index];
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = 0; x < N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+2][y-N][x];
 		    				}
 		    			}
-		    			for (index = 0,k = N; k < 2*N; k++) {
-		    				for (m = 0; m < N; m++, index++) {
-		    					waveim[k][m] = -coeffs[i][0][index];
+		    			for (y = 0; y < N; y++) {
+		    				for (x = N; x < 2*N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+1][y][x-N];
 		    				}
 		    			}
 		    			N *= 2;
-		    		} // for (i = 1; i < iter_max[0] + 1; i++)
+		    		} // for (i = 0; i < iter_max; i++)
+		    		
 		    	    subfreVector.add(waveim);
 		    	} // else "BIOR"
 	    	} // for (jj = 0; jj < subVector.size(); jj++)
