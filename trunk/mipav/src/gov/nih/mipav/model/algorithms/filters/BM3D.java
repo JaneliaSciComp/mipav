@@ -693,8 +693,8 @@ public class BM3D extends AlgorithmBase {
 		}
 		
 		// Symmetric reflection padding
-		int paddedXDim = xDim + pad;
-		int paddedYDim = yDim + pad;
+		int paddedXDim = xDim + 2*pad;
+		int paddedYDim = yDim + 2*pad;
 		int paddedLength = paddedXDim * paddedYDim;
 		double padBuf[] = new double[paddedLength];
 		for (y = 0; y < pad; y++) {
