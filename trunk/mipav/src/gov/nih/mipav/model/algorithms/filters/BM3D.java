@@ -1494,7 +1494,8 @@ public class BM3D extends AlgorithmBase {
 		// Returns double[] out 
 		// The window with the maximum value normalized to one (the value one
 		// appears only if the number of samples is odd).
-		int i, n;
+		int i;
+		double n;
 		if (M <= 0) {
 			return null;
 		}
@@ -1509,7 +1510,7 @@ public class BM3D extends AlgorithmBase {
     	int[] nz = new int[1];
 		int[] errorFlag = new int[1];
 		double maxValue = - Double.MAX_VALUE;
-		for (i = 0, n = -(M-1)/2; n <= (M-1)/2; i++, n++) {
+		for (i = 0, n = -(M-1.0)/2.0; i < M; i++, n+= 1.0) {
 			realArg = beta*Math.sqrt(1.0 - 4.0*n*n/((M-1.0)*(M-1.0)));
 			Bessel numBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
 					Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
