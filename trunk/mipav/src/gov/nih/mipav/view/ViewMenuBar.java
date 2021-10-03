@@ -194,6 +194,7 @@ public class ViewMenuBar {
 				menuBuilder.makeMenu("Filters (spatial)", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Anisotropic diffusion", null, 0, null, false),
 								menuBuilder.buildMenuItem("Bilateral filter", null, 0, null, false),
+								menuBuilder.buildMenuItem("BM3D", null, 0, null, false),
 								menuBuilder.buildMenuItem("Boundary attenuation", "BoundaryAttenuation", 0, null,
 										false),
 								menuBuilder.buildMenuItem("Coherence-enhancing diffusion", "CoherDiff", 0, null, false),
@@ -1457,6 +1458,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
 		if (numberOfDimensions == 4) {
+			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D", false);
 			menuBuilder.setMenuItemEnabled("Center of mass", false);
@@ -1580,6 +1582,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
+			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D", true);
@@ -1702,6 +1705,7 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
+			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
 			menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
@@ -1806,6 +1810,7 @@ public class ViewMenuBar {
 		// menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
 		// }
 
+		menuBuilder.setMenuItemEnabled("BM3D", true);
 		menuBuilder.setMenuItemEnabled("Density based clustering", true);
 		menuBuilder.setMenuItemEnabled("Edge detection", true);
 		menuBuilder.setMenuItemEnabled("Canny", true);
