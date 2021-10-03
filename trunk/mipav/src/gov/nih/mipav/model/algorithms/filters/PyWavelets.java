@@ -17382,7 +17382,8 @@ public  class PyWavelets extends AlgorithmBase {
             return level;
         }
         else if (level > max_level) {
-            MipavUtil.displayWarning("Level value of " + level +" is too high: all coefficients will experience boundary effects.");
+            Preferences.debug("Level value of " + level +" is too high: all coefficients will experience boundary effects.\n",
+            		Preferences.DEBUG_ALGORITHM);
             return level;
         }
         return level;
