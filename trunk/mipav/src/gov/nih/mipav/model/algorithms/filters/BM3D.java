@@ -348,14 +348,14 @@ public class BM3D extends AlgorithmBase {
 		    					waveim[y][x] = coeffs[3*i+3][y-N][x-N];
 		    				}
 		    			}
-		    			for (y = N; y < 2*N; y++) {
-		    				for (x = 0; x < N; x++) {
-		    					waveim[y][x] = -coeffs[3*i+2][y-N][x];
-		    				}
-		    			}
 		    			for (y = 0; y < N; y++) {
 		    				for (x = N; x < 2*N; x++) {
-		    					waveim[y][x] = -coeffs[3*i+1][y][x-N];
+		    					waveim[y][x] = -coeffs[3*i+2][y][x-N];
+		    				}
+		    			}
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = 0; x < N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+1][y-N][x];
 		    				}
 		    			}
 		    			N *= 2;
@@ -427,14 +427,14 @@ public class BM3D extends AlgorithmBase {
 		    					waveim[y][x] = coeffs[3*i+3][y-N][x-N];
 		    				}
 		    			}
-		    			for (y = N; y < 2*N; y++) {
-		    				for (x = 0; x < N; x++) {
-		    					waveim[y][x] = -coeffs[3*i+2][y-N][x];
-		    				}
-		    			}
 		    			for (y = 0; y < N; y++) {
 		    				for (x = N; x < 2*N; x++) {
-		    					waveim[y][x] = -coeffs[3*i+1][y][x-N];
+		    					waveim[y][x] = -coeffs[3*i+2][y][x-N];
+		    				}
+		    			}
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = 0; x < N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+1][y-N][x];
 		    				}
 		    			}
 		    			N *= 2;
@@ -745,7 +745,6 @@ public class BM3D extends AlgorithmBase {
 		double weight[] = new double[1];
 	    int width = img_noisy.getExtents()[0];
 	    int height = img_noisy.getExtents()[1];
-	    int length = width*height;
 	    
 	    int row_ind[] = ind_initialize(height - kHard + 1, nHard, pHard);
 	    int column_ind[] = ind_initialize(width - kHard + 1, nHard, pHard);
@@ -826,14 +825,14 @@ public class BM3D extends AlgorithmBase {
 		    					waveim[y][x] = coeffs[3*i+3][y-N][x-N];
 		    				}
 		    			}
-		    			for (y = N; y < 2*N; y++) {
-		    				for (x = 0; x < N; x++) {
-		    					waveim[y][x] = -coeffs[3*i+2][y-N][x];
-		    				}
-		    			}
 		    			for (y = 0; y < N; y++) {
 		    				for (x = N; x < 2*N; x++) {
-		    					waveim[y][x] = -coeffs[3*i+1][y][x-N];
+		    					waveim[y][x] = -coeffs[3*i+2][y][x-N];
+		    				}
+		    			}
+		    			for (y = N; y < 2*N; y++) {
+		    				for (x = 0; x < N; x++) {
+		    					waveim[y][x] = -coeffs[3*i+1][y-N][x];
 		    				}
 		    			}
 		    			N *= 2;
