@@ -850,7 +850,7 @@ public class BM3D extends AlgorithmBase {
 	    	for (j = 0; j < column_ind.length; j++) {
 	    		j_r = column_ind[j];
 	    		nSx_r = threshold_count[i_r][j_r];
-	    		group_3D = build_3D_group(fre_all_patches, ri_rj_N__ni_nj[i_r][ j_r], nSx_r);
+	    		group_3D = build_3D_group(fre_all_patches, ri_rj_N__ni_nj[i_r][j_r], nSx_r);
 	    		group_3D = ht_filtering_hadamard(group_3D, sigma, lambdaHard3D, !useSD, weight);
 	    		group_3D_transpose = new double[nSx_r][group_3D.length][group_3D.length];
 	    		for (k = acc_pointer; k < acc_pointer + nSx_r; k++) {
@@ -1104,7 +1104,7 @@ public class BM3D extends AlgorithmBase {
 				}
 			}
 		}
-		double group_3D[][][] = new double[nSx_r][k][k];
+		double group_3D[][][] = new double[nSx_r][][];
 		for (n = 0; n < nSx_r; n++) {
 			ni = N__ni_nj[n][0];
 			nj = N__ni_nj[n][1];
