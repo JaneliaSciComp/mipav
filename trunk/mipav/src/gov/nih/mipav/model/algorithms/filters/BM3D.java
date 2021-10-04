@@ -474,39 +474,41 @@ public class BM3D extends AlgorithmBase {
 	    	} // for (j = 0; j < column_ind.length; j++)
 	    } // for (i = 0; i < row_ind.length; i++)
 	    
-	    if (tau_2D.equalsIgnoreCase("DCT")) {
-    		// Reverse 2D Discrete Cosine Transform
-    		double new_patch_1[][] = new double[kWien][kWien];
-    		double yk;
-    		for (i = 0; i < kWien; i++) {
-    			for (k = 0; k < kWien; k++) {
-    				yk = group_3D_table[ii][0][i]/Math.sqrt(kWien);
-    			    for (n = 1; n < kWien; n++) {
-    			        yk += Math.sqrt(2.0/kWien) * group_3D_table[ii][n][i]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kWien));  
-    			    }
-			        new_patch_1[k][i] = yk;
-    			}
-    		}
-    		for (i = 0; i < kWien; i++) {
-    			for (k = 0; k < kWien; k++) {
-    				yk = new_patch_1[i][0]/Math.sqrt(kWien);
-    				for (n = 1; n < kWien; n++) {
-    					yk += Math.sqrt(2.0/kWien) * new_patch_1[i][n]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kWien));
-    				}
-			        group_3D_table[ii][i][k] = yk;
-    			}
-    		}
-    	} // if (tau_2D.equalsIgnoreCase("DCT"))
-    	else { // "BIOR"
-    		PyWavelets py = new PyWavelets();
-    		int level = (int)log2(kWien);
-    		double group_2D[][] = py.BM3Dwaverec2(group_3D_table[ii],level);
-    		for (j = 0; j < kWien; j++) {
-    			for (k = 0; k < kWien; k++) {
-    				group_3D_table[ii][j][k] = group_2D[j][k];
-    			}
-    		}
-    	} // else "BIOR"
+	   for (ii = 0; ii < group_len; ii++) {
+		    if (tau_2D.equalsIgnoreCase("DCT")) {
+	    		// Reverse 2D Discrete Cosine Transform
+	    		double new_patch_1[][] = new double[kWien][kWien];
+	    		double yk;
+	    		for (i = 0; i < kWien; i++) {
+	    			for (k = 0; k < kWien; k++) {
+	    				yk = group_3D_table[ii][0][i]/Math.sqrt(kWien);
+	    			    for (n = 1; n < kWien; n++) {
+	    			        yk += Math.sqrt(2.0/kWien) * group_3D_table[ii][n][i]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kWien));  
+	    			    }
+				        new_patch_1[k][i] = yk;
+	    			}
+	    		}
+	    		for (i = 0; i < kWien; i++) {
+	    			for (k = 0; k < kWien; k++) {
+	    				yk = new_patch_1[i][0]/Math.sqrt(kWien);
+	    				for (n = 1; n < kWien; n++) {
+	    					yk += Math.sqrt(2.0/kWien) * new_patch_1[i][n]*Math.cos(Math.PI*n*(2*k+1)/(2.0*kWien));
+	    				}
+				        group_3D_table[ii][i][k] = yk;
+	    			}
+	    		}
+	    	} // if (tau_2D.equalsIgnoreCase("DCT"))
+	    	else { // "BIOR"
+	    		PyWavelets py = new PyWavelets();
+	    		int level = (int)log2(kWien);
+	    		double group_2D[][] = py.BM3Dwaverec2(group_3D_table[ii],level);
+	    		for (j = 0; j < kWien; j++) {
+	    			for (k = 0; k < kWien; k++) {
+	    				group_3D_table[ii][j][k] = group_2D[j][k];
+	    			}
+	    		}
+	    	} // else "BIOR"
+	   } // for (ii = 0; ii < group_len; ii++)
 	    
 	    // for i in range(1000):
         //     patch = group_3D_table[i]
@@ -872,7 +874,8 @@ public class BM3D extends AlgorithmBase {
 	    } // for (i = 0; i < row_ind.length; i++)
 	    
 	    
-	    	if (tau_2D.equalsIgnoreCase("DCT")) {
+	    for (ii = 0; ii < group_len; ii++) {	
+	        if (tau_2D.equalsIgnoreCase("DCT")) {
 	    		// Reverse 2D Discrete Cosine Transform
 	    		double new_patch_1[][] = new double[kHard][kHard];
 	    		double yk;
@@ -905,6 +908,7 @@ public class BM3D extends AlgorithmBase {
 	    			}
 	    		}
 	    	} // else "BIOR"
+	    } // for (ii = 0; ii < group_len; ii++)
 	    	
     	// group_3D_table = np.maximum(group_3D_table, 0)
 	    // for i in range(1000):
