@@ -1054,6 +1054,8 @@ public class BM3D extends AlgorithmBase {
 	        	for (k = 0; k < n; k++) {
 	        		if (Math.abs(group_3D_h[j][k][i]) > T) {
 	        			weight[0] += 1.0;
+	        		}
+	        		else {
 	        			group_3D_h[j][k][i] = 0.0;
 	        		}
 	        	}
