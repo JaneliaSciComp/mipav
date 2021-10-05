@@ -174,6 +174,17 @@ public class BM3D extends AlgorithmBase {
             return;
         }
 		
+		if (estimateNoiseStandardDeviation) {
+        	double noiseStd[] = new double[1];
+        	// Obtain noise standard deviation with subband containing finest level diagonal details
+        	PyWavelets pAlgo = new PyWavelets(srcImage, noiseStd);
+        	pAlgo.run();
+        	sigma = noiseStd[0];
+        	System.out.println("Noise standard deviation estimated as " + sigma);
+        	pAlgo.finalize();
+        	pAlgo = null;
+        }
+		
 		if (sigma < 35.0) {
 		    tauMatch_H = 2500.0;	
 		}
@@ -202,17 +213,6 @@ public class BM3D extends AlgorithmBase {
 		else {
 			k_W = 12;
 		}
-		
-		if (estimateNoiseStandardDeviation) {
-        	double noiseStd[] = new double[1];
-        	// Obtain noise standard deviation with subband containing finest level diagonal details
-        	PyWavelets pAlgo = new PyWavelets(srcImage, noiseStd);
-        	pAlgo.run();
-        	sigma = noiseStd[0];
-        	System.out.println("Noise standard deviation estimated as " + sigma);
-        	pAlgo.finalize();
-        	pAlgo = null;
-        }
 		
 		ModelImage noisy_im_p = symetrize(srcImage, n_H);
 		
