@@ -589,85 +589,39 @@ public class BM3D extends AlgorithmBase {
 		int i,j,k;
 		double value;
 		int n = group_3D_img.length;
-		double group2D[][] = new double[n][n];
 		int nSx_r = group_3D_img[0][0].length;
-		double group_3D_img_h[][][] = new double[n][n][nSx_r];
-		double group_3D_est_h[][][] = new double[n][n][nSx_r];
-		double coef_norm = Math.sqrt(nSx_r);
+		double group_3D_img_h[][][] = new double[n][n][];
+		double group_3D_est_h[][][] = new double[n][n][];
 	    double coef = 1.0 / nSx_r;
-	    double dst[][] = new double[n][n];
 	    WalshHadamardTransform3 wht3 = new WalshHadamardTransform3();
 	    
-	    for (i = 0; i < nSx_r; i++) {
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group2D[j][k] = group_3D_img[j][k][i];
-	        		dst[j][k] = 0.0;
-	        	}
-	        }
-	        wht3.fhtnat2D(n, n, group2D, dst, true);
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group_3D_img_h[j][k][i] = dst[j][k];
-	        	}
-	        }
-	    } // for (i = 0; i < nSx_r; i++)
-	    
-	    for (i = 0; i < nSx_r; i++) {
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group2D[j][k] = group_3D_est[j][k][i];
-	        		dst[j][k] = 0.0;
-	        	}
-	        }
-	        wht3.fhtnat2D(n, n, group2D, dst, true);
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group_3D_est_h[j][k][i] = dst[j][k];
-	        	}
-	        }
-	    } // for (i = 0; i < nSx_r; i++)
-	    
-	    // hard threshold filtering in this block
-	    // In WalshHadamardTransform3 in the 1D transform in fhtnat we have:
-	    //if (forwardTransform) {
-		//	for (i1 = 0; i1 < N; i1++) {
-		//        x[i1]= (x[i1]/(double)N);
-		//	}
-	    //} // if (forwardTransform)
-	    // and fhtnat2D calls fhtnat twice, once for each dimension, so a multiplication of (1/(n*n)) is performed
-	    // on the forward transform but not on the reverse transform in WalshHadamardTransform3.
-	    // The python hadamard provides no information as to whether the call is a forward or inverse transform
-	    // so for python forward must scale by 1/n and inverse must scale by 1/n.
-	    // Therefore, sigma must be multiplied by 1/(n*n) to make the sigma align for WalshHadamardTransform3
-	    
+        for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		// false means don't multiply by 1.0/ nSx_r
+        		group_3D_img_h[j][k] = wht3.fhtnat(group_3D_img[j][k], false);
+        		group_3D_est_h[j][k] = wht3.fhtnat(group_3D_est[j][k], false);
+        	}
+        }
+	         
 	    // wiener filtering in this block
 	    weight[0] = 0.0;
 	    for (i = 0; i < nSx_r; i++) {
 	        for (j = 0; j < n; j++) {
 	        	for (k = 0; k < n; k++) {
 	        		value = group_3D_est_h[j][k][i] * group_3D_est_h[j][k][i] * coef;
-	        		value /= (value + sigma * sigma/(n * n));
+	        		value /= (value + sigma * sigma);
 	        		group_3D_est_h[j][k][i] = group_3D_img_h[j][k][i] * value * coef;
 	        		weight[0] += value;
 	        	}
 	        }
 	    }
 	    
-	    for (i = 0; i < nSx_r; i++) {
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group2D[j][k] = group_3D_est_h[j][k][i];
-	        		dst[j][k] = 0.0;
-	        	}
-	        }
-	        wht3.fhtnat2D(n, n, group2D, dst, false);
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group_3D_est[j][k][i] = dst[j][k] * coef;
-	        	}
-	        }
-	    } // for (i = 0; i < nSx_r; i++)
+	    for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		// false means don't multiply by 1.0/ nSx_r
+        		group_3D_est[j][k] = wht3.fhtnat(group_3D_est_h[j][k], false);
+        	}
+        }
 	    
 	    if (doWeight) {
 	        if (weight[0] > 0.0) {
@@ -1012,46 +966,23 @@ public class BM3D extends AlgorithmBase {
 	
 	private double[][][] ht_filtering_hadamard(double group_3D[][][], double sigma, 
 			double lambdaHard3D, boolean doWeight, double weight[]) {
-		// hard threshold filtering after hadamard transform
+		// hard threshold filtering after 1D hadamard transform
 		// group_3D shape=(n*n, nSx_r)
 		int i,j,k;
 		int n = group_3D.length;
-		double group2D[][] = new double[n][n];
 		int nSx_r = group_3D[0][0].length;
-		double group_3D_h[][][] = new double[n][n][nSx_r];
+		double group_3D_h[][][] = new double[n][n][];
 		double coef_norm = Math.sqrt(nSx_r);
-	    double coef = 1.0 / nSx_r;
-	    double dst[][] = new double[n][n];
 	    WalshHadamardTransform3 wht3 = new WalshHadamardTransform3();
 	    
-	    for (i = 0; i < nSx_r; i++) {
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group2D[j][k] = group_3D[j][k][i];
-	        		dst[j][k] = 0.0;
-	        	}
-	        }
-	        wht3.fhtnat2D(n, n, group2D, dst, true);
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group_3D_h[j][k][i] = dst[j][k];
-	        	}
-	        }
-	    } // for (i = 0; i < nSx_r; i++)
+        for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		// false means don't multiply by 1.0/ nSX_r during transform 
+        		group_3D_h[j][k] = wht3.fhtnat(group_3D[j][k], false);
+        	}
+        }
 	    
-	    // hard threshold filtering in this block
-	    // In WalshHadamardTransform3 in the 1D transform in fhtnat we have:
-	    //if (forwardTransform) {
-		//	for (i1 = 0; i1 < N; i1++) {
-		//        x[i1]= (x[i1]/(double)N);
-		//	}
-	    //} // if (forwardTransform)
-	    // and fhtnat2D calls fhtnat twice, once for each dimension, so a multiplication of (1/(n*n)) is performed
-	    // on the forward transform but not on the reverse transform in WalshHadamardTransform3.
-	    // The python hadamard provides no information as to whether the call is a forward or inverse transform
-	    // so for python forward must scale by 1/n and inverse must scale by 1/n.
-	    // Therefore, T must be multiplied by 1/n to make the thresholds align for WalshHadamardTransform3
-	    double T = lambdaHard3D * sigma * coef_norm/n;
+	    double T = lambdaHard3D * sigma * coef_norm;
 	    weight[0] = 0.0;
 	    for (i = 0; i < nSx_r; i++) {
 	        for (j = 0; j < n; j++) {
@@ -1066,20 +997,12 @@ public class BM3D extends AlgorithmBase {
 	        }
 	    } // for (i = 0; i < nSx_r; i++)
 	    
-	    for (i = 0; i < nSx_r; i++) {
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group2D[j][k] = group_3D_h[j][k][i];
-	        		dst[j][k] = 0.0;
-	        	}
-	        }
-	        wht3.fhtnat2D(n, n, group2D, dst, false);
-	        for (j = 0; j < n; j++) {
-	        	for (k = 0; k < n; k++) {
-	        		group_3D[j][k][i] = dst[j][k] * coef;
-	        	}
-	        }
-	    } // for (i = 0; i < nSx_r; i++)
+	    for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		// true means multiply by 1.0/ nSX_r during transform
+        		group_3D[j][k] = wht3.fhtnat(group_3D[j][k], true);
+        	}
+        }
 	    
 	    if (doWeight) {
 	        if (weight[0] > 0.0) {
