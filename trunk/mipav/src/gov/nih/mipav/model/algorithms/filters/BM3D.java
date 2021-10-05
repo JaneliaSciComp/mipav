@@ -218,7 +218,7 @@ public class BM3D extends AlgorithmBase {
 			destImage[0].importData(0, img_basic_arr, true);
 		}
 		catch (IOException e) {
-			MipavUtil.displayError("IOException on destImage[1].importData(0, img_basic_arr, true)");
+			MipavUtil.displayError("IOException on destImage[0].importData(0, img_basic_arr, true)");
 			setCompleted(false);
 			return;
 		}
@@ -1000,7 +1000,7 @@ public class BM3D extends AlgorithmBase {
 	    for (j = 0; j < n; j++) {
         	for (k = 0; k < n; k++) {
         		// true means multiply by 1.0/ nSX_r during transform
-        		group_3D[j][k] = wht3.fhtnat(group_3D[j][k], true);
+        		group_3D[j][k] = wht3.fhtnat(group_3D_h[j][k], true);
         	}
         }
 	    
