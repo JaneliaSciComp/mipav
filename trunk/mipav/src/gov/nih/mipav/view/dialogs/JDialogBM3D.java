@@ -35,6 +35,8 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 		
 		private BM3D bm3dAlgo;
 		
+		private boolean estimateNoiseStandardDeviation = true;
+		
 		// White Gaussian noise standard deviation
 		private double sigma; 
 		
@@ -108,6 +110,7 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 	 	private ButtonGroup WienerTransformGroup;
 	 	private JRadioButton WienerBIORButton;
 	 	private JRadioButton WienerDCTButton;
+	 	private JCheckBox estimateNoiseCheckBox = null;
 	 	
 	 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -150,6 +153,10 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 	            dispose();
 	        } else if (source == helpButton) {
 	            //MipavUtil.showHelp("");
+	        } else if (source == estimateNoiseCheckBox) {
+	        	estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
+	        	labelSigma.setEnabled(!estimateNoiseStandardDeviation);
+	        	textSigma.setEnabled(!estimateNoiseStandardDeviation);
 	        } else {
 	            super.actionPerformed(event);
 	        }
@@ -168,23 +175,33 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 	        
 	        filterPanel = new JPanel(new GridBagLayout());
 	        filterPanel.setBorder(buildTitledBorder("BM3D filter specifications"));
-
+	        
 	        gbc.gridx = 0;
 	        gbc.gridy = 0;
+	        gbc.gridwidth = 2;
+	        estimateNoiseCheckBox = new JCheckBox("Estimate Gaussian noise standard deviation");
+	        estimateNoiseCheckBox.setFont(serif12);
+	        estimateNoiseCheckBox.addActionListener(this);
+	        filterPanel.add(estimateNoiseCheckBox, gbc);
+	        estimateNoiseCheckBox.setEnabled(true);
+	        estimateNoiseCheckBox.setSelected(true);
+
+	        gbc.gridx = 0;
+	        gbc.gridy++;
 	        gbc.gridwidth = 1;
 	        gbc.weightx = .5;
 	        gbc.fill = GridBagConstraints.HORIZONTAL;
 	        labelSigma = new JLabel("White Gaussian noise standard deviation ");
 	        labelSigma.setForeground(Color.black);
 	        labelSigma.setFont(serif12);
-	        labelSigma.setEnabled(true);
+	        labelSigma.setEnabled(false);
 	        filterPanel.add(labelSigma, gbc);
 
 	        gbc.gridx = 1;
 	        textSigma = new JTextField(10);
 	        textSigma.setText("20.0");
 	        textSigma.setFont(serif12);
-	        textSigma.setEnabled(true);
+	        textSigma.setEnabled(false);
 	        filterPanel.add(textSigma, gbc);
 	        
 	        gbc.gridx = 0;
@@ -371,17 +388,21 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 	    private boolean setVariables() {
 	        String tmpStr;
 	        
-	        tmpStr = textSigma.getText();
+	        estimateNoiseStandardDeviation = estimateNoiseCheckBox.isSelected();
 
-	        if (testParameter(tmpStr, 0.1, 200.0)) {
-	            sigma = Double.valueOf(tmpStr).doubleValue();
-	        } else {
-	            MipavUtil.displayError("White Gaussian noise standard deviation must be between 0.1 and 200.0");
-	            textSigma.requestFocus();
-	            textSigma.selectAll();
-
-	            return false;
-	        }
+	        if (!estimateNoiseStandardDeviation) {
+		        tmpStr = textSigma.getText();
+	
+		        if (testParameter(tmpStr, 0.1, 200.0)) {
+		            sigma = Double.valueOf(tmpStr).doubleValue();
+		        } else {
+		            MipavUtil.displayError("White Gaussian noise standard deviation must be between 0.1 and 200.0");
+		            textSigma.requestFocus();
+		            textSigma.selectAll();
+	
+		            return false;
+		        }
+	        } // if (!estimateNoiseStandardDeviation)
 	        
 	        tmpStr = textHardSearchSize.getText();
 
@@ -497,7 +518,7 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 		        destImage = new ModelImage[2];
 		        destImage[0] = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), image.getImageName()+"_BM3D_stage1");
 		        destImage[1] = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), image.getImageName()+"_BM3D_stage2");
-		        bm3dAlgo = new BM3D(destImage, image, sigma, n_H, N_H,
+		        bm3dAlgo = new BM3D(destImage, image, estimateNoiseStandardDeviation, sigma, n_H, N_H,
 				    p_H, useSD_H, tau_2D_H, lambda3D_H,
 				    n_W, N_W, p_W, useSD_W, tau_2D_W);
 		        
@@ -625,6 +646,7 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 	    protected void setGUIFromParams() {
 	        image = scriptParameters.retrieveInputImage();
 	        parentFrame = image.getParentFrame();
+	        estimateNoiseStandardDeviation = scriptParameters.getParams().getBoolean("estimate_noise_std");
 	        sigma = scriptParameters.getParams().getDouble("sig");
 	        n_H = scriptParameters.getParams().getInt("nH");
 	        N_H = scriptParameters.getParams().getInt("NH");
@@ -653,6 +675,7 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 
 	        try {
 	            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+	            table.put(new ParameterBoolean("estimate_noise_std", true));
 	            table.put(new ParameterDouble("sig",20.0));
 	            table.put(new ParameterInt("nH",16));
 	            table.put(new ParameterInt("NH",16));
@@ -683,6 +706,7 @@ public class JDialogBM3D extends JDialogScriptableBase implements AlgorithmInter
 	            scriptParameters.storeImageInRecorder(getResultImage()[i]);
 	        }
 	        
+	        scriptParameters.getParams().put(ParameterFactory.newParameter("estimate_noise_std", estimateNoiseStandardDeviation));
 	        scriptParameters.getParams().put(ParameterFactory.newParameter("sig", sigma));
 	        scriptParameters.getParams().put(ParameterFactory.newParameter("nH", n_H));
 	        scriptParameters.getParams().put(ParameterFactory.newParameter("NH", N_H));
