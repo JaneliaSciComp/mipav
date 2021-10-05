@@ -83,6 +83,8 @@ public class BM3D extends AlgorithmBase {
 	// destImage[1] is output of stage 2 with Wiener thresholding
 	private ModelImage[] destImage;
 	
+	private boolean estimateNoiseStandardDeviation = true;
+	
 	// White Gaussian noise standard deviation
 	private double sigma; 
 	
@@ -144,11 +146,13 @@ public class BM3D extends AlgorithmBase {
  	// A 2D DCT transform is used.
  	private String tau_2D_W = "DCT";
 	
-	public BM3D(ModelImage[] destImage, ModelImage srcImg, double sigma, int n_H, int N_H,
+	public BM3D(ModelImage[] destImage, ModelImage srcImg, 
+			boolean estimateNoiseStandardDeviation, double sigma, int n_H, int N_H,
 			int p_H, boolean useSD_H, String tau_2D_H, double lambda3D_H,
 			int n_W, int N_W, int p_W, boolean useSD_W, String tau_2D_W) {
 		super(null, srcImg);
 		this.destImage = destImage;
+		this.estimateNoiseStandardDeviation = estimateNoiseStandardDeviation;
 		this.sigma = sigma;
 		this.n_H = n_H;
 		this.p_H = p_H;
@@ -198,6 +202,17 @@ public class BM3D extends AlgorithmBase {
 		else {
 			k_W = 12;
 		}
+		
+		if (estimateNoiseStandardDeviation) {
+        	double noiseStd[] = new double[1];
+        	// Obtain noise standard deviation with subband containing finest level diagonal details
+        	PyWavelets pAlgo = new PyWavelets(srcImage, noiseStd);
+        	pAlgo.run();
+        	sigma = noiseStd[0];
+        	System.out.println("Noise standard deviation estimated as " + sigma);
+        	pAlgo.finalize();
+        	pAlgo = null;
+        }
 		
 		ModelImage noisy_im_p = symetrize(srcImage, n_H);
 		
