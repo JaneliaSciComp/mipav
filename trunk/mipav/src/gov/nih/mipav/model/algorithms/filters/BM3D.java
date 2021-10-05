@@ -1453,6 +1453,12 @@ public class BM3D extends AlgorithmBase {
     	int[] nz = new int[1];
 		int[] errorFlag = new int[1];
 		double maxValue = - Double.MAX_VALUE;
+		realArg = beta;
+		Bessel denomBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
+				Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+				nz, errorFlag);
+		denomBessel.run();
+		double denomResult = realResult[0];
 		for (i = 0, n = -(M-1.0)/2.0; i < M; i++, n+= 1.0) {
 			realArg = beta*Math.sqrt(1.0 - 4.0*n*n/((M-1.0)*(M-1.0)));
 			Bessel numBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
@@ -1460,12 +1466,6 @@ public class BM3D extends AlgorithmBase {
 					nz, errorFlag);
 			numBessel.run();
 			double numResult = realResult[0];
-			realArg = beta;
-			Bessel denomBessel = new Bessel(Bessel.BESSEL_I, realArg, imagArg, initialOrder,
-					Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
-					nz, errorFlag);
-			denomBessel.run();
-			double denomResult = realResult[0];
 			out[i] = numResult/denomResult;
 			if (out[i] > maxValue) {
 				maxValue = out[i];
