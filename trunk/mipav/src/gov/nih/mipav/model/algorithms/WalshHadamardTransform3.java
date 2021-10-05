@@ -365,7 +365,7 @@ public class WalshHadamardTransform3 extends AlgorithmBase {
 	// ------------------------------------------------------
 	// 1D Natural(Hadamard)ordered Fast Hadamard Transform
 	// ------------------------------------------------------
-	private double[] fhtnat(double data[], boolean forwardTransform) {
+	public double[] fhtnat(double data[], boolean forwardTransform) {
 		// The function implement the 1D natural(Hadamard)ordered Fast Hadamard Transform
 		double x[];
     	int N;
