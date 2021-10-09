@@ -94,6 +94,8 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     
     // Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMax = 255.0;
+    
+    private boolean useProgressBar = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -105,9 +107,11 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
      * @param  intensityFraction
      * @param  maskFlag  DOCUMENT ME!
      * @param  img25D    DOCUMENT ME!
+     * @param  useProgressBar
      */
-    public AlgorithmBilateralFilter(ModelImage srcImg, float[] sigmas, float intensityFraction, boolean maskFlag, boolean img25D) {
-        this(null, srcImg, sigmas, intensityFraction, maskFlag, img25D);
+    public AlgorithmBilateralFilter(ModelImage srcImg, float[] sigmas, float intensityFraction, boolean maskFlag, boolean img25D,
+    		boolean useProgressBar) {
+        this(null, srcImg, sigmas, intensityFraction, maskFlag, img25D, useProgressBar);
     }
 
     /**
@@ -119,16 +123,17 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
      * @param  intensityFraction units of intensity range; it is multiplied by the intensity range to create intensitySigma
      * @param  maskFlag  the mask flag
      * @param  img25D    the 2.5D indicator
+     * @param  useProgressBar
      */
     public AlgorithmBilateralFilter(ModelImage destImg, ModelImage srcImg, float[] sigmas, float intensityFraction, boolean maskFlag,
-                                 boolean img25D) {
+                                 boolean img25D, boolean useProgressBar) {
         super(destImg, srcImg);
 
         this.sigmas = sigmas;
         this.intensityFraction = intensityFraction;
         entireImage = maskFlag;
         image25D = img25D;
-
+        this.useProgressBar = useProgressBar;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -182,7 +187,9 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
         }
         
         long startTime = System.nanoTime();
-        fireProgressStateChanged(0, srcImage.getImageName(), "Bilateral filter on image ...");
+        if (useProgressBar) {
+            fireProgressStateChanged(0, srcImage.getImageName(), "Bilateral filter on image ...");
+        }
         
         if (destImage == null) {
             targetImage = srcImage;
@@ -211,9 +218,11 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
             convolver = new AlgorithmConvolver(srcImage, GaussData, kExtents,entireImage, image25D, 
                                                               intensityGaussianDenom);
         }
-        convolver.setMinProgressValue(0);
-        convolver.setMaxProgressValue(100);
-		linkProgressToAlgorithm(convolver);
+        if (useProgressBar) {
+	        convolver.setMinProgressValue(0);
+	        convolver.setMaxProgressValue(100);
+			linkProgressToAlgorithm(convolver);
+        }
 		convolver.addListener(this);
 		if (!entireImage) {
 			convolver.setMask(mask);
