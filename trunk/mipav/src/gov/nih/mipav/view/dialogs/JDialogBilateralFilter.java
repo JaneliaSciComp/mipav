@@ -92,6 +92,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
     
+    private boolean useProgressBar = true;
+    
     /**
      * Empty constructor needed for dynamic instantiation.
      */
@@ -288,7 +290,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
                     // Make algorithm
                     bilateralFilterAlgo = new AlgorithmBilateralFilter(resultImage, image, sigmas, intensityFraction, 
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), false);
+                                                                 outputOptionsPanel.isProcessWholeImageSet(), false, useProgressBar);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -332,7 +334,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     bilateralFilterAlgo = new AlgorithmBilateralFilter(image, sigmas, intensityFraction, 
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), false);
+                                                                 outputOptionsPanel.isProcessWholeImageSet(), false, useProgressBar);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -412,7 +414,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
                     // Make algorithm
                     bilateralFilterAlgo = new AlgorithmBilateralFilter(resultImage, image, sigmas, intensityFraction, 
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), image25D);
+                                                                 outputOptionsPanel.isProcessWholeImageSet(), image25D, useProgressBar);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -456,7 +458,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
 
                     // Make algorithm
                     bilateralFilterAlgo = new AlgorithmBilateralFilter(image, sigmas, intensityFraction, 
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), image25D);
+                                                                 outputOptionsPanel.isProcessWholeImageSet(), image25D, useProgressBar);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
