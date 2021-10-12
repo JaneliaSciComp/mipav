@@ -54,6 +54,53 @@ import gov.nih.mipav.view.ViewJProgressBar;
  * Applications", SIGGRAPH 2007.
  * 3.) http://www.easyrgb.com has XYZ -> RGB, RGB -> XYZ, XYZ -> CIEL*ab, CIEL*ab -> XYZ, and
  *     XYZ(Tristimulus) Reference values of a perfect reflecting diffuser.
+ *     
+ * The routine bilateralFilter is obtained from the modification of code in OpenCl code in bilateral_filter-dispatch.cpp 
+ * with the following license:
+ * M///////////////////////////////////////////////////////////////////////////////////////
+//
+//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+//
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
+//
+//
+//                           License Agreement
+//                For Open Source Computer Vision Library
+//
+// Copyright (C) 2000-2008, 2018, Intel Corporation, all rights reserved.
+// Copyright (C) 2009, Willow Garage Inc., all rights reserved.
+// Copyright (C) 2014-2015, Itseez Inc., all rights reserved.
+// Third party copyrights are property of their respective owners.
+//
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+//
+//   * Redistribution's of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//
+//   * Redistribution's in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+//
+//   * The name of the copyright holders may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+//
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.
+//
+//M
+
+ * 
  *
  * @version  0.1 February 5, 2009
  * @author   William Gandler
@@ -63,6 +110,13 @@ import gov.nih.mipav.view.ViewJProgressBar;
 public class AlgorithmBilateralFilter extends AlgorithmBase implements AlgorithmInterface{
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+	
+	private final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
+	private final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
+	private final int BORDER_REFLECT = 2; // fedcba|abcdefgh|hgfedcb
+	private final int BORDER_WRAP = 3; // cdefgh|abcdefgh|abcdefg
+	private final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
+	private final int BORDER_DEFAULT = BORDER_REFLECT_101;
 
     /**
      * Flag, if true, indicates that the whole image should be processed. If false on process the image over the mask
@@ -98,6 +152,10 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     private boolean useProgressBar = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    public AlgorithmBilateralFilter() {
+    	
+    }
 
     /**
      * Creates a new AlgorithmBilateralFilter object.
@@ -186,7 +244,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
             return;
         }
         
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
         if (useProgressBar) {
             fireProgressStateChanged(0, srcImage.getImageName(), "Bilateral filter on image ...");
         }
@@ -592,5 +650,333 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
             buffer[i+3] = (float)B;
         } // for (i = 0; i < buffer.length; i += 4)
     } // private void convertCIELabtoRGB(float buffer[])
+    
+    public double[][] bilateralFilter(double src[][], int channels, int d,
+            double sigmaColor, double sigmaSpace,
+            int borderType ) {
+    	double dst[][];
+    	if (src == null) {
+    		System.err.println("src == null in bilateralFilter");
+    		return null;
+    	}
+    	
+    	if (src[0] == null) {
+    		System.err.println("src[0] == null in bilateralFilter");
+    		return null;
+    	}
+    	
+    	dst = new double[src.length][src[0].length];
+    	
+        int i, j, radius, y, x;
+        double minValSrc= Double.MAX_VALUE, maxValSrc= -Double.MAX_VALUE;
+        double r2;
+        double totalWeight;
+        double totalSum;
+        double totalSumR;
+        double totalSumG;
+        double totalSumB;
+        double weight;
+        double valueDiff;
+        double valueDiffR;
+        double valueDiffG;
+        double valueDiffB;
+        int c;
+        double srcChannel[][];
+  
+        if ((channels != 1) && (channels != 3)) {
+        	System.err.println("channels = " + channels + " bilateralFilter");
+        	return null;
+        }
+        
+        if( sigmaColor <= 0 )
+            sigmaColor = 1;
+        if( sigmaSpace <= 0 )
+            sigmaSpace = 1;
+
+        double gauss_color_coeff = -0.5/(sigmaColor*sigmaColor);
+        double gauss_space_coeff = -0.5/(sigmaSpace*sigmaSpace);
+
+        if( d <= 0 )
+            radius = (int)Math.round(sigmaSpace*1.5);
+        else
+            radius = d/2;
+        radius = Math.max(radius, 1);
+        d = radius*2 + 1;
+        // compute the min/max range for the input image (even if multichannel)
+        for (i = 0; i < src.length; i++) {
+        	for (j = 0; j < src[i].length; j++) {
+	        	if (src[i][j] < minValSrc) {
+	        		minValSrc = src[i][j];
+	        	}
+	        	if (src[i][j] > maxValSrc) {
+	        		maxValSrc = src[i][j];
+	        	}
+        	}
+        }
+       // epsilon = D1MACH(4)
+       // Machine epsilon is the smallest positive epsilon such that
+       // (1.0 + epsilon) != 1.0.
+       // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+       // epsilon = 2.2204460e-16
+       // epsilon is called the largest relative spacing
+       double epsilon = 1.0;
+       double neweps = 1.0;
+
+       while (true) {
+
+           if (1.0 == (1.0 + neweps)) {
+               break;
+           } else {
+               epsilon = neweps;
+               neweps = neweps / 2.0;
+           }
+       } // while(true)
+        	
+        if (Math.abs(minValSrc - maxValSrc) < epsilon) {
+            for (i = 0; i < src.length; i++) {
+            	for (j = 0; j < src[i].length; i++) {
+            		dst[i][j] = src[i][j];
+            	}
+            }
+            
+            return dst;
+        }
+        
+        // temporary copy of the image with borders for easy processing
+        double temp[][] = null;
+        if (channels == 1) {
+            temp = copyMakeBorder( src, radius, radius, radius, radius, borderType, 0.0);
+        }
+        else {
+        	temp = new double[src.length + 6*radius][src[0].length + 6*radius];
+        	srcChannel = new double[src.length][src[0].length/3];
+        	for (c = 0; c < 3; c++) {
+        	    for (y = 0; y < src.length; y++) {
+        	    	for (x = 0; x < src[0].length/3; x++) {
+        	    		srcChannel[y][x] = src[y][3*x + c];
+        	    	}
+        	    }
+        	    double tempChannel[][] = copyMakeBorder(srcChannel, radius, radius, radius, radius, borderType, 0.0);
+        	    for (y = 0; y < tempChannel.length; y++) {
+        	    	for (x = 0; x < tempChannel[0].length; x++) {
+        	    		temp[y][3*x+c] =  tempChannel[y][x];
+        	    	}
+        	    }
+        	}
+        }
+        
+     // initialize space-related bilateral filter coefficients
+     double space_weight[][] = new double[d][d];
+     for (i = -radius; i <= radius; i++) {
+    	 for (j = -radius; j <= radius; j++) {
+    	     r2 = i*i + j*j;
+    	     space_weight[i + radius][j + radius] = Math.exp(-r2 * gauss_space_coeff);
+    	 }
+     }
+     
+     if (channels == 1) {
+    	 for (y = 0; y < src.length; y++) {
+    		 for (x = 0; x < src[0].length; x++) {
+    		     totalWeight = 0.0;
+    		     totalSum = 0.0;
+    		     for (i = -radius; i <= radius; i++) {
+    		    	 for (j = -radius; j <= radius; j++) {
+    		    		 valueDiff = temp[y + radius][x + radius] - temp[y + radius + i][x + radius + j];
+    		    		 weight = space_weight[i + radius][j + radius] * Math.exp(valueDiff * valueDiff * gauss_color_coeff);
+    		    		 totalWeight += weight;
+    		    		 totalSum += weight * temp[y + radius + i][x + radius + j];
+    		    	 }
+    		     }
+    		     dst[y][x] = totalSum/totalWeight;
+    		 }
+    	 }
+     } // if (channels == 1)
+     else if (channels == 3) {
+    	 for (y = 0; y < src.length; y++) {
+    		 for (x = 0; x < src[0].length/3; x++) {
+    		     totalWeight = 0.0;
+    		     totalSumR = 0.0;
+    		     totalSumG = 0.0;
+    		     totalSumB = 0.0;
+    		     for (i = -radius; i <= radius; i++) {
+    		    	 for (j = -radius; j <= radius; j++) {
+    		    		 valueDiffR = temp[y + radius][3*(x + radius)] - temp[y + radius + i][3*(x + radius + j)];
+    		    		 valueDiffG = temp[y + radius][3*(x + radius) + 1] - temp[y + radius + i][3*(x + radius + j) + 1];
+    		    		 valueDiffB = temp[y + radius][3*(x + radius) + 2] - temp[y + radius + i][3*(x + radius + j) + 2];
+    		    		 valueDiff = Math.abs(valueDiffR) + Math.abs(valueDiffG) + Math.abs(valueDiffB);
+    		    		 weight = space_weight[i + radius][j + radius] * Math.exp(valueDiff * valueDiff * gauss_color_coeff);
+    		    		 totalWeight += weight;
+    		    		 totalSumR += weight * temp[y + radius + i][3*(x + radius + j)];
+    		    		 totalSumG += weight * temp[y + radius + i][3*(x + radius + j) + 1];
+    		    		 totalSumB += weight * temp[y + radius + i][3*(x + radius + j) + 2];
+    		    	 }
+    		     }
+    		     dst[y][3*x] = totalSumR/totalWeight;
+    		     dst[y][3*x+1] = totalSumG/totalWeight;
+    		     dst[y][3*x+2] = totalSumB/totalWeight;
+    		 }
+    	 }	 
+     }
+
+    	
+    	return dst;
+    }
+        
+    private double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
+    	int i,j;
+    	double dst[][] = new double[src.length + top + bottom][src[0].length + left + right];
+    	for (i = 0; i < src.length; i++) {
+    		for (j = 0; j < src[0].length; j++) {
+    			dst[i+top][j+left] = src[i][j];
+    		}
+    	}
+    	
+    	for (i = 0; i < top; i++) {
+    		for (j = 0; j < left; j++) {
+    		   switch (borderType) {
+    		   case BORDER_CONSTANT:
+    			   dst[i][j] = borderValue;
+    			   break;
+    		   case BORDER_REPLICATE:
+    			   dst[i][j] = src[0][0];
+    			   break;
+    		   case BORDER_REFLECT:
+    			   dst[i][j] = src[top - 1 - i][left - 1 - j];
+    			   break;
+    		   case BORDER_REFLECT_101:
+     			   dst[i][j] = src[top - i][left - j];
+     			   break;
+    		   }
+    		  
+ 		   }
+    		
+    		for (j = left; j < src[0].length + left; j++) {
+    			switch (borderType) {
+    			case BORDER_CONSTANT:
+    				dst[i][j] = borderValue;
+    				break;
+    			case BORDER_REPLICATE:
+    				dst[i][j] = src[0][j - left];
+    				break;
+    			case BORDER_REFLECT:
+    				dst[i][j] = src[top - 1 - i][j - left];
+    				break;
+    			case BORDER_REFLECT_101:
+    				dst[i][j] = src[top - i][j - left];
+    				break;
+    			}
+    		}
+    		
+    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+    		    switch(borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[0][src[0].length-1];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		    	dst[i][j] = src[top - 1 - i][2*src[0].length + left - 1 - j];
+    		    	break;
+    		    case BORDER_REFLECT_101:
+    		    	dst[i][j] = src[top - i][2*src[0].length + left - 2 - j];
+    		    	break;
+    		    }
+    		}
+    	}
+    	
+    	for (i = top + src.length; i < top + src.length + bottom; i++) {
+            for (j = 0; j < left; j++) {
+    		    switch (borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[src.length-1][0];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		    	dst[i][j] = src[2*src.length + top - 1 - i][left - 1 - j];
+    		    	break;
+    		    case BORDER_REFLECT_101:
+    		    	dst[i][j] = src[2*src.length + top - 2 - i][left - j];
+    		    	break;
+    		    }
+    		}
+            
+            for (j = left; j < src[0].length + left; j++) {
+    			switch (borderType) {
+    			case BORDER_CONSTANT:
+    				dst[i][j] = borderValue;
+    				break;
+    			case BORDER_REPLICATE:
+    				dst[i][j] = src[src.length-1][j - left];
+    				break;
+    			case BORDER_REFLECT:
+    				dst[i][j] = src[2*src.length + top - 1 - i][j - left];
+    				break;
+    			case BORDER_REFLECT_101:
+    				dst[i][j] = src[2*src.length + top - 2 - i][j - left];
+    				break;
+    			}
+    		}
+    		
+    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+    		    switch(borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[src.length-1][src[0].length-1];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		        dst[i][j] = src[2*src.length + top - 1 - i][2*src[0].length + left - 1 - j];
+    		        break;
+    		    case BORDER_REFLECT_101:
+    		        dst[i][j] = src[2*src.length + top - 2 - i][2*src[0].length + left - 2 - j];
+    		        break;
+    		    }
+    		}	
+    	}
+    	
+    	for (i = top; i < src.length + top; i++) {
+    		for (j = 0; j < left; j++) {
+    			switch(borderType) {
+    			case BORDER_CONSTANT:
+    				dst[i][j] = borderValue;
+    				break;
+    			case BORDER_REPLICATE:
+    				dst[i][j] = src[i - top][0];
+    				break;
+    			case BORDER_REFLECT:
+    				dst[i][j] = src[i - top][left - 1 - j];
+    				break; 
+    			case BORDER_REFLECT_101:
+    				dst[i][j] = src[i - top][left - j];
+    				break;  
+    			}
+    		}
+    		
+    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+    		    switch(borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[i - top][src[0].length-1];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		        dst[i][j] = src[i - top][2*src[0].length + left - 1 - j];
+    		        break;
+    		    case BORDER_REFLECT_101:
+    		        dst[i][j] = src[i - top][2*src[0].length + left - 2 - j];
+    		        break;
+    		    }
+    		}	
+    	}
+    	
+    	
+    	return dst;
+    }
+
 }
 
