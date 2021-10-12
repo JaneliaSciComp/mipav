@@ -673,6 +673,10 @@ public class BM3D extends AlgorithmBase {
 				padBuf[y*paddedXDim + x] = buf[(pad - 1 - y)*xDim + (pad - 1 - x)];
 			}
 			
+			for (x = pad; x < xDim + pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(pad - 1 - y)*xDim + (x - pad)]; 
+			}
+			
 			for (x = xDim + pad; x < xDim + 2*pad; x++) {
 				padBuf[y*paddedXDim + x] = buf[(pad - 1 - y)*xDim + 2*xDim + pad - 1 - x];
 			}
@@ -683,14 +687,24 @@ public class BM3D extends AlgorithmBase {
 				padBuf[y*paddedXDim + x] = buf[(2*yDim + pad - 1 - y)*xDim + (pad - 1 - x)];
 			}
 			
+			for (x = pad; x < xDim + pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(2*yDim + pad - 1 - y)*xDim + (x - pad)]; 
+			}
+			
 			for (x = xDim + pad; x < xDim + 2*pad; x++) {
 				padBuf[y*paddedXDim + x] = buf[(2*yDim + pad - 1 - y)*xDim + 2*xDim + pad - 1 - x];
 			}
 		}
 		
 		for (y = pad; y < yDim + pad; y++) {
+			for (x = 0; x < pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(y - pad)*xDim + (pad - 1 - x)];
+			}
 			for (x = pad; x < xDim + pad; x++) {
 				padBuf[y*paddedXDim + x] = buf[(y - pad)*xDim + x - pad];
+			}
+			for (x = xDim + pad; x < xDim + 2*pad; x++) {
+				padBuf[y*paddedXDim + x] = buf[(y - pad)*xDim + 2*xDim + pad - 1 - x];
 			}
 		}
 		
