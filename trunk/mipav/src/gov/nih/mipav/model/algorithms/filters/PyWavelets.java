@@ -13040,13 +13040,11 @@ public  class PyWavelets extends AlgorithmBase {
 	}
 	
 	public double [][][] BM3Dwavedec2(double[][] patch, int level) {
-		int i,x,y;
 		DiscreteWavelet w  = discrete_wavelet(WAVELET_NAME.BIOR, 15);
 		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
 	    MODE modes[] = new MODE[]{MODE.MODE_PERIODIZATION, MODE.MODE_PERIODIZATION};
 	    int axes[] = new int[]{0,1};
 	    double coeffs[][][] = wavedec2(patch, wavelets, modes, level, axes);
-	    double coeffsyx[][][] = new double[coeffs.length][][];
 	    return coeffs;
 	}
 	
