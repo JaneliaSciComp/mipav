@@ -20028,7 +20028,7 @@ public  class PyWavelets extends AlgorithmBase {
         return coeffs;
     }
     
-    private double[][] waverec2(double coeffs[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+    public double[][] waverec2(double coeffs[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode is symmetric,symmetric
     	// Default axes is {-2,-1}
         // Multilevel 2D Inverse Discrete Wavelet Transform.
