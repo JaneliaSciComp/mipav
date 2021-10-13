@@ -45,6 +45,7 @@ import java.util.Arrays;
     	private int d = 5;
     	private double sigmaColor = 0.5;
     	private double sigmaSpace = 1.8;
+    	private double epsilon;
     	public MultiResolutionBilateralFilter(ModelImage destImg, ModelImage srcImg, PyWavelets.WAVELET_NAME wavelet_name, 
     			int wavelet_order, int wavelet_levels, boolean estimateNoiseStandardDeviation,
     			double noiseStandardDeviation, int filterType, int d, double sigmaColor, double sigmaSpace) {
@@ -70,6 +71,24 @@ import java.util.Arrays;
     	}
     	
     	public void denoiseBW() {
+    	   // epsilon = D1MACH(4)
+	       // Machine epsilon is the smallest positive epsilon such that
+	       // (1.0 + epsilon) != 1.0.
+	       // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+	       // epsilon = 2.2204460e-16
+	       // epsilon is called the largest relative spacing
+	       epsilon = 1.0;
+	       double neweps = 1.0;
+
+	       while (true) {
+
+	           if (1.0 == (1.0 + neweps)) {
+	               break;
+	           } else {
+	               epsilon = neweps;
+	               neweps = neweps / 2.0;
+	           }
+	       } // while(true)
     		PyWavelets py = new PyWavelets();
     		DiscreteWavelet w  = py.discrete_wavelet(wavelet_name, wavelet_order);
     		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
@@ -80,8 +99,7 @@ import java.util.Arrays;
     		int length = xDim * yDim;
     		double buffer[] = null;
     		double buf2D[][] = null;
-    		int channels = 1;
-    		int x, y;	
+    		int i, x, y;	
     		buffer = new double[length];
     		int currentLevel;
 		    try {
@@ -110,14 +128,124 @@ import java.util.Arrays;
 		    
 		    AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
 		    int borderType = BORDER_REFLECT_101;
+		    double LP_bilateral[][];
 		    for (currentLevel = 0; currentLevel < wavelet_levels; currentLevel++) {
 		    	// --- denoise LP with bilateral
-		    	double LP_bilateral[][] = bf.bilateralFilter(LP, 1, d, sigmaColor, sigmaSpace, borderType);
+		        LP_bilateral = bf.bilateralFilter(LP, 1, d, sigmaColor, sigmaSpace, borderType);
 		    	
 		    	// --- denoise HP with thresholding
-		    	double detail_coeffs[][] = coeffs[3*currentLevel + 3];
+		    	double details[][][] = new double[3][][];
+		    	double denoised_detail[][][] = new double[3][][];
+		    	 for (i = 0; i < 3; i++) {
+		    		 details[i] = coeffs[3*currentLevel + i + 1];
+		    	     double threshold = _bayes_thresh(details[i], var);
+		    	     if (filterType == PyWavelets.FILTER_HARD) {
+		    	    	 denoised_detail[i] = hard(details[i], threshold, 0.0);
+		    	     }
+		    	     else {
+		    	    	 denoised_detail[i] = soft(details[i], threshold, 0.0);
+		    	     }
+		    	 }
+		    	 double coeffs_rec[][][] = new double[3][LP_bilateral.length][LP_bilateral[0].length];
+		    	 for (i = 0; i < 3; i++) {
+		    		 for (y = 0; y < LP_bilateral.length; y++) {
+		    			 for (x = 0; x < LP_bilateral[0].length; x++) {
+		    				 coeffs_rec[i][y][x] = LP_bilateral[y][x] + denoised_detail[i][y][x];
+		    			 }
+		    		 }
+		    	 }
+		    	 LP = py.waverec2(coeffs_rec, wavelets, modes, axes);
 		    } // for (currentLevel = 0; currentLevel < wavelet_levels; currentLevel++)
+		    
+		    double img_out[][] = bf.bilateralFilter(LP, 1, d, sigmaColor, sigmaSpace, borderType);
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		buffer[x + y*xDim] = img_out[y][x];
+		    	}
+		    }
+		    
+		    try {
+		    	destImage.importData(0, buffer, true);
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException on destImage.importData(0, buffer, true)");
+		    	setCompleted(false);
+		    	return;
+		    }
+		    
+		    setCompleted(true);
+		    return;
     	} // public void denoiseBW()
+    	
+    	public double[][] hard(double data[][], double value, double substitute) {
+        	// default substitute = 0.0
+        	double data2[][] = data.clone();
+        	int i,j;
+            for (i = 0; i < data2.length; i++) {
+            	for (j = 0; j < data2[i].length; j++) {
+    	            if (Math.abs(data2[i][j]) < value) {
+    	            	data2[i][j] = substitute;
+    	            }
+            	}
+            }
+            return data2;
+        }
+    	
+    	public double[][] soft(double data[][], double value, double substitute) {
+        	// Default substitute = 0
+        	int i, j;
+        	double magnitude[][] = new double[data.length][];
+        	double thresholded[][] = new double[data.length][];
+        	for (i = 0; i < data.length; i++) {
+        		magnitude[i] = new double[data[i].length];
+        		thresholded[i] = new double[data[i].length];
+        	}
+        	for (i = 0; i < data.length; i++) {
+        		for (j = 0; j < data[i].length; j++) {
+    	    		if (data[i][j] == 0.0) {
+    	    			thresholded[i][j] = 0.0;
+    	    		}
+    	    		else {
+    	    		    magnitude[i][j] = Math.abs(data[i][j]);
+    	    		    thresholded[i][j] = (1.0 - value/magnitude[i][j]);
+    	    		    if (thresholded[i][j] < 0.0) {
+    	    		    	thresholded[i][j] = 0.0;
+    	    		    }
+    	    		    thresholded[i][j] = data[i][j] * thresholded[i][j];
+    	    		}
+        		}
+        	}
+        	
+        	if (substitute == 0) {
+        		return thresholded;
+        	}
+        	else {
+        		for (i = 0; i < thresholded.length; i++) {
+        			for (j = 0; j < thresholded[i].length; j++) {
+    	    			if (magnitude[i][j] < value) {
+    	    				thresholded[i][j] = substitute;
+    	    			}
+        			}
+        		}
+        		return thresholded;
+        	}
+        }
+    	
+    	private double _bayes_thresh(double details[][], double var) {
+    		// BayesShrink threshold for a zero-mean details coeff array.
+    	    // Equivalent to:  dvar = np.var(details) for 0-mean details array	
+    		int y, x;
+    		int len = details.length * details[0].length;
+    		double sum = 0.0;
+    		for (y = 0; y < details.length; y++) {
+    			for (x = 0; x < details[0].length; x++) {
+    				sum += (details[y][x]*details[y][x]);
+    			}
+    		}
+    		double dvar = sum/len;
+    		double thresh = var / Math.sqrt(Math.max(dvar - var, epsilon));
+    		return thresh;
+    	}
     	
     	private double _sigma_est_dwt(double detail_coeffs[][], String distribution) {
     		int i,y,x;
@@ -160,6 +288,24 @@ import java.util.Arrays;
     	}
     	
     	public void denoiseColor() {
+    		// epsilon = D1MACH(4)
+ 	        // Machine epsilon is the smallest positive epsilon such that
+ 	        // (1.0 + epsilon) != 1.0.
+ 	        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+ 	        // epsilon = 2.2204460e-16
+ 	        // epsilon is called the largest relative spacing
+ 	        epsilon = 1.0;
+ 	        double neweps = 1.0;
+
+ 	        while (true) {
+
+ 	            if (1.0 == (1.0 + neweps)) {
+ 	                break;
+ 	            } else {
+ 	                epsilon = neweps;
+ 	                neweps = neweps / 2.0;
+ 	            }
+ 	        } // while(true)
     		PyWavelets py = new PyWavelets();
     		DiscreteWavelet w  = py.discrete_wavelet(wavelet_name, wavelet_order);
     		DiscreteWavelet wavelets[] = new DiscreteWavelet[]{w, w};
@@ -170,9 +316,12 @@ import java.util.Arrays;
     		int length = xDim * yDim;
     		float floatBuf[] = null;
     		double buf2D[][] = null;
-    		int channels = 3;
-    		int x, y;
+    		int i, x, y, c;
+    		double varR;
+    		double varG;
+    		double varB;
     		floatBuf = new float[length];
+    		int currentLevel;
 			try {
 				srcImage.exportRGBData(1, 0, length, floatBuf);
 			}
@@ -181,5 +330,174 @@ import java.util.Arrays;
 		    	setCompleted(false);
 		    	return;
 		    }
+			buf2D = new double[yDim][xDim];
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		buf2D[y][x] = floatBuf[x + y*xDim];
+		    	}
+		    }
+		    double coeffsR[][][] = py.wavedec2(buf2D, wavelets, modes, wavelet_levels, axes);
+		    double LPR[][] = coeffsR[0];
+		    
+		    try {
+				srcImage.exportRGBData(2, 0, length, floatBuf);
+			}
+			catch (IOException e) {
+		    	MipavUtil.displayError("IOException on srcImage.exportRGBData(2, 0, length, floatBuf)");
+		    	setCompleted(false);
+		    	return;
+		    }
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		buf2D[y][x] = floatBuf[x + y*xDim];
+		    	}
+		    }
+		    double coeffsG[][][] = py.wavedec2(buf2D, wavelets, modes, wavelet_levels, axes);
+		    double LPG[][] = coeffsG[0];
+		    
+		    try {
+				srcImage.exportRGBData(3, 0, length, floatBuf);
+			}
+			catch (IOException e) {
+		    	MipavUtil.displayError("IOException on srcImage.exportRGBData(3, 0, length, floatBuf)");
+		    	setCompleted(false);
+		    	return;
+		    }
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    		buf2D[y][x] = floatBuf[x + y*xDim];
+		    	}
+		    }
+		    double coeffsB[][][] = py.wavedec2(buf2D, wavelets, modes, wavelet_levels, axes);
+		    double LPB[][] = coeffsB[0];
+		    
+		    double LP[][] = new double[LPR.length][3*LPR[0].length];
+		    for (y = 0; y < LPR.length; y++) {
+		    	for (x = 0; x < LPR[0].length; x++) {
+		    		LP[y][3*x] = LPR[y][x];
+		    		LP[y][3*x+1] = LPG[y][x];
+		    		LP[y][3*x+2] = LPB[y][x];
+		    	}
+		    }
+		    
+		    if (estimateNoiseStandardDeviation) {
+		        double detail_coeffs[][] = coeffsR[coeffsR.length-1];
+		        noiseStandardDeviation = _sigma_est_dwt(detail_coeffs, "Gaussian");
+		        varR = noiseStandardDeviation * noiseStandardDeviation;
+		        
+		        detail_coeffs = coeffsG[coeffsG.length-1];
+		        noiseStandardDeviation = _sigma_est_dwt(detail_coeffs, "Gaussian");
+		        varG = noiseStandardDeviation * noiseStandardDeviation;
+		        
+		        detail_coeffs = coeffsB[coeffsB.length-1];
+		        noiseStandardDeviation = _sigma_est_dwt(detail_coeffs, "Gaussian");
+		        varB = noiseStandardDeviation * noiseStandardDeviation;
+		    }
+		    else {
+		    	varR = noiseStandardDeviation * noiseStandardDeviation;
+		    	varG = varR;
+		    	varB = varR;
+		    }
+		    
+		    AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
+		    int borderType = BORDER_REFLECT_101;
+		    double LP_bilateral[][];
+		    
+		    for (currentLevel = 0; currentLevel < wavelet_levels; currentLevel++) {
+		    	// --- denoise LP with bilateral
+		        LP_bilateral = bf.bilateralFilter(LP, 1, d, sigmaColor, sigmaSpace, borderType);
+		        
+		        // --- denoise HP with thresholding
+		    	double details[][][] = new double[3][][];
+		    	double denoised_detail[][][] = new double[3][][];
+		    	 for (i = 0; i < 3; i++) {
+		    		 details[i] = coeffsR[3*currentLevel + i + 1];
+		    	     double threshold = _bayes_thresh(details[i], varR);
+		    	     if (filterType == PyWavelets.FILTER_HARD) {
+		    	    	 denoised_detail[i] = hard(details[i], threshold, 0.0);
+		    	     }
+		    	     else {
+		    	    	 denoised_detail[i] = soft(details[i], threshold, 0.0);
+		    	     }
+		    	 }
+		    	 double coeffs_rec[][][] = new double[3][LP_bilateral.length][LP_bilateral[0].length/3];
+		    	 for (i = 0; i < 3; i++) {
+		    		 for (y = 0; y < LP_bilateral.length; y++) {
+		    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
+		    				 coeffs_rec[i][y][x] = LP_bilateral[y][3*x] + denoised_detail[i][y][x];
+		    			 }
+		    		 }
+		    	 }
+		    	 LPR = py.waverec2(coeffs_rec, wavelets, modes, axes);
+		    	 
+		    	 for (i = 0; i < 3; i++) {
+		    		 details[i] = coeffsG[3*currentLevel + i + 1];
+		    	     double threshold = _bayes_thresh(details[i], varG);
+		    	     if (filterType == PyWavelets.FILTER_HARD) {
+		    	    	 denoised_detail[i] = hard(details[i], threshold, 0.0);
+		    	     }
+		    	     else {
+		    	    	 denoised_detail[i] = soft(details[i], threshold, 0.0);
+		    	     }
+		    	 }
+		  
+		    	 for (i = 0; i < 3; i++) {
+		    		 for (y = 0; y < LP_bilateral.length; y++) {
+		    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
+		    				 coeffs_rec[i][y][x] = LP_bilateral[y][3*x+1] + denoised_detail[i][y][x];
+		    			 }
+		    		 }
+		    	 }
+		    	 LPG = py.waverec2(coeffs_rec, wavelets, modes, axes);
+		    	 
+		    	 for (i = 0; i < 3; i++) {
+		    		 details[i] = coeffsB[3*currentLevel + i + 1];
+		    	     double threshold = _bayes_thresh(details[i], varB);
+		    	     if (filterType == PyWavelets.FILTER_HARD) {
+		    	    	 denoised_detail[i] = hard(details[i], threshold, 0.0);
+		    	     }
+		    	     else {
+		    	    	 denoised_detail[i] = soft(details[i], threshold, 0.0);
+		    	     }
+		    	 }
+		  
+		    	 for (i = 0; i < 3; i++) {
+		    		 for (y = 0; y < LP_bilateral.length; y++) {
+		    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
+		    				 coeffs_rec[i][y][x] = LP_bilateral[y][3*x+2] + denoised_detail[i][y][x];
+		    			 }
+		    		 }
+		    	 }
+		    	 LPB = py.waverec2(coeffs_rec, wavelets, modes, axes);
+		    	 
+		    	 for (y = 0; y < LPR.length; y++) {
+				    	for (x = 0; x < LPR[0].length; x++) {
+				    		LP[y][3*x] = LPR[y][x];
+				    		LP[y][3*x+1] = LPG[y][x];
+				    		LP[y][3*x+2] = LPB[y][x];
+				    	}
+				    }
+		    } // for (currentLevel = 0; currentLevel < wavelet_levels; currentLevel++)
+		    
+		    for (c = 1; c <= 3; c++) {
+		        for (y = 0; y < yDim; y++) {
+		        	for (x = 0; x < xDim; x++) {
+		        		floatBuf[x + y*xDim] = (float)LP[y][3*x + c-1];
+		        	}
+		        }
+		        try {
+		        	destImage.importRGBData(c, 0, floatBuf, false);
+		        }
+		        catch (IOException e) {
+		        	MipavUtil.displayError("IOException on destImage.importRGBData(c, 0, floatBuf, false)");
+		        	setCompleted(false);
+		        	return;
+		        }
+		    } // for (c = 1; c <= 3; c++)
+		    
+		    destImage.calcMinMax();
+		    
+		    setCompleted(true);
+		    return;
     	} // public void denoiseColor()
     }
