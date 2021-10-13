@@ -1515,6 +1515,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         //double voxelSize = imgResol[0] * imgResol[1] * imgResol[2];
         double ccFactor = getResolutionFactorCC(img);
         
+        double pwiCCFactor = pwiResolutionFactorCC;
+        
         final String statsFile = outputDir + File.separator + outputBasename + "_stats.table";
         
         //final String volUnitsStr = adcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
@@ -1579,10 +1581,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             
             double dwiCoreVol = dwiCore * ccFactor;
             double pwiCoreVol = pwiCore * ccFactor;
-            double perfusionVol0 = perfusionSize[0] * ccFactor;
-            double perfusionVol1 = perfusionSize[1] * ccFactor;
-            double perfusionVol2 = perfusionSize[2] * ccFactor;
-            double perfusionVol3 = perfusionSize[3] * ccFactor;
+            double perfusionVol0 = perfusionSize[0] * pwiCCFactor;
+            double perfusionVol1 = perfusionSize[1] * pwiCCFactor;
+            double perfusionVol2 = perfusionSize[2] * pwiCCFactor;
+            double perfusionVol3 = perfusionSize[3] * pwiCCFactor;
             
             double hypoperfusionIndex = 0;
             if (perfusionSize[1] > 0) {
@@ -1594,10 +1596,10 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             double perfusionMismatchPwi = 0;
             double perfusionRatioPwi = 0;
             if (perfusionSize[1] > 0) {
-                perfusionMismatchDwi = (perfusionSize[1] - dwiCore) * ccFactor;
-                perfusionRatioDwi = perfusionSize[1] / dwiCore;
-                perfusionMismatchPwi = (perfusionSize[1] - pwiCore) * ccFactor;
-                perfusionRatioPwi = perfusionSize[1] / pwiCore;
+                perfusionMismatchDwi = perfusionSize[1] * pwiCCFactor - dwiCore * ccFactor;
+                perfusionRatioDwi = (perfusionSize[1] * pwiCCFactor) / (dwiCore * ccFactor);
+                perfusionMismatchPwi = perfusionSize[1] * pwiCCFactor - pwiCore * ccFactor;
+                perfusionRatioPwi = (perfusionSize[1] * pwiCCFactor) / (pwiCore * ccFactor);
             }
             
             System.err.println("CoreDWI/CorePWI/Perfusion Sizes:\t" + dwiCore + "\t" + pwiCore + "\t" + perfusionSize[1]);
