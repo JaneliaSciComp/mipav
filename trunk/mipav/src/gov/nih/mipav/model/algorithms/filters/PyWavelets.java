@@ -19843,7 +19843,7 @@ public  class PyWavelets extends AlgorithmBase {
 		return output;
     }
     
-    private double[][][] wavedec2(double data[][], DiscreteWavelet wavelet[], MODE mode[], int level, int axes[]) {
+    public double[][][] wavedec2(double data[][], DiscreteWavelet wavelet[], MODE mode[], int level, int axes[]) {
         // Default mode = symmetric,symmetric
     	// Default level = -1;
     	// Default axes = {-2,-1}
