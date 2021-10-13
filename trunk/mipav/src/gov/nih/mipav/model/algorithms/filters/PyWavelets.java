@@ -325,7 +325,7 @@ public  class PyWavelets extends AlgorithmBase {
         String name = null;
     }
     
-    private class DiscreteWavelet {
+    public class DiscreteWavelet {
         BaseWavelet base;
         double dec_hi[];  /* highpass decomposition */
         double dec_lo[];  /* lowpass decomposition */
