@@ -1023,9 +1023,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                                 }
                             }
                         }
+                        
+                        img.disposeLocal();
+                        img = null;
                     }
-                    img.disposeLocal();
-                    img = null;
                 }
             }
         }
