@@ -77,6 +77,13 @@ import java.util.Arrays;
 	       // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
 	       // epsilon = 2.2204460e-16
 	       // epsilon is called the largest relative spacing
+    	   ModelImage outputImage;
+    	   if (destImage != null) {
+    		   outputImage = destImage;
+    	   }
+    	   else {
+    		   outputImage = srcImage;
+    	   }
 	       epsilon = 1.0;
 	       double neweps = 1.0;
 
@@ -165,10 +172,10 @@ import java.util.Arrays;
 		    }
 		    
 		    try {
-		    	destImage.importData(0, buffer, true);
+		    	outputImage.importData(0, buffer, true);
 		    }
 		    catch (IOException e) {
-		    	MipavUtil.displayError("IOException on destImage.importData(0, buffer, true)");
+		    	MipavUtil.displayError("IOException on outputImage.importData(0, buffer, true)");
 		    	setCompleted(false);
 		    	return;
 		    }
@@ -288,6 +295,13 @@ import java.util.Arrays;
     	}
     	
     	public void denoiseColor() {
+    		ModelImage outputImage;
+     	   if (destImage != null) {
+     		   outputImage = destImage;
+     	   }
+     	   else {
+     		   outputImage = srcImage;
+     	   }
     		// epsilon = D1MACH(4)
  	        // Machine epsilon is the smallest positive epsilon such that
  	        // (1.0 + epsilon) != 1.0.
@@ -486,16 +500,16 @@ import java.util.Arrays;
 		        	}
 		        }
 		        try {
-		        	destImage.importRGBData(c, 0, floatBuf, false);
+		        	outputImage.importRGBData(c, 0, floatBuf, false);
 		        }
 		        catch (IOException e) {
-		        	MipavUtil.displayError("IOException on destImage.importRGBData(c, 0, floatBuf, false)");
+		        	MipavUtil.displayError("IOException on outputImage.importRGBData(c, 0, floatBuf, false)");
 		        	setCompleted(false);
 		        	return;
 		        }
 		    } // for (c = 1; c <= 3; c++)
 		    
-		    destImage.calcMinMax();
+		    outputImage.calcMinMax();
 		    
 		    setCompleted(true);
 		    return;
