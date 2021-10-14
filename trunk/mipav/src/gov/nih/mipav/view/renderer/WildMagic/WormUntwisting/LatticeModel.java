@@ -2021,33 +2021,36 @@ public class LatticeModel {
 				saveTriMesh( imageA, "model", "_mesh_" + stepSize, mesh );
 				
 				// save the surface and interior images:
-	        	SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
-	        	VolumeImage volImage = new VolumeImage(false, imageA, "", null, 0);
-				VolumeSurface volumeSurface = new VolumeSurface(volImage,
-						null, new Vector3f(), volImage.GetScaleX(), volImage.GetScaleY(), volImage.GetScaleZ(), surface, true);
-				BitSet surfaceMask = volumeSurface.computeSurfaceMask();
-				System.err.println("surfaceMask " + surfaceMask.cardinality() );
-				
-				ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_surface"));
-	            JDialogBase.updateFileInfo(imageA, surfaceMaskImage);
-
-	    		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
-	    		int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;		
-	    		int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;		
-	    		for ( int z = 0; z < dimZ; z++ ) {
-	    			for ( int y = 0; y < dimY; y++ ) {
-	    				for ( int x = 0; x < dimX; x++ ) {
-	    					int index = x + (dimX * (y + (dimY * z)));
-	    					if ( surfaceMask.get(index) ) {
-								surfaceMaskImage.set(x, y, z, 1);
-								surfaceMaskImage.setMax(1);
-	    					}
-	    				}
-	    			}
-	    		}
-
-				surfaceMaskImage.setMin(0);
+				ModelImage surfaceMaskImage = getInsideMeshImage(mesh);
 				LatticeModel.saveImage(imageA, surfaceMaskImage, "model", "" );
+				
+//	        	SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
+//	        	VolumeImage volImage = new VolumeImage(false, imageA, "", null, 0);
+//				VolumeSurface volumeSurface = new VolumeSurface(volImage,
+//						null, new Vector3f(), volImage.GetScaleX(), volImage.GetScaleY(), volImage.GetScaleZ(), surface, true);
+//				BitSet surfaceMask = volumeSurface.computeSurfaceMask();
+//				System.err.println("surfaceMask " + surfaceMask.cardinality() );
+//				
+//				ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_surface"));
+//	            JDialogBase.updateFileInfo(imageA, surfaceMaskImage);
+//
+//	    		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+//	    		int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;		
+//	    		int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;		
+//	    		for ( int z = 0; z < dimZ; z++ ) {
+//	    			for ( int y = 0; y < dimY; y++ ) {
+//	    				for ( int x = 0; x < dimX; x++ ) {
+//	    					int index = x + (dimX * (y + (dimY * z)));
+//	    					if ( surfaceMask.get(index) ) {
+//								surfaceMaskImage.set(x, y, z, 1);
+//								surfaceMaskImage.setMax(1);
+//	    					}
+//	    				}
+//	    			}
+//	    		}
+//
+//				surfaceMaskImage.setMin(0);
+//				LatticeModel.saveImage(imageA, surfaceMaskImage, "model", "" );
 				//							new ViewJFrameImage(surfaceMaskImage);
 
 //				ModelImage surfaceBlur = WormSegmentation.blur(surfaceMaskImage, 1);
@@ -10302,8 +10305,8 @@ public class LatticeModel {
 			contourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 		}
 		
-		FileIO fileIO = new FileIO();
-		ModelImage insideImage = fileIO.readImage( outputDirectory + File.separator + "model" + File.separator + imageName + "_interior.tif" );
+//		FileIO fileIO = new FileIO();
+//		ModelImage insideImage = fileIO.readImage( outputDirectory + File.separator + "model" + File.separator + imageName + "_interior.tif" );
 
 		VOIContour[] contours = null;
 		if ( contourVector.size() > 0 ) {
@@ -10407,10 +10410,10 @@ public class LatticeModel {
 			if ( minSlice == -1 && tryCount >= 3 ) {
 				Vector3f testInterior = markerCenters.elementAt(i);
 				System.err.println( "FAILED " + markerNames.elementAt(i) + "   " + startIndex + "  " + endIndex + "  " + markerCenters.elementAt(i) + "    " + minSlice + "   " + minUntwist );
-				if ( insideImage != null ) {
-					float insideValue = insideImage.getFloat( Math.round(testInterior.X), Math.round(testInterior.Y), Math.round(testInterior.Z));
-					System.err.println( "     " + insideValue );
-				}
+//				if ( insideImage != null ) {
+//					float insideValue = insideImage.getFloat( Math.round(testInterior.X), Math.round(testInterior.Y), Math.round(testInterior.Z));
+//					System.err.println( "     " + insideValue );
+//				}
 			}
 
 		}
@@ -10419,10 +10422,10 @@ public class LatticeModel {
 			contourImage.disposeLocal(false);
 			contourImage = null;
 		}
-		if ( insideImage != null ) {
-			insideImage.disposeLocal(false);
-			insideImage = null;
-		}
+//		if ( insideImage != null ) {
+//			insideImage.disposeLocal(false);
+//			insideImage = null;
+//		}
 		
 		
 		System.err.println( "TEST 2021: untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
@@ -11873,4 +11876,98 @@ public class LatticeModel {
 			}
 		}
 	}
+	
+
+
+
+	public ModelImage getInsideMeshImage(BitSet surfaceMask) 
+	{		
+		ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_interior"));
+		JDialogBase.updateFileInfo(imageA, surfaceMaskImage);
+
+		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+		int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;		
+		int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;		
+		for ( int z = 0; z < dimZ; z++ ) {
+			for ( int y = 0; y < dimY; y++ ) {
+				for ( int x = 0; x < dimX; x++ ) {
+					int index = x + (dimX * (y + (dimY * z)));
+					if ( surfaceMask.get(index) ) {
+						surfaceMaskImage.set(x, y, z, 1);
+						surfaceMaskImage.setMax(1);
+					}
+				}
+			}
+		}
+
+		surfaceMaskImage.setMin(0);
+
+		VOIContour centerCurve = getCenter();
+		Vector3f pt = centerCurve.elementAt( centerCurve.size() / 2 );
+
+		BitSet seedPaintBitmap = null;
+		ModelImage volMaskImage = null;
+		try {
+			AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(surfaceMaskImage, 1.0f, 1.0f);
+
+			regionGrowAlgo.setRunningInSeparateThread(false);
+			CubeBounds regionGrowBounds= new CubeBounds(dimX, 0, dimY, 0, dimZ, 0);
+			seedPaintBitmap = new BitSet( dimX * dimY * dimZ );
+
+			int count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D((int)pt.X, (int)pt.Y, (int)pt.Z), -1,
+					false, false, null, 0, 0, -1, -1,
+					false, 0, regionGrowBounds);
+
+			volMaskImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_interior"));
+			JDialogBase.updateFileInfo(imageA, volMaskImage);
+
+			for ( int z = 0; z < dimZ; z++ ) {
+				for ( int y = 0; y < dimY; y++ ) {
+					for ( int x = 0; x < dimX; x++ ) {
+						int index = x + (dimX * (y + (dimY * z)));
+						if ( seedPaintBitmap.get(index) ) {
+							volMaskImage.setC(x, y, z, 2, 1);
+							volMaskImage.setMaxG(1);
+							volMaskImage.setMax(1);
+						}
+						if ( surfaceMask.get(index) ) {
+							volMaskImage.setC(x, y, z, 1, 1);
+							volMaskImage.setMaxR(1);
+							volMaskImage.setMax(1);
+						}
+					}
+				}
+			}
+
+			volMaskImage.setMin(0);
+			seedPaintBitmap = null;
+			regionGrowAlgo = null;
+
+
+		} catch (final OutOfMemoryError error) {
+			System.gc();
+			MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
+		}
+
+		if ( surfaceMaskImage != null ) {
+			surfaceMaskImage.disposeLocal(false);
+			surfaceMaskImage = null;
+		}
+
+		return volMaskImage;
+	}
+
+	
+
+	public ModelImage getInsideMeshImage(TriMesh mesh) 
+	{		
+		// save the surface and interior images:
+		SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
+		VolumeImage volImage = new VolumeImage(false, imageA, "", null, 0);
+		VolumeSurface volumeSurface = new VolumeSurface(volImage,
+				null, new Vector3f(), volImage.GetScaleX(), volImage.GetScaleY(), volImage.GetScaleZ(), surface, true);
+		BitSet surfaceMask = volumeSurface.computeSurfaceMask();
+		return getInsideMeshImage(surfaceMask);
+	}
+
 }
