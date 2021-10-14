@@ -964,7 +964,7 @@ public class VolumeVOI extends VolumeObject
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) )
 		{
 			if ( m_kVOI.size() == 1 ) {
-				m_kVOI.add( m_kVOI.elementAt(0) );
+				m_kVOI.add( new Vector3f(m_kVOI.elementAt(0)) );
 			}
 		}
 		if ( m_kVOI.getType() == VOI.POINT )
@@ -1024,7 +1024,7 @@ public class VolumeVOI extends VolumeObject
 				return;
 			}
 			if ( m_kVOI.size() == 1 ) {
-				m_kVOI.add( m_kVOI.elementAt(0) );
+				m_kVOI.add( new Vector3f(m_kVOI.elementAt(0)) );
 			}
 			textAnnotations( m_kVOI.elementAt(1), m_kVOI.elementAt(0) );
 			m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));

@@ -538,6 +538,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					rightRenderer.setVOILatticeManager(rightImage.voiManager);
 
 					leftImage = imageStack[imageIndex];
+					
+					
 					leftRenderer.displayVOIs(false);
 					leftRenderer.setImages( leftImage.volumeImage );
 					leftRenderer.resetAxisY();
@@ -889,6 +891,24 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 	}
 
+	private void checkAnnotations() {
+		for ( int image = 0; image < imageStack.length; image++ ) {
+			System.err.println( imageStack[image].wormImage.getImageName() );
+			VOIVector vois = imageStack[image].wormImage.getVOIs();
+			for ( int v = 0; v < vois.size(); v++ ) {
+				VOI voi = vois.elementAt(v);
+
+				if ( voi.getName().equals("annotationVOIs") ) {
+					System.err.println( "     " + voi.getName() );
+					for ( int i = 0; i < voi.getCurves().size(); i++ ) {
+						VOIWormAnnotation text = (VOIWormAnnotation) voi.getCurves().elementAt(i);
+						System.err.println( "             " + text.getText() + "  " + text.elementAt(0) );
+					}
+				}
+			}
+		}
+	}
+	
 	public void rendererConfigured(VolumeTriPlanarRenderBase renderer)
 	{       
 		if ( (annotationList != null) && (annotationNames != null) && (triVolume != null) )
@@ -944,10 +964,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			activeImage.annotations = null;
 		}
 		VOI annotations = activeImage.voiManager.getAnnotations();
+//		System.err.println( activeImage.wormImage.getImageName() + "  " + annotations);
+
 		if ( annotations != null ) {
 			for (int i = 0; i < annotations.getCurves().size(); i++)
 			{
 				final VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+//				System.err.println( "       " + i + "  " + text.getText() + "  " + text.elementAt(0));
 				text.createVolumeVOI( activeImage.volumeImage, activeRenderer.getTranslate() );    			
 			}
 		}
@@ -1040,6 +1063,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 
 	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
+		System.err.println("setActiveRenderer");
+
 		VolumeTriPlanarRenderBase previousActive = activeRenderer;
 		if ( leftRenderer == renderer ) 
 		{
@@ -3573,9 +3598,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 		lutPanel.revalidate();
 		
-		integratedData.displayChannel1.setSelected(integratedData.displayRedAsGray);
-		integratedData.displayChannel2.setSelected(integratedData.displayGreenAsGray);
-		integratedData.displayBothChannels.setSelected(!integratedData.displayRedAsGray && !integratedData.displayGreenAsGray);
+		if ( integratedData.displayChannel1 != null ) {
+			integratedData.displayChannel1.setSelected(integratedData.displayRedAsGray);
+			integratedData.displayChannel2.setSelected(integratedData.displayGreenAsGray);
+			integratedData.displayBothChannels.setSelected(!integratedData.displayRedAsGray && !integratedData.displayGreenAsGray);
+		}
 	}
 
 
