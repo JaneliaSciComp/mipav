@@ -691,6 +691,12 @@ public class JDialogMultiResolutionBilateralFilter extends JDialogScriptableBase
             return false;
         }
         
+        if (replaceImage.isSelected()) {
+            displayLoc = REPLACE;
+        } else if (newImage.isSelected()) {
+            displayLoc = NEW;
+        }
+        
         return true;
     }
     
