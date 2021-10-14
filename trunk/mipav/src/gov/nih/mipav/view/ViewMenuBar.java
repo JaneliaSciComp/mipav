@@ -218,6 +218,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Mean", null, 0, null, false),
 								menuBuilder.buildMenuItem("Median", null, 0, null, false),
 								menuBuilder.buildMenuItem("Mode", null, 0, null, false),
+								menuBuilder.buildMenuItem("Multiresolution Bilateral filter", "MultiResBilateral filter", 0, null, false),
 								menuBuilder.buildMenuItem("Nonlinear noise reduction", "NLNR", 0, null, false),
 								menuBuilder.buildMenuItem("Nonlocal means filter", "nlMeansFilter", 0, null, false),
 								menuBuilder.buildMenuItem("Nonmaximum suppression", "nmsuppression", 0, null, false),
@@ -1458,6 +1459,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
 		if (numberOfDimensions == 4) {
+			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D", false);
@@ -1582,6 +1584,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
+			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
@@ -1810,6 +1813,7 @@ public class ViewMenuBar {
 		// menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
 		// }
 
+		menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", true);
 		menuBuilder.setMenuItemEnabled("BM3D", true);
 		menuBuilder.setMenuItemEnabled("Density based clustering", true);
 		menuBuilder.setMenuItemEnabled("Edge detection", true);
