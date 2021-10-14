@@ -63,10 +63,10 @@ import java.util.Arrays;
     	
     	public void runAlgorithm() {
     		if (srcImage.isColorImage()) {
-    			denoiseBW();
+    			denoiseColor();
     		}
     		else {
-    			denoiseColor();
+    			denoiseBW();
     		}
     	}
     	
