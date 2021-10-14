@@ -80,6 +80,7 @@ import java.util.Arrays;
     	   ModelImage outputImage;
     	   if (destImage != null) {
     		   outputImage = destImage;
+    		   System.err.println("outputImage = destImage");
     	   }
     	   else {
     		   outputImage = srcImage;
@@ -153,11 +154,12 @@ import java.util.Arrays;
 		    	    	 denoised_detail[i] = soft(details[i], threshold, 0.0);
 		    	     }
 		    	 }
-		    	 double coeffs_rec[][][] = new double[3][LP_bilateral.length][LP_bilateral[0].length];
-		    	 for (i = 0; i < 3; i++) {
+		    	 double coeffs_rec[][][] = new double[4][LP_bilateral.length][LP_bilateral[0].length];
+		    	 coeffs_rec[0] = LP_bilateral;
+		    	 for (i = 1; i < 4; i++) {
 		    		 for (y = 0; y < LP_bilateral.length; y++) {
 		    			 for (x = 0; x < LP_bilateral[0].length; x++) {
-		    				 coeffs_rec[i][y][x] = LP_bilateral[y][x] + denoised_detail[i][y][x];
+		    				 coeffs_rec[i][y][x] = denoised_detail[i-1][y][x];
 		    			 }
 		    		 }
 		    	 }
@@ -434,11 +436,16 @@ import java.util.Arrays;
 		    	    	 denoised_detail[i] = soft(details[i], threshold, 0.0);
 		    	     }
 		    	 }
-		    	 double coeffs_rec[][][] = new double[3][LP_bilateral.length][LP_bilateral[0].length/3];
-		    	 for (i = 0; i < 3; i++) {
+		    	 double coeffs_rec[][][] = new double[4][LP_bilateral.length][LP_bilateral[0].length/3];
+		    	 for (y = 0; y < LP_bilateral.length; y++) {
+	    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
+	    				 coeffs_rec[0][y][x] = LP_bilateral[y][3*x];
+	    			 }
+	    		 }
+		    	 for (i = 1; i < 4; i++) {
 		    		 for (y = 0; y < LP_bilateral.length; y++) {
 		    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
-		    				 coeffs_rec[i][y][x] = LP_bilateral[y][3*x] + denoised_detail[i][y][x];
+		    				 coeffs_rec[i][y][x] = denoised_detail[i-1][y][x];
 		    			 }
 		    		 }
 		    	 }
@@ -455,10 +462,15 @@ import java.util.Arrays;
 		    	     }
 		    	 }
 		  
-		    	 for (i = 0; i < 3; i++) {
+		    	 for (y = 0; y < LP_bilateral.length; y++) {
+	    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
+	    				 coeffs_rec[0][y][x] = LP_bilateral[y][3*x+1];
+	    			 }
+	    		 }
+		    	 for (i = 1; i < 4; i++) {
 		    		 for (y = 0; y < LP_bilateral.length; y++) {
 		    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
-		    				 coeffs_rec[i][y][x] = LP_bilateral[y][3*x+1] + denoised_detail[i][y][x];
+		    				 coeffs_rec[i][y][x] = denoised_detail[i-1][y][x];
 		    			 }
 		    		 }
 		    	 }
@@ -475,10 +487,15 @@ import java.util.Arrays;
 		    	     }
 		    	 }
 		  
-		    	 for (i = 0; i < 3; i++) {
+		    	 for (y = 0; y < LP_bilateral.length; y++) {
+	    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
+	    				 coeffs_rec[0][y][x] = LP_bilateral[y][3*x+2];
+	    			 }
+	    		 }
+		    	 for (i = 1; i < 4; i++) {
 		    		 for (y = 0; y < LP_bilateral.length; y++) {
 		    			 for (x = 0; x < LP_bilateral[0].length/3; x++) {
-		    				 coeffs_rec[i][y][x] = LP_bilateral[y][3*x+2] + denoised_detail[i][y][x];
+		    				 coeffs_rec[i][y][x] = denoised_detail[i-1][y][x];
 		    			 }
 		    		 }
 		    	 }
