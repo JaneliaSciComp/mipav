@@ -238,7 +238,7 @@ public class JDialogMultiResolutionBilateralFilter extends JDialogScriptableBase
         labelLevels = new JLabel("Levels");
         labelLevels.setFont(serif12);
         labelLevels.setForeground(Color.black);
-        labelLevels.setEnabled(false);
+        labelLevels.setEnabled(true);
         gbc2.gridx = 0;
         gbc2.gridy++;
         paramPanel.add(labelLevels, gbc2);
@@ -251,7 +251,7 @@ public class JDialogMultiResolutionBilateralFilter extends JDialogScriptableBase
         }
         comboBoxLevels.setSelectedIndex(3);
         comboBoxLevels.addActionListener(this);
-        comboBoxLevels.setEnabled(false);
+        comboBoxLevels.setEnabled(true);
         gbc2.gridx = 1;
         paramPanel.add(comboBoxLevels, gbc2);
         
