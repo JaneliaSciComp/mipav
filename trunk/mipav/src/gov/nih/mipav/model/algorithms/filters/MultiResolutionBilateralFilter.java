@@ -80,7 +80,6 @@ import java.util.Arrays;
     	   ModelImage outputImage;
     	   if (destImage != null) {
     		   outputImage = destImage;
-    		   System.err.println("outputImage = destImage");
     	   }
     	   else {
     		   outputImage = srcImage;
