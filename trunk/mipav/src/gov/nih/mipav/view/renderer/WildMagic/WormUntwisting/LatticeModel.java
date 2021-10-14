@@ -88,20 +88,19 @@ public class LatticeModel {
 		return ( (c1.getRed() == c2.getRed()) && (c1.getGreen() == c2.getGreen()) && (c1.getBlue() == c2.getBlue()) );
 	}
 	
-//	public static String checkName(String name, String original, int count, VOI annotationVOIs) {
-//		if ( annotationVOIs == null ) return name;
-//		if ( annotationVOIs.getCurves() == null ) return name;
-//		if ( annotationVOIs.getCurves().size() == 0 ) return name;
-//		
-//		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
-//			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
-//			if ( text.getText().contentEquals(name) ) {
-//				name = original + "_" + count++;
-//				return checkName(name, original, count, annotationVOIs);
-//			}
-//		}
-//		return name;
-//	}
+	public static boolean checkName(String name, VOI annotationVOIs) {
+		if ( annotationVOIs == null ) return false;
+		if ( annotationVOIs.getCurves() == null ) return false;
+		if ( annotationVOIs.getCurves().size() == 0 ) return false;
+		
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ ) {
+			VOIWormAnnotation text = (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(i);
+			if ( text.getText().contentEquals(name) ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Read a list of annotations from a CSV file: name,x,y,z,radius (optional)
@@ -121,7 +120,7 @@ public class LatticeModel {
 				BufferedReader br = new BufferedReader(fr);
 				String line = br.readLine();
 				line = br.readLine();
-//				String renameString = "";
+				String renameString = "";
 				VOI annotationVOIs = new VOI( sID, "annotationVOIs", VOI.ANNOTATION, 0 );
 				int count = 1;
 				while ( line != null && (line.length() > 1) )
@@ -139,11 +138,9 @@ public class LatticeModel {
 							int parsedIndex = 0;
 							String name = String.valueOf( parsed[parsedIndex++] );
 							text.setText(name);
-//							String name1 = checkName(name, new String(name), 1, annotationVOIs);
-//							if ( !name.equals(name1) ) {
-//								renameString += name + "->" + name1 + "\n";
-//							}
-//							text.setText(name1);
+							if ( checkName(name, annotationVOIs) ) {
+								renameString += name + "\n";
+							}
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
@@ -169,11 +166,9 @@ public class LatticeModel {
 							String name = String.valueOf( parsed[parsedIndex++] );
 							text.setText(name);
 
-//							String name1 = checkName(name, new String(name), 1, annotationVOIs);
-//							if ( !name.equals(name1) ) {
-//								renameString += name + "->" + name1 + "\n";
-//							}
-//							text.setText(name1);
+							if ( checkName(name, annotationVOIs) ) {
+								renameString += name + "\n";
+							}
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
@@ -200,9 +195,9 @@ public class LatticeModel {
 					}
 					line = br.readLine();
 				}
-//				if ( renameString.length() > 0 ) {
-//					MipavUtil.displayError( "Renamed duplicate annotations:\n" + renameString );
-//				}
+				if ( renameString.length() > 0 ) {
+					MipavUtil.displayError( "Duplicate annotations:\n" + renameString );
+				}
 				fr.close();
 				if ( count > 1 )
 				{
@@ -403,6 +398,7 @@ public class LatticeModel {
 	{		
 		// load the existing annotation file - use it to determine which annotations need untwisting.
 		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(dir + File.separator + fileName );
+//		System.err.println("saveAnnotationsAsCSV reading orig: " + (dir + File.separator + fileName));
 
 		if ( originalAnnotation != null ) {
 			if ( originalAnnotation.getCurves().size() == annotations.getCurves().size() ) {
@@ -11746,7 +11742,7 @@ public class LatticeModel {
 
 		for ( int i = 0; i < annotationsNew.getCurves().size(); i++ ) {
         	VOIWormAnnotation annotation = (VOIWormAnnotation) annotationsNew.getCurves().elementAt(i);
-//        	System.err.println(annotation.getText());
+//        	System.err.println("  " + annotation.getText());
         	// find match by name:
         	boolean found = false;
     		for ( int j = 0; j < annotationOld.getCurves().size(); j++ ) {
@@ -11766,7 +11762,7 @@ public class LatticeModel {
                 	if ( !pt.equals(ptO) ) {
                 		// point changed position - add to change list: 
                 		annotationsChangeList.getCurves().add(annotation);
-//                		System.err.println("moved annotation " + annotation.getText() );
+//                		System.err.println("     " + "moved annotation " + i + "  " + annotation.getText() + "   " + pt + "   " + ptO );
                 	}
             		found = true;
             		break;
@@ -11775,7 +11771,7 @@ public class LatticeModel {
     		if ( !found ) {
         		// new point - add to change list: 
         		annotationsChangeList.getCurves().add(annotation);
-//        		System.err.println("new annotation " + annotation.getText() );
+//        		System.err.println("     " + "new annotation " + annotation.getText() );
     		}
 		}
 		
