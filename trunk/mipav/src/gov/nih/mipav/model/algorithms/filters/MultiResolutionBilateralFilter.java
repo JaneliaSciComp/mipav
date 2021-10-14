@@ -501,6 +501,7 @@ import java.util.Arrays;
 		    	 }
 		    	 LPB = py.waverec2(coeffs_rec, wavelets, modes, axes);
 		    	 
+		    	 LP = new double[LPR.length][3*LPR[0].length];
 		    	 for (y = 0; y < LPR.length; y++) {
 				    	for (x = 0; x < LPR[0].length; x++) {
 				    		LP[y][3*x] = LPR[y][x];
