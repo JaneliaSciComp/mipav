@@ -111,12 +111,12 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
-	private final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
-	private final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
-	private final int BORDER_REFLECT = 2; // fedcba|abcdefgh|hgfedcb
-	private final int BORDER_WRAP = 3; // cdefgh|abcdefgh|abcdefg
-	private final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
-	private final int BORDER_DEFAULT = BORDER_REFLECT_101;
+	public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
+	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
+	public final int BORDER_REFLECT = 2; // fedcba|abcdefgh|hgfedcb
+	public final int BORDER_WRAP = 3; // cdefgh|abcdefgh|abcdefg
+	public final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
+	public final int BORDER_DEFAULT = BORDER_REFLECT_101;
 
     /**
      * Flag, if true, indicates that the whole image should be processed. If false on process the image over the mask
