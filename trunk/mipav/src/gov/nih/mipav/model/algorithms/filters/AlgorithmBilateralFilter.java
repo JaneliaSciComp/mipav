@@ -822,7 +822,7 @@ public class AlgorithmBilateralFilter extends AlgorithmBase implements Algorithm
     	return dst;
     }
         
-    private double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
+    public double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
     	int i,j;
     	double dst[][] = new double[src.length + top + bottom][src[0].length + left + right];
     	for (i = 0; i < src.length; i++) {
