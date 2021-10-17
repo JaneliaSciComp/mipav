@@ -196,8 +196,8 @@ import Jama.Matrix;
     		// Guided and source images must be different images
     		// Destination image is color image
      	    AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
-    		int xDim = srcImage.getExtents()[0];
-    		int yDim = srcImage.getExtents()[1];
+    		xDim = srcImage.getExtents()[0];
+    		yDim = srcImage.getExtents()[1];
     		int length = xDim * yDim;
     		float floatBuf[] = new float[length];
     		double guidedMin = guidedImage.getMin();
@@ -286,7 +286,7 @@ import Jama.Matrix;
     		double corrGuided_pad[][][][] = new double[3][3][][];
     		for (i = 0; i < 3; i++) {
     			for (j = 0; j < 3; j++) {
-    			    corrGuided_pad[i][j] = bf.copyMakeBorder(corrGuided_[i][j], radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);	
+    			    corrGuided_pad[i][j] = bf.copyMakeBorder(corrGuided_[i][j], radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
     			}
     		}
     		double corrGuided[][][][] = new double[3][3][][];
