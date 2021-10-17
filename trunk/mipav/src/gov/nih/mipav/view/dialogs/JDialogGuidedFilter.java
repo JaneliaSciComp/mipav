@@ -450,7 +450,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
-            } else if (resultImage == null) {
+            } else if ((resultImage == null) && (!guidedImage.isColorImage())) {
 
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
@@ -471,6 +471,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
                 }
 
                 image.notifyImageDisplayListeners(null, true);
+            
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
