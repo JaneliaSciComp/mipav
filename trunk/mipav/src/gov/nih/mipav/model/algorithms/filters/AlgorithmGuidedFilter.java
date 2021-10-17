@@ -22,9 +22,9 @@ import Jama.Matrix;
     public class AlgorithmGuidedFilter extends AlgorithmBase {
     	private ModelImage guidedImage;
     	// Filter radius
-    	private int radius;
+    	private int radius = 3;
     	// Value controlling sharpness
-    	private double eps;
+    	private double eps = 1.0E-5;
     	private int xDim;
     	private int yDim;
     	
