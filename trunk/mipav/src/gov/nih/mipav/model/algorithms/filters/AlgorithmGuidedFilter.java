@@ -194,7 +194,7 @@ import Jama.Matrix;
     		// Guided image is color
     		// Source image is black and white
     		// Guided and source images must be different images
-    		// Destination image is black and white image
+    		// Destination image is color image
      	    AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
     		int xDim = srcImage.getExtents()[0];
     		int yDim = srcImage.getExtents()[1];
@@ -386,23 +386,26 @@ import Jama.Matrix;
     	    double b_pad[][] = bf.copyMakeBorder(b, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
     	    double meanb[][] = boxFilter(b_pad);
     	    
-	    	for (y = 0; y < yDim; y++) {
+	    	float colorBuffer[][] = new float[3][length];
+    	    for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
-	    			buffer[x + y*xDim] = meanb[y][x];
 	    			for (i = 0; i < 3; i++) {
-	    			    buffer[x + y*xDim] += (meana[i][y][x] * guided[i][y][x]);
+	    			    colorBuffer[i][x + y*xDim] = (float)((meana[i][y][x] * guided[i][y][x]) + meanb[y][x]);
 	    			}
 	    		}
 	    	}
 	    	
-	    	try {
-		    	destImage.importData(0, buffer, true);
-		    }
-		    catch (IOException e) {
-		    	MipavUtil.displayError("IOException on destImage.importData(0, buffer, true)");
-		    	setCompleted(false);
-		    	return;
-		    }
+	    	for (i = 0; i < 3; i++) {
+	    	    try {
+			    	destImage.importRGBData((i+1), 0, colorBuffer[i], false);
+			    }
+			    catch (IOException e) {
+			    	MipavUtil.displayError("IOException on destImage.importRGBData("+(i+1)+", 0, colorBuffer["+i+"], false)");
+			    	setCompleted(false);
+			    	return;
+			    }
+	    	}
+	    	destImage.calcMinMax();
 		    
 		    setCompleted(true);
 		    return;
