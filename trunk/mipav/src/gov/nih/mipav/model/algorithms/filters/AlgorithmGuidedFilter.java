@@ -339,7 +339,7 @@ import Jama.Matrix;
     	    for (i = 0; i < 3; i++) {
     	    	corrGuidedSource[i] = boxFilter(guidedSource_pad[i]);
     	    }
-    	    double covGuidedSource[][][] = new double[3][][];
+    	    double covGuidedSource[][][] = new double[3][yDim][xDim];
     	    for (i = 0; i < 3; i++) {
     	    	for (y = 0; y < yDim; y++) {
     	    		for (x = 0; x < xDim; x++) {
