@@ -2,10 +2,12 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.structures.*;
-
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.*;
 
+import java.awt.Dimension;
 import java.io.*;
 import java.util.Arrays;
 
@@ -27,6 +29,7 @@ import Jama.Matrix;
     	private double eps = 1.0E-5;
     	private int xDim;
     	private int yDim;
+    	private ModelImage outputImage = null;
     	
     	public AlgorithmGuidedFilter(ModelImage destImg, ModelImage srcImg, ModelImage guidedImage,
     			int radius, double eps) {
@@ -47,7 +50,6 @@ import Jama.Matrix;
     	
     	public void GrayGuidedFilter() {
     	     // Specific guided filter for gray guided image	
-    		 ModelImage outputImage;
       	     if (destImage != null) {
       		     outputImage = destImage;
       	     }
@@ -195,6 +197,9 @@ import Jama.Matrix;
     		// Source image is black and white
     		// Guided and source images must be different images
     		// Destination image is color image
+    		if (destImage != null) {
+     		     outputImage = destImage;
+     	    }
      	    AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
     		xDim = srcImage.getExtents()[0];
     		yDim = srcImage.getExtents()[1];
@@ -395,17 +400,37 @@ import Jama.Matrix;
 	    		}
 	    	}
 	    	
-	    	for (i = 0; i < 3; i++) {
+	    	if (destImage == null) {
+	    		ModelImage imageR = srcImage;
+	    		ModelImage imageG = srcImage;
+	    		ModelImage imageB = srcImage;
+	    		DataType dataType = DataType.ARGB_FLOAT;
+	    		boolean remapMode = true;
+	    		boolean commonMapping = true;
+	    		float remapHighestValue = (float)srcImage.getMax();
+	    		AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType.getLegacyNum(), remapMode, commonMapping,
+                        remapHighestValue, true, true);
+	    		mathAlgo.run();
+	    		outputImage = mathAlgo.getImageR();
+	    		try {
+                    new ViewJFrameImage(outputImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+	    	}
+    	    for (i = 0; i < 3; i++) {
 	    	    try {
-			    	destImage.importRGBData((i+1), 0, colorBuffer[i], false);
+			    	outputImage.importRGBData((i+1), 0, colorBuffer[i], false);
 			    }
 			    catch (IOException e) {
-			    	MipavUtil.displayError("IOException on destImage.importRGBData("+(i+1)+", 0, colorBuffer["+i+"], false)");
+			    	MipavUtil.displayError("IOException on outputImage.importRGBData("+(i+1)+", 0, colorBuffer["+i+"], false)");
 			    	setCompleted(false);
 			    	return;
 			    }
 	    	}
-	    	destImage.calcMinMax();
+	    	outputImage.calcMinMax();
+	    	outputImage.notifyImageDisplayListeners(null, true);
 		    
 		    setCompleted(true);
 		    return;
