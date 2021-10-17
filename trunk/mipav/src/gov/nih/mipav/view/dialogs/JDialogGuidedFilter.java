@@ -330,7 +330,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_multiResBilateral");
+        String name = makeImageName(image.getImageName(), "_guided");
         int[] destExtents;
 
         destExtents = new int[2];
