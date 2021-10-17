@@ -207,6 +207,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
 								menuBuilder.buildMenuItem("Gradient Inverse Smoothing", "GradientInverse", 0, null, false),
 								menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
+								menuBuilder.buildMenuItem("Guided filter", null, 0, null, false),
 								menuBuilder.buildMenuItem("Haralick texture", "Haralick", 0, null, false),
 								menuBuilder.buildMenuItem("Hurst index", "Hurst", 0, null, false),
 								menuBuilder.buildMenuItem("Kernel regression", "kernelRegression", 0, null, false),
@@ -1459,6 +1460,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
 		if (numberOfDimensions == 4) {
+			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
@@ -1584,6 +1586,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
+			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
@@ -1708,6 +1711,7 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
+			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
@@ -1813,6 +1817,7 @@ public class ViewMenuBar {
 		// menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
 		// }
 
+		menuBuilder.setMenuItemEnabled("Guided filter", true);
 		menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", true);
 		menuBuilder.setMenuItemEnabled("BM3D", true);
 		menuBuilder.setMenuItemEnabled("Density based clustering", true);
