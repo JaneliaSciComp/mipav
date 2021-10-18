@@ -8,8 +8,10 @@ import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.*;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.io.*;
 import java.util.Arrays;
+import java.util.Vector;
 
 import Jama.Matrix;
 
@@ -40,16 +42,22 @@ import Jama.Matrix;
     	}
     	
     	public void runAlgorithm() {
-    		if (guidedImage.isColorImage()) {
+    		if ((guidedImage.isColorImage()) && (!srcImage.isColorImage())) {
     		    MultiDimGuidedFilter();	
     		}
+    		else if ((!guidedImage.isColorImage()) && (!srcImage.isColorImage())) {
+    			GraySourceGrayGuidedFilter();
+    		}
+    		else if ((!guidedImage.isColorImage()) && (srcImage.isColorImage())) {
+    			ColorSourceGrayGuidedFilter();
+    		}
     		else {
-    			GrayGuidedFilter();
+    			ColorSourceColorGuidedFilter();
     		}
     	}
     	
-    	public void GrayGuidedFilter() {
-    	     // Specific guided filter for gray guided image	
+    	public void GraySourceGrayGuidedFilter() {
+    	     // Specific gray guided filter for gray guided image	
       	     if (destImage != null) {
       		     outputImage = destImage;
       	     }
@@ -72,9 +80,13 @@ import Jama.Matrix;
     			setCompleted(false);
     			return;
     		}
+    		
+    		double srcMin = srcImage.getMin();
+    		double srcMax = srcImage.getMax();
+    		double srcDenom = srcMax - srcMin;
     		for (y = 0; y < yDim; y++) {
     			for (x = 0; x < xDim; x++) {
-    				src[y][x] = buffer[x + y*xDim];
+    				src[y][x] = (buffer[x + y*xDim] - srcMin)/srcDenom;
     			}
     		}
     		
@@ -172,6 +184,284 @@ import Jama.Matrix;
 		    return;
     	}
     	
+    	public void ColorSourceGrayGuidedFilter() {	
+     	     if (destImage != null) {
+     		     outputImage = destImage;
+     	     }
+     	     else {
+     		     outputImage = srcImage;
+     	     }
+   		int i,y,x,c;
+   		xDim = srcImage.getExtents()[0];
+   	    yDim = srcImage.getExtents()[1];
+   		int length = xDim * yDim;
+   		float floatBuf[][] = new float[3][length];
+   		double buffer[] = new double[length];
+   		double src[][] = new double[yDim][xDim];
+   		double guided[][] = new double[yDim][xDim];
+   		double srcMin = srcImage.getMin();
+   		double srcMax = srcImage.getMax();
+   		double srcDenom = srcMax - srcMin;
+   		double guidedMin = guidedImage.getMin();
+   		double guidedMax = guidedImage.getMax();
+   		double denom = guidedMax - guidedMin;
+   		AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
+   		for (c = 1; c <= 3; c++) {
+   		try {
+   			srcImage.exportRGBData(c, 0, length, floatBuf[c-1]);
+   		}
+   		catch (IOException e) {
+   			MipavUtil.displayError("IOException on srcImage.exportRGBData("+c + ", 0, length, floatBuf)");
+   			setCompleted(false);
+   			return;
+   		}
+   		
+   		
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				src[y][x] = (floatBuf[c-1][x + y*xDim] - srcMin)/srcDenom;
+   			}
+   		}
+   		
+   		
+   		try {
+   			guidedImage.exportData(0, length, buffer);
+   		}
+   		catch (IOException e) {
+   			MipavUtil.displayError("IOException on guidedImage.exportData(0, length, buffer)");
+   			setCompleted(false);
+   			return;
+   		}
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				guided[y][x] = (buffer[x + y*xDim] - guidedMin)/denom;
+   			}
+   		}
+   		
+   		// Step 1
+   		double guided_pad[][] = bf.copyMakeBorder(guided, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+   		double meanGuided[][] = boxFilter(guided_pad);
+   		double src_pad[][] = bf.copyMakeBorder(src, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+   		double meanSource[][] = boxFilter(src_pad);
+   		double guidedSquared[][] = new double[yDim][xDim];
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				guidedSquared[y][x] = guided[y][x] * guided[y][x];
+   			}
+   		}
+   		double guidedSquared_pad[][] = bf.copyMakeBorder(guidedSquared, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+   		double corrGuided[][] = boxFilter(guidedSquared_pad);
+   		double guidedSource[][] = new double[yDim][xDim];
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				guidedSource[y][x] = guided[y][x] * src[y][x];
+   			}
+   		}
+   		double guidedSource_pad[][] = bf.copyMakeBorder(guidedSource, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+   		double corrGuidedSource[][] = boxFilter(guidedSource_pad);
+   		
+   		// Step 2
+   		double varGuided[][] = new double[yDim][xDim];
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				varGuided[y][x] = corrGuided[y][x] - meanGuided[y][x] * meanGuided[y][x];
+   			}
+   		}
+   		
+   		double covGuidedSource[][] = new double[yDim][xDim];
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				covGuidedSource[y][x] = corrGuidedSource[y][x] - meanGuided[y][x] * meanSource[y][x];
+   			}
+   		}
+   		
+   		// Step 3
+   		double a[][] = new double[yDim][xDim];
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				a[y][x] = covGuidedSource[y][x] / (varGuided[y][x] + eps);	
+   			}
+   		}
+   		double b[][] = new double[yDim][xDim];
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				b[y][x] = meanSource[y][x] - a[y][x] * meanGuided[y][x];	
+   			}
+   		}
+   		
+   		// Step 4
+   		double a_pad[][] = bf.copyMakeBorder(a, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+   		double meana[][] = boxFilter(a_pad);
+   		double b_pad[][] = bf.copyMakeBorder(b, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+   		double meanb[][] = boxFilter(b_pad);
+   		
+   		// Step 5
+   		for (y = 0; y < yDim; y++) {
+   			for (x = 0; x < xDim; x++) {
+   				floatBuf[c-1][x + y*xDim] = (float)(meana[y][x] * guided[y][x] + meanb[y][x]); 
+   			}
+   		}
+   	} // for (c = 1; c <= 3; c++)
+   
+    if (outputImage.getType() != ModelStorageBase.ARGB_FLOAT) {
+    	outputImage.reallocate(ModelStorageBase.ARGB_FLOAT, false);    
+    }
+   		
+    for (c = 1; c <= 3; c++) {		
+      try {
+		    	outputImage.importRGBData(c, 0, floatBuf[c-1], false);
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException on outputImage.importRGBData(" + c + " ,0, floatBuf["+c+" -1], false)");
+		    	setCompleted(false);
+		    	return;
+		    }
+    } // for (c = 1; c <= 3; c++)
+   		
+   		outputImage.calcMinMax();
+		    
+		setCompleted(true);
+		return;
+   	}
+    	
+    	public void ColorSourceColorGuidedFilter() {	
+    	     if (destImage != null) {
+    		     outputImage = destImage;
+    	     }
+    	     else {
+    		     outputImage = srcImage;
+    	     }
+  		int i,y,x,c;
+  		xDim = srcImage.getExtents()[0];
+  	    yDim = srcImage.getExtents()[1];
+  		int length = xDim * yDim;
+  		float floatBuf[][] = new float[3][length];
+  		double buffer[] = new double[length];
+  		double src[][] = new double[yDim][xDim];
+  		double guided[][] = new double[yDim][xDim];
+  		AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
+  		double srcMin = srcImage.getMin();
+  		double srcMax = srcImage.getMax();
+  		double srcDenom = srcMax - srcMin;
+  		double guidedMin = guidedImage.getMin();
+  		double guidedMax = guidedImage.getMax();
+  		double denom = guidedMax - guidedMin;
+  		for (c = 1; c <= 3; c++) {
+  		try {
+  			srcImage.exportRGBData(c, 0, length, floatBuf[c-1]);
+  		}
+  		catch (IOException e) {
+  			MipavUtil.displayError("IOException on srcImage.exportRGBDataNoLock("+c + ", 0, length, floatBuf["+c+"-1])");
+  			setCompleted(false);
+  			return;
+  		}
+  		
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				src[y][x] = (floatBuf[c-1][x + y*xDim] - srcMin)/srcDenom;
+  			}
+  		}
+  		
+  		try {
+  			guidedImage.exportRGBData(c, 0, length, floatBuf[c-1]);
+  		}
+  		catch (IOException e) {
+  			MipavUtil.displayError("IOException on guidedImage.exportRGBData("+ c + ", 0, length, floatBuf["+c+"-1])");
+  			setCompleted(false);
+  			return;
+  		}
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				guided[y][x] = (floatBuf[c-1][x + y*xDim] - guidedMin)/denom;
+  			}
+  		}
+  		
+  		// Step 1
+  		double guided_pad[][] = bf.copyMakeBorder(guided, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+  		double meanGuided[][] = boxFilter(guided_pad);
+  		double src_pad[][] = bf.copyMakeBorder(src, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+  		double meanSource[][] = boxFilter(src_pad);
+  		double guidedSquared[][] = new double[yDim][xDim];
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				guidedSquared[y][x] = guided[y][x] * guided[y][x];
+  			}
+  		}
+  		double guidedSquared_pad[][] = bf.copyMakeBorder(guidedSquared, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+  		double corrGuided[][] = boxFilter(guidedSquared_pad);
+  		double guidedSource[][] = new double[yDim][xDim];
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				guidedSource[y][x] = guided[y][x] * src[y][x];
+  			}
+  		}
+  		double guidedSource_pad[][] = bf.copyMakeBorder(guidedSource, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+  		double corrGuidedSource[][] = boxFilter(guidedSource_pad);
+  		
+  		// Step 2
+  		double varGuided[][] = new double[yDim][xDim];
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				varGuided[y][x] = corrGuided[y][x] - meanGuided[y][x] * meanGuided[y][x];
+  			}
+  		}
+  		
+  		double covGuidedSource[][] = new double[yDim][xDim];
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				covGuidedSource[y][x] = corrGuidedSource[y][x] - meanGuided[y][x] * meanSource[y][x];
+  			}
+  		}
+  		
+  		// Step 3
+  		double a[][] = new double[yDim][xDim];
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				a[y][x] = covGuidedSource[y][x] / (varGuided[y][x] + eps);	
+  			}
+  		}
+  		double b[][] = new double[yDim][xDim];
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				b[y][x] = meanSource[y][x] - a[y][x] * meanGuided[y][x];	
+  			}
+  		}
+  		
+  		// Step 4
+  		double a_pad[][] = bf.copyMakeBorder(a, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+  		double meana[][] = boxFilter(a_pad);
+  		double b_pad[][] = bf.copyMakeBorder(b, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+  		double meanb[][] = boxFilter(b_pad);
+  		
+  		// Step 5
+  		for (y = 0; y < yDim; y++) {
+  			for (x = 0; x < xDim; x++) {
+  				floatBuf[c-1][x + y*xDim] = (float)(meana[y][x] * guided[y][x] + meanb[y][x]); 
+  			}
+  		}
+  	} // for (c = 1; c <= 3; c++)
+  	   
+    if (outputImage.getType() != ModelStorageBase.ARGB_FLOAT) {
+    	outputImage.reallocate(ModelStorageBase.ARGB_FLOAT, false);    
+    }
+   		
+    for (c = 1; c <= 3; c++) {		
+      try {
+		    	outputImage.importRGBData(c, 0, floatBuf[c-1], false);
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException on outputImage.importRGBData(" + c + " ,0, floatBuf["+c+" -1], false)");
+		    	setCompleted(false);
+		    	return;
+		    }
+    } // for (c = 1; c <= 3; c++)
+   		
+   		outputImage.calcMinMax();
+  		    
+		setCompleted(true);
+		return;
+  	}
+    	
     	public double[][] boxFilter(double input[][]) {
     		int x,y,i,j;
     		double out[][] = new double[yDim][xDim];
@@ -254,6 +544,10 @@ import Jama.Matrix;
     			}
     		}
     		
+    		double srcMin = srcImage.getMin();
+    		double srcMax = srcImage.getMax();
+    		double srcDenom = srcMax - srcMin;
+    		
     		try {
     			srcImage.exportData(0, length, buffer);
     		}
@@ -264,7 +558,7 @@ import Jama.Matrix;
     		}
     		for (y = 0; y < yDim; y++) {
     			for (x = 0; x < xDim; x++) {
-    				src[y][x] = buffer[x + y*xDim];
+    				src[y][x] = (buffer[x + y*xDim] - srcMin)/srcDenom;
     			}
     		}
     		
@@ -430,7 +724,9 @@ import Jama.Matrix;
 			    }
 	    	}
 	    	outputImage.calcMinMax();
-	    	outputImage.notifyImageDisplayListeners(null, true);
+	    	if (destImage == null) {
+	    		outputImage.notifyImageDisplayListeners(true, outputImage.getParentFrame().getComponentImage().getRGBTA());  
+	    	}
 		    
 		    setCompleted(true);
 		    return;
