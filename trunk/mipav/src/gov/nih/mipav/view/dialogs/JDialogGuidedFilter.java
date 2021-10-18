@@ -342,7 +342,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
             try {
 
                 // Make result image of float type
-                if (guidedImage.isColorImage()) {
+                if ((guidedImage.isColorImage()) || (image.isColorImage())) {
                     resultImage = new ModelImage(ModelImage.ARGB_FLOAT, destExtents, name);
                 } else {
                     resultImage = new ModelImage(ModelImage.DOUBLE, destExtents, name);
