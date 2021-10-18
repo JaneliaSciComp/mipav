@@ -1711,7 +1711,6 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
-			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
