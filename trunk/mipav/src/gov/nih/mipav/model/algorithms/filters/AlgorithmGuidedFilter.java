@@ -33,6 +33,10 @@ import Jama.Matrix;
     	private int yDim;
     	private ModelImage outputImage = null;
     	
+    	public AlgorithmGuidedFilter() {
+    		
+    	}
+    	
     	public AlgorithmGuidedFilter(ModelImage destImg, ModelImage srcImg, ModelImage guidedImage,
     			int radius, double eps) {
     		 super(destImg, srcImg);
@@ -54,6 +58,79 @@ import Jama.Matrix;
     		else {
     			ColorSourceColorGuidedFilter();
     		}
+    	}
+    	
+    	// src[][] and guided[][] are normalized to go between 0.0 and 1.0
+    	public double[][] GraySourceGrayGuidedFilter(double src[][], double guided[][], int radius, double eps) {
+    		int y,x;
+    		xDim = src[0].length;
+    		yDim = src.length;
+    		double buffer[][] = new double[yDim][xDim];
+    		AlgorithmBilateralFilter bf = new AlgorithmBilateralFilter();
+    		// Step 1
+    		double guided_pad[][] = bf.copyMakeBorder(guided, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+    		double meanGuided[][] = boxFilter(guided_pad);
+    		double src_pad[][] = bf.copyMakeBorder(src, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+    		double meanSource[][] = boxFilter(src_pad);
+    		double guidedSquared[][] = new double[yDim][xDim];
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				guidedSquared[y][x] = guided[y][x] * guided[y][x];
+    			}
+    		}
+    		double guidedSquared_pad[][] = bf.copyMakeBorder(guidedSquared, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+    		double corrGuided[][] = boxFilter(guidedSquared_pad);
+    		double guidedSource[][] = new double[yDim][xDim];
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				guidedSource[y][x] = guided[y][x] * src[y][x];
+    			}
+    		}
+    		double guidedSource_pad[][] = bf.copyMakeBorder(guidedSource, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+    		double corrGuidedSource[][] = boxFilter(guidedSource_pad);
+    		
+    		// Step 2
+    		double varGuided[][] = new double[yDim][xDim];
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				varGuided[y][x] = corrGuided[y][x] - meanGuided[y][x] * meanGuided[y][x];
+    			}
+    		}
+    		
+    		double covGuidedSource[][] = new double[yDim][xDim];
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				covGuidedSource[y][x] = corrGuidedSource[y][x] - meanGuided[y][x] * meanSource[y][x];
+    			}
+    		}
+    		
+    		// Step 3
+    		double a[][] = new double[yDim][xDim];
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				a[y][x] = covGuidedSource[y][x] / (varGuided[y][x] + eps);	
+    			}
+    		}
+    		double b[][] = new double[yDim][xDim];
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				b[y][x] = meanSource[y][x] - a[y][x] * meanGuided[y][x];	
+    			}
+    		}
+    		
+    		// Step 4
+    		double a_pad[][] = bf.copyMakeBorder(a, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+    		double meana[][] = boxFilter(a_pad);
+    		double b_pad[][] = bf.copyMakeBorder(b, radius, radius, radius, radius, bf.BORDER_REFLECT_101, 0.0);
+    		double meanb[][] = boxFilter(b_pad);
+    		
+    		// Step 5
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				buffer[y][x] = meana[y][x] * guided[y][x] + meanb[y][x]; 
+    			}
+    		}
+            return buffer;
     	}
     	
     	public void GraySourceGrayGuidedFilter() {
