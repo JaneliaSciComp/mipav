@@ -463,6 +463,34 @@ public class PlugInAlgorithmWormUntwisting
 		
 	}
 	
+	public static void batchFlipLattices( JProgressBar batchProgress, final Vector<Integer> includeRange, 
+			final String baseFileDir, final String baseFileName)
+	{
+		if ( includeRange != null )
+		{
+			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+			for ( int i = 0; i < includeRange.size(); i++ )
+			{
+				// Build the full image name:
+				String baseDir = baseFileDir + File.separator + baseFileName + "_" + includeRange.elementAt(i) + 
+						File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_results" + 
+						File.separator;
+				String fileName = baseDir + "lattice_final" + File.separator + "lattice.csv";
+
+				File voiFile = new File(fileName);
+				if ( voiFile.exists() )
+				{					
+					VOIVector lattice = LatticeModel.readLatticeCSV(fileName);
+					LatticeModel.saveLattice(baseDir, "lattice_final", "lattice_backup.csv", lattice);
+
+					LatticeModel.flipLattice(lattice.elementAt(0), lattice.elementAt(1));
+					LatticeModel.saveLattice(baseDir, "lattice_final", lattice);
+				}
+			}
+
+			MipavUtil.displayInfo( "Batch flip complete." );
+		}
+	}
 
 	/**
 	 * Run the lattice-based worm straightening algorithm for the list of input files.

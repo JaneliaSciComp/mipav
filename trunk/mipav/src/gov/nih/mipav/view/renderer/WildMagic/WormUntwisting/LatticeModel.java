@@ -1418,6 +1418,28 @@ public class LatticeModel {
 		
 		updateLattice(true);
 	}
+	
+	public static void flipLattice(VOI left, VOI right) {
+		for ( int i = left.getCurves().size() - 1; i >= 0; i-- ) {
+			VOIWormAnnotation textL = (VOIWormAnnotation) left.getCurves().remove(i);
+			VOIWormAnnotation textR = (VOIWormAnnotation) right.getCurves().remove(i);
+			
+			String labelL2R = textL.getText();
+			labelL2R = labelL2R.replace("L", "R");
+			textL.setText(labelL2R);
+			textL.updateText();
+			textL.update();
+			
+			String labelR2L = textR.getText();
+			labelR2L = labelR2L.replace("R", "L");			
+			textR.setText(labelR2L);
+			textR.updateText();
+			textR.update();
+						
+			left.getCurves().add(i, textR );
+			right.getCurves().add(i, textL );
+		}
+	}
 
 //	public BitSet computeVolumeMask(BitSet surfaceMask, ModelImage volMask, int stepSize ) {
 //		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
@@ -11690,6 +11712,11 @@ public class LatticeModel {
 
 	public static void saveLattice(final String directory, final String fileName, VOIVector latticeVector )
 	{
+		saveLattice(directory, fileName, "lattice.csv", latticeVector);
+	}
+	
+	public static void saveLattice(final String directory, final String fileName, final String latticeFileName, VOIVector latticeVector )
+	{
 		if ( (latticeVector == null) || (latticeVector.size() < 2) ) return;
 		
 		VOI left = latticeVector.elementAt(0);
@@ -11717,7 +11744,7 @@ public class LatticeModel {
 //				System.err.println( "saveLattice " + latticePoints.getCurves().size() );
 				return;
 			}
-			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, "lattice.csv", latticePoints);
+			LatticeModel.saveAnnotationsAsCSV(voiDir + File.separator, latticeFileName, latticePoints);
 			
 			// save seam-cells derived from lattice:
 			String voiSeamDir = directory + "seam_cell_final" + File.separator;
