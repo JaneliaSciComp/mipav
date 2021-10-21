@@ -2984,7 +2984,9 @@ public class DSC_MRI_toolbox extends CeresSolver {
 		if (WTTP >= 1) {
 			AIF_fit_weights[WTTP - 1] = AIF_fit_weights[WTTP - 1] / 5.0;
 		}
-		AIF_fit_weights[WTTP + 1] = AIF_fit_weights[WTTP + 1] / 2.0;
+		if (WTTP < nT-1) {
+		   AIF_fit_weights[WTTP + 1] = AIF_fit_weights[WTTP + 1] / 2.0;
+		}
 
 		fitGV_peak1(AIF_conc, AIF_fit_weights);
 		if (aif_recirculation == 1) {
