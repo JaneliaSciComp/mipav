@@ -129,15 +129,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
         	}
         	else {
         		labelGuided.setEnabled(true);
-        		gbc2.gridx = 1;
-        		gbc2.gridy = 3;
-                gbc2.gridwidth = 1;
-                comboBoxImage = new JComboBox<String>();
-                buildComboBoxImage();
-                comboBoxImage.setFont(serif12);
-                comboBoxImage.setBackground(Color.white);
                 comboBoxImage.setEnabled(true);
-                paramPanel.add(comboBoxImage, gbc2);
         	}
         } else { // else if (source == thresholdCheckbox)
             super.actionPerformed(event);
@@ -216,6 +208,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
         
         gbc2.gridx = 1;
         comboBoxImage = new JComboBox<String>();
+        buildComboBoxImage();
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
         comboBoxImage.setEnabled(false);
