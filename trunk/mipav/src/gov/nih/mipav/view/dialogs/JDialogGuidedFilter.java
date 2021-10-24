@@ -342,6 +342,9 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
             }
         	guidedImage = userInterface.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
         }
+        else {
+        	guidedImage = image;
+        }
         
         tmpStr = textRadius.getText();
 
