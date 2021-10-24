@@ -194,7 +194,7 @@ public class AlgorithmGuidedFilter extends AlgorithmBase {
 		    		outputImage.importRGBData(i, 0, floatBuf[i-1], false);
 		    	}
 		    	catch (IOException e) {
-		    		MipavUtil.displayError("IOException " + e + " on outputImage.importRGBData("+i+", 0, floatBuf["+i+"-1], false)");
+		    		MipavUtil.displayError("IOException " + e + " on outputImage.importRGBData("+i+", 0, floatBuf["+(i-1)+"], false)");
 		    		setCompleted(false);
 		    		return;
 		    	}
@@ -263,7 +263,7 @@ public class AlgorithmGuidedFilter extends AlgorithmBase {
 	        	guidedImage.exportRGBData(i, 0, length, floatBuf[i-1]);
 	        }
 	        catch (IOException e) {
-	        	MipavUtil.displayError("IOException " + e + " on guidedImage.exportRGBData(" + i + ", 0, length, floatBuf[("+i+"-1)])");
+	        	MipavUtil.displayError("IOException " + e + " on guidedImage.exportRGBData(" + i + ", 0, length, floatBuf[("+(i-1)+"])");
 				setCompleted(false);
 				return;	
 	        }
@@ -371,7 +371,7 @@ public class AlgorithmGuidedFilter extends AlgorithmBase {
 		    		outputImage.importRGBData(i, 0, floatBuf[i-1], false);
 		    	}
 		    	catch (IOException e) {
-		    		MipavUtil.displayError("IOException " + e + " on outputImage.importRGBData("+i+", 0, floatBuf["+i+"-1], false)");
+		    		MipavUtil.displayError("IOException " + e + " on outputImage.importRGBData("+i+", 0, floatBuf["+(i-1)+"], false)");
 		    		setCompleted(false);
 		    		return;
 		    	}
