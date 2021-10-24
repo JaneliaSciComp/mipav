@@ -50,8 +50,8 @@ public class AlgorithmGuidedFilter extends AlgorithmBase {
 	private int yDim;
 	private int xDim;
 	private int length;
-	private int r;
-	private double eps;
+	private int r = 8;
+	private double eps = 4.0E-2;
 	private double I[][];
 	private double mean_I[][];
 	private double var_I[][];
@@ -78,6 +78,8 @@ public class AlgorithmGuidedFilter extends AlgorithmBase {
 	}
 	
 	public void runAlgorithm() {
+		double range = guidedImage.getMax() - guidedImage.getMin();
+		eps = eps * range * range;
 		xDim = guidedImage.getExtents()[0];
 		yDim = guidedImage.getExtents()[1];
 		length = xDim * yDim;
