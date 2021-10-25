@@ -41,7 +41,7 @@ public class MultiGuidedFilter extends AlgorithmBase {
     // noted that choosing soft thresholding given additive noise finds the
     // best approximation of the original image.
 	private int filterType = PyWavelets.FILTER_SOFT;
-	// Kernel diameter
+	// Kernel radius
 	private int d = 3;
 	private double epsilon;
 	
