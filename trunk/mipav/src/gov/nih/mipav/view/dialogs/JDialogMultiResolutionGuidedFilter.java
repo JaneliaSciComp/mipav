@@ -104,7 +104,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
 	
 	private JRadioButton softButton;
 	
-	private int kernelWidth;
+	private int kernelRadius;
 	
 	private JLabel labelKernel;
 	
@@ -287,7 +287,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
         gbc2.gridx = 0;
         gbc2.gridy++;
         gbc2.gridwidth = 1;
-        labelKernel = createLabel("Kernel width");
+        labelKernel = createLabel("Kernel radius");
         paramPanel.add(labelKernel, gbc2);
         
         gbc2.gridx = 1;
@@ -420,7 +420,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
                 // Make algorithm
                 mrgFilterAlgo = new MultiGuidedFilter(resultImage, image, wavelet_name, wavelet_order,
                                          wavelet_levels, estimateNoiseStandardDeviation, noiseStandardDeviation,
-                                         filterType, kernelWidth);
+                                         filterType, kernelRadius);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -459,7 +459,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
             	// Make algorithm
                 mrgFilterAlgo = new MultiGuidedFilter(null, image, wavelet_name, wavelet_order,
                                          wavelet_levels, estimateNoiseStandardDeviation, noiseStandardDeviation,
-                                         filterType, kernelWidth);
+                                         filterType, kernelRadius);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -623,20 +623,13 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
         
         tmpStr = textKernel.getText();
 
-        if (testParameter(tmpStr, 3, 99)) {
-            kernelWidth = Integer.valueOf(tmpStr).intValue();
+        if (testParameter(tmpStr, 1, 99)) {
+            kernelRadius = Integer.valueOf(tmpStr).intValue();
         } else {
-            MipavUtil.displayError("Kernel width must be between 3 and 99");
+            MipavUtil.displayError("Kernel radius must be between 3 and 99");
             textKernel.requestFocus();
             textKernel.selectAll();
 
-            return false;
-        }
-        
-        if ((kernelWidth % 2) == 0) {
-            MipavUtil.displayError("Kernel width be an odd number");
-            textKernel.requestFocus();
-            textKernel.selectAll();
             return false;
         }
         
@@ -703,7 +696,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
             table.put(new ParameterBoolean("estimate_noise_std", true));
             table.put(new ParameterDouble("noise_standard_deviation",10.0));
             table.put(new ParameterInt("f_type", 1));
-            table.put(new ParameterInt("k_width", 5));
+            table.put(new ParameterInt("k_radius", 3));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
@@ -748,7 +741,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
         estimateNoiseStandardDeviation = scriptParameters.getParams().getBoolean("estimate_noise_std");
         noiseStandardDeviation = scriptParameters.getParams().getDouble("noise_standard_deviation");
         filterType = scriptParameters.getParams().getInt("f_type");
-        kernelWidth = scriptParameters.getParams().getInt("k_width");
+        kernelRadius = scriptParameters.getParams().getInt("k_radius");
     }
     
     /**
@@ -764,7 +757,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("estimate_noise_std", estimateNoiseStandardDeviation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_standard_deviation", noiseStandardDeviation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("f_type", filterType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("k_width", kernelWidth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("k_radius", kernelRadius));
     }
     
     /**
