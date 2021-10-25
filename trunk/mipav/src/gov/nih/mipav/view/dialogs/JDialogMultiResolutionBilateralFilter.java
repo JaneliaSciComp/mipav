@@ -439,7 +439,7 @@ public class JDialogMultiResolutionBilateralFilter extends JDialogScriptableBase
 
                 // Make result image of float type
                 if (image.isColorImage()) {
-                    resultImage = new ModelImage(image.getType(), destExtents, name);
+                    resultImage = new ModelImage(ModelImage.ARGB_FLOAT, destExtents, name);
                 } else {
                     resultImage = new ModelImage(ModelImage.DOUBLE, destExtents, name);
                 }
