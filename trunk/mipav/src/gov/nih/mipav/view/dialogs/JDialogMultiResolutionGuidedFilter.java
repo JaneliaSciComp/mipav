@@ -291,7 +291,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
         paramPanel.add(labelKernel, gbc2);
         
         gbc2.gridx = 1;
-        textKernel = createTextField("5");
+        textKernel = createTextField("3");
         paramPanel.add(textKernel, gbc2);
         
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
