@@ -320,8 +320,8 @@ public class MultiGuidedFilter extends AlgorithmBase {
     		 double s = 2*estimate_noise_fast(LP[c]);
     		 imin = Double.MAX_VALUE;
     		 imax = -Double.MAX_VALUE;
-    		 for (y = 0; y < LP[0].length; y++) {
-    			 for (x = 0; x < LP[0][0].length; x++) {
+    		 for (y = 0; y < LP[c].length; y++) {
+    			 for (x = 0; x < LP[c][0].length; x++) {
     				 if (LP[c][y][x] < imin) {
     					 imin = LP[c][y][x];
     				 }
@@ -330,14 +330,14 @@ public class MultiGuidedFilter extends AlgorithmBase {
     				 }
     			 }
     		 }
-    		 im = new double[LP[0].length* LP[0][0].length];
+    		 im = new double[LP[c].length* LP[c][0].length];
     		 imrange = imax - imin;
-    		 for (y = 0; y < LP[0].length; y++) {
-    			 for (x = 0; x < LP[0][0].length; x++) {
-    			     im[x+ y*LP[0][0].length] = 255.0*(LP[c][y][x] - imin)/imrange;
+    		 for (y = 0; y < LP[c].length; y++) {
+    			 for (x = 0; x < LP[c][0].length; x++) {
+    			     im[x+ y*LP[c][0].length] = 255.0*(LP[c][y][x] - imin)/imrange;
     			 }
     		 }
-    		 imextents = new int[] {LP[0][0].length, LP[0].length};
+    		 imextents = new int[] {LP[c][0].length, LP[c].length};
     		 img = new ModelImage(ModelImage.DOUBLE, imextents, "img");
     		 resultImage = new ModelImage(ModelImage.DOUBLE, imextents, "resultImage");
     		 try {
@@ -351,21 +351,21 @@ public class MultiGuidedFilter extends AlgorithmBase {
     		 sigmaColor = s*s; // Multiplication by 255*255 takes place in AlgorithmGuidedFilter
     		 algoGuidedFilter = new AlgorithmGuidedFilter(resultImage, img, img, d, sigmaColor);
     		 algoGuidedFilter.run();
-    		 double im_out[] = new double[LP[0].length * LP[0][0].length];
+    		 double im_out[] = new double[LP[c].length * LP[c][0].length];
     		 try {
-    			 resultImage.exportData(0, LP[0].length * LP[0][0].length, im_out);
+    			 resultImage.exportData(0, LP[c].length * LP[c][0].length, im_out);
     		 }
     		 catch(IOException e) {
-    			 MipavUtil.displayError("IOException on resultImage.exportData(0, LP[0].length * LP[0][0].length, im_out");
+    			 MipavUtil.displayError("IOException on resultImage.exportData(0, LP[c].length * LP[c][0].length, im_out");
     			 setCompleted(false);
     			 return;
     		 }
     		 img.disposeLocal();
     		 resultImage.disposeLocal();
-    		 LP_filter = new double[LP[0].length][LP[0][0].length];
-    		 for (y = 0; y < LP[0].length; y++) {
-    			 for (x = 0; x < LP[0][0].length; x++) {
-    				 LP_filter[y][x] = (im_out[x + y*LP[0][0].length]/255.0)*imrange + imin;
+    		 LP_filter = new double[LP[c].length][LP[c][0].length];
+    		 for (y = 0; y < LP[c].length; y++) {
+    			 for (x = 0; x < LP[c][0].length; x++) {
+    				 LP_filter[y][x] = (im_out[x + y*LP[c][0].length]/255.0)*imrange + imin;
     			 }
     		 }
     		 
@@ -402,8 +402,8 @@ public class MultiGuidedFilter extends AlgorithmBase {
 		 img = new ModelImage(ModelImage.ARGB_FLOAT, imextents, "img");
 		 resultImage = new ModelImage(ModelImage.ARGB_FLOAT, imextents, "resultImage");
 		 for (c = 0; c < 3; c++) {
-		 for (y = 0; y < LP[0].length; y++) {
-			 for (x = 0; x < LP[0][0].length; x++) {
+		 for (y = 0; y < LP[c].length; y++) {
+			 for (x = 0; x < LP[c][0].length; x++) {
 				 if (LP[c][y][x] < imin) {
 					 imin = LP[c][y][x];
 				 }
@@ -416,9 +416,9 @@ public class MultiGuidedFilter extends AlgorithmBase {
 		 imrange = imax - imin;
 		 
 		 for (c = 0; c < 3; c++) {
-		 for (y = 0; y < LP[0].length; y++) {
-			 for (x = 0; x < LP[0][0].length; x++) {
-			     imfloat[x+ y*LP[0][0].length] = (float)(255.0*(LP[c][y][x] - imin)/imrange);
+		 for (y = 0; y < LP[c].length; y++) {
+			 for (x = 0; x < LP[c][0].length; x++) {
+			     imfloat[x+ y*LP[c][0].length] = (float)(255.0*(LP[c][y][x] - imin)/imrange);
 			 }
 		 }
 		 
@@ -441,10 +441,10 @@ public class MultiGuidedFilter extends AlgorithmBase {
 		 img.disposeLocal();
 		 for (c = 0; c < 3; c++) {
 			 try {
-				 resultImage.exportRGBData(c+1, 0, LP[0].length * LP[0][0].length, im_out_float);
+				 resultImage.exportRGBData(c+1, 0, LP[c].length * LP[c][0].length, im_out_float);
 			 }
 			 catch(IOException e) {
-				 MipavUtil.displayError("IOException on resultImage.exportRGBData(" + (c+1) + ", 0, LP[0].length * LP[0][0].length, im_out_float");
+				 MipavUtil.displayError("IOException on resultImage.exportRGBData(" + (c+1) + ", 0, LP[c].length * LP[c][0].length, im_out_float");
 				 setCompleted(false);
 				 return;
 			 }
