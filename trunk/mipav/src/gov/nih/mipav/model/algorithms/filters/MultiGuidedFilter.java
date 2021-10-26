@@ -18,7 +18,7 @@ import gov.nih.mipav.view.*;
  * 2.) D. L. Donoho and I. M. Johnstone. "Ideal spatial adaptation
    by wavelet shrinkage." Biometrika 81.3 (1994): 425-455.
    :DOI:10.1093/biomet/81.3.425
-   3.) Reference: J. Immerkaer, “Fast Noise Variance Estimation”, 
+   3.) Reference: J. Immerkaer, "Fast Noise Variance Estimation", 
     Computer Vision and Image Understanding, 
     Vol. 64, No. 2, pp. 300-302, Sep. 1996 [PDF]
  */
