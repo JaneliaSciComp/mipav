@@ -70,6 +70,13 @@ the use of this software, even if advised of the possibility of such damage.
 
     public class AlgorithmTrilateralFilter extends AlgorithmBase {
     	
+    	public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
+    	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
+    	public final int BORDER_REFLECT = 2; // fedcba|abcdefgh|hgfedcb
+    	public final int BORDER_WRAP = 3; // cdefgh|abcdefgh|abcdefg
+    	public final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
+    	public final int BORDER_DEFAULT = BORDER_REFLECT_101;
+    	
     	private double sigmaC;
     	
     	private double epsilon;
@@ -114,8 +121,9 @@ the use of this software, even if advised of the possibility of such damage.
        }
 
 
-        // Cannot be color image
-    	public void runAlgorithm() {
+       // Cannot be color image
+       public void runAlgorithm() {
+    	   int x,y;
     	   ModelImage outputImage;
       	   if (destImage != null) {
       		   outputImage = destImage;
@@ -138,5 +146,266 @@ the use of this software, even if advised of the possibility of such damage.
 		    	setCompleted(false);
 		    	return;
 		    }
-    	  } // public void runAlgorithm
+      	   
+      	    double inputImg[][] = new double[yDim][xDim];
+      	    for (y = 0; y < yDim; y++) {
+      	    	for (x = 0; x < xDim; x++) {
+      	    		inputImg[y][x] = buffer[x + y*xDim];
+      	    	}
+      	    }
+      	    
+      	   
+      	    // Adaptive Neighbourhood pixelwise image
+      	    double adaptiveNeighbourhood[][] = new double[yDim][xDim];
+      	    
+      	    // x and y gradients
+      	    double xGradient[][] = new double[yDim][xDim];
+      	    double yGradient[][] = new double[yDim][xDim];
+      	    
+      	    // Smoothed x and y gradients
+      	    double xGradientSmooth[][] = new double[yDim][xDim];
+      	    double yGradientSmooth[][] = new double[yDim][xDim];
+      	    
+      	    // Gradient magnitude
+      	    double gradientMagnitude[][] = new double[yDim][xDim];
+      	    
+      	    // domain variance for the two filters: sigmaC
+      	    // range variance of the two filters: sigmaR
+      	    // beta = emperical value
+      	    double sigmaR; 
+      	    final double beta = 0.15; //Always set between 0.1 and 0.2
+      	    
+      	    // Computes X and Y gradients of the input image
+      	    computeGradients(inputImg, xGradient, yGradient );
+      	    
+      	    // Computes the gradient magnitude
+      	    computeMagnitude(xGradient, yGradient, gradientMagnitude);
+      	    
+      	    // Get min and max gradient for sigmaR
+      	    double minGrad[] = new double[1];
+      	    double maxGrad[] = new double[1];
+      	    minMaxLoc(gradientMagnitude, minGrad, maxGrad);
+      	    sigmaR = beta * (maxGrad[0] - minGrad[0]);
+      	    
+      	    // Level Max and Maximum LUT values
+      	    int levelMax, maxLUT;
+      	    
+      	    // If using LUT
+      	    if (filterType == TYPE_LUT) {
+      	        // maximum level = log2(xsize) or log2(ysize)
+      	    	levelMax = log2(Math.min(xDim, yDim), false);
+      	    	maxLUT = (int)Math.round(Math.pow( 2.0, levelMax-1)) + 1;
+      	    }
+      	    else {
+      	        // Using fast-trilateral
+      	        // Find threshold for truncation
+      	    	maxLUT = (int)( sigmaC * Math.sqrt( Math.abs( Math.log(epsilon) ) ) ) + 1;
+      	        // Calculate maximum level
+      	    	levelMax = log2(2 * maxLUT + 1, true);
+      	    }
+      	    
+      	    // Calculate Adaptive Neighbourhood
+      	    setAdaptiveNeighbourHood(gradientMagnitude, sigmaR, levelMax, adaptiveNeighbourhood);
+    	} // public void runAlgorithm
+    	
+    	// Computes X and Y gradients of the input image
+    	public void computeGradients(double inputImg[][], double xGradient[][], double yGradient[][]) {
+    		int x,y;
+    		// Set up convolution kernels for forward differences
+    		// double kernel[] = new double[]{ -1, 1 };
+    		double inputImgPad[][] = copyMakeBorder(inputImg, 0, 1, 0, 1, BORDER_DEFAULT, 0.0);
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				xGradient[y][x] = inputImgPad[y][x+1] - inputImgPad[y][x];
+    				yGradient[y][x] = inputImgPad[y+1][x] - inputImgPad[y][x];
+    			}
+    		}
+    	}
+    	
+    	public void computeMagnitude(double xGradient[][], double yGradient[][], double gradientMagnitude[][]) {
+    		int x,y;
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				gradientMagnitude[y][x] = Math.sqrt(xGradient[y][x]*xGradient[y][x] + yGradient[y][x]*yGradient[y][x]);
+    			}
+    		}
+    	}
+    	
+    	public void minMaxLoc(double input[][], double minGrad[], double maxGrad[]) {
+    		int x,y;
+    		minGrad[0] = Double.MAX_VALUE;
+    		maxGrad[0] = -Double.MAX_VALUE;
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				if (input[y][x] < minGrad[0]) {
+    					minGrad[0] = input[y][x];
+    				}
+    				if (input[y][x] > maxGrad[0]) {
+    					maxGrad[0] = input[y][x];
+    				}
+    			}
+    		}
+    	}
+    	
+    	// Find the adaptive neighbourhood for image
+    	public void setAdaptiveNeighbourHood(double gradientMagnitude[][], double sigmaR, int maxLevel, double adaptiveNeighborhood[][]) {
+    		
+    	}
+    	
+    	public double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
+        	int i,j;
+        	double dst[][] = new double[src.length + top + bottom][src[0].length + left + right];
+        	for (i = 0; i < src.length; i++) {
+        		for (j = 0; j < src[0].length; j++) {
+        			dst[i+top][j+left] = src[i][j];
+        		}
+        	}
+        	
+        	for (i = 0; i < top; i++) {
+        		for (j = 0; j < left; j++) {
+        		   switch (borderType) {
+        		   case BORDER_CONSTANT:
+        			   dst[i][j] = borderValue;
+        			   break;
+        		   case BORDER_REPLICATE:
+        			   dst[i][j] = src[0][0];
+        			   break;
+        		   case BORDER_REFLECT:
+        			   dst[i][j] = src[top - 1 - i][left - 1 - j];
+        			   break;
+        		   case BORDER_REFLECT_101:
+         			   dst[i][j] = src[top - i][left - j];
+         			   break;
+        		   }
+        		  
+     		   }
+        		
+        		for (j = left; j < src[0].length + left; j++) {
+        			switch (borderType) {
+        			case BORDER_CONSTANT:
+        				dst[i][j] = borderValue;
+        				break;
+        			case BORDER_REPLICATE:
+        				dst[i][j] = src[0][j - left];
+        				break;
+        			case BORDER_REFLECT:
+        				dst[i][j] = src[top - 1 - i][j - left];
+        				break;
+        			case BORDER_REFLECT_101:
+        				dst[i][j] = src[top - i][j - left];
+        				break;
+        			}
+        		}
+        		
+        		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+        		    switch(borderType) {
+        		    case BORDER_CONSTANT:
+         			   dst[i][j] = borderValue;
+         			   break;
+        		    case BORDER_REPLICATE:
+        		    	dst[i][j] = src[0][src[0].length-1];
+        		    	break;
+        		    case BORDER_REFLECT:
+        		    	dst[i][j] = src[top - 1 - i][2*src[0].length + left - 1 - j];
+        		    	break;
+        		    case BORDER_REFLECT_101:
+        		    	dst[i][j] = src[top - i][2*src[0].length + left - 2 - j];
+        		    	break;
+        		    }
+        		}
+        	}
+        	
+        	for (i = top + src.length; i < top + src.length + bottom; i++) {
+                for (j = 0; j < left; j++) {
+        		    switch (borderType) {
+        		    case BORDER_CONSTANT:
+         			   dst[i][j] = borderValue;
+         			   break;
+        		    case BORDER_REPLICATE:
+        		    	dst[i][j] = src[src.length-1][0];
+        		    	break;
+        		    case BORDER_REFLECT:
+        		    	dst[i][j] = src[2*src.length + top - 1 - i][left - 1 - j];
+        		    	break;
+        		    case BORDER_REFLECT_101:
+        		    	dst[i][j] = src[2*src.length + top - 2 - i][left - j];
+        		    	break;
+        		    }
+        		}
+                
+                for (j = left; j < src[0].length + left; j++) {
+        			switch (borderType) {
+        			case BORDER_CONSTANT:
+        				dst[i][j] = borderValue;
+        				break;
+        			case BORDER_REPLICATE:
+        				dst[i][j] = src[src.length-1][j - left];
+        				break;
+        			case BORDER_REFLECT:
+        				dst[i][j] = src[2*src.length + top - 1 - i][j - left];
+        				break;
+        			case BORDER_REFLECT_101:
+        				dst[i][j] = src[2*src.length + top - 2 - i][j - left];
+        				break;
+        			}
+        		}
+        		
+        		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+        		    switch(borderType) {
+        		    case BORDER_CONSTANT:
+         			   dst[i][j] = borderValue;
+         			   break;
+        		    case BORDER_REPLICATE:
+        		    	dst[i][j] = src[src.length-1][src[0].length-1];
+        		    	break;
+        		    case BORDER_REFLECT:
+        		        dst[i][j] = src[2*src.length + top - 1 - i][2*src[0].length + left - 1 - j];
+        		        break;
+        		    case BORDER_REFLECT_101:
+        		        dst[i][j] = src[2*src.length + top - 2 - i][2*src[0].length + left - 2 - j];
+        		        break;
+        		    }
+        		}	
+        	}
+        	
+        	for (i = top; i < src.length + top; i++) {
+        		for (j = 0; j < left; j++) {
+        			switch(borderType) {
+        			case BORDER_CONSTANT:
+        				dst[i][j] = borderValue;
+        				break;
+        			case BORDER_REPLICATE:
+        				dst[i][j] = src[i - top][0];
+        				break;
+        			case BORDER_REFLECT:
+        				dst[i][j] = src[i - top][left - 1 - j];
+        				break; 
+        			case BORDER_REFLECT_101:
+        				dst[i][j] = src[i - top][left - j];
+        				break;  
+        			}
+        		}
+        		
+        		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+        		    switch(borderType) {
+        		    case BORDER_CONSTANT:
+         			   dst[i][j] = borderValue;
+         			   break;
+        		    case BORDER_REPLICATE:
+        		    	dst[i][j] = src[i - top][src[0].length-1];
+        		    	break;
+        		    case BORDER_REFLECT:
+        		        dst[i][j] = src[i - top][2*src[0].length + left - 1 - j];
+        		        break;
+        		    case BORDER_REFLECT_101:
+        		        dst[i][j] = src[i - top][2*src[0].length + left - 2 - j];
+        		        break;
+        		    }
+        		}	
+        	}
+        	
+        	
+        	return dst;
+        }
+    	
     }
