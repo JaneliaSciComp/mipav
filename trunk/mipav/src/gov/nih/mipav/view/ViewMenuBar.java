@@ -231,6 +231,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Symmetric Nearest Neighbor", "SymmetricNearestNeighbor", 0, null, false),
 								menuBuilder.buildMenuItem("Tamura texture", "Tamura", 0, null, false),
 								menuBuilder.buildMenuItem("Texture analysis", "TextAnalysis", 0, null, false),
+								menuBuilder.buildMenuItem("Trilateral filter", null, 0, null, false),
 								menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false), }),
 				menuBuilder.makeMenu("Filters (wavelet)", false,
 						new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
@@ -1463,6 +1464,7 @@ public class ViewMenuBar {
 		if (numberOfDimensions == 4) {
 			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
+			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Guided filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
@@ -1590,6 +1592,7 @@ public class ViewMenuBar {
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
+			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Guided filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
@@ -1714,6 +1717,7 @@ public class ViewMenuBar {
 		}
 
 		if (ModelImage.isColorImage(type)) {
+			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
@@ -1821,6 +1825,7 @@ public class ViewMenuBar {
 
 		menuBuilder.setMenuItemEnabled("Guided filter", true);
 		menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", true);
+		menuBuilder.setMenuItemEnabled("Trilateral filter", true);
 		menuBuilder.setMenuItemEnabled("Multiresolution Guided filter", true);
 		menuBuilder.setMenuItemEnabled("BM3D", true);
 		menuBuilder.setMenuItemEnabled("Density based clustering", true);
