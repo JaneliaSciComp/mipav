@@ -1156,6 +1156,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogBilateralFilter(this, getActiveImage());
         } else if (command.equals("MultiResBilateral filter")) {
             new JDialogMultiResolutionBilateralFilter(this, getActiveImage());
+        } else if (command.equals("Trilateral filter")) {
+            new JDialogTrilateralFilter(this, getActiveImage());
         } else if (command.equals("MultiResGuided filter")) {
             new JDialogMultiResolutionGuidedFilter(this, getActiveImage());
         } else if (command.equals("BM3D")) {
