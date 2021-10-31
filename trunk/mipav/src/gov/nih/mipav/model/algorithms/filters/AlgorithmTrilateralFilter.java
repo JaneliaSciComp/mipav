@@ -2,9 +2,6 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.io.IOException;
@@ -104,11 +101,6 @@ the use of this software, even if advised of the possibility of such damage.
         	this.filterType = filterType;
         }
         
-        private double getNorm(double g1, double g2)  {
-            double norm = Math.sqrt(g1*g1 + g2*g2);
-            return norm;
-        }
-        
         // Default is roundUp = false
         private int log2(int input, boolean roundUp) {
             double temp = Math.log10( (double)(input) ) / Math.log10(2.0);
@@ -206,6 +198,47 @@ the use of this software, even if advised of the possibility of such damage.
       	    
       	    // Calculate Adaptive Neighbourhood
       	    setAdaptiveNeighbourHood(gradientMagnitude, sigmaR, levelMax, adaptiveNeighbourhood);
+      	    
+      	    // Bilaterally filter the X and Y gradients of the input image
+      	    // to produce xGradientSmooth and yGradientSmooth.
+      	    if (filterType == TYPE_LUT) {
+      	    	BilateralGradientFilterLUT(xGradient,yGradient, gradientMagnitude, sigmaC, sigmaR,
+      	    			xGradientSmooth, yGradientSmooth);
+      	    }
+      	    else {
+      	        BilateralGradientFilter(xGradient, yGradient, gradientMagnitude, sigmaC, sigmaR, epsilon, 
+      		    xGradientSmooth, yGradientSmooth );
+      	    }
+      	    
+      	    double outputImg[][] = new double[yDim][xDim];
+      	    // Performs bilateral filter on the detail signal 
+      	    if (filterType == TYPE_LUT) {
+                DetailBilateralFilterLUT(inputImg, adaptiveNeighbourhood, xGradientSmooth, yGradientSmooth, 
+      		        sigmaC, sigmaR, maxLUT, outputImg);
+      	    }
+	        else {
+	      	    DetailBilateralFilter(inputImg, adaptiveNeighbourhood, xGradientSmooth, yGradientSmooth, 
+	      	        sigmaC, sigmaR, maxLUT, epsilon, outputImg);
+	        }
+	
+	        for (y = 0; y < yDim; y++) {
+	  	       for (x = 0; x < xDim; x++) {
+	  	           buffer[x + y*xDim] = outputImg[y][x];
+	  	       }
+	  	    }
+	      	
+	        try {
+	      	    outputImage.importData(0, buffer, true);
+	        }
+	        catch (IOException e) {
+	            MipavUtil.displayError("IOException on outputImage.importData(0, buffer, true)");
+	      		setCompleted(false);
+	      		return;
+	      	}
+      	
+      	    setCompleted(true);
+      	    return;
+
     	} // public void runAlgorithm
     	
     	// Computes X and Y gradients of the input image
@@ -249,8 +282,421 @@ the use of this software, even if advised of the possibility of such damage.
     	
     	// Find the adaptive neighbourhood for image
     	public void setAdaptiveNeighbourHood(double gradientMagnitude[][], double sigmaR, int maxLevel, double adaptiveNeighborhood[][]) {
+    		int x,y;
+    		// Image stacks for max and min neighbourhoods	
+    		// Create image stack
+    		double minGradientStack[][][] = new double[maxLevel][yDim][xDim];
+    		double maxGradientStack[][][] = new double[maxLevel][yDim][xDim];
     		
+    		// Build the min-max stack
+    		buildMinMaxImageStack(gradientMagnitude, minGradientStack, maxGradientStack);
+
+    		// Set up image data references
+    		double[][] minImg, maxImg;
+
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				int lev;
+    				final double upperThreshold = gradientMagnitude[y][x] + sigmaR;
+    				final double lowerThreshold = gradientMagnitude[y][x] - sigmaR;
+    				
+    				// Compute the adaptive neighbourhood based on the similarity of
+    				// the neighborhood gradients
+    				for(lev = 0; lev < maxLevel; lev++) {
+    					minImg = minGradientStack[lev];
+    					maxImg = maxGradientStack[lev];
+    					if ( maxImg[y][x] > upperThreshold || minImg[y][x] < lowerThreshold ) {
+    						break;
+    					}
+    				}
+    				
+    				// Sets the (half) size of the adaptive region
+    				// i.e., floor( ( pow(2.f, lev) + 1 ) / 2.f )
+    				adaptiveNeighborhood[y][x] = Math.pow(2.0, lev-1);
+    			}
+    		}
     	}
+    	
+    	// Building the Min-Max Stack of Image Gradients
+    	public void buildMinMaxImageStack(double gradientMagnitude[][], double minStack[][][],
+    			double maxStack[][][]) {
+    	    int i,x,y,m,n;
+    	    double outMin, outMax;
+    		// Set up image data references
+    		double[][] minImg1, maxImg1, minImg2, maxImg2;
+    		
+    		// Set up the bottom level of the pyramid
+    		minImg1 = minStack[0];
+    		maxImg1 = maxStack[0];
+    		
+    		// Loop through image setting up bottom stack
+    		for(y = 0; y < yDim; y++) {
+    		    for (x = 0; x < xDim; x++) {
+    		        outMin = Double.MAX_VALUE;
+    		        outMax = -Double.MAX_VALUE;
+
+    		        // Loop through local neighbourhood
+    		        // To find maximum and minimum values
+    		        for(n = Math.max(y-1,0) ; n < Math.min(y+2, yDim); n++) {
+    		            for(m = Math.max(x-1,0); m < Math.min(x+2, xDim); m++) {
+    		                outMin = Math.min(gradientMagnitude[n][m], outMin);
+    		                outMax = Math.max(gradientMagnitude[n][m], outMax);
+    		            }
+    		        }
+    		        minImg1[y][x] = outMin;
+    		        maxImg1[y][x] = outMax;
+    		    }
+    		}
+
+    		// Loop through image stack
+    		for (i = 1 ; i < minStack.length; i++) {
+    		    // Lower level
+    		    minImg1 = minStack[i-1];
+    		    maxImg1 = maxStack[i-1];
+    		 
+    		    // Current level
+    		    minImg2 = minStack[i];
+    		    maxImg2 = maxStack[i];
+    		    
+    		    for (y = 0; y < yDim; y++) {
+    		        for (x = 0; x < xDim; x++) {
+    		    	    outMin = Double.MAX_VALUE;
+    		    	    outMax = -Double.MAX_VALUE;
+    		    	   
+    		    	    // Loop through local neighbourhood
+    		    	    // To find maximum and minimum values
+    		    	    for (n = Math.max(y-1,0); n < Math.min(y+2, yDim); n++) {
+    		    	        for (m = Math.max(x-1,0); m < Math.min(x+2, xDim); m++) {
+    		    	            outMin = Math.min(minImg1[n][m], outMin);
+    		    	            outMax = Math.max(maxImg1[n][m], outMax);
+    		    	        }
+    		    	    }
+    		    	    minImg2[y][x] = outMin;
+    		    	    maxImg2[y][x] = outMax;
+    		    	}
+    		    }
+    		}
+    	}
+    	
+    	// =======================================================================
+    	// Specific for LUT version of Trilateral Fitler
+    	// =======================================================================
+    
+    	// Bilaterally filters the X and Y gradients of the input image.
+    	// To produce smoothed x and y gradients
+
+    	public void BilateralGradientFilterLUT(double xGradient[][], double yGradient[][], double gradientMagnitude[][],
+    	                  double sigmaC, double sigmaR, double xGradientSmooth[][], double yGradientSmooth[][]) {
+    		int m,n,x,y;
+    		// Constants used for domain / range calculations
+    		final double domainConst = -2.0 * sigmaC * sigmaC;
+    		final double rangeConst = -2.0 * sigmaR * sigmaR;
+    		
+    		// Compute the weight for the domain filter (domainWeight). 
+    		// The domain filter is a Gaussian lowpass filter
+    		final int halfSize = (int)(sigmaC - 1.0 / 2.0);
+    		double domainWeightLUT[][] = new double[halfSize+1][halfSize+1];
+    		
+    		for (y = 0; y < halfSize+1; y++) {
+    			for (x = 0; x < halfSize+1; x++) {
+    				// weight for the domain filter (domainWeight)
+    				final double diff = (double) (x*x+y*y);
+    				domainWeightLUT[y][x] = Math.exp( diff / domainConst );
+    			}
+    		}
+    		
+    		// Loop through image
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				double normFactor = 0.0;
+    				double tmpX = 0.0;
+    				double tmpY = 0.0;
+    				
+    				// Calculate Middle Pixel Normalised-gradient
+    				final double g2 = gradientMagnitude[y][x];
+    				
+    				// Loop through local neighbourhood
+    				for (n = -halfSize; n <= halfSize; n++) {
+    					for (m = -halfSize; m <= halfSize; m++) {
+    						// Compute the weight for the domain filter (domainWeight). 
+    						final double dWeight = domainWeightLUT[Math.abs(n)][Math.abs(m)];
+    						
+    						// Only perform calculationg if within bounds
+    						final int localX = x + m;
+    						if (localX < 0) continue;
+    						if (localX >= xDim) continue;
+    						
+    						final int localY = y + n;
+    						if (localY < 0) continue;
+    						if (localY >= yDim) continue;
+    						
+    						// Calculate Local Normalised Gradient
+    						final double g1 = gradientMagnitude[localY][localX];
+    						
+    						// Compute the gradient difference between a pixel and its neighborhood pixel 
+    						final double gradDiffSq = Math.pow(g1 - g2, 2);
+    						
+    						// Compute the weight for the range filter (rangeWeight). The range filter
+    						// is a Gaussian filter defined by the difference in gradient magnitude.
+    						final double rangeWeight = Math.exp( gradDiffSq / rangeConst );
+    						
+    						tmpX += xGradient[localY][localX] * dWeight * rangeWeight;
+    						tmpY += yGradient[localY][localX] * dWeight * rangeWeight;
+    						
+    						// Bilateral filter normalized by normFactor
+    						normFactor += dWeight * rangeWeight;
+    					}
+    				}
+    				// Set smoothed image to normalised value
+    				xGradientSmooth[y][x] = tmpX / normFactor;
+    				yGradientSmooth[y][x] = tmpY / normFactor;
+    			}
+    		}
+    	}
+
+    	// =======================================================================
+    	// Specific for fast version of Trilateral Fitler
+    	// =======================================================================
+    	
+    	 
+    	// Bilaterally filters the X and Y gradients of the input image.
+    	// To produce smoothed x and y gradients
+    
+    	public void BilateralGradientFilter(double xGradient[][], double yGradient[][], double gradientMagnitude[][],
+    	            double sigmaC, double sigmaR, double epsilon, double xGradientSmooth[][], double yGradientSmooth[][]) {
+    		int m,n,x,y;
+    		// Constants used for domain / range calculations
+    		final double domainConst = -2.0 * sigmaC * sigmaC;
+    		final double rangeConst = -2.0 * sigmaR * sigmaR;
+    		
+    		// Compute the weight for the domain filter (domainWeight). 
+    		// The domain filter is a Gaussian lowpass filter
+    		final int halfSize = (int)(sigmaC / 2.0);
+    		double domainWeightLUT[][] = new double[halfSize+1][halfSize+1];
+
+            for (y = 0; y < halfSize+1; y++) {
+            	for (x = 0; x < halfSize+1; x++) {
+            		// weight for the domain filter (domainWeight)
+            		final double diff = (double) (x*x+y*y);
+            		domainWeightLUT[y][x] = Math.exp( diff / domainConst );
+            	}
+            }
+            
+            // Loop through image
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		double normFactor = 0.0;
+            		double tmpX = 0.0;
+            		double tmpY = 0.0;
+            		  
+            		// Calculate Middle Pixel Normalised-gradient
+            		final double g2 = gradientMagnitude[y][x];
+            		 
+            	    // Loop through local neighbourhood
+            		for (n = -halfSize; n <= halfSize; n++) {
+            			for (m = -halfSize; m <= halfSize; m++) {
+            				// Compute the weight for the domain filter (domainWeight). 
+            				final double dWeight = domainWeightLUT[Math.abs(n)][Math.abs(m)];
+            				
+            				// Only perform calculation if weight above zero
+            				if (dWeight < epsilon ) continue;
+            				
+            				// Only perform calculation if within bounds
+            				final int localX = x + m;
+            				if (localX < 0) continue;
+            				if (localX >= xDim) continue;
+            				   
+                            final int localY = y + n;
+                            if (localY < 0) continue;
+                            if (localY >= yDim) continue;
+                            
+                            // Calculate Local Normalised Gradient
+                            final double g1 = gradientMagnitude[localY][localX];
+                            
+                            // Compute the gradient difference between a pixel and its neighborhood pixel 
+                            final double gradDiffSq = Math.pow(g1 - g2, 2);
+                            
+                            // Compute the weight for the range filter (rangeWeight). The range filter
+                            // is a Gaussian filter defined by the difference in gradient magnitude.
+                            final double rangeWeight = Math.exp( gradDiffSq / rangeConst );
+                            
+                            // Only compute if less than epsilon
+                            if (rangeWeight < epsilon) continue;
+                            
+                            tmpX += xGradient[localY][localX] * dWeight * rangeWeight;
+                            tmpY += yGradient[localY][localX] * dWeight * rangeWeight;
+                            
+                            // Bilateral filter normalized by normFactor
+                            normFactor += dWeight * rangeWeight;
+            			}
+            		}
+            		// Set smoothed image to normalised value
+            		xGradientSmooth[y][x] = tmpX / normFactor;
+            		yGradientSmooth[y][x] = tmpY / normFactor;
+            	}
+            }
+    	}
+    	
+    	// Filters the detail signal and computes the output (2nd filtering pass for trilateral filter).
+    	public void DetailBilateralFilterLUT(double inputImage[][], double adaptiveRegion[][],
+    	            double xGradientSmooth[][], double yGradientSmooth[][], double sigmaC, double sigmaR,
+    	            int maxDomainSize, double outputImg[][]) {
+    		int m,n,x,y;
+            // Create constants used throughout code
+    		final double domainConst = -2.0 * sigmaC * sigmaC;
+    		final double rangeConst = -2.0 * sigmaR * sigmaR;
+    		
+    		// Define Look Up Table for weightings
+    		
+    	    // Compute the weight for the domain filter (domainWeight). The domain filter
+    		// is a Gaussian lowpass filter
+
+            double domainWeightLUT[][] = new double[maxDomainSize][maxDomainSize];
+            for (y = 0; y < maxDomainSize; y++) {
+            	for (x = 0; x < maxDomainSize; x++) {
+            		// weight for the domain filter (domainWeight)
+            		final double diff = (double) (x*x+y*y);
+            		domainWeightLUT[y][x] = Math.exp( diff / domainConst );
+            	}
+            }
+            
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		double normFactor = 0.0;
+            		double tmp = 0.0;
+            		 
+            		// filter window width is calculated from adaptive neighbourhood
+            		// halfsize is half of the filter window width (or maximum LUT value)
+            		final int halfSize = (int) adaptiveRegion[y][x];
+            		
+            		// Coefficients defining the centerplane is calculated
+            		// from the smoothed image gradients
+            		// Plane Equation is z = coeffA.x + coeffB.y + coeffC
+            		// coeffA = dI/dx, coeffB = dI/dy, coeffC = I at center pixel of the filter kernel
+            		final double coeffA = xGradientSmooth[y][x];
+            		final double coeffB = yGradientSmooth[y][x];
+            	    final double coeffC = inputImage[y][x];
+
+            	    for (n = -halfSize; n <= halfSize; n++) { // y scan line
+            	    	for (m = -halfSize; m <= halfSize; m++) { // x scan line
+            	            // Get domain weight from LUT
+            	    		final double dWeight = domainWeightLUT[Math.abs(n)][Math.abs(m)];
+            	    		 
+            	    		// Only perform calculationg if within bounds
+            	    		final int localX = x + m;
+            	    		if (localX < 0) continue;
+            	    		if (localX >= xDim) continue;
+            	    		 
+            	    		final int localY = y + n;
+            	    		if (localY < 0) continue;
+            	    		if (localY >= yDim) continue;
+            	    		  
+            	    		// Compute the detail signal (detail) based on the difference between a 
+            	    		// neighborhood pixel and the centerplane passing through the center-pixel 
+            	    		// of the filter window. 
+            	    		final double detail = 
+            	    		    inputImage[localY][localX] - coeffA * (double)(m) - coeffB * (double)(n) - coeffC;
+            	    		
+            	    		// Compute the weight for the range filter (rangeWeight). The range filter
+            	    		// is a Gaussian filter defined by the detail signal.
+            	    		final double rangeWeight = Math.exp(Math.pow(detail,2) / rangeConst ); 
+            	    		 
+            	    		// Add to function
+            	    		tmp += detail * dWeight * rangeWeight;
+            	    		
+            	    		// Detail Bilateral filter normalized by normFactor 
+            	    		normFactor += dWeight * rangeWeight;
+
+            	    	}
+            	    }
+            	    // Normalise according to weight
+            	    outputImg[y][x] = tmp / normFactor + coeffC;
+            	}
+            }
+    	}
+
+    	// Filters the detail signal and computes the output (2nd filtering pass for trilateral filter).
+    	public void DetailBilateralFilter(double inputImage[][], double adaptiveRegion[][],
+    	            double xGradientSmooth[][], double yGradientSmooth[][], double sigmaC, double sigmaR,
+    	            int maxDomainSize, double epsilon, double outputImg[][]) {
+    		int m,n,x,y;
+            // Create constants used throughout code
+    		final double domainConst = -2.0 * sigmaC * sigmaC;
+    		final double rangeConst = -2.0 * sigmaR * sigmaR;
+
+    		// Define Look Up Table for weightings
+    		  
+    	    // Compute the weight for the domain filter (domainWeight). The domain filter
+    		// is a Gaussian lowpass filter
+    		double domainWeightLUT[][] = new double[maxDomainSize+1][maxDomainSize+1];
+
+    		for (y = 0; y < maxDomainSize+1 ; y++) {
+    	        for (x = 0; x < maxDomainSize+1; x++) {
+    			    // weight for the domain filter (domainWeight)
+    			    final double diff = (double) (x*x+y*y);
+    			    domainWeightLUT[y][x] = Math.exp( diff / domainConst );
+    			}
+    	    }
+    		
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				double normFactor = 0.0;
+    				double tmp = 0.0;
+    				  
+    				// filter window width is calculated from adaptive neighbourhood
+    				// halfsize is half of the filter window width (or maximum LUT value)
+    				final int halfSize = (int) Math.min( adaptiveRegion[y][x], maxDomainSize );
+    				 
+    				// Coefficients defining the centerplane is calculated
+    				// from the smoothed image gradients
+    				// Plane Equation is z = coeffA.x + coeffB.y + coeffC
+    				// coeffA = dI/dx, coeffB = dI/dy, coeffC = I at center pixel of the filter kernel
+    			    final double coeffA = xGradientSmooth[y][x];
+    				final double coeffB = yGradientSmooth[y][x];
+    				final double coeffC = inputImage[y][x];
+    				 
+    				for (n = -halfSize; n <= halfSize; n++)  { // y scan line
+    				    for (m = -halfSize; m <= halfSize; m++) { // x scan line
+    				        // Get domain weight from LUT
+    				        final double dWeight = domainWeightLUT[Math.abs(n)][Math.abs(m)];
+    				 
+    				        // Only perform calculation if weight above zero
+    				        if ( dWeight < epsilon ) continue;
+    				   
+    				        // Only perform calculationg if within bounds
+    				        final int localX = x + m;
+    				        if (localX < 0) continue;
+    				        if (localX >= xDim) continue;
+    				  
+    				        final int localY = y + n;
+    				        if (localY < 0) continue;
+    				        if (localY >= yDim) continue;
+    				 
+    				        // Compute the detail signal (detail) based on the difference between a 
+    				        // neighborhood pixel and the centerplane passing through the center-pixel 
+    				        // of the filter window. 
+    				        final double detail = 
+    				              inputImage[localY][localX] - coeffA * (double)(m) - coeffB * (double)(n) - coeffC;
+    				 
+    				        // Compute the weight for the range filter (rangeWeight). The range filter
+    				        // is a Gaussian filter defined by the detail signal.
+    				        final double rangeWeight = Math.exp(Math.pow(detail,2) / rangeConst ); 
+    				 
+    				        if ( dWeight < epsilon ) continue;
+    				 
+    				        tmp += detail * dWeight * rangeWeight;
+    				  
+    				        // Detail Bilateral filter normalized by normFactor (eq. 9, Section 3.1)
+    				        normFactor += dWeight * rangeWeight;
+    				   }
+    			}	  
+    	        // Write result to output image
+    		    outputImg[y][x] = tmp / normFactor + coeffC;
+    			}
+    		}
+
+    	}
+
     	
     	public double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
         	int i,j;
