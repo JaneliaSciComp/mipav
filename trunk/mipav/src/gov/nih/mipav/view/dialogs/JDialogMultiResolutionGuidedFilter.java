@@ -161,7 +161,7 @@ public class JDialogMultiResolutionGuidedFilter extends JDialogScriptableBase
         		gbc2.gridy = 1;
                 paramPanel.add(comboBoxOrder, gbc2);
         	}
-        } else { // else if (source == thresholdCheckbox)
+        } else {
             super.actionPerformed(event);
         }
     }
