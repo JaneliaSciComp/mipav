@@ -131,7 +131,7 @@ public class JDialogGuidedFilter extends JDialogScriptableBase
         		labelGuided.setEnabled(true);
                 comboBoxImage.setEnabled(true);
         	}
-        } else { // else if (source == thresholdCheckbox)
+        } else {
             super.actionPerformed(event);
         }
     }
