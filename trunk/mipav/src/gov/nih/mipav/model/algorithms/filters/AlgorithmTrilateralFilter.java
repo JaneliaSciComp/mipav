@@ -74,9 +74,11 @@ the use of this software, even if advised of the possibility of such damage.
     	public final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
     	public final int BORDER_DEFAULT = BORDER_REFLECT_101;
     	
-    	private double sigmaC;
+    	// spatial sigma
+    	private double sigmaC = 5.0;
     	
-    	private double epsilon;
+    	// epsilon only used in TYPE_FAST
+    	private double epsilon = 1.0E-12;
     	
     	private final int TYPE_LUT = 0;
     	
