@@ -74,23 +74,31 @@ public class ImRegPOC extends AlgorithmBase {
     
     private int height, width, length;
     
-    public ImRegPOC(final ModelImage imageA, final ModelImage imageB) {
-    	super(null, imageB);
+    public ImRegPOC(final ModelImage dstImage, final ModelImage imageA, final ModelImage imageB) {
+    	super(dstImage, imageB);
         refImage = imageA;
         inputImage = imageB;
     }
 	
 	
 	public void runAlgorithm() {
+		ModelImage outputImage;
+   	   if (destImage != null) {
+   		   outputImage = destImage;
+   	   }
+   	   else {
+   		   outputImage = srcImage;
+   	   }
 		int cy,cx;
 		double han_win[];
 		double Rhan_win[];
 		double AI[];
 		double BI[];
 		double IA[];
-		double IB[];
+		double IB[][];
+		double B[];
 		double IAImag[];
-		double IBImag[];
+		double BImag[];
 		double At[];
 		double AtImag[];
 		double Bt[];
@@ -101,6 +109,16 @@ public class ImRegPOC extends AlgorithmBase {
 		double Bs[][];
 		double lpcA[];
 		double lpcB[];
+		double lpcAImag[];
+		double lpcBImag[];
+		double Ap;
+		double ApImag;
+		double Bp;
+		double BpImag;
+		double Pp[];
+		double PpImag[];
+		double PpShift[][];
+		double mag;
 		double LPmin;
 		int i,j;
 		double r;
@@ -108,6 +126,49 @@ public class ImRegPOC extends AlgorithmBase {
 		int x0,y0,x1,y1;
 		double w0,w1,h0,h1;
 		double val;
+		double maxVal;
+		int px;
+		int py;
+		double vert[] = new double[3];
+		double horz[] = new double[3];
+		double sum11;
+		double pyy;
+		double pxx;
+		double dx;
+		double dy;
+		double theta1;
+		double theta2;
+		double scale;
+		double IB_recover1[][];
+		double IB_recover2[][];
+		int index;
+		double IB_R1[];
+		double IB_R1Imag[];
+		double IB_R2[];
+		double IB_R2Imag[];
+		double IB1p[];
+		double IB1pImag[];
+		double IB2p[];
+		double IB2pImag[];
+		double Pp1[];
+		double Pp1Imag[];
+		double Pp2[];
+		double Pp2Imag[];
+		double Pp1Shift[][];
+		double Pp2Shift[][];
+		int px1;
+		int py1;
+		int px2;
+		int py2;
+		double maxVal1;
+		double maxVal2;
+		double theta;
+		double peak;
+		double pxx1;
+		double pyy1;
+		double pxx2;
+		double pyy2;
+		double result[];
 		if (refImage.getNDims() != 2) {
 			MipavUtil.displayError("In ImRegPOC refImage has " + refImage.getNDims() + " dimensions instead of the required 2 dimensions");
 			setCompleted(false);
@@ -213,22 +274,27 @@ public class ImRegPOC extends AlgorithmBase {
 		
 		// Apply Windowing 
 		IA = new double[length];
-		IB = new double[length];
-		for (i = 0; i < length; i++) {
-			IA[i] = han_win[i] * AI[i];
-			IB[i] = han_win[i] * BI[i];
+		IB = new double[height][width];
+		B = new double[length];
+		for (j = 0; j < height; j++) {
+			for (i = 0; i < width; i++) {
+				index = i + j*width;
+				IA[index] = han_win[index] * AI[index];
+				IB[j][i] = han_win[index] * BI[index];
+				B[index] = IB[j][i];
+			}
 		}
 		
 		// 2D fft
 		IAImag = new double[length];
-		IBImag = new double[length];
+		BImag = new double[length];
 		FFTUtility fftA = new FFTUtility(IA, IAImag, length, width, 1, -1, FFTUtility.FFT);
 		fftA.run();
 		FFTUtility fftA2 = new FFTUtility(IA, IAImag, 1, length, width, -1, FFTUtility.FFT);
 		fftA2.run();
-		FFTUtility fftB = new FFTUtility(IB, IBImag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftB = new FFTUtility(B, BImag, length, width, 1, -1, FFTUtility.FFT);
 		fftB.run();
-		FFTUtility fftB2 = new FFTUtility(IB, IBImag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftB2 = new FFTUtility(B, BImag, 1, length, width, -1, FFTUtility.FFT);
 		fftB2.run(); 
 		
 		At = new double[length];
@@ -241,9 +307,9 @@ public class ImRegPOC extends AlgorithmBase {
 		    Amag[i] = Math.sqrt(IA[i]*IA[i] + IAImag[i]*IAImag[i]);
 		    At[i] = IA[i]/Amag[i];
 		    AtImag[i] = IAImag[i]/Amag[i];
-		    Bmag[i] = Math.sqrt(IB[i]*IB[i] + IBImag[i]*IBImag[i]);
-		    Bt[i] = IB[i]/Bmag[i];
-		    BtImag[i] = -IBImag[i]/Bmag[i];
+		    Bmag[i] = Math.sqrt(B[i]*B[i] + BImag[i]*BImag[i]);
+		    Bt[i] = B[i]/Bmag[i];
+		    BtImag[i] = -BImag[i]/Bmag[i];
 		}
 		
 		// get magnitude and whitening
@@ -301,6 +367,285 @@ public class ImRegPOC extends AlgorithmBase {
 	   // end LogPoler
 		
 	   // phase correlation to get rotation and scaling
+		lpcAImag = new double[length];
+		lpcBImag = new double[length];
+		FFTUtility fftlA = new FFTUtility(lpcA, lpcAImag, length, width, 1, -1, FFTUtility.FFT);
+		fftlA.run();
+		FFTUtility fftlA2 = new FFTUtility(lpcA, lpcAImag, 1, length, width, -1, FFTUtility.FFT);
+		fftlA2.run();
+		FFTUtility fftlB = new FFTUtility(lpcB, lpcBImag, length, width, 1, -1, FFTUtility.FFT);
+		fftlB.run();
+		FFTUtility fftlB2 = new FFTUtility(lpcB, lpcBImag, 1, length, width, -1, FFTUtility.FFT);
+		fftlB2.run(); 
+		Pp = new double[length];
+		PpImag = new double[length];
+		for (i = 0; i < length; i++) {
+		    mag = Math.sqrt(lpcA[i]*lpcA[i] + lpcAImag[i]*lpcAImag[i]);
+		    Ap = lpcA[i]/mag;
+		    ApImag = lpcAImag[i]/mag;
+		    mag = Math.sqrt(lpcB[i]*lpcB[i] + lpcBImag[i]*lpcBImag[i]);
+		    Bp = lpcB[i]/mag;
+		    BpImag = -lpcBImag[i]/mag;
+		    Pp[i] = Ap*Bp - ApImag * BpImag;
+		    PpImag[i] = Ap*BpImag + ApImag * Bp;
+		}
+		// Real part of inverse transform
+		FFTUtility fftPp = new FFTUtility(Pp, PpImag, length, width, 1, 1, FFTUtility.FFT);
+		fftPp.run();
+		FFTUtility fftPp2 = new FFTUtility(Pp, PpImag, 1, length, width, 1, FFTUtility.FFT);
+		fftPp2.run();
+		PpShift = fftshift(Pp, height, width);
+		
+		px = 0;
+		py = 0;
+		maxVal = -Double.MAX_VALUE;
+		for (j = 0; j < height; j++) {
+			for (i = 0; i < width; i++) {
+				if (PpShift[j][i] > maxVal) {
+					maxVal = PpShift[j][i];
+					py = j;
+					px = i;
+				}
+			}
+		}
+
+		// Bilinear Interpolation
+		for (i = px-1; i <= px+1; i++) {
+			vert[i-(px-1)] = PpShift[py-1][i] + PpShift[py][i] + PpShift[py+1][i];
+		}
+		for (i = py-1; i <= py+1; i++) {
+			horz[i-(py-1)] = PpShift[i][px-1] + PpShift[i][px] + PpShift[i][px+1];
+		}
+		sum11 = vert[0] + vert[1] + vert[2];
+		pyy = ((py-1)*horz[0] + py*horz[1] + (py+1)*horz[2])/sum11;
+		pxx = ((px-1)*vert[0] + px*vert[1] + (px+1)*vert[2])/sum11;
+		
+		dx = Math.floor(width/2.0) - pxx + 1;
+		dy = Math.floor(height/2.0)- pyy + 1;
+		
+	    //  Translation Extraction
+		theta1 = 360 * dy / height;
+		theta2 = theta1 + 180;
+		scale = 1/Math.pow(width,dx/width);
+		
+		// Compensate Rotation and scaling
+		IB_recover1 = ImageRotateScale(IB, theta1,scale,width,height);
+		IB_recover2 = ImageRotateScale(IB, theta2,scale,width,height);
+		
+		// Translation estimation
+		IB_R1 = new double[length];
+		IB_R1Imag = new double[length];
+		IB_R2 = new double[length];
+		IB_R2Imag = new double[length];
+		
+		for (j = 0; j < height; j++) {
+			for (i = 0; i < width; i++) {
+				index = i + j*width;
+				IB_R1[index] = IB_recover1[j][i];
+				IB_R2[index] = IB_recover2[j][i];
+			}
+		}
+		
+		FFTUtility fftR1 = new FFTUtility(IB_R1, IB_R1Imag, length, width, 1, -1, FFTUtility.FFT);
+		fftR1.run();
+		FFTUtility fftR12 = new FFTUtility(IB_R1, IB_R1Imag, 1, length, width, -1, FFTUtility.FFT);
+		fftR12.run();
+		FFTUtility fftR2 = new FFTUtility(IB_R2, IB_R2Imag, length, width, 1, -1, FFTUtility.FFT);
+		fftR2.run();
+		FFTUtility fftR22 = new FFTUtility(IB_R2, IB_R2Imag, 1, length, width, -1, FFTUtility.FFT);
+		fftR22.run(); 
+		
+		IB1p = new double[length];
+		IB1pImag = new double[length];
+		IB2p = new double[length];
+		IB2pImag = new double[length];
+		for (i = 0; i < length; i++) {
+			mag = Math.sqrt(IB_R1[i]*IB_R1[i] + IB_R1Imag[i]*IB_R1Imag[i]);
+			IB1p[i] = IB_R1[i]/mag;
+			IB1pImag[i] = -IB_R1Imag[i]/mag;
+			mag = Math.sqrt(IB_R2[i]*IB_R2[i] + IB_R2Imag[i]*IB_R2Imag[i]);
+			IB2p[i] = IB_R2[i]/mag;
+			IB2pImag[i] = -IB_R2Imag[i]/mag;
+		}
+		
+		// App = A./abs(A);
+		// but we had At = A./abs(A);
+		// so use At in place of App
+		Pp1 = new double[length];
+		Pp1Imag = new double[length];
+		Pp2 = new double[length];
+		Pp2Imag = new double[length];
+		for (i = 0; i < length; i++) {
+		    Pp1[i] = At[i]*IB1p[i] - AtImag[i] * IB1pImag[i];
+		    Pp1Imag[i] = At[i]*IB1pImag[i] + AtImag[i]*IB1p[i];
+		    Pp2[i] = At[i]*IB2p[i] - AtImag[i] * IB2pImag[i];
+		    Pp2Imag[i] = At[i]*IB2pImag[i] + AtImag[i]*IB2p[i];
+		}
+		
+		// Real part of inverse transform
+		FFTUtility fftPp1 = new FFTUtility(Pp1, Pp1Imag, length, width, 1, 1, FFTUtility.FFT);
+		fftPp1.run();
+		FFTUtility fftPp12 = new FFTUtility(Pp1, Pp1Imag, 1, length, width, 1, FFTUtility.FFT);
+		fftPp12.run();
+		Pp1Shift = fftshift(Pp1, height, width);
+		
+		FFTUtility fftPp22 = new FFTUtility(Pp2, Pp2Imag, length, width, 1, 1, FFTUtility.FFT);
+		fftPp22.run();
+		FFTUtility fftPp222 = new FFTUtility(Pp2, Pp2Imag, 1, length, width, 1, FFTUtility.FFT);
+		fftPp222.run();
+		Pp2Shift = fftshift(Pp2, height, width);
+		
+		px1 = 0;
+		py1 = 0;
+		maxVal1 = -Double.MAX_VALUE;
+		for (j = 0; j < height; j++) {
+			for (i = 0; i < width; i++) {
+				if (Pp1Shift[j][i] > maxVal1) {
+					maxVal1 = Pp1Shift[j][i];
+					py1 = j;
+					px1 = i;
+				}
+			}
+		}
+		
+		px2 = 0;
+		py2 = 0;
+		maxVal2 = -Double.MAX_VALUE;
+		for (j = 0; j < height; j++) {
+			for (i = 0; i < width; i++) {
+				if (Pp2Shift[j][i] > maxVal2) {
+					maxVal2 = Pp2Shift[j][i];
+					py2 = j;
+					px2 = i;
+				}
+			}
+		}
+		
+		// Comparison to get True rotation
+		if (maxVal1 > maxVal2) {
+			theta = theta1;
+			for (i = px1-1; i <= px1+1; i++) {
+				vert[i-(px1-1)] = Pp1Shift[py1-1][i] + Pp1Shift[py1][i] + Pp1Shift[py1+1][i];
+			}
+			for (i = py1-1; i <= py1+1; i++) {
+				horz[i-(py1-1)] = Pp1Shift[i][px1-1] + Pp1Shift[i][px1] + Pp1Shift[i][px1+1];
+			}
+			sum11 = vert[0] + vert[1] + vert[2];
+			pyy1 = ((py1-1)*horz[0] + py1*horz[1] + (py1+1)*horz[2])/sum11;
+			pxx1 = ((px1-1)*vert[0] + px1*vert[1] + (px1+1)*vert[2])/sum11;
+			
+			dx = Math.floor(width/2.0) - pxx1 + 1;
+			dy = Math.floor(height/2.0)- pyy1 + 1;
+			
+			peak = maxVal1;   
+			result = imtranslate(IB_recover1,-dx, -dy);
+		} // if (maxVal1 > maxVal2)
+		else {
+			theta = theta2;
+			for (i = px2-1; i <= px2+1; i++) {
+				vert[i-(px2-1)] = Pp2Shift[py2-1][i] + Pp2Shift[py2][i] + Pp2Shift[py2+1][i];
+			}
+			for (i = py2-1; i <= py2+1; i++) {
+				horz[i-(py2-1)] = Pp2Shift[i][px2-1] + Pp2Shift[i][px2] + Pp2Shift[i][px2+1];
+			}
+			sum11 = vert[0] + vert[1] + vert[2];
+			pyy2 = ((py2-1)*horz[0] + py2*horz[1] + (py2+1)*horz[2])/sum11;
+			pxx2 = ((px2-1)*vert[0] + px2*vert[1] + (px2+1)*vert[2])/sum11;
+			
+			dx = Math.floor(width/2.0) - pxx2 + 1;
+			dy = Math.floor(height/2.0)- pyy2 + 1;
+			
+			peak = maxVal2; 
+			result = imtranslate(IB_recover2, -dx, -dy);
+		}
+		
+		try {
+      	    outputImage.importData(0, result, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on outputImage.importData(0, result, true)");
+      		setCompleted(false);
+      		return;
+      	}
+  	
+  	    setCompleted(true);
+  	    return;
+	}
+	
+	private double[] imtranslate(double Image[][], double translateX, double translateY) {
+		int i,j;
+		double x,y;
+		int x0,y0,x1,y1;
+		double w0, w1, h0, h1;
+		double val;
+		int height = Image.length;
+		int width = Image[0].length;
+		
+		double translateimage[] = new double[height * width];
+		
+		for (i= 0; i <= width-1; i++) {
+		    for (j= 0; j <= height-1; j++) {
+		        x= i + translateX;
+		        y= j + translateY;
+		        if ((0 < x) && (x < width - 1) && (0 < y) && (y < height - 1)) {
+		             x0 = (int)Math.floor(x);
+		             y0 = (int)Math.floor(y);
+		             x1 = x0 + 1;
+		             y1 = y0 + 1;
+		            w0=x1-x;
+		            w1=x-x0;
+		            h0=y1-y;
+		            h1=y-y0;
+		          
+		            val=Image[y0][x0]*w0*h0 + Image[y0][x1]*w1*h0+ Image[y1][x0]*w0*h1 + Image[y1][x1]*w1*h1;
+		                translateimage[j*width + i]=val;
+		        }
+		    }
+	    }
+		
+		return translateimage;
+	}
+	
+	private double[][] ImageRotateScale(double Image[][], double theta, double scale, int width, int height) {
+		double cx, cy;
+		double ct,st;
+		int i,j;
+		double x,y;
+		int x0,y0,x1,y1;
+		double w0, w1, h0, h1;
+		double val;
+		cx = width/2.0 + 0.5;
+		cy = height/2.0 + 0.5;	
+		
+		ct = Math.cos(theta*Math.PI/180.0);
+		st = Math.sin(theta*Math.PI/180.0);
+		
+		// tform = affine2d([cosd(theta) -sind(theta) 0; sind(theta) cosd(theta) 0; 0 0 1]);
+		
+		double resizeimage[][] = new double[height][width];
+		
+		for (i= 0; i <= width-1; i++) {
+			    for (j= 0; j <= height-1; j++) {
+			        x=(ct*(i-cx)-st*(j-cy))*scale+cx;
+			        y=(ct*(j-cy)+st*(i-cx))*scale+cy;
+			        if ((0 < x) && (x < width - 1) && (0 < y) && (y < height - 1)) {
+			             x0 = (int)Math.floor(x);
+			             y0 = (int)Math.floor(y);
+			             x1 = x0 + 1;
+			             y1 = y0 + 1;
+			            w0=x1-x;
+			            w1=x-x0;
+			            h0=y1-y;
+			            h1=y-y0;
+			          
+			            val=Image[y0][x0]*w0*h0 + Image[y0][x1]*w1*h0+ Image[y1][x0]*w0*h1 + Image[y1][x1]*w1*h1;
+			                resizeimage[j][i]=val;
+			        }
+			    }
+		}
+
+		
+		return resizeimage;
 	}
 	
 	 private double log2(double input) {
