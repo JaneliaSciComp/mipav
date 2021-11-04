@@ -2526,7 +2526,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		return displayGreenAsGray;
     }
 
+    private boolean displayBlueAsGray = false;
     public void setDisplayBlueAsGray(boolean display) {
+    	displayBlueAsGray = display;
 		if (m_kVolumeRayCast != null) {
 			m_kVolumeRayCast.setDisplayBlueAsGray(display);
 		}
@@ -2536,7 +2538,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		if (m_kVolumeRayCast != null) {
 			return m_kVolumeRayCast.getDisplayBlueAsGray();
 		}
-		return false;
+		return displayBlueAsGray;
     }
 
 	/**

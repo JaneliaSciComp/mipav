@@ -136,7 +136,8 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void calcMaxProjection(JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
+	private static void calcMaxProjection(JProgressBar batchProgress, final Vector<Integer> includeRange, final String[] baseFileDir,
+			final String baseFileName)
 	{
 		ModelImage image = null, maximumProjectionImage = null;
 		int[] currentMPImage = new int[]{0};
@@ -149,7 +150,7 @@ public class PlugInAlgorithmWormUntwisting
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 				if ( voiFile.exists() )
 				{					
 					mpSliceCount++;
@@ -161,7 +162,7 @@ public class PlugInAlgorithmWormUntwisting
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 
 //				System.err.println( fileName );
 				if ( voiFile.exists() )
@@ -179,24 +180,31 @@ public class PlugInAlgorithmWormUntwisting
 						}
 						image = null;
 					}
-					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
+					image = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null);
 					image.calcMinMax();
 					
-					if ( (baseFileDir2 != null) && !baseFileDir2.isEmpty() )
+					if ( !baseFileDir[1].isEmpty() || !baseFileDir[2].isEmpty() )
 					{
 						fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 								baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 								"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
-						File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+						File voiFile2 = new File(baseFileDir[1] + File.separator + fileName);
+						File voiFile3 = new File(baseFileDir[2] + File.separator + fileName);
 
 //						System.err.println( fileName );
 						ModelImage secondImage = null;
+						ModelImage thirdImage = null;
 						if ( voiFile2.exists() )
 						{
-							secondImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null);
+							secondImage = fileIO.readImage(fileName, baseFileDir[1] + File.separator, false, null);
 							secondImage.calcMinMax();     
 						}
-						if ( secondImage != null )
+						if ( voiFile3.exists() )
+						{
+							thirdImage = fileIO.readImage(fileName, baseFileDir[2] + File.separator, false, null);
+							thirdImage.calcMinMax();     
+						}
+						if ( secondImage != null && thirdImage == null )
 						{
 							ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB, image.getExtents(),
 									JDialogBase.makeImageName(image.getImageName(), "_rgb"));
@@ -213,6 +221,40 @@ public class PlugInAlgorithmWormUntwisting
 							blank.disposeLocal(false);
 							image = displayImage;
 						}
+
+						else if ( secondImage == null && thirdImage != null )
+						{
+							ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB, image.getExtents(),
+									JDialogBase.makeImageName(image.getImageName(), "_rgb"));
+							JDialogBase.updateFileInfo(image, displayImage);
+
+			                // Make algorithm
+							ModelImage blank = new ModelImage(ModelImage.SHORT, image.getExtents(), JDialogBase.makeImageName(image.getImageName(), ""));
+							AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(image, blank, thirdImage, displayImage, true, false, 255, true, true);
+							mathAlgo.run();
+							
+							ModelImage.saveImage(displayImage, displayImage.getImageName(), voiFile.getParent() + File.separator);
+							image.disposeLocal(false);
+							thirdImage.disposeLocal(false);
+							blank.disposeLocal(false);
+							image = displayImage;
+						}
+						else if ( secondImage != null && thirdImage != null )
+						{
+							ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB, image.getExtents(),
+									JDialogBase.makeImageName(image.getImageName(), "_rgb"));
+							JDialogBase.updateFileInfo(image, displayImage);
+
+			                // Make algorithm
+							AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(image, secondImage, thirdImage, displayImage, true, false, 255, true, true);
+							mathAlgo.run();
+							
+							ModelImage.saveImage(displayImage, displayImage.getImageName(), voiFile.getParent() + File.separator);
+							image.disposeLocal(false);
+							secondImage.disposeLocal(false);
+							thirdImage.disposeLocal(false);
+							image = displayImage;
+						}
 					}
 					
 					
@@ -221,7 +263,7 @@ public class PlugInAlgorithmWormUntwisting
 					
 					if ( maximumProjectionImage == null )
 					{
-						String name = ( (baseFileDir2 != null) && !baseFileDir2.isEmpty() ) ? "_combined" : "";
+						String name = ( !baseFileDir[1].isEmpty() ) ? "_combined" : "";
 						int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; // dimX
 						int dimY = image.getExtents().length > 2 ? image.getExtents()[2] : 1; // use dimZ for y projection
 						maximumProjectionImage = new ModelImage( image.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileName + name + "_MP_Y.tif" );
@@ -246,7 +288,7 @@ public class PlugInAlgorithmWormUntwisting
 		// Write the image stack to file:
 		if ( maximumProjectionImage != null )
 		{
-			String fileName = baseFileDir + File.separator;
+			String fileName = baseFileDir[0] + File.separator;
 			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
 			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
 
@@ -270,43 +312,37 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void createMaximumProjectionAVI( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
+	public static void createMaximumProjectionAVI( JProgressBar batchProgress, final Vector<Integer> includeRange, final String[] baseFileDir, final String baseFileName)
 	{			
 		
-		if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+		if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 		
 		// register images and save output files:
-		registerImages(batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileName);
+		registerImages(batchProgress, includeRange, baseFileDir, baseFileName);
 		// calculate the maximum projection of each image and save the image stack:
-		calcMaxProjection(batchProgress, includeRange, baseFileDir, null, baseFileName);	
-		if ( (baseFileDir2 != null) && !baseFileDir2.isEmpty())
-		{
-			// calculate the maximum projection of each image and save the image stack:
-			calcMaxProjection(batchProgress, includeRange, baseFileDir2, null, baseFileName);	
-			calcMaxProjection(batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileName);		
-		}
+		calcMaxProjection(batchProgress, includeRange, baseFileDir, baseFileName);	
 	}
 	
 	
 	public static void generateModelMesh( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String baseFileDir, final String baseFileName, final int paddingFactor )
+			final String[] baseFileDir, final String baseFileName, final int paddingFactor )
 	{
 		int meshCount = 0;
 		if ( includeRange != null )
 		{						
-			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 
 			ModelImage wormImage = null;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				// Build the full image name:
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
 					//					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					wormImage = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null);  
 					WormData wormData = new WormData(wormImage); 
 					VOIVector lattice = wormData.readFinalLattice();
 					if ( lattice != null )
@@ -354,32 +390,39 @@ public class PlugInAlgorithmWormUntwisting
 	
 	
 	public static void reslice( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String baseFileDir, final String baseFileDir2, final String baseFileName,
+			final String[] baseFileDir, final String baseFileName,
 			final int xSize, final int ySize, final int zSize )
 	{
 		if ( includeRange != null )
 		{						
-			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.xml";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
-				File imageFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
-				File imageFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				File imageFile = new File(baseFileDir[0] + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				File imageFile2 = new File(baseFileDir[1] + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				File imageFile3 = new File(baseFileDir[2] + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				
 				if ( imageFile.exists() ) {					
 					Vector3f[] conversion = resliceRotate(imageFile, imageName, xSize, ySize, zSize );					
-					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
-					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
-					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
+					resliceAnnotations( baseFileDir[0] + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
+					resliceAnnotations( baseFileDir[0] + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
+					resliceAnnotations( baseFileDir[0] + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
 				}
-				if ( imageFile2.exists() ) {
+				if ( imageFile2.exists() && !baseFileDir[1].isEmpty() ) {
 					Vector3f[] conversion = resliceRotate(imageFile2, imageName, xSize, ySize, zSize );					
-					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
-					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
-					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
+					resliceAnnotations( baseFileDir[1] + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
+					resliceAnnotations( baseFileDir[1] + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
+					resliceAnnotations( baseFileDir[1] + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
+				}
+				if ( imageFile3.exists() && !baseFileDir[2].isEmpty() ) {
+					Vector3f[] conversion = resliceRotate(imageFile3, imageName, xSize, ySize, zSize );					
+					resliceAnnotations( baseFileDir[2] + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
+					resliceAnnotations( baseFileDir[2] + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
+					resliceAnnotations( baseFileDir[2] + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
 				}
 			}
 		}
@@ -464,15 +507,15 @@ public class PlugInAlgorithmWormUntwisting
 	}
 	
 	public static void batchFlipLattices( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String baseFileDir, final String baseFileName)
+			final String[] baseFileDir, final String baseFileName)
 	{
 		if ( includeRange != null )
 		{
-			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				// Build the full image name:
-				String baseDir = baseFileDir + File.separator + baseFileName + "_" + includeRange.elementAt(i) + 
+				String baseDir = baseFileDir[0] + File.separator + baseFileName + "_" + includeRange.elementAt(i) + 
 						File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_results" + 
 						File.separator;
 				String fileName = baseDir + "lattice_final" + File.separator + "lattice.csv";
@@ -500,25 +543,25 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String baseFileDir, final String baseFileDir2, final String baseFileName, final int paddingFactor, final boolean segmentLattice )
+			final String[] baseFileDir, final String baseFileName, final int paddingFactor, final boolean segmentLattice )
 	{
 		long time = System.currentTimeMillis();
 		ModelImage wormImage = null;
 		ModelImage nucleiImage = null;
 		if ( includeRange != null )
 		{
-			if ( !checkFilePaths( includeRange, baseFileDir, baseFileName ) ) return;
+			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				//    	    		String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
 				// Build the full image name:
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
 					//					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					wormImage = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null);  
 					WormData wormData = new WormData(wormImage); 
 					VOIVector lattice = wormData.readFinalLattice();
 					if ( lattice == null )
@@ -531,17 +574,6 @@ public class PlugInAlgorithmWormUntwisting
 					model.setPaddingFactor(paddingFactor);
 					model.setSeamCellImage(seamImage);
 					model.setLattice(lattice);
-
-
-					// build the nuclei image file name 
-					String nucleiFileName = null;
-					File nucleiFile = null;
-					if ( baseFileDir2 != null )
-					{
-						nucleiFileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-						nucleiFile = new File(baseFileDir2 + File.separator + fileName);
-					}
-
 
 					long timeInterpolateLattice = System.currentTimeMillis();
 					model.initializeInterpolation(true);
@@ -563,6 +595,7 @@ public class PlugInAlgorithmWormUntwisting
 						markers = wormData.getMarkerAnnotations();
 						integratedMarkers = false;
 					}	
+
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
@@ -570,68 +603,68 @@ public class PlugInAlgorithmWormUntwisting
 						model.saveAnnotationStraight(wormImage, "straightened_annotations", "straightened_annotations.csv" );	
 					}
 					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
-					
+
 					// untwist neurite curves:
 					model.untwistNeuriteCurves(segmentLattice);
 
-					if ( (nucleiFile != null) && nucleiFile.exists() )
-					{			
-						System.err.println( "   " + fileName );
+					for ( int j = 1; j < baseFileDir.length; j++ ) {
 
-						if ( wormImage != null )
+						// build the nuclei image file name 
+						String nucleiFileName = null;
+						File nucleiFile = null;
+						if ( !baseFileDir[j].isEmpty() )
 						{
-							wormImage.unregisterAllVOIs();
-							wormImage.disposeLocal(false);
-						}
-						if ( wormData != null )
-						{
-							wormData.dispose();
+							nucleiFileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+							nucleiFile = new File(baseFileDir[j] + File.separator + fileName);
 						}
 
-						FileIO fileIO2 = new FileIO();
-						nucleiImage = fileIO2.readImage(nucleiFileName, baseFileDir2 + File.separator, false, null); 
-						nucleiImage.setImageName(baseFileName + "_" + includeRange.elementAt(i) + ".tif");
-						
+						if ( (nucleiFile != null) && nucleiFile.exists() )
+						{			
+							System.err.println( "   " + fileName );
 
-						timeInterpolateLattice = System.currentTimeMillis();
-						model.setImage(nucleiImage);
-						model.setSeamCellImage(null);
-						model.untwistImage( false );
-						System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
-
-						timeSegmentLattice = System.currentTimeMillis();
-						if ( contourImage != null )
-						{
-							model.segmentLattice(nucleiImage, contourImage);
-						}
-						else
-						{
-							model.segmentLattice(nucleiImage, false, paddingFactor, segmentLattice);
-						}
-						
-						System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
-
-						if ( !integratedMarkers ) {
-							timeAnnotation = System.currentTimeMillis();
-							wormData = new WormData(nucleiImage);
-							markers = wormData.getMarkerAnnotations();
-							if ( (markers != null) && (markers.getCurves().size() > 0) )
+							if ( wormImage != null )
 							{
-								model.setMarkers(markers);
-								model.untwistMarkers(segmentLattice);	
-								model.saveAnnotationStraight(nucleiImage, "straightened_annotations", "straightened_annotations.csv" );	
+								wormImage.unregisterAllVOIs();
+								wormImage.disposeLocal(false);
 							}
-							System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
-						}
-						model.dispose();
-						model = null;
+							if ( wormData != null )
+							{
+								wormData.dispose();
+							}
 
-						if ( nucleiImage != null )
-						{
-							nucleiImage.disposeLocal(false);
+							FileIO fileIO2 = new FileIO();
+							nucleiImage = fileIO2.readImage(nucleiFileName, baseFileDir[j] + File.separator, false, null); 
+							nucleiImage.setImageName(baseFileName + "_" + includeRange.elementAt(i) + ".tif");
+
+
+							timeInterpolateLattice = System.currentTimeMillis();
+							model.setImage(nucleiImage);
+							model.setSeamCellImage(null);
+							model.untwistImage( false );
+							System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
+
+							timeSegmentLattice = System.currentTimeMillis();
+							if ( contourImage != null )
+							{
+								model.segmentLattice(nucleiImage, contourImage);
+							}
+							else
+							{
+								model.segmentLattice(nucleiImage, false, paddingFactor, segmentLattice);
+							}
+
+							System.err.println( "segment lattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeSegmentLattice) );
+
+							if ( nucleiImage != null )
+							{
+								nucleiImage.disposeLocal(false);
+								nucleiImage = null;
+							}
+							model.setImage(null);
 						}
 					}
-
+					
+					
 					if ( contourImage != null )
 					{
 						contourImage.disposeLocal(false);
@@ -755,7 +788,8 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void registerImages( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
+	private static void registerImages( JProgressBar batchProgress, final Vector<Integer> includeRange, final String[] baseFileDir, 
+			final String baseFileName)
 	{
 		ModelImage image = null, prevImage = null;
 		int[] maxExtents = new int[]{0,0,0};
@@ -766,11 +800,11 @@ public class PlugInAlgorithmWormUntwisting
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
 					FileIO fileIO = new FileIO();
-					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					image = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null);  
 					int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
 					int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
 					int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 0;
@@ -791,16 +825,16 @@ public class PlugInAlgorithmWormUntwisting
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 
-				File registrationDir = new File(baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+				File registrationDir = new File(baseFileDir[0] + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
 						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images");
 				if ( voiFile.exists() )
 				{
 //					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  						
+					image = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null);  						
 
 					TransMatrix[] resultMatrix = new TransMatrix[1];
 					ModelImage result = register( prevImage, image, registrationDir, maxExtents, resultMatrix );
@@ -843,64 +877,66 @@ public class PlugInAlgorithmWormUntwisting
 				prevImage = null;
 			}
 
-			if ( (baseFileDir2 != null) && !baseFileDir2.isEmpty() )
-			{
-				for ( int i = 0; i < includeRange.size(); i++ )
+			for ( int f = 1; f < baseFileDir.length; f++ ) {
+				if ( !baseFileDir[f].isEmpty() )
 				{
-					String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
-							baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
-							"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
-					File voiFile = new File(baseFileDir2 + File.separator + fileName);
-
-					File registrationDir = new File(baseFileDir2 + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
-							baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
-							"output_images");
-					if ( voiFile.exists() )
+					for ( int i = 0; i < includeRange.size(); i++ )
 					{
-						//				System.err.println( fileName );
-						FileIO fileIO = new FileIO();
-						image = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null);  						
+						String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+								baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
+								"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
+						File voiFile = new File(baseFileDir[f] + File.separator + fileName);
 
-						ModelImage result = registerToMatrix( prevImage, image, registrationDir, maxExtents, matrixList[i] );
-						if ( result == null )
+						File registrationDir = new File(baseFileDir[f] + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+								baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
+								"output_images");
+						if ( voiFile.exists() )
 						{
-							prevImage = image;
+							//				System.err.println( fileName );
+							FileIO fileIO = new FileIO();
+							image = fileIO.readImage(fileName, baseFileDir[f] + File.separator, false, null);  						
+
+							ModelImage result = registerToMatrix( prevImage, image, registrationDir, maxExtents, matrixList[i] );
+							if ( result == null )
+							{
+								prevImage = image;
+							}
+							else
+							{
+								if ( image != null )
+								{
+									image.disposeLocal();
+									image = null;
+								}
+								if ( prevImage != null )
+								{
+									prevImage.disposeLocal();
+									prevImage = null;
+								}
+								prevImage = result;
+							}
 						}
-						else
+
+						if ( batchProgress != null )
 						{
-							if ( image != null )
-							{
-								image.disposeLocal();
-								image = null;
-							}
-							if ( prevImage != null )
-							{
-								prevImage.disposeLocal();
-								prevImage = null;
-							}
-							prevImage = result;
+							batchProgress.setValue((int)(100 * (float)(i+1)/includeRange.size()));
+							batchProgress.update(batchProgress.getGraphics());
 						}
 					}
-
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i+1)/includeRange.size()));
-						batchProgress.update(batchProgress.getGraphics());
-					}
+				}
+				if ( image != null )
+				{
+					image.disposeLocal();
+					image = null;
+				}
+				if ( prevImage != null )
+				{
+					prevImage.disposeLocal();
+					prevImage = null;
 				}
 			}
 		}
 
-		if ( image != null )
-		{
-			image.disposeLocal();
-			image = null;
-		}
-		if ( prevImage != null )
-		{
-			prevImage.disposeLocal();
-			prevImage = null;
-		}
 		
 	}
 	
@@ -911,8 +947,8 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void segmentSeamCells( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName,
-			final int minRadius, final int maxRadius)
+	public static void segmentSeamCells( JProgressBar batchProgress, final Vector<Integer> includeRange, final String[] baseFileDir,
+			final String baseFileName, final int minRadius, final int maxRadius)
 	{
 		ModelImage image = null; 
 		if ( includeRange != null )
@@ -924,7 +960,7 @@ public class PlugInAlgorithmWormUntwisting
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 				if ( voiFile.exists() )
 				{
 					step = 1;
@@ -940,7 +976,7 @@ public class PlugInAlgorithmWormUntwisting
 						}
 						image = null;
 					}
-					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
+					image = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null); 
 					image.calcMinMax();
 					String imageName = image.getImageName();
 					if (imageName.contains("_clone")) {
