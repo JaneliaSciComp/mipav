@@ -136,10 +136,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	private JPanel algorithmsPanel;
 	private JButton backButton;
-	private String baseFileDir;
-	private String baseFileDir2;
+	private String[] baseFileDir;
 	private JTextField baseFileLocText;
 	private JTextField baseFileLocText2;
+	private JTextField baseFileLocText3;
 	private String baseFileName;
 	private JTextField baseFileNameText;
 	private JProgressBar batchProgress;
@@ -264,15 +264,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private JPanel colorChannelPanel;
 		private JRadioButton displayChannel1;
 		private JRadioButton displayChannel2;
+		private JRadioButton displayChannel3;
 		private JRadioButton displayBothChannels;
+		private boolean displayRedAsGray = false;
+		private boolean displayGreenAsGray = false;
+		private boolean displayBlueAsGray = false;
 
 		private Matrix3f volumeMatrix = new Matrix3f();
 		private Matrix3f clipArb = null;
 		private boolean clipArbOn = false;
 
 		private int currentTab = -1;
-		private boolean displayRedAsGray = false;
-		private boolean displayGreenAsGray = false;
 
 		public IntegratedWormData() {
 		}
@@ -350,7 +352,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					try {
 						// Batch Untwisting:
 						PlugInAlgorithmWormUntwisting.latticeStraighten(batchProgress, includeRange, baseFileDir,
-								baseFileDir2, baseFileNameText.getText(), paddingFactor,
+								baseFileNameText.getText(), paddingFactor,
 								modelStraightenCheck.isSelected());
 					} catch (java.lang.OutOfMemoryError e) {
 						MipavUtil.displayError("Error: Not enough memory. Unable to finish straightening.");
@@ -363,7 +365,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					try {
 						// Batch Registration/MP calculation:
 						PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI(batchProgress, includeRange,
-								baseFileDir, baseFileDir2, baseFileNameText.getText());
+								baseFileDir, baseFileNameText.getText());
 					} catch (java.lang.OutOfMemoryError e) {
 						MipavUtil.displayError(
 								"Error: Not enough memory. Unable to finish maximum-projection calculation.");
@@ -374,7 +376,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					try {
 						if (resliceImageCheck.isSelected()) {
 							PlugInAlgorithmWormUntwisting.reslice(batchProgress, includeRange, baseFileDir,
-									baseFileDir2, baseFileNameText.getText(), resliceXValue, resliceYValue,
+									baseFileNameText.getText(), resliceXValue, resliceYValue,
 									resliceZValue);
 						}
 					} catch (java.lang.OutOfMemoryError e) {
@@ -809,22 +811,41 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			if (activeRenderer != null) {
 				activeImage.displayRedAsGray = false;
 				activeImage.displayGreenAsGray = true;
+				activeImage.displayBlueAsGray = false;
+
 				activeRenderer.setDisplayRedAsGray(false);
 				activeRenderer.setDisplayGreenAsGray(true);
+				activeRenderer.setDisplayBlueAsGray(false);
 			}
 		} else if (command.equals("displayChannel2")) {
 			if (activeRenderer != null) {
 				activeImage.displayRedAsGray = true;
-				activeImage.displayGreenAsGray = false;
+				activeImage.displayGreenAsGray = false;		
+				activeImage.displayBlueAsGray = false;
+
 				activeRenderer.setDisplayRedAsGray(true);
 				activeRenderer.setDisplayGreenAsGray(false);
+				activeRenderer.setDisplayBlueAsGray(false);
+			}
+		}  else if (command.equals("displayChannel3")) {
+			if (activeRenderer != null) {
+				activeImage.displayRedAsGray = false;
+				activeImage.displayGreenAsGray = false;
+				activeImage.displayBlueAsGray = true;
+
+				activeRenderer.setDisplayRedAsGray(false);
+				activeRenderer.setDisplayGreenAsGray(false);
+				activeRenderer.setDisplayBlueAsGray(true);
 			}
 		} else if (command.equals("displayBothChannels")) {
 			if (activeRenderer != null) {
 				activeImage.displayRedAsGray = false;
 				activeImage.displayGreenAsGray = false;
+				activeImage.displayBlueAsGray = false;
+
 				activeRenderer.setDisplayRedAsGray(false);
 				activeRenderer.setDisplayGreenAsGray(false);
+				activeRenderer.setDisplayBlueAsGray(false);
 			}
 		}
 	}
@@ -947,6 +968,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 		activeRenderer.setDisplayRedAsGray(activeImage.displayRedAsGray);
 		activeRenderer.setDisplayGreenAsGray(activeImage.displayGreenAsGray);
+		activeRenderer.setDisplayBlueAsGray(activeImage.displayBlueAsGray);
 		updateHistoLUTPanels(activeImage);
 		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
@@ -1379,7 +1401,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			return true;
 
 		ProcessBuilder processBuilder = new ProcessBuilder("python",
-				baseFileDir + File.separator + "restraighten_MIPAV.py", predictedStraight, predictedTwisted,
+				baseFileDir[0] + File.separator + "restraighten_MIPAV.py", predictedStraight, predictedTwisted,
 				rightImage.wormData.getIntegratedMarkerAnnotationsPath());
 		processBuilder.redirectErrorStream(true);
 
@@ -1474,15 +1496,17 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	 * @param sizeB
 	 * @return
 	 */
-	private boolean checkGPUMemory(int sizeA, int sizeB) {
+	private boolean checkGPUMemory(int sizeA, int sizeB, int sizeC) {
 		long[] maxMemSizeArray = new long[2];
 
 		OpenCLInfo.getMaxMemSize(CL_DEVICE_TYPE_GPU, maxMemSizeArray);
-		long memoryUsed = sizeA * 4 + sizeB * 4;
+		long memoryUsed = sizeA * 4 + sizeB * 4 + sizeC * 4;
 		long maxAllocSize = maxMemSizeArray[0];
 		long totalMemSize = maxMemSizeArray[1];
-		if ((sizeA > (maxAllocSize / (Sizeof.cl_float))) || (sizeB > (maxAllocSize / (Sizeof.cl_float)))
-				|| (memoryUsed >= (totalMemSize / Sizeof.cl_float))) {
+		if (  (sizeA > (maxAllocSize / (Sizeof.cl_float))) ||
+			  (sizeB > (maxAllocSize / (Sizeof.cl_float))) ||
+			  (sizeC > (maxAllocSize / (Sizeof.cl_float))) ||
+			  (memoryUsed >= (totalMemSize / Sizeof.cl_float)) ) {
 			return false;
 		}
 		return true;
@@ -1500,13 +1524,13 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				// count images to make sure all exist:
 				for (int i = includeRange.size() - 1; i >= 0; i--) {
 					String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-					File voiFile = new File(baseFileDir + File.separator + fileName);
+					File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 					if (editMode == ReviewResults) {
 						fileName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
 						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results"
 								+ File.separator;
-						voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults
+						voiFile = new File(baseFileDir[0] + File.separator + subDirName + subDirNameResults
 								+ PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
 					}
 					if (!voiFile.exists()) {
@@ -1529,18 +1553,22 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				for (int i = 0; i < includeRange.size(); i++) {
 					ModelImage imageA = null;
 					ModelImage imageB = null;
+					ModelImage imageC = null;
 
 					String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-					File voiFile = new File(baseFileDir + File.separator + fileName);
-					File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+					File voiFile = new File(baseFileDir[0] + File.separator + fileName);
+					File voiFile2 = new File(baseFileDir[1] + File.separator + fileName);
+					File voiFile3 = new File(baseFileDir[2] + File.separator + fileName);
 					if (editMode == ReviewResults) {
 						fileName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
 						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results"
 								+ File.separator;
-						voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults
+						voiFile = new File(baseFileDir[0] + File.separator + subDirName + subDirNameResults
 								+ PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
-						voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults
+						voiFile2 = new File(baseFileDir[1] + File.separator + subDirName + subDirNameResults
+								+ PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
+						voiFile3 = new File(baseFileDir[2] + File.separator + subDirName + subDirNameResults
 								+ PlugInAlgorithmWormUntwisting.outputImages + File.separator + fileName);
 					}
 					long memoryInUse = 0;
@@ -1557,18 +1585,25 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					if (voiFile2.exists()) {
 						imageB = openImage(voiFile2, fileName);
 					}
+					if (voiFile3.exists()) {
+						imageC = openImage(voiFile3, fileName);
+					}
 
 					// Add memory check here:
 					if (i == 0) {
 						int sizeA = 0;
 						int sizeB = 0;
+						int sizeC = 0;
 						if (imageA != null) {
 							sizeA = imageA.getDataSize();
 						}
 						if (imageB != null) {
 							sizeB = imageB.getDataSize();
 						}
-						if (!checkGPUMemory(sizeA, sizeB)) {
+						if (imageC != null) {
+							sizeC = imageC.getDataSize();
+						}
+						if (!checkGPUMemory(sizeA, sizeB, sizeC)) {
 							MipavUtil.displayError("Image size too big to load on GPU.");
 							progressBar.setVisible(false);
 							progressBar.dispose();
@@ -1580,6 +1615,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 							if (imageB != null) {
 								imageB.disposeLocal();
 								imageB = null;
+							}
+							if (imageC != null) {
+								imageC.disposeLocal();
+								imageC = null;
 							}
 							return false;
 						}
@@ -1604,19 +1643,25 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 								imageB.disposeLocal();
 								imageB = null;
 							}
+							if (imageC != null) {
+								imageC.disposeLocal();
+								imageC = null;
+							}
 							return false;
 						}
 					}
 
 					leftImage = new IntegratedWormData();
 
-					thresholdImage(imageA, imageB);
-					if (imageB != null) {
-						leftImage.wormImage = combineImages(imageA, imageB);
+					thresholdImage(imageA, imageB, imageC);
+					if (imageB != null || imageC != null) {
+						leftImage.wormImage = combineImages(imageA, imageB, imageC);
 						imageA.disposeLocal(false);
 						imageA = null;
 						imageB.disposeLocal(false);
 						imageB = null;
+						imageC.disposeLocal(false);
+						imageC = null;
 					} else {
 						leftImage.wormImage = imageA;
 					}
@@ -1747,7 +1792,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		return success;
 	}
 
-	private void thresholdImage(ModelImage imageA, ModelImage imageB) {
+	private void thresholdImage(ModelImage imageA, ModelImage imageB, ModelImage imageC) {
 		if (thresholdImageCheck.isSelected()) {
 			for (int i = 0; i < imageA.getDataSize(); i++) {
 				if (imageA.getFloat(i) > threshold) {
@@ -1756,30 +1801,51 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				if ((imageB != null) && (imageB.getFloat(i) > threshold)) {
 					imageB.set(i, threshold);
 				}
+				if ((imageC != null) && (imageC.getFloat(i) > threshold)) {
+					imageC.set(i, threshold);
+				}
 			}
 			imageA.calcMinMax();
 			if (imageB != null) {
 				imageB.calcMinMax();
 			}
+			if (imageC != null) {
+				imageC.calcMinMax();
+			}
 		}
 	}
 
-	private ModelImage combineImages(ModelImage imageA, ModelImage imageB) {
+	private ModelImage combineImages(ModelImage imageA, ModelImage imageB, ModelImage imageC) {
 
 		ModelImage displayImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.getExtents(),
 				JDialogBase.makeImageName(imageA.getImageName(), "_rgb"));
 		JDialogBase.updateFileInfo(imageA, displayImage);
 
 		// Make algorithm
-		ModelImage blank = new ModelImage(ModelImage.SHORT, imageA.getExtents(),
-				JDialogBase.makeImageName(imageA.getImageName(), ""));
-		AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imageB, imageA, blank, displayImage, true, false, 255,
-				true, true);
-		mathAlgo.run();
+		ModelImage blank = null;
+		if ( imageB == null && imageC != null ) {
+			blank = new ModelImage(ModelImage.SHORT, imageA.getExtents(),
+					JDialogBase.makeImageName(imageA.getImageName(), ""));
 
-		// ModelImage.saveImage(displayImage, displayImage.getImageName(),
-		// imageFile.getParent() + File.separator);
-		blank.disposeLocal(false);
+			AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(blank, imageA, imageC, displayImage, true, false, 255,
+					true, true);
+			mathAlgo.run();
+			blank.disposeLocal(false);
+		}
+		else if ( imageB != null && imageC == null ) {
+			blank = new ModelImage(ModelImage.SHORT, imageA.getExtents(),
+					JDialogBase.makeImageName(imageA.getImageName(), ""));
+
+			AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imageB, imageA, blank, displayImage, true, false, 255,
+					true, true);
+			mathAlgo.run();
+			blank.disposeLocal(false);
+		}
+		else {
+			AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imageB, imageA, imageC, displayImage, true, false, 255,
+					true, true);
+			mathAlgo.run();
+		}
 
 		return displayImage;
 	}
@@ -1993,7 +2059,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		ViewJProgressBar progress = new ViewJProgressBar("Generating Animation", "", 0, 100, false);
 		MipavUtil.centerOnScreen(progress);
 
-		String inputDirName = baseFileDir + File.separator;
+		String inputDirName = baseFileDir[0] + File.separator;
 		// System.err.println( inputDirName );
 		final File inputFileDir = new File(inputDirName);
 
@@ -2186,7 +2252,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		extents[2] = (int) Math.max(30, (max.Z - min.Z) + 10);
 
 		ModelImage animationImage = new ModelImage(ModelStorageBase.BOOLEAN, extents, "animationImage");
-		String outputDirName = baseFileDir + File.separator + "animation" + File.separator;
+		String outputDirName = baseFileDir[0] + File.separator + "animation" + File.separator;
 		final File outputFileDir = new File(outputDirName);
 
 		if (outputFileDir.exists() && outputFileDir.isDirectory()) {
@@ -2253,6 +2319,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		baseFileLocText2 = gui.buildFileField("Data directory (marker 2): ", "", false, JFileChooser.DIRECTORIES_ONLY,
 				this);
 		inputsPanel.add(baseFileLocText2.getParent(), gbc);
+		gbc.gridy++;
+
+		baseFileLocText3 = gui.buildFileField("Data directory (marker 3): ", "", false, JFileChooser.DIRECTORIES_ONLY,
+				this);
+		inputsPanel.add(baseFileLocText3.getParent(), gbc);
 		gbc.gridy++;
 
 		baseFileNameText = gui.buildField("Base images name: ", "Decon_reg");
@@ -3085,8 +3156,18 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 
 		baseFileName = baseFileNameText.getText();
-		baseFileDir = baseFileLocText.getText();
-		baseFileDir2 = baseFileLocText2.getText();
+		baseFileDir = new String[3];
+		baseFileDir[0] = baseFileLocText.getText();
+		baseFileDir[1] = baseFileLocText2.getText();
+		baseFileDir[2] = baseFileLocText3.getText();
+		if ( !baseFileDir[2].isEmpty() && (baseFileDir[2].equals(baseFileDir[0]) || baseFileDir[2].equals(baseFileDir[1]))) {
+			baseFileDir[2] = "";
+			baseFileLocText3.setText("");
+		}
+		if ( !baseFileDir[1].isEmpty() && (baseFileDir[1].equals(baseFileDir[0]) || baseFileDir[1].equals(baseFileDir[2]))) {
+			baseFileDir[1] = "";
+			baseFileLocText2.setText("");
+		}
 
 		includeRange = new Vector<Integer>();
 		String rangeFusion = rangeFusionText.getText();
@@ -3164,7 +3245,16 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.colorChannelPanel.add(integratedData.displayChannel2, gbc);
 			gbc.gridy++;
 
-			integratedData.displayBothChannels = gui.buildRadioButton("Display Both Channels", true);
+			integratedData.displayChannel3 = gui.buildRadioButton("Channel 3", false);
+			integratedData.displayChannel3.addActionListener(this);
+			integratedData.displayChannel3.setActionCommand("displayChannel2");
+			integratedData.displayChannel3.setVisible(true);
+			integratedData.displayChannel3.setEnabled(true);
+			group.add(integratedData.displayChannel3);
+			integratedData.colorChannelPanel.add(integratedData.displayChannel3, gbc);
+			gbc.gridy++;
+
+			integratedData.displayBothChannels = gui.buildRadioButton("Display All Channels", true);
 			integratedData.displayBothChannels.addActionListener(this);
 			integratedData.displayBothChannels.setActionCommand("displayBothChannels");
 			integratedData.displayBothChannels.setVisible(true);
@@ -3216,8 +3306,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if (integratedData.displayChannel1 != null) {
 			integratedData.displayChannel1.setSelected(integratedData.displayRedAsGray);
 			integratedData.displayChannel2.setSelected(integratedData.displayGreenAsGray);
+			integratedData.displayChannel3.setSelected(integratedData.displayBlueAsGray);
 			integratedData.displayBothChannels
-					.setSelected(!integratedData.displayRedAsGray && !integratedData.displayGreenAsGray);
+					.setSelected(!integratedData.displayRedAsGray && !integratedData.displayGreenAsGray
+							 && !integratedData.displayBlueAsGray);
 		}
 	}
 

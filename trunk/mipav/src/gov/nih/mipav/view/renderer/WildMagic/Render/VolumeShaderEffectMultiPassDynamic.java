@@ -188,10 +188,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     private static String useRedOnly = ""
         + "color.g = color.r;" + "\n"
         + "color.b = color.r;" + "\n";
-    
+
     private static String useGreenOnly = ""
             + "color.r = color.g;" + "\n"
             + "color.b = color.g;" + "\n";
+    
+    private static String useBlueOnly = ""
+            + "color.r = color.b;" + "\n"
+            + "color.g = color.b;" + "\n";
 
     private static String readImageColorB = ""
         + "vec4 color = vec4(0.0);" + "\n"
@@ -1284,6 +1288,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     			}
     			else if ( m_bDisplayGreenAsGray ) {
     				text += useGreenOnly;
+    			}
+    			else if ( m_bDisplayBlueAsGray ) {
+    				text += useBlueOnly;
     			}
     			text += readColorMapRGBA;
     		}

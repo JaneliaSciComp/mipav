@@ -1316,14 +1316,15 @@ public class LatticeModel {
 	 * Deletes this LatticeModel
 	 */
 	public void dispose() {
-		if (latticeGrid != null) {
-			for (int i = latticeGrid.size() - 1; i >= 0; i--) {
-				final VOI marker = latticeGrid.remove(i);
-				imageA.unregisterVOI(marker);
-			}
-		}
 		if ( imageA != null )
 		{
+			if (latticeGrid != null) {
+				for (int i = latticeGrid.size() - 1; i >= 0; i--) {
+					final VOI marker = latticeGrid.remove(i);
+					imageA.unregisterVOI(marker);
+				}
+			}
+			
 			for ( int i = 0; i < lattice.size(); i++ ) {
 				imageA.unregisterVOI(lattice.elementAt(i));
 			}

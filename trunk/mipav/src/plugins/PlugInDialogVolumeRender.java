@@ -130,8 +130,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private Vector<String> annotationNames;
 	private VOIVector annotations;
 	private JButton backButton;
-	private String baseFileDir;
-	private String baseFileDir2;
+	private String[] baseFileDir;
 	private JTextField  baseFileLocText;
 	private JTextField  baseFileLocText2;
 	private String baseFileName;
@@ -279,7 +278,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 						// Batch Automatic Lattice-Building
-						PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText());
+						PlugInAlgorithmWormUntwisting.buildLattice( batchProgress, includeRange, baseFileDir[0], baseFileNameText.getText());
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish automatic lattice-building." );
 						return;
@@ -291,7 +290,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 						// Batch Untwisting:
-						PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), paddingFactor, modelStraightenCheck.isSelected() );
+						PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), paddingFactor, modelStraightenCheck.isSelected() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish straightening." );
 						e.printStackTrace();
@@ -304,7 +303,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 						// Batch Registration/MP calculation:
-						PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir,  baseFileDir2, baseFileNameText.getText() );
+						PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish maximum-projection calculation." );
 						return;
@@ -316,7 +315,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					try {
 						if ( resliceImageCheck.isSelected() )
 						{
-							PlugInAlgorithmWormUntwisting.reslice( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), 
+							PlugInAlgorithmWormUntwisting.reslice( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), 
 									resliceXValue, resliceYValue, resliceZValue );
 						}					
 					} catch ( java.lang.OutOfMemoryError e ) {
@@ -1217,8 +1216,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				backNextPanel.add(previewUntwisting);
 
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
+				File voiFile2 = new File(baseFileDir[1] + File.separator + fileName);
 				if ( openImages( voiFile, null, fileName ) )
 				{
 					// open default file and get the lattice:
@@ -1467,8 +1466,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
+				File voiFile2 = new File(baseFileDir[1] + File.separator + fileName);
 				if ( openImages( voiFile, voiFile2, fileName ) )
 				{
 					wormImage.setImageName( wormImage.getImageName().replace("_rgb", ""));
@@ -1563,8 +1562,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
-				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
+				File voiFile2 = new File(baseFileDir[1] + File.separator + fileName);
 				if ( openImages( voiFile, voiFile2, fileName ) )
 				{
 					wormImage.setImageName( wormImage.getImageName().replace("_rgb", ""));
@@ -1621,7 +1620,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
-				File voiFile = new File(baseFileDir + File.separator + fileName);
+				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
 				if ( openImages( voiFile, null, fileName ) )
 				{
 					wormData = new WormData(wormImage);
@@ -1665,8 +1664,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				String imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
-				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
-				File voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				File voiFile = new File(baseFileDir[0] + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				File voiFile2 = new File(baseFileDir[1] + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				if ( openImages( voiFile, voiFile2, imageName ) )
 				{			
 					wormData = new WormData(wormImage);
@@ -1704,7 +1703,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		ViewJProgressBar progress = new  ViewJProgressBar( "Generating Animation", "", 0, 100, false);
 		MipavUtil.centerOnScreen(progress);
 
-		String inputDirName = baseFileDir + File.separator;
+		String inputDirName = baseFileDir[0] + File.separator;
 		//		System.err.println( inputDirName );
 		final File inputFileDir = new File(inputDirName);
 
@@ -1912,7 +1911,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		extents[2] = (int)Math.max( 30, (max.Z - min.Z) + 10);
 
 		ModelImage animationImage = new ModelImage( ModelStorageBase.BOOLEAN, extents, "animationImage" );
-		String outputDirName = baseFileDir + File.separator + "animation" + File.separator;
+		String outputDirName = baseFileDir[0] + File.separator + "animation" + File.separator;
 		final File outputFileDir = new File(outputDirName);
 
 		if (outputFileDir.exists() && outputFileDir.isDirectory()) {
@@ -2755,9 +2754,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		}
 
 		baseFileName = baseFileNameText.getText();
-		baseFileDir = baseFileLocText.getText();
-		baseFileDir2 = baseFileLocText2.getText();
-		editAnnotations2.setEnabled( !baseFileDir2.isEmpty() );
+		baseFileDir = new String[3];
+		baseFileDir[0] = baseFileLocText.getText();
+		baseFileDir[1] = baseFileLocText2.getText();
+		baseFileDir[2] = "";
+		editAnnotations2.setEnabled( !baseFileDir[1].isEmpty() );
 
 		includeRange = new Vector<Integer>();
 		String rangeFusion = rangeFusionText.getText();
