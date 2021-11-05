@@ -54,9 +54,9 @@ The merit of this method is that you can detect the success of this estimation v
 You can use isSucceed() function to check it. (0/1 to failure/succeed)
 
 References:
-1.) Y. Ri and H. Fujimoto, “Drift-free Motion Estimation from Video Images using Phase Correlation and Linear Optimization,”
+1.) Y. Ri and H. Fujimoto, "Drift-free Motion Estimation from Video Images using Phase Correlation and Linear Optimization,"
  in The 15th International Workshop on Advanced Motion Control, 2018, pp. 295-300.
- 2.) Y. Ri and H. Fujimoto, “Image Based Visual Servo Application on Video Tracking with Monocular Camera Based on Phase Correlation Method,” 
+ 2.) Y. Ri and H. Fujimoto, "Image Based Visual Servo Application on Video Tracking with Monocular Camera Based on Phase Correlation Method," 
  The 3rd IEEJ international workshop on Sensing, Actuation, Motion Control, and Optimization, 2017.
  3.) Kenji Takita, Takafumi Aoki, Yoshifumi Sasaki, Tatsuo Higuchi, and Koji Kobayashi, "High-Accuracy Subpixel Image
  Registration Based on Phase-Only Correlation," IEEE Trans. Fundamentals, Vol. E86-A, No.8, August, 2003, pp. 1925-1934.
