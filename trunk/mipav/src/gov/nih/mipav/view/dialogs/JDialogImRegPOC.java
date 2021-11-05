@@ -164,7 +164,6 @@ public class JDialogImRegPOC extends JDialogScriptableBase
         buildComboBoxImage();
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
-        comboBoxImage.setEnabled(false);
         paramPanel.add(comboBoxImage, gbc2);
         
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
