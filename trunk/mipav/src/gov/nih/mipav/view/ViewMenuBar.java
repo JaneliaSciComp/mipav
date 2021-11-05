@@ -383,6 +383,8 @@ public class ViewMenuBar {
 										false),
 								menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null,
 										false),
+								menuBuilder.buildMenuItem("Phase only correlation", "RegPOC", 0, null,
+										false),
 								menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
 								menuBuilder.buildMenuItem("SIFT registration 3D", "SIFT3DReg", 0, null, false),
 								menuBuilder.buildMenuItem("VABRA", "VABRA", 0, null, false),
@@ -1469,6 +1471,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("BM3D", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D", false);
+			menuBuilder.setMenuItemEnabled("Phase only correlation", false);
 			menuBuilder.setMenuItemEnabled("Center of mass", false);
 			menuBuilder.setMenuItemEnabled("Density based clustering", false);
 			menuBuilder.setMenuItemEnabled("Edge detection", false);
@@ -1598,6 +1601,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("DSC_MRI_toolbox", false);
 			menuBuilder.setMenuItemEnabled("SIFT", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D", true);
+			menuBuilder.setMenuItemEnabled("Phase only correlation", false);
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
 			menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
@@ -1728,6 +1732,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("FFT", false);
 			menuBuilder.setMenuItemEnabled("SWI", false);
 			menuBuilder.setMenuItemEnabled("SIFT registration 3D",false);
+			menuBuilder.setMenuItemEnabled("Phase only correlation", false);
 			menuBuilder.setMenuItemEnabled("Canny", false);
 			menuBuilder.setMenuItemEnabled("Entropic", false);
 			menuBuilder.setMenuItemEnabled("Phase congruency", false);
@@ -1823,6 +1828,7 @@ public class ViewMenuBar {
 		// menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
 		// }
 
+		menuBuilder.setMenuItemEnabled("Phase only correlation", true);
 		menuBuilder.setMenuItemEnabled("Guided filter", true);
 		menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", true);
 		menuBuilder.setMenuItemEnabled("Trilateral filter", true);
