@@ -288,13 +288,13 @@ public class ImRegPOC extends AlgorithmBase {
 		// 2D fft
 		IAImag = new double[length];
 		BImag = new double[length];
-		FFTUtility fftA = new FFTUtility(IA, IAImag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftA = new FFTUtility(IA, IAImag, height, width, 1, -1, FFTUtility.FFT);
 		fftA.run();
-		FFTUtility fftA2 = new FFTUtility(IA, IAImag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftA2 = new FFTUtility(IA, IAImag, 1, height, width, -1, FFTUtility.FFT);
 		fftA2.run();
-		FFTUtility fftB = new FFTUtility(B, BImag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftB = new FFTUtility(B, BImag, height, width, 1, -1, FFTUtility.FFT);
 		fftB.run();
-		FFTUtility fftB2 = new FFTUtility(B, BImag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftB2 = new FFTUtility(B, BImag, 1, height, width, -1, FFTUtility.FFT);
 		fftB2.run(); 
 		
 		At = new double[length];
@@ -369,13 +369,13 @@ public class ImRegPOC extends AlgorithmBase {
 	   // phase correlation to get rotation and scaling
 		lpcAImag = new double[length];
 		lpcBImag = new double[length];
-		FFTUtility fftlA = new FFTUtility(lpcA, lpcAImag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftlA = new FFTUtility(lpcA, lpcAImag, height, width, 1, -1, FFTUtility.FFT);
 		fftlA.run();
-		FFTUtility fftlA2 = new FFTUtility(lpcA, lpcAImag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftlA2 = new FFTUtility(lpcA, lpcAImag, 1, height, width, -1, FFTUtility.FFT);
 		fftlA2.run();
-		FFTUtility fftlB = new FFTUtility(lpcB, lpcBImag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftlB = new FFTUtility(lpcB, lpcBImag, height, width, 1, -1, FFTUtility.FFT);
 		fftlB.run();
-		FFTUtility fftlB2 = new FFTUtility(lpcB, lpcBImag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftlB2 = new FFTUtility(lpcB, lpcBImag, 1, height, width, -1, FFTUtility.FFT);
 		fftlB2.run(); 
 		Pp = new double[length];
 		PpImag = new double[length];
@@ -390,9 +390,9 @@ public class ImRegPOC extends AlgorithmBase {
 		    PpImag[i] = Ap*BpImag + ApImag * Bp;
 		}
 		// Real part of inverse transform
-		FFTUtility fftPp = new FFTUtility(Pp, PpImag, length, width, 1, 1, FFTUtility.FFT);
+		FFTUtility fftPp = new FFTUtility(Pp, PpImag, height, width, 1, 1, FFTUtility.FFT);
 		fftPp.run();
-		FFTUtility fftPp2 = new FFTUtility(Pp, PpImag, 1, length, width, 1, FFTUtility.FFT);
+		FFTUtility fftPp2 = new FFTUtility(Pp, PpImag, 1, height, width, 1, FFTUtility.FFT);
 		fftPp2.run();
 		PpShift = fftshift(Pp, height, width);
 		
@@ -446,13 +446,13 @@ public class ImRegPOC extends AlgorithmBase {
 			}
 		}
 		
-		FFTUtility fftR1 = new FFTUtility(IB_R1, IB_R1Imag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftR1 = new FFTUtility(IB_R1, IB_R1Imag, height, width, 1, -1, FFTUtility.FFT);
 		fftR1.run();
-		FFTUtility fftR12 = new FFTUtility(IB_R1, IB_R1Imag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftR12 = new FFTUtility(IB_R1, IB_R1Imag, 1, height, width, -1, FFTUtility.FFT);
 		fftR12.run();
-		FFTUtility fftR2 = new FFTUtility(IB_R2, IB_R2Imag, length, width, 1, -1, FFTUtility.FFT);
+		FFTUtility fftR2 = new FFTUtility(IB_R2, IB_R2Imag, height, width, 1, -1, FFTUtility.FFT);
 		fftR2.run();
-		FFTUtility fftR22 = new FFTUtility(IB_R2, IB_R2Imag, 1, length, width, -1, FFTUtility.FFT);
+		FFTUtility fftR22 = new FFTUtility(IB_R2, IB_R2Imag, 1, height, width, -1, FFTUtility.FFT);
 		fftR22.run(); 
 		
 		IB1p = new double[length];
@@ -483,15 +483,15 @@ public class ImRegPOC extends AlgorithmBase {
 		}
 		
 		// Real part of inverse transform
-		FFTUtility fftPp1 = new FFTUtility(Pp1, Pp1Imag, length, width, 1, 1, FFTUtility.FFT);
+		FFTUtility fftPp1 = new FFTUtility(Pp1, Pp1Imag, height, width, 1, 1, FFTUtility.FFT);
 		fftPp1.run();
-		FFTUtility fftPp12 = new FFTUtility(Pp1, Pp1Imag, 1, length, width, 1, FFTUtility.FFT);
+		FFTUtility fftPp12 = new FFTUtility(Pp1, Pp1Imag, 1, height, width, 1, FFTUtility.FFT);
 		fftPp12.run();
 		Pp1Shift = fftshift(Pp1, height, width);
 		
-		FFTUtility fftPp22 = new FFTUtility(Pp2, Pp2Imag, length, width, 1, 1, FFTUtility.FFT);
+		FFTUtility fftPp22 = new FFTUtility(Pp2, Pp2Imag, height, width, 1, 1, FFTUtility.FFT);
 		fftPp22.run();
-		FFTUtility fftPp222 = new FFTUtility(Pp2, Pp2Imag, 1, length, width, 1, FFTUtility.FFT);
+		FFTUtility fftPp222 = new FFTUtility(Pp2, Pp2Imag, 1, height, width, 1, FFTUtility.FFT);
 		fftPp222.run();
 		Pp2Shift = fftshift(Pp2, height, width);
 		
