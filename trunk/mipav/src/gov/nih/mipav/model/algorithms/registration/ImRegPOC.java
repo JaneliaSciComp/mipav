@@ -538,7 +538,7 @@ public class ImRegPOC extends AlgorithmBase {
 			dy = Math.floor(height/2.0)- pyy1 + 1;
 			
 			peak = maxVal1;   
-			result = imtranslate(IB_recover1,-dx, -dy);
+			result = imtranslate(IB_recover1,dx, dy);
 		} // if (maxVal1 > maxVal2)
 		else {
 			theta = theta2;
@@ -556,7 +556,7 @@ public class ImRegPOC extends AlgorithmBase {
 			dy = Math.floor(height/2.0)- pyy2 + 1;
 			
 			peak = maxVal2; 
-			result = imtranslate(IB_recover2, -dx, -dy);
+			result = imtranslate(IB_recover2, dx, dy);
 		}
 		
 		try {
