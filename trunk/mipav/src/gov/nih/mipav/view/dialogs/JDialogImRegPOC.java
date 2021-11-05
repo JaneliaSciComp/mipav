@@ -153,6 +153,7 @@ public class JDialogImRegPOC extends JDialogScriptableBase
         JLabel labelImage = createLabel(imageName);
         paramPanel.add(labelImage, gbc2);
         
+        gbc2.gridx = 0;
         gbc2.gridy = 1;
         gbc2.gridwidth = 1;
         labelReference = createLabel("Reference image: ");
