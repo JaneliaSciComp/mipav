@@ -43,7 +43,52 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 
-This program provides robust image registration method using "Phase Correlation" technique.
+The warpPolar routine is derived from warpPolar in the Open Source Computer Vision Library with the license:
+/*M///////////////////////////////////////////////////////////////////////////////////////
+	//
+	//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+	//
+	//  By downloading, copying, installing or using the software you agree to this license.
+	//  If you do not agree to this license, do not download, install,
+	//  copy or use the software.
+	//
+	//
+	//                           License Agreement
+	//                For Open Source Computer Vision Library
+	//
+	// Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
+	// Copyright (C) 2009, Willow Garage Inc., all rights reserved.
+	// Copyright (C) 2014-2015, Itseez Inc., all rights reserved.
+	// Third party copyrights are property of their respective owners.
+	//
+	// Redistribution and use in source and binary forms, with or without modification,
+	// are permitted provided that the following conditions are met:
+	//
+	//   * Redistribution's of source code must retain the above copyright notice,
+	//     this list of conditions and the following disclaimer.
+	//
+	//   * Redistribution's in binary form must reproduce the above copyright notice,
+	//     this list of conditions and the following disclaimer in the documentation
+	//     and/or other materials provided with the distribution.
+	//
+	//   * The name of the copyright holders may not be used to endorse or promote products
+	//     derived from this software without specific prior written permission.
+	//
+	// This software is provided by the copyright holders and contributors "as is" and
+	// any express or implied warranties, including, but not limited to, the implied
+	// warranties of merchantability and fitness for a particular purpose are disclaimed.
+	// In no event shall the Intel Corporation or contributors be liable for any direct,
+	// indirect, incidental, special, exemplary, or consequential damages
+	// (including, but not limited to, procurement of substitute goods or services;
+	// loss of use, data, or profits; or business interruption) however caused
+	// and on any theory of liability, whether in contract, strict liability,
+	// or tort (including negligence or otherwise) arising in any way out of
+	// the use of this software, even if advised of the possibility of such damage.
+	//
+	//M*/
+
+
+/*This program provides robust image registration method using "Phase Correlation" technique.
 
 With this toolbox, you can estimate 
 Translation, Rotation and Scaling between two 2D gray scale images with identical dimensions.
@@ -66,6 +111,17 @@ References:
 
 public class ImRegPOC extends AlgorithmBase {
 	
+	private final int INTER_LINEAR = 1;
+	private final int INTER_CUBIC = 2;
+	private final int INTER_LANCZOS4 = 4;
+	private final int INTER_MAX = 7;
+	private final int WARP_FILL_OUTLIERS = 8;
+	private final int WARP_INVERSE_MAP = 16;
+	private final int WARP_POLAR_LOG = 256;
+	
+	private final int BORDER_CONSTANT = 0;
+	private final int BORDER_TRANSPARENT = 5;
+	
 	/** The inputImage will be registered to this reference image. */
     private ModelImage refImage;
     
@@ -74,15 +130,282 @@ public class ImRegPOC extends AlgorithmBase {
     
     private int height, width, length;
     
+    private boolean isMATLABVersion = true;
+    
+    private double threshold = 0.06;
+    
+    private double alpha = 0.5;
+    
+    private double beta = 0.8;
+    
     public ImRegPOC(final ModelImage dstImage, final ModelImage imageA, final ModelImage imageB) {
     	super(dstImage, imageB);
         refImage = imageA;
         inputImage = imageB;
+        isMATLABVersion = true;
+    }
+    
+    public ImRegPOC(final ModelImage dstImage, final ModelImage imageA, final ModelImage imageB,
+    		double threshold, double alpha, double beta) {
+    	super(dstImage, imageB);
+        refImage = imageA;
+        inputImage = imageB;
+        this.threshold = threshold;
+        this.alpha = alpha;
+        this.beta = beta;
+        isMATLABVersion = false;
+    }
+    
+    public void runAlgorithm() {
+    	if (refImage.getNDims() != 2) {
+			MipavUtil.displayError("In ImRegPOC refImage has " + refImage.getNDims() + " dimensions instead of the required 2 dimensions");
+			setCompleted(false);
+			return;
+		}
+		
+		if (inputImage.getNDims() != 2) {
+			MipavUtil.displayError("In ImRegPOC inputImage has " + inputImage.getNDims() + " dimensions instead of the required 2 dimensions");
+			setCompleted(false);
+			return;
+		}
+		
+		if (refImage.isColorImage()) {
+			MipavUtil.displayError("In ImRegPOC refImage cannot be a color image");
+			setCompleted(false);
+			return;
+		}
+		
+		if (inputImage.isColorImage()) {
+			MipavUtil.displayError("In ImRegPOC inputImage cannot be a color image");
+			setCompleted(false);
+			return;
+		}
+		
+		if (refImage.isComplexImage()) {
+			MipavUtil.displayError("In ImRegPOC refImage cannot be a complex image");
+			setCompleted(false);
+			return;
+		}
+		
+		if (inputImage.isComplexImage()) {
+			MipavUtil.displayError("In ImRegPOC inputImage cannot be a complex image");
+			setCompleted(false);
+			return;
+		}
+		
+		if (inputImage.getExtents()[0] != refImage.getExtents()[0]) {
+			MipavUtil.displayError("In imRegPOC inputImage.getExtents()[0] = != refImage.getExtents()[0]");
+			setCompleted(false);
+			return;
+		}
+		
+		if (inputImage.getExtents()[1] != refImage.getExtents()[1]) {
+			MipavUtil.displayError("In imRegPOC inputImage.getExtents()[1] = != refImage.getExtents()[1]");
+			setCompleted(false);
+			return;
+		}
+		if (isMATLABVersion) {
+			runMATLABVersion();
+		}
+		else {
+			runPythonVersion();
+		}
+    }
+    
+    public void runPythonVersion() {
+        ModelImage outputImage;
+        double ref[];
+        double cmp[];
+        double centerx;
+        double centery;
+        double param[];
+        double peak;
+        double affine[][];
+        double perspective[][];
+        double hanw[];
+        double G_a[];
+        double G_aImag[];
+        double G_b[];
+        double G_bImag[];
+        double Amag[];
+        double Bmag[];
+        double LA[][];
+        double LB[][];
+        int i;
+        double cx;
+        double cy;
+        double Mag;
+	    if (destImage != null) {
+		    outputImage = destImage;
+	    }
+	    else {
+		    outputImage = srcImage;
+	    }
+	   
+	    height = refImage.getExtents()[1];
+		width = refImage.getExtents()[0];
+		length = width * height;
+		ref = new double[length];
+		try {
+			refImage.exportData(0, length, ref);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException on refImage.exportData(0, length, ref)");
+			setCompleted(false);
+			return;
+		}
+		
+		cmp = new double[length];
+		try {
+			inputImage.exportData(0, length, cmp);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException on inputImage.exportData(0, length, cmp)");
+			setCompleted(false);
+			return;
+		}
+		
+		centerx = (double)width/2.0;
+		centery = (double)height/2.0;
+		param = new double[] {0.0, 0.0, 0.0, 1.0};
+		peak = 0.0;
+		affine = new double[][] {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}};
+		perspective = new double[][] {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 0.0}};
+		hanw = createHanningWindow();
+		
+		// Windowing and FFT
+		G_a = new double[length];
+		G_aImag = new double[length];
+		for (i = 0; i < length; i++) {
+		    G_a[i] = ref[i]*hanw[i];
+		}
+		FFTUtility fftA = new FFTUtility(G_a, G_aImag, height, width, 1, -1, FFTUtility.FFT);
+		fftA.run();
+		FFTUtility fftA2 = new FFTUtility(G_a, G_aImag, 1, height, width, -1, FFTUtility.FFT);
+		fftA2.run();
+		
+		G_b = new double[length];
+		G_bImag = new double[length];
+		for (i = 0; i < length; i++) {
+		    G_b[i] = cmp[i]*hanw[i];
+		}
+		FFTUtility fftB = new FFTUtility(G_b, G_bImag, height, width, 1, -1, FFTUtility.FFT);
+		fftB.run();
+		FFTUtility fftB2 = new FFTUtility(G_b, G_bImag, 1, height, width, -1, FFTUtility.FFT);
+		fftB2.run();
+		
+		// 1.1: Frequency Whitening
+		Amag = new double[length];
+		Bmag = new double[length];
+		for (i = 0; i < length; i++) {
+			Amag[i] = Math.sqrt(G_a[i]*G_a[i] + G_aImag[i]*G_aImag[i]);
+			Bmag[i] = Math.sqrt(G_b[i]*G_b[i] + G_bImag[i]*G_bImag[i]);
+		}
+		
+		for (i = 0; i < length; i++) {
+			Amag[i] = Math.log(Amag[i] + 1.0);
+			Bmag[i] = Math.log(Bmag[i] + 1.0);
+		}
+		LA = fftshift(Amag, height, width);
+	    LB = fftshift(Bmag, height, width);
+	    
+	    // 1.2: Log polar Transformation
+        cx = centerx;
+        cy = centery;
+        Mag = (double)width/Math.log(width);
+        // logPolar with maxRadius = Mag calls warpPolar with
+        // double M = maxRadius > 0 ? std::exp(ssize.width/maxRadius) : 1
+        // so M = exp(width/(width/log(width)) = exp(log(width)) = width
+        // warpPolar is called with the WARP_POLAR_LOG flag set
+        // flags=cv2.INTER_LINEAR+cv2.WARP_FILL_OUTLIERS+cv2.WARP_POLAR_FLAG
+    }
+    
+    private void warpPolar(double _src[][], double _dst[][], int width, int height,
+           double centerx, double centery, double maxRadius, int flags) {
+        // if dest size is empty given than calculate using proportional setting
+        // thus we calculate needed angles to keep same area as bounding circle
+        if ((width <= 0) && (height <= 0))
+        {
+            width = (int)Math.round(maxRadius);
+            height = (int)Math.round(maxRadius * Math.PI);
+        }
+        else if (height <= 0)
+        {
+            height = (int)Math.round(width * Math.PI);
+        }
+        
+        double mapx[][] = new double[height][width];
+        double mapy[][] = new double[height][width];
+        boolean semiLog = (flags & WARP_POLAR_LOG) != 0;
+        if ((flags & WARP_INVERSE_MAP) == 0) {
+            double Kangle = 2.0*Math.PI / height;
+            int phi, rho;
+
+
+            // precalculate scaled rho
+            double bufRhos[] = new double[width];
+            if (semiLog)
+            {
+                double Kmag = Math.log(maxRadius) / width;
+                for (rho = 0; rho < width; rho++)
+                    bufRhos[rho] = Math.exp(rho * Kmag) - 1.0;
+
+
+            }
+            else
+            {
+                double Kmag = maxRadius / width;
+                for (rho = 0; rho < width; rho++)
+                    bufRhos[rho] = (rho * Kmag);
+            }
+            for (phi = 0; phi < height; phi++)
+            {
+                double KKy = Kangle * phi;
+                double cp = Math.cos(KKy);
+                double sp = Math.sin(KKy);
+
+
+                for (rho = 0; rho < width; rho++)
+                {
+                    double x = bufRhos[rho] * cp + centerx;
+                    double y = bufRhos[rho] * sp + centery;
+
+
+                    mapx[phi][rho] = x;
+                    mapy[phi][rho] = y;
+                }
+            }
+            //remap(_src, _dst, mapx, mapy, flags & cv::INTER_MAX, (flags & CV_WARP_FILL_OUTLIERS) ? cv::BORDER_CONSTANT : cv::BORDER_TRANSPARENT);
+            // flags & CV::INTER_MAX gives INTER_LINEAR
+            // (flags & CV_WARP_FILL_OUTLIERS) gives BORDER_CONSTANT
+        } // if ((flags & WARP_INVERSE_MAP) == 0)
+
+    }
+
+    
+    private double[] createHanningWindow() {
+    	int i,j;
+    	double window[] = new double[length];
+    	double coeff0 = 2.0 * Math.PI / (double)(width - 1);
+    	double coeff1 = 2.0 * Math.PI / (double)(height - 1);
+    	double wc[] = new double[width];
+        for (j = 0; j < width; j++) {
+            wc[j] = 0.5 * (1.0 - Math.cos(coeff0 * j));
+        }
+        
+        for(i = 0; i < height; i++)
+        {
+            double wr = 0.5 * (1.0 - Math.cos(coeff1 * i));
+            for(j = 0; j < width; j++) {
+                window[i*width + j] = wr * wc[j];
+            }
+        }
+        return window;
     }
 	
 	
-	public void runAlgorithm() {
-		ModelImage outputImage;
+	public void runMATLABVersion() {
+	   ModelImage outputImage;
    	   if (destImage != null) {
    		   outputImage = destImage;
    	   }
@@ -169,53 +492,7 @@ public class ImRegPOC extends AlgorithmBase {
 		double pxx2;
 		double pyy2;
 		double result[];
-		if (refImage.getNDims() != 2) {
-			MipavUtil.displayError("In ImRegPOC refImage has " + refImage.getNDims() + " dimensions instead of the required 2 dimensions");
-			setCompleted(false);
-			return;
-		}
 		
-		if (inputImage.getNDims() != 2) {
-			MipavUtil.displayError("In ImRegPOC inputImage has " + inputImage.getNDims() + " dimensions instead of the required 2 dimensions");
-			setCompleted(false);
-			return;
-		}
-		
-		if (refImage.isColorImage()) {
-			MipavUtil.displayError("In ImRegPOC refImage cannot be a color image");
-			setCompleted(false);
-			return;
-		}
-		
-		if (inputImage.isColorImage()) {
-			MipavUtil.displayError("In ImRegPOC inputImage cannot be a color image");
-			setCompleted(false);
-			return;
-		}
-		
-		if (refImage.isComplexImage()) {
-			MipavUtil.displayError("In ImRegPOC refImage cannot be a complex image");
-			setCompleted(false);
-			return;
-		}
-		
-		if (inputImage.isComplexImage()) {
-			MipavUtil.displayError("In ImRegPOC inputImage cannot be a complex image");
-			setCompleted(false);
-			return;
-		}
-		
-		if (inputImage.getExtents()[0] != refImage.getExtents()[0]) {
-			MipavUtil.displayError("In imRegPOC inputImage.getExtents()[0] = != refImage.getExtents()[0]");
-			setCompleted(false);
-			return;
-		}
-		
-		if (inputImage.getExtents()[1] != refImage.getExtents()[1]) {
-			MipavUtil.displayError("In imRegPOC inputImage.getExtents()[1] = != refImage.getExtents()[1]");
-			setCompleted(false);
-			return;
-		}
 		
 		height = refImage.getExtents()[1];
 		width = refImage.getExtents()[0];
@@ -226,15 +503,15 @@ public class ImRegPOC extends AlgorithmBase {
 	    // Create window
 		// hannig window and root of hanning window
 		han_win = new double[length];
-		Rhan_win = new double[length];
+		//Rhan_win = new double[length];
 		
 		// make window 
 		for (i = 1; i <= height; i++) {
 		    for (j = 1; j <= width; j++) {
 		            han_win[(i-1)*width + j-1] = 0.25 * (1.0 + Math.cos(Math.PI*Math.abs(cy- i) / height))*(1.0 + Math.cos(Math.PI*Math.abs(cx - j) / width));
 		            // Root han_win
-		            Rhan_win[(i-1)*width + j-1] = Math.abs(Math.cos(Math.PI*Math.abs(cy - i) / height)*Math.cos(Math.PI*Math.abs(cx - j) / width));
-		            /*if i >height/8  &&  i<height*7/8
+		            /*Rhan_win[(i-1)*width + j-1] = Math.abs(Math.cos(Math.PI*Math.abs(cy - i) / height)*Math.cos(Math.PI*Math.abs(cx - j) / width));
+		            if i >height/8  &&  i<height*7/8
 		                fi = 1;
 		            elseif i <= height/8
 		                fi = (i-1)/height * 8;
