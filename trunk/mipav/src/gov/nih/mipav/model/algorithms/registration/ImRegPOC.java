@@ -606,40 +606,80 @@ public class ImRegPOC extends AlgorithmBase {
 		// cut off val of LPF
 		LPmin = width*(1-log2(4*Math.PI)/log2(width));
 		
-		// start logplolar 
+		// start logpolar 
+		// Used refImage with single pixel width rectangle
+		// Used cmpImage with rectangle shifted by +1 pixel x and +1 pixel y
+		// Mean squared error of registered cmpImage to refImage:
+		// cx, cy 44.756
+		// cx-1, cy-1 44.805
+		// cx-1, cy 44.801
+		// cx,cy-1 44.800
+		// cx+1, cy 44.801
+		// cx, cy+1 44.800
+		// cx+1, cy+1 44.805
+		// cx-1, cy+1 44.802
+		// cx+1, cy-1 44.802
+		
+		// For a 512 by 512 image r < (cx * 0.6) gives:
+		// minx = 102.74762465587082
+		// maxx = 409.2523753441292
+	    // miny = 102.74762465587082
+	    // maxy = 409.2523753441292
+		//double minx = Double.MAX_VALUE;
+		//double maxx = -Double.MAX_VALUE;
+		//double miny = Double.MAX_VALUE;
+		//double maxy = -Double.MAX_VALUE;
 		for (i= 0; i <= width-1; i++) {
 		    r = Math.pow(width,(double)(i)/(double)width);
 		    for (j = 0; j <=height-1; j++) {
 		        x=r*Math.cos(2*Math.PI*j/height)+cx;
-		        y=r*Math.sin(2*Math.PI*j/height)+cy;
-		        if (r < (cx * 0.6)) { // in the circle
-		             x0 = (int)Math.floor(x);
-		             y0 = (int)Math.floor(y);
-		             x1 = x0 + 1;
-		             y1 = y0 + 1;
-		            w0=x1-x;
-		            w1=x-x0;
-		            h0=y1-y;
-		            h1=y-y0;
-		            // Bilinear Interpolation
-		            val=As[y0][x0]*w0*h0 + As[y0][x1]*w1*h0+ As[y1][x0]*w0*h1 + As[y1][x1]*w1*h1;
-		            // High pass
-		            if (i > LPmin) { 
-		                 lpcA[i + j*width] =val;
-		            }
-		            else {
-		                 lpcA[i + j*width] =0;
-		            }
-		            val=Bs[y0][x0]*w0*h0 + Bs[y0][x1]*w1*h0+ Bs[y1][x0]*w0*h1 + Bs[y1][x1]*w1*h1;
-		            if (i > LPmin) { 
-		                 lpcB[i + j*width] = val;
-		            }
-		            else {
-		                 lpcB[i + j*width] = 0;
-		            }
+			    y=r*Math.sin(2*Math.PI*j/height)+cy;
+			    if ((y >= 0) && (y < height-1)) {
+			        if (r < (cx * 0.6)) { // in the circle
+			        	/*if (x < minx) {
+			        		minx = x;
+			        	}
+			        	if (x > maxx) {
+			        		maxx = x;
+			        	}
+			        	if (y < miny) {
+			        		miny = y;
+			        	}
+			        	if (y > maxy) {
+			        		maxy = y;
+			        	}*/
+			             x0 = (int)Math.floor(x);
+			             y0 = (int)Math.floor(y);
+			             x1 = x0 + 1;
+			             y1 = y0 + 1;
+			            w0=x1-x;
+			            w1=x-x0;
+			            h0=y1-y;
+			            h1=y-y0;
+			            // Bilinear Interpolation
+			            val=As[y0][x0]*w0*h0 + As[y0][x1]*w1*h0+ As[y1][x0]*w0*h1 + As[y1][x1]*w1*h1;
+			            // High pass
+			            if (i > LPmin) { 
+			                 lpcA[i + j*width] =val;
+			            }
+			            else {
+			                 lpcA[i + j*width] =0;
+			            }
+			            val=Bs[y0][x0]*w0*h0 + Bs[y0][x1]*w1*h0+ Bs[y1][x0]*w0*h1 + Bs[y1][x1]*w1*h1;
+			            if (i > LPmin) { 
+			                 lpcB[i + j*width] = val;
+			            }
+			            else {
+			                 lpcB[i + j*width] = 0;
+			            }
+			        }
 		        }
 		    }
 		}
+		/*System.err.println("minx = " + minx);
+		System.err.println("maxx = " + maxx);
+		System.err.println("miny = " + miny);
+		System.err.println("maxy = " + maxy);*/
 
 	   // end LogPoler
 		
