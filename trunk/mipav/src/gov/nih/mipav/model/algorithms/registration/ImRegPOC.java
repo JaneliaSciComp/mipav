@@ -138,6 +138,8 @@ public class ImRegPOC extends AlgorithmBase {
     
     private double beta = 0.8;
     
+    private double hanw[];
+    
     public ImRegPOC(final ModelImage dstImage, final ModelImage imageA, final ModelImage imageB) {
     	super(dstImage, imageB);
         refImage = imageA;
@@ -222,7 +224,6 @@ public class ImRegPOC extends AlgorithmBase {
         double peak;
         double affine[][];
         double perspective[][];
-        double hanw[];
         double G_a[];
         double G_aImag[];
         double G_b[];
@@ -231,10 +232,21 @@ public class ImRegPOC extends AlgorithmBase {
         double Bmag[];
         double LA[][];
         double LB[][];
-        int i;
+        double LPA[];
+        double LPB[];
+        double LPA_filt[];
+        double LPB_filt[];
+        int i,j;
         double cx;
         double cy;
         double Mag;
+        double r;
+        double x,y;
+        int x0,y0,x1,y1;
+        double w0,w1,h0,h1;
+        double val;
+        int LPmin;
+        int LPmax;
 	    if (destImage != null) {
 		    outputImage = destImage;
 	    }
@@ -318,9 +330,97 @@ public class ImRegPOC extends AlgorithmBase {
         // so M = exp(width/(width/log(width)) = exp(log(width)) = width
         // warpPolar is called with the WARP_POLAR_LOG flag set
         // flags=cv2.INTER_LINEAR+cv2.WARP_FILL_OUTLIERS+cv2.WARP_POLAR_FLAG
+        // remap code for warpPolar is overly complicated; just use logPolar
+        // from MATLAB code.
+       LPA = new double[length];
+       LPB = new double[length];
+        for (i= 0; i <= width-1; i++) {
+		    r = Math.pow(width,(double)(i)/(double)width);
+		    for (j = 0; j <=height-1; j++) {
+		        x=r*Math.cos(2*Math.PI*j/height)+cx;
+		        if ((x >= 0) && (x < width - 1)) {
+			    y=r*Math.sin(2*Math.PI*j/height)+cy;
+			        if ((y >= 0) && (y < height-1)) {
+			             x0 = (int)Math.floor(x);
+			             y0 = (int)Math.floor(y);
+			             x1 = x0 + 1;
+			             y1 = y0 + 1;
+			            w0=x1-x;
+			            w1=x-x0;
+			            h0=y1-y;
+			            h1=y-y0;
+			            // Bilinear Interpolation
+			            val=LA[y0][x0]*w0*h0 + LA[y0][x1]*w1*h0+ LA[y1][x0]*w0*h1 + LA[y1][x1]*w1*h1;
+			            LPA[i + j*width] =val;
+			            val=LB[y0][x0]*w0*h0 + LB[y0][x1]*w1*h0+ LB[y1][x0]*w0*h1 + LB[y1][x1]*w1*h1;
+			            LPB[i + j*width] = val;
+			        }
+		        }
+		    }
+		}
+        
+        // 1.3:filtering
+        LPmin = (int)Math.floor(Mag*Math.log(alpha*width/2.0/Math.PI));
+        LPmax = Math.min(width, (int)Math.floor(Mag*Math.log(width*beta/2)));
+        if (LPmax <= LPmin) {
+        	MipavUtil.displayError("LPmax <= LPmin.  Increase LPmax or decrease LPmin");
+        	setCompleted(false);
+        	return;
+        }
+        LPA_filt = new double[length];
+        LPB_filt = new double[length];
+        for (j = 0; j < height; j++) {
+        	for (i = LPmin-1; i <= LPmax-1; i++) {
+        		LPA_filt[i + j*width] = LPA[i + j*width];
+        		LPB_filt[i + j*width] = LPB[i + j*width];
+        	}
+        }
+        
+        // 1.4: Phase Correlate to Get Rotation and Scaling
+        // Diff,peak,r_rotatescale = PhaseCorrelation(LPA_filt,LPB_filt)
     }
     
-    private void warpPolar(double _src[][], double _dst[][], int width, int height,
+    // Correlation
+    private void PhaseCorrelation(double a[], double b[]) {
+    	int i;
+    	// FFT
+    	double G_a[] = new double[length];
+    	double G_aImag[] = new double[length];
+    	double G_b[] = new double[length];
+    	double G_bImag[] = new double[length];
+    	for (i = 0; i < length; i++) {
+    		G_a[i] = a[i] * hanw[i];
+    		G_b[i] = b[i] * hanw[i];
+    	}
+    	FFTUtility fftA = new FFTUtility(G_a, G_aImag, height, width, 1, -1, FFTUtility.FFT);
+		fftA.run();
+		FFTUtility fftA2 = new FFTUtility(G_a, G_aImag, 1, height, width, -1, FFTUtility.FFT);
+		fftA2.run();
+		
+		FFTUtility fftB = new FFTUtility(G_b, G_bImag, height, width, 1, -1, FFTUtility.FFT);
+		fftB.run();
+		FFTUtility fftB2 = new FFTUtility(G_b, G_bImag, 1, height, width, -1, FFTUtility.FFT);
+		fftB2.run();
+    }
+
+       
+       /* R = G_a*conj_b
+        R /= np.absolute(R)
+        r = np.fft.fftshift(np.fft.ifft2(R).real)
+        # Get result and Interpolation
+        DY,DX = np.unravel_index(r.argmax(), r.shape)
+        # Subpixel Accuracy
+        boxsize = 5
+        box = r[DY-int((boxsize-1)/2):DY+int((boxsize-1)/2)+1,DX-int((boxsize-1)/2):DX+int((boxsize-1)/2)+1] # x times x box
+        #TY,TX= CenterOfGravity(box)
+        TY,TX= self.WeightedCOG(box)
+        sDY = TY+DY
+        sDX = TX+DX
+        # Show the result
+        return [math.floor(width/2)-sDX,math.floor(height/2)-sDY],r[DY,DX],r */
+
+    
+    private void warpPolar(double _src[][], double _dst[][], int width, int height, 
            double centerx, double centery, double maxRadius, int flags) {
         // if dest size is empty given than calculate using proportional setting
         // thus we calculate needed angles to keep same area as bounding circle
