@@ -68,6 +68,14 @@ public class JDialogImRegPOC extends JDialogScriptableBase
     
     private JComboBox<String> comboBoxImage;
     
+    private double alpha = 0.5;
+    
+    private double beta = 0.8;
+    
+    private JTextField textAlpha;
+    
+    private JTextField textBeta;
+    
   //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -165,6 +173,24 @@ public class JDialogImRegPOC extends JDialogScriptableBase
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
         paramPanel.add(comboBoxImage, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy++;
+        JLabel labelAlpha = createLabel("Low pass factor alpha");
+        paramPanel.add(labelAlpha, gbc2);
+        
+        gbc2.gridx = 1;
+        textAlpha = createTextField("0.5");
+        paramPanel.add(textAlpha, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy++;
+        JLabel labelBeta = createLabel("High pass factor beta");
+        paramPanel.add(labelBeta, gbc2);
+        
+        gbc2.gridx = 1;
+        textBeta = createTextField("0.8");
+        paramPanel.add(textBeta, gbc2);
         
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
         destinationPanel = new JPanel(new BorderLayout());
@@ -269,6 +295,30 @@ public class JDialogImRegPOC extends JDialogScriptableBase
             return false;
         }
     	refImage = userInterface.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
+    	
+    	tmpStr = textAlpha.getText();
+
+        if (testParameter(tmpStr, 0.01, 0.99)) {
+            alpha = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            MipavUtil.displayError("alpha must be between 0.01 and 0.99");
+            textAlpha.requestFocus();
+            textAlpha.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textBeta.getText();
+        
+        if (testParameter(tmpStr, 0.01, 0.99)) {
+            beta = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            MipavUtil.displayError("beta must be between 0.01 and 0.99");
+            textBeta.requestFocus();
+            textBeta.selectAll();
+
+            return false;
+        }
         
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
@@ -298,7 +348,7 @@ public class JDialogImRegPOC extends JDialogScriptableBase
                 resultImage = new ModelImage(ModelImage.DOUBLE, destExtents, name);
 
                 // Make algorithm
-                imRegPOCAlgo = new ImRegPOC(resultImage, refImage, matchImage);
+                imRegPOCAlgo = new ImRegPOC(resultImage, refImage, matchImage, alpha, beta);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -335,7 +385,7 @@ public class JDialogImRegPOC extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
             	// Make algorithm
-            	imRegPOCAlgo = new ImRegPOC(null, refImage, matchImage);
+            	imRegPOCAlgo = new ImRegPOC(null, refImage, matchImage, alpha, beta);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -483,6 +533,9 @@ public class JDialogImRegPOC extends JDialogScriptableBase
         } else {
             setDisplayLocReplace();
         }
+        
+        alpha = scriptParameters.getParams().getDouble("alph");
+        beta = scriptParameters.getParams().getDouble("bet");
     }
     
     /**
@@ -495,6 +548,9 @@ public class JDialogImRegPOC extends JDialogScriptableBase
         if (getResultImage() != null) {
             scriptParameters.storeImageInRecorder(getResultImage());
         }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("alph", alpha));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bet", beta));
     }
     
     /**
@@ -585,6 +641,9 @@ public class JDialogImRegPOC extends JDialogScriptableBase
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterDouble("alph",0.5));
+            table.put(new ParameterDouble("bet",0.8));
+            
 	    } catch (final ParserException e) {
 	        // this shouldn't really happen since there isn't any real parsing going on...
 	        e.printStackTrace();
