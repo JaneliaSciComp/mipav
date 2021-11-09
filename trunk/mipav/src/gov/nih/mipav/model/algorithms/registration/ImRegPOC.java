@@ -399,7 +399,7 @@ public class ImRegPOC extends AlgorithmBase {
             theta += Math.PI*2;
         }
         
-        double result[] = Warp_4dof(cmp, Trans[0], Trans[1], theta, 1.0/invscale);
+        double result[] = Warp_4dof(cmp, -Trans[0],-Trans[1], -theta, invscale);
         
         try {
       	    outputImage.importData(0, result, true);
@@ -450,10 +450,10 @@ public class ImRegPOC extends AlgorithmBase {
    		             else {
    		                 y1 = y0 + 1;
    		             }
-   		            w0=x1-x;
-   		            w1=x-x0;
-   		            h0=y1-y;
-   		            h1=y-y0;
+   		            w0=x1-imgx;
+   		            w1=imgx-x0;
+   		            h0=y1-imgy;
+   		            h1=imgy-y0;
    		          
    		            val=Img[y0*width + x0]*w0*h0 + Img[y0*width + x1]*w1*h0+ Img[y1*width + x0]*w0*h1 + Img[y1*width + x1]*w1*h1;
    		            outImg[y*width + x]=val;	
