@@ -244,6 +244,7 @@ public class ImRegPOC extends AlgorithmBase {
         double r2[][];
         double Trans[];
         double theta;
+        double outOfBoundsValue;
 	    if (destImage != null) {
 		    outputImage = destImage;
 	    }
@@ -373,8 +374,8 @@ public class ImRegPOC extends AlgorithmBase {
         theta2 = theta1 + Math.PI; // deg theta ambiguity
         invscale = Math.exp(Diff[0]/Mag);
         // 2.1: Correct rotation and scaling
-        b1 = Warp_4dof(cmp,0.0,0.0,theta1,invscale);
-        b2 = Warp_4dof(cmp,0.0,0.0,theta2,invscale);
+        b1 = Warp_4dof(cmp,0.0,0.0,theta1,invscale,0.0);
+        b2 = Warp_4dof(cmp,0.0,0.0,theta2,invscale,0.0);
         
         // 2.2 : Translation estimation
         r1 = PhaseCorrelation(ref,b1,diff1,peak1);
@@ -399,7 +400,8 @@ public class ImRegPOC extends AlgorithmBase {
             theta += Math.PI*2;
         }
         
-        double result[] = Warp_4dof(cmp, -Trans[0],-Trans[1], -theta, invscale);
+        outOfBoundsValue = inputImage.getMin();
+        double result[] = Warp_4dof(cmp, -Trans[0],-Trans[1], -theta, invscale, outOfBoundsValue);
         
         try {
       	    outputImage.importData(0, result, true);
@@ -415,8 +417,8 @@ public class ImRegPOC extends AlgorithmBase {
     }
     
     // Warp Image based on poc parameter
-    private double[] Warp_4dof(double Img[], double dx, double dy, double theta, double scale) {
-    	int x,y;
+    private double[] Warp_4dof(double Img[], double dx, double dy, double theta, double scale, double outOfBoundsValue) {
+    	int x,y,i;
     	int x0, x1, y0, y1;
     	double w0, w1, h0, h1;
     	double val;
@@ -427,6 +429,9 @@ public class ImRegPOC extends AlgorithmBase {
         //outImg = cv2.warpPerspective(Img, Affine, (cols,rows), cv2.INTER_LINEAR)
         double M[][] = (Affine.inverse()).getArray();
         double outImg[] = new double[length];
+        for (i = 0; i < length; i++) {
+        	outImg[i] = outOfBoundsValue;
+        }
         for (y = 0; y < height; y++) {
         	for (x = 0; x < width; x++) {
         		double denom = M[2][0]*x + M[2][1]*y + M[2][2];
@@ -822,6 +827,7 @@ public class ImRegPOC extends AlgorithmBase {
 		double pxx2;
 		double pyy2;
 		double result[];
+		double outOfBoundsValue;
 		
 		
 		height = refImage.getExtents()[1];
@@ -1184,8 +1190,9 @@ public class ImRegPOC extends AlgorithmBase {
 			dx = Math.floor(width/2.0) - pxx1 + 1;
 			dy = Math.floor(height/2.0)- pyy1 + 1;
 			
-			peak = maxVal1;   
-			result = imtranslate(IB_recover1,dx, dy);
+			peak = maxVal1;
+			outOfBoundsValue = inputImage.getMin();
+			result = imtranslate(IB_recover1,dx, dy, outOfBoundsValue);
 		} // if (maxVal1 > maxVal2)
 		else {
 			theta = theta2;
@@ -1203,7 +1210,8 @@ public class ImRegPOC extends AlgorithmBase {
 			dy = Math.floor(height/2.0)- pyy2 + 1;
 			
 			peak = maxVal2; 
-			result = imtranslate(IB_recover2, dx, dy);
+			outOfBoundsValue = inputImage.getMin();
+			result = imtranslate(IB_recover2, dx, dy, outOfBoundsValue);
 		}
 		
 		try {
@@ -1219,7 +1227,7 @@ public class ImRegPOC extends AlgorithmBase {
   	    return;
 	}
 	
-	private double[] imtranslate(double Image[][], double translateX, double translateY) {
+	private double[] imtranslate(double Image[][], double translateX, double translateY, double outOfBoundsValue) {
 		int i,j;
 		double x,y;
 		int x0,y0,x1,y1;
@@ -1229,6 +1237,9 @@ public class ImRegPOC extends AlgorithmBase {
 		int width = Image[0].length;
 		
 		double translateimage[] = new double[height * width];
+		for (i = 0; i < height*width; i++) {
+			translateimage[i] = outOfBoundsValue;
+		}
 		
 		for (i= 0; i <= width-1; i++) {
 		    for (j= 0; j <= height-1; j++) {
