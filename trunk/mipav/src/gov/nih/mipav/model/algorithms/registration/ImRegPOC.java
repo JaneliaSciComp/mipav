@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms.registration;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.structures.*;
+import Jama.Matrix;
 
 import gov.nih.mipav.view.*;
 
@@ -111,17 +112,6 @@ References:
 
 public class ImRegPOC extends AlgorithmBase {
 	
-	private final int INTER_LINEAR = 1;
-	private final int INTER_CUBIC = 2;
-	private final int INTER_LANCZOS4 = 4;
-	private final int INTER_MAX = 7;
-	private final int WARP_FILL_OUTLIERS = 8;
-	private final int WARP_INVERSE_MAP = 16;
-	private final int WARP_POLAR_LOG = 256;
-	
-	private final int BORDER_CONSTANT = 0;
-	private final int BORDER_TRANSPARENT = 5;
-	
 	/** The inputImage will be registered to this reference image. */
     private ModelImage refImage;
     
@@ -131,8 +121,6 @@ public class ImRegPOC extends AlgorithmBase {
     private int height, width, length;
     
     private boolean isMATLABVersion = true;
-    
-    private double threshold = 0.06;
     
     private double alpha = 0.5;
     
@@ -148,11 +136,10 @@ public class ImRegPOC extends AlgorithmBase {
     }
     
     public ImRegPOC(final ModelImage dstImage, final ModelImage imageA, final ModelImage imageB,
-    		double threshold, double alpha, double beta) {
+    		double alpha, double beta) {
     	super(dstImage, imageB);
         refImage = imageA;
         inputImage = imageB;
-        this.threshold = threshold;
         this.alpha = alpha;
         this.beta = beta;
         isMATLABVersion = false;
@@ -218,13 +205,8 @@ public class ImRegPOC extends AlgorithmBase {
         ModelImage outputImage;
         double ref[];
         double cmp[];
-        double centerx;
-        double centery;
-        double param[];
         double Diff[] = new double[2];
         double peak[] = new double[1];
-        double affine[][];
-        double perspective[][];
         double G_a[];
         double G_aImag[];
         double G_b[];
@@ -252,6 +234,16 @@ public class ImRegPOC extends AlgorithmBase {
         double theta1;
         double theta2;
         double invscale;
+        double b1[];
+        double b2[];
+        double diff1[] = new double[2];
+        double peak1[] = new double[1];
+        double r1[][];
+        double diff2[] = new double[2];
+        double peak2[] = new double[1];
+        double r2[][];
+        double Trans[];
+        double theta;
 	    if (destImage != null) {
 		    outputImage = destImage;
 	    }
@@ -282,11 +274,8 @@ public class ImRegPOC extends AlgorithmBase {
 			return;
 		}
 		
-		centerx = (double)width/2.0;
-		centery = (double)height/2.0;
-		param = new double[] {0.0, 0.0, 0.0, 1.0};
-		affine = new double[][] {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}};
-		perspective = new double[][] {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 0.0}};
+		cx = (double)width/2.0;
+		cy = (double)height/2.0;
 		hanw = createHanningWindow();
 		
 		// Windowing and FFT
@@ -326,8 +315,6 @@ public class ImRegPOC extends AlgorithmBase {
 	    LB = fftshift(Bmag, height, width);
 	    
 	    // 1.2: Log polar Transformation
-        cx = centerx;
-        cy = centery;
         Mag = (double)width/Math.log(width);
         // logPolar with maxRadius = Mag calls warpPolar with
         // double M = maxRadius > 0 ? std::exp(ssize.width/maxRadius) : 1
@@ -386,7 +373,110 @@ public class ImRegPOC extends AlgorithmBase {
         theta2 = theta1 + Math.PI; // deg theta ambiguity
         invscale = Math.exp(Diff[0]/Mag);
         // 2.1: Correct rotation and scaling
+        b1 = Warp_4dof(cmp,0.0,0.0,theta1,invscale);
+        b2 = Warp_4dof(cmp,0.0,0.0,theta2,invscale);
+        
+        // 2.2 : Translation estimation
+        r1 = PhaseCorrelation(ref,b1,diff1,peak1);
+        r2 = PhaseCorrelation(ref,b2,diff2,peak2);
+        
+        // 2.3: Compare peaks and choose true rotational error
+        if (peak1[0] > peak2[0]) {
+            Trans = diff1;
+            peak[0] = peak1[0];
+            theta = -theta1;
+        }
+        else {
+            Trans = diff2;
+            peak[0] = peak2[0];
+            theta = -theta2;
+        }
+        
+        if (theta > Math.PI) {
+            theta -= Math.PI*2;
+        }
+        else if (theta < -Math.PI) {
+            theta += Math.PI*2;
+        }
+        
+        double result[] = Warp_4dof(cmp, Trans[0], Trans[1], theta, 1.0/invscale);
+        
+        try {
+      	    outputImage.importData(0, result, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on outputImage.importData(0, result, true)");
+      		setCompleted(false);
+      		return;
+      	}
+  	
+  	    setCompleted(true);
+  	    return;
     }
+    
+    // Warp Image based on poc parameter
+    private double[] Warp_4dof(double Img[], double dx, double dy, double theta, double scale) {
+    	int x,y;
+    	int x0, x1, y0, y1;
+    	double w0, w1, h0, h1;
+    	double val;
+        double cx = (double)width/2.0;
+        double cy = (double)height/2.0;
+        Matrix Affine = poc2warp(cx, cy, dx, dy, theta, scale);
+        // Affine is inverted when the flag WARP_INVERSE_MAP is not set
+        //outImg = cv2.warpPerspective(Img, Affine, (cols,rows), cv2.INTER_LINEAR)
+        double M[][] = (Affine.inverse()).getArray();
+        double outImg[] = new double[length];
+        for (y = 0; y < height; y++) {
+        	for (x = 0; x < width; x++) {
+        		double denom = M[2][0]*x + M[2][1]*y + M[2][2];
+        		double xnumerator = M[0][0]*x + M[0][1]*y + M[0][2];
+        		double imgx = xnumerator/denom;
+        		if ((imgx >= 0) && (imgx <= width-1)) {
+        			double ynumerator = M[1][0]*x + M[1][1]*y + M[1][2];
+        			double imgy = ynumerator/denom;
+        			if ((imgy >= 0) && (imgy <= height-1)) {
+        			 x0 = (int)Math.floor(imgx);
+   		             y0 = (int)Math.floor(imgy);
+   		             if (x0 == width - 1) {
+   		            	 x1 = x0;
+   		             }
+   		             else {
+   		                 x1 = x0 + 1;
+   		             }
+   		             if (y0 == height-1) {
+   		            	 y1 = y0;
+   		             }
+   		             else {
+   		                 y1 = y0 + 1;
+   		             }
+   		            w0=x1-x;
+   		            w1=x-x0;
+   		            h0=y1-y;
+   		            h1=y-y0;
+   		          
+   		            val=Img[y0*width + x0]*w0*h0 + Img[y0*width + x1]*w1*h0+ Img[y1*width + x0]*w0*h1 + Img[y1*width + x1]*w1*h1;
+   		            outImg[y*width + x]=val;	
+        			}
+        		}
+        	}
+        }
+        return outImg;
+    }
+        		
+	private Matrix poc2warp(double cx, double cy, double dx, double dy, double theta, double scale) {
+        double cs = scale * Math.cos(theta);
+        double sn = scale * Math.sin(theta);
+        
+        Matrix Rot = new Matrix(new double[][] {{cs, sn, 0},{-sn, cs,0},{0,0,1}});
+        Matrix center_Trans = new Matrix(new double[][] {{1,0,cx},{0,1,cy},{0,0,1}});
+        Matrix center_iTrans = new Matrix(new double[][] {{1,0,-cx},{0,1,-cy},{0,0,1}});
+        Matrix cRot = (center_Trans.times(Rot)).times(center_iTrans);
+        
+        Matrix Trans = new Matrix(new double[][] {{1,0,dx},{0,1,dy},{0,0,1}});
+        Matrix Affine = cRot.times(Trans);
+        return Affine;
+	}
     
     // Correlation
     private double[][] PhaseCorrelation(double a[], double b[],double Diff[], double peak[]) {
@@ -560,7 +650,7 @@ public class ImRegPOC extends AlgorithmBase {
     	return A;
     }
     
-    private void warpPolar(double _src[][], double _dst[][], int width, int height, 
+    /*private void warpPolar(double _src[][], double _dst[][], int width, int height, 
            double centerx, double centery, double maxRadius, int flags) {
         // if dest size is empty given than calculate using proportional setting
         // thus we calculate needed angles to keep same area as bounding circle
@@ -620,7 +710,7 @@ public class ImRegPOC extends AlgorithmBase {
             // (flags & CV_WARP_FILL_OUTLIERS) gives BORDER_CONSTANT
         } // if ((flags & WARP_INVERSE_MAP) == 0)
 
-    }
+    }*/
 
     
     private double[] createHanningWindow() {
@@ -654,7 +744,7 @@ public class ImRegPOC extends AlgorithmBase {
    	   }
 		int cy,cx;
 		double han_win[];
-		double Rhan_win[];
+		//double Rhan_win[];
 		double AI[];
 		double BI[];
 		double IA[];
