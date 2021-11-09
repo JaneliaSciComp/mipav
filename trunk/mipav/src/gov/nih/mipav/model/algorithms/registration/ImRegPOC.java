@@ -221,7 +221,8 @@ public class ImRegPOC extends AlgorithmBase {
         double centerx;
         double centery;
         double param[];
-        double peak;
+        double Diff[] = new double[2];
+        double peak[] = new double[1];
         double affine[][];
         double perspective[][];
         double G_a[];
@@ -247,6 +248,10 @@ public class ImRegPOC extends AlgorithmBase {
         double val;
         int LPmin;
         int LPmax;
+        double r_rotatescale[][];
+        double theta1;
+        double theta2;
+        double invscale;
 	    if (destImage != null) {
 		    outputImage = destImage;
 	    }
@@ -280,7 +285,6 @@ public class ImRegPOC extends AlgorithmBase {
 		centerx = (double)width/2.0;
 		centery = (double)height/2.0;
 		param = new double[] {0.0, 0.0, 0.0, 1.0};
-		peak = 0.0;
 		affine = new double[][] {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}};
 		perspective = new double[][] {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 0.0}};
 		hanw = createHanningWindow();
@@ -377,12 +381,28 @@ public class ImRegPOC extends AlgorithmBase {
         }
         
         // 1.4: Phase Correlate to Get Rotation and Scaling
-        // Diff,peak,r_rotatescale = PhaseCorrelation(LPA_filt,LPB_filt)
+        r_rotatescale = PhaseCorrelation(LPA_filt,LPB_filt, Diff, peak);
+        theta1 = 2*Math.PI * Diff[1] / height; // deg
+        theta2 = theta1 + Math.PI; // deg theta ambiguity
+        invscale = Math.exp(Diff[0]/Mag);
+        // 2.1: Correct rotation and scaling
     }
     
     // Correlation
-    private void PhaseCorrelation(double a[], double b[]) {
-    	int i;
+    private double[][] PhaseCorrelation(double a[], double b[],double Diff[], double peak[]) {
+    	int i,j;
+    	int DY, DX;
+    	double rmax;
+    	double Rmag;
+    	double r[][];
+    	int boxsize;
+    	double box[][];
+    	int halfbox;
+    	double T[];
+    	double TY;
+    	double TX;
+    	double sDY;
+    	double sDX;
     	// FFT
     	double G_a[] = new double[length];
     	double G_aImag[] = new double[length];
@@ -401,24 +421,144 @@ public class ImRegPOC extends AlgorithmBase {
 		fftB.run();
 		FFTUtility fftB2 = new FFTUtility(G_b, G_bImag, 1, height, width, -1, FFTUtility.FFT);
 		fftB2.run();
+		
+		double R[] = new double[length];
+		double RImag[] = new double[length];
+		for (i = 0; i < length; i++) {
+			R[i] = G_a[i]*G_b[i] + G_aImag[i]*G_bImag[i];
+			RImag[i] = -G_a[i]*G_bImag[i] + G_aImag[i]*G_b[i];
+			Rmag = Math.sqrt(R[i]*R[i] + RImag[i]*RImag[i]);
+			R[i] /= Rmag;
+			RImag[i] /= Rmag;
+		}
+		
+		// Real part of inverse transform
+		FFTUtility fftR = new FFTUtility(R, RImag, height, width, 1, 1, FFTUtility.FFT);
+	    fftR.run();
+		FFTUtility fftR2 = new FFTUtility(R, RImag, 1, height, width, 1, FFTUtility.FFT);
+		fftR2.run();
+		r = fftshift(R, height, width);
+		
+		// Get result and interpolation
+		rmax = -Double.MAX_VALUE;
+		DX = -1;
+		DY = -1;
+		for (i = 0; i < height; i++) {
+			for (j = 0; j < width; j++) {
+				if (r[i][j] > rmax) {
+					rmax = r[i][j];
+					DY = i;
+					DX = j;
+				}
+			}
+		}
+		
+		// Subpixel Axccuracy
+		boxsize = 5;
+		box = new double[boxsize][boxsize];
+		halfbox = (boxsize - 1)/2;
+		for (i = 0; i < boxsize; i++) {
+			for (j = 0; j < boxsize; j++) {
+				box[i][j] = r[DY + i - halfbox][DX + j - halfbox];
+			}
+		}
+		// TY,TX= CenterOfGravity(box)
+		T = WeightedCOG(box);
+		TY = T[0];
+		TX = T[1];
+		sDY = TY+DY;
+		sDX = TX+DX;
+		// Show the result
+		Diff[0] = Math.floor(width/2)-sDX;
+		Diff[1] = Math.floor(height/2)-sDY;
+		peak[0] = r[DY][DX];
+		return r;
     }
-
-       
-       /* R = G_a*conj_b
-        R /= np.absolute(R)
-        r = np.fft.fftshift(np.fft.ifft2(R).real)
-        # Get result and Interpolation
-        DY,DX = np.unravel_index(r.argmax(), r.shape)
-        # Subpixel Accuracy
-        boxsize = 5
-        box = r[DY-int((boxsize-1)/2):DY+int((boxsize-1)/2)+1,DX-int((boxsize-1)/2):DX+int((boxsize-1)/2)+1] # x times x box
-        #TY,TX= CenterOfGravity(box)
-        TY,TX= self.WeightedCOG(box)
-        sDY = TY+DY
-        sDX = TX+DX
-        # Show the result
-        return [math.floor(width/2)-sDX,math.floor(height/2)-sDY],r[DY,DX],r */
-
+    
+    private double[] WeightedCOG(double mat[][]) {
+    	int i,j;
+    	double peak;
+    	double val;
+    	double newmat[][];
+    	double Res[];
+    	if (mat.length == 0) {
+    		System.out.println("Skip subpixel estimation");
+    		Res = new double[] {0.0, 0.0};
+    		return Res;
+    	}
+    	else {
+    		peak = -Double.MAX_VALUE;
+    		for (i = 0; i < mat.length; i++) {
+    			for (j = 0; j < mat[i].length; j++) {
+    				if (mat[i][j] > peak) {
+    					peak = mat[i][j];
+    				}
+    			}
+    		}
+    		newmat = new double[mat.length][];
+    		for (i = 0; i < mat.length; i++) {
+    			newmat[i] = new double[mat[i].length];
+    		}
+    		val = peak/10.0;
+    		for (i = 0; i < mat.length; i++) {
+    			for (j = 0; j < mat[i].length; j++) {
+    			    if (mat[i][j] > val) {
+    			    	newmat[i][j] = mat[i][j];
+    			    }
+    			}
+    		}
+    		Res = CenterOfGravity(newmat);
+    		return Res;
+    	}
+    }
+    
+    // Get peak point
+    private double[] CenterOfGravity(double mat[][]) {
+    	double A[];
+    	double Tile[];
+    	int i,j;
+    	double off;
+    	int hei = mat.length;
+    	int wid = mat[0].length;
+    	double Ax;
+    	double Ay;
+    	double Sum;
+    	double Sumx;
+    	double Sumy;
+    	if (hei != wid) {
+    		// if mat size is not square, there must be something wrong
+    		System.out.println("Skip subpixel estimation");
+    		A = new double[] {0.0, 0.0};
+    		return A;
+    	}
+        Tile = new double[wid];
+        off = (wid - 1.0)/2.0;
+    	for (i = 0; i < wid; i++) {
+    		Tile[i] = (double)i - off;
+    	}
+    	Sum = 0.0;
+    	for (i = 0; i < hei; i++) {
+    		for (j = 0; j < wid; j++) {
+    			Sum += mat[i][j];
+    		}
+    	}
+    	Sumx = 0.0;
+    	for (i = 0; i < hei; i++) {
+    		for (j = 0; j < wid; j++) {
+    			Sumx += mat[i][j] * Tile[j];
+    		}
+    	}
+    	Ax = Sumx/Sum;
+    	Sumy = 0.0;
+    	for (i = 0; i < hei; i++) {
+    		for (j = 0; j < wid; j++) {
+    			Sumy += mat[i][j] * Tile[i];
+    		}
+    	}
+    	Ay = Sumy/Sum;
+    	A = new double[] {Ay,Ax};
+    	return A;
+    }
     
     private void warpPolar(double _src[][], double _dst[][], int width, int height, 
            double centerx, double centery, double maxRadius, int flags) {
