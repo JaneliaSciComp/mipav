@@ -1658,10 +1658,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						leftImage.wormImage = combineImages(imageA, imageB, imageC);
 						imageA.disposeLocal(false);
 						imageA = null;
-						imageB.disposeLocal(false);
-						imageB = null;
-						imageC.disposeLocal(false);
-						imageC = null;
+						if ( imageB != null ) {
+							imageB.disposeLocal(false);
+							imageB = null;
+						}
+						if ( imageC != null ) {
+							imageC.disposeLocal(false);
+							imageC = null;
+						}
 					} else {
 						leftImage.wormImage = imageA;
 					}
@@ -3242,17 +3246,21 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			integratedData.displayChannel2.setVisible(true);
 			integratedData.displayChannel2.setEnabled(true);
 			group.add(integratedData.displayChannel2);
-			integratedData.colorChannelPanel.add(integratedData.displayChannel2, gbc);
-			gbc.gridy++;
-
+			if ( !baseFileDir[1].isEmpty() ) {
+				integratedData.colorChannelPanel.add(integratedData.displayChannel2, gbc);
+				gbc.gridy++;
+			}
+			
 			integratedData.displayChannel3 = gui.buildRadioButton("Channel 3", false);
 			integratedData.displayChannel3.addActionListener(this);
 			integratedData.displayChannel3.setActionCommand("displayChannel2");
 			integratedData.displayChannel3.setVisible(true);
 			integratedData.displayChannel3.setEnabled(true);
 			group.add(integratedData.displayChannel3);
-			integratedData.colorChannelPanel.add(integratedData.displayChannel3, gbc);
-			gbc.gridy++;
+			if ( !baseFileDir[2].isEmpty() ) {
+				integratedData.colorChannelPanel.add(integratedData.displayChannel3, gbc);
+				gbc.gridy++;
+			}
 
 			integratedData.displayBothChannels = gui.buildRadioButton("Display All Channels", true);
 			integratedData.displayBothChannels.addActionListener(this);
