@@ -917,28 +917,33 @@ public class AlgorithmHistogram extends AlgorithmBase {
 	                        // minus 3.  Let's make 7 categories, so degrees of freedom = 4.
 	                        // The 7 categories have lowest values of (imgBuffer[i] - mean)/stdDev =
 	                        // -infinity, -1.40, -0.80, -0.20, 0.40, 1.00, and 1.60.
-	                        zval = (imgBuffer[i] - mean)/stdDev;
-	                        if (zval >= 1.60) {
-	                            observedFrequency[6]++;
-	                        }
-	                        else if (zval >= 1.00) {
-	                            observedFrequency[5]++;
-	                        }
-	                        else if (zval >= 0.40) {
-	                            observedFrequency[4]++;
-	                        }
-	                        else if (zval >= -0.20) {
-	                            observedFrequency[3]++;
-	                        }
-	                        else if (zval >= -0.80) {
-	                            observedFrequency[2]++;
-	                        }
-	                        else if (zval >= -1.40) {
-	                            observedFrequency[1]++;
-	                        }
-	                        else {
-	                            observedFrequency[0]++;
-	                        }
+	                        // The test is only valid if the expected number of counts in each bin is at least 5
+	                        // so we must have cnt >= 5/.0548 = 91.2
+	                        // so we require cnt >= 92
+	                        if (cnt >= 92) {
+		                        zval = (imgBuffer[i] - mean)/stdDev;
+		                        if (zval >= 1.60) {
+		                            observedFrequency[6]++;
+		                        }
+		                        else if (zval >= 1.00) {
+		                            observedFrequency[5]++;
+		                        }
+		                        else if (zval >= 0.40) {
+		                            observedFrequency[4]++;
+		                        }
+		                        else if (zval >= -0.20) {
+		                            observedFrequency[3]++;
+		                        }
+		                        else if (zval >= -0.80) {
+		                            observedFrequency[2]++;
+		                        }
+		                        else if (zval >= -1.40) {
+		                            observedFrequency[1]++;
+		                        }
+		                        else {
+		                            observedFrequency[0]++;
+		                        }
+	                        } // if (cnt >= 92)
 	                    }
 	                }
 	            }
@@ -948,13 +953,15 @@ public class AlgorithmHistogram extends AlgorithmBase {
         fourthCentralMoment = diffFourth/cnt;
         skewness = thirdCentralMoment/(variance * stdDev);
         kurtosis = fourthCentralMoment/(variance * variance) - 3.0;
-        theoreticalFrequency[0] = 0.0808 * cnt;
-        theoreticalFrequency[1] = 0.1311 * cnt;
-        theoreticalFrequency[2] = 0.2088 * cnt;
-        theoreticalFrequency[3] = 0.2347 * cnt;
-        theoreticalFrequency[4] = 0.1859 * cnt;
-        theoreticalFrequency[5] = 0.1039 * cnt;
-        theoreticalFrequency[6] = 0.0548 * cnt;
+        if (cnt >= 92) {
+	        theoreticalFrequency[0] = 0.0808 * cnt;
+	        theoreticalFrequency[1] = 0.1311 * cnt;
+	        theoreticalFrequency[2] = 0.2088 * cnt;
+	        theoreticalFrequency[3] = 0.2347 * cnt;
+	        theoreticalFrequency[4] = 0.1859 * cnt;
+	        theoreticalFrequency[5] = 0.1039 * cnt;
+	        theoreticalFrequency[6] = 0.0548 * cnt;
+        }
 
 
         image.releaseLock();
@@ -1018,28 +1025,30 @@ public class AlgorithmHistogram extends AlgorithmBase {
         }
         UI.setDataText("Skewness = " + df.format(skewness) + "\n");
         UI.setDataText("Kurtosis = " + df.format(kurtosis) + "\n");
-        chiSquaredOfFour = 0.0;
-        for (i = 0; i < 7; i++) {
-        	//System.err.println("i = " + i + " obs = " + observedFrequency[i] + " the = " + theoreticalFrequency[i]);
-            deviate = observedFrequency[i] - theoreticalFrequency[i];
-            chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
-        }
-        UI.setDataText("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
-                           + chiSquaredOfFour + "\n");
-        degreesOfFreedom = 4;
-        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-                chiSquaredOfFour, degreesOfFreedom, chiSquaredPercentile);
-        stat.run();
-        
-        UI.setDataText("ChiSquared percentile for Gaussian fit on mean and standard deviation = " +
-                          chiSquaredPercentile[0]*100.0 + "\n");
-        if (chiSquaredPercentile[0] >= 0.95) {
-            UI.setDataText("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
-                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of significance\n"); 
-        }
-        else {
-            UI.setDataText("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
-        }
+        if (cnt >= 92) {
+	        chiSquaredOfFour = 0.0;
+	        for (i = 0; i < 7; i++) {
+	        	//System.err.println("i = " + i + " obs = " + observedFrequency[i] + " the = " + theoreticalFrequency[i]);
+	            deviate = observedFrequency[i] - theoreticalFrequency[i];
+	            chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
+	        }
+	        UI.setDataText("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
+	                           + chiSquaredOfFour + "\n");
+	        degreesOfFreedom = 4;
+	        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+	                chiSquaredOfFour, degreesOfFreedom, chiSquaredPercentile);
+	        stat.run();
+	        
+	        UI.setDataText("ChiSquared percentile for Gaussian fit on mean and standard deviation = " +
+	                          chiSquaredPercentile[0]*100.0 + "\n");
+	        if (chiSquaredPercentile[0] >= 0.95) {
+	            UI.setDataText("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
+	                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of significance\n"); 
+	        }
+	        else {
+	            UI.setDataText("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
+	        }
+        } // if (cnt >= 92)
         
         Arrays.sort(sort);
         if (cnt%2 == 1) {
