@@ -915,7 +915,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 	                        // Test chi squared goodness of fit for a Gaussian with the calculated mean and standard deviation
 	                        // The chi squared statistic has a number of degrees of freedom equal to the number of categories
 	                        // minus 3.  Let's make 7 categories, so degrees of freedom = 4.
-	                        // The 7 categories have lowest values of (nearestNeighborDistance - mean)/stdDev =
+	                        // The 7 categories have lowest values of (imgBuffer[i] - mean)/stdDev =
 	                        // -infinity, -1.40, -0.80, -0.20, 0.40, 1.00, and 1.60.
 	                        zval = (imgBuffer[i] - mean)/stdDev;
 	                        if (zval >= 1.60) {
@@ -924,7 +924,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 	                        else if (zval >= 1.00) {
 	                            observedFrequency[5]++;
 	                        }
-	                        else if (z >= 0.40) {
+	                        else if (zval >= 0.40) {
 	                            observedFrequency[4]++;
 	                        }
 	                        else if (zval >= -0.20) {
@@ -1020,6 +1020,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         UI.setDataText("Kurtosis = " + df.format(kurtosis) + "\n");
         chiSquaredOfFour = 0.0;
         for (i = 0; i < 7; i++) {
+        	//System.err.println("i = " + i + " obs = " + observedFrequency[i] + " the = " + theoreticalFrequency[i]);
             deviate = observedFrequency[i] - theoreticalFrequency[i];
             chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
         }
