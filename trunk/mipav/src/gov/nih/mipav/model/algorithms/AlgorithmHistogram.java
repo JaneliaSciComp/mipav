@@ -1035,7 +1035,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
                           chiSquaredPercentile[0]*100.0 + "\n");
         if (chiSquaredPercentile[0] >= 0.95) {
             UI.setDataText("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
-                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n"); 
+                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of significance\n"); 
         }
         else {
             UI.setDataText("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
