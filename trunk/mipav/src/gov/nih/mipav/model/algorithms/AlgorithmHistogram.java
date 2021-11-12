@@ -707,6 +707,15 @@ public class AlgorithmHistogram extends AlgorithmBase {
         double fourthCentralMoment;
         double skewness;
         double kurtosis;
+        double chiSquaredOfTwo;
+        int observedFrequency[] = new int[7];
+        double theoreticalFrequency[] = new double[7];
+        double chiSquaredOfFour;
+        double zval;
+        double deviate;
+        double degreesOfFreedom;
+        Statistics stat;
+        double chiSquaredPercentile[] = new double[1];
 
         if (image == null) {
             displayError("Source Image is null");
@@ -903,6 +912,33 @@ public class AlgorithmHistogram extends AlgorithmBase {
 	                        diffSquared = diff * diff;
 	                        diffCubed += (diffSquared*diff);
 	                        diffFourth += (diffSquared*diffSquared);
+	                        // Test chi squared goodness of fit for a Gaussian with the calculated mean and standard deviation
+	                        // The chi squared statistic has a number of degrees of freedom equal to the number of categories
+	                        // minus 3.  Let's make 7 categories, so degrees of freedom = 4.
+	                        // The 7 categories have lowest values of (nearestNeighborDistance - mean)/stdDev =
+	                        // -infinity, -1.40, -0.80, -0.20, 0.40, 1.00, and 1.60.
+	                        zval = (imgBuffer[i] - mean)/stdDev;
+	                        if (zval >= 1.60) {
+	                            observedFrequency[6]++;
+	                        }
+	                        else if (zval >= 1.00) {
+	                            observedFrequency[5]++;
+	                        }
+	                        else if (z >= 0.40) {
+	                            observedFrequency[4]++;
+	                        }
+	                        else if (zval >= -0.20) {
+	                            observedFrequency[3]++;
+	                        }
+	                        else if (zval >= -0.80) {
+	                            observedFrequency[2]++;
+	                        }
+	                        else if (zval >= -1.40) {
+	                            observedFrequency[1]++;
+	                        }
+	                        else {
+	                            observedFrequency[0]++;
+	                        }
 	                    }
 	                }
 	            }
@@ -912,6 +948,14 @@ public class AlgorithmHistogram extends AlgorithmBase {
         fourthCentralMoment = diffFourth/cnt;
         skewness = thirdCentralMoment/(variance * stdDev);
         kurtosis = fourthCentralMoment/(variance * variance) - 3.0;
+        theoreticalFrequency[0] = 0.0808 * cnt;
+        theoreticalFrequency[1] = 0.1311 * cnt;
+        theoreticalFrequency[2] = 0.2088 * cnt;
+        theoreticalFrequency[3] = 0.2347 * cnt;
+        theoreticalFrequency[4] = 0.1859 * cnt;
+        theoreticalFrequency[5] = 0.1039 * cnt;
+        theoreticalFrequency[6] = 0.0548 * cnt;
+
 
         image.releaseLock();
         
@@ -974,6 +1018,27 @@ public class AlgorithmHistogram extends AlgorithmBase {
         }
         UI.setDataText("Skewness = " + df.format(skewness) + "\n");
         UI.setDataText("Kurtosis = " + df.format(kurtosis) + "\n");
+        chiSquaredOfFour = 0.0;
+        for (i = 0; i < 7; i++) {
+            deviate = observedFrequency[i] - theoreticalFrequency[i];
+            chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
+        }
+        UI.setDataText("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
+                           + chiSquaredOfFour + "\n");
+        degreesOfFreedom = 4;
+        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                chiSquaredOfFour, degreesOfFreedom, chiSquaredPercentile);
+        stat.run();
+        
+        UI.setDataText("ChiSquared percentile for Gaussian fit on mean and standard deviation = " +
+                          chiSquaredPercentile[0]*100.0 + "\n");
+        if (chiSquaredPercentile[0] >= 0.95) {
+            UI.setDataText("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
+                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n"); 
+        }
+        else {
+            UI.setDataText("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
+        }
         
         Arrays.sort(sort);
         if (cnt%2 == 1) {
