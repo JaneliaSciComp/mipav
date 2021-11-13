@@ -1050,6 +1050,33 @@ public class AlgorithmHistogram extends AlgorithmBase {
 	        }
         } // if (cnt >= 92)
         
+        // Given a large number of observations, the Jarque-bera test can be used as a normality test.
+        // The Jarque-Bera test, a type of Lagrange multiplier test, was developed to test normality,
+        // heteroscedasticy, and serial correlation (autocorrelation) of regression residuals.  The
+        // Jarque-Bera statistic is computed from skewness and kurtosis and asymptotically follows the
+        // chi-squared distribution with 2 degress of freedom.
+        // (sample number)*[skewness**2/6 + (kurtosis - 3)**2/24] follows a chi squared of 2 degrees of freedom
+        // distribution.
+        // Have already subtracted 3.0 from kurtosis
+        if (cnt >= 2000) {
+	        chiSquaredOfTwo = cnt * (skewness * skewness/6.0 +(kurtosis * kurtosis)/24.0);
+	        UI.setDataText("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
+	                           + chiSquaredOfTwo + "\n");
+	        degreesOfFreedom = 2;
+	        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+	                chiSquaredOfTwo, degreesOfFreedom, chiSquaredPercentile);
+	        stat.run();
+	        UI.setDataText("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
+	                          chiSquaredPercentile[0]*100.0 + "\n");
+	        if (chiSquaredPercentile[0] >= 0.95) {
+	            UI.setDataText("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a " +
+	                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n"); 
+	        }
+	        else {
+	            UI.setDataText("chiSquared test does not reject Gaussian fit based on skewness and kurtosis\n");
+	        }
+        } // if (cnt >= 2000)
+        
         Arrays.sort(sort);
         if (cnt%2 == 1) {
             median = sort[cnt/2] ;   
