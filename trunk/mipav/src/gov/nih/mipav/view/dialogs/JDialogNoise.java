@@ -491,6 +491,11 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+    	double imageRange = image.getMax() - image.getMin();
+        double noiseStart = imageRange / 20.0;
+        if ((image.getType() != ModelStorageBase.FLOAT) && (image.getType() != ModelStorageBase.DOUBLE)) {
+        	noiseStart = Math.round(noiseStart);
+        }
         setForeground(Color.black);
 
         cancelFlag = false;
@@ -539,14 +544,14 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = yPos2++;
         panelGU.add(plusMinusLabel, gbc2);
 
-        maxNoiseLabel = new JLabel("Starting range (0 to end):  ");
+        maxNoiseLabel = new JLabel("Maximum noise:  ");
         maxNoiseLabel.setFont(serif12);
         maxNoiseLabel.setForeground(Color.black);
         gbc2.gridy = yPos2;
         panelGU.add(maxNoiseLabel, gbc2);
 
         textMaxNoise = new JTextField(10);
-        textMaxNoise.setText("0");
+        textMaxNoise.setText(String.valueOf(noiseStart));
         textMaxNoise.setFont(serif12);
         textMaxNoise.addFocusListener(this);
         gbc2.gridx = 1;
@@ -633,7 +638,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc.gridy++;
         JScrollPane RayleighScroll = new JScrollPane(panelRayleigh);
         RayleighScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        POScroll.setBorder(buildTitledBorder("Rayleigh"));
+        RayleighScroll.setBorder(buildTitledBorder("Rayleigh"));
         mainPanel.add(RayleighScroll, gbc);
         
         JLabel rayleighLabel = new JLabel("Image(i) = Image(i) + sigma*sqrt(-2*ln(U))");
@@ -687,14 +692,14 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = 1;
         panelRician.add(gLabel, gbc2);
         
-        maxNoiseLabel2 = new JLabel("Starting range (0 to end):  ");
+        maxNoiseLabel2 = new JLabel("Maximum noise:  ");
         maxNoiseLabel2.setFont(serif12);
         maxNoiseLabel2.setForeground(Color.black);
         gbc2.gridy = 2;
         panelRician.add(maxNoiseLabel2, gbc2);
 
         textMaxNoise2 = new JTextField(10);
-        textMaxNoise2.setText("0");
+        textMaxNoise2.setText(String.valueOf(noiseStart));
         textMaxNoise2.setFont(serif12);
         textMaxNoise2.addFocusListener(this);
         gbc2.gridx = 1;
@@ -786,13 +791,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             replaceImage.setEnabled(false);
         }
 
-        setRange();
-
-
-        /*
-         * buildOKButton(); buttonPanel.add(OKButton); buildCancelButton(); buttonPanel.add(cancelButton);
-         */
-
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -800,37 +798,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         setVisible(true);
 
         System.gc();
-    }
-
-    /**
-     * setRange.
-     */
-    private void setRange() {
-
-        maxNoiseLabel.setEnabled(true);
-        textMaxNoise.setEnabled(true);
-        maxNoiseLabel2.setEnabled(true);
-        textMaxNoise2.setEnabled(true);
-
-        double imageRange = image.getMax() - image.getMin();
-        double noiseMax = imageRange;
-        double noiseStart = imageRange / 20.0;
-
-        if ((image.getType() != ModelStorageBase.FLOAT) && (image.getType() != ModelStorageBase.DOUBLE)) {
-            maxNoiseLabel.setText("Maximum noise (0 - " + Math.round(noiseMax) + "):  ");
-            textMaxNoise.setText(String.valueOf(Math.round(noiseStart)));
-            maxNoiseLabel2.setText("Maximum noise (0 - " + Math.round(noiseMax) + "):  ");
-            textMaxNoise2.setText(String.valueOf(Math.round(noiseStart)));
-            min = 0;
-            max = Math.round(noiseMax);
-        } else {
-            maxNoiseLabel.setText("Maximum noise (0 - " + noiseMax + "):  ");
-            textMaxNoise.setText(String.valueOf(noiseStart));
-            maxNoiseLabel2.setText("Maximum noise (0 - " + noiseMax + "):  ");
-            textMaxNoise2.setText(String.valueOf(noiseStart));
-            min = 0;
-            max = noiseMax;
-        }
     }
 
     /**
@@ -858,10 +825,29 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
+        
+        if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE) || (image.getType() == ModelImage.ARGB)) {
+        	max = 127.0;
+        }
+        else if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT) || (image.getType() == ModelImage.ARGB_USHORT)) {
+        	max = 32767;
+        }
+        else if ((image.getType() == ModelImage.INTEGER) || (image.getType() == ModelImage.UINTEGER)) {
+        	max = Integer.MAX_VALUE;
+        }
+        else if (image.getType() == ModelImage.LONG) {
+        	max = Long.MAX_VALUE;
+        }
+        else if ((image.getType() == ModelImage.FLOAT) || (image.getType() == ModelImage.ARGB_FLOAT)) {
+        	max = Float.MAX_VALUE;
+        }
+        else {
+        	max = Double.MAX_VALUE;
+        }
 
         if ((noiseType == GAUSSIAN) || (noiseType == UNIFORM)) {
             tmpStr = textMaxNoise.getText();
-            if (testParameter(tmpStr, min, max)) {
+            if (testParameter(tmpStr, 0.0, max)) {
                 maximumNoise = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textMaxNoise.requestFocus();
@@ -899,7 +885,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         
         if (noiseType == RICIAN) {
         	tmpStr = textMaxNoise2.getText();
-            if (testParameter(tmpStr, min, max)) {
+            if (testParameter(tmpStr, 0.0, max)) {
                 maximumNoise = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textMaxNoise2.requestFocus();
