@@ -495,19 +495,24 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         cancelFlag = false;
         GridBagConstraints gbc = new GridBagConstraints();
-        int yPos = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.gridx = 0;
-        gbc.gridy = yPos;
+        gbc.gridy = 0;
+        
+        JPanel mainPanel;
+
+        mainPanel = new JPanel();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        mainPanel.setLayout(new GridBagLayout());
         
         
-        getContentPane().setLayout(new GridBagLayout());
         setTitle("Noise");
+        getContentPane().setLayout(new BorderLayout());
         
         GridBagConstraints gbc2 = new GridBagConstraints();
         int yPos2 = 0;
@@ -522,9 +527,11 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         
         panelGU = new JPanel(new GridBagLayout());
         panelGU.setForeground(Color.black);
-        panelGU.setBorder(buildTitledBorder("Gaussian and Uniform"));
-        gbc.gridy = yPos++;
-        getContentPane().add(panelGU, gbc);
+        gbc.weighty = 0.2;
+        JScrollPane GUScroll = new JScrollPane(panelGU);
+        GUScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        GUScroll.setBorder(buildTitledBorder("Gaussian and Uniform"));
+        mainPanel.add(GUScroll, gbc);
         
         JLabel plusMinusLabel = new JLabel("Image(i) = Image(i) +/- noise");
         plusMinusLabel.setFont(serif12);
@@ -561,9 +568,12 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         
         panelPO = new JPanel(new GridBagLayout());
         panelPO.setForeground(Color.black);
-        panelPO.setBorder(buildTitledBorder("Poisson"));
-        gbc.gridy = yPos++;
-        getContentPane().add(panelPO, gbc);
+        gbc.gridy++;
+        gbc.weighty = 0.2;
+        JScrollPane POScroll = new JScrollPane(panelPO);
+        POScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        POScroll.setBorder(buildTitledBorder("Poisson"));
+        mainPanel.add(POScroll, gbc);
         
         JLabel poissonLabel = new JLabel("Out = Gain * Poisson(mean) + Offset");
         poissonLabel.setFont(serif12);
@@ -620,9 +630,11 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         
         panelRayleigh = new JPanel(new GridBagLayout());
         panelRayleigh.setForeground(Color.black);
-        panelRayleigh.setBorder(buildTitledBorder("Rayleigh"));
-        gbc.gridy = yPos++;
-        getContentPane().add(panelRayleigh, gbc);
+        gbc.gridy++;
+        JScrollPane RayleighScroll = new JScrollPane(panelRayleigh);
+        RayleighScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        POScroll.setBorder(buildTitledBorder("Rayleigh"));
+        mainPanel.add(RayleighScroll, gbc);
         
         JLabel rayleighLabel = new JLabel("Image(i) = Image(i) + sigma*sqrt(-2*ln(U))");
         rayleighLabel.setFont(serif12);
@@ -655,9 +667,11 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         
         panelRician = new JPanel(new GridBagLayout());
         panelRician.setForeground(Color.black);
-        panelRician.setBorder(buildTitledBorder("Rician"));
-        gbc.gridy = yPos++;
-        getContentPane().add(panelRician, gbc);
+        gbc.gridy++;
+        JScrollPane RicianScroll = new JScrollPane(panelRician);
+        RicianScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        RicianScroll.setBorder(buildTitledBorder("Rician"));
+        mainPanel.add(RicianScroll, gbc);
         
         JLabel plusMinusLabel2 = new JLabel("Image(i) = sqrt((Image(i) +/- noise)**2 + noise**2");
         plusMinusLabel2.setFont(serif12);
@@ -694,11 +708,13 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = 3;
         panelRician.add(gaussLabel2, gbc2);
 
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
         panelImageType = new JPanel(new GridBagLayout());
         panelImageType.setForeground(Color.black);
-        panelImageType.setBorder(buildTitledBorder("Noise Type"));
-        outputOptPanel.add(panelImageType);
+        gbc.gridy++;
+        JScrollPane typeScroll = new JScrollPane(panelImageType);
+        typeScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        typeScroll.setBorder(buildTitledBorder("Noise types"));
+        mainPanel.add(typeScroll, gbc);
         
         GridBagConstraints gbc3 = new GridBagConstraints();
         gbc3.gridwidth = 1;
@@ -747,8 +763,11 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         destinationPanel = new JPanel(new BorderLayout());
         destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
+        gbc.gridy++;
+        JScrollPane destinationScroll = new JScrollPane(destinationPanel);
+        destinationScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        destinationScroll.setBorder(buildTitledBorder("Destination"));
+        mainPanel.add(destinationScroll, gbc);
 
         destinationGroup = new ButtonGroup();
         newImage = new JRadioButton("New image", true);
@@ -769,17 +788,13 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         setRange();
 
-        JPanel buttonPanel = new JPanel();
 
         /*
          * buildOKButton(); buttonPanel.add(OKButton); buildCancelButton(); buttonPanel.add(cancelButton);
          */
-        buttonPanel.add(buildButtons());
 
-        gbc.gridy = yPos++;
-        getContentPane().add(outputOptPanel, gbc);
-        gbc.gridy = yPos++;
-        getContentPane().add(buttonPanel, gbc);
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setResizable(true);
         setVisible(true);
