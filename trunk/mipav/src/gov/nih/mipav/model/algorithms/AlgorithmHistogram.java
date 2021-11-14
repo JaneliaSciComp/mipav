@@ -1057,6 +1057,16 @@ public class AlgorithmHistogram extends AlgorithmBase {
         // chi-squared distribution with 2 degress of freedom.
         // (sample number)*[skewness**2/6 + (kurtosis - 3)**2/24] follows a chi squared of 2 degrees of freedom
         // distribution.
+        // Note that chiSquaredOfTwo = 5.99 gives the 94.99633729134138 percentile
+        // so values of chiSquaredOfTwo > 5.99 are rejected as Gaussian fit.
+        
+        // For sample sizes of 2,000 or larger, this test statistic is compared to a chi-squared distribution with
+        // 2 degrees of freedom (normality is rejected if the test statistic is greater than the chi-squared value).
+
+        // The chi-square approximation requires fairly large sample sizes to be accurate. For sample sizes less than
+        // 2,000, the critical value is determined via simulation. Specifically, one hundred thousand normal samples
+        // with the same mean and standard deviation as the original data sample are generated and the Jarque-Bera test
+        // statistic computed to generate the reference distribution.
         // Have already subtracted 3.0 from kurtosis
         if (cnt >= 2000) {
 	        chiSquaredOfTwo = cnt * (skewness * skewness/6.0 +(kurtosis * kurtosis)/24.0);
