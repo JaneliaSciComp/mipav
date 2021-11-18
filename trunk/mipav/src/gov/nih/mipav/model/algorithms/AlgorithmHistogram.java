@@ -707,6 +707,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         double fourthCentralMoment;
         double skewness;
         double kurtosis;
+        double kurtosism3;
         double chiSquaredOfTwo;
         int observedFrequency[] = new int[7];
         double theoreticalFrequency[] = new double[7];
@@ -952,7 +953,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         thirdCentralMoment = diffCubed/cnt;
         fourthCentralMoment = diffFourth/cnt;
         skewness = thirdCentralMoment/(variance * stdDev);
-        kurtosis = fourthCentralMoment/(variance * variance) - 3.0;
+        kurtosis = fourthCentralMoment/(variance * variance);
         if (cnt >= 92) {
 	        theoreticalFrequency[0] = 0.0808 * cnt;
 	        theoreticalFrequency[1] = 0.1311 * cnt;
@@ -1067,9 +1068,9 @@ public class AlgorithmHistogram extends AlgorithmBase {
         // 2,000, the critical value is determined via simulation. Specifically, one hundred thousand normal samples
         // with the same mean and standard deviation as the original data sample are generated and the Jarque-Bera test
         // statistic computed to generate the reference distribution.
-        // Have already subtracted 3.0 from kurtosis
         if (cnt >= 2000) {
-	        chiSquaredOfTwo = cnt * (skewness * skewness/6.0 +(kurtosis * kurtosis)/24.0);
+        	kurtosism3 = kurtosis - 3.0;
+	        chiSquaredOfTwo = cnt * (skewness * skewness/6.0 +(kurtosism3 * kurtosism3)/24.0);
 	        UI.setDataText("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
 	                           + chiSquaredOfTwo + "\n");
 	        degreesOfFreedom = 2;
