@@ -177,8 +177,6 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
 								menuBuilder.buildMenuItem("Brejl-Sonka 3D", "edge3D", 0, null, false),
 								menuBuilder.buildMenuItem("Harris corner detector", "HARRIS", 0, null, false),
-								// menuBuilder.buildMenuItem("Global Pb",
-								// "GLOBAL_PB", 0 , null, false),
 								menuBuilder.buildMenuItem("Pb boundary", "PB_BOUNDARY", 0, null, false),
 								menuBuilder.buildMenuItem("Phase congruency", "phasecongruency", 0, null, false),
 								menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
