@@ -387,7 +387,223 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
         return y;	
     }
     
-    /*private double[][][] cfft2(double x[][][]) {
+    private double[][] icfft(double x[][]) {
+    	// Aliased inverse Fourier transform (IFFT) of the sequence x.
+    	// The FFT is computed using O(nlogn) operations.
+    	
+    	// x    The sequence whose IFFT should be computed. 
+    	//      Can be of odd or even length. Must be a 1D vector.
+    	
+    	// Returns the aliased IFFT of the sequence x.
+    
+    	// Yoel Shkolnisky 22/10/01
+    	double ix[][] = ifftshift1d(x);
+    	// Inverse FFT
+    	FFTUtility fft = new FFTUtility(ix[0],ix[1],1,x[0].length,1,1,FFTUtility.FFT);
+    	fft.run();
+    	double y[][] = fftshift1d(ix);
+    	return y;
+    }
+    
+    private double[][][] fftshift(double in[][][]) {
+    	int yDim = in[0].length;
+    	int xDim = in[0][0].length;
+		double out[][][] = new double[2][yDim][xDim];
+		int highestxquad1Index;
+		int highestyquad1Index;
+		int quad1height;
+		int quad1width;
+		int quad2height;
+		int quad2width;
+		int quad3height;
+		int quad3width;
+		int quad4height;
+		int quad4width;
+		int y,x;
+		if ((yDim %2) == 1) {
+			//yodd = true;
+			highestyquad1Index = (yDim - 1)/2;
+		}
+		else {
+			//yodd = false;
+			highestyquad1Index = yDim/2 - 1;
+		}
+		if ((xDim % 2) == 1) {
+			//xodd = true;
+			highestxquad1Index = (xDim - 1)/2;
+		}
+		else {
+			//xodd = false;
+			highestxquad1Index = xDim/2 - 1;
+		}
+		quad1width = highestxquad1Index + 1;
+		quad1height = highestyquad1Index + 1;
+		quad2width = xDim - quad1width;
+		quad2height = quad1height;
+		quad3width = quad2width;
+		quad3height = yDim - quad1height;
+		quad4width = quad1width;
+		quad4height = quad3height;
+		double quad1[][][] = new double[2][quad1height][quad1width];
+		double quad2[][][] = new double[2][quad2height][quad2width];
+		double quad3[][][] = new double[2][quad3height][quad3width];
+		double quad4[][][] = new double[2][quad4height][quad4width];
+		for (y = 0; y <= highestyquad1Index; y++) {
+			for (x = 0; x <= highestxquad1Index; x++) {
+				quad1[0][y][x] = in[0][y][x];
+				quad1[1][y][x] = in[1][y][x];
+			}
+		}
+		for (y = 0; y <= highestyquad1Index; y++) {
+			for (x = highestxquad1Index+1; x < xDim; x++) {
+				quad2[0][y][x - highestxquad1Index-1] = in[0][y][x];
+				quad2[1][y][x - highestxquad1Index-1] = in[1][y][x];
+			}
+		}
+		for (y = highestyquad1Index+1; y < yDim; y++) {
+			for (x = highestxquad1Index+1; x < xDim; x++) {
+				quad3[0][y - highestyquad1Index - 1][x - highestxquad1Index - 1] = in[0][y][x];
+				quad3[1][y - highestyquad1Index - 1][x - highestxquad1Index - 1] = in[1][y][x];
+			}
+		}
+		for (y = highestyquad1Index+1; y < yDim; y++) {
+			for (x = 0; x <= highestxquad1Index; x++) {
+				quad4[0][y - highestyquad1Index - 1][x] = in[0][y][x];
+				quad4[1][y - highestyquad1Index - 1][x] = in[1][y][x];
+			}
+		}
+		
+		// Move third quadrant to first
+		for (y = 0; y < quad3height; y++) {
+			for (x = 0; x < quad3width; x++) {
+				out[0][y][x] = quad3[0][y][x];
+				out[1][y][x] = quad3[1][y][x];
+			}
+		}
+		// Move fourth quadrant to second
+		for (y = 0; y < quad4height; y++) {
+			for (x = 0; x < quad4width; x++) {
+				out[0][y][x + quad3width] = quad4[0][y][x];
+				out[1][y][x + quad3width] = quad4[1][y][x];
+			}
+		}
+		// Move first quadrant to third
+		for (y = 0; y < quad1height; y++) {
+			for (x = 0; x < quad1width; x++) {
+				out[0][y+quad3height][x + quad3width] = quad1[0][y][x];
+				out[1][y+quad3height][x + quad3width] = quad1[1][y][x];
+			}
+		}
+		// Move second quadrant to fourth
+		for (y = 0; y < quad2height; y++) {
+			for (x = 0; x < quad2width; x++) {
+				out[0][y+quad3height][x] = quad2[0][y][x];
+				out[1][y+quad3height][x] = quad2[1][y][x];
+			}
+		}
+		return out;
+	}
+    
+    private double[][][] ifftshift(double in[][][]) {
+    	int yDim = in[0].length;
+    	int xDim = in[0][0].length;
+		double out[][][] = new double[2][yDim][xDim];
+		int highestxquad1Index;
+		int highestyquad1Index;
+		int quad1height;
+		int quad1width;
+		int quad2height;
+		int quad2width;
+		int quad3height;
+		int quad3width;
+		int quad4height;
+		int quad4width;
+		int y,x;
+		if ((yDim %2) == 1) {
+			//yodd = true;
+			highestyquad1Index = (yDim - 1)/2 - 1;
+		}
+		else {
+			//yodd = false;
+			highestyquad1Index = yDim/2 - 1;
+		}
+		if ((xDim % 2) == 1) {
+			//xodd = true;
+			highestxquad1Index = (xDim - 1)/2 - 1;
+		}
+		else {
+			//xodd = false;
+			highestxquad1Index = xDim/2 - 1;
+		}
+		quad1width = highestxquad1Index + 1;
+		quad1height = highestyquad1Index + 1;
+		quad2width = xDim - quad1width;
+		quad2height = quad1height;
+		quad3width = quad2width;
+		quad3height = yDim - quad1height;
+		quad4width = quad1width;
+		quad4height = quad3height;
+		double quad1[][][] = new double[2][quad1height][quad1width];
+		double quad2[][][] = new double[2][quad2height][quad2width];
+		double quad3[][][] = new double[2][quad3height][quad3width];
+		double quad4[][][] = new double[2][quad4height][quad4width];
+		for (y = 0; y <= highestyquad1Index; y++) {
+			for (x = 0; x <= highestxquad1Index; x++) {
+				quad1[0][y][x] = in[0][y][x];
+				quad1[1][y][x] = in[1][y][x];
+			}
+		}
+		for (y = 0; y <= highestyquad1Index; y++) {
+			for (x = highestxquad1Index+1; x < xDim; x++) {
+				quad2[0][y][x - highestxquad1Index-1] = in[0][y][x];
+				quad2[1][y][x - highestxquad1Index-1] = in[1][y][x];
+			}
+		}
+		for (y = highestyquad1Index+1; y < yDim; y++) {
+			for (x = highestxquad1Index+1; x < xDim; x++) {
+				quad3[0][y - highestyquad1Index - 1][x - highestxquad1Index - 1] = in[0][y][x];
+				quad3[1][y - highestyquad1Index - 1][x - highestxquad1Index - 1] = in[1][y][x];
+			}
+		}
+		for (y = highestyquad1Index+1; y < yDim; y++) {
+			for (x = 0; x <= highestxquad1Index; x++) {
+				quad4[0][y - highestyquad1Index - 1][x] = in[0][y][x];
+				quad4[1][y - highestyquad1Index - 1][x] = in[1][y][x];
+			}
+		}
+		
+		// Move third quadrant to first
+		for (y = 0; y < quad3height; y++) {
+			for (x = 0; x < quad3width; x++) {
+				out[0][y][x] = quad3[0][y][x];
+				out[1][y][x] = quad3[1][y][x];
+			}
+		}
+		// Move fourth quadrant to second
+		for (y = 0; y < quad4height; y++) {
+			for (x = 0; x < quad4width; x++) {
+				out[0][y][x + quad3width] = quad4[0][y][x];
+				out[1][y][x + quad3width] = quad4[1][y][x];
+			}
+		}
+		// Move first quadrant to third
+		for (y = 0; y < quad1height; y++) {
+			for (x = 0; x < quad1width; x++) {
+				out[0][y+quad3height][x + quad3width] = quad1[0][y][x];
+				out[1][y+quad3height][x + quad3width] = quad1[1][y][x];
+			}
+		}
+		// Move second quadrant to fourth
+		for (y = 0; y < quad2height; y++) {
+			for (x = 0; x < quad2width; x++) {
+				out[0][y+quad3height][x] = quad2[0][y][x];
+				out[1][y+quad3height][x] = quad2[1][y][x];
+			}
+		}
+		return out;
+	}
+    
+    private double[][][] cfft2(double x[][][]) {
     	// Aliased 2D FFT of the image x.
     	// The FFT is computed using O(n^2logn) operations.
     	
@@ -396,7 +612,244 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	// Returns the aliased 2D FFT of the image x.
     	 
     	// Yoel Shkolnisky 22/10/01
+    	int h, w;
+    	int yDim = x[0].length;
+    	int xDim = x[0][0].length;
+    	double ix[][][] = ifftshift(x);
+    	double ixarr[][] = new double[2][yDim*xDim];
+    	for (h = 0; h < yDim; h++) {
+    		for (w = 0; w < xDim; w++) {
+    			ixarr[0][h*xDim + w] = ix[0][h][w];
+    			ixarr[1][h*xDim + w] = ix[1][h][w];
+    		}
+    	}
+    	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim, xDim, 1, -1, FFTUtility.FFT);
+    	fftx.run();
+    	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], 1, yDim, xDim, -1, FFTUtility.FFT);
+    	ffty.run();
+    	double y[][][] = new double[2][yDim][xDim];
+    	for (h = 0; h < yDim; h++) {
+    		for (w = 0; w < xDim; w++) {
+    			y[0][h][w] = ixarr[0][h*xDim + w];
+    			y[1][h][w] = ixarr[1][h*xDim + w];
+    		}
+    	}
+    	return (fftshift(y));
+    }
+    
+    private double[][][] icfft2(double x[][][]) {
+    	// Aliased 2D Inverse FFT of the image x.
+    	// The FFT is computed using O(n^2logn) operations.
+    	
+    	// x   The image whose 2D inverse FFT should be computed. Can be of odd or even length.
+    	//
+    	// Returns the aliased 2D inverse FFT of the image x.
+    	 
+    	// Yoel Shkolnisky 06/02/02
+    	int h, w;
+    	int yDim = x[0].length;
+    	int xDim = x[0][0].length;
+    	double ix[][][] = ifftshift(x);
+    	double ixarr[][] = new double[2][yDim*xDim];
+    	for (h = 0; h < yDim; h++) {
+    		for (w = 0; w < xDim; w++) {
+    			ixarr[0][h*xDim + w] = ix[0][h][w];
+    			ixarr[1][h*xDim + w] = ix[1][h][w];
+    		}
+    	}
+    	// Inverse FFT
+    	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim, xDim, 1, 1, FFTUtility.FFT);
+    	fftx.run();
+    	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], 1, yDim, xDim, 1, FFTUtility.FFT);
+    	ffty.run();
+    	double y[][][] = new double[2][yDim][xDim];
+    	for (h = 0; h < yDim; h++) {
+    		for (w = 0; w < xDim; w++) {
+    			y[0][h][w] = ixarr[0][h*xDim + w];
+    			y[1][h][w] = ixarr[1][h*xDim + w];
+    		}
+    	}
+    	return (fftshift(y));
+    }
+    
+    private double[][] cfrft(double x[][], double alpha) {
+    	// Aliased fractional Fourier transform of the sequence x.
+    	// The FRFT is computed using O(nlogn) operations.
+    	
+    	// x       The sequence whose FRFT should be computed. Can be of odd or even
+    	//         length. Must be a 1-D row vector.
+    	// alpha   The parameter alpha of the fractional Fourier transform.
+    	
+    	// Returns the aliased FRFT with parameter alpha of the sequence x.
+    	// The fractional Fourier transform w of the sequence x (with parameter alpha) is defined by
+    	//                   n/2-1
+    	//       w(k) =       sum  x(u)*exp(-2*pi*i*k*u*alpha/N),  -n/2 <= k <= n/2-1, N=length(x).
+    	//                   u=-n/2
+    	
+    	 
+    	// This function is the same as cfrftV2. It uses the less padding (3m as in the paper)
+    	// and therefore it is more memory efficient. This may cause the lengths of the sequences to be non-optimal 
+    	// for Matlab's FFT function. The function cfrftV2 uses more memory (for padding) but uses FFTs
+    	// of dyadic length.
+    	
+    	// Yoel Shkolnisky 22/10/01
 
-    		y = fftshift(fft2(ifftshift(x)));	
-    }*/
+        int k;
+        double arg;
+        double cos;
+        double sin;
+    	int m= x[0].length;
+    	int j[] = new int[hiIdx(m) - lowIdx(m) + 1];
+    	for (k = lowIdx(m); k <= hiIdx(m); k++) {
+    		j[k-lowIdx(m)] = k;
+    	}
+    	int j2[] = new int[hiIdx(2*m) - lowIdx(2*m) + 1];
+    	for (k = lowIdx(2*m); k <= hiIdx(2*m); k++) {
+    		j2[k-lowIdx(2*m)] = k;
+    	}
+    	//E=i*pi*alpha;
+    	double y[][] = new double[2][m];
+    	for (k = 0; k < m; k++) {
+    		arg = Math.PI*alpha*j[k]*j[k]/m;
+    		cos = Math.cos(arg);
+    		sin = Math.sin(arg);
+    		y[0][k] = x[0][k] * cos + x[1][k] * sin;
+    		y[1][k] = -x[0][k] * sin + x[1][k] * cos;
+    	}
+
+    	double ypad[][] = new double[2][3*m];
+    	for (k = 0; k < m; k++) {
+    		ypad[0][k+m] = y[0][k];
+    		ypad[1][k+m] = y[1][k];
+    	}
+
+    	double z[][] = new double[2][3*m];
+    	int l=toUnaliasedIdx(-m,3*m);
+    	for (k = l; k <= l + j2.length -1; k++) {
+    	   arg = Math.PI*alpha*j2[k-l]*j2[k-l]/m;
+    	   z[0][k] = Math.cos(arg);
+    	   z[1][k] = Math.sin(arg);
+    	}
+
+    	double Y[][] =cfft(ypad);
+    	double Z[][] =cfft(z);
+    	double W[][] = new double[2][3*m];
+    	for (k = 0; k < 3*m; k++) {
+    		W[0][k] = Y[0][k]*Z[0][k] - Y[1][k]*Z[1][k];
+    		W[1][k] = Y[0][k]*Z[1][k] + Y[1][k]*Z[0][k];
+    	}
+    	double w[][] =icfft(W);
+        int lowIndex = toUnaliasedIdx(lowIdx(m),3*m);
+        int highIndex = toUnaliasedIdx(hiIdx(m),3*m);
+        double wtrunc[][] = new double[2][highIndex - lowIndex + 1];
+        for (k = lowIndex; k <= highIndex; k++) {
+        	wtrunc[0][k-lowIndex] = w[0][k];
+        	wtrunc[1][k-lowIndex] = w[1][k];
+        }
+        double wprod[][] = new double[2][wtrunc.length];
+    	for (k = 0; k < j.length; k++) {
+    		arg = Math.PI*alpha*j[k]*j[k]/m;
+    		cos = Math.cos(arg);
+    		sin = Math.sin(arg);
+    		wprod[0][k] = wtrunc[0][k]*cos + wtrunc[1][k]*sin;
+    		wprod[1][k] = -wtrunc[0][k]*sin + wtrunc[1][k]*cos;
+    	}
+    	return wprod;
+    }
+    
+    private double log2(double input) {
+        return (Math.log10(input) / Math.log10(2.0));
+	 }
+    
+    private double[][] cfrftV2(double x[][], double alpha) {
+    	// Aliased fractional Fourier transform of the sequence x.
+    	// The FRFT is computed using O(nlogn) operations.
+    	
+    	// x       The sequence whose FRFT should be computed. Can be of odd or even
+    	//         length. Must be a 1-D row vector.
+    	// alpha	  The parameter alpha of the fractional Fourier transform
+    	
+    	// Returns the aliased FRFT with parameter alpha of the sequence x.
+    	// The fractional Fourier transform w of the sequence x (with parameter alpha) is defined by
+    	//                   n/2-1
+    	//       w(k) =       sum  x(u)*exp(-2*pi*i*k*u*alpha/N),  -n/2 <= k <= n/2-1, N=length(x).
+    	//                   u=-n/2
+    
+    	
+    	// Yoel Shkolnisky 18/12/02
+
+    	int k;
+    	double arg;
+    	double cos;
+    	double sin;
+    	int m= x[0].length;
+    	//disp (strcat('FRFT LEN=',int2str(m)));
+    	int j[] = new int[hiIdx(m) - lowIdx(m) + 1];
+    	for (k = lowIdx(m); k <= hiIdx(m); k++) {
+    		j[k-lowIdx(m)] = k;
+    	}
+    	
+    	int j2[] = new int[hiIdx(2*m) - lowIdx(2*m) + 1];
+    	for (k = lowIdx(2*m); k <= hiIdx(2*m); k++) {
+    		j2[k-lowIdx(2*m)] = k;
+    	}
+    	//E=i*pi*alpha;
+
+    	int nextpow2 = (int)Math.ceil(log2(3*m));
+    	int paddedsize = (int)Math.round(Math.pow(2.0, nextpow2));
+    	int leftpad = (paddedsize-m+1)/2;
+    	int rightpad = paddedsize-m-leftpad; 
+    	double y[][] = new double[2][m];
+    	for (k = 0; k < m; k++) {
+    		arg = Math.PI*alpha*j[k]*j[k]/m;
+    		cos = Math.cos(arg);
+    		sin = Math.sin(arg);
+    		y[0][k] = x[0][k] * cos + x[1][k] * sin;
+    		y[1][k] = -x[0][k] * sin + x[1][k] * cos;
+    	}
+    	double ypad[][] = new double[2][leftpad + m + rightpad];
+    	for (k = 0; k < m; k++) {
+    		ypad[0][k+leftpad] = y[0][k];
+    		ypad[1][k+leftpad] = y[1][k];
+    	}
+
+    	// compute the fractional Fourier transform not by padding to 3*m (as in the paper) but by
+    	// padding to the next power of 2. This uses more memory, but since all FFTs use dyadic length
+    	// it is much faster
+
+    	double z[][] = new double[2][paddedsize];
+    	int l=toUnaliasedIdx(-m,paddedsize);
+    	for (k = l; k <= l + j2.length -1; k++) {
+     	   arg = Math.PI*alpha*j2[k-l]*j2[k-l]/m;
+     	   z[0][k] = Math.cos(arg);
+     	   z[1][k] = Math.sin(arg);
+     	}
+
+    	double Y[][] =cfft(ypad);
+    	double Z[][] =cfft(z);
+    	
+        double W[][] = new double[2][Y[0].length];
+    	for (k = 0; k < Y[0].length; k++) {
+    		W[0][k] = Y[0][k]*Z[0][k] - Y[1][k]*Z[1][k];
+    		W[1][k] = Y[0][k]*Z[1][k] + Y[1][k]*Z[0][k];
+    	}
+    	double w[][] =icfft(W);
+    	int lowIndex = toUnaliasedIdx(lowIdx(m),paddedsize);
+        int highIndex = toUnaliasedIdx(hiIdx(m),paddedsize);
+        double wtrunc[][] = new double[2][highIndex - lowIndex + 1];
+        for (k = lowIndex; k <= highIndex; k++) {
+        	wtrunc[0][k-lowIndex] = w[0][k];
+        	wtrunc[1][k-lowIndex] = w[1][k];
+        }
+        double wprod[][] = new double[2][wtrunc.length];
+    	for (k = 0; k < j.length; k++) {
+    		arg = Math.PI*alpha*j[k]*j[k]/m;
+    		cos = Math.cos(arg);
+    		sin = Math.sin(arg);
+    		wprod[0][k] = wtrunc[0][k]*cos + wtrunc[1][k]*sin;
+    		wprod[1][k] = -wtrunc[0][k]*sin + wtrunc[1][k]*cos;
+    	}
+    	return wprod;
+    }
+    
 }
