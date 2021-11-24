@@ -175,6 +175,146 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
     }
   } // public void testCfft()
+    
+    public void testChirp() {
+	    
+	    // Tests the functions slowChirp and ChirpZ
+	    
+	    // Yoel Shkolnisky 13/1/03
+	
+	    // Compare slowChirp to odd fft.
+	    // Compute the aliased Fourier transform for an odd sequence using slowChirp and verify the result.
+    	RandomNumberGen randomGen = new RandomNumberGen();
+    	int m;
+	    System.out.println("Test 1: SlowChirp odd");
+	    double x[][] = new double[2][7];
+    	for (m = 0; m < x[0].length; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+    	double A[] = new double[] {1.0,0.0};
+    	double arg = 2*Math.PI/x[0].length;
+    	double W[] = new double[2];
+    	W[0] = Math.cos(arg);
+    	W[1] = -Math.sin(arg);
+	    double c1[][] = cfft(x);
+	    double c2[][] = slowChirp(x,A,W,x[0].length);
+	    compare(c1,c2);
+	
+	    // Compare slowChirp to even fft
+	    // Compute the aliased Fourier transform for an even sequence using slowChirp and verify the result.
+	    System.out.println("Test 2: SlowChirp even");
+	    x = new double[2][8];
+    	for (m = 0; m < x[0].length; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+    	A = new double[] {1.0,0.0};
+    	arg = 2*Math.PI/x[0].length;
+    	W = new double[2];
+    	W[0] = Math.cos(arg);
+    	W[1] = -Math.sin(arg);
+	    c1 = cfft(x);
+	    c2 = slowChirp(x,A,W,x[0].length);
+	    compare(c1,c2);
+	
+	    // After this point we assume that slowChirp work correctly.
+	    // In the following tests we use slowChirp as a reference.
+	
+	    // Compare slowChirp and ChirpZ for odd random vector.
+	    // Input length is equal to output length
+	    System.out.println("Test 3: ChirpZ odd");
+	    x = new double[2][11];
+    	for (m = 0; m < x[0].length; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+	    A[0] = Math.cos(6.5);
+	    A[1] = Math.sin(6.5);
+	    W[0] = Math.cos(2.31*Math.PI);
+	    W[1] = -Math.sin(2.31*Math.PI);
+	    c1 = slowChirp(x,A,W,x[0].length);
+	    c2 = ChirpZ(x,A,W,x[0].length);
+	    compare(c1,c2);
+	
+	    // Compare slowChirp and ChirpZ for even radon vector
+	    // Input length is equal to output length
+	    System.out.println("Test 4: ChirpZ even");
+	    x = new double[2][16];
+    	for (m = 0; m < x[0].length; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+	    A[0] = 2;
+	    A[1] = 0;
+	    W[0] = Math.cos(2.31*Math.PI);
+	    W[1] = -Math.sin(2.31*Math.PI);
+	    c1 = slowChirp(x,A,W,x[0].length);
+	    c2 = ChirpZ(x,A,W,x[0].length);
+	    compare(c1,c2);
+	
+	    // Compare slowChirp and ChirpZ for odd random vector.
+	    // Input length is different from output length
+	    System.out.println("Test 5: ChirpZ odd (n<>M)");
+	    x = new double[2][21];
+    	for (m = 0; m < x[0].length; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+	    A[0] = Math.cos(0.1);
+	    A[1] = Math.sin(0.1);
+	    W[0] = Math.cos(2.31);
+	    W[1] = -Math.sin(2.31);
+	    c1 = slowChirp(x,A,W,51);
+	    c2 = ChirpZ(x,A,W,51);
+	    compare(c1,c2);
+	
+	    // Compare slowChirp and ChirpZ for even random vector.
+	    // Input length is different from output length
+	    System.out.println("Test 6: ChirpZ even (n<>M)");
+	    x = new double[2][32];
+    	for (m = 0; m < x[0].length; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+    	A[0] = Math.cos(0.1);
+	    A[1] = Math.sin(0.1);
+	    W[0] = Math.cos(2.31);
+	    W[1] = -Math.sin(2.31);
+	    c1 = slowChirp(x,A,W,64);
+	    c2 = ChirpZ(x,A,W,64);
+	    compare(c1,c2);
+    } // public void testChirp()
+       
+    private void compare(double c1[][], double c2[][]) {
+    	int n = c1[0].length;
+    	int i;
+    	int failed = 0;
+    	
+    	for (i = 0; i < n; i++) {
+    		boolean realFailed = false;
+    		boolean imagFailed = false;
+    		if (Math.abs(c1[0][i] - c2[0][i]) > 1.0E-11) {
+    			System.err.println("c1[0]["+i+"] = " + c1[0][i]);
+    			System.err.println("c2[0]["+i+"] = " + c2[0][i]);
+    			realFailed = true;
+    		}
+    		if (Math.abs(c1[1][i] - c2[1][i]) > 1.0E-11) {
+    			System.err.println("c1[1]["+i+"] = " + c1[1][i]);
+    			System.err.println("c2[1]["+i+"] = " + c2[1][i]);
+    			imagFailed = true;
+    		}
+    		if (realFailed || imagFailed) {
+    			failed++;
+    		}
+    	}
+    	if (failed == 0) {
+    		System.out.println("OK");
+    	}
+    	else {
+    		System.err.println(failed + " tests failed");
+    	}
+    }
      
     
     private int lowIdx(int n) {
@@ -1068,6 +1208,300 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	}
     	return wprod;
     }
+    
+    /**
+     * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
+     * 
+     * @param zr double
+     * @param zi double
+     * 
+     * @return double
+     */
+    private double zabs(final double zr, final double zi) {
+        double u, v, q, s;
+        u = Math.abs(zr);
+        v = Math.abs(zi);
+        s = u + v;
+
+        // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+        // floating zero
+        s = s * 1.0;
+
+        if (s == 0.0) {
+            return 0.0;
+        } else if (u > v) {
+            q = v / u;
+
+            return (u * Math.sqrt(1.0 + (q * q)));
+        } else {
+            q = u / v;
+
+            return (v * Math.sqrt(1.0 + (q * q)));
+        }
+    }
+    
+    /**
+     * b = z**a = exp(a*log(z))
+     * 
+     * @param zr
+     * @param zi
+     * @param a
+     * @param br
+     * @param bi
+     * @param ierr
+     */
+    private void zpow(final double zr, final double zi, final double a, final double br[], final double bi[],
+            final int ierr[]) {
+        zlog(zr, zi, br, bi, ierr);
+        if (ierr[0] == 1) {
+            MipavUtil.displayError("PseudoPolarFourierTransform has error in zlog in zpow");
+            return;
+        }
+        br[0] = a * br[0];
+        bi[0] = a * bi[0];
+        zexp(br[0], bi[0], br, bi);
+        return;
+    }
+    
+    /**
+     * complex logarithm b = clog(a).
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double[]
+     * @param bi double[]
+     * @param ierr int[] ierr = 0, normal return ierr = 1, z = cmplx(0.0, 0.0)
+     */
+    private void zlog(final double ar, final double ai, final double[] br, final double[] bi, final int[] ierr) {
+        double theta;
+        double zm;
+        ierr[0] = 0;
+
+        if (ar == 0.0) {
+
+            if (ai == 0.0) {
+                ierr[0] = 1;
+
+                return;
+            } // if (ai == 0.0)
+            else {
+
+                if (ai > 0.0) {
+                    bi[0] = Math.PI / 2.0;
+                } else {
+                    bi[0] = -Math.PI / 2.0;
+                }
+
+                br[0] = Math.log(Math.abs(ai));
+
+                return;
+            }
+        } // if (ar == 0.0)
+        else if (ai == 0.0) {
+
+            if (ar > 0.0) {
+                br[0] = Math.log(ar);
+                bi[0] = 0.0;
+
+                return;
+            } else {
+                br[0] = Math.log(Math.abs(ar));
+                bi[0] = Math.PI;
+
+                return;
+            }
+        } // else if (ai == 0.0)
+
+        theta = Math.atan(ai / ar);
+
+        if ( (theta <= 0.0) && (ar < 0.0)) {
+            theta = theta + Math.PI;
+        } else if (ar < 0.0) {
+            theta = theta - Math.PI;
+        }
+
+        zm = zabs(ar, ai);
+        br[0] = Math.log(zm);
+        bi[0] = theta;
+
+        return;
+    }
+    
+    /**
+     * complex exponential function b = exp(a).
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double[]
+     * @param bi double[]
+     */
+    private void zexp(final double ar, final double ai, final double[] br, final double[] bi) {
+        double zm, ca, cb;
+        zm = Math.exp(ar);
+        ca = zm * Math.cos(ai);
+        cb = zm * Math.sin(ai);
+        br[0] = ca;
+        bi[0] = cb;
+
+        return;
+    }
+    
+    private double[][] ChirpZ(double x[][], double A[] ,double W[], int M) {
+    		
+    		// Chrip Z-transform of the sequence x on the contour defined by
+    		// A*W^(-k), where k is a sequence of M indices centered around the origin.
+    		// For example, for M=5, the sequence k is -2,-1,0,1,2. For M=4, the sequence 
+    		// k is -2,-1,0,1.
+    		
+    		// The chirp Z-transform is computed using O(nlogn) operations.
+    		
+    		// x    The sequence whose chirp Z-transform should be computed. Can be of odd or even length.
+    		// A    Arbitrary complex number.
+    		// W    The complex ratio between two consecutive points on the contour.
+    		// M    The length of the output sequence. If not specified, the default value
+    		//      is M=length(x);
+    		
+    		// Returns the chirp Z-transform of the sequence x define by
+    		//                n/2-1
+    		//          X(Z) = sum x(j)Z^(-j)
+    		//                j=-n/2
+    		// along the contour Z_k = AW^(-k)     k=-M/2...M/2-1.
+    		
+    		// Yoel Shkolnisky 6/1/03
+
+            int i;
+    		int n= x[0].length;
+    		int j[] = new int[hiIdx(n) - lowIdx(n) + 1];
+    		for (i = lowIdx(n); i <= hiIdx(n); i++) {
+    			j[i - lowIdx(n)] = i;
+    		}     
+    		int pl = M+n; // the required total length for the convolution.
+    		int j2[] = new int[hiIdx(pl) - lowIdx(pl) + 1];
+    		for (i = lowIdx(pl); i <= hiIdx(pl); i++) {
+    			j2[i-lowIdx(pl)] = i;
+    		}
+
+    		// Create the array y of length pl and place the terms of the sequence, defined 
+    		// in the paper, in the middle (centered about zero).
+    		//x = x(:).'; % ensure that x is a row vector
+    		double y[][] = new double[2][pl];
+    		int low = toUnaliasedIdx(lowIdx(n),pl);
+    		int hi = toUnaliasedIdx(hiIdx(n),pl);
+    		double Apow[] = new double[1];
+    		double ApowImag[] = new double[1];
+    		double Wpow[] = new double[1];
+    		double WpowImag[] = new double[1];
+    		int ierr[] = new int[1];
+    		double xA;
+    		double xAImag;
+    		for (i = low; i <= hi; i++) {
+    			zpow(A[0], A[1], -j[i-low], Apow, ApowImag, ierr);
+    			zpow(W[0], W[1], j[i-low]*j[i-low]/2.0, Wpow, WpowImag, ierr);
+    			xA = x[0][i-low]*Apow[0] - x[1][i-low]*ApowImag[0];
+    			xAImag = x[0][i-low]*ApowImag[0] + x[1][i-low]*Apow[0];
+    			y[0][i] = xA*Wpow[0] - xAImag*WpowImag[0];
+    			y[1][i] = xA*WpowImag[0] + xAImag*Wpow[0];
+    		}
+
+    		// Create the array v
+    		double v[][] = new double[2][j2.length];
+    		for (i = 0; i < j2.length; i++) {
+    			zpow(W[0],W[1],-j2[i]*j2[i]/2.0, Wpow, WpowImag, ierr);
+    			v[0][i] = Wpow[0];
+    			v[1][i] = WpowImag[0];
+    		}
+
+    		// Convolve the arrays y and v
+    		double Y[][] =cfft(y);
+    		double V[][] =cfft(v);
+    		double G[][] = new double[2][Y[0].length];
+    		for (i = 0; i < Y[0].length; i++) {
+    			G[0][i] = Y[0][i]*V[0][i] - Y[1][i]*V[1][i];
+    			G[1][i] = Y[0][i]*V[1][i] + Y[1][i]*V[0][i];
+    		}
+    		double g[][] =icfft(G);
+
+    		// Extract relevant portion of the array - the portion the corresponds to -n/2<=k<=n/2
+    		low = toUnaliasedIdx(lowIdx(M),pl);
+    		hi = toUnaliasedIdx(hiIdx(M),pl);
+    		double gtrunc[][] = new double[2][hi-low+1];
+    		for (i = low; i <= hi; i++) {
+    			gtrunc[0][i-low] = g[0][i];
+    			gtrunc[1][i-low] = g[1][i];
+    		}
+
+    		// Postmultiplication
+    		int outIdx[] = new int[hiIdx(M) - lowIdx(M) + 1];
+    		for (i = lowIdx(M); i <= hiIdx(M); i++) {
+    			outIdx[i-lowIdx(M)] = i;
+    		}
+    		double gmult[][] = new double[2][gtrunc[0].length];
+    		for (i = 0; i < gtrunc[0].length; i++) {
+    			zpow(W[0], W[1], outIdx[i]*outIdx[i]/2.0, Wpow, WpowImag, ierr);
+    			gmult[0][i] = gtrunc[0][i]*Wpow[0] - gtrunc[1][i]*WpowImag[0];
+    			gmult[1][i] = gtrunc[0][i]*WpowImag[0] + gtrunc[1][i]*Wpow[0];
+    		}
+    		return gmult;
+    }
+    
+    private double[][] slowChirp(double x[][], double A[], double W[], int M) {
+    		
+    		// Chirp Z-transform of the sequence x on the contour defined by
+    		// A*W^(-k), where k is a sequence of M indices centered around the origin.
+    		// For example, for M=5, the sequence k is -2,-1,0,1,2. For M=4, the sequence 
+    		// k is -2,-1,0,1.
+    		// The chirp Z-transform is computed directly using O(n^2) operations.
+    		
+    		// x    The sequence whose chirp Z-transform should be computed. Can be of odd or even length.
+    		// A    Arbitrary complex number.
+    		// W    The complex ratio between two consecutive points on the contour.
+    		// M    The length of the output sequence. If not specified, the default value 
+    		//      is M=length(x);
+    		
+    		// Returns the chirp Z-transform of the sequence x define by
+    		//                n/2-1
+    		//          X(Z) = sum  x(j)Z^(-j)
+    		//                j=-n/2
+    		// along the contour Z_k = AW^(-k)     k=-M/2...M/2-1.
+    		//
+    		// For example, for x = [1 2 3 4 5], the call
+    		//     slowChirp(x,1,exp(-2*pi*i/5),5)
+    		// computes the aliased DFT of x.
+    		 
+    		// Yoel Shkolnisky 6/1/03
+
+    		int n= x[0].length;
+    		double g[][] = new double[2][M];
+    		double Wpow[] = new double[1];
+    		double WpowImag[] = new double[1];
+    		int ierr[] = new int[1];
+            double Z;
+            double ZImag;
+            double acc;
+            double accImag;
+            int idx;
+            double Zpow[] = new double[1];
+            double ZpowImag[] = new double[1];
+    		for (int k=lowIdx(M); k <= hiIdx(M); k++) {
+    		   zpow(W[0], W[1], -k, Wpow, WpowImag, ierr);
+    		   Z = A[0]*Wpow[0] - A[1]*WpowImag[0];
+    		   ZImag = A[0]*WpowImag[0] + A[1]*Wpow[0];
+    		   acc = 0.0;
+    		   accImag = 0.0;
+    		   for (int j=lowIdx(n); j <= hiIdx(n); j++) {
+    			  idx = toUnaliasedIdx(j,n);
+    			  zpow(Z, ZImag, -j, Zpow, ZpowImag, ierr);
+    			  acc = acc + x[0][idx]*Zpow[0] - x[1][idx]*ZpowImag[0];
+    			  accImag = accImag + x[0][idx]*ZpowImag[0] + x[1][idx]*Zpow[0];
+    		   }
+    		   int outIdx = toUnaliasedIdx(k,M);
+    		   g[0][outIdx] = acc;
+    		   g[1][outIdx] = accImag;
+    		}
+    		return g;
+    }
+
+
     
     /*private void CG(double [][][]Y, int flag[], double relres[], int iter[] ,double absres[],
     		// function PtP
