@@ -27,12 +27,155 @@ import gov.nih.mipav.view.Preferences;
 
 public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
+	public PseudoPolarFourierTransform() {
+		
+	}
+	
 	/**
      * Starts the program.
      */
     public void runAlgorithm() {
     	
     }
+    
+    public void testCfft() {
+    // All tests pass.
+    
+    // Tests the functions cfft, cfrft, icfft.
+    // See also cfft, cfrft, icfft.
+    
+    // Yoel Shkolnisky 9/2/02
+
+    double eps = 0.00000001;
+    int j[] = new int[] {100,101,256,317};
+    int i,m;
+    RandomNumberGen randomGen = new RandomNumberGen();
+    for (int k = 0; k < j.length; k++) {
+    	i = j[k];
+    	System.out.println("Testing with i = " + i);   
+    	double x[][] = new double[2][i];
+    	for (m = 0; m < i; m++) {
+    		x[0][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		x[1][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+
+    	double cdftx[][]  = cdft(x);
+    	double cfftx[][]  = cfft(x);
+    	double frftx[][]  = frft(x,1);
+    	double cfrftx[][] = cfrft(x,1);
+
+    	//check frft all this vectors should be equal.
+    	int failed = 0;
+    	boolean realFailed;
+    	boolean imagFailed;
+    	for (m = 0; m < i; m++) {
+    		realFailed = false;
+    		imagFailed = false;
+    		if ((cdftx[0][m] - cfftx[0][m]) > eps) {
+    			System.err.println("cdftx[0]["+m+"] = " + cdftx[0][m]);
+    			System.err.println("cfftx[0]["+m+"] = " + cfftx[0][m]);
+    			realFailed = true;
+    		}
+    		if ((cdftx[1][m] - cfftx[1][m]) > eps) {
+    			System.err.println("cdftx[1]["+m+"] = " + cdftx[1][m]);
+    			System.err.println("cfftx[1]["+m+"] = " + cfftx[1][m]);
+    			imagFailed = true;
+    		}
+    		if (realFailed || imagFailed) {
+    			failed++;
+    		}
+    	}
+    	
+    	if (failed == 0) {
+    		System.out.println("cfft OK");
+    	}
+    	else {
+    		System.err.println("cfft failed " + failed + " times");
+    	}
+
+    	failed = 0;
+    	for (m = 0; m < i; m++) {
+    		realFailed = false;
+    		imagFailed = false;
+    		if ((cdftx[0][m] - frftx[0][m]) > eps) {
+    			System.err.println("cdftx[0]["+m+"] = " + cdftx[0][m]);
+    			System.err.println("frftx[0]["+m+"] = " + frftx[0][m]);
+    			realFailed = true;
+    		}
+    		if ((cdftx[1][m] - frftx[1][m]) > eps) {
+    			System.err.println("cdftx[1]["+m+"] = " + cdftx[1][m]);
+    			System.err.println("frftx[1]["+m+"] = " + frftx[1][m]);
+    			imagFailed = true;
+    		}
+    		if (realFailed || imagFailed) {
+    			failed++;
+    		}
+    	}
+
+    	if (failed == 0) {
+    		System.out.println("frftx OK");
+    	}
+    	else {
+    		System.err.println("frftx failed " + failed + " times");
+    	}
+    	
+    	failed = 0;
+    	for (m = 0; m < i; m++) {
+    		realFailed = false;
+    		imagFailed = false;
+    		if ((frftx[0][m] - cfrftx[0][m]) > eps) {
+    			System.err.println("frftx[0]["+m+"] = " + frftx[0][m]);
+    			System.err.println("cfrftx[0]["+m+"] = " + cfrftx[0][m]);
+    			realFailed = true;
+    		}
+    		if ((frftx[1][m] - cfrftx[1][m]) > eps) {
+    			System.err.println("frftx[1]["+m+"] = " + frftx[1][m]);
+    			System.err.println("cfrftx[1]["+m+"] = " + cfrftx[1][m]);
+    			imagFailed = true;
+    		}
+    		if (realFailed || imagFailed) {
+    			failed++;
+    		}
+    	}
+    	
+    	if (failed == 0) {
+    		System.out.println("cfrftx OK");
+    	}
+    	else {
+    		System.err.println("cfrftx failed " + failed + " times");
+    	}
+
+    	double icfftx[][] = icfft(x);
+    	double icdftx[][] = icdft(x);
+    	
+    	for (m = 0; m < i; m++) {
+    		realFailed = false;
+    		imagFailed = false;
+    		if ((icdftx[0][m] - icfftx[0][m]) > eps) {
+    			System.err.println("icdftx[0]["+m+"] = " + icdftx[0][m]);
+    			System.err.println("icfftx[0]["+m+"] = " + icfftx[0][m]);
+    			realFailed = true;
+    		}
+    		if ((icdftx[1][m] - icfftx[1][m]) > eps) {
+    			System.err.println("icdftx[1]["+m+"] = " + icdftx[1][m]);
+    			System.err.println("icfftx[1]["+m+"] = " + icfftx[1][m]);
+    			imagFailed = true;
+    		}
+    		if (realFailed || imagFailed) {
+    			failed++;
+    		}
+    	}
+    	
+    	if (failed == 0) {
+    		System.out.println("icfft OK");
+    	}
+    	else {
+    		System.err.println("icfft failed " + failed + " times");
+    	}
+
+    }
+  } // public void testCfft()
+     
     
     private int lowIdx(int n) {
     		
@@ -321,6 +464,39 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		  }
     	   }
     	}
+    	return y;
+    }
+    
+    private double[][] icdft(double x[][]) {
+		//
+		// Aliased inverse discrete Fourier transform (IDFT) of the complex sequence x.
+		// The DFT is computed directly using O(n^2) operations.
+		
+		// x    The sequence whose IDFT should be computed. Can be of odd or even length.
+		
+		// Returns the aliased IDFT of the sequence x.
+		 
+		// Yoel Shkolnisky 22/10/01
+    	
+    	int m= x[0].length;
+    	double y[][] = new double[2][m];
+
+    	for (int k=lowIdx(m); k <= hiIdx(m); k++) {
+    	   double acc = 0.0;
+    	   double accImag = 0.0;
+    	   for (int j=lowIdx(m); j <= hiIdx(m); j++) {
+    		  // acc = acc + x(toUnaliasedIdx(j,m))* exp(2*pi*i*j*k/m);
+    		  int idx = toUnaliasedIdx(j,m);
+    		  double arg = 2*Math.PI*j*k/m;
+    		  double cos = Math.cos(arg);
+    		  double sin = Math.sin(arg);
+    	      acc = acc + x[0][idx]* cos - x[1][idx]*sin;
+    	      accImag = accImag +x[0][idx]*sin + x[1][idx]*cos;
+    	   }
+    	   int idxOut = toUnaliasedIdx(k,m);
+    	   y[0][idxOut] = acc/m;
+    	   y[1][idxOut] = accImag/m;
+        }
     	return y;
     }
     
@@ -672,6 +848,47 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	return (fftshift(y));
     }
     
+    private double[][] frft(double x[][], double alpha) {
+    		
+    		// Aliased fractional Fourier transform (FRFT) of the sequence x.
+    		// The FRFT is computed directly using O(n^2) operations.
+    		
+    		// x       The sequence whose FRFT should be computed. Can be of odd or even length.
+    		// alpha	  The alpha parameter of the fractional Fourier transform
+    		
+    		// Returns the aliased FRFT with parameter alpha of the sequence x.
+    		// The result is always a row vector.
+    		
+    		// The fractional Fourier transform y of the sequence x (with parameter alpha) is defined by
+    		//                   n/2-1
+    		//       y(k) =       sum  x(u)*exp(-2*pi*i*k*u*alpha/N),  -n/2 <= k <= n/2-1, N=length(x).
+    		//                   u=-n/2
+    		// The value of the fractional Fourier transform (y) for index k (-n/2 <= k <= n/2-1) is stored in 
+    		// the array y in index toUnalisedIdx(k,N) (which is between 1 and N).
+    		 
+    		// Yoel Shkolnisky 22/10/01
+
+    		int m= x[0].length;
+    		double y[][] = new double[2][m];
+
+    		for (int k=lowIdx(m); k <= hiIdx(m); k++) {
+    		   double acc = 0.0;
+    		   double accImag = 0.0;
+    		   for (int j=lowIdx(m); j <= hiIdx(m); j++) {
+    			  double arg = 2.0*Math.PI*j*k*alpha/m;
+    			  double cos = Math.cos(arg);
+    			  double sin = Math.sin(arg);
+    			  int idx = toUnaliasedIdx(j,m);
+    			  acc = acc + x[0][idx]*cos + x[1][idx]*sin;
+    			  accImag = accImag -x[0][idx]*sin + x[1][idx]*cos;	  
+    		   }
+    		   int outputIdx = toUnaliasedIdx(k,m);
+    		   y[0][outputIdx] = acc;
+    		   y[1][outputIdx] = accImag;
+    		}
+    		return y;
+    }
+    
     private double[][] cfrft(double x[][], double alpha) {
     	// Aliased fractional Fourier transform of the sequence x.
     	// The FRFT is computed using O(nlogn) operations.
@@ -746,7 +963,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
         	wtrunc[0][k-lowIndex] = w[0][k];
         	wtrunc[1][k-lowIndex] = w[1][k];
         }
-        double wprod[][] = new double[2][wtrunc.length];
+        double wprod[][] = new double[2][wtrunc[0].length];
     	for (k = 0; k < j.length; k++) {
     		arg = Math.PI*alpha*j[k]*j[k]/m;
     		cos = Math.cos(arg);
@@ -841,7 +1058,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
         	wtrunc[0][k-lowIndex] = w[0][k];
         	wtrunc[1][k-lowIndex] = w[1][k];
         }
-        double wprod[][] = new double[2][wtrunc.length];
+        double wprod[][] = new double[2][wtrunc[0].length];
     	for (k = 0; k < j.length; k++) {
     		arg = Math.PI*alpha*j[k]*j[k]/m;
     		cos = Math.cos(arg);
@@ -851,5 +1068,119 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	}
     	return wprod;
     }
+    
+    /*private void CG(double [][][]Y, int flag[], double relres[], int iter[] ,double absres[],
+    		// function PtP
+    		double[][][]X, double[] params, double ErrTol,int MaxIts,
+    		double [][][]guess, boolean verbose, double [][][]RefY) {
+    		
+    		// Solve the system X=PtP(Y,params) using the conjugate gradient method.
+    		// The operator PtP must be hermitian and positive defined.
+    		// The firat parameter to PtP must be the variable Y. params can be any list
+    		// of comma separated arguments.
+    		
+    		//  Input parameters:
+    		//    PtP       Name of the operator to invert
+    		//    X         The transformed matrix. The matrix at the range space of the operator PtP, 
+    		//              whose source needs to be found.
+    		//    params    Additional parameters to the operator PtP.
+    		//    ErrTol    Error tolerance of the CG method. Default 1.e-9.
+    		//    MaxIts    Maximum number of iterations. Default 10.
+    		//    guess     Initial guess of the solution. Default is X.
+    		//    verbose    By default, if more than one output argument is specified, then all output 
+    		//              messages are suppressed. Set this flag to any value other than 0 to
+    		//              always display output messages.
+    		//    RefY      The untransformed matrix Y. Used only for checking absolute error.
+    		//              If not specified, absolute error is not computed.
+    		
+    		//  Output parameters:
+    		//    Y         The result matrix of the CG method. This is the estimate of the CG
+    		//              method to the solution of the system X=PtP(Y).
+    		//    flag      A flag that describes the convergence of the CG method.
+    		//              0 CG converged to the desired tolerance ErrTol within MaxIts iterations.
+    		//              1 CG did not converge to ErrTol within MaxIts iterations.
+    		//    relres    Residual error at the end of the CG method. Computed using max norm.
+    		//    iter      The iteration number at which ErrTol was achieved. Relevant only if
+    		//              flag=0.
+    		//    absres    The absolute error at the end of the CG method. Relevant only if RefY
+    		//              was given as parameter. Computed using max norm.
+    		
+    		// Yoel Shkolnisky 15/12/02
+
+    		// Check the input and initialize flags and default parameters
+    	    boolean ref_given;
+    	    boolean suppress_output;
+    	    double xk[][][];
+    		ref_given=true;         // The flags is 1 if the reference untransformed matrix RefY is given and 0 otherwise
+
+    		if (refY == null) {    // RefY not given
+    		   ref_given=false;   
+    		}
+
+    		// Initialize convergence flag. If the routine will detect that the CG method converged, this flag 
+    		// will be set to 0 to represent convergence. By default it assumes that the CG did not converge.
+    		flag[0]=1;
+
+    		// Set flag to suppress output if "flag" output is specified.
+    		suppress_output=false;
+    		if (!verbose) {
+    		   suppress_output=true;
+    		}
+
+    		// iter holds the iteration in which CG converged to ErrTol.
+    		iter[0]=-1;
+
+    		// Initialization
+    		xk = guess;
+    		// Evaluates the function PtP using xk and params
+    		//temp = feval(PtP,xk,params{:});
+    		gk = temp-X;
+    		pk = -gk;
+    		dk = sum(abs(gk(:)).^2);
+
+    		% Conjugate gradient iteration
+    		j=2;
+    		done = 0;
+    		while (j<=MaxIts) & (~done)
+    		    perr=sum((abs(pk(:))).^2);
+    		    if ref_given % If reference matrix is given compute absolute error
+    		        xerr=max(max(abs(RefY-xk)));
+    		    end
+    		    if (~suppress_output) & (flag)
+    		%        fprintf('Iteration %2d:  Residual error=%-2.7e',j-1,perr);
+    		        fprintf('Iteration %2d:  Gradient norm=%-2.7e',j-1,perr);
+    		        fprintf('\t Residual error=%-2.7e',dk);
+    		        if ref_given            
+    		            fprintf('\t Absolute error=%-2.7e',xerr);
+    		        end
+    		        fprintf('\n');
+    		    end
+
+    		    if perr<=ErrTol
+    		        iter=j-1;  %CG converged at previous iteration
+    		        flag=0;
+    		        done=1;
+    		    end
+    		    if perr>ErrTol
+    		        hk = feval(PtP,pk,params{:});
+    		        tk = dk/dot(pk(:),hk(:));  %line search parameter
+    		        xk = xk+tk*pk;       % update approximate solution
+    		        gk = gk+tk*hk;       % update gradient
+    		        temp = sum(abs(gk(:)).^2);
+    		        bk = temp/dk;
+    		        dk = temp;
+    		        pk = -gk+bk*pk;       %update search direction
+    		    end
+    		    j=j+1;
+    		end
+
+    		relres = perr;
+    		if ref_given
+    		    absres = xerr;
+    		end      
+
+    		Y = xk;
+    } // private void CG */
+
     
 }
