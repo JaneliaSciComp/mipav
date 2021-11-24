@@ -177,6 +177,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
   } // public void testCfft()
     
     public void testChirp() {
+    	// All tests passed.
 	    
 	    // Tests the functions slowChirp and ChirpZ
 	    
