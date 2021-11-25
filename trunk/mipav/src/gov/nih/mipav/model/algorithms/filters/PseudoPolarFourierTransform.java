@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -1616,6 +1617,127 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
     		Y = xk;
     } // private void CG */
+    
+    private double[] dirichlet(double t[], int m) {
+    		
+		// compute the value of the dirichlet kernel of length m at point t
+		
+		// Yoel Shkolnisky 22/10/01
+    	
+    	// epsilon = D1MACH(4)
+        // Machine epsilon is the smallest positive epsilon such that
+        // (1.0 + epsilon) != 1.0.
+        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+        // epsilon = 2.2204460e-16
+        // epsilon is called the largest relative spacing
+        double epsilon = 1.0;
+        double neweps = 1.0;
+
+        while (true) {
+
+            if (1.0 == (1.0 + neweps)) {
+                break;
+            } else {
+                epsilon = neweps;
+                neweps = neweps / 2.0;
+            }
+        } // while(true)
+
+
+    		double y[] = new double[t.length];
+    		for (int k=0; k < y.length; k++) {
+    		    if (Math.abs(t[k])<epsilon) {
+    		        y[k]=1;
+    		    }
+    		    else {
+    		        y[k]= Math.sin(Math.PI*t[k])/(m*Math.sin(Math.PI*t[k]/m));
+    		    }
+    		}
+    		return y;
+    }
+    
+    private int[] toUnaliasedCoord(int aCoord[], int N[]) {
+    		
+    		// Converts indices from the range -n/2...n/2-1 to indices in the range 0...n-1.
+    		// Both odd and even values of n are handled. 
+    		
+    		// The functions accepts a vector of aliased indices (aCoord) and a vector of ranges
+    		// (N) from which the indices are taken. It converts each aliased index aCoord(k) into an
+    		// unaliased index uCoord(k) in the range 0...N(k)-1. If the vector of ranges
+    		// (N) is a scalar, then the function assumes that all indices are taken
+    		// from the same range N. This allows calling the function on a vector of
+    		// indices:
+    		//       toUnaliasedCoord([-1 1 2],5)
+    		// instead of
+    		//       toUnaliasedCoord([-1 1 2],[5 5 5])
+    		
+    		// Input:
+    		//   aCoord    Vector of aliased indices. Must be 1-D row vector.
+    		//   N         Vector that contains the range of each index. Must be 1-D row
+    		//             vector or a scalar. If N is scalar it is used for all
+    		//             coordinates.
+    		// Output:
+    		//   uCoord    Vector of unaliased indices.
+    		
+    		// If N is not a scaler, the vectors aCoord and N must have the same length.
+    		
+    		// Yoel Shkolnisky 8/1/03
+
+    		
+    		if ((N.length != 1) && (aCoord.length != N.length)) {
+    		   MipavUtil.displayError ("In toUnaliasedCoord N must be scalar or length of coordinates vector and ranges vector must be the same");
+    		   System.exit(0);
+    		}
+
+    		// The boolean flag scalar is 1 if the ranges vector N is a scalar.
+    		boolean scalar= false;
+    		if (N.length==1) {
+    		    scalar=true;
+    		}
+
+
+    		int uCoord[] = new int[aCoord.length];
+    		for (int k=0; k< aCoord.length; k++) {
+    		    if (scalar) {
+    		        uCoord[k] = toUnaliasedIdx(aCoord[k],N[0]);
+    		    }
+    		    else {
+    		        uCoord[k] = toUnaliasedIdx(aCoord[k],N[k]);
+    		    }
+    		}
+    		return uCoord;
+    }
+    
+    public boolean verifyImage(ModelImage im) {
+	    
+	    // Verify input image.
+	    
+	    // The function verifies that the input image is a 3D image of size nxnxn
+	    // with n even. Otherwise the function aborts with an error message.
+	    
+	    // Yoel Shkolnisky
+	
+	    // Verify that the input is a 3D image of size nxnxn
+	    int extents[] = im.getExtents();
+	    if (extents.length != 3) {
+	       System.err.println("Input must be a 3D image");
+	       return false;
+	    }
+	
+	    if ((extents[0] != extents[1]) || (extents[1] != extents[2])) {
+	       System.err.println("Input image must be cube");
+	       return false;
+	    }
+	
+	    if ((extents[0] % 2) != 0) {
+	       System.err.println("Input image must have even sides");
+	       return false;
+	    }
+	    
+	    return true;
+    }
+
+
 
     
 }
