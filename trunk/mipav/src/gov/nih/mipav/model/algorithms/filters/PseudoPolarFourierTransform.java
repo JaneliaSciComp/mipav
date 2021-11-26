@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -2273,7 +2277,289 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    return true;
     }
 
+    private double[][] adjF(double y[][]) {
+    		
+    		// Adjoint of the operator F
+    		
+    		// Parameters:
+    		//      y        vector of length n+1 (n even)
+    		//      x        vector of length n
+    		
+    		// Yoel Shkolnisky 30/03/03
 
+    	    int i;	
+    	    // Check that the vector y is of length n+1 with n even.
+    		int n = y[0].length-1;
+    		if ((n % 2) !=0) {
+    		    MipavUtil.displayError("In adjF y must be of length n+1 (n even)");
+    		    return null;
+    		}
+    		int m=2*n+1;
+
+    		double y2[][] = new double[2][m];
+    		for (i = 0; i < y.length; i++) {
+    			y2[0][2*i] = y[0][i];
+    			y2[1][2*i] = y[1][i];
+    		}
+    		double iy2[][] = icfft(y2);
+    		double x[][] = new double[2][m];
+    		for (i = 0; i < m; i++) {
+    			x[0][i] = m*y2[0][i];
+    			x[1][i] = m*y2[1][i];
+    		}
+    	    double xout[][] = new double[2][n];
+    	    for (i = n/2; i < 3*n/2; i++) {
+    	    	xout[0][i-n/2] = x[0][i];
+    	    	xout[1][i-n/2] = x[1][i];
+    	    }
+    		return xout;
+    }
+
+    private double[] chebzeros(int n) {
+    		
+    		// Compute all zero of the Chebyshev polynomial of order n
+    		
+    		// Parameters:
+    		//   n   Order of the polynomial. n is an integer. n>=0.
+    		
+    		// Returned value:
+    		//   t   Array with the n zeros.
+    		
+    		// Yoel Shkolnisky 22/09/04
+
+    		if (n<0) {
+    		    MipavUtil.displayError(" in chebzeros n should be a positive integer");
+    		    return null;
+    		}
+    		
+    		double t[] = new double[n];
+    		for (int i = 1; i <= n; i++) {
+    		    t[i-1] = -Math.cos((2.0*i-1.0)/n*(Math.PI/2.0));	
+    		}
+            return t;
+    }
+    
+    private class indexValueComparator implements Comparator<indexValueItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(indexValueItem o1, indexValueItem o2) {
+            double a = o1.getValue();
+            double b = o2.getValue();
+            int i = o1.getIndex();
+            int j = o2.getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else if (i < j) {
+            	return -1;
+            } else if (i > j) {
+            	return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+	
+	private class indexValueItem {
+		private int index;
+		private double value;
+		
+		public indexValueItem(int index, double value) {
+			this.index = index;
+			this.value = value;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public double getValue() {
+			return value;
+		}
+		
+		
+	}
+    
+    /*private double[] fastfmmresample(double f[], double y[], double x[],
+    		double dj[] ,double cl[], double EPS) {
+    		
+    		// Resample a trigonometric polynomial from the points y to the points x.
+    		
+    		// Let f(w) be the trigonometric polynomial given by
+    		//
+    		//       n/2-1
+    		// T(w) = sum a(k)*exp(i*k*w).
+    		//       k=-n/2
+    		// The array f is the sample of T(w) at the points y. The function computes
+    		// the values of T(w) at the points x.
+    		
+    		// Input parameters:
+    		//   f      Values of T(x) at the points y.
+    		//   y      Points where f is given.
+    		//   x      Points where to resample T(w).
+    		//   cl,dj  Precomputed interpolation constants.
+    	    //   EPS has has a default of 1.0E-8
+    		
+    		// Output parameters:
+    		//   g     Values of T(w) at the points x.
+    		
+    		// The arrays f,x,y should be of the same even length.
+    		
+    		// Yoel Shkolnisky  03/10/2004
+
+    		int i;
+    	    int n=f.length;
+    		
+    		if ((dj == null) || (dj.length == 0)) {
+    			System.err.println("In fastmmresample interpolation constants dj must be supplied");
+    			return null;
+    		}
+    		
+    		if ((cl == null) || (cl.length == 0)) {
+    			System.err.println("In fastmmresample interpolation constants cl must be supplied");
+    			return null;
+    		}
+
+    		if (x.length != n) {
+    			System.err.println("In fastmmresample f.length = " + n + ", but x.length = " + x.length);
+    			return null;
+    		}
+    		
+    		if (y.length != n) {
+    			System.err.println("In fastmmresample f.length = " + n + ", but y.length = " + y.length);
+    			return null;
+    		}
+
+    		if ((n % 2)==1) {
+    		    System.err.println("In fastmmresample the length n must be even");
+    		    return null;
+    		}
+
+    		// sort x and then sort everything to the same order as x.
+    		ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+    		for (i = 0; i < n; i++) {
+    			indexValueList.add(new indexValueItem(i, x[i]));
+    		}
+    		Collections.sort(indexValueList, new indexValueComparator());
+    		int srtXidx[] = new int[n];
+    		for (i = 0; i < n; i++) {
+    	    	indexValueItem item = indexValueList.get(i);
+    	    	x[i] = item.getValue();
+    	    	srtXidx[i] = item.getIndex();
+    		}
+    		indexValueList.clear();
+    		for (i = 0; i < n; i++) {
+    			indexValueList.add(new indexValueItem(i, y[i]));
+    		}
+    		Collections.sort(indexValueList, new indexValueComparator());
+    		int srtYidx[] = new int[n];
+    		for (i = 0; i < n; i++) {
+    	    	indexValueItem item = indexValueList.get(i);
+    	    	y[i] = item.getValue();
+    	    	srtYidx[i] = item.getIndex();
+    		}
+    		double fsrt[] = new double[n];
+    		for (i = 0; i < n; i++) {
+    			fsrt[i] = f[srtYidx[i]];
+    		}
+
+    		// remove x points that are equal to some y point
+    		int idxX=0;
+    		int idxY=0;
+    		int idxDroppedElems[] = new int[n]; // the indices of the x that appear in y
+    		int idxEqualTo[] = new int[n]; // the index in the y array of the dropped elements
+    		for (i = 0; i < n; i++) {
+    			idxDroppedElems[i] = -1;
+    			idxEqualTo[i] = -1;
+    		}
+
+    		int j=0;
+    		while ((idxX<n) && (idxY<n)) {
+    		    if (Math.abs(x[idxX]-y[idxY])<1.0d-15) {
+    		        idxDroppedElems[j]=idxX;
+    		        idxEqualTo[j]=idxY;
+    		        j=j+1;
+    		        idxX=idxX+1;
+    		    }
+    		    else if (x[idxX]<y[idxY]) {
+    		        idxX=idxX+1;
+    		    }
+    		    else {
+    		        idxY=idxY+1;
+    		    }
+    		 }
+
+    		// idxUsed is the set of indices from x which we need to
+    		// compute. In other words, these are the elements that were not dropped in
+    		// the previous iteration.
+    		int m = 0;
+    		int k = 0;
+    		boolean found;
+    		int idxUsed[] = new int[n];
+    		for (i = 0; i < n; i++) {
+    			found = false;
+    			for (k = 0; k < n; k++) {
+    				if (i == idxDroppedElems[k]) {
+    					found = true;
+    				}
+    			}
+    			if (!found) {
+    				idxUsed[m++] = i;
+    			}
+    		}
+    		double xused[] = new double[m];
+    		for (i = 0; i < m; i++) {
+    			xused[i] = x[idxUsed[i]];
+    		}
+    		int lendropped=j; // number of dropped elements from x
+    		double clused[] = new double[m];
+    		for (i = 0; i < m; i++) {
+    			clused[i] = cl[idxUsed[i]];
+    		}
+
+    		// Now we can resample the polynomial using the modified vector x
+
+    		double LARGE=1.0E15;
+    		double g[] = new double[n];
+
+    		// Resample the polynomial
+    		double gg[] = new double[m];
+    		if (xused.length>0) {
+    			double fd[] = new double[n];
+    			double sfd = 0.0;
+    			for (i = 0; i < n; i++) {
+    				fd[i] = fsrt[i]*dj[i];
+    				sfd += fd[i];
+    			}
+    			b=optimizedtansum(fd,y./2,xused./2,EPS);
+    			for k=1:m
+    		        b(k)=b(k)-i*sfd;
+    			end
+    			gg=clused.*b;
+    		}
+
+    		% For each dropped x, the value of the polynomial is simply the
+    		% corresponding value from f. 
+    		% Create the output array by appending the computed values to the relevant
+    		% values from f.
+    		g(idxUsed)=gg;
+    		for k=1:lendropped
+    		    g(idxDroppedElems(k))=fsrt(idxEqualTo(k));
+    		end
+
+    		% reorder the output array to the original order.
+    		g=g(srtXidx);
+    }*/
 
     
 }
