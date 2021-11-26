@@ -2390,7 +2390,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		
 	}
     
-    /*private double[] fastfmmresample(double f[], double y[], double x[],
+    private double[][] fastfmmresample(double f[][], double yin[], double xin[],
     		double dj[] ,double cl[], double EPS) {
     		
     		// Resample a trigonometric polynomial from the points y to the points x.
@@ -2418,7 +2418,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		// Yoel Shkolnisky  03/10/2004
 
     		int i;
-    	    int n=f.length;
+    	    int n=f[0].length;
     		
     		if ((dj == null) || (dj.length == 0)) {
     			System.err.println("In fastmmresample interpolation constants dj must be supplied");
@@ -2430,19 +2430,28 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     			return null;
     		}
 
-    		if (x.length != n) {
-    			System.err.println("In fastmmresample f.length = " + n + ", but x.length = " + x.length);
+    		if (xin.length != n) {
+    			System.err.println("In fastmmresample f.length = " + n + ", but xin.length = " + xin.length);
     			return null;
     		}
     		
-    		if (y.length != n) {
-    			System.err.println("In fastmmresample f.length = " + n + ", but y.length = " + y.length);
+    		if (yin.length != n) {
+    			System.err.println("In fastmmresample f.length = " + n + ", but yin.length = " + yin.length);
     			return null;
     		}
 
     		if ((n % 2)==1) {
     		    System.err.println("In fastmmresample the length n must be even");
     		    return null;
+    		}
+    		
+    		double x[] = new double[xin.length];
+    		for (i = 0; i < xin.length; i++) {
+    			x[i] = xin[i];
+    		}
+    		double y[] = new double[yin.length];
+    		for (i = 0; i < yin.length; i++) {
+    			y[i] = yin[i];
     		}
 
     		// sort x and then sort everything to the same order as x.
@@ -2468,9 +2477,10 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	    	y[i] = item.getValue();
     	    	srtYidx[i] = item.getIndex();
     		}
-    		double fsrt[] = new double[n];
+    		double fsrt[][] = new double[2][n];
     		for (i = 0; i < n; i++) {
-    			fsrt[i] = f[srtYidx[i]];
+    			fsrt[0][i] = f[0][srtYidx[i]];
+    			fsrt[1][i] = f[1][srtYidx[i]];
     		}
 
     		// remove x points that are equal to some y point
@@ -2530,36 +2540,387 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		// Now we can resample the polynomial using the modified vector x
 
     		double LARGE=1.0E15;
-    		double g[] = new double[n];
+    		double g[][] = new double[2][n];
 
     		// Resample the polynomial
-    		double gg[] = new double[m];
+    		double gg[][] = new double[2][m];
     		if (xused.length>0) {
-    			double fd[] = new double[n];
+    			double fd[][] = new double[2][n];
     			double sfd = 0.0;
+    			double sfdImag = 0.0;
     			for (i = 0; i < n; i++) {
-    				fd[i] = fsrt[i]*dj[i];
-    				sfd += fd[i];
+    				fd[0][i] = fsrt[0][i]*dj[i];
+    				fd[1][i] = fsrt[1][i]*dj[i];
+    				sfd += fd[0][i];
+    				sfdImag += fd[1][i];
     			}
-    			b=optimizedtansum(fd,y./2,xused./2,EPS);
-    			for k=1:m
-    		        b(k)=b(k)-i*sfd;
-    			end
-    			gg=clused.*b;
+    			double ydiv2[] = new double[n];
+    			for (i = 0; i < n; i++) {
+    				ydiv2[i] = y[i]/2.0;
+    			}
+    			double xdiv2[] = new double[m];
+    			for (i = 0; i < m; i++) {
+    				xdiv2[i] = xused[i]/2.0;
+    			}
+    			double b[][] =optimizedtansum(fd,ydiv2,xdiv2,EPS);
+    			for (k = 0; k < m; k++) {
+    				b[0][k]=b[0][k]+sfdImag;
+    		        b[1][k]=b[1][k]-sfd;
+    			}
+    			for (i = 0; i < m; i++) {
+    			    gg[0][i] = clused[i]*b[0][i];
+    			    gg[1][i] = clused[i]*b[1][i];
+    			}
     		}
 
-    		% For each dropped x, the value of the polynomial is simply the
-    		% corresponding value from f. 
-    		% Create the output array by appending the computed values to the relevant
-    		% values from f.
-    		g(idxUsed)=gg;
-    		for k=1:lendropped
-    		    g(idxDroppedElems(k))=fsrt(idxEqualTo(k));
+    		// For each dropped x, the value of the polynomial is simply the
+    		// corresponding value from f. 
+    		// Create the output array by appending the computed values to the relevant
+    		// values from f.
+    		for (i = 0; i < m; i++) {
+    			g[0][idxUsed[i]] = gg[0][i];
+    			g[1][idxUsed[i]] = gg[1][i];
+    		}
+    		for (k=0; k < lendropped; k++) {
+    		    g[0][idxDroppedElems[k]] = fsrt[0][idxEqualTo[k]];
+    		    g[1][idxDroppedElems[k]] = fsrt[1][idxEqualTo[k]];
+    		}
+
+    		// reorder the output array to the original order.
+    		double greorder[][] = new double[2][n];
+    		for (i = 0; i < n; i++) {
+    		    greorder[0][i]=g[0][srtXidx[i]];
+    		    greorder[1][i]=g[1][srtXidx[i]];
+    		}
+    		return greorder;
+    }
+    
+    private double[][] optimizedtansum(double alphain[][], double xin[], double yin[], double eps) {
+    		
+    		// An optimized version of the function tansum. See tansum for more details.
+    		
+    		// Input parameters:
+    		//    alphain   Weights in the sum above
+    		//    xin       Points at which the weights are given.
+    		//    yin       Points where to evaluate the sum v.
+    		//    eps     Required accuracy. Default value 1.0e-8.
+    		//
+    		// Returned value:
+    		//    v       An array of the same length as y where v(k) is the value of
+    		//            the sum above at the point y(k).
+    		//
+    		// Yoel Shkolnisky 21/09/04
+
+    		int i;
+    	    if (alphain[0].length != xin.length) {
+    		    System.err.println("In optimizedtansum arrays alphain and xin must have the same length");
+    		    System.exit(0);
+    		}
+    	    
+    	    double alpha[][] = new double[2][alphain[0].length];
+    	    for (i = 0; i < alphain[0].length; i++) {
+    	    	alpha[0][i] = alphain[0][i];
+    	    	alpha[1][i] = alphain[1][i];
+    	    }
+    	    double x[] = new double[xin.length];
+    	    for (i = 0; i < xin.length; i++) {
+    	    	x[i] = xin[i];
+    	    }
+    	    double y[] = new double[yin.length];
+    	    for (i = 0; i < yin.length; i++) {
+    	    	y[i] = yin[i];
+    	    }
+
+    		// Find the smallest interval the contains all points x and y
+    		double lowpoint = Double.MAX_VALUE;
+    		double highpoint = -Double.MAX_VALUE;
+    		for (i = 0; i < x.length; i++) {
+    			if (x[i] < lowpoint) {
+    				lowpoint = x[i];
+    			}
+    			if (x[i] > highpoint) {
+    				highpoint = x[i];
+    			}
+    		}
+    		for (i = 0; i < y.length; i++) {
+    			if (y[i] < lowpoint) {
+    				lowpoint = y[i];
+    			}
+    			if (y[i] > highpoint) {
+    				highpoint = y[i];
+    			}
+    		}
+
+    		// Sort the arrays alpha and x
+    		ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+    		for (i = 0; i < x.length; i++) {
+    			indexValueList.add(new indexValueItem(i, x[i]));
+    		}
+    		Collections.sort(indexValueList, new indexValueComparator());
+    		int sortidx[] = new int[x.length];
+    		for (i = 0; i < x.length; i++) {
+    	    	indexValueItem item = indexValueList.get(i);
+    	    	x[i] = item.getValue();
+    	    	sortidx[i] = item.getIndex();
+    		}
+    		for (i = 0; i < x.length; i++) {
+    		    alpha[0][i]=alpha[0][sortidx[i]];
+    		    alpha[1][i]=alpha[1][sortidx[i]];
+    		}
+
+    		// Set sizes and legnths
+    		int K=y.length;
+    		int N= x.length;
+    		int depth=(int)Math.floor(log2(N)/512);                        // Number of levels in the algorithm
+    		depth=Math.max(depth,1);
+    		double v[][] = new double[2][K];
+    		double rmin=(highpoint-lowpoint)/Math.pow(2,(depth+1)); // The smallest neigborhood processsed in the algorithm
+    		double sin = Math.sin(rmin);
+    		int nmax=(int)Math.ceil(Math.log(6/(eps*sin*sin))/Math.log(5)); // Largest number of coeffcients used in any level of the algorithm
+    		int n=nmax; // all levels use the same value of n since n does not varies very much
+    		double t[] =chebzeros(n);
+    		double tmp[][] = new double[2][n];
+
+    		// Precompute once the coefficients used by the polynomial u
+    		double ucoefs[][]= new double[n-1][n];
+    		/*for k=1:n-1
+    		    ucoefs(k,:)=(cos(k*acos(t(:)))).';
     		end
 
-    		% reorder the output array to the original order.
-    		g=g(srtXidx);
-    }*/
+    		for l=2:depth
+    		    % Compute the interpolation coefficients f
+
+    		    r=(highpoint-lowpoint)/2^(l+1);   %Radius of the interval processed in the current level.
+    		    coefs=zeros(2^l,nmax);
+    		    
+    		    xpointidx=1;
+    		    for i=1:2^l 
+    		        % Center of the current interval. The processed interval is
+    		        % [c-r,c+r].
+    		        c=2*r*(i-1)+lowpoint+r;
+    		           
+    		        % Create the far-field expansion coefficients for the current
+    		        % inteval.
+    		        intervalleft=lowpoint+2*r*(i-1);           %left point of the current interval
+    		        intervalright=intervalleft+2*r;  %right point of the current interval
+    		        
+    		        while (xpointidx<=N) & (x(xpointidx)<=intervalright),
+    		            trueidx=sortidx(xpointidx);
+    		            alphak=alpha(trueidx);
+    		            xk=x(trueidx);            
+    		            coefs(i,1:n)=coefs(i,1:n)+alphak.*(t+3*tan(r)*tan(xk-c))./(3*tan(r)-t*tan(xk-c));           
+    		            xpointidx=xpointidx+1;
+    		        end
+    		    end
+    		    
+    		    % For each point y, sum its iteraction with far intervals that were
+    		    % not processed in previous iterations. For each interval i,these
+    		    % intervals are  exactly intervals i-2 and i+2 at the current level
+    		    % (referred to as interaction list at the original paper)
+    		    
+    		    for k=1:K
+    		        % Find the interval of yk
+    		        interval=floor((y(k)-lowpoint)/(2*r))+1;
+    		        if ((interval-2)>=1)            
+    		            c=2*r*(interval-3)+lowpoint+r; % center of interval i-2
+    		            p=3*tan(r)/(tan(y(k)-c));
+    		            % Compute the polynomial u inline (no procedure call) for optimization
+    		            b=cos([1:n-1]*acos(p));
+    		            tmp=ucoefs(1,:).*b(1);
+    		            for m=2:n-1
+    		                tmp=tmp+ucoefs(m,:).*b(m);
+    		            end
+    		            tmp=2.*tmp/n;
+    		            tmp=tmp+1/n;
+    		            
+    		            v(k)=v(k)+sum(coefs(interval-2,1:n).*tmp);
+    		        end
+    		        if ((interval+2)<=2^l)
+    		            c=2*r*(interval+1)+lowpoint+r; % center of interval i+2
+    		            p=3*tan(r)/(tan(y(k)-c));
+    		            % Compute the polynomial u inline (no procedure call) for optimization
+    		            b=cos([1:n-1]*acos(p));
+    		            tmp=ucoefs(1,:).*b(1);
+    		            for m=2:n-1
+    		                tmp=tmp+ucoefs(m,:).*b(m);
+    		            end
+    		            tmp=2.*tmp/n;
+    		            tmp=tmp+1/n;
+    		            
+    		            v(k)=v(k)+sum(coefs(interval+2,1:n).*tmp);
+    		        end
+    		        
+    		        % Check if we should process also intervals i-3 and i+3
+    		        if ((interval-3)>=1) & (floor((interval-1)/2)-floor((interval-4)/2)==1)
+    		            c=2*r*(interval-4)+lowpoint+r; % center of interval i-3
+    		            p=3*tan(r)/(tan(y(k)-c));
+    		            % Compute the polynomial u inline (no procedure call) for optimization
+    		            b=cos([1:n-1]*acos(p));
+    		            tmp=ucoefs(1,:).*b(1);
+    		            for m=2:n-1
+    		                tmp=tmp+ucoefs(m,:).*b(m);
+    		            end
+    		            tmp=2.*tmp/n;
+    		            tmp=tmp+1/n;       
+    		            
+    		            v(k)=v(k)+sum(coefs(interval-3,1:n).*tmp);
+    		        end
+
+    		        if ((interval+3)<=2^l) & (floor((interval+2)/2)-floor((interval-1)/2)==1)
+    		            c=2*r*(interval+2)+lowpoint+r; % center of interval i+3
+    		            p=3*tan(r)/(tan(y(k)-c));            
+    		            % Compute the polynomial u inline (no procedure call) for optimization
+    		            b=cos([1:n-1]*acos(p));
+    		            tmp=ucoefs(1,:).*b(1);
+    		            for m=2:n-1
+    		                tmp=tmp+ucoefs(m,:).*b(m);
+    		            end
+    		            tmp=2.*tmp/n;
+    		            tmp=tmp+1/n;   
+
+    		            v(k)=v(k)+sum(coefs(interval+3,1:n).*tmp);
+    		        end      
+    		    end
+    		end
+
+    		% Compute which points belong to which interval at the finest level.
+    		% The array finest partition contains for for each of the 2^depth intervals at the finest 
+    		% level the indices of all the x points in that interval.
+    		%
+    		% finestpartition is a 2D array that contains for each interval i
+    		% (i=1..2^depth) the indices of all points x that are contained in this
+    		% interval.
+
+    		finestpartition = zeros(2^depth,N);
+    		r=(highpoint-lowpoint)/2^(depth+1);
+    		xpointidx=1;
+
+    		for i=1:2^depth
+    		    % Center of the current interval. The processed interval is
+    		    % [c-r,c+r].
+    		    c=2*r*(i-1)+lowpoint+r;
+    		    listidx=1; %current position in the array the corresponds to the current interval.
+    		           
+    		    intervalleft=lowpoint+2*r*(i-1);           %left point of the current interval
+    		    intervalright=intervalleft+2*r;  %right point of the current interval
+    		        
+    		    % The 1.0e-15 compansates for tiny numerical errors
+    		    % XXX: remove the +1.0e-15, run test13 for n=4 (it won't work) and find
+    		    % another fix for the bug. 
+    		%  while (xpointidx<=N) & (x(xpointidx)<=intervalright+1.0e-15),
+
+    		   while (xpointidx<=N) & (x(xpointidx)<=intervalright),
+    		        finestpartition(i,listidx)=sortidx(xpointidx);
+    		        listidx=listidx+1;
+    		        xpointidx=xpointidx+1;
+    		    end
+    		end
+
+    		% Process the last point, which may be unprocessed in the above loop due to
+    		% tiny numerical errors
+    		if (xpointidx==N)
+    		    finestpartition(i,listidx)=sortidx(xpointidx);
+    		end
+    		    
+
+    		% At the finsest level, compute for each point the interaction with the
+    		% neasrest intervals directly.
+
+    		for k=1:K
+    		    % Find the interval of yk
+    			interval=floor((y(k)-lowpoint)/(2*r))+1;
+    		    if interval>2^depth %should happen only due to tiny numerical errors
+    		        interval=2^depth;
+    		    end
+    		    
+    		    % Compute the interaction with the previous interval
+    			if ((interval-1)>=1)
+    		        j=1;
+    		        while (j<=N) & (finestpartition(interval-1,j)~=0)
+    		            idx=finestpartition(interval-1,j);
+    		            v(k)=v(k)+alpha(idx)/tan(y(k)-x(idx));
+    		            j=j+1;
+    		        end
+    			end
+
+    		    %Compute the interaction with the current interval
+    		    j=1;
+    		    while (j<=N) & (finestpartition(interval,j)~=0)
+    		        idx=finestpartition(interval,j);
+    		        v(k)=v(k)+alpha(idx)/tan(y(k)-x(idx));
+    		        j=j+1;
+    		    end
+    		    
+    		    % Compute the interaction with the next interval
+    		    if ((interval+1)<=2^depth)
+    		        j=1;
+    		        while (j<=N) & (finestpartition(interval+1,j)~=0)
+    		            idx=finestpartition(interval+1,j);
+    		            v(k)=v(k)+alpha(idx)/tan(y(k)-x(idx));
+    		            j=j+1;
+    		        end
+    		    end
+    		end*/
+    		return v;
+    }
+
+    		/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    		% THIS FUNCTION IS NOT USED - all calls were embeded inline.
+    		function cousins=checkcousins(interval1,interval2,l)
+    		%
+    		% Check if the parents of interval1 and interval 2 are neighbors in level 
+    		% l-1. Both interval1 and interval2 are from level l. Hence interval1 and
+    		% interval2 must be in the range 1..2^l.
+
+    		% This calls are safer but cost a lot time
+    		%if (interval1<1) | (interval1>2^l) 
+    		%    error('interval1 must be in the range 1...2^l');
+    		%end
+
+    		% This calls are safer but cost a lot time
+    		%if (interval2<1) | (interval2>2^l) 
+    		%    error('interval2 must be in the range 1...2^l');
+    		%end
+
+    		% The function assumes that l>0 since l==0 should never be called by the
+    		% calling function.
+    		%
+
+    		cousins=0;
+    		parentint1=floor((interval1-1)/2)+1;
+    		parentint2=floor((interval2-1)/2)+1;
+    		if (abs(parentint1-parentint2)==1) 
+    		    cousins=1;
+    		end
+
+    		% THIS FUNCTION IS NOT USED - all calls were embeded inline.
+    		function y=u(n,x,ucoefs)
+    		%
+    		% Compute the polynomial u_{j,n}(x) defined in "Fast Fourier Transform for
+    		% Non-equispaced data II" (Dutt and Rokhlin), ACHA 2, 85-100,1995. The
+    		% function is defined by Eq. 52. u_{j,n}(x) is the j'th Lagrange interpolation
+    		% polynomial at Chebyshev zeros t_{1}...t_{n}. The function computes
+    		% u_{j,n}(x) for j=1:n. ucoefs are the precomputed coefficients use by all
+    		% calls to this function
+    		%
+    		% Input parameters:
+    		%   n       Number of interpolation points.
+    		%   x       Point to evaluate the polynomials.
+    		%   ucoefs  Precomputed coefficients used to compute u.
+    		%
+    		% Output:
+    		%   y     Value of u_{j,n}(x) for j=1:n.
+    		%
+
+    		y=zeros(1,n);
+    		b=cos([1:n-1]*acos(x));
+    		for k=1:n-1
+    		    y=y+ucoefs(k,:).*b(k);
+    		end
+    		y=2.*y/n;
+    		y=y+1/n;*/
+
 
     
 }
