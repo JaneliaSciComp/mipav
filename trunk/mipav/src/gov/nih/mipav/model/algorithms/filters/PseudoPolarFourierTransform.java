@@ -921,6 +921,460 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		return out;
 	}
     
+    private double[][][][] fftshift(double in[][][][]) {
+    	int zDim = in[0].length;
+    	int yDim = in[0][0].length;
+    	int xDim = in[0][0][0].length;
+		double out[][][][] = new double[2][zDim][yDim][xDim];
+		int highestxoct1Index;
+		int highestyoct1Index;
+		int highestzoct1Index;
+		int oct1depth;
+		int oct1height;
+		int oct1width;
+		int oct2depth;
+		int oct2height;
+		int oct2width;
+		int oct3depth;
+		int oct3height;
+		int oct3width;
+		int oct4depth;
+		int oct4height;
+		int oct4width;
+		int oct5depth;
+		int oct5height;
+		int oct5width;
+		int oct6depth;
+		int oct6height;
+		int oct6width;
+		int oct7depth;
+		int oct7height;
+		int oct7width;
+		int oct8depth;
+		int oct8height;
+		int oct8width;
+		int z,y,x;
+		if ((zDim % 2) == 1) {
+			highestzoct1Index = (zDim - 1)/2;
+		}
+		else {
+			highestzoct1Index = zDim/2 - 1;
+		}
+		if ((yDim %2) == 1) {
+			//yodd = true;
+			highestyoct1Index = (yDim - 1)/2;
+		}
+		else {
+			//yodd = false;
+			highestyoct1Index = yDim/2 - 1;
+		}
+		if ((xDim % 2) == 1) {
+			//xodd = true;
+			highestxoct1Index = (xDim - 1)/2;
+		}
+		else {
+			//xodd = false;
+			highestxoct1Index = xDim/2 - 1;
+		}
+		oct1width = highestxoct1Index + 1;
+		oct1height = highestyoct1Index + 1;
+		oct1depth = highestzoct1Index + 1;
+		oct2width = xDim - oct1width;
+		oct2height = oct1height;
+		oct2depth = oct1depth;
+		oct3width = oct2width;
+		oct3height = yDim - oct1height;
+		oct3depth = oct1depth;
+		oct4width = oct1width;
+		oct4height = oct3height;
+		oct4depth = oct1depth;
+		oct5width = oct1width;
+		oct5height = oct1height;
+		oct5depth = zDim - oct1depth;
+		oct6width = oct2width;
+		oct6height = oct2height;
+		oct6depth = zDim - oct2depth;
+		oct7width = oct3width;
+		oct7height = oct3height;
+		oct7depth = zDim - oct3depth;
+		oct8width = oct4width;
+		oct8height = oct4height;
+		oct8depth = zDim - oct4depth;
+		double oct1[][][][] = new double[2][oct1depth][oct1height][oct1width];
+		double oct2[][][][] = new double[2][oct2depth][oct2height][oct2width];
+		double oct3[][][][] = new double[2][oct3depth][oct3height][oct3width];
+		double oct4[][][][] = new double[2][oct4depth][oct4height][oct4width];
+		double oct5[][][][] = new double[2][oct5depth][oct5height][oct5width];
+		double oct6[][][][] = new double[2][oct6depth][oct6height][oct6width];
+		double oct7[][][][] = new double[2][oct7depth][oct7height][oct7width];
+		double oct8[][][][] = new double[2][oct8depth][oct8height][oct8width];
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct1[0][z][y][x] = in[0][z][y][x];
+					oct1[1][z][y][x] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct2[0][z][y][x - highestxoct1Index-1] = in[0][z][y][x];
+					oct2[1][z][y][x - highestxoct1Index-1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct3[0][z][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[0][z][y][x];
+					oct3[1][z][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct4[0][z][y - highestyoct1Index - 1][x] = in[0][z][y][x];
+					oct4[1][z][y - highestyoct1Index - 1][x] = in[1][z][y][x];
+				}
+			}
+        }
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct5[0][z - highestzoct1Index - 1][y][x] = in[0][z][y][x];
+					oct5[1][z - highestzoct1Index - 1][y][x] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct6[0][z - highestzoct1Index - 1][y][x - highestxoct1Index-1] = in[0][z][y][x];
+					oct6[1][z - highestzoct1Index - 1][y][x - highestxoct1Index-1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct7[0][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[0][z][y][x];
+					oct7[1][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct8[0][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x] = in[0][z][y][x];
+					oct8[1][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x] = in[1][z][y][x];
+				}
+			}
+        }
+		
+		// Move seventh octant to first
+		for (z = 0; z < oct7depth; z++) {
+			for (y = 0; y < oct7height; y++) {
+				for (x = 0; x < oct7width; x++) {
+					out[0][z][y][x] = oct7[0][z][y][x];
+					out[1][z][y][x] = oct7[1][z][y][x];
+				}
+			}
+		}
+		// Move eighth octant to second
+		for (z = 0; z < oct8depth; z++) {
+			for (y = 0; y < oct8height; y++) {
+				for (x = 0; x < oct8width; x++) {
+					out[0][z][y][x + oct7width] = oct8[0][z][y][x];
+					out[1][z][y][x + oct7width] = oct8[1][z][y][x];
+				}
+			}
+		}
+		// Move fifth octant to third
+		for (z = 0; z < oct5depth; z++) {
+			for (y = 0; y < oct5height; y++) {
+				for (x = 0; x < oct5width; x++) {
+					out[0][z][y+oct7height][x + oct7width] = oct5[0][z][y][x];
+					out[1][z][y+oct7height][x + oct7width] = oct5[1][z][y][x];
+				}
+			}
+		}
+		// Move six octant to fourth
+		for (z = 0; z < oct6depth; z++) {
+			for (y = 0; y < oct6height; y++) {
+				for (x = 0; x < oct6width; x++) {
+					out[0][z][y+oct7height][x] = oct6[0][z][y][x];
+					out[1][z][y+oct7height][x] = oct6[1][z][y][x];
+				}
+			}
+		}
+		// Move first octant to seventh
+		for (z = 0; z < oct1depth; z++) {
+			for (y = 0; y < oct1height; y++) {
+				for (x = 0; x < oct1width; x++) {
+					out[0][z + oct7depth][y + oct7height][x + oct7width] = oct1[0][z][y][x];
+					out[1][z + oct7depth][y + oct7height][x + oct7width] = oct1[1][z][y][x];
+				}
+			}
+		}
+		// Move second octant to eighth
+		for (z = 0; z < oct2depth; z++) {
+			for (y = 0; y < oct2height; y++) {
+				for (x = 0; x < oct2width; x++) {
+					out[0][z + oct7depth][y + oct7height][x] = oct2[0][z][y][x];
+					out[1][z + oct7depth][y + oct7height][x] = oct2[1][z][y][x];
+				}
+			}
+		}
+		// Move third octant to fifth
+		for (z = 0; z < oct3depth; z++) {
+			for (y = 0; y < oct3height; y++) {
+				for (x = 0; x < oct3width; x++) {
+					out[0][z + oct7depth][y][x] = oct3[0][z][y][x];
+					out[1][z + oct7depth][y][x] = oct3[1][z][y][x];
+				}
+			}
+		}
+		// Move fourth octant to sixth
+		for (z = 0; z < oct4depth; z++) {
+			for (y = 0; y < oct4height; y++) {
+				for (x = 0; x < oct4width; x++) {
+					out[0][z + oct7depth][y][x + oct7width] = oct4[0][z][y][x];
+					out[1][z + oct7depth][y][x + oct7width] = oct4[1][z][y][x];
+				}
+			}
+		}
+		return out;
+	}
+    
+    private double[][][][] ifftshift(double in[][][][]) {
+    	int zDim = in[0].length;
+    	int yDim = in[0][0].length;
+    	int xDim = in[0][0][0].length;
+		double out[][][][] = new double[2][zDim][yDim][xDim];
+		int highestxoct1Index;
+		int highestyoct1Index;
+		int highestzoct1Index;
+		int oct1depth;
+		int oct1height;
+		int oct1width;
+		int oct2depth;
+		int oct2height;
+		int oct2width;
+		int oct3depth;
+		int oct3height;
+		int oct3width;
+		int oct4depth;
+		int oct4height;
+		int oct4width;
+		int oct5depth;
+		int oct5height;
+		int oct5width;
+		int oct6depth;
+		int oct6height;
+		int oct6width;
+		int oct7depth;
+		int oct7height;
+		int oct7width;
+		int oct8depth;
+		int oct8height;
+		int oct8width;
+		int z,y,x;
+		if ((zDim % 2) == 1) {
+			highestzoct1Index = (zDim - 1)/2 - 1;
+		}
+		else {
+			highestzoct1Index = zDim/2 - 1;
+		}
+		if ((yDim %2) == 1) {
+			//yodd = true;
+			highestyoct1Index = (yDim - 1)/2 - 1;
+		}
+		else {
+			//yodd = false;
+			highestyoct1Index = yDim/2 - 1;
+		}
+		if ((xDim % 2) == 1) {
+			//xodd = true;
+			highestxoct1Index = (xDim - 1)/2 - 1;
+		}
+		else {
+			//xodd = false;
+			highestxoct1Index = xDim/2 - 1;
+		}
+		oct1width = highestxoct1Index + 1;
+		oct1height = highestyoct1Index + 1;
+		oct1depth = highestzoct1Index + 1;
+		oct2width = xDim - oct1width;
+		oct2height = oct1height;
+		oct2depth = oct1depth;
+		oct3width = oct2width;
+		oct3height = yDim - oct1height;
+		oct3depth = oct1depth;
+		oct4width = oct1width;
+		oct4height = oct3height;
+		oct4depth = oct1depth;
+		oct5width = oct1width;
+		oct5height = oct1height;
+		oct5depth = zDim - oct1depth;
+		oct6width = oct2width;
+		oct6height = oct2height;
+		oct6depth = zDim - oct2depth;
+		oct7width = oct3width;
+		oct7height = oct3height;
+		oct7depth = zDim - oct3depth;
+		oct8width = oct4width;
+		oct8height = oct4height;
+		oct8depth = zDim - oct4depth;
+		double oct1[][][][] = new double[2][oct1depth][oct1height][oct1width];
+		double oct2[][][][] = new double[2][oct2depth][oct2height][oct2width];
+		double oct3[][][][] = new double[2][oct3depth][oct3height][oct3width];
+		double oct4[][][][] = new double[2][oct4depth][oct4height][oct4width];
+		double oct5[][][][] = new double[2][oct5depth][oct5height][oct5width];
+		double oct6[][][][] = new double[2][oct6depth][oct6height][oct6width];
+		double oct7[][][][] = new double[2][oct7depth][oct7height][oct7width];
+		double oct8[][][][] = new double[2][oct8depth][oct8height][oct8width];
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct1[0][z][y][x] = in[0][z][y][x];
+					oct1[1][z][y][x] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct2[0][z][y][x - highestxoct1Index-1] = in[0][z][y][x];
+					oct2[1][z][y][x - highestxoct1Index-1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct3[0][z][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[0][z][y][x];
+					oct3[1][z][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = 0; z <= highestzoct1Index; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct4[0][z][y - highestyoct1Index - 1][x] = in[0][z][y][x];
+					oct4[1][z][y - highestyoct1Index - 1][x] = in[1][z][y][x];
+				}
+			}
+        }
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct5[0][z - highestzoct1Index - 1][y][x] = in[0][z][y][x];
+					oct5[1][z - highestzoct1Index - 1][y][x] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = 0; y <= highestyoct1Index; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct6[0][z - highestzoct1Index - 1][y][x - highestxoct1Index-1] = in[0][z][y][x];
+					oct6[1][z - highestzoct1Index - 1][y][x - highestxoct1Index-1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = highestxoct1Index+1; x < xDim; x++) {
+					oct7[0][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[0][z][y][x];
+					oct7[1][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x - highestxoct1Index - 1] = in[1][z][y][x];
+				}
+			}
+		}
+		for (z = highestzoct1Index+1; z < zDim; z++) {
+			for (y = highestyoct1Index+1; y < yDim; y++) {
+				for (x = 0; x <= highestxoct1Index; x++) {
+					oct8[0][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x] = in[0][z][y][x];
+					oct8[1][z - highestzoct1Index - 1][y - highestyoct1Index - 1][x] = in[1][z][y][x];
+				}
+			}
+        }
+		
+		// Move seventh octant to first
+		for (z = 0; z < oct7depth; z++) {
+			for (y = 0; y < oct7height; y++) {
+				for (x = 0; x < oct7width; x++) {
+					out[0][z][y][x] = oct7[0][z][y][x];
+					out[1][z][y][x] = oct7[1][z][y][x];
+				}
+			}
+		}
+		// Move eighth octant to second
+		for (z = 0; z < oct8depth; z++) {
+			for (y = 0; y < oct8height; y++) {
+				for (x = 0; x < oct8width; x++) {
+					out[0][z][y][x + oct7width] = oct8[0][z][y][x];
+					out[1][z][y][x + oct7width] = oct8[1][z][y][x];
+				}
+			}
+		}
+		// Move fifth octant to third
+		for (z = 0; z < oct5depth; z++) {
+			for (y = 0; y < oct5height; y++) {
+				for (x = 0; x < oct5width; x++) {
+					out[0][z][y+oct7height][x + oct7width] = oct5[0][z][y][x];
+					out[1][z][y+oct7height][x + oct7width] = oct5[1][z][y][x];
+				}
+			}
+		}
+		// Move six octant to fourth
+		for (z = 0; z < oct6depth; z++) {
+			for (y = 0; y < oct6height; y++) {
+				for (x = 0; x < oct6width; x++) {
+					out[0][z][y+oct7height][x] = oct6[0][z][y][x];
+					out[1][z][y+oct7height][x] = oct6[1][z][y][x];
+				}
+			}
+		}
+		// Move first octant to seventh
+		for (z = 0; z < oct1depth; z++) {
+			for (y = 0; y < oct1height; y++) {
+				for (x = 0; x < oct1width; x++) {
+					out[0][z + oct7depth][y + oct7height][x + oct7width] = oct1[0][z][y][x];
+					out[1][z + oct7depth][y + oct7height][x + oct7width] = oct1[1][z][y][x];
+				}
+			}
+		}
+		// Move second octant to eighth
+		for (z = 0; z < oct2depth; z++) {
+			for (y = 0; y < oct2height; y++) {
+				for (x = 0; x < oct2width; x++) {
+					out[0][z + oct7depth][y + oct7height][x] = oct2[0][z][y][x];
+					out[1][z + oct7depth][y + oct7height][x] = oct2[1][z][y][x];
+				}
+			}
+		}
+		// Move third octant to fifth
+		for (z = 0; z < oct3depth; z++) {
+			for (y = 0; y < oct3height; y++) {
+				for (x = 0; x < oct3width; x++) {
+					out[0][z + oct7depth][y][x] = oct3[0][z][y][x];
+					out[1][z + oct7depth][y][x] = oct3[1][z][y][x];
+				}
+			}
+		}
+		// Move fourth octant to sixth
+		for (z = 0; z < oct4depth; z++) {
+			for (y = 0; y < oct4height; y++) {
+				for (x = 0; x < oct4width; x++) {
+					out[0][z + oct7depth][y][x + oct7width] = oct4[0][z][y][x];
+					out[1][z + oct7depth][y][x + oct7width] = oct4[1][z][y][x];
+				}
+			}
+		}
+		return out;
+	}
+    
     private double[][][] cfft2(double x[][][]) {
     	// Aliased 2D FFT of the image x.
     	// The FFT is computed using O(n^2logn) operations.
@@ -986,6 +1440,88 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     			y[0][h][w] = ixarr[0][h*xDim + w];
     			y[1][h][w] = ixarr[1][h*xDim + w];
     		}
+    	}
+    	return (fftshift(y));
+    }
+    
+    private double[][][][] cfft3(double x[][][][]) {
+    	// Aliased 3D FFT of the image x.
+    	// The FFT is computed using O(n^2logn) operations.
+    	
+    	// x   The image whose 3D FFT should be computed. Can be of odd or even length.
+    	//
+    	// Returns the aliased 3D FFT of the image x.
+    	 
+    	int d, h, w;
+    	int zDim = x[0].length;
+    	int yDim = x[0][0].length;
+    	int xDim = x[0][0][0].length;
+    	int length = xDim * yDim;
+    	double ix[][][][] = ifftshift(x);
+    	double ixarr[][] = new double[2][zDim*length];
+    	for (d = 0; d < zDim; d++) {
+	    	for (h = 0; h < yDim; h++) {
+	    		for (w = 0; w < xDim; w++) {
+	    			ixarr[0][d*length + h*xDim + w] = ix[0][d][h][w];
+	    			ixarr[1][d*length + h*xDim + w] = ix[1][d][h][w];
+	    		}
+	    	}
+    	}
+    	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim*zDim, xDim, 1, -1, FFTUtility.FFT);
+    	fftx.run();
+    	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], zDim, yDim, xDim, -1, FFTUtility.FFT);
+    	ffty.run();
+    	FFTUtility fftz = new FFTUtility(ixarr[0], ixarr[1], 1, zDim, length, -1, FFTUtility.FFT);
+    	fftz.run();
+    	double y[][][][] = new double[2][zDim][yDim][xDim];
+    	for (d = 0; d < zDim; d++) {
+	    	for (h = 0; h < yDim; h++) {
+	    		for (w = 0; w < xDim; w++) {
+	    			y[0][d][h][w] = ixarr[0][d*length + h*xDim + w];
+	    			y[1][d][h][w] = ixarr[1][d*length + h*xDim + w];
+	    		}
+	    	}
+    	}
+    	return (fftshift(y));
+    }
+    
+    private double[][][][] icfft3(double x[][][][]) {
+    	// Aliased 3D Inverse FFT of the image x.
+    	// The FFT is computed using O(n^2logn) operations.
+    	
+    	// x   The image whose 3D inverse FFT should be computed. Can be of odd or even length.
+    	//
+    	// Returns the aliased 3D inverse FFT of the image x.
+    	int d, h, w;
+    	int zDim = x[0].length;
+    	int yDim = x[0][0].length;
+    	int xDim = x[0][0][0].length;
+    	int length = xDim * yDim;
+    	double ix[][][][] = ifftshift(x);
+    	double ixarr[][] = new double[2][zDim*length];
+    	for (d = 0; d < zDim; d++) {
+	    	for (h = 0; h < yDim; h++) {
+	    		for (w = 0; w < xDim; w++) {
+	    			ixarr[0][d*length + h*xDim + w] = ix[0][d][h][w];
+	    			ixarr[1][d*length + h*xDim + w] = ix[1][d][h][w];
+	    		}
+	    	}
+    	}
+    	// Inverse FFT
+    	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim*zDim, xDim, 1, 1, FFTUtility.FFT);
+    	fftx.run();
+    	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], zDim, yDim, xDim, 1, FFTUtility.FFT);
+    	ffty.run();
+    	FFTUtility fftz = new FFTUtility(ixarr[0], ixarr[1], 1, zDim, length, 1, FFTUtility.FFT);
+    	fftz.run();
+    	double y[][][][] = new double[2][zDim][yDim][xDim];
+    	for (d = 0; d < zDim; d++) {
+	    	for (h = 0; h < yDim; h++) {
+	    		for (w = 0; w < xDim; w++) {
+	    			y[0][d][h][w] = ixarr[0][d*length + h*xDim + w];
+	    			y[1][d][h][w] = ixarr[1][d*length + h*xDim + w];
+	    		}
+	    	}
     	}
     	return (fftshift(y));
     }
