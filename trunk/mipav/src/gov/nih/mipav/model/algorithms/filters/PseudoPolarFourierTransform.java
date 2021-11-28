@@ -3257,6 +3257,196 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		}
     }
 
+    private double[][] topmul(double D[][],double v[][]) {
+	    
+	    // Mulitply a toeplitz matrix, whose diagonal form is D, with the vector v,
+	    // in  O(n log n) operations. 
+	    
+	    // Input parameters
+	    //   D   Diagonal form of the toeplitz matrix to multiply.
+	    //   v   The vector to multiply.
+	    
+	    // Output parameters
+	    //   u   The product of the toeplitz matrix that corresponds to D with the
+	    //       vector v. 
+	    
+	    // Yoel Shkolnisky 04/10/04
+	
+	    int i;
+    	int n=v[0].length;
+	
+	    if (D[0].length !=2*n) {
+	        System.err.println("In topmul D must be 2*length(v)");
+	        System.exit(0);
+	    }
+	
+	    double fv[][] = new double[2][2*n];
+	    for (i = 0; i < n; i++) {
+	    	fv[0][i] = v[0][i];
+	    	fv[1][i] = v[1][i];
+	    }
+	    FFTUtility fft = new FFTUtility(fv[0], fv[1], 1, 2*n, 1, -1, FFTUtility.FFT);
+	    fft.run();
+	    double Dfv[][] = new double[2][2*n];
+	    for (i = 0; i < 2*n; i++) {
+	    	Dfv[0][i] = D[0][i]*fv[0][i] - D[1][i]*fv[1][i];
+	    	Dfv[1][i] = D[0][i]*fv[1][i] + D[1][i]*fv[0][i];
+	    }
+	    FFTUtility ifft = new FFTUtility(Dfv[0], Dfv[1], 1, 2*n, 1, 1, FFTUtility.FFT);
+	    ifft.run();
+	    double u[][] = new double[2][n];
+	    for (i = 0; i < n; i++) {
+	    	u[0][i] = Dfv[0][i];
+	    	u[1][i] = Dfv[1][i];
+	    }
+	    return u;
+    }
+    
+    private double[][] topinvmul(double D1[][], double D2[][], double D3[][], double D4[][], double v[][]) {
+    		
+    		// Mulitply the inverse toeplitz matrix, where the diagonal form of its
+    		// Gohberg-Semencul factors are given by D1,D2,D3,and D4, with the
+    		// vector v, in O(n log n) operations. 
+    		// The factors D1,D2,D3,D4 are returned by the function topprepinv.
+    		
+    		// Input parameters
+    		//  D1 D2 D3 D4     Diagonal form of the Gohberg-Semencul factors of the
+    		//                  inverse topelitz matrix.
+    		// v                Vector to multiply.
+    		
+    		// Output parameters
+    		// u                The result of inv(T)*v where T is inv(T) is the inverse
+    		//                  toeplitz matrix.
+    		
+    		// Yoel Shkolnisky 04/10/04
+
+    		int i;
+    	    double u1[][]=topmul(D2,v);
+    		u1=topmul(D1,u1);
+
+    		double u2[][]=topmul(D4,v);
+    		u2=topmul(D3,u2);
+
+    		double u[][] = new double[2][u1[0].length];
+    		for (i = 0; i < u1[0].length; i++) {
+    			u[0][i] = u1[0][i] - u2[0][i];
+    			u[1][i] = u1[1][i] - u2[1][i];
+    		}
+    		return u;
+    }
+    
+    private double[][] topprep(double c[][], double r[][]) {
+	    
+	    // Prepare the Toeplitz matrix, whose first column is c and first row is r, 
+	    // for fast multiplication by a vector. The function diagonalizes the
+	    // toeplitz matrix given by c and r
+	    
+	    // Input parameters
+	    //    c  First column of the toeplitz matrix.
+	    //    r  First row of the toeplitz matrix.
+	    
+	    // Output parameters
+	    //    D  Diagonal form of the toeplitz matrix. This data used for fast 
+	    //       muliplication of the matrix Toeplitz(c,r) by an arbitrary vector. 
+	    
+	    // Yoel Shkolnisky 04/10/04
+	
+	
+	    // Algorithm description:
+	    
+	    // The function embeds the toeplitz matrix, given by c and r, in a circulat
+	    // matrix, diagonalizes it, and returns the eigenvalus of the circulat
+	    // matrix.
+	
+    	int i;
+    	if ((!floateq(c[0][0],r[0][0])) || (!floateq(c[1][0], r[1][0]))) {
+		    System.err.println("In topprep first element of column does not match first element of row");
+		    System.exit(0);
+		}	
+    	
+	    int n=c[0].length;
+	    int m=r[0].length;
+	    
+	    double D[][] = new double[2][2*n];
+	    for (i = 0; i < n; i++) {
+	    	D[0][i] = c[0][i];
+	    	D[1][i] = c[1][i];
+	    }
+	    
+	    for (i = n+1; i < 2*n; i++) {
+	    	D[0][i] = r[0][2*n-i];
+	    	D[1][i] = r[1][2*n-i];
+	    }
+	
+	    FFTUtility fft = new FFTUtility(D[0], D[1], 1, 2*n, 1, -1, FFTUtility.FFT);
+	    fft.run();
+	    return D;
+    }
+
+    private void topprepinv(double D1[][], double D2[][], double D3[][], double D4[][],
+    		double m1[][], double m2[][], double m3[][], double m4[][]) {
+    		
+    		// Like topprep but processes 4 toeplitz matrices at once.
+    		
+    		// Input parameters
+    		//   m1 m2 m3 m4     Cell arrays of size 2 where m_i{1} is the first column
+    		//                   of the toeplitz matrix m_i and m_i{2} is the first row of
+    		//                   the toeplitz matrix m_i.
+    		
+    		// Output parameters
+    		//  D1 D2 D3 D4      D_i is the diagonal form of the matrix m_i.
+    	    //  D1 same length as m1, D2 same length as m2, D3 same length as m3,
+    	    //  D4 same length as m4
+    		
+    		// Yoel Shkolnisky 04/10/04
+
+    		int i;
+    	    int len1 = m1[0].length/2;
+    		double m1c[][] = new double[2][len1];
+    		double m1r[][] = new double[2][len1];
+    		for (i = 0; i < len1; i++) {
+    			m1c[0][i] = m1[0][i];
+    			m1c[1][i] = m1[1][i];
+    			m1r[0][i] = m1[0][i+len1];
+    			m1r[0][i] = m1[1][i+len1];
+    		}
+    		
+    		int len2 = m2[0].length/2;
+    		double m2c[][] = new double[2][len2];
+    		double m2r[][] = new double[2][len2];
+    		for (i = 0; i < len2; i++) {
+    			m2c[0][i] = m2[0][i];
+    			m2c[1][i] = m2[1][i];
+    			m2r[0][i] = m2[0][i+len2];
+    			m2r[0][i] = m2[1][i+len2];
+    		}
+    		
+    		int len3 = m3[0].length/2;
+    		double m3c[][] = new double[2][len3];
+    		double m3r[][] = new double[2][len3];
+    		for (i = 0; i < len3; i++) {
+    			m3c[0][i] = m3[0][i];
+    			m3c[1][i] = m3[1][i];
+    			m3r[0][i] = m3[0][i+len3];
+    			m3r[0][i] = m3[1][i+len3];
+    		}
+    		
+    		int len4 = m4[0].length/2;
+    		double m4c[][] = new double[2][len4];
+    		double m4r[][] = new double[2][len4];
+    		for (i = 0; i < len4; i++) {
+    			m4c[0][i] = m4[0][i];
+    			m4c[1][i] = m4[1][i];
+    			m4r[0][i] = m4[0][i+len4];
+    			m4r[0][i] = m4[1][i+len4];
+    		}
+
+    		D1=topprep(m1c,m1r);
+    		D2=topprep(m2c,m2r);
+    		D3=topprep(m3c,m3r);
+    		D4=topprep(m4c,m4r);
+    }
+
 
     
 }
