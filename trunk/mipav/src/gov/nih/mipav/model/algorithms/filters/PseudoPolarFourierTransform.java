@@ -1888,6 +1888,31 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
         return;
     }
     
+    /**
+     * complex divide c = a/b.
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
+     */
+    private void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
+        double bm, cc, cd, ca, cb;
+
+        bm = 1.0 / zabs(br, bi);
+        cc = br * bm;
+        cd = bi * bm;
+        ca = ( (ar * cc) + (ai * cd)) * bm;
+        cb = ( (ai * cc) - (ar * cd)) * bm;
+        cr[0] = ca;
+        ci[0] = cb;
+
+        return;
+    }
+    
     private double[][] ChirpZ(double x[][], double A[] ,double W[], int M) {
     		
     		// Chrip Z-transform of the sequence x on the contour defined by
@@ -2970,5 +2995,268 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		boolean eq= ((Math.abs(x[0]-y[0])<EPS)  && (Math.abs(x[1] - y[1]) < EPS));
     		return eq;
     }
+    
+    private double[][] topsol(double c[][], double rin[][], double y[][]) {
+    		
+    		// Solve a toeplitz system.
+    		// The toeplitz matrix is given by the column c and the row r.
+    		// The function solves the system 
+    		//     Toeplitz(c,r)*x=y
+    		// in O(n^2) operations using the Levinson iterations.
+    		
+    		// Input parameters
+    		//    c  First column of the toepliz matrix.
+    		//    r  First row of the toepliz matrix.
+    		
+    		// Output parameters
+    		//    x  The solution of the system Toeplitz(c,r)*x=y
+    		
+    		// Yoel Shkolnisky 04/10/04
+    
+            int i,j,k,m,m1,m2,n;
+            double sxn[] = new double[2];
+            double sd[] = new double[2];
+            double sgd[] = new double[2];
+            double sgn[] = new double[2];
+            double shn[] = new double[2];
+            double pp[] = new double[2];
+            double qq[] = new double[2];
+            double pt1[] = new double[2];
+            double pt2[] = new double[2];
+            double qt1[] = new double[2];
+            double qt2[] = new double[2];
+            if ((rin == null) || (rin.length == 0) || (c == null) || (c.length == 0)) {
+            	return null;
+            }
+
+    		if ((!floateq(c[0][0],rin[0][0])) || (!floateq(c[1][0], rin[1][0]))) {
+    		    System.err.println("In topsol first element of column does not match first element of row");
+    		    System.exit(0);
+    		}
+
+    		if (c[0].length != rin[0].length) {
+    		    System.err.println("In topsol c and r must have the same length");
+    		    System.exit(0);
+    		}
+
+    		// store c and r in a single array R such that R(n+j) is equal to element
+    		// R(j) where
+    		//    +-                                            -+
+    		//    |R(0)   R(-1)   R(-2) ... R(-(N-2))  R(-(N-1)) |
+    		// R= |R(1)   R(0)    R(-1)     R(-(N-3))  R(-(N-2)) |
+    		//    |...                ....                  .... |
+    		//    |R(N-1) R(N-2) R(N-3) ... R(1)       R(0)      |  
+    		//    +-                                            -+
+    		n=c[0].length;
+    		double r[][] = new double[2][2*n-1];
+    		for (i = 0; i < n; i++) {
+    			r[0][i] = rin[0][n-1-i];
+    			r[1][i] = rin[1][n-1-i];
+    		}
+    		for (i = 1; i < n; i++) {
+    			r[0][i+n-1] = c[0][i];
+    			r[1][i+n-1] = c[1][i];
+    		}
+
+    		// Initialize iterations
+    		double x[][] = new double[2][n];
+    		double g[][] = new double[2][n];
+    		double h[][] = new double[2][n];
+    		double divout[] = new double[1];
+    		double divoutImag[] = new double[1];
+    		zdiv(y[0][0], y[1][0], r[0][n-1], r[1][n-1], divout, divoutImag);
+    		x[0][0] = divout[0];
+    		x[1][0] = divoutImag[0];
+    		if (n == 1) {
+    			return x;
+    		}
+    		
+    		zdiv(r[0][n-2], r[1][n-2], r[0][n-1], r[1][n-1], divout, divoutImag);
+    		g[0][0] = divout[0];
+    		g[1][0] = divoutImag[0];
+    		zdiv(r[0][n], r[1][n], r[0][n-1], r[1][n-1], divout, divoutImag);
+    		h[0][0] = divout[0];
+    		h[1][0] = divoutImag[0];
+
+    		// Iterations
+    		for (m=1; m <= n; m++) {
+    		    m1=m+1;
+    		    sxn[0]=-y[0][m1-1];
+    		    sxn[1]=-y[1][m1-1];
+    		    sd[0]=-r[0][n-1];
+    		    sd[1]=-r[1][n-1];
+    		    for (j=1; j <= m; j++) {
+    		        sxn[0]=sxn[0]+r[0][n+m1-j-1]*x[0][j-1] - r[1][n+m1-j-1]*x[1][j-1];
+    		        sxn[1]=sxn[1]+r[0][n+m1-j-1]*x[1][j-1] + r[1][n+m1-j-1]*x[0][j-1];
+    		        sd[0]=sd[0]+r[0][n+m1-j-1]*g[0][m-j] - r[1][n+m1-j-1]*g[1][m-j];
+    		        sd[1]=sd[1]+r[0][n+m1-j-1]*g[1][m-j] + r[1][n+m1-j-1]*g[0][m-j];
+    		    } // vfor (j=1; j <= m; j++)
+    		    if (zabs(sd[0],sd[1])<1.0e-15) {
+    		        System.err.println("In topsol singular principal minor");
+    		        System.exit(0);
+    		    }
+    		    
+    		    zdiv(sxn[0], sxn[1], sd[0], sd[1], divout, divoutImag);
+    		    x[0][m1-1] = divout[0];
+    		    x[1][m1-1] = divoutImag[0];
+    		    for (j=1; j <= m; j++) {
+    		        x[0][j-1]=x[0][j-1]-x[0][m1-1]*g[0][m-j] + x[1][m1-1]*g[1][m-j];
+    		        x[1][j-1]=x[1][j-1]-x[0][m1-1]*g[1][m-j] - x[1][m1-1]*g[0][m-j];
+    		    }
+    		    
+    		    if (m1==n) {
+    		        return x;
+    		    }
+    		    
+    		    sgn[0]=-r[0][n-m1-1];
+    		    sgn[1]=-r[1][n-m1-1];
+    		    shn[0]=-r[0][n+m1-1];
+    		    shn[1]=-r[1][n+m1-1];
+    		    sgd[0]=-r[0][n-1];
+    		    sgd[1]=-r[1][n-1];
+    		    for (j=1; j <=m; j++) {
+    		        sgn[0]=sgn[0]+r[0][n+j-m1-1]*g[0][j-1] - r[1][n+j-m1-1]*g[1][j-1];
+    		        sgn[1]=sgn[1]+r[0][n+j-m1-1]*g[1][j-1] + r[1][n+j-m1-1]*g[0][j-1];
+    		        shn[0]=shn[0]+r[0][n+m1-j-1]*h[0][j-1] - r[1][n+m1-j-1]*h[1][j-1];
+    		        shn[1]=shn[1]+r[0][n+m1-j-1]*h[1][j-1] + r[1][n+m1-j-1]*h[0][j-1];
+    		        sgd[0]=sgd[0]+r[0][n+j-m1-1]*h[0][m-j] - r[1][n+j-m1-1]*h[1][m-j];
+    		        sgd[1]=sgd[1]+r[0][n+j-m1-1]*h[1][m-j] + r[1][n+j-m1-1]*h[0][m-j];
+    		    } // for (j=1; j <=m; j++)
+    		    
+    		    if (zabs(sgd[0],sgd[1])<1.0e-15) {
+    		    	 System.err.println("In topsol singular principal minor");
+		             System.exit(0);
+    		    }
+    		    
+    		    zdiv(sgn[0], sgn[1], sgd[0], sgd[1], divout, divoutImag);
+    		    g[0][m1-1] = divout[0];
+    		    g[1][m1-1] = divoutImag[0];
+    		    zdiv(shn[0], shn[1], sd[0], sd[1], divout, divoutImag);
+    		    h[0][m1-1] = divout[0];
+    		    h[1][m1-1] = divoutImag[0];
+    		    k=m-1;
+    		    m2=(m+1)/2;
+    		    pp[0]=g[0][m1-1];
+    		    pp[1]=g[1][m1-1];
+    		    qq[0]=h[0][m1-1];
+    		    qq[1]=h[1][m1-1];
+    		    for (j=0; j < m2; j++) {
+    		        pt1[0]=g[0][j];
+    		        pt1[1]=g[1][j];
+    		        pt2[0]=g[0][k];
+    		        pt2[1]=g[1][k];
+    		        qt1[0]=h[0][j];
+    		        qt1[1]=h[1][j];
+    		        qt2[0]=h[0][k];
+    		        qt2[1]=h[1][k];
+    		        g[0][j]=pt1[0]-pp[0]*qt2[0] + pp[1]*qt2[1];
+    		        g[1][j]=pt1[1]-pp[0]*qt2[1] - pp[1]*qt2[0];
+    		        g[0][k]=pt2[0]-pp[0]*qt1[0] + pp[1]*qt1[1];
+    		        g[1][k]=pt2[1]-pp[0]*qt1[1] - pp[1]*qt1[0];
+    		        h[0][j]=qt1[0]-qq[0]*pt2[0] + qq[1]*pt2[1];
+    		        h[1][j]=qt1[1]-qq[0]*pt2[1] - qq[1]*pt2[0];
+    		        h[0][k]=qt2[0]-qq[0]*pt1[0] + qq[1]*pt1[1];
+    		        h[1][k]=qt2[1]-qq[0]*pt1[1] - qq[1]*pt1[0];
+    		        k=k-1;
+    		    } // for (j=0; j < m2; j++)
+    		} // for (m=1; m <= n; m++)
+    		return x;
+    }
+    
+    private void topinv(double m1[][], double m2[][], double m3[][], double m4[][],
+    		                          double c[][], double r[][]) {
+    		
+    		// factorize the inverse toeplitz matrix using the Gohberg-Semencul
+    		// factorization. This requires O(n^2) operations. 
+    		
+    		// The function returns four toeplitz matrices which are the
+    		// Gohberg-Semencul factorization.
+    		
+    		// Input parameters
+    		//    c  First column of the toeplitz matrix.
+    		//    r  First row of the toeplitz matrix.
+    		
+    		// Output parameters
+    		//    m1 m2 m3 m4     Four toeplitz matrics, which correpond to the
+    		//                    Gohberg-Semencul factorization of inv(Toeplitz(c,r)).
+    		//                    There are cell arrays of size 2 where m_i{1} is the first column 
+    		//                    of the toeplitz matrix m_i and m_i{2} is the first row of
+    		//                    the toeplitz matrix m_i.
+    	    //                    Input m1, m2, m3, m4 as arrays of double[2][2*n];
+    		
+    		// Yoel Shkolnisky 04/10/04
+
+	    	int i;
+	    	double divout[] = new double[1];
+	    	double divoutImag[] = new double[1];
+    	    if ((!floateq(c[0][0],r[0][0])) || (!floateq(c[1][0], r[1][0]))) {
+			    System.err.println("In topinv first element of column does not match first element of row");
+			    System.exit(0);
+			}	
+    	
+    		int n = c[0].length;
+    		int m = r[0].length;
+
+    		if (m !=n) {
+    		    System.err.println("In topinv c and r must have the same length");
+    		    System.exit(0);
+    		}
+
+    		double e0[][] = new double[2][m];
+    	    double en[][] = new double[2][m];
+    		e0[0][0]=1;
+    		en[0][n-1]=1;
+
+    		double x[][]=topsol(c,r,e0);
+    		double y[][] =topsol(c,r,en);
+    		
+    		for (i = 0; i < n; i++) {
+    			zdiv(x[0][i], x[1][i], x[0][0], x[1][0], divout, divoutImag);
+    			m1[0][i] = divout[0];
+    			m1[1][i] = divoutImag[0];
+    		}
+    		m1[0][n] = 1.0;
+    		m1[1][n] = 0.0;
+    		for (i = n+1; i < 2*n; i++) {
+    			m1[0][i] = 0.0;
+    			m1[1][i] = 0.0;
+    		}
+
+    		m2[0][0] = y[0][n-1];
+    		m2[1][0] = y[1][n-1];
+    		for (i = 1; i < n; i++) {
+    			m2[0][i] = 0.0;
+    			m2[1][i] = 0.0;
+    		}
+    		for (i = n; i < 2*n; i++) {
+    			m2[0][i] = y[0][2*n-i-1];
+    			m2[1][i] = y[1][2*n-i-1];
+    		}
+    		
+    		m3[0][0] = 0.0;
+    		m3[1][0] = 0.0;
+    		for (i = 0; i < n-1; i++) {
+    			zdiv(y[0][i], y[1][i], x[0][0], x[1][0], divout, divoutImag);
+    			m3[0][i+1] = divout[0];
+    			m3[1][i+1] = divoutImag[0];
+    		}
+    		for (i = n; i < 2*n; i++) {
+    			m3[0][i] = 0.0;
+    			m3[1][i] = 0.0;
+    		}
+    
+    		for (i = 0; i < n; i++) {
+    			m4[0][i] = 0.0;
+    			m4[1][i] = 0.0;
+    		}
+    		m4[0][n] = 0.0;
+    		m4[1][n] = 0.0;
+    		for (i = n+1; i < 2*n; i++) {
+    			m4[0][i] = x[0][2*n-i];
+    			m4[1][i] = x[1][2*n-i];
+    		}
+    }
+
+
     
 }
