@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -3628,7 +3631,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		alpha=-2.0*j/n;
 
     		// Compute the frequencies in the vector of length N(k,n+1)+n+1. These
-    		// frequnecies are denoted as the vector y
+    		// frequencies are denoted as the vector y
     		if ((type==1) || (type==4)) {
     		    idx1= createArray(-n/2,-n/2+N(j/2,n+1)/2-1);
     		    idx3=createArray(n/2-N(j/2,n+1)/2+1,n/2-1);
@@ -3719,12 +3722,29 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		
     		// Compute the constant required for the interpolation of row/column j in
     		// the the pseudo-polar grid.
-    		int i, m;
+    		int i, k, l, m;
     		double alpha;
     		int idx1[];
     		int idx2[];
     		int idx3[];
     		double y[];
+    		int array1[];
+    		double x[];
+    		int idxX;
+    		int idxY;
+    		int idxDroppedElems[];
+    		boolean found;
+    		double xused[];
+    		double LARGE;
+    		double EPS;
+    		double clt[];
+    		int lendropped;
+    		double cl[];
+    		
+    		if ((n % 2)==1) {
+    		    System.err.println("In compC the length n must be even");
+    		    System.exit(0);
+    		}
 
     		m=2*n+1;
     		alpha=-2.0*j/n;
@@ -3740,94 +3760,268 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		    idx3=createArray(n/2-N(j/2,n+1)/2+1,n/2);
     		}
 
-    		/*if (alpha==-2)
-    		    idx2=round([-n/2+N(j/2,n+1)/2+1:n/2-N(j/2,n+1)/2]/(alpha/2));
-    		elseif (alpha==2)
-    		        idx2=round([-n/2+N(j/2,n+1)/2:n/2-N(j/2,n+1)/2-1]/(alpha/2));
-    		elseif (alpha~=0)
-    		    idx2=round([-n/2+N(j/2,n+1)/2:n/2-N(j/2,n+1)/2]/(alpha/2));
-    		else
-    		    idx2=0;
-    		end
+    		if (alpha==-2) {
+    			idx2 = createArray(-n/2+N(j/2,n+1)/2+1,n/2-N(j/2,n+1)/2);
+    			for (i = 0; i < idx2.length; i++) {
+    				idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+    			}
+    		}
+    		else if (alpha==2) {
+    	        idx2 = createArray(-n/2+N(j/2,n+1)/2,n/2-N(j/2,n+1)/2-1);
+    	        for (i = 0; i < idx2.length; i++) {
+    				idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+    			}
+    		}
+    		else if (alpha!=0) {
+    			idx2 = createArray(-n/2+N(j/2,n+1)/2,n/2-N(j/2,n+1)/2);
+    			for (i = 0; i < idx2.length; i++) {
+    				idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+    			}
+    		}
+    		else {
+    		    idx2=new int[] {0};
+    		}
 
-    		y=[-2*pi*(2)*idx1/m -2*pi*alpha*idx2/m -2*pi*(2)*idx3/m];
+    		y = new double[idx1.length + idx2.length + idx3.length];
+    		if (y.length != n) {
+    			System.err.println("In compC y.length != n");
+    			System.exit(0);
+    		}
+    		for (i = 0; i < idx1.length; i++) {
+    			y[i] = -4.0*Math.PI*idx1[i]/m;
+    		}
+    		for (i = 0; i < idx2.length; i++) {
+    			y[i + idx1.length] = -2.0*Math.PI*alpha*idx2[i]/m;
+    		}
+    		for (i = 0; i < idx3.length; i++) {
+    			y[i + idx1.length + idx2.length] = -4.0*Math.PI*idx3[i]/m;
+    		}
 
-    		%Compute the frequencies on the Cartesian grid.
-    		if (type==1) | (type==4)
-    		    x=-2*pi*(2)*[-n/2:n/2-1]/m;
-    		else
-    		    x=-2*pi*(2)*[-n/2+1:n/2]/m;
-    		end
+    		// Compute the frequencies on the Cartesian grid.
+    		if ((type==1) || (type==4)) {
+    			array1 = createArray(-n/2,n/2-1);
+    			x = new double[array1.length];
+    			for (i = 0; i < x.length; i++) {
+    				x[i] = -4.0*Math.PI*array1[i]/m;
+    			}
+    		}
+    		else {
+    			array1 = createArray(-n/2+1,n/2);
+    			x = new double[array1.length];
+    			for (i = 0; i < x.length; i++) {
+    				x[i] = -4.0*Math.PI*array1[i]/m;
+    			}
+    		}
 
-    		if (n~=length(x)) || (n~=length(y))
-    		    error('The arrays f,x,y should be of the same length');
-    		end
+    		// sort x and then sort everything to the same order as x.
+    		ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+    		for (i = 0; i < n; i++) {
+    			indexValueList.add(new indexValueItem(i, x[i]));
+    		}
+    		Collections.sort(indexValueList, new indexValueComparator());
+    		int srtXidx[] = new int[n];
+    		for (i = 0; i < n; i++) {
+    	    	indexValueItem item = indexValueList.get(i);
+    	    	x[i] = item.getValue();
+    	    	srtXidx[i] = item.getIndex();
+    		}
+    		indexValueList.clear();
+    		for (i = 0; i < n; i++) {
+    			indexValueList.add(new indexValueItem(i, y[i]));
+    		}
+    		Collections.sort(indexValueList, new indexValueComparator());
+    		int srtYidx[] = new int[n];
+    		for (i = 0; i < n; i++) {
+    	    	indexValueItem item = indexValueList.get(i);
+    	    	y[i] = item.getValue();
+    	    	srtYidx[i] = item.getIndex();
+    		}
 
-    		if (mod(n,2)==1)
-    		    error('The length n must be even');
-    		end
+    		// remove x points that are equal to some y point
+    		idxX=0;
+    		idxY=0;
+    		idxDroppedElems=new int[n]; // the indices of the x that appear in y
+    		for (i = 0; i < n; i++) {
+    			idxDroppedElems[i] = -1;
+    		}
 
-    		% sort x and then sort everything to the same order as x.
-    		[x,srtXidx]=sort(x);
-    		[y,srtYidx]=sort(y);
-
-    		% remove x points that are equal to some y point
-    		idxX=1;
-    		idxY=1;
-    		idxDroppedElems=zeros(1,n); % the indices of the x that appear in y
-
-    		j=1;
-    		while (idxX<=n) & (idxY<=n)
-    		    if (abs(x(idxX)-y(idxY))<1.0d-15)
-    		        idxDroppedElems(j)=idxX;
+    		j=0;
+    		while ((idxX<n) && (idxY<n)) {
+    		    if (Math.abs(x[idxX]-y[idxY])<1.0d-15) {
+    		        idxDroppedElems[j]=idxX;
     		        j=j+1;
     		        idxX=idxX+1;
-    		    elseif x(idxX)<y(idxY)
+    		    }
+    		    else if (x[idxX]<y[idxY]) {
     		        idxX=idxX+1;
-    		    else
+    		    }
+    		    else {
     		        idxY=idxY+1;
-    		    end
-    		end
+    		    }
+    		} // while ((idxX<n) && (idxY<n))
 
-    		% idxUsed is the set of indices from x which we need to
-    		% compute. In other words, these are the elements that were not dropped in
-    		% the previous iteration.
-    		idxUsed=setdiff(1:n,idxDroppedElems(:));
-    		x=x(idxUsed);
-    		m=length(x);
-    		lendropped=j-1; % number of dropped elements from x
+    		// idxUsed is the set of indices from x which we need to
+    		// compute. In other words, these are the elements that were not dropped in
+    		// the previous iteration.
+    		m = 0;
+    		k = 0;
+    		int idxUsed[] = new int[n];
+    		for (i = 0; i < n; i++) {
+    			found = false;
+    			for (k = 0; k < n; k++) {
+    				if (i == idxDroppedElems[k]) {
+    					found = true;
+    				}
+    			}
+    			if (!found) {
+    				idxUsed[m++] = i;
+    			}
+    		}
+    		xused = new double[m];
+    		for (i = 0; i < m; i++) {
+    			xused[i] = x[idxUsed[i]];
+    		}
+    		lendropped=j; // number of dropped elements from x
 
-    		% Now we can resample the polynomial using the modified vector x
+    		// Now we can resample the polynomial using the modified vector x
 
     		LARGE=1.0E15;
     		EPS=1.0E-15;
-    		clt=zeros(1,m);
+    		clt=new double[m];
 
-    		% Compute the factors cl
-    		for l=1:m
-    		    %compute cl
-    		    clt(l)=0;
-    		    for k=1:n
-    		        clt(l)=clt(l)+log(sin((x(l)-y(k))/2));
-    		    end
-    		%    
-    		    if (abs(clt(l))>LARGE)
-    		        warning('Value of cl too large...');
-    		    end
-    		end
+    		// Compute the factors cl
+    		for (l = 0; l < m; l++) {
+    		    // compute cl
+    		    clt[l]=0.0;
+    		    for (k=0; k < n; k++) {
+    		        clt[l]=clt[l]+Math.log(Math.sin((xused[l]-y[k])/2));
+    		    }
+    		    
+    		    if (Math.abs(clt[l])>LARGE) {
+    		        System.out.println("Warning in compC value of cl too large...");
+    		    }
+    		} // for (l = 0; l < m; l++)
 
-    		clt=exp(clt);
+    		for (i = 0; i < m; i++) {
+    		    clt[i]=Math.exp(clt[i]);
+    		}
 
-    		% Put zeros in the elements that were not computed by this function.
-    		% These zeros will be dropped when the invserion function gets the table of
-    		% cl. We use zero padding so that all arrays will have the same size,
-    		% although this wastes storage space. 
-    		cl=zeros(1,n);
-    		cl(idxUsed)=clt;*/
-    		return null;
+    		// Put zeros in the elements that were not computed by this function.
+    		// These zeros will be dropped when the invserion function gets the table of
+    		// cl. We use zero padding so that all arrays will have the same size,
+    		// although this wastes storage space. 
+    		cl=new double[n];
+    		for (i = 0; i < m; i++) {
+    		    cl[idxUsed[i]]=clt[i];
+    		}
+    		return cl;
     }
 
-    		
+    private void ippftprecomp(int n) {
+	    
+	    // Compute the tables used in the inversion of the pseudo-polar of an image
+	    // of size nxn.
+	    // The function generates two mat files named c_[n] and d_[n] (for example
+	    // c_256 and d_256.
+	    
+	    // Yoel Shkolnisky 11/10/04
+    	int i,j,k;
+    	double c[][][] = new double[4][n/2][n];
+    	double d[][][] = new double[4][n/2][n];
+    	RandomAccessFile raFile = null;
+	    ippftconsts(c,d,n);
+	    String outputFilePath = "C:" + File.separator + "PseudoPolarFourierTranformTables" + File.separator;
+	    File file = new File(outputFilePath);
+		if (!file.exists()) {
+			file.mkdir();
+		}
+	    String fname = outputFilePath + "d_" + String.valueOf(n);
+	    File filed = new File(fname);
+		if (!filed.exists()) {
+			System.out.println("About to filed.createNewFile()");
+			try {
+				filed.createNewFile();
+			} catch (IOException e) {
+				MipavUtil.displayError("In ippftprecomp filed.createNewFile() IOException " + e);
+				System.exit(-1);
+			}
+			try {
+				raFile = new RandomAccessFile(filed, "rw");
+			} catch (IOException e) {
+				MipavUtil.displayError(
+						"In ippftprecomp raFile = new RandomAccessFile(filed, \"rw\") IOException " + e);
+				System.exit(-1);
+			}
+			for (i = 0; i < 4; i++) {
+				for (j = 0; j < n/2; j++) {
+					for (k = 0; k < n; k++) {
+					    try {
+					    	raFile.writeDouble(d[i][j][k]);
+					    }
+					    catch (IOException e) {
+							MipavUtil.displayError(
+									"In ippftprecomp raFile.writeDouble IOException " + e);
+							System.exit(-1);
+					    }
+					}
+				}
+			}
+			try {
+				raFile.close();
+			}
+			catch (IOException e) {
+				MipavUtil.displayError(
+						"In ippftprecomp raFile.close IOException " + e);
+				System.exit(-1);
+		    }
+		} // if (!filed.exists())
+		else {
+			System.out.println(fname + " already exists");
+		}
+	    fname=outputFilePath + "c_" + String.valueOf(n);
+	    File filec = new File(fname);
+		if (!filec.exists()) {
+			System.out.println("About to filec.createNewFile()");
+			try {
+				filec.createNewFile();
+			} catch (IOException e) {
+				MipavUtil.displayError("In ippftprecomp filec.createNewFile() IOException " + e);
+				System.exit(-1);
+			}
+			try {
+				raFile = new RandomAccessFile(filec, "rw");
+			} catch (IOException e) {
+				MipavUtil.displayError(
+						"In ippftprecomp raFile = new RandomAccessFile(filec, \"rw\") IOException " + e);
+				System.exit(-1);
+			}
+			for (i = 0; i < 4; i++) {
+				for (j = 0; j < n/2; j++) {
+					for (k = 0; k < n; k++) {
+					    try {
+					    	raFile.writeDouble(c[i][j][k]);
+					    }
+					    catch (IOException e) {
+							MipavUtil.displayError(
+									"In ippftprecomp raFile.writeDouble IOException " + e);
+							System.exit(-1);
+					    }
+					}
+				}
+			}
+			try {
+				raFile.close();
+			}
+			catch (IOException e) {
+				MipavUtil.displayError(
+						"In ippftprecomp raFile.close IOException " + e);
+				System.exit(-1);
+		    }
+		} // if (!filec.exists())
+		else {
+			System.out.println(fname + " already exists");
+		}  
+    }
 
     
 }
