@@ -4023,5 +4023,447 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		}  
     }
 
-    
+    private double[][] ippftd(double pp1[][][], double pp2[][][], double EPS) {
+	    
+	    // Inverse pseudo-polar Fourier transform.
+	    
+	    // Direct algorithm that computes the inverse pseudo-polar Fourier
+	    // transform.
+	    
+	    // Input parameters:
+	    //   pp1,pp2   Pseudo-polar sectors.
+	    //   EPS       Required accuracy of the computation.  Default is 1.0E-7.
+	    
+	    // Output parameters:
+	    //   rim       recovered image
+	    
+	    // Yoel Shkolnisky 24/01/05
+	    int n;
+	    double fim[][][];
+	    int i,j;
+	    double r1[][];
+	    double r2[][];
+	    double c1[][];
+	    double c2[][];
+	    int idx;
+	
+	    n=checkInput(pp1,pp2);
+	    double c[][][] = new double[4][n/2][n];
+	    double d[][][] = new double[4][n/2][n];
+	    double fu[][] = new double[2][n+1];
+	    double u[][] = new double[2][n+1];
+	    double fv[][] = new double[2][n+1];
+	    double v[][] = new double[2][n+1];
+	    double dj[] = new double[n];
+	    double cl[] = new double[n];
+	    loadConsts(c,d,n);
+	
+	    // Prepare output array
+	    fim = new double[2][n+1][n+1];
+	
+	    // Scan the pseudo-polar arrays in an "onion-peel" order and recover the
+	    // Fourier samples of each row/column
+	    for (j=n/2; j >= 1; j--) {
+	        // recover rows j and -j from pp1
+	    	idx = toUnaliasedIdx(-2*j,2*n+1);
+	    	for (i = 0; i < n+1; i++) {
+	    		fu[0][i] = pp1[0][idx][i];
+	    		fu[1][i] = pp1[1][idx][i];
+	    	}
+	        idx = toUnaliasedIdx(-j,n+1);
+	        for (i = 0; i < n+1; i++) {
+	        	u[0][i] = fim[0][idx][i];
+	        	u[1][i] = fim[1][idx][i];
+	        }
+	        for (i = 0; i < n; i++) {
+	            dj[i]=d[0][n/2-j][i];
+	            cl[i]=c[0][n/2-j][i];
+	        }
+	        r1 = recover(fu,u,-2*j,1,dj,cl,EPS);
+	    
+	        idx = toUnaliasedIdx(2*j,2*n+1);
+	        for (i = 0; i < n+1; i++) {
+	    		fu[0][i] = pp1[0][idx][i];
+	    		fu[1][i] = pp1[1][idx][i];
+	    	}
+	        idx = toUnaliasedIdx(j,n+1);
+	        for (i = 0; i < n+1; i++) {
+	        	u[0][i] = fim[0][idx][i];
+	        	u[1][i] = fim[1][idx][i];
+	        }
+	        for (i = 0; i < n; i++) {
+		        dj[i]=d[2][n/2-j][i];
+		        cl[i]=c[2][n/2-j][i];
+	        }
+	        r2 = recover(fu,u,2*j,3,dj,cl,EPS);
+	    
+	        // recover columns j and -j from pp2
+	        idx = toUnaliasedIdx(-2*j,2*n+1);
+	        for (i = 0; i < n+1; i++) {
+	        	fv[0][i] = pp2[0][idx][i];
+	        	fv[1][i] = pp2[1][idx][i];
+	        }
+	        idx = toUnaliasedIdx(-j,n+1);
+	        for (i = 0; i < n+1; i++) {
+	            v[0][i] = fim[0][i][idx];
+	            v[1][i] = fim[1][i][idx];
+	        }
+	        for (i = 0; i < n; i++) {
+	            dj[i]=d[1][n/2-j][i];
+	            cl[i]=c[1][n/2-j][i];
+	        }
+	        c1 = recover(fv,v,-2*j,2,dj,cl,EPS);
+	    
+	        idx = toUnaliasedIdx(2*j,2*n+1);
+	        for (i = 0; i < n+1; i++) {
+	        	fv[0][i] = pp2[0][idx][i];
+	        	fv[1][i] = pp2[1][idx][i];
+	        }
+	        idx = toUnaliasedIdx(j,n+1);
+	        for (i = 0; i < n+1; i++) {
+	            v[0][i] = fim[0][i][idx];
+	            v[1][i] = fim[1][i][idx];
+	        }
+	        for (i = 0; i < n; i++) {
+	            dj[i]=d[3][n/2-j][i];
+	            cl[i]=c[3][n/2-j][i];
+	        }
+	        c2 = recover(fv,v,2*j,4,dj,cl,EPS);    
+	    
+	        // store the recovered rows and columns in the output array
+	        idx = toUnaliasedIdx(-j,n+1);
+	        for (i = 0; i < n; i++) {
+	        	fim[0][idx][i] = r1[0][i];
+	        	fim[1][idx][i] = r1[1][i];
+	        }
+	        idx = toUnaliasedIdx(j,n+1);
+	        for (i = 0; i < n; i++) {
+	        	fim[0][idx][i+1] = r2[0][i];
+	        	fim[1][idx][i+1] = r2[1][i];
+	        }
+	        idx = toUnaliasedIdx(-j,n+1);
+	        for (i = 0; i < n; i++) {
+	        	fim[0][i+1][idx] = c1[0][i];
+	        	fim[1][i+1][idx] = c1[1][i];
+	        }
+	        idx = toUnaliasedIdx(j,n+1);
+	        for (i = 0; i < n; i++) {
+	        	fim[0][i][idx] = c2[0][i];
+	        	fim[1][i][idx] = c2[1][i];
+	        }
+	    } // for (j=n/2; j >= 1; j--)
+	    
+	    // recover row 0 (no need to recover column 0).
+	    fim[0][toUnaliasedIdx(0,n+1)][toUnaliasedIdx(0,n+1)]=pp1[0][toUnaliasedIdx(0,2*n+1)][toUnaliasedIdx(0,n+1)];
+	    fim[1][toUnaliasedIdx(0,n+1)][toUnaliasedIdx(0,n+1)]=pp1[1][toUnaliasedIdx(0,2*n+1)][toUnaliasedIdx(0,n+1)];
+	
+	    // recover the orignal image by inverting fim
+	    double rim[][] =invDecimatedFreqs(fim);
+	    double invertedrim[][] = new double[n][n];
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < n; j++) {
+	    		invertedrim[i][j] = rim[n-1-i][j];
+	    	}
+	    }
+	    return invertedrim;
+    }
+
+
+    private int checkInput(double pp1[][][], double pp2[][][]) {
+	    // Check that the arrays pp1 and pp2 are properly structured. pp1 and pp2
+	    // should be of size 2x(2n+1)x(n+1). If everything is ok with pp1 and pp2
+	    // the function returns n.
+	    
+	    int s11 = pp1[0].length;
+	    int s12 = pp1[0][0].length;
+	    int s21 = pp2[0].length;
+	    int s22 = pp2[0][0].length;
+	    
+	    if (s11 != s21) {
+	    	System.err.println("In checkInput pp1[0].length != pp2[0].length");
+	    	System.exit(0);
+	    }
+	    
+	    if (s12 != s22) {
+	    	System.err.println("In checkInput pp1[0][0].length != pp2[0][0].length");
+	    	System.exit(0);
+	    }
+	    
+	    if ((s11 % 2) != 1) {
+	    	System.err.println("In checkInput pp1[0].length is not odd");
+	    	System.exit(0);
+	    }
+	    
+	    if ((s12 % 2) != 1) {
+	    	System.err.println("In checkInput pp1[0][0].length is not odd");
+	    	System.exit(0);
+	    }
+	
+	    if (((s11 - 1)/2) != (s12 - 1)) {
+	    	System.err.println("In checkInput input parameter is not of form (2n+1)x(n+1)");
+	    	System.exit(0);
+	    }
+	    
+	    int n = s12 - 1;
+	    
+	    return n;
+    }
+
+    private void loadConsts(double c[][][], double d[][][], int n) {
+	    
+	    // Try to load the constants from the disk. If the constants do not exist on
+	    // the disk, compute them using a slow algorithm and print a warning.
+    	int i,j,k;
+    	RandomAccessFile raFile = null;
+	    boolean load = true;
+    	String outputFilePath = "C:" + File.separator + "PseudoPolarFourierTranformTables" + File.separator;
+    	File file = new File(outputFilePath);
+    	if (!file.exists()) {
+			System.out.println("Warning outputFilePath directory for tables not found on disk");
+			load = false;
+		}
+    	else {
+    		String cname=outputFilePath + "c_" + String.valueOf(n);
+    	    File filec = new File(cname);
+    		if (!filec.exists()) {
+    			System.out.println("Warning c_" + String.valueOf(n) + " does not exist on the disk");
+    			load = false;
+    		}
+    		else {
+    			try {
+    				raFile = new RandomAccessFile(filec, "r");
+    			} catch (IOException e) {
+    				System.err.println(
+    						"In loadConsts raFile = new RandomAccessFile(filec, \"r\") IOException " + e);
+    				load = false;
+    			}
+    			for (i = 0; i < 4; i++) {
+    				for (j = 0; j < n/2; j++) {
+    					for (k = 0; k < n; k++) {
+    					    try {
+    					    	c[i][j][k] = raFile.readDouble();
+    					    }
+    					    catch (IOException e) {
+    							System.err.println(
+    									"In loadConsts raFile.readDouble IOException " + e);
+    							load = false;
+    					    }
+    					}
+    				}
+    			}
+    			try {
+    				raFile.close();
+    			}
+    			catch (IOException e) {
+    				System.err.println(
+    						"In loadConsts raFile.close IOException " + e);
+    				load = false;
+    		    }	
+    		}
+    		
+    		String dname=outputFilePath + "d_" + String.valueOf(n);
+    	    File filed = new File(dname);
+    		if (!filed.exists()) {
+    			System.out.println("Warning d_" + String.valueOf(n) + " does not exist on the disk");
+    			load = false;
+    		}
+    		else {
+    			try {
+    				raFile = new RandomAccessFile(filed, "r");
+    			} catch (IOException e) {
+    				System.err.println(
+    						"In loadConsts raFile = new RandomAccessFile(filed, \"r\") IOException " + e);
+    				load = false;
+    			}
+    			for (i = 0; i < 4; i++) {
+    				for (j = 0; j < n/2; j++) {
+    					for (k = 0; k < n; k++) {
+    					    try {
+    					    	d[i][j][k] = raFile.readDouble();
+    					    }
+    					    catch (IOException e) {
+    							System.err.println(
+    									"In loadConsts raFile.readDouble IOException " + e);
+    							load = false;
+    					    }
+    					}
+    				}
+    			}
+    			try {
+    				raFile.close();
+    			}
+    			catch (IOException e) {
+    				System.err.println(
+    						"In loadConsts raFile.close IOException " + e);
+    				load = false;
+    		    }	
+    		}
+    	}
+	
+	    if (!load) {
+	        System.out.println("Warning tables not found on disk. Generating inversion tables...");
+	        ippftconsts(c,d,n);
+	    }
+    }
+
+    private double[][] recover(double fu[][], double u[][], int j,int type, double dj[], double cl[], double EPS) {
+	    // Respacing of the frequency samples to the cartesian grid.
+	    // The vector fx contains samples fractional samples given by
+	    //        n/2-1
+	    // fu(l) =  sum x(u)exp(-2*pi*i*alpha*u*l/m) 
+	    //        u=-n/2
+	    // where alpha=-2j/n and l=-n/2...n/2.
+	    
+	    // u contains the samples of the Cartesian Fourier grid that was recovered 
+	    // in previous iterations.
+	    
+	    // The function returns the vector y given by
+	    //         n/2-1
+	    // w(l) =  sum x(j)exp(-2*pi*i*(2*l)u/m).
+	    //        u=-n/2
+    	int n;
+    	int m;
+    	double alpha;
+    	int i;
+    	int idx1[];
+    	int idx2[];
+    	int idx3[];
+    	double y[];
+    	int array1[];
+    	double x[];
+    	double xs[];
+    	double ys[];
+    	int lx;
+    	int ly;
+    	double f[][];
+	
+	    n=fu[0].length-1;
+	    m=2*n+1;
+	    alpha=-2.0*j/n;
+	
+	    // Compute the frequencies in the vector of length N(k,n+1)+n+1. These
+	    // frequencies are denoted as the vector y
+	
+	    if ((type==1) || (type==4)) {
+	        idx1=createArray(-n/2,-n/2+N(j/2,n+1)/2-1);
+	        idx3=createArray(n/2-N(j/2,n+1)/2+1,n/2-1);
+	    }
+	    else {
+	        idx1=createArray(-n/2+1,-n/2+N(j/2,n+1)/2-1);
+	        idx3=createArray(n/2-N(j/2,n+1)/2+1,n/2);
+	    }
+	
+	    if (alpha==-2) {
+	        if ((type==1) || (type==3)) {
+	        	idx2 = createArray(-n/2+N(j/2,n+1)/2+1,n/2-N(j/2,n+1)/2);
+	        	for (i = 0; i < idx2.length; i++) {
+	        		idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+	        	}
+	        }
+	        else {
+	        	idx2 = createArray(-n/2+N(j/2,n+1)/2,n/2-N(j/2,n+1)/2-1);
+	        	for (i = 0; i < idx2.length; i++) {
+	        		idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+	        	}
+	        }
+	    }
+	    else if (alpha==2) {
+	        // Handling types 2 and 4 is different than type 1 and 3 because of the
+	        // flip (reverse angle order) in pp2.
+	        if ((type==1) || (type==3)) {
+	        	idx2 = createArray(-n/2+N(j/2,n+1)/2,n/2-N(j/2,n+1)/2-1);
+	        	for (i = 0; i < idx2.length; i++) {
+	        		idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+	        	}
+	        }
+	        else {
+	        	idx2 = createArray(-n/2+N(j/2,n+1)/2+1,n/2-N(j/2,n+1)/2);
+	        	for (i = 0; i < idx2.length; i++) {
+	        		idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+	        	}
+	        }
+	    }
+	    else if (alpha !=0) {
+	    	idx2 = createArray(-n/2+N(j/2,n+1)/2,n/2-N(j/2,n+1)/2);
+	    	for (i = 0; i < idx2.length; i++) {
+        		idx2[i] = (int)Math.round(idx2[i]/(alpha/2.0));
+        	}
+	    }
+	    else {
+	        idx2= new int[] {0};
+	    }
+	    
+	    y = new double[idx1.length + idx2.length + idx3.length];
+		
+		for (i = 0; i < idx1.length; i++) {
+			y[i] = -4.0*Math.PI*idx1[i]/m;
+		}
+		for (i = 0; i < idx2.length; i++) {
+			y[i + idx1.length] = -2.0*Math.PI*alpha*idx2[i]/m;
+		}
+		for (i = 0; i < idx3.length; i++) {
+			y[i + idx1.length + idx2.length] = -4.0*Math.PI*idx3[i]/m;
+		}
+	
+	    // Compute the frequencies on the Cartesian grid.
+		x = new double[n];
+	    if ((type==1) || (type==4)) {
+	    	array1 = createArray(-n/2,n/2-1);
+	    	for (i = 0; i < n; i++) {
+	    		x[i] = -4.0*Math.PI*array1[i]/m;
+	    	}
+	    }
+	    else {
+	    	array1 = createArray(-n/2+1,n/2);
+	    	for (i = 0; i < n; i++) {
+	    		x[i] = -4.0*Math.PI*array1[i]/m;
+	    	}
+	    }
+	    
+	    lx=x.length;
+	    ly=y.length;
+	    
+	    if (lx!=ly) {
+	        System.out.println("Warning in recover x and y are not of the same length");
+	    }
+	
+	    // Correspondence test of x and y. 
+	    // Used for validation of the code.
+	    // Remove in the final version.
+	    xs = new double[x.length];
+	    for (i = 0; i < x.length; i++) {
+	    	xs[i] = x[i];
+	    }
+	    Arrays.sort(xs);
+	    ys = new double[y.length];
+	    for (i = 0; i < y.length; i++) {
+	    	ys[i] = y[i];
+	    }
+	    Arrays.sort(ys);
+	    
+	
+	    if (xs[0] !=ys[0]) {
+	        System.out.println("Warning in recover first element in x and y are different");
+	    }
+	    if (xs[lx-1] != ys[lx-1]) {
+	        System.out.println("Warning in recover last element in x and y are different");
+	    }
+	    // END of validation code
+	    f = new double[2][idx1.length + idx2.length + idx3.length];
+	    for (i = 0; i < idx1.length; i++) {
+	    	f[0][i] = u[0][idx1[i]+n/2];
+	    	f[1][i] = u[1][idx1[i]+n/2];
+	    }
+	    for (i = 0; i < idx2.length; i++) {
+	    	f[0][i+idx1.length] = fu[0][idx2[i]+n/2];
+	    	f[1][i+idx1.length] = fu[1][idx2[i]+n/2];
+	    }
+	    for (i = 0; i < idx3.length; i++) {
+	    	f[0][i+idx1.length+idx2.length] = u[0][idx3[i]+n/2];
+	    	f[1][i+idx1.length+idx2.length] = u[1][idx3[i]+n/2];
+	    }
+	    double w[][]=fastfmmresample(f,y,x,dj,cl,EPS);
+	    return w;
+    }
+   
 }
