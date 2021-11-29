@@ -1101,7 +1101,15 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 		int borderSize = 3;
 		if ( imageA.isColorImage() )
 		{
-			histogramA = calcHistogram(imageA, 256, 1);
+			if ( imageA.getMaxR() >= imageA.getMaxG() && imageA.getMaxR() >= imageA.getMaxB() ) {
+				histogramA = calcHistogram(imageA, 256, 1);
+			}
+			else if ( imageA.getMaxG() >= imageA.getMaxR() && imageA.getMaxG() >= imageA.getMaxB() ) {
+				histogramA = calcHistogram(imageA, 256, 2);
+			}
+			else {
+				histogramA = calcHistogram(imageA, 256, 3);
+			}
 			//histogramAGreen = calcHistogram(imageA, 2);
 			//histogramABlue = calcHistogram(imageA, 3);
 
