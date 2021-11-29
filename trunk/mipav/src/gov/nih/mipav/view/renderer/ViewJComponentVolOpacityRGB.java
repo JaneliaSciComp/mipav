@@ -136,8 +136,10 @@ public class ViewJComponentVolOpacityRGB extends ViewJComponentVolOpacityBase {
             min = 0;
             max = 255;
         } else {
-            min = (float) image.getMinR();
-            max = (float) image.getMaxR();
+            min = (float) Math.min(image.getMinR(), image.getMinG());
+            min = (float) Math.min(min, image.getMinB());
+            max = (float) Math.max(image.getMaxR(), image.getMaxG());
+            max = (float) Math.max(max, image.getMaxB());
         }
 
         range = max - min;
