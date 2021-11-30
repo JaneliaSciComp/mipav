@@ -325,6 +325,26 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		System.err.println(failed + " tests failed");
     	}
     }
+    
+    public void testippft() {
+    
+	    // Test the function ippt.
+	    // The function generates a matrix, computes its pseud-polar Fourier
+	    // transform, inverts it, and compares the results.
+	    
+	    // The output of the function should be very close to zero.
+	    
+	    // Yoel Shkolnisky 11/10/04
+	
+	    double EPS=1.0e-10;
+	    int n=128;
+	    /*im=magic(n);
+	
+	    [pp1,pp2]=PPFT(im);
+	    rim=ippft(pp1,pp2,EPS);
+	    [v,I]=max(abs(im(:)-rim(:)));
+	    v/abs(im(I))*/
+    }
      
     
     private int lowIdx(int n) {
@@ -4465,5 +4485,248 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    double w[][]=fastfmmresample(f,y,x,dj,cl,EPS);
 	    return w;
     }
+    
+    private double[][] adjGKN(double w[][], int k) {
+    		
+    		// Computes the adjoint of the operator GKN for the vector w and the row k.
+    		// For a vector w of length n:
+    		// 		GKN(w) = U_{2n+1,n+1}(F^{2k/n}_{2n+1}(E_{n,2n+1}(F^{-1}(w)))) 
+    		// Hence,
+    		// 		adjGKN = adj F^{-1} \circ adj E_{n,2n+1} \circ adj F^{2k/n}_{2n+1} \circ adj U_{2n+1,n+1}
+    		// (where n is the length of the vector w and not of the input to adjGKN)
+    		
+    		// w    The sequence to resample. Can be of odd or even length.
+    		// k    The row whose transform is computed.
+    		
+    		// Returns the adjoint of GKN for the sequence x and the row k.
+    		// See thesis' final version for more information.
+    		
+    		// See Also GKN.
+    		
+    		// Yoel Shkolnisky 22/10/01
+
+    		int n = w[0].length-1;
+    		double v[][] = adjInvF(adjE(adjCfrft(adjU(w),2*k/n)));
+    		return v;
+    }
+
+    
+    private double[][] adjU(double v[][]) {
+            int i;
+    		int n = v[0].length-1;
+    		double z[][] = new double[2][2*n+1];
+    		for (i = 0; i < 2*n+1; i++) {
+    			z[0][i+n/2] = v[0][i];
+    			z[1][i+n/2] = v[1][i];
+    		}
+    		return v;
+    }
+
+    private double[][] adjE(double v[][]) {
+    	    int i;
+    		int n = (v[0].length-1)/2;
+    		double z[][] = new double[2][n];
+    		for (i = 0; i < n; i++) {
+    			z[0][i] = v[0][i+n/2];
+    			z[1][i] = v[1][i+n/2];
+    		}
+    		return z;
+    }
+
+    private double[][] adjCfrft(double x[][], double alpha) {
+    		double z[][] = cfrft(x,-alpha);
+    		return z;
+    }
+
+     private double[][] adjInvF(double v[][]) {
+    	    int i;
+    		int n= v[0].length;
+    		double z[][] = cfft(v);
+    		for (i = 0; i < z[0].length; i++) {
+    			z[0][i] = z[0][i]/n;
+    			z[1][i] = z[1][i]/n;
+    		}
+    		return z;
+     }
+     
+     private double[][] GKN(double x[][], int k) {
+    		 
+    		 // Application of the operator G(K,N) to the sequence x (of length n).
+    		 // The operator GKN is defined as follows:
+    		 //       1. Apply the inverse Fourier transform to the sequence x.
+    		 //       2. Pad the resulting sequence to length 2n+1.
+    		 //       3. Apply the fractional Fourier transform with alpha=2k/n.
+    		 //       4. Return the n+1 central elements.
+    		 
+    		 // x   The sequence to resample using the operator GKN. Can be of odd or even
+    		 //     length. Must be a 1-D row vector.
+    		 // k   The row whose transform is being computed.
+    		 
+    		 // Returns the result of the application of GKN to the sequence x.
+    		 // See thesis' final version for more information.
+    		 
+    		 // See Also adjGKN.
+    		 
+    		 // Yoel Shkolnisky 22/10/01
+             int i;
+
+    		 int n= x[0].length;
+    		 if ((n % 2)==1) {
+    		    System.err.println("In GKN input sequence must of even length");
+    		    System.exit(0);
+    		 }
+    		    
+    		 double w[][] = icfft(x);
+    		 double wpad[][] = new double[2][w[0].length+n];
+    		 for (i = 0; i < w[0].length; i++) {
+    			 wpad[0][i+n/2] = w[0][i];
+    			 wpad[1][i+n/2] = w[1][i];
+    		 }
+    		 wpad = cfrft(wpad,2.0*k/n);  // optimization - use alpha=2k/m instead of padding
+    		 double y[][] = new double[2][n+1];
+    		 for (i = 0; i < n+1; i++) {
+    			 y[0][i] = w[0][i+n/2];
+    			 y[1][i] = w[1][i+n/2];
+    		 }
+    		 return y;
+     }
+     
+     private void PPFT(double res1[][][], double res2[][][], double im[][]) {
+     
+	     // Fast algorithm for computing the pseudo-polar Fourier transform.
+	     // The computation requires O(n^2logn) operations.
+	     
+	     // im    The image whose pseudo-polar Fourier transform should be computed.
+	     //       Must of a dyadic square size (2^k x 2^k).  im is size n x n.
+	     
+	     // Returns res1 and res2 (of size 2n+1xn+1) that contain the pseudo-polar Fourier 
+	     // transform of the input image im.  res1 and res2 are 2x2n+1xn+1
+	     // res1 contains the values of PPI1(k,l). res2 contains the values of PPI2(k,l). 
+	     // The first argument of Res1 and Res2 corresponds to pseudo-radius and the second argument 
+	     // corresponds to pseudo-angle.
+	     // Angle ordering:
+	     //       res1(k,l) - pseudo-polar fourier transform which corresponds to radius "k" and angle
+	     //                   arctan(2l/n). "l" goes from -n/2 to n/2, and therefore, for a constant "k",
+	     //                   res1 corresponds to angles from -pi/4 to pi/4.
+	     //       res2(k,l) - pseudo-polar fourier transform which corresponds to radius "k" and angle
+	     //                   pi/2-arctan(2l/n). "l" goes from -n/2 to n/2, and therefore, for a constant "k",
+	     //                   res1 corresponds to angles from 3pi/4 to pi/4.
+	     // To obtains a continuous change in angle from res1 to res2, one must flip res2 such that it
+	     // corresponds to angles from pi/4 to 3pi/4 (and therefore continuous the angles in res1).
+	     
+	     //     3pi/4   pi/4
+	     //        \    /
+	     //         \  /  ^
+	     //          \/   |
+	     //          /\   |  angle change in res1 
+	     //         /  \  |
+	     //        /    \
+	     //             -pi/4
+	     
+	     
+	     
+	     //       -------> angle change in res2
+	     //     3pi/4   pi/4
+	     //        \    /
+	     //         \  /  
+	     //          \/   
+	     //          /\    
+	     //         /  \  
+	     //        /    \
+	     //             -pi/4
+	     //
+	     // See thesis' final PDF for more information.
+	     
+	     // Yoel Shkolnisky 22/10/01
+	
+	     // Matlab origin if top-left corner. y-axes goes up-down (values increase as we move down). 
+	     // Mathematical axes goes bottom-up (negative values are at the bottom). We must flip the matrix
+	     // to convert Matlab axes into the mathematical axes so the matrix will match the mathematical equations.
+    	 int i,j,k;
+    	 int idx;
+    	 double u[][];
+    	 double w[][];
+    	 double v[][];
+    	 double imflip[][] = new double[im.length][im[0].length];
+	     for (i = 0; i < im.length; i++) {
+	    	 for (j = 0; j < im[0].length; j++) {
+	    		 imflip[i][j] = im[im.length-1-i][j];
+	    	 }
+	     }
+	
+	     int s1 = im.length;
+	     int s2 = im[0].length;
+	     
+	     if (s1 != s2) {
+	        System.err.println("In PPFT input image must be square");
+	        System.exit(0);
+	     }
+	
+	     if ((s1 % 2) !=0) {
+	        System.err.println("In PPFT input image must have even side");
+	        System.exit(0);
+	     }
+	
+	     // initialize constants and data structures
+	     int n= s1;  // At this point, all validity test passed and therefore the input image is square. Therefore we can
+	                 // choose n to be the size of either of the dimensions.
+	     int m=2*n+1;
+	     //res1 = zeros(m,n+1);
+	     //res2 = zeros(m,n+1);
+	
+	     // Computation of Res1
+	     double EI[][][] = new double[2][im.length+n+1][im[0].length + 2*n];
+	     for (i = 0; i < n; i++) {
+	    	 for (j = 0; j < n; j++) {
+	    		 EI[0][i+n/2][j+n] = imflip[i][j];
+	    	 }
+	     }
+	     double FEI[][][] = cfft2(EI);
+	           
+	     u = new double[2][FEI[0][0].length];
+	     for (k=-n; k <= n; k++) {
+	    	 idx = toUnaliasedIdx(k,m);
+	    	 for (i = 0; i < FEI[0][0].length; i++) {
+	    		 u[0][i] = FEI[0][idx][i];
+	    		 u[1][i] = FEI[1][idx][i];
+	    	 }
+	         w = GKN(u,k);
+	         // See thesis paper for explanation of the flip
+	         for (i = 0; i < w[0].length; i++) {
+	        	 res1[0][idx][i] = w[0][w[0].length-1-i];
+	        	 res1[1][idx][i] = w[1][w[0].length-1-i];
+	         }
+	     }   
+	
+	
+	     // Computation of Res2
+	     EI = new double[2][im.length+2*n][im[0].length+n+1];
+	     for (i = 0; i < n; i++) {
+	    	 for (j = 0; j < n; j++) {
+	    		 EI[0][i+n][j+n/2] = imflip[i][j];
+	    	 }
+	     }
+	     FEI = cfft2(EI);
+	
+	     v = new double[2][FEI[0].length];
+	     for (k=-n; k <= n; k++) {
+	    	 idx = toUnaliasedIdx(k,m);
+	    	 for (i = 0; i < FEI[0].length; i++) {
+	    	     v[0][i] = FEI[0][i][idx];
+	    	     v[1][i] = FEI[1][i][idx];
+	    	 }
+	         w = GKN(v,k);
+	         // See thesis paper for explanation of the flip
+	         for (i = 0; i < w[0].length; i++) {
+	        	 res2[0][idx][i] = w[0][w[0].length-1-i];
+	        	 res2[1][idx][i] = w[1][w[0].length-1-i];
+	         } 
+	     }
+	
+	     //Revision record
+	     // 9/12/02   Yoel Shkolnisky     Added comments
+     }
+
+
    
 }
