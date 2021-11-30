@@ -4549,6 +4549,260 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		return z;
      }
      
+     private double[][][] adjPPFT(double pp1[][][], double pp2[][][]) { 
+    		 
+    		 // Computes the adjoint of the pseudo-polar Fourier transform.
+    		 
+    		 // pp1,pp2   The pseudo-polar sections resulted from the PPFT (pseudo-polar Fourier transform).
+    		 //           pp1 and pp2 must be of size (2n+1)x(n+1) as results from PPFT.
+    		 
+    		 // See also PPFT.
+    		 
+    		 // Yoel Shkolnisky 9/2/02
+
+             int i, j, k;
+             double u[][];
+             double v[][];
+             int idx;
+	    	 int s11 = pp1[0].length;
+	 	     int s12 = pp1[0][0].length;
+	 	     int s21 = pp2[0].length;
+	 	     int s22 = pp2[0][0].length;
+	 	    
+	 	     if (s11 != s21) {
+	 	    	 System.err.println("In adjPPFT pp1[0].length != pp2[0].length");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if (s12 != s22) {
+	 	    	 System.err.println("In adjPPFT pp1[0][0].length != pp2[0][0].length");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if ((s11 % 2) != 1) {
+	 	    	 System.err.println("In adjPPFT pp1[0].length is not odd");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if ((s12 % 2) != 1) {
+	 	    	 System.err.println("In adjPPFT pp1[0][0].length is not odd");
+	 	    	 System.exit(0);
+	 	     }
+	 	
+	 	     if (((s11 - 1)/2) != (s12 - 1)) {
+	 	    	 System.err.println("In adjPPFT input parameter is not of form (2n+1)x(n+1)");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     int n = s12 - 1;
+
+    		 double adjpp1[][][] = new double[2][n][n];
+    		 double adjpp2[][][] = new double[2][n][n];
+
+    		 // Compute the adjoint of PP1
+    		 double tmp[][][] = new double[2][2*n+1][n];
+    		 u = new double[2][n+1];
+    		 for (k = -n; k <= n; k++) {
+    			idx = toUnaliasedIdx(k,2*n+1);
+    			for (i = 0; i < n+1; i++) {
+    				u[0][i] = pp1[0][idx][n-i];
+    				u[1][i] = pp1[1][idx][n-i];
+    			}
+    		    v = adjGKN(u,k);
+    		    for (i = 0; i < n; i++) {
+    		    	tmp[0][idx][i] = v[0][i];
+    		    	tmp[1][idx][i] = v[1][i];
+    		    }
+    		 }
+    		 tmp = icfft2(tmp);
+    		 for (i = 0; i < 2*n+1; i++) {
+    		     for (j = 0; j < n; j++) {
+    		    	 tmp[0][i][j] = n*(2*n+1)*tmp[0][i][j];
+    		    	 tmp[1][i][j] = n*(2*n+1)*tmp[1][i][j];
+    		     }
+    		 }
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 adjpp1[0][i][j] = tmp[0][3*n/2 - 1 - i][j];
+    				 adjpp1[1][i][j] = tmp[1][3*n/2 - 1 - i][j];
+    			 }
+    		 }
+
+    		 // Compute the adjoint of PP2
+    		 tmp = new double[2][n][2*n+1];
+    		 for (k=-n; k <= n; k++) {
+    			idx = toUnaliasedIdx(k,2*n+1);
+    			for (i = 0; i < n+1; i++) {
+    				u[0][i] = pp2[0][idx][n-i];
+    				u[1][i] = pp2[1][idx][n-i];
+    			}
+    		    v = adjGKN(u,k);
+    		    for (i = 0; i < n; i++) {
+    		    	tmp[0][i][idx] = v[0][i];
+    		    	tmp[1][i][idx] = v[1][i];
+    		    }
+    		 }
+    		 tmp = icfft2(tmp);
+    		 for (i = 0; i < n; i++) {
+    		     for (j = 0; j < 2*n+1; j++) {
+    		    	 tmp[0][i][j] = n*(2*n+1)*tmp[0][i][j];
+    		    	 tmp[1][i][j] = n*(2*n+1)*tmp[1][i][j];
+    		     }
+    		 }
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 adjpp2[0][i][j] = tmp[0][n - 1 - i][j + n/2];
+    				 adjpp2[1][i][j] = tmp[1][n - 1 - i][j + n/2];
+    			 }
+    		 }
+
+    		 // Combine both adjoints
+    		 double im[][][] = new double[2][n][n];
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 im[0][i][j] = adjpp1[0][i][j] + adjpp2[0][i][j];
+    				 im[1][i][j] = adjpp1[1][i][j] + adjpp2[1][i][j];
+    			 }
+    		 }
+    		 return im;
+     }
+     
+     private double[][][] OptimizedAdjPPFT(double pp1[][][], double pp2[][][]) {
+    		 
+		 // Optimized version of adjppft, the adjoint operator of the
+		 // pseudo-polar Fourier transform operator.
+		 
+		 // See adjppft.m for more information.
+		 
+		 // Yoel Shkolnisky 22/10/01
+    	 
+    	 int i, j, k;
+    	 double v[][];
+    	 int idx;
+    	 int s11 = pp1[0].length;
+ 	     int s12 = pp1[0][0].length;
+ 	     int s21 = pp2[0].length;
+ 	     int s22 = pp2[0][0].length;
+ 	    
+ 	     if (s11 != s21) {
+ 	    	 System.err.println("In OptimizedAdjPPFT pp1[0].length != pp2[0].length");
+ 	    	 System.exit(0);
+ 	     }
+ 	    
+ 	     if (s12 != s22) {
+ 	    	 System.err.println("In OptimizedAdjPPFT pp1[0][0].length != pp2[0][0].length");
+ 	    	 System.exit(0);
+ 	     }
+ 	    
+ 	     if ((s11 % 2) != 1) {
+ 	    	 System.err.println("In OptimizedAdjPPFT pp1[0].length is not odd");
+ 	    	 System.exit(0);
+ 	     }
+ 	    
+ 	     if ((s12 % 2) != 1) {
+ 	    	 System.err.println("In OptimizedAdjPPFT pp1[0][0].length is not odd");
+ 	    	 System.exit(0);
+ 	     }
+ 	
+ 	     if (((s11 - 1)/2) != (s12 - 1)) {
+ 	    	 System.err.println("In OptimizedAdjPPFT input parameter is not of form (2n+1)x(n+1)");
+ 	    	 System.exit(0);
+ 	     }
+ 	    
+ 	     int n = s12 - 1;
+         int m = 2*n+1;
+         double alpha = 2.0*(n+1)/(n*m);
+
+         // Compute the adjoint of PP1
+         double tmp[][] = new double[2][(2*n+1)*n];
+         double u[][] = new double[2][n+1];
+         for (k=-n; k <= n; k++) {
+        	    idx = toUnaliasedIdx(k,2*n+1);
+        	    for (i = 0; i < n+1; i++) {
+    				u[0][i] = pp1[0][idx][n-i];
+    				u[1][i] = pp1[1][idx][n-i];
+    			}
+    		    v = cfrft(u,-k*alpha);
+    		    for (i = 0; i < n; i++) {
+    		    	tmp[0][idx*n+i] = v[0][i];
+    		    	tmp[1][idx*n+i] = v[1][i];
+    		    }
+         }
+         
+         // Inverse FFT on first dimension
+         FFTUtility ifft = new FFTUtility(tmp[0], tmp[1], 1, 2*n+1, n, 1, FFTUtility.FFT);
+         ifft.run();
+         for (i = 0; i < 2*n+1; i++) {
+        	 for (j = 0; j < n; j++) {
+        		 tmp[0][i*n + j] = m*tmp[0][i*n + j];
+        		 tmp[1][i*n + j] = m*tmp[1][i*n + j];
+        	 }
+         }
+         double adjpp1[][][] = new double[2][n][n];
+         for (i = 0; i < n; i++) {
+			 for (j = 0; j < n; j++) {
+				 adjpp1[0][i][j] = tmp[0][(3*n/2 - 1 - i)*n + j];
+				 adjpp1[1][i][j] = tmp[1][(3*n/2 - 1 - i)*n + j];
+			 }
+		 }
+
+         // Compute the adjoint of PP2
+
+    	 for (k=-n; k <= n; k++) {
+    		 idx = toUnaliasedIdx(k,2*n+1);
+    		 for (i = 0; i < n+1; i++) {
+ 				u[0][i] = pp2[0][idx][n-i];
+ 				u[1][i] = pp2[1][idx][n-i];
+ 			 }
+    		 v = cfrft(u,-k*alpha);
+    		 for (i = 0; i < n; i++) {
+    			 tmp[0][idx*n + i] = v[0][i];
+    			 tmp[1][idx*n + i] = v[1][i];
+    		 }
+    	 }
+         // To follow the code in adjPPFT we should have transposed each row before we assign it to tmp 
+         // (and creating an array of size nx(2n+1)). Then we had to apply cfft along the rows.
+    	 // To save operations, we assign the vector v to tmp without transpose, apply cfft along columns
+    	 // and then transpose the entire matrix at once.
+    	 
+    	 // Inverse FFT on first dimension
+         FFTUtility ifft2 = new FFTUtility(tmp[0], tmp[1], 1, 2*n+1, n, 1, FFTUtility.FFT);
+         ifft2.run();
+         for (i = 0; i < 2*n+1; i++) {
+        	 for (j = 0; j < n; j++) {
+        		 tmp[0][i*n + j] = m*tmp[0][i*n + j];
+        		 tmp[1][i*n + j] = m*tmp[1][i*n + j];
+        	 }
+         }
+         
+         double tmpTranspose[][][] = new double[2][n][2*n+1];
+         for (i = 0; i < 2*n+1; i++) {
+        	 for (j = 0; j < n; j++) {
+        		 tmpTranspose[0][j][i] = tmp[0][i*n + j];
+        		 tmpTranspose[1][j][i] = tmp[1][i*n + j];
+        	 }
+         }
+
+         double adjpp2[][][] = new double[2][n][n];
+         for (i = 0; i < n; i++) {
+        	 for (j = 0; j < n; j++) {
+        		 adjpp2[0][i][j] = tmpTranspose[0][n-1-i][j+n/2]; 
+        		 adjpp2[0][i][j] = tmpTranspose[1][n-1-i][j+n/2];
+        	 }
+         }
+
+    	 // Combine both adjoints
+         double im[][][] = new double[2][n][n];
+         for (i = 0; i < n; i++) {
+        	 for (j = 0; j < n; j++) {
+        		 im[0][i][j] = adjpp1[0][i][j] + adjpp2[0][i][j];
+        		 im[1][i][j] = adjpp1[1][i][j] + adjpp2[1][i][j];
+        	 }
+         }
+         return im;
+     }
+
+     
      private double[][] GKN(double x[][], int k) {
     		 
     		 // Application of the operator G(K,N) to the sequence x (of length n).
