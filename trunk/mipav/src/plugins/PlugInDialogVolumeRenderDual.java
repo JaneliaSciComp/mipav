@@ -813,9 +813,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.displayGreenAsGray = true;
 				activeImage.displayBlueAsGray = false;
 
-				activeRenderer.setDisplayRedAsGray(false);
-				activeRenderer.setDisplayGreenAsGray(true);
-				activeRenderer.setDisplayBlueAsGray(false);
+				activeRenderer.setDisplayRedAsGray(activeImage.displayRedAsGray);
+				activeRenderer.setDisplayGreenAsGray(activeImage.displayGreenAsGray);
+				activeRenderer.setDisplayBlueAsGray(activeImage.displayBlueAsGray);
 			}
 		} else if (command.equals("displayChannel2")) {
 			if (activeRenderer != null) {
@@ -823,9 +823,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.displayGreenAsGray = false;		
 				activeImage.displayBlueAsGray = false;
 
-				activeRenderer.setDisplayRedAsGray(true);
-				activeRenderer.setDisplayGreenAsGray(false);
-				activeRenderer.setDisplayBlueAsGray(false);
+				activeRenderer.setDisplayRedAsGray(activeImage.displayRedAsGray);
+				activeRenderer.setDisplayGreenAsGray(activeImage.displayGreenAsGray);
+				activeRenderer.setDisplayBlueAsGray(activeImage.displayBlueAsGray);
 			}
 		}  else if (command.equals("displayChannel3")) {
 			if (activeRenderer != null) {
@@ -833,9 +833,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.displayGreenAsGray = false;
 				activeImage.displayBlueAsGray = true;
 
-				activeRenderer.setDisplayRedAsGray(false);
-				activeRenderer.setDisplayGreenAsGray(false);
-				activeRenderer.setDisplayBlueAsGray(true);
+				activeRenderer.setDisplayRedAsGray(activeImage.displayRedAsGray);
+				activeRenderer.setDisplayGreenAsGray(activeImage.displayGreenAsGray);
+				activeRenderer.setDisplayBlueAsGray(activeImage.displayBlueAsGray);
 			}
 		} else if (command.equals("displayBothChannels")) {
 			if (activeRenderer != null) {
@@ -843,9 +843,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.displayGreenAsGray = false;
 				activeImage.displayBlueAsGray = false;
 
-				activeRenderer.setDisplayRedAsGray(false);
-				activeRenderer.setDisplayGreenAsGray(false);
-				activeRenderer.setDisplayBlueAsGray(false);
+				activeRenderer.setDisplayRedAsGray(activeImage.displayRedAsGray);
+				activeRenderer.setDisplayGreenAsGray(activeImage.displayGreenAsGray);
+				activeRenderer.setDisplayBlueAsGray(activeImage.displayBlueAsGray);
 			}
 		}
 	}
@@ -1019,7 +1019,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
-		System.err.println("setActiveRenderer");
+//		System.err.println("setActiveRenderer");
 
 		VolumeTriPlanarRenderBase previousActive = activeRenderer;
 		if (leftRenderer == renderer) {
@@ -1820,6 +1820,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	private ModelImage combineImages(ModelImage imageA, ModelImage imageB, ModelImage imageC) {
+		// imageA is never null and is always written into the 'green' channel...
 
 		ModelImage displayImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.getExtents(),
 				JDialogBase.makeImageName(imageA.getImageName(), "_rgb"));
@@ -1851,6 +1852,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			mathAlgo.run();
 		}
 
+		displayImage.calcMinMax();
 		return displayImage;
 	}
 
@@ -3253,7 +3255,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			
 			integratedData.displayChannel3 = gui.buildRadioButton("Channel 3", false);
 			integratedData.displayChannel3.addActionListener(this);
-			integratedData.displayChannel3.setActionCommand("displayChannel2");
+			integratedData.displayChannel3.setActionCommand("displayChannel3");
 			integratedData.displayChannel3.setVisible(true);
 			integratedData.displayChannel3.setEnabled(true);
 			group.add(integratedData.displayChannel3);
