@@ -4801,6 +4801,117 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
          }
          return im;
      }
+     
+     private double[][][] adjRadon(double r1[][][], double r2[][][]) { 
+    		 
+    		 // Computes the adjoint 2-D discrete Radon transform.
+    		 
+    		 // r1,r2    The sections of the discrete Radon transform whose adjoint should be computed.
+    		 //          r1 and r2 must be of size (2n+1)x(n+1) as results from the function Radon.
+    		 
+    		 // See also Radon, adjPPFT.
+    		 
+    		 // Yoel Shkolnisky 9/2/02
+
+    		 int i,j;
+    	     // Check if the input is of valid size 2x(2n+1)x(n+1)
+	    	 int s11 = r1[0].length;
+	 	     int s12 = r1[0][0].length;
+	 	     int s21 = r2[0].length;
+	 	     int s22 = r2[0][0].length;
+	 	    
+	 	     if (s11 != s21) {
+	 	    	 System.err.println("In adjRadon r1[0].length != r2[0].length");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if (s12 != s22) {
+	 	    	 System.err.println("In adjRadon r1[0][0].length != r2[0][0].length");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if ((s11 % 2) != 1) {
+	 	    	 System.err.println("In adjRadon r1[0].length is not odd");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if ((s12 % 2) != 1) {
+	 	    	 System.err.println("In adjRadon r1[0][0].length is not odd");
+	 	    	 System.exit(0);
+	 	     }
+	 	
+	 	     if (((s11 - 1)/2) != (s12 - 1)) {
+	 	    	 System.err.println("In adjRadon input parameter is not of form (2n+1)x(n+1)");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     int n = s11; // n - number of rows
+    		 
+             double pp1[][] = new double[2][s11*s12];
+             double pp2[][] = new double[2][s11*s12];
+             for (i = 0; i < s11; i++) {
+                 for (j = 0; j < s12; j++) {
+                	 pp1[0][i*s12 + j] = r1[0][i][j];
+                	 pp1[1][i*s12 + j] = r1[1][i][j];
+                	 pp2[0][i*s12 + j] = r2[0][i][j];
+                	 pp2[1][i*s12 + j] = r2[1][i][j];
+                 }
+             }
+             FFTUtility fft = new FFTUtility(pp1[0], pp1[1], 1, s11, s12, -1, FFTUtility.FFT);
+             fft.run();
+             FFTUtility fft2 = new FFTUtility(pp2[0], pp2[1], 1, s11, s12, -1, FFTUtility.FFT);
+             fft2.run();
+             double ppp1[][][] = new double[2][s11][s12];
+             double ppp2[][][] = new double[2][s11][s12];
+             for (i = 0; i < s11; i++) {
+            	 for (j = 0; j < s12; j++) {
+            	     ppp1[0][i][j] = pp1[0][i*s12+j]/n;
+            	     ppp1[1][i][j] = pp1[1][i*s12+j]/n;
+            	     ppp2[0][i][j] = pp2[0][i*s12+j]/n;
+            	     ppp2[1][i][j] = pp2[1][i*s12+j]/n;            	 }
+             }
+    		 double im[][][] = OptimizedAdjPPFT(ppp1,ppp2);
+    		 return im;
+
+    		 // Revision record
+    		 // 15/1/03	Yoel Shkolnisky		Used cfftd instead of column-wise cfft
+     }
+     
+     private double[] ip(double a[][][], double b[][][]) {
+	     
+	     // Inner product of 2 multi-dimensional arrays.
+	     // For two matrices the inner product is given by
+	     
+	     //         N1   N2
+	     //    c = sum (sum a(k,l)*conj(b(k,l))
+	     //        k=1  l=1 
+	     
+	     // Yoel Shkolnisky 9/2/02
+	
+	     // c = sum(conj(a(:)).*b(:));
+    	 // Note comment had conj(b) but code has conj(a).
+    	 int N1 = a[0].length;
+    	 int N2 = a[0][0].length;
+    	 int B1 = b[0].length;
+    	 int B2 = b[0][0].length;
+    	 if (N1 != B1) {
+    		 System.err.println("In ip a[0].length != b[0].length");
+    		 return null;
+    	 }
+    	 if (N2 != B2) {
+    		 System.err.println("In ip a[0][0].length != b[0][0].length");
+    		 return null;
+    	 }
+    	 int i,j;
+    	 double sum[] = new double[2];
+    	 for (i = 0; i < N1; i++) {
+    		 for (j = 0; j < N2; j++) {
+    			 sum[0] += (a[0][i][j]*b[0][i][j] + a[1][i][j]*b[1][i][j]);
+    			 sum[1] += (a[0][i][j]*b[1][i][j] - a[1][i][j]*b[0][i][j]);
+    		 }
+    	 }
+    	 return sum;
+     }
 
      
      private double[][] GKN(double x[][], int k) {
