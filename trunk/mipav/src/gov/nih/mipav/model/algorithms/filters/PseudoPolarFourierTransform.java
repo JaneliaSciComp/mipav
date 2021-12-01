@@ -4981,6 +4981,115 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // 9/12/02   Yoel Shkolnisky     Added comments
      }
 
+     private void OptimizedPPFT(double res1[][][], double res2[][][], double im[][]) {
+	     
+	     // Optimized algorithm for computing the pseudo-polar Fourier transform.
+	     // The computation requires O(n^2logn) operations and uses further 
+	     // optimizations to reduce the operation count (compared to PPFT.m).
+	     
+	     // im    The image whose pseudo-polar Fourier transform should be computed.
+	     //       Must of a dyadic square size (2^k x 2^k) = nxn.
+	     
+	     // Returns res1 and res2 (of size 2n+1xn+1) that contain the pseudo-polar Fourier 
+	     // transform of the input image im.
+	     // res1 contains the values of PPI1(k,l). res2 contains the values of PPI2(k,l). 
+	     
+	     // See PPFT.m for more documentation.
+	     
+	     // Yoel Shkolnisky 22/10/01
+    	 
+    	 int i,j,k,m,n;
+    	 int idx;
+    	 double alpha;
+    	 double u[][];
+    	 double w[][];
+    	 double v[][];
+    	 double imflip[][] = new double[im.length][im[0].length];
+	     for (i = 0; i < im.length; i++) {
+	    	 for (j = 0; j < im[0].length; j++) {
+	    		 imflip[i][j] = im[im.length-1-i][j];
+	    	 }
+	     }
+	
+	     int s1 = im.length;
+	     int s2 = im[0].length;
+	     
+	     if (s1 != s2) {
+	        System.err.println("In OptimizedPPFT input image must be square");
+	        System.exit(0);
+	     }
+	
+	     if ((s1 % 2) !=0) {
+	        System.err.println("In OPtimizedPPFT input image must have even side");
+	        System.exit(0);
+	     }
+	
+	     // initialize constants and data structures
+	     n=s1;
+	     m=2*n+1;
+	     alpha = 2.0*(n+1)/(n*m);
+	     //res1 = zeros(m,n+1);
+	     //res2 = zeros(m,n+1);
+	
+	     // Part I: Computation of Res1
+	     // padding the y-direction and applying column-wise fft
+	     double FEI[][] = new double[2][(2*n+1)*(3*n)];
+	     for (i = 0; i < n; i++) {
+	    	 for (j = 0; j < n; j++) {
+	    		 FEI[0][(n/2+i)*(3*n) + j + n] = imflip[i][j];
+	    	 }
+	     }
+	     FFTUtility fft = new FFTUtility(FEI[0], FEI[1], 1, 2*n+1, 3*n, -1, FFTUtility.FFT);
+	     fft.run();
+	
+	     // fractional along rows with alpha=2*k*(n+1)/(n*m). This is equivalent
+	     // to padding u to length 2n+1, applying FRFT with alpha=2*k/n and extracting 
+	     // the n+1 central elements. However, this requires less memory and operations.
+	     // The padding with the single zero is used to generate output of length
+	     // n+1.
+	     u = new double[2][3*n+1];
+	     for (k=-n; k <= n; k++) {
+	    	 idx = toUnaliasedIdx(k,m);
+	    	 for (i = 0; i < 3*n; i++) {
+	    		 u[0][i] = FEI[0][idx*3*n + i];
+	    		 u[1][i] = FEI[1][idx*3*n + i];
+	    	 }
+	         w = cfrft(u,k*alpha);
+	         for (i = 0; i < n+1; i++) {
+	        	 res1[0][idx][i] = w[0][n-i];
+	        	 res1[1][idx][i] = w[1][n-i];
+	         }
+	     }   
+	
+	     // Part II: Computation of Res2
+	     // padding the x-direction and applying row-wise fft
+	     //EI  = [zeros(n,n/2) im zeros(n,n/2+1)];
+	     FEI = new double[2][(3*n)*(2*n+1)];
+	     for (i = 0; i < n; i++) {
+	    	 for (j = 0; j < n; j++) {
+	    		 FEI[0][(n+i)*(2*n+1) + j + n/2] = imflip[i][j];
+	    	 }
+	     }
+	     FFTUtility fft2 = new FFTUtility(FEI[0], FEI[1], 3*n, 2*n+1, 1, -1, FFTUtility.FFT);
+	     fft2.run();
+	
+	     v = new double[2][3*n+1];
+	     for (k=-n; k <= n; k++) {
+	    	 idx = toUnaliasedIdx(k,m);
+	    	 for (i = 0; i < 3*n; i++) {
+	    		 v[0][i] = FEI[0][i*(2*n+1) + idx];
+	    		 v[1][i] = FEI[1][i*(2*n+1) + idx];
+	    	 }
+	         w = cfrft(v,k*alpha);
+	         for (i = 0; i < n+1; i++) {
+	        	 res2[0][idx][i] = w[0][n-i];
+	        	 res2[1][idx][i] = w[1][n-i];
+	         }
+	     }
+	
+	     // Revision record
+	     // 15/1/03   Yoel Shkolnisky     Used cfftd instead of column-wise cfft
+     }
 
    
 }
