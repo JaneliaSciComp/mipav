@@ -14,6 +14,7 @@ import gov.nih.mipav.model.algorithms.RandomNumberGen;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 
 /**
  * 
@@ -36,8 +37,10 @@ import gov.nih.mipav.view.Preferences;
 
 public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
+	private ViewUserInterface UI;
+	
 	public PseudoPolarFourierTransform() {
-		
+		UI = ViewUserInterface.getReference();	
 	}
 	
 	/**
@@ -413,18 +416,18 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        //b = ip(A,OptimizedAdjPPFT(B1,B2));
 	        b = ip(A,adjPPFT(B1,B2));
 	
-	        System.out.println("k = " + k);
-	        System.out.println("a = " + a[0] + " " + a[1]+"i");
-	        System.out.println("b = " + b[0] + " " + b[1]+"i");
+	        UI.setDataText("k = " + k + "\n");
+	        UI.setDataText("a = " + a[0] + " " + a[1]+"i\n");
+	        UI.setDataText("b = " + b[0] + " " + b[1]+"i\n");
 	        double error[] = new double[] {a[0]-b[0], a[1]-b[1]};
-	        System.out.println("Error = " + error[0] + " "+error[1]+"i");
+	        UI.setDataText("Error = " + error[0] + " "+error[1]+"i\n");
 	        double abserr = zabs(error[0],error[1]);
 	        double rela = abserr/zabs(a[0],a[1]);
-	        System.out.println("Rel a = " + rela);
+	        UI.setDataText("Rel a = " + rela + "\n");
 	        double relb = abserr/zabs(b[0],b[1]);
-	        System.out.println("Rel b = " + relb);
-	        System.out.println("*********************");
-	        System.out.println("  ");
+	        UI.setDataText("Rel b = " + relb + "\n");
+	        UI.setDataText("*********************\n");
+	        UI.setDataText("\n");
     	}
     }
 
@@ -813,6 +816,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	FFTUtility fft = new FFTUtility(ix[0],ix[1],1,x[0].length,1,-1,FFTUtility.FFT);
     	fft.setShowProgress(false);
     	fft.run();
+    	fft.finalize();
+    	fft = null;
     	double y[][] = fftshift1d(ix);
         return y;	
     }
@@ -832,6 +837,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	FFTUtility fft = new FFTUtility(ix[0],ix[1],1,x[0].length,1,1,FFTUtility.FFT);
     	fft.setShowProgress(false);
     	fft.run();
+        fft.finalize();
+        fft = null;
     	double y[][] = fftshift1d(ix);
     	return y;
     }
@@ -1511,9 +1518,13 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim, xDim, 1, -1, FFTUtility.FFT);
     	fftx.setShowProgress(false);
     	fftx.run();
+    	fftx.finalize();
+    	fftx = null;
     	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], 1, yDim, xDim, -1, FFTUtility.FFT);
     	ffty.setShowProgress(false);
     	ffty.run();
+    	ffty.finalize();
+    	ffty = null;
     	double y[][][] = new double[2][yDim][xDim];
     	for (h = 0; h < yDim; h++) {
     		for (w = 0; w < xDim; w++) {
@@ -1548,9 +1559,13 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim, xDim, 1, 1, FFTUtility.FFT);
     	fftx.setShowProgress(false);
     	fftx.run();
+    	fftx.finalize();
+    	fftx = null;
     	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], 1, yDim, xDim, 1, FFTUtility.FFT);
     	ffty.setShowProgress(false);
     	ffty.run();
+    	ffty.finalize();
+    	ffty = null;
     	double y[][][] = new double[2][yDim][xDim];
     	for (h = 0; h < yDim; h++) {
     		for (w = 0; w < xDim; w++) {
@@ -1587,12 +1602,18 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim*zDim, xDim, 1, -1, FFTUtility.FFT);
     	fftx.setShowProgress(false);
     	fftx.run();
+    	fftx.finalize();
+    	fftx = null;
     	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], zDim, yDim, xDim, -1, FFTUtility.FFT);
     	ffty.setShowProgress(false);
     	ffty.run();
+    	ffty.finalize();
+    	ffty = null;
     	FFTUtility fftz = new FFTUtility(ixarr[0], ixarr[1], 1, zDim, length, -1, FFTUtility.FFT);
     	fftz.setShowProgress(false);
     	fftz.run();
+    	fftz.finalize();
+    	fftz = null;
     	double y[][][][] = new double[2][zDim][yDim][xDim];
     	for (d = 0; d < zDim; d++) {
 	    	for (h = 0; h < yDim; h++) {
@@ -1631,12 +1652,18 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	FFTUtility fftx = new FFTUtility(ixarr[0], ixarr[1], yDim*zDim, xDim, 1, 1, FFTUtility.FFT);
     	fftx.setShowProgress(false);
     	fftx.run();
+    	fftx.finalize();
+    	fftx = null;
     	FFTUtility ffty = new FFTUtility(ixarr[0], ixarr[1], zDim, yDim, xDim, 1, FFTUtility.FFT);
     	ffty.setShowProgress(false);
     	ffty.run();
+    	ffty.finalize();
+    	ffty = null;
     	FFTUtility fftz = new FFTUtility(ixarr[0], ixarr[1], 1, zDim, length, 1, FFTUtility.FFT);
     	fftz.setShowProgress(false);
     	fftz.run();
+    	fftz.finalize();
+    	fftz = null;
     	double y[][][][] = new double[2][zDim][yDim][xDim];
     	for (d = 0; d < zDim; d++) {
 	    	for (h = 0; h < yDim; h++) {
@@ -1711,7 +1738,6 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	// of dyadic length.
     	
     	// Yoel Shkolnisky 22/10/01
-
         int k;
         double arg;
         double cos;
@@ -1748,7 +1774,6 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	   z[0][k] = Math.cos(arg);
     	   z[1][k] = Math.sin(arg);
     	}
-
     	double Y[][] =cfft(ypad);
     	double Z[][] =cfft(z);
     	double W[][] = new double[2][3*m];
@@ -3407,6 +3432,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    FFTUtility fft = new FFTUtility(fv[0], fv[1], 1, 2*n, 1, -1, FFTUtility.FFT);
 	    fft.setShowProgress(false);
 	    fft.run();
+	    fft.finalize();
+	    fft = null;
 	    double Dfv[][] = new double[2][2*n];
 	    for (i = 0; i < 2*n; i++) {
 	    	Dfv[0][i] = D[0][i]*fv[0][i] - D[1][i]*fv[1][i];
@@ -3415,6 +3442,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    FFTUtility ifft = new FFTUtility(Dfv[0], Dfv[1], 1, 2*n, 1, 1, FFTUtility.FFT);
 	    ifft.setShowProgress(false);
 	    ifft.run();
+	    ifft.finalize();
+	    ifft = null;
 	    double u[][] = new double[2][n];
 	    for (i = 0; i < n; i++) {
 	    	u[0][i] = Dfv[0][i];
@@ -3502,6 +3531,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    FFTUtility fft = new FFTUtility(D[0], D[1], 1, 2*n, 1, -1, FFTUtility.FFT);
 	    fft.setShowProgress(false);
 	    fft.run();
+	    fft.finalize();
+	    fft = null;
 	    return D;
     }
 
@@ -4604,7 +4635,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		// Yoel Shkolnisky 22/10/01
 
     		int n = w[0].length-1;
-    		double v[][] = adjInvF(adjE(adjCfrft(adjU(w),2*k/n)));
+    		double v[][] = adjInvF(adjE(adjCfrft(adjU(w),2.0*k/n)));
     		return v;
     }
 
@@ -4613,11 +4644,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
             int i;
     		int n = v[0].length-1;
     		double z[][] = new double[2][2*n+1];
-    		for (i = 0; i < 2*n+1; i++) {
+    		for (i = 0; i < n+1; i++) {
     			z[0][i+n/2] = v[0][i];
     			z[1][i+n/2] = v[1][i];
     		}
-    		return v;
+    		return z;
     }
 
     private double[][] adjE(double v[][]) {
@@ -4831,6 +4862,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
          FFTUtility ifft = new FFTUtility(tmp[0], tmp[1], 1, 2*n+1, n, 1, FFTUtility.FFT);
          ifft.setShowProgress(false);
          ifft.run();
+         ifft.finalize();
+         ifft = null;
          for (i = 0; i < 2*n+1; i++) {
         	 for (j = 0; j < n; j++) {
         		 tmp[0][i*n + j] = m*tmp[0][i*n + j];
@@ -4868,6 +4901,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
          FFTUtility ifft2 = new FFTUtility(tmp[0], tmp[1], 1, 2*n+1, n, 1, FFTUtility.FFT);
          ifft2.setShowProgress(false);
          ifft2.run();
+         ifft2.finalize();
+         ifft2 = null;
          for (i = 0; i < 2*n+1; i++) {
         	 for (j = 0; j < n; j++) {
         		 tmp[0][i*n + j] = m*tmp[0][i*n + j];
@@ -4960,9 +4995,13 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
              FFTUtility fft = new FFTUtility(pp1[0], pp1[1], 1, s11, s12, -1, FFTUtility.FFT);
              fft.setShowProgress(false);
              fft.run();
+             fft.finalize();
+             fft = null;
              FFTUtility fft2 = new FFTUtility(pp2[0], pp2[1], 1, s11, s12, -1, FFTUtility.FFT);
              fft2.setShowProgress(false);
              fft2.run();
+             fft2.finalize();
+             fft2 = null;
              double ppp1[][][] = new double[2][s11][s12];
              double ppp2[][][] = new double[2][s11][s12];
              for (i = 0; i < s11; i++) {
@@ -5142,15 +5181,15 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     //res2 = zeros(m,n+1);
 	
 	     // Computation of Res1
-	     double EI[][][] = new double[2][im.length+n+1][im[0].length + 2*n];
+	     double EI[][][] = new double[2][2*n+1][n];
 	     for (i = 0; i < n; i++) {
 	    	 for (j = 0; j < n; j++) {
-	    		 EI[0][i+n/2][j+n] = imflip[i][j];
+	    		 EI[0][i+n/2][j] = imflip[i][j];
 	    	 }
 	     }
 	     double FEI[][][] = cfft2(EI);
 	           
-	     u = new double[2][FEI[0][0].length];
+	     u = new double[2][n];
 	     for (k=-n; k <= n; k++) {
 	    	 idx = toUnaliasedIdx(k,m);
 	    	 for (i = 0; i < FEI[0][0].length; i++) {
@@ -5167,15 +5206,15 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
 	
 	     // Computation of Res2
-	     EI = new double[2][im.length+2*n][im[0].length+n+1];
+	     EI = new double[2][n][2*n+1];
 	     for (i = 0; i < n; i++) {
 	    	 for (j = 0; j < n; j++) {
-	    		 EI[0][i+n][j+n/2] = imflip[i][j];
+	    		 EI[0][i][j+n/2] = imflip[i][j];
 	    	 }
 	     }
 	     FEI = cfft2(EI);
 	
-	     v = new double[2][FEI[0].length];
+	     v = new double[2][n];
 	     for (k=-n; k <= n; k++) {
 	    	 idx = toUnaliasedIdx(k,m);
 	    	 for (i = 0; i < FEI[0].length; i++) {
@@ -5246,27 +5285,29 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
 	     // Part I: Computation of Res1
 	     // padding the y-direction and applying column-wise fft
-	     double FEI[][] = new double[2][(2*n+1)*(3*n)];
+	     double FEI[][] = new double[2][(2*n+1)*n];
 	     for (i = 0; i < n; i++) {
 	    	 for (j = 0; j < n; j++) {
-	    		 FEI[0][(n/2+i)*(3*n) + j + n] = imflip[i][j];
+	    		 FEI[0][(n/2+i)*n + j] = imflip[i][j];
 	    	 }
 	     }
-	     FFTUtility fft = new FFTUtility(FEI[0], FEI[1], 1, 2*n+1, 3*n, -1, FFTUtility.FFT);
+	     FFTUtility fft = new FFTUtility(FEI[0], FEI[1], 1, 2*n+1, n, -1, FFTUtility.FFT);
 	     fft.setShowProgress(false);
 	     fft.run();
+	     fft.finalize();
+	     fft = null;
 	
 	     // fractional along rows with alpha=2*k*(n+1)/(n*m). This is equivalent
 	     // to padding u to length 2n+1, applying FRFT with alpha=2*k/n and extracting 
 	     // the n+1 central elements. However, this requires less memory and operations.
 	     // The padding with the single zero is used to generate output of length
 	     // n+1.
-	     u = new double[2][3*n+1];
+	     u = new double[2][n+1];
 	     for (k=-n; k <= n; k++) {
 	    	 idx = toUnaliasedIdx(k,m);
-	    	 for (i = 0; i < 3*n; i++) {
-	    		 u[0][i] = FEI[0][idx*3*n + i];
-	    		 u[1][i] = FEI[1][idx*3*n + i];
+	    	 for (i = 0; i < n; i++) {
+	    		 u[0][i] = FEI[0][idx*n + i];
+	    		 u[1][i] = FEI[1][idx*n + i];
 	    	 }
 	         w = cfrft(u,k*alpha);
 	         for (i = 0; i < n+1; i++) {
@@ -5278,20 +5319,22 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // Part II: Computation of Res2
 	     // padding the x-direction and applying row-wise fft
 	     //EI  = [zeros(n,n/2) im zeros(n,n/2+1)];
-	     FEI = new double[2][(3*n)*(2*n+1)];
+	     FEI = new double[2][n*(2*n+1)];
 	     for (i = 0; i < n; i++) {
 	    	 for (j = 0; j < n; j++) {
-	    		 FEI[0][(n+i)*(2*n+1) + j + n/2] = imflip[i][j];
+	    		 FEI[0][i*(2*n+1) + j + n/2] = imflip[i][j];
 	    	 }
 	     }
-	     FFTUtility fft2 = new FFTUtility(FEI[0], FEI[1], 3*n, 2*n+1, 1, -1, FFTUtility.FFT);
+	     FFTUtility fft2 = new FFTUtility(FEI[0], FEI[1], n, 2*n+1, 1, -1, FFTUtility.FFT);
 	     fft2.setShowProgress(false);
 	     fft2.run();
+	     fft2.finalize();
+	     fft2 = null;
 	
-	     v = new double[2][3*n+1];
+	     v = new double[2][n+1];
 	     for (k=-n; k <= n; k++) {
 	    	 idx = toUnaliasedIdx(k,m);
-	    	 for (i = 0; i < 3*n; i++) {
+	    	 for (i = 0; i < n; i++) {
 	    		 v[0][i] = FEI[0][i*(2*n+1) + idx];
 	    		 v[1][i] = FEI[1][i*(2*n+1) + idx];
 	    	 }
