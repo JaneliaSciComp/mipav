@@ -396,8 +396,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        }
 	        r1 = new double[2][2*k+1][k+1];
 	        r2 = new double[2][2*k+1][k+1];
-	        //OptimizedPPFT(r1,r2,A[0]);
-	        PPFT(r1,r2,A[0]);
+	        OptimizedPPFT(r1,r2,A[0]);
+	        //PPFT(r1,r2,A[0]);
 	        r = new double[2][2*k+1][2*(k+1)];
 	        B = new double[2][2*k+1][2*(k+1)];
 	        for (m = 0; m < 2*k+1; m++) {
@@ -413,21 +413,20 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        	}
 	        }
 	        a = ip(r,B);
-	        //b = ip(A,OptimizedAdjPPFT(B1,B2));
-	        b = ip(A,adjPPFT(B1,B2));
+	        b = ip(A,OptimizedAdjPPFT(B1,B2));
+	        //b = ip(A,adjPPFT(B1,B2));
 	
-	        UI.setDataText("k = " + k + "\n");
-	        UI.setDataText("a = " + a[0] + " " + a[1]+"i\n");
-	        UI.setDataText("b = " + b[0] + " " + b[1]+"i\n");
+	        System.out.println("k = " + k);
+	        System.out.println("a = " + a[0] + " " + a[1]+"i");
+	        System.out.println("b = " + b[0] + " " + b[1]+"i");
 	        double error[] = new double[] {a[0]-b[0], a[1]-b[1]};
-	        UI.setDataText("Error = " + error[0] + " "+error[1]+"i\n");
+	        System.out.println("Error = " + error[0] + " "+error[1]+"i");
 	        double abserr = zabs(error[0],error[1]);
 	        double rela = abserr/zabs(a[0],a[1]);
-	        UI.setDataText("Rel a = " + rela + "\n");
+	        System.out.println("Rel a = " + rela);
 	        double relb = abserr/zabs(b[0],b[1]);
-	        UI.setDataText("Rel b = " + relb + "\n");
-	        UI.setDataText("*********************\n");
-	        UI.setDataText("\n");
+	        System.out.println("Rel b = " + relb);
+	        System.out.println("*********************\n");
     	}
     }
 
@@ -4879,7 +4878,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		 }
 
          // Compute the adjoint of PP2
-
+         tmp = new double[2][(2*n+1)*n];
     	 for (k=-n; k <= n; k++) {
     		 idx = toUnaliasedIdx(k,2*n+1);
     		 for (i = 0; i < n+1; i++) {
@@ -4922,7 +4921,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
          for (i = 0; i < n; i++) {
         	 for (j = 0; j < n; j++) {
         		 adjpp2[0][i][j] = tmpTranspose[0][n-1-i][j+n/2]; 
-        		 adjpp2[0][i][j] = tmpTranspose[1][n-1-i][j+n/2];
+        		 adjpp2[1][i][j] = tmpTranspose[1][n-1-i][j+n/2];
         	 }
          }
 
