@@ -1132,7 +1132,7 @@ public class FFTUtility extends AlgorithmBase {
                     kk = kk - kspnn + jc;
                 } while (kk <= mm);
 
-                if (kk >= kspan) {
+                if (kk > kspan) {
                     kk = kk - kspan + jc + inc;
 
                     if (kk <= (jc + jc)) {
@@ -1144,7 +1144,7 @@ public class FFTUtility extends AlgorithmBase {
                     goBack = true;
 
                     continue outer;
-                } // if (kk >= kspan)
+                } // if (kk > kspan)
 
                 s1 = (double) ( (kk - 1) / jc) * dr * rad;
                 c2 = Math.cos(s1);
