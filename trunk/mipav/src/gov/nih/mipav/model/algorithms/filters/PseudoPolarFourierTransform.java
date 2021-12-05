@@ -5082,7 +5082,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 }
     		    
     		 double w[][] = icfft(x);
-    		 double wpad[][] = new double[2][w[0].length+n];
+    		 double wpad[][] = new double[2][w[0].length+n+1];
     		 for (i = 0; i < w[0].length; i++) {
     			 wpad[0][i+n/2] = w[0][i];
     			 wpad[1][i+n/2] = w[1][i];
