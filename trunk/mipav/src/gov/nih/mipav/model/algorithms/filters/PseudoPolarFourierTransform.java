@@ -5682,16 +5682,25 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // Part I: Computation of Res1
 	     // padding the y-direction and applying column-wise fft
 	     double FEI[][] = new double[2][(2*n+1)*n];
-	     for (i = 0; i < n; i++) {
-	    	 for (j = 0; j < n; j++) {
-	    		 FEI[0][(n/2+i)*n + j] = imflip[i][j];
+	     double FEIC[][];
+	     for (j = 0; j < n; j++) {
+	    	 FEIC = new double[2][2*n+1];
+	    	 for (i = 0; i < n; i++) {
+	    		 FEIC[0][n/2+i] = imflip[i][j];
+	    	 }
+	    	 FEIC = ifftshift1d(FEIC);
+	    	 FFTUtility fft = new FFTUtility(FEIC[0], FEIC[1], 1, 2*n+1, 1, -1, FFTUtility.FFT);
+		     fft.setShowProgress(false);
+		     fft.run();
+		     fft.finalize();
+		     fft = null;
+		     FEIC = fftshift1d(FEIC);
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 FEI[0][i*n + j] = FEIC[0][i];
+	    		 FEI[1][i*n + j] = FEIC[1][i];
 	    	 }
 	     }
-	     FFTUtility fft = new FFTUtility(FEI[0], FEI[1], 1, 2*n+1, n, -1, FFTUtility.FFT);
-	     fft.setShowProgress(false);
-	     fft.run();
-	     fft.finalize();
-	     fft = null;
+	     
 	
 	     // fractional along rows with alpha=2*k*(n+1)/(n*m). This is equivalent
 	     // to padding u to length 2n+1, applying FRFT with alpha=2*k/n and extracting 
@@ -5716,16 +5725,24 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // padding the x-direction and applying row-wise fft
 	     //EI  = [zeros(n,n/2) im zeros(n,n/2+1)];
 	     FEI = new double[2][n*(2*n+1)];
+	     double FEIR[][];
 	     for (i = 0; i < n; i++) {
+	    	 FEIR = new double[2][2*n+1];
 	    	 for (j = 0; j < n; j++) {
-	    		 FEI[0][i*(2*n+1) + j + n/2] = imflip[i][j];
+	    		 FEIR[0][j+n/2] = imflip[i][j];
+	    	 }
+	    	 FEIR = ifftshift1d(FEIR);
+	    	 FFTUtility fft2 = new FFTUtility(FEIR[0], FEIR[1], 1, 2*n+1, 1, -1, FFTUtility.FFT);
+		     fft2.setShowProgress(false);
+		     fft2.run();
+		     fft2.finalize();
+		     fft2 = null;
+		     FEIR = fftshift1d(FEIR);
+	    	 for (j = 0; j < 2*n+1; j++) {
+	    		 FEI[0][i*(2*n+1) + j] = FEIR[0][j];
+	    		 FEI[1][i*(2*n+1) + j] = FEIR[1][j];
 	    	 }
 	     }
-	     FFTUtility fft2 = new FFTUtility(FEI[0], FEI[1], n, 2*n+1, 1, -1, FFTUtility.FFT);
-	     fft2.setShowProgress(false);
-	     fft2.run();
-	     fft2.finalize();
-	     fft2 = null;
 	
 	     v = new double[2][n+1];
 	     for (k=-n; k <= n; k++) {
