@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
@@ -20,6 +21,9 @@ import gov.nih.mipav.view.ViewUserInterface;
  * 
  * @author aailb
  * This is a port of MATLAB code in the ppft2 download package by Yoel Shkolnisky.
+ * The Magic Square code used in testing is derived from the code in the article 
+ * Magic Square by A. Riazi.  The article states that the article has no explicit
+ * license attached to it.
  * 
  * References:
  * 1.) Pseudo-Polar and Discrete Radon Transforms Software Package Documentation by Yoel Shkolnisky
@@ -349,8 +353,136 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    v/abs(im(I))*/
     }
     
+    private int[][] MagicSquare(int n) {
+        if (n < 3) {
+        	System.err.println("In MagicSquare n must be >= 3");
+        	return null;
+        }
+        int matrix[][] = new int[n][n];
+        if ((n % 2) == 1) { // n is odd
+        	OddMagicSquare(matrix, n);
+        }
+        else if ((n % 4) == 0) { // Doubly even order
+        	DoublyEvenMagicSquare(matrix, n);
+        }
+        else { // Singly even order
+        	SinglyEvenMagicSquare(matrix, n);
+        }
+        return matrix;
+    }
+    
+    private void OddMagicSquare(int matrix[][], int n)
+    {
+      int nsqr = n * n;
+      int i=0, j=n/2;     // start position
+
+      for (int k=1; k<=nsqr; ++k) 
+      {
+        matrix[i][j] = k;
+
+        i--;
+        j++;
+
+        if (k%n == 0) 
+        { 
+            i += 2; 
+            --j; 
+          }
+          else 
+          {
+            if (j==n) 
+              j -= n;
+            else if (i<0) 
+              i += n;
+          }
+        }
+      }
+    
+    private void DoublyEvenMagicSquare(int matrix[][], int n)
+    {
+      int I[][] = new int[n][n];
+      int J[][] = new int[n][n];
+
+      int i, j;
+
+      //prepare I, J
+      int index=1;
+      for (i=0; i<n; i++)
+        for (j=0; j<n; j++)
+        {
+          I[i][j]=((i+1)%4)/2;
+          J[j][i]=((i+1)%4)/2;
+          matrix[i][j]=index;
+          index++;
+        }
+
+      for (i=0; i<n; i++)
+        for (j=0; j<n; j++)
+        {
+          if (I[i][j]==J[i][j])
+            matrix[i][j]=n*n+1-matrix[i][j];
+        }
+    }
+
+
+    private void SinglyEvenMagicSquare(int matrix[][], int n)
+    {
+      int p=n/2;
+      
+      int M[][] = MagicSquare(p);
+      
+      int i, j, k;
+
+      for (i=0; i<p; i++)
+        for (j=0; j<p; j++)
+        {
+          matrix[i][j]=M[i][j];
+          matrix[i+p][j]=M[i][j]+3*p*p;
+          matrix[i][j+p]=M[i][j]+2*p*p;
+          matrix[i+p][j+p]=M[i][j]+p*p;
+        }
+
+      if (n==2)
+        return;  
+
+      int I[] = new int[p];
+      Vector<Integer> J = new Vector<Integer>();
+
+      for (i=0; i<p; i++)
+        I[i]=i+1;
+
+      k=(n-2)/4;
+      
+      for (i=1; i<=k; i++)
+        J.add(i);
+
+      for (i=n-k+2; i<=n; i++)
+        J.add(i);
+
+      int temp;
+      for (i=1; i<=p; i++)
+        for (j=1; j<=J.size(); j++)
+        {
+          temp=matrix[i-1][J.get(j-1)-1];
+          matrix[i-1][J.get(j-1)-1]=matrix[i+p-1][J.get(j-1)-1];
+          matrix[i+p-1][J.get(j-1)-1]=temp;
+        }
+
+      //j=1, i
+      //i=k+1, k+1+p
+      i=k; 
+      j=0;
+      temp=matrix[i][j]; matrix[i][j]=matrix[i+p][j]; matrix[i+p][j]=temp;
+
+      j=i;
+      temp=matrix[i+p][j]; matrix[i+p][j]=matrix[i][j]; matrix[i][j]=temp;
+    }
+
+
+
+    
     public void testOptimizedAdjPPFT() {
-	    
+	    // Test passes
 	    // Tests the function OptimizedAdjPPFT.
 	    // Check if <optimizedPPFT(A),B> = <A,optimizedAdjPPFT(B)> for various A and B. 
 	    // <A,B> stands for the inner-product of A and B.
@@ -428,6 +560,130 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        System.out.println("Rel b = " + relb);
 	        System.out.println("*********************\n");
     	}
+    }
+    
+    public void testAdj() {
+	    // Test passes
+	    // Tests the functions adjPPFT and adjRadon.
+	    // Check if <PPFT(A),B> = <A,adjPPFT(B)> for various A and B. 
+	    // <A,B> stands for the inner-product of A and B.
+	    
+	    // Legend for results format:
+	    //   n      - matrix size
+	    //   a      - <PPFT(A),B>
+	    //   b      - <A,adjPPFT(B)>
+	    //   error  - absolute error a-b
+	    //   Rel a  - Relative error (a-b)/a
+	    //   Rel b  - Relative error (a-b)/b
+	    
+	    // See also PPFT, adjPPFT, PsuedoRadon, adjRadon.
+	    
+	    // Yoel Shkolnisky 9/2/02
+	
+	    int l;
+	    int i,k,m,n;
+    	double A[][][];
+    	double B1[][][];
+    	double B2[][][];
+    	double r1[][][];
+    	double r2[][][];
+    	double r[][][];
+    	double B[][][];
+    	double a[];
+    	double b[];
+    	int arr[] = new int[] {4,8,16,32,64}; // 128,256,512
+    	RandomNumberGen randomGen = new RandomNumberGen();
+    	for (l = 1; l <= 2; l++) {
+	       if (l==1) {
+	          System.out.println("******** START Test of adjPPFT **********");
+	       }
+	       else {     
+	          System.out.println("******** START Test of adjRadon **********");
+	       }
+	       
+	       for (i = 0; i < arr.length; i++) {
+		        k = arr[i];
+		        A = new double[2][k][k];
+		        for (m = 0; m < k; m++) {
+		        	for (n = 0; n < k; n++) {
+		        		A[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        	}
+		        }
+		        B1 = new double[2][2*k+1][k+1];
+		        B2 = new double[2][2*k+1][k+1];
+		        for (m = 0; m < 2*k+1; m++) {
+		        	for (n = 0; n < k+1; n++) {
+		        		B1[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		B1[1][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		B2[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		B2[1][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        	}
+		        }
+	            
+		        B1 = new double[2][2*k+1][k+1];
+		        B2 = new double[2][2*k+1][k+1];
+		        for (m = 0; m < 2*k+1; m++) {
+		        	for (n = 0; n < k+1; n++) {
+		        		B1[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		B1[1][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		B2[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		B2[1][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        	}
+		        }
+		        r1 = new double[2][2*k+1][k+1];
+			    r2 = new double[2][2*k+1][k+1];
+			    r = new double[2][2*k+1][2*(k+1)];
+		        B = new double[2][2*k+1][2*(k+1)];
+		        for (m = 0; m < 2*k+1; m++) {
+		        	for (n = 0; n < k+1; n++) {
+		        		B[0][m][n] = B1[0][m][n];
+		        		B[1][m][n] = B1[1][m][n];
+		        		B[0][m][n+k+1] = B2[0][m][n];
+		        		B[1][m][n+k+1] = B2[1][m][n];
+		        	}
+		        }
+		        if (l == 1) {
+		        	PPFT(r1,r2,A[0]);
+			        for (m = 0; m < 2*k+1; m++) {
+			        	for (n = 0; n < k+1; n++) {
+			        		r[0][m][n] = r1[0][m][n];
+			        		r[1][m][n] = r1[1][m][n];
+			        		r[0][m][n+k+1] = r2[0][m][n];
+			        		r[1][m][n+k+1] = r2[1][m][n];
+			        	}
+			        }
+		            a = ip(r,B);
+		            b = ip(A,adjPPFT(B1,B2));
+		        }
+		        else {
+		        	Radon(r1[0],r2[0],A[0]);
+		        	for (m = 0; m < 2*k+1; m++) {
+			        	for (n = 0; n < k+1; n++) {
+			        		r[0][m][n] = r1[0][m][n];
+			        		r[0][m][n+k+1] = r2[0][m][n];
+			        	}
+			        }
+		        	a = new double[2];
+		        	a[0] = ip(r[0],B[0]);
+		        	a[1] = 0.0;
+		        	b = new double[2];
+		        	b[0] = ip(A[0], adjRadon(B1[0],B2[0]));
+		        	b[1] = 0.0;
+		        }
+		
+		        System.out.println("k = " + k);
+		        System.out.println("a = " + a[0] + " " + a[1]+"i");
+		        System.out.println("b = " + b[0] + " " + b[1]+"i");
+		        double error[] = new double[] {a[0]-b[0], a[1]-b[1]};
+		        System.out.println("Error = " + error[0] + " "+error[1]+"i");
+		        double abserr = zabs(error[0],error[1]);
+		        double rela = abserr/zabs(a[0],a[1]);
+		        System.out.println("Rel a = " + rela);
+		        double relb = abserr/zabs(b[0],b[1]);
+		        System.out.println("Rel b = " + relb);
+		        System.out.println("*********************\n");
+	       } // for (i = 0; i < arr.length; i++)
+    	} // for (l = 1; l <= 2; l++)
     }
 
      
@@ -4936,7 +5192,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
          return im;
      }
      
-     private double[][][] adjRadon(double r1[][][], double r2[][][]) { 
+     private double[][] adjRadon(double r1[][], double r2[][]) { 
     		 
     		 // Computes the adjoint 2-D discrete Radon transform.
     		 
@@ -4949,28 +5205,28 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
     		 int i,j;
     	     // Check if the input is of valid size 2x(2n+1)x(n+1)
-	    	 int s11 = r1[0].length;
-	 	     int s12 = r1[0][0].length;
-	 	     int s21 = r2[0].length;
-	 	     int s22 = r2[0][0].length;
+	    	 int s11 = r1.length;
+	 	     int s12 = r1[0].length;
+	 	     int s21 = r2.length;
+	 	     int s22 = r2[0].length;
 	 	    
 	 	     if (s11 != s21) {
-	 	    	 System.err.println("In adjRadon r1[0].length != r2[0].length");
+	 	    	 System.err.println("In adjRadon r1.length != r2.length");
 	 	    	 System.exit(0);
 	 	     }
 	 	    
 	 	     if (s12 != s22) {
-	 	    	 System.err.println("In adjRadon r1[0][0].length != r2[0][0].length");
+	 	    	 System.err.println("In adjRadon r1[0].length != r2[0].length");
 	 	    	 System.exit(0);
 	 	     }
 	 	    
 	 	     if ((s11 % 2) != 1) {
-	 	    	 System.err.println("In adjRadon r1[0].length is not odd");
+	 	    	 System.err.println("In adjRadon r1.length is not odd");
 	 	    	 System.exit(0);
 	 	     }
 	 	    
 	 	     if ((s12 % 2) != 1) {
-	 	    	 System.err.println("In adjRadon r1[0][0].length is not odd");
+	 	    	 System.err.println("In adjRadon r1[0].length is not odd");
 	 	    	 System.exit(0);
 	 	     }
 	 	
@@ -4985,10 +5241,10 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
              double pp2[][] = new double[2][s11*s12];
              for (i = 0; i < s11; i++) {
                  for (j = 0; j < s12; j++) {
-                	 pp1[0][i*s12 + j] = r1[0][i][j];
-                	 pp1[1][i*s12 + j] = r1[1][i][j];
-                	 pp2[0][i*s12 + j] = r2[0][i][j];
-                	 pp2[1][i*s12 + j] = r2[1][i][j];
+                	 pp1[0][i*s12 + j] = r1[i][j];
+                	 pp1[1][i*s12 + j] = 0.0;
+                	 pp2[0][i*s12 + j] = r2[i][j];
+                	 pp2[1][i*s12 + j] = 0.0;
                  }
              }
              FFTUtility fft = new FFTUtility(pp1[0], pp1[1], 1, s11, s12, -1, FFTUtility.FFT);
@@ -5010,11 +5266,46 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
             	     ppp2[0][i][j] = pp2[0][i*s12+j]/n;
             	     ppp2[1][i][j] = pp2[1][i*s12+j]/n;            	 }
              }
-    		 double im[][][] = OptimizedAdjPPFT(ppp1,ppp2);
-    		 return im;
+    		 double imComplex[][][] = OptimizedAdjPPFT(ppp1,ppp2);
+    		 return imComplex[0];
 
     		 // Revision record
     		 // 15/1/03	Yoel Shkolnisky		Used cfftd instead of column-wise cfft
+     }
+     
+    private double ip(double a[][], double b[][]) {
+	     
+	     // Inner product of 2 multi-dimensional arrays.
+	     // For two matrices the inner product is given by
+	     
+	     //         N1   N2
+	     //    c = sum (sum a(k,l)*conj(b(k,l))
+	     //        k=1  l=1 
+	     
+	     // Yoel Shkolnisky 9/2/02
+	
+	     // c = sum(conj(a(:)).*b(:));
+    	 // Note comment had conj(b) but code has conj(a).
+    	 int N1 = a.length;
+    	 int N2 = a[0].length;
+    	 int B1 = b.length;
+    	 int B2 = b[0].length;
+    	 if (N1 != B1) {
+    		 System.err.println("In ip a.length != b.length");
+    		 return Double.NaN;
+    	 }
+    	 if (N2 != B2) {
+    		 System.err.println("In ip a[0].length != b[0].length");
+    		 return Double.NaN;
+    	 }
+    	 int i,j;
+    	 double sum = 0.0;
+    	 for (i = 0; i < N1; i++) {
+    		 for (j = 0; j < N2; j++) {
+    			 sum += a[i][j]*b[i][j];
+    		 }
+    	 }
+    	 return sum;
      }
      
      private double[] ip(double a[][][], double b[][][]) {
@@ -5347,6 +5638,95 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // Revision record
 	     // 15/1/03   Yoel Shkolnisky     Used cfftd instead of column-wise cfft
      }
+     
+     private void Radon(double res1[][], double res2[][], double im[][]) {
+    	 // res1, res2, and im are real
+	     // Fast algorithm for computing the discrete Radon transform.
+	     // The computation requires O(n^2logn) operations.
+	     
+	     // im    The image whose discrete Radon transform should be computed.
+	     //       Must be real (no imaginary components) and of a dyadic square size (2^k x 2^k).
+	     
+	     // Returns res1 and res2 (of size 2n+1xn+1) that contain the discrete Radon
+	     // transform of the input image im.
+	     // res1 contains the values which correspond to rays of radius k=-n...n and angles
+	     // theta=arctan(2l/n) l=-n/2...n/2 (from -pi/4 to pi/4). 
+	     // res2 contains the values which correspond to rays of radius k=-n...n and angles
+	     // theta=pi/2-arctan(2l/n) l=-n/2...n/2 (from 3pi/4 to pi/4). 
+	     
+	     // Due to small round-off errors, the output may contain small imaginary
+	     // components. If the input image is real, the function truncates any
+	     // imaginary components from the output array (since the discrete Radon
+	     // transform of a real image is real)
+	     //
+	     // See thesis' final PDF for more information.
+	     
+	     // See also PPFT, OptimizedPPFT, adjRadon.
+	     
+	     // Yoel Shkolnisky 22/10/01
+    	 int i,j;
+    	 int n = im.length;
+    	 double res1Complex[][][] = new double[2][2*n+1][n+1];
+    	 double res2Complex[][][] = new double[2][2*n+1][n+1];
+	
+	     OptimizedPPFT(res1Complex, res2Complex, im);
+	     double res1C[][] = new double[2][(2*n+1)*(n+1)];
+	     double res2C[][] = new double[2][(2*n+1)*(n+1)];
+	     for (i = 0; i < 2*n+1; i++) {
+	    	 for (j = 0; j < n+1; j++) {
+	    		 res1C[0][i*(n+1) + j] = res1Complex[0][i][j];
+	    		 res1C[1][i*(n+1) + j] = res1Complex[1][i][j];
+	    		 res2C[0][i*(n+1) + j] = res2Complex[0][i][j];
+	    		 res2C[1][i*(n+1) + j] = res2Complex[1][i][j];
+	    	 }
+	     }
+	
+	     // Inverse FFT along columns
+	     FFTUtility ifft = new FFTUtility(res1C[0], res1C[1], 1, 2*n+1, n+1, 1, FFTUtility.FFT);
+	     ifft.run();
+	     ifft.finalize();
+	     ifft = null;
+	     FFTUtility ifft2 = new FFTUtility(res2C[0], res2C[1], 1, 2*n+1, n+1, 1, FFTUtility.FFT);
+	     ifft2.run();
+	     ifft2.finalize();
+	     ifft2 = null;
+	
+	     // For safety - should never happen.
+	     // No complex entries are expected in rim (the result array).
+	     // This condition should catch programming bugs that result in complex entries in rim.
+	     double maxAbsVal1 = 0.0;
+	     double maxAbsVal2 = 0.0;
+	     for (i = 0; i < 2*n+1; i++) {
+	    	 for (j = 0; j < n+1; j++) {
+	    		 if (Math.abs(res1C[1][i*(n+1) + j]) > maxAbsVal1) {
+	    			 maxAbsVal1 = Math.abs(res1C[1][i*(n+1) + j]);
+	    		 }
+	    		 if (Math.abs(res2C[1][i*(n+1) + j]) > maxAbsVal2) {
+	    			 maxAbsVal2 = Math.abs(res2C[1][i*(n+1) + j]);
+	    		 }
+	    	 }
+	     }
+	     if (maxAbsVal1 > 1.0E-5) {
+	    	 System.out.println("Warning! In Radon res1 has an imaginary component of maximum absolute value = " + maxAbsVal1);
+	     }
+	     if (maxAbsVal2 > 1.0E-5) {
+	    	 System.out.println("Warning! In Radon res2 has an imaginary component of maximum absolute value = " + maxAbsVal2);
+	     }
+	
+	     // Remove the imaginary component 00000000i from the entries of the result
+	     // matrix. This component causes the entries of rim to be considered imaginary, 
+	     // although the imaginary part is very close to zero.
+	     for (i = 0; i < 2*n+1; i++) {
+	    	 for (j = 0; j < n+1; j++) {
+	    		 res1[i][j] = res1C[0][i*(n+1) + j];
+	    		 res2[i][j] = res2C[0][i*(n+1) + j];
+	    	 }
+	     }
+	        
+	     // Revision record
+	     // 15/1/03   Yoel Shkolnisky     Use cfftd instead of column-wise cfft
+     }
+
 
    
 }
