@@ -19,7 +19,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 /**
  * 
- * @author aailb
+ * @author ilb
  * This is a port of MATLAB code in the ppft2 download package by Yoel Shkolnisky.
  * The Magic Square code used in testing is derived from the code in the article 
  * Magic Square by A. Riazi.  The article states that the article has no explicit
@@ -31,8 +31,8 @@ import gov.nih.mipav.view.ViewUserInterface;
    2.) DIRECT INVERSION OF THE THREE-DIMENSIONAL PSEUDO-POLAR FOURIER TRANSFORM
       AMIR AVERBUCH, GIL SHABAT, AND YOEL SHKOLNISKY SIAM J. SCI. COMPUT. 
       2016 Society for Industrial and Applied Mathematics
-      Vol. 38, No. 2, pp. A1100–A1120
-   3.) A FRAMEWORK FOR DISCRETE INTEGRAL TRANSFORMATIONS I – THE PSEUDO-POLAR FOURIER TRANSFORM 
+      Vol. 38, No. 2, pp. A1100-A1120
+   3.) A FRAMEWORK FOR DISCRETE INTEGRAL TRANSFORMATIONS I - THE PSEUDO-POLAR FOURIER TRANSFORM 
        A. AVERBUCH, R.R. COIFMAN, D.L. DONOHO, M. ISRAELI, AND Y. SHKOLNISKY
    4.) Y. Keller, Y. Shkolnisky, and A. Averbuch. Volume registration using the 3-D pseudo-polar
        Fourier transform. IEEE Transactions on Signal Processing, 54(11):4323-4331, 2006. 
