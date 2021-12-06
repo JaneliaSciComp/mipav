@@ -5220,11 +5220,26 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
          }
          
          // Inverse FFT on first dimension
-         FFTUtility ifft = new FFTUtility(tmp[0], tmp[1], 1, 2*n+1, n, 1, FFTUtility.FFT);
-         ifft.setShowProgress(false);
-         ifft.run();
-         ifft.finalize();
-         ifft = null;
+         double tmpC[][];
+	     for (j = 0; j < n; j++) {
+	    	 tmpC = new double[2][2*n+1];
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 tmpC[0][i] = tmp[0][i*n+j];
+	    		 tmpC[1][i] = tmp[1][i*n+j];
+	    	 }
+	    	 tmpC = ifftshift1d(tmpC);
+	    	 FFTUtility fft = new FFTUtility(tmpC[0], tmpC[1], 1, 2*n+1, 1, 1, FFTUtility.FFT);
+		     fft.setShowProgress(false);
+		     fft.run();
+		     fft.finalize();
+		     fft = null;
+		     tmpC = fftshift1d(tmpC);
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 tmp[0][i*n + j] = tmpC[0][i];
+	    		 tmp[1][i*n + j] = tmpC[1][i];
+	    	 }
+	     }
+        
          for (i = 0; i < 2*n+1; i++) {
         	 for (j = 0; j < n; j++) {
         		 tmp[0][i*n + j] = m*tmp[0][i*n + j];
@@ -5259,11 +5274,25 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 // and then transpose the entire matrix at once.
     	 
     	 // Inverse FFT on first dimension
-         FFTUtility ifft2 = new FFTUtility(tmp[0], tmp[1], 1, 2*n+1, n, 1, FFTUtility.FFT);
-         ifft2.setShowProgress(false);
-         ifft2.run();
-         ifft2.finalize();
-         ifft2 = null;
+    	 for (j = 0; j < n; j++) {
+	    	 tmpC = new double[2][2*n+1];
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 tmpC[0][i] = tmp[0][i*n+j];
+	    		 tmpC[1][i] = tmp[1][i*n+j];
+	    	 }
+	    	 tmpC = ifftshift1d(tmpC);
+	    	 FFTUtility fft = new FFTUtility(tmpC[0], tmpC[1], 1, 2*n+1, 1, 1, FFTUtility.FFT);
+		     fft.setShowProgress(false);
+		     fft.run();
+		     fft.finalize();
+		     fft = null;
+		     tmpC = fftshift1d(tmpC);
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 tmp[0][i*n + j] = tmpC[0][i];
+	    		 tmp[1][i*n + j] = tmpC[1][i];
+	    	 }
+	     }
+         
          for (i = 0; i < 2*n+1; i++) {
         	 for (j = 0; j < n; j++) {
         		 tmp[0][i*n + j] = m*tmp[0][i*n + j];
