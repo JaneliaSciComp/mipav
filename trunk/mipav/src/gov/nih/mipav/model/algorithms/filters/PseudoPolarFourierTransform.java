@@ -685,6 +685,112 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	       } // for (i = 0; i < arr.length; i++)
     	} // for (l = 1; l <= 2; l++)
     }
+    
+    public void testRadon() {
+	    
+	    // Tests the functions PPFT,Optimized PPFT, and Radon.
+	    // See also PPFT, OptimizedPPPT, Radon.
+	    
+	    //  Yoel Shkolnisky 9/2/02
+	
+	    double eps = 0.00000001;
+	    int imint[][] = MagicSquare(8);
+	    double im[][] = new double[8][8];
+	    int i,j;
+	    for (i = 0; i < 8; i++) {
+	    	for (j = 0; j < 8; j++) {
+	    		im[i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    
+	    double spp1[][][] = new double[2][17][9];
+	    double spp2[][][] = new double[2][17][9];
+	    double pp1[][][] = new double[2][17][9];
+	    double pp2[][][] = new double[2][17][9];
+	    double opp1[][][] = new double[2][17][9];
+	    double opp2[][][] = new double[2][17][9];
+	    slowPPFT(spp1, spp2, im);
+	    PPFT(pp1, pp2, im);
+	    OptimizedPPFT(opp1, opp2,im);
+	    double maxpp1Error = 0.0;
+	    double maxpp2Error = 0.0;
+	    double maxopp1Error = 0.0;
+	    double maxopp2Error = 0.0;
+	    double error;
+	    for (i = 0; i < 17; i++) {
+	    	for (j = 0; j < 9; j++) {
+	    	    error = zabs(spp1[0][i][j]-pp1[0][i][j],spp1[1][i][j]-pp1[1][i][j]);
+	    	    if (error > maxpp1Error) {
+	    	    	maxpp1Error = error;
+	    	    }
+	    	    error = zabs(spp2[0][i][j]-pp2[0][i][j],spp2[1][i][j]-pp2[1][i][j]);
+	    	    if (error > maxpp2Error) {
+	    	    	maxpp2Error = error;
+	    	    }
+	    	    error = zabs(spp1[0][i][j]-opp1[0][i][j],spp1[1][i][j]-opp1[1][i][j]);
+	    	    if (error > maxopp1Error) {
+	    	    	maxopp1Error = error;
+	    	    }
+	    	    error = zabs(spp2[0][i][j]-opp2[0][i][j],spp2[1][i][j]-opp2[1][i][j]);
+	    	    if (error > maxopp2Error) {
+	    	    	maxopp2Error = error;
+	    	    }
+	    	}
+	    }
+	    
+	    if ((maxpp1Error > eps) || (maxpp2Error > eps)) {
+	    	System.err.println("PPFT not OK");
+	    	System.err.println("maxpp1Error = " + maxpp1Error);
+	    	System.err.println("maxpp2Error = " + maxpp2Error);
+	    }
+	    else {
+	    	System.out.println("PPFT OK");
+	    }
+	    
+	    if ((maxopp1Error > eps) || (maxopp2Error > eps)) {
+	    	System.err.println("OptimizedPPFT not OK");
+	    	System.err.println("maxopp1Error = " + maxopp1Error);
+	    	System.err.println("maxopp2Error = " + maxopp2Error);
+	    }
+	    else {
+	    	System.out.println("OptimizedPPFT OK");
+	    }
+	
+	    double sr1[][] = new double[17][9];
+	    double sr2[][] = new double[17][9];
+	    double r1[][] = new double[17][9];
+	    double r2[][] = new double[17][9];
+	
+	    slowRadon(sr1,sr2,im);
+	    Radon(r1,r2,im);
+	    double maxr1Error = 0.0;
+	    double maxr2Error = 0.0;
+	    
+	    for (i = 0; i < 17; i++) {
+	    	for (j = 0; j < 9; j++) {
+	    	    error = Math.abs(sr1[i][j] - r1[i][j]);
+	    	    if (error > maxr1Error) {
+	    	    	maxr1Error = error;
+	    	    }
+	    	    error = Math.abs(sr2[i][j] - r2[i][j]);
+	    	    if (error > maxr2Error) {
+	    	    	maxr2Error = error;
+	    	    }
+	    	}
+	    }
+	    
+	    if ((maxr1Error > eps) || (maxr2Error > eps)) {
+	    	System.err.println("Radon not OK");
+	    	System.err.println("maxr1Error = " + maxr1Error);
+	    	System.err.println("maxr2Error = " + maxr2Error);
+	    }
+	    else {
+	    	System.out.println("Radon OK");
+	    }
+    }
+
+     
+
 
      
     
@@ -5639,6 +5745,109 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // 15/1/03   Yoel Shkolnisky     Used cfftd instead of column-wise cfft
      }
      
+     private void slowPPFT(double res1[][][], double res2[][][], double im[][]) {
+	     
+	     // Compute the pseudo-polar Fourier transform directly.
+	     // The computation requires O(n^4) operations.
+	     
+	     // im    The image whose pseudo-polar Fourier transform should be computed.
+	     //       Must be of a dyadic square size (2^k x 2^k).
+	     
+	     // Returns res1 and res2 (of size 2n+1xn+1) that contain the pseudo-polar Fourier 
+	     // transform of the input image im.
+	     // res1 contains the values of PPI1(k,l). res2 contains the values of PPI2(k,l). 
+	     // The first argument of Res1 and Res2 corresponds to pseudo-radius and the second argument 
+	     // corresponds to pseudo-angle.
+	     
+	     // See PPFT.m for more documentation.
+	     
+	     // See thesis' final PDF p.42 for more information.
+	     
+	     // Yoel Shkolnisky 22/10/0
+    	 
+    	 int i,j,k,l,n,ppRows,ppCols;
+    	 double trig[];
+    	 double imflip[][] = new double[im.length][im[0].length];
+	     for (i = 0; i < im.length; i++) {
+	    	 for (j = 0; j < im[0].length; j++) {
+	    		 imflip[i][j] = im[im.length-1-i][j];
+	    	 }
+	     }
+	
+	     int s1 = im.length;
+	     int s2 = im[0].length;
+	     
+	     if (s1 != s2) {
+	        System.err.println("In slowPPFT input image must be square");
+	        System.exit(0);
+	     }
+	
+	     if ((s1 % 2) !=0) {
+	        System.err.println("In slowPPFT input image must have even side");
+	        System.exit(0);
+	     }
+	
+	     n=s1;
+	
+	     ppRows = 2*n+1;
+	     ppCols = n+1;
+	     //res1 = zeros(ppRows,ppCols);
+	     //res2 = zeros(ppRows,ppCols);
+	
+	     // computation of Res1
+	     for (k=-n; k <= n; k++) {
+	        for (l=-n/2; l <= n/2; l++) {
+	           trig = trigPoly(imflip, -2.0*l*k/n,k);
+	           res1[0][toUnaliasedIdx(k,ppRows)][toUnaliasedIdx(l,ppCols)]=trig[0];
+	           res1[1][toUnaliasedIdx(k,ppRows)][toUnaliasedIdx(l,ppCols)]=trig[1];
+	        }
+	     } 
+	
+	     // computation of Res2
+	     for (k=-n; k <= n; k++) {
+	        for (l=-n/2; l <= n/2; l++) {
+	           trig = trigPoly(imflip,k,-2.0*l*k/n);
+	           res2[0][toUnaliasedIdx(k,ppRows)][toUnaliasedIdx(l,ppCols)]=trig[0];
+	           res2[1][toUnaliasedIdx(k,ppRows)][toUnaliasedIdx(l,ppCols)]=trig[1];
+	        }
+	     }
+     }
+
+
+     private double[] trigPoly(double im[][], double xi1, double xi2) {
+	     // The function evaluates the trigonometric polynomial
+	     //                          n/2    n/2
+	     //       TrigPolyI(xi1,xi2) = sum    sum I(u,v)*exp(-2*pi*i*(xi1*u+xi2*v)/m)       m=2n+1
+	     //                         u=-n/2 v=-n/2
+	     // where:
+	     //       xi1,xi2 -   The points in the frequency domain at which we evaluate the trigonometric polynomial
+	     //       im          -  The 2-D signal (image) for which the trigonometric polynomial is evaluated
+	     
+	     // This function is used as an auxiliary function for computing the pseudo-polar Fourier transform
+	     // directly (according to the definition of the pseudo-polar Fourier transform).
+	     // The calling function (slowPPFT) uses this auxiliary function to compute the trigonometric 
+	     // polynomial on the pseudo-polar grid points.
+	
+	     int n = im.length;
+	     int m=2*n+1;
+	     double acc[] = new double[2];
+	     int u,v;
+	     for (u=lowIdx(n); u <= hiIdx(n); u++) {     // x direction
+	        for (v=lowIdx(n); v <= hiIdx(n); v++) {  // y direction
+	           double imcom = im[toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)];
+	           double arg = 2.0*Math.PI*(xi1*u + xi2*v)/m;
+	           acc[0] = acc[0] + imcom*Math.cos(arg);
+	           acc[1] = acc[1] - imcom*Math.sin(arg);
+	        }
+	     }
+	     return acc;
+	
+	
+	     // Revision record
+	     // 9/12/02   Yoel Shkolnisky     Added comments to the function "trigPoly"
+     }
+
+     
      private void Radon(double res1[][], double res2[][], double im[][]) {
     	 // res1, res2, and im are real
 	     // Fast algorithm for computing the discrete Radon transform.
@@ -5726,6 +5935,117 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // Revision record
 	     // 15/1/03   Yoel Shkolnisky     Use cfftd instead of column-wise cfft
      }
+     
+     private void slowRadon(double res1[][], double res2[][], double im[][]) {
+	     
+	     // Compute the pseudo-Radon transform directly.
+	     // The computation requires O(n^3) operations.
+	     
+	     // im    The image whose discrete Radon transform should be computed.
+	     //       Must be real (no imaginary components) and of a dyadic square size (2^k x 2^k).
+	     
+	     // Returns res1 and res2 (of size 2n+1xn+1) that contain the discrete Radon
+	     // transform of the input image im.
+	     // res1 contains the radon values of basically horizontal lines. res2 contains the Radon
+	     // values of basically vertical lines. 
+	     // The first argument of res1 and res2 corresponds to pseudo-radius and the second argument 
+	     // corresponds to pseudo-angle.
+	     
+	     // See Radon for more information.
+	     
+	     // See thesis' final PDF for more information.
+	     
+	     // Yoel Shkolnisky 22/10/01
+    	 
+    	 int i,j,l,n,ppRows,ppCols,t,u,v;
+    	 double slope, acc;
+    	 double trig[];
+    	 double imflip[][] = new double[im.length][im[0].length];
+	     for (i = 0; i < im.length; i++) {
+	    	 for (j = 0; j < im[0].length; j++) {
+	    		 imflip[i][j] = im[im.length-1-i][j];
+	    	 }
+	     }
+	
+	     int s1 = im.length;
+	     int s2 = im[0].length;
+	     
+	     if (s1 != s2) {
+	        System.err.println("In slowRadon input image must be square");
+	        System.exit(0);
+	     }
+	
+	     if ((s1 % 2) !=0) {
+	        System.err.println("In slowRadon input image must have even side");
+	        System.exit(0);
+	     }
+	
+	     n=s1;
+	
+	     ppRows = 2*n+1;
+	     ppCols = n+1;
+	     //res1 = zeros(ppRows,ppCols);
+	     //res2 = zeros(ppRows,ppCols);
+	
+	     // computation of res1
+	     for (t=-n; t <= n; t++) {
+	        for (l=-n/2; l <= n/2; l++) {
+	           slope = 2.0*l/n;
+	           acc   = 0;
+	           
+	           for (u=-n/2; u <= n/2-1; u++) {
+	              acc = acc + I1(im,n,u,slope*u+t);
+	           }
+	           res1[toUnaliasedIdx(t,ppRows)][toUnaliasedIdx(l,ppCols)]=acc;
+	        }
+	     }     
+	         
+	     // computation of res2
+	
+	     for (t=-n; t <= n; t++) {
+	        for (l=-n/2; l <= n/2; l++) {
+	           slope = 2.0*l/n;
+	           acc   = 0;
+	           
+	           for (v=-n/2; v <= n/2-1; v++) {
+	              acc = acc + I2(im,n,slope*v+t,v);
+	           }
+	           res2[toUnaliasedIdx(t,ppRows)][toUnaliasedIdx(l,ppCols)]=acc;
+	        }
+	     }
+     }
+
+
+
+     // computation of I1 - trigonometric interpolation of I along the columns (along the y-axis)
+     private double I1(double im[][], int n, int u, double y) {
+	     int m=2*n+1;
+	     double acc = 0;
+	     int v;
+	     double yin[] = new double[1];
+	
+	     for (v=-n/2; v <= n/2-1; v++) {
+	    	yin[0] = y-v;
+	        acc = acc + im[toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)]*dirichlet(yin,m)[0];
+	     }
+	     return acc; 
+     }
+
+
+     // computation of I2 - trigonometric interpolation of I along the columns (along the y-axis)
+     private double I2(double im[][], int n, double x,int v) {
+	     int m=2*n+1;
+	     double acc = 0;
+	     int u;
+	     double xin[] = new double[1];
+	
+	     for (u=-n/2; u <= n/2-1; u++) {
+	    	xin[0] = x-u;
+	        acc = acc + im[toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)]*dirichlet(xin,m)[0];
+	     }
+	     return acc;
+     }
+
 
 
    
