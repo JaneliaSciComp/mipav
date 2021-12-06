@@ -5371,36 +5371,41 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	 	     }
 	 	    
 	 	     int n = s11; // n - number of rows
-    		 
-             double pp1[][] = new double[2][s11*s12];
-             double pp2[][] = new double[2][s11*s12];
-             for (i = 0; i < s11; i++) {
-                 for (j = 0; j < s12; j++) {
-                	 pp1[0][i*s12 + j] = r1[i][j];
-                	 pp1[1][i*s12 + j] = 0.0;
-                	 pp2[0][i*s12 + j] = r2[i][j];
-                	 pp2[1][i*s12 + j] = 0.0;
-                 }
-             }
-             FFTUtility fft = new FFTUtility(pp1[0], pp1[1], 1, s11, s12, -1, FFTUtility.FFT);
-             fft.setShowProgress(false);
-             fft.run();
-             fft.finalize();
-             fft = null;
-             FFTUtility fft2 = new FFTUtility(pp2[0], pp2[1], 1, s11, s12, -1, FFTUtility.FFT);
-             fft2.setShowProgress(false);
-             fft2.run();
-             fft2.finalize();
-             fft2 = null;
-             double ppp1[][][] = new double[2][s11][s12];
+	 	     double ppp1[][][] = new double[2][s11][s12];
              double ppp2[][][] = new double[2][s11][s12];
-             for (i = 0; i < s11; i++) {
-            	 for (j = 0; j < s12; j++) {
-            	     ppp1[0][i][j] = pp1[0][i*s12+j]/n;
-            	     ppp1[1][i][j] = pp1[1][i*s12+j]/n;
-            	     ppp2[0][i][j] = pp2[0][i*s12+j]/n;
-            	     ppp2[1][i][j] = pp2[1][i*s12+j]/n;            	 }
-             }
+             double pp1[][];
+             double pp2[][];
+             for (j = 0; j < s12; j++) {
+    	    	 pp1 = new double[2][s11];
+    	    	 pp2 = new double[2][s11];
+    	    	 for (i = 0; i < s11; i++) {
+    	    		 pp1[0][i] = r1[i][j];
+    	    		 pp1[1][i] = 0.0;
+    	    		 pp2[0][i] = r2[i][j];
+    	    		 pp2[1][i] = 0.0;
+    	    	 }
+    	    	 pp1 = ifftshift1d(pp1);
+    	    	 pp2 = ifftshift1d(pp2);
+    	    	 FFTUtility fft = new FFTUtility(pp1[0], pp1[1], 1, s11, 1, -1, FFTUtility.FFT);
+    		     fft.setShowProgress(false);
+    		     fft.run();
+    		     fft.finalize();
+    		     fft = null;
+    		     fft = new FFTUtility(pp2[0], pp2[1], 1, s11, 1, -1, FFTUtility.FFT);
+    		     fft.setShowProgress(false);
+    		     fft.run();
+    		     fft.finalize();
+    		     fft = null;
+    		     pp1 = fftshift1d(pp1);
+    		     pp2 = fftshift1d(pp2);
+    	    	 for (i = 0; i < s11; i++) {
+    	    		 ppp1[0][i][j] = pp1[0][i]/n;
+    	    		 ppp1[1][i][j] = pp1[1][i]/n;
+    	    		 ppp2[0][i][j] = pp2[0][i]/n;
+    	    		 ppp2[1][i][j] = pp2[1][i]/n;
+    	    	 }
+    	     }
+             
     		 double imComplex[][][] = OptimizedAdjPPFT(ppp1,ppp2);
     		 return imComplex[0];
 
@@ -5925,26 +5930,43 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 double res2Complex[][][] = new double[2][2*n+1][n+1];
 	
 	     OptimizedPPFT(res1Complex, res2Complex, im);
-	     double res1C[][] = new double[2][(2*n+1)*(n+1)];
-	     double res2C[][] = new double[2][(2*n+1)*(n+1)];
-	     for (i = 0; i < 2*n+1; i++) {
-	    	 for (j = 0; j < n+1; j++) {
-	    		 res1C[0][i*(n+1) + j] = res1Complex[0][i][j];
-	    		 res1C[1][i*(n+1) + j] = res1Complex[1][i][j];
-	    		 res2C[0][i*(n+1) + j] = res2Complex[0][i][j];
-	    		 res2C[1][i*(n+1) + j] = res2Complex[1][i][j];
+	     double res1C[][];
+	     double res2C[][];
+	     
+	     // Inverse FFT along columns
+	     for (j = 0; j < n+1; j++) {
+	    	 res1C = new double[2][2*n+1];
+	    	 res2C = new double[2][2*n+1];
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 res1C[0][i] = res1Complex[0][i][j];
+	    		 res1C[1][i] = res1Complex[1][i][j];
+	    		 res2C[0][i] = res2Complex[0][i][j];
+	    		 res2C[1][i] = res2Complex[1][i][j];
+	    	 }
+	    	 res1C = ifftshift1d(res1C);
+	    	 res2C = ifftshift1d(res2C);
+	    	 FFTUtility fft = new FFTUtility(res1C[0], res1C[1], 1, 2*n+1, 1, 1, FFTUtility.FFT);
+		     fft.setShowProgress(false);
+		     fft.run();
+		     fft.finalize();
+		     fft = null;
+		     fft = new FFTUtility(res2C[0], res2C[1], 1, 2*n+1, 1, 1, FFTUtility.FFT);
+		     fft.setShowProgress(false);
+		     fft.run();
+		     fft.finalize();
+		     fft = null;
+		     res1C = fftshift1d(res1C);
+		     res2C = fftshift1d(res2C);
+	    	 for (i = 0; i < 2*n+1; i++) {
+	    		 res1Complex[0][i][j] = res1C[0][i];
+	    		 res1Complex[1][i][j] = res1C[1][i];
+	    		 res2Complex[0][i][j] = res2C[0][i];
+	    		 res2Complex[1][i][j] = res2C[1][i];
 	    	 }
 	     }
 	
-	     // Inverse FFT along columns
-	     FFTUtility ifft = new FFTUtility(res1C[0], res1C[1], 1, 2*n+1, n+1, 1, FFTUtility.FFT);
-	     ifft.run();
-	     ifft.finalize();
-	     ifft = null;
-	     FFTUtility ifft2 = new FFTUtility(res2C[0], res2C[1], 1, 2*n+1, n+1, 1, FFTUtility.FFT);
-	     ifft2.run();
-	     ifft2.finalize();
-	     ifft2 = null;
+	     
+	     
 	
 	     // For safety - should never happen.
 	     // No complex entries are expected in rim (the result array).
@@ -5953,11 +5975,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     double maxAbsVal2 = 0.0;
 	     for (i = 0; i < 2*n+1; i++) {
 	    	 for (j = 0; j < n+1; j++) {
-	    		 if (Math.abs(res1C[1][i*(n+1) + j]) > maxAbsVal1) {
-	    			 maxAbsVal1 = Math.abs(res1C[1][i*(n+1) + j]);
+	    		 if (Math.abs(res1Complex[1][i][j]) > maxAbsVal1) {
+	    			 maxAbsVal1 = Math.abs(res1Complex[1][i][j]);
 	    		 }
-	    		 if (Math.abs(res2C[1][i*(n+1) + j]) > maxAbsVal2) {
-	    			 maxAbsVal2 = Math.abs(res2C[1][i*(n+1) + j]);
+	    		 if (Math.abs(res2Complex[1][i][j]) > maxAbsVal2) {
+	    			 maxAbsVal2 = Math.abs(res2Complex[1][i][j]);
 	    		 }
 	    	 }
 	     }
@@ -5973,8 +5995,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // although the imaginary part is very close to zero.
 	     for (i = 0; i < 2*n+1; i++) {
 	    	 for (j = 0; j < n+1; j++) {
-	    		 res1[i][j] = res1C[0][i*(n+1) + j];
-	    		 res2[i][j] = res2C[0][i*(n+1) + j];
+	    		 res1[i][j] = res1Complex[0][i][j];
+	    		 res2[i][j] = res2Complex[0][i][j];
 	    	 }
 	     }
 	        
