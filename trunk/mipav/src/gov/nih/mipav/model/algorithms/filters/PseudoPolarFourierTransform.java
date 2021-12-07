@@ -2632,8 +2632,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	    double pk[][][];
     	    double dk;
     	    boolean done;
-    	    double perr;
-    	    double xerr;
+    	    double perr = 0.0;
+    	    double xerr = 0.0;
     	    double err;
     	    double hk[][][];
     	    double tk[] = new double[1];
@@ -2725,7 +2725,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		        for (r = 0; r < row; r++) {
     		        	for (c = 0; c < col; c++) {
     		        		dotProd[0] += (pk[0][r][c]*hk[0][r][c] - pk[1][r][c]*hk[1][r][c]);
-    		        		dotProd[1] += (pk[0][r][c]*hk[1][r][c] + pk[1][r][c]*hk[0][r][c])
+    		        		dotProd[1] += (pk[0][r][c]*hk[1][r][c] + pk[1][r][c]*hk[0][r][c]);
     		        	}
     		        }
     		        zdiv(dk, 0.0, dotProd[0], dotProd[1], tk, tkImag);
