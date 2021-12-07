@@ -5160,6 +5160,201 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 return im;
      }
      
+     private double[][][] PrecondAdjPPFT(double pp1[][][], double pp2[][][]) { 
+    		 
+    		 // Computes the preconditioned adjoint of the pseudo-polar Fourier transform.
+    		 
+    		 // pp1,pp2  The pseudo-polar sections.
+    		 //          pp1 and pp2 must be of size (2n+1)x(n+1) as results from PPFT.
+    		 
+    		 // Returns the image (im) that is the preconditioned adjoint of the PPFT.
+    		 // See differences between this function and the function optimizedadjppft.m
+    		 // to see how the preconditioner is defined.
+    		 // See precond.m for an explicit form of the preconditioner.
+    		 
+    		 // Yoel Shkolnisky 17/12/02
+    	 
+	    	 int i, j, k, m;
+	    	 double mSquared;
+	    	 double alpha;
+	    	 double mult;
+	         double u[][];
+	         double v[][];
+	         int idx;
+	         
+	         // Check if the input is of valid size 2x(2n+1)x(n+1)
+	    	 int s11 = pp1[0].length;
+	 	     int s12 = pp1[0][0].length;
+	 	     int s21 = pp2[0].length;
+	 	     int s22 = pp2[0][0].length;
+	 	    
+	 	     if (s11 != s21) {
+	 	    	 System.err.println("In PrecondAdjPPFT pp1[0].length != pp2[0].length");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if (s12 != s22) {
+	 	    	 System.err.println("In PrecondAdjPPFT pp1[0][0].length != pp2[0][0].length");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     if ((s11 % 2) != 1) {
+	 	    	 System.err.println("In PrecondAdjPPFT pp1[0].length is not odd");
+	 	    	 System.exit(0);
+	 	     }	
+	 	    
+	 	     if ((s12 % 2) != 1) {
+	 	    	 System.err.println("In PrecondAdjPPFT pp1[0][0].length is not odd");
+	 	    	 System.exit(0);
+	 	     }
+	 	
+	 	     if (((s11 - 1)/2) != (s12 - 1)) {
+	 	    	 System.err.println("In PrecondAdjPPFT input parameter is not of form (2n+1)x(n+1)");
+	 	    	 System.exit(0);
+	 	     }
+	 	    
+	 	     int n = (s11 - 1)/2;
+
+    		 m=2*n+1;
+    		 alpha = 2.0*(n+1.0)/(n*m);
+    		 mSquared = (double)(m*m);
+
+    		 // Compute the adjoint of PP1
+    		 double tmp[][][] = new double[2][2*n+1][n];
+    		 u = new double[2][n+1];
+    		 for (k=-n; k <= n; k++) {
+    		    if (k==0) {
+    		       mult = 1.0/mSquared;
+    		    }
+    		    else {
+    		       mult = Math.abs(k*alpha);
+    		    }
+    		    idx = toUnaliasedIdx(k,2*n+1);
+    		    
+    		    for (i = 0; i < n+1; i++) {
+    		    	u[0][i] = pp1[0][idx][n-i];
+    		    	u[1][i] = pp1[1][idx][n-1];
+    		    }
+    		    v = cfrft(u,-k*alpha);
+    		    for (i = 0; i < n; i++) {
+    		    	v[0][i] = mult*v[0][i];
+    		    	v[1][i] = mult*v[1][i];
+    		    	tmp[0][idx][i] = v[0][i];
+    		    	tmp[1][idx][i] = v[1][i];
+    		    }
+    		 } // for (k=-n; k <= n; k++)
+
+    		 // Inverse FFT along columns
+    		 double tmpC[][];
+    	     for (j = 0; j < n; j++) {
+    	    	 tmpC = new double[2][2*n+1];
+    	    	 for (i = 0; i < 2*n+1; i++) {
+    	    		 tmpC[0][i] = tmp[0][i][j];
+    	    		 tmpC[1][i] = tmp[1][i][j];
+    	    	 }
+    	    	 tmpC = ifftshift1d(tmpC);
+    	    	 FFTUtility fft = new FFTUtility(tmpC[0], tmpC[1], 1, 2*n+1, 1, 1, FFTUtility.FFT);
+    		     fft.setShowProgress(false);
+    		     fft.run();
+    		     fft.finalize();
+    		     fft = null;
+    		     tmpC = fftshift1d(tmpC);
+    	    	 for (i = 0; i < 2*n+1; i++) {
+    	    		 tmp[0][i][j] = m*tmpC[0][i];
+    	    		 tmp[1][i][j] = m*tmpC[1][i];
+    	    	 }
+    	     }
+            
+    	     double adjpp1[][][] = new double[2][n][n];
+             for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 adjpp1[0][i][j] = tmp[0][3*n/2 - 1 - i][j];
+    				 adjpp1[1][i][j] = tmp[1][3*n/2 - 1 - i][j];
+    			 }
+    		 }
+
+    		 // Compute the adjoint of PP2
+
+             tmp = new double[2][2*n+1][n];
+             for (k=-n; k <= n; k++) {
+     		    if (k==0) {
+     		       mult = 1.0/mSquared;
+     		    }
+     		    else {
+     		       mult = Math.abs(k*alpha);
+     		    }
+     		    idx = toUnaliasedIdx(k,2*n+1);
+     		    
+     		    for (i = 0; i < n+1; i++) {
+     		    	u[0][i] = pp2[0][idx][n-i];
+     		    	u[1][i] = pp2[1][idx][n-1];
+     		    }
+     		    v = cfrft(u,-k*alpha);
+     		    for (i = 0; i < n; i++) {
+     		    	v[0][i] = mult*v[0][i];
+     		    	v[1][i] = mult*v[1][i];
+     		    	tmp[0][idx][i] = v[0][i];
+     		    	tmp[1][idx][i] = v[1][i];
+     		    }
+     		 } // for (k=-n; k <= n; k++)
+    		 
+    		 // To follow the code in adjPPFT we should have transposed each row before we assign it to tmp 
+    		 // (and creating an array of size nx(2n+1)). Then we had to apply cfft along the rows.
+    		 // To save operations, we assign the vector v to tmp without transpose, apply cfft along columns
+    		 // and then transpose the entire matrix at once.
+
+             // Inverse FFT along columns
+    	     for (j = 0; j < n; j++) {
+    	    	 tmpC = new double[2][2*n+1];
+    	    	 for (i = 0; i < 2*n+1; i++) {
+    	    		 tmpC[0][i] = tmp[0][i][j];
+    	    		 tmpC[1][i] = tmp[1][i][j];
+    	    	 }
+    	    	 tmpC = ifftshift1d(tmpC);
+    	    	 FFTUtility fft = new FFTUtility(tmpC[0], tmpC[1], 1, 2*n+1, 1, 1, FFTUtility.FFT);
+    		     fft.setShowProgress(false);
+    		     fft.run();
+    		     fft.finalize();
+    		     fft = null;
+    		     tmpC = fftshift1d(tmpC);
+    	    	 for (i = 0; i < 2*n+1; i++) {
+    	    		 tmp[0][i][j] = m*tmpC[0][i];
+    	    		 tmp[1][i][j] = m*tmpC[1][i];
+    	    	 }
+    	     }
+    	     
+    	     double tmpTranspose[][][] = new double[2][n][2*n+1];
+             for (i = 0; i < 2*n+1; i++) {
+            	 for (j = 0; j < n; j++) {
+            		 tmpTranspose[0][j][i] = tmp[0][i][j];
+            		 tmpTranspose[1][j][i] = tmp[1][i][j];
+            	 }
+             }
+
+             double adjpp2[][][] = new double[2][n][n];
+             for (i = 0; i < n; i++) {
+            	 for (j = 0; j < n; j++) {
+            		 adjpp2[0][i][j] = tmpTranspose[0][n-1-i][j+n/2]; 
+            		 adjpp2[1][i][j] = tmpTranspose[1][n-1-i][j+n/2];
+            	 }
+             }
+            
+
+    		 // Combine both adjoints
+             double im[][][] = new double[2][n][n];
+             for (i = 0; i < n; i++) {
+            	 for (j = 0; j < n; j++) {
+            		 im[0][i][j] = (adjpp1[0][i][j] + adjpp2[0][i][j])/mSquared;
+            		 im[1][i][j] = (adjpp1[1][i][j] + adjpp2[1][i][j])/mSquared;
+            	 }
+             }
+             return im;
+
+    		 // Revision record
+    		 // 15/1/03   Yoel Shkolnisky     Use cfftd instead of column-wise cfft
+     }
+
+     
      private double[][][] OptimizedAdjPPFT(double pp1[][][], double pp2[][][]) {
     		 
 		 // Optimized version of adjppft, the adjoint operator of the
@@ -6115,8 +6310,6 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     }
 	     return acc;
      }
-
-
 
    
 }
