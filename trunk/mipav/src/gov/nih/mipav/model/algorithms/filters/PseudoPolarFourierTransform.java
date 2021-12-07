@@ -687,6 +687,9 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     }
     
     public void testRadon() {
+    	// PPFT OK
+    	// OptimizedPPFT OK
+    	// Radon OK
 	    
 	    // Tests the functions PPFT,Optimized PPFT, and Radon.
 	    // See also PPFT, OptimizedPPPT, Radon.
@@ -6027,7 +6030,6 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 
     	 int i,j,l,n,ppRows,ppCols,t,u,v;
     	 double slope, acc;
-    	 double trig[];
     	 double imflip[][] = new double[im.length][im[0].length];
 	     for (i = 0; i < im.length; i++) {
 	    	 for (j = 0; j < im[0].length; j++) {
@@ -6062,7 +6064,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	           acc   = 0;
 	           
 	           for (u=-n/2; u <= n/2-1; u++) {
-	              acc = acc + I1(im,n,u,slope*u+t);
+	              acc = acc + I1(imflip,n,u,slope*u+t);
 	           }
 	           res1[toUnaliasedIdx(t,ppRows)][toUnaliasedIdx(l,ppCols)]=acc;
 	        }
@@ -6076,7 +6078,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	           acc   = 0;
 	           
 	           for (v=-n/2; v <= n/2-1; v++) {
-	              acc = acc + I2(im,n,slope*v+t,v);
+	              acc = acc + I2(imflip,n,slope*v+t,v);
 	           }
 	           res2[toUnaliasedIdx(t,ppRows)][toUnaliasedIdx(l,ppCols)]=acc;
 	        }
