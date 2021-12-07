@@ -2581,7 +2581,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
 
     
-    /*private void CG(double [][][]Y, int flag[], double relres[], int iter[] ,double absres[],
+    private void CG(double [][][]Y, int flag[], double relres[], int iter[] ,double absres[],
     		// function PtP
     		double[][][]X, double[] params, double ErrTol,int MaxIts,
     		double [][][]guess, boolean verbose, double [][][]RefY) {
@@ -2624,9 +2624,25 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	    boolean suppress_output;
     	    double xk[][][];
     	    double temp[][][];
+    	    double temp2;
+    	    int row = X[0].length;
+    	    int col = X[0][0].length;
+    	    int j,r,c;
+    	    double gk[][][];
+    	    double pk[][][];
+    	    double dk;
+    	    boolean done;
+    	    double perr;
+    	    double xerr;
+    	    double err;
+    	    double hk[][][];
+    	    double tk[] = new double[1];
+    	    double tkImag[] = new double[1];
+    	    double dotProd[];
+    	    double bk;
     		ref_given=true;         // The flags is 1 if the reference untransformed matrix RefY is given and 0 otherwise
 
-    		if (refY == null) {    // RefY not given
+    		if (RefY == null) {    // RefY not given
     		   ref_given=false;   
     		}
 
@@ -2644,56 +2660,112 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		iter[0]=-1;
 
     		// Initialization
-    		xk = guess;
+    		xk = new double[2][row][col];
+    		for (r = 0; r < row; r++) {
+    			for (c = 0; c < col; c++) {
+    				xk[0][r][c] = guess[0][r][c];
+    				xk[1][r][c] = guess[1][r][c];
+    			}
+    		}
     		// Evaluates the function PtP using xk and params
     		temp = PtP(xk);
-    		gk = temp-X;
-    		pk = -gk;
-    		dk = sum(abs(gk(:)).^2);
+    		gk = new double[2][row][col];
+    		pk = new double[2][row][col];
+    		dk = 0.0;
+    		for (r = 0; r < row; r++) {
+    			for (c = 0; c < col; c++) {
+		    		gk[0][r][c] = temp[0][r][c]-X[0][r][c];
+		    		gk[1][r][c] = temp[1][r][c]-X[1][r][c];
+		    		pk[0][r][c] = -gk[0][r][c];
+		    		pk[1][r][c] = -gk[1][r][c];
+		    		dk += (gk[0][r][c]*gk[0][r][c] + gk[1][r][c]*gk[1][r][c]);
+    			}
+    		}
 
-    		% Conjugate gradient iteration
+    		// Conjugate gradient iteration
     		j=2;
-    		done = 0;
-    		while (j<=MaxIts) & (~done)
-    		    perr=sum((abs(pk(:))).^2);
-    		    if ref_given % If reference matrix is given compute absolute error
-    		        xerr=max(max(abs(RefY-xk)));
-    		    end
-    		    if (~suppress_output) & (flag)
-    		%        fprintf('Iteration %2d:  Residual error=%-2.7e',j-1,perr);
-    		        fprintf('Iteration %2d:  Gradient norm=%-2.7e',j-1,perr);
-    		        fprintf('\t Residual error=%-2.7e',dk);
-    		        if ref_given            
-    		            fprintf('\t Absolute error=%-2.7e',xerr);
-    		        end
-    		        fprintf('\n');
-    		    end
+    		done = false;
+    		while ((j<=MaxIts) && (!done)) {
+    			perr = 0.0;
+    			for (r = 0; r < row; r++) {
+    				for (c = 0; c < col; c++) {
+    					perr += (pk[0][r][c]*pk[0][r][c] + pk[1][r][c]*pk[1][r][c]);
+    				}
+    			}
+    		    if (ref_given) { // If reference matrix is given compute absolute error
+    		    	xerr = 0;
+    		    	for (r = 0; r < row; r++) {
+    		    		for (c = 0; c < col; c++) {
+    		    			err = zabs(RefY[0][r][c]-xk[0][r][c],RefY[1][r][c]-xk[1][r][c]);
+    		    			if (err > xerr) {
+    		    				xerr = err;
+    		    			}
+    		    		}
+    		    	}
+    		    }
+    		    if ((!suppress_output) && (flag[0] == 1)) {
+    		    	System.out.println("Iteration = " + (j-1));
+    		    	System.out.println("Gradient norm = " + perr);
+    		    	System.out.println("Residual error = " + dk);
+    		        if (ref_given) {
+    		        	System.out.println("Absolute error = " + xerr);
+    		        }
+    		        System.out.println();
+    		    } // if ((!suppress_output) && (flag[0] == 1))
 
-    		    if perr<=ErrTol
-    		        iter=j-1;  %CG converged at previous iteration
-    		        flag=0;
-    		        done=1;
-    		    end
-    		    if perr>ErrTol
-    		        hk = feval(PtP,pk,params{:});
-    		        tk = dk/dot(pk(:),hk(:));  %line search parameter
-    		        xk = xk+tk*pk;       % update approximate solution
-    		        gk = gk+tk*hk;       % update gradient
-    		        temp = sum(abs(gk(:)).^2);
-    		        bk = temp/dk;
-    		        dk = temp;
-    		        pk = -gk+bk*pk;       %update search direction
-    		    end
+    		    if (perr<=ErrTol) {
+    		        iter[0]=j-1;  // CG converged at previous iteration
+    		        flag[0]=0;
+    		        done=true;
+    		    }
+    		    if (perr>ErrTol) {
+    		        hk = PtP(pk);
+    		        // line search parameter
+    		        dotProd = new double[2];
+    		        for (r = 0; r < row; r++) {
+    		        	for (c = 0; c < col; c++) {
+    		        		dotProd[0] += (pk[0][r][c]*hk[0][r][c] - pk[1][r][c]*hk[1][r][c]);
+    		        		dotProd[1] += (pk[0][r][c]*hk[1][r][c] + pk[1][r][c]*hk[0][r][c])
+    		        	}
+    		        }
+    		        zdiv(dk, 0.0, dotProd[0], dotProd[1], tk, tkImag);
+    		        temp2 = 0.0;
+    		        for (r = 0; r < row; r++) {
+    		        	for (c = 0; c < col; c++) {
+    		        		// update approximate solution
+		    		        xk[0][r][c] = xk[0][r][c]+tk[0]*pk[0][r][c] - tkImag[0]*pk[1][r][c]; 
+		    		        xk[1][r][c] = xk[1][r][c]+tk[0]*pk[1][r][c] + tkImag[0]*pk[0][r][c]; 
+		    		        // update gradient
+		    		        gk[0][r][c] = gk[0][r][c]+tk[0]*hk[0][r][c] - tkImag[0]*hk[1][r][c]; 
+		    		        gk[1][r][c] = gk[1][r][c]+tk[0]*hk[1][r][c] + tkImag[0]*hk[0][r][c]; 
+		    		        temp2 += (gk[0][r][c]*gk[0][r][c] + gk[1][r][c]*gk[1][r][c]);
+    		        	}
+    		        }
+    		        bk = temp2/dk;
+    		        dk = temp2;
+    		        // update search direction
+    		        for (r = 0; r < row; r++) {
+    		        	for (c = 0; c < col; c++) {
+    		                pk[0][r][c] = -gk[0][r][c]+bk*pk[0][r][c];
+    		                pk[1][r][c] = -gk[1][r][c]+bk*pk[1][r][c];
+    		        	}
+    		        }
+    		    } // if (perr>ErrTol)
     		    j=j+1;
-    		end
+    		} // while ((j<=MaxIts) && (!done))
 
-    		relres = perr;
-    		if ref_given
-    		    absres = xerr;
-    		end      
+    		relres[0] = perr;
+    		if (ref_given) {
+    		    absres[0] = xerr;
+    		}      
 
-    		Y = xk;
-    } // private void CG*/
+    		for (r = 0; r < row; r++) {
+    			for (c = 0; c < col; c++) {
+    				Y[0][r][c] = xk[0][r][c];
+    				Y[1][r][c] = xk[1][r][c];
+    			}
+    		}
+    } // private void CG
     
     private double[] dirichlet(double t[], int m) {
     		
