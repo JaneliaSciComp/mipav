@@ -514,6 +514,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        for (m = 0; m < k; m++) {
 	        	for (n = 0; n < k; n++) {
 	        		A[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+	        		A[1][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
 	        	}
 	        }
 	        B1 = new double[2][2*k+1][k+1];
@@ -528,7 +529,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        }
 	        r1 = new double[2][2*k+1][k+1];
 	        r2 = new double[2][2*k+1][k+1];
-	        OptimizedPPFT(r1,r2,A[0]);
+	        OptimizedPPFT(r1,r2,A);
 	        //PPFT(r1,r2,A[0]);
 	        r = new double[2][2*k+1][2*(k+1)];
 	        B = new double[2][2*k+1][2*(k+1)];
@@ -607,6 +608,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		        for (m = 0; m < k; m++) {
 		        	for (n = 0; n < k; n++) {
 		        		A[0][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
+		        		A[1][m][n] = randomGen.genUniformRandomNum(0.0, 1.0);
 		        	}
 		        }
 		        B1 = new double[2][2*k+1][k+1];
@@ -643,7 +645,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		        	}
 		        }
 		        if (l == 1) {
-		        	PPFT(r1,r2,A[0]);
+		        	PPFT(r1,r2,A);
 			        for (m = 0; m < 2*k+1; m++) {
 			        	for (n = 0; n < k+1; n++) {
 			        		r[0][m][n] = r1[0][m][n];
@@ -698,11 +700,12 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
 	    double eps = 0.00000001;
 	    int imint[][] = MagicSquare(8);
-	    double im[][] = new double[8][8];
+	    double im[][][] = new double[2][8][8];
 	    int i,j;
 	    for (i = 0; i < 8; i++) {
 	    	for (j = 0; j < 8; j++) {
-	    		im[i][j] = (double)imint[i][j];
+	    		im[0][i][j] = (double)imint[i][j];
+	    		im[1][i][j] = (double)imint[i][j] + 1.0;
 	    	}
 	    }
 	    
@@ -764,8 +767,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    double r1[][] = new double[17][9];
 	    double r2[][] = new double[17][9];
 	
-	    slowRadon(sr1,sr2,im);
-	    Radon(r1,r2,im);
+	    slowRadon(sr1,sr2,im[0]);
+	    Radon(r1,r2,im[0]);
 	    double maxr1Error = 0.0;
 	    double maxr2Error = 0.0;
 	    
@@ -2620,6 +2623,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	    boolean ref_given;
     	    boolean suppress_output;
     	    double xk[][][];
+    	    double temp[][][];
     		ref_given=true;         // The flags is 1 if the reference untransformed matrix RefY is given and 0 otherwise
 
     		if (refY == null) {    // RefY not given
@@ -2642,7 +2646,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		// Initialization
     		xk = guess;
     		// Evaluates the function PtP using xk and params
-    		//temp = feval(PtP,xk,params{:});
+    		temp = PtP(xk);
     		gk = temp-X;
     		pk = -gk;
     		dk = sum(abs(gk(:)).^2);
@@ -2689,7 +2693,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		end      
 
     		Y = xk;
-    } // private void CG */
+    } // private void CG*/
     
     private double[] dirichlet(double t[], int m) {
     		
@@ -5725,7 +5729,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 return y;
      }
      
-     private void PPFT(double res1[][][], double res2[][][], double im[][]) {
+     private void PPFT(double res1[][][], double res2[][][], double im[][][]) {
      
 	     // Fast algorithm for computing the pseudo-polar Fourier transform.
 	     // The computation requires O(n^2logn) operations.
@@ -5781,15 +5785,16 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 double u[][];
     	 double w[][];
     	 double v[][];
-    	 double imflip[][] = new double[im.length][im[0].length];
-	     for (i = 0; i < im.length; i++) {
-	    	 for (j = 0; j < im[0].length; j++) {
-	    		 imflip[i][j] = im[im.length-1-i][j];
+    	 double imflip[][][] = new double[2][im[0].length][im[0][0].length];
+	     for (i = 0; i < im[0].length; i++) {
+	    	 for (j = 0; j < im[0][0].length; j++) {
+	    		 imflip[0][i][j] = im[0][im[0].length-1-i][j];
+	    		 imflip[1][i][j] = im[1][im[0].length-1-i][j];
 	    	 }
 	     }
 	
-	     int s1 = im.length;
-	     int s2 = im[0].length;
+	     int s1 = im[0].length;
+	     int s2 = im[0][0].length;
 	     
 	     if (s1 != s2) {
 	        System.err.println("In PPFT input image must be square");
@@ -5812,7 +5817,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     double EI[][][] = new double[2][2*n+1][n];
 	     for (i = 0; i < n; i++) {
 	    	 for (j = 0; j < n; j++) {
-	    		 EI[0][i+n/2][j] = imflip[i][j];
+	    		 EI[0][i+n/2][j] = imflip[0][i][j];
+	    		 EI[1][i+n/2][j] = imflip[1][i][j];
 	    	 }
 	     }
 	     double FEI[][][] = cfft2(EI);
@@ -5837,7 +5843,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     EI = new double[2][n][2*n+1];
 	     for (i = 0; i < n; i++) {
 	    	 for (j = 0; j < n; j++) {
-	    		 EI[0][i][j+n/2] = imflip[i][j];
+	    		 EI[0][i][j+n/2] = imflip[0][i][j];
+	    		 EI[1][i][j+n/2] = imflip[1][i][j];
 	    	 }
 	     }
 	     FEI = cfft2(EI);
@@ -5861,7 +5868,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // 9/12/02   Yoel Shkolnisky     Added comments
      }
 
-     private void OptimizedPPFT(double res1[][][], double res2[][][], double im[][]) {
+     private void OptimizedPPFT(double res1[][][], double res2[][][], double im[][][]) {
 	     
 	     // Optimized algorithm for computing the pseudo-polar Fourier transform.
 	     // The computation requires O(n^2logn) operations and uses further 
@@ -5884,15 +5891,16 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 double u[][];
     	 double w[][];
     	 double v[][];
-    	 double imflip[][] = new double[im.length][im[0].length];
-	     for (i = 0; i < im.length; i++) {
-	    	 for (j = 0; j < im[0].length; j++) {
-	    		 imflip[i][j] = im[im.length-1-i][j];
+    	 double imflip[][][] = new double[2][im[0].length][im[0][0].length];
+	     for (i = 0; i < im[0].length; i++) {
+	    	 for (j = 0; j < im[0][0].length; j++) {
+	    		 imflip[0][i][j] = im[0][im[0].length-1-i][j];
+	    		 imflip[1][i][j] = im[1][im[0].length-1-i][j];
 	    	 }
 	     }
 	
-	     int s1 = im.length;
-	     int s2 = im[0].length;
+	     int s1 = im[0].length;
+	     int s2 = im[0][0].length;
 	     
 	     if (s1 != s2) {
 	        System.err.println("In OptimizedPPFT input image must be square");
@@ -5918,7 +5926,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     for (j = 0; j < n; j++) {
 	    	 FEIC = new double[2][2*n+1];
 	    	 for (i = 0; i < n; i++) {
-	    		 FEIC[0][n/2+i] = imflip[i][j];
+	    		 FEIC[0][n/2+i] = imflip[0][i][j];
+	    		 FEIC[1][n/2+i] = imflip[1][i][j];
 	    	 }
 	    	 FEIC = ifftshift1d(FEIC);
 	    	 FFTUtility fft = new FFTUtility(FEIC[0], FEIC[1], 1, 2*n+1, 1, -1, FFTUtility.FFT);
@@ -5961,7 +5970,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     for (i = 0; i < n; i++) {
 	    	 FEIR = new double[2][2*n+1];
 	    	 for (j = 0; j < n; j++) {
-	    		 FEIR[0][j+n/2] = imflip[i][j];
+	    		 FEIR[0][j+n/2] = imflip[0][i][j];
+	    		 FEIR[1][j+n/2] = imflip[1][i][j];
 	    	 }
 	    	 FEIR = ifftshift1d(FEIR);
 	    	 FFTUtility fft2 = new FFTUtility(FEIR[0], FEIR[1], 1, 2*n+1, 1, -1, FFTUtility.FFT);
@@ -5994,7 +6004,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // 15/1/03   Yoel Shkolnisky     Used cfftd instead of column-wise cfft
      }
      
-     private void slowPPFT(double res1[][][], double res2[][][], double im[][]) {
+     private void slowPPFT(double res1[][][], double res2[][][], double im[][][]) {
 	     
 	     // Compute the pseudo-polar Fourier transform directly.
 	     // The computation requires O(n^4) operations.
@@ -6016,15 +6026,16 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 
     	 int i,j,k,l,n,ppRows,ppCols;
     	 double trig[];
-    	 double imflip[][] = new double[im.length][im[0].length];
-	     for (i = 0; i < im.length; i++) {
-	    	 for (j = 0; j < im[0].length; j++) {
-	    		 imflip[i][j] = im[im.length-1-i][j];
+    	 double imflip[][][] = new double[2][im[0].length][im[0][0].length];
+	     for (i = 0; i < im[0].length; i++) {
+	    	 for (j = 0; j < im[0][0].length; j++) {
+	    		 imflip[0][i][j] = im[0][im[0].length-1-i][j];
+	    		 imflip[1][i][j] = im[1][im[0].length-1-i][j];
 	    	 }
 	     }
 	
-	     int s1 = im.length;
-	     int s2 = im[0].length;
+	     int s1 = im[0].length;
+	     int s2 = im[0][0].length;
 	     
 	     if (s1 != s2) {
 	        System.err.println("In slowPPFT input image must be square");
@@ -6063,7 +6074,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
      }
 
 
-     private double[] trigPoly(double im[][], double xi1, double xi2) {
+     private double[] trigPoly(double im[][][], double xi1, double xi2) {
 	     // The function evaluates the trigonometric polynomial
 	     //                          n/2    n/2
 	     //       TrigPolyI(xi1,xi2) = sum    sum I(u,v)*exp(-2*pi*i*(xi1*u+xi2*v)/m)       m=2n+1
@@ -6077,16 +6088,19 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // The calling function (slowPPFT) uses this auxiliary function to compute the trigonometric 
 	     // polynomial on the pseudo-polar grid points.
 	
-	     int n = im.length;
+	     int n = im[0].length;
 	     int m=2*n+1;
 	     double acc[] = new double[2];
 	     int u,v;
 	     for (u=lowIdx(n); u <= hiIdx(n); u++) {     // x direction
 	        for (v=lowIdx(n); v <= hiIdx(n); v++) {  // y direction
-	           double imcom = im[toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)];
+	           double imcom = im[0][toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)];
+	           double imcomImag = im[1][toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)];
 	           double arg = 2.0*Math.PI*(xi1*u + xi2*v)/m;
-	           acc[0] = acc[0] + imcom*Math.cos(arg);
-	           acc[1] = acc[1] - imcom*Math.sin(arg);
+	           double cos = Math.cos(arg);
+	           double sin = Math.sin(arg);
+	           acc[0] = acc[0] + imcom*cos + imcomImag*sin;
+	           acc[1] = acc[1] - imcom*sin + imcomImag*cos;
 	        }
 	     }
 	     return acc;
@@ -6098,7 +6112,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
      
      private void Radon(double res1[][], double res2[][], double im[][]) {
-    	 // res1, res2, and im are real
+    	 // res1 and res2 are real
 	     // Fast algorithm for computing the discrete Radon transform.
 	     // The computation requires O(n^2logn) operations.
 	     
@@ -6123,11 +6137,17 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     
 	     // Yoel Shkolnisky 22/10/01
     	 int i,j;
-    	 int n = im.length;
+    	 int n = im[0].length;
     	 double res1Complex[][][] = new double[2][2*n+1][n+1];
     	 double res2Complex[][][] = new double[2][2*n+1][n+1];
+    	 double imComplex[][][] = new double[2][n][n];
+    	 for (i = 0; i < n; i++) {
+    		 for (j = 0; j < n; j++) {
+    			 imComplex[0][i][j] = im[i][j];
+    		 }
+    	 }
 	
-	     OptimizedPPFT(res1Complex, res2Complex, im);
+	     OptimizedPPFT(res1Complex, res2Complex, imComplex);
 	     double res1C[][];
 	     double res2C[][];
 	     
@@ -6311,5 +6331,27 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     return acc;
      }
 
+     private double[][][] PtP(double X[][][]) {
+    		 
+    		 // Gram Operator of the pseudo-polar Fourier transform.
+    		 // Performs adjP(D(P)) where
+    		 //    P     The pseudo-polar Fourier transform
+    		 //    D     Preconditioner
+    		 //    adjP  Adjoint pseudo-polar Fourier transform
+    		 
+    		 //  Input parameters:
+    		 //    X      n*n matrix (x,y)
+    		 //  Outputs parameters:
+    		 //    Y      n*n matrix (x,y)
+    		 //
+    		 // Yoel Shkolnisky 17/12/02
+
+    		 int n = X.length;
+    		 double pp1[][][] = new double[2][2*n+1][n+1];
+    		 double pp2[][][] = new double[2][2*n+1][n+1];
+    		 OptimizedPPFT(pp1, pp2, X);
+    		 double Y[][][] = PrecondAdjPPFT(pp1,pp2);
+    		 return Y;
+     }
    
 }
