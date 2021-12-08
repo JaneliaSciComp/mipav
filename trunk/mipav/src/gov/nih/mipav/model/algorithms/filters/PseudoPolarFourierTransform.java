@@ -334,6 +334,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     }
     
     public void testippft() {
+    	// Test passes Maximum error = 6.550393932985149E-11
     
 	    // Test the function ippt.
 	    // The function generates a matrix, computes its pseud-polar Fourier
@@ -345,12 +346,40 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
 	    double EPS=1.0e-10;
 	    int n=128;
-	    /*im=magic(n);
-	
-	    [pp1,pp2]=PPFT(im);
-	    rim=ippft(pp1,pp2,EPS);
-	    [v,I]=max(abs(im(:)-rim(:)));
-	    v/abs(im(I))*/
+	    int imint[][] = MagicSquare(128);
+	    double im[][][] = new double[2][128][128];
+	    int i,j;
+	    for (i = 0; i < 128; i++) {
+	    	for (j = 0; j < 128; j++) {
+	    		im[0][i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    double pp1[][][] = new double[2][257][129];
+	    double pp2[][][] = new double[2][257][129];
+	    PPFT(pp1,pp2,im);
+	    double Y[][][] = new double[2][128][128];
+	    int flag[] = new int[1];
+	    double residual[] = new double[1];
+	    int iter[] = new int[1];
+	    int maxIts = 100;
+	    boolean verbose = false;
+	    ippft(Y, flag, residual, iter,pp1,pp2,EPS, maxIts, verbose);
+	    double maxDiff = 0.0;
+	    double diff;
+	    int ival = 0;
+	    int jval = 0;
+	    for (i = 0; i < 128; i++) {
+	    	for (j = 0; j < 128; j++) {
+	    		diff = Math.abs(Y[0][i][j] - im[0][i][j]);
+	    		if (diff > maxDiff) {
+	    			maxDiff = diff;
+	    			ival = i;
+	    			jval = j;
+	    		}
+	    	}
+	    }
+	    double error = maxDiff/Math.abs(im[0][ival][jval]);
+	    System.out.println("Maximum error = " + error);
     }
     
     private int[][] MagicSquare(int n) {
@@ -2579,11 +2608,45 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		return g;
     }
 
+    private void ippft(double Y[][][], int flag[], double residual[], int iter[],
+    		double pp1[][][], double pp2[][][], double ErrTol, int MaxIts,
+    		boolean verbose) {
+	    
+	    // Inverse pseudo-polar Fourier transform.
+	    // The inverse transform is computed using conjugate gradient method.
+	    
+	    // Input arguments:
+	    // pp1,pp2      Pseudo-polar sectors as returned from the function ppft.
+	    // ErrTol       Optional parameter of error tolerance used by the conjugate
+	    //              gradient method. If not specified, tolerance of 1.e-2 is used.
+	    // MaxIts       Maximum number of iterations. Default 10.
+	    // verbose      Display verbose CG information. 0 will suppress verbose information.
+	    //              Any non-zero value will display verbose CG information.  Default is false
+	    
+	    // Output arguments:
+	    // Y            The inverted matrix.
+	    // flag         Convergence flag. See CG for more information.
+	    // residual     Residual error at the end of the inversion.
+	    // iter         The iteration number at which ErrTol was achieved. Relevant only if
+	    //              flag=0
+	    
+	    // Yoel Shkolnisky 18/12/02
+	
+	    double temp[][][] = PrecondAdjPPFT(pp1,pp2);
+	    double guess[][][] = new double[2][temp[0].length][temp[0][0].length];
+	    double absres[] = new double[1];
+	    CG(Y, flag, residual, iter, absres,/*'PtP',*/temp,ErrTol,MaxIts,guess,verbose,null);
+	    if (flag[0] == 1) {
+	       System.out.println("ippft warning! CG inversion did not converge. Residual error = " + residual[0]);
+	    }
+    }
 
     
     private void CG(double [][][]Y, int flag[], double relres[], int iter[] ,double absres[],
     		// function PtP
-    		double[][][]X, double[] params, double ErrTol,int MaxIts,
+    		double[][][]X, 
+    		//double[] params, 
+    		double ErrTol,int MaxIts,
     		double [][][]guess, boolean verbose, double [][][]RefY) {
     		
     		// Solve the system X=PtP(Y,params) using the conjugate gradient method.
@@ -5309,7 +5372,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		    
     		    for (i = 0; i < n+1; i++) {
     		    	u[0][i] = pp1[0][idx][n-i];
-    		    	u[1][i] = pp1[1][idx][n-1];
+    		    	u[1][i] = pp1[1][idx][n-i];
     		    }
     		    v = cfrft(u,-k*alpha);
     		    for (i = 0; i < n; i++) {
@@ -5352,6 +5415,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 // Compute the adjoint of PP2
 
              tmp = new double[2][2*n+1][n];
+             u = new double[2][n+1];
              for (k=-n; k <= n; k++) {
      		    if (k==0) {
      		       mult = 1.0/mSquared;
@@ -5363,7 +5427,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
      		    
      		    for (i = 0; i < n+1; i++) {
      		    	u[0][i] = pp2[0][idx][n-i];
-     		    	u[1][i] = pp2[1][idx][n-1];
+     		    	u[1][i] = pp2[1][idx][n-i];
      		    }
      		    v = cfrft(u,-k*alpha);
      		    for (i = 0; i < n; i++) {
@@ -6418,7 +6482,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 //
     		 // Yoel Shkolnisky 17/12/02
 
-    		 int n = X.length;
+    		 int n = X[0].length;
     		 double pp1[][][] = new double[2][2*n+1][n+1];
     		 double pp2[][][] = new double[2][2*n+1][n+1];
     		 OptimizedPPFT(pp1, pp2, X);
