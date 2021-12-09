@@ -12,6 +12,7 @@ import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -823,8 +824,219 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    	System.out.println("Radon OK");
 	    }
     }
+    
+    public void testIRadon() {
+        // All 8 tests passed.
+	    // Tests the functions iRadon and ippft.
+	    //
+	    // Tests the correctness and performance of the inversion algorithm of the discrete Radon transform.
+	    // The function tests also the inversion of the pseudo-polar Fourier transform since 
+	    // inverting the discrete Radon transform requirers inverting the pseudo-polar Fourier transform.
+	    
+	    // Yoel Shkolnisky 21/12/02
+	
+	    // test No.1: magic square of size 64x64
+	    // Inversion should converge
+	    double pp1[][][];
+	    double pp2[][][];
+		int imint[][] = MagicSquare(64);
+	    double a[][] = new double[64][64];
+	    int i,j;
+	    for (i = 0; i < 64; i++) {
+	    	for (j = 0; j < 64; j++) {
+	    		a[i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    pp1 = new double[2][2*64+1][64+1];
+	    pp2 = new double[2][2*64+1][64+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-2,20,a,"1 - Magic square 64x64",true,true);
+	
+	    // test No.2: magic square of size 64x64
+	    // Inversion should NOT converge (required error too small)
+	    imint = MagicSquare(64);
+	    a = new double[64][64];
+	    for (i = 0; i < 64; i++) {
+	    	for (j = 0; j < 64; j++) {
+	    		a[i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    pp1 = new double[2][2*64+1][64+1];
+	    pp2 = new double[2][2*64+1][64+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-7,10,a,"2 - Magic square 64x64 (error too small)",true,true);
+	
+	    // test No.3: magic square of size 64x64
+	    // Inversion should NOT converge (not enough iterations)
+	    imint = MagicSquare(64);
+	    a = new double[64][64];
+	    for (i = 0; i < 64; i++) {
+	    	for (j = 0; j < 64; j++) {
+	    		a[i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    pp1 = new double[2][2*64+1][64+1];
+	    pp2 = new double[2][2*64+1][64+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-4,5,a,"3 - Magic square 64x64 (not enough iterations)",true,true);
+	
+	
+	    // test No.4: magic square of size 128x128
+	    imint = MagicSquare(128);
+	    a = new double[128][128];
+	    for (i = 0; i < 128; i++) {
+	    	for (j = 0; j < 128; j++) {
+	    		a[i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    pp1 = new double[2][2*128+1][128+1];
+	    pp2 = new double[2][2*128+1][128+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-1,10,a,"4 - Magic square 128x128",true,true);
+	
+	    //test No.5: random 64x64 image with real values from [0,1]
+	    RandomNumberGen randomGen = new RandomNumberGen();
+	    a = new double[64][64];
+	    for (i = 0; i < 64; i++) {
+	    	for (j = 0; j < 64; j++) {
+	    		a[i][j] = randomGen.genUniformRandomNum(0.0, 1.0);;
+	    	}
+	    }
+	    pp1 = new double[2][2*64+1][64+1];
+	    pp2 = new double[2][2*64+1][64+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-2,10,a,"5 - Real random matrix 64x64 from [0,1]",true,false);
+	
+	    //test No.6: random 64x64 image with integer values from [0,255]
+	    a = new double[64][64];
+	    for (i = 0; i < 64; i++) {
+	    	for (j = 0; j < 64; j++) {
+	    		a[i][j] = Math.floor(256.0*randomGen.genUniformRandomNum(0.0, 1.0));
+	    	}
+	    }
+	    pp1 = new double[2][2*64+1][64+1];
+	    pp2 = new double[2][2*64+1][64+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-2,10,a,"6 - Integer random matrix 64x64 from [0,255]",true,true);
+	
+	    // test No.7: Lena 256
+	    String lenaFile = "C:" + File.separator + "Polar Fourier Transform" + File.separator+ "ppft2" + File.separator + "lena.bmp";
+	    FileIO fileIO = new FileIO(); 
+    	fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+    	ModelImage lenaImage = fileIO.readImage(lenaFile);
+    	int length = 256*256;
+    	int buffer[] = new int[length];
+    	try {
+    		lenaImage.exportData(0, length, buffer);
+    	}
+    	catch (IOException e) {
+    		System.err.println("IOException on lenaImage.exportData");
+    		System.exit(0);
+    	}
+    	lenaImage.disposeLocal();
+    	lenaImage = null;
+    	a = new double[256][256];
+	    for (i = 0; i < 256; i++) {
+	    	for (j = 0; j < 256; j++) {
+	    		a[i][j] =  (double)buffer[256*i+j];
+	    	}
+	    }
+	    pp1 = new double[2][2*256+1][256+1];
+	    pp2 = new double[2][2*256+1][256+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-2,10,a,"7 - Lena 256",true,true);
+	
+	    //test No.8: magic square 32x32. Run quietly
+	    imint = MagicSquare(32);
+	    a = new double[32][32];
+	    for (i = 0; i < 32; i++) {
+	    	for (j = 0; j < 32; j++) {
+	    		a[i][j] = (double)imint[i][j];
+	    	}
+	    }
+	    pp1 = new double[2][2*32+1][32+1];
+	    pp2 = new double[2][2*32+1][32+1];
+	    Radon(pp1[0],pp2[0],a);
+	    runTest(pp1,pp2,1.e-2,10,a,"8 - Magic square 32x32 (quiet)",false,true);
+    }
 
      
+    //%%%%%%%%%%%%%%%
+    // Sub functions
+    //%%%%%%%%%%%%%%%
+
+    // Execute a single inversion test.
+    // pp1,pp2      The Radon sectors.
+    // ErrTol       Residual error required from the inversion algorithm.
+    // MaxIts       Number of iterations of the inversion algorithm.
+    // ref          The original image. Used as a reference to check the absolute error.
+    // description  Test description for printing purposes.
+    // verbose      If true, print the inversion log.
+    // trueimage    True if the input represents the discrete Radon transform of an integer image.
+    //              In this case it is possible to exactly inverting the transform
+    //              by truncating any floating parts of the result.
+    private void runTest(double pp1[][][], double pp2[][][], double ErrTol,
+    		int MaxIts, double ref[][], String description,
+    		boolean verbose, boolean trueimage) {
+
+	    int i,j;
+    	System.out.println("Test name : " + description);
+	    int n = (pp1[0].length-1)/2;
+	    System.out.println("Input size = " + n);
+	    System.out.println("Requested error = " + ErrTol);
+	    System.out.println("Max number of iterations = " + MaxIts);
+	    if (verbose) {
+	       System.out.println("Inversion log:");
+	       System.out.println("--------------");
+	    }
+	    long startTime = System.currentTimeMillis();
+	    double Y[][][] = new double[2][n][n];
+	    int flag[] = new int[1];
+	    double res[] = new double[1];
+	    int iter[] = new int[1];
+	    iRadon(Y,flag,res,iter,pp1,pp2,ErrTol,MaxIts,verbose);
+	    double t = (System.currentTimeMillis() - startTime)/1000.0;
+	    String str;
+	    if (flag[0] == 0) {
+	       str = "CONVERGED";
+	    }
+	    else {
+	       str = "DID NOT CONVERGE";
+	    }
+	
+	    System.out.println("\nResults:");
+	    System.out.println("---------");
+	    System.out.println("Inversion " + str);
+	    System.out.println("Residual error " + res[0] + " at iteration no. " + iter[0]);
+	    double error;
+	    double maxError = 0.0;
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < n; j++) {
+	    		error = Math.abs(Y[0][i][j] - ref[i][j]);
+	    		if (error > maxError) {
+	    			maxError = error;
+	    		}
+	    	}
+	    }
+	    System.out.println("Maxiumum absolute error = " + maxError);
+	
+	    if (trueimage) {
+	    	maxError = 0.0;
+	    	for (i = 0; i < n; i++) {
+		    	for (j = 0; j < n; j++) {
+		    		error = Math.abs(Math.round(Y[0][i][j]) - ref[i][j]);
+		    		if (error > maxError) {
+		    			maxError = error;
+		    		}
+		    	}
+		    }
+	       System.out.println("Maximum absolute error of reconstructed image = " + maxError);
+	    }
+	       
+	    System.out.println("Computation time = " + t + " seconds");
+	    System.out.println("--------------------------------------------------------\n\n");
+    }
 
 
      
@@ -2606,6 +2818,84 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		   g[1][outIdx] = accImag;
     		}
     		return g;
+    }
+    
+    private void iRadon(double Y[][][], int flag[], double residual[], int iter[],
+    		double res1[][][], double res2[][][], double ErrTol, int MaxIts,
+    		boolean verbose) {
+    		
+    		// 2-D inverse discrete Radon transform.
+    		// The inverse transform is computed using the conjugate gradient method.
+    		
+    		//  Input parameters:
+    		//    res1,res22   Discrete Radon sectors as returned from the function Radon.
+    		//    ErrTol       Optional parameter of error tolerance used by the conjugate
+    		//                 gradient method. If not specified, tolerance of 1.e-2 is used.
+    		//    MaxIts       Maximum number of iterations. Default 10.
+    		//    verbose      Display verbose CG information. 0 will suppress verbose information.
+    		//                 Any non-zero value will display verbose CG information. Default false.
+    		//
+    		//  Output arguments:
+    		//    Y            The inverted matrix.
+    		//    flag         Convergence flag. See CG for more information.
+    		//    residual     Residual error at the end of the inversion.
+    		//    iter         The iteration number at which ErrTol was achieved. Relevant only if
+    		//                 flag=0
+    		//
+    		// Yoel Shkolnisky 17/12/02
+
+
+    		//temp1 = cfftd(res1,1);
+    		//temp2 = cfftd(res2,1);
+    	    int i,j;
+    		int t1 = res1[0].length;
+    		int t2 = res1[0][0].length;
+    		double temp1[][][] = new double[2][t1][t2];
+    		double temp2[][][] = new double[2][t1][t2];
+    		// Forward FFT on first dimension
+            double tmpC[][];
+   	         for (j = 0; j < t2; j++) {
+	   	    	 tmpC = new double[2][t1];
+	   	    	 for (i = 0; i < t1; i++) {
+	   	    		 tmpC[0][i] = res1[0][i][j];
+	   	    		 tmpC[1][i] = res1[1][i][j];
+	   	    	 }
+	   	    	 tmpC = ifftshift1d(tmpC);
+	   	    	 FFTUtility fft = new FFTUtility(tmpC[0], tmpC[1], 1, t1, 1, -1, FFTUtility.FFT);
+	   		     fft.setShowProgress(false);
+	   		     fft.run();
+	   		     fft.finalize();
+	   		     fft = null;
+	   		     tmpC = fftshift1d(tmpC);
+	   	    	 for (i = 0; i < t1; i++) {
+	   	    		 temp1[0][i][j] = tmpC[0][i];
+	   	    		 temp1[1][i][j] = tmpC[1][i];
+	   	    	 }
+   	         }
+   	    	 
+   	    	for (j = 0; j < t2; j++) {
+      	    	 tmpC = new double[2][t1];
+      	    	 for (i = 0; i < t1; i++) {
+      	    		 tmpC[0][i] = res2[0][i][j];
+      	    		 tmpC[1][i] = res2[1][i][j];
+      	    	 }
+      	    	 tmpC = ifftshift1d(tmpC);
+      	    	 FFTUtility fft2 = new FFTUtility(tmpC[0], tmpC[1], 1, t1, 1, -1, FFTUtility.FFT);
+      		     fft2.setShowProgress(false);
+      		     fft2.run();
+      		     fft2.finalize();
+      		     fft2 = null;
+      		     tmpC = fftshift1d(tmpC);
+      	    	 for (i = 0; i < t1; i++) {
+      	    		 temp2[0][i][j] = tmpC[0][i];
+      	    		 temp2[1][i][j] = tmpC[1][i];
+      	    	 }
+   	        }
+
+    		ippft(Y,flag,residual,iter,temp1,temp2,ErrTol,MaxIts,verbose);
+
+    		// Revision record
+    		// 15/1/03	Yoel Shkolnisky		Used cfftd instead of column-wise cfft
     }
 
     private void ippft(double Y[][][], int flag[], double residual[], int iter[],
