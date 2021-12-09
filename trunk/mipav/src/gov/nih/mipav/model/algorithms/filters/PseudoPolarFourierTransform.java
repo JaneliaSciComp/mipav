@@ -6779,5 +6779,233 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 double Y[][][] = PrecondAdjPPFT(pp1,pp2);
     		 return Y;
      }
+     
+     private void cfrftV3_precomp(double PQ[][][], double PZ[][][], int m, double alpha[]) {
+    		 //
+    		 // Generate tables to be used by cfrftV3. 
+    		 // The tables contain precomputed factors that are for computing the
+    		 // fractional Fourier transform. Avoiding recomputing these factors speeds
+    		 // up the computation.
+    		 
+    		 // Input
+    		 //   alpha    A vector with the spacings with which the fractional Fourier
+    		 //            transform will be computed in subsequent calls to cfrftV3.
+    		 //            After calling the current function, instead of calling
+    		 //            w=cfrftV3(x,alpha), where alpha is the required spacing, call
+    		 //            w=cfrftV3(x,0,PQ,PZ,k), where PQ and PZ are the tables
+    		 //            computed by the current function. The fractional Fourier 
+    		 //            transform will be then computed with spacing alpha(k).
+    		 //   m        The length of the signal that will be tramsformed by
+    		 //            subsequent calls to cfrftV3.
+    		 
+    		 // Returns the precomputed tables PQ and PZ.
+    		 //
+    		 // Revised:
+    		 // Yoel Shkolnisky  May 17, 2010.
+
+    		 int i,k;
+    	     int n=alpha.length;
+
+    		 int lm= -(int)Math.floor(m/2.0);
+    		 int hm= (int)Math.floor((m-0.5)/2.0);
+    		 int ofs=(int)Math.floor(3.0*m/2.0)+1;
+
+    		 int jlen = hm-lm+1;
+    		 int j[] = new int[jlen];
+    		 for (i = 0; i < jlen; i++) {
+    			 j[i] = lm+i;
+    		 }
+    		 int j2len = 2*m+1;
+    		 int j2[] = new int[j2len];
+    		 for (i = 0; i < j2len; i++) {
+    			 j2[i] = -m + i;
+    		 }
+
+    		 //PQ=zeros(m,n);
+    		 //PZ=zeros(3*m,n);
+
+    		 for (k=0; k < n; k++) {    
+    		     for (i = 0; i < m; i++) {
+    		         double arg = Math.PI*alpha[k]*j[i]*j[i]/m;
+    		         PQ[0][i][k] = Math.cos(arg);
+    		         PQ[1][i][k] = -Math.sin(arg);
+    		     }
+    		     double z[][] = new double[2][3*m];
+
+    		     for (i = 0; i < 2*m+1; i++) {
+    		    	 double arg2 = Math.PI*alpha[k]*j2[i]*j2[i]/m;
+    		    	 z[0][-m+ofs+i] = Math.cos(arg2);
+    		    	 z[1][-m+ofs+i] = Math.sin(arg2);
+    		     }
+    		     FFTUtility fft = new FFTUtility(z[0], z[1], 1, 3*m, 1, -1, FFTUtility.FFT);
+    		     fft.run();
+    		     fft.finalize();
+    		     fft = null;
+    		     for (i = 0; i < 3*m; i++) {
+    		    	 PZ[0][i][k] = z[0][i];
+    		    	 PZ[1][i][k] = z[1][i];
+    		     }   
+    		 } // for (k=0; k < n; k++)
+     }
+     
+     private double[][][] cfrftV3(double x[][][], double alpha,double PQ[][][], double PZ[][][], int k) {
+    		 
+    		 // Aliased fractional Fourier transform of the sequence x.
+    		 // The FRFT is computed using O(nlogn) operations.
+    		 
+    		 // Input:
+    		 // x       The sequence whose FRFT should be computed. Can be of odd or even
+    		 //         length. Must be a 1-D row vector.
+    		 // alpha   The parameter alpha of the fractional Fourier transform.
+    		 // PQ,PZ   Precomputed tables for avoiding unnecessary computations in
+    		 //         repeated call to the function. These tables are generated using
+    		 //         cfrftV3_precomp.
+    		 // k       Determines the value of the fractional spacing, as well as the
+    		 //         appropriate column to use in the precomputed tables. See ppft3V3.
+    		 
+    		 // Returns the aliased FRFT with parameter alpha of the sequence x.
+    		 // The fractional Fourier transform w of the sequence x (with parameter alpha) is defined by
+    		 //                   n/2-1
+    		 //       w(j) =       sum  x(u)*exp(-2*pi*i*j*u*alpha/N),  -n/2 <= j <= n/2-1, N=length(x).
+    		 //                   u=-n/2
+    		 
+    		  
+    		 // This function is the same as cfrftV2. It uses the less padding (3m as in
+    		 // the paper) and therefore it is more memory efficient. This may cause the
+    		 // lengths of the sequences to be non-optimal for Matlab's FFT function. The
+    		 // function cfrftV2 uses more memory (for padding) but uses FFTs of dyadic
+    		 // length. 
+    		 
+    		 // If five parameters are provided, then alpha is ignored. Just pass,
+    		 // for example, zero.
+    		 
+    		 // Yoel Shkolnisky 22/10/01
+    		 
+    		 // Revisions:
+    		 // Yoel Shkolnisky 21/05/2013 Chage the code to work with column vectors.
+    		 //          Allow x to be a matrix, in which case the transform is applied
+    		 //          on all columns.
+
+    		 int i,n;
+    	     int m=x[0].length;
+    	     double q[][] = new double[2][m];
+    		 double Z[][] = new double[2][3*m];
+    		 int lm= -(int)Math.floor(m/2.0);
+    		 int hm= (int)Math.floor((m-0.5)/2.0);
+    		 int ofs=(int)Math.floor(3.0*m/2.0)+1;
+
+    		 if ((PQ != null) && (PZ != null)) {
+    		     // load weights from the precomputed structure
+    			 for (i = 0; i < m; i++) {
+    				 q[0][i] = PQ[0][i][k];
+    				 q[1][i] = PQ[1][i][k];
+    			 }
+    		     for (i = 0; i < 3*m; i++) {
+    		    	 Z[0][i] = PZ[0][i][k];
+    		    	 Z[1][i] = PZ[1][i][k];
+    		     }
+    		 }
+    		 else {
+    		     // computed required weights
+    			 int jlen = hm-lm+1;
+        		 int j[] = new int[jlen];
+        		 for (i = 0; i < jlen; i++) {
+        			 j[i] = lm+i;
+        		 }
+        		 int j2len = 2*m+1;
+        		 int j2[] = new int[j2len];
+        		 for (i = 0; i < j2len; i++) {
+        			 j2[i] = -m + i;
+        		 }
+    		     //E=1i*pi*alpha;
+        		 for (i = 0; i < m; i++) {
+    		         double arg = Math.PI*alpha*j[i]*j[i]/m;
+    		         q[0][i] = Math.cos(arg);
+    		         q[1][i] = -Math.sin(arg);
+    		     }
+    		     //q=q(:);
+        		 for (i = 0; i < 2*m+1; i++) {
+    		    	 double arg2 = Math.PI*alpha*j2[i]*j2[i]/m;
+    		    	 Z[0][-m+ofs+i] = Math.cos(arg2);
+    		    	 Z[1][-m+ofs+i] = Math.sin(arg2);
+    		     }
+    		     FFTUtility fft = new FFTUtility(Z[0], Z[1], 1, 3*m, 1, -1, FFTUtility.FFT);
+    		     fft.run();
+    		     fft.finalize();
+    		     fft = null;
+    		 }
+
+    		 int sz2=x[0][0].length;
+    		 double y[][][] = new double[2][m][sz2];
+    		 for (i = 0; i < m; i++) {
+    		     for (n = 0; n < sz2; n++) {
+    		    	 y[0][i][n] = x[0][i][n]*q[0][i] - x[1][i][n]*q[1][i];
+    		    	 y[1][i][n] = x[0][i][n]*q[1][i] + x[1][i][n]*q[0][i];
+    		     }
+    		 }
+    		 double Y[][] = new double[2][3*m*sz2];
+    		 for (i = 0; i < m; i++) {
+    			 for (n = 0; n < sz2; n++) {
+    			 	 Y[0][(i + m)*sz2 + n] = y[0][i][n];
+    			 	 Y[1][(i + m)*sz2 + n] = y[1][i][n];
+    			 }
+    		 }
+    		 FFTUtility fft = new FFTUtility(Y[0], Y[1], 1, 3*m, sz2, -1, FFTUtility.FFT);
+    		 fft.run();
+    		 fft.finalize();
+    		 fft = null;
+    		 if (sz2 > 1) {
+    			 FFTUtility fft2 = new FFTUtility(Y[0],Y[1], 3*m, sz2, 1, -1, FFTUtility.FFT);
+    			 fft2.run();
+    			 fft2.finalize();
+    			 fft2 = null;
+    		 }
+    		 double W[][] = new double[2][3*m*sz2];
+    		 for (i = 0; i < 3*m; i++) {
+    			 for (n = 0; n < sz2; n++) {
+    				 W[0][i*sz2 + n] = Y[0][i*sz2 + n]*Z[0][i] - Y[1][i*sz2 + n]*Z[1][i]; 
+    				 W[1][i*sz2 + n] = Y[0][i*sz2 + n]*Z[1][i] + Y[1][i*sz2 + n]*Z[0][i]; 
+    			 }
+    		 }
+    		 FFTUtility ifft = new FFTUtility(W[0], W[1], 1, 3*m, sz2, 1, FFTUtility.FFT);
+    		 ifft.run();
+    		 ifft.finalize();
+    		 ifft = null;
+    		 if (sz2 > 1) {
+    			 FFTUtility ifft2 = new FFTUtility(W[0],W[1], 3*m, sz2, 1, 1, FFTUtility.FFT);
+    			 ifft2.run();
+    			 ifft2.finalize();
+    			 ifft2 = null;
+    		 }
+    		 double w[][][] = new double[2][3*m][sz2];
+    		 for (i = ofs-1; i < 3*m; i++) {
+    			 for (n = 0; n < sz2; n++) {
+    				 w[0][i-(ofs-1)][n] = W[0][i*sz2+n];
+    				 w[1][i-(ofs-1)][n] = W[1][i*sz2+n];
+    			 }
+    		 }
+    		 for (i = 0; i < ofs-1; i++) {
+    			for (n = 0; n < sz2; n++) {
+    				w[0][3*m-ofs+1+i][n] = W[0][i*sz2+n];
+    				w[1][3*m-ofs+1+i][n] = W[1][i*sz2+n];
+    			}
+    		 }
+    		 double wtrunc[][][] = new double[2][hm-lm+1][sz2];
+    		 for (i = lm+ofs-1; i < hm+ofs; i++) {
+    			 for (n = 0; n < sz2; n++) {
+    				 wtrunc[0][i-(lm+ofs-1)][n] = w[0][i][n];
+    				 wtrunc[1][i-(lm+ofs-1)][n] = w[1][i][n];
+    			 }
+    		 }
+    		 double wout[][][] = new double[2][m][sz2];
+    		 for (i = 0; i < m; i++) {
+    			 for (n = 0; n < sz2; n++) {
+    				 wout[0][i][n] = wtrunc[0][i][n]*q[0][i] - wtrunc[1][i][n]*q[1][i];
+    				 wout[1][i][n] = wtrunc[0][i][n]*q[1][i] + wtrunc[1][i][n]*q[0][i];
+    			 }
+    		 }
+    		 return wout;
+     }
+
    
 }
