@@ -7007,5 +7007,330 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 return wout;
      }
 
-   
+     private double[][][][][] ppft3(ModelImage im) {
+	     
+	     // Fast algorithm for computing the 3-D pseudo-polar Fourier transform.
+	     // The computation requires O(n^3logn) operations.
+	     
+	     // The function computes the 3-D pseudo-polar Fourier transform according to
+	     // the algorithm given in
+	     // "A. Averbuch and Y. Shkolnisky. 3D Fourier based discrete Radon
+	     // transform. Applied and Computational Harmonic Analysis, 15(1):33-69,
+	     // 2003."
+	     
+	     // This implementation follows exactly the pseudo-code and notations given
+	     // in the paper. 
+	     
+	     // Input:
+	     //     im    3-D image of size nxnxn (n even).
+	     //           First  index - x direction
+	     //           Second index - y direction
+	     //           Third  index - z direction
+	     //     The indices in each direction are assumed to be from -n/2 to n/2-1 and
+	     //     not from 1 to n.
+	     
+	     // Output:
+	     //     pp - 4-D array of size 3x(3n+1)x(n+1)x(n+1) containing the 3-D
+	     //     pseudo-polar Fourier transform.
+	     //     The array pp contains the following Fourier samples:
+	     //        pp(1,k,l,j) = FI(k,-2lk/n,-2jk/n)
+	     //        pp(2,k,l,j) = FI(-2lk/n,k,-2jk/n)
+	     //        pp(3,k,l,j) = FI(-2lk/n,-2jk/n,k)
+	     //        where
+	     //             l,j = -n/2,...,n/2   k=-3n/2,...3n/2
+	     //        and
+	     //                           n/2-1   n/2-1   n/2-1
+	     //             FI(ox,oy,oz)=  sum     sum     sum  I(u,v,w)exp(-2*pi*i(u*ox+v*oy+w*oz)/m)   m=3n+1
+	     //                           u=-n/2  v=-n/2  w=-n/2
+	     
+	     // See also ppft3_ref.
+	     
+	     // Yoel Shkolnisky 30/01/03
+	     
+	     // Revisions:
+	     // Yoel Shkolnisky   19/05/2013    Renamed from OptimizedPPFT3 to PPFT3.
+	     // Yoel Shkolnisky   21/05/2013    Vectorize for speed (about factor 4).
+	
+	     int i,k,p,q;
+    	 // verify that the input is a 3D image of size nxnxn
+	     verifyImage(im);
+	
+	     // Initialize output data structure
+	     int n= im.getExtents()[0]; // at this point n is even
+	     double buffer[] = new double[n*n*n];
+	     try {
+	    	 im.exportData(0, n*n*n, buffer);
+	     }
+	     catch (IOException e) {
+	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
+	    	 System.exit(0);
+	     }
+	     int m = 3*n+1;
+	     double pp[][][][][]  = new double[2][3][3*n+1][n+1][n+1];
+	     double tmp[][][][] = new double[2][3*n+1][n+1][n+1];
+	     double alpha = 2.0*(n+1.0)/(n*m);
+	     double alphaArray[] = new double[3*n+1];
+	     for (i = -3*n/2; i <= 3*n/2; i++) {
+	    	 alphaArray[i+3*n/2] = alpha*i;
+	     }
+	     double PQ[][][] = new double[2][n+1][3*n+1];
+	     double PZ[][][] = new double[2][3*(n+1)][3*n+1];
+	
+	     cfrftV3_precomp(PQ, PZ, n+1,alphaArray);
+	
+	     // Compute the pseudo-polar Fourier transform PP1
+	     // pad the image to size m along the x direction
+	     double pim[][][][] = new double[2][3*n+1][n][n];
+	     for (i = 0; i < n; i++) {
+	    	 for (p = 0; p < n; p++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 pim[0][i+n][p][q] = buffer[i*n*n + p*n + q];
+	    		 }
+	    	 }
+	     }
+	     double cff1[][] = new double[2][3*n+1];
+	     double fim[][][][] = new double[2][3*n+1][n][n];
+	     for (p = 0; p < n; p++) {
+	    	 for (q = 0; q < n; q++) {
+	    		 for (i = 0; i < 3*n+1; i++) {
+	    			 cff1[0][i] = pim[0][i][p][q];
+	    		 }
+	    		 cff1 = ifftshift1d(cff1);
+	    		 FFTUtility fft = new FFTUtility(cff1[0], cff1[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+	    		 fft.run();
+	    		 fft.finalize();
+	    		 fft = null;
+	    		 cff1 = fftshift1d(cff1);
+	    		 for (i = 0; i < 3*n+1; i++) {
+	    			 fim[0][i][p][q] = cff1[0][i];
+	    			 fim[1][i][p][q] = cff1[1][i];
+	    		 }
+	    	 }
+	     }
+	     double tmp1[][][][] = new double[2][m][n][n+1]; // intermediate result after the first resampling. Referred as T1 in the paper.
+	
+	     int ofs_m=(int)Math.floor(m/2.0)+1;
+	     //ofs_n=floor(n/2)+1;
+	
+	     double U[][][] = new double[2][n+1][n];
+	     for (k=-3*n/2; k <= 3*n/2; k++) {
+	     //     for l=-n/2:n/2-1
+	     //         U = fim(k+ofs_m,l+ofs_n,:);
+	     //         tmp1(k+ofs_m,l+ofs_n,:) = cfrftV3([U(:); 0],0,PQ,PZ,k+3*n/2+1);
+	     //     end
+	    	 for (p = 0; p < n; p++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 U[0][q][p] = fim[0][k + ofs_m - 1][p][q];
+	    			 U[1][q][p] = fim[1][k + ofs_m - 1][p][q];
+	    		 }
+	    	 }
+	         double F[][][]=cfrftV3(U,0,PQ,PZ,k+3*n/2+1);
+	         for (p = 0; p < n; p++) {
+	        	 for (q = 0; q < n+1; q++) {
+	        		 tmp1[0][k+ofs_m-1][p][q] = F[0][q][p];
+	        		 tmp1[1][k+ofs_m-1][p][q] = F[1][q][p];
+	        	 }
+	         }
+	     } // for (k=-3*n/2; k <= 3*n/2; k++)
+	
+	     double V[][][] = new double[2][n+1][n+1];
+	     for (k=-3*n/2; k <= 3*n/2; k++) {
+	     //     for j=-n/2:n/2
+	     //         V = tmp1(k+ofs_m,:,j+ofs_n);
+	     //         tmp(k+ofs_m,:,j+ofs_n) = cfrftV3([V(:); 0],0,PQ,PZ,k+3*n/2+1);
+	     //     end 
+	    	 for (p = 0; p < n; p++) {
+	    		 for (q = 0; q < n+1; q++) {
+	    			 V[0][p][q] = tmp1[0][k+ofs_m-1][p][q];
+	    			 V[1][p][q] = tmp1[1][k+ofs_m-1][p][q];
+	    		 }
+	    	 }
+	         double F[][][]=cfrftV3(V,0,PQ,PZ,k+3*n/2+1);
+	         for (p = 0; p < n+1; p++) {
+	        	 for (q = 0; q < n+1; q++) {
+	                 tmp[0][k+ofs_m-1][p][q]=F[0][p][q];
+	                 tmp[1][k+ofs_m-1][p][q]=F[1][p][q];
+	        	 }
+	         }
+	     } // for (k=-3*n/2; k <= 3*n/2; k++)
+	     
+	     for (i = 0; i < 3*n+1; i++) {
+		     for (p = 0; p < n+1; p++) {
+		    	 for (q = 0; q < n+1; q++) {
+		    		 pp[0][0][i][p][q] = tmp[0][i][n-p][n-q];
+		    		 pp[1][0][i][p][q] = tmp[1][i][n-p][n-q];
+		    	 }
+		     }
+	     }
+	
+	     // Compute the pseudo-polar Fourier transform PP2
+	     // % pad the image to size m along the y direction
+	     pim = new double[2][n][3*n+1][n];
+	     for (i = 0; i < n; i++) {
+	    	 for (p = 0; p < n; p++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 pim[0][i][p+n][q] = buffer[i*n*n + p*n + q];
+	    		 }
+	    	 }
+	     }
+	     double cff2[][] = new double[2][3*n+1];
+	     fim = new double[2][n][3*n+1][n];
+	     for (i = 0; i < n; i++) {
+	    	 for (q = 0; q < n; q++) {
+	    		 for (p = 0; p < 3*n+1; p++) {
+	    			 cff2[0][p] = pim[0][i][p][q];
+	    		 }
+	    		 cff2 = ifftshift1d(cff2);
+	    		 FFTUtility fft = new FFTUtility(cff2[0], cff2[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+	    		 fft.run();
+	    		 fft.finalize();
+	    		 fft = null;
+	    		 cff2 = fftshift1d(cff2);
+	    		 for (p = 0; p < 3*n+1; p++) {
+	    			 fim[0][i][p][q] = cff2[0][p];
+	    			 fim[1][i][p][q] = cff2[1][p];
+	    		 }
+	    	 }
+	     }
+	     tmp1 = new double[2][n+1][m][n]; // intermediate result after the first resampling. Referred as T2 in the paper.
+	
+	     // The loop order (k,l,j) differs from PP1 and PP3 to keep consistency with
+	     // the paper.
+	     U = new double[2][n+1][n];
+	     for (k=-3*n/2; k <= 3*n/2; k++) {
+	     //     for j=-n/2:n/2-1
+	     //         U = fim(:,k+ofs_m,j+ofs_n);
+	     //         tmp1(:,k+ofs_m,j+ofs_n) = cfrftV3([U(:); 0],0,PQ,PZ,k+3*n/2+1);
+	     //     end
+	    	 for (i = 0; i < n; i++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 U[0][i][q] = fim[0][i][k+ofs_m-1][q];
+	    			 U[1][i][q] = fim[1][i][k+ofs_m-1][q];
+	    		 }
+	    	 }
+	         double F[][][] =cfrftV3(U,0,PQ,PZ,k+3*n/2+1);
+	         for (i = 0; i < n+1; i++) {
+	        	 for (q = 0; q < n; q++) {
+	        		 tmp1[0][i][k+ofs_m-1][q] = F[0][i][q];
+	        		 tmp1[1][i][k+ofs_m-1][q] = F[1][i][q];
+	        	 }
+	         }
+	     } // for (k=-3*n/2; k <= 3*n/2; k++)
+	
+	     V = new double[2][n+1][n+1];
+	     for (k=-3*n/2; k <= 3*n/2; k++) {
+	     //     for l=-n/2:n/2
+	     //         V = tmp1(l+ofs_n,k+ofs_m,:);
+	     //         tmp(k+ofs_m,l+ofs_n,:) = cfrftV3([V(:); 0],0,PQ,PZ,k+3*n/2+1);
+	     //     end
+	    	 for (i = 0; i < n+1; i++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 V[0][q][i] = tmp1[0][i][k+ofs_m-1][q];
+	    			 V[1][q][i] = tmp1[1][i][k+ofs_m-1][q];
+	    		 }
+	    	 }
+	         double F[][][]=cfrftV3(V,0,PQ,PZ,k+3*n/2+1);
+	         for (i = 0; i < n+1; i++) {
+	        	 for (q = 0; q < n+1; q++) {
+	                 tmp[0][k+ofs_m-1][i][q]=F[0][q][i];
+	                 tmp[1][k+ofs_m-1][i][q]=F[1][q][i];
+	             }
+	         }
+	
+	     } // for (k=-3*n/2; k <= 3*n/2; k++)
+	     
+	     for (i = 0; i < 3*n+1; i++) {
+	    	 for (p = 0; p < n+1; p++) {
+	    		 for (q = 0; q < n+1; q++) {
+	    			 pp[0][1][i][p][q] = tmp[0][i][n-p][n-q];
+	    			 pp[1][1][i][p][q] = tmp[1][i][n-p][n-q];
+	    		 }
+	    	 }
+	     }
+	
+	     
+	
+	     // Compute the pseudo-polar Fourier transform PP3
+	     // pad the image to size m along the z direction
+	     pim = new double[2][n][n][3*n+1];
+	     for (i = 0; i < n; i++) {
+	    	 for (p = 0; p < n; p++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 pim[0][i][p][q+n] = buffer[i*n*n + p*n + q];
+	    		 }
+	    	 }
+	     }
+	     double cff3[][] = new double[2][3*n+1];
+	     fim = new double[2][n][n][3*n+1];
+	     for (i = 0; i < n; i++) {
+	    	 for (p = 0; p < n; p++) {
+	    		 for (q = 0; q < 3*n+1; q++) {
+	    			 cff3[0][q] = pim[0][i][p][q];
+	    		 }
+	    		 cff3 = ifftshift1d(cff3);
+	    		 FFTUtility fft = new FFTUtility(cff3[0], cff3[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+	    		 fft.run();
+	    		 fft.finalize();
+	    		 fft = null;
+	    		 cff3 = fftshift1d(cff3);
+	    		 for (q = 0; q < 3*n+1; q++) {
+	    			 fim[0][i][p][q] = cff3[0][q];
+	    			 fim[1][i][p][q] = cff3[1][q];
+	    		 }
+	    	 }
+	     }
+	     tmp1 = new double[2][n][n+1][m]; // intermediate result after the first resampling. Referred as T3 in the paper.
+	
+	     U = new double[2][n+1][n];
+	     for (k=-3*n/2; k <= 3*n/2; k++) {
+	     //     for l=-n/2:n/2-1
+	     //         U = fim(l+ofs_n,:,k+ofs_m);
+	     //         tmp1(l+ofs_n,:,k+ofs_m) = cfrftV3([U(:); 0],0,PQ,PZ,k+3*n/2+1);
+	     //     end
+	    	 for (i = 0; i < n; i++) {
+	    		 for (q = 0; q < n; q++) {
+	    			 U[0][q][i] = fim[0][i][q][k+ofs_m-1];
+	    			 U[1][q][i] = fim[1][i][q][k+ofs_m-1];
+	    		 }
+	    	 }
+	         double F[][][]=cfrftV3(U,0,PQ,PZ,k+3*n/2+1);
+	         for (i = 0; i < n; i++) {
+	        	 for (q = 0; q < n+1; q++) {
+	        		tmp1[0][i][q][k+ofs_m-1] = F[0][q][i]; 
+	        		tmp1[1][i][q][k+ofs_m-1] = F[1][q][i]; 
+	        	 }
+	         }  
+	     } // for (k=-3*n/2; k <= 3*n/2; k++)
+	
+	     V = new double[2][n+1][n+1];
+	     for (k=-3*n/2; k <= 3*n/2; k++) {
+	     //     for j=-n/2:n/2
+	     //         V = tmp1(:,j+ofs_n,k+ofs_m);
+	     //         tmp(k+ofs_m,:,j+ofs_n) = cfrftV3([V(:); 0],0,PQ,PZ,k+3*n/2+1);
+	     //     end
+	    	 for (i = 0; i < n; i++) {
+	    		 for (p = 0; p < n+1; p++) {
+	    			 V[0][i][p] = tmp1[0][i][p][k+ofs_m-1];
+	    			 V[1][i][p] = tmp1[1][i][p][k+ofs_m-1];
+	    		 }
+	    	 }   
+	         double F[][][]=cfrftV3(V,0,PQ,PZ,k+3*n/2+1);
+	         for (p = 0; p < n+1; p++) {
+	        	 for (q = 0; q < n+1; q++) {
+	        		 tmp[0][k+ofs_m-1][p][q] = F[0][p][q];
+	        		 tmp[1][k+ofs_m-1][p][q] = F[1][p][q];
+	        	 }
+	         }   
+	     } // for (k=-3*n/2; k <= 3*n/2; k++)
+	
+	     for (i = 0; i < 3*n+1; i++) {
+	    	 for (p = 0; p < n+1; p++) {
+	    		 for (q = 0; q < n+1; q++) {
+	    			 pp[0][2][i][p][q] = tmp[0][i][n-p][n-q];
+	    			 pp[1][2][i][p][q] = tmp[1][i][n-p][n-q];
+	    		 }
+	    	 }
+	     }
+	     return pp;
+     }
 }
