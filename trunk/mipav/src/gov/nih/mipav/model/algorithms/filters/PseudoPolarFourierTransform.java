@@ -6155,6 +6155,45 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 return y;
      }
      
+     private double[][] GKN3(double x[][], int k) {
+    		 
+    		 // Application of the operator G(K,N) to the sequence x (of length n).
+    		 // The operator GKN in 3-D is defined as follows:
+    		 //       1. Apply the inverse Fourier transform to the sequence x.
+    		 //       2. Pad the resulting sequence to length 3n+1.
+    		 //       3. Apply the fractional Fourier transform with alpha=2k/n.
+    		 //       4. Return the n+1 central elements.
+    		 
+    		 // x  The sequence to resample using the operator GKN. Can be of odd or even length.
+    		 // k  The row whose transform is being computed.
+    		 
+    		 // Yoel Shkolnisky 30/01/03
+
+	    	 int i;
+	
+			 int n= x[0].length;
+			 if ((n % 2)==1) {
+			    System.err.println("In GKN3 input sequence must of even length");
+			    System.exit(0);
+			 }
+			 
+			 double w[][] = icfft(x);
+    		 double wpad[][] = new double[2][w[0].length+2*n+1];
+    		 for (i = 0; i < w[0].length; i++) {
+    			 wpad[0][i+n] = w[0][i];
+    			 wpad[1][i+n] = w[1][i];
+    		 }
+    		 wpad = cfrft(wpad,2.0*k/n);  // optimization - use alpha=2k/m instead of padding
+    		 // return n+1 central elements
+    		 double y[][] = new double[2][n+1];
+    		 for (i = 0; i < n+1; i++) {
+    			 y[0][i] = wpad[0][i+n];
+    			 y[1][i] = wpad[1][i+n];
+    		 }
+    		 return y;
+     }
+
+     
      private void PPFT(double res1[][][], double res2[][][], double im[][][]) {
      
 	     // Fast algorithm for computing the pseudo-polar Fourier transform.
@@ -7333,4 +7372,246 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     }
 	     return pp;
      }
+     
+     private double[][][][][] ppft3_ref(ModelImage im) {
+    		 
+    		 // Fast algorithm for computing the 3-D pseudo-polar Fourier transform.
+    		 // The computation requires O(n^3logn) operations.
+    		 
+    		 // The function computes the 3-D pseudo-polar Fourier transform according to
+    		 // the algorithm given in
+    		 // "A. Averbuch and Y. Shkolnisky. 3D Fourier based discrete Radon
+    		 // transform. Applied and Computational Harmonic Analysis, 15(1):33-69,
+    		 // 2003."
+    		 // This implementation follows exactly the pseudo-code and notations given
+    		 // in the paper. See ppft3 for an optimized version of the algorithm.
+    		 
+    		 // Input:
+    		 //     im    3-D image of size nxnxn (n even).
+    		 //           First  index - x direction
+    		 //           Second index - y direction
+    		 //           Third  index - z direction
+    		 //     The indices in each direction are assumed to be from -n/2 to n/2-1 and
+    		 //     not from 1 to n.
+    		 
+    		 // Output:
+    		 //     pp - 4-D array of size 3x(3n+1)x(n+1)x(n+1) containing the 3-D
+    		 //     pseudo-polar Fourier transform.
+    		 //     The array pp contains the following Fourier samples:
+    		 //        pp(1,k,l,j) = FI(k,-2lk/n,-2jk/n)
+    		 //        pp(2,k,l,j) = FI(-2lk/n,k,-2jk/n)
+    		 //        pp(3,k,l,j) = FI(-2lk/n,-2jk/n,k)
+    		 //        where
+    		 //             l,j = -n/2,...,n/2   k=-3n/2,...3n/2
+    		 //        and
+    		 //                           n/2-1   n/2-1   n/2-1
+    		 //             FI(ox,oy,oz)=  sum     sum     sum  I(u,v,w)exp(-2*pi*i(u*ox+v*oy+w*oz)/m)   m=3n+1
+    		 //                           u=-n/2  v=-n/2  w=-n/2
+    		 
+    		 
+    		 // Yoel Shkolnisky 30/01/03
+    		 
+    		 // Revisions:
+    		 // Yoel Shkolnisky 19/5/2013  Renamed from ppft3 to ppft3_ref.
+
+    		 int i,j,k,l,p,q;
+    		 int coord[];
+    		 int aCoord[];
+    		 int N[];
+    		 double GKN3Out[][];
+    	     // verify that the input is a 3D image of size nxnxn
+    		 verifyImage(im);
+    		 // Initialize output data structure
+    		 int n= im.getExtents()[0]; // at this point n is even
+    	     double buffer[] = new double[n*n*n];
+    	     try {
+    	    	 im.exportData(0, n*n*n, buffer);
+    	     }
+    	     catch (IOException e) {
+    	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
+    	    	 System.exit(0);
+    	     }
+    	     int m = 3*n+1;
+    	     double pp[][][][][]  = new double[2][3][3*n+1][n+1][n+1];
+    	     double tmp[][][][] = new double[2][3*n+1][n+1][n+1];
+
+    		 // Compute the pseudo-polar Fourier transform PP1
+    	     // pad the image to size m along the x direction
+    	     double pim[][][][] = new double[2][3*n+1][n][n];
+    	     for (i = 0; i < n; i++) {
+    	    	 for (p = 0; p < n; p++) {
+    	    		 for (q = 0; q < n; q++) {
+    	    			 pim[0][i+n][p][q] = buffer[i*n*n + p*n + q];
+    	    		 }
+    	    	 }
+    	     }
+    	     double fim[][][][] = cfft3(pim);
+    	     double tmp1[][][][] = new double[2][m][n][n+1]; // intermediate result after the first resampling. Referred as T1 in the paper
+
+    	     double U[][] = new double[2][n];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     for (l=-n/2; l <= n/2-1; l++) {
+    		    	 aCoord = new int[] {k,l};
+    		    	 N = new int[] {m,n};
+    		         coord = toUnaliasedCoord(aCoord, N);
+    		         for (q = 0; q < n; q++) {
+    		        	 U[0][q] = fim[0][coord[0]][coord[1]][q];
+    		        	 U[1][q] = fim[1][coord[0]][coord[1]][q];
+    		         }
+    		         GKN3Out = GKN3(U,k);
+    		         for (q = 0; q < n+1; q++) {
+    		        	 tmp1[0][coord[0]][coord[1]][q] = GKN3Out[0][q];
+    		        	 tmp1[1][coord[0]][coord[1]][q] = GKN3Out[1][q];
+    		         }
+    		     } // for (l=-n/2; l <= n/2-1; l++)
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++ 
+
+    		 double V[][] = new double[2][n];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     for (j=-n/2; j <= n/2; j++) {
+    		    	 aCoord = new int[] {k,j};
+    		    	 N = new int[] {m,n};
+    		         coord = toUnaliasedCoord(aCoord, N);
+    		         for (p = 0; p < n; p++) {
+    		        	 V[0][p] = tmp1[0][coord[0]][p][coord[1]];
+    		        	 V[1][p] = tmp1[1][coord[0]][p][coord[1]];
+    		         }
+    		         GKN3Out = GKN3(V,k);
+    		         for (p = 0; p < n+1; p++) {
+    		        	 tmp[0][coord[0]][p][coord[1]] = GKN3Out[0][p];
+    		        	 tmp[1][coord[0]][p][coord[1]] = GKN3Out[1][p];
+    		         }
+    		         
+    		     } // for (j=-n/2; j <= n/2; j++)
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+    		 
+    		 for (i = 0; i < 3*n+1; i++) {
+    		     for (p = 0; p < n+1; p++) {
+    		    	 for (q = 0; q < n+1; q++) {
+    		    		 pp[0][0][i][p][q] = tmp[0][i][n-p][n-q];
+    		    		 pp[1][0][i][p][q] = tmp[1][i][n-p][n-q];
+    		    	 }
+    		     }
+    	     }
+
+    		 // Compute the pseudo-polar Fourier transform PP2
+    		 // pad the image to size m along the y direction
+    		 pim = new double[2][n][3*n+1][n];
+    	     for (i = 0; i < n; i++) {
+    	    	 for (p = 0; p < n; p++) {
+    	    		 for (q = 0; q < n; q++) {
+    	    			 pim[0][i][p+n][q] = buffer[i*n*n + p*n + q];
+    	    		 }
+    	    	 }
+    	     }
+    		 
+    		 fim  = cfft3(pim);
+    		 tmp1 = new double[2][n+1][m][n]; // intermediate result after the first resampling. Referred as T2 in the paper.
+
+    		 // The loop order (k,l,j) differs from PP1 and PP3 to keep consistency with
+    		 // the paper.
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     for (j=-n/2; j <= n/2-1; j++) {
+    		    	 aCoord = new int[] {k,j};
+    		    	 N = new int[] {m,n};
+    		         coord = toUnaliasedCoord(aCoord, N);
+    		         for (i = 0; i < n; i++) {
+    		        	 U[0][i] = fim[0][i][coord[0]][coord[1]];
+    		        	 U[1][i] = fim[1][i][coord[0]][coord[1]];
+    		         }
+    		         GKN3Out = GKN3(U,k);
+    		         for (i = 0; i < n+1; i++) {
+    		        	 tmp1[0][i][coord[0]][coord[1]] = GKN3Out[0][i];
+    		        	 tmp1[1][i][coord[0]][coord[1]] = GKN3Out[1][i];
+    		         }
+    		     } // for (j=-n/2; j <= n/2-1; j++)
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     for (l=-n/2; l <= n/2; l++) {
+    		    	 aCoord = new int[] {k,l};
+    		    	 N = new int[] {m,n};
+    		         coord = toUnaliasedCoord(aCoord, N);
+    		         for (q = 0; q < n; q++) {
+    		              V[0][q] = tmp1[0][coord[1]][coord[0]][q];
+    		              V[1][q] = tmp1[1][coord[1]][coord[0]][q];
+    		         }
+    		         GKN3Out = GKN3(V,k);
+    		         for (q = 0; q < n+1; q++) {
+    		        	 tmp[0][coord[0]][coord[1]][q] = GKN3Out[0][q];
+    		        	 tmp[1][coord[0]][coord[1]][q] = GKN3Out[1][q];
+    		         }
+    		     } // for (l=-n/2; l <= n/2; l++)
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+    		 
+    		 for (i = 0; i < 3*n+1; i++) {
+    	    	 for (p = 0; p < n+1; p++) {
+    	    		 for (q = 0; q < n+1; q++) {
+    	    			 pp[0][1][i][p][q] = tmp[0][i][n-p][n-q];
+    	    			 pp[1][1][i][p][q] = tmp[1][i][n-p][n-q];
+    	    		 }
+    	    	 }
+    	     }
+
+    		 // Compute the pseudo-polar Fourier transform PP3
+             // pad the image to size m along the z direction
+    		 pim = new double[2][n][n][3*n+1];
+    	     for (i = 0; i < n; i++) {
+    	    	 for (p = 0; p < n; p++) {
+    	    		 for (q = 0; q < n; q++) {
+    	    			 pim[0][i][p][q+n] = buffer[i*n*n + p*n + q];
+    	    		 }
+    	    	 }
+    	     }
+    		 fim  = cfft3(pim);
+    		 tmp1 = new double[2][n][n+1][m]; // intermediate result after the first resampling. Referred as T3 in the paper.
+
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     for (l=-n/2; l <= n/2-1; l++) {
+    		    	 aCoord = new int[] {k,l};
+    		    	 N = new int[] {m,n};
+    		         coord = toUnaliasedCoord(aCoord, N);
+    		         for (p = 0; p < n; p++) {
+    		        	 U[0][p] = fim[0][coord[1]][p][coord[0]];
+    		        	 U[1][p] = fim[1][coord[1]][p][coord[0]];
+    		         }
+    		         GKN3Out = GKN3(U,k);
+    		         for (p = 0; p < n+1; p++) {
+    		        	 tmp1[0][coord[1]][p][coord[0]] = GKN3Out[0][p];
+    		        	 tmp1[1][coord[1]][p][coord[0]] = GKN3Out[1][p];
+    		         }
+    		     } // for (l=-n/2; l <= n/2-1; l++)
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     for (j=-n/2; j <= n/2; j++) {
+    		    	 aCoord = new int[] {k,j};
+    		    	 N = new int[] {m,n};
+    		         coord = toUnaliasedCoord(aCoord, N);
+    		         for (i = 0; i < n; i++) {
+    		        	 V[0][i] = tmp1[0][i][coord[1]][coord[0]];
+    		        	 V[1][i] = tmp1[1][i][coord[1]][coord[0]];
+    		         }
+    		         GKN3Out = GKN3(V,k);
+    		         for (p = 0; p < n+1; p++) {
+    		        	 tmp[0][coord[0]][p][coord[1]] = GKN3Out[0][p];
+    		        	 tmp[1][coord[0]][p][coord[1]] = GKN3Out[1][p];
+    		         }
+    		     } // for (j=-n/2; j <= n/2; j++)
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+    		 
+    		 for (i = 0; i < 3*n+1; i++) {
+    	    	 for (p = 0; p < n+1; p++) {
+    	    		 for (q = 0; q < n+1; q++) {
+    	    			 pp[0][2][i][p][q] = tmp[0][i][n-p][n-q];
+    	    			 pp[1][2][i][p][q] = tmp[1][i][n-p][n-q];
+    	    		 }
+    	    	 }
+    	     }
+    	     return pp;
+
+     }
+     
+    		 
+
 }
