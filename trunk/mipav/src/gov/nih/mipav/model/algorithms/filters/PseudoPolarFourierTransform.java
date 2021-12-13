@@ -899,7 +899,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    a = new double[64][64];
 	    for (i = 0; i < 64; i++) {
 	    	for (j = 0; j < 64; j++) {
-	    		a[i][j] = randomGen.genUniformRandomNum(0.0, 1.0);;
+	    		a[i][j] = randomGen.genUniformRandomNum(0.0, 1.0);
 	    	}
 	    }
 	    pp1 = new double[2][2*64+1][64+1];
@@ -1037,8 +1037,248 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    System.out.println("Computation time = " + t + " seconds");
 	    System.out.println("--------------------------------------------------------\n\n");
     }
+    
+    public void testppft3() {
+	    
+	    // Test the functions ppft3_ref, ppft3, and radon3.
+	    
+	    // Yoel Shkolnisky 20/05/2013
+	    int i,j,n;
+	    int volume;
+	    double eps = 1.e-14;
+	    ModelImage im;
+	    int extents[] = new int[3];
+	
+	    int sz[]=new int[] {4, 8, 16, 20, 32, 40, 64, 100, 128, 200, 256};
+	    RandomNumberGen randomGen = new RandomNumberGen();
+	
+	    for (i = 0; i < sz.length; i++) {
+	    	n = sz[i];
+	        // Test the function ppft3 by comparing it to ppft3_ref.
+	    	volume = n*n*n;
+	    	double buffer[] = new double[volume];
+	    	for (j = 0; j < volume; j++) {
+	    		buffer[i] = randomGen.genUniformRandomNum(0.0, 1.0);
+	    	}
+	    	extents[0] = n;
+	    	extents[1] = n;
+	    	extents[2] = n;
+	    	im = new ModelImage(ModelImage.DOUBLE, extents, "im");
+	    	try {
+	    		im.importData(0, buffer, true);
+	    	}
+	    	catch (IOException e) {
+	    		System.err.println("In testppft3 IOException on im.importData(0,buffer,true)");
+	    		System.exit(0);
+	    	}
+	    	long startTime = System.currentTimeMillis();
+	        double pp[][][][][] = ppft3_ref(im);
+	        double t1=(System.currentTimeMillis() - startTime)/1000.0;
+	        startTime = System.currentTimeMillis();
+	        double pp2[][][][][] = ppft3(im);
+	        double t2=(System.currentTimeMillis() - startTime)/1000.0;
+	        boolean ok[] = new boolean[1];
+	        double err[] = new double[1];
+	        equals(pp,pp2,eps,ok,err);
+	        reportResult("Test ppft3",n,ok[0],err[0],t1,t2);
+	    } // for (i = 0; i < sz.length; i++)
+	    
+	    // Test the function Radon3 by comparing it to the reference function
+	    // slowRadon3.
+	    volume = 4*4*4;
+    	double buffer[] = new double[volume];
+    	for (j = 0; j < volume; j++) {
+    		buffer[i] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	}
+    	extents[0] = 4;
+    	extents[1] = 4;
+    	extents[2] = 4;
+    	im = new ModelImage(ModelImage.DOUBLE, extents, "im");
+    	try {
+    		im.importData(0, buffer, true);
+    	}
+    	catch (IOException e) {
+    		System.err.println("In testppft3 IOException on im.importData(0,buffer,true)");
+    		System.exit(0);
+    	}
+    	long startTime = System.currentTimeMillis();
+	    double rr[][][][] = slowradon3(im);
+	    double t1=(System.currentTimeMillis() - startTime)/1000.0;
+        startTime = System.currentTimeMillis();
+	    double rr2[][][][] = Radon3(im);
+	    double t2=(System.currentTimeMillis() - startTime)/1000.0;
+        boolean ok[] = new boolean[1];
+        double err[] = new double[1];
+        equals(rr,rr2,eps,ok,err);
+	    reportResult("Test radon3",4,ok[0],err[0],t1,t2);
+    }
 
 
+
+    private void reportResult(String testMsg,int n,boolean res, double err, double t1, double t2) {
+	    String str;
+	    if (res) {
+	        str = "OK";
+	    }
+	    else {
+	        str = "FAIL";
+	    }
+	    System.out.println(testMsg + " n = " + n + " " + str + " err = " + err);
+	    System.out.println("t1 = " + t1 + " seconds t2 = " + t2 + " seconds speedup = " + (t1/t2));
+    }
+
+
+    private void equals(double v1[][][][][], double v2[][][][][], double eps, boolean ok[], double error[]) {
+    		
+    		// Compare two multi-dimensional arrays.
+    		
+    		// v1,v2    multi-dimensional arrays to compare
+    		// eps      Threshold. Default 1.e-12
+    		
+    		// The comparison is performed element by element. The arrays are considered
+    		// equal if no element in the difference v1-v2 exceeds the threshold.
+    		
+    		// Returns true if the arrays are equal and false otherwise.
+    		
+    		// Yoel Shkolnisky 03/02/03
+            int i,j,k,m;
+            double diff;
+            double diffImag;
+    		ok[0] = true;
+
+    		// Verify that v1 and v2 have the same dimensions
+    		int s11 = v1.length;
+    		int s21 = v2.length;
+
+    		if (s11 != s21) {
+    		    MipavUtil.displayError("v1.length = " + s11 + " != v2.length = " + s21);
+    		    System.exit(0);
+    		}
+    		
+    		int s12 = v1[0].length;
+    		int s22 = v2[0].length;
+
+    		if (s12 != s22) {
+    		    MipavUtil.displayError("v1[0].length = " + s12 + " != v2[0].length = " + s22);
+    		    System.exit(0);
+    		}
+    		
+    		int s13 = v1[0][0].length;
+    		int s23 = v2[0][0].length;
+
+    		if (s13 != s23) {
+    		    MipavUtil.displayError("v1[0][0].length = " + s13 + " != v2[0][0].length = " + s23);
+    		    System.exit(0);
+    		}
+    		
+    		int s14 = v1[0][0][0].length;
+    		int s24 = v2[0][0][0].length;
+
+    		if (s14 != s24) {
+    		    MipavUtil.displayError("v1[0][0][0].length = " + s14 + " != v2[0][0][0].length = " + s24);
+    		    System.exit(0);
+    		}
+    		
+    		int s15 = v1[0][0][0][0].length;
+    		int s25 = v2[0][0][0][0].length;
+
+    		if (s15 != s25) {
+    		    MipavUtil.displayError("v1[0][0][0][0].length = " + s15 + " != v2[0][0][0][0].length = " + s25);
+    		    System.exit(0);
+    		}
+    		
+    		double sumDiffSquare = 0;
+    		double sumV1Square = 0;
+    		for (i = 0; i < s12; i++) {
+    			for (j = 0; j < s13; j++) {
+    				for (k = 0; k < s14; k++) {
+    					for (m = 0; m < s15; m++) {
+    						diff = v1[0][i][j][k][m] - v2[0][i][j][k][m];
+    						diffImag = v1[1][i][j][k][m] - v2[1][i][j][k][m];
+    						sumDiffSquare += (diff*diff + diffImag*diffImag);
+    						sumV1Square += (v1[0][i][j][k][m]*v1[0][i][j][k][m] + v1[1][i][j][k][m]*v1[1][i][j][k][m]);
+    					}
+    				}
+    			}
+    		}
+    		double ratio = sumDiffSquare/sumV1Square;
+    		error[0] = Math.sqrt(ratio);
+
+    		if (error[0] > eps) {
+    		        ok[0] = false;
+    		}
+    }
+    
+    private void equals(double v1[][][][], double v2[][][][], double eps, boolean ok[], double error[]) {
+		
+		// Compare two multi-dimensional arrays.
+		
+		// v1,v2    multi-dimensional arrays to compare
+		// eps      Threshold. Default 1.e-12
+		
+		// The comparison is performed element by element. The arrays are considered
+		// equal if no element in the difference v1-v2 exceeds the threshold.
+		
+		// Returns true if the arrays are equal and false otherwise.
+		
+		// Yoel Shkolnisky 03/02/03
+        int i,j,k,m;
+        double diff;
+		ok[0] = true;
+
+		// Verify that v1 and v2 have the same dimensions
+		int s11 = v1.length;
+		int s21 = v2.length;
+
+		if (s11 != s21) {
+		    MipavUtil.displayError("v1.length = " + s11 + " != v2.length = " + s21);
+		    System.exit(0);
+		}
+		
+		int s12 = v1[0].length;
+		int s22 = v2[0].length;
+
+		if (s12 != s22) {
+		    MipavUtil.displayError("v1[0].length = " + s12 + " != v2[0].length = " + s22);
+		    System.exit(0);
+		}
+		
+		int s13 = v1[0][0].length;
+		int s23 = v2[0][0].length;
+
+		if (s13 != s23) {
+		    MipavUtil.displayError("v1[0][0].length = " + s13 + " != v2[0][0].length = " + s23);
+		    System.exit(0);
+		}
+		
+		int s14 = v1[0][0][0].length;
+		int s24 = v2[0][0][0].length;
+
+		if (s14 != s24) {
+		    MipavUtil.displayError("v1[0][0][0].length = " + s14 + " != v2[0][0][0].length = " + s24);
+		    System.exit(0);
+		}
+		
+		double sumDiffSquare = 0;
+		double sumV1Square = 0;
+		for (i = 0; i < s11; i++) {
+			for (j = 0; j < s12; j++) {
+				for (k = 0; k < s13; k++) {
+					for (m = 0; m < s14; m++) {
+						diff = v1[i][j][k][m] - v2[i][j][k][m];
+						sumDiffSquare += (diff*diff);
+						sumV1Square += (v1[i][j][k][m]*v1[i][j][k][m]);
+					}
+				}
+			}
+		}
+		double ratio = sumDiffSquare/sumV1Square;
+		error[0] = Math.sqrt(ratio);
+
+		if (error[0] > eps) {
+		        ok[0] = false;
+		}
+    }  
      
     
     private int lowIdx(int n) {
@@ -6687,6 +6927,75 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // 15/1/03   Yoel Shkolnisky     Use cfftd instead of column-wise cfft
      }
      
+     private double[][][][] Radon3(ModelImage im) {
+    		 
+    		 // Fast algorithm for computing the 3-D discrete Radon transform.
+    		 // The computation requires O(n^3logn) operations for a nxnxn image.
+    		 
+    		 // The algorithm is based on the Fourier slice theorem for the 30D discrete
+    		 // Radon transform. 
+    		 // The function computes the 3-D pseudo-polar Fourier transform of im and
+    		 // then perform 1-D inverse FFT along the parameters k (the pseudo-radius
+    		 // parameter).
+    		 
+    		 // Due to small round-off errors, the output may contain small imaginary
+    		 // components. If the input image is real, the function truncates any
+    		 // imaginary components from the output array (since the discrete Radon
+    		 // transform of a real image is real)
+    		 
+    		 // Input:
+    		 //   im - 3D array of size nxnxn.
+    		 //        first  index - x direction
+    		 //        second index - y direction
+    		 //        third  index - z direction
+    		 //     In each of the directions, the range 1...n is treated as -n/2...n/2-1.
+    		 //     The input image should be of size nxnxn with even n.
+    		 
+    		 // Output:
+    		 //   xr - 4D array 3x(3n+1)x(n+1)x(n+1) containing the 3-D discrete Radon transform of the input image.
+    		 //     The output array has the following format:
+    		 //        first  index  - 1 for x-planes, 2 for y-planes, 3 for z-planes
+    		 //        second index  - plane intercept
+    		 //        third  index  - slope p
+    		 //        fourth index  - slope q
+    		 
+    		 // Yoel Shkolnisky 03/02/03
+
+    		 int i,j,k,m;
+    	     // verify that the input is a 3D image of size nxnxn
+    		 verifyImage(im);
+    		 int n = im.getExtents()[0];
+    		 
+    		 double pp[][][][][] = ppft3(im);
+    		 double rr[][][][][] = new double[2][3][3*n+1][n+1][n+1];
+    		 double res[][];
+    		 // Inverse FFT on second dimension
+    		 for (i = 0; i < 3; i++) {
+    			 for (j = 0; j < n+1; j++) {
+    				 for (k = 0; k < n+1; k++) {
+    					 res = new double[2][3*n+1];
+    					 for (m = 0; m < 3*n+1; m++) {
+    						 res[0][m] = pp[0][i][m][j][k];
+    						 res[1][m] = pp[1][i][m][j][k];
+    					 }
+    					 res = ifftshift1d(res);
+    			    	 FFTUtility fft = new FFTUtility(res[0], res[1], 1, 3*n+1, 1, 1, FFTUtility.FFT);
+    				     fft.setShowProgress(false);
+    				     fft.run();
+    				     fft.finalize();
+    				     fft = null;
+    				     res = fftshift1d(res);
+    				     for (m = 0; m < 3*n+1; m++) {
+    				    	 rr[0][i][m][j][k] = res[0][m];
+    				    	 rr[1][i][m][j][k] = res[1][m];
+    				     }
+    				 }
+    			 }
+    		 }
+    		 return rr[0];
+     }
+
+     
      private void slowRadon(double res1[][], double res2[][], double im[][]) {
 	     
 	     // Compute the pseudo-Radon transform directly.
@@ -6765,7 +7074,126 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     }
      }
 
-
+     private double[][][][] slowradon3(ModelImage im) {
+	     
+	     // Compute the 3D pseudo-Radon transform directly, according to its definition.
+	     // The computation requires O(n^6) operations for a nxnxn image.
+	     
+	     // Input:
+	     //   im - 3D array of size nxnxn.
+	     //        first  index - x direction
+	     //        second index - y direction
+	     //        third  index - z direction
+	     //     In each of the directions, the range 1...n is treated as -n/2...n/2-1.
+	     //     The input image should be of size nxnxn with even n.
+	     
+	     // Output:
+	     //   xr - 4D array 3x(3n+1)x(n+1)x(n+1) containing the 3-D discrete Radon transform of the input image.
+	     //     The output array has the following format:
+	     //        first  index  - 1 for x-planes, 2 for y-planes, 3 for z-planes
+	     //        second index  - plane intercept
+	     //        third  index  - slope p
+	     //        fourth index  - slope q
+	     
+	     // Yoel Shkolnisky 29/01/03
+	
+	     int i,j,k,p,q,t,u,v,w;
+	     double s1,s2;
+	     double acc;
+	     int aCoord[];
+	     int N[];
+	     int coord[];
+    	 // verify that the input is a 3D image of size nxnxn
+	     verifyImage(im);
+	
+	     // Initialize output data structure
+	     int n= im.getExtents()[0]; // at this point n is even
+	     double buffer[] = new double[n*n*n];
+	     try {
+	    	 im.exportData(0, n*n*n, buffer);
+	     }
+	     catch (IOException e) {
+	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
+	    	 System.exit(0);
+	     }
+	     double ima[][][] = new double[n][n][n];
+	     for (i = 0; i < n; i++) {
+	    	 for (j = 0; j < n; j++) {
+	    		 for (k = 0; k < n; k++) {
+	    			 ima[i][j][k] = buffer[i*n*n + j*n + k];
+	    		 }
+	    	 }
+	     }
+	     int m = 3*n+1;
+	     double rr[][][][] = new double[3][3*n+1][n+1][n+1];
+	
+	     // Compute the 3-D discrete Radon transform for x-planes
+	     for (p=-n/2; p <= n/2; p++) {  // first slope
+	        s1=2.0*p/n;
+	        
+	         for (q=-n/2; q <= n/2; q++) { // second slope
+	           s2=2.0*q/n;
+	           
+	           for (t=-3*n/2; t <= 3*n/2; t++) {    // intercept
+	             acc=0;
+	             for (v=-n/2; v <= n/2-1; v++) {
+	                 for (w=-n/2; w <= n/2-1; w++) {
+	                    acc = acc+I1(ima,n,s1*v+s2*w+t,v,w);
+	                 } // for (w=-n/2; w <= n/2-1; w++)
+	             } // for (v=-n/2; v <= n/2-1; v++)
+	             aCoord = new int[] {t,p,q};
+	             N = new int[] {m,n+1,n+1};
+	             coord = toUnaliasedCoord(aCoord, N);
+	             rr[0][coord[0]][coord[1]][coord[2]] = acc;
+	           } // for (t=-3*n/2; t <= 3*n/2; t++)
+	         } // for (q=-n/2; q <= n/2; q++)
+	     } // for (p=-n/2; p <= n/2; p++)
+	
+	     // Compute the 3-D discrete Radon transform for y-planes
+	     for (p=-n/2; p <= n/2; p++) {  // first slope
+	        s1=2.0*p/n;
+	        
+	         for (q=-n/2; q <= n/2; q++) { // second slope
+	           s2=2.0*q/n;
+	           
+	           for (t=-3*n/2; t <= 3*n/2; t++) {  // intercept
+	             acc=0;
+	             for (u=-n/2; u <= n/2-1; u++) {
+	                 for (w=-n/2; w <= n/2-1; w++) {
+	                    acc = acc+I2(ima,n,u,s1*u+s2*w+t,w);
+	                 } // for (w=-n/2; w <= n/2-1; w++)
+	             } // for (u=-n/2; u <= n/2-1; u++)
+	             aCoord = new int[] {t,p,q};
+	             N = new int[] {m,n+1,n+1};
+	             coord = toUnaliasedCoord(aCoord, N);
+	             rr[1][coord[0]][coord[1]][coord[2]] = acc;
+	           } // for (t=-3*n/2; t <= 3*n/2; t++)
+	         } // for (q=-n/2; q <= n/2; q++)
+	     } // for (p=-n/2; p <= n/2; p++)
+	
+	     // the 3-D discrete Radon transform for z-planes
+	     for (p=-n/2; p <= n/2; p++) {  // first slope
+	        s1=2.0*p/n;
+	        
+	         for (q=-n/2; q <= n/2; q++) { // second slope
+	           s2=2.0*q/n;
+	           
+	           for (t=-3*n/2; t <= 3*n/2; t++) { // intercept
+	             acc=0;
+	             for (u=-n/2; u <= n/2-1; u++) {
+	                 for (v=-n/2; v <= n/2-1; v++) {
+	                    acc = acc+I3(ima,n,u,v,s1*u+s2*v+t);
+	                 } // for (v=-n/2; v <= n/2-1; v++)
+	             } // for (u=-n/2; u <= n/2-1; u++)
+	             aCoord = new int[] {t,p,q};
+	             N = new int[] {m,n+1,n+1};
+	             coord = toUnaliasedCoord(aCoord, N);
+	             rr[2][coord[0]][coord[1]][coord[2]] = acc;
+	           } // for (t=-3*n/2; t <= 3*n/2; t++)
+	         } // for (q=-n/2; q <= n/2; q++)
+	     } // for (p=-n/2; p <= n/2; p++)
+	     return rr;
+     }
 
      // computation of I1 - trigonometric interpolation of I along the columns (along the y-axis)
      private double I1(double im[][], int n, int u, double y) {
@@ -6779,6 +7207,26 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        acc = acc + im[toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)]*dirichlet(yin,m)[0];
 	     }
 	     return acc; 
+     }
+     
+     // computation of I1 - continuous extension of I along the x direction
+     private double I1(double im[][][], int n, double x,int v,int w) {
+		 int m=3*n+1;
+		 double acc = 0;
+		 int u;
+		 double xin[] = new double[1];
+		 int aCoord[];
+		 int N[];
+		 int coord[];
+		
+		 for (u=-n/2; u <= n/2-1; u++) {
+			aCoord = new int[] {u,v,w};
+			N = new int[] {n,n,n}; 
+		    coord = toUnaliasedCoord(aCoord,N);
+		    xin[0] = x-u;
+		    acc = acc + im[coord[0]][coord[1]][coord[1]]*dirichlet(xin,m)[0];
+		 }
+		 return acc;
      }
 
 
@@ -6794,6 +7242,46 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        acc = acc + im[toUnaliasedIdx(v,n)][toUnaliasedIdx(u,n)]*dirichlet(xin,m)[0];
 	     }
 	     return acc;
+     }
+     
+     // computation of I2 - continuous extension of I along the y direction
+     private double I2(double im[][][],int n,int u,double y, int w) {
+	     int m=3*n+1;
+	     double acc = 0;
+	     int v;
+	     double yin[] = new double[1];
+	     int aCoord[];
+		 int N[];
+		 int coord[];
+	     
+	     for (v=-n/2; v <= n/2-1; v++) {
+	    	    aCoord = new int[] {u,v,w};
+				N = new int[] {n,n,n}; 
+			    coord = toUnaliasedCoord(aCoord,N);
+			    yin[0] = y-v;
+	            acc = acc + im[coord[0]][coord[1]][coord[2]]*dirichlet(yin,m)[0];
+	     }
+	     return acc; 
+     }
+     
+     // computation of I3 - continuous extension of I along the z direction
+     private double I3(double im[][][], int n,int u,int v, double z) {
+	     int m=3*n+1;
+	     double acc = 0;
+	     int w;
+	     double zin[] = new double[1];
+	     int aCoord[];
+		 int N[];
+		 int coord[];
+	
+	     for (w=-n/2; w <= n/2-1; w++) {
+	    	 aCoord = new int[] {u,v,w};
+			 N = new int[] {n,n,n}; 
+			 coord = toUnaliasedCoord(aCoord,N);
+			 zin[0] = z-w;
+	         acc = acc + im[coord[0]][coord[1]][coord[2]]*dirichlet(zin,m)[0];
+	     }
+	     return acc; 
      }
 
      private double[][][] PtP(double X[][][]) {
@@ -6877,6 +7365,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		    	 z[1][-m+ofs+i] = Math.sin(arg2);
     		     }
     		     FFTUtility fft = new FFTUtility(z[0], z[1], 1, 3*m, 1, -1, FFTUtility.FFT);
+    		     fft.setShowProgress(false);
     		     fft.run();
     		     fft.finalize();
     		     fft = null;
@@ -6936,12 +7425,12 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 if ((PQ != null) && (PZ != null)) {
     		     // load weights from the precomputed structure
     			 for (i = 0; i < m; i++) {
-    				 q[0][i] = PQ[0][i][k];
-    				 q[1][i] = PQ[1][i][k];
+    				 q[0][i] = PQ[0][i][k-1];
+    				 q[1][i] = PQ[1][i][k-1];
     			 }
     		     for (i = 0; i < 3*m; i++) {
-    		    	 Z[0][i] = PZ[0][i][k];
-    		    	 Z[1][i] = PZ[1][i][k];
+    		    	 Z[0][i] = PZ[0][i][k-1];
+    		    	 Z[1][i] = PZ[1][i][k-1];
     		     }
     		 }
     		 else {
@@ -6969,6 +7458,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		    	 Z[1][-m+ofs+i] = Math.sin(arg2);
     		     }
     		     FFTUtility fft = new FFTUtility(Z[0], Z[1], 1, 3*m, 1, -1, FFTUtility.FFT);
+    		     fft.setShowProgress(false);
     		     fft.run();
     		     fft.finalize();
     		     fft = null;
@@ -6990,11 +7480,13 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     			 }
     		 }
     		 FFTUtility fft = new FFTUtility(Y[0], Y[1], 1, 3*m, sz2, -1, FFTUtility.FFT);
+    		 fft.setShowProgress(false);
     		 fft.run();
     		 fft.finalize();
     		 fft = null;
     		 if (sz2 > 1) {
     			 FFTUtility fft2 = new FFTUtility(Y[0],Y[1], 3*m, sz2, 1, -1, FFTUtility.FFT);
+    			 fft2.setShowProgress(false);
     			 fft2.run();
     			 fft2.finalize();
     			 fft2 = null;
@@ -7007,11 +7499,13 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     			 }
     		 }
     		 FFTUtility ifft = new FFTUtility(W[0], W[1], 1, 3*m, sz2, 1, FFTUtility.FFT);
+    		 ifft.setShowProgress(false);
     		 ifft.run();
     		 ifft.finalize();
     		 ifft = null;
     		 if (sz2 > 1) {
     			 FFTUtility ifft2 = new FFTUtility(W[0],W[1], 3*m, sz2, 1, 1, FFTUtility.FFT);
+    			 ifft2.setShowProgress(false);
     			 ifft2.run();
     			 ifft2.finalize();
     			 ifft2 = null;
@@ -7133,9 +7627,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    	 for (q = 0; q < n; q++) {
 	    		 for (i = 0; i < 3*n+1; i++) {
 	    			 cff1[0][i] = pim[0][i][p][q];
+	    			 cff1[1][i] = 0.0;
 	    		 }
 	    		 cff1 = ifftshift1d(cff1);
 	    		 FFTUtility fft = new FFTUtility(cff1[0], cff1[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+	    		 fft.setShowProgress(false);
 	    		 fft.run();
 	    		 fft.finalize();
 	    		 fft = null;
@@ -7218,9 +7714,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    	 for (q = 0; q < n; q++) {
 	    		 for (p = 0; p < 3*n+1; p++) {
 	    			 cff2[0][p] = pim[0][i][p][q];
+	    			 cff2[1][p] = 0.0;
 	    		 }
 	    		 cff2 = ifftshift1d(cff2);
 	    		 FFTUtility fft = new FFTUtility(cff2[0], cff2[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+	    		 fft.setShowProgress(false);
 	    		 fft.run();
 	    		 fft.finalize();
 	    		 fft = null;
@@ -7305,9 +7803,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    	 for (p = 0; p < n; p++) {
 	    		 for (q = 0; q < 3*n+1; q++) {
 	    			 cff3[0][q] = pim[0][i][p][q];
+	    			 cff3[1][q] = 0.0;
 	    		 }
 	    		 cff3 = ifftshift1d(cff3);
 	    		 FFTUtility fft = new FFTUtility(cff3[0], cff3[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+	    		 fft.setShowProgress(false);
 	    		 fft.run();
 	    		 fft.finalize();
 	    		 fft = null;
