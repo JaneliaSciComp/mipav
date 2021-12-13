@@ -1057,8 +1057,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		t1 = 96.175 seconds t2 = 24.425 seconds speedup = 3.9375639713408392
 		Test ppft3 n = 128 OK err = 1.8795673825722752E-14
 		t1 = 153.401 seconds t2 = 38.279 seconds speedup = 4.00744533556258
-		Test radon3 n = 4 FAIL err = 0.7071067811865479
-		t1 = 0.02 seconds t2 = 0.011 seconds speedup = 1.8181818181818183
+		Test radon3 n = 4 OK err = 7.75349445079772E-16
+        t1 = 0.032 seconds t2 = 0.015 seconds speedup = 2.1333333333333333
 		*/
 	    // Test the functions ppft3_ref, ppft3, and radon3.
 	    
@@ -7000,11 +7000,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     						 res[1][m] = pp[1][i][m][j][k];
     					 }
     					 res = ifftshift1d(res);
-    			    	 FFTUtility fft = new FFTUtility(res[0], res[1], 1, 3*n+1, 1, 1, FFTUtility.FFT);
-    				     fft.setShowProgress(false);
-    				     fft.run();
-    				     fft.finalize();
-    				     fft = null;
+    			    	 FFTUtility ifft = new FFTUtility(res[0], res[1], 1, 3*n+1, 1, 1, FFTUtility.FFT);
+    				     ifft.setShowProgress(false);
+    				     ifft.run();
+    				     ifft.finalize();
+    				     ifft = null;
     				     res = fftshift1d(res);
     				     for (m = 0; m < 3*n+1; m++) {
     				    	 rr[0][i][m][j][k] = res[0][m];
@@ -7245,7 +7245,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 			N = new int[] {n,n,n}; 
 		    coord = toUnaliasedCoord(aCoord,N);
 		    xin[0] = x-u;
-		    acc = acc + im[coord[0]][coord[1]][coord[1]]*dirichlet(xin,m)[0];
+		    acc = acc + im[coord[0]][coord[1]][coord[2]]*dirichlet(xin,m)[0];
 		 }
 		 return acc;
      }
