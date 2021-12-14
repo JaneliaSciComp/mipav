@@ -8335,6 +8335,506 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
      }
      
-        		 
+     private double[][][][] precondadjppft3(double pp[][][][][]) { 
+    		 
+    		 // Computes the preconditioned adjoint of the 3-D pseudo-polar Fourier transform.
+    		 
+    		 // pp    4-D array of size 3x(3n+1)x(n+1)x(n+1) containing the 3-D
+    		 //       pseudo-polar Fourier transform
+    		 
+    		 // See also ppft3, adjppft3_ref, adjppft3, precondadjppft3_ref.
+    		 
+    		 // Yoel Shkolnisky 28/02/03
+    		 
+    		 // Revisions:
+    		 // Yoel Shkolnisky  19/05/2013  Renamed from OptimizedprecondAdjPPFT3 to precondAdjPPFT3.
+    		 // Yoel Shkolnisky  21/05/2013  Vectorize for speed.
+
+    		 int i,j,k,m,n;
+    		 double alpha;
+    		 int ofs_3n1;
+    		 double alphaArray[];
+    		 double PQ[][][];
+    		 double PZ[][][];
+    	     // Check if the input is of size 3x(3n+1)x(n+1)x(n+1)
+    		 n=verifyPP(pp);
+
+    		 // The array adjpp contains the three parts of the adjoint transform. 
+    		 // adjpp(k,:,:,:) contains the adjoint of pp(k,:,:,:)
+    		 double adjpp [][][][][] = new double[2][3][n][n][n];
+    		 m=3*n+1;
+    		 alpha = 2.0*(n+1.0)/(n*m);
+
+
+    		 ofs_3n1=(int)Math.floor((3.0*n+1.0)/2.0)+1;
+    		 //ofs_n1=floor((n+1)/2)+1;
+               
+    		 alphaArray = new double[m];
+    		 for (i = 0; i < m; i++) {
+    			 alphaArray[i] = alpha*(3*n/2 - i);
+    		 }
+    		 PQ = new double[2][n+1][m];
+    		 PZ = new double[2][3*n+3][m];
+    		 cfrftV3_precomp(PQ,PZ,n+1,alphaArray);
+
+    		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    		 //Compute the adjoint of pp(1,:,:,:)
+    		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    		 double tmp1[][][][] = new double[2][3*n+1][n][n+1];
+    		 double tmp2[][][][] = new double[2][3*n+1][n][n];
+
+    		 // Apply adjFlipY and adjFlipZ - the adjoint of fliping along the second
+    		 // and third dimensions.
+    		 double tmp[][][][] = new double[2][3*n+1][n+1][n+1];
+    		 for (i = 0; i < 3*n+1; i++) {
+    			 for (j = 0; j < n+1; j++) {
+    				 for (k = 0; k < n+1; k++) {
+    					 tmp[0][i][j][k] = pp[0][0][i][n-j][n-k];
+    					 tmp[1][i][j][k] = pp[1][0][i][n-j][n-k];
+    				 }
+    			 }
+    		 }
+
+    		 // now tmp is of size (3n+1)x(n+1)x(n+1)
+    		 // Apply adjoint of FRFT along the y direction.
+    		 double U[][][] = new double[2][n+1][n+1];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     // Old version:
+    		 //     for j=-n/2:n/2
+    		 //         U = tmp(k+ofs_3n1,:,j+ofs_n1);
+    		 //         F = mult(k,alpha,n).*cfrftV3(U(:),-k*alpha,PQ,PZ,k+3*n/2+1); 
+    		 //         tmp1(k+ofs_3n1,:,j+ofs_n1) = F(1:n); % Truncate the last element of F
+    		 //     end
+    		     
+    		     // Optimized version:
+    			 for (i = 0; i < n+1; i++) {
+    				 for (j = 0; j < n+1; j++) {
+    					U[0][i][j] = tmp[0][k+ofs_3n1-1][i][j]; 
+    					U[1][i][j] = tmp[1][k+ofs_3n1-1][i][j]; 
+    				 }
+    			 }
+    			 double W[][][] = cfrftV3(U,-k*alpha,PQ,PZ,k+3*n/2+1);
+    			 double prod = mult(k,alpha,n);
+    			 for (i = 0; i < W[0].length; i++) {
+    				 for (j = 0; j < W[0][0].length; j++) {
+    					 W[0][i][j] = prod*W[0][i][j];
+    					 W[1][i][j] = prod*W[1][i][j];
+    				 }
+    			 }
+    			 for (i = 0; i < n; i++) {
+    				 for (j = 0; j < n+1; j++) {
+    					 tmp1[0][k+ofs_3n1-1][i][j] = W[0][i][j];
+    					 tmp1[1][k+ofs_3n1-1][i][j] = W[1][i][j];
+    				 }
+    			 }
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 // tmp1 is of size (3n+1)xnx(n+1)
+    		 // Apply adjoint of FRFT along the z direction.
+    		 double V[][][] = new double[2][n+1][n];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     // Old version:
+    		 //     for l=-n/2:n/2-1
+    		 //         V = tmp1(k+ofs_3n1,l+ofs_n1,:);
+    		 //         F = mult(k,alpha,n).*cfrftV3(V(:),-k*alpha,PQ,PZ,k+3*n/2+1);
+    		 //         tmp2(k+ofs_3n1,l+ofs_n1,:) = F(1:n);
+    		 //     end
+
+    		     // Optimized version:
+    			 for (i = 0; i < n; i++) {
+    				 for (j = 0; j < n+1; j++) {
+    					 V[0][j][i] = tmp1[0][k+ofs_3n1-1][i][j];
+    					 V[1][j][i] = tmp1[1][k+ofs_3n1-1][i][j];
+    				 }
+    			 }
+    			 double W[][][] = cfrftV3(V,-k*alpha,PQ,PZ,k+3*n/2+1);
+    			 double prod = mult(k,alpha,n);
+    			 for (i = 0; i < W[0].length; i++) {
+    				 for (j = 0; j < W[0][0].length; j++) {
+    					 W[0][i][j] = prod*W[0][i][j];
+    					 W[1][i][j] = prod*W[1][i][j];
+    				 }
+    			 }
+    			 for (i = 0; i < n; i++) {
+    				 for (j = 0; j < n; j++) {
+    					 tmp2[0][k+ofs_3n1-1][i][j] = W[0][j][i];
+    					 tmp2[1][k+ofs_3n1-1][i][j] = W[1][j][i];
+    				 }
+    			 }
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+    		 // now tmp2 is of size (3n+1)xnxn
+    		 // Apply adjFFT along the x direction.
+    		 tmp = new double[2][3*n+1][n][n];
+    		 double res[][] = new double[2][3*n+1];
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < 3*n+1; k++) {
+    					 res[0][k] = tmp2[0][k][i][j];
+    					 res[1][k] = tmp2[1][k][i][j];
+    				 }
+    				 res = ifftshift1d(res);
+			    	 FFTUtility ifft = new FFTUtility(res[0], res[1], 1, 3*n+1, 1, 1, FFTUtility.FFT);
+				     ifft.setShowProgress(false);
+				     ifft.run();
+				     ifft.finalize();
+				     ifft = null;
+				     res = fftshift1d(res);
+				     for (k = 0; k < 3*n+1; k++) {
+				    	 tmp[0][k][i][j] = m*res[0][k];
+				    	 tmp[1][k][i][j] = m*res[1][k];
+				     }
+    			 }
+    		 }
+    		 // Apply adjEX (adjoint of padding along the X direction).
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < n; k++) {
+    					 adjpp[0][0][i][j][k] = tmp[0][i+n][j][k];
+    					 adjpp[1][0][i][j][k] = tmp[1][i+n][j][k];
+    				 }
+    			 }
+    		 }
+
+    		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    		 //Compute the adjoint of pp(2,:,:,:)
+    		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    		 tmp1 = new double[2][n+1][3*n+1][n+1];
+    		 tmp2 = new double[2][n+1][3*n+1][n];
+    		 double tmp3[][][][] = new double[2][n][3*n+1][n];
+
+    		 // Apply adjFlipY and adjFlipZ - the adjoint of fliping along the second
+    		 // and third dimensions.
+    		 tmp = new double[2][3*n+1][n+1][n+1];
+    		 for (i = 0; i < 3*n+1; i++) {
+    			 for (j = 0; j < n+1; j++) {
+    				 for (k = 0; k < n+1; k++) {
+    					 tmp[0][i][j][k] = pp[0][1][i][n-j][n-k];
+    					 tmp[1][i][j][k] = pp[1][1][i][n-j][n-k];
+    				 }
+    			 }
+    		 }
+
+    		 // Swap coordinates 1 and 2.
+    		 // This is the adjoint operation for the coordinate change in ppft3 for PP2.
+    		 // We perform coordinate change in ppft3 so that the pseudo-radius k will
+    		 // always be the first parameter. To compute the adjoint transform we need
+    		 // to swap the coordinates again.
+    		 for (i = 0; i < 3*n+1; i++) {
+    			 for (j = 0; j < n+1; j++) {
+    				 for (k = 0; k < n+1; k++) {
+    				     tmp1[0][j][i][k] = tmp[0][i][j][k];
+    				     tmp1[1][j][i][k] = tmp[1][i][j][k];
+    				 }
+    			 }
+    		 }
+
+    		 // now tmp1 is of size (n+1)x(3n+1)x(n+1)
+    		 // Apply the adjoint of FRFT along the z direction.
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     // Old version:
+    		 //     for l=-n/2:n/2
+    		 //         V = tmp1(l+ofs_n1,k+ofs_3n1,:);
+    		 //         F = mult(k,alpha,n).*cfrftV3(V(:),-k*alpha,PQ,PZ,k+3*n/2+1);
+    		 //         tmp2(l+ofs_n1,k+ofs_3n1,:) = F(1:n);
+    		 //     end
+
+    		     // Optimized version:
+    			 for (i = 0; i < n+1; i++) {
+    				 for (j = 0; j < n+1; j++) {
+    					 U[0][j][i] = tmp1[0][i][k+ofs_3n1-1][j];
+    					 U[1][j][i] = tmp1[1][i][k+ofs_3n1-1][j];
+    				 }
+    			 }
+    			 double W[][][] = cfrftV3(U,-k*alpha,PQ,PZ,k+3*n/2+1);
+    			 double prod = mult(k,alpha,n);
+    			 for (i = 0; i < W[0].length; i++) {
+    				 for (j = 0; j < W[0][0].length; j++) {
+    					 W[0][i][j] = prod*W[0][i][j];
+    					 W[1][i][j] = prod*W[1][i][j];
+    				 }
+    			 }
+    		     for (i = 0; i < n+1; i++) {
+    		    	 for (j = 0; j < n; j++) {
+    		    		 tmp2[0][i][k+ofs_3n1-1][j] = W[0][j][i];
+    		    		 tmp2[1][i][k+ofs_3n1-1][j] = W[1][j][i];
+    		    	 }
+    		     }
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 // now tmp2 is of size (n+1)x(3n+1)xn
+    		 // Apply the adjoint of FRFT along the x direction.
+    		 U = new double[2][n+1][n];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     // Old version:
+    		 //     for j=-n/2:n/2-1
+    		 //         U = tmp2(:,k+ofs_3n1,j+ofs_n1);
+    		 //         F = mult(k,alpha,n).*cfrftV3(U(:),-k*alpha,PQ,PZ,k+3*n/2+1);
+    		 //         tmp3(:,k+ofs_3n1,j+ofs_n1) = F(1:n);
+    		 //     end
+    		     
+    		     // Optimized version:
+    			 for (i = 0; i < n+1; i++) {
+    				 for (j = 0; j < n; j++) {
+    					 U[0][i][j] = tmp2[0][i][k+ofs_3n1-1][j];
+    					 U[1][i][j] = tmp2[1][i][k+ofs_3n1-1][j];
+    				 }
+    			 }
+    		     double W[][][] = cfrftV3(U,-k*alpha,PQ,PZ,k+3*n/2+1);
+    		     double prod = mult(k,alpha,n);
+    			 for (i = 0; i < W[0].length; i++) {
+    				 for (j = 0; j < W[0][0].length; j++) {
+    					 W[0][i][j] = prod*W[0][i][j];
+    					 W[1][i][j] = prod*W[1][i][j];
+    				 }
+    			 }
+    			 for (i = 0; i < n; i++) {
+    				 for (j = 0; j < n; j++) {
+    					 tmp3[0][i][k+ofs_3n1-1][j] = W[0][i][j];
+    					 tmp3[1][i][k+ofs_3n1-1][j] = W[1][i][j];
+    				 }
+    			 }
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 // now tmp3 is of size nx(3n+1)xn
+    		 // Apply adjFFT along the y direction.
+    		 tmp = new double[2][n][3*n+1][n];
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < 3*n+1; k++) {
+    					 res[0][k] = tmp2[0][i][k][j];
+    					 res[1][k] = tmp2[1][i][k][j];
+    				 }
+    				 res = ifftshift1d(res);
+			    	 FFTUtility ifft = new FFTUtility(res[0], res[1], 1, 3*n+1, 1, 1, FFTUtility.FFT);
+				     ifft.setShowProgress(false);
+				     ifft.run();
+				     ifft.finalize();
+				     ifft = null;
+				     res = fftshift1d(res);
+				     for (k = 0; k < 3*n+1; k++) {
+				    	 tmp[0][i][k][j] = m*res[0][k];
+				    	 tmp[1][i][k][j] = m*res[1][k];
+				     }
+    			 }
+    		 }
+    		 // Apply adjEX (adjoint of padding along the X direction).
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < n; k++) {
+    					 adjpp[0][1][i][j][k] = tmp[0][i][j+n][k];
+    					 adjpp[1][1][i][j][k] = tmp[1][i][j+n][k];
+    				 }
+    			 }
+    		 }
+
+    		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    		 //Compute the adjoint of pp(3,:,:,:)
+    		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    		 tmp1 = new double[2][n+1][n+1][3*n+1];
+    		 tmp2 = new double[2][n][n+1][3*n+1];
+    		 tmp3 = new double[2][n][n][3*n+1];
+
+    		 // Apply adjFlipY and adjFlipZ - the adjoint of fliping along the second
+    		 // and third dimensions.
+    		 tmp = new double[2][3*n+1][n+1][n+1];
+    		 for (i = 0; i < 3*n+1; i++) {
+    			 for (j = 0; j < n+1; j++) {
+    				 for (k = 0; k < n+1; k++) {
+    					 tmp[0][i][j][k] = pp[0][2][i][n-j][n-k];
+    					 tmp[1][i][j][k] = pp[1][2][i][n-j][n-k];
+    				 }
+    			 }
+    		 }
+
+    		 // The coordinates in pp are given as follows:
+    		 // coordinate 1 - pseudo-radius (unit steps in the z direction)
+    		 // coordinate 2 - pseudo-angle in the x direction
+    		 // coordinate 3 - pseudo-angle in the y direction.
+    		 // We rearrange the coordinates as [2 3 1] to restore the original
+    		 // coordinates oredering, where the first coordinate is x, the second is y
+    		 // and the third is z.
+    		 for (i = 0; i < n+1; i++) {
+    			 for (j = 0; j < n+1; j++) {
+    				 for (k = 0; k < 3*n+1; k++) {
+    					 tmp1[0][i][j][k] = tmp[0][j][k][i];
+    					 tmp1[1][i][j][k] = tmp[1][j][k][i];
+    				 }
+    			 }
+    		 }
+
+    		 // now tmp1 is of size (n+1)x(n+1)(3n+1)
+    		 // Apply the adjoint of FRFT along the x direction.
+    		 V = new double[2][n+1][n+1];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     // Old version:
+    		 //     for j=-n/2:n/2
+    		 //         V = tmp1(:,j+ofs_n1,k+ofs_3n1);
+    		 //         F = mult(k,alpha,n).*cfrftV3(V(:),-k*alpha,PQ,PZ,k+3*n/2+1);
+    		 //         tmp2(:,j+ofs_n1,k+ofs_3n1) = F(1:n);
+    		 //     end
+    		     
+    		     // Optimized version:
+    			 for (i = 0; i < n+1; i++) {
+    				 for (j = 0; j < n+1; j++) {
+    					 V[0][i][j] = tmp1[0][i][j][k+ofs_3n1-1];
+    					 V[1][i][j] = tmp1[1][i][j][k+ofs_3n1-1];
+    				 }
+    			 }
+    		     double W[][][] = cfrftV3(V,-k*alpha,PQ,PZ,k+3*n/2+1);
+    		     double prod = mult(k,alpha,n);
+    			 for (i = 0; i < W[0].length; i++) {
+    				 for (j = 0; j < W[0][0].length; j++) {
+    					 W[0][i][j] = prod*W[0][i][j];
+    					 W[1][i][j] = prod*W[1][i][j];
+    				 }
+    			 }
+    		     for (i = 0; i < n; i++) {
+    		    	 for (j = 0; j < n+1; j++) {
+    		    		 tmp2[0][i][j][k+ofs_3n1-1] = W[0][i][j];
+    		    		 tmp2[1][i][j][k+ofs_3n1-1] = W[1][i][j];
+    		    	 }
+    		     }
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 // now tmp2 is of size nx(n+1)x(3n+1)
+    		 // Apply the adjoint of FRFT along the y direction.
+    		 U = new double[2][n+1][n];
+    		 for (k=-3*n/2; k <= 3*n/2; k++) {
+    		     // Old version:
+    		 //     for l=-n/2:n/2-1
+    		 //         U = tmp2(l+ofs_n1,:,k+ofs_3n1);
+    		 //         F = mult(k,alpha,n).*cfrftV3(U(:),-k*alpha,PQ,PZ,k+3*n/2+1);
+    		 //         tmp3(l+ofs_n1,:,k+ofs_3n1) = F(1:n);
+    		 //     end
+
+    		     // Optimized version:
+    			 for (i = 0; i < n; i++) {
+    				 for (j = 0; j < n+1; j++) {
+    					 U[0][j][i] = tmp2[0][i][j][k+ofs_3n1-1];
+    					 U[1][j][i] = tmp2[1][i][j][k+ofs_3n1-1];
+    				 }
+    			 }
+    		     double W[][][] = cfrftV3(U,-k*alpha,PQ,PZ,k+3*n/2+1);
+    		     double prod = mult(k,alpha,n);
+    			 for (i = 0; i < W[0].length; i++) {
+    				 for (j = 0; j < W[0][0].length; j++) {
+    					 W[0][i][j] = prod*W[0][i][j];
+    					 W[1][i][j] = prod*W[1][i][j];
+    				 }
+    			 }
+    			 for (i = 0; i < n; i++) {
+    				 for (j = 0; j < n; j++) {
+    					 tmp3[0][i][j][k+ofs_3n1-1] = W[0][j][i];
+    					 tmp3[1][i][j][k+ofs_3n1-1] = W[1][j][i];
+    				 }
+    			 }
+    		 } // for (k=-3*n/2; k <= 3*n/2; k++)
+
+    		 // now tmp3 is of size nxnx(3n+1)
+    		 // Apply adjFFT along.
+    		 tmp = new double[2][n][n][3*n+1];
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < 3*n+1; k++) {
+    					 res[0][k] = tmp3[0][i][j][k];
+    					 res[1][k] = tmp3[1][i][j][k];
+    				 }
+    				 res = ifftshift1d(res);
+			    	 FFTUtility ifft = new FFTUtility(res[0], res[1], 1, 3*n+1, 1, 1, FFTUtility.FFT);
+				     ifft.setShowProgress(false);
+				     ifft.run();
+				     ifft.finalize();
+				     ifft = null;
+				     res = fftshift1d(res);
+				     for (k = 0; k < 3*n+1; k++) {
+				    	 tmp[0][i][j][k] = m*res[0][k];
+				    	 tmp[1][i][j][k] = m*res[1][k];
+				     }
+    			 }
+    		 }
+    		 // Apply adjEX (adjoint of padding along the X direction).
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < n; k++) {
+    					 adjpp[0][2][i][j][k] = tmp[0][i][j][k+n];
+    					 adjpp[1][2][i][j][k] = tmp[1][i][j][k+n];
+    				 }
+    			 }
+    		 }
+
+
+    		 //%%%%%%%%%%%%%%%%%%%%%%
+    		 //Combine the 3 adjoints
+    		 //%%%%%%%%%%%%%%%%%%%%%%
+    		 double im[][][][] = new double[2][n][n][n];
+    		 for (i = 0; i < n; i++) {
+    			 for (j = 0; j < n; j++) {
+    				 for (k = 0; k < n; k++) {
+    				     im[0][i][j][k] = adjpp[0][0][i][j][k] + adjpp[0][1][i][j][k] + adjpp[0][2][i][j][k];
+    				     im[1][i][j][k] = adjpp[1][0][i][j][k] + adjpp[1][1][i][j][k] + adjpp[1][2][i][j][k];
+    				 }
+    			 }
+    		 }
+    		 return im;
+     }
+
+     
+     private int verifyPP(double pp[][][][][]) {
+    		 // Verify that the input image is of size 3x(3n+1)x(n+1)x(n+1) with n even.
+    		 // If so, the function return n. Otherwise, the function terminates with
+    		 // proper error message.
+    		 String ERR = "pp must be COMPLEX of size 3x(3n+1)x(n+1)x(n+1)";
+    		 int s1 = pp.length;
+    		 
+    		 if (s1 != 2) {
+    			 System.err.println("In verifyPP pp.length = " + s1 + " instead of the 2 required for complex");
+    			 System.exit(0);
+    		 }
+
+    		 int s2 = pp[0].length;
+    		 if (s2 != 3) {
+    			 System.err.println("In verifyPP pp[0].length = " + s2 + " instead of the required 3");
+    			 System.exit(0); 
+    		 }
+    		 int s3 = pp[0][0].length;
+    		 int s4 = pp[0][0][0].length;
+    		 int s5 = pp[0][0][0][0].length;
+
+    		 if ((s4-s5) != 0) {
+    		     // The last two dimensions of pp should be n+1
+    			 System.err.println("In verifyPP pp[0][0][0].length != pp[0][0][0][0].length");
+    			 System.exit(0);
+    		 }
+
+    		 int n = s4-1;
+    		 if ((n%2)!=0) {
+    		     // n is not even
+    			 System.err.println("In verifyPP n = " + n + " is not even");
+    			 System.exit(0);
+    		 }
+
+    		 if (s3 !=(3*n+1)) {
+    		     // Second dimension is not 3n+1
+    			 System.err.println("In verifyPP pp[0][0].length = " + s3 + " instead of 3*n+1");
+    			 System.exit(0);
+    		 }
+    		 return n;
+     }
+     
+     private double mult(int k, double alpha, int n) {
+		 // Compute preconditioning factor for row k
+    	 double v;
+		 if (k==0) {
+			 double var = 3.0*n+1.0;
+		     v = 1.0/(var*var);
+		 }
+		 else {
+		     v = Math.abs(k*alpha);
+		 }
+		 return v;
+     }
 
 }
