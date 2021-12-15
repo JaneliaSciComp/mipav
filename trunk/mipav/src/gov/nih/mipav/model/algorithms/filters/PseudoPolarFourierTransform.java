@@ -1256,7 +1256,145 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    }
 	    System.out.println(testMsg + " " + str + " err = " + err);
     }
-
+	
+	public void testprecondAdjPPFT3(boolean ref) {
+		// test passes
+		// ref = false gives:
+		// ip1[0] = 176677.00097436918 ip2[0] = 176677.00097437162
+	    // ip1[1] = 25385.24216207578 ip2[1] = 25385.242162078976
+	    // abs(ip1-ip2)/abs(ip1) = 2.2535212835810207E-14
+        // ref = true gives:
+		// ip1[0] = 278813.67712995125 ip2[0] = 278813.67712991906
+		// ip1[1] = -6617.461993166054 ip2[1] = -6617.461993162298
+		// abs(ip1-ip2)/abs(ip1) = 1.1619956517216327E-13
+		
+		// Let D be the preconditioner. Denote by P the 3D ppft and by Q the 3D
+		// preconditioned ajoint ppft.
+		//
+		// This code shows that <A,QB> = <DPA,B>. That is, it shows that we compute
+		// the preconditioned adjoint ppft correctly.
+		
+		// The printout should be very close to zero.
+		
+		// Yoel Shkolnisky, July 2007.
+	
+		int i,j,k,m,n;
+		double alpha;
+		ModelImage a;
+	    int extents[] = new int[3];
+	    int volume;
+	    double buffer[];
+	    RandomNumberGen randomGen = new RandomNumberGen();
+	    double prod;
+		n=64;
+		m=3*n+1;
+		alpha = 2.0*(n+1.0)/(n*m);
+		volume = n*n*n;
+		buffer = new double[volume];
+		double bufa[][][][] = new double[2][n][n][n];
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < n; j++) {
+				for (k = 0; k < n; k++) {
+    		        bufa[0][i][j][k] = randomGen.genUniformRandomNum(0.0, 1.0);
+    		        buffer[i*n*n + j*n + k] = bufa[0][i][j][k];
+				}
+			}
+    	}
+    	extents[0] = n;
+    	extents[1] = n;
+    	extents[2] = n;
+    	a = new ModelImage(ModelImage.DOUBLE, extents, "a");
+    	try {
+    		a.importData(0, buffer, true);
+    	}
+    	catch (IOException e) {
+    		System.err.println("In testprecondAdjPPFT3 IOException on a.importData(0,buffer,true)");
+    		System.exit(0);
+    	}
+    	
+    	double b[][][][][] = new double[2][3][3*n+1][n+1][n+1];
+    	for (i = 0; i < 3; i++) {
+    	    for (j = 0; j < 3*n+1; j++) {
+    	    	for (k = 0; k < n+1; k++) {
+    	    		for (m = 0; m < n+1; m++) {
+    	    			b[0][i][j][k][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+    	    		}
+    	    	}
+    	    }
+    	}
+	    double ppa[][][][][];
+	    double ppbT[][][][];
+	
+		if (ref) {
+	        ppa=ppft3_ref(a);
+		    ppbT = precondadjppft3_ref(b);
+		}
+		else {
+		    ppa=ppft3(a);
+		    ppbT=precondadjppft3(b);
+		}
+	
+	
+		for (k=-3*n/2; k <= 3*n/2; k++) {
+			prod = mult(k,alpha,n);
+		    for (j=-n/2; j <= n/2; j++) {
+		    	for (i = 0; i < 3; i++) {
+		    		for (m = 0; m < n+1; m++) {
+		                ppa[0][i][k+3*n/2][j+n/2][m]=prod*ppa[0][i][k+3*n/2][j+n/2][m];
+		                ppa[1][i][k+3*n/2][j+n/2][m]=prod*ppa[1][i][k+3*n/2][j+n/2][m];
+		    		}
+		    	}
+		    }
+		}
+	
+		for (k=-3*n/2; k <= 3*n/2; k++) {
+			prod = mult(k,alpha,n);
+		    for (j=-n/2; j <= n/2; j++) {
+		    	for (i = 0; i < 3; i++) {
+		    		for (m = 0; m < n+1; m++) {
+		                ppa[0][i][k+3*n/2][m][j+n/2]=prod*ppa[0][i][k+3*n/2][m][j+n/2];
+		                ppa[1][i][k+3*n/2][m][j+n/2]=prod*ppa[1][i][k+3*n/2][m][j+n/2];
+		    		}
+		    	}
+		    }
+		}
+	
+		double ip1[]=ip(ppa,b);
+		double ip2[]=ip(bufa,ppbT);
+		System.out.println("ip1[0] = " + ip1[0] + " ip2[0] = " + ip2[0]);
+		System.out.println("ip1[1] = " + ip1[1] + " ip2[1] = " + ip2[1]);
+		double absdiff = zabs(ip1[0]-ip2[0],ip1[1]-ip2[1]);
+		double absip1 = zabs(ip1[0],ip1[1]);
+	    double ratio = absdiff/absip1;
+	    System.out.println("abs(ip1-ip2)/abs(ip1) = " + ratio);
+	
+	
+	
+		// % % % The commented code shows that the function for the preconditioned
+		// % % % adjoint ppft gives the same answer as applying the preconditioner D
+		// % % % following by the application of the not-preconditioned adjoint ppft. 
+		// % % 
+		// % % n=16;
+		// % % m=3*n+1;
+		// % % alpha = 2*(n+1)/(n*m);
+		// % % 
+		// % % a=rand(n,n,n);
+		// % % b=rand(3,3*n+1,n+1,n+1);
+		// % % ppbT1=ppft3TV3(b);
+		// % % for k=-3*n/2:3*n/2
+		// % %     for j=-n/2:n/2
+		// % %         b(:,k+3*n/2+1,j+n/2+1,:)=mult(k,alpha,n).*b(:,k+3*n/2+1,j+n/2+1,:);
+		// % %     end
+		// % % end
+		// % % 
+		// % % for k=-3*n/2:3*n/2
+		// % %     for j=-n/2:n/2
+		// % %         b(:,k+3*n/2+1,:,j+n/2+1)=mult(k,alpha,n).*b(:,k+3*n/2+1,:,j+n/2+1);
+		// % %     end
+		// % % end
+		// % % ppbT2=adjPPFT3(b);
+		// % % max(abs(ppbT1(:)-ppbT2(:)))
+	}
 
     private void equals(double v1[][][][][], double v2[][][][][], double eps, boolean ok[], double error[]) {
     		
@@ -6481,6 +6619,105 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	 }
     	 return sum;
      }
+     
+    private double[] ip(double a[][][][], double b[][][][]) {
+	     
+	     // Inner product of 2 multi-dimensional arrays.
+	     // For two matrices the inner product is given by
+	     
+	     //         N1   N2
+	     //    c = sum (sum a(k,l)*conj(b(k,l))
+	     //        k=1  l=1 
+	     
+	     // Yoel Shkolnisky 9/2/02
+	
+	     // c = sum(conj(a(:)).*b(:));
+    	 // Note comment had conj(b) but code has conj(a).
+    	 int N1 = a[0].length;
+    	 int N2 = a[0][0].length;
+    	 int N3 = a[0][0][0].length;
+    	 int B1 = b[0].length;
+    	 int B2 = b[0][0].length;
+    	 int B3 = b[0][0][0].length;
+    	 
+    	 if (N1 != B1) {
+    		 System.err.println("In ip a[0].length != b[0].length");
+    		 return null;
+    	 }
+    	 if (N2 != B2) {
+    		 System.err.println("In ip a[0][0].length != b[0][0].length");
+    		 return null;
+    	 }
+    	 if (N3 != B3) {
+    		 System.err.println("In ip a[0][0][0].length != b[0][0][0].length");
+    		 return null;
+    	 }
+    	 
+    	 int i,j,k;
+    	 double sum[] = new double[2];
+    	 for (i = 0; i < N1; i++) {
+    		 for (j = 0; j < N2; j++) {
+    			 for (k = 0; k < N3; k++) {
+	    			 sum[0] += (a[0][i][j][k]*b[0][i][j][k] + a[1][i][j][k]*b[1][i][j][k]);
+	    			 sum[1] += (a[0][i][j][k]*b[1][i][j][k] - a[1][i][j][k]*b[0][i][j][k]);
+    			 }
+    		 }
+    	 }
+    	 return sum;
+     }
+     
+     private double[] ip(double a[][][][][], double b[][][][][]) {
+	     
+	     // Inner product of 2 multi-dimensional arrays.
+	     // For two matrices the inner product is given by
+	     
+	     //         N1   N2
+	     //    c = sum (sum a(k,l)*conj(b(k,l))
+	     //        k=1  l=1 
+	     
+	     // Yoel Shkolnisky 9/2/02
+	
+	     // c = sum(conj(a(:)).*b(:));
+    	 // Note comment had conj(b) but code has conj(a).
+    	 int N1 = a[0].length;
+    	 int N2 = a[0][0].length;
+    	 int N3 = a[0][0][0].length;
+    	 int N4 = a[0][0][0][0].length;
+    	 int B1 = b[0].length;
+    	 int B2 = b[0][0].length;
+    	 int B3 = b[0][0][0].length;
+    	 int B4 = b[0][0][0][0].length;
+    	 
+    	 if (N1 != B1) {
+    		 System.err.println("In ip a[0].length != b[0].length");
+    		 return null;
+    	 }
+    	 if (N2 != B2) {
+    		 System.err.println("In ip a[0][0].length != b[0][0].length");
+    		 return null;
+    	 }
+    	 if (N3 != B3) {
+    		 System.err.println("In ip a[0][0][0].length != b[0][0][0].length");
+    		 return null;
+    	 }
+    	 if (N4 != B4) {
+    		 System.err.println("In ip a[0][0][0][0].length != b[0][0][0][0].length");
+    		 return null;
+    	 }
+    	 int i,j,k,m;
+    	 double sum[] = new double[2];
+    	 for (i = 0; i < N1; i++) {
+    		 for (j = 0; j < N2; j++) {
+    			 for (k = 0; k < N3; k++) {
+    				 for (m = 0; m < N4; m++) {
+		    			 sum[0] += (a[0][i][j][k][m]*b[0][i][j][k][m] + a[1][i][j][k][m]*b[1][i][j][k][m]);
+		    			 sum[1] += (a[0][i][j][k][m]*b[1][i][j][k][m] - a[1][i][j][k][m]*b[0][i][j][k][m]);
+    				 }
+    			 }
+    		 }
+    	 }
+    	 return sum;
+     }
 
      
      private double[][] GKN(double x[][], int k) {
@@ -8814,7 +9051,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		 // adjpp(k,:,:,:) contains the adjoint of pp(k,:,:,:)
 		 double adjpp[][][][][] = new double[2][3][n][n][n];
 		 m=3*n+1;
-		 alpha = 2*(n+1)/(n*m);
+		 alpha = 2.0*(n+1.0)/(n*m);
 
 		 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		 //Compute the adjoint of pp(1,:,:,:)
