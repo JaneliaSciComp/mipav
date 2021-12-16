@@ -3357,6 +3357,84 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		// Revision record
     		// 15/1/03	Yoel Shkolnisky		Used cfftd instead of column-wise cfft
     }
+    
+    private void ippft3_ref(double Y[][][][], int flag[], double residual[], int iter[],
+    		double pp[][][][][], double ErrTol, int MaxIts,
+    		boolean verbose) {
+	    
+	    // Inverse 3-D pseudo-polar Fourier transform.
+	    // The inverse transform is computed using conjugate gradient method.
+	    //
+	    // Input arguments:
+	    // pp           Pseudo-polar samples as returned from the function ppft3. pp is a 
+	    //              4-D array of size 3x(3n+1)x(n+1)x(n+1).
+	    // ErrTol       (Optional) Error tolerance used by the conjugate
+	    //              gradient method. Default 1.e-2.
+	    // MaxIts       Maximum number of iterations. Default 10.
+	    // verbose      Display verbose CG information. 0 will suppress verbose information.
+	    //              Any non-zero value will display verbose CG information.  Default is false.
+	    
+	    // Output arguments:
+	    // Y            The reconstructed 3-D array.
+	    // flag         Convergence flag. See CG for more information.
+	    // residual     Residual error at the end of the inversion.
+	    // iter         The iteration number at which ErrTol was achieved. Relevant only if
+	    //              flag=0
+	    
+	    // Yoel Shkolnisky 19/05/2013
+	
+	
+	
+	    double temp[][][][] = precondadjppft3_ref(pp);
+	    double guess[][][][] = new double[2][temp[0].length][temp[0][0].length][temp[0][0][0].length];
+	    double absres[] = new double[1];
+	    boolean ref = true;
+	    CG(Y, flag, residual, iter, absres, ref, /*'PtP3',*/temp,ErrTol,MaxIts,guess,verbose,null);
+	    if (flag[0] == 1) {
+	       System.out.println("ippft3_ref warning! CG inversion did not converge. Residual error = " + residual[0]);
+	    }
+    }
+
+    
+    private void ippft3(double Y[][][][], int flag[], double residual[], int iter[],
+    		double pp[][][][][], double ErrTol, int MaxIts,
+    		boolean verbose) {
+	    
+	    // Inverse 3-D pseudo-polar Fourier transform.
+	    // The inverse transform is computed using conjugate gradient method.
+	    
+	    // Input arguments:
+	    // pp           Pseudo-polar samples as returned from the function ppft3. pp is a 
+	    //              4-D array of size 3x(3n+1)x(n+1)x(n+1).
+	    // ErrTol       (Optional) Error tolerance used by the conjugate
+	    //              gradient method. Default 1.e-2.
+	    // MaxIts       Maximum number of iterations. Default 10.
+	    // verbose      Display verbose CG information. 0 will suppress verbose information.
+	    //              Any non-zero value will display verbose CG information.  Default is false.
+	    
+	    // Output arguments:
+	    // Y            The reconstructed 3-D array.
+	    // flag         Convergence flag. See CG for more information.
+	    // residual     Residual error at the end of the inversion.
+	    // iter         The iteration number at which ErrTol was achieved. Relevant only if
+	    //              flag=0
+	    
+	    // Yoel Shkolnisky 26/02/03
+	    
+	    // Revision:
+	    // Yoel Shkolnisky 19/05/2013 OptimizedprecondAdjPPFT3 was renamed to
+	    //      precondAdjPPFT3. Replaced call accordingly.
+	
+	
+	    double temp[][][][] = precondadjppft3(pp);
+	    double guess[][][][] = new double[2][temp[0].length][temp[0][0].length][temp[0][0][0].length];
+	    double absres[] = new double[1];
+	    boolean ref = false;
+	    CG(Y, flag, residual, iter, absres, ref, /*'PtP3',*/temp,ErrTol,MaxIts,guess,verbose,null);
+	    if (flag[0] == 1) {
+	       System.out.println("ippft3 warning! CG inversion did not converge. Residual error = " + residual[0]);
+	    }
+    }
 
     private void ippft(double Y[][][], int flag[], double residual[], int iter[],
     		double pp1[][][], double pp2[][][], double ErrTol, int MaxIts,
@@ -3577,6 +3655,222 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     				Y[0][r][c] = xk[0][r][c];
     				Y[1][r][c] = xk[1][r][c];
     			}
+    		}
+    } // private void CG
+    
+    private void CG(double [][][][]Y, int flag[], double relres[], int iter[] ,double absres[], boolean ref,
+    		// function PtP3
+    		double[][][][]X, 
+    		//double[] params, 
+    		double ErrTol,int MaxIts,
+    		double [][][][]guess, boolean verbose, double [][][][]RefY) {
+    		
+    		// Solve the system X=PtP(Y,params) using the conjugate gradient method.
+    		// The operator PtP must be hermitian and positive defined.
+    		// The firat parameter to PtP must be the variable Y. params can be any list
+    		// of comma separated arguments.
+    		
+    		//  Input parameters:
+    		//    PtP3      Name of the operator to invert
+    		//    X         The transformed matrix. The matrix at the range space of the operator PtP, 
+    		//              whose source needs to be found.
+    		//    params    Additional parameters to the operator PtP.
+    		//    ErrTol    Error tolerance of the CG method. Default 1.e-9.
+    		//    MaxIts    Maximum number of iterations. Default 10.
+    		//    guess     Initial guess of the solution. Default is X.
+    		//    verbose    By default, if more than one output argument is specified, then all output 
+    		//              messages are suppressed. Set this flag to any value other than 0 to
+    		//              always display output messages.
+    		//    RefY      The untransformed matrix Y. Used only for checking absolute error.
+    		//              If not specified, absolute error is not computed.
+    		
+    		//  Output parameters:
+    		//    Y         The result matrix of the CG method. This is the estimate of the CG
+    		//              method to the solution of the system X=PtP(Y).
+    		//    flag      A flag that describes the convergence of the CG method.
+    		//              0 CG converged to the desired tolerance ErrTol within MaxIts iterations.
+    		//              1 CG did not converge to ErrTol within MaxIts iterations.
+    		//    relres    Residual error at the end of the CG method. Computed using max norm.
+    		//    iter      The iteration number at which ErrTol was achieved. Relevant only if
+    		//              flag=0.
+    		//    absres    The absolute error at the end of the CG method. Relevant only if RefY
+    		//              was given as parameter. Computed using max norm.
+    		
+    		// Yoel Shkolnisky 15/12/02
+
+    		// Check the input and initialize flags and default parameters
+    	    boolean ref_given;
+    	    boolean suppress_output;
+    	    double xk[][][][];
+    	    double temp[][][][];
+    	    double temp2;
+    	    int plane = X[0].length;
+    	    int row = X[0][0].length;
+    	    int col = X[0][0][0].length;
+    	    int j,p,r,c;
+    	    double gk[][][][];
+    	    double pk[][][][];
+    	    double dk;
+    	    boolean done;
+    	    double perr = 0.0;
+    	    double xerr = 0.0;
+    	    double err;
+    	    double hk[][][][];
+    	    double tk[] = new double[1];
+    	    double tkImag[] = new double[1];
+    	    double dotProd[];
+    	    double bk;
+    		ref_given=true;         // The flags is 1 if the reference untransformed matrix RefY is given and 0 otherwise
+
+    		if (RefY == null) {    // RefY not given
+    		   ref_given=false;   
+    		}
+
+    		// Initialize convergence flag. If the routine will detect that the CG method converged, this flag 
+    		// will be set to 0 to represent convergence. By default it assumes that the CG did not converge.
+    		flag[0]=1;
+
+    		// Set flag to suppress output if "flag" output is specified.
+    		suppress_output=false;
+    		if (!verbose) {
+    		   suppress_output=true;
+    		}
+
+    		// iter holds the iteration in which CG converged to ErrTol.
+    		iter[0]=-1;
+
+    		// Initialization
+    		xk = new double[2][plane][row][col];
+    		
+    		for (p = 0; p < plane; p++) {
+	    		for (r = 0; r < row; r++) {
+	    			for (c = 0; c < col; c++) {
+	    				xk[0][p][r][c] = guess[0][p][r][c];
+	    				xk[1][p][r][c] = guess[1][p][r][c];
+	    			}
+	    		}
+    		}
+    		// Evaluates the function PtP3 using xk and params
+    		if (ref) {
+    		    temp = PtP3_ref(xk);
+    		}
+    		else {
+    			temp = PtP3(xk);
+    		}
+    		gk = new double[2][plane][row][col];
+    		pk = new double[2][plane][row][col];
+    		dk = 0.0;
+    		for (p = 0; p < plane; p++) {
+	    		for (r = 0; r < row; r++) {
+	    			for (c = 0; c < col; c++) {
+			    		gk[0][p][r][c] = temp[0][p][r][c]-X[0][p][r][c];
+			    		gk[1][p][r][c] = temp[1][p][r][c]-X[1][p][r][c];
+			    		pk[0][p][r][c] = -gk[0][p][r][c];
+			    		pk[1][p][r][c] = -gk[1][p][r][c];
+			    		dk += (gk[0][p][r][c]*gk[0][p][r][c] + gk[1][p][r][c]*gk[1][p][r][c]);
+	    			}
+	    		}
+    		}
+
+    		// Conjugate gradient iteration
+    		j=2;
+    		done = false;
+    		while ((j<=MaxIts) && (!done)) {
+    			perr = 0.0;
+    			for (p = 0; p < plane; p++) {
+	    			for (r = 0; r < row; r++) {
+	    				for (c = 0; c < col; c++) {
+	    					perr += (pk[0][p][r][c]*pk[0][p][r][c] + pk[1][p][r][c]*pk[1][p][r][c]);
+	    				}
+	    			}
+    			}
+    		    if (ref_given) { // If reference matrix is given compute absolute error
+    		    	xerr = 0;
+    		    	for (p = 0; p < plane; p++) {
+	    		    	for (r = 0; r < row; r++) {
+	    		    		for (c = 0; c < col; c++) {
+	    		    			err = zabs(RefY[0][p][r][c]-xk[0][p][r][c],RefY[1][p][r][c]-xk[1][p][r][c]);
+	    		    			if (err > xerr) {
+	    		    				xerr = err;
+	    		    			}
+	    		    		}
+	    		    	}
+    		    	}
+    		    }
+    		    if ((!suppress_output) && (flag[0] == 1)) {
+    		    	System.out.println("Iteration = " + (j-1));
+    		    	System.out.println("Gradient norm = " + perr);
+    		    	System.out.println("Residual error = " + dk);
+    		        if (ref_given) {
+    		        	System.out.println("Absolute error = " + xerr);
+    		        }
+    		        System.out.println();
+    		    } // if ((!suppress_output) && (flag[0] == 1))
+
+    		    if (perr<=ErrTol) {
+    		        iter[0]=j-1;  // CG converged at previous iteration
+    		        flag[0]=0;
+    		        done=true;
+    		    }
+    		    if (perr>ErrTol) {
+    		    	if (ref) {
+    		    		hk = PtP3_ref(pk);
+    		    	}
+    		    	else {
+    		            hk = PtP3(pk);
+    		    	}
+    		        // line search parameter
+    		        dotProd = new double[2];
+    		        for (p = 0; p < plane; p++) {
+	    		        for (r = 0; r < row; r++) {
+	    		        	for (c = 0; c < col; c++) {
+	    		        		dotProd[0] += (pk[0][p][r][c]*hk[0][p][r][c] - pk[1][p][r][c]*hk[1][p][r][c]);
+	    		        		dotProd[1] += (pk[0][p][r][c]*hk[1][p][r][c] + pk[1][p][r][c]*hk[0][p][r][c]);
+	    		        	}
+	    		        }
+    		        }
+    		        zdiv(dk, 0.0, dotProd[0], dotProd[1], tk, tkImag);
+    		        temp2 = 0.0;
+    		        for (p = 0; p < plane; p++) {
+	    		        for (r = 0; r < row; r++) {
+	    		        	for (c = 0; c < col; c++) {
+	    		        		// update approximate solution
+			    		        xk[0][p][r][c] = xk[0][p][r][c]+tk[0]*pk[0][p][r][c] - tkImag[0]*pk[1][p][r][c]; 
+			    		        xk[1][p][r][c] = xk[1][p][r][c]+tk[0]*pk[1][p][r][c] + tkImag[0]*pk[0][p][r][c]; 
+			    		        // update gradient
+			    		        gk[0][p][r][c] = gk[0][p][r][c]+tk[0]*hk[0][p][r][c] - tkImag[0]*hk[1][p][r][c]; 
+			    		        gk[1][p][r][c] = gk[1][p][r][c]+tk[0]*hk[1][p][r][c] + tkImag[0]*hk[0][p][r][c]; 
+			    		        temp2 += (gk[0][p][r][c]*gk[0][p][r][c] + gk[1][p][r][c]*gk[1][p][r][c]);
+	    		        	}
+	    		        }
+    		        }
+    		        bk = temp2/dk;
+    		        dk = temp2;
+    		        // update search direction
+    		        for (p = 0; p < plane; p++) {
+	    		        for (r = 0; r < row; r++) {
+	    		        	for (c = 0; c < col; c++) {
+	    		                pk[0][p][r][c] = -gk[0][p][r][c]+bk*pk[0][p][r][c];
+	    		                pk[1][p][r][c] = -gk[1][p][r][c]+bk*pk[1][p][r][c];
+	    		        	}
+	    		        }
+    		        }
+    		    } // if (perr>ErrTol)
+    		    j=j+1;
+    		} // while ((j<=MaxIts) && (!done))
+
+    		relres[0] = perr;
+    		if (ref_given) {
+    		    absres[0] = xerr;
+    		}      
+
+    		for (p = 0; p < plane; p++) {
+	    		for (r = 0; r < row; r++) {
+	    			for (c = 0; c < col; c++) {
+	    				Y[0][p][r][c] = xk[0][p][r][c];
+	    				Y[1][p][r][c] = xk[1][p][r][c];
+	    			}
+	    		}
     		}
     } // private void CG
     
@@ -9361,24 +9655,47 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		 return v;
      }
      
-    /* % function Y = PtP3(X)
-    		 %
-    		 % Gram Operator of the 3-D pseudo-polar Fourier transform.
-    		 % Performs adjP(D(P)) where
-    		 %    P     The 3-D pseudo-polar Fourier transform
-    		 %    D     Preconditioner
-    		 %    adjP  Adjoint 3-D pseudo-polar Fourier transform
-    		 %
-    		 %  Input parameters:
-    		 %    X      nxnxn 3-D array (n even)
-    		 %  Outputs parameters:
-    		 %    Y      nxnxn 3-D array
-    		 %
-    		 % Yoel Shkolnisky, July 2007.
+    private double[][][][] PtP3(double X[][][][]) {
+    		 
+    		 // Gram Operator of the 3-D pseudo-polar Fourier transform.
+    		 // Performs adjP(D(P)) where
+    		 //    P     The 3-D pseudo-polar Fourier transform
+    		 //    D     Preconditioner
+    		 //    adjP  Adjoint 3-D pseudo-polar Fourier transform
+    		 
+    		 //  Input parameters:
+    		 //    X      nxnxn 3-D array (n even)
+    		 //  Outputs parameters:
+    		 //    Y      nxnxn 3-D array
+    		 
+    		 // Yoel Shkolnisky, July 2007.
 
-    		 function Y = PtP3(X)
-    		 pp = ppft3(X);
-    		 Y = precondadjppft3(pp);*/
+    		 double pp[][][][][] = ppft3(X);
+    		 double Y[][][][] = precondadjppft3(pp);
+    		 return Y;
+    }
 
+    private double [][][][] PtP3_ref(double X[][][][]) {
+    		
+    		// Gram Operator of the 3-D pseudo-polar Fourier transform.
+    		// Performs adjP(D(P)) where
+    		//    P     The 3-D pseudo-polar Fourier transform
+    		//    D     Preconditioner
+    		//    adjP  Adjoint 3-D pseudo-polar Fourier transform
+    		
+    		//  Input parameters:
+    		//    X      nxnxn 3-D array (n even)
+    		//  Outputs parameters:
+    		//    Y      nxnxn 3-D array
+    		
+    		// Yoel Shkolnisky 28/2/03
+    		
+    		// Revisions:
+    		// Yoel Shkolnisky 19/05/2013    Renamed from PtP3 to PtP3_ref.
+
+    		double pp[][][][][] = ppft3_ref(X);
+    		double Y[][][][] = precondadjppft3_ref(pp);
+    		return Y;
+    }
 
 }
