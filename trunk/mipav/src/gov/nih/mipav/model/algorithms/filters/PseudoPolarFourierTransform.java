@@ -1064,11 +1064,9 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    // Test the functions ppft3_ref, ppft3, and radon3.
 	    
 	    // Yoel Shkolnisky 20/05/2013
-	    int i,j,n;
-	    int volume;
+	    int i,j,k,m,n;
 	    double eps = 1.e-14;
-	    ModelImage im;
-	    int extents[] = new int[3];
+	    double im[][][][];
 	
 	    int sz[]=new int[] {4, 8, 16, 20, 32, 40, 64, 100, 128/*, 200, 256*/};
 	    RandomNumberGen randomGen = new RandomNumberGen();
@@ -1076,22 +1074,15 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    for (i = 0; i < sz.length; i++) {
 	    	n = sz[i];
 	        // Test the function ppft3 by comparing it to ppft3_ref.
-	    	volume = n*n*n;
-	    	double buffer[] = new double[volume];
-	    	for (j = 0; j < volume; j++) {
-	    		buffer[j] = randomGen.genUniformRandomNum(0.0, 1.0);
-	    	}
-	    	extents[0] = n;
-	    	extents[1] = n;
-	    	extents[2] = n;
-	    	im = new ModelImage(ModelImage.DOUBLE, extents, "im");
-	    	try {
-	    		im.importData(0, buffer, true);
-	    	}
-	    	catch (IOException e) {
-	    		System.err.println("In testppft3 IOException on im.importData(0,buffer,true)");
-	    		System.exit(0);
-	    	}
+	        im = new double[2][n][n][n];
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		for (m = 0; m < n; m++) {
+	        			im[0][j][k][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+	        		}
+	        	}
+	        }
+	    	
 	    	long startTime = System.currentTimeMillis();
 	        double pp[][][][][] = ppft3_ref(im);
 	        double t1=(System.currentTimeMillis() - startTime)/1000.0;
@@ -1106,22 +1097,16 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    
 	    // Test the function Radon3 by comparing it to the reference function
 	    // slowRadon3.
-	    volume = 4*4*4;
-    	double buffer[] = new double[volume];
-    	for (j = 0; j < volume; j++) {
-    		buffer[j] = randomGen.genUniformRandomNum(0.0, 1.0);
-    	}
-    	extents[0] = 4;
-    	extents[1] = 4;
-    	extents[2] = 4;
-    	im = new ModelImage(ModelImage.DOUBLE, extents, "im");
-    	try {
-    		im.importData(0, buffer, true);
-    	}
-    	catch (IOException e) {
-    		System.err.println("In testppft3 IOException on im.importData(0,buffer,true)");
-    		System.exit(0);
-    	}
+	    n = 4;
+	    im = new double[2][n][n][n];
+        for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		for (m = 0; m < n; m++) {
+        			im[0][j][k][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+        		}
+        	}
+        }
+    	
     	long startTime = System.currentTimeMillis();
 	    double rr[][][][] = slowradon3(im);
 	    double t1=(System.currentTimeMillis() - startTime)/1000.0;
@@ -1155,11 +1140,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    // Yoel Shkolnisky 20/05/2013
 	
 	    double eps = 1.e-14;
-	    int volume;
 	    int i,j,k,m,n;
-	    ModelImage im;
-	    double buffer[];
-	    int extents[] = new int[3];
+	    double im[][][][];
 	    RandomNumberGen randomGen = new RandomNumberGen();
 	    boolean ok[] = new boolean[1];
         double err[] = new double[1];
@@ -1169,25 +1151,18 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    // transform, the 1-D inverse FFT of the pseudo-polar Fourier transform
 	    // (slowppft3) along the parameter k should be equal to the discrete 3-D 
 	    // radon transform.
-	    volume = 2*2*2;
-	    buffer = new double[volume];
-    	for (j = 0; j < volume; j++) {
-    		buffer[j] = randomGen.genUniformRandomNum(0.0, 1.0);
-    	}
-    	extents[0] = 2;
-    	extents[1] = 2;
-    	extents[2] = 2;
-    	im = new ModelImage(ModelImage.DOUBLE, extents, "im");
-    	try {
-    		im.importData(0, buffer, true);
-    	}
-    	catch (IOException e) {
-    		System.err.println("In testppft3_ref IOException on im.importData(0,buffer,true)");
-    		System.exit(0);
-    	}
+        n = 2;
+	    im = new double[2][n][n][n];
+        for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		for (m = 0; m < n; m++) {
+        			im[0][j][k][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+        		}
+        	}
+        }
+	    
 	    double rr[][][][] = slowradon3(im);
 	    double pp[][][][][] = slowppft3(im);
-	    n = 2;
 	    double rr2[][][][][] = new double[2][3][3*n+1][n+1][n+1];
 		 double res[][];
 		 // Inverse FFT on second dimension
@@ -1224,22 +1199,16 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    equals(pp,pp2,eps,ok,err);
 	    reportResult("Test 1 ppft3_ref",ok[0],err[0]);
 	
-	    volume = 4*4*4;
-	    buffer = new double[volume];
-    	for (j = 0; j < volume; j++) {
-    		buffer[j] = randomGen.genUniformRandomNum(0.0, 1.0);
-    	}
-    	extents[0] = 4;
-    	extents[1] = 4;
-    	extents[2] = 4;
-    	im = new ModelImage(ModelImage.DOUBLE, extents, "im");
-    	try {
-    		im.importData(0, buffer, true);
-    	}
-    	catch (IOException e) {
-    		System.err.println("In testppft3_ref IOException on im.importData(0,buffer,true)");
-    		System.exit(0);
-    	}
+	    n = 4;
+	    im = new double[2][n][n][n];
+        for (j = 0; j < n; j++) {
+        	for (k = 0; k < n; k++) {
+        		for (m = 0; m < n; m++) {
+        			im[0][j][k][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+        		}
+        	}
+        }
+	    
 	    pp = slowppft3(im);
 	    pp2 = ppft3_ref(im);
 	    equals(pp,pp2,eps,ok,err);
@@ -1280,36 +1249,19 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	
 		int i,j,k,m,n;
 		double alpha;
-		ModelImage a;
-	    int extents[] = new int[3];
-	    int volume;
-	    double buffer[];
+		double a[][][][];
 	    RandomNumberGen randomGen = new RandomNumberGen();
 	    double prod;
 		n=64;
 		m=3*n+1;
 		alpha = 2.0*(n+1.0)/(n*m);
-		volume = n*n*n;
-		buffer = new double[volume];
-		double bufa[][][][] = new double[2][n][n][n];
+		a = new double[2][n][n][n];
 		for (i = 0; i < n; i++) {
 			for (j = 0; j < n; j++) {
 				for (k = 0; k < n; k++) {
-    		        bufa[0][i][j][k] = randomGen.genUniformRandomNum(0.0, 1.0);
-    		        buffer[i*n*n + j*n + k] = bufa[0][i][j][k];
+    		        a[0][i][j][k] = randomGen.genUniformRandomNum(0.0, 1.0);
 				}
 			}
-    	}
-    	extents[0] = n;
-    	extents[1] = n;
-    	extents[2] = n;
-    	a = new ModelImage(ModelImage.DOUBLE, extents, "a");
-    	try {
-    		a.importData(0, buffer, true);
-    	}
-    	catch (IOException e) {
-    		System.err.println("In testprecondAdjPPFT3 IOException on a.importData(0,buffer,true)");
-    		System.exit(0);
     	}
     	
     	double b[][][][][] = new double[2][3][3*n+1][n+1][n+1];
@@ -1360,7 +1312,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		}
 	
 		double ip1[]=ip(ppa,b);
-		double ip2[]=ip(bufa,ppbT);
+		double ip2[]=ip(a,ppbT);
 		System.out.println("ip1[0] = " + ip1[0] + " ip2[0] = " + ip2[0]);
 		System.out.println("ip1[1] = " + ip1[1] + " ip2[1] = " + ip2[1]);
 		double absdiff = zabs(ip1[0]-ip2[0],ip1[1]-ip2[1]);
@@ -3718,7 +3670,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		return uCoord;
     }
     
-    public boolean verifyImage(ModelImage im) {
+    public boolean verifyImage(double im[][][][]) {
 	    
 	    // Verify input image.
 	    
@@ -3728,18 +3680,14 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    // Yoel Shkolnisky
 	
 	    // Verify that the input is a 3D image of size nxnxn
-	    int extents[] = im.getExtents();
-	    if (extents.length != 3) {
-	       System.err.println("Input must be a 3D image");
-	       return false;
-	    }
-	
-	    if ((extents[0] != extents[1]) || (extents[1] != extents[2])) {
+	    
+	    
+	    if ((im[0].length != im[0][0].length) || (im[0][0].length != im[0][0][0].length)) {
 	       System.err.println("Input image must be cube");
 	       return false;
 	    }
 	
-	    if ((extents[0] % 2) != 0) {
+	    if ((im[0].length % 2) != 0) {
 	       System.err.println("Input image must have even sides");
 	       return false;
 	    }
@@ -7145,7 +7093,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     }
      }
      
-     private double[][][][][] slowppft3(ModelImage im) {
+     private double[][][][][] slowppft3(double im[][][][]) {
     		 
     		 // Compute the 3-D pseudo-polar Fourier transform directly.
     		 // The computation requires O(n^6) operations.
@@ -7157,26 +7105,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 int i,j,k,l;
     	     verifyImage(im);
     		 
-    		 int n= im.getExtents()[0]; // at this point n is even
+    		 int n= im[0].length; // at this point n is even
     		 int aCoord[];
     		 int N[] = new int[] {3*n+1,n+1,n+1};
     		 int coord[];
-    	     double buffer[] = new double[n*n*n];
-    	     try {
-    	    	 im.exportData(0, n*n*n, buffer);
-    	     }
-    	     catch (IOException e) {
-    	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
-    	    	 System.exit(0);
-    	     }
-    	     double ima[][][][] = new double[2][n][n][n];
-    	     for (i = 0; i < n; i++) {
-    	    	 for (j = 0; j < n; j++) {
-    	    		 for (k = 0; k < n; k++) {
-    	    			 ima[0][i][j][k] = buffer[i*n*n + j*n + k];
-    	    		 }
-    	    	 }
-    	     }
+    	     
 
     		 double pp[][][][][] = new double[2][3][3*n+1][n+1][n+1];
 
@@ -7185,12 +7118,12 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		         for (j=-n/2; j <= n/2; j++) {
     		        	 aCoord = new int[] {k,l,j};
     		             coord = toUnaliasedCoord(aCoord,N);
-    		             pp[0][0][coord[0]][coord[1]][coord[2]] = trigPoly(ima,k,-2.0*l*k/n,-2.0*j*k/n)[0];
-    		             pp[1][0][coord[0]][coord[1]][coord[2]] = trigPoly(ima,k,-2.0*l*k/n,-2.0*j*k/n)[1];
-    		             pp[0][1][coord[0]][coord[1]][coord[2]] = trigPoly(ima,-2.0*l*k/n,k,-2.0*j*k/n)[0];
-    		             pp[1][1][coord[0]][coord[1]][coord[2]] = trigPoly(ima,-2.0*l*k/n,k,-2.0*j*k/n)[1];
-    		             pp[0][2][coord[0]][coord[1]][coord[2]] = trigPoly(ima,-2.0*l*k/n,-2.0*j*k/n,k)[0];
-    		             pp[1][2][coord[0]][coord[1]][coord[2]] = trigPoly(ima,-2.0*l*k/n,-2.0*j*k/n,k)[1];
+    		             pp[0][0][coord[0]][coord[1]][coord[2]] = trigPoly(im,k,-2.0*l*k/n,-2.0*j*k/n)[0];
+    		             pp[1][0][coord[0]][coord[1]][coord[2]] = trigPoly(im,k,-2.0*l*k/n,-2.0*j*k/n)[1];
+    		             pp[0][1][coord[0]][coord[1]][coord[2]] = trigPoly(im,-2.0*l*k/n,k,-2.0*j*k/n)[0];
+    		             pp[1][1][coord[0]][coord[1]][coord[2]] = trigPoly(im,-2.0*l*k/n,k,-2.0*j*k/n)[1];
+    		             pp[0][2][coord[0]][coord[1]][coord[2]] = trigPoly(im,-2.0*l*k/n,-2.0*j*k/n,k)[0];
+    		             pp[1][2][coord[0]][coord[1]][coord[2]] = trigPoly(im,-2.0*l*k/n,-2.0*j*k/n,k)[1];
     		         }
     		     }
     		 }
@@ -7387,7 +7320,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     // 15/1/03   Yoel Shkolnisky     Use cfftd instead of column-wise cfft
      }
      
-     private double[][][][] Radon3(ModelImage im) {
+     private double[][][][] Radon3(double im[][][][]) {
     		 
     		 // Fast algorithm for computing the 3-D discrete Radon transform.
     		 // The computation requires O(n^3logn) operations for a nxnxn image.
@@ -7424,7 +7357,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 int i,j,k,m;
     	     // verify that the input is a 3D image of size nxnxn
     		 verifyImage(im);
-    		 int n = im.getExtents()[0];
+    		 int n = im[0].length;
     		 
     		 double pp[][][][][] = ppft3(im);
     		 double rr[][][][][] = new double[2][3][3*n+1][n+1][n+1];
@@ -7534,7 +7467,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     }
      }
 
-     private double[][][][] slowradon3(ModelImage im) {
+     private double[][][][] slowradon3(double[][][][] im) {
 	     
 	     // Compute the 3D pseudo-Radon transform directly, according to its definition.
 	     // The computation requires O(n^6) operations for a nxnxn image.
@@ -7567,23 +7500,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     verifyImage(im);
 	
 	     // Initialize output data structure
-	     int n= im.getExtents()[0]; // at this point n is even
-	     double buffer[] = new double[n*n*n];
-	     try {
-	    	 im.exportData(0, n*n*n, buffer);
-	     }
-	     catch (IOException e) {
-	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
-	    	 System.exit(0);
-	     }
-	     double ima[][][] = new double[n][n][n];
-	     for (i = 0; i < n; i++) {
-	    	 for (j = 0; j < n; j++) {
-	    		 for (k = 0; k < n; k++) {
-	    			 ima[i][j][k] = buffer[i*n*n + j*n + k];
-	    		 }
-	    	 }
-	     }
+	     int n= im[0].length; // at this point n is even
+	     
 	     int m = 3*n+1;
 	     double rr[][][][] = new double[3][3*n+1][n+1][n+1];
 	
@@ -7598,7 +7516,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	             acc=0;
 	             for (v=-n/2; v <= n/2-1; v++) {
 	                 for (w=-n/2; w <= n/2-1; w++) {
-	                    acc = acc+I1(ima,n,s1*v+s2*w+t,v,w);
+	                    acc = acc+I1(im[0],n,s1*v+s2*w+t,v,w);
 	                 } // for (w=-n/2; w <= n/2-1; w++)
 	             } // for (v=-n/2; v <= n/2-1; v++)
 	             aCoord = new int[] {t,p,q};
@@ -7620,7 +7538,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	             acc=0;
 	             for (u=-n/2; u <= n/2-1; u++) {
 	                 for (w=-n/2; w <= n/2-1; w++) {
-	                    acc = acc+I2(ima,n,u,s1*u+s2*w+t,w);
+	                    acc = acc+I2(im[0],n,u,s1*u+s2*w+t,w);
 	                 } // for (w=-n/2; w <= n/2-1; w++)
 	             } // for (u=-n/2; u <= n/2-1; u++)
 	             aCoord = new int[] {t,p,q};
@@ -7642,7 +7560,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	             acc=0;
 	             for (u=-n/2; u <= n/2-1; u++) {
 	                 for (v=-n/2; v <= n/2-1; v++) {
-	                    acc = acc+I3(ima,n,u,v,s1*u+s2*v+t);
+	                    acc = acc+I3(im[0],n,u,v,s1*u+s2*v+t);
 	                 } // for (v=-n/2; v <= n/2-1; v++)
 	             } // for (u=-n/2; u <= n/2-1; u++)
 	             aCoord = new int[] {t,p,q};
@@ -8000,7 +7918,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		 return wout;
      }
 
-     private double[][][][][] ppft3(ModelImage im) {
+     private double[][][][][] ppft3(double im[][][][]) {
 	     
 	     // Fast algorithm for computing the 3-D pseudo-polar Fourier transform.
 	     // The computation requires O(n^3logn) operations.
@@ -8049,15 +7967,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     verifyImage(im);
 	
 	     // Initialize output data structure
-	     int n= im.getExtents()[0]; // at this point n is even
-	     double buffer[] = new double[n*n*n];
-	     try {
-	    	 im.exportData(0, n*n*n, buffer);
-	     }
-	     catch (IOException e) {
-	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
-	    	 System.exit(0);
-	     }
+	     int n= im[0].length; // at this point n is even
+	     
 	     int m = 3*n+1;
 	     double pp[][][][][]  = new double[2][3][3*n+1][n+1][n+1];
 	     double tmp[][][][] = new double[2][3*n+1][n+1][n+1];
@@ -8077,7 +7988,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     for (i = 0; i < n; i++) {
 	    	 for (p = 0; p < n; p++) {
 	    		 for (q = 0; q < n; q++) {
-	    			 pim[0][i+n][p][q] = buffer[i*n*n + p*n + q];
+	    			 pim[0][i+n][p][q] = im[0][i][p][q];
+	    			 pim[1][i+n][p][q] = im[1][i][p][q];
 	    		 }
 	    	 }
 	     }
@@ -8087,7 +7999,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    	 for (q = 0; q < n; q++) {
 	    		 for (i = 0; i < 3*n+1; i++) {
 	    			 cff1[0][i] = pim[0][i][p][q];
-	    			 cff1[1][i] = 0.0;
+	    			 cff1[1][i] = pim[1][i][p][q];
 	    		 }
 	    		 cff1 = ifftshift1d(cff1);
 	    		 FFTUtility fft = new FFTUtility(cff1[0], cff1[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
@@ -8164,7 +8076,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     for (i = 0; i < n; i++) {
 	    	 for (p = 0; p < n; p++) {
 	    		 for (q = 0; q < n; q++) {
-	    			 pim[0][i][p+n][q] = buffer[i*n*n + p*n + q];
+	    			 pim[0][i][p+n][q] = im[0][i][p][q];
+	    			 pim[1][i][p+n][q] = im[1][i][p][q];
 	    		 }
 	    	 }
 	     }
@@ -8253,7 +8166,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     for (i = 0; i < n; i++) {
 	    	 for (p = 0; p < n; p++) {
 	    		 for (q = 0; q < n; q++) {
-	    			 pim[0][i][p][q+n] = buffer[i*n*n + p*n + q];
+	    			 pim[0][i][p][q+n] = im[0][i][p][q];
+	    			 pim[1][i][p][q+n] = im[1][i][p][q];
 	    		 }
 	    	 }
 	     }
@@ -8333,7 +8247,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	     return pp;
      }
      
-     private double[][][][][] ppft3_ref(ModelImage im) {
+     private double[][][][][] ppft3_ref(double im[][][][]) {
     		 
     		 // Fast algorithm for computing the 3-D pseudo-polar Fourier transform.
     		 // The computation requires O(n^3logn) operations.
@@ -8382,15 +8296,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	     // verify that the input is a 3D image of size nxnxn
     		 verifyImage(im);
     		 // Initialize output data structure
-    		 int n= im.getExtents()[0]; // at this point n is even
-    	     double buffer[] = new double[n*n*n];
-    	     try {
-    	    	 im.exportData(0, n*n*n, buffer);
-    	     }
-    	     catch (IOException e) {
-    	    	 System.err.println("IOException on im.exportData(0, n*n*n. buffer)");
-    	    	 System.exit(0);
-    	     }
+    		 int n= im[0].length; // at this point n is even
+    	     
     	     int m = 3*n+1;
     	     double pp[][][][][]  = new double[2][3][3*n+1][n+1][n+1];
     	     double tmp[][][][] = new double[2][3*n+1][n+1][n+1];
@@ -8401,7 +8308,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	     for (i = 0; i < n; i++) {
     	    	 for (p = 0; p < n; p++) {
     	    		 for (q = 0; q < n; q++) {
-    	    			 pim[0][i+n][p][q] = buffer[i*n*n + p*n + q];
+    	    			 pim[0][i+n][p][q] = im[0][i][p][q];
+    	    			 pim[1][i+n][p][q] = im[1][i][p][q];
     	    		 }
     	    	 }
     	     }
@@ -8460,7 +8368,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	     for (i = 0; i < n; i++) {
     	    	 for (p = 0; p < n; p++) {
     	    		 for (q = 0; q < n; q++) {
-    	    			 pim[0][i][p+n][q] = buffer[i*n*n + p*n + q];
+    	    			 pim[0][i][p+n][q] = im[0][i][p][q];
+    	    			 pim[1][i][p+n][q] = im[1][i][p][q];
     	    		 }
     	    	 }
     	     }
@@ -8519,7 +8428,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	     for (i = 0; i < n; i++) {
     	    	 for (p = 0; p < n; p++) {
     	    		 for (q = 0; q < n; q++) {
-    	    			 pim[0][i][p][q+n] = buffer[i*n*n + p*n + q];
+    	    			 pim[0][i][p][q+n] = im[0][i][p][q];
+    	    			 pim[1][i][p][q+n] = im[1][i][p][q];
     	    		 }
     	    	 }
     	     }
@@ -9450,5 +9360,25 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		 }
 		 return v;
      }
+     
+    /* % function Y = PtP3(X)
+    		 %
+    		 % Gram Operator of the 3-D pseudo-polar Fourier transform.
+    		 % Performs adjP(D(P)) where
+    		 %    P     The 3-D pseudo-polar Fourier transform
+    		 %    D     Preconditioner
+    		 %    adjP  Adjoint 3-D pseudo-polar Fourier transform
+    		 %
+    		 %  Input parameters:
+    		 %    X      nxnxn 3-D array (n even)
+    		 %  Outputs parameters:
+    		 %    Y      nxnxn 3-D array
+    		 %
+    		 % Yoel Shkolnisky, July 2007.
+
+    		 function Y = PtP3(X)
+    		 pp = ppft3(X);
+    		 Y = precondadjppft3(pp);*/
+
 
 }
