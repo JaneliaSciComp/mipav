@@ -1347,6 +1347,128 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		// % % ppbT2=adjPPFT3(b);
 		// % % max(abs(ppbT1(:)-ppbT2(:)))
 	}
+	
+	public void testippft3() {
+		// n = 4
+		// Norm error for ippft3_ref = 1.585923265899918E-8 time = 6.75 seconds
+		// Norm error for ippft3 = 1.5859232632509966E-8 time = 1.062 seconds
+		// n = 8
+		// Norm error for ippft3_ref = 2.553471067798475E-9 time = 11.187 seconds
+		// Norm error for ippft3 = 2.553486517843596E-9 time = 2.656 seconds
+		// n = 16
+		// Norm error for ippft3_ref = 9.291739308867836E-11 time = 34.56 seconds
+		// Norm error for ippft3 = 9.815391745444395E-11 time = 6.718 seconds
+		
+		// ippft3_ref warning! CG inversion did not converge. Residual error = 5.284131854996386
+		// n = 20
+		// Norm error for ippft3_ref = 7.376082773564069E-10 time = 306.004 seconds
+		// Norm error for ippft3 = 3.418825925905102E-11 time = 9.591 seconds
+		// n = 32
+		// Norm error for ippft3 = 4.151941229724665E-12 time = 23.858 seconds
+		// n = 40
+		// Norm error for ippft3 = 1.2499563000042098E-12 time = 51.934 seconds
+		// n = 64
+		// Norm error for ippft3 = 1.9077747979940867E-13 time = 194.674 seconds
+
+		// Tests the functions ippft3_ref and ippft3.
+		
+		// Tests the correctness and performance of the inversion algorithm of the 3-D pseudo-polar Fourier transform.
+		
+		// Yoel Shkolnisky 20/05/2013
+	
+		int i,j,k,m,n;
+		double im[][][][];
+	    RandomNumberGen randomGen = new RandomNumberGen();
+		//sz=[4 8 16 20 32 40 64 100 128 200 256];
+		int sz[]=new int[] {4, 8, 16, 20, 32, 40, 64};
+	
+		//fprintf('n \t err_ref \t err_ppft3 \t err_conv \t t_ref \t\t t_ppft3 \t t_conv \t t_ref/t_ppft3 \t t_ref/t_conv\n');
+		for (i = 0; i < sz.length; i++) {
+			n = sz[i];
+		    // Test the function ippft3 by comparing it to ippft3_ref.
+			im = new double[2][n][n][n];
+	        for (j = 0; j < n; j++) {
+	        	for (k = 0; k < n; k++) {
+	        		for (m = 0; m < n; m++) {
+	        			im[0][j][k][m] = randomGen.genUniformRandomNum(0.0, 1.0);
+	        		}
+	        	}
+	        }
+		    double pp[][][][][] = ppft3(im);
+		    boolean doippft3_ref = false;
+		    runTest(n,pp,1.e-8,100,im,false, doippft3_ref);
+		}
+	}
+
+
+	//%%%%%%%%%%%%%%
+	// Sub functions
+	//%%%%%%%%%%%%%%
+
+	// Execute a single inversion test.
+	// pp           The 3-D Radon sectors.
+	// ErrTol       Residual error required from the inversion algorithm.
+	// MaxIts       Number of iterations of the inversion algorithm.
+	// ref          The original image. Used as a reference to check the absolute error.
+	// description  Test description for printing purposes.
+	// verbose      If true, print the inversion log.
+	private void runTest(int n,double pp[][][][][], double ErrTol,int MaxIts, double ref[][][][], boolean verbose, boolean doippt3_ref) {
+		int i,j,k;
+		double diff;
+        int flag[] = new int[1];
+        double residual[] = new double[1];
+        int iter[] = new int[1];
+        double Y1[][][][] = new double[2][n][n][n];
+        long startTime;
+        double t1 = 0.0;
+        if (doippt3_ref) {
+	        startTime = System.currentTimeMillis();
+			ippft3_ref(Y1, flag, residual, iter, pp,ErrTol,MaxIts,verbose);
+			t1=(System.currentTimeMillis() - startTime)/1000.0;
+        }
+	
+		double Y2[][][][] = new double[2][n][n][n];
+        startTime = System.currentTimeMillis();
+		ippft3(Y2, flag, residual, iter, pp,ErrTol,MaxIts,verbose);
+		double t2=(System.currentTimeMillis() - startTime)/1000.0;
+	
+		/*tic;
+		[Y3,~,~,~] = fippft3(pp,ErrTol,MaxIts,verbose);
+		t3=toc;*/
+		
+		double diffY1RefSquared = 0.0;
+		double diffY2RefSquared = 0.0;
+		double refSquared = 0.0;
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < n; j++) {
+				for (k = 0; k < n; k++) {
+				    refSquared += (ref[0][i][j][k]*ref[0][i][j][k]);
+				    if (doippt3_ref) {
+					    diff = Y1[0][i][j][k] - ref[0][i][j][k];
+					    diffY1RefSquared += (diff*diff);
+				    }
+				    diff = Y2[0][i][j][k] - ref[0][i][j][k];
+				    diffY2RefSquared += (diff*diff);
+				}
+			}
+		}
+		
+		double err_ref = 0.0;
+		if (doippt3_ref) {
+		    err_ref = Math.sqrt(diffY1RefSquared/refSquared);
+		}
+		double err_ppft3 = Math.sqrt(diffY2RefSquared/refSquared);
+	
+		System.out.println("n = " + n);
+		if (doippt3_ref) {
+		    System.out.println("Norm error for ippft3_ref = " + err_ref + " time = " + t1 + " seconds");
+		}
+		System.out.println("Norm error for ippft3 = " + err_ppft3 + " time = " + t2 + " seconds");
+		//err_conv=norm(Y3(:)-ref(:))/norm(ref(:));
+	
+	}
+
+	   
 
     private void equals(double v1[][][][][], double v2[][][][][], double eps, boolean ok[], double error[]) {
     		
