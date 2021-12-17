@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Vector;
+import java.util.Date;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.RandomNumberGen;
@@ -9819,5 +9820,133 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		double Y[][][][] = precondadjppft3_ref(pp);
     		return Y;
     }
+    
+    private String getppfiltname(int n/*,precision*/) {
+    		
+    		// Genetrate the name of the file that stores the filter that corresponds to
+    		// size n and given precision.
+    		// 
+    	    // Yoel Shkolnisky, December 2010.
+    		
+    		// Revisions:
+    		// April 2014 Y.S.   Add precision variable.
+
+    		// if nargin<2
+    		    //precision='double';
+    		//end
+
+    		//filtname=sprintf('ppfilt%d_%s.dat',n,precision);
+    	    String outputFilePath = "C:" + File.separator + "PseudoPolarFourierTranformTables" + File.separator;
+    	    String filtname = outputFilePath + "ppfilt" + String.valueOf(n) + ".dat";
+    	    return filtname;
+    }
+    
+    public void loadppftfilter(int precond[], double filter[][][], String fname, boolean verbose) {
+    		//
+    		// Load precomputed filter used for fast inversion of the pseudo-polar
+    		// Fourier transform.
+    		
+    		// Set verbose to non-zero to print filter header.
+    		// On error (for example, if the file does not exist), the functions returns
+    		// -1.
+    		
+    		// See saveppftfilter for more informations.
+    		
+    		// Yoel Shkolnisky, December 2010.
+    	
+	    int i,j,k;	
+    	RandomAccessFile raFile = null;
+	    	int n = 0;
+	    	long timestamp = 0;
+    	    String outputFilePath = "C:" + File.separator + "PseudoPolarFourierTranformTables" + File.separator;
+	    	File file = new File(outputFilePath);
+	    	if (!file.exists()) {
+				System.out.println("Warning outputFilePath directory for tables not found on disk");
+			    precond[0] = -1;
+			    return;
+			}
+	    	
+    		String cname=outputFilePath + fname;
+    	    File filef = new File(fname);
+    		if (!filef.exists()) {
+    			System.out.println("Warning " + fname + " does not exist on the disk");
+    			precond[0] = -1;
+    			return;
+    		}
+			try {
+				raFile = new RandomAccessFile(filef, "r");
+			} catch (IOException e) {
+				System.err.println(
+						"In loadppftfilter raFile = new RandomAccessFile(filec, \"r\") IOException " + e);
+				precond[0] = -1;
+				return;
+			}
+	    	
+    		try {
+			    n  = raFile.readInt();
+    		}
+    		catch (IOException e) {
+    			System.err.println(
+						"In loadppftfilter n = raFile.readInt() IOException " + e);
+				precond[0] = -1;
+				return;
+    		}
+
+    		try {
+    			timestamp = raFile.readLong();
+    		}
+    		catch (IOException e) {
+				System.err.println(
+						"In loadppftfilter timestamp = raFile.readLong() IOException " + e);
+				precond[0] = -1;
+				return;
+			}
+    		try {
+    			precond[0] = raFile.readInt();
+    		}
+    		catch (IOException e) {
+    			System.err.println(
+						"In loadppftfilter precond[0] = raFile.readInt() IOException " + e);
+				precond[0] = -1;
+				return;
+    		}
+
+    		if (verbose) {
+    		    System.out.println("In loadppftfilter n = " + n);
+    		    Date date = new Date(timestamp);
+    		    System.out.println("Filter created on " + date.toString());
+    		    System.out.println("precond[0] = " + precond[0]);
+    		}
+    		
+    		for (i = 0; i < 2*n; i++) {
+    			for (j = 0; j < 2*n; j++) {
+    				for (k = 0; k < 2*n; k++) {
+    					try {
+    				        filter[i][j][k] = raFile.readDouble();
+    					}
+    					catch (IOException e) {
+    		    			System.err.println(
+    								"In loadppftfilter filter["+i+"]["+j+"]["+k+"] = raFile.readDouble() IOException " + e);
+    						precond[0] = -1;
+    						return;
+    		    		}
+    				}
+    			}
+    		}
+
+    		try {
+    			raFile.close();
+    		}
+    		catch (IOException e) {
+    			System.err.println(
+						"In loadppftfilter raFile.close() IOException " + e);
+				precond[0] = -1;
+				return;	
+    		}
+
+    		return;
+    }
+
+
 
 }
