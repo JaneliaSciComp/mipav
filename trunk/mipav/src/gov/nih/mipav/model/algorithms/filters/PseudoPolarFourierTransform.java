@@ -9947,6 +9947,265 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		return;
     }
 
+    private double[][][][] nufft_3d(double alpha[][][][],double omega[][], int M) {
+    		
+    		// Optimized version of nufft_3d_ref.m.
+    		// See nufft_3d_ref.m. for more information.
+    		
+    		// Yoel Shkolnisky, January 2010.
+
+    	    int i,j,k;
+    		double b=1.5629;
+    	    int m=2;
+    	    int q=28;
+
+
+    		if (omega[0].length != 3) {
+    		    System.err.println("In nufft_3d omega must be a 3 column array");
+    		    System.exit(0);
+    		}
+    		int n = alpha[0].length*alpha[0][0].length*alpha[0][0][0].length;
+    		if (omega.length != n) {
+    		    System.err.println("In nufft_ed the number of rows in omega must equal the number of elements in alpha");
+    		    System.exit(0);
+    		}
+    		double alphaVec[][] = new double[2][n];
+    		for (i = 0; i < alpha[0][0][0].length; i++) {
+    			for (j = 0; j < alpha[0][0].length; j++) {
+    				for (k = 0; k < alpha[0].length; k++) {
+    					alphaVec[0][k + j*alpha[0].length + i*alpha[0][0].length*alpha[0].length] = alpha[0][k][j][i];
+    					alphaVec[1][k + j*alpha[0].length + i*alpha[0][0].length*alpha[0].length] = alpha[1][k][j][i];
+    				}
+    			}
+    		}
+    		int mu[] = new int[3*n];
+    		for (i = 0; i < n; i++) {
+    			for (j = 0; j < 3; j++) {
+    				mu[j*n+3] = (int)Math.round(omega[i][j]*m);
+    			}
+    		}
+
+    		// All precomputations are broken into 1D ones.
+    		double Px[]= new double[n*(q+1)];
+    		double Py[] = new double[n*(q+1)];
+    		double Pz[] = new double[n*(q+1)];
+    		double denom = 2.0*Math.sqrt(b*Math.PI);
+    		double tmp1;
+    		double tmp2;
+    		double tmp3;
+    		double diff;
+    		for (j=-q/2; j <= q/2; j++) {
+    			for (i = 0; i < n; i++) {
+    				diff = m*omega[i][0] - (mu[i] + j);
+    				tmp1 = diff*diff;
+    				diff = m*omega[i][1] - (mu[i+n] + j);
+    				tmp2 = diff*diff;
+    				diff = m*omega[i][2] - (mu[i+2*n] + j);
+    				tmp3 = diff*diff;
+    				Px[j+q/2+ i*(q+1)] = Math.exp(-tmp1/(4*b))/denom;
+    				Py[j+q/2 +i*(q+1)] = Math.exp(-tmp2/(4*b))/denom;
+    				Pz[j+q/2 +i*(q+1)] = Math.exp(-tmp3/(4*b))/denom;
+    			} // for (i = 0; i < n; i++)
+    		} // for (j=-q/2; j <= q/2; j++)
+
+    		double tau[][][][] =nufft3dauxmx(n,M,m,q,mu,Px,Py,Pz,alphaVec);
+    		tau = ifftshift(tau);
+    		double tauC[][] = new double[2][m*M*m*M*m*M];
+    		for (i = 0; i < m*M; i++) {
+    			for (j = 0; j < m*M; j++) {
+    				for (k = 0; k < m*M; k++) {
+    					tauC[0][i*m*M*m*M + j*m*M + k] = tau[0][i][j][k];
+    					tauC[1][i*m*M*m*M + j*m*M + k] = tau[1][i][j][k];
+    				}
+    			}
+    		}
+    		FFTUtility ifft = new FFTUtility(tauC[0],tauC[1], m*M*m*M, m*M, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		
+    		FFTUtility ifft2 = new FFTUtility(tauC[0], tauC[1], m*M, m*M, m*M, 1, FFTUtility.FFT);
+    		ifft2.setShowProgress(false);
+    		ifft2.run();
+    		ifft2.finalize();
+    		ifft2 = null;
+    		
+    		FFTUtility ifft3 = new FFTUtility(tauC[0], tauC[1], 1, m*M, m*M*m*M, 1, FFTUtility.FFT);
+    		ifft3.setShowProgress(false);
+    		ifft3.run();
+    		ifft3.finalize();
+    		ifft3 = null;
+    		for (i = 0; i < m*M; i++) {
+    			for (j = 0; j < m*M; j++) {
+    				for (k = 0; k < m*M; k++) {
+    					tau[0][i][j][k] = m*M*m*M*m*M*tauC[0][i*m*M*m*M + j*m*M + k];
+    					tau[1][i][j][k] = m*M*m*M*m*M*tauC[1][i*m*M*m*M + j*m*M + k];
+    				}
+    			}
+    		}
+    		double T[][][][] = fftshift(tau);
+
+    		int low_idx_M=-(int)Math.ceil((M-1.0)/2.0);
+    		int high_idx_M=(int)Math.floor((M-1.0)/2.0);
+    		int idxLength = high_idx_M - low_idx_M + 1;
+    		int idx;
+    		double var;
+    		double E[] = new double[idxLength];
+    		for (i = 0; i < idxLength; i++) {
+    			idx = i + low_idx_M;
+    			var = 2.0*Math.PI*idx/(m*M);
+    			E[i] = Math.exp(b * var * var);
+    		}
+    		
+    		int offset1=(int)Math.ceil((m*M-1.0)/2.0);
+    		int offset2=offset1+low_idx_M;
+    		double E3[][][] = new double[M][M][M];
+    		for (i = 0; i < M; i++) {
+    			for (j = 0; j < M; j++) {
+    				for (k = 0; k < M; k++) {
+    					E3[i][j][k] = E[i]*E[j]*E[k];
+    				}
+    			}
+    		}
+    		double f[][][][] = new double[2][M][M][M];
+    		for (i = offset2; i <= offset2+M-1; i++) {
+    			for (j = offset2; j <= offset2+M-1; j++) {
+    				for (k = offset2; k <= offset2+M-1; k++) {
+    					f[0][i-offset2][j - offset2][k - offset2] = T[0][i][j][k]*E3[i][j][k];
+    					f[1][i-offset2][j - offset2][k - offset2] = T[1][i][j][k]*E3[i][j][k];
+    				}
+    			}
+    		}
+    		return f;
+    }
+    
+    /*
+    MEX version of the gridding loop for the 3D NUFFT
+
+    Optimized version of nufftdauxmx_ref.cpp.
+    The iplemented optimizations are:
+    1) Move the varaible k to the outermost loop.
+    2) Remove unnecessary access to memory. For example, access mu only from the outer loop.
+    3) The arrays Px Py and Pz are transposed compared to nufftdauxmx_ref, to access memory in columns.
+    4) The loops for j1,j2,j3 now go from 0 to q instead of -q/2 to q/2.
+    5) Instad of computing the indices to Px, Py, Pz each time, we maintain the indices idxPx,idxPy,idxPz, and just update them each iteration.
+
+    Example:
+    	tau=nufft3dauxmx(n,M,m,q,mu,Px.',Py.',Pz.',alpha);
+    Note the transpose of Px, Py, and Pz compared to nufft3dauxmx_ref.
+
+    Yoel Shkolnisky, January 2010.
+    */
+
+    
+
+    //define for if(0);else for
+
+
+    private int matlab_mod(int j, int n) {
+    	while (j<0) j+=n;
+    	return j % n;    
+//    	The above code is no slower than "return (j+4*n) % n".
+    }
+
+    private double[][][][] nufft3dauxmx(int n, int M, int m, int q, int mu[], double Px[],
+    		                            double Py[], double Pz[], double alpha[][]) {
+    	
+        // alpha is a complex vector
+    	// Parameters: n,M,m,q,mu,Px,Py,Pz,alpha
+    	// Returns: tau
+
+    	
+    	int dims[] = new int[3];
+    	
+    	int i,j,k,j1,j2,j3;
+    	// We regrid each point omega(k) to (q+1)^3 regular points around it.
+    	// The regular grid points are the q+1 points closest to round(m*omega(k)).
+    	// The variables startinggridpointx, startinggridpointy, startinggridpointz hold 
+    	// the coordinates of first grid point of the regular grid around omega(k), in the x,y, 
+    	// and z directions, respectively. The coordinates are given in terms of the padded volume 
+    	// tau of size (m*M)^3.
+    	int startinggridpointx,startinggridpointy,startinggridpointz; 
+    	// Current grid point processed. "gp" stands for "grid point". (gpx,gpy,gpz) is the current 
+    	// grid point of the (q+1)^3 regular cube around omega(k), at which we compute the conribution 
+    	// of the point omega(k).
+    	int gpx,gpy,gpz;
+    	// Weights to be used at the point (gpx,gpy,gpz). idxPx is the weight used to compute the contibution
+    	// of the point omega(k) at the point gpx. idxPy and idxPz have similar roles.
+    	int idxPx,idxPy,idxPz;	
+    	int gpxm,gpym,gpzm; // The points gpx,gpy,gpz modulu m*M.
+    	int idx; // The linear index of the point (gpxm,gpym,gpzm) in an array of size (m*M)^3.
+    	// Absolute value of the lowest index in a zero-centered array. For example, "2" if we have a 5 elements 
+    	// array, since the indices are -2,1,0,1,2.  This variable is used to translate indices of zero-centered 
+    	// arrays to indices of zero-based arrays.
+    	int offset; 
+    	double w,w1,w2,w12; // Temporary variables for computing the gridding weights.
+    	int mM,mM2; // To avoid repeated computations of m*M and (m*M)^2.
+    	double akr,aki; // Aviod accessing alpha_pr and alpha_pi for each j1,j2,j3. Access it only once.
+
+
+    	
+
+    	// Allocate output variable
+    	dims[0]=m*M; dims[1]=m*M; dims[2]=m*M;
+    	double tau[][][][] = new double[2][dims[0]][dims[1]][dims[2]];
+    	double tauVec[][] = new double[2][dims[0]*dims[1]*dims[2]];
+
+    	// Gridding loop.
+    	mM=m*M;
+    	mM2=mM*mM;
+    	offset=(int)Math.ceil((m*M-1.0)/2.0);
+    	for (k=0; k<n; k++) {
+    		startinggridpointx=(int)mu[k]-q/2;
+    		startinggridpointy=(int)mu[n+k]-q/2;
+    		startinggridpointz=(int)mu[2*n+k]-q/2;
+    		gpx=startinggridpointx+offset;
+    		idxPx=k*(q+1);
+
+    		akr=alpha[0][k];
+    		aki=alpha[1][k];
+
+    		for (j1=0; j1<=q; j1++) {
+    			gpxm=matlab_mod(gpx,mM);			
+    			w1=Px[idxPx];
+    			gpx++;
+    			idxPx++;
+    			gpy=startinggridpointy+offset;			
+    			idxPy=k*(q+1);
+    			
+    			for (j2=0; j2<=q; j2++) {
+    				gpym=matlab_mod(gpy,mM);				
+    				w2=Py[idxPy];
+    				gpy++;
+    				idxPy++;
+    				w12=w1*w2;
+    				gpz=startinggridpointz+offset;	
+    				idxPz=k*(q+1);
+
+    				for (j3=0; j3<=q; j3++) {
+    					gpzm=matlab_mod(gpz,mM);					
+    					idx=gpzm*mM2+gpym*mM+gpxm; // There is no point in doing the computation incrementaly.
+    					w=w12*Pz[idxPz];
+    					tauVec[0][idx]+=w*akr;
+    				    tauVec[1][idx]+=w*aki;
+    					gpz++;
+    					idxPz++;
+    				}
+    			}
+    		}    
+    	}
+    	for (i = 0; i < tau[0][0][0].length; i++) {
+			for (j = 0; j < tau[0][0].length; j++) {
+				for (k = 0; k < tau[0].length; k++) {
+					tau[0][k][j][i] = tauVec[0][k + j*tau[0].length + i*tau[0][0].length*tau[0].length];
+					tau[1][k][j][i] = tauVec[1][k + j*tau[0].length + i*tau[0][0].length*tau[0].length];
+				}
+			}
+		}
+    	return tau;
+
+    }
 
 
 }
