@@ -1436,7 +1436,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		
 		double Y3[][][][] = new double[2][n][n][n];
         startTime = System.currentTimeMillis();
-		fippft3(Y2, flag, residual, iter, pp,ErrTol,MaxIts,verbose);
+		fippft3(Y3, flag, residual, iter, pp,ErrTol,MaxIts,verbose);
 		double t3=(System.currentTimeMillis() - startTime)/1000.0;
 		
 		double diffY1RefSquared = 0.0;
@@ -3514,11 +3514,11 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		int precond[] = new int[1];
     		filter = new double[2][2*n][2*n][2*n];
     		loadppftfilter(precond, filter, filtname, verbose);
-    		if (precond[0] != -1) {
+    		if (precond[0] == -1) {
     		    System.out.println("Filter not found in fippft3. Generating filter");
     		    filter =makeppftfilter(n,1);
     		    saveppftfilter(1,filter,filtname);
-    		} // if (precond[0] != -1)
+    		} // if (precond[0] == -1)
     		double temp[][][][] = precondadjppft3(pp);
     		double guess[][][][] = new double[2][temp[0].length][temp[0][0].length][temp[0][0][0].length];
     	    double absres[] = new double[1];
@@ -10292,7 +10292,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		int mu[] = new int[3*n];
     		for (i = 0; i < n; i++) {
     			for (j = 0; j < 3; j++) {
-    				mu[j*n+3] = (int)Math.round(omega[i][j]*m);
+    				mu[j*n+i] = (int)Math.round(omega[i][j]*m);
     			}
     		}
 
@@ -10383,8 +10383,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		for (i = offset2; i <= offset2+M-1; i++) {
     			for (j = offset2; j <= offset2+M-1; j++) {
     				for (k = offset2; k <= offset2+M-1; k++) {
-    					f[0][i-offset2][j - offset2][k - offset2] = T[0][i][j][k]*E3[i][j][k];
-    					f[1][i-offset2][j - offset2][k - offset2] = T[1][i][j][k]*E3[i][j][k];
+    					f[0][i-offset2][j - offset2][k - offset2] = T[0][i][j][k]*E3[i - offset2][j - offset2][k - offset2];
+    					f[1][i-offset2][j - offset2][k - offset2] = T[1][i][j][k]*E3[i - offset2][j - offset2][k - offset2];
     				}
     			}
     		}
@@ -10646,7 +10646,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     			for (j = 0; j < 3*n; j++) {
     				for (k = 0; k < 3*n; k++) {
     					Y[0][i][j][k] = YF[0][9*n*n*i + 3*n*j + k];
-    					Y[0][i][j][k] = YF[0][9*n*n*i + 3*n*j + k];
+    					Y[1][i][j][k] = YF[1][9*n*n*i + 3*n*j + k];
     				}
     			}
     		}
