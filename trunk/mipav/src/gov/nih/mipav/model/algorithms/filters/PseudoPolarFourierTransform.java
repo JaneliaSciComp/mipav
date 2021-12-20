@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -1432,13 +1433,15 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
         startTime = System.currentTimeMillis();
 		ippft3(Y2, flag, residual, iter, pp,ErrTol,MaxIts,verbose);
 		double t2=(System.currentTimeMillis() - startTime)/1000.0;
-	
-		/*tic;
-		[Y3,~,~,~] = fippft3(pp,ErrTol,MaxIts,verbose);
-		t3=toc;*/
+		
+		double Y3[][][][] = new double[2][n][n][n];
+        startTime = System.currentTimeMillis();
+		fippft3(Y2, flag, residual, iter, pp,ErrTol,MaxIts,verbose);
+		double t3=(System.currentTimeMillis() - startTime)/1000.0;
 		
 		double diffY1RefSquared = 0.0;
 		double diffY2RefSquared = 0.0;
+		double diffY3RefSquared = 0.0;
 		double refSquared = 0.0;
 		for (i = 0; i < n; i++) {
 			for (j = 0; j < n; j++) {
@@ -1450,6 +1453,8 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 				    }
 				    diff = Y2[0][i][j][k] - ref[0][i][j][k];
 				    diffY2RefSquared += (diff*diff);
+				    diff = Y3[0][i][j][k] - ref[0][i][j][k];
+				    diffY3RefSquared += (diff*diff);
 				}
 			}
 		}
@@ -1459,14 +1464,14 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		    err_ref = Math.sqrt(diffY1RefSquared/refSquared);
 		}
 		double err_ppft3 = Math.sqrt(diffY2RefSquared/refSquared);
+		double err_conv = Math.sqrt(diffY3RefSquared/refSquared);
 	
 		System.out.println("n = " + n);
 		if (doippt3_ref) {
 		    System.out.println("Norm error for ippft3_ref = " + err_ref + " time = " + t1 + " seconds");
 		}
 		System.out.println("Norm error for ippft3 = " + err_ppft3 + " time = " + t2 + " seconds");
-		//err_conv=norm(Y3(:)-ref(:))/norm(ref(:));
-	
+		System.out.println("Norm error for fippft3 = " + err_conv + " time = " + t3 + " seconds");
 	}
 
 	   
@@ -3481,6 +3486,50 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		// 15/1/03	Yoel Shkolnisky		Used cfftd instead of column-wise cfft
     }
     
+    private void fippft3(double Y[][][][], int flag[], double residual[], int iter[],
+    		double pp[][][][][], double ErrTol, int MaxIts,
+    		boolean verbose) {
+    		
+    		// Fast inverse pseudo-polar Fourier transform.
+    		// See ippft3 for more information
+    		
+    		// The function tries to load a precomputed convolution filter that
+    		// corresponds to the dimensions of the given pseudo-polar array pp.
+    		// If this filter does not exist, the function generates and saves it to the
+    		// disk. The filename of the saved filter is "ppfiltNN.dat". 
+    		// Generating the filter might take a long time, but subsequent calls with
+    		// the same dimensions would be fast.
+    		
+    		// Yoel Shkolnisky, December 2010.
+    		
+    		// Revisions:
+    		// Yoel Shkolnisky 19/05/2013 OptimizedprecondAdjPPFT3 was renamed to
+    		//      precondAdjPPFT3. Replaced call accordingly.
+    	    // Defaults: verbose = false, MaxIts = 10, ErrTol = 1.0E-2
+
+
+    		double filter[][][][] = null;
+    	    int n=verifyPP(pp);
+    		String filtname=getppfiltname(n);
+    		int precond[] = new int[1];
+    		filter = new double[2][2*n][2*n][2*n];
+    		loadppftfilter(precond, filter, filtname, verbose);
+    		if (precond[0] != -1) {
+    		    System.out.println("Filter not found in fippft3. Generating filter");
+    		    filter =makeppftfilter(n,1);
+    		    saveppftfilter(1,filter,filtname);
+    		} // if (precond[0] != -1)
+    		double temp[][][][] = precondadjppft3(pp);
+    		double guess[][][][] = new double[2][temp[0].length][temp[0][0].length][temp[0][0][0].length];
+    	    double absres[] = new double[1];
+    	    boolean ref = false;
+    	    CG(Y, flag, residual, iter, absres, ref, /*'FPtP',*/temp,filter,ErrTol,MaxIts,guess,verbose,null);
+    	    if (flag[0] == 1) {
+    	       System.out.println("fippft3 warning! CG inversion did not converge. Residual error = " + residual[0]);
+    	    }
+    }
+
+    
     private void ippft3_ref(double Y[][][][], int flag[], double residual[], int iter[],
     		double pp[][][][][], double ErrTol, int MaxIts,
     		boolean verbose) {
@@ -3512,7 +3561,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    double guess[][][][] = new double[2][temp[0].length][temp[0][0].length][temp[0][0][0].length];
 	    double absres[] = new double[1];
 	    boolean ref = true;
-	    CG(Y, flag, residual, iter, absres, ref, /*'PtP3',*/temp,ErrTol,MaxIts,guess,verbose,null);
+	    CG(Y, flag, residual, iter, absres, ref, /*'PtP3_ref',*/temp,null,ErrTol,MaxIts,guess,verbose,null);
 	    if (flag[0] == 1) {
 	       System.out.println("ippft3_ref warning! CG inversion did not converge. Residual error = " + residual[0]);
 	    }
@@ -3553,7 +3602,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    double guess[][][][] = new double[2][temp[0].length][temp[0][0].length][temp[0][0][0].length];
 	    double absres[] = new double[1];
 	    boolean ref = false;
-	    CG(Y, flag, residual, iter, absres, ref, /*'PtP3',*/temp,ErrTol,MaxIts,guess,verbose,null);
+	    CG(Y, flag, residual, iter, absres, ref, /*'PtP3',*/temp,null,ErrTol,MaxIts,guess,verbose,null);
 	    if (flag[0] == 1) {
 	       System.out.println("ippft3 warning! CG inversion did not converge. Residual error = " + residual[0]);
 	    }
@@ -3784,7 +3833,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     private void CG(double [][][][]Y, int flag[], double relres[], int iter[] ,double absres[], boolean ref,
     		// function PtP3
     		double[][][][]X, 
-    		//double[] params, 
+    		double[][][][] filt, 
     		double ErrTol,int MaxIts,
     		double [][][][]guess, boolean verbose, double [][][][]RefY) {
     		
@@ -3874,7 +3923,10 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	    		}
     		}
     		// Evaluates the function PtP3 using xk and params
-    		if (ref) {
+    		if (filt != null) {
+    		    temp = FPtP(xk,filt);	
+    		}
+    		else if (ref) {
     		    temp = PtP3_ref(xk);
     		}
     		else {
@@ -3936,7 +3988,10 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		        done=true;
     		    }
     		    if (perr>ErrTol) {
-    		    	if (ref) {
+    		    	if (filt != null) {
+    		    	    hk = FPtP(pk,filt);	
+    		    	}
+    		        else if (ref) {
     		    		hk = PtP3_ref(pk);
     		    	}
     		    	else {
@@ -9841,7 +9896,105 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	    return filtname;
     }
     
-    public void loadppftfilter(int precond[], double filter[][][], String fname, boolean verbose) {
+    private void saveppftfilter(int precond,double filter[][][][], String fname) {
+	    
+	    // The sturcture of the file is
+	    //     n          INTEGER    Size of the filter is n^3.
+	    //     timestamp  REAL*8     Date and time when the filter was created.
+	    //     precond    INTEGER    nonzero if the kernel includes a
+	    //                           preconditioner.
+	    //     precision  INTEGER    0 for single, 1 for double.
+	    //     data       n^3*REAL*8  Data of the filter. The data is complex so
+	    //                the length is 2xn^3..
+	    
+	    // Yoel Shkolnisky, December 2010.
+	    
+	    // Revisions:
+	    // April 2014 Y.S. Add precision variable.
+	
+	    int i,j,k;
+    	RandomAccessFile raFile = null;
+    	long timestamp=System.currentTimeMillis();
+	    int n= filter[0].length/2;
+	
+	    
+	
+	    if ((2*n!= filter[0][0].length) || (2*n != filter[0][0][0].length)) {
+	        System.err.println("In saveppftfilter filter must be a volume of size 2x2nx2nx2n");
+	        System.exit(0);
+	    }
+	    
+	    File file = new File(fname);
+	    try {
+	        raFile = new RandomAccessFile(file, "rw");
+	    }
+	    catch (FileNotFoundException e) {
+	    	System.err.println("In saveppftfilter FileNotFound Exception for " + fname);
+	    	System.exit(0);
+	    }
+	    try {
+            raFile.setLength(0);
+	    }
+	    catch (IOException e) {
+	    	System.err.println("In saveppftfilter raFile.setLength(0) IOException " + e);
+	    	System.exit(0);
+	    }
+	
+	    try {
+	    	raFile.writeInt(n);
+	    }
+	    catch (IOException e) {
+	    	System.err.println("In saveppftfilter raFile.writeInt(n) IOException " + e);
+	    	System.exit(0);
+	    }
+	    
+	    try {
+	    	raFile.writeLong(timestamp);
+	    }
+	    catch(IOException e) {
+	    	System.err.println("In saveppftfilter raFile.writeLong(timestamp) IOException " + e);
+	    	System.exit(0);
+	    }
+	    
+	    try {
+	    	raFile.writeInt(precond);
+	    }
+	    catch(IOException e) {
+	    	System.err.println("In saveppftfilter raFile.writeInt(precond) IOException " + e);
+	    	System.exit(0);
+	    }
+	    
+	    for (i = 0; i < 2*n; i++) {
+			for (j = 0; j < 2*n; j++) {
+				for (k = 0; k < 2*n; k++) {
+				    try {
+				    	raFile.writeDouble(filter[0][i][j][k]);
+				    }
+				    catch (IOException e) {
+				    	System.err.println("In saveppftfilter raFile.writeDouble(filter[0]["+i+"]["+j+"]["+k+"]) IOException " + e);
+				    	System.exit(0);
+				    }
+				    try {
+				    	raFile.writeDouble(filter[1][i][j][k]);
+				    }
+				    catch (IOException e) {
+				    	System.err.println("In saveppftfilter raFile.writeDouble(filter[1]["+i+"]["+j+"]["+k+"]) IOException " + e);
+				    	System.exit(0);
+				    }
+				}
+			}
+	    }
+	    
+	    try {
+	    	raFile.close();
+	    }
+	    catch(IOException e) {
+	    	System.err.println("In saveppftfilter raFile.close() IOException " + e);
+	    	System.exit(0);
+	    }
+    }
+    
+    public void loadppftfilter(int precond[], double filter[][][][], String fname, boolean verbose) {
     		//
     		// Load precomputed filter used for fast inversion of the pseudo-polar
     		// Fourier transform.
@@ -9866,7 +10019,6 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 			    return;
 			}
 	    	
-    		String cname=outputFilePath + fname;
     	    File filef = new File(fname);
     		if (!filef.exists()) {
     			System.out.println("Warning " + fname + " does not exist on the disk");
@@ -9922,11 +10074,20 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     			for (j = 0; j < 2*n; j++) {
     				for (k = 0; k < 2*n; k++) {
     					try {
-    				        filter[i][j][k] = raFile.readDouble();
+    				        filter[0][i][j][k] = raFile.readDouble();
     					}
     					catch (IOException e) {
     		    			System.err.println(
-    								"In loadppftfilter filter["+i+"]["+j+"]["+k+"] = raFile.readDouble() IOException " + e);
+    								"In loadppftfilter filter[0]["+i+"]["+j+"]["+k+"] = raFile.readDouble() IOException " + e);
+    						precond[0] = -1;
+    						return;
+    		    		}
+    					try {
+    				        filter[1][i][j][k] = raFile.readDouble();
+    					}
+    					catch (IOException e) {
+    		    			System.err.println(
+    								"In loadppftfilter filter[1["+i+"]["+j+"]["+k+"] = raFile.readDouble() IOException " + e);
     						precond[0] = -1;
     						return;
     		    		}
@@ -9945,6 +10106,156 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     		}
 
     		return;
+    }
+    
+    private double[][][][] makeppftfilter(int n, int precond) {
+    		
+    		// Compute the convolution kernel required for applying the Gram operator of
+    		// the pseudo-polar Fourier transform. The filter is created in the given
+    		// precision ('single' or 'double').
+    		//
+    		// nxnxn are the dimensions on which the ppft is applied.
+    		
+    		// Set precond to nonzero to compute the convolution filter of the
+    		// preconditioned gram operator.
+    		
+    		// The computed filter H is an object with the following fields:
+    		//   filter     The data of the filter
+    		//   precond    1 if the filter is for the preconditioned gram operator and
+    		//              0 otherwise.  precond is 0 if default.
+    		//   precision  'single' or 'double'. Default is 'double'.
+    		//
+    		// Yoel Shkolnisky, December 2010.
+    		
+    		// Revisions:
+    		// April 2014  Y.S.  Add precision variable.
+
+    		int i,j,k;
+    	    int m=3*n+1;
+
+    		double alpha[][][][] = new double[2][m][n+1][n+1];
+    		for (i = 0; i < m; i++) {
+    			for (j = 0; j < n+1; j++) {
+    				for (k = 0; k < n+1; k++) {
+    					alpha[0][i][j][k] = 1.0;
+    				}
+    			}
+    		}
+    		double c=2.0*(n+1.0)/(m*n);
+    		double inversem4 = 1.0/(m*m*m*m);
+    		double kc2;
+    		if (precond == 1) {
+    		    for (k=-3*n/2; k <= 3*n/2; k++) {
+    		        if (k==0) {
+    		        	for (i = 0; i < n+1; i++) {
+    		        		for (j = 0; j < n+1; j++) {
+    		                    alpha[0][k+3*n/2][i][j]=inversem4;
+    		        		}
+    		        	}
+    		        }
+    		        else {
+    		        	kc2 = k*k*c*c;
+    		        	for (i = 0; i < n+1; i++) {
+    		        		for (j = 0; j < n+1; j++) {
+    		                    alpha[0][k+3*n/2][i][j]=kc2;
+    		        		}
+    		        	}
+    		        }
+    		    }
+    		} // if (precond == 1)
+
+    		// Generate the frequencies of the pseudo-polar Fourier transform that
+    		// correspond to the first sector of the PP grid (PP(1,:,:,)). 
+    		// The other two sectors are obtained by shuffling these frequencies, as
+    		// done
+    		int omegaLength = m*(n+1)*(n+1);
+    		double omega[][] = new double[omegaLength][3];
+    		for (i = 0; i < m; i++) {
+    			for (j = 0; j < n+1; j++) {
+    				for (k = 0; k < n+1; k++) {
+    					omega[i + j*m + k*m*(n+1)][0] = -3*n/2 + i;
+    					omega[i + j*m + k*m*(n+1)][1] = -n/2 + j;
+    					omega[i + j*m + k*m*(n+1)][2] = -n/2 + k;
+    				}
+    			}
+    		}
+    		for (i = 0; i < omegaLength; i++) {
+    			omega[i][1] = omega[i][1]*(-2.0)*omega[i][0]/n;
+    			omega[i][2] = omega[i][2]*(-2.0)*omega[i][0]/n;
+    		}
+
+    		// Compute h1
+            double omegain[][] = new double[omegaLength][3];
+            for (i = 0; i < omegaLength; i++) {
+            	for (j = 0; j < 3; j++) {
+            		omegain[i][j] = 2.0*n*omega[i][j]/m;
+            	}
+            }
+    		double h1b[][][][]=nufft_3d(alpha,omegain,2*n);
+
+    		// Compute h2
+    		for (i = 0; i < omegaLength; i++) {
+    			omegain[i][0] = 2.0*n*omega[i][1]/m;
+    			omegain[i][1] = 2.0*n*omega[i][0]/m;
+    			omegain[i][2] = 2.0*n*omega[i][2]/m;
+    		}
+    		double h2b[][][][]=nufft_3d(alpha,omegain,2*n);
+
+    		// Compute h3
+    		for (i = 0; i < omegaLength; i++) {
+    			omegain[i][0] = 2.0*n*omega[i][0]/m;
+    			omegain[i][1] = 2.0*n*omega[i][2]/m;
+    			omegain[i][2] = 2.0*n*omega[i][1]/m;
+    		}
+    		double h3b[][][][]=nufft_3d(alpha,omegain,2*n);
+
+    		double filter[][][][] = new double[2][2*n][2*n][2*n];
+    		for (i = 0; i < 2*n; i++) {
+    			for (j = 0; j < 2*n; j++) {
+    			    for (k = 0; k < 2*n; k++) {
+    			    	filter[0][i][j][k] = h1b[0][i][j][k] + h2b[0][i][j][k] + h3b[0][i][j][k];
+    			    	filter[1][i][j][k] = h1b[1][i][j][k] + h2b[1][i][j][k] + h3b[1][i][j][k];
+    			    }
+    			}
+    		}
+
+    		return filter;
+
+
+    		// The following version works for any n, but is not needed since PPFT
+    		// requires n to be even.
+    		// % precision='double';
+    		// % m=3*n+1;
+    		// % alpha=ones(3*n+1,n+1,n+1);
+    		// % 
+    		// % % Generate the frequencies of the pseudo-polar Fourier transform that
+    		// % % correspond to the first sector of the PP grid (PP(1,:,:,)). 
+    		// % % The other two sectors are obtained by shuffling these frequencies, as
+    		// % % done below.
+    		// % [ox,oy,oz]=ndgrid(-fix(3*n/2):fix(3*n/2),-fix(n/2):fix(n/2),-fix(n/2):fix(n/2)); 
+    		// % omega=[ox(:) oy(:) oz(:)];
+    		// % omega(:,2)=omega(:,2).*(-2).*omega(:,1)./n;
+    		// % omega(:,3)=omega(:,3).*(-2).*omega(:,1)./n;
+    		// % 
+    		// % % Compute h1
+    		// % h1b=nufft_3d(alpha,2.*n.*omega/m,precision,2*n);
+    		// % 
+    		// % % Compute h2
+    		// % omega=[omega(:,2) omega(:,1) omega(:,3)];
+    		// % h2b=nufft_3d(alpha,2.*n.*omega/m,precision,2*n);
+    		// % 
+    		// % % Compute h3
+    		// % omega=[omega(:,1) omega(:,3) omega(:,2)];
+    		// % h3b=nufft_3d(alpha,2.*n.*omega/m,precision,2*n);
+    		// % 
+    		// % % Compute the Fourier transform of the convolution filter.
+    		// % h=h1b+h2b+h3b;
+    		// % hp=zeros(3*n,3*n,3*n);
+    		// % %hp(n/2+1:5*n/2,n/2+1:5*n/2,n/2+1:5*n/2)=h;
+    		// % idxl=toUnaliasedIdx(-n,3*n);
+    		// % idxh=toUnaliasedIdx(n,3*n)-1;
+    		// % hp(idxl:idxh,idxl:idxh,idxl:idxh)=h;
+    		// % H=fftn(ifftshift(hp));
     }
 
     private double[][][][] nufft_3d(double alpha[][][][],double omega[][], int M) {
@@ -10206,6 +10517,152 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
     	return tau;
 
     }
+    
+    private double[][][][] FPtP(double X[][][][], double H[][][][]) {
+    		
+    		// Apply the Gram operator of the pseudo-polar Fourier transform to a volume
+    		// X. This function is called by fippft3.
+    		
+    		// Yoel Shkolnisky, December 2010.
+
+    	    return applyppftfilter(X,H);
+    }
+    
+    private double[][][][] applyppftfilter(double X[][][][], double filter[][][][]) {
+    		
+    		// Apply the convolution filter that corresponds to the gram operator of the
+    		// pseudo-polar Fourier transform to the volume X.
+    		
+    		// X should be a volume of size nxnxn, and H should be a convolution filter
+    		// for size n, as generared by makeppftfilter(n).
+    		
+    		// Yoel Shkolnisky, December 2010.
+
+    		int i,j,k;
+    	    verifyImage(X);
+    		int n= X[0].length;
+    		int vol = 27*n*n*n;
+    		double Xp[][][][]= new double[2][3*n][3*n][3*n];
+    		for (i = 0; i < n; i++) {
+    			for (j = 0; j < n; j++) {
+    				for (k = 0; k < n; k++) {
+    					Xp[0][i+n][j+n][k+n] = X[0][i][j][k];
+    					Xp[1][i+n][j+n][k+n] = X[1][i][j][k];
+    				}
+    			}
+    		}
+
+    		double hp[][][][]=new double[2][3*n][3*n][3*n];
+    		for (i = 0; i < 2*n; i++) {
+    			for (j = 0; j < 2*n; j++) {
+    				for (k = 0; k < 2*n; k++) {
+    					hp[0][n/2+i][n/2+j][n/2+k] = filter[0][i][j][k];
+    					hp[1][n/2+i][n/2+j][n/2+k] = filter[1][i][j][k];
+    				}
+    			}
+    		}
+    		hp = ifftshift(hp);
+    		double Hhat[][] = new double[2][vol];
+    		for (i = 0; i < 3*n; i++) {
+    			for (j = 0; j < 3*n; j++) {
+    				for (k = 0; k < 3*n; k++) {
+    					Hhat[0][9*n*n*i + 3*n*j + k] = hp[0][i][j][k];
+    					Hhat[1][9*n*n*i + 3*n*j + k] = hp[1][i][j][k];
+    				}
+    			}
+    		}
+    		FFTUtility fft = new FFTUtility(Hhat[0], Hhat[1], 9*n*n, 3*n, 1, -1, FFTUtility.FFT);
+    		fft.setShowProgress(false);
+    		fft.run();
+    		fft.finalize();
+    		fft = null;
+    		
+    		FFTUtility fft2 = new FFTUtility(Hhat[0], Hhat[1], 3*n, 3*n, 3*n, -1, FFTUtility.FFT);
+    		fft2.setShowProgress(false);
+    		fft2.run();
+    		fft2.finalize();
+    		fft2 = null;
+    		
+    		FFTUtility fft3 = new FFTUtility(Hhat[0], Hhat[1], 1, 3*n, 9*n*n, -1, FFTUtility.FFT);
+    		fft3.setShowProgress(false);
+    		fft3.run();
+    		fft3.finalize();
+    		fft3 = null;
+    		
+    		Xp = ifftshift(Xp);
+    		double XF[][] = new double[2][vol];
+    		for (i = 0; i < 3*n; i++) {
+    			for (j = 0; j < 3*n; j++) {
+    				for (k = 0; k < 3*n; k++) {
+    					XF[0][9*n*n*i + 3*n*j + k] = Xp[0][i][j][k];
+    					XF[1][9*n*n*i + 3*n*j + k] = Xp[1][i][j][k];
+    				}
+    			}
+    		}
+    		fft = new FFTUtility(XF[0], XF[1], 9*n*n, 3*n, 1, -1, FFTUtility.FFT);
+    		fft.setShowProgress(false);
+    		fft.run();
+    		fft.finalize();
+    		fft = null;
+    		
+    		fft2 = new FFTUtility(XF[0], XF[1], 3*n, 3*n, 3*n, -1, FFTUtility.FFT);
+    		fft2.setShowProgress(false);
+    		fft2.run();
+    		fft2.finalize();
+    		fft2 = null;
+    		
+    		fft3 = new FFTUtility(XF[0], XF[1], 1, 3*n, 9*n*n, -1, FFTUtility.FFT);
+    		fft3.setShowProgress(false);
+    		fft3.run();
+    		fft3.finalize();
+    		fft3 = null;
+    		
+    		double YF[][] = new double[2][vol];
+    		for (i = 0; i < vol; i++) {
+    			YF[0][i] = XF[0][i]*Hhat[0][i] - XF[1][i]*Hhat[1][i];
+    			YF[1][i] = XF[0][i]*Hhat[1][i] + XF[1][i]*Hhat[0][i];
+    		}
+    		
+    		FFTUtility ifft = new FFTUtility(YF[0], YF[1], 9*n*n, 3*n, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		
+    		FFTUtility ifft2 = new FFTUtility(YF[0], YF[1], 3*n, 3*n, 3*n, 1, FFTUtility.FFT);
+    		ifft2.setShowProgress(false);
+    		ifft2.run();
+    		ifft2.finalize();
+    		ifft2 = null;
+    		
+    		FFTUtility ifft3 = new FFTUtility(YF[0], YF[1], 1, 3*n, 9*n*n, 1, FFTUtility.FFT);
+    		ifft3.setShowProgress(false);
+    		ifft3.run();
+    		ifft3.finalize();
+    		ifft3 = null;
+    		
+    		double Y[][][][] = new double[2][3*n][3*n][3*n];
+    		for (i = 0; i < 3*n; i++) {
+    			for (j = 0; j < 3*n; j++) {
+    				for (k = 0; k < 3*n; k++) {
+    					Y[0][i][j][k] = YF[0][9*n*n*i + 3*n*j + k];
+    					Y[0][i][j][k] = YF[0][9*n*n*i + 3*n*j + k];
+    				}
+    			}
+    		}
+    		Y = fftshift(Y);
+    		double Ytrunc[][][][] = new double[2][n][n][n];
+    		for (i = 0; i < n; i++) {
+    			for (j = 0; j < n; j++) {
+    				for (k = 0; k < n; k++) {
+    					Ytrunc[0][i][j][k] = Y[0][i+n][j+n][k+n];
+    					Ytrunc[1][i][j][k] = Y[1][i+n][j+n][k+n];
+    				}
+    			}
+    		}
+    		return Ytrunc;
+    }
+
 
 
 }
