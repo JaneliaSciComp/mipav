@@ -1371,6 +1371,75 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		// Norm error for ippft3 = 1.2499563000042098E-12 time = 51.934 seconds
 		// n = 64
 		// Norm error for ippft3 = 1.9077747979940867E-13 time = 194.674 seconds
+		
+		// For MaxIts = 100
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt4.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// n = 4
+		// Norm error for ippft3 = 1.769539132217751E-8 time = 0.703 seconds
+		// Norm error for fippft3 = 1.7695390645032576E-8 time = 1.048 seconds
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt8.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// n = 8
+		// Norm error for ippft3 = 8.71700097838205E-10 time = 2.094 seconds
+		// Norm error for fippft3 = 8.717109975912477E-10 time = 6.046 seconds
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt16.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// fippft3 warning! CG inversion did not converge. Residual error = 0.4078153750632663
+		// n = 16
+		// Norm error for ippft3 = 8.835581157290706E-11 time = 8.156 seconds
+		// Norm error for fippft3 = 6.001007364683751E-10 time = 28.135 seconds
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt20.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// fippft3 warning! CG inversion did not converge. Residual error = 93.57727664878145
+		// n = 20
+		// Norm error for ippft3 = 4.164174080034899E-11 time = 6.359 seconds
+		// Norm error for fippft3 = 3.927318590512477E-9 time = 39.674 seconds
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt32.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// fippft3 warning! CG inversion did not converge. Residual error = 581.0717751388471
+		// n = 32
+		// Norm error for ippft3 = 3.783940627274266E-12 time = 21.389 seconds
+		// Norm error for fippft3 = 8.503810520809297E-10 time = 359.83 seconds
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt40.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// fippft3 warning! CG inversion did not converge. Residual error = 590009.3647231869
+		// n = 40
+		// Norm error for ippft3 = 1.0978851832294155E-12 time = 82.945 seconds
+		// Norm error for fippft3 = 1.2198298548667346E-7 time = 539.581 seconds
+		// Warning C:\PseudoPolarFourierTranformTables\ppfilt64.dat does not exist on the disk
+		// Filter not found in fippft3. Generating filter
+		// fippft3 warning! CG inversion did not converge. Residual error = 4559114.187087534
+		// n = 64
+		// Norm error for ippft3 = 1.7199009115490613E-13 time = 224.624 seconds
+		// Norm error for fippft3 = 5.814554471576391E-9 time = 3222.61 seconds
+		
+		// For MaxIts = 200
+		// n = 4
+		// Norm error for ippft3 = 1.9295235927142955E-8 time = 0.735 seconds
+		// Norm error for fippft3 = 1.9295236603317184E-8 time = 0.172 seconds
+		// n = 8
+		// Norm error for ippft3 = 9.057697122171399E-10 time = 2.218 seconds
+		// Norm error for fippft3 = 9.053826990738583E-10 time = 1.032 seconds
+		// n = 16
+		// Norm error for ippft3 = 1.1545569681313629E-10 time = 7.14 seconds
+		// Norm error for fippft3 = 8.677085733185562E-11 time = 4.734 seconds
+		// fippft3 warning! CG inversion did not converge. Residual error = 4.459435043549667
+		// n = 20
+		// Norm error for ippft3 = 1.2101917558782925E-11 time = 13.155 seconds
+		// Norm error for fippft3 = 3.1554905658036324E-10 time = 24.092 seconds
+		// fippft3 warning! CG inversion did not converge. Residual error = 629696.9753946927
+		// n = 32
+		// Norm error for ippft3 = 3.4956796518996733E-12 time = 21.998 seconds
+		// Norm error for fippft3 = 2.0467725332235932E-8 time = 181.787 seconds
+		// fippft3 warning! CG inversion did not converge. Residual error = 71055.02524527047
+		// n = 40
+		// Norm error for ippft3 = 1.3269795644861978E-12 time = 53.593 seconds
+		// Norm error for fippft3 = 1.1678751920813508E-9 time = 323.399 seconds
+		// fippft3 warning! CG inversion did not converge. Residual error = 1.4777035579579128E7
+		// n = 64
+		// Norm error for ippft3 = 1.6915978653055024E-13 time = 189.632 seconds
+		// Norm error for fippft3 = 2.496827516452827E-9 time = 1993.89 seconds
 
 		// Tests the functions ippft3_ref and ippft3.
 		
@@ -1398,7 +1467,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 	        }
 		    double pp[][][][][] = ppft3(im);
 		    boolean doippft3_ref = false;
-		    runTest(n,pp,1.e-8,100,im,false, doippft3_ref);
+		    runTest(n,pp,1.e-8,200,im,false, doippft3_ref);
 		}
 	}
 
@@ -10203,9 +10272,9 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
     		// Compute h3
     		for (i = 0; i < omegaLength; i++) {
-    			omegain[i][0] = 2.0*n*omega[i][0]/m;
+    			omegain[i][0] = 2.0*n*omega[i][1]/m;
     			omegain[i][1] = 2.0*n*omega[i][2]/m;
-    			omegain[i][2] = 2.0*n*omega[i][1]/m;
+    			omegain[i][2] = 2.0*n*omega[i][0]/m;
     		}
     		double h3b[][][][]=nufft_3d(alpha,omegain,2*n);
 
