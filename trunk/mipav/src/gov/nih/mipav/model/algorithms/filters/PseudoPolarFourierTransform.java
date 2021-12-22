@@ -1441,7 +1441,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		// Norm error for ippft3 = 1.6915978653055024E-13 time = 189.632 seconds
 		// Norm error for fippft3 = 2.496827516452827E-9 time = 1993.89 seconds
 
-		// Tests the functions ippft3_ref and ippft3.
+		// Tests the functions ippft3_ref, ippft3, and fippft3.
 		
 		// Tests the correctness and performance of the inversion algorithm of the 3-D pseudo-polar Fourier transform.
 		
@@ -1470,7 +1470,6 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		    runTest(n,pp,1.e-8,200,im,false, doippft3_ref);
 		}
 	}
-
 
 	//%%%%%%%%%%%%%%
 	// Sub functions
@@ -1542,7 +1541,173 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		System.out.println("Norm error for ippft3 = " + err_ppft3 + " time = " + t2 + " seconds");
 		System.out.println("Norm error for fippft3 = " + err_conv + " time = " + t3 + " seconds");
 	}
+	
+public void testiRadon3() {
+		// All parts of test pass
+		// Tests the function iRadon3.
+		
+		// Tests the correctness and performance of the inversion algorithm of the 3-D discrete Radon transform.
+		// The function tests also the inversion of the 3-D pseudo-polar Fourier transform since 
+		// inverting the 3-D discrete Radon transform requirers inverting the 3-D pseudo-polar Fourier transform.
+		
+		// Yoel Shkolnisky 01/03/03
+	
+		int i,j,k;
+		double a[][][][] = new double[2][8][8][8];
+		double pp[][][][];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		// test No.1: All ones cube 8x8x8
+		// Inversion should converge
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				for (k = 0; k < 8; k++) {
+					a[0][i][j][k] = 1.0;
+					a[1][i][j][k] = 0.0;
+				}
+			}
+		}
+		pp = Radon3(a);
+		runTest(pp,1.e-2,20,a[0],"1 - All ones 8x8x8",true, true);
+	
+		// test No.2: Random cube [0,255] 8x8x8
+		// Inversion should converge
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				for (k = 0; k < 8; k++) {
+					a[0][i][j][k] = 255.0*randomGen.genUniformRandomNum(0.0, 1.0);
+					if (a[0][i][j][k] >= 0.0) {
+						a[0][i][j][k] = Math.floor(a[0][i][j][k]);
+					}
+					else {
+						a[0][i][j][k] = Math.ceil(a[0][i][j][k]);
+					}
+					a[1][i][j][k] = 0.0;
+				}
+			}
+		}
+		pp = Radon3(a);
+		runTest(pp,1.e-2,20,a[0],"2- Random cube [0,255] 8x8x8",true,true);
+	
+		// test No.3: Random cube [0,255] 8x8x8
+		// Inversion should NOT converge (required error too small)
+		pp = Radon3(a);
+		runTest(pp,1.e-7,10,a[0],"3 - Random cube [0,255] 8x8x8 (error too small)",true,true);
+	
+		// test No.4: Random cube [0,255] 8x8x8
+		// Inversion should NOT converge (not enough iterations)
+		pp = Radon3(a);
+		runTest(pp,1.e-4,5,a[0],"4 - Random cube [0,255] 8x8x8 (not enough iterations)",true,true);
+	
+	
+		//test No.5: Random cube 8x8x8 with real values from [0,1]
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				for (k = 0; k < 8; k++) {
+					a[0][i][j][k] = randomGen.genUniformRandomNum(0.0, 1.0);;
+					a[1][i][j][k] = 0.0;
+				}
+			}
+		}
+		pp = Radon3(a);
+		runTest(pp,1.e-2,100,a[0],"5 - Real random cube 8x8x8 from [0,1]",true,false);
+	
+		// test No.6: Random cube [0,255] 8x8x8 (run quietly)
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				for (k = 0; k < 8; k++) {
+					a[0][i][j][k] = 255.0*randomGen.genUniformRandomNum(0.0, 1.0);
+					if (a[0][i][j][k] >= 0.0) {
+						a[0][i][j][k] = Math.floor(a[0][i][j][k]);
+					}
+					else {
+						a[0][i][j][k] = Math.ceil(a[0][i][j][k]);
+					}
+					a[1][i][j][k] = 0.0;
+				}
+			}
+		}
+		pp = Radon3(a);
+		runTest(pp,1.e-2,10,a[0],"6 - Random cube 8x8x8 [0,255] (quiet)",false,true);
+	}
 
+
+	//%%%%%%%%%%%%%%
+	// Sub functions
+	//%%%%%%%%%%%%%%
+
+	// Execute a single inversion test.
+	// pp           The 3-D Radon sectors.
+	// ErrTol       Residual error required from the inversion algorithm.
+	// MaxIts       Number of iterations of the inversion algorithm.
+	// ref          The original image. Used as a reference to check the absolute error.
+	// description  Test description for printing purposes.
+	// verbose      If true, print the inversion log.
+	// trueimage    True if the input represents the discrete Radon transform of an integer image.
+	//              In this case it is possible to exactly inverting the transform
+	//              by truncating any floating parts of the result.
+	private void runTest(double pp[][][][] ,double ErrTol, int MaxIts,double ref[][][],
+			String description, boolean verbose, boolean trueimage) {
+
+		int i,j,k;
+		System.out.println("Test name : " + description);
+		System.out.println("Requested error = " + ErrTol);
+		System.out.println("Max number of iterations = " + MaxIts);
+		if (verbose) {
+		    System.out.println("Inversion log:");
+		    System.out.println("--------------");
+		}
+		long start = System.currentTimeMillis();
+		int n = pp[0][0].length - 1;
+		double Y[][][][] = new double[2][n][n][n];
+		int flag[] = new int[1];
+        double res[] = new double[1];
+        int iter[] = new int[1];
+		iradon3(Y,flag,res,iter,pp,ErrTol,MaxIts,verbose);
+		double t = (System.currentTimeMillis() - start)/1000.0;
+		String str;
+	    if (flag[0] == 0) {
+	       str = "CONVERGED";
+	    }
+	    else {
+	       str = "DID NOT CONVERGE";
+	    }
+	
+	    System.out.println("\nResults:");
+	    System.out.println("---------");
+	    System.out.println("Inversion " + str);
+	    System.out.println("Residual error " + res[0] + " at iteration no. " + iter[0]);
+	    double error;
+	    double maxError = 0.0;
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < n; j++) {
+	    		for (k = 0; k < n; k++) {
+		    		error = Math.abs(Y[0][i][j][k] - ref[i][j][k]);
+		    		if (error > maxError) {
+		    			maxError = error;
+		    		}
+	    		}
+	    	}
+	    }
+	    System.out.println("Maxiumum absolute error = " + maxError);
+	
+	    if (trueimage) {
+	    	maxError = 0.0;
+	    	for (i = 0; i < n; i++) {
+		    	for (j = 0; j < n; j++) {
+		    		for (k = 0; k < n; k++) {
+			    		error = Math.abs(Math.round(Y[0][i][j][k]) - ref[i][j][k]);
+			    		if (error > maxError) {
+			    			maxError = error;
+			    		}
+		    		}
+		    	}
+		    }
+	       System.out.println("Maximum absolute error of reconstructed image = " + maxError);
+	    }
+	       
+	    System.out.println("Computation time = " + t + " seconds");
+	    System.out.println("--------------------------------------------------------\n\n");	
+	}
 	   
 
     private void equals(double v1[][][][][], double v2[][][][][], double eps, boolean ok[], double error[]) {
@@ -3553,6 +3718,60 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 
     		// Revision record
     		// 15/1/03	Yoel Shkolnisky		Used cfftd instead of column-wise cfft
+    }
+    
+    private void iradon3(double Y[][][][], int flag[], double residual[], int iter[],
+    		double res[][][][], double ErrTol, int MaxIts,
+    		boolean verbose) {
+	    
+	    // Inverse 3-D discrete Radon transform.
+	    // The inverse transform is computed using conjugate gradient method.
+	    
+	    // Input arguments:
+	    // res          Discrete 3-D Radon sectors as returned from the function Radon3. res is a 
+	    //              4-D array of size 3x(3n+1)x(n+1)x(n+1).
+	    // ErrTol       (Optional) Error tolerance used by the conjugate
+	    //              gradient method. Default 1.e-2.
+	    // MaxIts       Maximum number of iterations. Default 10.
+	    // verbose      Display verbose CG information. 0 will suppress verbose information.
+	    //              Any non-zero value will display verbose CG information.  False if default
+	    
+	    // Output arguments:
+	    // Y            The reconstructed 3-D array.
+	    // flag         Convergence flag. See CG for more information.
+	    // residual     Residual error at the end of the inversion.
+	    // iter         The iteration number at which ErrTol was achieved. Relevant only if
+	    //              flag=0
+	    
+	    // Yoel Shkolnisky 01/03/03
+    	int i,j,k,m;
+	    int n = res[0][0].length-1;
+	    double temp[][][][][] = new double[2][3][3*n+1][n+1][n+1];
+		 double res2[][];
+		 // FFT on second dimension
+		 for (i = 0; i < 3; i++) {
+			 for (j = 0; j < n+1; j++) {
+				 for (k = 0; k < n+1; k++) {
+					 res2 = new double[2][3*n+1];
+					 for (m = 0; m < 3*n+1; m++) {
+						 res2[0][m] = res[i][m][j][k];
+						 res2[1][m] = 0.0;
+					 }
+					 res2 = ifftshift1d(res2);
+			    	 FFTUtility fft = new FFTUtility(res2[0], res2[1], 1, 3*n+1, 1, -1, FFTUtility.FFT);
+				     fft.setShowProgress(false);
+				     fft.run();
+				     fft.finalize();
+				     fft = null;
+				     res2 = fftshift1d(res2);
+				     for (m = 0; m < 3*n+1; m++) {
+				    	 temp[0][i][m][j][k] = res2[0][m];
+				    	 temp[1][i][m][j][k] = res2[1][m];
+				     }
+				 }
+			 }
+		 }
+	    ippft3(Y,flag,residual,iter,temp,ErrTol,MaxIts,verbose);
     }
     
     private void fippft3(double Y[][][][], int flag[], double residual[], int iter[],
