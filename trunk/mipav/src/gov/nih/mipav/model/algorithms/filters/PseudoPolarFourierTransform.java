@@ -1542,7 +1542,7 @@ public class PseudoPolarFourierTransform extends AlgorithmBase {
 		System.out.println("Norm error for fippft3 = " + err_conv + " time = " + t3 + " seconds");
 	}
 	
-public void testiRadon3() {
+    public void testiRadon3() {
 		// All parts of test pass
 		// Tests the function iRadon3.
 		
