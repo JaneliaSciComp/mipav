@@ -142,7 +142,7 @@ public class ChirpZTransform extends AlgorithmBase {
 	
     public void runAlgorithm() {
     	int i, n;
-        if (forward || simple)) {
+        if (forward || simple) {
         	// Calculate the Chirp Z-transform (CZT).
             // Solves in O(n log n) time.
             // See algorithm 1 in Sukhoy & Stoytchev 2019.
