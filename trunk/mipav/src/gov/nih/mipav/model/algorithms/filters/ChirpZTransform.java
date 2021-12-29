@@ -141,7 +141,7 @@ public class ChirpZTransform extends AlgorithmBase {
      */
 	
     public void runAlgorithm() {
-    	int i, n;
+    	int i, j, n;
         if (forward || simple) {
         	// Calculate the Chirp Z-transform (CZT).
             // Solves in O(n log n) time.
@@ -183,10 +183,64 @@ public class ChirpZTransform extends AlgorithmBase {
         	else {
         		// Algorithm 1 from Sukhoy & Stoytchev 2019	
         		int MNmax = Math.max(M,N);
+        		double r[][] = new double[2][N];
+        		double X[][] = new double[2][N];
+        		double Xout[][] = new double[2][N];
+        		double c[][] = new double[2][M];
+        		double br[] = new double[1];
+        		double bi[] = new double[1];
+        		double cr[] = new double[1];
+        		double ci[] = new double[1];
+        		int ierr[] = new int[1];
+        		for (i = 0; i < MNmax; i++) {
+        		    zpow(W[0], W[1], -(i*i)/2.0, br, bi, ierr);	
+        		    if (i < M) {
+        		    	c[0][i] = br[0];
+        		    	c[1][i] = bi[0];
+        		    }
+        		    if (i < N) {
+        		    	r[0][i] = br[0];
+        		    	r[1][i] = bi[0];
+        		    	zpow(A[0], A[1], -i, br, bi, ierr);
+        		    	zmlt(br[0], bi[0], x[0][i], x[1][i], cr, ci);
+        		    	zdiv(cr[0], ci[0], r[0][i], r[1][i], br, bi);
+        		    	X[0][i] = br[0];
+        		    	X[1][i] = bi[0];
+        		    }
+        		} // for (i = 0; i < MNmax; i++)
+        	    if (t_method.equalsIgnoreCase("ce")) {
+        	        //Xout = _toeplitz_mlt_ce(r, c, X, f_method);	
+        	    }
+        	    else if (t_method.equalsIgnoreCase("pd")) {
+        	    	//Xout = _toeplitz_mult_pd(r, c, X, f_method);
+        	    }
+        	    else if (t_method.equalsIgnoreCase("mm")) {
+        	    	double toep[][][] = toeplitz(c, r);
+        	    	for (i = 0; i < M; i++) {
+        	    	    for (j = 0; j < N; j++) {
+        	    	    	Xout[0][i] += (toep[0][i][j]*X[0][j] - toep[1][i][j]*X[1][j]);
+        	    	    	Xout[1][i] += (toep[0][i][j]*X[1][j] + toep[1][i][j]*X[0][j]);
+        	    	    }
+        	    	}
+        	    }
+        	    else if (t_method.equalsIgnoreCase("scipy")) {
+        	    	//Efficient Toeplitz Matrix-Matrix Multiplication using FFT
+        	    	//Xout = matmul_toeplitz((c, r), X);
+        	    }
+        	    else {
+        	    	System.err.println("t_method " + t_method + " not recognized");
+        	    	System.exit(0);
+        	    }
+        		for (i = 0; i < M; i++) {
+        			zdiv(X[0][i], X[1][i], c[0][i], c[1][i], br, bi);
+        			output[0][i] = br[0];
+        			output[1][i] = bi[0];
+        		}
         	} // else not simple
         	if (!forward) {
         		for (i = 0; i < M; i++) {
-        			output[1][i] = -output[1][i];
+        			output[0][i] = output[0][i]/M;
+        			output[1][i] = -output[1][i]/M;
         		}
         	}
         } // if (forward || simple))
@@ -202,6 +256,26 @@ public class ChirpZTransform extends AlgorithmBase {
         	N = MN;
         	M = X[0].length;
         }
+    }
+    
+    private double[][][] toeplitz(double c[][], double r[][]) {
+    	int i,row,col;
+    	double ans[][][] = new double[2][c[0].length][r[0].length];
+    	for (i = 0; i < c[0].length; i++) {
+    		ans[0][i][0] = c[0][i];
+    		ans[1][i][0] = c[1][i];
+    	}
+    	for (i = 1; i < r[0].length; i++) {
+    		ans[0][0][i] = r[0][i];
+    		ans[1][0][i] = r[1][i];
+    	}
+    	for (row = 1; row < c[0].length; row++) {
+    		for (col = 1; col < r[0].length; col++) {
+    			ans[0][row][col] = ans[0][row-1][col-1];
+    			ans[1][row][col] = ans[1][row-1][col-1];
+    		}
+    	}
+    	return ans;
     }
     
     /**
@@ -337,6 +411,53 @@ public class ChirpZTransform extends AlgorithmBase {
         cb = zm * Math.sin(ai);
         br[0] = ca;
         bi[0] = cb;
+
+        return;
+    }
+    
+    /**
+     * complex divide c = a/b.
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
+     */
+    private void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
+        double bm, cc, cd, ca, cb;
+
+        bm = 1.0 / zabs(br, bi);
+        cc = br * bm;
+        cd = bi * bm;
+        ca = ( (ar * cc) + (ai * cd)) * bm;
+        cb = ( (ai * cc) - (ar * cd)) * bm;
+        cr[0] = ca;
+        ci[0] = cb;
+
+        return;
+    }
+    
+    /**
+     * complex multiply c = a * b.
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
+     */
+    private void zmlt(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
+        double ca, cb;
+
+        ca = (ar * br) - (ai * bi);
+        cb = (ar * bi) + (ai * br);
+        cr[0] = ca;
+        ci[0] = cb;
 
         return;
     }
