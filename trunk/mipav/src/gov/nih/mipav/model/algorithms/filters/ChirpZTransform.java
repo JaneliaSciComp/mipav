@@ -225,14 +225,51 @@ public class ChirpZTransform extends AlgorithmBase {
         	    }
         	    else if (t_method.equalsIgnoreCase("scipy")) {
         	    	//Efficient Toeplitz Matrix-Matrix Multiplication using FFT
-        	    	//Xout = matmul_toeplitz((c, r), X);
+        	    	double embedded_col[][] = new double[2][M+N-1];
+        	    	for (i = 0; i < M; i++) {
+        	    		embedded_col[0][i] = c[0][i];
+        	    		embedded_col[1][i] = c[1][i];
+        	    	}
+        	    	for (i = 0; i < N-1; i++) {
+        	    		embedded_col[0][i+M] = r[0][N-1-i];
+        	    		embedded_col[1][i+M] = r[1][N-i-i];
+        	    	}
+        	    	FFTUtility fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, M+N-1, 1, -1, FFTUtility.FFT);
+        	    	fft.setShowProgress(false);
+        	    	fft.run();
+        	    	fft.finalize();
+        	    	fft = null;
+        	    	double Xpad[][] = new double[2][N+M-1];
+        	    	for (i = 0; i < N; i++) {
+        	    		Xpad[0][i] = X[0][i];
+        	    		Xpad[1][i] = X[1][i];
+        	    	}
+        	    	fft = new FFTUtility(Xpad[0], Xpad[1], 1, M+N-1, 1, -1, FFTUtility.FFT);
+        	    	fft.setShowProgress(false);
+        	    	fft.run();
+        	    	fft.finalize();
+        	    	fft = null;
+        	    	double colX[][] = new double[2][N+M-1];
+        	    	for (i = 0; i < N+M-1; i++) {
+        	    		colX[0][i] = embedded_col[0][i]*Xpad[0][i] - embedded_col[1][i]*Xpad[1][i];
+        	    		colX[1][i] = embedded_col[0][i]*Xpad[1][i] + embedded_col[1][i]*Xpad[0][i];
+        	    	}
+        	    	FFTUtility ifft = new FFTUtility(colX[0], colX[1], 1, M+N-1, 1, 1, FFTUtility.FFT);
+        	    	ifft.setShowProgress(false);
+        	    	ifft.run();
+        	        ifft.finalize();
+        	        ifft = null;
+        	        for (i = 0; i < N; i++) {
+        	        	Xout[0][i] = colX[0][i];
+        	        	Xout[1][i] = colX[1][i];
+        	        }
         	    }
         	    else {
         	    	System.err.println("t_method " + t_method + " not recognized");
         	    	System.exit(0);
         	    }
         		for (i = 0; i < M; i++) {
-        			zdiv(X[0][i], X[1][i], c[0][i], c[1][i], br, bi);
+        			zdiv(Xout[0][i], Xout[1][i], c[0][i], c[1][i], br, bi);
         			output[0][i] = br[0];
         			output[1][i] = bi[0];
         		}
