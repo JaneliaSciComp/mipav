@@ -141,7 +141,7 @@ public class ChirpZTransform extends AlgorithmBase {
      */
 	
     public void runAlgorithm() {
-    	int i, j, n;
+    	int i, j, k, n;
         if (forward || simple) {
         	// Calculate the Chirp Z-transform (CZT).
             // Solves in O(n log n) time.
@@ -185,7 +185,7 @@ public class ChirpZTransform extends AlgorithmBase {
         		int MNmax = Math.max(M,N);
         		double r[][] = new double[2][N];
         		double X[][] = new double[2][N];
-        		double Xout[][] = new double[2][N];
+        		double Xout[][] = null;
         		double c[][] = new double[2][M];
         		double br[] = new double[1];
         		double bi[] = new double[1];
@@ -212,9 +212,10 @@ public class ChirpZTransform extends AlgorithmBase {
         	        Xout = _toeplitz_mult_ce(r, c, X, f_method);	
         	    }
         	    else if (t_method.equalsIgnoreCase("pd")) {
-        	    	//Xout = _toeplitz_mult_pd(r, c, X, f_method);
+        	    	Xout = _toeplitz_mult_pd(r, c, X, f_method);
         	    }
         	    else if (t_method.equalsIgnoreCase("mm")) {
+        	    	Xout = new double[2][N];
         	    	double toep[][][] = toeplitz(c, r);
         	    	for (i = 0; i < M; i++) {
         	    	    for (j = 0; j < N; j++) {
@@ -225,6 +226,7 @@ public class ChirpZTransform extends AlgorithmBase {
         	    }
         	    else if (t_method.equalsIgnoreCase("scipy")) {
         	    	//Efficient Toeplitz Matrix-Matrix Multiplication using FFT
+        	    	Xout = new double[2][N];
         	    	double embedded_col[][] = new double[2][M+N-1];
         	    	for (i = 0; i < M; i++) {
         	    		embedded_col[0][i] = c[0][i];
@@ -292,7 +294,372 @@ public class ChirpZTransform extends AlgorithmBase {
     		}
         	N = MN;
         	M = X[0].length;
+        	// Algorithm 2 from Sukhoy & Stoytchev 2019
+            if (M != N) {
+                System.err.println("In inverse ChirpZTransform M must be equal to N");
+                System.exit(0);
+            }
+            n = N;
+            double br[] = new double[1];
+            double bi[] = new double[1];
+            double cr[] = new double[1];
+            double ci[] = new double[1];
+            int ierr[] = new int[1];
+            double Wk22[][] = new double[2][n];
+            double x[][] = new double[2][n];
+            for (k = 0; k < n; k++) {
+            	zpow(W[0],W[1], -(k*k)/2.0, br, bi, ierr);
+            	Wk22[0][k] = br[0];
+            	Wk22[1][k] = bi[0];
+            	x[0][i] = Wk22[0][k]*X[0][k] - Wk22[1][k]*X[1][k];
+            	x[1][i] = Wk22[1][k]*X[1][k] + Wk22[1][k]*X[0][k];
+            }
+            double p[][] = new double[2][n];
+            p[0][0] = 1.0;
+            p[1][0] = 0.0;
+            for (k = 1; k < n; k++) {
+            	zpow(W[0],W[1],k,br,bi,ierr);
+            	p[0][k] = p[0][k-1]*(br[0]-1) - p[1][k-1]*bi[0];
+            	p[1][k] = p[0][k-1]*bi[0] + p[1][k-1]*(br[0]-1);
+            }
+            double u[][] = new double[2][n];
+            for (k = 0; k < n; k++) {
+                zpow(W[0],W[1], (k * (k - n + 0.5) + (n / 2.0 - 0.5) * n), br, bi, ierr);
+                zdiv(br[0], bi[0], p[0][k], p[1][k], cr, ci);
+                if ((k % 2) == 0) {
+                	u[0][k] = cr[0];
+                	u[1][k] = ci[0];
+                }
+                else {
+                	u[0][k] = -cr[0];
+                	u[1][k] = -ci[0];
+                }
+            }
+            double udiv[][] = new double[2][n];
+            for (k = 0; k < n; k++) {
+            	zdiv(u[0][k], u[1][k], p[0][n-1-k], p[1][n-1-k], br, bi);
+            	udiv[0][k] = br[0];
+            	udiv[1][k] = bi[0];
+            }
+            double z[][] = new double[2][n];
+            double uhat[][] = new double[2][n];
+            uhat[0][0] = 0.0;
+            uhat[1][0] = 0.0;
+            for (i = 1; i < n; i++) {
+            	uhat[0][i] = udiv[0][n-i];
+            	uhat[1][i] = udiv[1][n-i];
+            }
+            double util[][] = new double[2][n];
+            util[0][0] = udiv[0][0];
+            util[1][0] = udiv[1][0];
+            double x1[][] = null;
+            double x2[][] = null;
+            if (t_method.equalsIgnoreCase("ce")) {
+    	        x1 = _toeplitz_mult_ce(uhat, z, x, f_method);
+    	        x1 = _toeplitz_mult_ce(z, uhat, x1, f_method);
+    	        x2 = _toeplitz_mult_ce(udiv, util, x, f_method);
+    	        x2 = _toeplitz_mult_ce(util, udiv, x2, f_method);
+    	    }
+    	    else if (t_method.equalsIgnoreCase("pd")) {
+    	    	x1 = _toeplitz_mult_pd(uhat, z, x, f_method);
+    	        x1 = _toeplitz_mult_pd(z, uhat, x1, f_method);
+    	        x2 = _toeplitz_mult_pd(udiv, util, x, f_method);
+    	        x2 = _toeplitz_mult_pd(util, udiv, x2, f_method);
+    	    }
+    	    else if (t_method.equalsIgnoreCase("mm")) {
+    	    	double prex1[][] = new double[2][n];
+    	    	double toep[][][] = toeplitz(z, uhat);
+    	    	for (i = 0; i < n; i++) {
+    	    	    for (j = 0; j < n; j++) {
+    	    	        prex1[0][i] += (toep[0][i][j]*x[0][j] - toep[1][i][j]*x[1][j]);
+    	    	    	prex1[1][i] += (toep[0][i][j]*x[1][j] + toep[1][i][j]*x[0][j]);
+    	    	    }
+    	    	}
+    	    	toep = toeplitz(uhat,z);
+    	    	x1 = new double[2][n];
+    	    	for (i = 0; i < n; i++) {
+    	    	    for (j = 0; j < n; j++) {
+    	    	        x1[0][i] += (toep[0][i][j]*prex1[0][j] - toep[1][i][j]*prex1[1][j]);
+    	    	    	x1[1][i] += (toep[0][i][j]*prex1[1][j] + toep[1][i][j]*prex1[0][j]);
+    	    	    }
+    	    	}
+    	    	toep = toeplitz(util, udiv);
+    	    	double prex2[][] = new double[2][n];
+    	    	for (i = 0; i < n; i++) {
+    	    	    for (j = 0; j < n; j++) {
+    	    	        prex2[0][i] += (toep[0][i][j]*x[0][j] - toep[1][i][j]*x[1][j]);
+    	    	    	prex2[1][i] += (toep[0][i][j]*x[1][j] + toep[1][i][j]*x[0][j]);
+    	    	    }
+    	    	}
+    	    	toep = toeplitz(udiv, util);
+    	    	x2 = new double[2][n];
+    	    	for (i = 0; i < n; i++) {
+    	    	    for (j = 0; j < n; j++) {
+    	    	        x2[0][i] += (toep[0][i][j]*prex2[0][j] - toep[1][i][j]*prex2[1][j]);
+    	    	    	x2[1][i] += (toep[0][i][j]*prex2[1][j] + toep[1][i][j]*prex2[0][j]);
+    	    	    }
+    	    	}
+    	    }
+    	    else if (t_method.equalsIgnoreCase("scipy")) {
+    	    	//Efficient Toeplitz Matrix-Matrix Multiplication using FFT
+    	    	double prex1[][] = new double[2][n];
+    	    	double prex2[][] = new double[2][n];
+    	    	double embedded_col[][] = new double[2][2*n-1];
+    	    	for (i = 0; i < n; i++) {
+    	    		embedded_col[0][i] = z[0][i];
+    	    		embedded_col[1][i] = z[1][i];
+    	    	}
+    	    	for (i = 0; i < n-1; i++) {
+    	    		embedded_col[0][i+n] = uhat[0][n-1-i];
+    	    		embedded_col[1][i+n] = uhat[1][n-i-i];
+    	    	}
+    	    	FFTUtility fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	double Xpad[][] = new double[2][2*n-1];
+    	    	for (i = 0; i < n; i++) {
+    	    		Xpad[0][i] = x[0][i];
+    	    		Xpad[1][i] = x[1][i];
+    	    	}
+    	    	fft = new FFTUtility(Xpad[0], Xpad[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	double colX[][] = new double[2][2*n-1];
+    	    	for (i = 0; i < 2*n-1; i++) {
+    	    		colX[0][i] = embedded_col[0][i]*Xpad[0][i] - embedded_col[1][i]*Xpad[1][i];
+    	    		colX[1][i] = embedded_col[0][i]*Xpad[1][i] + embedded_col[1][i]*Xpad[0][i];
+    	    	}
+    	    	FFTUtility ifft = new FFTUtility(colX[0], colX[1], 1, 2*n-1, 1, 1, FFTUtility.FFT);
+    	    	ifft.setShowProgress(false);
+    	    	ifft.run();
+    	        ifft.finalize();
+    	        ifft = null;
+    	        for (i = 0; i < n; i++) {
+    	        	prex1[0][i] = colX[0][i];
+    	        	prex1[1][i] = colX[1][i];
+    	        }
+    	        x1 = new double[2][n];
+    	        for (i = 0; i < n; i++) {
+    	    		embedded_col[0][i] = uhat[0][i];
+    	    		embedded_col[1][i] = uhat[1][i];
+    	    	}
+    	    	for (i = 0; i < n-1; i++) {
+    	    		embedded_col[0][i+n] = z[0][n-1-i];
+    	    		embedded_col[1][i+n] = z[1][n-i-i];
+    	    	}
+    	    	fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	Xpad = new double[2][2*n-1];
+    	    	for (i = 0; i < n; i++) {
+    	    		Xpad[0][i] = prex1[0][i];
+    	    		Xpad[1][i] = prex1[1][i];
+    	    	}
+    	    	fft = new FFTUtility(Xpad[0], Xpad[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	colX = new double[2][2*n-1];
+    	    	for (i = 0; i < 2*n-1; i++) {
+    	    		colX[0][i] = embedded_col[0][i]*Xpad[0][i] - embedded_col[1][i]*Xpad[1][i];
+    	    		colX[1][i] = embedded_col[0][i]*Xpad[1][i] + embedded_col[1][i]*Xpad[0][i];
+    	    	}
+    	    	ifft = new FFTUtility(colX[0], colX[1], 1, 2*n-1, 1, 1, FFTUtility.FFT);
+    	    	ifft.setShowProgress(false);
+    	    	ifft.run();
+    	        ifft.finalize();
+    	        ifft = null;
+    	        for (i = 0; i < n; i++) {
+    	        	x1[0][i] = colX[0][i];
+    	        	x1[1][i] = colX[1][i];
+    	        }
+    	        
+    	        for (i = 0; i < n; i++) {
+    	    		embedded_col[0][i] = util[0][i];
+    	    		embedded_col[1][i] = util[1][i];
+    	    	}
+    	    	for (i = 0; i < n-1; i++) {
+    	    		embedded_col[0][i+n] = udiv[0][n-1-i];
+    	    		embedded_col[1][i+n] = udiv[1][n-i-i];
+    	    	}
+    	    	fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	Xpad = new double[2][2*n-1];
+    	    	for (i = 0; i < n; i++) {
+    	    		Xpad[0][i] = x[0][i];
+    	    		Xpad[1][i] = x[1][i];
+    	    	}
+    	    	fft = new FFTUtility(Xpad[0], Xpad[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	colX = new double[2][2*n-1];
+    	    	for (i = 0; i < 2*n-1; i++) {
+    	    		colX[0][i] = embedded_col[0][i]*Xpad[0][i] - embedded_col[1][i]*Xpad[1][i];
+    	    		colX[1][i] = embedded_col[0][i]*Xpad[1][i] + embedded_col[1][i]*Xpad[0][i];
+    	    	}
+    	    	ifft = new FFTUtility(colX[0], colX[1], 1, 2*n-1, 1, 1, FFTUtility.FFT);
+    	    	ifft.setShowProgress(false);
+    	    	ifft.run();
+    	        ifft.finalize();
+    	        ifft = null;
+    	        for (i = 0; i < n; i++) {
+    	        	prex2[0][i] = colX[0][i];
+    	        	prex2[1][i] = colX[1][i];
+    	        }
+    	        
+    	        for (i = 0; i < n; i++) {
+    	    		embedded_col[0][i] = udiv[0][i];
+    	    		embedded_col[1][i] = udiv[1][i];
+    	    	}
+    	    	for (i = 0; i < n-1; i++) {
+    	    		embedded_col[0][i+n] = util[0][n-1-i];
+    	    		embedded_col[1][i+n] = util[1][n-i-i];
+    	    	}
+    	    	fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	Xpad = new double[2][2*n-1];
+    	    	for (i = 0; i < n; i++) {
+    	    		Xpad[0][i] = prex2[0][i];
+    	    		Xpad[1][i] = prex2[1][i];
+    	    	}
+    	    	fft = new FFTUtility(Xpad[0], Xpad[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
+    	    	fft.setShowProgress(false);
+    	    	fft.run();
+    	    	fft.finalize();
+    	    	fft = null;
+    	    	colX = new double[2][2*n-1];
+    	    	for (i = 0; i < 2*n-1; i++) {
+    	    		colX[0][i] = embedded_col[0][i]*Xpad[0][i] - embedded_col[1][i]*Xpad[1][i];
+    	    		colX[1][i] = embedded_col[0][i]*Xpad[1][i] + embedded_col[1][i]*Xpad[0][i];
+    	    	}
+    	    	ifft = new FFTUtility(colX[0], colX[1], 1, 2*n-1, 1, 1, FFTUtility.FFT);
+    	    	ifft.setShowProgress(false);
+    	    	ifft.run();
+    	        ifft.finalize();
+    	        ifft = null;
+    	        for (i = 0; i < n; i++) {
+    	        	x2[0][i] = colX[0][i];
+    	        	x2[1][i] = colX[1][i];
+    	        }
+    	    }
+    	    else {
+    	    	System.err.println("t_method " + t_method + " not recognized");
+    	    	System.exit(0);
+    	    }
+            for (k = 0; k < n; k++) {
+            	zdiv(x2[0][k] - x1[0][k], x2[1][k] - x1[1][k], udiv[0][0], udiv[1][0], br, bi);
+            	x[0][k] = br[0];
+            	x[1][k] = bi[0];
+            }
+            double prod[] = new double[2];
+            for (k = 0; k < n; k++) {
+            	zpow(A[0], A[1], k, br, bi, ierr);
+            	prod[0] = br[0]*Wk22[0][k] - bi[0]*Wk22[1][k];
+            	prod[1] = br[0]*Wk22[1][k] + bi[0]*Wk22[0][k];
+            	output[0][k] = prod[0]*x[0][k] - prod[1]*x[1][k];
+            	output[1][k] = prod[0]*x[1][k] + prod[1]*x[0][k];
+            }
+
         }
+    }
+    
+    private double[][]_toeplitz_mult_pd(double r[][], double c[][], double x[][], String f_method) {
+        // Multiply Toeplitz matrix by vector using Pustylnikov's decomposition.
+
+        // See algorithm S3 in Sukhoy & Stoytchev 2019:
+
+           //Compute the product y = Tx of a Toeplitz matrix T and a vector x, where
+           // T is specified by its first row r = (r[0], r[1], r[2],...,r[N-1]) and
+           // its first column c = (c[0], c[1], c[2],...,c[M-1]), where r[0] = c[0].
+
+        // Args:
+            // r (np.ndarray): first row of Toeplitz matrix
+            // c (np.ndarray): first column of Toeplitz matrix
+            // x (np.ndarray): vector to multiply the Toeplitz matrix
+            // f_method (str): FFT method. "FFTUtility", 'recursive'
+                //for recursive method.
+
+        // Returns:
+            //np.ndarray: product of Toeplitz matrix and vector x
+
+    	int i;
+        int N = r[0].length;
+        int M = c[0].length;
+        if  ((r[0][0] != c[0][0]) || (r[1][0] != c[1][0])) {
+        	System.err.println("In _toeplitz_mult_pd r[0] = " + r[0][0] + " + " + r[1][0] + "i");
+        	System.err.println("In _toeplitz_mult_pd c[0] = " + c[0][0] + " + " + c[1][0] + "i");
+        	System.err.println("toeplitz_mult_pd must have r[0] = c[0]");
+        	System.exit(0);
+        }
+        if (x[0].length != N) {
+        	System.err.println("In _toeplitz_mult_pd x[0].length != N");
+        	System.exit(0);
+        }
+        int n = (int)Math.pow(2,Math.ceil(log2(M + N - 1)));
+        double rpad[][];
+        double xpad[][];
+        double cpad[][];
+        if (N != n) {
+        	rpad = new double[2][n];
+        	xpad = new double[2][n];
+        	for (i = 0; i < N; i++) {
+        		rpad[0][i] = r[0][i];
+        		rpad[1][i] = r[1][i];
+        		xpad[0][i] = x[0][i];
+        		xpad[1][i] = x[1][i];
+        	}
+        }
+        else {
+        	rpad = r;
+        	xpad = x;
+        }
+        if (M != n) {
+        	cpad = new double[2][n];
+        	for (i = 0; i < M; i++) {
+        		cpad[0][i] = c[0][i];
+        		cpad[1][i] = c[1][i];
+        	}
+        }
+        else {
+        	cpad = c;
+        }
+        double c1[][] = new double[2][n];
+        c1[0][0] = cpad[0][0]/2.0;
+        c1[1][0] = cpad[1][0]/2.0;
+        for (i = 1; i < n; i++) {
+        	c1[0][i] = (cpad[0][i] + rpad[0][n-i])/2.0;
+        	c1[1][i] = (cpad[1][i] + rpad[1][n-i])/2.0;
+        }
+        double c2[][] = new double[2][n];
+        c2[0][0] = cpad[0][0]/2.0;
+        c2[1][0] = cpad[1][0]/2.0;
+		for (i = 1; i < n; i++) {
+        	c2[0][i] = (cpad[0][i] - rpad[0][n-i])/2.0;
+        	c2[1][i] = (cpad[1][i] - rpad[1][n-i])/2.0;
+        }
+        double y1[][] = _circulant_multiply(c1, x, f_method);
+        double y2[][] = _skew_circulant_multiply(c2, x, f_method);
+        double y[][] = new double[2][M];
+        for (i = 0; i < M; i++) {
+        	y[0][i] = y1[0][i] + y2[0][i];
+        	y[1][i] = y1[1][i] + y2[1][i];
+        }
+        return y;
     }
     
     private double[][] _toeplitz_mult_ce(double r[][], double c[][], double x[][], String f_method) {
@@ -357,6 +724,48 @@ public class ChirpZTransform extends AlgorithmBase {
         	y[1][i] = yhat[1][i];
         }
         return y;
+    }
+    
+    private double[][] _skew_circulant_multiply(double c[][], double x[][], String f_method) {
+        // Multiply a skew-circulant matrix by a vector.
+
+        // Runs in O(n log n) time.
+
+        // See algorithm S7 in Sukhoy & Stoytchev 2019.
+
+        // Args:
+            // c (np.ndarray): first column of skew-circulant matrix G
+            // x (np.ndarray): vector x
+            // f_method (str): FFT method. "FFTUtility", 'recursive'
+                // for recursive method.
+
+        // Returns:
+            // np.ndarray: product Gx
+
+    	int i;
+        int n = c[0].length;
+        if (x[0].length != n) {
+            System.err.println("In _skew_circulant_multiply x[0].length != n");
+            System.exit(0);
+        }
+        double prefac[][] = new double[2][n];
+        double chat[][] = new double[2][n];
+        double xhat[][] = new double[2][n];
+        for (i = 0; i < n; i++) {
+        	prefac[0][i] = Math.cos(i * Math.PI/n);
+        	prefac[1][i] = -Math.sin(i * Math.PI/n);
+        	chat[0][i] = c[0][i]*prefac[0][i] - c[1][i]*prefac[1][i];
+        	chat[1][i] = c[0][i]*prefac[1][i] + c[1][i]*prefac[0][i];
+        	xhat[0][i] = x[0][i]*prefac[0][i] - x[1][i]*prefac[1][i];
+        	xhat[1][i] = x[0][i]*prefac[1][i] + x[1][i]*prefac[0][i];
+        }
+        double y[][] = _circulant_multiply(chat, xhat, f_method);
+        double yout[][] = new double[2][n];
+        for (i = 0; i < n; i++) {
+        	yout[0][i] = y[0][i]*prefac[0][i] + y[1][i]*prefac[1][i];
+        	yout[1][i] = -y[0][i]*prefac[1][i] + y[1][i]*prefac[0][i];
+        }
+        return yout;
     }
     
     private double[][] _circulant_multiply(double c[][], double x[][], String f_method) {
