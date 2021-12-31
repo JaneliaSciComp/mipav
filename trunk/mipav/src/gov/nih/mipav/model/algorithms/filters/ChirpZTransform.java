@@ -123,6 +123,7 @@ public class ChirpZTransform extends AlgorithmBase {
 	
 	// True for forward transform, false for inverse transform
 	private boolean forward;
+	
 	public ChirpZTransform(double output[][], double xX[][], int MN, double W[], double A[],
 			boolean simple,  String t_method, String f_method, boolean forward) {
 		this.output = output;
@@ -139,6 +140,91 @@ public class ChirpZTransform extends AlgorithmBase {
 	/**
      * Starts the program.
      */
+	
+	public void test_compare_different_czt_methods() {
+		// test_compare_different_czt_methods() passes.
+		UI.setDataText("Compare different CZT calculation methods\n");
+		
+		int i;
+		// Create time-domain signal
+		double t[] = new double[200];
+		for (i = 0; i < 200; i++) {
+			t[i] = i * 1.0E-4;
+		}
+		double x[] = _signal_model(t);
+		double xX[][] = new double[2][200];
+		for (i = 0; i < 200; i++) {
+			xX[0][i] = x[i];
+		}
+		int MN = xX[0].length;
+		double W[] = new double[2];
+		W[0] = Math.cos(2.0*Math.PI/MN);
+		W[1] = -Math.sin(2.0 * Math.PI/MN);
+		double A[] = new double[] {1.0,0.0};
+		boolean forward = true;
+		
+		// Calculate CZT using different methods
+		double X_czt0[][] = new double[2][MN];
+		_czt(X_czt0, xX,MN,W,A);
+		double X_czt1[][] = new double[2][MN];
+		boolean simple = true;
+		String t_method = "ce";
+		String f_method = "FFTUtility";
+		ChirpZTransform cz = new ChirpZTransform(X_czt1, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double X_czt2[][] = new double[2][MN];
+		simple = false;
+		cz = new ChirpZTransform(X_czt2, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double X_czt3[][] = new double[2][MN];
+		t_method = "pd";
+		cz = new ChirpZTransform(X_czt3, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double X_czt4[][] = new double[2][MN];
+		t_method = "mm";
+		cz = new ChirpZTransform(X_czt4, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double X_czt5[][] = new double[2][MN];
+		t_method = "scipy";
+		cz = new ChirpZTransform(X_czt5, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double X_czt6[][] = new double[2][MN];
+		t_method = "ce";
+		f_method = "recursive";
+		cz = new ChirpZTransform(X_czt6, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double X_czt7[][] = new double[2][MN];
+		t_method = "pd";
+		cz = new ChirpZTransform(X_czt7, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		
+		// Compare Toeplitz matrix multiplication methods
+		int decimal = 6;
+		assert_almost_equal(X_czt0, X_czt1, decimal, "X_czt0", "X_czt1");
+		assert_almost_equal(X_czt0, X_czt2, decimal, "X_czt0", "X_czt2");
+		assert_almost_equal(X_czt0, X_czt3, decimal, "X_czt0", "X_czt3");
+		assert_almost_equal(X_czt0, X_czt4, decimal, "X_czt0", "X_czt4");
+		assert_almost_equal(X_czt0, X_czt5, decimal, "X_czt0", "X_czt5");
+		
+		// Compare FFT methods
+		assert_almost_equal(X_czt1, X_czt6, decimal, "X_czt1", "X_czt6");
+		assert_almost_equal(X_czt1, X_czt7, decimal, "X_czt1", "X_czt7");
+		UI.setDataText("Finished test_compare_different_czt_methods()\n");
+	}
+	
+	private void assert_almost_equal(double actual[][], double desired[][], int decimal, String actualString, String desiredString) {
+		int len = actual[0].length;
+		int i;
+		double diff;
+		double maxDiff = 1.5 * Math.pow(10.0, -decimal);
+		for (i = 0; i < len; i++) {
+			diff = zabs(actual[0][i] - desired[0][i], actual[1][i] - desired[1][i]);
+			if (diff >= maxDiff) {
+			    UI.setDataText("i = " + i + " difference = " + diff + " " + desiredString + " = " + desired[0][i] + " + " + desired[1][i] + "i\n");
+			    UI.setDataText(actualString + " = " + actual[0][i] + " + " + actual[1][i] + "i\n");
+			}
+		}
+	}
 	
     public void runAlgorithm() {
     	int i, j, k, n;
@@ -234,7 +320,7 @@ public class ChirpZTransform extends AlgorithmBase {
         	    	}
         	    	for (i = 0; i < N-1; i++) {
         	    		embedded_col[0][i+M] = r[0][N-1-i];
-        	    		embedded_col[1][i+M] = r[1][N-i-i];
+        	    		embedded_col[1][i+M] = r[1][N-1-i];
         	    	}
         	    	FFTUtility fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, M+N-1, 1, -1, FFTUtility.FFT);
         	    	fft.setShowProgress(false);
@@ -411,7 +497,7 @@ public class ChirpZTransform extends AlgorithmBase {
     	    	}
     	    	for (i = 0; i < n-1; i++) {
     	    		embedded_col[0][i+n] = uhat[0][n-1-i];
-    	    		embedded_col[1][i+n] = uhat[1][n-i-i];
+    	    		embedded_col[1][i+n] = uhat[1][n-1-i];
     	    	}
     	    	FFTUtility fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
     	    	fft.setShowProgress(false);
@@ -449,7 +535,7 @@ public class ChirpZTransform extends AlgorithmBase {
     	    	}
     	    	for (i = 0; i < n-1; i++) {
     	    		embedded_col[0][i+n] = z[0][n-1-i];
-    	    		embedded_col[1][i+n] = z[1][n-i-i];
+    	    		embedded_col[1][i+n] = z[1][n-1-i];
     	    	}
     	    	fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
     	    	fft.setShowProgress(false);
@@ -487,7 +573,7 @@ public class ChirpZTransform extends AlgorithmBase {
     	    	}
     	    	for (i = 0; i < n-1; i++) {
     	    		embedded_col[0][i+n] = udiv[0][n-1-i];
-    	    		embedded_col[1][i+n] = udiv[1][n-i-i];
+    	    		embedded_col[1][i+n] = udiv[1][n-1-i];
     	    	}
     	    	fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
     	    	fft.setShowProgress(false);
@@ -525,7 +611,7 @@ public class ChirpZTransform extends AlgorithmBase {
     	    	}
     	    	for (i = 0; i < n-1; i++) {
     	    		embedded_col[0][i+n] = util[0][n-1-i];
-    	    		embedded_col[1][i+n] = util[1][n-i-i];
+    	    		embedded_col[1][i+n] = util[1][n-1-i];
     	    	}
     	    	fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, 2*n-1, 1, -1, FFTUtility.FFT);
     	    	fft.setShowProgress(false);
@@ -652,8 +738,8 @@ public class ChirpZTransform extends AlgorithmBase {
         	c2[0][i] = (cpad[0][i] - rpad[0][n-i])/2.0;
         	c2[1][i] = (cpad[1][i] - rpad[1][n-i])/2.0;
         }
-        double y1[][] = _circulant_multiply(c1, x, f_method);
-        double y2[][] = _skew_circulant_multiply(c2, x, f_method);
+        double y1[][] = _circulant_multiply(c1, xpad, f_method);
+        double y2[][] = _skew_circulant_multiply(c2, xpad, f_method);
         double y[][] = new double[2][M];
         for (i = 0; i < M; i++) {
         	y[0][i] = y1[0][i] + y2[0][i];
@@ -768,7 +854,7 @@ public class ChirpZTransform extends AlgorithmBase {
         return yout;
     }
     
-    private double[][] _circulant_multiply(double c[][], double x[][], String f_method) {
+    private double[][] _circulant_multiply(double c[][], double xorg[][], String f_method) {
         // Multiply a circulant matrix by a vector.
 
         // Runs in O(n log n) time.
@@ -788,9 +874,14 @@ public class ChirpZTransform extends AlgorithmBase {
             // np.ndarray: product Gx
         int i;
         int n = c[0].length;
-        if (x[0].length != n) {
-            System.err.println("In _circulant_multiply x[0].length != n");
+        if (xorg[0].length != n) {
+            System.err.println("In _circulant_multiply xorg[0].length != n");
             System.exit(0);
+        }
+        double x[][] = new double[2][n];
+        for (i = 0; i < n; i++) {
+        	x[0][i] = xorg[0][i];
+        	x[1][i] = xorg[1][i];
         }
         if (f_method.equalsIgnoreCase("FFTUtility")) {
             FFTUtility fft = new FFTUtility(c[0], c[1], 1, n, 1, -1, FFTUtility.FFT);
@@ -1146,4 +1237,114 @@ public class ChirpZTransform extends AlgorithmBase {
 
         return;
     }
+    
+    private double[] _signal_model(double tt[]) {
+        // Generate time-domain signal for tests.
+
+        // Exponentially decaying sine wave with distortion from higher-order
+        // frequencies.
+
+        // Args:
+            // tt (np.ndarray): time sweep
+
+        // Returns:
+            // np.ndarray: time-domain signal
+
+       int i;
+       int len = tt.length;
+       double output[] = new double[len];
+
+        for (i = 0; i < len; i++) {
+            output[i] = (1.0 * Math.sin(2 * Math.PI * 1e3 * tt[i]) +
+                  0.3 * Math.sin(2 * Math.PI * 2e3 * tt[i]) +
+                  0.1 * Math.sin(2 * Math.PI * 3e3 * tt[i])) * Math.exp(-1e3 * tt[i]);
+        }
+
+        return output;
+    }
+    
+    private void _czt(double output[][], double x[][], int M, double W[], double A[]) {
+    	// Default A = 1.0
+    	// Default M = x[0].length
+    	// Default W = exp(-2j * PI /M)
+        // Calculate CZT (Stripped down to the basics)."""
+
+        // Unpack arguments
+        int N = x[0].length;
+
+        // CZT algorithm
+        int MN = Math.max(M,N);
+        int i,k;
+        double r[][] = new double[2][N];
+        double c[][] = new double[2][M];
+        double br[] = new double[1];
+        double bi[] = new double[1];
+        int ierr[] = new int[1];
+        for (k = 0; k < MN; k++) {
+            zpow(W[0], W[1], -(k*k)/2.0, br, bi, ierr);	
+            if (k < N) {
+            	r[0][k] = br[0];
+            	r[1][k] = bi[0];
+            }
+            if (k < M) {
+            	c[0][k] = br[0];
+            	c[1][k] = bi[0];
+            }
+        }
+        double X[][] = new double[2][N];
+        double Ax[] = new double[2];
+        for (k = 0; k < N; k++) {
+        	zpow(A[0], A[1], -k, br, bi, ierr);
+        	Ax[0] = br[0]*x[0][k] - bi[0]*x[1][k];
+        	Ax[1] = br[0]*x[1][k] + bi[0]*x[0][k];
+        	zdiv(Ax[0], Ax[1], r[0][k], r[1][k], br, bi);
+        	X[0][k] = br[0];
+        	X[1][k] = bi[0];
+        }
+        double Xout[][] = new double[2][N];
+    	double embedded_col[][] = new double[2][M+N-1];
+    	for (i = 0; i < M; i++) {
+    		embedded_col[0][i] = c[0][i];
+    		embedded_col[1][i] = c[1][i];
+    	}
+    	for (i = 0; i < N-1; i++) {
+    		embedded_col[0][i+M] = r[0][N-1-i];
+    		embedded_col[1][i+M] = r[1][N-1-i];
+    	}
+    	FFTUtility fft = new FFTUtility(embedded_col[0], embedded_col[1], 1, M+N-1, 1, -1, FFTUtility.FFT);
+    	fft.setShowProgress(false);
+    	fft.run();
+    	fft.finalize();
+    	fft = null;
+    	double Xpad[][] = new double[2][N+M-1];
+    	for (i = 0; i < N; i++) {
+    		Xpad[0][i] = X[0][i];
+    		Xpad[1][i] = X[1][i];
+    	}
+    	fft = new FFTUtility(Xpad[0], Xpad[1], 1, M+N-1, 1, -1, FFTUtility.FFT);
+    	fft.setShowProgress(false);
+    	fft.run();
+    	fft.finalize();
+    	fft = null;
+    	double colX[][] = new double[2][N+M-1];
+    	for (i = 0; i < N+M-1; i++) {
+    		colX[0][i] = embedded_col[0][i]*Xpad[0][i] - embedded_col[1][i]*Xpad[1][i];
+    		colX[1][i] = embedded_col[0][i]*Xpad[1][i] + embedded_col[1][i]*Xpad[0][i];
+    	}
+    	FFTUtility ifft = new FFTUtility(colX[0], colX[1], 1, M+N-1, 1, 1, FFTUtility.FFT);
+    	ifft.setShowProgress(false);
+    	ifft.run();
+        ifft.finalize();
+        ifft = null;
+        for (i = 0; i < N; i++) {
+        	Xout[0][i] = colX[0][i];
+        	Xout[1][i] = colX[1][i];
+        }
+        for (i = 0; i < M; i++) {
+			zdiv(Xout[0][i], Xout[1][i], c[0][i], c[1][i], br, bi);
+			output[0][i] = br[0];
+			output[1][i] = bi[0];
+		}
+    }
+
 }
