@@ -990,7 +990,7 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	{
 		if ( containingPanel == null )
 		{
-			containingPanel = new JPanel();
+			containingPanel = new JPanel(new BorderLayout());
 		}
 		else
 		{
@@ -1008,12 +1008,13 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			tabbedPane.setFont(MipavUtil.font12B);
 			tabbedPane.setSelectedIndex(0);
 			tabbedPane.addChangeListener(this);
-
-			containingPanel.add(tabbedPane);
+			// WEST keeps the panel from expanding horizontally.
+			containingPanel.add(tabbedPane, BorderLayout.WEST);
 		}
 		else
 		{
-			containingPanel.add(panelA);
+			// WEST keeps the panel from expanding horizontally.
+			containingPanel.add(panelA, BorderLayout.WEST);
 		}
 	}
 

@@ -1056,8 +1056,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			bReturn = true;
 		}
 		// update rotation:
-		kVolumeVOI.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
-		kVolumeVOI.GetScene().UpdateGS();
+		if ( kVolumeVOI.GetScene() != null ) {
+			kVolumeVOI.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+			kVolumeVOI.GetScene().UpdateGS();
+		} else {
+			System.err.println(kVolumeVOI.GetName());
+		}
 		
 		kVolumeVOI.showTextBox(true);
 		kVolumeVOI.setZCompare(true);
