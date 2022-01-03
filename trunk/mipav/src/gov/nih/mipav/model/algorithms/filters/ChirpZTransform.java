@@ -142,7 +142,7 @@ public class ChirpZTransform extends AlgorithmBase {
      */
 	
 	public void test_compare_different_czt_methods() {
-		// test_compare_different_czt_methods() passes.
+		// test_compare_different_czt_methods() passes for forward and inverse tests.
 		UI.setDataText("Compare different CZT calculation methods\n");
 		
 		int i;
@@ -151,10 +151,10 @@ public class ChirpZTransform extends AlgorithmBase {
 		for (i = 0; i < 200; i++) {
 			t[i] = i * 1.0E-4;
 		}
-		double x[] = _signal_model(t);
+		double sig[] = _signal_model(t);
 		double xX[][] = new double[2][200];
 		for (i = 0; i < 200; i++) {
-			xX[0][i] = x[i];
+			xX[0][i] = sig[i];
 		}
 		int MN = xX[0].length;
 		double W[] = new double[2];
@@ -162,6 +162,7 @@ public class ChirpZTransform extends AlgorithmBase {
 		W[1] = -Math.sin(2.0 * Math.PI/MN);
 		double A[] = new double[] {1.0,0.0};
 		boolean forward = true;
+		boolean inverse = false;
 		
 		// Calculate CZT using different methods
 		double X_czt0[][] = new double[2][MN];
@@ -172,30 +173,51 @@ public class ChirpZTransform extends AlgorithmBase {
 		String f_method = "FFTUtility";
 		ChirpZTransform cz = new ChirpZTransform(X_czt1, xX, MN, W, A, simple, t_method, f_method, forward);
 		cz.runAlgorithm();
+		double iX_czt1[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt1, X_czt1, MN, W, A, simple, t_method, f_method, inverse);
+		cz.runAlgorithm();
 		double X_czt2[][] = new double[2][MN];
 		simple = false;
 		cz = new ChirpZTransform(X_czt2, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double iX_czt2[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt2, X_czt2, MN, W, A, simple, t_method, f_method, inverse);
 		cz.runAlgorithm();
 		double X_czt3[][] = new double[2][MN];
 		t_method = "pd";
 		cz = new ChirpZTransform(X_czt3, xX, MN, W, A, simple, t_method, f_method, forward);
 		cz.runAlgorithm();
+		double iX_czt3[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt3, X_czt3, MN, W, A, simple, t_method, f_method, inverse);
+		cz.runAlgorithm();
 		double X_czt4[][] = new double[2][MN];
 		t_method = "mm";
 		cz = new ChirpZTransform(X_czt4, xX, MN, W, A, simple, t_method, f_method, forward);
 		cz.runAlgorithm();
+		double iX_czt4[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt4, X_czt4, MN, W, A, simple, t_method, f_method, inverse);
+		cz.runAlgorithm();
 		double X_czt5[][] = new double[2][MN];
 		t_method = "scipy";
 		cz = new ChirpZTransform(X_czt5, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double iX_czt5[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt5, X_czt5, MN, W, A, simple, t_method, f_method, inverse);
 		cz.runAlgorithm();
 		double X_czt6[][] = new double[2][MN];
 		t_method = "ce";
 		f_method = "recursive";
 		cz = new ChirpZTransform(X_czt6, xX, MN, W, A, simple, t_method, f_method, forward);
 		cz.runAlgorithm();
+		double iX_czt6[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt6, X_czt6, MN, W, A, simple, t_method, f_method, inverse);
+		cz.runAlgorithm();
 		double X_czt7[][] = new double[2][MN];
 		t_method = "pd";
 		cz = new ChirpZTransform(X_czt7, xX, MN, W, A, simple, t_method, f_method, forward);
+		cz.runAlgorithm();
+		double iX_czt7[][] = new double[2][MN];
+		cz = new ChirpZTransform(iX_czt7, X_czt7, MN, W, A, simple, t_method, f_method, inverse);
 		cz.runAlgorithm();
 		
 		// Compare Toeplitz matrix multiplication methods
@@ -209,6 +231,14 @@ public class ChirpZTransform extends AlgorithmBase {
 		// Compare FFT methods
 		assert_almost_equal(X_czt1, X_czt6, decimal, "X_czt1", "X_czt6");
 		assert_almost_equal(X_czt1, X_czt7, decimal, "X_czt1", "X_czt7");
+		
+		assert_almost_equal(xX, iX_czt1, decimal, "xX", "iX_czt1");
+		assert_almost_equal(xX, iX_czt2, decimal, "xX", "iX_czt2");
+		assert_almost_equal(xX, iX_czt3, decimal, "xX", "iX_czt3");
+		assert_almost_equal(xX, iX_czt4, decimal, "xX", "iX_czt4");
+		assert_almost_equal(xX, iX_czt5, decimal, "xX", "iX_czt5");
+		assert_almost_equal(xX, iX_czt6, decimal, "xX", "iX_czt6");
+		assert_almost_equal(xX, iX_czt7, decimal, "xX", "iX_czt7");
 		UI.setDataText("Finished test_compare_different_czt_methods()\n");
 	}
 	
@@ -270,7 +300,7 @@ public class ChirpZTransform extends AlgorithmBase {
         		// Algorithm 1 from Sukhoy & Stoytchev 2019	
         		int MNmax = Math.max(M,N);
         		double r[][] = new double[2][N];
-        		double X[][] = new double[2][N];
+        		X = new double[2][N];
         		double Xout[][] = null;
         		double c[][] = new double[2][M];
         		double br[] = new double[1];
@@ -392,13 +422,13 @@ public class ChirpZTransform extends AlgorithmBase {
             double ci[] = new double[1];
             int ierr[] = new int[1];
             double Wk22[][] = new double[2][n];
-            double x[][] = new double[2][n];
+            x = new double[2][n];
             for (k = 0; k < n; k++) {
             	zpow(W[0],W[1], -(k*k)/2.0, br, bi, ierr);
             	Wk22[0][k] = br[0];
             	Wk22[1][k] = bi[0];
-            	x[0][i] = Wk22[0][k]*X[0][k] - Wk22[1][k]*X[1][k];
-            	x[1][i] = Wk22[1][k]*X[1][k] + Wk22[1][k]*X[0][k];
+            	x[0][k] = Wk22[0][k]*X[0][k] - Wk22[1][k]*X[1][k];
+            	x[1][k] = Wk22[0][k]*X[1][k] + Wk22[1][k]*X[0][k];
             }
             double p[][] = new double[2][n];
             p[0][0] = 1.0;
@@ -638,6 +668,7 @@ public class ChirpZTransform extends AlgorithmBase {
     	    	ifft.run();
     	        ifft.finalize();
     	        ifft = null;
+    	        x2 = new double[2][n];
     	        for (i = 0; i < n; i++) {
     	        	x2[0][i] = colX[0][i];
     	        	x2[1][i] = colX[1][i];
@@ -854,7 +885,7 @@ public class ChirpZTransform extends AlgorithmBase {
         return yout;
     }
     
-    private double[][] _circulant_multiply(double c[][], double xorg[][], String f_method) {
+    private double[][] _circulant_multiply(double corg[][], double xorg[][], String f_method) {
         // Multiply a circulant matrix by a vector.
 
         // Runs in O(n log n) time.
@@ -873,13 +904,16 @@ public class ChirpZTransform extends AlgorithmBase {
         // Returns:
             // np.ndarray: product Gx
         int i;
-        int n = c[0].length;
+        int n = corg[0].length;
         if (xorg[0].length != n) {
             System.err.println("In _circulant_multiply xorg[0].length != n");
             System.exit(0);
         }
+        double c[][] = new double[2][n];
         double x[][] = new double[2][n];
         for (i = 0; i < n; i++) {
+        	c[0][i] = corg[0][i];
+        	c[1][i] = corg[1][i];
         	x[0][i] = xorg[0][i];
         	x[1][i] = xorg[1][i];
         }
