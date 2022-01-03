@@ -953,7 +953,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		if (dualGPU != null) {
 			dualGPU.setDividerLocation(0.5);
-			integratedPanel.setDividerLocation(0.3);
+//			integratedPanel.setDividerLocation(0.3);
 			if (leftImage != null && leftImage.annotationPanelUI != null)
 				leftImage.annotationPanelUI.configureListPanel();
 			if (rightImage != null && rightImage.annotationPanelUI != null)
@@ -961,7 +961,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			if (activeImage != null && activeImage.annotationPanelUI != null)
 				activeImage.annotationPanelUI.configureListPanel();
 		} else {
-			integratedPanel.setDividerLocation(0.5);
+//			integratedPanel.setDividerLocation(0.5);
 			if (activeImage != null && activeImage.annotationPanelUI != null)
 				activeImage.annotationPanelUI.configureListPanel();
 		}
@@ -976,33 +976,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if (activeImage.currentTab != -1) {
 			tabbedPane.setSelectedIndex(activeImage.currentTab);
 		}
-
-		// nextBackCount--;
-		// if ( nextBackFlag && (nextBackCount == 0) ) {
-		//
-		// updateSurfacePanels();
-		// updateClipPanel(activeImage, activeRenderer, true);
-		//
-		// updateHistoLUTPanels(activeImage);
-		//
-		// if ( editMode == IntegratedEditing || editMode == EditLattice ) {
-		// initDisplayLatticePanel( activeRenderer, activeImage.voiManager, activeImage
-		// );
-		// }
-		// if ( editMode == IntegratedEditing ) {
-		// initDisplayCurvesPanel( activeRenderer, activeImage.voiManager, activeImage
-		// );
-		// }
-		//
-		// activeImage.voiManager.editAnnotations(editMode == EditSeamCells);
-		// activeImage.voiManager.colorAnnotations(editMode == EditSeamCells);
-		// if ( editMode != EditLattice ) {
-		// initDisplayAnnotationsPanel( activeRenderer, activeImage.voiManager,
-		// activeImage );
-		// activeImage.annotationOpen = true;
-		// }
-		// nextBackFlag = false;
-		// }
+		
 		int nextStep = dualGPU == null ? 1 : 2;
 		imageIndex = Math.min(includeRange.size() - 1, imageIndex);
 		imageIndex = Math.max(0, imageIndex);
@@ -1035,6 +1009,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			activeImage = rightImage;
 		}
 
+				
 		if (previousActive != activeRenderer) {
 
 			if (activeImage.voiManager.isPreview()) {
@@ -1118,7 +1093,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if (latticeSelectionPanel != null) {
 			latticeSelectionPanel.setVisible(false);
 		}
-		System.err.println(currentSize);
+//		System.err.println(currentSize);
 		setExtendedState(JFrame.NORMAL);
 		pack();
 		setPreferredSize(currentSize);
@@ -2382,15 +2357,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
 		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
 
-		// dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		// dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
-		// dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		// getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
-
-		lutPanel = new JPanel(new BorderLayout());
-		opacityPanel = new JPanel();
-		clipPanel = new JPanel();
+		lutPanel = new JPanel(new GridLayout(2,1));
+		opacityPanel = new JPanel( new BorderLayout() );
+		clipPanel = new JPanel( new BorderLayout() );
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
@@ -2533,15 +2502,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		latticeSelectionPanel.setVisible(false);
 
 		gpuPanel = new JPanel(new BorderLayout());
-		// final int imagePanelWidth = (int)
-		// (Toolkit.getDefaultToolkit().getScreenSize().width * 0.5f);
-		// final int imagePanelHeight = (int)
-		// (Toolkit.getDefaultToolkit().getScreenSize().height * 0.5f);
-
-		// gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
-		// gpuPanel.setMinimumSize(new Dimension(imagePanelWidth, imagePanelHeight));
-		// gpuPanel.setBorder(JDialogBase.buildTitledBorder("Volume Display"));
-
 		dialogGUI.getContentPane().add(gpuPanel, BorderLayout.CENTER);
 		dialogGUI.getContentPane().add(backNextPanel, BorderLayout.SOUTH);
 
@@ -3288,7 +3248,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		// integratedData.volumeImage.getLUT() );
 		integratedData.lutHistogramPanel = new JFrameHistogram(this, integratedData.volumeImage.GetImage(), null,
 				integratedData.volumeImage.getLUT(), null);
-		integratedData.lutHistogramPanel.histogramLUT(true, false, true);
+		integratedData.lutHistogramPanel.histogramLUT(true, false, !integratedData.volumeImage.GetImage().isColorImage());
+
 		if (integratedData.volumeImage.GetImage().isColorImage()) {
 			integratedData.displayBothChannels.setSelected(true);
 		}
@@ -3300,14 +3261,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		// integratedData.wormImage.getImageName() + " " +
 		// integratedData.lutHistogramPanel.getContainingPanel() );
 		opacityPanel.removeAll();
-		opacityPanel.add(integratedData.volOpacityPanel.getMainPanel());
+		opacityPanel.add(integratedData.volOpacityPanel.getMainPanel(), BorderLayout.WEST );
 		if (tabbedPane.getSelectedComponent() == opacityPanel) {
 			integratedData.volOpacityPanel.getCompA().showHistogram();
 		}
 
 		lutPanel.removeAll();
-		lutPanel.add(integratedData.lutHistogramPanel.getContainingPanel(), BorderLayout.NORTH);
-		lutPanel.add(integratedData.colorChannelPanel, BorderLayout.CENTER);
+		lutPanel.add(integratedData.lutHistogramPanel.getContainingPanel());
+		lutPanel.add(integratedData.colorChannelPanel);
 		if (tabbedPane.getSelectedComponent() == lutPanel) {
 			integratedData.lutHistogramPanel.redrawFrames();
 		}
@@ -3332,7 +3293,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 
 		clipPanel.removeAll();
-		clipPanel.add(integratedData.clipGUI.getMainPanel());
+		clipPanel.add(integratedData.clipGUI.getMainPanel(), BorderLayout.WEST);
 		integratedData.clipGUI.getMainPanel().repaint();
 		clipPanel.validate();
 
