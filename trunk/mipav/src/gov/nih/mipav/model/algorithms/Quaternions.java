@@ -437,6 +437,89 @@ public class Quaternions extends AlgorithmBase {
 		}
 	
 	}
+	
+	public void test_qnorm() {
+		// Test passes.
+		// TEST_QNORM runs unit tests for the QNORM function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.7 $
+		// $Date: 2009-07-26 20:05:13 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	
+		UI.setDataText("test_title = test_qnorm\n");
+		
+		int r,c;
+	    int failures=0;
+		double q[][] = null;
+		double truth_value[][];
+		double test_value[][];
+	
+		
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Column of two quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		UI.setDataText("Column of two quaternions\n");
+		q = new double[2][4];
+		double row0SumSquared = 0.0;
+		double row1SumSquared = 0.0;
+		for (c = 0; c < 4; c++) {
+			q[0][c] = c+1;
+			q[1][c] = 4-c;
+			row0SumSquared += (q[0][c]*q[0][c]);
+			row1SumSquared += (q[1][c]*q[1][c]);
+		}
+		double row0Mag = Math.sqrt(row0SumSquared);
+		double row1Mag = Math.sqrt(row1SumSquared);
+		truth_value = new double[2][4];
+		for (c = 0; c < 4; c++) {
+		    truth_value[0][c] = q[0][c]/row0Mag;
+		    truth_value[1][c] = q[1][c]/row1Mag;
+		}
+		test_value = qnorm(q);
+		double absDiff;
+		for (r = 0; r < 2; r++) {
+			for (c = 0; c < 4; c++) {
+			    absDiff = Math.abs(test_value[r][c] - truth_value[r][c]);
+			    if (absDiff > epsilon) {
+			    	failures++;
+			    }
+			}
+		}
+		UI.setDataText("In test_qnorm column of two quaternions failures = " + failures + "\n");
+		
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Row of 6 quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		failures = 0;
+		UI.setDataText("Row of 6 quaternions\n");
+		truth_value = new double[4][6];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 6; c++) {
+				truth_value[r][c] = 0.5;
+			}
+		}
+		q = new double[4][6];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 6; c++) {
+				q[r][c] = 1.0;
+			}
+		}
+		test_value = qnorm(q);
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 6; c++) {
+			    absDiff = Math.abs(test_value[r][c] - truth_value[r][c]);
+			    if (absDiff > epsilon) {
+			    	failures++;
+			    }
+			}
+		}
+		UI.setDataText("In test_qnorm row of 6 quaternions failures = " + failures + "\n");
+	
+	}
+
 
 	
 	public int isq(double q[][]) {
@@ -534,7 +617,7 @@ public class Quaternions extends AlgorithmBase {
 
 	}
 	
-	private int isnormq(double q[][]) {
+	public int isnormq(double q[][]) {
 			// ISQ(Q) checks to see if Q is a normalized quaternion or set of quaternions.
 			//     ISNORMQ returns a value accordingly:
 			
@@ -559,7 +642,7 @@ public class Quaternions extends AlgorithmBase {
 			 
 			// Copyright (c) 2001-2009, Jay A. St. Pierre.  All rights reserved.
 
-		int r,c;
+		  int r,c;
 		  double tol=5*epsilon;
 		  
 		  int row_size_q= q.length;
@@ -632,6 +715,75 @@ public class Quaternions extends AlgorithmBase {
 
 	}
 
+
+	public double[][] qnorm(double qinorg[][]) {
+			// QNORM(Q) normalizes quaternions.
+			//     Works on vectors of quaternions too.  If input is a vector of four
+			//    quaternions, QNORM will determine whether the quaternions are row or
+			//     column vectors according to ISQ.
+			
+			// See also ISQ.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.11 $
+			// $Date: 2009-07-26 20:05:12 $
+			 
+			// Copyright (c) 2001-2009, Jay A. St. Pierre.  All rights reserved.
+
+
+			int r,c;
+			int qtype = isq(qinorg);
+			  if ( qtype == 0 ) {
+			    System.err.println("Invalid qnorm input: must be a quaternion or a vector of quarternions");
+			    return null;
+			  }
+			  else if ( qtype==3 ) {
+			    System.out.println("Warning qnorm:indeterminateShape");
+			    System.out.println("Component quaternion shape indeterminate, assuming row vectors");
+			  }
+
+
+			// Make sure qin is a row of quaternions
+			 double qin[][];
+			if( qtype == 1 ) {
+			    qin = new double[qinorg[0].length][qinorg.length];
+			    for (r = 0; r < qinorg.length; r++) {
+			    	for (c = 0; c < qinorg[0].length; c++) {
+			    		qin[c][r] = qinorg[r][c];
+			    	}
+			    }
+			}
+			else {
+				qin = qinorg;
+			}
+
+			double rowSquareSum;
+			double qmag;
+			double qout[][] = new double[qin.length][qin[0].length];
+			// Find the magnitude of each quaternion
+			for (r = 0; r < qin.length; r++) {
+			    rowSquareSum = 0.0;
+			    for (c = 0; c < 4; c++) {
+	                rowSquareSum += (qin[r][c]*qin[r][c]);		    	
+			    }
+			    qmag = Math.sqrt(rowSquareSum);
+			    for (c = 0; c < 4; c++) {
+			    	qout[r][c] = qin[r][c]/qmag;
+			    }
+			}
+			
+            if (qtype != 1) {
+            	return qout;
+            }
+			// Make sure output is same shape as input
+			double qtranspose[][] = new double[qout[0].length][qout.length];
+			for (r = 0; r < qout.length; r++) {
+				for (c = 0; c < qout[0].length; c++) {
+					qtranspose[c][r] = qout[r][c];
+				}
+			}
+			return qtranspose;
+	}
 
 
 	
