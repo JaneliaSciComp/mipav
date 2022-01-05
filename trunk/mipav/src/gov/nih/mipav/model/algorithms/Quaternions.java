@@ -900,7 +900,7 @@ public class Quaternions extends AlgorithmBase {
 			double prod1[][] = new double[rows][4];
 			double prod2[][] = new double[rows][4];
 			double prod3[][] = new double[rows][4];
-			double prod4[][] = new double[rows][4]];
+			double prod4[][] = new double[rows][4];
 			for (r = 0; r < rows; r++) {
 				prod1[r][0] = q1[r][0]*q2[r][3];
 				prod1[r][1] = -q1[r][0]*q2[r][2];
