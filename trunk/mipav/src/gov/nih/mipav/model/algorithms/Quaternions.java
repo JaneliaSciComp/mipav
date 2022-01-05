@@ -785,6 +785,176 @@ public class Quaternions extends AlgorithmBase {
 			return qtranspose;
 	}
 
+	public double[][] qmult(double q1org[][], double q2org[][]) {
+			// QMULT(Q1,Q2) calculates the product of two quaternions Q1 and Q2.
+			//    Inputs can be vectors of quaternions, but they must either have the
+			//    same number of component quaternions, or one input must be a single
+			//    quaternion.  QMULT will determine whether the component quaternions of
+			//    the inputs are row or column vectors according to ISQ.
+			  
+			//    The output will have the same shape as Q1.  If the component
+			//    quaternions of either Q1 or Q2 (but not both) are of indeterminate
+			//    shape (see ISQ), then the shapes will be assumed to be the same for
+			//    both inputs.  If both Q1 and Q2 are of indeterminate shape, then both
+			//    are assumed to be composed of row vector quaternions.
+			
+			// See also ISQ.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.14 $
+			// $Date: 2009-07-26 20:05:12 $
+			 
+			// Copyright (c) 2001-2009, Jay A. St. Pierre.  All rights reserved.
+			 
+            int r,c;
+			int q1type = isq(q1org);
+			if ( q1type == 0 ) {
+			    System.err.println("Invalid qmult input: q1org must be a quaternion or a vector of quaternions");
+			    return null;
+	        }
+			int q2type = isq(q2org);
+			if ( q2type == 0 ) {
+				System.err.println("Invalid qmult input: q2org must be a quaternion or a vector of quaternions");
+			    return null;
+			}
+
+			// Make sure q1 is a column of quaternions (components are rows)
+			double q1mid[][];
+			if ( q1type==1 || (q1type==3 && q2type==1) ) {
+			  q1mid = new double[q1org[0].length][q1org.length];
+			  for (r = 0; r < q1org.length; r++) {
+				  for (c = 0; c < q1org[0].length; c++) {
+					  q1mid[c][r] = q1org[r][c];
+				  }
+			  }
+			}
+			else {
+				q1mid = q1org;
+			}
+
+			// Make sure q2 is a column of quaternions (components are rows)
+			double q2mid[][];
+			if ( q2type==1 || (q2type==3 && q1type==1) ) {
+			    q2mid = new double[q2org[0].length][q2org.length];
+			    for (r = 0; r < q2org.length; r++) {
+			    	for (c = 0; c < q2org[0].length; c++) {
+			    		q2mid[c][r] = q2org[r][c];
+			    	}
+			    }
+			}
+			else {
+				q2mid = q2org;
+			}
+
+			int num_q1 = q1mid.length;
+			int num_q2 = q2mid.length;
+
+			if (  num_q1 !=num_q2 && num_q1 !=1 && num_q2 !=1 ) {
+			  System.err.println("Inputs do not have the same number of elements:");
+			  System.err.println("Number of quaternions in q1 = " + num_q1);
+			  System.err.println("Number of quaternions in q2 = " + num_q2);
+			  System.err.println("Inputs must have the same number of elements, or");
+			  System.err.println("one of the inputs must be a single quaternion (not a");
+			  System.err.println("vector of quaternions).");
+			  return null;
+			}
+
+			// Build up full quaternion vector if one input is a single quaternion
+			double q1[][];
+			double q2[][];
+			if (( num_q1 != num_q2 ) && (num_q1 == 1)) {
+				q1 = new double[num_q2][4];
+				for (r = 0; r < num_q2; r++) {
+					for (c = 0; c < 4; c++) {
+						q1[r][c] = q1mid[0][c];
+					}
+				}
+				q2 = q2mid;
+			}
+			else if ((num_q1 != num_q2) && (num_q2 == 1)) {
+				q2 = new double[num_q1][4];
+				for (r = 0; r < num_q1; r++) {
+					for (c = 0; c < 4; c++) {
+						q2[r][c] = q2mid[0][c];
+					}
+				}
+				q1 = q1mid;
+			}
+			else {
+				q1 = q1mid;
+				q2 = q2mid;
+			}
+			  
+			// Products
+
+			// If q1 and q2 are not vectors of quaternions, then:
+			//
+			//   q1*q2 = q1*[ q2(4) -q2(3)  q2(2) -q2(1)
+			//                q2(3)  q2(4) -q2(1) -q2(2)
+			//               -q2(2)  q2(1)  q2(4) -q2(3)
+			//                q2(1)  q2(2)  q2(3)  q2(4) ]
+			
+			// But to deal with vectorized quaternions, we have to use the ugly
+			// commands below.
+			int rows = Math.max(num_q1, num_q2);
+			double prod1[][] = new double[rows][4];
+			double prod2[][] = new double[rows][4];
+			double prod3[][] = new double[rows][4];
+			double prod4[][] = new double[rows][4]];
+			for (r = 0; r < rows; r++) {
+				prod1[r][0] = q1[r][0]*q2[r][3];
+				prod1[r][1] = -q1[r][0]*q2[r][2];
+				prod1[r][2] = q1[r][0]*q2[r][1];
+				prod1[r][3] = -q1[r][0]*q2[r][0];
+				prod2[r][0] = q1[r][1]*q2[r][2];
+				prod2[r][1] = q1[r][1]*q2[r][3];
+				prod2[r][2] = -q1[r][1]*q2[r][0];
+				prod2[r][3] = -q1[r][1]*q2[r][1];
+				prod3[r][0] = -q1[r][2]*q2[r][1];
+				prod3[r][1] = q1[r][2]*q2[r][0];
+				prod3[r][2] = q1[r][2]*q2[r][3];
+				prod3[r][3] = -q1[r][2]*q2[r][2];
+				prod4[r][0] = q1[r][3]*q2[r][0];
+				prod4[r][1] = q1[r][3]*q2[r][1];
+				prod4[r][2] = q1[r][3]*q2[r][2];
+				prod4[r][3] = q1[r][3]*q2[r][3];
+			}
+			
+			double qout[][] = new double[rows][4];
+			for (r = 0; r < rows; r++) {
+				for (c = 0; c < 4; c++) {
+					qout[r][c] = prod1[r][c] + prod2[r][c] + prod3[r][c] + prod4[r][c];
+				}
+			}
+
+			
+
+			// Make sure output is same format as q1
+			if ( q1type==1 || (q1type==3 && q2type==1) ) {
+			  double qtranspose[][] = new double[4][rows];
+			  for (r = 0; r < rows; r++) {
+				  for (c = 0; c < 4; c++) {
+					  qtranspose[c][r] = qout[r][c];
+				  }
+			  }
+			  return qtranspose;
+			}
+			
+			return qout;
+
+			// NOTE that the following algorithm proved to be slower than the one used
+			// above:
+			
+			// q_out = zeros(size(q1));
+			 
+			// q_out(:,1:3) = ...
+			//     [q1(:,4) q1(:,4) q1(:,4)].*q2(:,1:3) + ...
+			//     [q2(:,4) q2(:,4) q2(:,4)].*q1(:,1:3) + ...
+			//     cross(q1(:,1:3), q2(:,1:3));
+			// 
+			// q_out(:,4) = q1(:,4).*q2(:,4) - dot(q1(:,1:3), q2(:,1:3), 2);
+	}
+
 
 	
 }
