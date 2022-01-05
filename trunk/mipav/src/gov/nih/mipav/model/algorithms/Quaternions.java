@@ -62,6 +62,168 @@ public class Quaternions extends AlgorithmBase {
 		
 	}
 	
+	public void test_isq() {
+		// TEST_ISQ runs unit tests for the ISQ function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.6 $
+		// $Date: 2009-07-24 19:14:44 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	    UI.setDataText("test_title = test_isq\n");
+	
+		int r,c;
+	    int failures=0;
+		double q[][] = null;
+		int truth_value;
+		int test_value;
+		RandomNumberGen randomGen = new RandomNumberGen();
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is 2D, but neither dim is size 4');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		truth_value = 0;
+		q = new double[3][5];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < 5; c++) {
+				q[r][c] = 1.0;
+			}
+		}
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() fails on input is 2D, but neither dim is size 4\n");
+			failures++;
+		}
+	
+		
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is 4xN, N~=4');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		truth_value = 1;
+		q = new double[4][5];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 5; c++) {
+				q[r][c] = randomGen.genUniformRandomNum(-0.5, 0.5);
+			}
+		}
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() Input is 4xN, N!=4\n");
+			failures++;
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is 4x4, only columns are normalized');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		double M[] = new double[4];
+		double qMag = 0.0;
+		for (r = 0; r < 4; r++) {
+			M[r] = randomGen.genUniformRandomNum(1.0, 2.0);
+			qMag += (M[r]*M[r]);
+		}
+		qMag = Math.sqrt(qMag);
+		for (r = 0; r < 4; r++) {
+			M[r] = M[r]/qMag;
+		}
+		q = new double[4][4];
+		for (c = 0; c < 4; c++) {
+			for (r = 0; r < 4; r++) {
+				q[r][c] = M[r];
+			}
+		}
+		truth_value = 1;
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() Input is 4x4, only columns are normalized\n");
+			failures++;
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is Nx4, N~=4');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		truth_value = 2;
+		q = new double[3][4];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < 4; c++) {
+				q[r][c] = randomGen.genUniformRandomNum(0.0, 1.0);
+			}
+		}
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() Input is Nx4, N!=4\n");
+			failures++;
+		}
+		
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is 4x4, only rows are normalized');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		M = new double[4];
+		qMag = 0.0;
+		for (c = 0; c < 4; c++) {
+			M[c] = randomGen.genUniformRandomNum(1.0, 2.0);
+			qMag += (M[c]*M[c]);
+		}
+		qMag = Math.sqrt(qMag);
+		for (c = 0; c < 4; c++) {
+			M[c] = M[c]/qMag;
+		}
+		q = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				q[r][c] = M[c];
+			}
+		}
+		truth_value = 2;
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() Input is 4x4, only rows are normalized\n");
+			failures++;
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is 4x4, both rows and columns are normalized');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				q[r][c] = 0.5;
+			}
+		}
+		truth_value = 3;
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() Input is 4x4, both rows and columns are normalized\n");
+			failures++;
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Input is 4x4, neither rows nor columns are normalized');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				q[r][c] = 1.0;
+			}
+		}
+		truth_value = 3;
+		test_value  = isq(q);
+		if (truth_value != test_value) {
+			UI.setDataText("test_isq() Input is 4x4, neither rows nor columns are normalized\n");
+			failures++;
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		UI.setDataText("In test_isq " + failures + " failures\n");
+		if (failures > 0) {
+			UI.setDataText("test_isq FAILED\n");
+		}
+	
+	}
+
+	
 	public int isq(double q[][]) {
 			// ISQ(Q) checks to see if Q is a quaternion or set of quaternions.
 			//     ISQ returns a value accordingly:
@@ -98,7 +260,7 @@ public class Quaternions extends AlgorithmBase {
 
 			
               int r,c;
-			  double tol=2*epsilon;
+			  double tol=5*epsilon;
 			  
 			  int row_size_q= q.length;
 			  int col_size_q = q[0].length;
@@ -118,27 +280,27 @@ public class Quaternions extends AlgorithmBase {
 	
 	          if ((row_size_q == 4) && (col_size_q == 4)) {
 	        	  for (r = 0; r < 4; r++) {
-	        	      col_sum_squared = 0.0;
+	        	      row_sum_squared = 0.0;
 	        	      for (c = 0; c < 4; c++) {
-	        	    	  col_sum_squared += q[r][c]*q[r][c];
+	        	    	  row_sum_squared += q[r][c]*q[r][c];
 	        	      }
-	        	      col_diff = col_sum_squared - 1.0;
-	        	      col_diff_total += col_diff;
+	        	      row_diff = Math.abs(row_sum_squared - 1.0);
+	        	      row_diff_total += row_diff;
 	        	  }
-	        	  if (col_diff_total > tol) {
-	        	      col_diff_within_tol = false;  
+	        	  if (row_diff_total > tol) {
+	        	      row_diff_within_tol = false;  
 	        	  }
 	        	  
 	        	  for (c = 0; c < 4; c++) {
-	        		  row_sum_squared = 0.0;
+	        		  col_sum_squared = 0.0;
 	        		  for (r = 0; r < 4; r++) {
-	        			  row_sum_squared += q[r][c]*q[r][c];
+	        			  col_sum_squared += q[r][c]*q[r][c];
 	        		  }
-	        		  row_diff = row_sum_squared - 1.0;
-	        		  row_diff_total += row_diff;
+	        		  col_diff = Math.abs(col_sum_squared - 1.0);
+	        		  col_diff_total += col_diff;
 	        	  }
-	        	  if (row_diff_total > tol) {
-	        		  row_diff_within_tol = false;
+	        	  if (col_diff_total > tol) {
+	        		  col_diff_within_tol = false;
 	        	  }
 	          }
 	          
