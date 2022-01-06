@@ -521,6 +521,7 @@ public class Quaternions extends AlgorithmBase {
 	}
 	
 	public void test_qmult() {
+		// Test passes.
 		// TEST_QMULT runs unit tests for the QMULT function.
 	
 		// Release: $Name: quaternions-1_3 $
@@ -574,21 +575,23 @@ public class Quaternions extends AlgorithmBase {
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		//disp_test_name('quaternions are row vectors');
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q1 = new double[][] {{1}, {2.0}, {3}, {4}};
-		q2 = new double[][] {{-1}, {0.5}, {2}, {-2}};
-		q1q2 = new double[][] {{q1[0][0]*q2[3][0] + q1[1][0]*q2[2][0] -q1[2][0]*q2[1][0] + q1[3][0]*q2[0][0]},
-			{-q1[0][0]*q2[2][0] + q1[1][0]*q2[3][0] + q1[2][0]*q2[0][0] + q1[3][0]*q2[1][0]},
-			{q1[0][0]*q2[1][0] - q1[1][0]*q2[0][0] + q1[2][0]*q2[3][0] + q1[3][0]*q2[2][0]},
-			{-q1[0][0]*q2[0][0] - q1[1][0]*q2[1][0] - q1[2][0]*q2[2][0] + q1[3][0]*q2[3][0]}};
-		truth_value = new double[4][1];
-		for (r = 0; r < 4; r++) {
-			truth_value[r][0] = q1q2[r][0];
+		double preq1[][] = new double[][] {{1, 2.0, 3, 4}};
+		q1 = qnorm(preq1);
+		double preq2[][] = new double[][] {{-1, 0.5, 2, -2}};
+		q2 = qnorm(preq2);
+		q1q2 = new double[][] {{q1[0][0]*q2[0][3] + q1[0][1]*q2[0][2] -q1[0][2]*q2[0][1] + q1[0][3]*q2[0][0],
+			-q1[0][0]*q2[0][2] + q1[0][1]*q2[0][3] + q1[0][2]*q2[0][0] + q1[0][3]*q2[0][1],
+			q1[0][0]*q2[0][1] - q1[0][1]*q2[0][0] + q1[0][2]*q2[0][3] + q1[0][3]*q2[0][2],
+			-q1[0][0]*q2[0][0] - q1[0][1]*q2[0][1] - q1[0][2]*q2[0][2] + q1[0][3]*q2[0][3]}};
+		truth_value = new double[1][4];
+		for (c = 0; c < 4; c++) {
+			truth_value[0][c] = q1q2[0][c];
 		}
 		
 		test_value  = qmult(q1, q2);
 		wrong_values = 0;
-		for (r = 0; r < 4; r++) {
-			if (Math.abs(truth_value[r][0] - test_value[r][0]) > 1.0E-15) {
+		for (c = 0; c < 4; c++) {
+			if (Math.abs(truth_value[0][c] - test_value[0][c]) > 1.0E-15) {
 				wrong_values++;
 			}
 		}
@@ -601,18 +604,18 @@ public class Quaternions extends AlgorithmBase {
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		//disp_test_name('q1 is a column vector, q2 is a row vector');
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		truth_value = new double[1][4];
-		for (c = 0; c < 4; c++) {
-			truth_value[0][c] = q1q2[c][0];
+		truth_value = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			truth_value[r][0] = q1q2[0][r];
 		}
-		double q1t[][] = new double[1][4];
-		for (c = 0; c < 4; c++) {
-			q1t[0][c] = q1[c][0];
+		double q1t[][] = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			q1t[r][0] = q1[0][r];
 		}
 		test_value  = qmult(q1t, q2);
 		wrong_values = 0;
-		for (c = 0; c < 4; c++) {
-			if (Math.abs(truth_value[0][c] - test_value[0][c]) > 1.0E-15) {
+		for (r = 0; r < 4; r++) {
+			if (Math.abs(truth_value[r][0] - test_value[r][0]) > 1.0E-15) {
 				wrong_values++;
 			}
 		}
@@ -625,18 +628,18 @@ public class Quaternions extends AlgorithmBase {
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		//disp_test_name('q1 is a row vector, q2 is a column vector');
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		truth_value = new double[4][1];
-		for (r = 0; r < 4; r++) {
-			truth_value[r][0] = q1q2[r][0];
-		}
-		double q2t[][] = new double[1][4];
+		truth_value = new double[1][4];
 		for (c = 0; c < 4; c++) {
-			q2t[0][c] = q2[c][0];
+			truth_value[0][c] = q1q2[0][c];
+		}
+		double q2t[][] = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			q2t[r][0] = q2[0][r];
 		}
 		test_value  = qmult(q1, q2t);
 		wrong_values = 0;
-		for (r = 0; r < 4; r++) {
-			if (Math.abs(truth_value[r][0] - test_value[r][0]) > 1.0E-15) {
+		for (c = 0; c < 4; c++) {
+			if (Math.abs(truth_value[0][c] - test_value[0][c]) > 1.0E-15) {
 				wrong_values++;
 			}
 		}
@@ -649,22 +652,22 @@ public class Quaternions extends AlgorithmBase {
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		//disp_test_name('quaternions are column vectors');
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		double preq3[][] = new double[][]{{0.2, -1.0, 0.5, 0.3}};
+		double preq3[][] = new double[][]{{0.2}, {-1.0}, {0.5}, {0.3}};
 		double q3[][] = qnorm(preq3);
-		double preq4[][] = new double[][] {{2.0, 1.5, -1.0, 0.5}};
+		double preq4[][] = new double[][] {{2.0}, {1.5}, {-1.0}, {0.5}};
 		double q4[][] = qnorm(preq4);
-		double q3q4[][] = new double[][] {{q3[0][0]*q4[0][3] + q3[0][1]*q4[0][2] -q3[0][2]*q4[0][1] + q3[0][3]*q4[0][0],
-			-q3[0][0]*q4[0][2] + q3[0][1]*q4[0][3] + q3[0][2]*q4[0][0] + q3[0][3]*q4[0][1],
-			q3[0][0]*q4[0][1] - q3[0][1]*q4[0][0] + q3[0][2]*q4[0][3] + q3[0][3]*q4[0][2],
-			-q3[0][0]*q4[0][0] - q3[0][1]*q4[0][1] - q3[0][2]*q4[0][2] + q3[0][3]*q4[0][3]}};
-		truth_value = new double[1][4];
-		for (c = 0; c < 4; c++) {
-			truth_value[0][c] = q3q4[0][c];
+		double q3q4[][] = new double[][] {{q3[0][0]*q4[3][0] + q3[1][0]*q4[2][0] -q3[2][0]*q4[1][0] + q3[3][0]*q4[0][0]},
+			{-q3[0][0]*q4[2][0] + q3[1][0]*q4[3][0] + q3[2][0]*q4[0][0] + q3[3][0]*q4[1][0]},
+			{q3[0][0]*q4[1][0] - q3[1][0]*q4[0][0] + q3[2][0]*q4[3][0] + q3[3][0]*q4[2][0]},
+			{-q3[0][0]*q4[0][0] - q3[1][0]*q4[1][0] - q3[2][0]*q4[2][0] + q3[3][0]*q4[3][0]}};
+		truth_value = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			truth_value[r][0] = q3q4[r][0];
 		}
 		test_value  = qmult(q3, q4);
 		wrong_values = 0;
-		for (c = 0; c < 4; c++) {
-			if (Math.abs(truth_value[0][c] - test_value[0][c]) > 1.0E-15) {
+		for (r = 0; r < 4; r++) {
+			if (Math.abs(truth_value[r][0] - test_value[r][0]) > 1.0E-15) {
 				wrong_values++;
 			}
 		}
@@ -679,22 +682,22 @@ public class Quaternions extends AlgorithmBase {
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		double Q1[][] = new double[4][2];
 		for (r = 0; r < 4; r++) {
-			Q1[r][0] = q1[r][0];
-			Q1[r][1] = q3[0][r];
+			Q1[r][0] = q1[0][r];
+			Q1[r][1] = q3[r][0];
 		}
 		double Q2[][] = new double[2][4];
 		for (r = 0; r < 4; r++) {
-			Q2[0][r] = q2[r][0];
-			Q2[1][r] = q4[0][r];
+			Q2[0][r] = q2[0][r];
+			Q2[1][r] = q4[r][0];
 		}
-		double q1q2t[][] = new double[1][4];
-		for (c = 0; c < 4; c++) {
-			q1q2t[0][c] = q1q2[c][0];
+		double q1q2t[][] = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			q1q2t[r][0] = q1q2[0][r];
 		}
 		truth_value = new double[4][2];
 		for (r = 0; r < 4; r++) {
-			truth_value[r][0] = q1q2t[0][r];
-			truth_value[r][1] = q3q4[0][r];
+			truth_value[r][0] = q1q2t[r][0];
+			truth_value[r][1] = q3q4[r][0];
 		}
 		test_value  = qmult(Q1, Q2);
 		wrong_values = 0;
@@ -711,64 +714,192 @@ public class Quaternions extends AlgorithmBase {
 			UI.setDataText("In test_qmult Multiply 2 vectors of quaternions failed with " + wrong_values + " wrong values\n");
 		}
 	
-		/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('Multiply vector of quaternions by a single quaternion');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		Q1=q1, disp(' ') %#ok<NASGU,NOPTS>
-		Q2=[q2.' q4], disp(' ') %#ok<NASGU,NOPTS>
-		q1q4 = [ ...
-		    '(q1*[ q4(4) -q4(3)  q4(2) -q4(1)', 10, ...
-		    '      q4(3)  q4(4) -q4(1) -q4(2)', 10, ...
-		    '     -q4(2)  q4(1)  q4(4) -q4(3)', 10, ...
-		    '      q4(1)  q4(2)  q4(3)  q4(4) ])'],disp(' ') %#ok<NOPTS>
-		q1q4 = eval(q1q4);
-		truth_value = '[q1q2; q1q4]';
-		test_value  = 'qmult(Q1, Q2)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Multiply vector of quaternions by a single quaternion');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		Q1 = new double[1][4];
+		for (c = 0; c < 4; c++) {
+			Q1[0][c] = q1[0][c];
+		}
+		Q2 = new double[4][2];
+		for (r = 0; r < 4; r++) {
+			Q2[r][0] = q2[0][r];
+			Q2[r][1] = q4[r][0];
+		}
+		double q1q4[][] = new double[][] {{q1[0][0]*q4[3][0] + q1[0][1]*q4[2][0] -q1[0][2]*q4[1][0] + q1[0][3]*q4[0][0],
+			-q1[0][0]*q4[2][0] + q1[0][1]*q4[3][0] + q1[0][2]*q4[0][0] + q1[0][3]*q4[1][0],
+			q1[0][0]*q4[1][0] - q1[0][1]*q4[0][0] + q1[0][2]*q4[3][0] + q1[0][3]*q4[2][0],
+			-q1[0][0]*q4[0][0] - q1[0][1]*q4[1][0] - q1[0][2]*q4[2][0] + q1[0][3]*q4[3][0]}};
+	    truth_value = new double[2][4];
+	    for (c = 0; c < 4; c++) {
+	    	truth_value[0][c] = q1q2[0][c];
+	    	truth_value[1][c] = q1q4[0][c];
+	    }
+		
+		test_value  = qmult(Q1, Q2);
+		wrong_values = 0;
+		for (r = 0; r < 2; r++) {
+			for (c = 0; c < 4; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qmult Multiply vector of quaternions by a single quaternion failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('Q1 is of indeterminate shape, Q2 is a row');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		Q1=[q1; ones(3,4)],disp(' ') %#ok<NASGU,NOPTS>
-		Q2=q2,disp(' ') %#ok<NASGU,NOPTS>
-		truth_value = 'q1q2';
-		Q1Q2 = 'qmult(Q1, Q2)',disp(' ') %#ok<NOPTS>
-		Q1Q2 = eval(Q1Q2); %#ok<NASGU>
-		test_value  = 'Q1Q2(1,:)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Q1 is of indeterminate shape, Q2 is a row');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		Q1 = new double[4][4];
+		for (c = 0; c < 4; c++) {
+			Q1[0][c] = q1[0][c];
+		}
+		for (r = 1; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				Q1[r][c] = 1.0;
+			}
+		}
+		Q2 = new double[1][4];
+		for (c = 0; c < 4; c++) {
+			Q2[0][c] = q2[0][c];
+		}
+		truth_value = new double[1][4];
+		for (c = 0; c < 4; c++) {
+			truth_value[0][c] = q1q2[0][c];
+		}
+		double Q1Q2[][] = qmult(Q1, Q2);
+		test_value = new double[1][4];
+		for (c = 0; c < 4; c++) {
+		    test_value[0][c] = Q1Q2[0][c];	
+		}
+		wrong_values = 0;
+		for (c = 0; c < 4; c++) {
+			if (Math.abs(truth_value[0][c] - test_value[0][c]) > 1.0E-15) {
+				wrong_values++;
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qmult Q1 is of indeterminate shape, Q2 is a row failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('Q1 is of indeterminate shape, Q2 is a column');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		Q1=[q3 ones(4,3)],disp(' ') %#ok<NASGU,NOPTS>
-		Q2=q4,disp(' ') %#ok<NASGU,NOPTS>
-		truth_value = 'q3q4';
-		Q1Q2 = 'qmult(Q1, Q2)',disp(' ') %#ok<NOPTS>
-		Q1Q2 = eval(Q1Q2);
-		test_value  = 'Q1Q2(:,1)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Q1 is of indeterminate shape, Q2 is a column');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		Q1 = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			Q1[r][0] = q3[r][0];
+		}
+		for (r = 0; r < 4; r++) {
+			for (c = 1; c < 4; c++) {
+				Q1[r][c] = 1.0;
+			}
+		}
+		Q2 = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			Q2[r][0] = q4[r][0];
+		}
+		truth_value = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			truth_value[r][0] = q3q4[r][0];
+		}
+		Q1Q2 = qmult(Q1, Q2);
+		test_value = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			test_value[r][0] = Q1Q2[r][0];
+		}
+		wrong_values = 0;
+		for (r = 0; r < 4; r++) {
+			if (Math.abs(truth_value[r][0] - test_value[r][0]) > 1.0E-15) {
+				wrong_values++;
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qmult Q1 is of indeterminate shape, Q2 is a column failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('Both inputs 4x4, normalized differently');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		Q1=[q1; q3.'; q1; q3.'],disp(' ') %#ok<NASGU,NOPTS>
-		Q2=[q2; q4.'; q2; q4.'].',disp(' ') %#ok<NASGU,NOPTS>
-		truth_value = '[q1q2; q3q4.''; q1q2; q3q4.'']';
-		test_value  = 'qmult(Q1, Q2)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Both inputs 4x4, normalized differently');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		Q1 = new double[4][4];
+		for (c = 0; c < 4; c++) {
+			Q1[0][c] = q1[0][c];
+			Q1[1][c] = q3[c][0];
+			Q1[2][c] = q1[0][c];
+			Q1[3][c] = q3[c][0];
+		}
+	    Q2 = new double[4][4];
+	    for (c = 0; c < 4; c++) {
+	    	Q2[0][c] = q2[0][c];
+	    	Q2[1][c] = q4[c][0];
+	    	Q2[2][c] = q2[0][c];
+	    	Q2[3][c] = q4[c][0];
+	    }
+		truth_value = new double[4][4];
+		for (c = 0; c < 4; c++) {
+			truth_value[0][c] = q1q2[0][c];
+			truth_value[1][c] = q3q4[c][0];
+			truth_value[2][c] = q1q2[0][c];
+			truth_value[3][c] = q3q4[c][0];
+		}
+		test_value  = qmult(Q1, Q2);
+		wrong_values = 0;
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qmult Both inputs 4x4, normalized differently failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('Both inputs 4x4, and of indeterminate shape');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		Q1=ones(4),disp(' ') %#ok<NOPTS>
-		Q2=ones(4),disp(' ') %#ok<NOPTS>
-		truth_value = '2*[ones(4,3) -ones(4,1)]';
-		test_value  = 'qmult(Q1, Q2)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Both inputs 4x4, and of indeterminate shape');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		Q1 = new double[4][4];
+		Q2 = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				Q1[r][c] = 1.0;
+				Q2[r][c] = 1.0;
+			}
+		}
+		
+		truth_value = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = 2.0;
+			}
+			truth_value[r][3] = -2.0;
+		}
+		test_value  = qmult(Q1, Q2);
+		wrong_values = 0;
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qmult Both inputs 4x4, and of indeterminate shape failed with " + wrong_values + " wrong values\n");
+		}
 	
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 	
 		UI.setDataText("In test_qmult " + failures + " failures\n");
 		if (failures > 0) {
