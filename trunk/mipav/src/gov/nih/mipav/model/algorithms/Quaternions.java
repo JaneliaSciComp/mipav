@@ -942,7 +942,7 @@ public class Quaternions extends AlgorithmBase {
 	    		qin[r][c] = 1.0;
 	    	}
 	    }
-		test_value  = qconj(qin);
+		test_value  = qconj(qin,true);
 		wrong_values = 0;
 		for (r = 0; r < 2; r++) {
 			for (c = 0; c < 4; c++) {
@@ -973,7 +973,7 @@ public class Quaternions extends AlgorithmBase {
 				qin[r][c] = 1.0;
 			}
 		}
-		test_value  = qconj(qin);
+		test_value  = qconj(qin,true);
 		wrong_values = 0;
 		for (r = 0; r < 4; r++) {
 			for (c = 0; c < 6; c++) {
@@ -1006,7 +1006,7 @@ public class Quaternions extends AlgorithmBase {
 				qin[r][c] = 0.5;
 			}
 		}
-		test_value  = qconj(qin);
+		test_value  = qconj(qin,true);
 		wrong_values = 0;
 		for (r = 0; r < 4; r++) {
 			for (c = 0; c < 4; c++) {
@@ -1030,6 +1030,287 @@ public class Quaternions extends AlgorithmBase {
 		}
 	}
 
+	public void test_qcvq() {
+		// TEST_QcVQ runs unit tests for the QcVQ function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.3 $
+		// $Date: 2009-07-26 20:05:12 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	
+        UI.setDataText("test_title = test_qcvq\n");
+		
+		int failures=0;
+	    int r,c;
+	    double truth_value[][];
+	    double test_value[][];
+	    int wrong_values;
+	
+		double q[][]= new double[][] {{0, 0, 0, 1}};
+		double v[][];
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Invalid Input: v is 2D, but neither dim is size 3');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_err = ...
+		    //['Invalid input: second input must be a 3-element vector', 10, ...
+		    // 'or a vector of 3-element vectors'];
+		v = new double[][] {{1,2,3,4},{4,5,6,8}};
+		test_value = qcvq(q, v);
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%% q and v mismatched
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('number of q ~= number of v');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		double Q[][] = new double[2][4];
+		for (r = 0; r < 2; r++) {
+			for (c = 0; c < 4; c++) {
+				Q[r][c] = q[0][c];
+			}
+		}
+	    double V[][] = new double[][]{{1,2,3},{4,5,6},{7,8,9},{10,11,12}};
+		//expected_err = ...
+		//  ['Inputs do not have the same number of elements:', 10, ...
+		//   '   number of quaternions in q = ', num2str(size(Q,1)), 10,...
+		//   '   number of vectors in v     = ', num2str(size(V,1)), 10,...
+		//   'Inputs must have the same number of elements, or', 10, ...
+		//   'one of the inputs must have a single element.'];
+		test_value = qcvq(Q, V);
+	
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%% 4x4 quaternion inputs
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Q is 4x1 and V is 3x3');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ['Q is 4x1 and V is 3x3: assuming vectors' ...
+		//                 ' are column vectors'];
+		double qt[][] = new double[4][1];
+		for (r = 0; r < 4; r++) {
+			qt[r][0] = q[0][r];
+		}
+		v = new double[3][3];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < 3; c++) {
+				v[r][c] = 1.0;
+			}
+		}
+		test_value   = qcvq(qt, v);
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Q is 1x4 and V is 3x3');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ['Q is 1x4 and V is 3x3: assuming vectors' ...
+		//                 ' are row vectors'];
+		test_value      = qcvq(q, v);
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Q is 4x4 and V is 3x1');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ['Q is 4x4 and V is 3x1: assuming quaternions are' ...
+		//                 ' column vectors'];
+		Q = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				Q[r][c] = 1.0;
+			}
+		}
+		V = new double[][] {{1}, {2}, {3}};
+		test_value      = qcvq(Q, V);
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Q is 4x4 and V is 1x3');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ['Q is 4x4 and V is 1x3: assuming quaternions are' ...
+		 //                ' row vectors'];
+		V = new double[][]{{1, 2, 3}};
+		test_value = qcvq(Q, V);
+	
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%% Singlets
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('row q, row v');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 -1 2 0.5]),disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3],disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v 0], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('row q, col v');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 -1 2 0.5]),disp(' ') %#ok<NASGU,NOPTS>
+		v=[1; 2; 3],disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; 0], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%% Vector of q, single v
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (rows), single v (row)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 2 3 4; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3], disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v 0], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(:,1:3)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (columns), single v (row)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 2 3 4; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3], disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v 0], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3,:).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (columns), single v (column)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 2 3 4; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3].', disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; 0], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3,:)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (rows), single v (column)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 2 3 4; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3].', disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; 0], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(:,1:3).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%% Single q, vector of v
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('single q (row), vector of v (rows)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 -1 2 0.5]), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(:,1:3)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('single q (column), vector of v (rows)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 -1 2 0.5].'), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3,:).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('single q (column), vector of v (columns)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 -1 2 0.5].'), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3,:)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('single q (row), vector of v (columns)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([1 -1 2 0.5]), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(:,1:3).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%% Vector of q, vector of v
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (rows), vector of v (rows)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([-0.5 -1 2 1; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(:,1:3)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (columns), vector of v (rows)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([-0.5 -1 2 1; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3,:).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (columns), vector of v (columns)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([-0.5 -1 2 1; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
+		truth_value = 'qconj_v4_q(1:3,:)';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_test_name('vector of q (rows), vector of v (columns)');
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		q=qnorm([-0.5 -1 2 1; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
+		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
+		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
+		qconj_v4_q = eval(qconj_v4_q);
+		truth_value = 'qconj_v4_q(:,1:3).''';
+		test_value  = 'qcvq(q, v)';
+		failures=failures+check_float(truth_value, test_value, 1e-15);
+	
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		disp_num_failures(test_title, failures)*/
+	}
 
 
 
@@ -1467,7 +1748,7 @@ public class Quaternions extends AlgorithmBase {
 			// q_out(:,4) = q1(:,4).*q2(:,4) - dot(q1(:,1:3), q2(:,1:3), 2);
 	}
 
-	public double[][] qconj(double qinorg[][]) {
+	public double[][] qconj(double qinorg[][], boolean warning) {
 			// QCONJ(Q) calculates the conjugate of the quaternion Q.
 			//     Works on "vectors" of quaterions as well.  Will return the same shape
 			//     vector as input.  If input is a vector of four quaternions, QCONJ will
@@ -1490,8 +1771,10 @@ public class Quaternions extends AlgorithmBase {
 			    return null;
 			}
 			else if ( qtype==3 ) {
-			    System.out.println("Warning: qconj:indeterminateShape");
-			    System.out.println("Component quaternion shape indeterminate, assuming row vectors");
+				if (warning) {
+			        System.out.println("Warning: qconj:indeterminateShape");
+			        System.out.println("Component quaternion shape indeterminate, assuming row vectors");
+				}
 			}
 
 			// Make sure component quaternions are row vectors
@@ -1530,5 +1813,198 @@ public class Quaternions extends AlgorithmBase {
 			return qout_trans;
 	}
 
+	public double[][] qcvq(double qorg[][],double vorg[][]) {
+			// QcVQ(Q,V) performs the operation qconj(Q)*V*Q
+			//     where the vector is treated as a quaternion with a scalar element of
+			//     zero.
+			
+			//     Q and V can be vectors of quaternions and vectors, but they must
+			//     either be the same length or one of them must have a length of one.
+			//     The output will have the same shape as V.  Q will be passed through
+			//     QNORM to ensure it is normalized.
+			
+			// See also QVQc, QNORM, QMULT.
+
+			// Note that QNORM is invoked by QMULT, therefore QcQV does not invoke
+			// it directly.
+			  
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.2 $
+			// $Date: 2009-07-26 20:05:12 $
+			 
+			// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+
+			int r,c;
+		    int qtype=isq(qorg);
+			if ( qtype == 0 ) {
+			    System.err.println("Input Q must be a quaternion or a vector of quaternions");
+			    return null;
+			}
+			
+			if (!((vorg.length == 3) || (vorg[0].length == 3))) {
+			    System.err.println("Invalid input: second input must be a 3-element vector");
+			    System.err.println("or a vector of 3-element vectors");
+			    return null;
+			}
+
+
+			// Make sure q is a column of quaternions
+			double q[][];
+			if ( qtype==1 ) {
+			    q = new double[qorg[0].length][qorg.length];
+			    for (r = 0; r < qorg.length; r++) {
+			    	for (c = 0; c < qorg[0].length; c++) {
+			    		q[c][r] = qorg[r][c];
+			    	}
+			    }
+			}
+			else {
+				q = qorg;
+			}
+
+			// Make sure v is a column of vectors
+			boolean row_of_vectors = (vorg[0].length != 3);
+			double v[][];
+			if ( row_of_vectors ) {
+			    v = new double[vorg[0].length][vorg.length];
+			    for (r = 0; r < vorg.length; r++) {
+			    	for (c = 0; c < vorg[0].length; c++) {
+			    		v[c][r] = vorg[r][c];
+			    	}
+			    }
+			}
+			else {
+				v = vorg;
+			}
+			int size_v1 = v.length;
+
+			int size_q1 = q.length;
+
+			double v2[][];
+			double q2[][];
+			if (size_q1 !=size_v1 && size_q1 !=1 && size_v1 !=1 ) {
+			  System.err.println("qcvq inputs do not have the same number of elements:");
+			  System.err.println("Number of quaternions in q = " + size_q1);
+			  System.err.println("Number of vectors in v = " + size_v1);
+			  System.err.println("Inputs must have the same number of elements, or");
+			  System.err.println("one of the inputs must have a single element.");
+			  return null;
+			}
+			else if ( size_q1 ==1 && size_v1 ==3 ) {
+			  if ( qtype==1 ) {
+			      System.out.println("Warning! qcvq:assumingVcols");
+			      System.out.println("Q is 4x1 and V is 3x3: assuming vectors are column vectors");
+			      row_of_vectors = true;
+			      v2 = new double[v[0].length][v.length];
+			      for (r = 0; r < v.length; r++) {
+			    	  for (c = 0; c < v[0].length; c++) {
+			    		  v2[c][r] = v[r][c];
+			    	  }
+			      }
+			      q2 = q;
+			  }
+			  else {
+			      System.out.println("Warning! qcvq:assumingVrows");
+			      System.out.println("Q is 1x4 and V is 3x3: assuming vectors are row vectors");
+			      v2 = v;
+			      q2 = q;
+			  }
+			}
+			else if ( qtype==3 && size_v1 ==1 ) {
+			  if ( row_of_vectors ) {
+			      System.out.println("Warning! qcvq:assumingQcols");
+			      System.out.println("Q is 4x4 and V is 3x1: assuming quaternions are column vectors");
+			      q2 = new double[q[0].length][q.length];
+			      for (r = 0; r < q.length; r++) {
+			    	  for (c = 0; c < q[0].length; c++) {
+			    		  q2[c][r] = q[r][c];
+			    	  }
+			      }
+			      v2 = v;
+			  }
+			  else {
+			      System.out.println("Warning! qcvq:assumingQrows");
+			      System.out.println("Q is 4x4 and V is 1x3: assuming quaternions are row vectors");
+			      v2 = v;
+				  q2 = q;
+			  }
+			}
+			else {
+				v2 = v;
+				q2 = q;
+			}
+	
+
+			// Build up full vectors if one input is a singleton
+			double v3[][];
+			double q3[][];
+			if (q2.length != v2.length) {
+			  if (q2.length == 1) {
+				  q3 = new double[v2.length][4];
+				  for (r = 0; r < v2.length; r++) {
+					  q3[r][0] = q2[0][0];
+					  q3[r][1] = q2[0][1];
+					  q3[r][2] = q2[0][2];
+					  q3[r][3] = q2[0][3];
+				  }
+				  v3 = v2;
+			  }
+			  else { // v2.length == 1
+				  v3 = new double[q2.length][3];
+				  for (r = 0; r < q2.length; r++) {
+					  v3[r][0] = v2[0][0];
+					  v3[r][1] = v2[0][1];
+					  v3[r][2] = v2[0][2];
+				  }
+			      q3 = q2; 
+			  }
+			}
+			else {
+				v3 = v2;
+				q3 = q2;
+			}
+
+			// Add an element to V
+			double v4[][] = new double[v3.length][4];
+			for (r = 0; r < v3.length; r++) {
+				for (c = 0; c < 3; c++) {
+					v4[r][c] = v3[r][c];
+				}
+				v4[r][3] = 0.0;
+			}
+
+			// Turn off warnings before calling qconj (it has simillar warnings as
+			// qvxform, so all warnings would just be duplicated).  Save current state of
+			// warnings, though.
+			// warning_state = warning; warning('off', 'qconj:indeterminateShape');
+			// local_warning = lastwarn;
+
+			// Perform transform
+			double vt[][ ]=qmult(qconj(q3,false),qmult(v4,q3));
+
+			// Restore warning state to original state
+			// warning(warning_state);
+			// lastwarn(local_warning);
+
+			// Eliminate last element of vt for output
+			double v_out[][] = new double[vt.length][3];
+			for (r = 0; r < vt.length; r++) {
+				for (c = 0; c < 3; c++) {
+					v_out[r][c] = vt[r][c];
+				}
+			}
+
+			// Make sure output vectors are the same shape as input vectors
+			if (!row_of_vectors) {
+				return v_out;
+			}
+			double v_out_transpose[][] = new double[3][v_out.length];
+			for (r = 0; r < v_out.length; r++) {
+				for (c = 0; c < 3; c++) {
+					v_out_transpose[c][r] = v_out[r][c];
+				}
+			}
+			return v_out_transpose;
+	}
 	
 }
