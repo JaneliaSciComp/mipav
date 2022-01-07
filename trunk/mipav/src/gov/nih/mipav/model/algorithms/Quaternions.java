@@ -907,6 +907,129 @@ public class Quaternions extends AlgorithmBase {
 		}
 	}
 
+	public void test_qconj() {
+		// Test passes.
+		// TEST_QCONJ runs unit tests for the QCONJ function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.8 $
+		// $Date: 2009-07-26 20:05:12 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	
+		UI.setDataText("test_title = test_qconj\n");
+		
+		int failures=0;
+	    int r,c;
+	    double truth_value[][];
+	    double test_value[][];
+	    int wrong_values;
+	    double qin[][];
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Column of two quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	    truth_value = new double[2][4];
+	    for (r = 0; r < 2; r++) {
+	    	for (c = 0; c < 3; c++) {
+	    		truth_value[r][c] = -1.0;
+	    	}
+	    	truth_value[r][3] = 1.0;
+	    }
+        qin = new double[2][4];
+        for (r = 0; r < 2; r++) {
+	    	for (c = 0; c < 4; c++) {
+	    		qin[r][c] = 1.0;
+	    	}
+	    }
+		test_value  = qconj(qin);
+		wrong_values = 0;
+		for (r = 0; r < 2; r++) {
+			for (c = 0; c < 4; c++) {
+				if (truth_value[r][c] != test_value[r][c]) {
+					wrong_values++;
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qconj Column of two quaternions failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Row of 6 quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		truth_value = new double[4][6];
+		for (c = 0; c < 6; c++) {
+			for (r = 0; r < 3; r++) {
+				truth_value[r][c] = -1.0;
+			}
+			truth_value[3][c] = 1.0;
+		}
+		qin = new double[4][6];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 6; c++) {
+				qin[r][c] = 1.0;
+			}
+		}
+		test_value  = qconj(qin);
+		wrong_values = 0;
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 6; c++) {
+				if (truth_value[r][c] != test_value[r][c]) {
+					wrong_values++;
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qconj Row of 6 quaternions failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Ambiguous Input: 4x4 normalized in both directions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ['Component quaternion shape indeterminate, assuming' ...
+		                 //' row vectors'];
+		truth_value = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = -0.5;
+			}
+			truth_value[r][3] = 0.5;
+		}
+		qin = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				qin[r][c] = 0.5;
+			}
+		}
+		test_value  = qconj(qin);
+		wrong_values = 0;
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				if (truth_value[r][c] != test_value[r][c]) {
+					wrong_values++;
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qconj Ambiguous Input: 4x4 normalized in both directions failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		UI.setDataText("In test_qconj " + failures + " failures\n");
+		if (failures > 0) {
+			UI.setDataText("test_qconj FAILED\n");
+		}
+	}
+
 
 
 
@@ -1344,6 +1467,68 @@ public class Quaternions extends AlgorithmBase {
 			// q_out(:,4) = q1(:,4).*q2(:,4) - dot(q1(:,1:3), q2(:,1:3), 2);
 	}
 
+	public double[][] qconj(double qinorg[][]) {
+			// QCONJ(Q) calculates the conjugate of the quaternion Q.
+			//     Works on "vectors" of quaterions as well.  Will return the same shape
+			//     vector as input.  If input is a vector of four quaternions, QCONJ will
+			//     determine whether the quaternions are row or column vectors according
+			//     to ISQ.
+			
+			// See also ISQ.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.16 $
+			// $Date: 2009-07-26 20:05:12 $
+			 
+			// Copyright (c) 2001-2009, Jay A. St. Pierre.  All rights reserved.
+
+
+			int r,c;
+			int qtype = isq(qinorg);
+			if ( qtype==0 ) {
+			    System.err.println("conj invalid input: must be a quaternion or a vector of quaternions");
+			    return null;
+			}
+			else if ( qtype==3 ) {
+			    System.out.println("Warning: qconj:indeterminateShape");
+			    System.out.println("Component quaternion shape indeterminate, assuming row vectors");
+			}
+
+			// Make sure component quaternions are row vectors
+			double qin[][];
+			if( qtype == 1 ) {
+			  qin = new double[qinorg[0].length][4];
+			  for (r = 0; r < 4; r++) {
+				  for (c = 0; c < qinorg[0].length; c++) {
+					  qin[c][r] = qinorg[r][c];
+				  }
+			  }
+			}
+			else {
+				qin = qinorg;
+			}
+            
+			double qout[][] = new double[qin.length][4];
+			for (r = 0; r < qout.length; r++) {
+			    qout[r][0] = -qin[r][0];
+			    qout[r][1] = -qin[r][1];
+			    qout[r][2] = -qin[r][2];
+			    qout[r][3] = qin[r][3];
+			}
+			
+			if (qtype != 1) {
+				return qout;
+			}
+
+			// Make sure output is same shape as input
+			double qout_trans[][] = new double[4][qout.length];
+			for (r = 0; r < qout.length; r++) {
+				for (c = 0; c < 4; c++) {
+					qout_trans[c][r] = qout[r][c];
+				}
+			}
+			return qout_trans;
+	}
 
 	
 }
