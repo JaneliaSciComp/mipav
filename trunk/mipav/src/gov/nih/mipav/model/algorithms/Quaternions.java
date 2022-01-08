@@ -1555,6 +1555,57 @@ public class Quaternions extends AlgorithmBase {
 		}
 	}
 
+	public void test_qvqc() {
+		// Test passes.
+		// TEST_QVQc runs unit tests for the QVQc function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.3 $
+		// $Date: 2009-07-26 20:05:13 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	
+        UI.setDataText("test_title = test_qvqc\n");
+		
+		int failures=0;
+	    int r,c;
+	    double truth_value[][];
+	    double test_value[][];
+	    int wrong_values;
+	
+		double q[][];
+		double v[][];
+		double preq[][];
+		
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Algorithm check');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{-1,0.5,1,2},{5,6,7,8}};
+		q = qnorm(preq);
+	    v = new double[][] {{1,4},{2,5},{3,6}};
+		truth_value = qvxform(qconj(q,true), v);
+		test_value  = qvqc(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qvqc Algorithm check failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		UI.setDataText("In test_qvqc " + failures + " failures\n");
+		if (failures > 0) {
+			UI.setDataText("test_qvqc FAILED\n");
+		}
+	}
 
 
 	
@@ -2249,5 +2300,50 @@ public class Quaternions extends AlgorithmBase {
 			}
 			return v_out_transpose;
 	}
+	
+	public double[][] qvqc(double qorg[][],double v[][]) {
+			// QVQc(Q,V) performs the operation Q*V*qconj(Q)
+			//     where the vector is treated as a quaternion with a scalar element of
+			//     zero. 
+			//
+			//     Q and V can be vectors of quaternions and vectors, but they must
+			//     either be the same length or one of them must have a length of one.
+			//     The output will have the same shape as V.  Q will be passed through
+			//     QNORM to ensure it is normalized.
+			
+			// See also QcQV, QNORM
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.1 $
+			// $Date: 2009-07-24 19:14:44 $
+			 
+			// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+			double q[][]  = qconj(qorg,true);
+			double v_out[][] = qcvq(q, v);
+		    return v_out;
+	}
+	
+	public double[][] qvxform(double q[][], double v[][]) {
+			// QVXFORM(Q,V) transforms the vector V using the quaternion Q.
+			//     Specifically performs the operation qconj(Q)*V*Q, where the vector
+			//     is treated as a quaternion with a scalar element of zero.
+			
+			//     Q and V can be vectors of quaternions and vectors, but they must
+			//     either be the same length or one of them must have a length of one.
+			//     The output will have the same shape as V.  Q will be passed through
+			//     QNORM to ensure it is normalized.
+			
+			// See also QcQV, QVROT.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.14 $
+			// $Date: 2009-07-24 19:14:44 $
+			 
+			// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+
+		    double v_out[][] = qcvq(q, v);
+			return v_out;
+	}
+
 	
 }
