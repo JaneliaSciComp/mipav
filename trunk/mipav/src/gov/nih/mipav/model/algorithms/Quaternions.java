@@ -1031,6 +1031,7 @@ public class Quaternions extends AlgorithmBase {
 	}
 
 	public void test_qcvq() {
+		// Test passes.
 		// TEST_QcVQ runs unit tests for the QcVQ function.
 	
 		// Release: $Name: quaternions-1_3 $
@@ -1049,6 +1050,8 @@ public class Quaternions extends AlgorithmBase {
 	
 		double q[][]= new double[][] {{0, 0, 0, 1}};
 		double v[][];
+		double preq[][];
+		double v2[][];
 	
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		//disp_test_name('Invalid Input: v is 2D, but neither dim is size 3');
@@ -1137,179 +1140,419 @@ public class Quaternions extends AlgorithmBase {
 		//%% Singlets
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-		/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('row q, row v');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 -1 2 0.5]),disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3],disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v 0], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('row q, col v');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 -1 2 0.5]),disp(' ') %#ok<NASGU,NOPTS>
-		v=[1; 2; 3],disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; 0], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%% Vector of q, single v
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (rows), single v (row)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 2 3 4; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3], disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v 0], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(:,1:3)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (columns), single v (row)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 2 3 4; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3], disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v 0], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3,:).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (columns), single v (column)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 2 3 4; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3].', disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; 0], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3,:)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (rows), single v (column)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 2 3 4; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3].', disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; 0], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(:,1:3).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('row q, row v');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, -1, 2, 0.5}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}};
+		v2 = new double[][] {{1, 2, 3, 0}};
+		double qconj_v4_q[][] = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[][] {{qconj_v4_q[0][0],qconj_v4_q[0][1],qconj_v4_q[0][2]}}; 
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (c = 0; c < 3; c++) {
+			if (Math.abs(truth_value[0][c] - test_value[0][c]) > 1.0E-15) {
+				wrong_values++;
+			}	
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq row q, row v failed with " + wrong_values + " wrong values\n");
+		}
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('row q, col v');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, -1, 2, 0.5}};
+		q = qnorm(preq);
+		v = new double[][] {{1}, {2}, {3}};
+		v2 = new double[][] {{1}, {2}, {3}, {0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+        truth_value = new double[][]{{qconj_v4_q[0][0]}, {qconj_v4_q[0][1]}, {qconj_v4_q[0][2]}};
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			if (Math.abs(truth_value[r][0] - test_value[r][0]) > 1.0E-15) {
+				wrong_values++;
+			}	
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq row q, col v failed with " + wrong_values + " wrong values\n");
+		}
 	
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%% Single q, vector of v
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%% Vector of q, single v
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('single q (row), vector of v (rows)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 -1 2 0.5]), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(:,1:3)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (rows), single v (row)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, 2, 3, 4}, {5, 6, 7, 8}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}};
+		v2 = new double[][] {{1, 2, 3, 0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[qconj_v4_q.length][3];
+		for (r = 0; r < qconj_v4_q.length; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = qconj_v4_q[r][c];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of q (rows), single v (row) failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('single q (column), vector of v (rows)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 -1 2 0.5].'), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3,:).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (columns), single v (row)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1,5},{2,6},{3,7},{4,8}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}};
+		v2 = new double[][] {{1, 2, 3, 0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[qconj_v4_q[0].length][3];
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = qconj_v4_q[c][r];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of q (coumns), single v (row) failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('single q (column), vector of v (columns)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 -1 2 0.5].'), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3,:)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (columns), single v (column)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1,5},{2,6},{3,7},{4,8}};
+		q = qnorm(preq);
+		v = new double[][] {{1}, {2}, {3}};
+		v2 = new double[][] {{1}, {2}, {3}, {0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[3][qconj_v4_q[0].length];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				truth_value[r][c] = qconj_v4_q[r][c];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of q (coumns), single v (column) failed with " + wrong_values + " wrong values\n");
+		}
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('single q (row), vector of v (columns)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([1 -1 2 0.5]), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(:,1:3).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%% Vector of q, vector of v
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (rows), vector of v (rows)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([-0.5 -1 2 1; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(:,1:3)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (columns), vector of v (rows)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([-0.5 -1 2 1; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6], disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v [0; 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3,:).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (columns), vector of v (columns)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([-0.5 -1 2 1; 5 6 7 8].'), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q); %#ok<NASGU>
-		truth_value = 'qconj_v4_q(1:3,:)';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
-	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_test_name('vector of q (rows), vector of v (columns)');
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		q=qnorm([-0.5 -1 2 1; 5 6 7 8]), disp(' ') %#ok<NASGU,NOPTS>
-		v=[1 2 3; 4 5 6].', disp(' ') %#ok<NASGU,NOPTS>
-		qconj_v4_q = 'qmult(qconj(q), qmult([v; [0 0]], q))',disp(' ') %#ok<NOPTS>
-		qconj_v4_q = eval(qconj_v4_q);
-		truth_value = 'qconj_v4_q(:,1:3).''';
-		test_value  = 'qcvq(q, v)';
-		failures=failures+check_float(truth_value, test_value, 1e-15);
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (rows), single v (column)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, 2, 3, 4}, {5, 6, 7, 8}};
+		q = qnorm(preq);
+		v = new double[][] {{1}, {2}, {3}};
+		v2 = new double[][] {{1}, {2}, {3}, {0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[3][qconj_v4_q.length];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				truth_value[r][c] = qconj_v4_q[c][r];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of q (rows), single v (column) failed with " + wrong_values + " wrong values\n");
+		}
 	
 	
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		disp_num_failures(test_title, failures)*/
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%% Single q, vector of v
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('single q (row), vector of v (rows)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, -1, 2, 0.5}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}, {4, 5, 6}};
+		v2 = new double[][] {{1, 2, 3, 0}, {4, 5, 6, 0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[qconj_v4_q.length][3];
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = qconj_v4_q[r][c];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of single q (row), vector of v (rows) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('single q (column), vector of v (rows)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1}, {-1}, {2}, {0.5}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}, {4, 5, 6}};
+		v2 = new double[][] {{1, 2, 3, 0}, {4, 5, 6, 0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[qconj_v4_q[0].length][3];
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = qconj_v4_q[c][r];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of single q (column), vector of v (rows) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('single q (column), vector of v (columns)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1}, {-1}, {2}, {0.5}};
+		q = qnorm(preq);
+		v = new double[][] {{1,4},{2,5},{3,6}};
+		v2 = new double[][] {{1,4},{2,5},{3,6},{0,0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[3][qconj_v4_q[0].length];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				truth_value[r][c] = qconj_v4_q[r][c];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of single q (column), vector of v (columns) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('single q (row), vector of v (columns)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, -1, 2, 0.5}};
+		q = qnorm(preq);
+		v = new double[][] {{1,4},{2,5},{3,6}};
+		v2 = new double[][] {{1,4},{2,5},{3,6},{0,0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[3][qconj_v4_q.length];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				truth_value[r][c] = qconj_v4_q[c][r];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of single q (row), vector of v (columns) failed with " + wrong_values + " wrong values\n");
+		}
+	
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%% Vector of q, vector of v
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (rows), vector of v (rows)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{-0.5,-1,2,1},{5,6,7,8}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}, {4, 5, 6}};
+		v2 = new double[][] {{1, 2, 3, 0}, {4, 5, 6, 0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[qconj_v4_q.length][3];
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = qconj_v4_q[r][c];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of q (rows), vector of v (rows) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (columns), vector of v (rows)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{-0.5,5},{-1,6},{2,7},{1,8}};
+		q = qnorm(preq);
+		v = new double[][] {{1, 2, 3}, {4, 5, 6}};
+		v2 = new double[][] {{1, 2, 3, 0}, {4, 5, 6, 0}};
+		
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[qconj_v4_q[0].length][3];
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				truth_value[r][c] = qconj_v4_q[c][r];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < truth_value.length; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of q (columns), vector of v (rows) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (columns), vector of v (columns)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{-0.5,5},{-1,6},{2,7},{1,8}};
+		q = qnorm(preq);
+		v = new double[][] {{1,4},{2,5},{3,6}};
+		v2 = new double[][] {{1,4},{2,5},{3,6},{0,0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[3][qconj_v4_q[0].length];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				truth_value[r][c] = qconj_v4_q[r][c];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of vector of q (columns), vector of v (columns) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('vector of q (rows), vector of v (columns)');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{-0.5,-1,2,1},{5,6,7,8}};
+		q = qnorm(preq);
+		v = new double[][] {{1,4},{2,5},{3,6}};
+		v2 = new double[][] {{1,4},{2,5},{3,6},{0,0}};
+		qconj_v4_q = qmult(qconj(q,true), qmult(v2, q));
+		truth_value = new double[3][qconj_v4_q.length];
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				truth_value[r][c] = qconj_v4_q[c][r];
+			}
+		}
+		test_value  = qcvq(q, v);
+		wrong_values = 0;
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < truth_value[0].length; c++) {
+				if (Math.abs(truth_value[r][c] - test_value[r][c]) > 1.0E-15) {
+					wrong_values++;
+				}	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qcvq vector of vector of q (rows), vector of v (columns) failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		UI.setDataText("In test_qcvq " + failures + " failures\n");
+		if (failures > 0) {
+			UI.setDataText("test_qcvq FAILED\n");
+		}
 	}
 
 
