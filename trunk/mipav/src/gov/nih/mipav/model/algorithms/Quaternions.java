@@ -2345,5 +2345,88 @@ public class Quaternions extends AlgorithmBase {
 			return v_out;
 	}
 
+	public double[][] qvrot(double q[][], double v[][]) {
+			// QVROT(Q,V) rotates the vector V using the quaternion Q.
+			//     Specifically performs the operation Q*V*qconj(Q), where the vector
+			//     is treated as a quaternion with a scalar element of zero.
+			
+			//     Q and V can be vectors of quaternions and vectors, but they must
+			//     either be the same length or one of them must have a length of one.
+			//     The output will have the same shape as V.  Q will be passed through
+			//     QNORM to ensure it is normalized.
+			
+			// See also QVQc, QVXFORM.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.8 $
+			// $Date: 2009-07-24 19:14:44 $
+			 
+			// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+
+			
+			double v_out[][] = qvqc(q, v);
+			return v_out;
+    }
+	
+	public void qdecomp(double v[][], double phi[], double qorg[][]) {
+			// [V,PHI]=QDECOMP(Q) breaks out the unit vector and angle of rotation
+			//     components of the quaternion(s).  Input will be run through QNORM to
+			//     insure that the component quaternion(s) are normalized.
+			
+			// See also ISNORMQ, QNORM.
+			  
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.12 $
+			// $Date: 2009-07-26 20:05:12 $
+			 
+			// Copyright (c) 2001-2009, Jay A. St. Pierre.  All rights reserved.
+			int r,c; 
+			int qtype = isq(qorg);
+			if ( qtype == 0 ) {
+			    System.err.println("In qdecomp input qorg must be a quaternion or a vector of quaternions");
+			    return;
+			}
+
+			// Make sure q is a column of quaternions
+			double q[][];
+			if( qtype == 1 ) {
+			  q = new double[qorg[0].length][qorg.length];
+			  for (r = 0; r < q.length; r++) {
+					for (c = 0; c < q[0].length; c++) {
+						q[r][c] = qorg[c][r];
+					}
+				}
+			}
+			else {
+				q = new double[qorg.length][qorg[0].length];
+				for (r = 0; r < q.length; r++) {
+					for (c = 0; c < q[0].length; c++) {
+						q[r][c] = qorg[r][c];
+					}
+				}
+			}
+
+			// Make sure quaternion is normalized to prevent warnings when using
+			// sin(acos())
+			q=qnorm(q);
+            double half_phi;
+            double sin_half_phi;
+            for (r = 0; r < q.length; r++) {
+            	half_phi = Math.acos(q[r][3]);
+            	phi[r] = 2.0 * half_phi;
+            	sin_half_phi = Math.sin(half_phi);
+            	if (sin_half_phi == 0) {
+            		v[r][0] = q[r][0];
+            		v[r][1] = q[r][1];
+            		v[r][2] = q[r][2];
+            	}
+            	else {
+            		v[r][0] = q[r][0]/sin_half_phi;
+            		v[r][1] = q[r][1]/sin_half_phi;
+            		v[r][2] = q[r][2]/sin_half_phi;
+            	}
+            }
+	}
+
 	
 }
