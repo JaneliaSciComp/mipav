@@ -1607,6 +1607,315 @@ public class Quaternions extends AlgorithmBase {
 		}
 	}
 
+	public void test_qdecomp() {
+		// Test passes.
+		// TEST_QDECOMP runs unit tests for the QDECOMP function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.7 $
+		// $Date: 2009-07-26 20:05:13 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	
+        UI.setDataText("test_title = test_qdecomp\n");
+		
+		int failures=0;
+	    int r,c;
+        int wrong_values;
+        double q[][];
+        double test_v[][];
+        double test_phi[];
+        int qtype;
+        int ansLength;
+        double truth_phi[];
+        double truth_v[][];
+        double preq[][];
+        double q1[][];
+        double q2[][];
+        double q3[][];
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('q=[0 0 0 1]');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//% Test values
+        q = new double[][] {{0, 0, 0, 1}};
+        qtype = isq(q);
+        if (qtype == 1) {
+        	ansLength = q[0].length;
+        }
+        else {
+        	ansLength = q.length;
+        }
+        test_v = new double[ansLength][3];
+        test_phi = new double[ansLength];
+		qdecomp(test_v, test_phi, q);
+		// phi
+		truth_phi = new double[] {0};
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			if (Math.abs(truth_phi[r] - test_phi[r]) > 1.0E-15) {
+			    wrong_values++;	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp q=[0 0 0 1] phi check failed with " + wrong_values + " wrong values\n");
+		}
+		// v
+		truth_v = new double[][] {{0, 0, 0}};
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_v[r][c] - test_v[r][c]) > 1.0E-15) {
+				    wrong_values++;	
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp q=[0 0 0 1] v check failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Column of three quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		preq = new double[][] {{1, 2.0, 3, 4}};
+		q1 = qnorm(preq);
+		q2 = new double[][] {{0,0,0,1}};
+		preq = new double[][] {{-1, 0.5, 2, -2}};
+		q3=qnorm(preq);
+		q = new double[3][4];
+		for (c = 0; c < 4; c++) {
+			q[0][c] = q1[0][c];
+			q[1][c] = q2[0][c];
+			q[2][c] = q3[0][c];
+		}
+		qtype = isq(q);
+        if (qtype == 1) {
+        	ansLength = q[0].length;
+        }
+        else {
+        	ansLength = q.length;
+        }
+        test_v = new double[ansLength][3];
+        test_phi = new double[ansLength];
+		qdecomp(test_v, test_phi, q);
+		// phi
+		truth_phi = new double[] {2.0*Math.acos(q1[0][3]), 0.0, 2.0*Math.acos(q3[0][3])};
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			if (Math.abs(truth_phi[r] - test_phi[r]) > 1.0E-15) {
+			    wrong_values++;	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp Column of three quaternions phi check failed with " + wrong_values + " wrong values\n");
+		}
+		// v
+		truth_v = new double[3][3];
+		double denom1 = Math.sin(Math.acos(q1[0][3]));
+		truth_v[0][0] = q1[0][0]/denom1;
+		truth_v[0][1] = q1[0][1]/denom1;
+		truth_v[0][2] = q1[0][2]/denom1;
+		truth_v[1][0] = 0.0;
+		truth_v[1][1] = 0.0;
+		truth_v[1][2] = 0.0;
+		double denom3 = Math.sin(Math.acos(q3[0][3]));
+		truth_v[2][0] = q3[0][0]/denom3;
+		truth_v[2][1] = q3[0][1]/denom3;
+		truth_v[2][2] = q3[0][2]/denom3;
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_v[r][c] - test_v[r][c]) > 1.0E-15) {
+				    wrong_values++;	
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp Column of three quaternions v check failed with " + wrong_values + " wrong values\n");
+		}
+		
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Row of 6 quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		// Test values
+		q = new double[4][6];
+		for (r = 0;  r < 4; r++) {
+			q[r][0] = q1[0][r];
+			q[r][1] = q2[0][r];
+			q[r][2] = q3[0][r];
+			q[r][3] = q3[0][r];
+			q[r][4] = q2[0][r];
+			q[r][5] = q1[0][r];
+		}
+		qtype = isq(q);
+        if (qtype == 1) {
+        	ansLength = q[0].length;
+        }
+        else {
+        	ansLength = q.length;
+        }
+        test_v = new double[ansLength][3];
+        test_phi = new double[ansLength];
+		qdecomp(test_v, test_phi, q);
+		// phi
+		truth_phi = new double[] {2.0*Math.acos(q1[0][3]), 0.0, 2.0*Math.acos(q3[0][3]),
+				2.0*Math.acos(q3[0][3]), 0.0, 2.0*Math.acos(q1[0][3])};		
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			if (Math.abs(truth_phi[r] - test_phi[r]) > 1.0E-15) {
+			    wrong_values++;	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp Row of 6 quaternions phi check failed with " + wrong_values + " wrong values\n");
+		}
+	
+		// v
+		truth_v = new double[6][3];
+		denom1 = Math.sin(Math.acos(q1[0][3]));
+		truth_v[0][0] = q1[0][0]/denom1;
+		truth_v[0][1] = q1[0][1]/denom1;
+		truth_v[0][2] = q1[0][2]/denom1;
+		truth_v[1][0] = 0.0;
+		truth_v[1][1] = 0.0;
+		truth_v[1][2] = 0.0;
+	    denom3 = Math.sin(Math.acos(q3[0][3]));
+		truth_v[2][0] = q3[0][0]/denom3;
+		truth_v[2][1] = q3[0][1]/denom3;
+		truth_v[2][2] = q3[0][2]/denom3;
+		truth_v[3][0] = q3[0][0]/denom3;
+		truth_v[3][1] = q3[0][1]/denom3;
+		truth_v[3][2] = q3[0][2]/denom3;
+		truth_v[4][0] = 0.0;
+		truth_v[4][1] = 0.0;
+		truth_v[4][2] = 0.0;
+		truth_v[5][0] = q1[0][0]/denom1;
+		truth_v[5][1] = q1[0][1]/denom1;
+		truth_v[5][2] = q1[0][2]/denom1;
+		
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_v[r][c] - test_v[r][c]) > 1.0E-15) {
+				    wrong_values++;	
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp Row of 6 quaternions v check failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Ambiguous Input: 4x4, check result for validity');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		// Test values
+		q = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			q[r][0] = q1[0][r];
+			q[r][1] = q3[0][r];
+			q[r][2] = q1[0][r];
+			q[r][3] = q2[0][r];
+		}
+		qtype = isq(q);
+        if (qtype == 1) {
+        	ansLength = q[0].length;
+        }
+        else {
+        	ansLength = q.length;
+        }
+        test_v = new double[ansLength][3];
+        test_phi = new double[ansLength];
+		qdecomp(test_v, test_phi, q);
+		// phi
+		truth_phi = new double[] {2.0*Math.acos(q1[0][3]),2.0*Math.acos(q3[0][3]),2.0*Math.acos(q1[0][3]),0.0};
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			if (Math.abs(truth_phi[r] - test_phi[r]) > 1.0E-15) {
+			    wrong_values++;	
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp Ambiguous Input: 4x4, check result for validity phi check failed with " + wrong_values + " wrong values\n");
+		}
+		
+		// v
+		truth_v = new double[4][3];
+		denom1 = Math.sin(Math.acos(q1[0][3]));
+		truth_v[0][0] = q1[0][0]/denom1;
+		truth_v[0][1] = q1[0][1]/denom1;
+		truth_v[0][2] = q1[0][2]/denom1;
+		double denom2 = Math.sin(Math.acos(q3[0][3]));
+		truth_v[1][0] = q3[0][0]/denom2;
+		truth_v[1][1] = q3[0][1]/denom2;
+		truth_v[1][2] = q3[0][2]/denom2;
+		truth_v[2][0] = q1[0][0]/denom1;
+		truth_v[2][1] = q1[0][1]/denom1;
+		truth_v[2][2] = q1[0][2]/denom1;
+		truth_v[3][0] = 0.0;
+		truth_v[3][1] = 0.0;
+		truth_v[3][2] = 0.0;
+		
+		wrong_values = 0;
+		for (r = 0; r < ansLength; r++) {
+			for (c = 0; c < 3; c++) {
+				if (Math.abs(truth_v[r][c] - test_v[r][c]) > 1.0E-15) {
+				    wrong_values++;	
+				}
+			}
+		}
+		
+		if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_qdecomp Ambiguous Input: 4x4, check result for validity v check failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Ambiguous Input: 4x4');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ['Component quaternion shape indeterminate, assuming' ...
+		//                 ' row vectors'];
+		q = new double[4][4];
+		for (r = 0; r < 4; r++) {
+			for (c = 0; c < 4; c++) {
+				q[r][c] = 0.5;
+			}
+		}
+		qtype = isq(q);
+        if (qtype == 1) {
+        	ansLength = q[0].length;
+        }
+        else {
+        	ansLength = q.length;
+        }
+        test_v = new double[ansLength][3];
+        test_phi = new double[ansLength];
+		qdecomp(test_v, test_phi, q);
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	    
+		UI.setDataText("In test_qdecomp " + failures + " failures\n");
+		if (failures > 0) {
+			UI.setDataText("test_qdecomp FAILED\n");
+		}
+	}
+
+
 
 	
 	public int isq(double q[][]) {
