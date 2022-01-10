@@ -534,7 +534,6 @@ public class Quaternions extends AlgorithmBase {
 	
 		int failures=0;
 	
-		double q[] = new double[] {0, 0, 0, 1};
 	    double q1[][];
 	    double q2[][];
 	    double q1q2[][];
