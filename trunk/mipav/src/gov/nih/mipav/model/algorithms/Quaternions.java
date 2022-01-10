@@ -2058,6 +2058,122 @@ public class Quaternions extends AlgorithmBase {
 		}
 		
 	}
+	
+	public void test_q2dcm() {
+		// Test passes.
+		// TEST_Q2DCM runs unit tests for the Q2DCM function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.6 $
+		// $Date: 2009-07-26 20:05:12 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+	
+        UI.setDataText("test_title = test_q2dcm\n");
+		
+		int failures=0;
+	    int r,c;
+	    double q[][];
+	    double R[][][];
+	    int wrong_values;
+		
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Ambiguous Input: 4x4 non-normalized');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//expected_warn = ...
+		    //'Component quaternion shape indeterminate, assuming row vectors';
+	    q = new double[4][4];
+	    for (r = 0; r < 4; r++) {
+	    	for (c = 0; c < 4; c++) {
+	    		q[r][c] = 1.0;
+	    	}
+	    }
+		R = q2dcm(q);
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Column of two quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		double preQ[][] = new double[2][4];
+        RandomNumberGen randomGen = new RandomNumberGen();
+        for (r = 0; r < 2; r++) {
+        	for (c = 0; c < 4; c++) {
+        	    preQ[r][c] = randomGen.genUniformRandomNum(-1.0,1.0);
+        	}
+        }
+        double Q[][] = qnorm(preQ);
+		double v[][] = new double[][] {{1, 2, 3}};
+		double truth_value[][] = qvxform(Q, v);
+		double A[][][] = q2dcm(Q);
+		double test_value[][] = new double[2][3];
+		test_value[0][0] = A[0][0][0]*v[0][0] + A[0][1][0]*v[0][1] + A[0][2][0]*v[0][2];
+		test_value[0][1] = A[1][0][0]*v[0][0] + A[1][1][0]*v[0][1] + A[1][2][0]*v[0][2];
+		test_value[0][2] = A[2][0][0]*v[0][0] + A[2][1][0]*v[0][1] + A[2][2][0]*v[0][2];
+		test_value[1][0] = A[0][0][1]*v[0][0] + A[0][1][1]*v[0][1] + A[0][2][1]*v[0][2];
+		test_value[1][1] = A[1][0][1]*v[0][0] + A[1][1][1]*v[0][1] + A[1][2][1]*v[0][2];
+		test_value[1][2] = A[2][0][1]*v[0][0] + A[2][1][1]*v[0][1] + A[2][2][1]*v[0][2];
+        wrong_values = 0;
+        for (r = 0; r < 2; r++) {
+        	for (c = 0; c < 3; c++) {
+        		if (Math.abs(truth_value[r][c] - test_value[r][c]) > 10.0*epsilon) {
+        			wrong_values++;
+        		}
+        	}
+        }
+        
+        if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_q2dcm Column of two quaternions failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Row of two quaternions');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        preQ = new double[4][2];
+        for (r = 0; r < 4; r++) {
+        	for (c = 0; c < 2; c++) {
+        	    preQ[r][c] = randomGen.genUniformRandomNum(-1.0,1.0);
+        	}
+        }
+        Q = qnorm(preQ);
+        v = new double[3][2];
+        for (r = 0; r < 3; r++) {
+        	for (c = 0; c < 2; c++) {
+        	    v[r][c] = randomGen.genUniformRandomNum(0.0,1.0);
+        	}
+        }
+		truth_value = qvxform(Q, v);
+		A=q2dcm(Q);
+		test_value = new double[3][2];
+		test_value[0][0] = A[0][0][0]*v[0][0] + A[0][1][0]*v[1][0] + A[0][2][0]*v[2][0];
+		test_value[1][0] = A[1][0][0]*v[0][0] + A[1][1][0]*v[1][0] + A[1][2][0]*v[2][0];
+		test_value[2][0] = A[2][0][0]*v[0][0] + A[2][1][0]*v[1][0] + A[2][2][0]*v[2][0];
+		test_value[0][1] = A[0][0][1]*v[0][1] + A[0][1][1]*v[1][1] + A[0][2][1]*v[2][1];
+		test_value[1][1] = A[1][0][1]*v[0][1] + A[1][1][1]*v[1][1] + A[1][2][1]*v[2][1];
+		test_value[2][1] = A[2][0][1]*v[0][1] + A[2][1][1]*v[1][1] + A[2][2][1]*v[2][1];
+        wrong_values = 0;
+        for (r = 0; r < 3; r++) {
+        	for (c = 0; c < 2; c++) {
+        		if (Math.abs(truth_value[r][c] - test_value[r][c]) > 10.0*epsilon) {
+        			wrong_values++;
+        		}
+        	}
+        }
+        
+        if (wrong_values > 0) {
+			failures++;
+			UI.setDataText("In test_q2dcm Row of two quaternions failed with " + wrong_values + " wrong values\n");
+		}
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		UI.setDataText("In test_q2dcm " + failures + " failures\n");
+		if (failures > 0) {
+			UI.setDataText("test_q2dcm FAILED\n");
+		}
+	}
+
+
 
 	
 	public int isq(double q[][]) {
