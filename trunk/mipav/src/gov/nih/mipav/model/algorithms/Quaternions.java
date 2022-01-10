@@ -1916,6 +1916,96 @@ public class Quaternions extends AlgorithmBase {
 	}
 
 
+	public void test_dcm2q() {
+		// TEST_DCM2Q runs unit tests for the DCM2Q function.
+	
+		// Release: $Name: quaternions-1_3 $
+		// $Revision: 1.8 $
+		// $Date: 2009-07-26 20:05:12 $
+	
+		// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+		
+        UI.setDataText("test_title = test_dcm2q\n");
+		
+		int failures=0;
+	    int r,c;
+        int wrong_values;
+	
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		//disp_test_name('Algorithm');
+		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        double t;
+        double a[] = new double[17];
+        double b[] = new double[17];
+        double z[] = new double[17];
+        for (r = 0; r < 17; r++) {
+        	t = r*Math.PI/8;
+        	a[r] = Math.sin(t);
+        	b[r] = Math.cos(t);
+        }
+        double preQin[][] = new double[10][4];
+        RandomNumberGen randomGen = new RandomNumberGen();
+        for (r = 0; r < 10; r++) {
+        	for (c = 0; c < 4; c++) {
+        	    preQin[r][c] = randomGen.genUniformRandomNum(-1.0,1.0);
+        	}
+        }
+        double Qin[][] = qnorm(preQin);
+		/*t=0:2*pi/16:2*pi;
+		a=sin(t)';
+		b=cos(t)';
+		z=0*a;
+	
+		Qin = qnorm(2*rand(10,4)-1);
+	
+		Qin = [Qin; [a b z z]];
+		Qin = [Qin; [a z b z]];
+		Qin = [Qin; [a z z b]];
+	
+		Qin = [Qin; [b a z z]];
+		Qin = [Qin; [z a b z]];
+		Qin = [Qin; [z a z b]];
+	
+		Qin = [Qin; [b z a z]];
+		Qin = [Qin; [z b a z]];
+		Qin = [Qin; [z z a b]];
+	
+		Qin = [Qin; [b z z a]];
+		Qin = [Qin; [z b z a]];
+		Qin = [Qin; [z z b a]];
+	
+		% make sure all quaternions have q4>=0
+		for count=1:length(Qin)
+		  if Qin(count,4)<0
+		    Qin(count,:)=-Qin(count,:);
+		  end
+		end
+		Qin, disp(' ') %#ok<NOPTS>
+	
+		A='q2dcm(Qin)', disp(' ') %#ok<NOPTS>
+		A=eval(A);
+	
+		T=(1:length(Qin))*0;
+		for count=1:length(Qin)
+		  T(count) = trace(A(:,:,count));
+		end
+	
+		Qout='dcm2q(A)', disp(' ') %#ok<NOPTS>
+		Qout=eval(Qout);
+	
+		qdiff='qmult(qconj(Qout),Qin)', disp(' ') %#ok<NOPTS>
+		qdiff=eval(qdiff);
+	
+		truth_value = '[0.0  0.0  0.0]';
+		test_value  = 'max(abs(qdiff(:,1:3)))';
+	
+		failures=failures+check_value(truth_value, test_value);
+	
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+		disp_num_failures(test_title, failures)*/
+	}
 
 	
 	public int isq(double q[][]) {
@@ -2737,5 +2827,206 @@ public class Quaternions extends AlgorithmBase {
             }
 	}
 
+	public double[][] dcm2q(double R[][][]) {
+			// DCM2Q(R) converts direction cosine matrices into quaternions.
+			
+			//     The resultant quaternion(s) will perform the equivalent vector
+			//     transformation as the input DCM(s), i.e.:
+			
+			//       qconj(Q)*V*Q = R*V
+			
+			//     where R is the DCM, V is a vector, and Q is the quaternion.  Note that
+			//     for purposes of quaternion-vector multiplication, a vector is treated
+			//     as a quaterion with a scalar element of zero.
+			
+			//     If the input is a 3x3xN array, the output will be a vector of
+			//     quaternions where input direction cosine matrix R(:,:,k) corresponds
+			//     to the output quaternion Q(k,:).
+			
+			//     Note that this function is meaningless for non-orthonormal matrices!
+			
+			// See also Q2DCM.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.11 $
+			// $Date: 2009-07-25 04:28:18 $
+			 
+			// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+
+			// Thanks to Tatsuki Kashitani for pointing out the numerical instability in
+			// the original implementation.  His suggested fix also included a check for
+			// the "sr" values below being zero.  But I think I've convinced myself that
+			// this isn't necessary if the input matrices are orthonormal (or at least
+			// very close to orthonormal).
+
+			  
+			  
+		   int r,c;
+		   int id_dcm;
+		   double dcm[][] = new double[3][3];
+		   double trace;
+		   double sr;
+		   double sr2;
+		   int R1 = R.length;
+		   int R2 = R[0].length;
+		   int R3 = R[0][0].length;
+		  
+		   if ((R1 != 3) || (R2 != 3))  {
+			   System.err.println("dcm2q invalid R input: Must be a 3X3XN array");
+			   return null;
+		   }
+		   
+		   double q[][] = new double[4][R3];
+
+
+			for (id_dcm = 0; id_dcm < R3; id_dcm++) {
+			  for (r = 0; r < 3; r++) {
+				  for (c = 0; c < 3; c++) {
+					  dcm[r][c] = R[r][c][id_dcm];
+				  }
+			  }
+			  trace = dcm[0][0] + dcm[1][1] + dcm[2][2];
+			  if (trace > 0) {
+			    // Positve Trace Algorithm
+			    sr  = Math.sqrt( Math.max(1 + trace,0.0));
+			    sr2 = 2*sr;
+			    q[0][id_dcm] = ( dcm[1][2] - dcm[2][1] ) / sr2;
+			    q[1][id_dcm] = ( dcm[2][0] - dcm[0][2] ) / sr2;
+			    q[2][id_dcm] = ( dcm[0][1] - dcm[1][0] ) / sr2;
+			    q[3][id_dcm] = 0.5 * sr;
+			  }
+			  else {
+			    // Negative Trace Algorithm
+			    if (( dcm[0][0] > dcm[1][1] ) && ( dcm[0][0] > dcm[2][2] )) {
+			      // Maximum Value at DCM(0,0)
+			      sr  = Math.sqrt( Math.max(1 + (dcm[0][0] - ( dcm[1][1] + dcm[2][2] )),0.0) );
+			      sr2 = 2*sr;
+			      q[0][id_dcm] = 0.5 * sr;
+			      q[1][id_dcm] = ( dcm[1][0] + dcm[0][1] ) / sr2;
+			      q[2][id_dcm] = ( dcm[2][0] + dcm[0][2] ) / sr2;
+			      q[3][id_dcm] = ( dcm[1][2] - dcm[2][1] ) / sr2;
+			    }
+			    else if (dcm[1][1] > dcm[2][2]) {
+			      // Maximum Value at DCM(1,1)
+			      sr  = Math.sqrt( Math.max(1 + (dcm[1][1] - ( dcm[2][2] + dcm[0][0] )),0.0) );
+			      sr2 = 2*sr;
+			      q[0][id_dcm] = ( dcm[1][0] + dcm[0][1] ) / sr2;
+			      q[1][id_dcm] = 0.5 * sr;
+			      q[2][id_dcm] = ( dcm[1][2] + dcm[2][1] ) / sr2;
+			      q[3][id_dcm] = ( dcm[2][0] - dcm[0][2] ) / sr2;
+			    }
+			    else {
+			      // Maximum Value at DCM(2,2)
+			      sr  = Math.sqrt( Math.max(1 + (dcm[2][2] - ( dcm[0][0] + dcm[1][1] )),0.0) );
+			      sr2 = 2*sr;
+			      q[0][id_dcm] = ( dcm[2][0] + dcm[0][2] ) / sr2;
+			      q[1][id_dcm] = ( dcm[1][2] + dcm[2][1] ) / sr2;
+			      q[2][id_dcm] = 0.5 * sr;
+			      q[3][id_dcm] = ( dcm[0][1] - dcm[1][0] ) / sr2;
+			    }
+			  } // else negative trace algorithm
+			} // for (id_dcm = 0; id_dcm < R3; id_dcm++)
+
+			// Make quaternion vector a column of quaternions
+			double qt[][] = new double[R3][4];
+			for (r = 0; r < R3; r++) {
+				for (c = 0; c < 4; c++) {
+					qt[r][c] = q[c][r];
+				}
+			}
+			return qt;
+	}
+
+
+	public double[][][] q2dcm(double qorg[][]) {
+			// Q2DCM(Q) converts quaternions into direction cosine matrices.
+			
+			//     The resultant DCM(s) will perform the same transformations as the
+			//     quaternion(s) in Q, i.e.:
+			
+			//       R*v = qvxform(q, v) 
+			
+			//     where R is the DCM, V is a vector, and Q is the quaternion.  Note that
+			//     for purposes of quaternion-vector multiplication, a vector is treated
+			//     as a quaterion with a scalar element of zero.
+			
+			//     If the input, Q, is a vector of quaternions, the output, R, will be
+			//     3x3xN where input quaternion Q(k,:) corresponds to output DCM
+			//     R(:,:,k).
+			
+			//     Note that the input Q will be processed by QNORM to ensure normality.
+			
+			// See also DCM2Q, QNORM.
+
+			// Release: $Name: quaternions-1_3 $
+			// $Revision: 1.14 $
+			// $Date: 2009-07-24 19:14:44 $
+			 
+			// Copyright (c) 2000-2009, Jay A. St. Pierre.  All rights reserved.
+
+
+			int r,c;
+			int qtype=isq(qorg);
+			if ( qtype == 0 ) {
+			    System.err.println("q2dcm invalid input: must be a quaternion or a vector of quaternions");
+			    return null;
+			}
+
+			// Make sure input is a column of quaternions
+			double q[][];
+			if( qtype==1 ) {
+				q = new double[qorg[0].length][qorg.length];
+				for (r = 0; r < q.length; r++) {
+					for (c = 0; c < q[0].length; c++) {
+						q[r][c] = qorg[c][r];
+					}
+				}
+			}
+			else {
+				q = new double[qorg.length][qorg[0].length];
+				for (r = 0; r < q.length; r++) {
+					for (c = 0; c < q[0].length; c++) {
+						q[r][c] = qorg[r][c];
+					}
+				}	
+			}
+
+			// Make sure quaternion is normalized to prevent skewed DCM
+			q=qnorm(q);
+			double R[][][] = new double[3][3][q.length];
+			double q1q1, q1q2, q1q3, q1q4, q2q2, q2q3, q2q4, q3q3, q3q4, q4q4;
+
+			// Build quaternion element products
+			for (r = 0; r < q.length; r++) {
+				q1q1=q[r][0]*q[r][0];
+				q1q2=q[r][0]*q[r][1];
+				q1q3=q[r][0]*q[r][2];
+				q1q4=q[r][0]*q[r][3];
+	
+				q2q2=q[r][1]*q[r][1];
+				q2q3=q[r][1]*q[r][2];
+				q2q4=q[r][1]*q[r][3];
+	
+				q3q3=q[r][2]*q[r][2];
+				q3q4=q[r][2]*q[r][3];
+				  
+				q4q4=q[r][3]*q[r][3];
+	
+				// Build DCM
+				R[0][0][r] =  q1q1 - q2q2 - q3q3 + q4q4;
+				R[0][1][r] = 2*(q1q2 + q3q4);
+				R[0][2][r] = 2*(q1q3 - q2q4);
+				  
+				R[1][0][r] = 2*(q1q2 - q3q4);
+				R[1][1][r] = -q1q1 + q2q2 - q3q3 + q4q4;
+				R[1][2][r] = 2*(q2q3 + q1q4);
+				  
+				R[2][0][r] = 2*(q1q3 + q2q4);
+				R[2][1][r] = 2*(q2q3 - q1q4);
+				R[2][2][r] = -q1q1 - q2q2 + q3q3 + q4q4;
+			}
+			
+			return R;
+	}
 	
 }
