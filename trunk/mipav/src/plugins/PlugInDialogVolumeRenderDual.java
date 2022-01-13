@@ -404,6 +404,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						validate();
+						leftRenderer.setVisible(true);
+						if ( rightRenderer != null ) rightRenderer.setVisible(true);
 					} else {
 						editMode = EditNONE;
 						startButton.setEnabled(true);
@@ -420,6 +422,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						validate();
+						leftRenderer.setVisible(true);
+						if ( rightRenderer != null ) rightRenderer.setVisible(true);
 					} else {
 						editMode = EditNONE;
 						startButton.setEnabled(true);
@@ -433,6 +437,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						previewUntwisting.setVisible(true);
 						displayControls.setVisible(false);
 						validate();
+						leftRenderer.setVisible(true);
+						if ( rightRenderer != null ) rightRenderer.setVisible(true);
 					} else {
 						editMode = EditNONE;
 						startButton.setEnabled(true);
@@ -1677,6 +1683,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				success = true;
 
 				leftRenderer = new VolumeTriPlanarRender(null, leftImage.volumeImage, new VolumeImage());
+				leftRenderer.setVisible(false);
 				leftRenderer.addConfiguredListener(this);
 
 				if ((imageIndex + 1) < imageStack.length) {
@@ -1684,6 +1691,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					rightRenderer = new VolumeTriPlanarRender(null, rightImage.volumeImage, new VolumeImage());
 					rightRenderer.addConfiguredListener(this);
+					rightRenderer.setVisible(false);
 
 					leftDisplayPanel = new JPanel(new BorderLayout());
 					leftDisplayPanel.add(leftRenderer.GetCanvas(), BorderLayout.CENTER);
