@@ -46,6 +46,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
     /** DOCUMENT ME! */
     private JDialogDICOMTagEditor editorDialogDicom;
+    
+    private JDialogDICOMNewTagEditor editorNewTag;
 
     /** DOCUMENT ME! */
     private Vector<JDialogDICOMTagEditor> editorDialogDicomList;
@@ -1676,7 +1678,20 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             isAppend = false;
             saveTags();
         } else if(e.getActionCommand().equals("NewTag")) {
-        	MipavUtil.displayError("This method has not been implemented, please contact bugs@mipav.cit.nih.gov to request its implementation.");
+        	editorNewTag = new JDialogDICOMNewTagEditor(this, DicomInfo.getTagTable(), false, true);
+            editorNewTag.addButtonListener(this);
+            editorDialogDicom.addWindowListener(new WindowAdapter() { 
+	            public void windowClosed(final WindowEvent e) {
+	                JDialogDICOMNewTagEditor tagDialog; // temporary tag editor dialog
+	
+	                tagDialog = (JDialogDICOMNewTagEditor) e.getSource();
+	
+	                if (tagDialog.wasDialogOkay()) {
+	                    // Prevent second entry when JDialogFileInfoDICOM window closes
+	                    tagDialog.setStruckOkayButton(false);
+	                }
+	            }
+            });
         } else if (e.getActionCommand().equals("SaveTagsAppend")) {
             isAppend = true;
             saveTags();
