@@ -1680,7 +1680,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         } else if(e.getActionCommand().equals("NewTag")) {
         	editorNewTag = new JDialogDICOMNewTagEditor(this, DicomInfo.getTagTable(), false, true);
             editorNewTag.addButtonListener(this);
-            editorDialogDicom.addWindowListener(new WindowAdapter() { 
+            editorNewTag.addWindowListener(new WindowAdapter() { 
 	            public void windowClosed(final WindowEvent e) {
 	                JDialogDICOMNewTagEditor tagDialog; // temporary tag editor dialog
 	
@@ -1689,8 +1689,66 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 	                if (tagDialog.wasDialogOkay()) {
 	                    // Prevent second entry when JDialogFileInfoDICOM window closes
 	                    tagDialog.setStruckOkayButton(false);
-	                }
-	            }
+	                    if (tagDialog.applyToAllSlices()) { // apply change to all slices
+                            int i;
+
+                            if (imageA.getNDims() == 2) {
+                                DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                        tagDialog.getTagValue());
+                            } else {
+                                FileInfoDicom tempInfo;
+
+                                for (i = 0; i < imageA.getExtents()[2]; i++) {
+                                    tempInfo = (FileInfoDicom) imageA.getFileInfo(i);
+                                    tempInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                            tagDialog.getTagValue());
+                                    imageA.setFileInfo(tempInfo, i);
+                                }
+                            }
+
+                            // tell any other objects that care that there are new data
+                            // (ie, a new name) & update
+                            final Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
+
+                            for (i = 0; i < imageFrames.size(); i++) {
+                                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle();
+                            }
+
+                            setTitle(imageA.getImageName());
+                        } else { // do not apply this change to all image-info. Apply this change to only
+                            // this
+                            // slice.
+
+                            // place the tag back into the DicomInfo
+                            DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                    tagDialog.getTagValue());
+                        }
+
+                        //if (editorDialogDicomList.size() > 0) {
+                            //editorDialogDicomList.removeElementAt(0);
+                        //} // clean up
+
+                        int i;
+
+                        for (i = 0; i < tagsModel.getRowCount(); i++) {
+
+                            if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
+                                break;
+                            }
+                        }
+
+                        i += 2;
+
+                        for (; i < tagsModel.getRowCount();) {
+                            tagsModel.removeRow(i);
+                        }
+
+                        JDialogFileInfoDICOM.showTags(tagsModel, DicomInfo, showPrivate); // update the
+                        // displayed
+                        // table
+                    } else {}
+                }
+
             });
         } else if (e.getActionCommand().equals("SaveTagsAppend")) {
             isAppend = true;
