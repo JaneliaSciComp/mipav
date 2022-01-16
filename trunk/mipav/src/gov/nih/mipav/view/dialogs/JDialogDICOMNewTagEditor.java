@@ -32,11 +32,23 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
     /** DOCUMENT ME! */
     private JCheckBox applyToAllSlicesCheckBox;
 
-    /** DOCUMENT ME! */
-    private JPanelEdit[] newInputPanel;
 
     /** DOCUMENT ME! */
-    private JTextField originalTextField;
+    private JTextField textTagGroup;
+    
+    private JTextField textTagElement;
+    
+    private JTextField textTagName;
+    
+    private JTextField textTagValue;
+    
+    String groupString;
+    
+    String elementString;
+    
+    String tagName;
+    
+    String tagValue;
 
     /** DOCUMENT ME! */
     private boolean struckOkayButton = false; // if the user hit the OKAY button set to true
@@ -47,8 +59,6 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
     /** A reference to the tag table containing the tag we will be editing. */
     private FileDicomTagTable tagTable;
 
-    /** The main panel that is accessed. */
-	private Box mainBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -89,7 +99,7 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
         gbc.gridy = 0;
         paramPanel.add(labelTagGroup, gbc);
 
-        JTextField textTagGroup = new JTextField(10);
+        textTagGroup = new JTextField(10);
         textTagGroup.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textTagGroup, gbc);
@@ -101,7 +111,7 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
         gbc.gridy = 1;
         paramPanel.add(labelTagElement, gbc);
 
-        JTextField textTagElement = new JTextField(10);
+        textTagElement = new JTextField(10);
         textTagElement.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textTagElement, gbc);
@@ -109,12 +119,14 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
         JLabel labelTagName = new JLabel("Tag name");
         labelTagName.setForeground(Color.black);
         labelTagName.setFont(serif12);
+        labelTagName.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy = 2;
         paramPanel.add(labelTagName, gbc);
 
-        JTextField textTagName = new JTextField(80);
+        textTagName = new JTextField(80);
         textTagName.setFont(serif12);
+        textTagName.setEnabled(false);
         gbc.gridx = 1;
         paramPanel.add(textTagName, gbc);
         
@@ -125,12 +137,12 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
         gbc.gridy = 3;
         paramPanel.add(labelTagValue, gbc);
 
-        JTextField textTagValue = new JTextField(80);
+        textTagValue = new JTextField(80);
         textTagGroup.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textTagValue, gbc);
         
-        JCheckBox applyToAllSlicesCheckBox = new JCheckBox("Apply this change to all slices in image");
+        applyToAllSlicesCheckBox = new JCheckBox("Apply this change to all slices in image");
         applyToAllSlicesCheckBox.setActionCommand("NewTagEditorApplyToAllSlicesCheckBox");
         applyToAllSlicesCheckBox.setFont(serif12);
         applyToAllSlicesCheckBox.setForeground(Color.black);
@@ -160,10 +172,10 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equals("OK")) {
+        if (command.equals("TagAddOK")) {
 
             if (setVariables()) {
-            	//tagTable.setValue(tagKey, newValue.toString());
+            	tagTable.setValue(tagKey, tagValue);
             	// hide & set flags
                 setVisible(false);
                 dispose();
@@ -171,7 +183,7 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
             }
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
-        } else if (command.equals("Cancel")) {
+        } else if (command.equals("TagAddCancel")) {
             dispose();
         } else {
             super.actionPerformed(event);
@@ -179,49 +191,88 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
     }
     
     private boolean setVariables() {
-
+        int i;
         System.gc();
-
-        String tmpStr;
         
-        /*tmpStr = textHighThreshold.getText();
-
-        if (testParameter(tmpStr, 0.001, 1.0)) {
-            highThreshold = Double.valueOf(tmpStr).doubleValue();
-        } else {
-            textHighThreshold.requestFocus();
-            textHighThreshold.selectAll();
-
+        groupString = textTagGroup.getText();
+        if (!isHexadecimal(groupString)) {
+        	MipavUtil.displayError("The tag group string is not hexadecimal");
+            textTagGroup.requestFocus();
+            textTagGroup.selectAll();
             return false;
         }
-
-        tmpStr = textLowThreshold.getText();
-
-        if (testParameter(tmpStr, 0.0001, 0.9999 * highThreshold)) {
-            lowThreshold = Double.valueOf(tmpStr).doubleValue();
-        } else {
-            textLowThreshold.requestFocus();
-            textLowThreshold.selectAll();
-
+        if (groupString.length() > 4) {
+        	MipavUtil.displayError("The tag group string cannot have a length greater than 4");
+            textTagGroup.requestFocus();
+            textTagGroup.selectAll();
             return false;
         }
         
-        tmpStr = textSigma.getText();
+        while (groupString.length() < 4) { // prepend with '0' as needed
+            groupString = "0" + groupString;
+        }
 
-        if (testParameter(tmpStr, 1.0, 10.0)) {
-            sigma = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textSigma.requestFocus();
-            textSigma.selectAll();
+        groupString = groupString.toUpperCase();
 
+        elementString = textTagElement.getText();
+        if (!isHexadecimal(elementString)) {
+        	MipavUtil.displayError("The tag element string is not hexadecimal");
+            textTagElement.requestFocus();
+            textTagElement.selectAll();
             return false;
+        }
+        if (elementString.length() > 4) {
+        	MipavUtil.displayError("The tag element string cannot have a length greater than 4");
+            textTagElement.requestFocus();
+            textTagElement.selectAll();
+            return false;
+        }
+        
+        while (elementString.length() < 4) { // prepend with '0' as needed
+            elementString = "0" + elementString;
+        }
+
+        elementString = elementString.toUpperCase();
+        
+        tagKey = groupString + "," + elementString;
+        if (tagTable.containsTag(tagKey)) {
+            MipavUtil.displayError("The tagTable already contains the speicifed group,element");
+            return false;
+        }
+        
+        tagName = textTagName.getText();
+        /*if (tagName == null || tagName.length() == 0) {
+        	MipavUtil.displayError("A name has not been provided");
+            textTagName.requestFocus();
+            textTagName.selectAll();
+            return false;    	
         }*/
+        
+        tagValue = textTagValue.getText();
+        if (tagValue == null || tagValue.length() == 0) {
+        	MipavUtil.displayError("A value has not been provided");
+            textTagValue.requestFocus();
+            textTagValue.selectAll();
+            return false;    	
+        }
        
 
         return true;
 
     }
+    
+    private boolean isHexadecimal(String tString) {
+        if (tString == null || tString.length() == 0 || 
+             (tString.charAt(0) != '-' && Character.digit(tString.charAt(0), 16) == -1))
+            return false;
+        if ( tString.length() == 1 && tString.charAt(0) == '-' )
+            return false;
 
+        for ( int i = 1 ; i < tString.length() ; i++ )
+            if ( Character.digit(tString.charAt(i), 16) == -1 )
+                return false;
+        return true;
+    }
     
 
     /**
@@ -256,32 +307,16 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
     public String getTagKey() {
         return tagKey;
     }
-
-    /**
-	 * @return the mainBox
-	 */
-	public Box getMainBox() {
-		return mainBox;
-	}
-
-	/**
-     * check the dialog so that if all the fields are okay (have the right number of digits, etc) and there are no
-     * messages to send back to the user about correctness.
-     *
-     * @return  boolean true if the dialog box is closing okay.
-     */
-    public boolean isDialogOkay() {
-
-        for (int i = 0; i < newInputPanel.length; i++) {
-
-            if (!newInputPanel[i].checkFields()) { // if (!okay)
-                return false;
-            }
-        }
-
-        return true;
+    
+    public String getTagName() {
+    	return tagName;
+    }
+    
+    public String getTagValue() {
+    	return tagValue;
     }
 
+	
     /**
      * returns the value of the edited tag.
      *
@@ -317,12 +352,12 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
         // size and place the OK button
         buildOKButton();
         OKCancelPanel.add(OKButton, BorderLayout.WEST);
-        OKButton.setActionCommand("TagEditorOK");
+        OKButton.setActionCommand("TagAddOK");
 
         // size and place the CANCEL button
         buildCancelButton();
         OKCancelPanel.add(cancelButton, BorderLayout.EAST);
-        cancelButton.setActionCommand("TagEditorCancel");
+        cancelButton.setActionCommand("TagAddCancel");
 
         return OKCancelPanel;
     }
