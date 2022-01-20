@@ -48,6 +48,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     private JDialogDICOMTagEditor editorDialogDicom;
     
     private JDialogDICOMNewTagEditor editorNewTag;
+    
+    private JDialogDICOMDeleteTagEditor editorDeleteTag;
 
     /** DOCUMENT ME! */
     private Vector<JDialogDICOMTagEditor> editorDialogDicomList;
@@ -86,7 +88,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
     /** buttons for toolbar * */
     private JButton saveCheckedButton, saveCheckedAppendButton, checkAllButton, uncheckAllButton, editTagButton,
-            overlayButton, anonymizeButton;
+            deleteTagButton, overlayButton, anonymizeButton;
 
     /** tool bar * */
     private JToolBar toolBar;
@@ -1549,7 +1551,88 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 					}
 				}
             });
+        } else if (e.getActionCommand().equals("DeleteTag")) { // delete the high-lighted tag
+        	String tagKey;
 
+            // get the hash-code
+            tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1)); // find the key to the selected
+            // DICOM tag
+
+            if (tagKey.equals("")) { // workaround prevent the portion of the image information from
+                return; // causing an exception if user tries to click edit tag
+            } // caused 'cos i don't understand listSelectionModel well enough
+
+            tagKey = tagKey.substring(1, tagKey.length() - 1); // remove the parens that are part of the display (the
+            // hashtable does not use parens)
+        	editorDeleteTag = new JDialogDICOMDeleteTagEditor(this, tagKey, DicomInfo.getTagTable(), false, true);
+            editorDeleteTag.addButtonListener(this);
+            editorDeleteTag.addWindowListener(new WindowAdapter() { 
+	            public void windowClosed(final WindowEvent e) {
+	                JDialogDICOMDeleteTagEditor tagDialog; // temporary tag editor dialog
+	
+	                tagDialog = (JDialogDICOMDeleteTagEditor) e.getSource();
+	
+	                if (tagDialog.wasDialogOkay()) {
+	                    // Prevent second entry when JDialogFileInfoDICOM window closes
+	                    tagDialog.setStruckOkayButton(false);
+	                    if (tagDialog.applyToAllSlices()) { // apply change to all slices
+                            int i;
+
+                            if (imageA.getNDims() == 2) {
+                                DicomInfo.getTagTable().removeTag(tagDialog.getTagKey());
+                            } else {
+                                FileInfoDicom tempInfo;
+
+                                for (i = 0; i < imageA.getExtents()[2]; i++) {
+                                    tempInfo = (FileInfoDicom) imageA.getFileInfo(i);
+                                    tempInfo.getTagTable().removeTag(tagDialog.getTagKey());
+                                    imageA.setFileInfo(tempInfo, i);
+                                }
+                            }
+
+                            // tell any other objects that care that there are new data
+                            // (ie, a new name) & update
+                            final Vector<ViewImageUpdateInterface> imageFrames = imageA.getImageFrameVector();
+
+                            for (i = 0; i < imageFrames.size(); i++) {
+                                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle();
+                            }
+
+                            setTitle(imageA.getImageName());
+                        } else { // do not apply this change to all image-info. Apply this change to only
+                            // this
+                            // slice.
+
+                            // place the tag back into the DicomInfo
+                            DicomInfo.getTagTable().removeTag(tagDialog.getTagKey());
+                        }
+
+                        //if (editorDialogDicomList.size() > 0) {
+                            //editorDialogDicomList.removeElementAt(0);
+                        //} // clean up
+
+                        int i;
+
+                        for (i = 0; i < tagsModel.getRowCount(); i++) {
+
+                            if (tagsModel.getValueAt(i, 2).equals("Other Image Information")) {
+                                break;
+                            }
+                        }
+
+                        i += 2;
+
+                        for (; i < tagsModel.getRowCount();) {
+                            tagsModel.removeRow(i);
+                        }
+
+                        JDialogFileInfoDICOM.showTags(tagsModel, DicomInfo, showPrivate); // update the
+                        // displayed
+                        // table
+                    } else {}
+                }
+
+            });
         } else if (e.getActionCommand().equals("EditTag")) { // edit the high-lighted tag
 
             String tagKey;
@@ -1879,6 +1962,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                 if (lsm.isSelectionEmpty()) {
                     editTagButton.setEnabled(false); // ...//no rows are selected
+                    deleteTagButton.setEnabled(false);
                 } else {
                     final int oldSelectedRow = selectedRowDicom;
 
@@ -1889,8 +1973,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         final String tagKey = new String((String) tagsTable.getValueAt(selectedRowDicom, 1));
                         if ( !tagKey.equals("")) {
                             editTagButton.setEnabled(true);
+                            deleteTagButton.setEnabled(true);
                         } else {
                             editTagButton.setEnabled(false);
+                            deleteTagButton.setEnabled(false);
                         }
                     } // ...//selectedRow is selected
                     // else {
@@ -2110,6 +2196,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         editTagButton = toolbarBuilder.buildButton("EditTag", "Edit Tag", "edittag");
         editTagButton.setEnabled(false);
         newTagButton = toolbarBuilder.buildButton("NewTag", "New Tag", "newtag");
+        deleteTagButton = toolbarBuilder.buildTextButton("Delete Tag","Delete Tag", "DeleteTag");
+        deleteTagButton.setEnabled(false);
         overlayButton = toolbarBuilder.buildButton("OverlayTag", "Overlay", "overlay");
         anonymizeButton = toolbarBuilder.buildButton("AnonymizeImage", "Anonymize", "anon");
 
@@ -2124,6 +2212,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         toolBar.add(ViewToolBarBuilder.makeSeparator());
         toolBar.add(newTagButton);
         toolBar.add(editTagButton);
+        toolBar.add(deleteTagButton);
         toolBar.add(ViewToolBarBuilder.makeSeparator());
         toolBar.add(overlayButton);
         toolBar.add(ViewToolBarBuilder.makeSeparator());
