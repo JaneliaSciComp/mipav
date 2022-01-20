@@ -14,7 +14,7 @@ import javax.swing.*;
 
 
 /**
- * dialog for editing DICOM tag information currently allows a limited number of special tags (procssing of which must
+ * dialog for adding new DICOM tag information currently allows a limited number of special tags (procssing of which must
  * be performed by the DICOM tag itself), but allows editing seperate multiplicity values.
  *
  * @author   William Gandler
@@ -25,7 +25,7 @@ public class JDialogDICOMNewTagEditor extends JDialogBase {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = 8765963102638731411L;
+    //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
