@@ -2826,6 +2826,40 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Export RGB data error - bounds incorrect");
     }
+    
+    /**
+     * export data in values array.
+     * 
+     * @param offset correct offset for RED, GREEN, or BLUE component to be exported
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void exportRGBData(final int offset, final int start, final int length,
+            final double[] values) throws IOException {
+        int i, j;
+
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize) && (length <= values.length)) {
+
+            try {
+                setLock(ModelStorageBase.W_LOCKED);
+
+                for (i = start + offset, j = 0; j < length; i += 4, j++) {
+                    values[j] = data.getDouble(i);
+                }
+            } catch (final IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return;
+        }
+
+        throw new IOException("Export RGB data error - bounds incorrect");
+    }
 
     /**
      * Export data in values array WITHOUT using locking.
