@@ -2,7 +2,9 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
 
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -69,7 +71,8 @@ mse, rmse, psnr, rmse_sw, uqi, ssim, ergas, scc, rase, sam, msssim, vifp, psnrb
 public class ImageQuality extends AlgorithmBase {
 	
 	private ViewUserInterface UI;
-	private int metric;
+	private int metrics[];
+	private double results[];
 	private ModelImage referenceImage;
 	private ModelImage testImage;
 	public final int MEAN_SQUARED_ERROR = 1;
@@ -86,22 +89,160 @@ public class ImageQuality extends AlgorithmBase {
 	public final int SPATIAL_DISTORTION_INDEX = 12;
 	public final int QUALITY_WITH_NO_REFERENCE = 13;
  	public final int BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO = 14;
+ 	
+ 	private double testBuffer[] = null;
+    private float testRedBuffer[] = null;
+    private float testGreenBuffer[] = null;
+    private float testBlueBuffer[] = null;
+    private double referenceBuffer[] = null;
+    private float referenceRedBuffer[] = null;
+    private float referenceGreenBuffer[] = null;
+    private float referenceBlueBuffer[] = null;
+    private double testYBuffer[];
+    private double testCrBuffer[];
+    private double testCbBuffer[];
+    private double referenceYBuffer[];
+    private double referenceCrBuffer[];
+    private double referenceCbBuffer[];
+    private int length = 1;
+    private boolean onlyTestImageRequired = false;
+    private boolean YCrCbRequired = false;
+    private boolean isColor = false;
+    
+    private double meanSquareError;
+    
+    private ModelImage gry = null;
+    private ModelImage gry_noise = null;
+    private ModelImage gry_const = null;
+    private ModelImage clr = null;
+    private ModelImage clr_noise = null;
+    private ModelImage clr_const = null;
 	
 	public ImageQuality() {
 		UI = ViewUserInterface.getReference();
+		String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
+		final FileIO fileIO = new FileIO();
+		fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+		gry = fileIO.readTiff("lena512gray.tiff", fileDir, true);
+		gry_noise = fileIO.readTiff("lena512gray_noise.tiff", fileDir, true);
+		gry_const = fileIO.readTiff("lena512gray_constant.tiff", fileDir, true);
+		clr = fileIO.readTiff("lena512color.tiff", fileDir, true);
+		clr_noise = fileIO.readTiff("lena512color_noise.tiff", fileDir, true);
+		clr_const = fileIO.readTiff("lena512color_constant.tiff", fileDir, true);
 	}
 	
-	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metric) {
-		if ((metric < 1) || (metric > 14)) {
-			MipavUtil.displayError("Illegal metric in ImageQuality");
+	public void testMse() {
+		// All tests passed for meanSquareError
+		int testsFailed = 0;
+		double eps = 1.0E-4;
+		metrics = new int[] {MEAN_SQUARED_ERROR};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,results);
+		iq.runAlgorithm();
+		if (results[0] != 0.0) {
+			System.err.println("Mean square error = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, results);
+		iq.runAlgorithm();
+		if (results[0] != 0.0) {
+			System.err.println("Mean square error = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(clr, clr_noise, metrics, results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 2391.465875)) > eps) {
+			System.err.println("Mean square error = " + results[0] + " for clr, clr_noise\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry_noise, metrics, results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 2025.913940)) > eps) {
+			System.err.println("Mean square error = " + results[0] + " for gry, gry_noise\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(clr, clr_const, metrics, results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 2302.953958)) > eps) {
+			System.err.println("Mean square error = " + results[0] + " for clr, clr_const\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry_const, metrics, results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 2016.476768)) > eps) {
+			System.err.println("Mean square error = " + results[0] + " for gry, gry_const\n");
+			testsFailed++;
+		}
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for mean square error");
+		}
+		else {
+			System.out.println("All tests passed for meanSquareError");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], double results[]) {
+		if (metrics == null) {
+			MipavUtil.displayError("metrics is null in ImageQuality");
+			return;
+		}
+		if (metrics.length == 0) {
+			MipavUtil.displayError("metrics.length == 0 in ImageQuality");
+			return;
+		}
+		if (metrics.length > 14) {
+			MipavUtil.displayError("metrics.length > 14 in ImageQuality");
+			return;
+		}
+		if (results == null) {
+			MipavUtil.displayError("results == null in ImageQuality");
+			return;
+		}
+		if (results.length != metrics.length) {
+			MipavUtil.displayError("results.length != metrics.length in ImageQuality");
 			return;
 		}
 		if (testImage == null) {
 			MipavUtil.displayError("testImage is null in ImageQuality");
 			return;
 		}
+		isColor = testImage.isColorImage();
+		for (int i = 0; i < metrics.length; i++) {
+			if ((metrics[i] < 1) || (metrics[i] > 14)) {
+				MipavUtil.displayError("Illegal metrics[" + i+ "] in ImageQuality");
+				return;
+			}
+			if ((metrics[i] == QUALITY_WITH_NO_REFERENCE) && (metrics.length == 1)) {
+				onlyTestImageRequired = true;
+			}
+			if (isColor && (metrics[i] == BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO)) {
+				YCrCbRequired = true;
+			}
+		}
+		this.metrics = metrics;
+		this.results = results;
+		
 		this.testImage = testImage;
-	    if (metric != QUALITY_WITH_NO_REFERENCE) {
+	    if (!onlyTestImageRequired) {
 	    	if (referenceImage == null) {
 				MipavUtil.displayError("referenceImage is null in ImageQuality");
 				return;
@@ -127,26 +268,17 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	this.referenceImage = referenceImage;
-	    } // if (metric != QUALITY_WITH_NO_REFERENCE)
+	    } // if (!onlyTestImageRequired)
 	}
-	
+    
     public void runAlgorithm() {
     	int i;
     	UI = ViewUserInterface.getReference();
 	    int nDims = testImage.getNDims();
-	    double testBuffer[] = null;
-	    double testRedBuffer[] = null;
-	    double testGreenBuffer[] = null;
-	    double testBlueBuffer[] = null;
-	    double referenceBuffer[] = null;
-	    double referenceRedBuffer[] = null;
-	    double referenceGreenBuffer[] = null;
-	    double referenceBlueBuffer[] = null;
-	    int length = 1;
+	    
 	    for (i = 0; i < nDims; i++) {
 	    	length *= testImage.getExtents()[i];
 	    }
-	    boolean isColor = testImage.isColorImage();
 	    if (!isColor) {
 	        testBuffer = new double[length];
 	        try {
@@ -159,7 +291,7 @@ public class ImageQuality extends AlgorithmBase {
 	        }
 	    }
 	    else {
-	        testRedBuffer = new double[length];
+	        testRedBuffer = new float[length];
 	        try {
 	        	testImage.exportRGBData(1, 0, length, testRedBuffer);
 	        }
@@ -169,7 +301,7 @@ public class ImageQuality extends AlgorithmBase {
 	        	return;
 	        }
 	        
-	        testGreenBuffer = new double[length];
+	        testGreenBuffer = new float[length];
 	        try {
 	        	testImage.exportRGBData(2, 0, length, testGreenBuffer);
 	        }
@@ -179,7 +311,7 @@ public class ImageQuality extends AlgorithmBase {
 	        	return;
 	        }
 	        
-	        testBlueBuffer = new double[length];
+	        testBlueBuffer = new float[length];
 	        try {
 	        	testImage.exportRGBData(3, 0, length, testBlueBuffer);
 	        }
@@ -188,12 +320,9 @@ public class ImageQuality extends AlgorithmBase {
 	        	setCompleted(false);
 	        	return;
 	        }
-	        if (metric == BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO) {
-	        	
-	        } // if (metric == BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO)
 	    } // else isColor
 	    
-	    if (metric != QUALITY_WITH_NO_REFERENCE) {
+	    if (!onlyTestImageRequired) {
 	    	if (!isColor) {
 		        referenceBuffer = new double[length];
 		        try {
@@ -206,7 +335,7 @@ public class ImageQuality extends AlgorithmBase {
 		        }
 		    }
 		    else {
-		        referenceRedBuffer = new double[length];
+		        referenceRedBuffer = new float[length];
 		        try {
 		        	referenceImage.exportRGBData(1, 0, length, referenceRedBuffer);
 		        }
@@ -216,7 +345,7 @@ public class ImageQuality extends AlgorithmBase {
 		        	return;
 		        }
 		        
-		        referenceGreenBuffer = new double[length];
+		        referenceGreenBuffer = new float[length];
 		        try {
 		        	referenceImage.exportRGBData(2, 0, length, referenceGreenBuffer);
 		        }
@@ -226,7 +355,7 @@ public class ImageQuality extends AlgorithmBase {
 		        	return;
 		        }
 		        
-		        referenceBlueBuffer = new double[length];
+		        referenceBlueBuffer = new float[length];
 		        try {
 		        	referenceImage.exportRGBData(3, 0, length, referenceBlueBuffer);
 		        }
@@ -236,41 +365,113 @@ public class ImageQuality extends AlgorithmBase {
 		        	return;
 		        }
 		    } // else isColor	
-	    	if (metric == BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO) {
-	    		
-	    	} // if (metric == BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO)
-	    } // metric != QUALITY_WITH_NO_REFERENCE
+	    } // if (!onlyTestImageRequired)
 	    
-	    switch(metric) {
-	    case MEAN_SQUARED_ERROR:
-	    	break;
-	    case ROOT_MEAN_SQUARED_ERROR:
-	    	break;
-	    case PEAK_SIGNAL_TO_NOISE_RATIO:
-	    	break;
-	    case STRUCTURAL_SIMILARITY_INDEX:
-	    	break;
-	    case UNIVERSAL_QUALITY_IMAGE_INDEX:
-	    	break;
-	    case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
-	    	break;
-	    case ERGAS:
-	    	break;
-	    case SPATIAL_CORRELATION_COEFFICIENT:
-	    	break;
-	    case RELATIVE_AVERAGE_SPECTRAL_ERROR:
-	    	break;
-	    case SPECTRAL_ANGLE_MAPPER:
-	    	break;
-	    case SPECTRAL_DISTORTION_INDEX:
-	    	break;
-	    case SPATIAL_DISTORTION_INDEX:
-	    	break;
-	    case QUALITY_WITH_NO_REFERENCE:
-	    	break;
-	    case BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO:
-	    	break;
-	    }
+	    if (YCrCbRequired) {
+            testYBuffer = new double[length];
+            testCrBuffer = new double[length];
+            testCbBuffer =  new double[length];
+            referenceYBuffer = new double[length];
+            referenceCrBuffer = new double[length];
+            referenceCbBuffer = new double[length];
+            double delta;
+            if (referenceImage.getType() == ModelStorageBase.ARGB) {
+            	delta = 128;
+            }
+            else if (referenceImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            	delta = 32768;
+            }
+            else {
+            	delta = 0.5;
+            }
+            for (i = 0; i < length; i++) {
+            	testYBuffer[i] = 0.299*testRedBuffer[i] + 0.587*testGreenBuffer[i] + 0.114*testBlueBuffer[i];
+            	testCrBuffer[i] = (testRedBuffer[i] - testYBuffer[i])*0.713 + delta;
+            	testCbBuffer[i] = (testBlueBuffer[i] - testYBuffer[i])*0.564 + delta;
+            	referenceYBuffer[i] = 0.299*referenceRedBuffer[i] + 0.587*referenceGreenBuffer[i] + 0.114*referenceBlueBuffer[i];
+            	referenceCrBuffer[i] = (referenceRedBuffer[i] - referenceYBuffer[i])*0.713 + delta;
+            	referenceCbBuffer[i] = (referenceBlueBuffer[i] - referenceYBuffer[i])*0.564 + delta;
+            }
+        } // if (YCrCbRequired)
+	    
+	    for (i = 0; i < metrics.length; i++) {
+		    switch(metrics[i]) {
+		    case MEAN_SQUARED_ERROR:
+		    	mse();
+		    	results[i] = meanSquareError;
+		    	break;
+		    case ROOT_MEAN_SQUARED_ERROR:
+		    	break;
+		    case PEAK_SIGNAL_TO_NOISE_RATIO:
+		    	break;
+		    case STRUCTURAL_SIMILARITY_INDEX:
+		    	break;
+		    case UNIVERSAL_QUALITY_IMAGE_INDEX:
+		    	break;
+		    case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
+		    	break;
+		    case ERGAS:
+		    	break;
+		    case SPATIAL_CORRELATION_COEFFICIENT:
+		    	break;
+		    case RELATIVE_AVERAGE_SPECTRAL_ERROR:
+		    	break;
+		    case SPECTRAL_ANGLE_MAPPER:
+		    	break;
+		    case SPECTRAL_DISTORTION_INDEX:
+		    	break;
+		    case SPATIAL_DISTORTION_INDEX:
+		    	break;
+		    case QUALITY_WITH_NO_REFERENCE:
+		    	break;
+		    case BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO:
+		    	break;
+		    } // switch(metrics[i])
+	    } // for (i = 0; i < metrics.length; i++)
+	    setCompleted(true);
+	    return;
 	}
+    
+    private void mse() {
+    	int i;
+    	double diff;
+    	double totalSquareDiff = 0.0;
+    	double totalRedSquareDiff = 0.0;
+    	double meanRedSquareError;
+    	double totalGreenSquareDiff = 0.0;
+    	double meanGreenSquareError;
+    	double totalBlueSquareDiff = 0.0;
+    	double meanBlueSquareError;
+    	if (!isColor) {
+    	    for (i = 0; i < length; i++) {
+    	        diff = 	referenceBuffer[i] - testBuffer[i];
+    	        totalSquareDiff += diff*diff;
+    	    }
+    	    meanSquareError = totalSquareDiff/length;
+    	}
+    	else {
+    		for (i = 0; i < length; i++) {
+    	        diff = 	referenceRedBuffer[i] - testRedBuffer[i];
+    	        totalRedSquareDiff += diff*diff;
+    	        diff = 	referenceGreenBuffer[i] - testGreenBuffer[i];
+    	        totalGreenSquareDiff += diff*diff;
+    	        diff = 	referenceBlueBuffer[i] - testBlueBuffer[i];
+    	        totalBlueSquareDiff += diff*diff;
+    	    } 
+    		totalSquareDiff = totalRedSquareDiff + totalGreenSquareDiff + totalBlueSquareDiff;
+    		meanRedSquareError = totalRedSquareDiff/length;
+    		meanGreenSquareError = totalGreenSquareDiff/length;
+    		meanBlueSquareError = totalBlueSquareDiff/length;
+    		meanSquareError = totalSquareDiff/(3.0*length);
+    		UI.setDataText("Red mean square error = " + meanRedSquareError + "\n");
+    	    System.out.println("Red mean square error = " + meanRedSquareError);
+    	    UI.setDataText("Green mean square error = " + meanGreenSquareError + "\n");
+    	    System.out.println("Green mean square error = " + meanGreenSquareError);
+    	    UI.setDataText("Blue mean square error = " + meanBlueSquareError + "\n");
+    	    System.out.println("Blue mean square error = " + meanBlueSquareError);
+    	}
+    	UI.setDataText("Mean square error = " + meanSquareError + "\n");
+	    System.out.println("Mean square error = " + meanSquareError);
+    }
 	
 }
