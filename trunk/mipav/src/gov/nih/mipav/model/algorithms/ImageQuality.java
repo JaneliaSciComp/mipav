@@ -110,6 +110,7 @@ public class ImageQuality extends AlgorithmBase {
     private boolean isColor = false;
     
     private double meanSquareError;
+    private double rootMeanSquareError;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -141,42 +142,42 @@ public class ImageQuality extends AlgorithmBase {
 		ImageQuality iq = new ImageQuality(clr, clr, metrics,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
-			System.err.println("Mean square error = " + results[0] + " for clr, clr\n");
+			System.err.println("Mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
 		iq = new ImageQuality(gry, gry, metrics, results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
-			System.err.println("Mean square error = " + results[0] + " for gry, gry\n");
+			System.err.println("Mean squared error = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
 		iq = new ImageQuality(clr, clr_noise, metrics, results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2391.465875)) > eps) {
-			System.err.println("Mean square error = " + results[0] + " for clr, clr_noise\n");
+			System.err.println("Mean squared error = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
 		iq = new ImageQuality(gry, gry_noise, metrics, results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2025.913940)) > eps) {
-			System.err.println("Mean square error = " + results[0] + " for gry, gry_noise\n");
+			System.err.println("Mean squared error = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
 		iq = new ImageQuality(clr, clr_const, metrics, results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2302.953958)) > eps) {
-			System.err.println("Mean square error = " + results[0] + " for clr, clr_const\n");
+			System.err.println("Mean squared error = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
 		iq = new ImageQuality(gry, gry_const, metrics, results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2016.476768)) > eps) {
-			System.err.println("Mean square error = " + results[0] + " for gry, gry_const\n");
+			System.err.println("Mean squared error = " + results[0] + " for gry, gry_const\n");
 			testsFailed++;
 		}
 		
@@ -401,6 +402,8 @@ public class ImageQuality extends AlgorithmBase {
 		    	results[i] = meanSquareError;
 		    	break;
 		    case ROOT_MEAN_SQUARED_ERROR:
+		    	rmse();
+		    	results[i] = rootMeanSquareError;
 		    	break;
 		    case PEAK_SIGNAL_TO_NOISE_RATIO:
 		    	break;
@@ -463,15 +466,57 @@ public class ImageQuality extends AlgorithmBase {
     		meanGreenSquareError = totalGreenSquareDiff/length;
     		meanBlueSquareError = totalBlueSquareDiff/length;
     		meanSquareError = totalSquareDiff/(3.0*length);
-    		UI.setDataText("Red mean square error = " + meanRedSquareError + "\n");
-    	    System.out.println("Red mean square error = " + meanRedSquareError);
-    	    UI.setDataText("Green mean square error = " + meanGreenSquareError + "\n");
-    	    System.out.println("Green mean square error = " + meanGreenSquareError);
-    	    UI.setDataText("Blue mean square error = " + meanBlueSquareError + "\n");
-    	    System.out.println("Blue mean square error = " + meanBlueSquareError);
+    		UI.setDataText("Red mean squared error = " + meanRedSquareError + "\n");
+    	    System.out.println("Red mean squared error = " + meanRedSquareError);
+    	    UI.setDataText("Green mean squared error = " + meanGreenSquareError + "\n");
+    	    System.out.println("Green mean squared error = " + meanGreenSquareError);
+    	    UI.setDataText("Blue mean squared error = " + meanBlueSquareError + "\n");
+    	    System.out.println("Blue mean squared error = " + meanBlueSquareError);
     	}
-    	UI.setDataText("Mean square error = " + meanSquareError + "\n");
-	    System.out.println("Mean square error = " + meanSquareError);
+    	UI.setDataText("Mean squared error = " + meanSquareError + "\n");
+	    System.out.println("Mean squared error = " + meanSquareError);
+    }
+    
+    private void rmse() {
+    	int i;
+    	double diff;
+    	double totalSquareDiff = 0.0;
+    	double totalRedSquareDiff = 0.0;
+    	double rootMeanRedSquareError;
+    	double totalGreenSquareDiff = 0.0;
+    	double rootMeanGreenSquareError;
+    	double totalBlueSquareDiff = 0.0;
+    	double rootMeanBlueSquareError;
+    	if (!isColor) {
+    	    for (i = 0; i < length; i++) {
+    	        diff = 	referenceBuffer[i] - testBuffer[i];
+    	        totalSquareDiff += diff*diff;
+    	    }
+    	    rootMeanSquareError = Math.sqrt(totalSquareDiff/length);
+    	}
+    	else {
+    		for (i = 0; i < length; i++) {
+    	        diff = 	referenceRedBuffer[i] - testRedBuffer[i];
+    	        totalRedSquareDiff += diff*diff;
+    	        diff = 	referenceGreenBuffer[i] - testGreenBuffer[i];
+    	        totalGreenSquareDiff += diff*diff;
+    	        diff = 	referenceBlueBuffer[i] - testBlueBuffer[i];
+    	        totalBlueSquareDiff += diff*diff;
+    	    } 
+    		totalSquareDiff = totalRedSquareDiff + totalGreenSquareDiff + totalBlueSquareDiff;
+    		rootMeanRedSquareError = Math.sqrt(totalRedSquareDiff/length);
+    		rootMeanGreenSquareError = Math.sqrt(totalGreenSquareDiff/length);
+    		rootMeanBlueSquareError = Math.sqrt(totalBlueSquareDiff/length);
+    		rootMeanSquareError = Math.sqrt(totalSquareDiff/(3.0*length));
+    		UI.setDataText("Red root mean squared error = " + rootMeanRedSquareError + "\n");
+    	    System.out.println("Red root mean squared error = " + rootMeanRedSquareError);
+    	    UI.setDataText("Green root mean squared error = " + rootMeanGreenSquareError + "\n");
+    	    System.out.println("Green root mean squared error = " + rootMeanGreenSquareError);
+    	    UI.setDataText("Blue root mean squared error = " + rootMeanBlueSquareError + "\n");
+    	    System.out.println("Blue root mean squared error = " + rootMeanBlueSquareError);
+    	}
+    	UI.setDataText("Root mean squared error = " + rootMeanSquareError + "\n");
+	    System.out.println("Root mean squared error = " + rootMeanSquareError);
     }
 	
 }
