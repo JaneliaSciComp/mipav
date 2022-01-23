@@ -13731,7 +13731,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readTiff(final String fileName, final String fileDir, final boolean one) {
+    public ModelImage readTiff(final String fileName, final String fileDir, final boolean one) {
         ModelImage image = null;
         FileTiff imageFile;
 
