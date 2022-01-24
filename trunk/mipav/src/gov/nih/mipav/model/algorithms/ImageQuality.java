@@ -89,6 +89,7 @@ public class ImageQuality extends AlgorithmBase {
 	public final int SPATIAL_DISTORTION_INDEX = 12;
 	public final int QUALITY_WITH_NO_REFERENCE = 13;
  	public final int BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO = 14;
+ 	public final int RMSE_SW = 15;
  	
  	private double testBuffer[] = null;
     private float testRedBuffer[] = null;
@@ -104,6 +105,8 @@ public class ImageQuality extends AlgorithmBase {
     private double referenceYBuffer[];
     private double referenceCrBuffer[];
     private double referenceCbBuffer[];
+    private double rmse_map[];
+    private double mean2D[] = new double[1];
     private int length = 1;
     private boolean onlyTestImageRequired = false;
     private boolean YCrCbRequired = false;
@@ -118,6 +121,12 @@ public class ImageQuality extends AlgorithmBase {
     private ModelImage clr = null;
     private ModelImage clr_noise = null;
     private ModelImage clr_const = null;
+    
+    private int nDims;
+    private int xDim;
+    private int yDim;
+    // Window size
+    private int ws;
 	
 	public ImageQuality() {
 		UI = ViewUserInterface.getReference();
@@ -136,45 +145,45 @@ public class ImageQuality extends AlgorithmBase {
 	public void testMse() {
 		// All tests passed for meanSquareError
 		int testsFailed = 0;
-		double eps = 1.0E-4;
+		double eps = 1.0E-3;
 		metrics = new int[] {MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, results);
+		iq = new ImageQuality(gry, gry, metrics, ws, results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2391.465875)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2025.913940)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2302.953958)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2016.476768)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_const\n");
@@ -182,10 +191,10 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		
 		if (testsFailed > 0) {
-			System.err.println(testsFailed + " tests failed for mean square error");
+			System.err.println(testsFailed + " tests failed for mean squared error");
 		}
 		else {
-			System.out.println("All tests passed for meanSquareError");
+			System.out.println("All tests passed for meanSquaredError");
 		}
 		gry.disposeLocal();
 		gry = null;
@@ -201,7 +210,78 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
-	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], double results[]) {
+	public void testRmse() {
+		// All tests passed for rootMeanSquaredError
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,results);
+		iq.runAlgorithm();
+		if (results[0] != 0.0) {
+			System.err.println("Root mean squared error = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, results);
+		iq.runAlgorithm();
+		if (results[0] != 0.0) {
+			System.err.println("Root mean squared error = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		metrics = new int[] {RMSE_SW};
+		ws = 8;
+		iq = new ImageQuality(clr, clr, metrics,ws,results);
+		iq.runAlgorithm();
+		if (results[0] != 0.0) {
+			System.err.println("Root mean squared error sliding window = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, results);
+		iq.runAlgorithm();
+		if (results[0] != 0.0) {
+			System.err.println("Root mean squared error sliding window = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
+		iq = new ImageQuality(gry, gry_const, metrics, ws,results);
+		iq.runAlgorithm();
+		double rmse = results[0];
+		metrics = new int[] {RMSE_SW};
+		ws = 510;
+		iq = new ImageQuality(gry, gry_const, metrics, ws,results);
+		iq.runAlgorithm();
+		double rmse_sw = results[0];
+		if ((Math.abs(rmse - rmse_sw)) > eps) {
+			System.err.println("Root mean squared error = " + rmse + " for gry, gry_const\n");
+			System.err.println("Root mean squared error sliding windon = " + rmse_sw + " for gry, gry_const\n");
+			testsFailed++;
+		}
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for root mean squared error");
+		}
+		else {
+			System.out.println("All tests passed for rootMeanSquaredError");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double results[]) {
 		if (metrics == null) {
 			MipavUtil.displayError("metrics is null in ImageQuality");
 			return;
@@ -210,8 +290,8 @@ public class ImageQuality extends AlgorithmBase {
 			MipavUtil.displayError("metrics.length == 0 in ImageQuality");
 			return;
 		}
-		if (metrics.length > 14) {
-			MipavUtil.displayError("metrics.length > 14 in ImageQuality");
+		if (metrics.length > 15) {
+			MipavUtil.displayError("metrics.length > 15 in ImageQuality");
 			return;
 		}
 		if (results == null) {
@@ -228,7 +308,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		isColor = testImage.isColorImage();
 		for (int i = 0; i < metrics.length; i++) {
-			if ((metrics[i] < 1) || (metrics[i] > 14)) {
+			if ((metrics[i] < 1) || (metrics[i] > 15)) {
 				MipavUtil.displayError("Illegal metrics[" + i+ "] in ImageQuality");
 				return;
 			}
@@ -269,13 +349,16 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	this.referenceImage = referenceImage;
+	    	this.ws = ws;
 	    } // if (!onlyTestImageRequired)
 	}
     
     public void runAlgorithm() {
     	int i;
     	UI = ViewUserInterface.getReference();
-	    int nDims = testImage.getNDims();
+	    nDims = testImage.getNDims();
+	    xDim = testImage.getExtents()[0];
+	    yDim = testImage.getExtents()[1];
 	    
 	    for (i = 0; i < nDims; i++) {
 	    	length *= testImage.getExtents()[i];
@@ -429,6 +512,21 @@ public class ImageQuality extends AlgorithmBase {
 		    	break;
 		    case BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO:
 		    	break;
+		    case RMSE_SW:
+		    	 if (!isColor) {
+		    	     rmse_map = new double[length];
+		    	 }
+		    	 else {
+		    		 rmse_map = new double[3*length];
+		    	 }
+		    	 if (ws < 1) {
+		    		 System.err.println("ws < 1 for rmse_sw");
+		    		 setCompleted(false);
+		    		 return;
+		    	 }
+		    	 rmse_sw(rmse_map, mean2D, ws);
+		    	 results[i] = mean2D[0];
+		         break;
 		    } // switch(metrics[i])
 	    } // for (i = 0; i < metrics.length; i++)
 	    setCompleted(true);
@@ -518,5 +616,130 @@ public class ImageQuality extends AlgorithmBase {
     	UI.setDataText("Root mean squared error = " + rootMeanSquareError + "\n");
 	    System.out.println("Root mean squared error = " + rootMeanSquareError);
     }
+    
+    private void _rmse_sw_single (double rmse_map1D[], double mean1D[], double reference1D[], double test1D[], int ws) {
+    	int i, j;
+    	double diff;
+    	int bufSize = reference1D.length;
+    	double errors[] = new double[bufSize];
+    	double errors_out[] = new double[bufSize];
+    	for (i = 0; i < bufSize; i++) {
+    	    diff = reference1D[i] - test1D[i];	
+    	    errors[i] = diff*diff;
+    	}
+    	double total;
+    	int size1 = ws/2;
+    	int size2 = ws - size1 - 1;
+        int paddedSize = bufSize + size1 + size2;
+        double paddedErrors[] = new double[paddedSize];
+        for (i = 0; i <= size1; i++) {
+        	paddedErrors[i] = errors[size1-i];
+        }
+        for (i = size1 + 1; i <= size1 + bufSize; i++) {
+        	paddedErrors[i] = errors[i-size1-1];
+        }
+        for (i = size1 + bufSize + 1; i < paddedSize; i++) {
+        	paddedErrors[i] = errors[2*bufSize+size1-i];
+        }
+    	for (i = 0; i < bufSize; i++) {
+    		total = 0.0;
+    		for (j = -size1; j <= size2; j++) {
+    			total += paddedErrors[i+size1+j];
+    		}
+    		errors[i] = total/ws;
+    	}
+        for (i = 0; i < bufSize; i++) {
+        	rmse_map1D[i] = Math.sqrt(errors[i]);
+        }
+        mean1D[0] = 0.0;
+        total = 0.0;
+        for (i = 0; i < bufSize; i++) {
+            total += rmse_map1D[i];	
+        }
+        mean1D[0] = total/bufSize;
+        return;
+    }
+    
+    private void rmse_sw (double rmse_map2D[], double mean2D[], int ws) {
+    	// calculates root mean squared error (rmse) using sliding window.
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+    	// param ws: sliding window size (default = 8).
+
+    	// returns:  tuple -- rmse value,rmse map.	
+        int i,j;
+        double rmse_map1D[] = new double[yDim];
+        double mean1D[] = new double[1];
+        double reference1D[] = new double[yDim];
+        double test1D[] = new double[yDim];
+    	double vals[] = new double[xDim];
+    	if (!isColor) {
+	    	double total = 0.0;
+	    	for (i = 0; i < xDim; i++) {
+	    		for (j = 0; j < yDim; j++) {
+	    			reference1D[j] = referenceBuffer[j*xDim + i];
+	    			test1D[j] = testBuffer[j*xDim + i];
+	    		}
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		for (j = 0; j < yDim; j++) {
+	    			rmse_map2D[j*xDim + i] = rmse_map1D[j];
+	    		}
+	    		vals[i] = mean1D[0];
+	    		total += vals[i];
+	    	}
+	        mean2D[0] = total/xDim;
+    	} // if (!isColor)
+    	else {
+    		double total = 0.0;
+	    	for (i = 0; i < xDim; i++) {
+	    		for (j = 0; j < yDim; j++) {
+	    			reference1D[j] = referenceRedBuffer[j*xDim + i];
+	    			test1D[j] = testRedBuffer[j*xDim + i];
+	    		}
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		for (j = 0; j < yDim; j++) {
+	    			rmse_map2D[3*j*xDim + 3*i] = rmse_map1D[j];
+	    		}
+	    		vals[i] = mean1D[0];
+	    		total += vals[i];
+	    	}
+	        double meanRed = total/xDim;
+	        
+	        total = 0.0;
+	    	for (i = 0; i < xDim; i++) {
+	    		for (j = 0; j < yDim; j++) {
+	    			reference1D[j] = referenceGreenBuffer[j*xDim + i];
+	    			test1D[j] = testGreenBuffer[j*xDim + i];
+	    		}
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		for (j = 0; j < yDim; j++) {
+	    			rmse_map2D[3*j*xDim + 3*i + 1] = rmse_map1D[j];
+	    		}
+	    		vals[i] = mean1D[0];
+	    		total += vals[i];
+	    	}
+	        double meanGreen = total/xDim;	
+	        
+	        total = 0.0;
+	    	for (i = 0; i < xDim; i++) {
+	    		for (j = 0; j < yDim; j++) {
+	    			reference1D[j] = referenceBlueBuffer[j*xDim + i];
+	    			test1D[j] = testBlueBuffer[j*xDim + i];
+	    		}
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		for (j = 0; j < yDim; j++) {
+	    			rmse_map2D[3*j*xDim + 3*i + 2] = rmse_map1D[j];
+	    		}
+	    		vals[i] = mean1D[0];
+	    		total += vals[i];
+	    	}
+	        double meanBlue = total/xDim;
+	        mean2D[0] = (meanRed + meanGreen + meanBlue)/3.0;
+    	}
+    	return;
+    }
+    
+    
 	
 }
