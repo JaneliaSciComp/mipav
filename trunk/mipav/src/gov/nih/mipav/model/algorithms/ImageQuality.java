@@ -105,12 +105,11 @@ public class ImageQuality extends AlgorithmBase {
     private double referenceYBuffer[];
     private double referenceCrBuffer[];
     private double referenceCbBuffer[];
-    private double rmse_map[];
-    private double mean2D[] = new double[1];
+    private double rmse_sw_mean;
+    private double uqi_mean;
     private int length = 1;
     private boolean onlyTestImageRequired = false;
     private boolean YCrCbRequired = false;
-    private boolean rmseMapRequired = false;
     private boolean isColor = false;
     
     private double meanSquareError;
@@ -119,6 +118,7 @@ public class ImageQuality extends AlgorithmBase {
     private double meanBlueSquareError;
     private double rootMeanSquareError;
     private double peakSignalToNoiseRatio;
+    private double universalImageQualityIndex;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -131,7 +131,16 @@ public class ImageQuality extends AlgorithmBase {
     private int xDim;
     private int yDim;
     // Window size
+    // Default = 8 for RMSE_SW
+    // Defualt = 8 for UNIVERSAL_QUALITY_IMAGE_INDEX
     private int ws;
+    
+    public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
+	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
+	public final int BORDER_REFLECT = 2; // fedcba|abcdefgh|hgfedcb
+	public final int BORDER_WRAP = 3; // cdefgh|abcdefgh|abcdefg
+	public final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
+	public final int BORDER_DEFAULT = BORDER_REFLECT_101;
 	
 	public ImageQuality() {
 		UI = ViewUserInterface.getReference();
@@ -262,7 +271,7 @@ public class ImageQuality extends AlgorithmBase {
 		double rmse_sw = results[0];
 		if ((Math.abs(rmse - rmse_sw)) > eps) {
 			System.err.println("Root mean squared error = " + rmse + " for gry, gry_const\n");
-			System.err.println("Root mean squared error sliding windon = " + rmse_sw + " for gry, gry_const\n");
+			System.err.println("Root mean squared error sliding window = " + rmse_sw + " for gry, gry_const\n");
 			testsFailed++;
 		}
 		
@@ -398,7 +407,6 @@ public class ImageQuality extends AlgorithmBase {
 		    		 setCompleted(false);
 		    		 return;
 		    	 }
-				 rmseMapRequired = true;
 			}
 		}
 		this.metrics = metrics;
@@ -561,15 +569,6 @@ public class ImageQuality extends AlgorithmBase {
             }
         } // if (YCrCbRequired)
 	    
-	    if (rmseMapRequired) {
-	    	if (!isColor) {
-	    	     rmse_map = new double[length];
-	    	 }
-	    	 else {
-	    		 rmse_map = new double[3*length];
-	    	 }
-	    } // if (rmseMapRequired)
-	    
 	    for (i = 0; i < metrics.length; i++) {
 		    switch(metrics[i]) {
 		    case MEAN_SQUARED_ERROR:
@@ -607,8 +606,8 @@ public class ImageQuality extends AlgorithmBase {
 		    case BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO:
 		    	break;
 		    case RMSE_SW:
-		    	 rmse_sw(rmse_map);
-		    	 results[i] = mean2D[0];
+		    	 rmse_sw();
+		    	 results[i] = rmse_sw_mean;
 		         break;
 		    } // switch(metrics[i])
 	    } // for (i = 0; i < metrics.length; i++)
@@ -757,128 +756,301 @@ public class ImageQuality extends AlgorithmBase {
     }
         
 
-    	
-    
-    private void _rmse_sw_single (double rmse_map1D[], double mean1D[], double reference1D[], double test1D[]) {
-    	int i, j;
-    	double diff;
-    	int bufSize = reference1D.length;
-    	double errors[] = new double[bufSize];
-    	double errors_out[] = new double[bufSize];
-    	for (i = 0; i < bufSize; i++) {
-    	    diff = reference1D[i] - test1D[i];	
-    	    errors[i] = diff*diff;
-    	}
-    	double total;
-    	int size1 = ws/2;
-    	int size2 = ws - size1 - 1;
-        int paddedSize = bufSize + size1 + size2;
-        double paddedErrors[] = new double[paddedSize];
-        for (i = 0; i <= size1; i++) {
-        	paddedErrors[i] = errors[size1-i];
-        }
-        for (i = size1 + 1; i <= size1 + bufSize; i++) {
-        	paddedErrors[i] = errors[i-size1-1];
-        }
-        for (i = size1 + bufSize + 1; i < paddedSize; i++) {
-        	paddedErrors[i] = errors[2*bufSize+size1-i];
-        }
-    	for (i = 0; i < bufSize; i++) {
-    		total = 0.0;
-    		for (j = -size1; j <= size2; j++) {
-    			total += paddedErrors[i+size1+j];
-    		}
-    		errors[i] = total/ws;
-    	}
-        for (i = 0; i < bufSize; i++) {
-        	rmse_map1D[i] = Math.sqrt(errors[i]);
-        }
-        mean1D[0] = 0.0;
-        total = 0.0;
-        for (i = 0; i < bufSize; i++) {
-            total += rmse_map1D[i];	
-        }
-        mean1D[0] = total/bufSize;
-        return;
+    private void uqi() {
+    	// calculates universal image quality index (uqi).
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+    	// param ws: sliding window size (default = 8).
+
+    	// returns:  float -- uqi value.
+    		
     }
     
-    private void rmse_sw (double rmse_map2D[]) {
+    private void _uqi_single(double mean1D[], double reference1D[], double test1D[]) {
+    	/*N = ws**2
+    	window = np.ones((ws,ws))
+
+    	GT_sq = GT*GT
+    	P_sq = P*P
+    	GT_P = GT*P
+
+    	GT_sum = uniform_filter(GT, ws)    
+    	P_sum =  uniform_filter(P, ws)     
+    	GT_sq_sum = uniform_filter(GT_sq, ws)  
+    	P_sq_sum = uniform_filter(P_sq, ws)  
+    	GT_P_sum = uniform_filter(GT_P, ws)
+
+    	GT_P_sum_mul = GT_sum*P_sum
+    	GT_P_sum_sq_sum_mul = GT_sum*GT_sum + P_sum*P_sum
+    	numerator = 4*(N*GT_P_sum - GT_P_sum_mul)*GT_P_sum_mul
+    	denominator1 = N*(GT_sq_sum + P_sq_sum) - GT_P_sum_sq_sum_mul
+    	denominator = denominator1*GT_P_sum_sq_sum_mul
+
+    	q_map = np.ones(denominator.shape)
+    	index = np.logical_and((denominator1 == 0) , (GT_P_sum_sq_sum_mul != 0))
+    	q_map[index] = 2*GT_P_sum_mul[index]/GT_P_sum_sq_sum_mul[index]
+    	index = (denominator != 0)
+    	q_map[index] = numerator[index]/denominator[index]
+
+    	s = int(np.round(ws/2))
+    	return np.mean(q_map[s:-s,s:-s])*/
+    }
+    
+    public double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
+    	int i,j;
+    	double dst[][] = new double[src.length + top + bottom][src[0].length + left + right];
+    	for (i = 0; i < src.length; i++) {
+    		for (j = 0; j < src[0].length; j++) {
+    			dst[i+top][j+left] = src[i][j];
+    		}
+    	}
+    	
+    	for (i = 0; i < top; i++) {
+    		for (j = 0; j < left; j++) {
+    		   switch (borderType) {
+    		   case BORDER_CONSTANT:
+    			   dst[i][j] = borderValue;
+    			   break;
+    		   case BORDER_REPLICATE:
+    			   dst[i][j] = src[0][0];
+    			   break;
+    		   case BORDER_REFLECT:
+    			   dst[i][j] = src[top - 1 - i][left - 1 - j];
+    			   break;
+    		   case BORDER_REFLECT_101:
+     			   dst[i][j] = src[top - i][left - j];
+     			   break;
+    		   }
+    		  
+ 		   }
+    		
+    		for (j = left; j < src[0].length + left; j++) {
+    			switch (borderType) {
+    			case BORDER_CONSTANT:
+    				dst[i][j] = borderValue;
+    				break;
+    			case BORDER_REPLICATE:
+    				dst[i][j] = src[0][j - left];
+    				break;
+    			case BORDER_REFLECT:
+    				dst[i][j] = src[top - 1 - i][j - left];
+    				break;
+    			case BORDER_REFLECT_101:
+    				dst[i][j] = src[top - i][j - left];
+    				break;
+    			}
+    		}
+    		
+    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+    		    switch(borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[0][src[0].length-1];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		    	dst[i][j] = src[top - 1 - i][2*src[0].length + left - 1 - j];
+    		    	break;
+    		    case BORDER_REFLECT_101:
+    		    	dst[i][j] = src[top - i][2*src[0].length + left - 2 - j];
+    		    	break;
+    		    }
+    		}
+    	}
+    	
+    	for (i = top + src.length; i < top + src.length + bottom; i++) {
+            for (j = 0; j < left; j++) {
+    		    switch (borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[src.length-1][0];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		    	dst[i][j] = src[2*src.length + top - 1 - i][left - 1 - j];
+    		    	break;
+    		    case BORDER_REFLECT_101:
+    		    	dst[i][j] = src[2*src.length + top - 2 - i][left - j];
+    		    	break;
+    		    }
+    		}
+            
+            for (j = left; j < src[0].length + left; j++) {
+    			switch (borderType) {
+    			case BORDER_CONSTANT:
+    				dst[i][j] = borderValue;
+    				break;
+    			case BORDER_REPLICATE:
+    				dst[i][j] = src[src.length-1][j - left];
+    				break;
+    			case BORDER_REFLECT:
+    				dst[i][j] = src[2*src.length + top - 1 - i][j - left];
+    				break;
+    			case BORDER_REFLECT_101:
+    				dst[i][j] = src[2*src.length + top - 2 - i][j - left];
+    				break;
+    			}
+    		}
+    		
+    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+    		    switch(borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[src.length-1][src[0].length-1];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		        dst[i][j] = src[2*src.length + top - 1 - i][2*src[0].length + left - 1 - j];
+    		        break;
+    		    case BORDER_REFLECT_101:
+    		        dst[i][j] = src[2*src.length + top - 2 - i][2*src[0].length + left - 2 - j];
+    		        break;
+    		    }
+    		}	
+    	}
+    	
+    	for (i = top; i < src.length + top; i++) {
+    		for (j = 0; j < left; j++) {
+    			switch(borderType) {
+    			case BORDER_CONSTANT:
+    				dst[i][j] = borderValue;
+    				break;
+    			case BORDER_REPLICATE:
+    				dst[i][j] = src[i - top][0];
+    				break;
+    			case BORDER_REFLECT:
+    				dst[i][j] = src[i - top][left - 1 - j];
+    				break; 
+    			case BORDER_REFLECT_101:
+    				dst[i][j] = src[i - top][left - j];
+    				break;  
+    			}
+    		}
+    		
+    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+    		    switch(borderType) {
+    		    case BORDER_CONSTANT:
+     			   dst[i][j] = borderValue;
+     			   break;
+    		    case BORDER_REPLICATE:
+    		    	dst[i][j] = src[i - top][src[0].length-1];
+    		    	break;
+    		    case BORDER_REFLECT:
+    		        dst[i][j] = src[i - top][2*src[0].length + left - 1 - j];
+    		        break;
+    		    case BORDER_REFLECT_101:
+    		        dst[i][j] = src[i - top][2*src[0].length + left - 2 - j];
+    		        break;
+    		    }
+    		}	
+    	}
+    	
+    	
+    	return dst;
+    }
+	
+	private double[][] uniformFilter(double img[][], int size1, int size2) {
+		double imgpad[][] = copyMakeBorder(img, size1, size2, size1, size2, BORDER_REFLECT, 0.0);
+		int h = img.length;
+		int w = img[0].length;
+		double result[][] = new double[h][w];
+		double area = (size1+size2+1)*(size1+size2+1);
+		double sum;
+		int y,x,i,j;
+		for (y = size1; y < h + size1; y++) {
+			for (x = size1; x < w + size1; x++) {
+			    sum = 0.0;
+			    for (i = -size1; i <= size2; i++) {
+			    	for (j = -size1; j <= size2; j++) {
+			    		sum += imgpad[y + i][x + j];
+			    	}
+			    }
+			    result[y-size1][x-size1] = sum/area;
+			}
+		}
+		return result;
+	}
+    
+    private void rmse_sw () {
     	// calculates root mean squared error (rmse) using sliding window.
 
     	// param GT: first (original) input image.
     	// param P: second (deformed) input image.
     	// param ws: sliding window size (default = 8).
 
-    	// returns:  tuple -- rmse value,rmse map.	
-        int i,j;
-        double rmse_map1D[] = new double[yDim];
-        double mean1D[] = new double[1];
-        double reference1D[] = new double[yDim];
-        double test1D[] = new double[yDim];
-    	double vals[] = new double[xDim];
-    	if (!isColor) {
-	    	double total = 0.0;
-	    	for (i = 0; i < xDim; i++) {
-	    		for (j = 0; j < yDim; j++) {
-	    			reference1D[j] = referenceBuffer[j*xDim + i];
-	    			test1D[j] = testBuffer[j*xDim + i];
-	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
-	    		for (j = 0; j < yDim; j++) {
-	    			rmse_map2D[j*xDim + i] = rmse_map1D[j];
-	    		}
-	    		vals[i] = mean1D[0];
-	    		total += vals[i];
-	    	}
-	        mean2D[0] = total/xDim;
-    	} // if (!isColor)
-    	else {
-    		double total = 0.0;
-	    	for (i = 0; i < xDim; i++) {
-	    		for (j = 0; j < yDim; j++) {
-	    			reference1D[j] = referenceRedBuffer[j*xDim + i];
-	    			test1D[j] = testRedBuffer[j*xDim + i];
-	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
-	    		for (j = 0; j < yDim; j++) {
-	    			rmse_map2D[3*j*xDim + 3*i] = rmse_map1D[j];
-	    		}
-	    		vals[i] = mean1D[0];
-	    		total += vals[i];
-	    	}
-	        double meanRed = total/xDim;
-	        
-	        total = 0.0;
-	    	for (i = 0; i < xDim; i++) {
-	    		for (j = 0; j < yDim; j++) {
-	    			reference1D[j] = referenceGreenBuffer[j*xDim + i];
-	    			test1D[j] = testGreenBuffer[j*xDim + i];
-	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
-	    		for (j = 0; j < yDim; j++) {
-	    			rmse_map2D[3*j*xDim + 3*i + 1] = rmse_map1D[j];
-	    		}
-	    		vals[i] = mean1D[0];
-	    		total += vals[i];
-	    	}
-	        double meanGreen = total/xDim;	
-	        
-	        total = 0.0;
-	    	for (i = 0; i < xDim; i++) {
-	    		for (j = 0; j < yDim; j++) {
-	    			reference1D[j] = referenceBlueBuffer[j*xDim + i];
-	    			test1D[j] = testBlueBuffer[j*xDim + i];
-	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
-	    		for (j = 0; j < yDim; j++) {
-	    			rmse_map2D[3*j*xDim + 3*i + 2] = rmse_map1D[j];
-	    		}
-	    		vals[i] = mean1D[0];
-	    		total += vals[i];
-	    	}
-	        double meanBlue = total/xDim;
-	        mean2D[0] = (meanRed + meanGreen + meanBlue)/3.0;
-    	}
+    	// returns:  tuple -- rmse value,rmse map.
+    	int x,y;
+    	int size1 = ws/2;
+    	int size2 = ws - size1 - 1;
+    	double errors[][] = new double[yDim][xDim];
+    	double diff;
+    	int index;
+    	double total = 0.0;
+        if (!isColor) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    diff = referenceBuffer[index] - testBuffer[index];
+        		    errors[y][x] = diff*diff;
+        		}
+        	}
+        	errors = uniformFilter(errors, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += Math.sqrt(errors[y][x]);	
+        		}
+        	}
+        	rmse_sw_mean = total/length;
+        }
+        else {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    diff = referenceRedBuffer[index] - testRedBuffer[index];
+        		    errors[y][x] = diff*diff;
+        		}
+        	}
+        	errors = uniformFilter(errors, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += Math.sqrt(errors[y][x]);	
+        		}
+        	}
+        	
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    diff = referenceGreenBuffer[index] - testGreenBuffer[index];
+        		    errors[y][x] = diff*diff;
+        		}
+        	}
+        	errors = uniformFilter(errors, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += Math.sqrt(errors[y][x]);	
+        		}
+        	}
+        	
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    diff = referenceBlueBuffer[index] - testBlueBuffer[index];
+        		    errors[y][x] = diff*diff;
+        		}
+        	}
+        	errors = uniformFilter(errors, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += Math.sqrt(errors[y][x]);	
+        		}
+        	}
+        	rmse_sw_mean = total/(3.0*length);
+        }
+        
     	return;
     }
     
