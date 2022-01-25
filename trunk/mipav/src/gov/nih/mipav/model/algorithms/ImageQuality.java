@@ -110,10 +110,15 @@ public class ImageQuality extends AlgorithmBase {
     private int length = 1;
     private boolean onlyTestImageRequired = false;
     private boolean YCrCbRequired = false;
+    private boolean rmseMapRequired = false;
     private boolean isColor = false;
     
     private double meanSquareError;
+    private double meanRedSquareError;
+    private double meanGreenSquareError;
+    private double meanBlueSquareError;
     private double rootMeanSquareError;
+    private double peakSignalToNoiseRatio;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -281,6 +286,73 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
+	public void testPsnr() {
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,results);
+		iq.runAlgorithm();
+		if (!Double.isInfinite(results[0])) {
+			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, results);
+		iq.runAlgorithm();
+		if (!Double.isInfinite(results[0])) {
+			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 14.344162)) > eps) {
+			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_noise\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 15.064594)) > eps) {
+			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_noise\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(clr, clr_const, metrics, ws,results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 14.507951)) > eps) {
+			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_const\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry_const, metrics, ws,results);
+		iq.runAlgorithm();
+		if ((Math.abs(results[0] - 15.084871)) > eps) {
+			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_const\n");
+			testsFailed++;
+		}
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for peaks signal to noise ratio");
+		}
+		else {
+			System.out.println("All tests passed for peakSignalToNoiseRatio");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double results[]) {
 		if (metrics == null) {
 			MipavUtil.displayError("metrics is null in ImageQuality");
@@ -318,6 +390,14 @@ public class ImageQuality extends AlgorithmBase {
 			if (isColor && (metrics[i] == BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO)) {
 				YCrCbRequired = true;
 			}
+			if (metrics[i] == RMSE_SW) {
+				if (ws < 1) {
+		    		 System.err.println("ws < 1 for rmse_sw");
+		    		 setCompleted(false);
+		    		 return;
+		    	 }
+				 rmseMapRequired = true;
+			}
 		}
 		this.metrics = metrics;
 		this.results = results;
@@ -348,6 +428,7 @@ public class ImageQuality extends AlgorithmBase {
 	    			return;
 	    		}
 	    	}
+	    	referenceImage.calcMinMax();
 	    	this.referenceImage = referenceImage;
 	    	this.ws = ws;
 	    } // if (!onlyTestImageRequired)
@@ -478,6 +559,15 @@ public class ImageQuality extends AlgorithmBase {
             }
         } // if (YCrCbRequired)
 	    
+	    if (rmseMapRequired) {
+	    	if (!isColor) {
+	    	     rmse_map = new double[length];
+	    	 }
+	    	 else {
+	    		 rmse_map = new double[3*length];
+	    	 }
+	    } // if (rmseMapRequired)
+	    
 	    for (i = 0; i < metrics.length; i++) {
 		    switch(metrics[i]) {
 		    case MEAN_SQUARED_ERROR:
@@ -489,6 +579,8 @@ public class ImageQuality extends AlgorithmBase {
 		    	results[i] = rootMeanSquareError;
 		    	break;
 		    case PEAK_SIGNAL_TO_NOISE_RATIO:
+		    	psnr();
+		    	results[i] = peakSignalToNoiseRatio;
 		    	break;
 		    case STRUCTURAL_SIMILARITY_INDEX:
 		    	break;
@@ -513,18 +605,7 @@ public class ImageQuality extends AlgorithmBase {
 		    case BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO:
 		    	break;
 		    case RMSE_SW:
-		    	 if (!isColor) {
-		    	     rmse_map = new double[length];
-		    	 }
-		    	 else {
-		    		 rmse_map = new double[3*length];
-		    	 }
-		    	 if (ws < 1) {
-		    		 System.err.println("ws < 1 for rmse_sw");
-		    		 setCompleted(false);
-		    		 return;
-		    	 }
-		    	 rmse_sw(rmse_map, mean2D, ws);
+		    	 rmse_sw(rmse_map);
 		    	 results[i] = mean2D[0];
 		         break;
 		    } // switch(metrics[i])
@@ -538,11 +619,8 @@ public class ImageQuality extends AlgorithmBase {
     	double diff;
     	double totalSquareDiff = 0.0;
     	double totalRedSquareDiff = 0.0;
-    	double meanRedSquareError;
     	double totalGreenSquareDiff = 0.0;
-    	double meanGreenSquareError;
     	double totalBlueSquareDiff = 0.0;
-    	double meanBlueSquareError;
     	if (!isColor) {
     	    for (i = 0; i < length; i++) {
     	        diff = 	referenceBuffer[i] - testBuffer[i];
@@ -580,11 +658,11 @@ public class ImageQuality extends AlgorithmBase {
     	double diff;
     	double totalSquareDiff = 0.0;
     	double totalRedSquareDiff = 0.0;
-    	double rootMeanRedSquareError;
     	double totalGreenSquareDiff = 0.0;
-    	double rootMeanGreenSquareError;
     	double totalBlueSquareDiff = 0.0;
-    	double rootMeanBlueSquareError;
+    	double rootMeanRedSquareError;
+        double rootMeanGreenSquareError;
+        double rootMeanBlueSquareError;
     	if (!isColor) {
     	    for (i = 0; i < length; i++) {
     	        diff = 	referenceBuffer[i] - testBuffer[i];
@@ -617,7 +695,69 @@ public class ImageQuality extends AlgorithmBase {
 	    System.out.println("Root mean squared error = " + rootMeanSquareError);
     }
     
-    private void _rmse_sw_single (double rmse_map1D[], double mean1D[], double reference1D[], double test1D[], int ws) {
+    private void psnr() {
+    	// calculates peak signal-to-noise ratio (psnr).
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+    	// Originally param MAX: maximum value of datarange (if None, MAX is calculated using image dtype).
+    	// Now always use image max
+
+    	// returns:  float -- psnr value in dB.
+    
+    	//if MAX is None:
+        double maxValue = referenceImage.getMax();
+        maxValue = 255;
+        mse();
+        if (isColor) {
+        	double maxRedValue = referenceImage.getMaxR();
+        	double maxGreenValue = referenceImage.getMaxG();
+        	double maxBlueValue = referenceImage.getMaxB();
+        	double peakRedSignalToNoiseRatio;
+        	double peakGreenSignalToNoiseRatio;
+        	double peakBlueSignalToNoiseRatio;
+        	
+        	if (meanRedSquareError == 0) {
+            	peakRedSignalToNoiseRatio = Double.POSITIVE_INFINITY;
+            }
+            else {
+            	peakRedSignalToNoiseRatio = 10.0 * Math.log10((maxRedValue*maxRedValue)/meanRedSquareError);
+            }
+            UI.setDataText("Peak red signal to noise ratio = " + peakRedSignalToNoiseRatio + "\n");
+    	    System.out.println("Peak red signal to noise ratio = " + peakRedSignalToNoiseRatio);	
+    	    
+    	    if (meanGreenSquareError == 0) {
+            	peakGreenSignalToNoiseRatio = Double.POSITIVE_INFINITY;
+            }
+            else {
+            	peakGreenSignalToNoiseRatio = 10.0 * Math.log10((maxGreenValue*maxGreenValue)/meanGreenSquareError);
+            }
+            UI.setDataText("Peak green signal to noise ratio = " + peakGreenSignalToNoiseRatio + "\n");
+    	    System.out.println("Peak green signal to noise ratio = " + peakGreenSignalToNoiseRatio);
+    	    
+    	    if (meanBlueSquareError == 0) {
+            	peakBlueSignalToNoiseRatio = Double.POSITIVE_INFINITY;
+            }
+            else {
+            	peakBlueSignalToNoiseRatio = 10.0 * Math.log10((maxBlueValue*maxBlueValue)/meanBlueSquareError);
+            }
+            UI.setDataText("Peak blue signal to noise ratio = " + peakBlueSignalToNoiseRatio + "\n");
+    	    System.out.println("Peak blue signal to noise ratio = " + peakBlueSignalToNoiseRatio);
+        } // if (isColor)
+        if (meanSquareError == 0) {
+        	peakSignalToNoiseRatio = Double.POSITIVE_INFINITY;
+        }
+        else {
+        	peakSignalToNoiseRatio = 10.0 * Math.log10((maxValue*maxValue)/meanSquareError);
+        }
+        UI.setDataText("Peak signal to noise ratio = " + peakSignalToNoiseRatio + "\n");
+	    System.out.println("Peak signal to noise ratio = " + peakSignalToNoiseRatio);
+    }
+        
+
+    	
+    
+    private void _rmse_sw_single (double rmse_map1D[], double mean1D[], double reference1D[], double test1D[]) {
     	int i, j;
     	double diff;
     	int bufSize = reference1D.length;
@@ -660,7 +800,7 @@ public class ImageQuality extends AlgorithmBase {
         return;
     }
     
-    private void rmse_sw (double rmse_map2D[], double mean2D[], int ws) {
+    private void rmse_sw (double rmse_map2D[]) {
     	// calculates root mean squared error (rmse) using sliding window.
 
     	// param GT: first (original) input image.
@@ -681,7 +821,7 @@ public class ImageQuality extends AlgorithmBase {
 	    			reference1D[j] = referenceBuffer[j*xDim + i];
 	    			test1D[j] = testBuffer[j*xDim + i];
 	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
 	    		for (j = 0; j < yDim; j++) {
 	    			rmse_map2D[j*xDim + i] = rmse_map1D[j];
 	    		}
@@ -697,7 +837,7 @@ public class ImageQuality extends AlgorithmBase {
 	    			reference1D[j] = referenceRedBuffer[j*xDim + i];
 	    			test1D[j] = testRedBuffer[j*xDim + i];
 	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
 	    		for (j = 0; j < yDim; j++) {
 	    			rmse_map2D[3*j*xDim + 3*i] = rmse_map1D[j];
 	    		}
@@ -712,7 +852,7 @@ public class ImageQuality extends AlgorithmBase {
 	    			reference1D[j] = referenceGreenBuffer[j*xDim + i];
 	    			test1D[j] = testGreenBuffer[j*xDim + i];
 	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
 	    		for (j = 0; j < yDim; j++) {
 	    			rmse_map2D[3*j*xDim + 3*i + 1] = rmse_map1D[j];
 	    		}
@@ -727,7 +867,7 @@ public class ImageQuality extends AlgorithmBase {
 	    			reference1D[j] = referenceBlueBuffer[j*xDim + i];
 	    			test1D[j] = testBlueBuffer[j*xDim + i];
 	    		}
-	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D, ws);
+	    		_rmse_sw_single(rmse_map1D, mean1D, reference1D, test1D);
 	    		for (j = 0; j < yDim; j++) {
 	    			rmse_map2D[3*j*xDim + 3*i + 2] = rmse_map1D[j];
 	    		}
