@@ -287,6 +287,8 @@ public class ImageQuality extends AlgorithmBase {
 	}
 	
 	public void testPsnr() {
+		// Taking maxValue = 255 instead of the actual referenceImage.getMax() causes all tests to pass.
+		// However, this version of the software will use the actual referenceImage.getMax().
 		int testsFailed = 0;
 		double eps = 1.0E-3;
 		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
@@ -707,7 +709,7 @@ public class ImageQuality extends AlgorithmBase {
     
     	//if MAX is None:
         double maxValue = referenceImage.getMax();
-        maxValue = 255;
+        // maxValue = 255; causes all tests to pass.
         mse();
         if (isColor) {
         	double maxRedValue = referenceImage.getMaxR();
