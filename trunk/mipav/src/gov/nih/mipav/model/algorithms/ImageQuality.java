@@ -586,6 +586,8 @@ public class ImageQuality extends AlgorithmBase {
 		    case STRUCTURAL_SIMILARITY_INDEX:
 		    	break;
 		    case UNIVERSAL_QUALITY_IMAGE_INDEX:
+		    	uqi();
+		    	results[i] = uqi_mean;
 		    	break;
 		    case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
 		    	break;
@@ -764,37 +766,181 @@ public class ImageQuality extends AlgorithmBase {
     	// param ws: sliding window size (default = 8).
 
     	// returns:  float -- uqi value.
-    		
-    }
-    
-    private void _uqi_single(double mean1D[], double reference1D[], double test1D[]) {
-    	/*N = ws**2
-    	window = np.ones((ws,ws))
-
-    	GT_sq = GT*GT
-    	P_sq = P*P
-    	GT_P = GT*P
-
-    	GT_sum = uniform_filter(GT, ws)    
-    	P_sum =  uniform_filter(P, ws)     
-    	GT_sq_sum = uniform_filter(GT_sq, ws)  
-    	P_sq_sum = uniform_filter(P_sq, ws)  
-    	GT_P_sum = uniform_filter(GT_P, ws)
-
-    	GT_P_sum_mul = GT_sum*P_sum
-    	GT_P_sum_sq_sum_mul = GT_sum*GT_sum + P_sum*P_sum
-    	numerator = 4*(N*GT_P_sum - GT_P_sum_mul)*GT_P_sum_mul
-    	denominator1 = N*(GT_sq_sum + P_sq_sum) - GT_P_sum_sq_sum_mul
-    	denominator = denominator1*GT_P_sum_sq_sum_mul
-
-    	q_map = np.ones(denominator.shape)
-    	index = np.logical_and((denominator1 == 0) , (GT_P_sum_sq_sum_mul != 0))
-    	q_map[index] = 2*GT_P_sum_mul[index]/GT_P_sum_sq_sum_mul[index]
-    	index = (denominator != 0)
-    	q_map[index] = numerator[index]/denominator[index]
-
-    	s = int(np.round(ws/2))
-    	return np.mean(q_map[s:-s,s:-s])*/
+    	int x,y;
+    	int N = ws*ws;
+    	int size1 = ws/2;
+    	int size2 = ws - size1 - 1;
+    	double GT_sum[][] = new double[yDim][xDim];
+    	double P_sum[][] = new double[yDim][xDim];
+    	double GT_sq_sum[][] = new double[yDim][xDim];
+    	double P_sq_sum[][] = new double[yDim][xDim];
+    	double GT_P_sum[][] = new double[yDim][xDim];
+    	double GT_P_sum_mul;
+    	double GT_P_sum_sq_sum_mul;
+    	double numerator;
+    	double denominator1;
+    	double denominator;
+    	double q_map[][] = new double[yDim][xDim];
+    	int index;
+    	double total = 0.0;
+        if (!isColor) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    GT_sum[y][x] = referenceBuffer[index];
+        		    P_sum[y][x] = testBuffer[index];
+        		    GT_sq_sum[y][x] = referenceBuffer[index]*referenceBuffer[index];
+        		    P_sq_sum[y][x] = testBuffer[index]*testBuffer[index];
+        		    GT_P_sum[y][x] = referenceBuffer[index]*testBuffer[index];
+        		    
+        		}
+        	}
+        	GT_sum = uniformFilter(GT_sum, size1, size2);
+        	P_sum = uniformFilter(P_sum, size1, size2);
+        	GT_sq_sum = uniformFilter(GT_sq_sum, size1, size2);
+        	P_sq_sum = uniformFilter(P_sq_sum, size1, size2);
+        	GT_P_sum = uniformFilter(GT_P_sum, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    GT_P_sum_mul =  GT_sum[y][x]*P_sum[y][x];	
+        		    GT_P_sum_sq_sum_mul = GT_sum[y][x]*GT_sum[y][x] + P_sum[y][x]*P_sum[y][x];
+        		    numerator = 4*(N*GT_P_sum[y][x] - GT_P_sum_mul)*GT_P_sum_mul;
+        		    denominator1 = N*(GT_sq_sum[y][x] + P_sq_sum[y][x]) - GT_P_sum_sq_sum_mul;
+        		    denominator = denominator1*GT_P_sum_sq_sum_mul;
+        		    q_map[y][x] = 1.0;
+        		    if ((denominator1 == 0) && (GT_P_sum_sq_sum_mul != 0)) {
+        		    	q_map[y][x] = 2*GT_P_sum_mul/GT_P_sum_sq_sum_mul;	
+        		    }
+        		    if (denominator != 0) {
+        		    	q_map[y][x] = numerator/denominator;	
+        		    }
+        		}
+        	}
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += q_map[y][x];    
+        		}
+        	}
+        	uqi_mean = total/length;
+        } // if (!isColor)
+        else { // isColor
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    GT_sum[y][x] = referenceRedBuffer[index];
+        		    P_sum[y][x] = testRedBuffer[index];
+        		    GT_sq_sum[y][x] = referenceRedBuffer[index]*referenceRedBuffer[index];
+        		    P_sq_sum[y][x] = testRedBuffer[index]*testRedBuffer[index];
+        		    GT_P_sum[y][x] = referenceRedBuffer[index]*testRedBuffer[index];
+        		    
+        		}
+        	}
+        	GT_sum = uniformFilter(GT_sum, size1, size2);
+        	P_sum = uniformFilter(P_sum, size1, size2);
+        	GT_sq_sum = uniformFilter(GT_sq_sum, size1, size2);
+        	P_sq_sum = uniformFilter(P_sq_sum, size1, size2);
+        	GT_P_sum = uniformFilter(GT_P_sum, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    GT_P_sum_mul =  GT_sum[y][x]*P_sum[y][x];	
+        		    GT_P_sum_sq_sum_mul = GT_sum[y][x]*GT_sum[y][x] + P_sum[y][x]*P_sum[y][x];
+        		    numerator = 4*(N*GT_P_sum[y][x] - GT_P_sum_mul)*GT_P_sum_mul;
+        		    denominator1 = N*(GT_sq_sum[y][x] + P_sq_sum[y][x]) - GT_P_sum_sq_sum_mul;
+        		    denominator = denominator1*GT_P_sum_sq_sum_mul;
+        		    q_map[y][x] = 1.0;
+        		    if ((denominator1 == 0) && (GT_P_sum_sq_sum_mul != 0)) {
+        		    	q_map[y][x] = 2*GT_P_sum_mul/GT_P_sum_sq_sum_mul;	
+        		    }
+        		    if (denominator != 0) {
+        		    	q_map[y][x] = numerator/denominator;	
+        		    }
+        		}
+        	}
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += q_map[y][x];    
+        		}
+        	}
+        	
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    GT_sum[y][x] = referenceGreenBuffer[index];
+        		    P_sum[y][x] = testGreenBuffer[index];
+        		    GT_sq_sum[y][x] = referenceGreenBuffer[index]*referenceGreenBuffer[index];
+        		    P_sq_sum[y][x] = testGreenBuffer[index]*testGreenBuffer[index];
+        		    GT_P_sum[y][x] = referenceGreenBuffer[index]*testGreenBuffer[index];
+        		    
+        		}
+        	}
+        	GT_sum = uniformFilter(GT_sum, size1, size2);
+        	P_sum = uniformFilter(P_sum, size1, size2);
+        	GT_sq_sum = uniformFilter(GT_sq_sum, size1, size2);
+        	P_sq_sum = uniformFilter(P_sq_sum, size1, size2);
+        	GT_P_sum = uniformFilter(GT_P_sum, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    GT_P_sum_mul =  GT_sum[y][x]*P_sum[y][x];	
+        		    GT_P_sum_sq_sum_mul = GT_sum[y][x]*GT_sum[y][x] + P_sum[y][x]*P_sum[y][x];
+        		    numerator = 4*(N*GT_P_sum[y][x] - GT_P_sum_mul)*GT_P_sum_mul;
+        		    denominator1 = N*(GT_sq_sum[y][x] + P_sq_sum[y][x]) - GT_P_sum_sq_sum_mul;
+        		    denominator = denominator1*GT_P_sum_sq_sum_mul;
+        		    q_map[y][x] = 1.0;
+        		    if ((denominator1 == 0) && (GT_P_sum_sq_sum_mul != 0)) {
+        		    	q_map[y][x] = 2*GT_P_sum_mul/GT_P_sum_sq_sum_mul;	
+        		    }
+        		    if (denominator != 0) {
+        		    	q_map[y][x] = numerator/denominator;	
+        		    }
+        		}
+        	}
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += q_map[y][x];    
+        		}
+        	}
+        	
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        		    GT_sum[y][x] = referenceBlueBuffer[index];
+        		    P_sum[y][x] = testBlueBuffer[index];
+        		    GT_sq_sum[y][x] = referenceBlueBuffer[index]*referenceBlueBuffer[index];
+        		    P_sq_sum[y][x] = testBlueBuffer[index]*testBlueBuffer[index];
+        		    GT_P_sum[y][x] = referenceBlueBuffer[index]*testBlueBuffer[index];
+        		    
+        		}
+        	}
+        	GT_sum = uniformFilter(GT_sum, size1, size2);
+        	P_sum = uniformFilter(P_sum, size1, size2);
+        	GT_sq_sum = uniformFilter(GT_sq_sum, size1, size2);
+        	P_sq_sum = uniformFilter(P_sq_sum, size1, size2);
+        	GT_P_sum = uniformFilter(GT_P_sum, size1, size2);
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    GT_P_sum_mul =  GT_sum[y][x]*P_sum[y][x];	
+        		    GT_P_sum_sq_sum_mul = GT_sum[y][x]*GT_sum[y][x] + P_sum[y][x]*P_sum[y][x];
+        		    numerator = 4*(N*GT_P_sum[y][x] - GT_P_sum_mul)*GT_P_sum_mul;
+        		    denominator1 = N*(GT_sq_sum[y][x] + P_sq_sum[y][x]) - GT_P_sum_sq_sum_mul;
+        		    denominator = denominator1*GT_P_sum_sq_sum_mul;
+        		    q_map[y][x] = 1.0;
+        		    if ((denominator1 == 0) && (GT_P_sum_sq_sum_mul != 0)) {
+        		    	q_map[y][x] = 2*GT_P_sum_mul/GT_P_sum_sq_sum_mul;	
+        		    }
+        		    if (denominator != 0) {
+        		    	q_map[y][x] = numerator/denominator;	
+        		    }
+        		}
+        	}
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        		    total += q_map[y][x];    
+        		}
+        	}
+        	uqi_mean = total/(3.0*length);
+        } // else is Color
+    	UI.setDataText("Universal quality image index = " + uqi_mean + "\n");
+    	System.out.println("Universal quality image index = " + uqi_mean);
     }
     
     public double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
