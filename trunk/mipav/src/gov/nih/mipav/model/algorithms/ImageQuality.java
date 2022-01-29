@@ -119,6 +119,11 @@ public class ImageQuality extends AlgorithmBase {
     private double meanBlueSquareError;
     private double rootMeanSquareError;
     private double peakSignalToNoiseRatio;
+    private double rmse_map[][] = null;
+    private double rmse_red_map[][] = null;
+    private double rmse_green_map[][] = null;
+    private double rmse_blue_map[][] = null;
+    private double ergas_mean;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -136,10 +141,12 @@ public class ImageQuality extends AlgorithmBase {
     // Default = 11 for STRUCTURAL_SIMILARITY_INDEX
     private int ws;
     // First SSIM constant (default = 0.01)
-    private double k1;
+    private double k1 = 0.01;
     // Second SSIM constant (default = 0.03)
-    private double k2;
+    private double k2 = 0.03;
     private double sigma;
+    // Ratio of high resolution to low resolution (default = 4.0)
+    private double r = 4.0;
     
     public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
 	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
@@ -168,42 +175,42 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, k1, k2,sigma,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, k1, k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2, sigma,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2, sigma,r,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2391.465875)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2025.913940)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2302.953958)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2016.476768)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_const\n");
@@ -236,14 +243,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error = " + results[0] + " for gry, gry\n");
@@ -252,14 +259,14 @@ public class ImageQuality extends AlgorithmBase {
 		
 		metrics = new int[] {RMSE_SW};
 		ws = 8;
-		iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,results);
+		iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error sliding window = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error sliding window = " + results[0] + " for gry, gry\n");
@@ -267,12 +274,12 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		
 		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		double rmse = results[0];
 		metrics = new int[] {RMSE_SW};
 		ws = 510;
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		double rmse_sw = results[0];
 		if ((Math.abs(rmse - rmse_sw)) > eps) {
@@ -308,42 +315,42 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (!Double.isInfinite(results[0])) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if (!Double.isInfinite(results[0])) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 14.344162)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 15.064594)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 14.507951)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 15.084871)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_const\n");
@@ -370,8 +377,49 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
+	public void testErgas() {
+		// All tests passed for ergas
+		r = 4;
+		ws = 8;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {ERGAS};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
+		iq.runAlgorithm();
+		if (results[0] != 0) {
+			System.err.println("ergas = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
+		iq.runAlgorithm();
+		if (results[0] != 0) {
+			System.err.println("ergas = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for ergas");
+		}
+		else {
+			System.out.println("All tests passed for ergas");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
-			double k1, double k2, double sigma, double results[]) {
+			double k1, double k2, double sigma, double r, double results[]) {
 		if (metrics == null) {
 			MipavUtil.displayError("metrics is null in ImageQuality");
 			return;
@@ -451,6 +499,7 @@ public class ImageQuality extends AlgorithmBase {
 	    	this.k1 = k1;
 	    	this.k2 = k2;
 	    	this.sigma = sigma;
+	    	this.r = r;
 	    } // if (!onlyTestImageRequired)
 	}
     
@@ -604,6 +653,8 @@ public class ImageQuality extends AlgorithmBase {
 		    case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
 		    	break;
 		    case ERGAS:
+		    	ergas();
+		    	results[i] = ergas_mean;
 		    	break;
 		    case SPATIAL_CORRELATION_COEFFICIENT:
 		    	break;
@@ -1149,6 +1200,7 @@ public class ImageQuality extends AlgorithmBase {
     	int index;
     	double total = 0.0;
         if (!isColor) {
+        	rmse_map = new double[yDim][xDim];
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			index = x + y*xDim;
@@ -1159,12 +1211,16 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        		    total += Math.sqrt(errors[y][x]);	
+        			rmse_map[y][x] = Math.sqrt(errors[y][x]);
+        		    total += rmse_map[y][x];	
         		}
         	}
         	rmse_sw_mean = total/length;
         }
         else {
+        	rmse_red_map = new double[yDim][xDim];
+        	rmse_green_map = new double[yDim][xDim];
+        	rmse_blue_map = new double[yDim][xDim];
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			index = x + y*xDim;
@@ -1175,7 +1231,8 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        		    total += Math.sqrt(errors[y][x]);	
+        			rmse_red_map[y][x] = Math.sqrt(errors[y][x]);
+        		    total += rmse_red_map[y][x];	
         		}
         	}
         	
@@ -1189,7 +1246,8 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        		    total += Math.sqrt(errors[y][x]);	
+        			rmse_green_map[y][x] = Math.sqrt(errors[y][x]);
+        		    total += rmse_green_map[y][x];		
         		}
         	}
         	
@@ -1203,7 +1261,8 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        		    total += Math.sqrt(errors[y][x]);	
+        			rmse_blue_map[y][x] = Math.sqrt(errors[y][x]);
+        		    total += rmse_blue_map[y][x];		
         		}
         	}
         	rmse_sw_mean = total/(3.0*length);
@@ -1575,6 +1634,114 @@ public class ImageQuality extends AlgorithmBase {
     	}
     	return out;
 
+    }
+    
+    private void ergas() {
+    	// calculates erreur relative globale adimensionnelle de synthese (ergas).
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+    	// param r: ratio of high resolution to low resolution (default=4).
+    	// param ws: sliding window size (default = 8).
+
+    	// returns:  float -- ergas value.
+    	rmse_map = null;
+    	rmse_red_map = null;
+    	rmse_green_map = null;
+    	rmse_blue_map = null;
+        int nb = 1;
+        int size1 = ws/2;
+    	int size2 = ws - size1 - 1;
+    	int x,y;
+    	int index;
+    	int wsSquared = ws*ws;
+    	double total = 0;
+    	double refBuf2D[][] = new double[yDim][xDim];
+    	double means_map[][];
+        
+        rmse_sw();
+        if (!isColor) {
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceBuffer[index];
+        		}
+        	}
+            means_map = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			means_map[y][x] = means_map[y][x]/wsSquared;
+        			// Avoid division by zero
+        			if (means_map[y][x] == 0.0) {
+        			    means_map[y][x] = 1.0;	
+        			    rmse_map[y][x] = 0.0;
+        			}
+        		    total += 100*r*Math.sqrt(rmse_map[y][x]*rmse_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+        		}
+            }
+            ergas_mean = total/length;
+        } // if (!isColor)
+        else { // isColor
+        	for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceRedBuffer[index];
+        		}
+        	}
+            means_map = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			means_map[y][x] = means_map[y][x]/wsSquared;
+        			// Avoid division by zero
+        			if (means_map[y][x] == 0.0) {
+        			    means_map[y][x] = 1.0;	
+        			    rmse_red_map[y][x] = 0.0;
+        			}
+        		    total += 100*r*Math.sqrt(rmse_red_map[y][x]*rmse_red_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+        		}
+            }	
+            
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceGreenBuffer[index];
+        		}
+        	}
+            means_map = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			means_map[y][x] = means_map[y][x]/wsSquared;
+        			// Avoid division by zero
+        			if (means_map[y][x] == 0.0) {
+        			    means_map[y][x] = 1.0;	
+        			    rmse_green_map[y][x] = 0.0;
+        			}
+        		    total += 100*r*Math.sqrt(rmse_green_map[y][x]*rmse_green_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+        		}
+            }
+            
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceBlueBuffer[index];
+        		}
+        	}
+            means_map = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			means_map[y][x] = means_map[y][x]/wsSquared;
+        			// Avoid division by zero
+        			if (means_map[y][x] == 0.0) {
+        			    means_map[y][x] = 1.0;	
+        			    rmse_blue_map[y][x] = 0.0;
+        			}
+        		    total += 100*r*Math.sqrt(rmse_blue_map[y][x]*rmse_blue_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+        		}
+            }	
+            ergas_mean = total/(3.0*length);
+        } // isColor
+        UI.setDataText("ergas = " + ergas_mean + "\n");
+        System.out.println("ergas = " + ergas_mean);
     }
 	
 }
