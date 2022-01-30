@@ -472,7 +472,7 @@ public class ImageQuality extends AlgorithmBase {
 		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
-			System.err.println("Sptial correlation coefficient = " + results[0] + " for clr, clr\n");
+			System.err.println("Spatial correlation coefficient = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
@@ -487,6 +487,46 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		else {
 			System.out.println("All tests passed for spatial correlation coefficient");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
+	public void testUqi() {
+		// 2 of 2 tests passed for universal quality image index
+		ws = 8;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {UNIVERSAL_QUALITY_IMAGE_INDEX};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Universal quality image index = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Spatial Universal quality image index = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for universal quality image index");
+		}
+		else {
+			System.out.println("All tests passed for universal quality image index");
 		}
 		gry.disposeLocal();
 		gry = null;
