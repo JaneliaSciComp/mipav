@@ -124,6 +124,7 @@ public class ImageQuality extends AlgorithmBase {
     private double rmse_green_map[][] = null;
     private double rmse_blue_map[][] = null;
     private double ergas_mean;
+    private double spatialCorrelationCoefficient;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -147,6 +148,8 @@ public class ImageQuality extends AlgorithmBase {
     private double sigma;
     // Ratio of high resolution to low resolution (default = 4.0)
     private double r = 4.0;
+    // high pass filter for spatial processing (default=[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]).
+    private double win[][] = new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}};
     
     public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
 	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
@@ -175,42 +178,42 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, k1, k2,sigma,r,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, k1, k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2, sigma,r,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2, sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2391.465875)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2025.913940)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2302.953958)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2016.476768)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_const\n");
@@ -243,14 +246,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error = " + results[0] + " for gry, gry\n");
@@ -259,14 +262,14 @@ public class ImageQuality extends AlgorithmBase {
 		
 		metrics = new int[] {RMSE_SW};
 		ws = 8;
-		iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error sliding window = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error sliding window = " + results[0] + " for gry, gry\n");
@@ -274,12 +277,12 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		
 		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		double rmse = results[0];
 		metrics = new int[] {RMSE_SW};
 		ws = 510;
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		double rmse_sw = results[0];
 		if ((Math.abs(rmse - rmse_sw)) > eps) {
@@ -315,42 +318,42 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (!Double.isInfinite(results[0])) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (!Double.isInfinite(results[0])) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 14.344162)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 15.064594)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 14.507951)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 15.084871)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_const\n");
@@ -377,6 +380,47 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
+	public void testSsim() {
+		// All tests passed for structural similarity index
+		ws = 11;
+		sigma = 1.0;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {STRUCTURAL_SIMILARITY_INDEX};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Structural similarity index = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Structural similarity index = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for structural similarity index");
+		}
+		else {
+			System.out.println("All tests passed for structural similarity index");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
 	public void testErgas() {
 		// All tests passed for ergas
 		r = 4;
@@ -385,14 +429,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {ERGAS};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0) {
 			System.err.println("ergas = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
 		iq.runAlgorithm();
 		if (results[0] != 0) {
 			System.err.println("ergas = " + results[0] + " for gry, gry\n");
@@ -418,8 +462,48 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
+	public void testScc() {
+		// All tests passed for spatial correlation coefficient
+		ws = 8;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {SPATIAL_CORRELATION_COEFFICIENT};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Sptial correlation coefficient = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Spatial correlation coefficient = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for spatial correlation coefficient");
+		}
+		else {
+			System.out.println("All tests passed for spatial correlation coefficient");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
-			double k1, double k2, double sigma, double r, double results[]) {
+			double k1, double k2, double sigma, double r, double win[][], double results[]) {
 		if (metrics == null) {
 			MipavUtil.displayError("metrics is null in ImageQuality");
 			return;
@@ -500,6 +584,7 @@ public class ImageQuality extends AlgorithmBase {
 	    	this.k2 = k2;
 	    	this.sigma = sigma;
 	    	this.r = r;
+	    	this.win = win;
 	    } // if (!onlyTestImageRequired)
 	}
     
@@ -657,6 +742,8 @@ public class ImageQuality extends AlgorithmBase {
 		    	results[i] = ergas_mean;
 		    	break;
 		    case SPATIAL_CORRELATION_COEFFICIENT:
+		    	scc();
+		    	results[i] = spatialCorrelationCoefficient;
 		    	break;
 		    case RELATIVE_AVERAGE_SPECTRAL_ERROR:
 		    	break;
@@ -1161,6 +1248,32 @@ public class ImageQuality extends AlgorithmBase {
     	
     	return dst;
     }
+    
+    private double[][] correlationFilter(double img[][]) {
+    	int top = win.length/2;
+    	int bottom = win.length -top - 1;
+    	int left = win[0].length/2;
+    	int right = win[0].length - left - 1;
+    	double imgpad[][] = copyMakeBorder(img, top, bottom, left, right, BORDER_REFLECT, 0.0);
+    	int h = img.length;
+		int w = img[0].length;
+		double result[][] = new double[h][w];
+		double area = (top+bottom+1)*(left+right+1);
+		double sum;
+		int y,x,i,j;
+		for (y = top; y < h + top; y++) {
+			for (x = left; x < w + left; x++) {
+			    sum = 0.0;
+			    for (i = -top; i <= bottom; i++) {
+			    	for (j = -left; j <= right; j++) {
+			    		sum += imgpad[y + i][x + j] * win[i+top][j+left];
+			    	}
+			    }
+			    result[y-top][x-left] = sum/area;
+			}
+		}
+		return result;
+    }
 	
 	private double[][] uniformFilter(double img[][], int size1, int size2) {
 		double imgpad[][] = copyMakeBorder(img, size1, size2, size1, size2, BORDER_REFLECT, 0.0);
@@ -1293,18 +1406,18 @@ public class ImageQuality extends AlgorithmBase {
     	int size2 = ws - size1 - 1;
     	int index;
     	
-    	double win[][] = new double[ws][ws];
+    	double window[][] = new double[ws][ws];
     	double sum = 0.0;
     	for (y = -size1; y <= size2; y++) {
     		for (x = -size1; x <= size2; x++) {
-    		    win[y+size1][x+size1] = Math.exp(-((x*x + y*y)/(2.0*sigma*sigma)));
-    		    sum += win[y+size1][x+size1];
+    		    window[y+size1][x+size1] = Math.exp(-((x*x + y*y)/(2.0*sigma*sigma)));
+    		    sum += window[y+size1][x+size1];
     		}
     	}
     	if (sum != 0.0) {
 	    	for (y = 0; y < ws; y++) {
 	    		for (x = 0; x < ws; x++) {
-	    			win[y][x] = win[y][x]/sum;
+	    			window[y][x] = window[y][x]/sum;
 	    		}
 	    	}
     	}
@@ -1320,8 +1433,8 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	
-	    	double mu1[][] = filter2NoPad(refBuf2D, win);
-	    	double mu2[][] = filter2NoPad(testBuf2D,win);
+	    	double mu1[][] = filter2NoPad(refBuf2D, window);
+	    	double mu2[][] = filter2NoPad(testBuf2D,window);
 	    	double GT_sum_sq[][] = new double[yDim][xDim];
 	    	double P_sum_sq[][] = new double[yDim][xDim];
 	    	double GT_P_sum_mul[][] = new double[yDim][xDim];
@@ -1338,9 +1451,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	double filtGTGT[][] = filter2NoPad(GTGT, win);
-	    	double filtPP[][] = filter2NoPad(PP, win);
-	    	double filtGTP[][] = filter2NoPad(GTP, win);
+	    	double filtGTGT[][] = filter2NoPad(GTGT, window);
+	    	double filtPP[][] = filter2NoPad(PP, window);
+	    	double filtGTP[][] = filter2NoPad(GTP, window);
 	    	double sigmaGT_sq[][] = new double[yDim][xDim];
 	    	double sigmaP_sq[][] = new double[yDim][xDim];
 	    	double sigmaGT_P[][] = new double[yDim][xDim];
@@ -1396,8 +1509,8 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	
-	    	double mu1[][] = filter2NoPad(refBuf2D, win);
-	    	double mu2[][] = filter2NoPad(testBuf2D,win);
+	    	double mu1[][] = filter2NoPad(refBuf2D, window);
+	    	double mu2[][] = filter2NoPad(testBuf2D,window);
 	    	double GT_sum_sq[][] = new double[yDim][xDim];
 	    	double P_sum_sq[][] = new double[yDim][xDim];
 	    	double GT_P_sum_mul[][] = new double[yDim][xDim];
@@ -1414,9 +1527,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	double filtGTGT[][] = filter2NoPad(GTGT, win);
-	    	double filtPP[][] = filter2NoPad(PP, win);
-	    	double filtGTP[][] = filter2NoPad(GTP, win);
+	    	double filtGTGT[][] = filter2NoPad(GTGT, window);
+	    	double filtPP[][] = filter2NoPad(PP, window);
+	    	double filtGTP[][] = filter2NoPad(GTP, window);
 	    	double sigmaGT_sq[][] = new double[yDim][xDim];
 	    	double sigmaP_sq[][] = new double[yDim][xDim];
 	    	double sigmaGT_P[][] = new double[yDim][xDim];
@@ -1467,8 +1580,8 @@ public class ImageQuality extends AlgorithmBase {
 	    			testBuf2D[y][x] = testGreenBuffer[index];
 	    		}
 	    	}
-	    	mu1 = filter2NoPad(refBuf2D, win);
-	    	mu2 = filter2NoPad(testBuf2D,win);
+	    	mu1 = filter2NoPad(refBuf2D, window);
+	    	mu2 = filter2NoPad(testBuf2D,window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
@@ -1479,9 +1592,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, win);
-	    	filtPP = filter2NoPad(PP, win);
-	    	filtGTP = filter2NoPad(GTP, win);
+	    	filtGTGT = filter2NoPad(GTGT, window);
+	    	filtPP = filter2NoPad(PP, window);
+	    	filtGTP = filter2NoPad(GTP, window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
@@ -1527,8 +1640,8 @@ public class ImageQuality extends AlgorithmBase {
 	    			testBuf2D[y][x] = testBlueBuffer[index];
 	    		}
 	    	}
-	    	mu1 = filter2NoPad(refBuf2D, win);
-	    	mu2 = filter2NoPad(testBuf2D,win);
+	    	mu1 = filter2NoPad(refBuf2D, window);
+	    	mu2 = filter2NoPad(testBuf2D,window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
@@ -1539,9 +1652,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, win);
-	    	filtPP = filter2NoPad(PP, win);
-	    	filtGTP = filter2NoPad(GTP, win);
+	    	filtGTGT = filter2NoPad(GTGT, window);
+	    	filtPP = filter2NoPad(PP, window);
+	    	filtGTP = filter2NoPad(GTP, window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
@@ -1581,8 +1694,8 @@ public class ImageQuality extends AlgorithmBase {
 	    	}
 	    	structuralSimilarityIndex = sum/(3.0*length);	
     	} // isColor
-    	UI.setDataText("Structural similarity index = " + universalImageQualityIndex + "\n");
-    	System.out.println("Structural similarity index = " + universalImageQualityIndex);
+    	UI.setDataText("Structural similarity index = " + structuralSimilarityIndex + "\n");
+    	System.out.println("Structural similarity index = " + structuralSimilarityIndex);
     }
     
     private double[][] filter2NoPad(double img[][], double filter[][]) {
@@ -1742,6 +1855,201 @@ public class ImageQuality extends AlgorithmBase {
         } // isColor
         UI.setDataText("ergas = " + ergas_mean + "\n");
         System.out.println("ergas = " + ergas_mean);
+    }
+    
+    private void scc() {
+    	// calculates spatial correlation coefficient (scc).
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+    	// param fltr: high pass filter for spatial processing (default=[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]).
+    	// param ws: sliding window size (default = 8).
+
+    	// returns:  float -- scc value.
+    	double refBuf2D[][] = new double[yDim][xDim];
+    	double testBuf2D[][] = new double[yDim][xDim];
+    	int x,y;
+    	int index;
+    	double GT_hp[][];
+    	double P_hp[][];
+    	double mu1[][];
+    	double mu2[][];
+    	double GT_sum_sq[][] = new double[yDim][xDim];
+    	double P_sum_sq[][] = new double[yDim][xDim];
+    	double GT_P_sum_mul[][] = new double[yDim][xDim];
+    	double GTGT[][] = new double[yDim][xDim];
+    	double PP[][] = new double[yDim][xDim];
+    	double GTP[][] = new double[yDim][xDim];
+    	double filtGTGT[][];
+    	double filtPP[][];
+    	double filtGTP[][];
+    	double sigmaGT_sq;
+    	double sigmaP_sq;
+    	double sigmaGT_P; 
+    	double den;
+    	double inversews2 = 1.0/(ws*ws);
+	    double window[][] = new double[ws][ws];
+	    for (y = 0; y < ws; y++) {
+	    	for (x = 0; x < ws; x++) {
+	    		window[y][x] = inversews2;
+	    	}
+	    }
+    	double total = 0.0;
+    	
+    	if (!isColor) {
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				index = x + y*xDim;
+    				refBuf2D[y][x] = referenceBuffer[index];
+    				testBuf2D[y][x] = testBuffer[index];
+    			}
+    		}
+    		
+    	    GT_hp = correlationFilter(refBuf2D);
+    	    P_hp = correlationFilter(testBuf2D);
+    	    mu1 = filter2NoPad(GT_hp, window);
+	    	mu2 = filter2NoPad(P_hp,window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		    GTGT[y][x] = GT_hp[y][x] * GT_hp[y][x];
+	    		    PP[y][x] = P_hp[y][x] * P_hp[y][x];
+	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
+	    		}
+	    	}
+	    	filtGTGT = filter2NoPad(GTGT, window);
+	    	filtPP = filter2NoPad(PP, window);
+	    	filtGTP = filter2NoPad(GTP, window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
+	    			sigmaP_sq = Math.max(0,filtPP[y][x] -P_sum_sq[y][x]);
+	    			sigmaGT_P = filtGTP[y][x] - GT_P_sum_mul[y][x];
+	    			den = Math.sqrt(sigmaGT_sq) * Math.sqrt(sigmaP_sq);
+	    			if (den != 0) {
+	    				total += sigmaGT_P / den;
+	    			}
+	    		}
+	    	}
+	    	spatialCorrelationCoefficient = total/length;
+    	} // if (!isColor)
+    	else { // isColor
+    		for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				index = x + y*xDim;
+    				refBuf2D[y][x] = referenceRedBuffer[index];
+    				testBuf2D[y][x] = testRedBuffer[index];
+    			}
+    		}
+    		
+    	    GT_hp = correlationFilter(refBuf2D);
+    	    P_hp = correlationFilter(testBuf2D);
+    	    mu1 = filter2NoPad(GT_hp, window);
+	    	mu2 = filter2NoPad(P_hp,window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		    GTGT[y][x] = GT_hp[y][x] * GT_hp[y][x];
+	    		    PP[y][x] = P_hp[y][x] * P_hp[y][x];
+	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
+	    		}
+	    	}
+	    	filtGTGT = filter2NoPad(GTGT, window);
+	    	filtPP = filter2NoPad(PP, window);
+	    	filtGTP = filter2NoPad(GTP, window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
+	    			sigmaP_sq = Math.max(0,filtPP[y][x] -P_sum_sq[y][x]);
+	    			sigmaGT_P = filtGTP[y][x] - GT_P_sum_mul[y][x];
+	    			den = Math.sqrt(sigmaGT_sq) * Math.sqrt(sigmaP_sq);
+	    			if (den != 0) {
+	    				total += sigmaGT_P / den;
+	    			}
+	    		}
+	    	}
+	    	
+	    	for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				index = x + y*xDim;
+    				refBuf2D[y][x] = referenceGreenBuffer[index];
+    				testBuf2D[y][x] = testGreenBuffer[index];
+    			}
+    		}
+    		
+    	    GT_hp = correlationFilter(refBuf2D);
+    	    P_hp = correlationFilter(testBuf2D);
+    	    mu1 = filter2NoPad(GT_hp, window);
+	    	mu2 = filter2NoPad(P_hp,window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		    GTGT[y][x] = GT_hp[y][x] * GT_hp[y][x];
+	    		    PP[y][x] = P_hp[y][x] * P_hp[y][x];
+	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
+	    		}
+	    	}
+	    	filtGTGT = filter2NoPad(GTGT, window);
+	    	filtPP = filter2NoPad(PP, window);
+	    	filtGTP = filter2NoPad(GTP, window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
+	    			sigmaP_sq = Math.max(0,filtPP[y][x] -P_sum_sq[y][x]);
+	    			sigmaGT_P = filtGTP[y][x] - GT_P_sum_mul[y][x];
+	    			den = Math.sqrt(sigmaGT_sq) * Math.sqrt(sigmaP_sq);
+	    			if (den != 0) {
+	    				total += sigmaGT_P / den;
+	    			}
+	    		}
+	    	}
+	    	
+	    	for (y = 0; y < yDim; y++) {
+    			for (x = 0; x < xDim; x++) {
+    				index = x + y*xDim;
+    				refBuf2D[y][x] = referenceBlueBuffer[index];
+    				testBuf2D[y][x] = testBlueBuffer[index];
+    			}
+    		}
+    		
+    	    GT_hp = correlationFilter(refBuf2D);
+    	    P_hp = correlationFilter(testBuf2D);
+    	    mu1 = filter2NoPad(GT_hp, window);
+	    	mu2 = filter2NoPad(P_hp,window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		    GTGT[y][x] = GT_hp[y][x] * GT_hp[y][x];
+	    		    PP[y][x] = P_hp[y][x] * P_hp[y][x];
+	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
+	    		}
+	    	}
+	    	filtGTGT = filter2NoPad(GTGT, window);
+	    	filtPP = filter2NoPad(PP, window);
+	    	filtGTP = filter2NoPad(GTP, window);
+	    	for (y = 0; y < yDim; y++) {
+	    		for (x = 0; x < xDim; x++) {
+	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
+	    			sigmaP_sq = Math.max(0,filtPP[y][x] -P_sum_sq[y][x]);
+	    			sigmaGT_P = filtGTP[y][x] - GT_P_sum_mul[y][x];
+	    			den = Math.sqrt(sigmaGT_sq) * Math.sqrt(sigmaP_sq);
+	    			if (den != 0) {
+	    				total += sigmaGT_P / den;
+	    			}
+	    		}
+	    	}
+    		spatialCorrelationCoefficient = total/(3.0*length);   	
+    	} // isColor
+    	UI.setDataText("Spatial correlation coefficient = " + spatialCorrelationCoefficient + "\n");
+        System.out.println("Spatial correlation coefficient = " + spatialCorrelationCoefficient);	
     }
 	
 }
