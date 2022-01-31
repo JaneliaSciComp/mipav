@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
+import tools.DB;
 
 /**
  * 
@@ -145,7 +146,7 @@ public class ImageQuality extends AlgorithmBase {
     private double k1 = 0.01;
     // Second SSIM constant (default = 0.03)
     private double k2 = 0.03;
-    private double sigma;
+    private double sigma = 1.5;
     // Ratio of high resolution to low resolution (default = 4.0)
     private double r = 4.0;
     // high pass filter for spatial processing (default=[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]).
@@ -383,7 +384,6 @@ public class ImageQuality extends AlgorithmBase {
 	public void testSsim() {
 		// All tests passed for structural similarity index
 		ws = 11;
-		sigma = 1.0;
 		int testsFailed = 0;
 		double eps = 1.0E-3;
 		metrics = new int[] {STRUCTURAL_SIMILARITY_INDEX};
@@ -401,12 +401,29 @@ public class ImageQuality extends AlgorithmBase {
 			System.err.println("Structural similarity index = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
+		
+
+		String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
+		final FileIO fileIO = new FileIO();
+		fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+    	// Einstein picture examples from https://ece.uwaterloo.ca/~z70wang/research/ssim/.
+    	// Original image, MSE = 0, SSIM = 1
+    	ModelImage gryA = fileIO.readJimi("EinsteinA.jpg", fileDir, false);
+    	// MSE = 144, SSIM = 0.988
+    	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
+    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,results);
+    	iq.runAlgorithm();
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for structural similarity index");
 		}
 		else {
 			System.out.println("All tests passed for structural similarity index");
 		}
+		gryA.disposeLocal();
+		gryA = null;
+		gryB.disposeLocal();
+		gryB = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -482,6 +499,7 @@ public class ImageQuality extends AlgorithmBase {
 			System.err.println("Spatial correlation coefficient = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
+		
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for spatial correlation coefficient");
 		}
@@ -527,12 +545,43 @@ public class ImageQuality extends AlgorithmBase {
 		final FileIO fileIO = new FileIO();
 		fileIO.setQuiet(true);
     	fileIO.setSuppressProgressBar(true);
+    	// Lena examples from https://ece.uwaterloo.ca/~z70wang/research/quality_index/demo_lena.html
     	// Original MSE = 0, UQI = 1
 		ModelImage gryA = fileIO.readJimi("lenaA.gif", fileDir, false);
-		// Impulse salt pepper noise MSE = 255, Q = 0.6494
+		// Impulse salt pepper noise MSE = 225, Q = 0.6494
 		ModelImage gryB = fileIO.readJimi("lenaB.gif", fileDir, false);
 		iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,results);
-		// Running gave Universal quality image index = Universal quality image index = 0.6493759202505665, which matches 0.6494.
+		// Running gave Universal quality image index = 0.6493759202505665, which matches 0.6494.
+		iq.runAlgorithm();
+		// Additive Gaussian noise MSE = 225, Q = 0.3891
+		ModelImage gryC = fileIO.readJimi("lenaC.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,results);
+		// Running gave Universal quality image index = 0.3891114199004425, which matches 0.3891
+		iq.runAlgorithm();
+		// Multiplicative speckle noise MSE = 225, Q = 0.4408
+		ModelImage gryD = fileIO.readJimi("lenaD.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryD, metrics, ws, k1,k2,sigma,r,win,results);
+		// Running gave Universal quality image index = 0.4407595077383508, which matches 0.4408
+		iq.runAlgorithm();
+		// Mean shift MSE = 225, Q = .9894
+		ModelImage gryE = fileIO.readJimi("lenaE.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryE, metrics, ws, k1,k2,sigma,r,win,results);
+		// Running gave Universal quality image index = 0.9894240066005174, which matches 0.9894
+		iq.runAlgorithm();
+		// Contrast shifting MSE = 225, Q = 0.9372
+		ModelImage gryF = fileIO.readJimi("lenaF.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryF, metrics, ws, k1,k2,sigma,r,win,results);
+		// Running gave Universal quality image index = 0.9371941115064664, which matches 0.9372
+		iq.runAlgorithm();
+		// Blurring MSE = 225, Q = 0.3461
+		ModelImage gryG = fileIO.readJimi("lenaG.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryG, metrics, ws, k1,k2,sigma,r,win,results);
+		// Running gave Universal quality image index = 0.3461221853315234, which matches 0.3461
+		iq.runAlgorithm();
+		// JPEG compression MSE = 215, Q = 0.2876
+		ModelImage gryH = fileIO.readJimi("lenaH.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryH, metrics, ws, k1,k2,sigma,r,win,results);
+		// Running gave Universal quality image index = 0.28755478329174916, which matches 0.2876.
 		iq.runAlgorithm();
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for universal quality image index");
@@ -544,6 +593,18 @@ public class ImageQuality extends AlgorithmBase {
 		gryA = null;
 		gryB.disposeLocal();
 		gryB = null;
+		gryC.disposeLocal();
+		gryC = null;
+		gryD.disposeLocal();
+		gryD = null;
+		gryE.disposeLocal();
+		gryE = null;
+		gryF.disposeLocal();
+		gryF = null;
+		gryG.disposeLocal();
+		gryG = null;
+		gryH.disposeLocal();
+		gryH = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -1466,18 +1527,26 @@ public class ImageQuality extends AlgorithmBase {
     	// param K1: First constant for SSIM (default = 0.01).
     	// param K2: Second constant for SSIM (default = 0.03).
     	// param MAX: Maximum value of datarange (if None, MAX is calculated using image dtype).
+    	// sigma = 1.5
 
     	// returns:  tuple -- ssim value, cs value.	
     	//if MAX is None:
     	
-        double maxValue = referenceImage.getMax();
+        double range = referenceImage.getMax() - referenceImage.getMin();
         
-        double c1 = k1*k1*maxValue*maxValue;
-        double c2 = k2*k2*maxValue*maxValue;
+        double c1 = k1*k1*range*range;
+        double c2 = k2*k2*range*range;
         int x,y;
     	int size1 = ws/2;
     	int size2 = ws - size1 - 1;
     	int index;
+    	int filtXDim;
+    	int filtYDim;
+    	double refBuf2D[][] = new double[yDim][xDim];
+    	double testBuf2D[][] = new double[yDim][xDim];
+    	double GTGT[][] = new double[yDim][xDim];
+    	double PP[][] = new double[yDim][xDim];
+    	double GTP[][] = new double[yDim][xDim];
     	
     	double window[][] = new double[ws][ws];
     	double sum = 0.0;
@@ -1496,59 +1565,56 @@ public class ImageQuality extends AlgorithmBase {
     	}
     	
     	if (!isColor) {
-	    	double refBuf2D[][] = new double[yDim][xDim];
-	    	double testBuf2D[][] = new double[yDim][xDim];
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			index = x + y*xDim;
 	    			refBuf2D[y][x] = referenceBuffer[index];
 	    			testBuf2D[y][x] = testBuffer[index];
-	    		}
-	    	}
-	    	
-	    	double mu1[][] = filter2NoPad(refBuf2D, window);
-	    	double mu2[][] = filter2NoPad(testBuf2D,window);
-	    	double GT_sum_sq[][] = new double[yDim][xDim];
-	    	double P_sum_sq[][] = new double[yDim][xDim];
-	    	double GT_P_sum_mul[][] = new double[yDim][xDim];
-	    	double GTGT[][] = new double[yDim][xDim];
-	    	double PP[][] = new double[yDim][xDim];
-	    	double GTP[][] = new double[yDim][xDim];
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		    GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
+	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	double filtGTGT[][] = filter2NoPad(GTGT, window);
-	    	double filtPP[][] = filter2NoPad(PP, window);
-	    	double filtGTP[][] = filter2NoPad(GTP, window);
-	    	double sigmaGT_sq[][] = new double[yDim][xDim];
-	    	double sigmaP_sq[][] = new double[yDim][xDim];
-	    	double sigmaGT_P[][] = new double[yDim][xDim];
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	
+	    	double mu1[][] = filter2Valid(refBuf2D, window);
+	    	double mu2[][] = filter2Valid(testBuf2D,window);
+	    	filtYDim = mu1.length;
+	    	filtXDim = mu1[0].length;
+	    	double GT_sum_sq[][] = new double[filtYDim][filtXDim];
+	    	double P_sum_sq[][] = new double[filtYDim][filtXDim];
+	    	double GT_P_sum_mul[][] = new double[filtYDim][filtXDim];
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		}
+	    	}
+	    	double filtGTGT[][] = filter2Valid(GTGT, window);
+	    	double filtPP[][] = filter2Valid(PP, window);
+	    	double filtGTP[][] = filter2Valid(GTP, window);
+	    	double sigmaGT_sq[][] = new double[filtYDim][filtXDim];
+	    	double sigmaP_sq[][] = new double[filtYDim][filtXDim];
+	    	double sigmaGT_P[][] = new double[filtYDim][filtXDim];
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
 	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
 	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
 	    		}
 	    	}
-	    	double ssim_map[][] = new double[yDim][xDim];
+	    	double ssim_map[][] = new double[filtYDim][filtXDim];
 	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
 		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
 		    		}
 	    		}
 	    	} // if ((c1 > 0) && (c2 > 0))
 	    	else {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
 		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
 		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
@@ -1564,67 +1630,64 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	sum = 0.0;
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sum += ssim_map[y][x];
 	    		}
 	    	}
-	    	structuralSimilarityIndex = sum/length;
-    	} // is (!isColor)
+	    	structuralSimilarityIndex = sum/(filtXDim * filtYDim);
+    	}
     	else { // isColor
-    		double refBuf2D[][] = new double[yDim][xDim];
-	    	double testBuf2D[][] = new double[yDim][xDim];
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			index = x + y*xDim;
 	    			refBuf2D[y][x] = referenceRedBuffer[index];
 	    			testBuf2D[y][x] = testRedBuffer[index];
-	    		}
-	    	}
-	    	
-	    	double mu1[][] = filter2NoPad(refBuf2D, window);
-	    	double mu2[][] = filter2NoPad(testBuf2D,window);
-	    	double GT_sum_sq[][] = new double[yDim][xDim];
-	    	double P_sum_sq[][] = new double[yDim][xDim];
-	    	double GT_P_sum_mul[][] = new double[yDim][xDim];
-	    	double GTGT[][] = new double[yDim][xDim];
-	    	double PP[][] = new double[yDim][xDim];
-	    	double GTP[][] = new double[yDim][xDim];
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		    GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
+	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	double filtGTGT[][] = filter2NoPad(GTGT, window);
-	    	double filtPP[][] = filter2NoPad(PP, window);
-	    	double filtGTP[][] = filter2NoPad(GTP, window);
-	    	double sigmaGT_sq[][] = new double[yDim][xDim];
-	    	double sigmaP_sq[][] = new double[yDim][xDim];
-	    	double sigmaGT_P[][] = new double[yDim][xDim];
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	
+	    	double mu1[][] = filter2Valid(refBuf2D, window);
+	    	double mu2[][] = filter2Valid(testBuf2D,window);
+	    	filtYDim = mu1.length;
+	    	filtXDim = mu1[0].length;
+	    	double GT_sum_sq[][] = new double[filtYDim][filtXDim];
+	    	double P_sum_sq[][] = new double[filtYDim][filtXDim];
+	    	double GT_P_sum_mul[][] = new double[filtYDim][filtXDim];
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		}
+	    	}
+	    	double filtGTGT[][] = filter2Valid(GTGT, window);
+	    	double filtPP[][] = filter2Valid(PP, window);
+	    	double filtGTP[][] = filter2Valid(GTP, window);
+	    	double sigmaGT_sq[][] = new double[filtYDim][filtXDim];
+	    	double sigmaP_sq[][] = new double[filtYDim][filtXDim];
+	    	double sigmaGT_P[][] = new double[filtYDim][filtXDim];
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
 	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
 	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
 	    		}
 	    	}
-	    	double ssim_map[][] = new double[yDim][xDim];
+	    	double ssim_map[][] = new double[filtYDim][filtXDim];
 	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
 		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
 		    		}
 	    		}
 	    	} // if ((c1 > 0) && (c2 > 0))
 	    	else {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
 		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
 		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
@@ -1640,8 +1703,8 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	sum = 0.0;
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sum += ssim_map[y][x];
 	    		}
 	    	}
@@ -1651,41 +1714,41 @@ public class ImageQuality extends AlgorithmBase {
 	    			index = x + y*xDim;
 	    			refBuf2D[y][x] = referenceGreenBuffer[index];
 	    			testBuf2D[y][x] = testGreenBuffer[index];
-	    		}
-	    	}
-	    	mu1 = filter2NoPad(refBuf2D, window);
-	    	mu2 = filter2NoPad(testBuf2D,window);
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		    GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
+	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, window);
-	    	filtPP = filter2NoPad(PP, window);
-	    	filtGTP = filter2NoPad(GTP, window);
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	mu1 = filter2Valid(refBuf2D, window);
+	    	mu2 = filter2Valid(testBuf2D,window);
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
+	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
+	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
+	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
+	    		}
+	    	}
+	    	filtGTGT = filter2Valid(GTGT, window);
+	    	filtPP = filter2Valid(PP, window);
+	    	filtGTP = filter2Valid(GTP, window);
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
 	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
 	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
 	    		}
 	    	}
 	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
 		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
 		    		}
 	    		}
 	    	} // if ((c1 > 0) && (c2 > 0))
 	    	else {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
 		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
 		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
@@ -1700,8 +1763,8 @@ public class ImageQuality extends AlgorithmBase {
 		    		}
 	    		}
 	    	}
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sum += ssim_map[y][x];
 	    		}
 	    	}
@@ -1711,41 +1774,41 @@ public class ImageQuality extends AlgorithmBase {
 	    			index = x + y*xDim;
 	    			refBuf2D[y][x] = referenceBlueBuffer[index];
 	    			testBuf2D[y][x] = testBlueBuffer[index];
+	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
+		    		PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
+		    		GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	mu1 = filter2NoPad(refBuf2D, window);
-	    	mu2 = filter2NoPad(testBuf2D,window);
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	mu1 = filter2Valid(refBuf2D, window);
+	    	mu2 = filter2Valid(testBuf2D,window);
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
 	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
 	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		    GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
-	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
-	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, window);
-	    	filtPP = filter2NoPad(PP, window);
-	    	filtGTP = filter2NoPad(GTP, window);
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	filtGTGT = filter2Valid(GTGT, window);
+	    	filtPP = filter2Valid(PP, window);
+	    	filtGTP = filter2Valid(GTP, window);
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
 	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
 	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
 	    		}
 	    	}
 	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
 		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
 		    		}
 	    		}
 	    	} // if ((c1 > 0) && (c2 > 0))
 	    	else {
-	    		for (y = 0; y < yDim; y++) {
-		    		for (x = 0; x < xDim; x++) {
+	    		for (y = 0; y < filtYDim; y++) {
+		    		for (x = 0; x < filtXDim; x++) {
 		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
 		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
 		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
@@ -1760,12 +1823,12 @@ public class ImageQuality extends AlgorithmBase {
 		    		}
 	    		}
 	    	}
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
+	    	for (y = 0; y < filtYDim; y++) {
+	    		for (x = 0; x < filtXDim; x++) {
 	    			sum += ssim_map[y][x];
 	    		}
 	    	}
-	    	structuralSimilarityIndex = sum/(3.0*length);	
+	    	structuralSimilarityIndex = sum/(3.0*filtXDim*filtYDim);	
     	} // isColor
     	UI.setDataText("Structural similarity index = " + structuralSimilarityIndex + "\n");
     	System.out.println("Structural similarity index = " + structuralSimilarityIndex);
