@@ -974,8 +974,6 @@ public class ImageQuality extends AlgorithmBase {
     	// returns:  float -- uqi value.
     	int x,y;
     	int N = ws*ws;
-    	int size1 = ws/2;
-    	int size2 = ws - size1 - 1;
     	double GT[][] = new double[yDim][xDim];
     	double P[][] = new double[yDim][xDim];
     	double GT_sq[][] = new double[yDim][xDim];
