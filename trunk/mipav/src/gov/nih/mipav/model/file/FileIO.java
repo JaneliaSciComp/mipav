@@ -8983,7 +8983,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readJimi(final String fileName, final String fileDir, final boolean multifile) {
+    public ModelImage readJimi(final String fileName, final String fileDir, final boolean multifile) {
         ModelImage modelImage = null;
         Image image = null;
         int imageWidth = 0;
