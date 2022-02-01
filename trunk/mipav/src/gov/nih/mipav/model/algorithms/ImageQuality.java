@@ -1029,7 +1029,7 @@ public class ImageQuality extends AlgorithmBase {
     	return dst;
     }
     
-    private double[][] correlationFilter(double img[][]) {
+    private double[][] filter2Same(double img[][], double win[][]) {
     	int top = win.length/2;
     	int bottom = win.length -top - 1;
     	int left = win[0].length/2;
@@ -1038,7 +1038,6 @@ public class ImageQuality extends AlgorithmBase {
     	int h = img.length;
 		int w = img[0].length;
 		double result[][] = new double[h][w];
-		double area = (top+bottom+1)*(left+right+1);
 		double sum;
 		int y,x,i,j;
 		for (y = top; y < h + top; y++) {
@@ -1049,7 +1048,32 @@ public class ImageQuality extends AlgorithmBase {
 			    		sum += imgpad[y + i][x + j] * win[i+top][j+left];
 			    	}
 			    }
-			    result[y-top][x-left] = sum/area;
+			    result[y-top][x-left] = sum;
+			}
+		}
+		return result;
+    }
+    
+    private double[][] correlationFilter(double img[][]) {
+    	int top = win.length/2;
+    	int bottom = win.length -top - 1;
+    	int left = win[0].length/2;
+    	int right = win[0].length - left - 1;
+    	double imgpad[][] = copyMakeBorder(img, top, bottom, left, right, BORDER_REFLECT, 0.0);
+    	int h = img.length;
+		int w = img[0].length;
+		double result[][] = new double[h][w];
+		double sum;
+		int y,x,i,j;
+		for (y = top; y < h + top; y++) {
+			for (x = left; x < w + left; x++) {
+			    sum = 0.0;
+			    for (i = -top; i <= bottom; i++) {
+			    	for (j = -left; j <= right; j++) {
+			    		sum += imgpad[y + i][x + j] * win[i+top][j+left];
+			    	}
+			    }
+			    result[y-top][x-left] = sum;
 			}
 		}
 		return result;
@@ -1398,8 +1422,8 @@ public class ImageQuality extends AlgorithmBase {
     		
     	    GT_hp = correlationFilter(refBuf2D);
     	    P_hp = correlationFilter(testBuf2D);
-    	    mu1 = filter2NoPad(GT_hp, window);
-	    	mu2 = filter2NoPad(P_hp,window);
+    	    mu1 = filter2Same(GT_hp, window);
+	    	mu2 = filter2Same(P_hp,window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
@@ -1410,9 +1434,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, window);
-	    	filtPP = filter2NoPad(PP, window);
-	    	filtGTP = filter2NoPad(GTP, window);
+	    	filtGTGT = filter2Same(GTGT, window);
+	    	filtPP = filter2Same(PP, window);
+	    	filtGTP = filter2Same(GTP, window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
@@ -1437,8 +1461,8 @@ public class ImageQuality extends AlgorithmBase {
     		
     	    GT_hp = correlationFilter(refBuf2D);
     	    P_hp = correlationFilter(testBuf2D);
-    	    mu1 = filter2NoPad(GT_hp, window);
-	    	mu2 = filter2NoPad(P_hp,window);
+    	    mu1 = filter2Same(GT_hp, window);
+	    	mu2 = filter2Same(P_hp,window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
@@ -1449,9 +1473,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, window);
-	    	filtPP = filter2NoPad(PP, window);
-	    	filtGTP = filter2NoPad(GTP, window);
+	    	filtGTGT = filter2Same(GTGT, window);
+	    	filtPP = filter2Same(PP, window);
+	    	filtGTP = filter2Same(GTP, window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
@@ -1474,8 +1498,8 @@ public class ImageQuality extends AlgorithmBase {
     		
     	    GT_hp = correlationFilter(refBuf2D);
     	    P_hp = correlationFilter(testBuf2D);
-    	    mu1 = filter2NoPad(GT_hp, window);
-	    	mu2 = filter2NoPad(P_hp,window);
+    	    mu1 = filter2Same(GT_hp, window);
+	    	mu2 = filter2Same(P_hp,window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
@@ -1486,9 +1510,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, window);
-	    	filtPP = filter2NoPad(PP, window);
-	    	filtGTP = filter2NoPad(GTP, window);
+	    	filtGTGT = filter2Same(GTGT, window);
+	    	filtPP = filter2Same(PP, window);
+	    	filtGTP = filter2Same(GTP, window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
@@ -1511,8 +1535,8 @@ public class ImageQuality extends AlgorithmBase {
     		
     	    GT_hp = correlationFilter(refBuf2D);
     	    P_hp = correlationFilter(testBuf2D);
-    	    mu1 = filter2NoPad(GT_hp, window);
-	    	mu2 = filter2NoPad(P_hp,window);
+    	    mu1 = filter2Same(GT_hp, window);
+	    	mu2 = filter2Same(P_hp,window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
@@ -1523,9 +1547,9 @@ public class ImageQuality extends AlgorithmBase {
 	    		    GTP[y][x] = GT_hp[y][x] * P_hp[y][x];
 	    		}
 	    	}
-	    	filtGTGT = filter2NoPad(GTGT, window);
-	    	filtPP = filter2NoPad(PP, window);
-	    	filtGTP = filter2NoPad(GTP, window);
+	    	filtGTGT = filter2Same(GTGT, window);
+	    	filtPP = filter2Same(PP, window);
+	    	filtGTP = filter2Same(GTP, window);
 	    	for (y = 0; y < yDim; y++) {
 	    		for (x = 0; x < xDim; x++) {
 	    			sigmaGT_sq = Math.max(0,filtGTGT[y][x] - GT_sum_sq[y][x]);
