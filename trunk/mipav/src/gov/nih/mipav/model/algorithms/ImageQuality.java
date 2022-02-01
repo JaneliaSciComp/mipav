@@ -79,9 +79,9 @@ public class ImageQuality extends AlgorithmBase {
 	public final int MEAN_SQUARED_ERROR = 1;
 	public final int ROOT_MEAN_SQUARED_ERROR = 2;
 	public final int PEAK_SIGNAL_TO_NOISE_RATIO = 3;
-	public final int STRUCTURAL_SIMILARITY_INDEX = 4;
+	//public final int STRUCTURAL_SIMILARITY_INDEX = 4;
 	public final int UNIVERSAL_QUALITY_IMAGE_INDEX = 5;
-	public final int MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX = 6;
+	//public final int MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX = 6;
 	public final int ERGAS = 7;
 	public final int SPATIAL_CORRELATION_COEFFICIENT = 8;
 	public final int RELATIVE_AVERAGE_SPECTRAL_ERROR = 9;
@@ -313,8 +313,8 @@ public class ImageQuality extends AlgorithmBase {
 	}
 	
 	public void testPsnr() {
-		// Taking maxValue = 255 instead of the actual referenceImage.getMax() causes all tests to pass.
-		// However, this version of the software will use the actual referenceImage.getMax().
+		// Taking range = 255 instead of the actual referenceImage.getMax() - referenceImage.getMin() causes all tests to pass.
+		// However, this version of the software will use the actual referenceImage.getMax() - referenceImage.getMin().
 		int testsFailed = 0;
 		double eps = 1.0E-3;
 		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
@@ -367,63 +367,6 @@ public class ImageQuality extends AlgorithmBase {
 		else {
 			System.out.println("All tests passed for peakSignalToNoiseRatio");
 		}
-		gry.disposeLocal();
-		gry = null;
-		gry_noise.disposeLocal();
-		gry_noise = null;
-		gry_const.disposeLocal();
-		gry_const = null;
-		clr.disposeLocal();
-		clr = null;
-		clr_noise.disposeLocal();
-		clr_noise = null;
-		clr_const.disposeLocal();
-		clr_const = null;
-	}
-	
-	public void testSsim() {
-		// All tests passed for structural similarity index
-		ws = 11;
-		int testsFailed = 0;
-		double eps = 1.0E-3;
-		metrics = new int[] {STRUCTURAL_SIMILARITY_INDEX};
-		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
-		iq.runAlgorithm();
-		if (results[0] != 1.0) {
-			System.err.println("Structural similarity index = " + results[0] + " for clr, clr\n");
-			testsFailed++;
-		}
-		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
-		iq.runAlgorithm();
-		if (results[0] != 1.0) {
-			System.err.println("Structural similarity index = " + results[0] + " for gry, gry\n");
-			testsFailed++;
-		}
-		
-
-		String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
-		final FileIO fileIO = new FileIO();
-		fileIO.setQuiet(true);
-    	fileIO.setSuppressProgressBar(true);
-    	// Einstein picture examples from https://ece.uwaterloo.ca/~z70wang/research/ssim/.
-    	// Original image, MSE = 0, SSIM = 1
-    	ModelImage gryA = fileIO.readJimi("EinsteinA.jpg", fileDir, false);
-    	// MSE = 144, SSIM = 0.988
-    	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
-    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,results);
-    	iq.runAlgorithm();
-		if (testsFailed > 0) {
-			System.err.println(testsFailed + " tests failed for structural similarity index");
-		}
-		else {
-			System.out.println("All tests passed for structural similarity index");
-		}
-		gryA.disposeLocal();
-		gryA = null;
-		gryB.disposeLocal();
-		gryB = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -844,16 +787,16 @@ public class ImageQuality extends AlgorithmBase {
 		    	psnr();
 		    	results[i] = peakSignalToNoiseRatio;
 		    	break;
-		    case STRUCTURAL_SIMILARITY_INDEX:
-		    	ssim();
-		    	results[i] = structuralSimilarityIndex;
-		    	break;
+		    //case STRUCTURAL_SIMILARITY_INDEX:
+		    	//ssim();
+		    	//results[i] = structuralSimilarityIndex;
+		    	//break;
 		    case UNIVERSAL_QUALITY_IMAGE_INDEX:
 		    	uqi();
 		    	results[i] = universalImageQualityIndex;
 		    	break;
-		    case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
-		    	break;
+		    //case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
+		    	//break;
 		    case ERGAS:
 		    	ergas();
 		    	results[i] = ergas_mean;
@@ -976,13 +919,13 @@ public class ImageQuality extends AlgorithmBase {
     	// returns:  float -- psnr value in dB.
     
     	//if MAX is None:
-        double maxValue = referenceImage.getMax();
-        // maxValue = 255; causes all tests to pass.
+        double range = referenceImage.getMax() - referenceImage.getMin();
+        // range = 255; causes all tests to pass.
         mse();
         if (isColor) {
-        	double maxRedValue = referenceImage.getMaxR();
-        	double maxGreenValue = referenceImage.getMaxG();
-        	double maxBlueValue = referenceImage.getMaxB();
+        	double redRange = referenceImage.getMaxR() - referenceImage.getMinR();
+        	double greenRange = referenceImage.getMaxG() - referenceImage.getMinG();
+        	double blueRange = referenceImage.getMaxB() - referenceImage.getMinB();
         	double peakRedSignalToNoiseRatio;
         	double peakGreenSignalToNoiseRatio;
         	double peakBlueSignalToNoiseRatio;
@@ -991,7 +934,7 @@ public class ImageQuality extends AlgorithmBase {
             	peakRedSignalToNoiseRatio = Double.POSITIVE_INFINITY;
             }
             else {
-            	peakRedSignalToNoiseRatio = 10.0 * Math.log10((maxRedValue*maxRedValue)/meanRedSquareError);
+            	peakRedSignalToNoiseRatio = 10.0 * Math.log10((redRange*redRange)/meanRedSquareError);
             }
             UI.setDataText("Peak red signal to noise ratio = " + peakRedSignalToNoiseRatio + "\n");
     	    System.out.println("Peak red signal to noise ratio = " + peakRedSignalToNoiseRatio);	
@@ -1000,7 +943,7 @@ public class ImageQuality extends AlgorithmBase {
             	peakGreenSignalToNoiseRatio = Double.POSITIVE_INFINITY;
             }
             else {
-            	peakGreenSignalToNoiseRatio = 10.0 * Math.log10((maxGreenValue*maxGreenValue)/meanGreenSquareError);
+            	peakGreenSignalToNoiseRatio = 10.0 * Math.log10((greenRange*greenRange)/meanGreenSquareError);
             }
             UI.setDataText("Peak green signal to noise ratio = " + peakGreenSignalToNoiseRatio + "\n");
     	    System.out.println("Peak green signal to noise ratio = " + peakGreenSignalToNoiseRatio);
@@ -1009,7 +952,7 @@ public class ImageQuality extends AlgorithmBase {
             	peakBlueSignalToNoiseRatio = Double.POSITIVE_INFINITY;
             }
             else {
-            	peakBlueSignalToNoiseRatio = 10.0 * Math.log10((maxBlueValue*maxBlueValue)/meanBlueSquareError);
+            	peakBlueSignalToNoiseRatio = 10.0 * Math.log10((blueRange*blueRange)/meanBlueSquareError);
             }
             UI.setDataText("Peak blue signal to noise ratio = " + peakBlueSignalToNoiseRatio + "\n");
     	    System.out.println("Peak blue signal to noise ratio = " + peakBlueSignalToNoiseRatio);
@@ -1018,7 +961,7 @@ public class ImageQuality extends AlgorithmBase {
         	peakSignalToNoiseRatio = Double.POSITIVE_INFINITY;
         }
         else {
-        	peakSignalToNoiseRatio = 10.0 * Math.log10((maxValue*maxValue)/meanSquareError);
+        	peakSignalToNoiseRatio = 10.0 * Math.log10((range*range)/meanSquareError);
         }
         UI.setDataText("Peak signal to noise ratio = " + peakSignalToNoiseRatio + "\n");
 	    System.out.println("Peak signal to noise ratio = " + peakSignalToNoiseRatio);
@@ -1518,321 +1461,7 @@ public class ImageQuality extends AlgorithmBase {
     	return;
     }
     
-    private void ssim() {
-    	// calculates structural similarity index (ssim).
-
-    	// param GT: first (original) input image.
-    	// param P: second (deformed) input image.
-    	// param ws: sliding window size (default = 11).
-    	// param K1: First constant for SSIM (default = 0.01).
-    	// param K2: Second constant for SSIM (default = 0.03).
-    	// param MAX: Maximum value of datarange (if None, MAX is calculated using image dtype).
-    	// sigma = 1.5
-
-    	// returns:  tuple -- ssim value, cs value.	
-    	//if MAX is None:
-    	
-        double range = referenceImage.getMax() - referenceImage.getMin();
-        
-        double c1 = k1*k1*range*range;
-        double c2 = k2*k2*range*range;
-        int x,y;
-    	int size1 = ws/2;
-    	int size2 = ws - size1 - 1;
-    	int index;
-    	int filtXDim;
-    	int filtYDim;
-    	double refBuf2D[][] = new double[yDim][xDim];
-    	double testBuf2D[][] = new double[yDim][xDim];
-    	double GTGT[][] = new double[yDim][xDim];
-    	double PP[][] = new double[yDim][xDim];
-    	double GTP[][] = new double[yDim][xDim];
-    	
-    	double window[][] = new double[ws][ws];
-    	double sum = 0.0;
-    	for (y = -size1; y <= size2; y++) {
-    		for (x = -size1; x <= size2; x++) {
-    		    window[y+size1][x+size1] = Math.exp(-((x*x + y*y)/(2.0*sigma*sigma)));
-    		    sum += window[y+size1][x+size1];
-    		}
-    	}
-    	if (sum != 0.0) {
-	    	for (y = 0; y < ws; y++) {
-	    		for (x = 0; x < ws; x++) {
-	    			window[y][x] = window[y][x]/sum;
-	    		}
-	    	}
-    	}
-    	
-    	if (!isColor) {
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceBuffer[index];
-	    			testBuf2D[y][x] = testBuffer[index];
-	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
-	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
-	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
-	    		}
-	    	}
-	    	
-	    	double mu1[][] = filter2Valid(refBuf2D, window);
-	    	double mu2[][] = filter2Valid(testBuf2D,window);
-	    	filtYDim = mu1.length;
-	    	filtXDim = mu1[0].length;
-	    	double GT_sum_sq[][] = new double[filtYDim][filtXDim];
-	    	double P_sum_sq[][] = new double[filtYDim][filtXDim];
-	    	double GT_P_sum_mul[][] = new double[filtYDim][filtXDim];
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		}
-	    	}
-	    	double filtGTGT[][] = filter2Valid(GTGT, window);
-	    	double filtPP[][] = filter2Valid(PP, window);
-	    	double filtGTP[][] = filter2Valid(GTP, window);
-	    	double sigmaGT_sq[][] = new double[filtYDim][filtXDim];
-	    	double sigmaP_sq[][] = new double[filtYDim][filtXDim];
-	    	double sigmaGT_P[][] = new double[filtYDim][filtXDim];
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
-	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
-	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
-	    		}
-	    	}
-	    	double ssim_map[][] = new double[filtYDim][filtXDim];
-	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
-		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
-		    		}
-	    		}
-	    	} // if ((c1 > 0) && (c2 > 0))
-	    	else {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
-		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
-		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
-		    			double denominator2 = sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2;
-		    			ssim_map[y][x] = 1.0;
-		    			if (denominator1*denominator2 > 0) {
-		    			   ssim_map[y][x] = (numerator1*numerator2)/(denominator1*denominator2);
-		    			}
-		    			if ((denominator1 != 0) & (denominator2 == 0)) {
-		    			   ssim_map[y][x] = numerator1/denominator1;
-		    			}
-		    		}
-	    		}
-	    	}
-	    	sum = 0.0;
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sum += ssim_map[y][x];
-	    		}
-	    	}
-	    	structuralSimilarityIndex = sum/(filtXDim * filtYDim);
-    	}
-    	else { // isColor
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceRedBuffer[index];
-	    			testBuf2D[y][x] = testRedBuffer[index];
-	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
-	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
-	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
-	    		}
-	    	}
-	    	
-	    	double mu1[][] = filter2Valid(refBuf2D, window);
-	    	double mu2[][] = filter2Valid(testBuf2D,window);
-	    	filtYDim = mu1.length;
-	    	filtXDim = mu1[0].length;
-	    	double GT_sum_sq[][] = new double[filtYDim][filtXDim];
-	    	double P_sum_sq[][] = new double[filtYDim][filtXDim];
-	    	double GT_P_sum_mul[][] = new double[filtYDim][filtXDim];
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		}
-	    	}
-	    	double filtGTGT[][] = filter2Valid(GTGT, window);
-	    	double filtPP[][] = filter2Valid(PP, window);
-	    	double filtGTP[][] = filter2Valid(GTP, window);
-	    	double sigmaGT_sq[][] = new double[filtYDim][filtXDim];
-	    	double sigmaP_sq[][] = new double[filtYDim][filtXDim];
-	    	double sigmaGT_P[][] = new double[filtYDim][filtXDim];
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
-	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
-	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
-	    		}
-	    	}
-	    	double ssim_map[][] = new double[filtYDim][filtXDim];
-	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
-		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
-		    		}
-	    		}
-	    	} // if ((c1 > 0) && (c2 > 0))
-	    	else {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
-		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
-		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
-		    			double denominator2 = sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2;
-		    			ssim_map[y][x] = 1.0;
-		    			if (denominator1*denominator2 > 0) {
-		    			   ssim_map[y][x] = (numerator1*numerator2)/(denominator1*denominator2);
-		    			}
-		    			if ((denominator1 != 0) & (denominator2 == 0)) {
-		    			   ssim_map[y][x] = numerator1/denominator1;
-		    			}
-		    		}
-	    		}
-	    	}
-	    	sum = 0.0;
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sum += ssim_map[y][x];
-	    		}
-	    	}
-	    	
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceGreenBuffer[index];
-	    			testBuf2D[y][x] = testGreenBuffer[index];
-	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
-	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
-	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
-	    		}
-	    	}
-	    	mu1 = filter2Valid(refBuf2D, window);
-	    	mu2 = filter2Valid(testBuf2D,window);
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		}
-	    	}
-	    	filtGTGT = filter2Valid(GTGT, window);
-	    	filtPP = filter2Valid(PP, window);
-	    	filtGTP = filter2Valid(GTP, window);
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
-	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
-	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
-	    		}
-	    	}
-	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
-		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
-		    		}
-	    		}
-	    	} // if ((c1 > 0) && (c2 > 0))
-	    	else {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
-		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
-		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
-		    			double denominator2 = sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2;
-		    			ssim_map[y][x] = 1.0;
-		    			if (denominator1*denominator2 > 0) {
-		    			   ssim_map[y][x] = (numerator1*numerator2)/(denominator1*denominator2);
-		    			}
-		    			if ((denominator1 != 0) & (denominator2 == 0)) {
-		    			   ssim_map[y][x] = numerator1/denominator1;
-		    			}
-		    		}
-	    		}
-	    	}
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sum += ssim_map[y][x];
-	    		}
-	    	}
-	    	
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceBlueBuffer[index];
-	    			testBuf2D[y][x] = testBlueBuffer[index];
-	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
-		    		PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
-		    		GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
-	    		}
-	    	}
-	    	mu1 = filter2Valid(refBuf2D, window);
-	    	mu2 = filter2Valid(testBuf2D,window);
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    		    GT_sum_sq[y][x] = mu1[y][x] * mu1[y][x];
-	    		    P_sum_sq[y][x] = mu2[y][x] * mu2[y][x];
-	    		    GT_P_sum_mul[y][x] = mu1[y][x] * mu2[y][x];
-	    		}
-	    	}
-	    	filtGTGT = filter2Valid(GTGT, window);
-	    	filtPP = filter2Valid(PP, window);
-	    	filtGTP = filter2Valid(GTP, window);
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sigmaGT_sq[y][x] = filtGTGT[y][x] - GT_sum_sq[y][x];
-	    			sigmaP_sq[y][x] = filtPP[y][x] - P_sum_sq[y][x];
-	    			sigmaGT_P[y][x] = filtGTP[y][x] - GT_P_sum_mul[y][x];
-	    		}
-	    	}
-	    	if ((c1 > 0) && (c2 > 0)) {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			ssim_map[y][x] = ((2*GT_P_sum_mul[y][x] + c1)*(2*sigmaGT_P[y][x] + c2))/
-		    					((GT_sum_sq[y][x] + P_sum_sq[y][x] + c1)*(sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2));	
-		    		}
-	    		}
-	    	} // if ((c1 > 0) && (c2 > 0))
-	    	else {
-	    		for (y = 0; y < filtYDim; y++) {
-		    		for (x = 0; x < filtXDim; x++) {
-		    			double numerator1 = 2*GT_P_sum_mul[y][x] + c1;
-		    			double numerator2 = 2*sigmaGT_P[y][x] + c2;
-		    		    double denominator1 = GT_sum_sq[y][x] + P_sum_sq[y][x] + c1;
-		    			double denominator2 = sigmaGT_sq[y][x] + sigmaP_sq[y][x] + c2;
-		    			ssim_map[y][x] = 1.0;
-		    			if (denominator1*denominator2 > 0) {
-		    			   ssim_map[y][x] = (numerator1*numerator2)/(denominator1*denominator2);
-		    			}
-		    			if ((denominator1 != 0) & (denominator2 == 0)) {
-		    			   ssim_map[y][x] = numerator1/denominator1;
-		    			}
-		    		}
-	    		}
-	    	}
-	    	for (y = 0; y < filtYDim; y++) {
-	    		for (x = 0; x < filtXDim; x++) {
-	    			sum += ssim_map[y][x];
-	    		}
-	    	}
-	    	structuralSimilarityIndex = sum/(3.0*filtXDim*filtYDim);	
-    	} // isColor
-    	UI.setDataText("Structural similarity index = " + structuralSimilarityIndex + "\n");
-    	System.out.println("Structural similarity index = " + structuralSimilarityIndex);
-    }
+    
     
     private double[][] filter2Valid(double img[][], double filter[][]) {
     	int outYDim = Math.max(img.length,filter.length) - Math.min(img.length,filter.length)+1;
