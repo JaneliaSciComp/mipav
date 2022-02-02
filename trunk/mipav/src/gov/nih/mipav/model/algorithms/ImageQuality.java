@@ -1116,6 +1116,8 @@ public class ImageQuality extends AlgorithmBase {
     	double diff;
     	int index;
     	double total = 0.0;
+    	int s = (int)Math.round(ws/2.0);
+    	int numValues = (yDim - 2*s)*(xDim - 2*s);
         if (!isColor) {
         	rmse_map = new double[yDim][xDim];
         	for (y = 0; y < yDim; y++) {
@@ -1128,11 +1130,15 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			rmse_map[y][x] = Math.sqrt(errors[y][x]);
-        		    total += rmse_map[y][x];	
+        			rmse_map[y][x] = Math.sqrt(errors[y][x]);	
         		}
         	}
-        	rmse_sw_mean = total/length;
+        	for (y = s; y < yDim - s; y++) {
+        		for (x = s; x < xDim - s; x++) {
+        			total += rmse_map[y][x];
+        		}
+        	}
+        	rmse_sw_mean = total/numValues;
         }
         else {
         	rmse_red_map = new double[yDim][xDim];
@@ -1148,11 +1154,14 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			rmse_red_map[y][x] = Math.sqrt(errors[y][x]);
-        		    total += rmse_red_map[y][x];	
+        			rmse_red_map[y][x] = Math.sqrt(errors[y][x]);	
         		}
         	}
-        	
+        	for (y = s; y < yDim - s; y++) {
+        		for (x = s; x < xDim - s; x++) {
+        			total += rmse_red_map[y][x];
+        		}
+        	}
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			index = x + y*xDim;
@@ -1163,8 +1172,12 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			rmse_green_map[y][x] = Math.sqrt(errors[y][x]);
-        		    total += rmse_green_map[y][x];		
+        			rmse_green_map[y][x] = Math.sqrt(errors[y][x]);	
+        		}
+        	}
+        	for (y = s; y < yDim - s; y++) {
+        		for (x = s; x < xDim - s; x++) {
+        			total += rmse_green_map[y][x];
         		}
         	}
         	
@@ -1178,11 +1191,15 @@ public class ImageQuality extends AlgorithmBase {
         	errors = uniformFilter(errors, size1, size2);
         	for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
-        			rmse_blue_map[y][x] = Math.sqrt(errors[y][x]);
-        		    total += rmse_blue_map[y][x];		
+        			rmse_blue_map[y][x] = Math.sqrt(errors[y][x]);		
         		}
         	}
-        	rmse_sw_mean = total/(3.0*length);
+        	for (y = s; y < yDim - s; y++) {
+        		for (x = s; x < xDim - s; x++) {
+        			total += rmse_blue_map[y][x];
+        		}
+        	}
+        	rmse_sw_mean = total/(3.0*numValues);
         }
         
     	return;
@@ -1286,6 +1303,8 @@ public class ImageQuality extends AlgorithmBase {
     	double total = 0;
     	double refBuf2D[][] = new double[yDim][xDim];
     	double means_map[][];
+    	int s = (int)Math.round(ws/2.0);
+    	int numValues = (yDim - 2*s)*(xDim - 2*s);
         
         rmse_sw();
         if (!isColor) {
@@ -1296,18 +1315,16 @@ public class ImageQuality extends AlgorithmBase {
         		}
         	}
             means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
+            for (y = s; y < yDim-s; y++) {
+        		for (x = s; x < xDim-s; x++) {
         			means_map[y][x] = means_map[y][x]/wsSquared;
         			// Avoid division by zero
-        			if (means_map[y][x] == 0.0) {
-        			    means_map[y][x] = 1.0;	
-        			    rmse_map[y][x] = 0.0;
+        			if (means_map[y][x] != 0) {
+        		        total += (rmse_map[y][x]*rmse_map[y][x])/(means_map[y][x]*means_map[y][x]);
         			}
-        		    total += 100*r*Math.sqrt(rmse_map[y][x]*rmse_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
         		}
             }
-            ergas_mean = total/length;
+            ergas_mean = 100*r*Math.sqrt(total/nb)/numValues;
         } // if (!isColor)
         else { // isColor
         	for (y = 0; y < yDim; y++) {
@@ -1317,15 +1334,13 @@ public class ImageQuality extends AlgorithmBase {
         		}
         	}
             means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
+            for (y = s; y < yDim-s; y++) {
+        		for (x = s; x < xDim-s; x++) {
         			means_map[y][x] = means_map[y][x]/wsSquared;
         			// Avoid division by zero
-        			if (means_map[y][x] == 0.0) {
-        			    means_map[y][x] = 1.0;	
-        			    rmse_red_map[y][x] = 0.0;
-        			}
-        		    total += 100*r*Math.sqrt(rmse_red_map[y][x]*rmse_red_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+                    if (means_map[y][x] != 0.0) {
+        		        total += (rmse_red_map[y][x]*rmse_red_map[y][x])/(means_map[y][x]*means_map[y][x]);
+                    }
         		}
             }	
             
@@ -1336,15 +1351,13 @@ public class ImageQuality extends AlgorithmBase {
         		}
         	}
             means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
+            for (y = s; y < yDim-s; y++) {
+        		for (x = s; x < xDim-s; x++) {
         			means_map[y][x] = means_map[y][x]/wsSquared;
         			// Avoid division by zero
-        			if (means_map[y][x] == 0.0) {
-        			    means_map[y][x] = 1.0;	
-        			    rmse_green_map[y][x] = 0.0;
-        			}
-        		    total += 100*r*Math.sqrt(rmse_green_map[y][x]*rmse_green_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+        			if (means_map[y][x] != 0.0) {
+        		        total += (rmse_green_map[y][x]*rmse_green_map[y][x])/(means_map[y][x]*means_map[y][x]);
+                    }
         		}
             }
             
@@ -1355,18 +1368,16 @@ public class ImageQuality extends AlgorithmBase {
         		}
         	}
             means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = 0; y < yDim; y++) {
-        		for (x = 0; x < xDim; x++) {
+            for (y = s; y < yDim-s; y++) {
+        		for (x = s; x < xDim-s; x++) {
         			means_map[y][x] = means_map[y][x]/wsSquared;
         			// Avoid division by zero
-        			if (means_map[y][x] == 0.0) {
-        			    means_map[y][x] = 1.0;	
-        			    rmse_blue_map[y][x] = 0.0;
-        			}
-        		    total += 100*r*Math.sqrt(rmse_blue_map[y][x]*rmse_blue_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
+        			if (means_map[y][x] != 0.0) {
+        		        total += (rmse_blue_map[y][x]*rmse_blue_map[y][x])/(means_map[y][x]*means_map[y][x]);
+                    }
         		}
             }	
-            ergas_mean = total/(3.0*length);
+            ergas_mean = 100*r*Math.sqrt(total/nb)/(3.0*numValues);
         } // isColor
         UI.setDataText("ergas = " + ergas_mean + "\n");
         System.out.println("ergas = " + ergas_mean);
