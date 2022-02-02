@@ -126,6 +126,7 @@ public class ImageQuality extends AlgorithmBase {
     private double rmse_blue_map[][] = null;
     private double ergas_mean;
     private double spatialCorrelationCoefficient;
+    private double rase_mean;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -141,6 +142,7 @@ public class ImageQuality extends AlgorithmBase {
     // Default = 8 for RMSE_SW
     // Default = 8 for UNIVERSAL_QUALITY_IMAGE_INDEX
     // Default = 11 for STRUCTURAL_SIMILARITY_INDEX
+    // Default = 8 for RELATIVE_AVERAGE_SPECTRAL_ERROR
     private int ws;
     // First SSIM constant (default = 0.01)
     private double k1 = 0.01;
@@ -463,7 +465,45 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
-	
+	public void testRase() {
+		// All tests passed for relative average spectral error
+		ws = 8;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {RELATIVE_AVERAGE_SPECTRAL_ERROR};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 0) {
+			System.err.println("Relative average spectral error = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (results[0] != 0) {
+			System.err.println("Relative average spectral error = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for relative average spectral error");
+		}
+		else {
+			System.out.println("All tests passed for relative average spectral error");
+		}
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
 	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
 			double k1, double k2, double sigma, double r, double win[][], double results[]) {
@@ -709,6 +749,8 @@ public class ImageQuality extends AlgorithmBase {
 		    	results[i] = spatialCorrelationCoefficient;
 		    	break;
 		    case RELATIVE_AVERAGE_SPECTRAL_ERROR:
+		    	rase();
+		    	results[i] = rase_mean;
 		    	break;
 		    case SPECTRAL_ANGLE_MAPPER:
 		    	break;
@@ -1302,7 +1344,11 @@ public class ImageQuality extends AlgorithmBase {
     	int wsSquared = ws*ws;
     	double total = 0;
     	double refBuf2D[][] = new double[yDim][xDim];
+    	double ergas_map[][] = new double[yDim][xDim];
     	double means_map[][];
+    	double red_means_map[][];
+    	double green_means_map[][];
+    	double blue_means_map[][];
     	int s = (int)Math.round(ws/2.0);
     	int numValues = (yDim - 2*s)*(xDim - 2*s);
         
@@ -1315,16 +1361,15 @@ public class ImageQuality extends AlgorithmBase {
         		}
         	}
             means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = s; y < yDim-s; y++) {
-        		for (x = s; x < xDim-s; x++) {
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
         			means_map[y][x] = means_map[y][x]/wsSquared;
         			// Avoid division by zero
         			if (means_map[y][x] != 0) {
-        		        total += (rmse_map[y][x]*rmse_map[y][x])/(means_map[y][x]*means_map[y][x]);
+        		        ergas_map[y][x] = 100*r*Math.sqrt(rmse_map[y][x]*rmse_map[y][x])/(means_map[y][x]*means_map[y][x]*nb);
         			}
         		}
             }
-            ergas_mean = 100*r*Math.sqrt(total/nb)/numValues;
         } // if (!isColor)
         else { // isColor
         	for (y = 0; y < yDim; y++) {
@@ -1333,52 +1378,47 @@ public class ImageQuality extends AlgorithmBase {
         			refBuf2D[y][x] = referenceRedBuffer[index];
         		}
         	}
-            means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = s; y < yDim-s; y++) {
-        		for (x = s; x < xDim-s; x++) {
-        			means_map[y][x] = means_map[y][x]/wsSquared;
-        			// Avoid division by zero
-                    if (means_map[y][x] != 0.0) {
-        		        total += (rmse_red_map[y][x]*rmse_red_map[y][x])/(means_map[y][x]*means_map[y][x]);
-                    }
-        		}
-            }	
-            
+            red_means_map = uniformFilter(refBuf2D, size1, size2);
             for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			index = x + y*xDim;
         			refBuf2D[y][x] = referenceGreenBuffer[index];
         		}
         	}
-            means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = s; y < yDim-s; y++) {
-        		for (x = s; x < xDim-s; x++) {
-        			means_map[y][x] = means_map[y][x]/wsSquared;
-        			// Avoid division by zero
-        			if (means_map[y][x] != 0.0) {
-        		        total += (rmse_green_map[y][x]*rmse_green_map[y][x])/(means_map[y][x]*means_map[y][x]);
-                    }
-        		}
-            }
-            
+            green_means_map = uniformFilter(refBuf2D, size1, size2);
             for (y = 0; y < yDim; y++) {
         		for (x = 0; x < xDim; x++) {
         			index = x + y*xDim;
         			refBuf2D[y][x] = referenceBlueBuffer[index];
         		}
         	}
-            means_map = uniformFilter(refBuf2D, size1, size2);
-            for (y = s; y < yDim-s; y++) {
-        		for (x = s; x < xDim-s; x++) {
-        			means_map[y][x] = means_map[y][x]/wsSquared;
-        			// Avoid division by zero
-        			if (means_map[y][x] != 0.0) {
-        		        total += (rmse_blue_map[y][x]*rmse_blue_map[y][x])/(means_map[y][x]*means_map[y][x]);
-                    }
-        		}
-            }	
-            ergas_mean = 100*r*Math.sqrt(total/nb)/(3.0*numValues);
+            blue_means_map = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		total = 0.0;
+            		red_means_map[y][x] = red_means_map[y][x]/wsSquared;
+            		green_means_map[y][x] = green_means_map[y][x]/wsSquared;
+            		blue_means_map[y][x] = blue_means_map[y][x]/wsSquared;
+            		if (red_means_map[y][x] != 0.0) {
+            			total += (rmse_red_map[y][x]*rmse_red_map[y][x])/(red_means_map[y][x]*red_means_map[y][x]);	
+            		}
+            		if (green_means_map[y][x] != 0.0) {
+            			total += (rmse_green_map[y][x]*rmse_green_map[y][x])/(green_means_map[y][x]*green_means_map[y][x]);	
+            		}
+            		if (blue_means_map[y][x] != 0.0) {
+            			total += (rmse_blue_map[y][x]*rmse_blue_map[y][x])/(blue_means_map[y][x]*blue_means_map[y][x]);	
+            		}
+            		ergas_map[y][x] = 100*r*Math.sqrt(total/nb);
+            	}
+            } 
         } // isColor
+        total = 0.0;
+        for (y = s; y < yDim - s; y++) {
+        	for (x = s; x < xDim -s; x++) {
+        		total += ergas_map[y][x];
+        	}
+        }
+        ergas_mean = total/numValues;
         UI.setDataText("ergas = " + ergas_mean + "\n");
         System.out.println("ergas = " + ergas_mean);
     }
@@ -1576,6 +1616,87 @@ public class ImageQuality extends AlgorithmBase {
     	} // isColor
     	UI.setDataText("Spatial correlation coefficient = " + spatialCorrelationCoefficient + "\n");
         System.out.println("Spatial correlation coefficient = " + spatialCorrelationCoefficient);	
+    }
+    
+    private void rase() {
+    	// calculates relative average spectral error (rase).
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+    	// param ws: sliding window size (default = 8).
+
+    	// returns:  float -- rase value.
+    	int x,y,index;
+    	int size1 = ws/2;
+    	int size2 = ws - size1 - 1;
+    	double GT_means[][];
+    	double red_GT_means[][];
+    	double green_GT_means[][];
+    	double blue_GT_means[][];
+    	double refBuf2D[][] = new double[yDim][xDim];
+    	int wsSquared = ws*ws;
+    	double M;
+    	double rase_map[][] = new double[yDim][xDim];
+    	int s = (int)Math.round(ws/2.0);
+    	int numValues = (yDim - 2*s)*(xDim - 2*s);
+    	double total = 0.0;
+    	rmse_sw();
+    	if (!isColor) {
+    		for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceBuffer[index];
+        		}
+        	}
+            GT_means = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			GT_means[y][x] = GT_means[y][x]/wsSquared;
+        			rase_map[y][x] = (100.0/GT_means[y][x])*rmse_map[y][x];
+        		}
+            }
+    	} // if (!isColor)
+    	else { // isColor
+    		for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceRedBuffer[index];
+        		}
+        	}
+            red_GT_means = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceGreenBuffer[index];
+        		}
+        	}
+            green_GT_means = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			index = x + y*xDim;
+        			refBuf2D[y][x] = referenceBlueBuffer[index];
+        		}
+        	}
+            blue_GT_means = uniformFilter(refBuf2D, size1, size2);
+            for (y = 0; y < yDim; y++) {
+        		for (x = 0; x < xDim; x++) {
+        			red_GT_means[y][x] = red_GT_means[y][x]/wsSquared;
+        			green_GT_means[y][x] = green_GT_means[y][x]/wsSquared;
+        			blue_GT_means[y][x] = blue_GT_means[y][x]/wsSquared;
+        			M = (red_GT_means[y][x] + green_GT_means[y][x] + blue_GT_means[y][x])/3;
+        			rase_map[y][x] = (100.0/M)*Math.sqrt((rmse_red_map[y][x]*rmse_red_map[y][x] +
+        					rmse_green_map[y][x]*rmse_green_map[y][x] + rmse_blue_map[y][x]*rmse_blue_map[y][x])/3.0);
+        		}
+            }
+    	} // isColor
+    	for (y = s; y < yDim - s; y++) {
+        	for (x = s; x < xDim - s; x++) {
+        		total += rase_map[y][x];
+        	}
+        }
+        rase_mean = total/numValues;
+    	UI.setDataText("Relative average spectral error = " + rase_mean + "\n");
+    	System.out.println("Relative average spectral error = " + rase_mean);
     }
 	
 }
