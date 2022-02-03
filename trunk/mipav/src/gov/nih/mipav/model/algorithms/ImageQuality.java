@@ -2120,7 +2120,7 @@ public class ImageQuality extends AlgorithmBase {
     	//if MAX is None:
     	
         double range = referenceImage.getMax() - referenceImage.getMin();
-        sigma = 2.0;
+       
         double c1 = k1*k1*range*range;
         double c2 = k2*k2*range*range;
         int x,y;
