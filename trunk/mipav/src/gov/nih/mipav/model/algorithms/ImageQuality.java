@@ -84,7 +84,7 @@ public class ImageQuality extends AlgorithmBase {
 	public final int PEAK_SIGNAL_TO_NOISE_RATIO = 3;
 	public final int STRUCTURAL_SIMILARITY_INDEX = 4;
 	public final int UNIVERSAL_QUALITY_IMAGE_INDEX = 5;
-	//public final int MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX = 6;
+	public final int MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX = 6;
 	public final int ERGAS = 7;
 	public final int SPATIAL_CORRELATION_COEFFICIENT = 8;
 	public final int RELATIVE_AVERAGE_SPECTRAL_ERROR = 9;
@@ -113,6 +113,7 @@ public class ImageQuality extends AlgorithmBase {
     private double universalImageQualityIndex;
     private double structuralSimilarityIndex;
     private double sam_mean;
+    private double psnr_b;
     private int length = 1;
     private boolean onlyTestImageRequired = false;
     private boolean YCrCbRequired = false;
@@ -733,6 +734,46 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 	
+	public void testPSNRB() {
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(gry, gry_noise, metrics,ws,k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (Math.abs(15.0646-results[0]) >= eps) {
+			System.err.println("Block sensitive peak signal to noise ratio = " + results[0] + " for gry, gry_noise\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (Math.abs(14.5881-results[0]) >= eps) {
+			System.err.println("Block sensitive peak signal to noise ratio = " + results[0] + " for clr, clr_noise\n");
+			testsFailed++;
+		}
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for block sensitive peak signal to noise ratio");
+		}
+		else {
+			System.out.println("All tests passed for block sensitive peak signal to noise ratio");
+		}
+		
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;	
+	}
+	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
 			double k1, double k2, double sigma, double r, double win[][], double results[]) {
 		if (metrics == null) {
@@ -925,6 +966,7 @@ public class ImageQuality extends AlgorithmBase {
             referenceCrBuffer = new double[length];
             referenceCbBuffer = new double[length];
             double delta;
+            //python
             if (referenceImage.getType() == ModelStorageBase.ARGB) {
             	delta = 128;
             }
@@ -935,10 +977,10 @@ public class ImageQuality extends AlgorithmBase {
             	delta = 0.5;
             }
             for (i = 0; i < length; i++) {
-            	testYBuffer[i] = 0.299*testRedBuffer[i] + 0.587*testGreenBuffer[i] + 0.114*testBlueBuffer[i];
+            	testYBuffer[i] = 0.299*testRedBuffer[i] + 0.587*testGreenBuffer[i] + 0.114*testBlueBuffer[i]; // PYTHON
             	testCrBuffer[i] = (testRedBuffer[i] - testYBuffer[i])*0.713 + delta;
             	testCbBuffer[i] = (testBlueBuffer[i] - testYBuffer[i])*0.564 + delta;
-            	referenceYBuffer[i] = 0.299*referenceRedBuffer[i] + 0.587*referenceGreenBuffer[i] + 0.114*referenceBlueBuffer[i];
+            	referenceYBuffer[i] = 0.299*referenceRedBuffer[i] + 0.587*referenceGreenBuffer[i] + 0.114*referenceBlueBuffer[i];// PYTHON
             	referenceCrBuffer[i] = (referenceRedBuffer[i] - referenceYBuffer[i])*0.713 + delta;
             	referenceCbBuffer[i] = (referenceBlueBuffer[i] - referenceYBuffer[i])*0.564 + delta;
             }
@@ -966,8 +1008,8 @@ public class ImageQuality extends AlgorithmBase {
 		    	uqi();
 		    	results[i] = universalImageQualityIndex;
 		    	break;
-		    //case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
-		    	//break;
+		    case MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX:
+		    	break;
 		    case ERGAS:
 		    	ergas();
 		    	results[i] = ergas_mean;
@@ -991,6 +1033,8 @@ public class ImageQuality extends AlgorithmBase {
 		    case QUALITY_WITH_NO_REFERENCE:
 		    	break;
 		    case BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO:
+		    	psnrb();
+		    	results[i] = psnr_b;
 		    	break;
 		    case RMSE_SW:
 		    	 rmse_sw();
@@ -2544,5 +2588,173 @@ public class ImageQuality extends AlgorithmBase {
     	System.out.println("Spectral angle mapper = " + sam_mean);
     	
     }
+    
+    private void psnrb() {
+    	// Calculates PSNR with Blocking Effect Factor for a given pair of images (PSNR-B)
+
+    	// param GT: first (original) input image in YCbCr format or Grayscale.
+    	// param P: second (corrected) input image in YCbCr format or Grayscale..
+    	// return: float -- psnr_b.
+    	double imdiff[];
+    	int i;
+    	double bef;
+    	double maxP = -Double.MAX_VALUE;
+    	if (!isColor) {
+    	    imdiff = new double[referenceBuffer.length];	
+    	    for (i = 0; i < referenceBuffer.length; i++) {
+    	    	imdiff[i] = referenceBuffer[i] - testBuffer[i];
+    	    }
+    	    bef = _compute_bef(testBuffer, 8);
+    	    for (i = 0; i < testBuffer.length; i++) {
+    	    	if (testBuffer[i] > maxP) {
+    	    		maxP = testBuffer[i];
+    	    	}
+    	    }
+    	} // if (!isColor)
+    	else { // isColor
+    	    imdiff = new double[referenceYBuffer.length];
+    	    for (i = 0; i < referenceYBuffer.length; i++) {
+    	    	imdiff[i] = referenceYBuffer[i] - testYBuffer[i];
+    	    }
+    	    bef = _compute_bef(testYBuffer, 8);
+    	    for (i = 0; i < testYBuffer.length; i++) {
+    	    	if (testYBuffer[i] > maxP) {
+    	    		maxP = testYBuffer[i];
+    	    	}
+    	    }
+    	} // isColor
+    	double total = 0.0;
+    	for (i = 0; i < imdiff.length; i++) {
+    		total += (imdiff[i] * imdiff[i]);
+    	}
+    	double mse = total/imdiff.length;
+    	double mse_b = mse + bef;
+    	
+    	if (maxP > 2) {
+    		psnr_b = 10 * Math.log10((255.0*255.0)/mse_b);
+    	}
+    	else {
+    		psnr_b = 10 * Math.log10(1.0/mse_b);
+    	}
+    	
+    	UI.setDataText("PSNR with Blocking Effect Factor = " + psnr_b + "\n");
+    	System.out.println("PSNR with Blocking Effect Factor = " + psnr_b);
+    	return;
+    }
+    
+    private double _compute_bef(double im[], int block_size) {
+    	// Calculates Blocking Effect Factor (BEF) for a given grayscale/one channel image
+
+    	//C. Yim and A. C. Bovik, "Quality Assessment of Deblocked Images," in IEEE Transactions on Image Processing,
+    		// vol. 20, no. 1, pp. 88-98, Jan. 2011.
+
+    	// param im: input image (numpy ndarray)
+    	// param block_size: Size of the block over which DCT was performed during compression
+    	// return: float -- bef.
+    	
+        int i,j,index,x,y;
+    	int h[] = new int[xDim-1]; 
+    	for (i = 0; i < xDim-1; i++) {
+    		h[i] = i;
+    	}
+    	int num_h_b = (xDim-1)/block_size;
+    	int h_b[] = new int[num_h_b];
+    	for (i = 0; i < num_h_b; i++) {
+    		h_b[i] = block_size-1 + i*block_size;
+    	}
+    	int h_bc[] = new int[h.length - h_b.length];
+    	index = 0;
+    	for (j = 0; j < num_h_b; j++) {
+	    	for (i = 0; i < block_size-1; i++) {
+	    		h_bc[index++] = j*block_size + i;
+	    	}
+    	}
+
+    	int v[] = new int[yDim-1];
+    	for (i = 0; i < yDim-1; i++) {
+    		v[i] = i;
+    	}
+    	int num_v_b = (yDim-1)/block_size;
+    	int v_b[] = new int[num_v_b];
+        for (i = 0; i < num_v_b; i++) {
+        	v_b[i] = block_size-1 + i*block_size;
+        }
+        int v_bc[] = new int[v.length - v_b.length];
+        index = 0;
+    	for (j = 0; j < num_v_b; j++) {
+	    	for (i = 0; i < block_size-1; i++) {
+	    		v_bc[index++] = j*block_size + i;
+	    	}
+    	}
+        
+    	
+    	double d_b = 0;
+    	double d_bc = 0;
+    	double diff;
+
+    	// h_b for loop
+    	for (j = 0; j < h_b.length; j++) {
+    		x = h_b[j];
+    		for (y = 0; y < yDim; y++) {
+    			diff = im[x + y*xDim] - im[x+1 + y*xDim];
+    		    d_b += (diff*diff);
+    		}
+    	}
+
+    	// h_bc for loop
+    	for (j = 0; j < h_bc.length; j++) {
+    		x = h_bc[j];
+    		for (y = 0; y < yDim; y++) {
+    			diff = im[x + y*xDim] - im[x+1 + y*xDim];
+    		    d_bc += (diff*diff);
+    		}
+    	}
+
+    	// v_b for loop
+    	for (j = 0; j < v_b.length; j++) {
+    		y = v_b[j];
+    		for (x = 0; x < xDim; x++) {
+    			diff = im[x + y*xDim] - im[x + (y+1)*xDim];
+    			d_b += (diff*diff);
+    		}
+    	}
+
+    	// V_bc for loop
+    	for (j = 0; j < v_bc.length; j++) {
+    		y = v_bc[j];
+    		for (x = 0; x < xDim; x++) {
+    		    diff = im[x + y*xDim] - im[x + (y+1)*xDim];
+    		    d_bc += (diff*diff);
+    		}
+    	}
+
+    	// N code
+    	double n_hb = yDim * ((double)xDim/(double)block_size) - 1;
+    	double n_hbc = (yDim * (xDim - 1)) - n_hb;
+    	double n_vb = xDim * ((double)yDim/(double)block_size) - 1;
+    	double n_vbc = (xDim * (yDim - 1)) - n_vb;
+
+    	// D code
+    	d_b /= (n_hb + n_vb);
+    	d_bc /= (n_hbc + n_vbc);
+
+    	// Log
+    	double t;
+    	if (d_b > d_bc) {
+    		t = log2(block_size)/log2(Math.min(yDim, xDim));
+    	}
+    	else {
+    		t = 0;
+    	}
+
+    	// BEF
+    	double bef = t*(d_b - d_bc);
+
+    	return bef;
+    }
+    
+    private double log2(double input) {
+        return (Math.log10(input) / Math.log10(2.0));
+	 }
 	
 }
