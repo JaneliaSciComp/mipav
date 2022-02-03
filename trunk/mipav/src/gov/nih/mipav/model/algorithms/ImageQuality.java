@@ -7,7 +7,6 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
-import tools.DB;
 
 /**
  * 
@@ -113,6 +112,7 @@ public class ImageQuality extends AlgorithmBase {
     private double rmse_sw_mean;
     private double universalImageQualityIndex;
     private double structuralSimilarityIndex;
+    private double sam_mean;
     private int length = 1;
     private boolean onlyTestImageRequired = false;
     private boolean YCrCbRequired = false;
@@ -671,28 +671,13 @@ public class ImageQuality extends AlgorithmBase {
 			testsFailed++;
 		}
 		
-
-		String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
-		final FileIO fileIO = new FileIO();
-		fileIO.setQuiet(true);
-    	fileIO.setSuppressProgressBar(true);
-    	// Einstein picture examples from https://ece.uwaterloo.ca/~z70wang/research/ssim/.
-    	// Original image, MSE = 0, SSIM = 1
-    	ModelImage gryA = fileIO.readJimi("EinsteinA.jpg", fileDir, false);
-    	// MSE = 144, SSIM = 0.988
-    	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
-    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,results);
-    	iq.runAlgorithm();
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for structural similarity index");
 		}
 		else {
 			System.out.println("All tests passed for structural similarity index");
 		}
-		gryA.disposeLocal();
-		gryA = null;
-		gryB.disposeLocal();
-		gryB = null;
+		
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -707,7 +692,46 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const = null;
 	}
 
-
+	public void testSam() {
+		// All tests passed for spectral angle mapper
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {SPECTRAL_ANGLE_MAPPER};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (Math.abs(results[0]) >= eps) {
+			System.err.println("Spectral angle mapper = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,results);
+		iq.runAlgorithm();
+		if (Math.abs(results[0]) >= eps) {
+			System.err.println("Spectral angle mapper = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for spectral angle mapper");
+		}
+		else {
+			System.out.println("All tests passed for spectral angle mapper");
+		}
+		
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
 	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
 			double k1, double k2, double sigma, double r, double win[][], double results[]) {
@@ -957,6 +981,8 @@ public class ImageQuality extends AlgorithmBase {
 		    	results[i] = rase_mean;
 		    	break;
 		    case SPECTRAL_ANGLE_MAPPER:
+		    	sam();
+		    	results[i] = sam_mean;
 		    	break;
 		    case SPECTRAL_DISTORTION_INDEX:
 		    	break;
@@ -2419,6 +2445,104 @@ public class ImageQuality extends AlgorithmBase {
     	} // isColor
     	UI.setDataText("Structural similarity index = " + structuralSimilarityIndex + "\n");
     	System.out.println("Structural similarity index = " + structuralSimilarityIndex);
+    }
+    
+    private void sam() {
+    	 // calculates spectral angle mapper (sam).
+
+    	// param GT: first (original) input image.
+    	// param P: second (deformed) input image.
+
+    	// returns:  float -- sam value.
+    	int x,y;
+    	int index;
+    	double dotProduct =  0.0;
+    	double referenceSumOfSquares = 0.0;
+    	double testSumOfSquares = 0.0;
+    	double value;
+    	double red_sam_mean;
+    	double green_sam_mean;
+    	double blue_sam_mean;
+    	if (!isColor) {
+    	     for (y = 0; y < yDim; y++) {
+    	    	 for (x = 0; x < xDim; x++) {
+    	    		 index = x + y*xDim;
+    	    		 dotProduct += (referenceBuffer[index]*testBuffer[index]);
+    	    		 referenceSumOfSquares += (referenceBuffer[index]*referenceBuffer[index]);
+    	    		 testSumOfSquares += (testBuffer[index]*testBuffer[index]);
+    	    	 }	 
+    	     }
+    	     value = dotProduct/(Math.sqrt(referenceSumOfSquares) * Math.sqrt(testSumOfSquares));
+    	     if (value < -1) {
+    	    	 value = -1.0;
+    	     }
+    	     if (value > 1.0) {
+    	    	 value = 1.0;
+    	     }
+    	     sam_mean = Math.acos(value);
+    	} // if (!isColor)
+    	else { // isColor
+    		for (y = 0; y < yDim; y++) {
+   	    	    for (x = 0; x < xDim; x++) {
+   	    		   index = x + y*xDim;
+   	    		   dotProduct += (referenceRedBuffer[index]*testRedBuffer[index]);
+   	    		   referenceSumOfSquares += (referenceRedBuffer[index]*referenceRedBuffer[index]);
+   	    		   testSumOfSquares += (testRedBuffer[index]*testRedBuffer[index]);
+   	    	    }	 
+	   	     }
+	   	     value = dotProduct/(Math.sqrt(referenceSumOfSquares) * Math.sqrt(testSumOfSquares));
+	   	     if (value < -1) {
+	   	    	 value = -1.0;
+	   	     }
+	   	     if (value > 1.0) {
+	   	    	 value = 1.0;
+	   	     }
+	   	     red_sam_mean = Math.acos(value);
+   	     
+	   	     dotProduct =  0.0;
+	    	 referenceSumOfSquares = 0.0;
+	         testSumOfSquares = 0.0;
+	   	     for (y = 0; y < yDim; y++) {
+	 	    	 for (x = 0; x < xDim; x++) {
+	 	    		 index = x + y*xDim;
+	 	    		 dotProduct += (referenceGreenBuffer[index]*testGreenBuffer[index]);
+	 	    		 referenceSumOfSquares += (referenceGreenBuffer[index]*referenceGreenBuffer[index]);
+	 	    		 testSumOfSquares += (testGreenBuffer[index]*testGreenBuffer[index]);
+	 	    	 }	 
+	 	     }
+	 	     value = dotProduct/(Math.sqrt(referenceSumOfSquares) * Math.sqrt(testSumOfSquares));
+	 	     if (value < -1) {
+	 	    	 value = -1.0;
+	 	     }
+	 	     if (value > 1.0) {
+	 	    	 value = 1.0;
+	 	     }
+	 	     green_sam_mean = Math.acos(value);
+	 	     
+	 	     dotProduct =  0.0;
+	    	 referenceSumOfSquares = 0.0;
+	         testSumOfSquares = 0.0;
+	 	     for (y = 0; y < yDim; y++) {
+	 	    	 for (x = 0; x < xDim; x++) {
+	 	    		 index = x + y*xDim;
+	 	    		 dotProduct += (referenceBlueBuffer[index]*testBlueBuffer[index]);
+	 	    		 referenceSumOfSquares += (referenceBlueBuffer[index]*referenceBlueBuffer[index]);
+	 	    		 testSumOfSquares += (testBlueBuffer[index]*testBlueBuffer[index]);
+	 	    	 }	 
+	 	     }
+	 	     value = dotProduct/(Math.sqrt(referenceSumOfSquares) * Math.sqrt(testSumOfSquares));
+	 	     if (value < -1) {
+	 	    	 value = -1.0;
+	 	     }
+	 	     if (value > 1.0) {
+	 	    	 value = 1.0;
+	 	     }
+	 	     blue_sam_mean = Math.acos(value);
+	 	     sam_mean = (red_sam_mean + green_sam_mean + blue_sam_mean)/3.0;
+    	} // isColor
+    	UI.setDataText("Spectral angle mapper = " + sam_mean + "\n");
+    	System.out.println("Spectral angle mapper = " + sam_mean);
+    	
     }
 	
 }
