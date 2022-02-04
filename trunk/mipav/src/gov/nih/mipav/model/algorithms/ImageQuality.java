@@ -320,8 +320,7 @@ public class ImageQuality extends AlgorithmBase {
 	}
 	
 	public void testPsnr() {
-		// Taking range = 255 instead of the actual referenceImage.getMax() - referenceImage.getMin() causes all tests to pass.
-		// However, this version of the software will use the actual referenceImage.getMax() - referenceImage.getMin().
+		// All tests passed for peakSignalToNoiseRatio
 		int testsFailed = 0;
 		double eps = 1.0E-3;
 		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
@@ -960,29 +959,17 @@ public class ImageQuality extends AlgorithmBase {
 	    
 	    if (YCrCbRequired) {
             testYBuffer = new double[length];
-            testCrBuffer = new double[length];
-            testCbBuffer =  new double[length];
             referenceYBuffer = new double[length];
-            referenceCrBuffer = new double[length];
-            referenceCbBuffer = new double[length];
-            double delta;
-            //python
+            double range;
             if (referenceImage.getType() == ModelStorageBase.ARGB) {
-            	delta = 128;
-            }
-            else if (referenceImage.getType() == ModelStorageBase.ARGB_USHORT) {
-            	delta = 32768;
+            	range = 255.0;
             }
             else {
-            	delta = 0.5;
+            	range = referenceImage.getMax() - referenceImage.getMin();
             }
             for (i = 0; i < length; i++) {
-            	testYBuffer[i] = 0.299*testRedBuffer[i] + 0.587*testGreenBuffer[i] + 0.114*testBlueBuffer[i]; // PYTHON
-            	testCrBuffer[i] = (testRedBuffer[i] - testYBuffer[i])*0.713 + delta;
-            	testCbBuffer[i] = (testBlueBuffer[i] - testYBuffer[i])*0.564 + delta;
-            	referenceYBuffer[i] = 0.299*referenceRedBuffer[i] + 0.587*referenceGreenBuffer[i] + 0.114*referenceBlueBuffer[i];// PYTHON
-            	referenceCrBuffer[i] = (referenceRedBuffer[i] - referenceYBuffer[i])*0.713 + delta;
-            	referenceCbBuffer[i] = (referenceBlueBuffer[i] - referenceYBuffer[i])*0.564 + delta;
+            	testYBuffer[i] = (0.299*testRedBuffer[i] + 0.587*testGreenBuffer[i] + 0.114*testBlueBuffer[i])/range;
+            	referenceYBuffer[i] = (0.299*referenceRedBuffer[i] + 0.587*referenceGreenBuffer[i] + 0.114*referenceBlueBuffer[i])/range;
             }
         } // if (YCrCbRequired)
 	    
@@ -1138,13 +1125,25 @@ public class ImageQuality extends AlgorithmBase {
     	// returns:  float -- psnr value in dB.
     
     	//if MAX is None:
-        double range = referenceImage.getMax() - referenceImage.getMin();
-        // range = 255; causes all tests to pass.
+    	double range;
+    	double redRange;
+    	double greenRange;
+    	double blueRange;
+    	if ((referenceImage.getType() == ModelStorageBase.BYTE) || (referenceImage.getType() == ModelStorageBase.UBYTE) ||
+    		(referenceImage.getType() == ModelStorageBase.ARGB)) {
+    		range = 255.0;
+    		redRange = 255.0;
+    		greenRange = 255.0;
+    		blueRange = 255.0;
+    	}
+    	else {
+            range = referenceImage.getMax() - referenceImage.getMin();
+            redRange = range;
+            greenRange = range;
+            blueRange = range;
+    	}
         mse();
         if (isColor) {
-        	double redRange = referenceImage.getMaxR() - referenceImage.getMinR();
-        	double greenRange = referenceImage.getMaxG() - referenceImage.getMinG();
-        	double blueRange = referenceImage.getMaxB() - referenceImage.getMinB();
         	double peakRedSignalToNoiseRatio;
         	double peakGreenSignalToNoiseRatio;
         	double peakBlueSignalToNoiseRatio;
@@ -2598,18 +2597,35 @@ public class ImageQuality extends AlgorithmBase {
     	double imdiff[];
     	int i;
     	double bef;
-    	double maxP = -Double.MAX_VALUE;
+    	double range;
+    	double maxGT;
+    	double minGT;
+    	if ((referenceImage.getType() == ModelStorageBase.UBYTE) || (referenceImage.getType() == ModelStorageBase.BYTE)) {
+    		range = 255.0;
+    	}
+    	else if (isColor) {
+    		range = 1.0;
+    	}
+    	else {
+    		minGT = Double.MAX_VALUE;
+    		maxGT = -Double.MAX_VALUE;
+    		for (i = 0; i < referenceBuffer.length; i++) {
+    			if (referenceBuffer[i] > maxGT) {
+    				maxGT = referenceBuffer[i];
+    			}
+    			if (referenceBuffer[i] < minGT) {
+    				minGT = referenceBuffer[i];
+    			}
+    		}
+    		range = maxGT - minGT;
+    	}
     	if (!isColor) {
     	    imdiff = new double[referenceBuffer.length];	
     	    for (i = 0; i < referenceBuffer.length; i++) {
     	    	imdiff[i] = referenceBuffer[i] - testBuffer[i];
     	    }
     	    bef = _compute_bef(testBuffer, 8);
-    	    for (i = 0; i < testBuffer.length; i++) {
-    	    	if (testBuffer[i] > maxP) {
-    	    		maxP = testBuffer[i];
-    	    	}
-    	    }
+    	    
     	} // if (!isColor)
     	else { // isColor
     	    imdiff = new double[referenceYBuffer.length];
@@ -2617,11 +2633,7 @@ public class ImageQuality extends AlgorithmBase {
     	    	imdiff[i] = referenceYBuffer[i] - testYBuffer[i];
     	    }
     	    bef = _compute_bef(testYBuffer, 8);
-    	    for (i = 0; i < testYBuffer.length; i++) {
-    	    	if (testYBuffer[i] > maxP) {
-    	    		maxP = testYBuffer[i];
-    	    	}
-    	    }
+    	    
     	} // isColor
     	double total = 0.0;
     	for (i = 0; i < imdiff.length; i++) {
@@ -2630,12 +2642,13 @@ public class ImageQuality extends AlgorithmBase {
     	double mse = total/imdiff.length;
     	double mse_b = mse + bef;
     	
-    	if (maxP > 2) {
+    	/*if (maxP > 2) {
     		psnr_b = 10 * Math.log10((255.0*255.0)/mse_b);
     	}
     	else {
     		psnr_b = 10 * Math.log10(1.0/mse_b);
-    	}
+    	}*/
+    	psnr_b = 10 * Math.log10(range*range/mse_b);
     	
     	UI.setDataText("PSNR with Blocking Effect Factor = " + psnr_b + "\n");
     	System.out.println("PSNR with Blocking Effect Factor = " + psnr_b);
