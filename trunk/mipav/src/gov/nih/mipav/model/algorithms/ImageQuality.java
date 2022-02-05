@@ -83,18 +83,19 @@ public class ImageQuality extends AlgorithmBase {
 	public final int ROOT_MEAN_SQUARED_ERROR = 2;
 	public final int PEAK_SIGNAL_TO_NOISE_RATIO = 3;
 	public final int STRUCTURAL_SIMILARITY_INDEX = 4;
-	public final int UNIVERSAL_QUALITY_IMAGE_INDEX = 5;
+	public final int SSIM_WITH_AUTOMATIC_DOWNSAMPLING = 5;
+	public final int UNIVERSAL_QUALITY_IMAGE_INDEX = 6;
 	//public final int MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX;
-	public final int ERGAS = 6;
-	public final int SPATIAL_CORRELATION_COEFFICIENT = 7;
-	public final int RELATIVE_AVERAGE_SPECTRAL_ERROR = 8;
-	public final int SPECTRAL_ANGLE_MAPPER = 9;
+	public final int ERGAS = 7;
+	public final int SPATIAL_CORRELATION_COEFFICIENT = 8;
+	public final int RELATIVE_AVERAGE_SPECTRAL_ERROR = 9;
+	public final int SPECTRAL_ANGLE_MAPPER = 10;
 	//public final int SPECTRAL_DISTORTION_INDEX = 10;
 	//public final int SPATIAL_DISTORTION_INDEX = 11;
 	//public final int QUALITY_WITH_NO_REFERENCE = 12;
-	public final int VISUAL_INFORMATION_FIDELITY = 10;
- 	public final int BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO = 11;
- 	public final int RMSE_SW = 12;
+	public final int VISUAL_INFORMATION_FIDELITY = 11;
+ 	public final int BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO = 12;
+ 	public final int RMSE_SW = 13;
  	
  	private double testBuffer[] = null;
     private float testRedBuffer[] = null;
@@ -145,6 +146,7 @@ public class ImageQuality extends AlgorithmBase {
     // Default = 8 for RMSE_SW
     // Default = 8 for UNIVERSAL_QUALITY_IMAGE_INDEX
     // Default = 11 for STRUCTURAL_SIMILARITY_INDEX
+    // Default = 11 for SSIM_WITH_AUTOMATIC_DOWNSAMPLING
     // Default = 8 for RELATIVE_AVERAGE_SPECTRAL_ERROR
     // Default = 8 for ERGAS
     private int ws;
@@ -694,6 +696,65 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const.disposeLocal();
 		clr_const = null;
 	}
+	
+	public void testSsimDownload() {
+		// All tests passed for structural similarity index with automatic downloading
+		ws = 11;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {SSIM_WITH_AUTOMATIC_DOWNSAMPLING};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Structural similarity index with automatic downloading = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,results);
+		iq.runAlgorithm();
+		if (results[0] != 1.0) {
+			System.err.println("Structural similarity index with automatic downloading = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		/*String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
+		final FileIO fileIO = new FileIO();
+		fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+    	// Einstein picture examples from https://ece.uwaterloo.ca/~z70wang/research/ssim/.
+    	// Original image, MSE = 0, SSIM = 1
+    	ModelImage gryA = fileIO.readJimi("EinsteinA.jpg", fileDir, false);
+    	// MSE = 144, SSIM = 0.988
+    	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
+    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,results);
+    	iq.runAlgorithm();*/
+
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for structural similarity index with automatic downloading");
+		}
+		else {
+			System.out.println("All tests passed for structural similarity index with automatic downloading");
+		}
+		
+		/*gryA.disposeLocal();
+		gryA = null;
+		gryB.disposeLocal();
+		gryB = null;*/
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
 
 	public void testSam() {
 		// All tests passed for spectral angle mapper
@@ -845,8 +906,8 @@ public class ImageQuality extends AlgorithmBase {
 			MipavUtil.displayError("metrics.length == 0 in ImageQuality");
 			return;
 		}
-		if (metrics.length > 12) {
-			MipavUtil.displayError("metrics.length > 12 in ImageQuality");
+		if (metrics.length > 13) {
+			MipavUtil.displayError("metrics.length > 13 in ImageQuality");
 			return;
 		}
 		if (results == null) {
@@ -863,7 +924,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		isColor = testImage.isColorImage();
 		for (int i = 0; i < metrics.length; i++) {
-			if ((metrics[i] < 1) || (metrics[i] > 12)) {
+			if ((metrics[i] < 1) || (metrics[i] > 13)) {
 				MipavUtil.displayError("Illegal metrics[" + i+ "] in ImageQuality");
 				return;
 			}
@@ -1041,7 +1102,11 @@ public class ImageQuality extends AlgorithmBase {
 		    	results[i] = peakSignalToNoiseRatio;
 		    	break;
 		    case STRUCTURAL_SIMILARITY_INDEX:
-		    	ssim();
+		    	ssim(false);
+		    	results[i] = structuralSimilarityIndex;
+		    	break;
+		    case SSIM_WITH_AUTOMATIC_DOWNSAMPLING:
+		    	ssim(true);
 		    	results[i] = structuralSimilarityIndex;
 		    	break;
 		    case UNIVERSAL_QUALITY_IMAGE_INDEX:
@@ -2180,7 +2245,7 @@ public class ImageQuality extends AlgorithmBase {
     	System.out.println("Universal quality image index = " + universalImageQualityIndex);
     }
 
-    private void ssim() {
+    private void ssim(boolean downSampling) {
     	// calculates structural similarity index (ssim).
 
     	// param GT: first (original) input image.
@@ -2194,11 +2259,7 @@ public class ImageQuality extends AlgorithmBase {
     	// returns:  tuple -- ssim value, cs value.	
     	//if MAX is None:
     	
-        double range = referenceImage.getMax() - referenceImage.getMin();
-       
-        double c1 = k1*k1*range*range;
-        double c2 = k2*k2*range*range;
-        int x,y;
+    	int x,y;
     	int size1 = ws/2;
     	int size2 = ws - size1 - 1;
     	int index;
@@ -2206,9 +2267,144 @@ public class ImageQuality extends AlgorithmBase {
     	int filtYDim;
     	double refBuf2D[][] = new double[yDim][xDim];
     	double testBuf2D[][] = new double[yDim][xDim];
-    	double GTGT[][] = new double[yDim][xDim];
-    	double PP[][] = new double[yDim][xDim];
-    	double GTP[][] = new double[yDim][xDim];
+    	int scaleYDim = yDim;
+    	int scaleXDim = xDim;
+    	double scaleReferenceBuffer[] = null;
+    	double scaleTestBuffer[] = null;
+    	float scaleReferenceRedBuffer[] = null;
+    	float scaleTestRedBuffer[] = null;
+    	float scaleReferenceGreenBuffer[] = null;
+    	float scaleTestGreenBuffer[] = null;
+    	float scaleReferenceBlueBuffer[] = null;
+        float scaleTestBlueBuffer[] = null;
+    	int scaleIndex;
+    	int f = Math.max(1,Math.round(Math.min(xDim,yDim)/256));
+    	if (downSampling && (f > 1)) {
+    		// automatic downsampling
+    		
+    		// downsampling by f
+    		// use a simple low-pass filter 
+			double lpf[][] = new double[f][f];
+			double fval = 1.0/(f*f);
+			for (y = 0; y < f; y++) {
+				for (x = 0; x < f; x++) {
+					lpf[y][x] = fval;
+				}
+			}
+			if (!isColor) {
+				for (y = 0; y < yDim; y++) {
+		    		for (x = 0; x < xDim; x++) {
+		    			index = x + y*xDim;
+		    			refBuf2D[y][x] = referenceBuffer[index];
+		    			testBuf2D[y][x] = testBuffer[index];
+		    		}
+				}
+				double imgGT[][] = filter2Same(refBuf2D, lpf);
+				double imgP[][] = filter2Same(testBuf2D,lpf);
+				scaleYDim = 1 + (yDim - 1)/f;
+				scaleXDim = 1 + (xDim - 1)/f;
+				scaleReferenceBuffer = new double[scaleYDim*scaleXDim];
+				scaleTestBuffer = new double[scaleYDim*scaleXDim];
+				for (y = 0; y < scaleYDim; y++) {
+					for (x = 0; x < scaleXDim; x++) {
+					    scaleIndex = x + y*scaleXDim;
+					    scaleReferenceBuffer[scaleIndex] = imgGT[f*y][f*x];
+					    scaleTestBuffer[scaleIndex] = imgP[f*y][f*x];
+					}
+				}
+			} // if (!isColor)
+			else { // isColor
+				for (y = 0; y < yDim; y++) {
+		    		for (x = 0; x < xDim; x++) {
+		    			index = x + y*xDim;
+		    			refBuf2D[y][x] = referenceRedBuffer[index];
+		    			testBuf2D[y][x] = testRedBuffer[index];
+		    		}
+				}
+				double imgGT[][] = filter2Same(refBuf2D, lpf);
+				double imgP[][] = filter2Same(testBuf2D,lpf);
+				scaleYDim = 1 + (yDim - 1)/f;
+				scaleXDim = 1 + (xDim - 1)/f;
+				scaleReferenceRedBuffer = new float[scaleYDim*scaleXDim];
+				scaleTestRedBuffer = new float[scaleYDim*scaleXDim];
+				for (y = 0; y < scaleYDim; y++) {
+					for (x = 0; x < scaleXDim; x++) {
+					    scaleIndex = x + y*scaleXDim;
+					    scaleReferenceRedBuffer[scaleIndex] = (float)imgGT[f*y][f*x];
+					    scaleTestRedBuffer[scaleIndex] = (float)imgP[f*y][f*x];
+					}
+				}	
+				
+				for (y = 0; y < yDim; y++) {
+		    		for (x = 0; x < xDim; x++) {
+		    			index = x + y*xDim;
+		    			refBuf2D[y][x] = referenceGreenBuffer[index];
+		    			testBuf2D[y][x] = testGreenBuffer[index];
+		    		}
+				}
+				imgGT = filter2Same(refBuf2D, lpf);
+				imgP = filter2Same(testBuf2D,lpf);
+				scaleReferenceGreenBuffer = new float[scaleYDim*scaleXDim];
+				scaleTestGreenBuffer = new float[scaleYDim*scaleXDim];
+				for (y = 0; y < scaleYDim; y++) {
+					for (x = 0; x < scaleXDim; x++) {
+					    scaleIndex = x + y*scaleXDim;
+					    scaleReferenceGreenBuffer[scaleIndex] = (float)imgGT[f*y][f*x];
+					    scaleTestGreenBuffer[scaleIndex] = (float)imgP[f*y][f*x];
+					}
+				}
+				
+				for (y = 0; y < yDim; y++) {
+		    		for (x = 0; x < xDim; x++) {
+		    			index = x + y*xDim;
+		    			refBuf2D[y][x] = referenceBlueBuffer[index];
+		    			testBuf2D[y][x] = testBlueBuffer[index];
+		    		}
+				}
+				imgGT = filter2Same(refBuf2D, lpf);
+				imgP = filter2Same(testBuf2D,lpf);
+				scaleReferenceBlueBuffer = new float[scaleYDim*scaleXDim];
+				scaleTestBlueBuffer = new float[scaleYDim*scaleXDim];
+				for (y = 0; y < scaleYDim; y++) {
+					for (x = 0; x < scaleXDim; x++) {
+					    scaleIndex = x + y*scaleXDim;
+					    scaleReferenceBlueBuffer[scaleIndex] = (float)imgGT[f*y][f*x];
+					    scaleTestBlueBuffer[scaleIndex] = (float)imgP[f*y][f*x];
+					}
+				}	
+			} // isColor
+			refBuf2D = new double[scaleYDim][scaleXDim];
+			testBuf2D = new double[scaleYDim][scaleXDim];
+    	} // if ((downSampling) && (f > 1))
+    	else {
+    		if (!isColor) {
+    			scaleReferenceBuffer = referenceBuffer;
+    			scaleTestBuffer = testBuffer;
+    		}
+    		else { // isColor
+    			scaleReferenceRedBuffer = referenceRedBuffer;
+    			scaleTestRedBuffer = testRedBuffer;
+    			scaleReferenceGreenBuffer = referenceGreenBuffer;
+    			scaleTestGreenBuffer = testGreenBuffer;
+    			scaleReferenceBlueBuffer = referenceBlueBuffer;
+    			scaleTestBlueBuffer = testBlueBuffer;
+    		} // isColor
+    	}
+    	
+        double range;
+        if ((referenceImage.getType() == ModelStorageBase.UBYTE) || (referenceImage.getType() == ModelStorageBase.BYTE) ||
+        		(referenceImage.getType() == ModelStorageBase.ARGB)) {
+        	range = 255.0;
+        }
+        else {
+        	range = referenceImage.getMax() - referenceImage.getMin();
+        }
+       
+        double c1 = k1*k1*range*range;
+        double c2 = k2*k2*range*range;
+    	double GTGT[][] = new double[scaleYDim][scaleXDim];
+    	double PP[][] = new double[scaleYDim][scaleXDim];
+    	double GTP[][] = new double[scaleYDim][scaleXDim];
     	
     	double window[][] = new double[ws][ws];
     	double sum = 0.0;
@@ -2227,11 +2423,11 @@ public class ImageQuality extends AlgorithmBase {
     	}
     	
     	if (!isColor) {
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceBuffer[index];
-	    			testBuf2D[y][x] = testBuffer[index];
+	    	for (y = 0; y < scaleYDim; y++) {
+	    		for (x = 0; x < scaleXDim; x++) {
+	    			index = x + y*scaleXDim;
+	    			refBuf2D[y][x] = scaleReferenceBuffer[index];
+	    			testBuf2D[y][x] = scaleTestBuffer[index];
 	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
@@ -2300,11 +2496,11 @@ public class ImageQuality extends AlgorithmBase {
 	    	structuralSimilarityIndex = sum/(filtXDim * filtYDim);
     	}
     	else { // isColor
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceRedBuffer[index];
-	    			testBuf2D[y][x] = testRedBuffer[index];
+	    	for (y = 0; y < scaleYDim; y++) {
+	    		for (x = 0; x < scaleXDim; x++) {
+	    			index = x + y*scaleXDim;
+	    			refBuf2D[y][x] = scaleReferenceRedBuffer[index];
+	    			testBuf2D[y][x] = scaleTestRedBuffer[index];
 	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
@@ -2371,11 +2567,11 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceGreenBuffer[index];
-	    			testBuf2D[y][x] = testGreenBuffer[index];
+	    	for (y = 0; y < scaleYDim; y++) {
+	    		for (x = 0; x < scaleXDim; x++) {
+	    			index = x + y*scaleXDim;
+	    			refBuf2D[y][x] = scaleReferenceGreenBuffer[index];
+	    			testBuf2D[y][x] = scaleTestGreenBuffer[index];
 	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 	    		    PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 	    		    GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
@@ -2431,11 +2627,11 @@ public class ImageQuality extends AlgorithmBase {
 	    		}
 	    	}
 	    	
-	    	for (y = 0; y < yDim; y++) {
-	    		for (x = 0; x < xDim; x++) {
-	    			index = x + y*xDim;
-	    			refBuf2D[y][x] = referenceBlueBuffer[index];
-	    			testBuf2D[y][x] = testBlueBuffer[index];
+	    	for (y = 0; y < scaleYDim; y++) {
+	    		for (x = 0; x < scaleXDim; x++) {
+	    			index = x + y*scaleXDim;
+	    			refBuf2D[y][x] = scaleReferenceBlueBuffer[index];
+	    			testBuf2D[y][x] = scaleTestBlueBuffer[index];
 	    			GTGT[y][x] = refBuf2D[y][x] * refBuf2D[y][x];
 		    		PP[y][x] = testBuf2D[y][x] * testBuf2D[y][x];
 		    		GTP[y][x] = refBuf2D[y][x] * testBuf2D[y][x];
