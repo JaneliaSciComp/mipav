@@ -105,8 +105,8 @@
 	 
 	 "CNRM_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.cnrm-dr.nih.gov/",
-	 	"authServer": "https://cnrm-dr.nih.gov/"
+	 	"dictionaryServer": "https://casa-dd.cnrm.nih.gov/",
+	 	"authServer": "https://casa.cnrm.nih.gov/"
 	 }],
 	 "CNRM_Demo": [
 	 {
