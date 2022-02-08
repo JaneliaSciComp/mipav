@@ -14,8 +14,9 @@ import gov.nih.mipav.view.ViewUserInterface;
  *MIT License
  *imageQualityIndex.m by Zhou Wang ported with his kind permission.
  *The original source code for imageQualityIndex.m is Copyright (c) 2001 The University of Texas at Austin
- *ssim_index.m by Zhou Wang ported with his kind permission.
+ *ssim_index.m and ssim.m by Zhou Wang ported with his kind permission.
  *The original source code for ssim.index.m is Copyright(c) 2003 Zhou Wang
+ *The original source code for ssim.m is Copyright(c) 2009 Zhou Wang
  *Other metrics are from full_ref.py, no_ref.py and utils.py by Andrew Khalel.
   full_ref.py, no_ref.py and utils.py are Copyright (c) 2018 Andrew Khalel
 
@@ -718,7 +719,7 @@ public class ImageQuality extends AlgorithmBase {
 			testsFailed++;
 		}
 		
-		/*String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
+		String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
 		final FileIO fileIO = new FileIO();
 		fileIO.setQuiet(true);
     	fileIO.setSuppressProgressBar(true);
@@ -728,7 +729,7 @@ public class ImageQuality extends AlgorithmBase {
     	// MSE = 144, SSIM = 0.988
     	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
     	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,results);
-    	iq.runAlgorithm();*/
+    	iq.runAlgorithm();
 
 		
 		if (testsFailed > 0) {
@@ -738,10 +739,10 @@ public class ImageQuality extends AlgorithmBase {
 			System.out.println("All tests passed for structural similarity index with automatic downloading");
 		}
 		
-		/*gryA.disposeLocal();
+		gryA.disposeLocal();
 		gryA = null;
 		gryB.disposeLocal();
-		gryB = null;*/
+		gryB = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -1068,6 +1069,32 @@ public class ImageQuality extends AlgorithmBase {
 	        	MipavUtil.displayError("IOException on referenceImage.exportRGBData(3, 0, length, referenceBlueBuffer");
 	        	setCompleted(false);
 	        	return;
+	        }
+	        
+	        // Handle gray scale image stored in color format
+	        
+	        boolean sameColorValues = true;
+	        for (i = 0; (i < length) && sameColorValues; i++) {
+	        	if ((testRedBuffer[i] != testGreenBuffer[i]) || (testRedBuffer[i] != testBlueBuffer[i]) ||
+	        			(referenceRedBuffer[i] != referenceGreenBuffer[i]) || (referenceRedBuffer[i] != referenceBlueBuffer[i])) {
+	        		sameColorValues = false;
+	        	}
+	        }
+	        
+	        if (sameColorValues) {
+	        	testBuffer = new double[length];
+	        	referenceBuffer = new double[length];
+	        	for (i = 0; i < length; i++) {
+	        		testBuffer[i] = (double)testRedBuffer[i];
+	        		referenceBuffer[i] = (double)referenceBuffer[i];
+	        	}
+	        	testRedBuffer = null;
+	        	testGreenBuffer = null;
+	        	testBlueBuffer = null;
+	        	referenceRedBuffer = null;
+	        	referenceGreenBuffer = null;
+	        	referenceBlueBuffer = null;
+	        	isColor = false;
 	        }
 	    } // else isColor	
 	    
