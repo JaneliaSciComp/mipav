@@ -741,6 +741,11 @@ public class ImageQuality extends AlgorithmBase {
     	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
     	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,level,weight,method,results);
     	iq.runAlgorithm();
+    	
+    	// MSE = 144, SSIM = 0.913
+    	ModelImage gryC = fileIO.readJimi("EinsteinC.jpg", fileDir, false);
+    	iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,level,weight,method,results);
+    	iq.runAlgorithm();
 
 		
 		if (testsFailed > 0) {
@@ -754,6 +759,8 @@ public class ImageQuality extends AlgorithmBase {
 		gryA = null;
 		gryB.disposeLocal();
 		gryB = null;
+		gryC.disposeLocal();
+		gryC = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -803,6 +810,7 @@ public class ImageQuality extends AlgorithmBase {
 			System.out.println("All tests passed for multi scale structural similarity index");
 		}
 		
+		gry.disposeLocal();
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -2940,7 +2948,7 @@ public class ImageQuality extends AlgorithmBase {
     	float scaleReferenceBlueBuffer[] = null;
         float scaleTestBlueBuffer[] = null;
     	int scaleIndex;
-    	int f = Math.max(1,Math.round(Math.min(xDim,yDim)/256));
+    	int f = (int)Math.max(1,Math.round(Math.min(xDim,yDim)/256.0));
     	if (downSampling && (f > 1)) {
     		// automatic downsampling
     		
