@@ -4653,7 +4653,7 @@ public class DSC_MRI_toolbox extends CeresSolver {
 			double mindati = Double.MAX_VALUE;
 			for (t = 0; t <= TTPpos; t++) {
 				if (dati[t] < mindati) {
-					mindati = dati[i];
+					mindati = dati[t];
 					lastIndex = t;
 				}
 			}
