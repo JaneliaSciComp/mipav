@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Vector;
 
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -3932,9 +3934,239 @@ public class ImageQuality extends AlgorithmBase {
     	// use your own wavelet as long as the cell arrays org and dist contain
     	// corresponding subbands from the reference and the distorted images
     	// respectively.
-    	// [pyr,pind] = buildSpyr(imorg, 4, 'sp5Filters', 'reflect1'); % compute transform
+    	Vector<double[][]>org = new Vector<double[][]>();
+    	Vector<int[][]>pind = new Vector<int[][]>();
+    	Vector<int[]>harmonics = new Vector<int[]>();
+    	Vector<double[][]>steermtx = new Vector<double[][]>();
+    	PyramidToolbox pyramid = new PyramidToolbox();
+    	pyramid.buildSpyr(org, pind, harmonics, steermtx, refBuf2D, 4, "sp5Filters", BORDER_REFLECT_101); // compute transform
+    	Collections.reverse(org);
+    	pind.clear();
+    	harmonics.clear();
+    	steermtx.clear();
+    	Vector<double[][]>dist = new Vector<double[][]>();
+    	pyramid.buildSpyr(dist, pind, harmonics, steermtx, testBuf2D, 4, "sp5Filters", BORDER_REFLECT_101); 
+    	Collections.reverse(dist);
+    	
+    	// calculate the parameters of the distortion channel
+    	Vector<double[][]>g_all = new Vector<double[][]>();
+    	Vector<double[][]>vv_all = new Vector<double[][]>();
+        vifsub_est_M(g_all,vv_all,org,dist);
+    	
     	UI.setDataText("Visual information fidelity = " + vif + "\n");
         System.out.println("Visual information fidelity = " + vif);
         return;	
     }
+    
+    private double[][] filter2SameWithDownSample(double img[][], double win[][], int borderType, int downSampleY, int downSampleX,
+    		int startY, int startX, int stopY, int stopX) {
+    	int top = win.length/2;
+    	int bottom = win.length -top - 1;
+    	int left = win[0].length/2;
+    	int right = win[0].length - left - 1;
+    	double imgpad[][] = copyMakeBorder(img, top, bottom, left, right, borderType, 0.0);
+    	int h = img.length;
+		int w = img[0].length;
+		double result[][] = new double[h][w];
+		double sum;
+		int y,x,i,j;
+		for (y = top; y < h + top; y++) {
+			for (x = left; x < w + left; x++) {
+			    sum = 0.0;
+			    for (i = -top; i <= bottom; i++) {
+			    	for (j = -left; j <= right; j++) {
+			    		sum += imgpad[y + i][x + j] * win[i+top][j+left];
+			    	}
+			    }
+			    result[y-top][x-left] = sum;
+			}
+		}
+		if ((downSampleY == 1) && (downSampleX == 1)) {
+		    return result;
+		}
+		else {
+			int scaleYDim = 1 + (stopY - startY - 1)/downSampleY;
+			int scaleXDim = 1 + (stopX - startX - 1)/downSampleX;
+			double sampledResult[][] = new double[scaleYDim][scaleXDim];
+			for (y = 0; y < scaleYDim; y++) {
+				for (x = 0; x < scaleXDim; x++) {
+					sampledResult[y][x] = result[startY + downSampleY*y][startX + downSampleX*x];
+				}
+			}
+			return sampledResult;
+		}
+    }
+    
+    private void vifsub_est_M(Vector<double[][]> g_all, Vector<double[][]> vv_all,
+    		Vector<double[][]>org, Vector<double[][]>dist) { 
+
+	    // uses convolution for determining the parameters of the distortion channel
+	    // Called by vifvec.m
+	
+	    double tol = 1e-15; // tolernace for zero variance. Variance below this is set to zero, and zero is set to this value to avoid numerical issues.
+	    int i;
+	    int sub;
+	    double y[][];
+	    double yn[][];
+	    int lev;
+	    int winsize;
+	    int offset;
+	    double win[][];
+	    double winnorm[][];
+	    double val;
+	    int xs,ys;
+	    int newsizey;
+	    int newsizex;
+	    double truncy[][];
+	    double truncyn[][];
+	    int winstepy;
+	    int winstepx;
+	    int winstarty;
+	    int winstartx;
+	    int winstopy;
+	    int winstopx;
+	    double mean_x[][];
+	    double mean_y[][];
+	    double yyn[][];
+	    double y2[][];
+	    double yn2[][];
+	    double cov_xy[][];
+	    double ss_x[][];
+	    double ss_y[][];
+	    double g[][];
+	    double vv[][];
+	
+	    for (i=0; i < subbands.length; i++) {
+	        sub=subbands[i];
+	        y=org.get(sub);
+	        yn=dist.get(sub);
+	
+	        // compute the size of the window used in the distortion channel estimation
+	        lev=(int)Math.ceil((sub-1)/6.0);
+	        winsize=(int)Math.pow(2,lev)+1; 
+	        offset=(winsize-1)/2;
+	        win = new double[winsize][winsize];
+	        winnorm = new double[winsize][winsize];
+	        double winsum = winsize*winsize;
+	        val = 1.0/(winsize*winsize);
+	        for (ys = 0; ys < winsize; ys++) {
+	        	for (xs = 0; xs < winsize; xs++) {
+	        		win[ys][xs] = 1.0;
+	        		winnorm[ys][xs] = val;
+	        	}
+	        }
+	        
+	        // force subband size to be multiple of M
+	        newsizey=(int)Math.floor((double)y.length/(double)M)*M;
+	        newsizex=(int)Math.floor((double)y[0].length/(double)M)*M;
+	        
+	        truncy = new double[newsizey][newsizex];
+	        truncyn = new double[newsizey][newsizex];
+	        yyn = new double[newsizey][newsizex];
+	        y2 = new double[newsizey][newsizex];
+	        yn2 = new double[newsizey][newsizex];
+	        for (ys = 0; ys < newsizey; ys++) {
+	        	for (xs = 0; xs < newsizex; xs++) {
+	        		truncy[ys][xs] = y[ys][xs];
+	        		truncyn[ys][xs] = yn[ys][xs];
+	        		yyn[ys][xs] = y[ys][xs]*yn[ys][xs];
+	        		y2[ys][xs] = y[ys][xs]*y[ys][xs];
+	        		yn2[ys][xs] = yn[ys][xs]*yn[ys][xs];
+	        	}
+	        }
+	
+	        // Correlation with downsampling. This is faster than downsampling after
+	        // computing full correlation.
+	        winstepy = M;
+	        winstepx = M;
+	        winstarty = (int)Math.floor(M/2.0);
+	        winstartx = (int)Math.floor(M/2.0);
+	        winstopy = truncy.length - (int)Math.ceil(M/2.0) + 1;
+	        winstopx = truncy[0].length - (int)Math.ceil(M/2.0) + 1;
+	        
+	        // mean
+	        mean_x = filter2SameWithDownSample(truncy,winnorm,BORDER_REFLECT_101,winstepy, winstepx,
+	        		 winstarty, winstartx, winstopy, winstopx);
+	        mean_y = filter2SameWithDownSample(truncyn,winnorm,BORDER_REFLECT_101,winstepy, winstepx,
+	        		 winstarty, winstartx, winstopy, winstopx);
+	        // cov
+	        cov_xy = filter2SameWithDownSample(yyn,win,BORDER_REFLECT_101,winstepy, winstepx,
+	        		 winstarty, winstartx, winstopy, winstopx);
+	        for (ys = 0; ys < cov_xy.length; ys++) {
+	        	for (xs = 0; xs < cov_xy.length; xs++) {
+	        		cov_xy[ys][xs] = cov_xy[ys][xs] - winsum*mean_x[ys][xs]*mean_y[ys][xs];
+	        	}
+	        }
+	       
+	        // var
+	        // get rid of numerical problems, very small negative numbers, or very
+	        // small positive numbers, or other theoretical impossibilities.
+	        ss_x = filter2SameWithDownSample(y2,win,BORDER_REFLECT_101,winstepy, winstepx,
+	        		 winstarty, winstartx, winstopy, winstopx);
+	        for (ys = 0; ys < ss_x.length; ys++) {
+	        	for (xs = 0; xs < ss_x.length; xs++) {
+	        		ss_x[ys][xs] = Math.max(0.0,ss_x[ys][xs] - winsum*mean_x[ys][xs]*mean_x[ys][xs]);
+	        	}
+	        }
+	        
+	        ss_y = filter2SameWithDownSample(yn2,win,BORDER_REFLECT_101,winstepy, winstepx,
+	        		 winstarty, winstartx, winstopy, winstopx);
+	        for (ys = 0; ys < ss_y.length; ys++) {
+	        	for (xs = 0; xs < ss_y.length; xs++) {
+	        		ss_y[ys][xs] = Math.max(0.0,ss_y[ys][xs] - winsum*mean_y[ys][xs]*mean_y[ys][xs]);
+	        	}
+	        }
+	       
+	        // Regression 
+	        g = new double[cov_xy.length][cov_xy[0].length];
+	        for (ys = 0; ys < cov_xy.length; ys++) {
+	        	for (xs = 0; xs < cov_xy[0].length; xs++) {
+	        		g[ys][xs] = cov_xy[ys][xs]/(ss_x[ys][xs] + tol);
+	        	}
+	        }
+	       
+	        
+	        // Variance of error in regression
+	        vv = new double[ss_y.length][ss_y[0].length];
+	        for (ys = 0; ys < vv.length; ys++) {
+	        	for (xs = 0; xs < vv[0].length; xs++) {
+	        		vv[ys][xs] = (ss_y[ys][xs] - g[ys][xs]*cov_xy[ys][xs])/winsum;
+	        	}
+	        }
+	        
+	        // get rid of numerical problems, very small negative numbers, or very
+	        // small positive numbers, or other theoretical impossibilities.
+	        for (ys = 0; ys < g.length; ys++) {
+	        	for (xs = 0; xs < g[0].length; xs++) {
+	        		if (ss_x[ys][xs] < tol) {
+	        			g[ys][xs] = 0;
+	        			vv[ys][xs] = ss_y[ys][xs];
+	        			ss_x[ys][xs] = 0;
+	        		}
+	        		
+	        		if (ss_y[ys][xs] < tol) {
+	        			g[ys][xs] = 0.0;
+	        			vv[ys][xs] = 0.0;
+	        		}
+	        		
+	        		// constrain g to be non-negative. 
+	        		if (g[ys][xs] < 0) {
+	        			vv[ys][xs] = ss_y[ys][xs];
+	        			g[ys][xs] = 0.0;
+	        		}
+	        		
+	        		// take care of numerical errors, vv could be very small negative
+	        		if (vv[ys][xs] < tol) {
+	        			vv[ys][xs] = tol;
+	        		}
+	        	}
+	        }
+	        
+	        g_all.add(g);
+	        vv_all.add(vv);
+	        
+	    } // for (i=0; i < subbands.length; i++)
+    }
+    
+    
 }
