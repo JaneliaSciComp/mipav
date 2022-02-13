@@ -57,7 +57,12 @@ public class PyramidToolbox extends AlgorithmBase {
 	SOFTWARE.
 	*/
 
-
+	public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
+	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
+	public final int BORDER_REFLECT = 2; // fedcba|abcdefgh|hgfedcb
+	public final int BORDER_WRAP = 3; // cdefgh|abcdefgh|abcdefg
+	public final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
+	public final int BORDER_DEFAULT = BORDER_REFLECT_101;
 	
 	public PyramidToolbox() {
 		
@@ -92,8 +97,8 @@ public class PyramidToolbox extends AlgorithmBase {
 	    // filtfile default sp1Filters
 	    // edges default = reflect1
 
-		public void buildSpyr(Vector<Integer>pyr, Vector<Integer>pind, Vector<int[]> harmonics, Vector<double[][]>steermtx, double im[][],
-				int ht, String filtfile, String edges) {
+		public void buildSpyr(Vector<double[][]>pyr, Vector<int[][]>pind, Vector<int[]> harmonics, Vector<double[][]>steermtx, double im[][],
+				int ht, String filtfile, int borderType) {
 			int i,r,c;
             double hi0filt[][] = null;
             double lo0filt[][] = null;
@@ -600,14 +605,13 @@ public class PyramidToolbox extends AlgorithmBase {
 			}
 	
 			// -----------------------------------------------------------------
+			
+			double hi0[][] = filter2SameWithDownSample(im, hi0filt, borderType,1,1);
+			double lo0[][] = filter2SameWithDownSample(im, lo0filt, borderType,1,1);
 	
-			/*hi0 = corrDn(im, hi0filt, edges);
-			lo0 = corrDn(im, lo0filt, edges);
-	
-			[pyr,pind] = buildSpyrLevs(lo0, ht, lofilt, bfilts, edges);
-	
-			pyr = [hi0(:) ; pyr];
-			pind = [size(hi0); pind];*/
+			buildSpyrLevs(pyr, pind, lo0, ht, lofilt, bfilts, borderType);
+	        pyr.add(0, hi0);
+	        pind.add(0, new int[][] {{hi0.length,hi0[0].length}});
 		}
 			  
 		// HEIGHT = maxPyrHt(IMSIZE, FILTSIZE)
@@ -627,8 +631,262 @@ public class PyramidToolbox extends AlgorithmBase {
 				return (1 + maxPyrHt((int)Math.floor(imszy/2.0), (int)Math.floor(imszx/2.0), filtsz));
 			}
 		}
-
 		
+		public double[][] copyMakeBorder(double src[][], int top, int bottom, int left, int right, int borderType, double borderValue) {
+	    	int i,j;
+	    	double dst[][] = new double[src.length + top + bottom][src[0].length + left + right];
+	    	for (i = 0; i < src.length; i++) {
+	    		for (j = 0; j < src[0].length; j++) {
+	    			dst[i+top][j+left] = src[i][j];
+	    		}
+	    	}
+	    	
+	    	for (i = 0; i < top; i++) {
+	    		for (j = 0; j < left; j++) {
+	    		   switch (borderType) {
+	    		   case BORDER_CONSTANT:
+	    			   dst[i][j] = borderValue;
+	    			   break;
+	    		   case BORDER_REPLICATE:
+	    			   dst[i][j] = src[0][0];
+	    			   break;
+	    		   case BORDER_REFLECT:
+	    			   dst[i][j] = src[top - 1 - i][left - 1 - j];
+	    			   break;
+	    		   case BORDER_REFLECT_101:
+	     			   dst[i][j] = src[top - i][left - j];
+	     			   break;
+	    		   }
+	    		  
+	 		   }
+	    		
+	    		for (j = left; j < src[0].length + left; j++) {
+	    			switch (borderType) {
+	    			case BORDER_CONSTANT:
+	    				dst[i][j] = borderValue;
+	    				break;
+	    			case BORDER_REPLICATE:
+	    				dst[i][j] = src[0][j - left];
+	    				break;
+	    			case BORDER_REFLECT:
+	    				dst[i][j] = src[top - 1 - i][j - left];
+	    				break;
+	    			case BORDER_REFLECT_101:
+	    				dst[i][j] = src[top - i][j - left];
+	    				break;
+	    			}
+	    		}
+	    		
+	    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+	    		    switch(borderType) {
+	    		    case BORDER_CONSTANT:
+	     			   dst[i][j] = borderValue;
+	     			   break;
+	    		    case BORDER_REPLICATE:
+	    		    	dst[i][j] = src[0][src[0].length-1];
+	    		    	break;
+	    		    case BORDER_REFLECT:
+	    		    	dst[i][j] = src[top - 1 - i][2*src[0].length + left - 1 - j];
+	    		    	break;
+	    		    case BORDER_REFLECT_101:
+	    		    	dst[i][j] = src[top - i][2*src[0].length + left - 2 - j];
+	    		    	break;
+	    		    }
+	    		}
+	    	}
+	    	
+	    	for (i = top + src.length; i < top + src.length + bottom; i++) {
+	            for (j = 0; j < left; j++) {
+	    		    switch (borderType) {
+	    		    case BORDER_CONSTANT:
+	     			   dst[i][j] = borderValue;
+	     			   break;
+	    		    case BORDER_REPLICATE:
+	    		    	dst[i][j] = src[src.length-1][0];
+	    		    	break;
+	    		    case BORDER_REFLECT:
+	    		    	dst[i][j] = src[2*src.length + top - 1 - i][left - 1 - j];
+	    		    	break;
+	    		    case BORDER_REFLECT_101:
+	    		    	dst[i][j] = src[2*src.length + top - 2 - i][left - j];
+	    		    	break;
+	    		    }
+	    		}
+	            
+	            for (j = left; j < src[0].length + left; j++) {
+	    			switch (borderType) {
+	    			case BORDER_CONSTANT:
+	    				dst[i][j] = borderValue;
+	    				break;
+	    			case BORDER_REPLICATE:
+	    				dst[i][j] = src[src.length-1][j - left];
+	    				break;
+	    			case BORDER_REFLECT:
+	    				dst[i][j] = src[2*src.length + top - 1 - i][j - left];
+	    				break;
+	    			case BORDER_REFLECT_101:
+	    				dst[i][j] = src[2*src.length + top - 2 - i][j - left];
+	    				break;
+	    			}
+	    		}
+	    		
+	    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+	    		    switch(borderType) {
+	    		    case BORDER_CONSTANT:
+	     			   dst[i][j] = borderValue;
+	     			   break;
+	    		    case BORDER_REPLICATE:
+	    		    	dst[i][j] = src[src.length-1][src[0].length-1];
+	    		    	break;
+	    		    case BORDER_REFLECT:
+	    		        dst[i][j] = src[2*src.length + top - 1 - i][2*src[0].length + left - 1 - j];
+	    		        break;
+	    		    case BORDER_REFLECT_101:
+	    		        dst[i][j] = src[2*src.length + top - 2 - i][2*src[0].length + left - 2 - j];
+	    		        break;
+	    		    }
+	    		}	
+	    	}
+	    	
+	    	for (i = top; i < src.length + top; i++) {
+	    		for (j = 0; j < left; j++) {
+	    			switch(borderType) {
+	    			case BORDER_CONSTANT:
+	    				dst[i][j] = borderValue;
+	    				break;
+	    			case BORDER_REPLICATE:
+	    				dst[i][j] = src[i - top][0];
+	    				break;
+	    			case BORDER_REFLECT:
+	    				dst[i][j] = src[i - top][left - 1 - j];
+	    				break; 
+	    			case BORDER_REFLECT_101:
+	    				dst[i][j] = src[i - top][left - j];
+	    				break;  
+	    			}
+	    		}
+	    		
+	    		for (j = src[0].length + left; j < src[0].length + left + right; j++) {
+	    		    switch(borderType) {
+	    		    case BORDER_CONSTANT:
+	     			   dst[i][j] = borderValue;
+	     			   break;
+	    		    case BORDER_REPLICATE:
+	    		    	dst[i][j] = src[i - top][src[0].length-1];
+	    		    	break;
+	    		    case BORDER_REFLECT:
+	    		        dst[i][j] = src[i - top][2*src[0].length + left - 1 - j];
+	    		        break;
+	    		    case BORDER_REFLECT_101:
+	    		        dst[i][j] = src[i - top][2*src[0].length + left - 2 - j];
+	    		        break;
+	    		    }
+	    		}	
+	    	}
+	    	
+	    	
+	    	return dst;
+	    }
+		
+		 private double[][] filter2SameWithDownSample(double img[][], double win[][], int borderType, int downSampleY, int downSampleX) {
+		    	int top = win.length/2;
+		    	int bottom = win.length -top - 1;
+		    	int left = win[0].length/2;
+		    	int right = win[0].length - left - 1;
+		    	double imgpad[][] = copyMakeBorder(img, top, bottom, left, right, borderType, 0.0);
+		    	int h = img.length;
+				int w = img[0].length;
+				double result[][] = new double[h][w];
+				double sum;
+				int y,x,i,j;
+				for (y = top; y < h + top; y++) {
+					for (x = left; x < w + left; x++) {
+					    sum = 0.0;
+					    for (i = -top; i <= bottom; i++) {
+					    	for (j = -left; j <= right; j++) {
+					    		sum += imgpad[y + i][x + j] * win[i+top][j+left];
+					    	}
+					    }
+					    result[y-top][x-left] = sum;
+					}
+				}
+				if ((downSampleY == 1) && (downSampleX == 1)) {
+				    return result;
+				}
+				else {
+					int scaleYDim = 1 + (img.length - 1)/downSampleY;
+					int scaleXDim = 1 + (img[0].length - 1)/downSampleX;
+					double sampledResult[][] = new double[scaleYDim][scaleXDim];
+					for (y = 0; y < scaleYDim; y++) {
+						for (x = 0; x < scaleXDim; x++) {
+							sampledResult[y][x] = result[downSampleY*y][downSampleX*x];
+						}
+					}
+					return sampledResult;
+				}
+		    }
+		 
+		 // [PYR, INDICES] = buildSpyrLevs(LOIM, HEIGHT, LOFILT, BFILTS, EDGES)
+		 
+		 // Recursive function for constructing levels of a steerable pyramid.  This
+		 // is called by buildSpyr, and is not usually called directly.
+
+		 // Eero Simoncelli, 6/96.
+
+		 private void buildSpyrLevs(Vector<double[][]>pyr, Vector<int[][]> pind, 
+				 double lo0[][], int ht,double lofilt[][], double bfilts[][], int borderType) {
+         int b,y,x;
+         double filt[][];
+         double band[][];
+         double lo[][];
+		 if (ht <= 0) {
+           pyr.clear();
+		   pyr.add(lo0);
+		   pind.clear();
+		   pind.add(new int[][] {{lo0.length,lo0[0].length}});
+		 }
+
+		 else {
+
+		   // Assume square filters:
+		   int bfiltsz =  (int)Math.round(Math.sqrt(bfilts.length));
+
+		   double bands[][] = new double[lo0.length*lo0[0].length][bfilts[0].length];
+		   int bind[][] = new int[bfilts[0].length][2];
+
+		   for (b = 0; b < bfilts[0].length; b++) {
+			 filt = new double[bfiltsz][bfiltsz];
+			 for (x = 0; x < bfiltsz; x++) {
+				 for (y = 0; y < bfiltsz; y++) {
+				     filt[y][x] = bfilts[y + x*bfiltsz][b];	 
+				 }
+			 }
+		     band = filter2SameWithDownSample(lo0, filt, borderType, 1, 1);
+		     for (x = 0; x < band[0].length; x++) {
+				 for (y = 0; y < band.length; y++) {
+				     bands[y + x*band.length][b] = band[y][x];	 
+				 }
+			 }
+		     bind[b][0] = band.length;
+		     bind[b][1] = band[0].length;
+		   }
+		 	
+		   lo = filter2SameWithDownSample(lo0, lofilt, borderType, 2, 2);
+		   Vector<double[][]>npyr = new Vector<double[][]>();
+		   Vector<int[][]>nind = new Vector<int[][]>();
+		   
+		   buildSpyrLevs(npyr, nind, lo, ht-1, lofilt, bfilts, borderType);
+           pyr.clear();
+           pyr.add(bands);
+           pyr.addAll(npyr);
+		   pind.clear();
+		   pind.add(bind);
+		   pind.addAll(nind);
+		 }
+		 	
+		 }
+
+
 
 	
 }
