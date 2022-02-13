@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Vector;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -3952,11 +3954,133 @@ public class ImageQuality extends AlgorithmBase {
     	Vector<double[][]>g_all = new Vector<double[][]>();
     	Vector<double[][]>vv_all = new Vector<double[][]>();
         vifsub_est_M(g_all,vv_all,org,dist);
+        
+        // calculate the parameters of the reference image
+        double ssarr[][] = new double[subbands.length][];
+        double larr[][] = new double[subbands.length][M*M];
+        double cuarr[][][] = new double[subbands.length][][];
+        refparams_vecgsm(ssarr, larr, cuarr, org);
     	
     	UI.setDataText("Visual information fidelity = " + vif + "\n");
         System.out.println("Visual information fidelity = " + vif);
         return;	
     }
+    
+    private void refparams_vecgsm(double ssarr[][], double l_arr[][], double cu_arr[][][], Vector<double[][]> org) {
+
+		//This function computes the parameters of the reference image. This is
+		// called by vifvec.m.
+    	int i;
+    	int sub;
+    	double y[][];
+    	int sizeyy;
+    	int sizeyx;
+    	int ys,xs;
+    	double ytrunc[][];
+    	double temp[][];
+    	int j,k;
+    	double mcu[];
+    	double sum;
+    	double cu[][];
+    	int xindex;
+    	int yindex;
+    	double ss[][];
+    	double sssum[];
+    	double d[];
+
+		for (i = 0; i < subbands.length; i++) {
+		    sub=subbands[i];
+		    y=org.get(sub);
+		    
+		    sizeyy= (int)Math.floor((double)y.length/(double)M)*M; // crop  to exact multiple size
+		    sizeyx= (int)Math.floor((double)y[0].length/(double)M)*M;
+		    ytrunc = new double[sizeyy][sizeyx];
+		    for (ys = 0; ys < sizeyy; ys++) {
+		    	for (xs = 0; xs < sizeyx; xs++) {
+		    		ytrunc[ys][xs] = y[ys][xs];
+		    	}
+		    }
+		    
+		    // Collect MxM blocks. Rearrange each block into an
+		    // M^2 dimensional vector and collect all such vectors.
+		    // Collect ALL possible MXM blocks (even those overlapping) from the subband
+		    temp= new double[M*M][(ytrunc.length-M+1)*(ytrunc[0].length-M+1)];
+		    for (j = 1; j <= M; j++) {
+		        for (k=1; k <= M; k++) {
+		        	for (xs = j-1; xs <= ytrunc[0].length-1+j-M; xs++) {
+		        		for (ys = k-1; ys <= ytrunc.length-1+k-M; ys++) {
+		        			temp[(k-1) + (j-1)*M][ys-(k-1) + (xs-(j-1))*(ytrunc.length-M+1)] = ytrunc[ys][xs];
+		        		}
+		        	}
+		        }
+		    }
+		    
+		    // estimate mean and covariance
+		    mcu = new double[M*M];
+		    for (i = 0; i < M*M; i++) {
+		        sum = 0.0;
+		        for (j = 0; j < temp[0].length; j++) {
+		        	sum += temp[i][j];
+		        }
+		        mcu[i] = sum/temp[0].length;
+		    }
+		   
+		    cu = new double[temp.length][temp.length];
+		    Matrix tr = new Matrix(temp.length,temp[0].length);
+		    for (i = 0; i < temp.length; i++) {
+		    	for (j = 0; j < temp[0].length; j++) {
+		    		tr.set(i,j,(temp[i][j] - mcu[i]));
+		    	}
+		    }
+		    Matrix trtrtranspose = tr.times(tr.transpose());
+		    for (i = 0; i < temp.length; i++) {
+		    	for (j = 0; j < temp.length; j++) {
+		    	    cu[i][j] = trtrtranspose.getArray()[i][j]/temp[0].length; //  % covariance matrix for U
+		    	}
+		    }
+		    
+		    // Collect MxM blocks as above. Use ONLY non-overlapping blocks to
+		    // calculate the S field
+		    temp= new double[M*M][(1 + (ytrunc.length-1)/M)*(1 + (ytrunc[0].length-1)/M)];
+		    for (j = 1; j <= M; j++) {
+		        for (k = 1; k <= M; k++) {
+		        	for (xs = j-1, xindex = 0; xs <= ytrunc[0].length-1; xs+=M, xindex++) {
+		        		for (ys = k-1, yindex = 0; ys <= ytrunc.length-1; ys+=M, yindex++) {
+		        			temp[(k-1) + (j-1)*M][yindex + xindex*(1 + (ytrunc.length-1)/M)] = ytrunc[ys][xs];
+		        		}
+		        	}
+		        }
+		    }
+
+		    // Calculate the S field
+		    Matrix cuMat = new Matrix(cu);
+		    Matrix cuinv = cuMat.inverse();
+		    ss = (cuinv.times(new Matrix(temp))).getArray();
+		    sssum = new double[ss[0].length];
+		    for (j = 0; j < ss[0].length; j++) {
+		    	sum = 0.0;
+		    	for (i = 0; i < ss.length; i++) {
+		    		sum += ss[i][j]*temp[i][j];
+		    	}
+		    	sssum[j] = sum/(M*M);
+		    }
+		    //sssum=reshape(sssum,sizey/M);
+		    
+		    // Eigen-decomposition
+		    EigenvalueDecomposition dec = new EigenvalueDecomposition(cuMat);
+		    d = dec.getRealEigenvalues();
+		    for (i = 0; i < M*M; i++) {
+		    	l_arr[sub][i] = d[i];
+		    }
+		    
+		    // rearrange for output
+		    ssarr[sub]=sssum;
+		    temp=null;
+		    cu_arr[sub]=cu;
+		} // for (i = 0; i < subbands.length; i++)
+    }
+
+
     
     private double[][] filter2SameWithDownSample(double img[][], double win[][], int borderType, int downSampleY, int downSampleX,
     		int startY, int startX, int stopY, int stopX) {
