@@ -3956,7 +3956,7 @@ public class ImageQuality extends AlgorithmBase {
         vifsub_est_M(g_all,vv_all,org,dist);
         
         // calculate the parameters of the reference image
-        double ssarr[][] = new double[subbands.length][];
+        double ssarr[][][] = new double[subbands.length][][];
         double larr[][] = new double[subbands.length][M*M];
         double cuarr[][][] = new double[subbands.length][][];
         refparams_vecgsm(ssarr, larr, cuarr, org);
@@ -3966,7 +3966,7 @@ public class ImageQuality extends AlgorithmBase {
         return;	
     }
     
-    private void refparams_vecgsm(double ssarr[][], double l_arr[][], double cu_arr[][][], Vector<double[][]> org) {
+    private void refparams_vecgsm(double ssarr[][][], double l_arr[][], double cu_arr[][][], Vector<double[][]> org) {
 
 		//This function computes the parameters of the reference image. This is
 		// called by vifvec.m.
@@ -3986,6 +3986,7 @@ public class ImageQuality extends AlgorithmBase {
     	int yindex;
     	double ss[][];
     	double sssum[];
+    	double sssumyx[][];
     	double d[];
 
 		for (i = 0; i < subbands.length; i++) {
@@ -4064,7 +4065,12 @@ public class ImageQuality extends AlgorithmBase {
 		    	}
 		    	sssum[j] = sum/(M*M);
 		    }
-		    //sssum=reshape(sssum,sizey/M);
+		    sssumyx = new double[sizeyy/M][sizeyx/M];
+		    for (i = 0, xs = 0; xs < sizeyx/M; xs++) {
+			    for (ys = 0; ys < sizeyy/M; ys++) {
+			        sssumyx[ys][xs] = sssum[ys + xs*sizeyy/M];	
+			    }
+		    }
 		    
 		    // Eigen-decomposition
 		    EigenvalueDecomposition dec = new EigenvalueDecomposition(cuMat);
@@ -4074,7 +4080,7 @@ public class ImageQuality extends AlgorithmBase {
 		    }
 		    
 		    // rearrange for output
-		    ssarr[sub]=sssum;
+		    ssarr[sub]=sssumyx;
 		    temp=null;
 		    cu_arr[sub]=cu;
 		} // for (i = 0; i < subbands.length; i++)
@@ -4134,7 +4140,6 @@ public class ImageQuality extends AlgorithmBase {
 	    double yn[][];
 	    int lev;
 	    int winsize;
-	    int offset;
 	    double win[][];
 	    double winnorm[][];
 	    double val;
@@ -4168,7 +4173,6 @@ public class ImageQuality extends AlgorithmBase {
 	        // compute the size of the window used in the distortion channel estimation
 	        lev=(int)Math.ceil((sub-1)/6.0);
 	        winsize=(int)Math.pow(2,lev)+1; 
-	        offset=(winsize-1)/2;
 	        win = new double[winsize][winsize];
 	        winnorm = new double[winsize][winsize];
 	        double winsum = winsize*winsize;
