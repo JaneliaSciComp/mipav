@@ -250,7 +250,8 @@ public class ImageQuality extends AlgorithmBase {
     // Default = 0.4 for VISUAL_INFORMATION_FIDELITY
     private double sigma_nsq;
     // subbands included in the computation for VISUAL_INFORMATION_FIDELITY
-    private int subbands[] = new int[] {4, 7, 10, 13, 16, 19, 22, 25};
+    // subbands decreased 1 from MATLAB values to go from 1 to 0 based indexing
+    private int subbands[] = new int[] {3, 6, 9, 12, 15, 18, 21, 24};
     // MxM is the block size that denotes the size of a vector used in the GSM model in VISUAL_INFORMATION_FIDELITY.
     private int M = 3;
     
@@ -971,6 +972,47 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		else {
 			System.out.println("All tests passed for block sensitive peak signal to noise ratio");
+		}
+		
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;	
+	}
+	
+	public void testVIF() {
+		sigma_nsq = 0.4;
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {VISUAL_INFORMATION_FIDELITY};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq.runAlgorithm();
+		if (Math.abs(1.0-results[0]) >= eps) {
+			System.err.println("Visual information fidelity = " + results[0] + " for clr, clr\n");
+			testsFailed++;
+		}
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq.runAlgorithm();
+		if (Math.abs(1.0-results[0]) >= eps) {
+			System.err.println("Visual information fidelity = " + results[0] + " for gry, gry\n");
+			testsFailed++;
+		}
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for visual information fidelity");
+		}
+		else {
+			System.out.println("All tests passed for visual information fidelity");
 		}
 		
 		gry.disposeLocal();
@@ -3906,7 +3948,25 @@ public class ImageQuality extends AlgorithmBase {
     }
     
     private void vifvec() {
-    	int i,x,y,index;
+    	int i,j,x,y,index,kk,r,c;
+    	int sub;
+    	double g[][];
+    	double vv[][];
+    	double ss[][];
+    	double lambda[];
+    	//double cu[][];
+    	//int neigvals;
+    	int lev;
+    	int winsize;
+    	double offsetf;
+    	int offset;
+    	double gvalid[][];
+    	double vvvalid[][];
+    	double ssvalid[][];
+    	double temp1;
+    	double temp2;
+    	double sumnum;
+    	double sumden;
     	if (referenceImage.isColorImage()) {
     		referenceBuffer = new double[length];
     		for (i = 0; i < length; i++) {
@@ -3937,7 +3997,7 @@ public class ImageQuality extends AlgorithmBase {
     	// corresponding subbands from the reference and the distorted images
     	// respectively.
     	Vector<double[][]>org = new Vector<double[][]>();
-    	Vector<int[][]>pind = new Vector<int[][]>();
+    	Vector<int[]>pind = new Vector<int[]>();
     	Vector<int[]>harmonics = new Vector<int[]>();
     	Vector<double[][]>steermtx = new Vector<double[][]>();
     	PyramidToolbox pyramid = new PyramidToolbox();
@@ -3956,17 +4016,98 @@ public class ImageQuality extends AlgorithmBase {
         vifsub_est_M(g_all,vv_all,org,dist);
         
         // calculate the parameters of the reference image
-        double ssarr[][][] = new double[subbands.length][][];
-        double larr[][] = new double[subbands.length][M*M];
-        double cuarr[][][] = new double[subbands.length][][];
-        refparams_vecgsm(ssarr, larr, cuarr, org);
+        double ssarr[][][] = new double[org.size()][][];
+        double larr[][] = new double[org.size()][M*M];
+        //double cuarr[][][] = new double[subbands.length][][];
+        //refparams_vecgsm(ssarr, larr, cuarr, org);
+        refparams_vecgsm(ssarr, larr, org);
+        
+        // reorder subbands. This is needed since the outputs of the above functions
+        // are not in the same order
+        int subbands_max = -1;
+        for (i = 0; i < subbands.length; i++) {
+        	if (subbands[i] > subbands_max) {
+                subbands_max = subbands[i];
+        	}
+        }
+        double vvtemp[][][] =new double[subbands_max+1][][];
+        double ggtemp[][][] = new double[subbands_max+1][][];
+        ggtemp=vvtemp;
+        for(kk=0; kk < subbands.length; kk++) {
+            vvtemp[subbands[kk]] = vv_all.get(kk);
+            ggtemp[subbands[kk]] = g_all.get(kk);
+        }
+        
+        // compute reference and distorted image information from each subband
+        sumnum = 0.0;
+        sumden = 0.0;
+        for (i = 0; i < subbands.length; i++) {
+            sub=subbands[i];
+            g=ggtemp[sub];
+            vv=vvtemp[sub];
+            ss=ssarr[sub];
+            lambda = larr[sub]; 
+            //cu=cuarr[sub];
+
+            // how many eigenvalues to sum over. default is all.
+            // neigvals=lambda.length;
+            
+            // compute the size of the window used in the distortion channel estimation, and use it to calculate the offset from subband borders
+            // we do this to avoid all coefficients that may suffer from boundary
+            // effects
+            lev=(int)Math.ceil(sub/6.0);
+            winsize=(int)Math.pow(2,lev)+1; 
+            offsetf=(winsize-1)/2.0;
+            offset=(int)Math.ceil(offsetf/M);
+            
+            
+            // select only valid portion of the output.
+            gvalid = new double[g.length-2*offset][g[0].length-2*offset];
+            for (r = 0; r < gvalid.length; r++) {
+            	for (c = 0; c < gvalid[0].length; c++) {
+            		gvalid[r][c] = g[r+offset][c+offset];
+            	}
+            }
+            vvvalid = new double[vv.length-2*offset][vv[0].length-2*offset];
+            for (r = 0; r < vvvalid.length; r++) {
+            	for (c = 0; c < vvvalid[0].length; c++) {
+            		vvvalid[r][c] = vv[r+offset][c+offset];
+            	}
+            }
+            ssvalid = new double[ss.length-2*offset][ss[0].length-2*offset];
+            for (r = 0; r < ssvalid.length; r++) {
+            	for (c = 0; c < ssvalid[0].length; c++) {
+            		ssvalid[r][c] = ss[r+offset][c+offset];
+            	}
+            }
+            
+            // VIF
+            temp1=0; 
+            temp2=0;
+            for (j=0; j < lambda.length; j++) {
+            	for (r = 0; r < gvalid.length; r++) {
+            		for (c = 0; c < gvalid[0].length; c++) {
+            			// distorted image information for the i'th subband
+            			temp1 += log2(1 + gvalid[r][c]*gvalid[r][c]*ssvalid[r][c]*lambda[j]/(vvvalid[r][c]+sigma_nsq));
+            			// reference image information
+            			temp2 += log2(1 + ssvalid[r][c]*lambda[j]/sigma_nsq);
+            		}
+            	}
+            } // for (j=0; j < lambda.length; j++)
+            sumnum += temp1;
+            sumden += temp2;
+            
+        } // for (i = 0; i < subbands[i].length; i++)
+
+        // compuate VIF
+        vif=sumnum/sumden;
     	
     	UI.setDataText("Visual information fidelity = " + vif + "\n");
         System.out.println("Visual information fidelity = " + vif);
         return;	
     }
     
-    private void refparams_vecgsm(double ssarr[][][], double l_arr[][], double cu_arr[][][], Vector<double[][]> org) {
+    private void refparams_vecgsm(double ssarr[][][], double l_arr[][], /*double cu_arr[][][],*/ Vector<double[][]> org) {
 
 		//This function computes the parameters of the reference image. This is
 		// called by vifvec.m.
@@ -3978,7 +4119,7 @@ public class ImageQuality extends AlgorithmBase {
     	int ys,xs;
     	double ytrunc[][];
     	double temp[][];
-    	int j,k;
+    	int ii,j,k;
     	double mcu[];
     	double sum;
     	double cu[][];
@@ -4018,25 +4159,25 @@ public class ImageQuality extends AlgorithmBase {
 		    
 		    // estimate mean and covariance
 		    mcu = new double[M*M];
-		    for (i = 0; i < M*M; i++) {
+		    for (ii = 0; ii < M*M; ii++) {
 		        sum = 0.0;
 		        for (j = 0; j < temp[0].length; j++) {
-		        	sum += temp[i][j];
+		        	sum += temp[ii][j];
 		        }
-		        mcu[i] = sum/temp[0].length;
+		        mcu[ii] = sum/temp[0].length;
 		    }
 		   
 		    cu = new double[temp.length][temp.length];
 		    Matrix tr = new Matrix(temp.length,temp[0].length);
-		    for (i = 0; i < temp.length; i++) {
+		    for (ii = 0; ii < temp.length; ii++) {
 		    	for (j = 0; j < temp[0].length; j++) {
-		    		tr.set(i,j,(temp[i][j] - mcu[i]));
+		    		tr.set(ii,j,(temp[ii][j] - mcu[ii]));
 		    	}
 		    }
 		    Matrix trtrtranspose = tr.times(tr.transpose());
-		    for (i = 0; i < temp.length; i++) {
+		    for (ii = 0; ii < temp.length; ii++) {
 		    	for (j = 0; j < temp.length; j++) {
-		    	    cu[i][j] = trtrtranspose.getArray()[i][j]/temp[0].length; //  % covariance matrix for U
+		    	    cu[ii][j] = trtrtranspose.getArray()[ii][j]/temp[0].length; //  % covariance matrix for U
 		    	}
 		    }
 		    
@@ -4060,13 +4201,13 @@ public class ImageQuality extends AlgorithmBase {
 		    sssum = new double[ss[0].length];
 		    for (j = 0; j < ss[0].length; j++) {
 		    	sum = 0.0;
-		    	for (i = 0; i < ss.length; i++) {
-		    		sum += ss[i][j]*temp[i][j];
+		    	for (ii = 0; ii < ss.length; ii++) {
+		    		sum += ss[ii][j]*temp[ii][j];
 		    	}
 		    	sssum[j] = sum/(M*M);
 		    }
 		    sssumyx = new double[sizeyy/M][sizeyx/M];
-		    for (i = 0, xs = 0; xs < sizeyx/M; xs++) {
+		    for (xs = 0; xs < sizeyx/M; xs++) {
 			    for (ys = 0; ys < sizeyy/M; ys++) {
 			        sssumyx[ys][xs] = sssum[ys + xs*sizeyy/M];	
 			    }
@@ -4075,14 +4216,14 @@ public class ImageQuality extends AlgorithmBase {
 		    // Eigen-decomposition
 		    EigenvalueDecomposition dec = new EigenvalueDecomposition(cuMat);
 		    d = dec.getRealEigenvalues();
-		    for (i = 0; i < M*M; i++) {
-		    	l_arr[sub][i] = d[i];
+		    for (ii = 0; ii < M*M; ii++) {
+		    	l_arr[sub][ii] = d[ii];
 		    }
 		    
 		    // rearrange for output
 		    ssarr[sub]=sssumyx;
 		    temp=null;
-		    cu_arr[sub]=cu;
+		    //cu_arr[sub]=cu;
 		} // for (i = 0; i < subbands.length; i++)
     }
 
@@ -4221,7 +4362,7 @@ public class ImageQuality extends AlgorithmBase {
 	        cov_xy = filter2SameWithDownSample(yyn,win,BORDER_REFLECT_101,winstepy, winstepx,
 	        		 winstarty, winstartx, winstopy, winstopx);
 	        for (ys = 0; ys < cov_xy.length; ys++) {
-	        	for (xs = 0; xs < cov_xy.length; xs++) {
+	        	for (xs = 0; xs < cov_xy[0].length; xs++) {
 	        		cov_xy[ys][xs] = cov_xy[ys][xs] - winsum*mean_x[ys][xs]*mean_y[ys][xs];
 	        	}
 	        }
@@ -4232,7 +4373,7 @@ public class ImageQuality extends AlgorithmBase {
 	        ss_x = filter2SameWithDownSample(y2,win,BORDER_REFLECT_101,winstepy, winstepx,
 	        		 winstarty, winstartx, winstopy, winstopx);
 	        for (ys = 0; ys < ss_x.length; ys++) {
-	        	for (xs = 0; xs < ss_x.length; xs++) {
+	        	for (xs = 0; xs < ss_x[0].length; xs++) {
 	        		ss_x[ys][xs] = Math.max(0.0,ss_x[ys][xs] - winsum*mean_x[ys][xs]*mean_x[ys][xs]);
 	        	}
 	        }
@@ -4240,7 +4381,7 @@ public class ImageQuality extends AlgorithmBase {
 	        ss_y = filter2SameWithDownSample(yn2,win,BORDER_REFLECT_101,winstepy, winstepx,
 	        		 winstarty, winstartx, winstopy, winstopx);
 	        for (ys = 0; ys < ss_y.length; ys++) {
-	        	for (xs = 0; xs < ss_y.length; xs++) {
+	        	for (xs = 0; xs < ss_y[0].length; xs++) {
 	        		ss_y[ys][xs] = Math.max(0.0,ss_y[ys][xs] - winsum*mean_y[ys][xs]*mean_y[ys][xs]);
 	        	}
 	        }
