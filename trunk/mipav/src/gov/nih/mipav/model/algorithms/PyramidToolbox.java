@@ -97,7 +97,7 @@ public class PyramidToolbox extends AlgorithmBase {
 	    // filtfile default sp1Filters
 	    // edges default = reflect1
 
-		public void buildSpyr(Vector<double[][]>pyr, Vector<int[][]>pind, Vector<int[]> harmonics, Vector<double[][]>steermtx, double im[][],
+		public void buildSpyr(Vector<double[][]>pyr, Vector<int[]>pind, Vector<int[]> harmonics, Vector<double[][]>steermtx, double im[][],
 				int ht, String filtfile, int borderType) {
 			int i,r,c;
             double hi0filt[][] = null;
@@ -611,7 +611,7 @@ public class PyramidToolbox extends AlgorithmBase {
 	
 			buildSpyrLevs(pyr, pind, lo0, ht, lofilt, bfilts, borderType);
 	        pyr.add(0, hi0);
-	        pind.add(0, new int[][] {{hi0.length,hi0[0].length}});
+	        pind.add(0, new int[] {hi0.length,hi0[0].length});
 		}
 			  
 		// HEIGHT = maxPyrHt(IMSIZE, FILTSIZE)
@@ -833,9 +833,9 @@ public class PyramidToolbox extends AlgorithmBase {
 
 		 // Eero Simoncelli, 6/96.
 
-		 private void buildSpyrLevs(Vector<double[][]>pyr, Vector<int[][]> pind, 
+		 private void buildSpyrLevs(Vector<double[][]>pyr, Vector<int[]> pind, 
 				 double lo0[][], int ht,double lofilt[][], double bfilts[][], int borderType) {
-         int b,y,x;
+         int b,y,x,i;
          double filt[][];
          double band[][];
          double lo[][];
@@ -843,7 +843,7 @@ public class PyramidToolbox extends AlgorithmBase {
            pyr.clear();
 		   pyr.add(lo0);
 		   pind.clear();
-		   pind.add(new int[][] {{lo0.length,lo0[0].length}});
+		   pind.add(new int[] {lo0.length,lo0[0].length});
 		 }
 
 		 else {
@@ -851,7 +851,7 @@ public class PyramidToolbox extends AlgorithmBase {
 		   // Assume square filters:
 		   int bfiltsz =  (int)Math.round(Math.sqrt(bfilts.length));
 
-		   double bands[][] = new double[lo0.length*lo0[0].length][bfilts[0].length];
+		   double bands[][][] = new double[bfilts[0].length][lo0.length][lo0[0].length];
 		   int bind[][] = new int[bfilts[0].length][2];
 
 		   for (b = 0; b < bfilts[0].length; b++) {
@@ -864,7 +864,7 @@ public class PyramidToolbox extends AlgorithmBase {
 		     band = filter2SameWithDownSample(lo0, filt, borderType, 1, 1);
 		     for (x = 0; x < band[0].length; x++) {
 				 for (y = 0; y < band.length; y++) {
-				     bands[y + x*band.length][b] = band[y][x];	 
+				     bands[b][y][x] = band[y][x];	 
 				 }
 			 }
 		     bind[b][0] = band.length;
@@ -873,14 +873,18 @@ public class PyramidToolbox extends AlgorithmBase {
 		 	
 		   lo = filter2SameWithDownSample(lo0, lofilt, borderType, 2, 2);
 		   Vector<double[][]>npyr = new Vector<double[][]>();
-		   Vector<int[][]>nind = new Vector<int[][]>();
+		   Vector<int[]>nind = new Vector<int[]>();
 		   
 		   buildSpyrLevs(npyr, nind, lo, ht-1, lofilt, bfilts, borderType);
            pyr.clear();
-           pyr.add(bands);
+           for (i = 0; i < bands.length; i++) {
+               pyr.add(bands[i]);
+           }
            pyr.addAll(npyr);
 		   pind.clear();
-		   pind.add(bind);
+		   for (i = 0; i < bind.length; i++) {
+		       pind.add(new int[]{bind[i][0], bind[i][1]});   
+		   }
 		   pind.addAll(nind);
 		 }
 		 	
