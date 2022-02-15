@@ -4312,7 +4312,7 @@ public class ImageQuality extends AlgorithmBase {
 	        yn=dist.get(sub);
 	
 	        // compute the size of the window used in the distortion channel estimation
-	        lev=(int)Math.ceil((sub-1)/6.0);
+	        lev=(int)Math.ceil(sub/6.0);
 	        winsize=(int)Math.pow(2,lev)+1; 
 	        win = new double[winsize][winsize];
 	        winnorm = new double[winsize][winsize];
