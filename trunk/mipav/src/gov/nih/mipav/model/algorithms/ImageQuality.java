@@ -989,6 +989,9 @@ public class ImageQuality extends AlgorithmBase {
 	}
 	
 	public void testVIF() {
+		// Visual information fidelity = 0.9999999999999993
+		// Visual information fidelity = 0.9999999999999992
+		// All tests passed for visual information fidelity
 		sigma_nsq = 0.4;
 		int testsFailed = 0;
 		double eps = 1.0E-3;
@@ -4032,7 +4035,6 @@ public class ImageQuality extends AlgorithmBase {
         }
         double vvtemp[][][] =new double[subbands_max+1][][];
         double ggtemp[][][] = new double[subbands_max+1][][];
-        ggtemp=vvtemp;
         for(kk=0; kk < subbands.length; kk++) {
             vvtemp[subbands[kk]] = vv_all.get(kk);
             ggtemp[subbands[kk]] = g_all.get(kk);
