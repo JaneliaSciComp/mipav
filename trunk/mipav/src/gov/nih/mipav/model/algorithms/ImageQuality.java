@@ -991,6 +991,13 @@ public class ImageQuality extends AlgorithmBase {
 	public void testVIF() {
 		// Visual information fidelity = 0.9999999999999993
 		// Visual information fidelity = 0.9999999999999992
+		// Website VIF for contrast enhanced image = 1.10
+		// Calculated VIF for contrast enhanced image = 1.1199409945177197
+        // Website VIF for blurred image = 0.07
+        // Calculated VIF for blurred image = 0.22238035280832483
+        // Website VIF for JPEG compressed image = 0.10
+        // Calculated VIF for JPEG compressed image = 0.216630221353973
+
 		// All tests passed for visual information fidelity
 		sigma_nsq = 0.4;
 		int testsFailed = 0;
@@ -1011,6 +1018,35 @@ public class ImageQuality extends AlgorithmBase {
 			testsFailed++;
 		}
 		
+		String fileDir = "C:/Image Quality/vifvec_release/";
+		final FileIO fileIO = new FileIO();
+		fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+    	// goldhill picture examples from https://live.ece.edu/research/Quality/VIF.htm
+    	// Reference VIF = 1.0
+    	ModelImage gryA = fileIO.readJimi("goldhill.gif", fileDir, false);
+    	// Contrast enhanced VIF = 1.10
+    	// Note that an enhanced version of the image gives a VIF > 1.0
+    	ModelImage gryB = fileIO.readJimi("goldhill_cs.gif", fileDir, false);
+    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq.runAlgorithm();
+		System.out.println("Website VIF for contrast enhanced image = 1.10");
+		System.out.println("Calculated VIF for contrast enhanced image = " + results[0]);
+		
+		// Blurred image VIF = 0.07
+		ModelImage gryC = fileIO.readJimi("goldhill_blur.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq.runAlgorithm();
+		System.out.println("Website VIF for blurred image = 0.07");
+		System.out.println("Calculated VIF for blurred image = " + results[0]);
+		
+		// JPEG compressed VIF = 0.10
+		ModelImage gryD = fileIO.readJimi("goldhill_jpeg.gif", fileDir, false);
+		iq = new ImageQuality(gryA, gryD, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq.runAlgorithm();
+		System.out.println("Website VIF for JPEG compressed image = 0.10");
+		System.out.println("Calculated VIF for JPEG compressed image = " + results[0]);
+		
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for visual information fidelity");
 		}
@@ -1018,6 +1054,14 @@ public class ImageQuality extends AlgorithmBase {
 			System.out.println("All tests passed for visual information fidelity");
 		}
 		
+		gryA.disposeLocal();
+		gryA = null;
+		gryB.disposeLocal();
+		gryB = null;
+		gryC.disposeLocal();
+		gryC = null;
+		gryD.disposeLocal();
+		gryD = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
