@@ -4546,6 +4546,7 @@ public class ImageQuality extends AlgorithmBase {
     	    	return;
     	    }
     	    int i,j;
+    	    int index;
     		double xplane[][] = new double[yDim][yDim];
     		for (i = 0; i < yDim; i++) {
     		    for (j = 0; j < yDim; j++) {
@@ -4642,7 +4643,176 @@ public class ImageQuality extends AlgorithmBase {
     		        }
     		    }
     		}
+    		
+    		double GS_0[][] = fftshift(G_0);
+    		for (i = 0; i < yDim; i++) {
+		        G_0[i] = null;	
+		    }
+    		G_0 = null;
+    		double GS_1[][] = fftshift(G_1);
+    		for (i = 0; i < yDim; i++) {
+		        G_1[i] = null;	
+		    }
+    		G_1 = null;
+    		double GS_2[][] = fftshift(G_2);
+    		for (i = 0; i < yDim; i++) {
+		        G_2[i] = null;	
+		    }
+    		G_2 = null;
+    		double GS_3[][] = fftshift(G_3);
+    		for (i = 0; i < yDim; i++) {
+		        G_3[i] = null;	
+		    }
+    		G_3 = null;
+    		double GS_4[][] = fftshift(G_4);
+    		for (i = 0; i < yDim; i++) {
+		        G_4[i] = null;	
+		    }
+    		G_4 = null;
+    		double GS_5[][] = fftshift(G_5);
+    		for (i = 0; i < yDim; i++) {
+		        G_5[i] = null;	
+		    }
+    		G_5 = null;
+    		
+    		double l_0[] = new double[length];
+    		double l_0Imag[] = new double[length];
+    		double li_0[] = new double[length];
+    		double li_0Imag[] = new double[length];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < xDim; j++) {
+    				index = j + i*xDim;
+    				l_0[index] = GS_0[i][j]*FO[index];
+    				l_0Imag[index] = GS_0[i][j]*FOImag[index];
+    				li_0[index] = GS_0[i][j]*FI[index];
+    				li_0Imag[index] = GS_0[i][j]*FIImag[index];
+    			}
+    		}
+    		for (i = 0; i < yDim; i++) {
+		        GS_0[i] = null;	
+		    }
+    		GS_0 = null;
+    		
+    		FFTUtility ifft = new FFTUtility(l_0, l_0Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(l_0, l_0Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		l_0Imag = null;
+    		
+    		ifft = new FFTUtility(li_0, li_0Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(li_0, li_0Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		li_0Imag = null;
+    		
+    		double a_1[] = new double[length];
+    		double a_1Imag[] = new double[length];
+    		double ai_1[] = new double[length];
+    		double ai_1Imag[] = new double[length];
     }
+    
+    private double[][] fftshift(double in[][]) {
+    	int yDim = in.length;
+    	int xDim = in[0].length;
+		double out[][] = new double[yDim][xDim];
+		int highestxquad1Index;
+		int highestyquad1Index;
+		int quad1height;
+		int quad1width;
+		int quad2height;
+		int quad2width;
+		int quad3height;
+		int quad3width;
+		int quad4height;
+		int quad4width;
+		int y,x;
+		if ((yDim %2) == 1) {
+			//yodd = true;
+			highestyquad1Index = (yDim - 1)/2;
+		}
+		else {
+			//yodd = false;
+			highestyquad1Index = yDim/2 - 1;
+		}
+		if ((xDim % 2) == 1) {
+			//xodd = true;
+			highestxquad1Index = (xDim - 1)/2;
+		}
+		else {
+			//xodd = false;
+			highestxquad1Index = xDim/2 - 1;
+		}
+		quad1width = highestxquad1Index + 1;
+		quad1height = highestyquad1Index + 1;
+		quad2width = xDim - quad1width;
+		quad2height = quad1height;
+		quad3width = quad2width;
+		quad3height = yDim - quad1height;
+		quad4width = quad1width;
+		quad4height = quad3height;
+		double quad1[][] = new double[quad1height][quad1width];
+		double quad2[][] = new double[quad2height][quad2width];
+		double quad3[][] = new double[quad3height][quad3width];
+		double quad4[][] = new double[quad4height][quad4width];
+		for (y = 0; y <= highestyquad1Index; y++) {
+			for (x = 0; x <= highestxquad1Index; x++) {
+				quad1[y][x] = in[y][x];
+			}
+		}
+		for (y = 0; y <= highestyquad1Index; y++) {
+			for (x = highestxquad1Index+1; x < xDim; x++) {
+				quad2[y][x - highestxquad1Index-1] = in[y][x];
+			}
+		}
+		for (y = highestyquad1Index+1; y < yDim; y++) {
+			for (x = highestxquad1Index+1; x < xDim; x++) {
+				quad3[y - highestyquad1Index - 1][x - highestxquad1Index - 1] = in[y][x];
+			}
+		}
+		for (y = highestyquad1Index+1; y < yDim; y++) {
+			for (x = 0; x <= highestxquad1Index; x++) {
+				quad4[y - highestyquad1Index - 1][x] = in[y][x];
+			}
+		}
+		
+		// Move third quadrant to first
+		for (y = 0; y < quad3height; y++) {
+			for (x = 0; x < quad3width; x++) {
+				out[y][x] = quad3[y][x];
+			}
+		}
+		// Move fourth quadrant to second
+		for (y = 0; y < quad4height; y++) {
+			for (x = 0; x < quad4width; x++) {
+				out[y][x + quad3width] = quad4[y][x];
+			}
+		}
+		// Move first quadrant to third
+		for (y = 0; y < quad1height; y++) {
+			for (x = 0; x < quad1width; x++) {
+				out[y+quad3height][x + quad3width] = quad1[y][x];
+			}
+		}
+		// Move second quadrant to fourth
+		for (y = 0; y < quad2height; y++) {
+			for (x = 0; x < quad2width; x++) {
+				out[y+quad3height][x] = quad2[y][x];
+			}
+		}
+		return out;
+	}
     
     
 }
