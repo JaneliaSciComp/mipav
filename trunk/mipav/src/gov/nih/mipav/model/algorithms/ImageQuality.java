@@ -11,7 +11,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
-
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 /**
  * 
  * @author aailb
@@ -88,6 +88,24 @@ import gov.nih.mipav.view.ViewUserInterface;
 %   (3) subbands included in the computation
  *
  *
+ *
+ *NQM is ported with the kind permission of Professor Brian L. Evans:
+ *Copyright (c) 1999-2021 The University of Texas at Austin
+ All rights reserved.
+
+ Permission is hereby granted, without written agreement and without license or royalty fees, to use, copy, modify,
+ and distribute this software and its documentation for any purpose, provided that the copyright notice in its
+ entirety appear in all copies of this software.
+ IN NO EVENT SHALL THE UNIVERSITY OF TEXAS AT AUSTIN BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL,
+ OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
+ TEXAS AT AUSTIN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ THE UNIVERSITY OF TEXAS AT AUSTIN SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE DATABASE PROVIDED HEREUNDER IS ON AN "AS IS"
+ BASIS, AND THE UNIVERSITY OF TEXAS AT AUSTIN HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
+ OR MODIFICATIONS.
+
+
  **Other metrics are from full_ref.py, no_ref.py and utils.py by Andrew Khalel.
   full_ref.py, no_ref.py and utils.py are Copyright (c) 2018 Andrew Khalel
 
@@ -169,6 +187,7 @@ public class ImageQuality extends AlgorithmBase {
 	public final int PIXEL_BASED_VISUAL_INFORMATION_FIDELITY = 13;
  	public final int BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO = 14;
  	public final int RMSE_SW = 15;
+ 	public final int NQM = 16;
  	
  	// method choices for MSSSIM
  	private final int PRODUCT = 1;
@@ -210,6 +229,7 @@ public class ImageQuality extends AlgorithmBase {
     private double rase_mean;
     private double vifp_mean;
     private double vif;
+    private double nqm_value;
     
     private ModelImage gry = null;
     private ModelImage gry_noise = null;
@@ -254,6 +274,8 @@ public class ImageQuality extends AlgorithmBase {
     private int subbands[] = new int[] {3, 6, 9, 12, 15, 18, 21, 24};
     // MxM is the block size that denotes the size of a vector used in the GSM model in VISUAL_INFORMATION_FIDELITY.
     private int M = 3;
+    // VA is the viewing angle in NQM.
+    private double VA;
     
     public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
 	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
@@ -282,42 +304,42 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, k1, k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws, k1, k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2, sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2, sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2391.465875)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2025.913940)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2302.953958)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 2016.476768)) > eps) {
 			System.err.println("Mean squared error = " + results[0] + " for gry, gry_const\n");
@@ -350,14 +372,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error = " + results[0] + " for gry, gry\n");
@@ -366,14 +388,14 @@ public class ImageQuality extends AlgorithmBase {
 		
 		metrics = new int[] {RMSE_SW};
 		ws = 8;
-		iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error sliding window = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0.0) {
 			System.err.println("Root mean squared error sliding window = " + results[0] + " for gry, gry\n");
@@ -381,12 +403,12 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		
 		metrics = new int[] {ROOT_MEAN_SQUARED_ERROR};
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		double rmse = results[0];
 		metrics = new int[] {RMSE_SW};
 		ws = 510;
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		double rmse_sw = results[0];
 		if ((Math.abs(rmse - rmse_sw)) > eps) {
@@ -421,42 +443,42 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {PEAK_SIGNAL_TO_NOISE_RATIO};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (!Double.isInfinite(results[0])) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (!Double.isInfinite(results[0])) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 14.344162)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 15.064594)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(clr, clr_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 14.507951)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for clr, clr_const\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if ((Math.abs(results[0] - 15.084871)) > eps) {
 			System.err.println("Peak signal to noise ratio = " + results[0] + " for gry, gry_const\n");
@@ -491,14 +513,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {ERGAS};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0) {
 			System.err.println("ergas = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0) {
 			System.err.println("ergas = " + results[0] + " for gry, gry\n");
@@ -531,14 +553,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {SPATIAL_CORRELATION_COEFFICIENT};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Spatial correlation coefficient = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Spatial correlation coefficient = " + results[0] + " for gry, gry\n");
@@ -572,14 +594,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {RELATIVE_AVERAGE_SPECTRAL_ERROR};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0) {
 			System.err.println("Relative average spectral error = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 0) {
 			System.err.println("Relative average spectral error = " + results[0] + " for gry, gry\n");
@@ -612,14 +634,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {UNIVERSAL_QUALITY_IMAGE_INDEX};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Universal quality image index = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Spatial Universal quality image index = " + results[0] + " for gry, gry\n");
@@ -635,7 +657,7 @@ public class ImageQuality extends AlgorithmBase {
 		ModelImage gryA = fileIO.readJimi("lenaA.gif", fileDir, false);
 		// Impulse salt pepper noise MSE = 225, Q = 0.6494
 		ModelImage gryB = fileIO.readJimi("lenaB.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.6493759202505665, which matches 0.6494.
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.6494) > 1.0E-4) {
@@ -646,7 +668,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		// Additive Gaussian noise MSE = 225, Q = 0.3891
 		ModelImage gryC = fileIO.readJimi("lenaC.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.3891114199004425, which matches 0.3891
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.3891) > 1.0E-4) {
@@ -657,7 +679,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		// Multiplicative speckle noise MSE = 225, Q = 0.4408
 		ModelImage gryD = fileIO.readJimi("lenaD.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryD, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryD, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.4407595077383508, which matches 0.4408
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.4408) > 1.0E-4) {
@@ -668,7 +690,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		// Mean shift MSE = 225, Q = .9894
 		ModelImage gryE = fileIO.readJimi("lenaE.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryE, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryE, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.9894240066005174, which matches 0.9894
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.9894) > 1.0E-4) {
@@ -679,7 +701,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		// Contrast shifting MSE = 225, Q = 0.9372
 		ModelImage gryF = fileIO.readJimi("lenaF.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryF, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryF, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.9371941115064664, which matches 0.9372
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.9372) > 1.0E-4) {
@@ -690,7 +712,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		// Blurring MSE = 225, Q = 0.3461
 		ModelImage gryG = fileIO.readJimi("lenaG.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryG, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryG, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.3461221853315234, which matches 0.3461
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.3461) > 1.0E-4) {
@@ -701,7 +723,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		// JPEG compression MSE = 215, Q = 0.2876
 		ModelImage gryH = fileIO.readJimi("lenaH.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryH, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryH, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		// Running gave Universal quality image index = 0.28755478329174916, which matches 0.2876.
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.2876) > 1.0E-4) {
@@ -753,14 +775,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {STRUCTURAL_SIMILARITY_INDEX};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Structural similarity index = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Structural similarity index = " + results[0] + " for gry, gry\n");
@@ -795,14 +817,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {SSIM_WITH_AUTOMATIC_DOWNSAMPLING};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Structural similarity index with automatic downloading = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Structural similarity index with automatic downloading = " + results[0] + " for gry, gry\n");
@@ -818,12 +840,12 @@ public class ImageQuality extends AlgorithmBase {
     	ModelImage gryA = fileIO.readJimi("EinsteinA.jpg", fileDir, false);
     	// MSE = 144, SSIM = 0.988
     	ModelImage gryB = fileIO.readJimi("EinsteinB.jpg", fileDir, false);
-    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
     	iq.runAlgorithm();
     	
     	// MSE = 144, SSIM = 0.913
     	ModelImage gryC = fileIO.readJimi("EinsteinC.jpg", fileDir, false);
-    	iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+    	iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
     	iq.runAlgorithm();
 
 		
@@ -861,21 +883,21 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Multi scale structural similarity index = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (results[0] != 1.0) {
 			System.err.println("Multi scale structural similarity index = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(results[0] - 0.631429952770791) > eps) {
 			System.err.println("Multi scale structural similarity index = " + results[0] + " for gry, gry_noise\n");
@@ -910,14 +932,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {SPECTRAL_ANGLE_MAPPER};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(results[0]) >= eps) {
 			System.err.println("Spectral angle mapper = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(results[0]) >= eps) {
 			System.err.println("Spectral angle mapper = " + results[0] + " for gry, gry\n");
@@ -951,14 +973,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(gry, gry_noise, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(gry, gry_noise, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(15.0646-results[0]) >= eps) {
 			System.err.println("Block sensitive peak signal to noise ratio = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(clr, clr_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		// Value computed for psnrb using MATLAB for the first channel of the image. 
 		// There could be discrepancy in the results compared to MATLAB when using the Y channel of the image, due to scaling issues in Python vs MATLAB 
@@ -1004,14 +1026,14 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {VISUAL_INFORMATION_FIDELITY};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(1.0-results[0]) >= eps) {
 			System.err.println("Visual information fidelity = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(1.0-results[0]) >= eps) {
 			System.err.println("Visual information fidelity = " + results[0] + " for gry, gry\n");
@@ -1028,21 +1050,21 @@ public class ImageQuality extends AlgorithmBase {
     	// Contrast enhanced VIF = 1.10
     	// Note that an enhanced version of the image gives a VIF > 1.0
     	ModelImage gryB = fileIO.readJimi("goldhill_cs.gif", fileDir, false);
-    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+    	iq = new ImageQuality(gryA, gryB, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		System.out.println("Website VIF for contrast enhanced image = 1.10");
 		System.out.println("Calculated VIF for contrast enhanced image = " + results[0]);
 		
 		// Blurred image VIF = 0.07
 		ModelImage gryC = fileIO.readJimi("goldhill_blur.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryC, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		System.out.println("Website VIF for blurred image = 0.07");
 		System.out.println("Calculated VIF for blurred image = " + results[0]);
 		
 		// JPEG compressed VIF = 0.10
 		ModelImage gryD = fileIO.readJimi("goldhill_jpeg.gif", fileDir, false);
-		iq = new ImageQuality(gryA, gryD, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gryA, gryD, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		System.out.println("Website VIF for JPEG compressed image = 0.10");
 		System.out.println("Calculated VIF for JPEG compressed image = " + results[0]);
@@ -1083,28 +1105,28 @@ public class ImageQuality extends AlgorithmBase {
 		double eps = 1.0E-3;
 		metrics = new int[] {PIXEL_BASED_VISUAL_INFORMATION_FIDELITY};
 		results = new double[1];
-		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(1.0-results[0]) >= eps) {
 			System.err.println("Pixel based visual information fidelity = " + results[0] + " for clr, clr\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(1.0-results[0]) >= eps) {
 			System.err.println("Pixel based visual information fidelity = " + results[0] + " for gry, gry\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(0.120490551257006-results[0]) >= eps) {
 			System.err.println("Pixel based visual information fidelity = " + results[0] + " for gry, gry_noise\n");
 			testsFailed++;
 		}
 		
-		iq = new ImageQuality(gry, gry_const, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,results);
+		iq = new ImageQuality(gry, gry_const, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		if (Math.abs(0.981413452665522-results[0]) >= eps) {
 			System.err.println("Pixel based visual information fidelity = " + results[0] + " for gry, gry_const\n");
@@ -1134,7 +1156,7 @@ public class ImageQuality extends AlgorithmBase {
 	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
 			double k1, double k2, double sigma, double r, double win[][], double sigma_nsq, 
-			int subbands[], int M, int level, double weight[], int method, double results[]) {
+			int subbands[], int M, int level, double weight[], int method, double VA, double results[]) {
 		if (metrics == null) {
 			MipavUtil.displayError("metrics is null in ImageQuality");
 			return;
@@ -1143,8 +1165,8 @@ public class ImageQuality extends AlgorithmBase {
 			MipavUtil.displayError("metrics.length == 0 in ImageQuality");
 			return;
 		}
-		if (metrics.length > 15) {
-			MipavUtil.displayError("metrics.length > 15 in ImageQuality");
+		if (metrics.length > 16) {
+			MipavUtil.displayError("metrics.length > 16 in ImageQuality");
 			return;
 		}
 		if (results == null) {
@@ -1161,7 +1183,7 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		isColor = testImage.isColorImage();
 		for (int i = 0; i < metrics.length; i++) {
-			if ((metrics[i] < 1) || (metrics[i] > 15)) {
+			if ((metrics[i] < 1) || (metrics[i] > 16)) {
 				MipavUtil.displayError("Illegal metrics[" + i+ "] in ImageQuality");
 				return;
 			}
@@ -1218,6 +1240,7 @@ public class ImageQuality extends AlgorithmBase {
     	this.level = level;
     	this.weight = weight;
     	this.method = method;
+    	this.VA = VA;
 	}
     
     public void runAlgorithm() {
@@ -1423,6 +1446,10 @@ public class ImageQuality extends AlgorithmBase {
 		    	 rmse_sw();
 		    	 results[i] = rmse_sw_mean;
 		         break;
+		    case NQM:
+		    	nqm();
+		    	results[i] = nqm_value;
+		    	break;
 		    } // switch(metrics[i])
 	    } // for (i = 0; i < metrics.length; i++)
 	    setCompleted(true);
@@ -4481,6 +4508,140 @@ public class ImageQuality extends AlgorithmBase {
 	        vv_all.add(vv);
 	        
 	    } // for (i=0; i < subbands.length; i++)
+    }
+    
+    //function y=nqm(O,I,VA,N)
+    private void nqm() {
+    	    // Requires xDim = yDim
+    		// NQM   Nonlinear Weighted Signal to noise ratio for additive noise.
+    		//      RATIO = NQM(MOD_RES,RES,ANGLE, DIM) computes the nonlinear weighted signal to
+    		//      noise ratio of the restored image MOD_RES with respect to the model
+    		//      restored image MOD_RES and returns the result in dB.
+    		//      ANGLE is the viewing angle. DIM is the [DIM DIM] dimension of the image 
+    		
+    		//      Note that NQM is a measure of additive noise only. The model restored 
+    		//      image is assumed to have the same freq. distortion as the restored image.  
+    		
+    		//      Function calls: CTF, CMASKN, GTHRESH
+    		
+    		//      Ref: N. Damera-Venkata, T. Kite, W. Geisler, B. Evans and A. Bovik, "Image
+    		//      Quality Assessment Based on a Degradation Model", IEEE Trans. on Image 
+    		//      Processing, Vol. 9, No. 4, Apr. 2000  
+    		
+    		//      Ref: E. Peli, "Contrast in Complex Images", Journal of the Optical
+    		//      Society of America A, Vol. 7, No. 10, Oct. 1990
+    		
+    		//      See also CSFMOD, CSF, PSNR, WSNR
+    		
+    		//      Niranjan Damera-Venkata March 1998 
+    		 
+
+    		//[x,y]=size(O);
+
+    		//[xplane,yplane]=meshgrid(-x/2:x/2-1);
+    		//plane=(xplane+i*yplane);
+    		//r=abs(plane);
+    	    if (xDim != yDim) {
+    	    	System.err.println("NQM algorithm requires xDim = yDim");
+    	    	return;
+    	    }
+    	    int i,j;
+    		double xplane[][] = new double[yDim][yDim];
+    		for (i = 0; i < yDim; i++) {
+    		    for (j = 0; j < yDim; j++) {
+    		    	xplane[i][j] = -yDim/2.0 + j;
+    		    }
+    		}
+    		double yplane[][] = new double[yDim][yDim];
+    		for (j = 0; j < yDim; j++) {
+    			for (i = 0; i < yDim; i++) {
+    				yplane[i][j] = -yDim/2.0 + i;
+    			}
+    		}
+    		double r[][] = new double[yDim][yDim];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < yDim; j++) {
+    				r[i][j] = Math.sqrt(xplane[i][j]*xplane[i][j] + yplane[i][j]*yplane[i][j]);
+    			}
+    		}
+    		
+    		double FO[] = new double[length];
+    		double FOImag[] = new double[length];
+    		double FI[] = new double[length];
+    		double FIImag[] = new double[length];
+    		for (i = 0; i < length; i++) {
+    			FO[i] = referenceBuffer[i];
+    			FI[i] = testBuffer[i];
+    		}
+    		FFTUtility fft = new FFTUtility(FO, FOImag, yDim, xDim, 1, -1, FFTUtility.FFT);
+    		fft.setShowProgress(false);
+    		fft.run();
+    		fft.finalize();
+    		fft = null;
+    		fft = new FFTUtility(FO, FOImag, 1, yDim, xDim, -1, FFTUtility.FFT);
+    		fft.setShowProgress(false);
+    		fft.run();
+    		fft.finalize();
+    		fft = null;
+    	 
+    		fft = new FFTUtility(FI, FIImag, yDim, xDim, 1, -1, FFTUtility.FFT);
+    		fft.setShowProgress(false);
+    		fft.run();
+    		fft.finalize();
+    		fft = null;
+    		fft = new FFTUtility(FI, FIImag, 1, yDim, xDim, -1, FFTUtility.FFT);
+    		fft.setShowProgress(false);
+    		fft.run();
+    		fft.finalize();
+    		fft = null;
+    		
+    		//%%%%%%%%%%% Decompose image with cosine log filter bank %%%%%%%%%%%%%%%%
+    		double G_0[][] = new double[yDim][xDim];
+    		double G_1[][] = new double[yDim][xDim];
+    		double G_2[][] = new double[yDim][xDim];
+    		double G_3[][] = new double[yDim][xDim];
+    		double G_4[][] = new double[yDim][xDim];
+    		double G_5[][] = new double[yDim][xDim];
+    		for (i = 0; i < yDim; i++) {
+    		    for (j = 0; j < xDim; j++) {
+    		        if (r[i][j] <= 2.0) {
+    		        	G_0[i][j]=0.5*(1+Math.cos(Math.PI*log2((r[i][j]+2) )-Math.PI));	
+    		        }
+    		        else {
+    		        	G_0[i][j]=0.5*(1+Math.cos(Math.PI*log2(4.0 )-Math.PI));		
+    		        }
+    		        if ((r[i][j] >= 1.0) && (r[i][j] <= 4.0)) {
+    		        	G_1[i][j]=0.5*(1+Math.cos(Math.PI*log2(r[i][j] )-Math.PI));	
+    		        }
+    		        else {
+    		        	G_1[i][j]=0.5*(1+Math.cos(Math.PI*log2(4.0 )-Math.PI));	
+    		        }
+    		        if ((r[i][j] >= 2.0) && (r[i][j] <= 8.0)) {
+    		        	G_2[i][i]=0.5*(1+Math.cos(Math.PI*log2(r[i][j])));	
+    		        }
+    		        else {
+    		        	G_2[i][i]=0.5*(1+Math.cos(Math.PI*log2(5.0)));	
+    		        }
+    		        if ((r[i][j] >= 4.0) && (r[i][j] <= 16.0)) {
+    		        	G_3[i][j]=0.5*(1+Math.cos(Math.PI*log2(r[i][j])-Math.PI));	
+    		        }
+    		        else {
+    		        	G_3[i][j]=0.5*(1+Math.cos(Math.PI*log2(4.0)-Math.PI));
+    		        }
+    		        if ((r[i][j] >= 8.0) && (r[i][j] <= 32.0)) {
+    		        	G_4[i][j]=0.5*(1+Math.cos(Math.PI*log2(r[i][j])));	
+    		        }
+    		        else {
+    		        	G_4[i][j]=0.5*(1+Math.cos(Math.PI*log2(5.0)));	
+    		        }
+    		        if ((r[i][j] >= 16.0) && (r[i][j] <= 64.0)) {
+    		        	G_5[i][j]=0.5*(1+Math.cos(Math.PI*log2(r[i][j])-Math.PI));	
+    		        }
+    		        else {
+    		        	G_5[i][j]=0.5*(1+Math.cos(Math.PI*log2(4.0)-Math.PI));
+    		        }
+    		    }
+    		}
     }
     
     
