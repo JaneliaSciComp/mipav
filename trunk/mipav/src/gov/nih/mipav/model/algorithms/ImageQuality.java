@@ -4721,7 +4721,357 @@ public class ImageQuality extends AlgorithmBase {
     		double a_1Imag[] = new double[length];
     		double ai_1[] = new double[length];
     		double ai_1Imag[] = new double[length];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < xDim; j++) {
+    				index = j + i*xDim;
+    				a_1[index] = GS_1[i][j]*FO[index];
+    				a_1Imag[index] = GS_1[i][j]*FOImag[index];
+    				ai_1[index] = GS_1[i][j]*FI[index];
+    				ai_1Imag[index] = GS_1[i][j]*FIImag[index];
+    			}
+    		}
+    		for (i = 0; i < yDim; i++) {
+		        GS_1[i] = null;	
+		    }
+    		GS_1 = null;
+    		
+    		ifft = new FFTUtility(a_1, a_1Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(a_1, a_1Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		a_1Imag = null;
+    		
+    		ifft = new FFTUtility(ai_1, ai_1Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(ai_1, ai_1Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ai_1Imag = null;
+    		
+    		double a_2[] = new double[length];
+    		double a_2Imag[] = new double[length];
+    		double ai_2[] = new double[length];
+    		double ai_2Imag[] = new double[length];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < xDim; j++) {
+    				index = j + i*xDim;
+    				a_2[index] = GS_2[i][j]*FO[index];
+    				a_2Imag[index] = GS_2[i][j]*FOImag[index];
+    				ai_2[index] = GS_2[i][j]*FI[index];
+    				ai_2Imag[index] = GS_2[i][j]*FIImag[index];
+    			}
+    		}
+    		for (i = 0; i < yDim; i++) {
+		        GS_2[i] = null;	
+		    }
+    		GS_2 = null;
+    		
+    		ifft = new FFTUtility(a_2, a_2Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(a_2, a_2Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		a_2Imag = null;
+    		
+    		ifft = new FFTUtility(ai_2, ai_2Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(ai_2, ai_2Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ai_2Imag = null;
+    		
+    		double a_3[] = new double[length];
+    		double a_3Imag[] = new double[length];
+    		double ai_3[] = new double[length];
+    		double ai_3Imag[] = new double[length];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < xDim; j++) {
+    				index = j + i*xDim;
+    				a_3[index] = GS_3[i][j]*FO[index];
+    				a_3Imag[index] = GS_3[i][j]*FOImag[index];
+    				ai_3[index] = GS_3[i][j]*FI[index];
+    				ai_3Imag[index] = GS_3[i][j]*FIImag[index];
+    			}
+    		}
+    		for (i = 0; i < yDim; i++) {
+		        GS_3[i] = null;	
+		    }
+    		GS_3 = null;
+    		
+    		ifft = new FFTUtility(a_3, a_3Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(a_3, a_3Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		a_3Imag = null;
+    		
+    		ifft = new FFTUtility(ai_3, ai_3Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(ai_3, ai_3Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ai_3Imag = null;
+    		
+    		double a_4[] = new double[length];
+    		double a_4Imag[] = new double[length];
+    		double ai_4[] = new double[length];
+    		double ai_4Imag[] = new double[length];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < xDim; j++) {
+    				index = j + i*xDim;
+    				a_4[index] = GS_4[i][j]*FO[index];
+    				a_4Imag[index] = GS_4[i][j]*FOImag[index];
+    				ai_4[index] = GS_4[i][j]*FI[index];
+    				ai_4Imag[index] = GS_4[i][j]*FIImag[index];
+    			}
+    		}
+    		for (i = 0; i < yDim; i++) {
+		        GS_4[i] = null;	
+		    }
+    		GS_4 = null;
+    		
+    		ifft = new FFTUtility(a_4, a_4Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(a_4, a_4Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		a_4Imag = null;
+    		
+    		ifft = new FFTUtility(ai_4, ai_4Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(ai_4, ai_4Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ai_4Imag = null;
+    		
+    		double a_5[] = new double[length];
+    		double a_5Imag[] = new double[length];
+    		double ai_5[] = new double[length];
+    		double ai_5Imag[] = new double[length];
+    		for (i = 0; i < yDim; i++) {
+    			for (j = 0; j < xDim; j++) {
+    				index = j + i*xDim;
+    				a_5[index] = GS_5[i][j]*FO[index];
+    				a_5Imag[index] = GS_5[i][j]*FOImag[index];
+    				ai_5[index] = GS_5[i][j]*FI[index];
+    				ai_5Imag[index] = GS_5[i][j]*FIImag[index];
+    			}
+    		}
+    		for (i = 0; i < yDim; i++) {
+		        GS_5[i] = null;	
+		    }
+    		GS_5 = null;
+    		FO = null;
+    		FOImag = null;
+    		FI = null;
+    		FIImag = null;
+    		
+    		ifft = new FFTUtility(a_5, a_5Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(a_5, a_5Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		a_5Imag = null;
+    		
+    		ifft = new FFTUtility(ai_5, ai_5Imag, yDim, xDim, 1, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ifft = new FFTUtility(ai_5, ai_5Imag, 1, yDim, xDim, 1, FFTUtility.FFT);
+    		ifft.setShowProgress(false);
+    		ifft.run();
+    		ifft.finalize();
+    		ifft = null;
+    		ai_5Imag = null;
+    		
+    		// %%%%%%%%%%%%%%%%%%%%%Compute contrast images%%%%%%%%%%%%%%%%%%%
+    		double c1[] = new double[length];
+    		double c2[] = new double[length];
+    		double c3[] = new double[length];
+    		double c4[] = new double[length];
+    		double c5[] = new double[length];
+    		double ci1[] = new double[length];
+    		double ci2[] = new double[length];
+    		double ci3[] = new double[length];
+    		double ci4[] = new double[length];
+    		double ci5[] = new double[length];
+    		for (i = 0; i < length; i++) {
+	    		c1[i]=(a_1[i]/l_0[i]);
+	    		c2[i]=(a_2[i]/(l_0[i]+a_1[i]));
+	    		c3[i]=(a_3[i]/(l_0[i]+a_1[i]+a_2[i]));
+	    		c4[i]=(a_4[i]/(l_0[i]+a_1[i]+a_2[i]+a_3[i]));
+	    		c5[i]=(a_5[i]/(l_0[i]+a_1[i]+a_2[i]+a_3[i]+a_4[i]));
+	
+	    		ci1[i]=(ai_1[i]/li_0[i]);
+	    		ci2[i]=(ai_2[i]/(li_0[i]+ai_1[i]));
+	    		ci3[i]=(ai_3[i]/(li_0[i]+ai_1[i]+ai_2[i]));
+	    		ci4[i]=(ai_4[i]/(li_0[i]+ai_1[i]+ai_2[i]+ai_3[i]));
+	    		ci5[i]=(ai_5[i]/(li_0[i]+ai_1[i]+ai_2[i]+ai_3[i]+ai_4[i]));
+    		}
+    		
+    		// %%%%%%%%%%%%%%%%%%%%%%Detection Thresholds%%%%%%%%%%%%%%%%%%%%%%
+
+    		double d1=ctf(2.0/VA);
+    		double d2=ctf(4.0/VA);
+    		double d3=ctf(8.0/VA);
+    		double d4=ctf(16.0/VA);
+    		double d5=ctf(32.0/VA);
+    		
+    		// %%%%%%%%%%%%%%%%%%Account for suprathrshold effects (See Bradley and Ozhawa)%%%%
+    		ai_1 = cmaskn(c1,ci1,a_1,ai_1,1.0);
+    		ai_2 = cmaskn(c2,ci2,a_2,ai_2,2.0);
+    		ai_3 = cmaskn(c3,ci3,a_3,ai_3,3.0);
+    		ai_4 = cmaskn(c4,ci4,a_4,ai_4,4.0);
+    		ai_5 = cmaskn(c5,ci5,a_5,ai_5,5.0);
+    		
+    		//%%%%%%%%%%Apply detection thresholds%%%%%%%%%%%%%%%%%%%%%%
+    		double A_1[] = gthresh(c1,d1,a_1);
+    		double AI_1[] = gthresh(ci1,d1,ai_1);
+    		double A_2[] = gthresh(c2,d2,a_2);
+    		double AI_2[] = gthresh(ci2,d2,ai_2);
+    		double A_3[] = gthresh(c3,d3,a_3);
+    		double AI_3[] = gthresh(ci3,d3,ai_3);
+    		double A_4[] = gthresh(c4,d4,a_4);
+    		double AI_4[] = gthresh(ci4,d4,ai_4);
+    		double A_5[] = gthresh(c5,d5,a_5);
+    		double AI_5[] = gthresh(ci5,d5,ai_5);
+    		
+    		// %%%%%%%%reconstruct images%%%%%%%%%%%%%%%%%%%
+    		double y1[] = new double[length];
+    		double y2[] = new double[length];
+    		for (i = 0; i < length; i++) {
+    		    y1[i] = (A_1[i]+A_2[i]+A_3[i]+A_4[i]+A_5[i]);
+    		    y2[i] = (AI_1[i]+AI_2[i]+AI_3[i]+AI_4[i]+AI_5[i]);
+    		}
+
+    		// %%%%%%%%%%%%%%%compute SNR%%%%%%%%%%%%%%%%%%%%
+    		double np = 0.0;
+    		double sp = 0.0;
+    		double diff;
+    		for (i = 0; i < length; i++) {
+    		    diff = y1[i]-y2[i];
+    		    np += (diff*diff);
+    		    sp += (y1[i]*y1[i]);
+    		}
+
+    		nqm_value=10*Math.log10(sp/np);
     }
+    
+    // Global detection thresholds
+    // Niranjan Damera-Venkata
+    // March 1998
+
+    private double[] gthresh(double x[], double T,double z[]) {
+
+        int i;
+        double y[] = new double[length];
+        for (i = 0; i < length; i++) {
+        	if (Math.abs(x[i]) < T) {
+        		y[i] = 0.0;
+        	}
+        	else {
+        		y[i] = z[i];
+        	}
+        }
+        return y;
+    }
+    
+    // Bradley and Ozhawa masking functions
+    // Niranjan Damera-Venkata
+    // March 1998
+
+    private double[] cmaskn(double c[], double ci[],double a[], double ai[], double i) {
+        int j;
+        double ci2[] = new double[length];
+	    for (j = 0; j < length; j++) {
+	    	if (Math.abs(ci[j]) > 1.0) {
+	    		ci2[j] = 1.0;
+	    	}
+	    	else {
+	    		ci2[j] = ci[j];
+	    	}
+	    }
+	
+	    double ct=ctf(i);
+	    double T[] = new double[length];
+	    for (j = 0; j < length; j++) {
+	    	T[j] = ct*(.86*((c[j]/ct)-1)+.3);
+	    }
+	    
+	    double y[] = new double[length];
+	    for (j = 0; j < length; j++) {
+	    	if ((Math.abs(ci2[j]-c[j])-T[j]) < 0.0) {
+	    		y[j] = a[j];
+	    	}
+	    	else {
+	    		y[j] = ai[j];
+	    	}
+	    }
+	
+	    return y;
+	 }
+
+
+    
+    // Bandpass contrast threshold function
+    // You may want to modify the default function based on your imaging system
+    // measurements
+    // Niranjan Damera-Venkata
+    // March 1998
+
+    private double ctf(double f_r) {
+
+       double y=1./(200*(2.6*(0.0192+0.114*(f_r))*Math.exp(-Math.pow((0.114*f_r),1.1))));
+       return y;
+    }
+
     
     private double[][] fftshift(double in[][]) {
     	int yDim = in.length;
