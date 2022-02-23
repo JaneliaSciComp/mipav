@@ -274,8 +274,8 @@ public class ImageQuality extends AlgorithmBase {
     private int subbands[] = new int[] {3, 6, 9, 12, 15, 18, 21, 24};
     // MxM is the block size that denotes the size of a vector used in the GSM model in VISUAL_INFORMATION_FIDELITY.
     private int M = 3;
-    // VA is the viewing angle in NQM.
-    private double VA;
+    // VA is the viewing angle in NQM.  Default 4.0 degrees.
+    private double VA = 4.0;
     
     public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
 	public final int BORDER_REPLICATE = 1; // aaaaaa|abcdefgh|hhhhhhh
@@ -951,6 +951,40 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		else {
 			System.out.println("All tests passed for spectral angle mapper");
+		}
+		
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;
+	}
+	
+	public void testNQM() {
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		double VA = 4.0;
+		metrics = new int[] {NQM};
+		results = new double[1];
+		
+		ImageQuality iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
+		iq.runAlgorithm();
+		
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
+		iq.runAlgorithm();
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for NQM");
+		}
+		else {
+			System.out.println("All tests passed for NQM");
 		}
 		
 		gry.disposeLocal();
@@ -5002,6 +5036,8 @@ public class ImageQuality extends AlgorithmBase {
     		}
 
     		nqm_value=10*Math.log10(sp/np);
+    		UI.setDataText("NQM = " + nqm_value + "\n");
+    		System.out.println("NQM = " + nqm_value);
     }
     
     // Global detection thresholds
