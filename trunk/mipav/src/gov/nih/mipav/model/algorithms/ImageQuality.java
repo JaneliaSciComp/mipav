@@ -4575,27 +4575,23 @@ public class ImageQuality extends AlgorithmBase {
     		//[xplane,yplane]=meshgrid(-x/2:x/2-1);
     		//plane=(xplane+i*yplane);
     		//r=abs(plane);
-    	    if (xDim != yDim) {
-    	    	System.err.println("NQM algorithm requires xDim = yDim");
-    	    	return;
-    	    }
     	    int i,j;
     	    int index;
-    		double xplane[][] = new double[yDim][yDim];
+    		double xplane[][] = new double[yDim][xDim];
     		for (i = 0; i < yDim; i++) {
-    		    for (j = 0; j < yDim; j++) {
-    		    	xplane[i][j] = -yDim/2.0 + j;
+    		    for (j = 0; j < xDim; j++) {
+    		    	xplane[i][j] = -xDim/2.0 + j;
     		    }
     		}
-    		double yplane[][] = new double[yDim][yDim];
-    		for (j = 0; j < yDim; j++) {
+    		double yplane[][] = new double[yDim][xDim];
+    		for (j = 0; j < xDim; j++) {
     			for (i = 0; i < yDim; i++) {
     				yplane[i][j] = -yDim/2.0 + i;
     			}
     		}
-    		double r[][] = new double[yDim][yDim];
+    		double r[][] = new double[yDim][xDim];
     		for (i = 0; i < yDim; i++) {
-    			for (j = 0; j < yDim; j++) {
+    			for (j = 0; j < xDim; j++) {
     				r[i][j] = Math.sqrt(xplane[i][j]*xplane[i][j] + yplane[i][j]*yplane[i][j]);
     			}
     		}
