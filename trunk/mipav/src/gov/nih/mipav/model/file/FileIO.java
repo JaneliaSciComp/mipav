@@ -15925,6 +15925,8 @@ public class FileIO {
                 image = clonedImage;
 
             }
+            boolean haveNIFTIYAxisPtoA = false;
+            boolean haveNIFTIYAxisItoS = false;
             if (isNIFTI) {
                 patientOrientationString = ((FileInfoNIFTI) image.getFileInfo(0)).getPatientOrientationString();
                 if (patientOrientationString != null) {
@@ -15932,6 +15934,51 @@ public class FileIO {
                         patientOrientationString = patientOrientationString + " ";
                     }
                     myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
+                    int index1, index2, index3, index4, index5, index6;
+                    int notSet = -1;
+                    double[][] dirCos = null;
+                    dirCos = new double[4][4]; // row, col
+                    index1 = index2 = index3 = index4 = index5 = index6 = notSet;
+                    for (i = 0; i < patientOrientationString.length(); i++) {
+
+                        if (patientOrientationString.charAt(i) == '\\') {
+
+                            if (index1 == notSet) {
+                                index1 = i;
+                            } else if (index2 == notSet) {
+                                index2 = i;
+                            } else if (index3 == notSet) {
+                                index3 = i;
+                            } else if (index4 == notSet) {
+                                index4 = i;
+                            } else if (index5 == notSet) {
+                                index5 = i;
+                            } else {
+                                index6 = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    dirCos[0][0] = Double.valueOf(patientOrientationString.substring(0, index1)).doubleValue();
+                    dirCos[0][1] = Double.valueOf(patientOrientationString.substring(index1 + 1, index2)).doubleValue();
+                    dirCos[0][2] = Double.valueOf(patientOrientationString.substring(index2 + 1, index3)).doubleValue();
+                    dirCos[0][3] = 0;
+
+                    dirCos[1][0] = Double.valueOf(patientOrientationString.substring(index3 + 1, index4)).doubleValue();
+                    dirCos[1][1] = Double.valueOf(patientOrientationString.substring(index4 + 1, index5)).doubleValue();
+                    if (index6 == notSet)
+                        dirCos[1][2] = Double.valueOf(patientOrientationString.substring(index5 + 1)).doubleValue();
+                    else
+                        dirCos[1][2] = Double.valueOf(patientOrientationString.substring(index5 + 1, index6)).doubleValue();
+                        
+                    dirCos[1][3] = 0;
+                    if ((dirCos[1][0] == 0.0) && (dirCos[1][1] == -1.0) && (dirCos[1][2] == 0.0)) {
+                    	haveNIFTIYAxisPtoA = true;	
+                    }
+                    else if ((dirCos[1][0] == 0.0) && (dirCos[1][1] == 0.0) && (dirCos[1][2] == 1.0)) {
+                    	haveNIFTIYAxisItoS = true;
+                    }
                 }
             }
             if (isPARREC) {
@@ -16084,6 +16131,13 @@ public class FileIO {
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
             final float origin[] = image.getFileInfo()[0].getOrigin();
+            // For NIFTI 0020,0037 patientOrientationString has unflipped Y axis orientation so retrieve unflipped Y axis origin
+            if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ) && haveNIFTIYAxisPtoA) {
+            	origin[1] = origin[1] + (image.getFileInfo(0).getExtents()[1] - 1) * image.getFileInfo(0).getResolutions()[1];
+            }
+            else if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ) && haveNIFTIYAxisItoS) {
+            	origin[1] = origin[1] - (image.getFileInfo(0).getExtents()[1] - 1) * image.getFileInfo(0).getResolutions()[1];	
+            }
             final int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
             boolean set;
             boolean haveResols0 = false;
