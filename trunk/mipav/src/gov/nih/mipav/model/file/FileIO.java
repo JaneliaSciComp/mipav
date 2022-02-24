@@ -16124,6 +16124,7 @@ public class FileIO {
                     if (i == 0) {
                         myFileInfo.getTagTable().setValue("0018,602C", Double.valueOf(resols[0]), 8);
                         myFileInfo.setResolutions(resols[0], 0);
+                        haveResols0 = true;
                     } else if (i == 1) {
                         myFileInfo.getTagTable().setValue("0018,602E", Double.valueOf(resols[1]), 8);
                         myFileInfo.setResolutions(resols[1], 1);
