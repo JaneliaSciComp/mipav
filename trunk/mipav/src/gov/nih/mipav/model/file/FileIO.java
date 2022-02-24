@@ -15975,9 +15975,23 @@ public class FileIO {
                     dirCos[1][3] = 0;
                     if ((dirCos[1][0] == 0.0) && (dirCos[1][1] == -1.0) && (dirCos[1][2] == 0.0)) {
                     	haveNIFTIYAxisPtoA = true;	
+                    	if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) {
+                    	    dirCos[1][1] = 1.0;
+                    	}
                     }
                     else if ((dirCos[1][0] == 0.0) && (dirCos[1][1] == 0.0) && (dirCos[1][2] == 1.0)) {
                     	haveNIFTIYAxisItoS = true;
+                    	if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) {
+                    	    dirCos[1][2] = -1.0;
+                    	}
+                    }
+                    if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) && (haveNIFTIYAxisPtoA || haveNIFTIYAxisItoS)) {
+	                    patientOrientationString = dirCos[0][0] + "\\" + dirCos[0][1] + "\\" + dirCos[0][2] +
+	                    		"\\" + dirCos[1][0] + "\\" + dirCos[1][1] + "\\" + dirCos[1][2];
+	                    if ( (patientOrientationString.length() % 2) == 1) {
+	                        patientOrientationString = patientOrientationString + " ";
+	                    }
+	                    myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
                     }
                 }
             }
@@ -16131,13 +16145,6 @@ public class FileIO {
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
             final float origin[] = image.getFileInfo()[0].getOrigin();
-            // For NIFTI 0020,0037 patientOrientationString has unflipped Y axis orientation so retrieve unflipped Y axis origin
-            if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ) && haveNIFTIYAxisPtoA) {
-            	origin[1] = origin[1] + (image.getFileInfo(0).getExtents()[1] - 1) * image.getFileInfo(0).getResolutions()[1];
-            }
-            else if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ) && haveNIFTIYAxisItoS) {
-            	origin[1] = origin[1] - (image.getFileInfo(0).getExtents()[1] - 1) * image.getFileInfo(0).getResolutions()[1];	
-            }
             final int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
             boolean set;
             boolean haveResols0 = false;
