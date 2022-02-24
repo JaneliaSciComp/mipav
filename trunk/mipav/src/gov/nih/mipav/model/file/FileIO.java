@@ -16086,6 +16086,7 @@ public class FileIO {
             final float origin[] = image.getFileInfo()[0].getOrigin();
             final int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
             boolean set;
+            boolean haveResols0 = false;
 
             for (i = 0; i < 2; i++) {
                 set = true;
@@ -16122,8 +16123,15 @@ public class FileIO {
                 if (set) {
                     if (i == 0) {
                         myFileInfo.getTagTable().setValue("0018,602C", Double.valueOf(resols[0]), 8);
+                        myFileInfo.setResolutions(resols[0], 0);
                     } else if (i == 1) {
                         myFileInfo.getTagTable().setValue("0018,602E", Double.valueOf(resols[1]), 8);
+                        myFileInfo.setResolutions(resols[1], 1);
+                        if (haveResols0) {
+                        	 String dicomString = null;
+                        	 dicomString = String.valueOf(resols[1]) + "\\" + String.valueOf(resols[0]);
+                        	 myFileInfo.getTagTable().setValue("0028,0030", dicomString, dicomString.length());
+                        }
                     }
                 }
             } // for (i = 0; i < 2; i++)
