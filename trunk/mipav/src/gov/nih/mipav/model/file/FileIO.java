@@ -15934,65 +15934,6 @@ public class FileIO {
                         patientOrientationString = patientOrientationString + " ";
                     }
                     myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
-                    int index1, index2, index3, index4, index5, index6;
-                    int notSet = -1;
-                    double[][] dirCos = null;
-                    dirCos = new double[4][4]; // row, col
-                    index1 = index2 = index3 = index4 = index5 = index6 = notSet;
-                    for (i = 0; i < patientOrientationString.length(); i++) {
-
-                        if (patientOrientationString.charAt(i) == '\\') {
-
-                            if (index1 == notSet) {
-                                index1 = i;
-                            } else if (index2 == notSet) {
-                                index2 = i;
-                            } else if (index3 == notSet) {
-                                index3 = i;
-                            } else if (index4 == notSet) {
-                                index4 = i;
-                            } else if (index5 == notSet) {
-                                index5 = i;
-                            } else {
-                                index6 = i;
-                                break;
-                            }
-                        }
-                    }
-
-                    dirCos[0][0] = Double.valueOf(patientOrientationString.substring(0, index1)).doubleValue();
-                    dirCos[0][1] = Double.valueOf(patientOrientationString.substring(index1 + 1, index2)).doubleValue();
-                    dirCos[0][2] = Double.valueOf(patientOrientationString.substring(index2 + 1, index3)).doubleValue();
-                    dirCos[0][3] = 0;
-
-                    dirCos[1][0] = Double.valueOf(patientOrientationString.substring(index3 + 1, index4)).doubleValue();
-                    dirCos[1][1] = Double.valueOf(patientOrientationString.substring(index4 + 1, index5)).doubleValue();
-                    if (index6 == notSet)
-                        dirCos[1][2] = Double.valueOf(patientOrientationString.substring(index5 + 1)).doubleValue();
-                    else
-                        dirCos[1][2] = Double.valueOf(patientOrientationString.substring(index5 + 1, index6)).doubleValue();
-                        
-                    dirCos[1][3] = 0;
-                    if ((dirCos[1][0] == 0.0) && (dirCos[1][1] == -1.0) && (dirCos[1][2] == 0.0)) {
-                    	haveNIFTIYAxisPtoA = true;	
-                    	if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) {
-                    	    dirCos[1][1] = 1.0;
-                    	}
-                    }
-                    else if ((dirCos[1][0] == 0.0) && (dirCos[1][1] == 0.0) && (dirCos[1][2] == 1.0)) {
-                    	haveNIFTIYAxisItoS = true;
-                    	if (Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) {
-                    	    dirCos[1][2] = -1.0;
-                    	}
-                    }
-                    if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) && (haveNIFTIYAxisPtoA || haveNIFTIYAxisItoS)) {
-	                    patientOrientationString = dirCos[0][0] + "\\" + dirCos[0][1] + "\\" + dirCos[0][2] +
-	                    		"\\" + dirCos[1][0] + "\\" + dirCos[1][1] + "\\" + dirCos[1][2];
-	                    if ( (patientOrientationString.length() % 2) == 1) {
-	                        patientOrientationString = patientOrientationString + " ";
-	                    }
-	                    myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
-                    }
                 }
             }
             if (isPARREC) {
@@ -16561,10 +16502,10 @@ public class FileIO {
                     }
                     seqBase.addItem(outerItem); // is now the 2D item within the sequence
                     outerItem.setWriteAsUnknownLength(false);
-
                     dicomOrigin[RLIndex] += matrix.get(0, 2) * sliceResolution;
                     dicomOrigin[APIndex] += matrix.get(1, 2) * sliceResolution;
                     dicomOrigin[ISIndex] += matrix.get(2, 2) * sliceResolution;
+                    
 
                     if (baseInstanceNumber != -1) {
                         String instanceStr = "" + (baseInstanceNumber + k);
