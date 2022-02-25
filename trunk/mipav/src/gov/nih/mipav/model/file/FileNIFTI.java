@@ -9177,6 +9177,18 @@ public class FileNIFTI extends FileBase {
             matrix.set(0, 3, LPSOrigin[0]);
             matrix.set(1, 3, LPSOrigin[1]);
             matrix.set(2, 3, LPSOrigin[2]);
+            r00 = -matrix.get(0,0)/resolutions[0];
+            r10 = -matrix.get(1,0)/resolutions[0];
+            r20 = matrix.get(2,0)/resolutions[0];
+            r01 = -matrix.get(0, 1)/resolutions[1];
+            r11 = -matrix.get(1, 1)/resolutions[1];
+            r21 = matrix.get(2,1)/resolutions[1];
+            patientOrientationString = new String();
+            DecimalFormat nf = new DecimalFormat("##0.0000000");
+          
+            patientOrientationString = nf.format(-r00) + "\\" + nf.format(-r10) + "\\" + nf.format(r20) +
+                        "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
+            fileInfo.setPatientOrientationString(patientOrientationString);
                           
             if (matrix2 != null) {
                 matrix2.set(0, 1, -matrix2.get(0, 1));
@@ -9953,6 +9965,18 @@ public class FileNIFTI extends FileBase {
                 matrix.set(0, 3, LPSOrigin[0]);
                 matrix.set(1, 3, LPSOrigin[1]);
                 matrix.set(2, 3, LPSOrigin[2]);
+                r00 = -matrix.get(0,0)/resolutions[0];
+                r10 = -matrix.get(1,0)/resolutions[0];
+                r20 = matrix.get(2,0)/resolutions[0];
+                r01 = -matrix.get(0, 1)/resolutions[1];
+                r11 = -matrix.get(1, 1)/resolutions[1];
+                r21 = matrix.get(2,1)/resolutions[1];
+                patientOrientationString = new String();
+                DecimalFormat nf = new DecimalFormat("##0.0000000");
+              
+                patientOrientationString = nf.format(-r00) + "\\" + nf.format(-r10) + "\\" + nf.format(r20) +
+                            "\\" + nf.format(-r01) + "\\" + nf.format(-r11) + "\\" + nf.format(r21);
+                fileInfo.setPatientOrientationString(patientOrientationString);
                               
                 if (matrix2 != null) {
                     matrix2.set(0, 1, -matrix2.get(0, 1));
