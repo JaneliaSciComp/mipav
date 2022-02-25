@@ -15925,8 +15925,7 @@ public class FileIO {
                 image = clonedImage;
 
             }
-            boolean haveNIFTIYAxisPtoA = false;
-            boolean haveNIFTIYAxisItoS = false;
+            
             if (isNIFTI) {
                 patientOrientationString = ((FileInfoNIFTI) image.getFileInfo(0)).getPatientOrientationString();
                 if (patientOrientationString != null) {
