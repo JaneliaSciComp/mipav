@@ -16616,6 +16616,35 @@ public class FileIO {
                 }
                 image.setFileInfo(fBase);
             } else {
+            	 if (isPARREC) {
+                     if (echoNumberString != null) {
+                         myFileInfo.getTagTable().setValue("0018,0086", echoNumberString[0], echoNumberString[0].length());
+                     }
+                     if (echoTimeString != null) {
+                         myFileInfo.getTagTable().setValue("0018,0081", echoTimeString[0], echoTimeString[0].length());
+                     }
+                     if (triggerTimeString != null) {
+                         myFileInfo.getTagTable().setValue("0018,1060", triggerTimeString[0], triggerTimeString[0].length());
+                     }
+                     if (flipAngleString != null) {
+                         myFileInfo.getTagTable().setValue("0018,1314", flipAngleString[0], flipAngleString[0].length());
+                     }
+                     if (heartRateString != null) {
+                         myFileInfo.getTagTable().setValue("0018,1088", heartRateString[0], heartRateString[0].length());
+                     }
+                     if (lowRRValueString != null) {
+                         myFileInfo.getTagTable().setValue("0018,1081", lowRRValueString[0], lowRRValueString[0].length());
+                     }
+                     if (highRRValueString != null) {
+                         myFileInfo.getTagTable().setValue("0018,1082", highRRValueString[0], highRRValueString[0].length());
+                     }
+                     if (inversionTimeString != null) {
+                         myFileInfo.getTagTable().setValue("0018,0082", inversionTimeString[0], inversionTimeString[0].length());
+                     }
+                     if (diffusionBValue != null) {
+                         myFileInfo.getTagTable().setValue("0018,9087", diffusionBValue[0], 8);
+                     }
+                 } // if (isPARREC)
                 image.setFileInfo(myFileInfo, 0);
             }
         }
@@ -16638,37 +16667,6 @@ public class FileIO {
             }
             myFileInfo.setMultiFrame(false);
         }
-
-        if (isPARREC) {
-            if (echoNumberString != null) {
-                myFileInfo.getTagTable().setValue("0018,0086", echoNumberString[0], echoNumberString[0].length());
-            }
-            if (echoTimeString != null) {
-                myFileInfo.getTagTable().setValue("0018,0081", echoTimeString[0], echoTimeString[0].length());
-            }
-            if (triggerTimeString != null) {
-                myFileInfo.getTagTable().setValue("0018,1060", triggerTimeString[0], triggerTimeString[0].length());
-            }
-            if (flipAngleString != null) {
-                myFileInfo.getTagTable().setValue("0018,1314", flipAngleString[0], flipAngleString[0].length());
-            }
-            if (heartRateString != null) {
-                myFileInfo.getTagTable().setValue("0018,1088", heartRateString[0], heartRateString[0].length());
-            }
-            if (lowRRValueString != null) {
-                myFileInfo.getTagTable().setValue("0018,1081", lowRRValueString[0], lowRRValueString[0].length());
-            }
-            if (highRRValueString != null) {
-                myFileInfo.getTagTable().setValue("0018,1082", highRRValueString[0], highRRValueString[0].length());
-            }
-            if (inversionTimeString != null) {
-                myFileInfo.getTagTable().setValue("0018,0082", inversionTimeString[0], inversionTimeString[0].length());
-            }
-            if (diffusionBValue != null) {
-                myFileInfo.getTagTable().setValue("0018,9087", diffusionBValue[0], 8);
-            }
-        } // if (isPARREC)
-        image.setFileInfo(myFileInfo, 0);
 
         createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
 
