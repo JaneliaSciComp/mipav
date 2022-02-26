@@ -980,6 +980,18 @@ public class ImageQuality extends AlgorithmBase {
 		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
 		iq.runAlgorithm();
 		
+		String referenceFileDir = "C:/Image Quality/tid2008/reference_images/";
+		String distortedFileDir = "C:/Image Quality/tid2008/distorted_images/";
+		final FileIO fileIO = new FileIO();
+		fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+    	ModelImage colorRef = fileIO.readJimi("I01.BMP", referenceFileDir, false);
+    	ModelImage colorA = fileIO.readJimi("I01_01_1.BMP", distortedFileDir, false);
+    	iq = new ImageQuality(colorRef, colorA, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,results);
+		iq.runAlgorithm();
+		System.out.println("Website NQM for I01_01_1.BMP = 30.7619");
+		System.out.println("Calculated NQM for I01_01_1.BMP = " + results[0]);
+		
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for NQM");
 		}
@@ -987,6 +999,10 @@ public class ImageQuality extends AlgorithmBase {
 			System.out.println("All tests passed for NQM");
 		}
 		
+		colorRef.disposeLocal();
+		colorRef = null;
+		colorA.disposeLocal();
+		colorA = null;
 		gry.disposeLocal();
 		gry = null;
 		gry_noise.disposeLocal();
@@ -4601,8 +4617,14 @@ public class ImageQuality extends AlgorithmBase {
     		double FI[] = new double[length];
     		double FIImag[] = new double[length];
     		for (i = 0; i < length; i++) {
-    			FO[i] = referenceBuffer[i];
-    			FI[i] = testBuffer[i];
+    			if (isColor) {
+    				FO[i] = 0.2989 * referenceRedBuffer[i] + 0.5870 * referenceGreenBuffer[i] + 0.1140 * referenceBlueBuffer[i];
+	    			FI[i] = 0.2989 * testRedBuffer[i] + 0.5870 * testGreenBuffer[i] + 0.1140 * testBlueBuffer[i];	
+    			}
+    			else {
+	    			FO[i] = referenceBuffer[i];
+	    			FI[i] = testBuffer[i];
+    			}
     		}
     		FFTUtility fft = new FFTUtility(FO, FOImag, yDim, xDim, 1, -1, FFTUtility.FFT);
     		fft.setShowProgress(false);
