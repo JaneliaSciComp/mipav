@@ -6,12 +6,12 @@ import java.util.Vector;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 /**
  * 
  * @author aailb
@@ -199,8 +199,8 @@ public class ImageQuality extends AlgorithmBase {
  	public final int VSNR = 17;
  	
  	// method choices for MSSSIM
- 	private final int PRODUCT = 1;
- 	private final int WTD_SUM = 2;
+ 	private static final int PRODUCT = 1;
+ 	private final static int WTD_SUM = 2;
  	
  	private double testBuffer[] = null;
     private float testRedBuffer[] = null;
@@ -259,12 +259,13 @@ public class ImageQuality extends AlgorithmBase {
     // Default = 11 for MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX
     // Default = 8 for RELATIVE_AVERAGE_SPECTRAL_ERROR
     // Default = 8 for ERGAS
+    // Default = 8 for SPATIAL_CORRELATION_COEFFICIENT
     private int ws;
-    // First SSIM and MSSSIM constant (default = 0.01)
+    // First STRUCTURAL_SIMILARITY_INDEX, SSIM_WITH_AUTOMATIC_DOWNSAMPLING, and MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX constant (default = 0.01)
     private double k1 = 0.01;
-    // Second SSIM and MSSSIM constant (default = 0.03)
+    // Second STRUCTURAL_SIMILARITY_INDEX, SSIM_WITH_AUTOMATIC_DOWNSAMPLING, and MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX constant (default = 0.03)
     private double k2 = 0.03;
-    // sigma used in STRUCTURAL_SIMILARITY_INDEX and MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX
+    // sigma used in STRUCTURAL_SIMILARITY_INDEX, SSIM_WITH_AUTOMATIC_DOWNSAMPLING, and MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX
     private double sigma = 1.5;
     // Used in MSSSIM
     private int level = 5;
@@ -1427,6 +1428,84 @@ public class ImageQuality extends AlgorithmBase {
 		clr_const.disposeLocal();
 		clr_const = null;	
 	}
+	
+	// Used to call MEAN_SQUARED_ERROR, ROOT_MEAN_SQUARED_ERROR, PEAK_SIGNAL_TO_NOISE_RATIO, 
+	// SPECTRAL_ANGLE_MAPPER, and BLOCK_SENSITIVE_PEAK_SIGNAL_TO_NOISE_RATIO
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], double results[]) {
+		    this(referenceImage, testImage, metrics, 8, 0.01,0.03,1.5,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+		    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+		    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+	}
+	
+	// Used to call RMSE_SW, UNIVERSAL_QUALITY_IMAGE_INDEX, and RELATIVE_AVERAGE_SPECTRAL_ERROR
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double results[]) {
+	    this(referenceImage, testImage, metrics, ws, 0.01,0.03,1.5,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used to call STRUCTURAL_SIMILARITY_INDEX and SSIM_WITH_AUTOMATIC_DOWNSAMPLING
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double k1, double k2,
+			double sigma, double results[]) {
+	    this(referenceImage, testImage, metrics, ws, k1,k2,sigma,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used to call MULTI_SCALE_STRUCTURAL_SIMILARITY_INDEX
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double k1, double k2,
+			double sigma, int level, double weight[], int method, double results[]) {
+	    this(referenceImage, testImage, metrics, ws, k1,k2,sigma,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,level,weight,
+	    		method,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used in ERGAS
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double r, double results[]) {
+	    this(referenceImage, testImage, metrics, ws, 0.01,0.03,1.5,r,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used in SPATIAL_CORRELATION_COEFFICIENT
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws, double win[][], double results[]) {
+	    this(referenceImage, testImage, metrics, ws, 0.01,0.03,1.5,4.0,win,
+	    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used in PIXEL_BASED_VISUAL_INFORMATION_FIDELITY
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], double sigma_nsq, double results[]) {
+	    this(referenceImage, testImage, metrics, 8, 0.01,0.03,1.5,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		sigma_nsq,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used in VISUAL_INFORMATION_FIDELITY
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], double sigma_nsq, 
+			int subbands[], int M, double results[]) {
+	    this(referenceImage, testImage, metrics, 8, 0.01,0.03,1.5,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		sigma_nsq,subbands,M,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+    // Used in NQM
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, double VA,  int metrics[], double results[]) {
+    this(referenceImage, testImage, metrics, 8, 0.01,0.03,1.5,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+    		PRODUCT,VA,0.04, 0, 0.02874, 2.2, 96.0, 19.1,5, null, results);
+    }
+	
+	// Used in VSNR
+	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], double alpha,
+			int vsnr_data_b, double vsnr_data_k, double vsnr_data_g, double vsnr_data_r,
+			double vsnr_data_v, int vsnr_data_num_levels, int vsnr_data_filter_gains[],
+			double results[]) {
+	    this(referenceImage, testImage, metrics, 8, 0.01,0.03,1.5,4.0,new double[][] {{-1,-1,-1},{-1,8,-1},{-1,-1,-1}},
+	    		2.0,new int[] {3, 6, 9, 12, 15, 18, 21, 24},3,5,new double[] {0.0448, 0.2856, 0.3001, 0.2363, 0.1333},
+	    		PRODUCT,4.0,alpha, vsnr_data_b, vsnr_data_k, vsnr_data_g, vsnr_data_r, 
+	    		vsnr_data_v, vsnr_data_num_levels, vsnr_data_filter_gains, results);
+    }
 	
 	public ImageQuality(ModelImage referenceImage, ModelImage testImage, int metrics[], int ws,
 			double k1, double k2, double sigma, double r, double win[][], double sigma_nsq, 
@@ -4801,12 +4880,11 @@ public class ImageQuality extends AlgorithmBase {
     
     //function y=nqm(O,I,VA,N)
     private void nqm() {
-    	    // Requires xDim = yDim
     		// NQM   Nonlinear Weighted Signal to noise ratio for additive noise.
     		//      RATIO = NQM(MOD_RES,RES,ANGLE, DIM) computes the nonlinear weighted signal to
     		//      noise ratio of the restored image MOD_RES with respect to the model
     		//      restored image MOD_RES and returns the result in dB.
-    		//      ANGLE is the viewing angle. DIM is the [DIM DIM] dimension of the image 
+    		//      ANGLE is the viewing angle. DIM is the [yDim xDim] dimension of the image 
     		
     		//      Note that NQM is a measure of additive noise only. The model restored 
     		//      image is assumed to have the same freq. distortion as the restored image.  
@@ -5500,30 +5578,60 @@ public class ImageQuality extends AlgorithmBase {
     	int i;
     	double diff;
     	double total = 0.0;
-    	for (i = 0; i < length; i++) {
-    		total += (referenceRedBuffer[i] + referenceGreenBuffer[i] + referenceBlueBuffer[i]);
-    	}
-    	double vsnr_data_mX = total/(3.0*length);
-    	
-    	// mean luminance
-    	total = 0;
-    	double src_img_lum[] = new double[3*length];
-    	for (i = 0; i < length; i++) {
-    		src_img_lum[3*i] = vsnr_data_pix2lum_table[(int)Math.round(referenceRedBuffer[i])];
-    	    src_img_lum[3*i+1] = vsnr_data_pix2lum_table[(int)Math.round(referenceGreenBuffer[i])];
-    		src_img_lum[3*i+2] = vsnr_data_pix2lum_table[(int)Math.round(referenceBlueBuffer[i])];
-    		total += (src_img_lum[3*i] + src_img_lum[3*i+1] + src_img_lum[3*i+2]);
-    	}
-    	double vsnr_data_mL = total/(3.0*length);
-    	
-    	// total RMS image contrast
-    	// Standard deviation normalized by N rather than N-1
-        total = 0.0;
-        for (i = 0; i < 3*length; i++) {
-        	diff = src_img_lum[i] - vsnr_data_mL;
-        	total += diff*diff;
-        }
-        double std = Math.sqrt(total/(3.0*length));
+    	double vsnr_data_mX;
+    	double src_img_lum[];
+    	double vsnr_data_mL;
+    	double std;
+    	if (isColor) {
+	    	for (i = 0; i < length; i++) {
+	    		total += (referenceRedBuffer[i] + referenceGreenBuffer[i] + referenceBlueBuffer[i]);
+	    	}
+	    	vsnr_data_mX = total/(3.0*length);
+	    	
+	    	// mean luminance
+	    	total = 0;
+	    	src_img_lum = new double[3*length];
+	    	for (i = 0; i < length; i++) {
+	    		src_img_lum[3*i] = vsnr_data_pix2lum_table[(int)Math.round(referenceRedBuffer[i])];
+	    	    src_img_lum[3*i+1] = vsnr_data_pix2lum_table[(int)Math.round(referenceGreenBuffer[i])];
+	    		src_img_lum[3*i+2] = vsnr_data_pix2lum_table[(int)Math.round(referenceBlueBuffer[i])];
+	    		total += (src_img_lum[3*i] + src_img_lum[3*i+1] + src_img_lum[3*i+2]);
+	    	}
+	    	vsnr_data_mL = total/(3.0*length);
+	    	
+	    	// total RMS image contrast
+	    	// Standard deviation normalized by N rather than N-1
+	        total = 0.0;
+	        for (i = 0; i < 3*length; i++) {
+	        	diff = src_img_lum[i] - vsnr_data_mL;
+	        	total += diff*diff;
+	        }
+	        std = Math.sqrt(total/(3.0*length));
+    	} // if (isColor)
+    	else { // gray scale
+    		for (i = 0; i < length; i++) {
+	    		total += referenceBuffer[i];
+	    	}
+	    	vsnr_data_mX = total/length;
+	    	
+	    	// mean luminance
+	    	total = 0;
+	    	src_img_lum = new double[length];
+	    	for (i = 0; i < length; i++) {
+	    		src_img_lum[i] = vsnr_data_pix2lum_table[(int)Math.round(referenceBuffer[i])];
+	    		total += (src_img_lum[i]);
+	    	}
+	    	vsnr_data_mL = total/length;
+	    	
+	    	// total RMS image contrast
+	    	// Standard deviation normalized by N rather than N-1
+	        total = 0.0;
+	        for (i = 0; i < length; i++) {
+	        	diff = src_img_lum[i] - vsnr_data_mL;
+	        	total += diff*diff;
+	        }
+	        std = Math.sqrt(total/length);	
+    	} // else gray scale
         double vsnr_data_Ci = std/vsnr_data_mL;
     	
         // zeta value used to estimate image contrast at each scale
@@ -5532,6 +5640,13 @@ public class ImageQuality extends AlgorithmBase {
           (vsnr_data_k * vsnr_data_g);  
 
         // compute the image contrast at each scale
+        // IMDWT Forward discrete wavelet transform of an image.
+        //  [BANDS] = IMDWT(IMG, NLEVELS) returns the subbands of a discrete
+        //  wavelet transform of the image IMG using the 9/7 biorthogonal 
+        //  filters.  The number of decomposition levels is specified via the
+        //  parameter NLEVELS (default = 5).
+
+        // vsnr_data.src_bands = imdwt(vsnr_data.src_img, vsnr_data.num_levels);
 
     }
     
