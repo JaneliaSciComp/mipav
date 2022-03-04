@@ -111,7 +111,28 @@ import gov.nih.mipav.view.ViewUserInterface;
  Copyright 1998-2007 Image Coding and Analysis Lab, Oklahoma State 
  University, Stillwater, OK 74078 USA.
  $Revision: BETA 1.02.0.0 $  $Date: 2007/10/04/ 15:00:00 $ 
-
+ 
+ For DWT code used for VSNR:
+ ////////////////////////////////////////////////////////////////////////////
+//                                                                        //
+// COPYRIGHT (c) 1998, 2002, VCL                                          //
+// ------------------------------                                         //
+// Permission to use, copy, modify, distribute and sell this software     //
+// and its documentation for any purpose is hereby granted without fee,   //
+// provided that the above copyright notice appear in all copies and      //
+// that both that copyright notice and this permission notice appear      //
+// in supporting documentation.  VCL makes no representations about       //
+// the suitability of this software for any purpose.                      //
+//                                                                        //
+// DISCLAIMER:                                                            //
+// -----------                                                            //
+// The code provided hereunder is provided as is without warranty         //
+// of any kind, either express or implied, including but not limited      //
+// to the implied warranties of merchantability and fitness for a         //
+// particular purpose.  The author(s) shall in no event be liable for     //
+// any damages whatsoever including direct, indirect, incidental,         //
+// consequential, loss of business profits or special damages.            //
+//                                                                        //
 
 
  **Other metrics are from full_ref.py, no_ref.py and utils.py by Andrew Khalel.
@@ -5575,7 +5596,7 @@ public class ImageQuality extends AlgorithmBase {
     private void analyze_src_img() {
     	// % compute some useful statistics about the original image
     	// mean pixel value
-    	int i;
+    	int i, x, y, index;
     	double diff;
     	double total = 0.0;
     	double vsnr_data_mX;
@@ -5645,10 +5666,172 @@ public class ImageQuality extends AlgorithmBase {
         //  wavelet transform of the image IMG using the 9/7 biorthogonal 
         //  filters.  The number of decomposition levels is specified via the
         //  parameter NLEVELS (default = 5).
+        
+	     // The Decompose() method uses the first image in the list as the
+	     // source image.  It then decomposes (forward DWTs) this image
+	     // and stores the results as depicted above, in the list.  The
+	     // source image, WaveList->Image() remains untouched.  L1 is
+	     // the smooth (low-passed) image whose rows have been transformed.
+	     // H1 is the detail (high-passed) image whose rows have been
+	     // transformed.  HH1 is the detail (high-high passed) image whose
+	     // rows then columns have been transformed.  HL1 is the detail
+	     // (high-low passed) image whose rows then columns have been
+	     // transformed.  LH1 is the detail (low-high passed) image whose
+	     // rows then columns have been transformed.  Finally, LL1 is the
+	     // smooth (low-low-passed) image whose rows then columns have been
+	     // transformed.  LL1 is used as the source image for the next
+	     // level of decomposition.  For this reason, the LL buffers are
+	     // stored last in the zero-based indices [0, 6, 12, 18, 24, ...].
+         // LL0  | L1  | H1  | HH1 | HL1 | LH1 | LL1        
+
 
         // vsnr_data.src_bands = imdwt(vsnr_data.src_img, vsnr_data.num_levels);
+        double LL0[][] = new double[yDim][xDim];
+    	for (y = 0; y < yDim; y++) {
+    		for (x = 0; x < xDim; x++) {
+    			index = x + y*xDim;
+    			LL0[y][x] = referenceBuffer[index];
+    		}
+    	}
+        int num_bands = 6*(vsnr_data_num_levels-1)+1;
+        double src_bands[][][] = new double[num_bands][][];
+        int cx = referenceImage.getExtents()[0]; // image width
+        int cy = referenceImage.getExtents()[1]; // image height
+        int half_cx = cx >> 1;
+	    int half_cy = cy >> 1;
+	    src_bands[0] = LL0;
+    	for (i = 1; i < num_bands; i += 6 ) {
+            // make room for the L and H subbands
+    		src_bands[i] = new double[cy][half_cx];
+    		src_bands[i+1] = new double[cy][half_cx];
+	        // make room for the HH, HL, HL, and LL subbands
+	        src_bands[i+2] = new double[half_cy][half_cx];
+	        src_bands[i+3] = new double[half_cy][half_cx];
+	        src_bands[i+4] = new double[half_cy][half_cx];
+	        src_bands[i+5] = new double[half_cy][half_cx];
+	
+	        // divide the dimensions by 2 for the next scale
+	        cy >>= 1; half_cx >>= 1; half_cy >>= 1;
 
+    	} // for (i = 0; i < num_bands; i += 6 )
+    	
+    	
+    	// perform the forward DWT
+    	int scale_index;
+    	double LL[][];
+    	double L[][];
+    	double H[][];
+    	for (scale_index = 0; scale_index < vsnr_data_num_levels; ++scale_index) {
+    		// 2D transform
+		    //
+		    // extract the source image (or the LL subband
+		    // from the previous level of decomposition)
+		    //
+			// buf_type& LL = WaveList.LL(scale_index);
+			LL = src_bands[6*scale_index];
+
+		    // grab a reference to the L and H subbands
+		    L = src_bands[6*scale_index+1];
+		    H = src_bands[6*scale_index+2];
+
+		    // filter the rows and downsample horizontally
+		    DoTransformRows(LL, L, H);
+
+		    // filter the columns and downsample vertically
+		    //DoTransformCols(
+		      //H, WaveList.HL(scale_index), WaveList.HH(scale_index)
+		      //);
+		    DoTransformCols(H, src_bands[6*scale_index+4], src_bands[6*scale_index+3]);
+		    //DoTransformCols(
+		      //L, WaveList.LL(scale_index), WaveList.LH(scale_index)
+		      //);
+		    DoTransformCols(L, src_bands[6*scale_index+6],src_bands[6*scale_index+5]);
+    		 
+    	} // for (scale_index = 0; scale_index < vsnr_data_num_levels; ++scale_index)
+
+    } // analyze_src_img()
+    
+    
+    //#define GETXVAL(p, x) *(p + (x))
+    //#define SETXVAL(p, x, v) *(p + (x)) = (v)
+
+    public void DoTransformRows(double Buffer[][], double SBuffer[][], double DBuffer[][]) {
+    	  final int xw = Buffer[0].length;
+    	  final int dw = DBuffer[0].length;
+    	  final int sw = SBuffer[0].length;
+    	  final int sh = SBuffer.length;
+    	  final int sw_minus_one = sw - 1;
+
+    	  /*const buf_data_type* px = Buffer.Data();
+    	  buf_data_type* pd = DBuffer.Data();
+    	  buf_data_type* ps = SBuffer.Data();
+
+    	  register const buf_data_type* px_row;
+    	  register buf_data_type* pd_row;
+    	  register buf_data_type* ps_row;
+
+    	  register size_type x;
+    	  register buf_data_type d_res0, old_d_res, d_res, X2n;
+    	  for (size_type y = 0; y < sh; ++y)
+    	  {
+    	    px_row = px + (xw * y);
+    	    pd_row = pd + (dw * y);
+    	    ps_row = ps + (sw * y);
+
+    	    d_res0 = old_d_res =
+    	      GETXVAL(px_row, 1) + ALPHA * (*px_row + GETXVAL(px_row, 2));
+    	    *pd_row = old_d_res;
+    	    for (x = 1; x < sw_minus_one; ++x)
+    	    {
+    	      X2n = GETXVAL(px_row, x << 1);
+    	      d_res =
+    	        GETXVAL(px_row, (x << 1) + 1) +
+    	        ALPHA * (X2n + GETXVAL(px_row, (x << 1) + 2));
+
+    	      SETXVAL(pd_row, x, d_res);
+    	      SETXVAL(ps_row, x, X2n + BETA * (d_res + old_d_res));
+    	      old_d_res = d_res;
+    	    }
+    	    d_res =
+    	      GETXVAL(px_row, (sw << 1) - 1) +
+    	      TWOALPHA * GETXVAL(px_row, (sw << 1) - 2);
+    	    SETXVAL(pd_row, sw_minus_one, d_res);
+    	    *ps_row = *px_row + TWOBETA * d_res0;
+    	    SETXVAL(ps_row, sw_minus_one,
+    	      GETXVAL(px_row, sw_minus_one << 1) +
+    	      BETA * (d_res + old_d_res)
+    	      );
+
+    	    d_res0 = old_d_res =
+    	      *pd_row + GAMMA * (*ps_row + GETXVAL(ps_row, 1));
+    	    *pd_row = old_d_res;
+    	    for (x = 1; x < sw_minus_one; ++x)
+    	    {
+    	      d_res =
+    	        GETXVAL(pd_row, x) + GAMMA * (
+    	          GETXVAL(ps_row, x) + GETXVAL(ps_row, x + 1)
+    	          );
+    	      SETXVAL(pd_row, x, d_res);
+    	      SBuffer.IncPixels(x, y, DELTA * (d_res + old_d_res));
+    	      old_d_res = d_res;
+    	    }
+    	    d_res =
+    	      GETXVAL(pd_row, sw_minus_one) +
+    	      TWOGAMMA * GETXVAL(ps_row, sw_minus_one);
+    	    SETXVAL(pd_row, sw_minus_one, d_res);
+    	    SBuffer.IncPixels(
+    	      0, y, TWODELTA * d_res0
+    	      );
+    	    SBuffer.IncPixels(
+    	      sw_minus_one, y, DELTA * (d_res + old_d_res)
+    	      );*/
+	
     }
+    
+    public void DoTransformCols(double Buffer[][], double L[][], double H[][]) {
+    	
+    }
+
     
     
 }
