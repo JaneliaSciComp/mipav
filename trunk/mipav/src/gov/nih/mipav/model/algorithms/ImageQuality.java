@@ -5609,63 +5609,47 @@ public class ImageQuality extends AlgorithmBase {
     private void analyze_src_img() {
     	// % compute some useful statistics about the original image
     	// mean pixel value
-    	int i, x, y, index;
+    	int i, x, y, index, s, or;
     	double diff;
+    	double c;
     	double total = 0.0;
     	double vsnr_data_mX;
     	double src_img_lum[];
     	double vsnr_data_mL;
     	double std;
+    	double refBuffer[] = null;
     	if (isColor) {
-	    	for (i = 0; i < length; i++) {
-	    		total += (referenceRedBuffer[i] + referenceGreenBuffer[i] + referenceBlueBuffer[i]);
-	    	}
-	    	vsnr_data_mX = total/(3.0*length);
-	    	
-	    	// mean luminance
-	    	total = 0;
-	    	src_img_lum = new double[3*length];
-	    	for (i = 0; i < length; i++) {
-	    		src_img_lum[3*i] = vsnr_data_pix2lum_table[(int)Math.round(referenceRedBuffer[i])];
-	    	    src_img_lum[3*i+1] = vsnr_data_pix2lum_table[(int)Math.round(referenceGreenBuffer[i])];
-	    		src_img_lum[3*i+2] = vsnr_data_pix2lum_table[(int)Math.round(referenceBlueBuffer[i])];
-	    		total += (src_img_lum[3*i] + src_img_lum[3*i+1] + src_img_lum[3*i+2]);
-	    	}
-	    	vsnr_data_mL = total/(3.0*length);
-	    	
-	    	// total RMS image contrast
-	    	// Standard deviation normalized by N rather than N-1
-	        total = 0.0;
-	        for (i = 0; i < 3*length; i++) {
-	        	diff = src_img_lum[i] - vsnr_data_mL;
-	        	total += diff*diff;
-	        }
-	        std = Math.sqrt(total/(3.0*length));
-    	} // if (isColor)
-    	else { // gray scale
+    		refBuffer = new double[length];
     		for (i = 0; i < length; i++) {
-	    		total += referenceBuffer[i];
-	    	}
-	    	vsnr_data_mX = total/length;
-	    	
-	    	// mean luminance
-	    	total = 0;
-	    	src_img_lum = new double[length];
-	    	for (i = 0; i < length; i++) {
-	    		src_img_lum[i] = vsnr_data_pix2lum_table[(int)Math.round(referenceBuffer[i])];
-	    		total += (src_img_lum[i]);
-	    	}
-	    	vsnr_data_mL = total/length;
-	    	
-	    	// total RMS image contrast
-	    	// Standard deviation normalized by N rather than N-1
-	        total = 0.0;
-	        for (i = 0; i < length; i++) {
-	        	diff = src_img_lum[i] - vsnr_data_mL;
-	        	total += diff*diff;
-	        }
-	        std = Math.sqrt(total/length);	
-    	} // else gray scale
+    			refBuffer[i] = 0.2989 * referenceRedBuffer[i] + 0.5870 * referenceGreenBuffer[i] + 0.1140 * referenceBlueBuffer[i];
+    		}
+    	}
+    	else {
+    		refBuffer = referenceBuffer;
+    	}
+    	
+		for (i = 0; i < length; i++) {
+    		total += refBuffer[i];
+    	}
+    	vsnr_data_mX = total/length;
+    	
+    	// mean luminance
+    	total = 0;
+    	src_img_lum = new double[length];
+    	for (i = 0; i < length; i++) {
+    		src_img_lum[i] = vsnr_data_pix2lum_table[(int)Math.round(refBuffer[i])];
+    		total += (src_img_lum[i]);
+    	}
+    	vsnr_data_mL = total/length;
+    	
+    	// total RMS image contrast
+    	// Standard deviation normalized by N rather than N-1
+        total = 0.0;
+        for (i = 0; i < length; i++) {
+        	diff = src_img_lum[i] - vsnr_data_mL;
+        	total += diff*diff;
+        }
+        std = Math.sqrt(total/length);	
         double vsnr_data_Ci = std/vsnr_data_mL;
     	
         // zeta value used to estimate image contrast at each scale
@@ -5695,33 +5679,62 @@ public class ImageQuality extends AlgorithmBase {
 	     // transformed.  LL1 is used as the source image for the next
 	     // level of decomposition.  For this reason, the LL buffers are
 	     // stored last in the zero-based indices [0, 6, 12, 18, 24, ...].
-         // LL0  | L1  | H1  | HH1 | HL1 | LH1 | LL1        
+         // LL0  | L1  | H1  | HH1 | HL1 | LH1 | LL1 
+         double LL0[][] = new double[yDim][xDim];
+         for (y = 0; y < yDim; y++) {
+        	 for (x = 0; x < xDim; x++) {
+        		 index = x + y * xDim;
+        		 LL0[y][x] = refBuffer[index];
+        	 }
+         }
 
-
-        // vsnr_data.src_bands = imdwt(vsnr_data.src_img, vsnr_data.num_levels);
-        double LL0[][] = new double[yDim][xDim];
-    	for (y = 0; y < yDim; y++) {
-    		for (x = 0; x < xDim; x++) {
-    			index = x + y*xDim;
-    			LL0[y][x] = referenceBuffer[index];
-    		}
-    	}
-        int num_bands = 6*(vsnr_data_num_levels-1)+1;
-        double src_bands[][][] = new double[num_bands][][];
-        int cx = referenceImage.getExtents()[0]; // image width
-        int cy = referenceImage.getExtents()[1]; // image height
+        double vsnr_data_src_bands[][][][] = imdwt(LL0, vsnr_data_num_levels);
+        
+        double vsnr_data_Cis[] = new double[vsnr_data_num_levels];
+        for (s = 0; s < vsnr_data_num_levels; s++) {
+            for (or = 0; or < 3; or++) {
+            // estimate the contrast at scale s, orient o
+            	// Standard deviation normalized by N rather than N-1
+            	total = 0.0;
+                for (y = 0; y < vsnr_data_src_bands[s][or].length; y++) {
+                	for (x = 0; x < vsnr_data_src_bands[s][or][0].length; x++) {
+                	    total += vsnr_data_src_bands[s][or][y][x];
+                	} // for (x = 0; x < vsnr_data_src_bands[s][or][0].length; x++)
+                } // for (y = 0; y < vsnr_data_src_bands[s][or].length; y++) 
+                double mean = total/(vsnr_data_src_bands[s][or].length * vsnr_data_src_bands[s][or][0].length);
+                total = 0.0;
+                for (y = 0; y < vsnr_data_src_bands[s][or].length; y++) {
+                	for (x = 0; x < vsnr_data_src_bands[s][or][0].length; x++) {
+                	    diff = vsnr_data_src_bands[s][or][y][x] - mean;
+                	    total += diff*diff;
+                	} // for (x = 0; x < vsnr_data_src_bands[s][or][0].length; x++)
+                } // for (y = 0; y < vsnr_data_src_bands[s][or].length; y++) 
+                std = Math.sqrt(total/(vsnr_data_src_bands[s][or].length * vsnr_data_src_bands[s][or][0].length));	
+               
+        		c = std/(vsnr_data_zeta * vsnr_data_filter_gains[s]);
+        		vsnr_data_Cis[s] = vsnr_data_Cis[s] + c*c;
+            } // for (or = 0; or < 3; or++)
+        } // for (s = 0; s < vsnr_data_num_levels; s++)
+    }
+    
+    private double[][][][] imdwt(double LL0[][], int num_levels) {
+    	int i, s, num_orients, or;
+        int num_bands = 6*(num_levels-1)+1;
+        double bands[][][] = new double[num_bands][][];
+        int cx = LL0[0].length; // image width
+        int cy = LL0.length; // image height
         int half_cx = cx >> 1;
 	    int half_cy = cy >> 1;
-	    src_bands[0] = LL0;
+	    bands[0] = LL0;
     	for (i = 1; i < num_bands; i += 6 ) {
             // make room for the L and H subbands
-    		src_bands[i] = new double[cy][half_cx];
-    		src_bands[i+1] = new double[cy][half_cx];
+    		bands[i] = new double[cy][half_cx];
+    		bands[i+1] = new double[cy][half_cx];
 	        // make room for the HH, HL, HL, and LL subbands
-	        src_bands[i+2] = new double[half_cy][half_cx];
-	        src_bands[i+3] = new double[half_cy][half_cx];
-	        src_bands[i+4] = new double[half_cy][half_cx];
-	        src_bands[i+5] = new double[half_cy][half_cx];
+	        bands[i+2] = new double[half_cy][half_cx];
+	        bands[i+3] = new double[half_cy][half_cx];
+	        bands[i+4] = new double[half_cy][half_cx];
+	        bands[i+5] = new double[half_cy][half_cx];
 	
 	        // divide the dimensions by 2 for the next scale
 	        cy >>= 1; half_cx >>= 1; half_cy >>= 1;
@@ -5734,18 +5747,18 @@ public class ImageQuality extends AlgorithmBase {
     	double LL[][];
     	double L[][];
     	double H[][];
-    	for (scale_index = 0; scale_index < vsnr_data_num_levels; ++scale_index) {
+    	for (scale_index = 0; scale_index < num_levels; ++scale_index) {
     		// 2D transform
 		    //
 		    // extract the source image (or the LL subband
 		    // from the previous level of decomposition)
 		    //
 			// buf_type& LL = WaveList.LL(scale_index);
-			LL = src_bands[6*scale_index];
+			LL = bands[6*scale_index];
 
 		    // grab a reference to the L and H subbands
-		    L = src_bands[6*scale_index+1];
-		    H = src_bands[6*scale_index+2];
+		    L = bands[6*scale_index+1];
+		    H = bands[6*scale_index+2];
 
 		    // filter the rows and downsample horizontally
 		    DoTransformRows(LL, L, H);
@@ -5754,30 +5767,50 @@ public class ImageQuality extends AlgorithmBase {
 		    //DoTransformCols(
 		      //H, WaveList.HL(scale_index), WaveList.HH(scale_index)
 		      //);
-		    DoTransformCols(H, src_bands[6*scale_index+4], src_bands[6*scale_index+3]);
+		    DoTransformCols(H, bands[6*scale_index+4], bands[6*scale_index+3]);
 		    //DoTransformCols(
 		      //L, WaveList.LL(scale_index), WaveList.LH(scale_index)
 		      //);
-		    DoTransformCols(L, src_bands[6*scale_index+6],src_bands[6*scale_index+5]);
+		    DoTransformCols(L, bands[6*scale_index+6], bands[6*scale_index+5]);
     		 
     	} // for (scale_index = 0; scale_index < vsnr_data_num_levels; ++scale_index)
+    	
+    	double p_cell_mx[][][][] = new double[num_levels][][][];
+        for (s = 1; s <= num_levels; ++s)  {
+    	    if (s == num_levels) {
+    	        num_orients = 4;	
+    	    }
+    	    else {
+    	    	num_orients = 3;
+    	    }
+    	    p_cell_mx[s-1] = new double[num_orients][][];
+    	    for (or = 0; or < num_orients; or++) {
+    	        if (or == 0) {
+    	          // return LH(scale_index);
+    	        	p_cell_mx[s-1][or] = bands[6*s-1];
+    	        }
+    	        else if (or == 1) {
+    	          // return HL(scale_index);
+    	        	p_cell_mx[s-1][or] = bands[6*s-2];
+    	        }
+    	        else if (or == 2) {
+    	        	// return HH(scale_index)
+    	        	p_cell_mx[s-1][or] = bands[6*s-3];
+    	        }
+    	        else {
+    	        	// return LL(scale_index)
+    	        	p_cell_mx[s-1][or] = bands[6*s];
+    	        }
+    	    } // for (or = 0; or < num_orients; or++)
+    	} // for (s = 1; s <= vsnr_data_num_levels; ++s)
+        return p_cell_mx;
 
-    } // analyze_src_img()
-    
-    
-    //#define GETXVAL(p, x) *(p + (x))
-    //#define SETXVAL(p, x, v) *(p + (x)) = (v)
+    } // imdwt
 
     public void DoTransformRows(double Buffer[][], double SBuffer[][], double DBuffer[][]) {
-    	  final int xw = Buffer[0].length;
-    	  final int dw = DBuffer[0].length;
     	  final int sw = SBuffer[0].length;
     	  final int sh = SBuffer.length;
     	  final int sw_minus_one = sw - 1;
-
-    	  //const buf_data_type* px = Buffer.Data();
-    	  //buf_data_type* pd = DBuffer.Data();
-    	  //buf_data_type* ps = SBuffer.Data();
 
     	  double px_row[];
     	  double pd_row[];
@@ -5865,9 +5898,94 @@ public class ImageQuality extends AlgorithmBase {
     	    }
 	
     }
-    
-    public void DoTransformCols(double Buffer[][], double L[][], double H[][]) {
-    	
+
+    public void DoTransformCols(double Buffer[][], double SBuffer[][], double DBuffer[][]) {
+  	    final int sw = SBuffer[0].length;
+  	    final int sh = SBuffer.length;
+  	    final int sh_minus_one = sh - 1;
+
+    	  int x, y;
+    	  int ysave0, ysave1;
+    	  double d_res0, old_d_res, d_res, X2n;
+    	  for (x = 0; x < sw; ++x)
+    	  {
+
+    	    d_res0 = old_d_res =
+    	      Buffer[1][x] + ALPHA * (
+    	        Buffer[0][x] + Buffer[2][x]);
+    	    DBuffer[0][x] = old_d_res;
+    	    for (y = 1; y < sh_minus_one; ++y)
+    	    {
+    	      ysave0 = (y << 1);
+    	      ysave1 = y;
+
+    	      X2n = Buffer[ysave0][x];
+    	      d_res =
+    	        Buffer[ysave0 + 1][x] +
+    	        ALPHA * (X2n + Buffer[ysave0 + 2][x]);
+
+    	      DBuffer[ysave1][x] = d_res;
+    	      SBuffer[ysave1][x] = X2n + BETA * (d_res + old_d_res);
+    	      old_d_res = d_res;
+    	    }
+    	    d_res =
+    	      Buffer[(sh << 1) - 1][x] +
+    	      TWOALPHA * Buffer[(sh << 1) - 2][x];
+    	    DBuffer[sh_minus_one][x] =  d_res;
+    	    SBuffer[0][x] = Buffer[0][x] + TWOBETA * d_res0;
+    	    SBuffer[sh_minus_one][x] =
+    	      Buffer[sh_minus_one << 1][x] +
+    	      BETA * (d_res + old_d_res);
+
+    	    d_res0 = old_d_res =
+    	      DBuffer[0][x] + GAMMA * (SBuffer[0][x] + SBuffer[1][x]);
+    	    DBuffer[0][x] = old_d_res;
+    	    for (y = 1; y < sh_minus_one; ++y)
+    	    {
+    	      ysave0 = y;
+    	      d_res = DBuffer[ysave0][x] + GAMMA * (
+    	        SBuffer[ysave0][x] + SBuffer[ysave0 + 1][x]);
+    	      DBuffer[ysave0][x] = d_res;
+    	      SBuffer[y][x] += DELTA * (d_res + old_d_res);
+    	      old_d_res = d_res;
+    	    }
+    	    d_res =
+    	      DBuffer[sh_minus_one][x] +
+    	      TWOGAMMA * SBuffer[sh_minus_one][x];
+    	    DBuffer[sh_minus_one][x] = d_res;
+    	    SBuffer[0][x] += TWODELTA * d_res0;
+    	    SBuffer[sh_minus_one][x] += DELTA * (d_res + old_d_res);
+    	  }
+    	  
+    	  if (GWAVELIFT_NORM_1_1) {
+    		  final double B0 =       1.0/1.23017410558578;
+    		  final double B1 =       1.0/1.62578613134411;
+    		  for (y = 0; y < SBuffer.length; y++) {
+    			  for (x = 0; x < SBuffer[0].length; x++) {
+    				  SBuffer[y][x] *= B0;  
+    			  }
+    		  }
+    		  for (y = 0; y < DBuffer.length; y++) {
+    			  for (x = 0; x < DBuffer[0].length; x++) {
+    				  DBuffer[y][x] *= B1;  
+    			  }
+    		  }
+    	    }
+    	    else {
+    		  final double K =        0.8698643;
+    		  final double KINV =     1.1496046;
+    		  for (y = 0; y < SBuffer.length; y++) {
+    			  for (x = 0; x < SBuffer[0].length; x++) {
+    				  SBuffer[y][x] *= KINV;  
+    			  }
+    		  }
+    		  for (y = 0; y < DBuffer.length; y++) {
+    			  for (x = 0; x < DBuffer[0].length; x++) {
+    				  DBuffer[y][x] *= -K;  
+    			  }
+    		  }
+    	    }
+	
     }
 
     
