@@ -358,6 +358,17 @@ public class ImageQuality extends AlgorithmBase {
 	public final int BORDER_REFLECT_101 = 4; // gfedcb|abcdefgh|gfedcba
 	public final int BORDER_DEFAULT = BORDER_REFLECT_101;
 	
+	// For DWT:
+	static final double ALPHA =   -1.586134342;
+	static final double BETA =    -0.052980118;
+	static final double GAMMA =    0.882911075;
+	static final double DELTA =    0.443506852;
+	static final double TWOALPHA = 2 * ALPHA;
+	static final double TWOBETA =  2 * BETA;
+	static final double TWOGAMMA = 2 * GAMMA;
+	static final double TWODELTA = 2 * DELTA;
+
+	
 	public ImageQuality() {
 		UI = ViewUserInterface.getReference();
 		String fileDir = "C:/Image Quality/sewar-master/sewar/tests/res/";
@@ -5762,69 +5773,64 @@ public class ImageQuality extends AlgorithmBase {
     	  final int sh = SBuffer.length;
     	  final int sw_minus_one = sw - 1;
 
-    	  /*const buf_data_type* px = Buffer.Data();
-    	  buf_data_type* pd = DBuffer.Data();
-    	  buf_data_type* ps = SBuffer.Data();
+    	  //const buf_data_type* px = Buffer.Data();
+    	  //buf_data_type* pd = DBuffer.Data();
+    	  //buf_data_type* ps = SBuffer.Data();
 
-    	  register const buf_data_type* px_row;
-    	  register buf_data_type* pd_row;
-    	  register buf_data_type* ps_row;
+    	  double px_row[];
+    	  double pd_row[];
+    	  double ps_row[];
 
-    	  register size_type x;
-    	  register buf_data_type d_res0, old_d_res, d_res, X2n;
-    	  for (size_type y = 0; y < sh; ++y)
+    	  int x;
+    	  double d_res0, old_d_res, d_res, X2n;
+    	  int y;
+    	  for (y = 0; y < sh; ++y)
     	  {
-    	    px_row = px + (xw * y);
-    	    pd_row = pd + (dw * y);
-    	    ps_row = ps + (sw * y);
+    	    px_row = Buffer[y];
+    	    pd_row = DBuffer[y];
+    	    ps_row = SBuffer[y];
 
     	    d_res0 = old_d_res =
-    	      GETXVAL(px_row, 1) + ALPHA * (*px_row + GETXVAL(px_row, 2));
-    	    *pd_row = old_d_res;
+    	      px_row[1] + ALPHA * (px_row[0] + px_row[2]);
+    	      pd_row[0] = old_d_res;
     	    for (x = 1; x < sw_minus_one; ++x)
     	    {
-    	      X2n = GETXVAL(px_row, x << 1);
+    	      X2n = px_row[x << 1];
     	      d_res =
-    	        GETXVAL(px_row, (x << 1) + 1) +
-    	        ALPHA * (X2n + GETXVAL(px_row, (x << 1) + 2));
+    	        px_row[(x << 1) + 1] +
+    	        ALPHA * (X2n + px_row[(x << 1) + 2]);
 
-    	      SETXVAL(pd_row, x, d_res);
-    	      SETXVAL(ps_row, x, X2n + BETA * (d_res + old_d_res));
+    	      pd_row[x] = d_res;
+    	      ps_row[x] = X2n + BETA * (d_res + old_d_res);
     	      old_d_res = d_res;
     	    }
     	    d_res =
-    	      GETXVAL(px_row, (sw << 1) - 1) +
-    	      TWOALPHA * GETXVAL(px_row, (sw << 1) - 2);
-    	    SETXVAL(pd_row, sw_minus_one, d_res);
-    	    *ps_row = *px_row + TWOBETA * d_res0;
-    	    SETXVAL(ps_row, sw_minus_one,
-    	      GETXVAL(px_row, sw_minus_one << 1) +
-    	      BETA * (d_res + old_d_res)
-    	      );
+    	      px_row[(sw << 1) - 1] +
+    	      TWOALPHA * px_row[(sw << 1) - 2];
+    	    pd_row[sw_minus_one] = d_res;
+    	    ps_row[0] = px_row[0] + TWOBETA * d_res0;
+    	    ps_row[sw_minus_one] =
+    	      px_row[sw_minus_one << 1] +
+    	      BETA * (d_res + old_d_res);
 
     	    d_res0 = old_d_res =
-    	      *pd_row + GAMMA * (*ps_row + GETXVAL(ps_row, 1));
-    	    *pd_row = old_d_res;
+    	      pd_row[0] + GAMMA * (ps_row[0] + ps_row[1]);
+    	    pd_row[0] = old_d_res;
     	    for (x = 1; x < sw_minus_one; ++x)
     	    {
     	      d_res =
-    	        GETXVAL(pd_row, x) + GAMMA * (
-    	          GETXVAL(ps_row, x) + GETXVAL(ps_row, x + 1)
-    	          );
-    	      SETXVAL(pd_row, x, d_res);
-    	      SBuffer.IncPixels(x, y, DELTA * (d_res + old_d_res));
+    	        pd_row[x] + GAMMA * (
+    	         ps_row[x] + ps_row[x + 1]);
+    	      pd_row[x] = d_res;
+    	      SBuffer[y][x] += DELTA * (d_res + old_d_res);
     	      old_d_res = d_res;
     	    }
     	    d_res =
-    	      GETXVAL(pd_row, sw_minus_one) +
-    	      TWOGAMMA * GETXVAL(ps_row, sw_minus_one);
-    	    SETXVAL(pd_row, sw_minus_one, d_res);
-    	    SBuffer.IncPixels(
-    	      0, y, TWODELTA * d_res0
-    	      );
-    	    SBuffer.IncPixels(
-    	      sw_minus_one, y, DELTA * (d_res + old_d_res)
-    	      );*/
+    	      pd_row[sw_minus_one] +
+    	      TWOGAMMA * ps_row[sw_minus_one];
+    	    pd_row[sw_minus_one] = d_res;
+    	    SBuffer[y][0] += TWODELTA * d_res0;
+    	    SBuffer[y][sw_minus_one] += DELTA * (d_res + old_d_res);
 	
     }
     
