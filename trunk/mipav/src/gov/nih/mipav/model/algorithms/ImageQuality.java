@@ -367,6 +367,8 @@ public class ImageQuality extends AlgorithmBase {
 	static final double TWOBETA =  2 * BETA;
 	static final double TWOGAMMA = 2 * GAMMA;
 	static final double TWODELTA = 2 * DELTA;
+	boolean GWAVELIFT_NORM_1_1 = true;
+
 
 	
 	public ImageQuality() {
@@ -5831,6 +5833,36 @@ public class ImageQuality extends AlgorithmBase {
     	    pd_row[sw_minus_one] = d_res;
     	    SBuffer[y][0] += TWODELTA * d_res0;
     	    SBuffer[y][sw_minus_one] += DELTA * (d_res + old_d_res);
+    	  }
+    	  
+    	  if (GWAVELIFT_NORM_1_1) {
+    		  final double B0 =       1.0/1.23017410558578;
+    		  final double B1 =       1.0/1.62578613134411;
+    		  for (y = 0; y < SBuffer.length; y++) {
+    			  for (x = 0; x < SBuffer[0].length; x++) {
+    				  SBuffer[y][x] *= B0;  
+    			  }
+    		  }
+    		  for (y = 0; y < DBuffer.length; y++) {
+    			  for (x = 0; x < DBuffer[0].length; x++) {
+    				  DBuffer[y][x] *= B1;  
+    			  }
+    		  }
+    	    }
+    	    else {
+    		  final double K =        0.8698643;
+    		  final double KINV =     1.1496046;
+    		  for (y = 0; y < SBuffer.length; y++) {
+    			  for (x = 0; x < SBuffer[0].length; x++) {
+    				  SBuffer[y][x] *= KINV;  
+    			  }
+    		  }
+    		  for (y = 0; y < DBuffer.length; y++) {
+    			  for (x = 0; x < DBuffer[0].length; x++) {
+    				  DBuffer[y][x] *= -K;  
+    			  }
+    		  }
+    	    }
 	
     }
     
