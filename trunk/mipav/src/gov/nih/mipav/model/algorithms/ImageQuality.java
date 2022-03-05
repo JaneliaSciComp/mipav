@@ -347,8 +347,24 @@ public class ImageQuality extends AlgorithmBase {
     private double vsnr_data_fs[] = null; 
     // the pixel-value-to-luminance lookup table
     // not an input parameter
-    private double vsnr_data_pix2lum_table[] = null; 
-
+    private double vsnr_data_pix2lum_table[] = null;
+    // the total distortion contrast threshold
+    // not an input parameter
+    private double vsnr_data_CTe;
+    // mean of reference buffer
+    // not an input parameter
+    private double vsnr_data_mX;
+    // not an input parameter
+    private double vsnr_data_mL;
+    // zeta value used to estimate image contrast at each scale
+    // not an input parameter
+    private double vsnr_data_zeta;
+    // not an input parameter
+    private double vsnr_data_Cis[] = null;
+    // not an input parameter
+    private double vsnr_data_Ci; 
+    // not an input parameter
+    private double vsnr_data_Ce;
 
     
     public final int BORDER_CONSTANT = 0; // iiiiii|abcdefgh|iiiiiii with some specified i
@@ -1447,6 +1463,59 @@ public class ImageQuality extends AlgorithmBase {
 		}
 		else {
 			System.out.println("All tests passed for pixel based visual information fidelity");
+		}
+		
+		gry.disposeLocal();
+		gry = null;
+		gry_noise.disposeLocal();
+		gry_noise = null;
+		gry_const.disposeLocal();
+		gry_const = null;
+		clr.disposeLocal();
+		clr = null;
+		clr_noise.disposeLocal();
+		clr_noise = null;
+		clr_const.disposeLocal();
+		clr_const = null;	
+	}
+	
+	public void testVSNR() {
+		int testsFailed = 0;
+		double eps = 1.0E-3;
+		metrics = new int[] {VSNR};
+		results = new double[1];
+		ImageQuality iq = new ImageQuality(clr, clr, metrics,ws,k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,
+				alpha, vsnr_data_b, vsnr_data_k, vsnr_data_g, vsnr_data_r, vsnr_data_v,
+				vsnr_data_num_levels, vsnr_data_filter_gains, 
+				results);
+		iq.runAlgorithm();
+		
+		
+		iq = new ImageQuality(gry, gry, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,
+				alpha, vsnr_data_b, vsnr_data_k, vsnr_data_g, vsnr_data_r, vsnr_data_v,
+				vsnr_data_num_levels, vsnr_data_filter_gains, 
+				results);
+		iq.runAlgorithm();
+		
+		iq = new ImageQuality(gry, gry_noise, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,
+				alpha, vsnr_data_b, vsnr_data_k, vsnr_data_g, vsnr_data_r, vsnr_data_v,
+				vsnr_data_num_levels, vsnr_data_filter_gains, 
+				results);
+		iq.runAlgorithm();
+		
+		
+		iq = new ImageQuality(gry, gry_const, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,
+				alpha, vsnr_data_b, vsnr_data_k, vsnr_data_g, vsnr_data_r, vsnr_data_v,
+				vsnr_data_num_levels, vsnr_data_filter_gains, 
+				results);
+		iq.runAlgorithm();
+		
+		
+		if (testsFailed > 0) {
+			System.err.println(testsFailed + " tests failed for VSNR");
+		}
+		else {
+			System.out.println("All tests passed for VSNR");
 		}
 		
 		gry.disposeLocal();
@@ -5577,6 +5646,7 @@ public class ImageQuality extends AlgorithmBase {
 
     	int i;
     	double var;
+    	double d = 1.0;
     	int pixel_vals;
     	if (vsnr_data_filter_gains == null) {
     	    vsnr_data_filter_gains = new int[vsnr_data_num_levels];	
@@ -5603,6 +5673,218 @@ public class ImageQuality extends AlgorithmBase {
     	
     	// analyze the source image
     	analyze_src_img();
+    	
+    	// measure the actual CSNRs of the distorted image
+    	double csnrs_act[] = analyze_dst_img();
+
+    	if ((csnrs_act.length == 1) && (csnrs_act[0] == -1)) { // subthreshold distortions
+    	  vsnr_value = Double.POSITIVE_INFINITY;
+    	}
+    	else {
+    	  // if csnrs_act is a vector, this denotes the distortions 
+    	  // are suprathreshold (visible)
+    	  if (csnrs_act.length == vsnr_data_num_levels) {
+
+    	    // compute the assumed best CSNRs for the given Ce
+    	    double csnrs_str = find_best_csnrs(vsnr_data_Ce);
+
+    	    // convert the CSNRs to contrasts
+    	    double Ces_act;
+    	    double Ces_str;
+    	    double diff;
+    	    double totalSquared = 0.0;
+    	    for (i = 0; i < vsnr_data_num_levels; i++) {
+    	        Ces_act = vsnr_data_Cis[i] / csnrs_act[i];
+    	        Ces_str = vsnr_data_Cis[i] / csnrs_str;  
+    	        diff = Ces_str - Ces_act;
+    	        totalSquared += (diff * diff);
+    	    }
+
+    	    // compute the distances
+    	    double d_gp = Math.sqrt(totalSquared);
+    	    double d_pc = vsnr_data_Ce;
+    	    d = alpha*d_pc + (1 - alpha)*d_gp/Math.sqrt(2);
+    	    
+    	  // brightness-only difference  
+    	  }
+    	  else if (csnrs_act.length == 1)  {  
+    	    d = csnrs_act[0];
+    	  }
+    	  else {
+    		  System.err.println("Impossible value for csnrs_act.lenth = " + csnrs_act.length);
+    		  System.exit(0);
+    	  }
+    	  
+    	  // compute the VSNR
+    	  vsnr_value = 20*Math.log10(vsnr_data_Ci / d);
+    	}
+    	UI.setDataText("VSNR = " + vsnr_value + "\n");
+		System.out.println("VSNR = " + vsnr_value);
+
+
+    }
+    
+    private double find_best_csnrs(double Ce) {
+            int i;
+    		double save_Ce = Ce;
+    		double deltaCe = 0.01 * Ce;
+    		double v_idx_min = 0; 
+    		double v_idx_max = 1;
+    		double csnrs = 0.0;
+
+    		int num_iters = 0;
+    		while (num_iters < 32) {
+    		  double v_idx = 0.5 * (v_idx_min + v_idx_max);
+    		  if (num_iters > 0) {
+    		    Ce = save_Ce;
+    		  }
+
+    		  // compute the best CSNRs for the given visibility index
+    		  csnrs = best_csnrs(v_idx);
+    		  // compute the corresponding distortion contrast
+    		  double totalSquared = 0.0;
+    		  double div;
+    		  for (i = 0; i < vsnr_data_Cis.length; i++) {
+    	          div = vsnr_data_Cis[i]/csnrs;
+    	          totalSquared += (div * div);
+    		  }
+    		  double hat_Ce = Math.sqrt(totalSquared);
+
+    		  if (v_idx_min == v_idx_max) {
+    		    // punt
+    		    break;
+    		  }
+
+    		  double diffCe = hat_Ce - Ce;
+    		  if (Math.abs(diffCe) < deltaCe) {
+    		    // close enough
+    		    break;
+    		  }
+    		  else if (diffCe < 0) {
+    		    // Ce too low
+    		    v_idx_min = v_idx;
+    		  }
+    		  else {
+    		    // Ce too high
+    		    v_idx_max = v_idx;
+    		  }
+    		}
+
+    		return csnrs;
+    }
+
+    
+    private double[] analyze_dst_img() {
+    	int i, index, x, y, s, or;
+    	double c;
+    	double mean;
+    	double refBuffer[] = null;
+    	double tBuffer[] = null;
+    	double res[] = null;
+    	if (isColor) {
+    		refBuffer = new double[length];
+    		tBuffer = new double[length];
+    		for (i = 0; i < length; i++) {
+    			refBuffer[i] = 0.2989 * referenceRedBuffer[i] + 0.5870 * referenceGreenBuffer[i] + 0.1140 * referenceBlueBuffer[i];
+    			tBuffer[i] = 0.2989 * testRedBuffer[i] + 0.5879 * testGreenBuffer[i] + 0.1140 * testBlueBuffer[i];
+    		}
+    	}
+    	else {
+    		refBuffer = referenceBuffer;
+    		tBuffer = testBuffer;
+    	}
+    	
+    	// compute the error image and its total RMS contrast
+    	double err_img[] = new double[length];
+    	for (i = 0; i < length; i++) {
+    	    err_img[i] = Math.round(tBuffer[i]	- refBuffer[i] + vsnr_data_mX);
+    	    if (err_img[i] > 255.0) {
+    	    	err_img[i] = 255.0;
+    	    }
+    	    if (err_img[i] < 0.0) {
+    	    	err_img[i] = 0.0;
+    	    }
+    	}
+    	
+    	double err_img_lum[] = new double[length];
+    	double total = 0.0;
+    	for (i = 0; i < length; i++) {
+    	    err_img_lum[i] = vsnr_data_pix2lum_table[(int)err_img[i]];
+    	    total += err_img_lum[i];
+    	}
+    	double mean_err_img_lum = total/length;
+    	
+    	total = 0.0;
+    	double diff;
+    	for (i = 0; i < length; i++) {
+    		diff = err_img_lum[i] - mean_err_img_lum;
+    		total += (diff * diff);
+    	}
+    	double std = Math.sqrt(total/length);
+    	vsnr_data_Ce = std / vsnr_data_mL;
+    	
+    	// if the distortion contrast is suprathreshold
+    	// (i.e., if the distortions are visible)...
+    	if (vsnr_data_Ce > vsnr_data_CTe) {
+    	  // compute the distortion contrast at each scale
+          double LL0[][] = new double[yDim][xDim];
+          for (y = 0; y < yDim; y++) {
+        	  for (x = 0; x < xDim; x++) {
+        		  index = x + y * xDim;
+        		  LL0[y][x] = err_img[index];
+        	  }
+          }
+    	  double err_bands[][][][] = imdwt(LL0, vsnr_data_num_levels);
+    	  double vsnr_data_Ces[] = new double[vsnr_data_num_levels];
+    	  for (s = 0; s < vsnr_data_num_levels; s++) {
+              for (or = 0; or < 3; or++) {
+              // estimate the contrast at scale s, orient o
+              	// Standard deviation normalized by N rather than N-1
+              	total = 0.0;
+                  for (y = 0; y < err_bands[s][or].length; y++) {
+                  	for (x = 0; x < err_bands[s][or][0].length; x++) {
+                  	    total += err_bands[s][or][y][x];
+                  	} // for (x = 0; x < err_bands[s][or][0].length; x++)
+                  } // for (y = 0; y < err_bands[s][or].length; y++) 
+                  mean = total/(err_bands[s][or].length * err_bands[s][or][0].length);
+                  total = 0.0;
+                  for (y = 0; y < err_bands[s][or].length; y++) {
+                  	for (x = 0; x < err_bands[s][or][0].length; x++) {
+                  	    diff = err_bands[s][or][y][x] - mean;
+                  	    total += diff*diff;
+                  	} // for (x = 0; x < err_bands[s][or][0].length; x++)
+                  } // for (y = 0; y < err_bands[s][or].length; y++) 
+                  std = Math.sqrt(total/(err_bands[s][or].length * err_bands[s][or][0].length));	
+                 
+          		c = std/(vsnr_data_zeta * vsnr_data_filter_gains[s]);
+          		vsnr_data_Ces[s] = vsnr_data_Ces[s] + c*c;
+              } // for (or = 0; or < 3; or++)
+          } // for (s = 0; s < vsnr_data_num_levels; s++)
+    	  
+    	  for (s = 0; s < vsnr_data_num_levels; s++) {
+    	      vsnr_data_Ces[s] = Math.sqrt(vsnr_data_Ces[s]);
+    	  }
+    	  
+    	  // compute the actual CSNRs
+    	  res = new double[vsnr_data_num_levels];
+    	  for (s = 0; s < vsnr_data_num_levels; s++) {
+    	      res[s] = vsnr_data_Cis[s]/ vsnr_data_Ces[s];
+    	  }
+    	}
+    	else {
+    	  double lum_diff = Math.abs(mean_err_img_lum - vsnr_data_mL);
+    	  if (lum_diff / vsnr_data_mL < 0.01) {
+    	    // distortions are subthreshold (undetectable)
+    	    res = new double[] {-1};
+    	  }
+    	  else {
+    	    // punt to Weber's law for brightness-only differences
+    	    res = new double [] {1.5};
+    	    vsnr_data_Ci = Math.pow(10,(vsnr_data_mL / lum_diff));
+    	  }
+    	}
+        return res;
+
 
     }
     
@@ -5613,9 +5895,7 @@ public class ImageQuality extends AlgorithmBase {
     	double diff;
     	double c;
     	double total = 0.0;
-    	double vsnr_data_mX;
     	double src_img_lum[];
-    	double vsnr_data_mL;
     	double std;
     	double refBuffer[] = null;
     	if (isColor) {
@@ -5650,10 +5930,10 @@ public class ImageQuality extends AlgorithmBase {
         	total += diff*diff;
         }
         std = Math.sqrt(total/length);	
-        double vsnr_data_Ci = std/vsnr_data_mL;
+        vsnr_data_Ci = std/vsnr_data_mL;
     	
         // zeta value used to estimate image contrast at each scale
-        double vsnr_data_zeta = vsnr_data_mL *
+        vsnr_data_zeta = vsnr_data_mL *
           Math.pow((vsnr_data_b + vsnr_data_k*vsnr_data_mX),(1 - vsnr_data_g)) /
           (vsnr_data_k * vsnr_data_g);  
 
@@ -5690,7 +5970,7 @@ public class ImageQuality extends AlgorithmBase {
 
         double vsnr_data_src_bands[][][][] = imdwt(LL0, vsnr_data_num_levels);
         
-        double vsnr_data_Cis[] = new double[vsnr_data_num_levels];
+        vsnr_data_Cis = new double[vsnr_data_num_levels];
         for (s = 0; s < vsnr_data_num_levels; s++) {
             for (or = 0; or < 3; or++) {
             // estimate the contrast at scale s, orient o
@@ -5715,11 +5995,44 @@ public class ImageQuality extends AlgorithmBase {
         		vsnr_data_Cis[s] = vsnr_data_Cis[s] + c*c;
             } // for (or = 0; or < 3; or++)
         } // for (s = 0; s < vsnr_data_num_levels; s++)
+        
+        for (s = 0; s < vsnr_data_num_levels; s++) {
+        	vsnr_data_Cis[s] = Math.sqrt(vsnr_data_Cis[s]);	
+        }
+        
+        // compute the total distortion contrast threshold
+        double ctsnrs = best_csnrs(0);
+        double cTes[] = new double[vsnr_data_num_levels];
+        double totalSquared = 0.0;
+        for (s = 0; s < vsnr_data_num_levels; s++) {
+            cTes[s] = vsnr_data_Cis[s]/ ctsnrs;
+            totalSquared += (cTes[s]*cTes[s]);
+        }
+        vsnr_data_CTe = Math.sqrt(totalSquared);
+
     }
+    
+    private double best_csnrs(double v_idx) {
+            int i;
+    		double a0 = 59.8;
+    		double a1 = -0.1258; 
+    		double a2 = -0.1087;
+
+    		double b2 = (-1 - a2)*v_idx + a2;
+    		double b1 = (1 - a1)*v_idx + a1;
+    		double b0 = -a0*v_idx + a0;  
+     
+    		double res = 0.0;
+    		for (i = 0; i < vsnr_data_fs.length; i++) {
+    		    res = Math.max(res, b0*(Math.pow(vsnr_data_fs[i],(b2*Math.log(vsnr_data_fs[i]) + b1))));
+    		}
+    		return res;
+    }
+
     
     private double[][][][] imdwt(double LL0[][], int num_levels) {
     	int i, s, num_orients, or;
-        int num_bands = 6*(num_levels-1)+1;
+        int num_bands = 6*num_levels+1;
         double bands[][][] = new double[num_bands][][];
         int cx = LL0[0].length; // image width
         int cy = LL0.length; // image height
