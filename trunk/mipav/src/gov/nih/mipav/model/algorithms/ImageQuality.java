@@ -6043,7 +6043,7 @@ public class ImageQuality extends AlgorithmBase {
             // make room for the L and H subbands
     		bands[i] = new double[cy][half_cx];
     		bands[i+1] = new double[cy][half_cx];
-	        // make room for the HH, HL, HL, and LL subbands
+	        // make room for the HH, HL, LH, and LL subbands
 	        bands[i+2] = new double[half_cy][half_cx];
 	        bands[i+3] = new double[half_cy][half_cx];
 	        bands[i+4] = new double[half_cy][half_cx];
