@@ -1510,6 +1510,21 @@ public class ImageQuality extends AlgorithmBase {
 				results);
 		iq.runAlgorithm();
 		
+		String referenceFileDir = "C:/Image Quality/tid2008/reference_images/";
+		String distortedFileDir = "C:/Image Quality/tid2008/distorted_images/";
+		final FileIO fileIO = new FileIO();
+		fileIO.setQuiet(true);
+    	fileIO.setSuppressProgressBar(true);
+    	ModelImage colorRef = fileIO.readJimi("I01.BMP", referenceFileDir, false);
+    	ModelImage colorA = fileIO.readJimi("I01_01_1.BMP", distortedFileDir, false);
+    	iq = new ImageQuality(colorRef, colorA, metrics, ws, k1,k2,sigma,r,win,sigma_nsq,subbands,M,level,weight,method,VA,
+    			alpha, vsnr_data_b, vsnr_data_k, vsnr_data_g, vsnr_data_r, vsnr_data_v,
+				vsnr_data_num_levels, vsnr_data_filter_gains, 
+    			results);
+		iq.runAlgorithm();
+		System.out.println("Website VSNR for I01_01_1.BMP = 31.0664");
+		System.out.println("Calculated VSNR for I01_01_1.BMP = " + results[0]);
+		
 		
 		if (testsFailed > 0) {
 			System.err.println(testsFailed + " tests failed for VSNR");
@@ -6301,6 +6316,67 @@ public class ImageQuality extends AlgorithmBase {
 	
     }
 
-    
+	 // The Reconstruct() method uses the last four buffers (HHn, HLn,
+	 // LHn, LLn) in the list as the starting point, and then inverse
+	 // transforms their columns, storing the result in the fourth and
+	 // fifth from the last positions (Hn and Ln, repsectively).  It
+	 // then inverse transforms these results, storing the result in
+	 // the LL(n-1) position.  This latter result is then used to
+	 // reconstruct the next level.  Upon completion, the inverse
+	 // transformed image is stored in the first position of the list.
+     private void Reconstruct(double bands[][][], int num_scales) {
+    	  int scale_index;
+    	  for ( scale_index = num_scales; scale_index >= 1; --scale_index) {
+    		// extract the HH and HL subbands from the list
+    		    double HH[][] = bands[6*scale_index-3];
+    		    double HL[][] = bands[6*scale_index-2];
+    		    //
+    		    // extract the H subband from the list
+    		    // (this buffer will be overwritten)
+    		    //
+    		    double H[][] = bands[6*scale_index-4];
+    		    //
+    		    // upsample vertically, filter the columns, and then
+    		    // sum the results (which are stored in H)
+    		    // H = filter(HL_up_2 w/ filt7) + filter(HH_up_2 w/ filt9)
+    		    //
+    		    DoUntransformCols(H, HL, HH);
+
+    		    // extract the LH and LL subbands from the list
+    		    double LH[][] = bands[6*scale_index-1];
+    		    double LL[][] = bands[6*scale_index];
+    		    //
+    		    // extract the L subband from the list
+    		    // (this buffer will be overwritten)
+    		    //
+    		    double L[][] = bands[6*scale_index-5];
+    		    //
+    		    // upsample vertically, filter the columns, and then
+    		    // sum the results (which are stored in L)
+    		    // L = filter(LL_up_2 w/ filt7) + filter(LH_up_2 w/ filt9)
+    		    //
+    		    DoUntransformCols(L, LL, LH);
+
+    		    //
+    		    // extract the buffer for the reconstructed image
+    		    // (this buffer will be overwritten)
+    		    //
+    		    double LLprev[][] = bands[6*(scale_index - 1)];
+    		    //
+    		    // upsample horizontally, filter the rows, and then
+    		    // sum the results (which are stored in LL_prev_scale)
+    		    // LLprev = filter(L_up_2 w/ filt7) + filter(H_up_2 w/ filt9)
+    		    //
+    		    DoUntransformRows(LLprev, L, H);
+          }
+     } // Reconstruct
+     
+     private void DoUntransformCols( double Buffer[][], double SBuffer[][], double DBuffer[][]) {
+    	 
+     }
+
+     private void DoUntransformRows( double Buffer[][], double SBuffer[][], double DBuffer[][]) {
+    	 
+     }
     
 }
