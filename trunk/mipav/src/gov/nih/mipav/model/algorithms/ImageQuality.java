@@ -6103,6 +6103,47 @@ public class ImageQuality extends AlgorithmBase {
     		 
     	} // for (scale_index = 0; scale_index < vsnr_data_num_levels; ++scale_index)
     	
+    	boolean testWithReconstruct = false;
+    	if (testWithReconstruct) {
+    		// Ratio of error norm to original norm = 1.0811313924279027E-15
+			// VSNR = 118.64166398052696
+			// Ratio of error norm to original norm = 1.046812260394941E-15
+			// VSNR = 98.63308987130611
+			// Ratio of error norm to original norm = 1.046812260394941E-15
+			// Ratio of error norm to original norm = 9.910623761895389E-16
+			// VSNR = 7.2918431170333
+			// Ratio of error norm to original norm = 1.046812260394941E-15
+			// Ratio of error norm to original norm = 1.0317699615517395E-15
+			// VSNR = 35.39332288920834
+			// Ratio of error norm to original norm = 1.0844799139090019E-15
+			// Ratio of error norm to original norm = 1.06215200623753E-15
+    		int x,y;
+    	     double bandsReconstruct[][][] = new double[num_bands][][];
+    	     for (s = 0; s < num_bands; s++) {
+    	    	 bandsReconstruct[s] = new double[bands[s].length][bands[s][0].length];
+    	    	 for (y = 0; y < bands[s].length; y++) {
+    	    		 for (x = 0; x < bands[s][0].length; x++) {
+    	    		     bandsReconstruct[s][y][x] = bands[s][y][x];	 
+    	    		 }
+    	    	 }
+    	     }
+    	     Reconstruct(bandsReconstruct, vsnr_data_num_levels);
+    	     double LL0Reconstruct[][] = bandsReconstruct[0];
+    	     double reconstructError[][] = new double[yDim][xDim];
+    	     double LL0TotalSquared = 0;
+    	     double errorTotalSquared = 0;
+    	     for (y = 0; y < yDim; y++) {
+    	         for (x = 0; x < xDim; x++) {
+    	        	 reconstructError[y][x] = LL0Reconstruct[y][x] - LL0[y][x];
+    	        	 LL0TotalSquared += (LL0[y][x]*LL0[y][x]);
+    	        	 errorTotalSquared += (reconstructError[y][x]*reconstructError[y][x]);
+    	         }
+    	     }
+    	     double normRatio = Math.sqrt(errorTotalSquared/LL0TotalSquared);
+    	     System.out.println("Ratio of error norm to original norm = " + normRatio);
+    	     UI.setDataText("Ratio of error norm to original norm = " + normRatio + "\n");
+    	} // if (testWithReconstruct)
+    	
     	double p_cell_mx[][][][] = new double[num_levels][][][];
         for (s = 1; s <= num_levels; ++s)  {
     	    if (s == num_levels) {
@@ -6372,11 +6413,185 @@ public class ImageQuality extends AlgorithmBase {
      } // Reconstruct
      
      private void DoUntransformCols( double Buffer[][], double SBuffer[][], double DBuffer[][]) {
-    	 
+    	   //
+    	   // NOTE: all widths are the same while Buffer's
+    	   // height is 2x that of SBuffer and DBuffer
+    	   //
+    	   final int sw = SBuffer[0].length;
+    	   final int sh = SBuffer.length;
+    	   final int sh_minus_one = sh - 1;
+    	   int y,x;
+
+    	   if (GWAVELIFT_NORM_1_1) {
+     		  final double B0 =       1.0/1.23017410558578;
+     		  final double B1 =       1.0/1.62578613134411;
+     		  for (y = 0; y < SBuffer.length; y++) {
+     			  for (x = 0; x < SBuffer[0].length; x++) {
+     				  SBuffer[y][x] /= B0;  
+     			  }
+     		  }
+     		  for (y = 0; y < DBuffer.length; y++) {
+     			  for (x = 0; x < DBuffer[0].length; x++) {
+     				  DBuffer[y][x] /= B1;  
+     			  }
+     		  }
+     	    }
+     	    else {
+     		  final double K =        0.8698643;
+     		  final double KINV =     1.1496046;
+     		  for (y = 0; y < SBuffer.length; y++) {
+     			  for (x = 0; x < SBuffer[0].length; x++) {
+     				  SBuffer[y][x] *= K;  
+     			  }
+     		  }
+     		  for (y = 0; y < DBuffer.length; y++) {
+     			  for (x = 0; x < DBuffer[0].length; x++) {
+     				  DBuffer[y][x] *= -KINV;  
+     			  }
+     		  }
+     	    }
+
+    	   int ysave0;
+    	   double s_res, d_res, d_res0, d_res_last;
+    	   for (x = 0; x < sw; ++x)
+    	   {
+
+    	     SBuffer[0][x] -= (TWODELTA * DBuffer[0][x]);
+    	     for (y = 1; y < sh; ++y)
+    	     {
+    	       ysave0 = y;
+    	       SBuffer[y][x] -= DELTA * (
+    	         DBuffer[ysave0][x] + DBuffer[ysave0 - 1][x]);
+    	     }
+
+    	     d_res0 = d_res_last =
+    	       DBuffer[0][x] - GAMMA * (SBuffer[0][x] + SBuffer[1][x]);
+    	     DBuffer[0][x] = d_res_last;
+    	     for (y = 1; y < sh_minus_one; ++y)
+    	     {
+    	       ysave0 = y;
+
+    	       s_res = SBuffer[ysave0][x];
+    	       d_res = DBuffer[ysave0][x] -
+    	         GAMMA * (s_res + SBuffer[ysave0 + 1][x]);
+
+    	       DBuffer[ysave0][x] = d_res;
+    	         Buffer[y << 1][x] =  s_res - BETA * (d_res + d_res_last);
+    	       d_res_last = d_res;
+    	     }
+    	     d_res =
+    	       DBuffer[sh_minus_one][x] -
+    	       TWOGAMMA * SBuffer[sh_minus_one][x];
+    	       DBuffer[sh_minus_one][x] =  d_res;
+    	       Buffer[0][x]= SBuffer[0][x] - TWOBETA * d_res0;
+    	       Buffer[sh_minus_one << 1][x] =
+    	       SBuffer[sh_minus_one][x] -
+    	       BETA * (d_res + d_res_last);
+
+    	     for (y = 0; y < sh_minus_one; ++y)
+    	     {
+    	       ysave0 = (y << 1);
+    	       Buffer[ysave0 + 1][x] =
+    	         DBuffer[y][x] - ALPHA * (
+    	           Buffer[ysave0][x] + Buffer[ysave0 + 2][x]);
+    	     }
+    	     Buffer[(sh << 1) - 1][x] =
+    	       DBuffer[sh_minus_one][x] -
+    	       TWOALPHA * Buffer[(sh << 1) - 2][x];
+    	   }
+	 
      }
 
      private void DoUntransformRows( double Buffer[][], double SBuffer[][], double DBuffer[][]) {
-    	 
+    	   //
+    	   // NOTE: widths and heights are the same
+    	   //
+    	   final int sw = SBuffer[0].length;
+    	   final int sh = SBuffer.length;
+    	   final int sw_minus_one = sw - 1;
+
+    	   double px_row[];
+     	   double pd_row[];
+     	   double ps_row[];
+     	   int y,x;
+          
+     	  if (GWAVELIFT_NORM_1_1) {
+     		  final double B0 =       1.0/1.23017410558578;
+     		  final double B1 =       1.0/1.62578613134411;
+     		  for (y = 0; y < SBuffer.length; y++) {
+     			  for (x = 0; x < SBuffer[0].length; x++) {
+     				  SBuffer[y][x] /= B0;  
+     			  }
+     		  }
+     		  for (y = 0; y < DBuffer.length; y++) {
+     			  for (x = 0; x < DBuffer[0].length; x++) {
+     				  DBuffer[y][x] /= B1;  
+     			  }
+     		  }
+     	    }
+     	    else {
+     		  final double K =        0.8698643;
+     		  final double KINV =     1.1496046;
+     		  for (y = 0; y < SBuffer.length; y++) {
+     			  for (x = 0; x < SBuffer[0].length; x++) {
+     				  SBuffer[y][x] *= K;  
+     			  }
+     		  }
+     		  for (y = 0; y < DBuffer.length; y++) {
+     			  for (x = 0; x < DBuffer[0].length; x++) {
+     				  DBuffer[y][x] *= -KINV;  
+     			  }
+     		  }
+     	    }
+    	   
+    	   double s_res, d_res, old_d_res, d_res0;
+    	   for (y = 0; y < sh; ++y)
+    	   {
+    	     px_row = Buffer[y];
+    	     pd_row = DBuffer[y];
+    	     ps_row = SBuffer[y];
+
+    	     SBuffer[y][0] -= (TWODELTA * pd_row[0]);
+    	     for (x = 1; x < sw; ++x)
+    	     {
+    	       SBuffer[y][x] -= DELTA * (
+    	         pd_row[x] + pd_row[x - 1]);
+    	     }
+
+    	     d_res0 = old_d_res =
+    	       pd_row[0] - GAMMA * (ps_row[0] + ps_row[1]);
+    	     pd_row[0] = old_d_res;
+    	     for (x = 1; x < sw_minus_one; ++x)
+    	     {
+    	       s_res = ps_row[x];
+    	       d_res =
+    	         pd_row[x] -
+    	         GAMMA * (s_res + ps_row[x + 1]);
+
+    	       pd_row[x] = d_res;
+    	       px_row[x << 1] = s_res - BETA * (d_res + old_d_res);
+    	       old_d_res = d_res;
+    	     }
+    	     d_res =
+    	       pd_row[sw_minus_one] -
+    	       TWOGAMMA * ps_row[sw_minus_one];
+    	     pd_row[sw_minus_one] = d_res;
+    	     px_row[0] = ps_row[0] - TWOBETA * d_res0;
+    	     px_row[sw_minus_one << 1] =
+    	       ps_row[sw_minus_one] - BETA * (d_res + old_d_res);
+
+    	     for (x = 0; x < sw_minus_one; ++x)
+    	     {
+    	       px_row[(x << 1) + 1] =
+    	         pd_row[x] - ALPHA * (
+    	           px_row[x << 1] +
+    	           px_row[(x << 1) + 2]);
+    	     }
+    	     px_row[(sw << 1) - 1] =
+    	       pd_row[sw_minus_one] -
+    	       TWOALPHA * px_row[(sw << 1) - 2];
+    	   }
+	 
      }
     
 }
