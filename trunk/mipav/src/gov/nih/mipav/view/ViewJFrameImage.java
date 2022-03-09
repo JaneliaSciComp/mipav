@@ -1327,6 +1327,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         		return;
         	}
         	new JDialogBRISK(this, getActiveImage());
+        } else if (command.equals("PPDenoising")) {
+        	new JDialogPhasePreservingDenoising(this, getActiveImage());
         } else if (command.equals("RegionsFromPartial")) {
         	new JDialogRegionsFromPartialBorders(this, getActiveImage());
         } else if (command.equals("RegionMergingMelting")) {
