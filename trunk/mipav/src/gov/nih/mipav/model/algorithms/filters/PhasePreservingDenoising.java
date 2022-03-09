@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
@@ -112,8 +113,14 @@ SOFTWARE.
     	int length;
     	double img[];
     	double imgImag[];
-    	int i,y,x,or;
+    	int i,y,x,or,s,index;
     	double angl;
+    	double fo;
+    	double wavelength;
+    	double median;
+    	double T;
+    	double V;
+    	double VImag;
     	if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -177,38 +184,38 @@ SOFTWARE.
 		// normalized to +/-0.5.  The following code adjusts things appropriately for
 		// odd and even values of yDim and xDim so that the 0 frequency point is
 		// placed appropriately.
-		double fxrange[] = new double[2*xDim-1];
+		double fxrange[] = new double[xDim];
 		if ((xDim % 2) == 1) {
 		    fxrange[0] = -(xDim-1.0)/(2.0*xDim);
 		}
 		else {
 			fxrange[0] = -0.5;
 		}
-		for (i = 1; i < 2*xDim-1; i++) {
-			fxrange[i] = fxrange[0] + i/(2.0*xDim);
+		for (i = 1; i < xDim; i++) {
+			fxrange[i] = fxrange[0] + (double)i/((double)xDim);
 		}
 		
-		double fyrange[] = new double[2*yDim-1];
+		double fyrange[] = new double[yDim];
 		if ((yDim % 2) == 1) {
 			fyrange[0] = -(yDim-1.0)/(2.0*yDim);
 		}
 		else {
 			fyrange[0] = -0.5;
 		}
-		for (i = 1; i < 2*yDim-1; i++) {
-			fyrange[i] = fyrange[0] + i/(2.0*yDim);
+		for (i = 1; i < yDim; i++) {
+			fyrange[i] = fyrange[0] + (double)i/((double)yDim);
 		}
 		;
-		double fx[][] = new double[2*yDim-1][2*xDim-1];
-		for (y = 0; y < 2*yDim-1; y++) {
-			for (x = 0; x < 2*xDim-1; x++) {
+		double fx[][] = new double[yDim][xDim];
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
 				fx[y][x] = fxrange[x];
 			}
 		}
 		
-		double fy[][] = new double[2*yDim-1][2*xDim-1];
-		for (y = 0; y < 2*yDim-1; y++) {
-			for (x = 0; x < 2*xDim-1; x++) {
+		double fy[][] = new double[yDim][xDim];
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
 				fy[y][x] = fyrange[y];
 			}
 		}
@@ -220,20 +227,20 @@ SOFTWARE.
 		
 		// Construct spatial frequency filters in terms of normalized radius from
 		// center
-		double freq[][] = new double[2*yDim-1][2*xDim-1];
-		for (y = 0; y < 2*yDim-1; y++) {
-			for (x = 0; x < 2*xDim-1; x++) {
+		double freq[][] = new double[yDim][xDim];
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
 				freq[y][x] = Math.sqrt(fx[y][x]*fx[y][x] + fy[y][x]*fy[y][x]);
 			}
 		}
 		
 		// Generate arrays of filter grid angles
-		double sintheta[][] = new double[2*yDim-1][2*xDim-1];
-		double costheta[][] = new double[2*yDim-1][2*xDim-1];
+		double sintheta[][] = new double[yDim][xDim];
+		double costheta[][] = new double[yDim][xDim];
 		// Avoid divide by zero
 		freq[0][0] = 1.0;
-		for (y = 0; y < 2*yDim-1; y++) {
-			for (x = 0; x < 2*xDim-1; x++) {
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
 				sintheta[y][x] = fx[y][x]/freq[y][x];
 				costheta[y][x] = fy[y][x]/freq[y][x];
 			}
@@ -242,13 +249,13 @@ SOFTWARE.
 		freq[0][0] = 0.0;
 		
 		// Response at each orientation
-		double totalEnergy[][] = new double[yDim][xDim];
-		double totalEnergyImag[][] = new double[yDim][xDim];
+		double totalEnergy[] = new double[length];
+		double totalEnergyImag[] = new double[length];
 		double filter[][] = new double[yDim][xDim];
-		double angfilter[][] = new double[yDim][xDim];
-		double EO[][] = new double[yDim][xDim];
-		double EOImag[][] = new double[yDim][xDim];
-		double aEO[][] = new double[yDim][xDim];
+		double angfilter[][];
+		double EO[] = new double[length];
+		double EOImag[] = new double[length];
+		double aEO[] = new double[length];
 		
 		// make main scope
 		double RayMean = 0.0;
@@ -259,7 +266,153 @@ SOFTWARE.
 			// Calculate the filter angle
 			angl = (or-1.0)*Math.PI/norient;
 			// Generate angular filter
+			angfilter = gaussianangularfilter(angl, thetaSigma, sintheta, costheta);
+			
+			// Initialize filter wavelength
+			wavelength = minwavelength;
+			
+			for (s = 1; s <= nscale; s++) {
+			    // Construct the filter = logGabor filter * angular filter
+				fo = 1.0/wavelength;
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						filter[y][x] = loggabor(freq[y][x], fo, sigmaonf) * angfilter[y][x];
+					}
+				}
+				
+				// Convolve image with even and odd filters returning the result in EO
+				for (y = 0; y < yDim; y++) {
+					for (x = 0; x < xDim; x++) {
+						index = x + y * xDim;
+						EO[index] = img[index]*filter[y][x];
+						EOImag[index] = imgImag[index]*filter[y][x];
+					}
+				}
+				
+				FFTUtility ifft = new FFTUtility(EO, EOImag, yDim, xDim, 1, 1, FFTUtility.FFT);
+				ifft.setShowProgress(false);
+				ifft.run();
+				ifft.finalize();
+				ifft = null;
+				ifft = new FFTUtility(EO, EOImag, 1, yDim, xDim, 1, FFTUtility.FFT);
+				ifft.setShowProgress(false);
+				ifft.run();
+				ifft.finalize();
+				ifft = null;
+				
+				for (i = 0; i < length; i++) {
+				    aEO[i] = Math.sqrt(EO[i]*EO[i] + EOImag[i]*EOImag[i]);
+			    }
+				
+				if (s == 1) {
+					// Estimate the mean and variance in the amplitude
+					// response of the smallest scale filter pair at this
+					// orientation.  If the noise is Gaussian the amplitude
+					// response will have a Rayleigh distribution.  We
+					// calculate the median amplitude response as this is a
+					// robust statistic.  From this we estimate the mean
+					// and variance of the Rayleigh distribution.
+					double aEOmedian[] = new double[length];
+					for (i = 0; i < length; i++) {
+						aEOmedian[i] = aEO[i];
+					}
+					Arrays.sort(aEOmedian);
+					if ((length % 2) == 1) {
+					   median = aEOmedian[(length-1)/2];	
+					}
+					else {
+						median = (aEOmedian[length/2] + aEOmedian[(length/2)-1])/2.0;
+					}
+					RayMean = median * 0.5 * Math.sqrt(-Math.PI/Math.log(0.5));
+					RayVar = (4.0 - Math.PI)*(RayMean*RayMean)/Math.PI;
+				} // if (s == 1)
+				
+				// Compute soft threshold noting that the effect of noise
+				// is inversely proportional to the filter bandwidth/center
+				// frequency.  (If the noise has a uniform spectrum)
+				T = (RayMean + k*Math.sqrt(RayVar))/Math.pow(mult,(s-1.0));
+				
+				for (i = 0; i < length; i++) {
+					if (aEO[i] > T) {
+					    // Complex noise vector to subtract = T * normalize(EO)
+						// times degree of softness
+						V = softness*T*EO[i]/(aEO[i] + epsilon);
+						VImag = softness*T*EOImag[i]/(aEO[i] + epsilon);
+						// subtract noise vector
+						EO[i] -= V;
+						EOImag[i] -= VImag;
+						totalEnergy[i] += EO[i];
+						totalEnergyImag[i] += EOImag[i];
+					}
+					// else {
+					//    aEO is less than T so this componet makes no contribution to the totalEnergy
+					// }
+				} // for (i = 0; i < length; i++)
+				// Wavelength of next filter
+				wavelength *= mult;
+			} // for (s = 1; s <= nscale; s++)
 		} // for (or = 1; or <= norient; or++)
+		
+        try {
+        	targetImage.importData(0, totalEnergy, true);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on targetImage.importData(0, totalEnergy, true)");
+        	setCompleted(false);
+        	return;
+        }
+        setCompleted(true);
+        return;
+    }
+    
+    private double loggabor(double f, double fo, double sigmaOnf) {
+    	// The logarithmic Gabor filter in the frequency domain
+    	// Arguments:
+    	// f - Frequency to evaluate the function at.
+    	// fo - Center frequency of filter
+    	// sigmaOnf - Ratio of the standard deviation of the Gaussian
+    	//  describing the log Gabor filter's transfer function
+    	//  in the frequency domain the the filter center frequency
+    	
+    	// sigmaOnf = 0.75 gives a filter bandwidth of about 1 octave.
+    	// sigmaOnf = 0.55 gives a filter bandwidth of about 2 octaves.
+    	if (f < 2.220446049250313e-16) {
+    		return 0.0;
+    	}
+    	else {
+    		double lognum = Math.log(f/fo);
+    		double logdenom = Math.log(sigmaOnf);
+    		return Math.exp((-lognum*lognum)/(2.0*logdenom*logdenom));
+    	}
+    }
+    
+    private double[][] gaussianangularfilter(double angl, double thetaSigma, 
+    		double sintheta[][], double costheta[][]) {
+    	int y,x;
+    	double ds,dc,dtheta;
+        // Orientation selective frequency domain filter with Gaussian windowing function.
+    	// Arguments:
+    	// angl - Orientation of the filter (radians)
+    	// thetaSigma - Standard deviation of angular Gaussian window function.
+    	// sintheta, costheta - Grids as returned by gridangles()
+    	double sinangl = Math.sin(angl);
+    	double cosangl = Math.cos(angl);
+    	double fltr[][] = new double[sintheta.length][sintheta[0].length];
+    	
+    	// For each point in the filter matrix calculate the angular
+    	// distance from the specified filter orientation.  To overcome
+    	// the angular wrap-around problem sin difference and cosine
+    	// difference values are first computed and then the atan2
+    	// function is used to determine the angular distance.
+    	for (y = 0; y < sintheta.length; y++) {
+    		for (x = 0; x < sintheta[0].length; x++) {
+    		    ds = sintheta[y][x] * cosangl - costheta[y][x] * sinangl; // Difference in sine
+    		    dc = costheta[y][x] * cosangl + sintheta[y][x] * sinangl; // Difference in cosine
+    		    dtheta = Math.atan2(ds,dc);
+    		    fltr[y][x] = Math.exp((-dtheta*dtheta)/(2.0*thetaSigma*thetaSigma));
+    		}
+    	}
+    	return fltr;
     }
     
     private double[][] ifftshift(double in[][]) {
