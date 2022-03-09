@@ -2,16 +2,13 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.io.IOException;
 import java.util.Arrays;
 
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJProgressBar;
+//import gov.nih.mipav.view.ViewJProgressBar;
 
 public class PhasePreservingDenoising extends AlgorithmBase {
 	
