@@ -236,6 +236,7 @@ public class ViewMenuBar {
 								// null, null, null),
 								menuBuilder.buildMenuItem("Biorthogonal wavelets", "biorthogonalWavelets", 0, null, false),
 								menuBuilder.buildMenuItem("Multiscale products", "waveletMultiscaleProducts", 0, null, false), 
+								menuBuilder.buildMenuItem("Phase preserving denoising", "PPDenoising", 0, null, false),
 								menuBuilder.buildMenuItem("PyWavelets", "pyWavelets", 0, null, false),
 								menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),
 								}),
