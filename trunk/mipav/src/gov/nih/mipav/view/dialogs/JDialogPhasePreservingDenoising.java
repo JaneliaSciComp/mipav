@@ -720,7 +720,7 @@ public class JDialogPhasePreservingDenoising extends JDialogScriptableBase imple
 	    public ActionMetadata getActionMetadata() {
 	        return new MipavActionMetadata() {
 	            public String getCategory() {
-	                return new String("Algorithms.Filters)");
+	                return new String("Algorithms.Filters (wavelets)");
 	            }
 
 	            public String getDescription() {
