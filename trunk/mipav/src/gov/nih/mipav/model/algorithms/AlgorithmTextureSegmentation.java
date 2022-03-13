@@ -299,9 +299,9 @@ public class AlgorithmTextureSegmentation extends AlgorithmBase implements Algor
                     varZ = (7.787 * varZ) + (16.0/116.0);
                 }
                 
-                L = (float)((116.0 * varY) - 16.0);
-                a = (float)(500.0 * (varX - varY));
-                b = (float)(200.0 * (varY - varZ));
+                L = ((116.0 * varY) - 16.0);
+                a = (500.0 * (varX - varY));
+                b = (200.0 * (varY - varZ));
                 
                 if (L < minL) {
                     minL = L;
