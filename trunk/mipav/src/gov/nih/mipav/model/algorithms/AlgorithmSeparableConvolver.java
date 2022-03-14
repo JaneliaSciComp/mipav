@@ -500,6 +500,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 }
 
                 for (int i = start; i < end; i += cFactor) {
+                	if ( i + combined >= inputBuffer.length ) break;
                     sum += kernelBuffer[0][count] * inputBuffer[i + combined];
 
                     if (kernelBuffer[0][count] >= 0) {
@@ -511,7 +512,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     count++;
                 }
 
-                outputBuffer[pix] = sum / norm;
+                if ( pix < outputBuffer.length ) outputBuffer[pix] = sum / norm;
             } else {
                 outputBuffer[pix] = inputBuffer[pix];
             }
@@ -566,6 +567,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 }
 
                 for (int i = start; i < end; i += offset) {
+                	if ( i + combined >= outputBuffer.length ) break;
                     sum += kernelBuffer[1][count] * outputBuffer[i + combined];
 
                     if (kernelBuffer[1][count] >= 0) {
@@ -578,7 +580,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 }
 
                 // use imgBuffer as a temp buffer since we won't need to use it again
-                inputBuffer[pix] = sum / norm;
+                if ( pix < inputBuffer.length ) inputBuffer[pix] = sum / norm;
             } else {
                 inputBuffer[pix] = outputBuffer[pix];
             }
@@ -648,7 +650,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     count++;
                 }
 
-                outputBuffer[pix] = sum / norm;
+                if ( pix < outputBuffer.length ) outputBuffer[pix] = sum / norm;
             } else {
                 outputBuffer[pix] = inputBuffer[pix];
             }

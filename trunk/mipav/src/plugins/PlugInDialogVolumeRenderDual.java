@@ -3256,7 +3256,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		// integratedData.volumeImage.getLUT() );
 		integratedData.lutHistogramPanel = new JFrameHistogram(this, integratedData.volumeImage.GetImage(), null,
 				integratedData.volumeImage.getLUT(), null);
-		integratedData.lutHistogramPanel.histogramLUT(true, false, !integratedData.volumeImage.GetImage().isColorImage());
+		integratedData.lutHistogramPanel.histogramLUT(true, false, false);//!integratedData.volumeImage.GetImage().isColorImage());
 
 		if (integratedData.volumeImage.GetImage().isColorImage()) {
 			integratedData.displayBothChannels.setSelected(true);
