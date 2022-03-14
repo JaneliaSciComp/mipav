@@ -117,9 +117,10 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		double scaleMax;
 		float buffer[];
 		double Labbuf[][];
-		int i;
+		int i,j,index,n;
 		double varR;
 		double varG;
+		int x,y;
 		double varB;
 		double X,Y,Z;
 		double varX, varY, varZ;
@@ -136,7 +137,41 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         double maxa = -Double.MAX_VALUE;
         double minb = Double.MAX_VALUE;
         double maxb = -Double.MAX_VALUE;
-		if (srcImage == null) {
+        int halfmw1;
+        int halfmw2;
+        int ymin;
+        int ymax;
+        int xmin;
+        int xmax;
+        int medlength;
+        double med[] = null;
+        double medarray[];
+        int medptr;
+        double S;
+        int nodeCols;
+        int nodeRows;
+        double vSpacing;
+        double C[][];
+        int l[][];
+        double d[][];
+        int kk;
+        double r;
+        int ri;
+        double c;
+        int ci;
+        int cc;
+        int rr;
+        int intS;
+        int rmin;
+        int rmax;
+        int cmin;
+        int cmax;
+        int rlen;
+        int clen;
+        double subim[][][];
+        double Ckk[];
+        double D[][];
+        if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
 
@@ -277,6 +312,300 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
             Labbuf[i/4][1] = a;
             Labbuf[i/4][2] = b;
         } // for (i = 0; i < buffer.length; i += 4)
-}
+		
+		// Apply median filtering to colour components if mw has been supplied
+	    // and/or non-zero
+		if ((mw1 > 0) || (mw2 > 0)) {
+			med = new double[length];
+		}
+		if (mw1 > 0) {
+			halfmw1 = (mw1 -1)/2;
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    	    index = x + y * xDim;
+		    	    ymin = Math.max(0,y-halfmw1);
+		    	    ymax = Math.min(yDim-1,y+halfmw1);
+		    	    xmin = Math.max(0,x-halfmw1);
+	    	    	xmax = Math.min(xDim-1,x+halfmw1);
+	    	    	medlength = (ymax-ymin+1)*(xmax-xmin+1);
+	    	    	medarray = new double[medlength];
+		    	    for (j = ymin, medptr = 0; j <= ymax; y++) {
+		    	    	for (i = xmin; i <= xmax; x++, medptr++) {
+		    	    	    medarray[medptr] = Labbuf[i + j * xDim][0];
+		    	    	}
+		    	    }
+		    	    Arrays.sort(medarray);
+		    	    if ((medlength % 2) == 1) {
+		    	    	med[index] = medarray[(medlength-1)/2];
+		    	    }
+		    	    else {
+		    	    	med[index] = (medarray[medlength/2] + medarray[(medlength/2)-1])/2.0;
+		    	    }
+		    	}
+		    }
+		    for (y = 0; y < yDim; y++) {
+		    	for (x = 0; x < xDim; x++) {
+		    	    index = x + y * xDim;
+		    	    Labbuf[index][0] = med[index];
+		    	}
+		    }
+		} // if (mw1 > 0)
+		if (mw2 > 0) {
+			halfmw2 = (mw2 -1)/2;
+			for (n = 1; n <= 2; n++) {
+			    for (y = 0; y < yDim; y++) {
+			    	for (x = 0; x < xDim; x++) {
+			    	    index = x + y * xDim;
+			    	    ymin = Math.max(0,y-halfmw2);
+			    	    ymax = Math.min(yDim-1,y+halfmw2);
+			    	    xmin = Math.max(0,x-halfmw2);
+		    	    	xmax = Math.min(xDim-1,x+halfmw2);
+		    	    	medlength = (ymax-ymin+1)*(xmax-xmin+1);
+		    	    	medarray = new double[medlength];
+			    	    for (j = ymin, medptr = 0; j <= ymax; y++) {
+			    	    	for (i = xmin; i <= xmax; x++, medptr++) {
+			    	    	    medarray[medptr] = Labbuf[i + j * xDim][n];
+			    	    	}
+			    	    }
+			    	    Arrays.sort(medarray);
+			    	    if ((medlength % 2) == 1) {
+			    	    	med[index] = medarray[(medlength-1)/2];
+			    	    }
+			    	    else {
+			    	    	med[index] = (medarray[medlength/2] + medarray[(medlength/2)-1])/2.0;
+			    	    }
+			    	}
+			    }
+			    for (y = 0; y < yDim; y++) {
+			    	for (x = 0; x < xDim; x++) {
+			    	    index = x + y * xDim;
+			    	    Labbuf[index][n] = med[index];
+			    	}
+			    }
+			} // for (n = 1; n <= 2; n++)
+		} // if (mw2 > 0)
+		
+		// Nominal spacing between grid elements assuming hexagonal grid
+	    S = Math.sqrt(length / (k * Math.sqrt(3.0)/2.0));
+	    
+	    // Get nodes per row allowing a half column margin at one end that alternates
+	    // from row to row
+	    nodeCols = (int)Math.round(xDim/S - 0.5);
+	    // Given an integer number of nodes per row recompute S
+	    S = xDim/(nodeCols + 0.5); 
+
+	    // Get number of rows of nodes allowing 0.5 row margin top and bottom
+	    nodeRows = (int)Math.round(yDim/(Math.sqrt(3.0)/2.0*S));
+	    vSpacing = (double)yDim/(double)nodeRows;
+
+	    // Recompute k
+	    k = nodeRows * nodeCols;
+	    
+	    // Allocate memory and initialise clusters, labels and distances.
+	    C = new double[6][k];          // Cluster centre data  1:3 is mean Lab value,
+	                                   // 4:5 is col, row of centre, 6 is No of pixels
+	    Ckk = new double[6];
+	    // Pixel labels.
+	    l = new int[yDim][xDim];
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		l[y][x] = -1;
+	    	}
+	    }
+	    // Pixel distances from cluster centres.
+	    d = new double[yDim][xDim];
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		d[y][x] = Double.POSITIVE_INFINITY;
+	    	}
+	    }
+	    
+	    // Initialise clusters on a hexagonal grid
+	    kk = 0;
+	    r = vSpacing/2;
+	    rr = (int)Math.round(r)-1;
+	    
+	    for (ri = 1; ri <= nodeRows; ri++) {
+	        // Following code alternates the starting column for each row of grid
+	        // points to obtain a hexagonal pattern. Note S and vSpacing are kept
+	        // as doubles to prevent errors accumulating across the grid.
+	        if ((ri % 2) == 1) {
+	        	c = S/2.0; 
+	        }
+	        else {
+	        	c = S;
+	        }
+	        
+	        for (ci = 1; ci <= nodeCols; ci++) {
+	            cc = (int)Math.round(c)-1; 
+	            index = cc + rr*xDim;
+	            C[0][kk] = Labbuf[index][0];
+	            C[1][kk] = Labbuf[index][1];
+	            C[2][kk] = Labbuf[index][2];
+	            C[3][kk] = cc;
+	            C[4][kk] = rr;
+	            c = c+S;
+	            kk = kk+1;
+	        } // for (ci = 1; ci <= nodeCols; ci++)
+	        
+	        r = r+vSpacing;
+	        rr = (int)Math.round(r)-1;
+	    } // for (ri = 1; ri <= nodeRows; ri++)
+	    
+	    
+	    // Now perform the clustering.  10 iterations is suggested but I suspect n
+	    // could be as small as 2 or even 1
+	    intS = (int)Math.round(S);  // We need S to be an integer from now on
+	    
+	    for (n = 1; n <= nItr; n++) {
+	       for (kk = 0; kk < k; kk++) {  // for each cluster
+
+	           // Get subimage around cluster
+	           rmin = (int)Math.max(C[4][kk]-intS, 0);   
+	           rmax = (int)Math.min(C[4][kk]+S, yDim-1);
+	           if (rmax < rmin) {
+	        	   System.err.println("rmax < rmin");
+	        	   setCompleted(false);
+	        	   return;
+	           }
+	           rlen = rmax-rmin+1;
+	           cmin = (int)Math.max(C[3][kk]-S, 0);   
+	           cmax = (int)Math.min(C[3][kk]+S, xDim-1);
+	           if (cmax < cmin)  {
+	        	   System.err.println("cmax < cmin");
+	        	   setCompleted(false);
+	        	   return;
+	           }
+	           clen = cmax-cmin+1;
+	           subim = new double[rlen][clen][3];
+	           for (y = rmin; y <= rmax; y++) {
+	        	   for (x = cmin; x <= cmax; x++) {
+	        		   index = x + y * xDim;
+	        		   for (i = 0; i < 3; i++) {
+	        			   subim[y-rmin][x-cmin][i] = Labbuf[index][i];
+	        		   }
+	        	   }
+	           }
+	           
+	           // Compute distances D between C(:,kk) and subimage
+	           for (i = 0; i < 6; i++) {
+	        	   Ckk[i] = C[i][kk]; 
+	           }
+	           D = dist(Ckk, subim, rmin, cmin, S, m);
+	           
+
+	           // If any pixel distance from the cluster centre is less than its
+	           // previous value update its distance and label
+	           for (y = rmin; y <= rmax; y++) {
+	        	   for (x = cmin; x <= cmax; x++) {
+	        		   if (D[y-rmin][x-cmin] < d[y][x]) {
+	        			   d[y][x] = D[y-rmin][x-cmin];
+	        			   l[y][x] = kk;
+	        		   }
+	        	   }
+	           }           
+	       } // for (kk = 0; kk < k; kk++)
+	       
+	       // Update cluster centres with mean values
+	       for (i = 0; i < 6; i++) {
+	    	   for (j = 0; j < k; j++) {
+	    		   C[i][j] = 0.0;
+	    	   }
+	       }
+	       for (y = 0; y < yDim; y++) {
+	           for (x = 0; x < xDim; x++) {
+	        	  index = x + y * xDim;
+	        	  C[0][l[y][x]] = C[0][l[y][x]] + Labbuf[index][0];
+	        	  C[1][l[y][x]] = C[1][l[y][x]] + Labbuf[index][1];
+	        	  C[2][l[y][x]] = C[2][l[y][x]] + Labbuf[index][2];
+	        	  C[3][l[y][x]] = C[3][l[y][x]] + x;
+	        	  C[4][l[y][x]] = C[4][l[y][x]] + y;
+	        	  C[5][l[y][x]] = C[5][l[y][x]] + 1.0;
+	           } // for (x = 0; x < xDim; x++)
+	       } // for (y = 0; y < yDim; y++)
+	       
+	       // Divide by number of pixels in each superpixel to get mean values
+	       for (kk = 0; kk < k; kk++) { 
+	    	   for (i = 0; i < 5; i++) {
+	    		   C[i][kk] = Math.round(C[i][kk]/C[5][kk]);
+	    	   }
+	       } // for (kk = 0; kk < k; kk++)
+	       
+	       // Note the residual error, E, is not calculated because we are using a
+	       // fixed number of iterations 
+	    } // for (n = 1; n <= nItr; n++)
+		
+    }
+	
+	private double[][] dist(double C[], double im[][][], int r1, int c1, double S, double m) {
+		// Arguments:   C - Cluster being considered
+		//             im - sub-image surrounding cluster centre
+		//         r1, c1 - row and column of top left corner of sub image within the
+		//                  overall image.
+		//              S - grid spacing
+		//              m - weighting factor between colour and spatial differences.
+		
+		// Returns:     D - Distance image giving distance of every pixel in the
+		//                  subimage from the cluster centre
+		
+		// Distance = sqrt( dc^2 + (ds/S)^2*m^2 )
+		// where:
+		// dc = sqrt(dl^2 + da^2 + db^2)  % Colour distance
+		// ds = sqrt(dx^2 + dy^2)         % Spatial distance
+		
+		// m is a weighting factor representing the nominal maximum colour distance
+		// expected so that one can rank colour similarity relative to distance
+		// similarity.  try m in the range [1-40] for L*a*b* space
+		
+		// ?? Might be worth trying the Geometric Mean instead ??
+		//  Distance = sqrt(dc * ds)
+		// but having a factor 'm' to play with is probably handy
+
+		// This code could be more efficient
+
+		// Squared spatial distance
+		// ds is a fixed 'image' we should be able to exploit this
+		// and use a fixed meshgrid for much of the time somehow...	
+		int x,y,n;
+		double diff;
+		int rows = im.length;
+		int cols = im[0].length;
+		double X[][] = new double[rows][cols];
+		double Y[][] = new double[rows][cols];
+		double ds2[][] = new double[rows][cols];
+		double dc2[][] = new double[rows][cols];
+		double D[][] = new double[rows][cols];
+		double Ssquared = S*S;
+		double msquared = m*m;
+		for (y = 0; y < rows; y++) {
+			for (x = 0; x < cols; x++) {
+				X[y][x] = c1 + x;
+				Y[y][x] = r1 + y;
+				// x and y dist form cluster center
+				X[y][x] = X[y][x] - C[3];
+				Y[y][x] = Y[y][x] - C[4];
+				ds2[y][x] = X[y][x]*X[y][x] + Y[y][x]*Y[y][x];
+			}
+		}
+		
+		// Squared color differences
+		for (n = 0; n < 3; n++) {
+			for (y = 0; y < rows; y++) {
+				for (x = 0; x < cols; x++) {
+					diff = im[y][x][n] - C[n];
+					dc2[y][x] += (diff*diff);
+				}
+			}
+		}
+		
+		for (y = 0; y < rows; y++) {
+			for (x = 0; x < cols; x++) {
+				D[y][x] = Math.sqrt(dc2[y][x] + ds2[y][x]/Ssquared*msquared);
+			}
+		}
+		return D;
+		
+	}
+	
 	
 }
