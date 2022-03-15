@@ -171,6 +171,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         double subim[][][];
         double Ckk[];
         double D[][];
+        double Am[][];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -533,9 +534,340 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	       
 	       // Note the residual error, E, is not calculated because we are using a
 	       // fixed number of iterations 
+	       
+	       // Cleanup small orphaned regions and 'spurs' on each region using
+	       // morphological opening on each labeled region.  The cleaned up regions are
+	       // assigned to the nearest cluster. The regions are renumbered and the
+	       // adjacency matrix regenerated.  This is needed because the cleanup is
+	       // likely to change the number of labeled regions.
+	       if (seRadius > 0) {
+	           //[l, Am] = mcleanupregions(l, seRadius);
+	    	   Am = mcleanupregions(l, seRadius);
+	       } // if (seRadius > 0)
 	    } // for (n = 1; n <= nItr; n++)
 		
     }
+	
+	private double[][] mcleanupregions(int seg[][], double seRadius) {
+		// MCLEANUPREGIONS  Morphological clean up of small segments in an image of segmented regions
+		
+		// Usage: [seg, Am] = mcleanupregions(seg, seRadius)
+		
+		// Arguments: seg - A region segmented image, such as might be produced by a
+		//                  graph cut algorithm.  All pixels in each region are labeled
+		//                  by an integer.
+		//       seRadius - Structuring element radius.  This can be set to 0 in which
+		//                  case  the function will simply ensure all labeled regions
+		//                  are distinct and relabel them if necessary. 
+		
+		// Returns:   seg - The updated segment image.
+		//             Am - Adjacency matrix of segments.  Am(i, j) indicates whether
+		//                  segments labeled i and j are connected/adjacent
+		
+		// Typical application:
+		// If a graph cut or superpixel algorithm fails to converge stray segments
+		// can be left in the result.  This function tries to clean things up by:
+		// 1) Checking there is only one region for each segment label. If there is
+		//    more than one region they are given unique labels.
+		// 2) Eliminating regions below the structuring element size
+		
+		// Note that regions labeled 0 are treated as a 'privileged' background region
+		// and is not processed/affected by the function.
+		
+		// See also: REGIONADJACENCY, RENUMBERREGIONS, CLEANUPREGIONS, MAKEREGIONSDISTINCT
+
+		// Copyright (c) 2013 Peter Kovesi
+		// www.peterkovesi.com/matlabfns/
+		
+		// Permission is hereby granted, free of charge, to any person obtaining a copy
+		// of this software and associated documentation files (the "Software"), to deal
+		// in the Software without restriction, subject to the following conditions:
+		 
+		// The above copyright notice and this permission notice shall be included in 
+		// all copies or substantial portions of the Software.
+		
+		// The Software is provided "as is", without warranty of any kind.
+		
+		// March   2013 
+		// June    2013  Improved morphological cleanup process using distance map
+
+		// function [seg, Am, mask] = mcleanupregions(seg, seRadius)
+		
+		int maxlabel;
+		boolean se[][];
+		// 1) Ensure every segment is distinct 	
+		maxlabel = makeregionsdistinct(seg,4);
+		
+		// 2) Perform a morphological opening on each segment, subtract the opening
+	    // from the orignal segment to obtain regions to be reassigned to
+	    // neighbouring segments.
+	    if (seRadius > 0) {
+	    	// Accurate and not noticeably slower
+            // if radius is small
+	        se = circularstruct(seRadius);
+	    }
+		return null;
+	}
+	
+	private boolean[][] circularstruct(double radius) {
+		// Function to construct a circular structuring element
+		// for morphological operations.
+		
+		// Note radius can be a floating point value though the resulting
+		// circle will be a discrete approximation
+		
+		// Peter Kovesi   March 2000
+		if (radius < 1.0) {
+			System.err.println("Radius must be >= 1.0");
+			System.exit(0);
+		}
+		
+		// Diameter of structuring element
+		int dia = (int)Math.ceil(2.0*radius);
+		
+		// If diameter is an even value, add 1 to generate a center pixel
+		if ((dia % 2) == 0) {
+			dia = dia + 1;
+		}
+		
+		int r = (dia - 1)/2;
+		int y,x;
+		boolean strel[][] = new boolean[dia][dia];
+		double radiusSquared = radius * radius;
+		double rad;
+		for (y = -r; y <= r; y++) {
+			for (x = -r; x <= r; x++) {
+			    rad = x*x + y*y;
+			    if (rad <= radiusSquared) {
+			    	strel[y+r][x+r] = true;
+			    }
+			}
+		}
+		return strel;
+	}
+	
+	private int makeregionsdistinct(int seg[][], int connectivity) {
+		// MAKEREGIONSDISTINCT Ensures labeled segments are distinct
+		
+		// Usage: [seg, maxlabel] = makeregionsdistinct(seg, connectivity)
+		
+		// Arguments: seg - A region segmented image, such as might be produced by a
+		//                  superpixel or graph cut algorithm.  All pixels in each
+		//                  region are labeled by an integer.
+		//   connectivity - Optional parameter indicating whether 4 or 8 connectedness
+		//                  should be used.  Defaults to 4.
+		
+		// Returns:   seg - A labeled image where all segments are distinct.
+		//       maxlabel - Maximum segment label number.
+		
+		// Typical application: A graphcut or superpixel algorithm may terminate in a few
+		// cases with multiple regions that have the same label.  This function
+		// identifies these regions and assigns a unique label to them.
+		
+		// See also: SLIC, CLEANUPREGIONS, RENUMBERREGIONS
+
+		// Copyright (c) 2013 Peter Kovesi
+		// www.peterkovesi.com/matlabfns/
+	 
+		// Permission is hereby granted, free of charge, to any person obtaining a copy
+		// of this software and associated documentation files (the "Software"), to deal
+		// in the Software without restriction, subject to the following conditions:
+		 
+		// The above copyright notice and this permission notice shall be included in 
+		// all copies or substantial portions of the Software.
+		
+		// The Software is provided "as is", without warranty of any kind.
+
+		// June 2013
+
+		// if ~exist('connectivity', 'var'), connectivity = 4; end
+	    
+	    // Ensure every segment is distinct but do not touch segments 
+	    // with a label of 0
+		int x,y,i;
+		int maxlabel;
+		int l;
+	    //labels = unique(seg(:))';
+		int yDim = seg.length;
+		int xDim = seg[0].length;
+		int length = xDim*yDim;
+		int segArray[] = new int[length];
+		int index;
+		int num = 0;
+		int n;
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
+				index = x + y * xDim;
+				segArray[index] = seg[y][x];
+			}
+		}
+		Arrays.sort(segArray);
+		int numUnique = 1;
+        for (i = 1; i < length; i++) {
+        	if (segArray[i] > segArray[i-1]) {
+        		numUnique++;
+        	}
+        }
+        int labels[] = new int[numUnique];
+        labels[0] = segArray[0];
+        for (i = 1, index = 1; i < length; i++) {
+        	if (segArray[i] > segArray[i-1]) {
+        		labels[index++] = segArray[i];
+        	}
+        }
+        maxlabel = labels[labels.length-1];
+        // Remove 0 from label list
+        boolean hasZero = false;
+        for (i = 0; i < labels.length && (!hasZero); i++) {
+        	if (labels[i] == 0) {
+        		hasZero = true;
+        	}
+        }
+        if (hasZero) {
+        	int tempLabel[] = new int[labels.length-1];
+        	for (i = 0, index = 0; i < labels.length; i++) {
+        		if (labels[i] != 0) {
+        			tempLabel[index++] = labels[i];
+        		}
+        	}
+        	labels = new int[tempLabel.length];
+        	for (i = 0; i < labels.length; i++) {
+        		labels[i] = tempLabel[i];
+        	}
+        	tempLabel = null;
+        } // if (hasZero)
+        
+        int bl[][] = new int[yDim][xDim];
+        for (i = 0; i < labels.length; i++) {
+            l = labels[i];
+            for (y = 0; y < yDim; y++) {
+            	for (x = 0; x < xDim; x++) {
+            		if (seg[y][x] == l) {
+            			bl[y][x] = -1;
+            		}
+            		else {
+            			bl[y][x] = 0;
+            		}
+            	}
+            }
+            if (connectivity == 4) {
+                num = bwlabel4(bl);	
+            }
+            if (num > 1) {
+            	// We have more than 1 region with the same label
+            	for (n = 2; n <= num; n++) {
+            	    // Generate a new label
+            		maxlabel = maxlabel + 1;
+            		// And assign to this segment
+            		for (y = 0; y < yDim; y++) {
+            			for (x = 0; x < xDim; x++) {
+            				if (bl[y][x] == n) {
+            				    seg[y][x] = maxlabel;	
+            				}
+            			}
+            		}
+            	} // for (n = 2; n <= num; n++)
+            } // if (num > 1)
+        } // for (i = 0; i < labels.length; i++)
+        return maxlabel;
+	}
+	
+	private int bwlabel4(int bl[][]) {
+		// All values must initially be zeros and -1
+		int yDim = bl.length;
+		int xDim = bl[0].length;
+		int newLabel = 0;
+		int x,y;
+		int x2,y2;
+		int minY;
+		int maxY;
+		int minX;
+		int maxX;
+		int nextMinY;
+		int nextMaxY;
+		int nextMinX;
+		int nextMaxX;
+		boolean setLabel = false;
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
+				if (bl[y][x] == -1) {
+					newLabel++;
+					bl[y][x] = newLabel;
+					boolean changed = true;
+					minY = Math.max(0,y-1);
+					nextMinY = minY;
+					maxY = Math.min(yDim-1,y+1);
+					nextMaxY = maxY;
+					minX = Math.max(0,x-1);
+					nextMinX = minX;
+					maxX = Math.max(xDim-1,x+1);
+					nextMaxX = maxX;
+					while (changed) {
+					    changed = false;
+					    for (y2 = minY; y2 <= maxY; y2++) {
+					    	for (x2 = minX; x2 <= maxX; x2++) {
+					    		setLabel = false;
+					    		if (bl[y2][x2] == -1) {
+					    			if (y2 > minY) {
+					    				if (bl[y2-1][x2] == newLabel) {
+					    					bl[y2][x2] = newLabel;
+					    					setLabel = true;
+					    					changed = true;
+					    					if ((y2 == maxY) && (maxY < yDim-1)) {
+					    						nextMaxY = maxY+1;
+					    					}
+					    				}
+					    			}
+					    			if (!setLabel) {
+					    				if (y2 < maxY) {
+					    					if (bl[y2+1][x2] == newLabel) {
+					    						bl[y2][x2] = newLabel;
+					    						setLabel = true;
+					    						changed = true;
+					    						if ((y2 == minY) && (minY > 0)) {
+					    							nextMinY = minY-1;
+					    						}
+					    					}
+					    				}
+					    			}
+					    			if (!setLabel) {
+					    				if (x2 > minX) {
+					    					if (bl[y2][x2-1] == newLabel) {
+					    						bl[y2][x2] = newLabel;
+					    						setLabel = true;
+					    						changed = true;
+					    						if ((x2 == maxX) && (maxX < xDim-1)) {
+					    							nextMaxX = maxX + 1;
+					    						}
+					    					}
+					    				}
+					    			}
+					    			if (!setLabel) {
+					    				if (x2 < maxX) {
+					    					if (bl[y2][x2+1] == newLabel) {
+					    						bl[y2][x2] = newLabel;
+					    						changed = true;
+					    						if ((x2 == minX) && (minX > 0)) {
+					    							nextMinX = minX-1;
+					    						}
+					    					}
+					    				}
+					    			}
+					    		} // if (bl[y2][x2] == -1)
+					    	}
+					    }
+					    if (changed) {
+					    	minX = nextMinX;
+					    	maxX = nextMaxX;
+					    	minY = nextMinY;
+					    	maxY = nextMaxY;
+					    }
+					} // while (changed)
+				} 
+			}
+		}
+		return newLabel;
+	}
 	
 	private double[][] dist(double C[], double im[][][], int r1, int c1, double S, double m) {
 		// Arguments:   C - Cluster being considered
