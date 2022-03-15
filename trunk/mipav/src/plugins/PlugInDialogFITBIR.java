@@ -283,7 +283,7 @@ public class PlugInDialogFITBIR extends JFrame
 
     private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women's", "Cleveland Clinic", "Columbia University", "Emory University", "Florida Atlantic University",
             "Johns Hopkins University", "Mayo Clinic-FL", "Mayo Clinic-MN", "Northwestern University", "Pennsylvania State University (Hershey)",
-            "Pacific Northwest National Laboratory", "Rush University", "Thomas Jefferson University", "University of Alabama (Birmingham)", "University of California San Diego",
+            "Pacific Northwest National Laboratory", "Rush University", "Rush University - LBD", "Thomas Jefferson University", "University of Alabama (Birmingham)", "University of California San Diego",
             "University of Florida (Gainesville)", "University of Michigan", "University of North Carolina", "University of Pennsylvania", "University of Pittsburgh",
             "University of Washington", "UT-Southwestern Medical Center", "VA-Pugent Sound Health Care System/University of Washington",};
 
@@ -884,6 +884,9 @@ public class PlugInDialogFITBIR extends JFrame
                 bidsPackage.setParticipantsFile(bidsDirFiles[i]);
             } else if ( (bidsDirFiles[i].isFile()) && (bidsDirFiles[i].getName().equalsIgnoreCase("dataset_description.json"))) {
                 bidsPackage.setDatasetDescriptionFile(bidsDirFiles[i]);
+            } else if ( (bidsDirFiles[i].isFile()) && (bidsDirFiles[i].getName().equalsIgnoreCase("brics_dataset_values.json"))) {
+                // TODO optionally read brics_dataset_values.json for brics info (ImgQAQCPerfInd, default values for other DEs if not set otherwise, etc)
+                bidsPackage.setBricsDatasetFile(bidsDirFiles[i]);
             } else if (bidsDirFiles[i].isFile() && bidsDirFiles[i].getName().endsWith(".json")) {
                 bidsPackage.addAdditionalFile(bidsDirFiles[i]);
             } else if (bidsDirFiles[i].isFile() && (bidsDirFiles[i].getName().endsWith("_tsv") || bidsDirFiles[i].getName().endsWith(".tsv"))) {
@@ -901,7 +904,7 @@ public class PlugInDialogFITBIR extends JFrame
             Iterable<CSVRecord> participantRecords = null;
             try {
                 tsvIn = new FileReader(bidsPackage.getParticipantsFile());
-                participantRecords = CSVFormat.TDF.withHeader().parse(tsvIn);
+                participantRecords = CSVFormat.TDF.withHeader().withIgnoreHeaderCase().parse(tsvIn);
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -1475,6 +1478,10 @@ public class PlugInDialogFITBIR extends JFrame
         private File datasetDescriptionFile;
 
         private JSONObject datasetDescriptionJson;
+        
+        private File bricsDatasetFile;
+        
+        private JSONObject bricsDatasetJson;
 
         private Vector<BIDSSubject> subjectList;
 
@@ -1511,7 +1518,7 @@ public class PlugInDialogFITBIR extends JFrame
         public void setDatasetDescriptionFile(File datasetDescriptionFile) {
             this.datasetDescriptionFile = datasetDescriptionFile;
         }
-
+        
         public JSONObject getDatasetDescriptionJson() {
             if (datasetDescriptionJson == null && datasetDescriptionFile != null) {
                 datasetDescriptionJson = readJsonFile(datasetDescriptionFile);
@@ -1521,6 +1528,25 @@ public class PlugInDialogFITBIR extends JFrame
 
         public void setDatasetDescriptionJson(JSONObject datasetDescriptionJson) {
             this.datasetDescriptionJson = datasetDescriptionJson;
+        }
+        
+        public File getBricsDatasetFile() {
+            return bricsDatasetFile;
+        }
+
+        public void setBricsDatasetFile(File bricsFile) {
+            this.bricsDatasetFile = bricsFile;
+        }
+
+        public JSONObject getBricsDatasetJson() {
+            if (bricsDatasetJson == null && bricsDatasetFile != null) {
+                bricsDatasetJson = readJsonFile(bricsDatasetFile);
+            }
+            return bricsDatasetJson;
+        }
+
+        public void setBricsDatasetFile(JSONObject bricsJson) {
+            this.bricsDatasetJson = bricsJson;
         }
 
         public Vector<BIDSSubject> getSubjectList() {
@@ -1947,6 +1973,7 @@ public class PlugInDialogFITBIR extends JFrame
             case FUNC:
             case func:
                 readFuncFieldsFromJson(recordRepeat, scan.getScanJson());
+                setAdditionalFuncTaskInfo(recordRepeat, scan.getPackage().getAdditionalFileList());
                 setAdditionalFuncFiles(record, scan.getAdditionalFileList());
                 break;
             default:
@@ -1963,6 +1990,10 @@ public class PlugInDialogFITBIR extends JFrame
     private void readGlobalFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
         addExtractedField(jsonData, "ImgQAQCPerfInd", extractedFields, "Image QA & QC.ImgQAQCPerfInd");
     }
+    
+    // TODO add methods to add csv entry/csv field only if it is not already set
+    
+    // TODO read brics dataset json and add data element values if they are in the appropriate FS and not already set
 
     private void readGenericFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
 //      "Manufacturer": "Siemens",
@@ -2177,7 +2208,19 @@ public class PlugInDialogFITBIR extends JFrame
     }
 
     private void readDwiFieldsFromJson(ArrayList<String> recordRepeat, JSONObject jsonData) {
-        // nothing to extract right now
+        String groupName = "Magnetic Resonance Information.";
+        
+        boolean foundSeq = false;
+        for (String field : csvFieldNames) {
+            if (field.equalsIgnoreCase(groupName + "ImgPulseSeqTyp")) {
+                foundSeq = true;
+                break;
+            }
+        }
+        
+        if (!foundSeq) {
+            addCSVEntry(recordRepeat, groupName + "ImgPulseSeqTyp", "DTI");
+        }
     }
 
     private void readDwiFieldsFromJson(HashMap<String, String> extractedFields, JSONObject jsonData) {
@@ -2213,7 +2256,7 @@ public class PlugInDialogFITBIR extends JFrame
         }
 
         if (bvecFile != null) {
-            addCSVEntry(recordRepeat, groupName + IMG_DIFF_BVEC_ELEMENT_NAME, bvalFile.getAbsolutePath());
+            addCSVEntry(recordRepeat, groupName + IMG_DIFF_BVEC_ELEMENT_NAME, bvecFile.getAbsolutePath());
         }
 
         // TODO - need to handle any additional files and put into Diffusion Derived Data.ImgFile?
@@ -2342,8 +2385,22 @@ public class PlugInDialogFITBIR extends JFrame
 //                        1.14,
 //                        2.415,
 //                        1.2075  ],
-
-        String groupName = "fMRI Information.";
+        
+        String groupName = "Magnetic Resonance Information.";
+        
+        boolean foundSeq = false;
+        for (String field : csvFieldNames) {
+            if (field.equalsIgnoreCase(groupName + "ImgPulseSeqTyp")) {
+                foundSeq = true;
+                break;
+            }
+        }
+        
+        if (!foundSeq) {
+            addCSVEntry(recordRepeat, groupName + "ImgPulseSeqTyp", "fMRI");
+        }
+        
+        groupName = "fMRI Information.";
 
         String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
 
@@ -2396,6 +2453,19 @@ public class PlugInDialogFITBIR extends JFrame
         String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
 
         addExtractedField(extractedFields, groupName + "ImgFMRITaskTyp", taskType);
+    }
+    
+    private void setAdditionalFuncTaskInfo(ArrayList<String> recordRepeat, Vector<File> additionalFiles) {
+        // TODO if there is a file with a base name matching the img base name, extract json info, set any values from the json that are not already set in the record
+        String imgFile = null;
+        for (int i = 0; i < recordRepeat.size(); i++) {
+            // TODO
+        }
+        
+        
+        for (File file : additionalFiles) {
+            // TODO
+        }
     }
 
     private String mapTaskNameBIDS(String taskName) {
@@ -9022,12 +9092,12 @@ public class PlugInDialogFITBIR extends JFrame
      * structures (without their attached data elements).
      */
     public class FormListRESTThread extends Thread implements ActionListener {
-        private static final String ddAuthBase = "/portal/ws/webstart/dictionary/formStructure/details";
+        //private static final String ddAuthBase = "/portal/ws/webstart/dictionary/formStructure/details";
 
-        private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
+        //private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
         // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING";
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
 
@@ -9070,9 +9140,9 @@ public class PlugInDialogFITBIR extends JFrame
                 
                 WebClient client;
                 if (ddUseAuthService) {
-                    client = WebClient.create(ddServerURL + ddAuthBase);
+                    client = WebClient.create(ddServerURL);
                 } else {
-                    client = WebClient.create(ddServerURL + ddStructListRequest);
+                    client = WebClient.create(ddServerURL);
                 }
 
                 final HTTPConduit conduit = WebClient.getConfig(client).getHttpConduit();
