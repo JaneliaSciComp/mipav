@@ -594,7 +594,23 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		// function [seg, Am, mask] = mcleanupregions(seg, seRadius)
 		
 		int maxlabel;
-		boolean se[][];
+		int yDim = seg.length;
+		int xDim = seg[0].length;
+		int length = xDim * yDim;
+		int l;
+		int x,y,index;
+		byte b[][];
+		byte mask[][];
+		byte bopen[];
+		ModelImage bImage;
+		int extents[];
+		int option = 2;
+		AlgorithmMorphology2D algoMorph2D;
+		int iterDilate = 1;
+		int iterErode = 1;
+		int numPruningPixels = 0;
+		boolean entireImage = true;
+		int list[][][][];
 		// 1) Ensure every segment is distinct 	
 		maxlabel = makeregionsdistinct(seg,4);
 		
@@ -604,46 +620,268 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    if (seRadius > 0) {
 	    	// Accurate and not noticeably slower
             // if radius is small
-	        se = circularstruct(seRadius);
-	    }
+	        if (seRadius < 1.0) {
+				System.err.println("seRadius must be >= 1.0");
+				System.exit(0);
+			}
+			
+			// Diameter of structuring element
+			int dia = (int)Math.ceil(2.0*seRadius);
+			
+			// If diameter is an even value, add 1 to generate a center pixel
+			if ((dia % 2) == 0) {
+				dia = dia + 1;
+			}
+	        mask = new byte[yDim][xDim];
+	        b = new byte[yDim][xDim];
+	        bopen = new byte[length];
+	        extents = new int[] {xDim,yDim};
+	        bImage = new ModelImage(ModelStorageBase.BYTE, extents, "bImage");
+	        
+	        if (option == 1) {
+	        	for (l = 1; l <= maxlabel; l++) {
+	        	    for (y = 0; y < yDim; y++) {
+	        	    	for (x = 0; x < xDim; x++) {
+	        	    		index = x + y * xDim;
+	        	    	    if (seg[y][x] == l) {
+	        	    	    	b[y][x] = 1;
+	        	    	    	bopen[index] = 1;
+	        	    	    }
+	        	    	    else {
+	        	    	    	b[y][x] = 0;
+	        	    	    	bopen[index] = 0;
+	        	    	    }
+	        	    	}
+	        	    } // for (y = 0; y < yDim; y++)
+	        	    try {
+	        	    	bImage.importData(0, bopen, true);
+	        	    }
+	        	    catch (IOException e) {
+	        	    	System.err.println("IOException " + e + " on bImage.importData(0, bopen, true)");
+	        	    	System.exit(0);
+	        	    }
+	        	    algoMorph2D = new AlgorithmMorphology2D(bImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)dia,
+	        	    		AlgorithmMorphology2D.OPEN,iterDilate,iterErode,numPruningPixels,AlgorithmMorphology2D.INNER_EDGING,
+	        	    		true);
+	        	    algoMorph2D.run();
+	        	    try {
+	        	    	bImage.exportData(0, length, bopen);
+	        	    }
+	        	    catch (IOException e) {
+	        	    	System.err.println("IOException " + e + " on bImage.exportData(0, length, bopen)");
+	        	    	System.exit(0);
+	        	    }
+	        	    algoMorph2D.finalize();
+	        	    for (y = 0; y < yDim; y++) {
+	        	    	for (x = 0; x < xDim; x++) {
+	        	    		index = x + y*xDim;
+	        	    		if ((b[y][x] == 1) && (bopen[index] == 0)) {
+	        	    			mask[y][x] = 1;
+	        	    		}
+	        	    	}
+	        	    }
+	        	} // for (l = 1; l <= maxlabel; l++)
+	        } // if (option == 1)
+	        else { // option == 2
+	        	// Rather than perform a morphological opening on every
+	            // individual region in sequence the following finds separate
+	            // lists of unconnected regions and performs openings on these.
+	            // Typically an image can be covered with only 5 or 6 lists of
+	            // unconnected regions.  Seems to be about 2X speed of option
+	            // 1. (I was hoping for more...)
+	            list = finddisconnected(seg);	
+	        } // else option == 2
+	    } // if (seRadius > 0)
 		return null;
 	}
 	
-	private boolean[][] circularstruct(double radius) {
-		// Function to construct a circular structuring element
-		// for morphological operations.
+	private int[][][][] finddisconnected(int l[][]) {
+		// FINDDISCONNECTED find groupings of disconnected labeled regions
 		
-		// Note radius can be a floating point value though the resulting
-		// circle will be a discrete approximation
+		// Usage: list = finddisconnected(l)
 		
-		// Peter Kovesi   March 2000
-		if (radius < 1.0) {
-			System.err.println("Radius must be >= 1.0");
+		// Argument:   l - A labeled image segmenting an image into regions, such as
+		//                 might be produced by a graph cut or superpixel algorithm.
+		//                 All pixels in each region are labeled by an integer.
+		
+		// Returns: list - A cell array of lists of regions that are not
+		//                 connected. Typically there are 5 to 6 lists.
+		
+		// Used by MCLEANUPREGIONS to reduce the number of morphological closing
+		// operations 
+		
+		// See also: MCLEANUPREGIONS, REGIONADJACENCY
+
+		// Copyright (c) 2013 Peter Kovesi
+		// www.peterkovesi.com/matlabfns/
+	
+		// Permission is hereby granted, free of charge, to any person obtaining a copy
+		// of this software and associated documentation files (the "Software"), to deal
+		// in the Software without restriction, subject to the following conditions:
+		
+		// The above copyright notice and this permission notice shall be included in 
+		// all copies or substantial portions of the Software.
+		
+		// The Software is provided "as is", without warranty of any kind.
+
+		// PK July 2013
+        boolean debug = false;
+        return null;
+	}
+	
+	private void regionadjacency(int L[][], int connectivity) {
+		// REGIONADJACENCY Computes adjacency matrix for image of labeled segmented regions
+		
+		// Usage:  [Am, Al] = regionadjacency(L, connectivity)
+		
+		// Arguments:  L - A region segmented image, such as might be produced by a
+		//                 graph cut or superpixel algorithm.  All pixels in each
+		//                 region are labeled by an integer.
+		//  connectivity - 8 or 4.  If not specified connectivity defaults to 8.
+		
+		// Returns:   Am - An adjacency matrix indicating which labeled regions are
+		//                 adjacent to each other, that is, they share boundaries. Am
+		//                 is sparse to save memory.
+		//            Al - A cell array representing the adjacency list corresponding
+		//                 to Am.  Al{n} is an array of the region indices adjacent to
+		//                 region n.
+		
+		// Regions with a label of 0 are not processed. They are considered to be
+		// 'background regions' that are not to be considered.  If you want to include
+		// these regions you should assign a new positive label to these areas using, say
+		// >> L(L==0) = max(L(:)) + 1;
+		
+		// See also: CLEANUPREGIONS, RENUMBERREGIONS, SLIC
+
+		// Copyright (c) 2013 Peter Kovesi
+		// www.peterkovesi.com/matlabfns/
+		
+		// Permission is hereby granted, free of charge, to any person obtaining a copy
+		// of this software and associated documentation files (the "Software"), to deal
+		// in the Software without restriction, subject to the following conditions:
+	
+		// The above copyright notice and this permission notice shall be included in 
+		// all copies or substantial portions of the Software.
+		
+		// February 2013  Original version
+		// July     2013  Speed improvement in sparse matrix formation (4x)
+
+	    // function  [Am, varargout] = regionadjacency(L, connectivity)
+
+		//if ~exist('connectivity', 'var'), connectivity = 8; end
+		if ((connectivity != 4) && (connectivity != 8)) {
+			System.err.println("In regionadjacency connectivity =" + connectivity + " instead of the required 4 or 8");
 			System.exit(0);
 		}
+		int x,y,index,ii;
+		int yDim = L.length;
+		int xDim = L[0].length;
+		int length = xDim * yDim;
+		int LArray[] = new int[length];
+		int N;
+		int n,r,c;
 		
-		// Diameter of structuring element
-		int dia = (int)Math.ceil(2.0*radius);
-		
-		// If diameter is an even value, add 1 to generate a center pixel
-		if ((dia % 2) == 0) {
-			dia = dia + 1;
-		}
-		
-		int r = (dia - 1)/2;
-		int y,x;
-		boolean strel[][] = new boolean[dia][dia];
-		double radiusSquared = radius * radius;
-		double rad;
-		for (y = -r; y <= r; y++) {
-			for (x = -r; x <= r; x++) {
-			    rad = x*x + y*y;
-			    if (rad <= radiusSquared) {
-			    	strel[y+r][x+r] = true;
-			    }
+		// Identify the unique labels in the image, excluding 0 as a label.
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
+				index = x + y * xDim;
+				LArray[index] = L[y][x];
 			}
 		}
-		return strel;
+		Arrays.sort(LArray);
+		int numUnique = 1;
+        for (ii = 1; ii < length; ii++) {
+        	if (LArray[ii] > LArray[ii-1]) {
+        		numUnique++;
+        	}
+        }
+        int labels[] = new int[numUnique];
+        labels[0] = LArray[0];
+        for (ii = 1, index = 1; ii < length; ii++) {
+        	if (LArray[ii] > LArray[ii-1]) {
+        		labels[index++] = LArray[ii];
+        	}
+        }
+        // Required size of adjacency matrix
+        N = labels[labels.length-1];
+        // Remove 0 from label list
+        boolean hasZero = false;
+        for (ii = 0; ii < labels.length && (!hasZero); ii++) {
+        	if (labels[ii] == 0) {
+        		hasZero = true;
+        	}
+        }
+        if (hasZero) {
+        	int tempLabel[] = new int[labels.length-1];
+        	for (ii = 0, index = 0; ii < labels.length; ii++) {
+        		if (labels[ii] != 0) {
+        			tempLabel[index++] = labels[ii];
+        		}
+        	}
+        	labels = new int[tempLabel.length];
+        	for (ii = 0; ii < labels.length; ii++) {
+        		labels[ii] = tempLabel[ii];
+        	}
+        	tempLabel = null;
+        } // if (hasZero)
+        
+        if (labels.length == 0) {
+        	System.out.println("Warning! There are no objects in the image");
+        	return;
+        }
+        
+        // Strategy:  Step through the labeled image.  For 8-connectedness inspect 
+        // pixels as follows and set the appropriate entries in the adjacency
+        // matrix. 
+        //      x - o
+        //    / | \
+        //  o   o   o
+        
+        // For 4-connectedness we only inspect the following pixels
+        //      x - o
+        //      | 
+        //      o  
+        
+        // Because the adjacency search looks 'forwards' a final OR operation is
+        // performed on the adjacency matrix and its transpose to ensure
+        // connectivity both ways.
+
+        // Allocate vectors for forming row, col, value triplets used to construct
+        // sparse matrix.  Forming these vectors first is faster than filling
+        // entries directly into the sparse matrix
+        int i[] = new int[length]; // row value
+        int j[] = new int[length]; // col value
+        int s[] = new int[length]; // value
+        
+        if (connectivity == 8) {
+            n = 0;
+            for (r = 0; r < yDim-1; r++) {
+
+                // Handle pixels in 1st column
+                i[n] = L[r][0]; j[n] = L[r][1]; s[n] = 1; n=n+1;
+                i[n] = L[r][0]; j[n] = L[r+1][0]; s[n] = 1; n=n+1;
+                i[n] = L[r][0]; j[n] = L[r+1][1]; s[n] = 1; n=n+1;
+                
+                // ... now the rest of the column
+                for (c = 1; c < xDim-1; c++) {
+                   i[n] = L[r][c]; j[n] = L[r][c+1]; s[n] = 1; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r+1][c-1]; s[n] = 1; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r+1][c]; s[n] = 1; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r+1][c+1]; s[n] = 1; n=n+1;
+                }
+            }
+        } // if (connectivity == 8)
+            
+        else if (connectivity == 4) {
+            n = 0;
+            for (r = 0; r < yDim-1; r++) {
+                for (c = 0; c < xDim-1; c++) {
+                    i[n] = L[r][c]; j[n] = L[r][c+1]; s[n] = 1; n=n+1;
+                    i[n] = L[r][c]; j[n] = L[r+1][c]; s[n] = 1; n=n+1;
+                }
+            }
+        
+        } // else if (connectivity == 4) 
 	}
 	
 	private int makeregionsdistinct(int seg[][], int connectivity) {
