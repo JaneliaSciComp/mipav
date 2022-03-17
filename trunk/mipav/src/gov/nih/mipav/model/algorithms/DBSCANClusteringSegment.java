@@ -598,7 +598,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		int xDim = seg[0].length;
 		int length = xDim * yDim;
 		int l;
-		int x,y,index;
+		int x,y,index,m,n;
 		byte b[][];
 		byte mask[][];
 		byte bopen[];
@@ -610,7 +610,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		int iterErode = 1;
 		int numPruningPixels = 0;
 		boolean entireImage = true;
-		int list[][][][];
+		Vector<Vector<Integer>> list;
 		// 1) Ensure every segment is distinct 	
 		maxlabel = makeregionsdistinct(seg,4);
 		
@@ -662,7 +662,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	        	    }
 	        	    algoMorph2D = new AlgorithmMorphology2D(bImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)dia,
 	        	    		AlgorithmMorphology2D.OPEN,iterDilate,iterErode,numPruningPixels,AlgorithmMorphology2D.INNER_EDGING,
-	        	    		true);
+	        	    		entireImage);
 	        	    algoMorph2D.run();
 	        	    try {
 	        	    	bImage.exportData(0, length, bopen);
@@ -690,12 +690,61 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	            // unconnected regions.  Seems to be about 2X speed of option
 	            // 1. (I was hoping for more...)
 	            list = finddisconnected(seg);	
+	            
+	            for (n = 0; n < list.size(); n++) {
+	                for (y = 0; y < yDim; y++) {
+	                	for (x = 0; x < xDim; x++) {
+	                		index = x + y * xDim;
+	                		b[y][x] = 0;
+	                		bopen[index] = 0;
+	                	}
+	                }
+	                for (m = 0; m < list.get(n).size(); m++) {
+	                	for (y = 0; y < yDim; y++) {
+		        	    	for (x = 0; x < xDim; x++) {
+		        	    		index = x + y * xDim;
+		        	    	    if (seg[y][x] == list.get(n).get(m)) {
+		        	    	    	b[y][x] = 1;
+		        	    	    	bopen[index] = 1;
+		        	    	    }
+		        	    	   
+		        	    	}
+		        	    } // for (y = 0; y < yDim; y++)	
+	                } // for (m = 0; m < list.get(n).size(); m++)
+	                try {
+	        	    	bImage.importData(0, bopen, true);
+	        	    }
+	        	    catch (IOException e) {
+	        	    	System.err.println("IOException " + e + " on bImage.importData(0, bopen, true)");
+	        	    	System.exit(0);
+	        	    }
+	        	    algoMorph2D = new AlgorithmMorphology2D(bImage,AlgorithmMorphology2D.SIZED_CIRCLE,(float)dia,
+	        	    		AlgorithmMorphology2D.OPEN,iterDilate,iterErode,numPruningPixels,AlgorithmMorphology2D.INNER_EDGING,
+	        	    		entireImage);
+	        	    algoMorph2D.run();
+	        	    try {
+	        	    	bImage.exportData(0, length, bopen);
+	        	    }
+	        	    catch (IOException e) {
+	        	    	System.err.println("IOException " + e + " on bImage.exportData(0, length, bopen)");
+	        	    	System.exit(0);
+	        	    }
+	        	    algoMorph2D.finalize();
+	        	    for (y = 0; y < yDim; y++) {
+	        	    	for (x = 0; x < xDim; x++) {
+	        	    		index = x + y*xDim;
+	        	    		if ((b[y][x] == 1) && (bopen[index] == 0)) {
+	        	    			mask[y][x] = 1;
+	        	    		}
+	        	    	}
+	        	    }
+	            } // for (n = 0; n < list.size(); n++)
 	        } // else option == 2
 	    } // if (seRadius > 0)
 		return null;
 	}
 	
-	private int[][][][] finddisconnected(int l[][]) {
+	private Vector<Vector<Integer>> finddisconnected(int l[][]) {
 		// FINDDISCONNECTED find groupings of disconnected labeled regions
 		
 		// Usage: list = finddisconnected(l)
@@ -726,10 +775,82 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 
 		// PK July 2013
         boolean debug = false;
-        return null;
+        AmAl amal = regionadjacency(l,8);
+        int yDim = l.length;
+        int xDim = l[0].length;
+        int x,y,n,i,j,m,p;
+        int listNo;
+        // Number of labels
+        int N = 0;
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        		if (l[y][x] > N) {
+        			N = l[y][x];
+        		}
+        	}
+        }
+        
+        // Array for keeping track of visisted labels
+        boolean visited[] = new boolean[N+1];
+        Vector<Vector<Integer>>list = new Vector<Vector<Integer>>();
+        Vector<Integer>notConnected = new Vector<Integer>();
+        int alm;
+        int intp;
+        boolean found = false;
+        for (n = 1; n <= N; n++) {
+            if (!visited[n]) {
+                Vector<Integer> intVec = new Vector<Integer>();
+                intVec.add(n);
+                visited[n] = true;
+                
+                // Find all regions not directly connected to n and not visited
+                notConnected.clear();
+                for (i = 1; i < N; i++) {
+                	notConnected.add(i);
+                }
+                if (amal.Ami != null) {
+	                for (i = 0; i < amal.Ami.length; i++) {
+	                	if (amal.Ami[i] == n) {
+	                		notConnected.removeElement(amal.Amj[i]);
+	                	}
+	                }
+                }
+                for (i = 1; i <= N; i++) {
+                	if (visited[i]) {
+                		notConnected.removeElement(i);
+                	}
+                }
+                
+                // For each unconnected region check that it is not already 
+                // connected to a region in the list.  If not, add to list.
+                for (i = 0; i < notConnected.size(); i++) {
+                	m = notConnected.get(i);
+                	if (amal.Al != null) {
+                		if (amal.Al[m] != null) {
+                			found = false;
+                			for (j = 0; j < amal.Al[m].length && (!found); j++) {
+                			    alm = amal.Al[m][j];
+                			    for (p = 0; p < intVec.size() && (!found); p++) {
+                			        intp = intVec.get(p);
+                			        if (alm == intp) {
+                			        	found = true;
+                			        }
+                			    }
+                			}
+                			if (!found) {
+                				intVec.add(m);
+                				visited[m] = true;
+                			}
+                		} // if (amal.Al[m] != null)
+                	} // if (amal.Al != null)
+                } // for (i = 0; i < notConnected.size(); i++)
+                list.add(intVec);
+            } // if (!visited[n])
+        } // for (n = 1; n <= N; n++)
+        return list;
 	}
 	
-	private void regionadjacency(int L[][], int connectivity) {
+	private AmAl regionadjacency(int L[][], int connectivity) {
 		// REGIONADJACENCY Computes adjacency matrix for image of labeled segmented regions
 		
 		// Usage:  [Am, Al] = regionadjacency(L, connectivity)
@@ -827,7 +948,8 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         
         if (labels.length == 0) {
         	System.out.println("Warning! There are no objects in the image");
-        	return;
+        	AmAl amal = new AmAl();
+        	return amal;
         }
         
         // Strategy:  Step through the labeled image.  For 8-connectedness inspect 
@@ -882,6 +1004,77 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
             }
         
         } // else if (connectivity == 4) 
+        
+       int numAmEntries = 0;
+       boolean have[][] = new boolean[length][length];
+       for (r = 0; r < length; r++) {
+    	   if (s[r] == 1) {
+    		   if (i[r] != j[r]) {
+    			   numAmEntries++;
+    			   have[i[r]][j[r]] = true;
+    		   }
+    	   }
+       }
+       for (r = 0; r < length; r++) {
+    	   if (s[r] == 1) {
+    		   if (i[r] != j[r]) {
+    			   if (!have[j[r]][i[r]]) {
+    				   numAmEntries++;
+    			   }
+    		   }
+    	   }
+       }
+       AmAl amal = new AmAl();
+       amal.Ami = new int[numAmEntries];
+       amal.Amj = new int[numAmEntries];
+       int entry = 0;
+       for (r = 0; r < length; r++) {
+    	   if (s[r] == 1) {
+    		   if (i[r] != j[r]) {
+    			   amal.Ami[entry] = i[r];
+    			   amal.Amj[entry++] = j[r];
+    		   }
+    	   }
+       }
+       for (r = 0; r < length; r++) {
+    	   if (s[r] == 1) {
+    		   if (i[r] != j[r]) {
+    			   if (!have[j[r]][i[r]]) {
+    				   amal.Ami[entry] = j[r];
+    				   amal.Amj[entry++] = i[r];
+    			   }
+    		   }
+    	   }
+       }
+       
+       amal.Al = new int[N][];
+       int numAlEntries;
+       for (r = 0; r < N; r++) {
+    	   numAlEntries = 0;
+    	   for (c = 0; c < numAmEntries; c++) {
+    	       if (amal.Ami[c] == r) {
+    	    	   numAlEntries++;
+    	       }
+    	   }
+    	   amal.Al[r] = new int[numAlEntries];
+    	   entry = 0;
+    	   for (c = 0; c < numAmEntries; c++) {
+    		   if (amal.Ami[c] == r) {
+    		       amal.Al[r][entry++] = amal.Amj[c];   
+    		   }
+    	   }
+       }
+       return amal;
+	}
+    
+	
+	class AmAl {
+		public AmAl() {
+			
+		}
+		int Ami[];
+		int Amj[];
+		int Al[][];
 	}
 	
 	private int makeregionsdistinct(int seg[][], int connectivity) {
