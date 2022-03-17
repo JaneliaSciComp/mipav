@@ -122,7 +122,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		double varG;
 		int x,y;
 		double varB;
-		double X,Y,Z;
+		double XL,YL,ZL;
 		double varX, varY, varZ;
 		// Observer = 2 degrees, Illuminant = D65
         double XN = 95.047;
@@ -171,7 +171,8 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         double subim[][][];
         double Ckk[];
         double D[][];
-        double Am[][];
+        AmAl amal;
+        int N;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -184,6 +185,94 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 			finalize();
 			return;
 		}
+		
+		// SLIC Simple Linear Iterative Clustering SuperPixels
+		
+		// Implementation of Achanta, Shaji, Smith, Lucchi, Fua and Susstrunk's
+		// SLIC Superpixels
+		
+		// Usage:   [l, Am, Sp, d] = slic(im, k, m, seRadius, colopt, mw)
+		
+		// Arguments:  im - Image to be segmented.
+		//              k - Number of desired superpixels. Note that this is nominal
+		//                  the actual number of superpixels generated will generally
+		//                  be a bit larger, especially if parameter m is small.
+		//              m - Weighting factor between colour and spatial
+		//                  differences. Values from about 5 to 40 are useful.  Use a
+		//                  large value to enforce superpixels with more regular and
+		//                  smoother shapes. Try a value of 10 to start with.
+		//       seRadius - Regions morphologically smaller than this are merged with
+		//                  adjacent regions. Try a value of 1 or 1.5.  Use 0 to
+		//                  disable.
+		//         colopt - String 'mean' or 'median' indicating how the cluster
+		//                  colour centre should be computed. Defaults to 'mean'
+		//             mw - Optional median filtering window size.  Image compression
+		//                  can result in noticeable artifacts in the a*b* components
+		//                  of the image.  Median filtering can reduce this. mw can be
+		//                  a single value in which case the same median filtering is
+		//                  applied to each L* a* and b* components.  Alternatively it
+		//                  can be a 2-vector where mw(1) specifies the median
+		//                  filtering window to be applied to L* and mw(2) is the
+		//                  median filtering window to be applied to a* and b*.
+		
+		// Returns:    l - Labeled image of superpixels. Labels range from 1 to k.
+		//             Am - Adjacency matrix of segments.  Am(i, j) indicates whether
+		//                  segments labeled i and j are connected/adjacent
+		//             Sp - Superpixel attribute structure array with fields:
+		//                   L  - Mean L* value
+		//                   a  - Mean a* value
+		//                   b  - Mean b* value
+		//                   r  - Mean row value
+		//                   c  - Mean column value
+		//                   stdL  - Standard deviation of L* 
+		//                   stda  - Standard deviation of a* 
+		//                   stdb  - Standard deviation of b* 
+		//                   N - Number of pixels
+		//                   edges - List of edge numbers that bound each
+		//                           superpixel. This field is allocated, but not set,
+		//                           by SLIC. Use SPEDGES for this.
+		//              d - Distance image giving the distance each pixel is from its
+		//                  associated superpixel centre.
+		
+		// It is suggested that use of this function is followed by SPDBSCAN to perform a
+		// DBSCAN clustering of superpixels.  This results in a simple and fast
+		// segmentation of an image.
+		
+		// Minor variations from the original algorithm as defined in Achanta et al's
+		// paper:
+		
+		// - SuperPixel centres are initialised on a hexagonal grid rather than a square
+		//   one. This results in a segmentation that will be nominally 6-connected
+		//   which hopefully facilitates any subsequent post-processing that seeks to
+		//   merge superpixels.
+		// - Initial cluster positions are not shifted to point of lowest gradient
+		//   within a 3x3 neighbourhood because this will be rendered irrelevant the
+		//   first time cluster centres are updated.
+		
+		// Reference: R. Achanta, A. Shaji, K. Smith, A. Lucchi, P. Fua and
+		// S. Susstrunk. "SLIC Superpixels Compared to State-of-the-Art Superpixel
+		// Methods"  PAMI. Vol 34 No 11.  November 2012. pp 2274-2281.
+		
+		// See also: SPDBSCAN, MCLEANUPREGIONS, REGIONADJACENCY, DRAWREGIONBOUNDARIES, RGB2LAB
+
+		// Copyright (c) 2013 Peter Kovesi
+		// www.peterkovesi.com/matlabfns/
+		 
+		// Permission is hereby granted, free of charge, to any person obtaining a copy
+		// of this software and associated documentation files (the "Software"), to deal
+		// in the Software without restriction, subject to the following conditions:
+		
+		// The above copyright notice and this permission notice shall be included in 
+		// all copies or substantial portions of the Software.
+		
+		// The Software is provided "as is", without warranty of any kind.
+
+		// Feb  2013
+		// July 2013 Super pixel attributes returned as a structure array
+
+		// Note that most of the computation time is not in the clustering, but rather
+		// in the region cleanup process.
+
 		
 		// Convert image to L*a*b* colourspace.  This gives us a colourspace that is
 	    // nominally perceptually uniform. This allows us to use the euclidean
@@ -259,13 +348,13 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
             varB = 100.0 * varB;
             
             // Observer = 2 degrees, Illuminant = D65
-            X = 0.4124*varR + 0.3576*varG + 0.1805*varB;
-            Y = 0.2126*varR + 0.7152*varG + 0.0722*varB;
-            Z = 0.0193*varR + 0.1192*varG + 0.9505*varB;
+            XL = 0.4124*varR + 0.3576*varG + 0.1805*varB;
+            YL = 0.2126*varR + 0.7152*varG + 0.0722*varB;
+            ZL = 0.0193*varR + 0.1192*varG + 0.9505*varB;
             
-            varX = X/ XN;
-            varY = Y/ YN;
-            varZ = Z/ ZN;
+            varX = XL/ XN;
+            varY = YL/ YN;
+            varZ = ZL/ ZN;
             
             if (varX > 0.008856) {
                 varX = Math.pow(varX, 1.0/3.0);
@@ -534,21 +623,253 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	       
 	       // Note the residual error, E, is not calculated because we are using a
 	       // fixed number of iterations 
-	       
-	       // Cleanup small orphaned regions and 'spurs' on each region using
-	       // morphological opening on each labeled region.  The cleaned up regions are
-	       // assigned to the nearest cluster. The regions are renumbered and the
-	       // adjacency matrix regenerated.  This is needed because the cleanup is
-	       // likely to change the number of labeled regions.
-	       if (seRadius > 0) {
-	           //[l, Am] = mcleanupregions(l, seRadius);
-	    	   Am = mcleanupregions(l, seRadius);
-	       } // if (seRadius > 0)
 	    } // for (n = 1; n <= nItr; n++)
+	       
+       // Cleanup small orphaned regions and 'spurs' on each region using
+       // morphological opening on each labeled region.  The cleaned up regions are
+       // assigned to the nearest cluster. The regions are renumbered and the
+       // adjacency matrix regenerated.  This is needed because the cleanup is
+       // likely to change the number of labeled regions.
+       if (seRadius > 0) {
+           //[l, Am] = mcleanupregions(l, seRadius);
+    	   amal = mcleanupregions(l, seRadius);
+       } // if (seRadius > 0)
+       else {
+    	   int maxLabel = makeregionsdistinct(l,4); 
+    	   Renum re = renumberregions(l);
+	   	   for (y = 0; y < yDim; y++) {
+	   	       for (x = 0; x < xDim; x++) {
+	   	    	   l[y][x] = re.nL[y][x];
+	   	       }
+	   	   }
+	   	   amal = regionadjacency(l,8);
+       } // else
+       
+       // Recompute the final superpixel attributes and write information into
+       // the Sp struct array.
+       N = amal.Ami.length;
+       SP Sp = new SP(N);
+	   int Y[][] = new int[yDim][xDim];
+	   int X[][] = new int[yDim][xDim];
+	   for (y = 0; y < yDim; y++) {
+		   for (x = 0; x < xDim; x++) {
+			   X[y][x] = x;
+			   Y[y][x] = y;
+		   }
+	   }
+	   
+	   byte mask[][] = new byte[yDim][xDim];
+	   int nm;
+	   for (n = 0; n < N; n++) {
+		   nm = 0;
+	       for (y = 0; y < yDim; y++) {
+	    	   for (x = 0; x < xDim; x++) {
+	    		   if (l[y][x] == (n+1)) {
+	    			   mask[y][x] = 1;
+	    			   nm++;
+	    		   }
+	    		   else {
+	    			   mask[y][x] = 0;
+	    		   }
+	    	   }
+	       } // for (y = 0; y < yDim; y++)
+	       if (center == MEAN_CENTER) {
+	    	   double sumL = 0.0;
+	    	   double suma = 0.0;
+	    	   double sumb = 0.0;
+	    	   for (y = 0; y < yDim; y++) {
+	    		   for (x = 0; x < xDim; x++) {
+	    			   if (mask[y][x] == 1) {
+	    				   index = x + y * xDim;
+	    				   sumL += Labbuf[index][0];
+	    				   suma += Labbuf[index][1];
+	    				   sumb += Labbuf[index][2];
+	    			   }
+	    		   }
+	    	   } // for (y = 0; y < yDim; y++)
+	    	   Sp.L[n] = sumL/nm;
+	    	   Sp.a[n] = suma/nm;
+	    	   Sp.b[n] = sumb/nm;
+	       } // if (center == MEAN_CENTER)
+	       else if (center == MEDIAN_CENTER) {
+	           double Larray[] = new double[nm];
+	           double aarray[] = new double[nm];
+	           double barray[] = new double[nm];
+	           for (y = 0, i = 0; y < yDim; y++) {
+	    		   for (x = 0; x < xDim; x++) {
+	    			   if (mask[y][x] == 1) {
+	    				   index = x + y * xDim;
+	    				   Larray[i]= Labbuf[index][0];
+	    				   aarray[i]= Labbuf[index][1];
+	    				   barray[i] = Labbuf[index][2];
+	    			   }
+	    		   }
+	    	   } // for (y = 0, i = 0; y < yDim; y++)
+	           Arrays.sort(Larray);
+	           Arrays.sort(aarray);
+	           Arrays.sort(barray);
+	           if ((nm % 2) == 1) {
+	    	    	Sp.L[n] = Larray[(nm-1)/2];
+	    	    	Sp.a[n] = aarray[(nm-1)/2];
+	    	    	Sp.b[n] = barray[(nm-1)/2];
+	    	    }
+	    	    else {
+	    	    	Sp.L[n] = (Larray[nm/2] + Larray[(nm/2)-1])/2.0;
+	    	    	Sp.a[n] = (aarray[nm/2] + aarray[(nm/2)-1])/2.0;
+	    	    	Sp.b[n] = (barray[nm/2] + barray[(nm/2)-1])/2.0;
+	    	    }
+	       } // else if (center == MEDIAN_CENTER)
+	       
+	       double sumy = 0.0;
+	       double sumx = 0.0;
+	       for (y = 0; y < yDim; y++) {
+	    	   for (x = 0; x < xDim; x++) {
+	    		   if (mask[y][x] == 1) {
+	    			   sumy += Y[y][x];
+	    			   sumx += X[y][x];
+	    		   }
+	    	   }
+	       }
+	       Sp.r[n] = sumy/nm;
+	       Sp.c[n] = sumx/nm;
+	       
+	       // Compute standard deviations of the colour components of each super
+	       // pixel. This can be used by code seeking to merge superpixels into
+	       // image segments.  Note these are calculated relative to the mean colour
+	       // component irrespective of the centre being calculated from the mean or
+	       // median colour component values.
+	       double sumL = 0.0;
+    	   double suma = 0.0;
+    	   double sumb = 0.0;
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   if (mask[y][x] == 1) {
+    				   index = x + y * xDim;
+    				   sumL += Labbuf[index][0];
+    				   suma += Labbuf[index][1];
+    				   sumb += Labbuf[index][2];
+    			   }
+    		   }
+    	   } // for (y = 0; y < yDim; y++)
+    	   double meanL = sumL/nm;
+    	   double meana = suma/nm;
+    	   double meanb = sumb/nm;
+    	   
+    	   double diff;
+    	   double Lsquared = 0.0;
+    	   double asquared = 0.0;
+    	   double bsquared = 0.0;
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   if (mask[y][x] == 1) {
+    				   index = x + y * xDim;
+    				   diff = (Labbuf[index][0] - meanL);
+    				   Lsquared += (diff*diff);
+    				   diff = (Labbuf[index][1] - meana);
+    				   asquared += (diff*diff);
+    				   diff = (Labbuf[index][2] - meanb);
+    				   bsquared += (diff*diff);
+    			   }
+    		   }
+    	   } // for (y = 0; y < yDim; y++)
+    	   Sp.stdL[n] = Math.sqrt(Lsquared/(nm - 1.0));
+		   Sp.stda[n] = Math.sqrt(asquared/(nm - 1.0));
+		   Sp.stdb[n] = Math.sqrt(bsquared/(nm - 1.0));
+		   
+		   // Record number of pixels in superpixel too.
+		   Sp.N[n] = nm;
+	   } // for (n = 0; n < N; n++)
+	   
+	   // SPDBSCAN SuperPixel DBSCAN clustering for image segmentation
+	   
+	   // Usage:  [lc, C, regionsC] = spdbscan(l, Cp, Am, E)
+	   
+	   // Arguments:  (Note this code is structured assuming the input superpixels
+	   //              have been generated using SLIC)
+	   //       l   - Labeled image of clusters/regions generated by a superpixel
+	   //             algorithm,  such as  SLIC. 
+	   //       Cp  - 5 x Np array, as returned by SLIC. Each column giving the
+	   //             attributes of each superpixel region.  Only the first 3
+	   //             attributes, the Lab colour values, are used. 
+	   //       Am  - An adjacency matrix of the labeled image (also returned by SLIC).
+	   //       E   - Matching tolerance value/distance threshold that controls which
+	   //             superpixels are clustered together.  This value is in L*a*b*
+	   //             colour units.  Try a value in the range 5-10 to start with.
+	   //             Changing the value of E by just 1 unit can give a significant
+	   //             difference. 
+	   
+	   // Returns:
+	   //        lc - New labeled image corresponding to the new clustered regions of
+	   //             superpixels.
+	   //         C - Cell array of length Nc listing indices of superpixel regions
+	   //             associated with each cluster.
+	   //  regionsC - Array of length Np listing the cluster number associated with
+	   //             each superpixel region.  
+	   
+	   // This function performs an image segmentation using the DBSCAN algorithm to
+	   // form clusters of superpixels.  In determining the neighbourhood of any
+	   // superpixel the following criterion is used: If any two superpixels are
+	   // adjacent the clustering distance measure is the lab colour distance between
+	   // the colour centres of the two superpixels.  If any two superpixels are not
+	   // adjacent the clustering distance measure is assumed infinite.  The use of an
+	   // adjacency matrix allows the DBSCAN scan algorithm to be efficient in
+	   // determining the neighbourhood of each superpixel.
+	   
+	   // See also: SLIC, REGIONADJACENCY, DBSCAN, DRAWREGIONBOUNDARIES
+
+	   // DBSCAN Reference: 
+	   // Martin Ester, Hans-Peter Kriegel, Jörg Sander, Xiaowei Xu (1996). "A
+	   // density-based algorithm for discovering clusters in large spatial databases
+	   // with noise".  Proceedings of the Second International Conference on Knowledge
+	   // Discovery and Data Mining (KDD-96). AAAI Press. pp. 226-231.  
+	   // Also see: http://en.wikipedia.org/wiki/DBSCAN
+
+	   // Copyright (c) 2013 Peter Kovesi
+	   // www.peterkovesi.com/matlabfns/
+	    
+	   // Permission is hereby granted, free of charge, to any person obtaining a copy
+	   // of this software and associated documentation files (the "Software"), to deal
+	   // in the Software without restriction, subject to the following conditions:
+	    
+	   // The above copyright notice and this permission notice shall be included in 
+	   // all copies or substantial portions of the Software.
+	   
+	   // The Software is provided "as is", without warranty of any kind.
+
+	   // ** To Do: Make the distance measure incorporate some measure of any edge
+	   // continuity that adjacent superpixels might have **
+	   // ** Allow attributes other than Lab colour to be used **
+
+	   // March 2013
+	   // July  2013  Changes to accommondate superpixel attributes being passed as a
+	   //             struct array
 		
     }
 	
-	private double[][] mcleanupregions(int seg[][], double seRadius) {
+	class SP {
+		public SP(int n) {
+		    L = new double[n];	
+		    a = new double[n];
+		    b = new double[n];
+		    stdL = new double[n];
+		    stda = new double[n];
+		    stdb = new double[n];
+		    r = new double[n];
+		    c = new double[n];
+		    N = new int[n];
+		}
+		double L[];
+		double a[];
+		double b[];
+		double stdL[];
+		double stda[];
+		double stdb[];
+		double r[];
+		double c[];
+		int N[];
+	}
+	
+	private AmAl mcleanupregions(int seg[][], double seRadius) {
 		// MCLEANUPREGIONS  Morphological clean up of small segments in an image of segmented regions
 		
 		// Usage: [seg, Am] = mcleanupregions(seg, seRadius)
@@ -599,6 +920,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		int length = xDim * yDim;
 		int l;
 		int x,y,index,m,n;
+		int y2,x2;
 		byte b[][];
 		byte mask[][];
 		byte bopen[];
@@ -740,8 +1062,195 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	        	    }
 	            } // for (n = 0; n < list.size(); n++)
 	        } // else option == 2
+	        
+	        // Compute distance map on inverse of map
+	        byte invmask[][] = new byte[yDim][xDim];
+	        int idxy[][] = new int[yDim][xDim];
+	        int idxx[][] = new int[yDim][xDim];
+	        for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		if (mask[y][x] == 0) {
+	        			invmask[y][x] = 1;
+	        		}
+	        	}
+	        }
+	        
+	        double distanceSquared;
+	        double currentDistSquared;
+	        double diffx;
+	        double diffy;
+	        for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		if (invmask[y][x] == 1) {
+	        			idxy[y][x] = y;
+	        			idxx[y][x] = x;
+	        		}
+	        		else {
+	        			distanceSquared = Double.MAX_VALUE;
+	        			for (y2 = 0; y2 < yDim; y2++) {
+	        				for (x2 = 0; x2 < xDim; x2++) {
+	        					if (invmask[y2][x2] == 1) {
+	        						diffx = x - x2;
+	        						diffy = y - y2;
+	        						currentDistSquared = diffx * diffx + diffy * diffy;
+	        						if (currentDistSquared < distanceSquared) {
+	        							distanceSquared = currentDistSquared;
+	        							idxy[y][x] = y2;
+	        							idxx[y][x] = x2;
+	        						}
+	        					}
+	        				}
+	        			}
+	        		}
+	        	}
+	        } // for (y = 0; y < yDim; y++)
+	        
+	        // Assign a label to every pixel in the masked area using the label of
+	        // the closest pixel not in the mask as computed by bwdist
+	        int seg2[][] = new int[yDim][xDim];
+	        for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        	    seg2[y][x] = seg[y][x];	
+	        	}
+	        }
+	        
+	        for (y = 0; y < yDim; y++) {
+	        	for (x = 0; x < xDim; x++) {
+	        		if (mask[y][x] == 1) {
+	        			seg[y][x] = seg2[idxy[y][x]][idxx[y][x]];
+	        		}
+	        	}
+	        }
 	    } // if (seRadius > 0)
-		return null;
+		
+	    // 3) As some regions will have been relabled, possibly broken into several
+	    // parts, or absorbed into others and no longer exist we ensure all regions
+	    // are distinct again, and renumber the regions so that they sequentially
+	    // increase from 1.  We also need to reconstruct the adjacency matrix to
+	    // reflect the changed number of regions and their relabeling.
+
+	    int maxLabel = makeregionsdistinct(seg,4);
+	    //[seg, minLabel, maxLabel] = renumberregions(seg);
+	    Renum re = renumberregions(seg);
+	    for (y = 0; y < yDim; y++) {
+	    	for (x = 0; x < xDim; x++) {
+	    		seg[y][x] = re.nL[y][x];
+	    	}
+	    }
+	    AmAl amal = regionadjacency(seg,8);
+	    return amal;
+	}
+	
+	private Renum renumberregions(int L[][]) {
+		// Usage: [nL, minLabel, maxLabel] = renumberregions(L)
+		
+		// Argument:   L - A labeled image segmenting an image into regions, such as
+		//                 might be produced by a graph cut or superpixel algorithm.
+		//                 All pixels in each region are labeled by an integer.
+		
+		// Returns:   nL - A relabeled version of L so that label numbers form a
+		//                 sequence 1:maxRegions  or 0:maxRegions-1 depending on
+		//                 whether L has a region labeled with 0s or not.
+		//      minLabel - Minimum label in the renumbered image.  This will be 0 or 1.
+		//      maxLabel - Maximum label in the renumbered image.
+		
+		// Application: Segmentation algorithms can produce a labeled image with a non
+		// contiguous numbering of regions 1 4 6 etc. This function renumbers them into a
+		// contiguous sequence.  If the input image has a region labeled with 0s this
+		// region is treated as a privileged 'background region' and retains its 0
+		// labeling. The resulting image will have labels ranging over 0:maxRegions-1.
+		// Otherwise the image will be relabeled over the sequence 1:maxRegions
+		
+		// See also: CLEANUPREGIONS, REGIONADJACENCY
+
+		// Copyright (c) 2010 Peter Kovesi
+		// www.peterkovesi.com/matlabfns/
+		
+		// Permission is hereby granted, free of charge, to any person obtaining a copy
+		// of this software and associated documentation files (the "Software"), to deal
+		// in the Software without restriction, subject to the following conditions:
+		 
+		// The above copyright notice and this permission notice shall be included in 
+		// all copies or substantial portions of the Software.
+		
+		// October  2010
+		// February 2013 Return label numbering range
+		int x,y,i,index,n;
+	    Renum re = new Renum();
+	    re.nL = new int[L.length][L[0].length];
+	    for (y = 0; y < L.length; y++) {
+	    	for (x = 0; x < L[0].length; x++) {
+	    		re.nL[y][x] = L[y][x];
+	    	}
+	    }
+	    
+	    // Sorted list of unique labels
+	    int length = L.length * L[0].length;
+	    int Larray[] = new int[length];
+	    for (y = 0; y < L.length; y++) {
+	    	for (x = 0; x < L[0].length; x++) {
+	    		index = x + y * L[0].length;
+	    		Larray[index] = L[y][x];
+	    	}
+	    }
+	    Arrays.sort(Larray);
+	    int N = 1;
+	    for (i = 1; i < length; i++) {
+	    	if (Larray[i] > Larray[i-1]) {
+	    		N++;
+	    	}
+	    }
+	    int labels[] = new int[N];
+	    labels[0] = Larray[0];
+	    for (i = 1,index = 1; i < length; i++) {
+	    	if (Larray[i] > Larray[i-1]) {
+	    		labels[index++] = Larray[i];
+	    	}
+	    }
+	    
+	    // If there is a label of 0 we ensure that we do not renumber that region
+	    // by removing it from the list of labels to be renumbered.
+	    if (labels[0] == 0) {
+	    	int tempLabels[] = new int[N-1];
+	    	for (i = 1; i < N; i++) {
+	    		tempLabels[i-1] = labels[i]; 
+	    	}
+	    	labels = new int[N-1];
+	    	for (i = 0; i < N-1; i++) {
+	    		labels[i] = tempLabels[i];
+	    	}
+	    	tempLabels = null;
+	    	re.minLabel = 0;
+	    	re.maxLabel = N-1;
+	    }
+	    else {
+	    	re.minLabel = 1;
+	    	re.maxLabel = N;
+	    }
+	    
+	    // Now do the relabelling
+	    int count = 1;
+	    for (i = 0; i < labels.length; i++) {
+	        n = labels[i];
+	        for (y = 0; y < L.length; y++) {
+	        	for (x = 0; x < L[0].length; x++) {
+	        		if (L[y][x] == n) {
+	        			re.nL[y][x] = count;
+	        		}
+	        	}
+	        }
+	        count = count + 1;
+	    }
+	    return re;
+	}
+	
+	class Renum {
+		public Renum() {
+			
+		}
+		int nL[][];
+		int minLabel;
+		int maxLabel;
 	}
 	
 	private Vector<Vector<Integer>> finddisconnected(int l[][]) {
