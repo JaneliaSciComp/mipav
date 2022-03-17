@@ -31,27 +31,27 @@ import gov.nih.mipav.view.ViewJProgressBar;
  * 
  * Ported MATLAB files:
  *  slic.m Implementation of Achanta, Shaji, Smith, Lucchi, Fua and Susstrunk's SLIC Superpixels.
-•	spdbscan.m Implements DBSCAN clustering of superpixels.
-•	cleanupregions.m Cleans up small regions in a segmentation. Used by slic.m
-•	mcleanupregions.m Morphological version of cleanupregions.m The output is not quite as nice but the execution is much faster.
-•	finddisconnected.m Finds groupings of disconnected labeled regions. Used by mcleanupregions.m to reduce execution time.
-•	makeregionsdistinct.m Ensures labeled regions are distinct.
-•	renumberregions.m Ensures all regions in labeled image have a unique label and that the label numbering forms a contiguous sequence.
-•	regionadjacency.m Computes adjacency matrix for an image of labeled segmented regions.
-•	drawregionboundaries.m Draw boundaries of labeled regions in an image.
-•	maskimage.m used by drawregionboundaries.m
-    circularstruct.m Generates a circular structuring element, used by mcleanupregions.m
-•	dbscan.m Basic implementation of DBSCAN
-•	testdbscan.m Function to test/demonstrate dbscan.m
+ *	spdbscan.m Implements DBSCAN clustering of superpixels.
+ *	cleanupregions.m Cleans up small regions in a segmentation. Used by slic.m
+ *	mcleanupregions.m Morphological version of cleanupregions.m The output is not quite as nice but the execution is much faster.
+ *	finddisconnected.m Finds groupings of disconnected labeled regions. Used by mcleanupregions.m to reduce execution time.
+ *	makeregionsdistinct.m Ensures labeled regions are distinct.
+ *	renumberregions.m Ensures all regions in labeled image have a unique label and that the label numbering forms a contiguous sequence.
+ *	regionadjacency.m Computes adjacency matrix for an image of labeled segmented regions.
+ *	drawregionboundaries.m Draw boundaries of labeled regions in an image.
+ *	maskimage.m used by drawregionboundaries.m
+ *  circularstruct.m Generates a circular structuring element, used by mcleanupregions.m
+ *	dbscan.m Basic implementation of DBSCAN
+ *	testdbscan.m Function to test/demonstrate dbscan.m
 
 
  * 
  * References:
-•	R. Achanta, A. Shaji, K. Smith, A. Lucchi, P. Fua and S. Susstrunk. "SLIC Superpixels Compared
-    to State-of-the-Art Superpixel Methods" PAMI. Vol 34 No 11. November 2012. pp 2274-2281.
-•	Martin Ester, Hans-Peter Kriegel, Jörg Sander, Xiaowei Xu (1996). "A density-based algorithm
-    for discovering clusters in large spatial databases with noise". Proceedings of the Second International
-    Conference on Knowledge Discovery and Data Mining (KDD-96). AAAI Press. pp. 226-231.
+ *	R. Achanta, A. Shaji, K. Smith, A. Lucchi, P. Fua and S. Susstrunk. "SLIC Superpixels Compared
+ *  to State-of-the-Art Superpixel Methods" PAMI. Vol 34 No 11. November 2012. pp 2274-2281.
+ *	Martin Ester, Hans-Peter Kriegel, Jorg Sander, Xiaowei Xu (1996). "A density-based algorithm
+ *  for discovering clusters in large spatial databases with noise". Proceedings of the Second International
+ *  Conference on Knowledge Discovery and Data Mining (KDD-96). AAAI Press. pp. 226-231.
 
  */
 
@@ -818,7 +818,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	   // See also: SLIC, REGIONADJACENCY, DBSCAN, DRAWREGIONBOUNDARIES
 
 	   // DBSCAN Reference: 
-	   // Martin Ester, Hans-Peter Kriegel, Jörg Sander, Xiaowei Xu (1996). "A
+	   // Martin Ester, Hans-Peter Kriegel, Jorg Sander, Xiaowei Xu (1996). "A
 	   // density-based algorithm for discovering clusters in large spatial databases
 	   // with noise".  Proceedings of the Second International Conference on Knowledge
 	   // Discovery and Data Mining (KDD-96). AAAI Press. pp. 226-231.  
