@@ -93,15 +93,15 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	// Matching tolerance value/distance threshold that controls which
 	// superpixels are clustered together.  This value is in L*a*b*
 	// colour units.  Try a value in the range 5-10 to start with.
-	// Changing the value of E by just 1 unit can give a significant
+	// Changing the value of Ec by just 1 unit can give a significant
 	// difference. 
-	private double E = 7.5;
+	private double Ec = 7.5;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 	
 		public DBSCANClusteringSegment(ModelImage destImg, ModelImage srcImg, int k,
 				double m, double seRadius, int center, int mw1, int mw2, 
-				int nItr, double E) {
+				int nItr, double Ec) {
 			super(destImg, srcImg);
 			this.k = k;
 			this.m = m;
@@ -110,7 +110,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 			this.mw1 = mw1;
 			this.mw2 = mw2;
 			this.nItr = nItr;
-			this.E = E;
+			this.Ec = Ec;
 		}
 	
 	public void runAlgorithm() {
@@ -843,8 +843,127 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	   // March 2013
 	   // July  2013  Changes to accommondate superpixel attributes being passed as a
 	   //             struct array
+	   
+	   int Np = Sp.N.length;
+	   
+	   int regionsC[] = new int[Np+1];
+	   Vector<Vector<Integer>> Cl = new Vector<Vector<Integer>>();
+	   Vector<Integer> intVec;
+	   int Nc = 0; //Cluster counter
+	   // Array to keep track of superpixels that have been visited
+	   boolean Pvisit[] = new boolean[Np+1];
+	   Vector<Integer> neighbours;
+	   Vector<Integer> neighboursP;
+	   int ind;
+	   int nb;
+	   
+	   for (n = 1; n <= Np; n++) {
+		   if (!Pvisit[n]) { // If this superpixel not visited yet
+			   Pvisit[n] = true; // mark it as visited
+			   neighbours = regionQueryM(Sp, amal, n-1, Ec);
+			   
+			   // Form a cluster
+			   // Increment number of clusters and process nieghbourhood
+			   Nc = Nc + 1;
+			   intVec = new Vector<Integer>();
+			   // Initialize cluster Nc with point n
+			   intVec.add(n);
+			   // and mark superpixel n as being a member of the cluster Nc.
+			   regionsC[n] = Nc;
+			   
+			   // Initialize index into neighbours vector
+			   ind = 0;
+			   
+			   // For each superpixel Sp in list of neighbours
+			   while (ind < neighbours.size()) {
+		           nb = neighbours.get(ind);
+		           
+		           if (!Pvisit[nb]) { // If this neighbour has not been visited
+		        	   Pvisit[nb] = true; // mark it as visited
+		        	   
+		        	   // Find the neighbours of this neighbour and
+		        	   // add them to the neighbours list
+		        	   neighboursP = regionQueryM(Sp, amal, nb-1, Ec);
+		        	   neighbours.addAll(neighboursP);
+		           } // if (!Pvisit[nb])
+		           
+		           // If this neighbour nb is not yet a member of any cluster add it
+		           // to this cluster
+		           if (regionsC[nb] == 0) {
+		        	   intVec.add(nb);
+		        	   regionsC[nb] = Nc;
+		           }
+		           
+		           // Increment neighbour point index and process next neighbour
+			   } // while (ind < neighbours.size())
+			   Cl.add(intVec);
+		   } // if (!Pvisit[n])
+	   } // for (n = 1; n <= Np; n++)
+	   
+	   // Generate new labeled image corresponding to the new clustered regions
+	   int lc[] = new int[length];
+	   for (n = 1; n < regionsC.length; n++) {
+		   for (y = 0; y < yDim; y++) {
+			   for (x = 0; x < xDim; x++) {
+				   if (l[y][x] == n) {
+					   index = x + y*xDim;
+					   lc[index] = regionsC[n];
+				   }
+			   }
+		   }
+	   }
+	   
+	   try {
+		   destImage.importData(0, lc, true);
+	   }
+	   catch (IOException e) {
+		   System.err.println("IOException " + e + " on destImage.importData(0, lc, true)");
+		   setCompleted(false);
+		   return;
+	   }
+	   
+	   setCompleted(true);
+	   return;
 		
     }
+	
+	private Vector<Integer> regionQueryM(SP Sp, AmAl amal, int n, double Ec) {
+		// Find indices of all superpixels adjacent to superpixel n with mean Lab 
+		// colour difference less than Ec.
+		
+		// Arguments:
+		//             Sp - The struct array of superpixel attributes
+		//             Am - Adjacency matrix
+		//              n - Index of point of interest
+		//             Ec - Colour distance threshold
+		
+		int i,j;
+		double E2 = Ec*Ec;
+		Vector<Integer>neighbours = new Vector<Integer>();
+		
+		// Get indices of all pixels connected to superpixel connected to superpixel n
+		Vector<Integer> ind = new Vector<Integer>();
+		if (amal.Ami != null) {
+			for (i = 0; i < amal.Ami.length; i++) {
+		        if (amal.Ami[i] == n) {
+		        	ind.add(amal.Amj[i]);
+		        }
+			}
+			
+			for (j = 0; j < ind.size(); j++) {
+				i = ind.get(j);
+				// Test if distance^2 < E^2
+				double Ldiff = Sp.L[i] - Sp.L[n];
+				double adiff = Sp.a[i] - Sp.a[n];
+				double bdiff = Sp.b[i] - Sp.b[n];
+				double dist2 = Ldiff*Ldiff + adiff*adiff + bdiff*bdiff;
+				if (dist2 < E2) {
+					neighbours.add(i+1);
+				}
+			}
+		}
+		return neighbours;
+	}
 	
 	class SP {
 		public SP(int n) {
@@ -1288,7 +1407,6 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         int yDim = l.length;
         int xDim = l[0].length;
         int x,y,n,i,j,m,p;
-        int listNo;
         // Number of labels
         int N = 0;
         for (y = 0; y < yDim; y++) {
