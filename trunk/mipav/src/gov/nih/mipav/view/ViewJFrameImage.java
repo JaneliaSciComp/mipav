@@ -1960,6 +1960,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // else if ( command.equals( "Vessel Segmentation" ) ) {
         // new JDialogVesselSegmentation( this, getActiveImage() );
         // }
+        else if (command.equals("DBSCAN")) {
+        	new JDialogDBSCANClusteringSegment(this, getActiveImage());
+        }
         else if (command.equals("TextureSegmentation")) {
         	new JDialogTextureSegmentation(this, getActiveImage());
         }
