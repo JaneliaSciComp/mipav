@@ -416,6 +416,8 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Regions from Partial Borders", "RegionsFromPartial", 0, null, false),
 								menuBuilder.buildMenuItem("Region merging via boundary melting", "RegionMergingMelting", 0, null, false),
 								menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
+								menuBuilder.buildMenuItem("Superpixel DBSCAN clustering", "DBSCAN", 0,
+										null, false),
 								menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null,
 										false),
                         
@@ -1463,6 +1465,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
 		if (numberOfDimensions == 4) {
+			menuBuilder.setMenuItemEnabled("Superpixel DBSCAN clustering", false);
 			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
@@ -1592,6 +1595,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else if (numberOfDimensions == 3) {
+			menuBuilder.setMenuItemEnabled("Superpixel DBSCAN clustering", false);
 			menuBuilder.setMenuItemEnabled("Guided filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
@@ -1801,6 +1805,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Slant Transform", false);
 			menuBuilder.setMenuItemEnabled("Haar Transform", false);
 		} else {
+			menuBuilder.setMenuItemEnabled("Superpixel DBSCAN clustering", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
 			menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
