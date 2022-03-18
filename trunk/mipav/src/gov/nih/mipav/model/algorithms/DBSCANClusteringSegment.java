@@ -895,6 +895,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		           }
 		           
 		           // Increment neighbour point index and process next neighbour
+		           ind = ind + 1;
 			   } // while (ind < neighbours.size())
 			   Cl.add(intVec);
 		   } // if (!Pvisit[n])
@@ -1598,11 +1599,16 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         // Allocate vectors for forming row, col, value triplets used to construct
         // sparse matrix.  Forming these vectors first is faster than filling
         // entries directly into the sparse matrix
-        int i[] = new int[length]; // row value
-        int j[] = new int[length]; // col value
-        int s[] = new int[length]; // value
+        int i[] = null; // row value
+        int j[] = null; // col value
+        int s[] = null; // value
+        int lencon = 0;
         
         if (connectivity == 8) {
+        	lencon = 3*(yDim-1) + 4*(yDim-1)*(xDim-2);
+        	i = new int[lencon];
+        	j = new int[lencon];
+        	s = new int[lencon];
             n = 0;
             for (r = 0; r < yDim-1; r++) {
 
@@ -1623,6 +1629,10 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
             
         else if (connectivity == 4) {
             n = 0;
+            lencon = 2*(xDim-1)*(yDim-1);
+            i = new int[lencon];
+        	j = new int[lencon];
+        	s = new int[lencon];
             for (r = 0; r < yDim-1; r++) {
                 for (c = 0; c < xDim-1; c++) {
                     i[n] = L[r][c]; j[n] = L[r][c+1]; s[n] = 1; n=n+1;
@@ -1633,45 +1643,46 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         } // else if (connectivity == 4) 
         
        int numAmEntries = 0;
-       boolean have[][] = new boolean[length][length];
-       for (r = 0; r < length; r++) {
-    	   if (s[r] == 1) {
+       Vector<Integer> Ami = new Vector<Integer>();
+       Vector<Integer> Amj = new Vector<Integer>();
+       boolean haveEntry;
+       boolean haveReverseEntry;
+       for (r = 0; r < lencon; r++) {
+    	   if ((i[r] != 0) && (j[r] != 0)) {
     		   if (i[r] != j[r]) {
-    			   numAmEntries++;
-    			   have[i[r]][j[r]] = true;
-    		   }
-    	   }
-       }
-       for (r = 0; r < length; r++) {
-    	   if (s[r] == 1) {
-    		   if (i[r] != j[r]) {
-    			   if (!have[j[r]][i[r]]) {
+    			   haveEntry = false;
+    			   haveReverseEntry = false;
+    			   for (c = 0; c < numAmEntries; c++) {
+    				   if ((Ami.get(c) == i[r]) && (Ami.get(c) == j[r])) {
+    					    haveEntry = true;   
+    				   }
+    				   if ((Ami.get(c) == j[r]) && (Ami.get(c) == i[r])) {
+   					       haveReverseEntry = true;   
+   				       }
+    			   }
+    			   if (!haveEntry) {
+    				   Ami.add(i[r]);
+    				   Amj.add(j[r]);
     				   numAmEntries++;
     			   }
+    			   if (!haveReverseEntry) {
+    				   Ami.add(j[r]);
+    				   Amj.add(i[r]);
+    				   numAmEntries++;
+    			   }
+
     		   }
     	   }
        }
+       
+      
        AmAl amal = new AmAl();
        amal.Ami = new int[numAmEntries];
        amal.Amj = new int[numAmEntries];
        int entry = 0;
-       for (r = 0; r < length; r++) {
-    	   if (s[r] == 1) {
-    		   if (i[r] != j[r]) {
-    			   amal.Ami[entry] = i[r];
-    			   amal.Amj[entry++] = j[r];
-    		   }
-    	   }
-       }
-       for (r = 0; r < length; r++) {
-    	   if (s[r] == 1) {
-    		   if (i[r] != j[r]) {
-    			   if (!have[j[r]][i[r]]) {
-    				   amal.Ami[entry] = j[r];
-    				   amal.Amj[entry++] = i[r];
-    			   }
-    		   }
-    	   }
+       for (r = 0; r < numAmEntries; r++) {
+    	   amal.Ami[r] = Ami.get(r);
+    	   amal.Amj[r] = Amj.get(r);
        }
        
        amal.Al = new int[N][];
@@ -1858,7 +1869,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 					nextMaxY = maxY;
 					minX = Math.max(0,x-1);
 					nextMinX = minX;
-					maxX = Math.max(xDim-1,x+1);
+					maxX = Math.min(xDim-1,x+1);
 					nextMaxX = maxX;
 					while (changed) {
 					    changed = false;
