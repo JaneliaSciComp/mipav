@@ -385,6 +385,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         meanButton.setFont(serif12);
         meanButton.setForeground(Color.black);
         centerGroup.add(meanButton);
+        optionsPanel.add(meanButton, gbc);
         
         gbc.gridx = 0;
         gbc.gridy = 4;
@@ -392,6 +393,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         medianButton.setFont(serif12);
         medianButton.setForeground(Color.black);
         centerGroup.add(medianButton);
+        optionsPanel.add(medianButton, gbc);
         
         gbc.gridx = 0;
         gbc.gridy = 5;
@@ -425,7 +427,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         gbc.gridx = 1;
         gbc.gridy = 7;
         textIter = new JTextField();
-        textIter.setText("0");
+        textIter.setText("10");
         textIter.setFont(serif12);
         optionsPanel.add(textIter, gbc);
         
