@@ -312,7 +312,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		buffer =  new float[4 * length];
 		Labbuf = new double[length][3];
 		try {
-			srcImage.exportData(0, length, buffer);
+			srcImage.exportData(0, 4*length, buffer);
 		}
 		catch(IOException e) {
 			e.printStackTrace();
