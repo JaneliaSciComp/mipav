@@ -584,7 +584,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	        	   for (x = cmin; x <= cmax; x++) {
 	        		   if (D[y-rmin][x-cmin] < d[y][x]) {
 	        			   d[y][x] = D[y-rmin][x-cmin];
-	        			   l[y][x] = kk;
+	        			   l[y][x] = kk+1;
 	        		   }
 	        	   }
 	           }           
