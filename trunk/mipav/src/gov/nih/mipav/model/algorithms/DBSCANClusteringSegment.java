@@ -695,7 +695,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    				   index = x + y * xDim;
 	    				   Larray[i]= Labbuf[index][0];
 	    				   aarray[i]= Labbuf[index][1];
-	    				   barray[i] = Labbuf[index][2];
+	    				   barray[i++] = Labbuf[index][2];
 	    			   }
 	    		   }
 	    	   } // for (y = 0, i = 0; y < yDim; y++)
