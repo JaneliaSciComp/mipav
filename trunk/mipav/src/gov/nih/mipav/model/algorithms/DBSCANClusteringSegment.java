@@ -546,15 +546,15 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 
 	           // Get subimage around cluster
 	           rmin = (int)Math.max(C[4][kk]-intS, 0);   
-	           rmax = (int)Math.min(C[4][kk]+S, yDim-1);
+	           rmax = (int)Math.min(C[4][kk]+intS, yDim-1);
 	           if (rmax < rmin) {
 	        	   System.err.println("rmax < rmin");
 	        	   setCompleted(false);
 	        	   return;
 	           }
 	           rlen = rmax-rmin+1;
-	           cmin = (int)Math.max(C[3][kk]-S, 0);   
-	           cmax = (int)Math.min(C[3][kk]+S, xDim-1);
+	           cmin = (int)Math.max(C[3][kk]-intS, 0);   
+	           cmax = (int)Math.min(C[3][kk]+intS, xDim-1);
 	           if (cmax < cmin)  {
 	        	   System.err.println("cmax < cmin");
 	        	   setCompleted(false);
@@ -575,7 +575,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	           for (i = 0; i < 6; i++) {
 	        	   Ckk[i] = C[i][kk]; 
 	           }
-	           D = dist(Ckk, subim, rmin, cmin, S, m);
+	           D = dist(Ckk, subim, rmin, cmin, (double)intS, m);
 	           
 
 	           // If any pixel distance from the cluster centre is less than its
