@@ -514,7 +514,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
 
         tmpStr = textm.getText();
 
-        if (testParameter(tmpStr, 5.0, 40.0)) {
+        if (testParameter(tmpStr, 1.0, 40.0)) {
             m = Double.valueOf(tmpStr).doubleValue();
         } else {
             textm.requestFocus();
