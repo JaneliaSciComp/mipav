@@ -58,6 +58,9 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	// Number of desired superpixels. Note that this is nominal
 	// the actual number of superpixels generated will generally
 	// be a bit larger, especially if parameter m is small.
+    // For a 225 by 225 image with 9 equally sized squares:
+    // k = 10 gave 7 objects, k = 11 to k = 18 gave the 9 squares perfectly,
+    // and k = 19 found 13 objects
 	private int k;
 	// Weighting factor between colour and spatial
 	// differences. Values from about 5 to 40 are useful.  Use a
