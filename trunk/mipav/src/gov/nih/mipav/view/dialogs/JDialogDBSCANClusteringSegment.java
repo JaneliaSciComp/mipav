@@ -368,7 +368,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        labelse = createLabel("Structuring element radius");
+        labelse = createLabel("Structuring element radius (>= 1.0)");
         optionsPanel.add(labelse, gbc);
 
         gbc.gridx = 1;
@@ -504,7 +504,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         
         tmpStr = textse.getText();
 
-        if (testParameter(tmpStr, 0.5, 5.0)) {
+        if (testParameter(tmpStr, 1.0, 5.0)) {
             seRadius = Double.valueOf(tmpStr).doubleValue();
         } else {
             textse.requestFocus();
