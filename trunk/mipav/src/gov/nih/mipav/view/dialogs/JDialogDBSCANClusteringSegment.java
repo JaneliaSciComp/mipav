@@ -90,6 +90,8 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
     
     private JTextField textm;
     
+    private JCheckBox enableseCheckBox;
+    
     private JTextField textse;
 
     /** DOCUMENT ME! */
@@ -146,6 +148,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -154,6 +157,17 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (source == enableseCheckBox) {
+        	if (enableseCheckBox.isSelected()) {
+        		labelse.setEnabled(true);
+        		textse.setEnabled(true);
+        		textse.setText("1.0");
+        	}
+        	else {
+        		labelse.setEnabled(false);
+        		textse.setEnabled(false);
+        		textse.setText("0.0");
+        	}
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
         } else { 
@@ -365,21 +379,28 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         textm.setText("10.0");
         textm.setFont(serif12);
         optionsPanel.add(textm, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 2;
+        enableseCheckBox = new JCheckBox("Enable structuring element", true);
+        enableseCheckBox.setFont(serif12);
+        enableseCheckBox.addActionListener(this);
+        optionsPanel.add(enableseCheckBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         labelse = createLabel("Structuring element radius (>= 1.0)");
         optionsPanel.add(labelse, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         textse = new JTextField();
         textse.setText("1.0");
         textse.setFont(serif12);
         optionsPanel.add(textse, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         centerGroup = new ButtonGroup();
         meanButton = new JRadioButton("Mean center", true);
         meanButton.setFont(serif12);
@@ -388,7 +409,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         optionsPanel.add(meanButton, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         medianButton = new JRadioButton("Median center", false);
         medianButton.setFont(serif12);
         medianButton.setForeground(Color.black);
@@ -396,48 +417,48 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         optionsPanel.add(medianButton, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         labelmw1 = createLabel("L median filter size");
         optionsPanel.add(labelmw1, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         textmw1 = new JTextField();
         textmw1.setText("0");
         textmw1.setFont(serif12);
         optionsPanel.add(textmw1, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         labelmw2 = createLabel("a and b median filter size");
         optionsPanel.add(labelmw2, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         textmw2 = new JTextField();
         textmw2.setText("0");
         textmw2.setFont(serif12);
         optionsPanel.add(textmw2, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         labelIter = createLabel("Number of iterations");
         optionsPanel.add(labelIter, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         textIter = new JTextField();
         textIter.setText("10");
         textIter.setFont(serif12);
         optionsPanel.add(textIter, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         labelEc = createLabel("Tolerance value/distance threshold");
         optionsPanel.add(labelEc, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         textEc = new JTextField();
         textEc.setText("7.5");
         textEc.setFont(serif12);
@@ -504,13 +525,18 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         
         tmpStr = textse.getText();
 
-        if (testParameter(tmpStr, 1.0, 5.0)) {
-            seRadius = Double.valueOf(tmpStr).doubleValue();
-        } else {
-            textse.requestFocus();
-            textse.selectAll();
-
-            return false;
+        if (enableseCheckBox.isSelected()) {
+	        if (testParameter(tmpStr, 1.0, 5.0)) {
+	            seRadius = Double.valueOf(tmpStr).doubleValue();
+	        } else {
+	            textse.requestFocus();
+	            textse.selectAll();
+	
+	            return false;
+	        }
+        }
+        else {
+        	seRadius = 0.0;
         }
         
         if (meanButton.isSelected()) {
