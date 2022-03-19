@@ -486,7 +486,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    k = nodeRows * nodeCols;
 	    
 	    // Allocate memory and initialise clusters, labels and distances.
-	    C = new double[6][k];          // Cluster centre data  1:3 is mean Lab value,
+	    C = new double[6][k+1];          // Cluster centre data  1:3 is mean Lab value,
 	                                   // 4:5 is col, row of centre, 6 is No of pixels
 	    Ckk = new double[6];
 	    // Pixel labels.
@@ -505,7 +505,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    }
 	    
 	    // Initialise clusters on a hexagonal grid
-	    kk = 0;
+	    kk = 1;
 	    r = vSpacing/2;
 	    rr = (int)Math.round(r)-1;
 	    
@@ -542,7 +542,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    intS = (int)Math.round(S);  // We need S to be an integer from now on
 	    
 	    for (n = 1; n <= nItr; n++) {
-	       for (kk = 0; kk < k; kk++) {  // for each cluster
+	       for (kk = 1; kk <= k; kk++) {  // for each cluster
 
 	           // Get subimage around cluster
 	           rmin = (int)Math.max(C[4][kk]-intS, 0);   
@@ -584,7 +584,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	        	   for (x = cmin; x <= cmax; x++) {
 	        		   if (D[y-rmin][x-cmin] < d[y][x]) {
 	        			   d[y][x] = D[y-rmin][x-cmin];
-	        			   l[y][x] = kk+1;
+	        			   l[y][x] = kk;
 	        		   }
 	        	   }
 	           }           
@@ -592,7 +592,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	       
 	       // Update cluster centres with mean values
 	       for (i = 0; i < 6; i++) {
-	    	   for (j = 0; j < k; j++) {
+	    	   for (j = 1; j <= k; j++) {
 	    		   C[i][j] = 0.0;
 	    	   }
 	       }
@@ -609,11 +609,11 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	       } // for (y = 0; y < yDim; y++)
 	       
 	       // Divide by number of pixels in each superpixel to get mean values
-	       for (kk = 0; kk < k; kk++) { 
+	       for (kk = 1; kk <= k; kk++) { 
 	    	   for (i = 0; i < 5; i++) {
 	    		   C[i][kk] = Math.round(C[i][kk]/C[5][kk]);
 	    	   }
-	       } // for (kk = 0; kk < k; kk++)
+	       } // for (kk = 1; kk <= k; kk++)
 	       
 	       // Note the residual error, E, is not calculated because we are using a
 	       // fixed number of iterations 
