@@ -1601,28 +1601,26 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
         // entries directly into the sparse matrix
         int i[] = null; // row value
         int j[] = null; // col value
-        int s[] = null; // value
         int lencon = 0;
         
         if (connectivity == 8) {
         	lencon = 3*(yDim-1) + 4*(yDim-1)*(xDim-2);
         	i = new int[lencon];
         	j = new int[lencon];
-        	s = new int[lencon];
             n = 0;
             for (r = 0; r < yDim-1; r++) {
 
                 // Handle pixels in 1st column
-                i[n] = L[r][0]; j[n] = L[r][1]; s[n] = 1; n=n+1;
-                i[n] = L[r][0]; j[n] = L[r+1][0]; s[n] = 1; n=n+1;
-                i[n] = L[r][0]; j[n] = L[r+1][1]; s[n] = 1; n=n+1;
+                i[n] = L[r][0]; j[n] = L[r][1]; n=n+1;
+                i[n] = L[r][0]; j[n] = L[r+1][0]; n=n+1;
+                i[n] = L[r][0]; j[n] = L[r+1][1]; n=n+1;
                 
                 // ... now the rest of the column
                 for (c = 1; c < xDim-1; c++) {
-                   i[n] = L[r][c]; j[n] = L[r][c+1]; s[n] = 1; n=n+1;
-                   i[n] = L[r][c]; j[n] = L[r+1][c-1]; s[n] = 1; n=n+1;
-                   i[n] = L[r][c]; j[n] = L[r+1][c]; s[n] = 1; n=n+1;
-                   i[n] = L[r][c]; j[n] = L[r+1][c+1]; s[n] = 1; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r][c+1]; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r+1][c-1]; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r+1][c]; n=n+1;
+                   i[n] = L[r][c]; j[n] = L[r+1][c+1]; n=n+1;
                 }
             }
         } // if (connectivity == 8)
@@ -1632,11 +1630,10 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
             lencon = 2*(xDim-1)*(yDim-1);
             i = new int[lencon];
         	j = new int[lencon];
-        	s = new int[lencon];
             for (r = 0; r < yDim-1; r++) {
                 for (c = 0; c < xDim-1; c++) {
-                    i[n] = L[r][c]; j[n] = L[r][c+1]; s[n] = 1; n=n+1;
-                    i[n] = L[r][c]; j[n] = L[r+1][c]; s[n] = 1; n=n+1;
+                    i[n] = L[r][c]; j[n] = L[r][c+1]; n=n+1;
+                    i[n] = L[r][c]; j[n] = L[r+1][c]; n=n+1;
                 }
             }
         
