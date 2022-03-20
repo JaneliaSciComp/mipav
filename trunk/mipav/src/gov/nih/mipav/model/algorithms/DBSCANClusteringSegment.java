@@ -61,7 +61,11 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
     // For a 225 by 225 image with 9 equally sized squares:
     // k = 10 gave 7 objects, k = 11 to k = 18 gave the 9 squares perfectly,
     // and k = 19 found 13 objects
+    // For noSpatialDistanceIfZeroColorDistance = true:
+    // k = 10 gave 7 objects, k= 11 to k = 28 gave the 9 squares perfectly,
+    // and k = 29 gave 13 objects.
 	private int k;
+	private boolean noSpatialDistanceIfZeroColorDistance = false;
 	// Weighting factor between colour and spatial
 	// differences. Values from about 5 to 40 are useful.  Use a
 	// large value to enforce superpixels with more regular and
@@ -97,10 +101,11 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 	
 		public DBSCANClusteringSegment(ModelImage destImg, ModelImage srcImg, int k,
-				double m, double seRadius, int center, int mw1, int mw2, 
+				boolean noSpatialDistanceIfZeroColorDistance, double m, double seRadius, int center, int mw1, int mw2, 
 				int nItr, double Ec) {
 			super(destImg, srcImg);
 			this.k = k;
+			this.noSpatialDistanceIfZeroColorDistance = noSpatialDistanceIfZeroColorDistance;
 			this.m = m;
 			this.seRadius = seRadius;
 			this.center = center;
@@ -1995,7 +2000,12 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		
 		for (y = 0; y < rows; y++) {
 			for (x = 0; x < cols; x++) {
-				D[y][x] = Math.sqrt(dc2[y][x] + ds2[y][x]/Ssquared*msquared);
+				if (noSpatialDistanceIfZeroColorDistance && (dc2[y][x] == 0.0)) {
+					D[y][x] = 0.0;
+				}
+				else {
+				    D[y][x] = Math.sqrt(dc2[y][x] + ds2[y][x]/Ssquared*msquared);
+				}
 			}
 		}
 		return D;
