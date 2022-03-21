@@ -421,8 +421,8 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    	    	xmax = Math.min(xDim-1,x+halfmw1);
 	    	    	medlength = (ymax-ymin+1)*(xmax-xmin+1);
 	    	    	medarray = new double[medlength];
-		    	    for (j = ymin, medptr = 0; j <= ymax; y++) {
-		    	    	for (i = xmin; i <= xmax; x++, medptr++) {
+		    	    for (j = ymin, medptr = 0; j <= ymax; j++) {
+		    	    	for (i = xmin; i <= xmax; i++, medptr++) {
 		    	    	    medarray[medptr] = Labbuf[i + j * xDim][0];
 		    	    	}
 		    	    }
@@ -454,8 +454,8 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		    	    	xmax = Math.min(xDim-1,x+halfmw2);
 		    	    	medlength = (ymax-ymin+1)*(xmax-xmin+1);
 		    	    	medarray = new double[medlength];
-			    	    for (j = ymin, medptr = 0; j <= ymax; y++) {
-			    	    	for (i = xmin; i <= xmax; x++, medptr++) {
+			    	    for (j = ymin, medptr = 0; j <= ymax; j++) {
+			    	    	for (i = xmin; i <= xmax; i++, medptr++) {
 			    	    	    medarray[medptr] = Labbuf[i + j * xDim][n];
 			    	    	}
 			    	    }
