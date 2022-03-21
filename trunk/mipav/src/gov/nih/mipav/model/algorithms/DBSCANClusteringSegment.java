@@ -733,10 +733,8 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		    		   }
 		    	   }
 		       }
-		       if (nm != 0) {
-		           Sp.r[n] = sumy/nm;
-		           Sp.c[n] = sumx/nm;
-		       }
+		       Sp.r[n] = sumy/nm;
+		       Sp.c[n] = sumx/nm;
 		       
 		       // Compute standard deviations of the colour components of each super
 		       // pixel. This can be used by code seeking to merge superpixels into
