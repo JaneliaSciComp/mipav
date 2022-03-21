@@ -675,8 +675,75 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    		   }
 	    	   }
 	       } // for (y = 0; y < yDim; y++)
-	       if (center == MEAN_CENTER) {
-	    	   double sumL = 0.0;
+	       if (nm != 0) {
+		       if (center == MEAN_CENTER) {
+		    	   double sumL = 0.0;
+		    	   double suma = 0.0;
+		    	   double sumb = 0.0;
+		    	   for (y = 0; y < yDim; y++) {
+		    		   for (x = 0; x < xDim; x++) {
+		    			   if (mask[y][x] == 1) {
+		    				   index = x + y * xDim;
+		    				   sumL += Labbuf[index][0];
+		    				   suma += Labbuf[index][1];
+		    				   sumb += Labbuf[index][2];
+		    			   }
+		    		   }
+		    	   } // for (y = 0; y < yDim; y++)
+		    	   Sp.L[n] = sumL/nm;
+		    	   Sp.a[n] = suma/nm;
+		    	   Sp.b[n] = sumb/nm;
+		       } // if (center == MEAN_CENTER)
+		       else if (center == MEDIAN_CENTER) {
+		           double Larray[] = new double[nm];
+		           double aarray[] = new double[nm];
+		           double barray[] = new double[nm];
+		           for (y = 0, i = 0; y < yDim; y++) {
+		    		   for (x = 0; x < xDim; x++) {
+		    			   if (mask[y][x] == 1) {
+		    				   index = x + y * xDim;
+		    				   Larray[i]= Labbuf[index][0];
+		    				   aarray[i]= Labbuf[index][1];
+		    				   barray[i++] = Labbuf[index][2];
+		    			   }
+		    		   }
+		    	   } // for (y = 0, i = 0; y < yDim; y++)
+		           Arrays.sort(Larray);
+		           Arrays. sort(aarray);
+		           Arrays.sort(barray);
+		           if ((nm % 2) == 1) {
+		    	    	Sp.L[n] = Larray[(nm-1)/2];
+		    	    	Sp.a[n] = aarray[(nm-1)/2];
+		    	    	Sp.b[n] = barray[(nm-1)/2];
+		    	    }
+		    	    else {
+		    	    	Sp.L[n] = (Larray[nm/2] + Larray[(nm/2)-1])/2.0;
+		    	    	Sp.a[n] = (aarray[nm/2] + aarray[(nm/2)-1])/2.0;
+		    	    	Sp.b[n] = (barray[nm/2] + barray[(nm/2)-1])/2.0;
+		    	    }
+		       } // else if (center == MEDIAN_CENTER)
+		       
+		       double sumy = 0.0;
+		       double sumx = 0.0;
+		       for (y = 0; y < yDim; y++) {
+		    	   for (x = 0; x < xDim; x++) {
+		    		   if (mask[y][x] == 1) {
+		    			   sumy += Y[y][x];
+		    			   sumx += X[y][x];
+		    		   }
+		    	   }
+		       }
+		       if (nm != 0) {
+		           Sp.r[n] = sumy/nm;
+		           Sp.c[n] = sumx/nm;
+		       }
+		       
+		       // Compute standard deviations of the colour components of each super
+		       // pixel. This can be used by code seeking to merge superpixels into
+		       // image segments.  Note these are calculated relative to the mean colour
+		       // component irrespective of the centre being calculated from the mean or
+		       // median colour component values.
+		       double sumL = 0.0;
 	    	   double suma = 0.0;
 	    	   double sumb = 0.0;
 	    	   for (y = 0; y < yDim; y++) {
@@ -689,94 +756,31 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	    			   }
 	    		   }
 	    	   } // for (y = 0; y < yDim; y++)
-	    	   Sp.L[n] = sumL/nm;
-	    	   Sp.a[n] = suma/nm;
-	    	   Sp.b[n] = sumb/nm;
-	       } // if (center == MEAN_CENTER)
-	       else if (center == MEDIAN_CENTER) {
-	           double Larray[] = new double[nm];
-	           double aarray[] = new double[nm];
-	           double barray[] = new double[nm];
-	           for (y = 0, i = 0; y < yDim; y++) {
+	    	   double meanL = sumL/nm;
+	    	   double meana = suma/nm;
+	    	   double meanb = sumb/nm;
+	    	   
+	    	   double diff;
+	    	   double Lsquared = 0.0;
+	    	   double asquared = 0.0;
+	    	   double bsquared = 0.0;
+	    	   for (y = 0; y < yDim; y++) {
 	    		   for (x = 0; x < xDim; x++) {
 	    			   if (mask[y][x] == 1) {
 	    				   index = x + y * xDim;
-	    				   Larray[i]= Labbuf[index][0];
-	    				   aarray[i]= Labbuf[index][1];
-	    				   barray[i++] = Labbuf[index][2];
+	    				   diff = (Labbuf[index][0] - meanL);
+	    				   Lsquared += (diff*diff);
+	    				   diff = (Labbuf[index][1] - meana);
+	    				   asquared += (diff*diff);
+	    				   diff = (Labbuf[index][2] - meanb);
+	    				   bsquared += (diff*diff);
 	    			   }
 	    		   }
-	    	   } // for (y = 0, i = 0; y < yDim; y++)
-	           Arrays.sort(Larray);
-	           Arrays.sort(aarray);
-	           Arrays.sort(barray);
-	           if ((nm % 2) == 1) {
-	    	    	Sp.L[n] = Larray[(nm-1)/2];
-	    	    	Sp.a[n] = aarray[(nm-1)/2];
-	    	    	Sp.b[n] = barray[(nm-1)/2];
-	    	    }
-	    	    else {
-	    	    	Sp.L[n] = (Larray[nm/2] + Larray[(nm/2)-1])/2.0;
-	    	    	Sp.a[n] = (aarray[nm/2] + aarray[(nm/2)-1])/2.0;
-	    	    	Sp.b[n] = (barray[nm/2] + barray[(nm/2)-1])/2.0;
-	    	    }
-	       } // else if (center == MEDIAN_CENTER)
-	       
-	       double sumy = 0.0;
-	       double sumx = 0.0;
-	       for (y = 0; y < yDim; y++) {
-	    	   for (x = 0; x < xDim; x++) {
-	    		   if (mask[y][x] == 1) {
-	    			   sumy += Y[y][x];
-	    			   sumx += X[y][x];
-	    		   }
-	    	   }
-	       }
-	       Sp.r[n] = sumy/nm;
-	       Sp.c[n] = sumx/nm;
-	       
-	       // Compute standard deviations of the colour components of each super
-	       // pixel. This can be used by code seeking to merge superpixels into
-	       // image segments.  Note these are calculated relative to the mean colour
-	       // component irrespective of the centre being calculated from the mean or
-	       // median colour component values.
-	       double sumL = 0.0;
-    	   double suma = 0.0;
-    	   double sumb = 0.0;
-    	   for (y = 0; y < yDim; y++) {
-    		   for (x = 0; x < xDim; x++) {
-    			   if (mask[y][x] == 1) {
-    				   index = x + y * xDim;
-    				   sumL += Labbuf[index][0];
-    				   suma += Labbuf[index][1];
-    				   sumb += Labbuf[index][2];
-    			   }
-    		   }
-    	   } // for (y = 0; y < yDim; y++)
-    	   double meanL = sumL/nm;
-    	   double meana = suma/nm;
-    	   double meanb = sumb/nm;
-    	   
-    	   double diff;
-    	   double Lsquared = 0.0;
-    	   double asquared = 0.0;
-    	   double bsquared = 0.0;
-    	   for (y = 0; y < yDim; y++) {
-    		   for (x = 0; x < xDim; x++) {
-    			   if (mask[y][x] == 1) {
-    				   index = x + y * xDim;
-    				   diff = (Labbuf[index][0] - meanL);
-    				   Lsquared += (diff*diff);
-    				   diff = (Labbuf[index][1] - meana);
-    				   asquared += (diff*diff);
-    				   diff = (Labbuf[index][2] - meanb);
-    				   bsquared += (diff*diff);
-    			   }
-    		   }
-    	   } // for (y = 0; y < yDim; y++)
-    	   Sp.stdL[n] = Math.sqrt(Lsquared/(nm - 1.0));
-		   Sp.stda[n] = Math.sqrt(asquared/(nm - 1.0));
-		   Sp.stdb[n] = Math.sqrt(bsquared/(nm - 1.0));
+	    	   } // for (y = 0; y < yDim; y++)
+	    	   Sp.stdL[n] = Math.sqrt(Lsquared/(nm - 1.0));
+			   Sp.stda[n] = Math.sqrt(asquared/(nm - 1.0));
+			   Sp.stdb[n] = Math.sqrt(bsquared/(nm - 1.0));
+	       } // if (nm != 0)
 		   
 		   // Record number of pixels in superpixel too.
 		   Sp.N[n] = nm;
