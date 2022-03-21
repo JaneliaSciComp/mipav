@@ -741,43 +741,45 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		       // image segments.  Note these are calculated relative to the mean colour
 		       // component irrespective of the centre being calculated from the mean or
 		       // median colour component values.
-		       double sumL = 0.0;
-	    	   double suma = 0.0;
-	    	   double sumb = 0.0;
-	    	   for (y = 0; y < yDim; y++) {
-	    		   for (x = 0; x < xDim; x++) {
-	    			   if (mask[y][x] == 1) {
-	    				   index = x + y * xDim;
-	    				   sumL += Labbuf[index][0];
-	    				   suma += Labbuf[index][1];
-	    				   sumb += Labbuf[index][2];
-	    			   }
-	    		   }
-	    	   } // for (y = 0; y < yDim; y++)
-	    	   double meanL = sumL/nm;
-	    	   double meana = suma/nm;
-	    	   double meanb = sumb/nm;
-	    	   
-	    	   double diff;
-	    	   double Lsquared = 0.0;
-	    	   double asquared = 0.0;
-	    	   double bsquared = 0.0;
-	    	   for (y = 0; y < yDim; y++) {
-	    		   for (x = 0; x < xDim; x++) {
-	    			   if (mask[y][x] == 1) {
-	    				   index = x + y * xDim;
-	    				   diff = (Labbuf[index][0] - meanL);
-	    				   Lsquared += (diff*diff);
-	    				   diff = (Labbuf[index][1] - meana);
-	    				   asquared += (diff*diff);
-	    				   diff = (Labbuf[index][2] - meanb);
-	    				   bsquared += (diff*diff);
-	    			   }
-	    		   }
-	    	   } // for (y = 0; y < yDim; y++)
-	    	   Sp.stdL[n] = Math.sqrt(Lsquared/(nm - 1.0));
-			   Sp.stda[n] = Math.sqrt(asquared/(nm - 1.0));
-			   Sp.stdb[n] = Math.sqrt(bsquared/(nm - 1.0));
+		       if (nm != 1) {
+			       double sumL = 0.0;
+		    	   double suma = 0.0;
+		    	   double sumb = 0.0;
+		    	   for (y = 0; y < yDim; y++) {
+		    		   for (x = 0; x < xDim; x++) {
+		    			   if (mask[y][x] == 1) {
+		    				   index = x + y * xDim;
+		    				   sumL += Labbuf[index][0];
+		    				   suma += Labbuf[index][1];
+		    				   sumb += Labbuf[index][2];
+		    			   }
+		    		   }
+		    	   } // for (y = 0; y < yDim; y++)
+		    	   double meanL = sumL/nm;
+		    	   double meana = suma/nm;
+		    	   double meanb = sumb/nm;
+		    	   
+		    	   double diff;
+		    	   double Lsquared = 0.0;
+		    	   double asquared = 0.0;
+		    	   double bsquared = 0.0;
+		    	   for (y = 0; y < yDim; y++) {
+		    		   for (x = 0; x < xDim; x++) {
+		    			   if (mask[y][x] == 1) {
+		    				   index = x + y * xDim;
+		    				   diff = (Labbuf[index][0] - meanL);
+		    				   Lsquared += (diff*diff);
+		    				   diff = (Labbuf[index][1] - meana);
+		    				   asquared += (diff*diff);
+		    				   diff = (Labbuf[index][2] - meanb);
+		    				   bsquared += (diff*diff);
+		    			   }
+		    		   }
+		    	   } // for (y = 0; y < yDim; y++)
+		    	   Sp.stdL[n] = Math.sqrt(Lsquared/(nm - 1.0));
+				   Sp.stda[n] = Math.sqrt(asquared/(nm - 1.0));
+				   Sp.stdb[n] = Math.sqrt(bsquared/(nm - 1.0));
+	    	   } // if (nm != 1)
 	       } // if (nm != 0)
 		   
 		   // Record number of pixels in superpixel too.
