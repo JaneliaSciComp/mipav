@@ -59,13 +59,8 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	// the actual number of superpixels generated will generally
 	// be a bit larger, especially if parameter m is small.
     // For a 225 by 225 image with 9 equally sized squares:
-    // k = 10 gave 7 objects, k = 11 to k = 18 gave the 9 squares perfectly,
-    // and k = 19 found 13 objects
-    // For noSpatialDistanceIfZeroColorDistance = true:
-    // k = 10 gave 7 objects, k= 11 to k = 28 gave the 9 squares perfectly,
-    // and k = 29 gave 13 objects.
+    // k >= 11 gave perfect segmentation
 	private int k;
-	private boolean noSpatialDistanceIfZeroColorDistance = false;
 	// Weighting factor between colour and spatial
 	// differences. Values from about 5 to 40 are useful.  Use a
 	// large value to enforce superpixels with more regular and
@@ -101,11 +96,10 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 	
 		public DBSCANClusteringSegment(ModelImage destImg, ModelImage srcImg, int k,
-				boolean noSpatialDistanceIfZeroColorDistance, double m, double seRadius, int center, int mw1, int mw2, 
+				double m, double seRadius, int center, int mw1, int mw2, 
 				int nItr, double Ec) {
 			super(destImg, srcImg);
 			this.k = k;
-			this.noSpatialDistanceIfZeroColorDistance = noSpatialDistanceIfZeroColorDistance;
 			this.m = m;
 			this.seRadius = seRadius;
 			this.center = center;
@@ -650,7 +644,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
        // Recompute the final superpixel attributes and write information into
        // the Sp struct array.
        N = amal.Ami.length;
-       SP Sp = new SP(N);
+       SP Sp = new SP(N+1);
 	   int Y[][] = new int[yDim][xDim];
 	   int X[][] = new int[yDim][xDim];
 	   for (y = 0; y < yDim; y++) {
@@ -662,11 +656,11 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	   
 	   byte mask[][] = new byte[yDim][xDim];
 	   int nm;
-	   for (n = 0; n < N; n++) {
+	   for (n = 1; n <= N; n++) {
 		   nm = 0;
 	       for (y = 0; y < yDim; y++) {
 	    	   for (x = 0; x < xDim; x++) {
-	    		   if (l[y][x] == (n+1)) {
+	    		   if (l[y][x] == n) {
 	    			   mask[y][x] = 1;
 	    			   nm++;
 	    		   }
@@ -784,7 +778,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		   
 		   // Record number of pixels in superpixel too.
 		   Sp.N[n] = nm;
-	   } // for (n = 0; n < N; n++)
+	   } // for (n = 1; n <= N; n++)
 	   
 	   // SPDBSCAN SuperPixel DBSCAN clustering for image segmentation
 	   
@@ -850,7 +844,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	   // July  2013  Changes to accommondate superpixel attributes being passed as a
 	   //             struct array
 	   
-	   int Np = Sp.N.length;
+	   int Np = Sp.N.length-1;
 	   
 	   int regionsC[] = new int[Np+1];
 	   Vector<Vector<Integer>> Cl = new Vector<Vector<Integer>>();
@@ -866,7 +860,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 	   for (n = 1; n <= Np; n++) {
 		   if (!Pvisit[n]) { // If this superpixel not visited yet
 			   Pvisit[n] = true; // mark it as visited
-			   neighbours = regionQueryM(Sp, amal, n-1, Ec);
+			   neighbours = regionQueryM(Sp, amal, n, Ec);
 			   
 			   // Form a cluster
 			   // Increment number of clusters and process nieghbourhood
@@ -889,7 +883,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		        	   
 		        	   // Find the neighbours of this neighbour and
 		        	   // add them to the neighbours list
-		        	   neighboursP = regionQueryM(Sp, amal, nb-1, Ec);
+		        	   neighboursP = regionQueryM(Sp, amal, nb, Ec);
 		        	   neighbours.addAll(neighboursP);
 		           } // if (!Pvisit[nb])
 		           
@@ -947,6 +941,9 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		int i,j;
 		double E2 = Ec*Ec;
 		Vector<Integer>neighbours = new Vector<Integer>();
+		if (Sp.N[n] == 0) {
+			return neighbours;
+		}
 		
 		// Get indices of all pixels connected to superpixel connected to superpixel n
 		Vector<Integer> ind = new Vector<Integer>();
@@ -959,13 +956,15 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 			
 			for (j = 0; j < ind.size(); j++) {
 				i = ind.get(j);
-				// Test if distance^2 < E^2
-				double Ldiff = Sp.L[i] - Sp.L[n];
-				double adiff = Sp.a[i] - Sp.a[n];
-				double bdiff = Sp.b[i] - Sp.b[n];
-				double dist2 = Ldiff*Ldiff + adiff*adiff + bdiff*bdiff;
-				if (dist2 < E2) {
-					neighbours.add(i+1);
+				if (Sp.N[i] != 0) {
+					// Test if distance^2 < E^2
+					double Ldiff = Sp.L[i] - Sp.L[n];
+					double adiff = Sp.a[i] - Sp.a[n];
+					double bdiff = Sp.b[i] - Sp.b[n];
+					double dist2 = Ldiff*Ldiff + adiff*adiff + bdiff*bdiff;
+					if (dist2 < E2) {
+						neighbours.add(i);
+					}
 				}
 			}
 		}
@@ -2004,12 +2003,7 @@ public class DBSCANClusteringSegment extends AlgorithmBase {
 		
 		for (y = 0; y < rows; y++) {
 			for (x = 0; x < cols; x++) {
-				if (noSpatialDistanceIfZeroColorDistance && (dc2[y][x] == 0.0)) {
-					D[y][x] = 0.0;
-				}
-				else {
-				    D[y][x] = Math.sqrt(dc2[y][x] + ds2[y][x]/Ssquared*msquared);
-				}
+				D[y][x] = Math.sqrt(dc2[y][x] + ds2[y][x]/Ssquared*msquared);
 			}
 		}
 		return D;
