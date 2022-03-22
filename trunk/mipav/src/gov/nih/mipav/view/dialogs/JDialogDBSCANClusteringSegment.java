@@ -36,7 +36,6 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
 	// the actual number of superpixels generated will generally
 	// be a bit larger, especially if parameter m is small.
 	private int k;
-	private boolean noSpatialDistanceIfZeroColorDistance = false;
 	// Weighting factor between colour and spatial
 	// differences. Values from about 5 to 40 are useful.  Use a
 	// large value to enforce superpixels with more regular and
@@ -250,7 +249,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
                      *   ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                      * }*/
                     // Make algorithm
-                    dbAlgo = new DBSCANClusteringSegment(resultImage, image, k, noSpatialDistanceIfZeroColorDistance, m, seRadius, center,
+                    dbAlgo = new DBSCANClusteringSegment(resultImage, image, k, m, seRadius, center,
                     		mw1, mw2, nItr, Ec);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -304,7 +303,6 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         setDefaults();
 
         k = scriptParameters.getParams().getInt("k_num");
-        noSpatialDistanceIfZeroColorDistance = scriptParameters.getParams().getBoolean("no_spatial");
         m = scriptParameters.getParams().getDouble("m_num");
         seRadius = scriptParameters.getParams().getDouble("se");
         center = scriptParameters.getParams().getInt("cen");
@@ -322,7 +320,6 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         scriptParameters.storeOutputImageParams(getResultImage(), true);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("k_num", k));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("no_spatial", noSpatialDistanceIfZeroColorDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("m_num", m));
         scriptParameters.getParams().put(ParameterFactory.newParameter("se", seRadius));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cen", center));
@@ -372,46 +369,40 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         textk.setText("1000");
         textk.setFont(serif12);
         optionsPanel.add(textk, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        noSpatialCheckBox = new JCheckBox("Spatial distance not used for zero color distance", false);
-        noSpatialCheckBox.setFont(serif12);
-        optionsPanel.add(noSpatialCheckBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         labelm = createLabel("Color and spatial differences weighting");
         optionsPanel.add(labelm, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         textm = new JTextField();
         textm.setText("10.0");
         textm.setFont(serif12);
         optionsPanel.add(textm, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         enableseCheckBox = new JCheckBox("Enable structuring element", true);
         enableseCheckBox.setFont(serif12);
         enableseCheckBox.addActionListener(this);
         optionsPanel.add(enableseCheckBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 3;
         labelse = createLabel("Structuring element radius (>= 1.0)");
         optionsPanel.add(labelse, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = 3;
         textse = new JTextField();
         textse.setText("1.0");
         textse.setFont(serif12);
         optionsPanel.add(textse, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 4;
         centerGroup = new ButtonGroup();
         meanButton = new JRadioButton("Mean center", true);
         meanButton.setFont(serif12);
@@ -420,7 +411,7 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         optionsPanel.add(meanButton, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 5;
         medianButton = new JRadioButton("Median center", false);
         medianButton.setFont(serif12);
         medianButton.setForeground(Color.black);
@@ -428,48 +419,48 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         optionsPanel.add(medianButton, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 6;
         labelmw1 = createLabel("L median filter size");
         optionsPanel.add(labelmw1, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 7;
+        gbc.gridy = 6;
         textmw1 = new JTextField();
         textmw1.setText("0");
         textmw1.setFont(serif12);
         optionsPanel.add(textmw1, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 7;
         labelmw2 = createLabel("a and b median filter size");
         optionsPanel.add(labelmw2, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 8;
+        gbc.gridy = 7;
         textmw2 = new JTextField();
         textmw2.setText("0");
         textmw2.setFont(serif12);
         optionsPanel.add(textmw2, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         labelIter = createLabel("Number of iterations");
         optionsPanel.add(labelIter, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         textIter = new JTextField();
         textIter.setText("10");
         textIter.setFont(serif12);
         optionsPanel.add(textIter, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 9;
         labelEc = createLabel("Tolerance value/distance threshold");
         optionsPanel.add(labelEc, gbc);
         
         gbc.gridx = 1;
-        gbc.gridy = 10;
+        gbc.gridy = 9;
         textEc = new JTextField();
         textEc.setText("7.5");
         textEc.setFont(serif12);
@@ -494,7 +485,6 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
     private void setDefaults() {
 
         k = 1000;
-        noSpatialDistanceIfZeroColorDistance = false;
     	m = 10.0;
         seRadius = 1.0;
         center = MEAN_CENTER;
@@ -523,8 +513,6 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
 
             return false;
         }
-        
-        noSpatialDistanceIfZeroColorDistance = noSpatialCheckBox.isSelected();
 
         tmpStr = textm.getText();
 
@@ -653,7 +641,6 @@ public class JDialogDBSCANClusteringSegment extends JDialogScriptableBase implem
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("k_num", 1000));
-            table.put(new ParameterBoolean("no_spatial", false));
             table.put(new ParameterDouble("m_num", 10.0));
             table.put(new ParameterDouble("se",1.0));
             table.put(new ParameterInt("cen", MEAN_CENTER));
