@@ -97,8 +97,11 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		for (i = 1; i <= k; i++) {
 			idxVec.clear();
 		    for (j = 0; j < z.length; j++) {
-		    	
+		        if (i == z[j]) {
+		            idxVec.add(j);	
+		        }
 		    }
+		    //Sigma(:,:,i) = iwishrnd(W0,v0); % invpd(wishrnd(W0,v0));
 		} // for (i = 1; i <= k; i++)
 		
 	}
