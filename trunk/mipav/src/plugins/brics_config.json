@@ -1,8 +1,8 @@
 {
 	"FITBIR_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.fitbir.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://fitbir.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://fitbir.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://fitbir.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "FITBIR_Demo": [
 	 {
@@ -16,8 +16,8 @@
 	 }],
 	 "FITBIR_UAT": [
 	 {
-	 	"dictionaryServer": "https://fitbir-dd-uat.cit.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://fitbir-uat.cit.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://fitbir-uat.cit.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://fitbir-uat.cit.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "FITBIR_Dev": [
 	 {
@@ -27,8 +27,8 @@
 	 
 	 "PDBP_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.pdbp.ninds.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://pdbp.ninds.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://pdbp.ninds.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://pdbp.ninds.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "PDBP_Demo": [
 	 {
@@ -42,8 +42,8 @@
 	 }],
 	 "PDBP_UAT": [
 	 {
-	 	"dictionaryServer": "https://pdbp-dd-uat.cit.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://pdbp-uat.cit.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://pdbp-uat.cit.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://pdbp-uat.cit.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "PDBP_Dev": [
 	 {
@@ -53,8 +53,8 @@
 	 
 	 "NEI_BRICS_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionarybrics.nei.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://brics.nei.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://brics.nei.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://brics.nei.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NEI_BRICS_Demo": [
 	 {
@@ -68,8 +68,8 @@
 	 }],
 	 "NEI_BRICS_UAT": [
 	 {
-	 	"dictionaryServer": "https://bricsnei-dd-uat.cit.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://bricsnei-uat.cit.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://bricsnei-uat.cit.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://bricsnei-uat.cit.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NEI_BRICS_Dev": [
 	 {
@@ -79,8 +79,8 @@
 	 
 	 "NINR_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.cdrns.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://cdrns.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://cdrns.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://cdrns.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NINR_Demo": [
 	 {
@@ -94,8 +94,8 @@
 	 }],
 	 "NINR_UAT": [
 	 {
-	 	"dictionaryServer": "https://cdrns-dd-uat.cit.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://cdrns-uat.cit.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://cdrns-uat.cit.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://cdrns-uat.cit.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NINR_Dev": [
 	 {
@@ -105,8 +105,8 @@
 	 
 	 "CNRM_Prod": [
 	 {
-	 	"dictionaryServer": "https://casa-dd.cnrm.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://casa.cnrm.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://casa.cnrm.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://casa.cnrm.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "CNRM_Demo": [
 	 {
@@ -131,8 +131,8 @@
 	 
 	 "CISTAR_Prod": [
 	 {
-	 	"dictionaryServer": "https://cistar-dd.ninds.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://cistar.ninds.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://cistar.ninds.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://cistar.ninds.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "CISTAR_Demo": [
 	 {
@@ -209,18 +209,18 @@
 	 
 	 "NTRR_Prod": [
 	 {
-	 	"dictionaryServer": "https://dictionary.ntrr-nti.org/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://ntrr-nti.org/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://ntrr-nti.org/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://ntrr-nti.org/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NTRR_Demo": [
 	 {
-	 	"dictionaryServer": "https://dictionarydemo.ntrr-nti.org/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://demo.ntrr-nti.org/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://demo.ntrr-nti.org/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://demo.ntrr-nti.org/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NTRR_Stage": [
 	 {
-	 	"dictionaryServer": "https://dictionarystage.ntrr-nti.org/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://stage.ntrr-nti.org/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://stage.ntrr-nti.org/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://stage.ntrr-nti.org/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "NTRR_UAT": [
 	 {
@@ -235,8 +235,8 @@
 	 
 	 "BRICS_Intramural": [
 	 {
-	 	"dictionaryServer": "https://brics-dd-intramural.cit.nih.gov/portal/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
-	 	"authServer": "https://brics-intramural.cit.nih.gov/portal/ws/webstart/dictionary/formStructure/details"
+	 	"dictionaryServer": "https://bricsintramural.cit.nih.gov/dictionary/ws/ddt/dictionary/FormStructure/Published/list?type=IMAGING&incDEs=false",
+	 	"authServer": "https://brics-intramural.cit.nih.gov/dictionary/ws/webstart/dictionary/formStructure/details"
 	 }],
 	 "BRICS_Demo": [
 	 {
