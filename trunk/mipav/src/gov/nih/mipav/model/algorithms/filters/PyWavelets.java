@@ -4046,7 +4046,7 @@ public  class PyWavelets extends AlgorithmBase {
         return w;
     }
     
-    private short dwt_max_level(int input_len, DiscreteWavelet w) {
+    public short dwt_max_level(int input_len, DiscreteWavelet w) {
 		int filter_len = w.dec_len;
 		return dwt_max_level(input_len, filter_len);
 	}
