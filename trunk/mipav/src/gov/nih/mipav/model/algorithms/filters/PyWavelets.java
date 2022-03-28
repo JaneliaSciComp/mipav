@@ -17552,7 +17552,7 @@ public  class PyWavelets extends AlgorithmBase {
         return a; 
     }
     
-    private double[][][] dwt2(double data[][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+    public double[][][] dwt2(double data[][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = -2,-1
         // 2D Discrete Wavelet Transform.
@@ -17609,7 +17609,7 @@ public  class PyWavelets extends AlgorithmBase {
         return coefs;
     }
     
-    private double[][][][] dwt2(double data[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+    public double[][][][] dwt2(double data[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = -2,-1
         // 2D Discrete Wavelet Transform on 3D object.
@@ -18003,7 +18003,7 @@ public  class PyWavelets extends AlgorithmBase {
         return 0;
     }
        
-    private double[][] idwt2(double coeffs[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+    public double[][] idwt2(double coeffs[][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = -2,-1
         // 2-D Inverse Discrete Wavelet Transform.
@@ -18055,7 +18055,7 @@ public  class PyWavelets extends AlgorithmBase {
         return idwtn2(coeffMap, wavelet, mode, axes); 
     }
     
-    private double[][][] idwt23(double coeffs[][][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+    public double[][][] idwt23(double coeffs[][][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = -2,-1
         // 2-D Inverse Discrete Wavelet Transform on 3D object
@@ -19439,7 +19439,7 @@ public  class PyWavelets extends AlgorithmBase {
         return 0;
     }
     
-    private double[][][] idwt3(double coeffs[][][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
+    public double[][][] idwt3(double coeffs[][][][], DiscreteWavelet wavelet[], MODE mode[], int axes[]) {
         // Default mode = symmetric
     	// Default axes = -3,-2,-1
         // 3-D Inverse Discrete Wavelet Transform.
