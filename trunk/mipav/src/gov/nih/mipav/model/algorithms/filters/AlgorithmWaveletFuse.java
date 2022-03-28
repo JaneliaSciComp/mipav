@@ -50,7 +50,11 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	private PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[] {PyWavelets.WAVELET_NAME.DB};
 	private int orders[] = new int[] {13};
 	private int max_depth = 999;
-	boolean slow = false;
+	private boolean slow = false;
+	
+	private int numXColors;
+	private int numYColors;
+	private int numDestColors;
 	
     public AlgorithmWaveletFuse() {
 		
@@ -84,136 +88,265 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	   MODE modes[] = new MODE[]{MODE.MODE_SYMMETRIC, MODE.MODE_SYMMETRIC};
 	   int axes[] = new int[]{0,1};
 	   double buffer[] = new double[length];
-	   double xbuf[][] = new double[yDim][xDim];
-	   double ybuf[][] = new double[yDim][xDim];
 	   double arrx[][][];
 	   double arry[][][];
+	   double arrx2[][][] = null;
+	   double arry2[][][] = null;
+	   double arrx3[][][] = null;
+	   double arry3[][][] = null;
 	   double arri[][][] = new double[4][][];
-	   int numColors = 1;
+	   double arri2[][][] = new double[4][][];
+	   double arri3[][][] = new double[4][][];
+	   numXColors = 1;
+	   numYColors = 1;
 	   float fbuffer[] = null;
 	   if (srcImage.isColorImage() || fuseImage.isColorImage()) {
-		   numColors = 3;
 		   fbuffer = new float[length];
 	   }
+	   if (srcImage.isColorImage()) {
+		   numXColors = 3;
+	   }
+	   if (fuseImage.isColorImage()) {
+		   numYColors = 3;
+	   }
+	   numDestColors = Math.max(numXColors, numYColors);
+	   double xbuf[][][] = new double[numXColors][yDim][xDim];
+	   double ybuf[][][] = new double[numYColors][yDim][xDim];
+	   double dx[][][] = new double[numXColors][][];
+	   double dy[][][] = new double[numYColors][][];
+	   double di[][][] = new double[numDestColors][][];
+	   double hx[][][] = new double[numXColors][][];
+	   double hy[][][] = new double[numYColors][][];
+	   double hi[][][] = new double[numDestColors][][];
+	   double vx[][][] = new double[numXColors][][];
+	   double vy[][][] = new double[numYColors][][];
+	   double vi[][][] = new double[numDestColors][][];
 	   double srcMin = srcImage.getMin();
 	   double srcMax = srcImage.getMax();
 	   double fuseMin = fuseImage.getMin();
 	   double fuseMax = fuseImage.getMax();
-	   Vector<double[][]> stack = new Vector<double[][]>();
-	   for (color = 1; color <= numColors; color++) {
-	       if (srcImage.isColorImage()) {
-	    	   try {
-	    	       srcImage.exportRGBData(color, 0, length, buffer);
-	    	   }
-	    	   catch (IOException e) {
-	    		   System.err.println("IOException " + e + " on srcImage.exportRGBData(color,0,length,buffer");
-	    		   setCompleted(false);
-	    		   return;
-	    	   }
-	    	   if (color > 1) {
-	    		   xbuf = new double[yDim][xDim];
-	    	   }
-	    	   for (y = 0; y < yDim; y++) {
-	    		   for (x = 0; x < xDim; x++) {
-	    			   xbuf[y][x] = (buffer[x+ y * xDim] -srcMin)/srcMax;
-	    		   }
-	    	   }
-	    	   
-	       }  // if (srcImage.isColorImage())
-	       else { // srcImage gray scale image
-	    	   try {
-	    	       srcImage.exportData(0, length, buffer);
-	    	   }
-	    	   catch (IOException e) {
-	    		   System.err.println("IOException " + e + " on srcImage.exportData(0,length,buffer");
-	    		   setCompleted(false);
-	    		   return;
-	    	   }
-	    	   for (y = 0; y < yDim; y++) {
-	    		   for (x = 0; x < xDim; x++) {
-	    			   xbuf[y][x] = (buffer[x+ y * xDim] -srcMin)/srcMax;
-	    		   }
-	    	   }
-	    	   
-	       } // else srcImage gray scale image
-	       if (fuseImage.isColorImage()) {
-	    	   try {
-	    	       fuseImage.exportRGBData(color, 0, length, buffer);
-	    	   }
-	    	   catch (IOException e) {
-	    		   System.err.println("IOException " + e + " on fuseImage.exportRGBData(color,0,length,buffer");
-	    		   setCompleted(false);
-	    		   return;
-	    	   }
-	    	   if (color > 1) {
-	    		   ybuf = new double[yDim][xDim];
-	    	   }
-	    	   for (y = 0; y < yDim; y++) {
-	    		   for (x = 0; x < xDim; x++) {
-	    			   ybuf[y][x] = (buffer[x+ y * xDim] - fuseMin)/fuseMax;
-	    		   }
-	    	   }   
-	       }
-	       else { // fuseImage gray scale image
-	    	   try {
-	    	       fuseImage.exportData(0, length, buffer);
-	    	   }
-	    	   catch (IOException e) {
-	    		   System.err.println("IOException " + e + " on fuseImage.exportData(0,length,buffer");
-	    		   setCompleted(false);
-	    		   return;
-	    	   }
-	    	   for (y = 0; y < yDim; y++) {
-	    		   for (x = 0; x < xDim; x++) {
-	    			   ybuf[y][x] = (buffer[x+ y * xDim] -fuseMin)/fuseMax;
-	    		   }
-	    	   }      
-	       } // else fuseImage gray scale image
-	       
-	       // Move down the wavelet pyramid, fuse along the way
-	       depth = 1;
-	       while ((xbuf.length >= 2*kernel_size) && (xbuf[0].length >= 2*kernel_size)) {
-	           if (depth > max_depth) {
-	        	   break;
-	           }
-	           arrx = py.dwt2(xbuf, wavelets, modes, axes);
-	           arry = py.dwt2(ybuf, wavelets, modes, axes);
-	           // fuse CD coefficents
-	           stack.add(fuse(arrx[3], arry[3], kernel_size, slow));
-	           // fuse CV coefficients
-	           stack.add(fuse(arrx[2], arry[2], kernel_size, slow));
-	           // fuse CH coefficients
-	           stack.add(fuse(arrx[1], arry[1], kernel_size, slow));
-	           xbuf = arrx[0];
-	           ybuf = arry[0];
-	           depth += 1;
-	       } // while ((xbuf.length >= 2*kernel_size) && (xbuf[0].length >= 2*kernel_size))
-	       
-	       // fuse the DC offset
-	       double fused[][] = fuse(xbuf, ybuf, kernel_size, slow);
-	       
-	       // Inverse wavelet transform back up
-	       while (stack.size() > 0) {
-	           arri[0] = fused;
-	           arri[1] = stack.remove(stack.size()-1);
-	           arri[2] = stack.remove(stack.size()-1);
-	           arri[3] = stack.remove(stack.size()-1);
-	           fused = py.idwt2(arri, wavelets, modes, axes);
-	       } // while (stack.size() > 0)
-	       
-	       // Clip to image range
-	       if (destImage.isColorImage()) {
+	   Vector<double[][][]> stack = new Vector<double[][][]>();
+       if (srcImage.isColorImage()) {
+    	   try {
+    	       srcImage.exportRGBData(1, 0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on srcImage.exportRGBData(1,0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   xbuf[0][y][x] = (buffer[x+ y * xDim] -srcMin)/srcMax;
+    		   }
+    	   }
+    	   
+    	   try {
+    	       srcImage.exportRGBData(2, 0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on srcImage.exportRGBData(2,0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   xbuf[1][y][x] = (buffer[x+ y * xDim] -srcMin)/srcMax;
+    		   }
+    	   }
+    	   
+    	   try {
+    	       srcImage.exportRGBData(3, 0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on srcImage.exportRGBData(3,0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   xbuf[2][y][x] = (buffer[x+ y * xDim] -srcMin)/srcMax;
+    		   }
+    	   }
+    	   
+       }  // if (srcImage.isColorImage())
+       else { // srcImage gray scale image
+    	   try {
+    	       srcImage.exportData(0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on srcImage.exportData(0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   xbuf[0][y][x] = (buffer[x+ y * xDim] -srcMin)/srcMax;
+    		   }
+    	   }
+    	   
+       } // else srcImage gray scale image
+       if (fuseImage.isColorImage()) {
+    	   try {
+    	       fuseImage.exportRGBData(1, 0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on fuseImage.exportRGBData(1,0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   ybuf[0][y][x] = (buffer[x+ y * xDim] - fuseMin)/fuseMax;
+    		   }
+    	   }
+    	   
+    	   try {
+    	       fuseImage.exportRGBData(2, 0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on fuseImage.exportRGBData(2,0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   ybuf[1][y][x] = (buffer[x+ y * xDim] - fuseMin)/fuseMax;
+    		   }
+    	   } 
+    	   
+    	   try {
+    	       fuseImage.exportRGBData(3, 0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on fuseImage.exportRGBData(3,0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   ybuf[2][y][x] = (buffer[x+ y * xDim] - fuseMin)/fuseMax;
+    		   }
+    	   }   
+       }
+       else { // fuseImage gray scale image
+    	   try {
+    	       fuseImage.exportData(0, length, buffer);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on fuseImage.exportData(0,length,buffer");
+    		   setCompleted(false);
+    		   return;
+    	   }
+    	   for (y = 0; y < yDim; y++) {
+    		   for (x = 0; x < xDim; x++) {
+    			   ybuf[0][y][x] = (buffer[x+ y * xDim] -fuseMin)/fuseMax;
+    		   }
+    	   }      
+       } // else fuseImage gray scale image
+       
+       // Move down the wavelet pyramid, fuse along the way
+       depth = 1;
+       while ((xbuf[0].length >= 2*kernel_size) && (xbuf[0][0].length >= 2*kernel_size)) {
+           if (depth > max_depth) {
+        	   break;
+           }
+           arrx = py.dwt2(xbuf[0], wavelets, modes, axes);
+           dx[0] = arrx[3];
+           vx[0] = arrx[2];
+           hx[0] = arrx[1];
+           arry = py.dwt2(ybuf[0], wavelets, modes, axes);
+           dy[0] = arry[3];
+           vy[0] = arry[2];
+           hy[0] = arry[1];
+           if (srcImage.isColorImage()) {
+        	   arrx2 = py.dwt2(xbuf[1], wavelets, modes, axes);
+        	   dx[1] = arrx2[3];
+               vx[1] = arrx2[2];
+               hx[1] = arrx2[1];
+        	   arrx3 = py.dwt2(xbuf[2], wavelets, modes, axes);
+        	   dx[2] = arrx3[3];
+               vx[2] = arrx3[2];
+               hx[2] = arrx3[1];
+           }
+           if (fuseImage.isColorImage()) {
+        	   arry2 = py.dwt2(ybuf[1], wavelets, modes, axes);
+        	   dy[1] = arry2[3];
+               vy[1] = arry2[2];
+               hy[1] = arry2[1];
+               arry3 = py.dwt2(ybuf[2], wavelets, modes, axes);
+               dy[2] = arry3[3];
+               vy[2] = arry3[2];
+               hy[2] = arry3[1];
+           }
+           // fuse CD coefficents
+           stack.add(fuse(dx, dy, kernel_size, slow));
+           // fuse CV coefficients
+           stack.add(fuse(vx, vy, kernel_size, slow));
+           // fuse CH coefficients
+           stack.add(fuse(hx, hy, kernel_size, slow));
+           xbuf[0] = arrx[0];
+           if (srcImage.isColorImage()) {
+        	   xbuf[1] = arrx2[0];
+        	   xbuf[2] = arrx3[0];
+           }
+           ybuf[0] = arry[0];
+           if (fuseImage.isColorImage()) {
+        	   ybuf[1] = arry2[0];
+        	   ybuf[2] = arry3[0];
+           }
+           depth += 1;
+       } // while ((xbuf[0].length >= 2*kernel_size) && (xbuf[0][0].length >= 2*kernel_size))
+       
+       // fuse the DC offset
+       double fused[][][] = fuse(xbuf, ybuf, kernel_size, slow);
+       
+       // Inverse wavelet transform back up
+       while (stack.size() > 0) {
+           arri[0] = fused[0];
+           if (numDestColors == 3) {
+        	   arri2[0] = fused[1];
+        	   arri3[0] = fused[2];
+           }
+           hi = stack.remove(stack.size()-1);
+           arri[1] = hi[0];
+           if (numDestColors == 3) {
+        	   arri2[1] = hi[1];
+        	   arri3[1] = hi[2];
+           }
+           vi = stack.remove(stack.size()-1);
+           arri[2] = vi[0];
+           if (numDestColors == 3) {
+        	   arri2[2] = vi[1];
+        	   arri3[2] = vi[2];
+           }
+           di = stack.remove(stack.size()-1);
+           arri[3] = di[0];
+           if (numDestColors == 3) {
+        	   arri2[3] = di[1];
+        	   arri3[3] = di[2];
+           }
+           fused[0] = py.idwt2(arri, wavelets, modes, axes);
+           if (numDestColors == 3) {
+        	   fused[1] = py.idwt2(arri2, wavelets, modes, axes);  
+        	   fused[2] = py.idwt2(arri3, wavelets, modes, axes);
+           }
+       } // while (stack.size() > 0)
+       
+       // Clip to image range
+       if (destImage.isColorImage()) {
+    	   for (color = 1; color <= 3; color++) {
 	    	   for (y = 0; y < yDim; y++) {
 		    	   for (x = 0; x < xDim; x++) {
 		    		   index = x + y * xDim;
-		    		   if (fused[y][x] > 1.0) {
+		    		   if (fused[color-1][y][x] > 1.0) {
 		    			   fbuffer[index] = 1.0f;
 		    		   }
-		    		   else if (fused[y][x] < 0.0) {
+		    		   else if (fused[color-1][y][x] < 0.0) {
 		    			   fbuffer[index] = 0.0f;
 		    		   }
 		    		   else {
-		    			   fbuffer[index] = (float)fused[y][x];
+		    			   fbuffer[index] = (float)fused[color-1][y][x];
 		    		   }
 		    	   }
 		       }
@@ -228,38 +361,204 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	    	   if (color == 3) {
 	    		   destImage.calcMinMax();
 	    	   }
-	       } // if (destImage.isColorImage())
-	       else { // destImage gray scale image
-	    	   for (y = 0; y < yDim; y++) {
-		    	   for (x = 0; x < xDim; x++) {
-		    		   index = x + y * xDim;
-		    		   if (fused[y][x] > 1.0) {
-		    			   buffer[index] = 1.0;
-		    		   }
-		    		   else if (fused[y][x] < 0.0) {
-		    			   buffer[index] = 0.0;
-		    		   }
-		    		   else {
-		    			   buffer[index] = fused[y][x];
-		    		   }
-		    	   }
-		       }
-	    	   try {
-	    	       destImage.importData(length, buffer, true);
+    	   } // for (color = 1; color <= 3; color++) 
+       } // if (destImage.isColorImage())
+       else { // destImage gray scale image
+    	   for (y = 0; y < yDim; y++) {
+	    	   for (x = 0; x < xDim; x++) {
+	    		   index = x + y * xDim;
+	    		   if (fused[0][y][x] > 1.0) {
+	    			   buffer[index] = 1.0;
+	    		   }
+	    		   else if (fused[0][y][x] < 0.0) {
+	    			   buffer[index] = 0.0;
+	    		   }
+	    		   else {
+	    			   buffer[index] = fused[0][y][x];
+	    		   }
 	    	   }
-	    	   catch (IOException e) {
-	    		   System.err.println("IOException " + e + " on destImage.importData(length, buffer, true)");
-	    		   setCompleted(false);
-	    		   return;
-	    	   }   
-	       } // else destImage gray scale image
-	   } // for (colors = 1; colors <= numColors; colors++)
+	       }
+    	   try {
+    	       destImage.importData(length, buffer, true);
+    	   }
+    	   catch (IOException e) {
+    		   System.err.println("IOException " + e + " on destImage.importData(length, buffer, true)");
+    		   setCompleted(false);
+    		   return;
+    	   }   
+       } // else destImage gray scale image
 	   setCompleted(true);
 	   return;
     }
 	
-	private double[][] fuse(double img1[][], double img2[][], int ks, boolean slow) {
+	private double[][][] fuse(double img1[][][], double img2[][][], int ks, boolean slow) {
+		boolean binary_map[][][];
+		if (slow) {
+			binary_map = slow_decision_map(img1, img2, ks);
+		}	
+		else {
+			binary_map = decision_map(img1, img2, ks);
+		}
 	    return null;	
+	}
+	
+	private boolean[][][] slow_majority_filter(boolean map[][][], int ks) {
+		int c,x,y,i,j;
+		int p = (ks - 1)/2;
+		boolean map_p[][][] = new boolean[map.length][map[0].length + 2*p][map[0][0].length + 2*p];
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				for (x = 0; x < map[0][0].length; x++) {
+					map_p[c][y + p][x+p] = map[c][y][x];
+				}
+			}
+		}
+		
+		boolean output[][][] = new boolean[map.length][map[0].length][map[0][0].length];
+		double sum;
+		double threshold = (ks * ks)/2.0;
+		for (j = 0; j < map[0].length; j++) {
+			for (i = 0; i < map[0][0].length; i++) {
+				for (c = 0; c < numDestColors; c++) {
+				    sum = 0.0;
+				    for (y = 0; y < ks; y++) {
+				    	for (x = 0; x < ks; x++) {
+				    		if (map_p[c][y+j][x+i]) {
+				    			sum += 1.0;
+				    		}
+				    	}
+				    }
+				    output[c][j][i] = sum > threshold;
+				}
+			}
+		}
+		return output;
+	}
+	
+	private boolean[][][] decision_map(double img1[][][], double img2[][][], int ks) {
+		int c,x,y,i,j;
+		int halfks = (ks-1)/2;
+		double maxval;
+		double filty1[][][] = new double[numXColors][img1[0].length][img1[0][0].length];
+		double max1[][][] = new double[numXColors][img1[0].length][img1[0][0].length];
+		for (c = 0; c < numXColors; c++) {
+			for (x = 0; x < img1[0][0].length; x++) {
+				for (y = 0; y < img1[0].length; y++) {
+					maxval = -Double.MAX_VALUE;
+					for (j = -halfks; j <= halfks; j++) {
+					    if (((y + j) >= 0) && ((y+j) < img1[0].length) && (img1[c][y+j][x] > maxval)) {
+					    	maxval = img1[c][y+j][x];
+					    }
+					}
+					filty1[c][y][x] = maxval;
+				}
+			}
+		}
+		for (c = 0; c < numXColors; c++) {
+			for (y = 0; y < img1[0].length; y++) {
+				for (x = 0; x < img1[0][0].length; x++) {
+				    maxval = -Double.MAX_VALUE;
+				    for (i = -halfks; i <= halfks; i++) {
+				    	if (((x + i) >= 0) && ((x+i) < img1[0][0].length) && (filty1[c][y][x+i] > maxval)) {
+				    		maxval = filty1[c][y][x+i];
+				    	}
+				    }
+				    max1[c][y][x] = maxval;
+				}
+			}
+		}
+		
+		double filty2[][][] = new double[numYColors][img2[0].length][img2[0][0].length];
+		double max2[][][] = new double[numYColors][img2[0].length][img2[0][0].length];
+		for (c = 0; c < numYColors; c++) {
+			for (x = 0; x < img2[0][0].length; x++) {
+				for (y = 0; y < img2[0].length; y++) {
+					maxval = -Double.MAX_VALUE;
+					for (j = -halfks; j <= halfks; j++) {
+					    if (((y + j) >= 0) && ((y+j) < img2[0].length) && (img2[c][y+j][x] > maxval)) {
+					    	maxval = img2[c][y+j][x];
+					    }
+					}
+					filty2[c][y][x] = maxval;
+				}
+			}
+		}
+		for (c = 0; c < numYColors; c++) {
+			for (y = 0; y < img2[0].length; y++) {
+				for (x = 0; x < img2[0][0].length; x++) {
+				    maxval = -Double.MAX_VALUE;
+				    for (i = -halfks; i <= halfks; i++) {
+				    	if (((x + i) >= 0) && ((x+i) < img2[0][0].length) && (filty2[c][y][x+i] > maxval)) {
+				    		maxval = filty2[c][y][x+i];
+				    	}
+				    }
+				    max2[c][y][x] = maxval;
+				}
+			}
+		}
+		
+		boolean output[][][] = new boolean[numDestColors][img1[0].length][img1[0][0].length];
+		for (c = 0; c < numDestColors; c++) {
+			for (y = 0; y < img1[0].length; y++) {
+				for (x = 0; x < img1[0][0].length; x++) {
+					output[c][y][x] = max1[Math.max(c,numXColors-1)][y][x] > max2[Math.max(c,numYColors-1)][y][x];	
+				}
+			}
+		}
+		return output;
+	}
+	
+	private boolean[][][] slow_decision_map(double img1[][][], double img2[][][], int ks) {
+		int i,j,x,y,c;
+		int p = (ks - 1)/2;
+		double img1_p[][][] = new double[numXColors][img1[0].length + 2*p][img1[0][0].length + 2*p];
+		for (c = 0; c < numXColors; c++) {
+			for (y = 0; y < img1[0].length; y++) {
+				for (x = 0; x < img1[0][0].length; x++) {
+					img1_p[c][y + p][x+p] = img1[c][y][x];
+				}
+			}
+		}
+		double img2_p[][][] = new double[numYColors][img2[0].length + 2*p][img2[0][0].length + 2*p];
+		for (c = 0; c < numYColors; c++) {
+			for (y = 0; y < img2[0].length; y++) {
+				for (x = 0; x < img2[0][0].length; x++) {
+					img2_p[c][y+p][x+p] = img2[c][y][x];
+				}
+			}
+		}
+		
+		boolean output[][][] = new boolean[numDestColors][img1[0].length][img1[0][0].length];
+		double w1[] = new double[numXColors];
+		double w2[] = new double[numYColors];
+		for (j = 0; j < img1[0].length; j++) {
+			for (i = 0; i < img1[0][0].length; i++) {
+				for (c = 0; c < numXColors; c++) {
+					w1[c] = 0.0;
+					for (y = 0; y < ks; y++) {
+						for (x = 0; x < ks; x++) {
+							if (Math.abs(img1_p[c][j+y][i+x]) > w1[c]) {
+							    w1[c] = Math.abs(img1_p[c][j+y][i+x]);	
+							}
+						}
+					}
+				} // for (c = 0; c < numXColors; c++)
+				for (c = 0; c < numYColors; c++) {
+					w2[c] = 0.0;
+					for (y = 0; y < ks; y++) {
+						for (x = 0; x < ks; x++) {
+							if (Math.abs(img2_p[c][j+y][i+x]) > w2[c]) {
+							    w2[c] = Math.abs(img2_p[c][j+y][i+x]);	
+							}
+						}
+					}
+				} // for (c = 0; c < numYColors; c++)
+				for (c = 0; c < numDestColors; c++) {
+					output[c][j][i] = w1[Math.max(c,numXColors-1)] > w2[Math.max(c,numYColors-1)];
+				}
+			}
+		}
+		return output;
 	}
 
 }
