@@ -9092,12 +9092,12 @@ public class PlugInDialogFITBIR extends JFrame
      * structures (without their attached data elements).
      */
     public class FormListRESTThread extends Thread implements ActionListener {
-        //private static final String ddAuthBase = "/portal/ws/webstart/dictionary/formStructure/details";
+        private static final String ddAuthBase = "/dictionary/ws/webstart/dictionary/formStructure/details";
 
-        //private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
+        private static final String ddRequestBase = "/dictionary/ws/ddt/dictionary/FormStructure";
 
-        // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING";
-        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING";
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
 
@@ -9140,9 +9140,9 @@ public class PlugInDialogFITBIR extends JFrame
                 
                 WebClient client;
                 if (ddUseAuthService) {
-                    client = WebClient.create(ddServerURL);
+                    client = WebClient.create(ddServerURL + ddAuthBase);
                 } else {
-                    client = WebClient.create(ddServerURL);
+                    client = WebClient.create(ddServerURL + ddStructListRequest);
                 }
 
                 final HTTPConduit conduit = WebClient.getConfig(client).getHttpConduit();
@@ -9215,7 +9215,7 @@ public class PlugInDialogFITBIR extends JFrame
      */
     public class FormDataElementsRESTThread extends Thread implements ActionListener {
 
-        private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
+        private static final String ddRequestBase = "/dictionary/ws/ddt/dictionary/FormStructure";
 
         private JButton progressCancelButton;
 
