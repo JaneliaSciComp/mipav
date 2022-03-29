@@ -392,6 +392,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
     }
 	
 	private double[][][] fuse(double img1[][][], double img2[][][], int ks, boolean slow) {
+		int c,y,x;
 		boolean binary_map[][][];
 		if (slow) {
 			binary_map = slow_decision_map(img1, img2, ks);
@@ -399,7 +400,170 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 		else {
 			binary_map = decision_map(img1, img2, ks);
 		}
-	    return null;	
+		if (slow) {
+			binary_map = slow_majority_filter(binary_map,ks);
+		}
+		else {
+			binary_map = majority_filter(binary_map,ks);
+		}
+	    for (c = 0; c < binary_map.length; c++) {
+	    	for (y = 0; y < binary_map[0].length; y++) {
+	    		for (x = 0; x < binary_map[0][0].length; x++) {
+	    			binary_map[c][y][x] = !binary_map[c][y][x];
+	    		}
+	    	}
+	    }
+	    if (slow) {
+			binary_map = slow_majority_filter(binary_map,ks);
+		}
+		else {
+			binary_map = majority_filter(binary_map,ks);
+		}
+	    for (c = 0; c < binary_map.length; c++) {
+	    	for (y = 0; y < binary_map[0].length; y++) {
+	    		for (x = 0; x < binary_map[0][0].length; x++) {
+	    			binary_map[c][y][x] = !binary_map[c][y][x];
+	    		}
+	    	}
+	    }
+	    double newImage[][][] = new double[binary_map.length][binary_map[0].length][binary_map[0][0].length];
+	    for (c = 0; c < binary_map.length; c++) {
+	    	for (y = 0; y < binary_map[0].length; y++) {
+	    		for (x = 0; x < binary_map[0][0].length; x++) {
+	    		    if (binary_map[c][y][x]) {
+	    		    	newImage[c][y][x] = img1[Math.min(c,numXColors-1)][y][x];
+	    		    }
+	    		    else {
+	    		    	newImage[c][y][x] = img2[Math.min(c,numYColors-1)][y][x];
+	    		    }
+	    		}
+	    	}
+	    }
+	    return newImage;
+	}
+	
+	private boolean[][][] majority_filter(boolean map[][][], int ks) {
+		// because the map is binary, comparing the sum with the area of
+		// the kernel is equivalent to majority vote
+		int c,x,y;
+		int r = (ks-1)/2;
+		int xcumsum[][][] = new int[map.length][map[0].length][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				if (map[c][y][0]) {
+					xcumsum[c][y][0] = 1;
+				}
+				else {
+					xcumsum[c][y][0] = 0;
+				}
+				for (x = 1; x < map[0][0].length; x++) {
+					if (map[c][y][x]) {
+						xcumsum[c][y][x] = xcumsum[c][y][x-1] + 1;
+					}
+					else {
+						xcumsum[c][y][x] = xcumsum[c][y][x-1];
+					}
+				}
+			}
+		}
+		int left[][][] = new int[map.length][map[0].length][r+1];
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				for (x = r; x <= 2*r; x++) {
+					left[c][y][x-r] = xcumsum[c][y][x];
+				}
+			}
+		}
+		int middle[][][] = new int[map.length][map[0].length][map[0][0].length-2*r-1];
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				for (x = 2*r+1; x < map[0][0].length; x++) {
+					middle[c][y][x-2*r-1] = xcumsum[c][y][x] - xcumsum[c][y][x-2*r-1];
+				}
+			}
+		}
+		int right[][][] = new int[map.length][map[0].length][r];
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				for (x = map[0][0].length -2*r-1 ; x < map[0][0].length - r - 1; x++) {
+					right[c][y][x-(map[0][0].length - 2*r-1)] = xcumsum[c][y][map[0][0].length-1] - xcumsum[c][y][x];
+				}
+			}
+		}
+		int xdiff[][][] = new int[map.length][map[0].length][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				for (x = 0; x < r+1; x++) {
+					xdiff[c][y][x] = left[c][y][x];
+				}
+				for (x = r+1; x < map[0][0].length-r; x++) {
+					xdiff[c][y][x] = middle[c][y][x-r-1];
+				}
+				for (x = map[0][0].length-r; x < map[0][0].length; x++) {
+					xdiff[c][y][x] = right[c][y][x-map[0][0].length+r];
+				}
+			}
+		}
+		int ycumsum[][][] = new int[map.length][map[0].length][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (x = 0; x < map[0][0].length; x++) {
+				ycumsum[c][0][x] = xdiff[c][0][x]; 
+				for (y = 1; y < map[0].length; y++) {
+					ycumsum[c][y][x] = ycumsum[c][y-1][x] + xdiff[c][y][x];
+				}
+			}
+		}
+		left = new int[map.length][r+1][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (x = 0; x < map[0][0].length; x++) {
+				for ( y = r; y <= 2*r; y++) {
+					left[c][y-r][x] = ycumsum[c][y][x];
+				}
+			}
+		}
+		middle = new int[map.length][map[0].length-2*r-1][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (x = 0; x < map[0][0].length; x++) {
+				for (y = 2*r+1; y < map[0].length; y++) {
+					middle[c][y-2*r-1][x] = ycumsum[c][y][x] - ycumsum[c][y-2*r-1][x];
+				}
+			}
+		}
+		right = new int[map.length][r][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (x = 0; x < map[0][0].length; x++) {
+				for (y = map[0].length -2*r-1 ; y < map[0].length - r - 1; y++) {
+					right[c][y-(map[0].length - 2*r-1)][x] = ycumsum[c][map[0].length-1][x] - ycumsum[c][y][x];
+				}
+			}
+		}
+		int box_filter[][][] = new int[map.length][map[0].length][map[0][0].length];
+		for (c = 0; c < map.length; c++) {
+			for (x = 0; x < map[0][0].length; x++) {
+				for (y = 0; y < r+1; y++) {
+					box_filter[c][y][x] = left[c][y][x];
+				}
+				for (y = r+1; y < map[0].length-r; y++) {
+					box_filter[c][y][x] = middle[c][y-r-1][x];
+				}
+				for (y = map[0].length-r; y < map[0].length; y++) {
+					box_filter[c][y][x] = right[c][y-map[0].length+r][x];
+				}
+			}
+		}
+		boolean output[][][] = new boolean[map.length][map[0].length][map[0][0].length];
+		double sum;
+		double threshold = (ks * ks)/2.0;
+		for (c = 0; c < map.length; c++) {
+			for (y = 0; y < map[0].length; y++) {
+				for (x = 0; x < map[0][0].length; x++) {
+					if (box_filter[c][y][x] > threshold) {
+						output[c][y][x] = true;
+					}
+				}
+			}
+		}
+		return output;
 	}
 	
 	private boolean[][][] slow_majority_filter(boolean map[][][], int ks) {
