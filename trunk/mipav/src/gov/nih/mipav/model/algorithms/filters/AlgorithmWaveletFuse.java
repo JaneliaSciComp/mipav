@@ -425,8 +425,8 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
         // int mod = orgDim[0]/50;
         // int counter = 0; //used for progress bar
         float T00, T01, T02, T10, T11, T12;
-        double Sx = ((double)newXDim) / ((double)xDim);
-        double Sy = ((double)newYDim) / ((double)yDim);
+        double Sx = ((double)xDim) / ((double)newXDim);
+        double Sy = ((double)yDim) / ((double)newYDim);
         TransMatrix xfrm = new TransMatrix(3);
         xfrm.setZoom(Sx, Sy);
         T00 = xfrm.get(0, 0);
