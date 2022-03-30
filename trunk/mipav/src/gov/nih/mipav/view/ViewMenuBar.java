@@ -1746,7 +1746,6 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Harris corner detector", false);
 			menuBuilder.setMenuItemEnabled("Harris Laplace", false);
 			menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
-			menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
 			menuBuilder.setMenuItemEnabled("Edge extraction by FIRE operators", false);
 			menuBuilder.setMenuItemEnabled("Fuzzy minimization", false);
 			menuBuilder.setMenuItemEnabled("Fuzzy minimization De and Chatterji", false);
@@ -1772,6 +1771,11 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Zero X non-maximum suppression", false);
 			menuBuilder.setMenuItemEnabled("Single channel", false);
 			menuBuilder.setMenuItemEnabled("Unsharp mask", false);
+			menuBuilder.setMenuItemEnabled("Biorthogonal wavelets", false);
+			menuBuilder.setMenuItemEnabled("Multiscale products",false);
+			menuBuilder.setMenuItemEnabled("Phase preserving denoising", false);
+			menuBuilder.setMenuItemEnabled("PyWavelets", false);
+			menuBuilder.setMenuItemEnabled("Thresholding", false);
 			menuBuilder.setMenuItemEnabled("Watershed", false);
 			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
 			menuBuilder.setMenuItemEnabled("Hill Climbing Watershed", false);
