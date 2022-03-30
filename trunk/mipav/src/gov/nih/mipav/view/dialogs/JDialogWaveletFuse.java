@@ -292,8 +292,8 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
     	else if (family.equals("Daubechies")) {
     		for (i = 0; i < 38; i++) {
     	    	comboBox.addItem(String.valueOf(i+1));
-    	    	comboBox.setSelectedIndex(13);
-    	    }	
+    	    }
+    		comboBox.setSelectedIndex(13);
     	}
     	else if (family.equals("Haar")) {
     		comboBox.addItem("1");
