@@ -38,7 +38,7 @@ Reference:
     Image Fusion Using Wavelet Transform by Aggariyo Wanagiri and 
     Hans Brouwer, Delft University of Technology.
 
-This is a port of wavelet_fuse.py
+This is a port of wavelet_fuse.py and part of util.py.
 
 */
 
@@ -69,6 +69,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 		this.names = names;
 		this.orders = orders;
 		this.max_depth = max_depth;
+		this.slow = slow;
 	}
 	
 	public void runAlgorithm() {
@@ -76,7 +77,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	   int xDim = srcImage.getExtents()[0];
 	   int yDim = srcImage.getExtents()[1];
 	   int length = xDim * yDim;
-	   int i,x,y;
+	   int x,y;
 	   int index;
 	   int depth;
 	   PyWavelets py = new PyWavelets();
@@ -351,10 +352,10 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 		    	   }
 		       }
 	    	   try {
-	    	       destImage.importRGBData(color, length, fbuffer, false);
+	    	       destImage.importRGBData(color, 0, fbuffer, false);
 	    	   }
 	    	   catch (IOException e) {
-	    		   System.err.println("IOException " + e + " on destImage.importRGBData(color, length, fbuffer, false)");
+	    		   System.err.println("IOException " + e + " on destImage.importRGBData(color, 0, fbuffer, false)");
 	    		   setCompleted(false);
 	    		   return;
 	    	   }
@@ -379,10 +380,10 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	    	   }
 	       }
     	   try {
-    	       destImage.importData(length, buffer, true);
+    	       destImage.importData(0, buffer, true);
     	   }
     	   catch (IOException e) {
-    		   System.err.println("IOException " + e + " on destImage.importData(length, buffer, true)");
+    		   System.err.println("IOException " + e + " on destImage.importData(0, buffer, true)");
     		   setCompleted(false);
     		   return;
     	   }   
@@ -665,7 +666,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 		for (c = 0; c < numDestColors; c++) {
 			for (y = 0; y < img1[0].length; y++) {
 				for (x = 0; x < img1[0][0].length; x++) {
-					output[c][y][x] = max1[Math.max(c,numXColors-1)][y][x] > max2[Math.max(c,numYColors-1)][y][x];	
+					output[c][y][x] = max1[Math.min(c,numXColors-1)][y][x] > max2[Math.min(c,numYColors-1)][y][x];	
 				}
 			}
 		}
@@ -718,7 +719,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 					}
 				} // for (c = 0; c < numYColors; c++)
 				for (c = 0; c < numDestColors; c++) {
-					output[c][j][i] = w1[Math.max(c,numXColors-1)] > w2[Math.max(c,numYColors-1)];
+					output[c][j][i] = w1[Math.min(c,numXColors-1)] > w2[Math.min(c,numYColors-1)];
 				}
 			}
 		}
