@@ -619,7 +619,7 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Algorithms.Filters (spatial)");
+                return new String("Algorithms.Filters (wavelet)");
             }
 
             public String getDescription() {
