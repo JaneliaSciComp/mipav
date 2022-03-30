@@ -239,6 +239,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Phase preserving denoising", "PPDenoising", 0, null, false),
 								menuBuilder.buildMenuItem("PyWavelets", "pyWavelets", 0, null, false),
 								menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),
+								menuBuilder.buildMenuItem("Wavelet fuse", "waveletFuse", 0, null, false),
 								}),
 						menuBuilder.makeMenu("Fractal dimension", false,
 								new JMenuItem[] {
@@ -1467,6 +1468,7 @@ public class ViewMenuBar {
 		if (numberOfDimensions == 4) {
 			menuBuilder.setMenuItemEnabled("Superpixel DBSCAN clustering", false);
 			menuBuilder.setMenuItemEnabled("Guided filter", false);
+			menuBuilder.setMenuItemEnabled("Wavelet fuse", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Guided filter", false);
@@ -1597,6 +1599,7 @@ public class ViewMenuBar {
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("Superpixel DBSCAN clustering", false);
 			menuBuilder.setMenuItemEnabled("Guided filter", false);
+			menuBuilder.setMenuItemEnabled("Wavelet fuse", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Trilateral filter", false);
 			menuBuilder.setMenuItemEnabled("Multiresolution Guided filter", false);
@@ -1834,6 +1837,7 @@ public class ViewMenuBar {
 
 		menuBuilder.setMenuItemEnabled("Phase only correlation", true);
 		menuBuilder.setMenuItemEnabled("Guided filter", true);
+		menuBuilder.setMenuItemEnabled("Wavelet fuse", true);
 		menuBuilder.setMenuItemEnabled("Multiresolution Bilateral filter", true);
 		menuBuilder.setMenuItemEnabled("Trilateral filter", true);
 		menuBuilder.setMenuItemEnabled("Multiresolution Guided filter", true);
