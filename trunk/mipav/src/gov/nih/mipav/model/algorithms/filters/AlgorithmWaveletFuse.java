@@ -311,6 +311,14 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
            }
            hi = stack.remove(stack.size()-1);
            arri[1] = hi[0];
+           if ((arri[0].length != arri[1].length) || (arri[0][0].length != arri[1][0].length)) {
+        	   // Interpolate arri[0] to be the same size as arri[1]
+        	   arri[0] = transformBilinear(arri[0], arri[1][0].length, arri[1].length);
+        	   if (numDestColors == 3) {
+        		   arri2[0] = transformBilinear(arri2[0], arri[1][0].length, arri[1].length); 
+        		   arri3[0] = transformBilinear(arri3[0], arri[1][0].length, arri[1].length);
+        	   }
+           }
            if (numDestColors == 3) {
         	   arri2[1] = hi[1];
         	   arri3[1] = hi[2];
@@ -390,6 +398,96 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
        } // else destImage gray scale image
 	   setCompleted(true);
 	   return;
+    }
+	
+	/**
+     * Transforms and resamples volume using bilinear interpolation.
+     * 
+     * @param imgBuf - image array
+     * @param xfrm - TransMatrix to be applied
+     */
+    private double[][] transformBilinear(double[][] imgBuf, int newXDim, int newYDim) {
+        int i, j;
+        int X0pos, Y0pos;
+        int X1pos, Y1pos;
+        double X, Y;
+        double x0, y0;
+        double x1, y1;
+        double value;
+        double imm, jmm;
+        double temp1, temp2;
+        int roundX, roundY;
+        double transformedBuf[][] = new double[newYDim][newXDim];
+        int xDim = imgBuf[0].length;
+        int yDim = imgBuf.length;
+
+        // int length = orgDim[0]*orgDim[1];
+        // int mod = orgDim[0]/50;
+        // int counter = 0; //used for progress bar
+        float T00, T01, T02, T10, T11, T12;
+        double Sx = ((double)newXDim) / ((double)xDim);
+        double Sy = ((double)newYDim) / ((double)yDim);
+        TransMatrix xfrm = new TransMatrix(3);
+        xfrm.setZoom(Sx, Sy);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+
+        for (i = 0; i < newXDim; i++) {
+
+            // if ( isProgressBarVisible()&& i%mod ==0) {
+            // progressBar.setValue((int)((float)i/oXdim * 100+0.5));
+            // }
+            imm = i;
+            temp1 = (imm * T00) + T02;
+            temp2 = (imm * T10) + T12;
+
+            for (j = 0; j < newYDim; j++) {
+
+                // transform i,j
+                value = 0; // remains zero if voxel is transformed out of bounds
+                jmm = j;
+                X = (temp1 + (jmm * T01));
+                roundX = (int) (X + 0.5);
+
+                if ( (X >= 0) && (roundX < xDim)) {
+                    Y = (temp2 + (jmm * T11));
+                    roundY = (int) (Y + 0.5);
+
+                    if ( (Y >= 0) && (roundY < yDim)) {
+
+                        if ( (roundX == (xDim - 1)) || (roundY == (yDim - 1))) { // cannot interpolate on
+                            // last
+                            // X or Y
+                            X0pos = roundX;
+                            Y0pos = roundY;
+                            value = imgBuf[Y0pos][X0pos];
+                        } else {
+
+                            // set intensity of i,j,k to new transformed coordinate if
+                            // x,y,z is w/in dimensions of image
+                            x0 = X - (int) X;
+                            y0 = Y - (int) Y;
+                            x1 = 1 - x0;
+                            y1 = 1 - y0;
+                            X0pos = (int) X;
+                            Y0pos = (int) Y;
+                            X1pos = X0pos + 1;
+                            Y1pos = Y0pos + 1;
+                            value = (x1 * y1 * imgBuf[Y0pos][X0pos]) + (x0 * y1 * imgBuf[Y0pos][X1pos])
+                                    + (x1 * y0 * imgBuf[Y1pos][X0pos]) + (x0 * y0 * imgBuf[Y1pos][X1pos]);
+                        }
+                    } // end if Y in bounds
+                } // end if X in bounds
+
+                transformedBuf[j][i] = value;
+                // counter++;
+            } // end for j
+        } // end for i
+        return transformedBuf;
     }
 	
 	private double[][][] fuse(double img1[][][], double img2[][][], int ks, boolean slow) {
