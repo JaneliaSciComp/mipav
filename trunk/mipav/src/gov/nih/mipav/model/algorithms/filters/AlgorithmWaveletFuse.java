@@ -62,7 +62,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	
 	public AlgorithmWaveletFuse(ModelImage destImg, ModelImage srcImg, ModelImage fuseImage,
 			int kernel_size, PyWavelets.WAVELET_NAME names[], int orders[],
-			short max_depth, boolean slow) {
+			int max_depth, boolean slow) {
 		super(destImg, srcImg);
 		this.fuseImage = fuseImage;
 		this.kernel_size = kernel_size;
