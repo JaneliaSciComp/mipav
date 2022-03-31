@@ -47,7 +47,7 @@ public class AlgorithmWaveletFuse extends AlgorithmBase {
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 	private ModelImage fuseImage;
 	private int kernel_size = 37;
-	private PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[] {PyWavelets.WAVELET_NAME.DB};
+	private PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[] {PyWavelets.WAVELET_NAME.SYM};
 	private int orders[] = new int[] {13};
 	private int max_depth = 999;
 	private boolean slow = false;
