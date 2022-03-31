@@ -33,7 +33,7 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	private ModelImage fuseImage;
 	private int kernel_size = 37;
-	private PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[] {PyWavelets.WAVELET_NAME.DB};
+	private PyWavelets.WAVELET_NAME names[] = new PyWavelets.WAVELET_NAME[] {PyWavelets.WAVELET_NAME.SYM};
 	private int orders[] = new int[] {13};
 	private int max_depth = 999;
 	private boolean slow = false;
@@ -50,7 +50,7 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
     
     private JComboBox<String> comboBoxOrder;
     
-    private String lastNameString = "Daubechies";
+    private String lastNameString = "Symlets";
     
     private JTextField textDepth;
     
@@ -256,7 +256,7 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
         comboBox.addItem("Haar");
         comboBox.addItem("Reverse biorthogonal");
         comboBox.addItem("Symlets");
-        comboBox.setSelectedIndex(2);
+        comboBox.setSelectedIndex(5);
         comboBox.addActionListener(this);
         return comboBox;
     }
@@ -293,7 +293,7 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
     		for (i = 0; i < 38; i++) {
     	    	comboBox.addItem(String.valueOf(i+1));
     	    }
-    		comboBox.setSelectedIndex(13);
+    		comboBox.setSelectedIndex(12);
     	}
     	else if (family.equals("Haar")) {
     		comboBox.addItem("1");
@@ -302,6 +302,7 @@ public class JDialogWaveletFuse extends JDialogScriptableBase
     	    for (i = 0; i < 19; i++) {
     	    	comboBox.addItem(String.valueOf(i+2));	
     	    }
+    	    comboBox.setSelectedIndex(11);
     	}
     	return comboBox;
     }
