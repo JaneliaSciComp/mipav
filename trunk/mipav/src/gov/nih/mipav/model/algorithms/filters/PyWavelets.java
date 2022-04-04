@@ -11313,7 +11313,7 @@ public  class PyWavelets extends AlgorithmBase {
     }
     
     public void test_cwt_method_fft() {
-    	// Maximum difference of absolute values in test_cwt_method_fft() = 3.5110803153770576E-13
+    	// Maximum difference of absolute values in test_cwt_method_fft() = 1.9984014443252818E-14
         //rstate = np.random.RandomState(1)
         //data = rstate.randn(50)
     	int i,j,k;
@@ -11328,7 +11328,7 @@ public  class PyWavelets extends AlgorithmBase {
         	scales[i] = i+1;
         }
         //wavelet = 'cmor1.5-1.0'
-        ContinuousWavelet wavelet = continuous_wavelet(WAVELET_NAME.MEXH,0);
+        ContinuousWavelet wavelet = continuous_wavelet(WAVELET_NAME.CMOR,0);
         wavelet.center_frequency = 1.0;
         wavelet.bandwidth_frequency = 1.5;
         double sampling_period = 1.0;
@@ -11342,7 +11342,7 @@ public  class PyWavelets extends AlgorithmBase {
         double maxDiff = 0.0;
     	for (i = 0; i < cfs_conv[0].length; i++) {
     		for (j = 0; j < cfs_conv[0][0].length; j++) {
-	    		double diff = Math.abs(cfs_conv[0][i][j] - cfs_fft[0][i][j]);
+	    		double diff = Math.abs(zabs(cfs_conv[0][i][j],cfs_conv[1][i][j]) - zabs(cfs_fft[0][i][j],cfs_fft[1][i][j]));
 	    		maxDiff = Math.max(diff, maxDiff);
     		}
     	}	
