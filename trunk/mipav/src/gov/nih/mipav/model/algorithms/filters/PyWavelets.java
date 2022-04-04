@@ -11296,7 +11296,7 @@ public  class PyWavelets extends AlgorithmBase {
         ContinuousWavelet w = continuous_wavelet(WAVELET_NAME.MEXH,0);
         double scales[] = new double[]{0.1};
         // cfs, f = cwt(data, scales=0.1, wavelet='mexh', sampling_period)
-        double ans[][][] = cwt(data, scales, w, sampling_period);
+        double ans[][][] = cwt(data, scales, w, sampling_period, "conv");
         double cfs[][] = ans[0];
         //double f[] = ans[1][0];
         //assert_allclose(cfs, np.zeros_like(cfs))
@@ -11308,8 +11308,46 @@ public  class PyWavelets extends AlgorithmBase {
 
         //# extremely short scale factors raise a ValueError
         scales[0] = 0.01;
-        ans = cwt(data, scales, w, sampling_period);
+        ans = cwt(data, scales, w, sampling_period, "conv");
         //assert_raises(ValueError, pywt.cwt, data, scales=0.01, wavelet='mexh')
+    }
+    
+    public void test_cwt_method_fft() {
+    	// Maximum difference of absolute values in test_cwt_method_fft() = 3.5110803153770576E-13
+        //rstate = np.random.RandomState(1)
+        //data = rstate.randn(50)
+    	int i,j,k;
+    	double data[] = new double[50];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		for (i = 0; i < 50; i++) {
+		     data[i] = randomGen.genStandardGaussian();
+		}
+        data[15] = 1.0;
+        double scales[] = new double[63];
+        for (i = 0; i < 63; i++) {
+        	scales[i] = i+1;
+        }
+        //wavelet = 'cmor1.5-1.0'
+        ContinuousWavelet wavelet = continuous_wavelet(WAVELET_NAME.MEXH,0);
+        wavelet.center_frequency = 1.0;
+        wavelet.bandwidth_frequency = 1.5;
+        double sampling_period = 1.0;
+
+        // build a reference cwt with the legacy np.conv() method
+        double cfs_conv[][][] = cwt(data, scales, wavelet, sampling_period, "conv");
+
+        // compare with the fft based convolution
+        double cfs_fft[][][] = cwt(data, scales, wavelet, sampling_period, "fft");
+        //assert_allclose(cfs_conv, cfs_fft, rtol=0, atol=1e-13)
+        double maxDiff = 0.0;
+    	for (i = 0; i < cfs_conv[0].length; i++) {
+    		for (j = 0; j < cfs_conv[0][0].length; j++) {
+	    		double diff = Math.abs(cfs_conv[0][i][j] - cfs_fft[0][i][j]);
+	    		maxDiff = Math.max(diff, maxDiff);
+    		}
+    	}	
+        System.out.println("Maximum difference of absolute values in test_cwt_method_fft() = " + maxDiff);
+        
     }
         
 	    public void test_wavelet_properties() {
@@ -15949,8 +15987,10 @@ public  class PyWavelets extends AlgorithmBase {
         return true;
     }
     
-    private double[][][] cwt(double data[], double scales[], ContinuousWavelet w, double sampling_period) {
+    private double[][][] cwt(double data[], double scales[], ContinuousWavelet w, double sampling_period,
+    		String method) {
         // default sampling_period = 1.0
+    	// default method = "conv"
         //cwt(data, scales, wavelet)
 
         //One dimensional Continuous Wavelet Transform.
@@ -15971,6 +16011,17 @@ public  class PyWavelets extends AlgorithmBase {
         //    The values computed for ``coefs`` are independent of the choice of
         //    ``sampling_period`` (i.e. ``scales`` is not scaled by the sampling
         //    period).
+    	// method : {'conv', 'fft'}, optional
+        // The method used to compute the CWT. Can be any of:
+        //    - ``conv`` uses ``numpy.convolve``.
+        //    - ``fft`` uses frequency domain convolution.
+        //    - ``auto`` uses automatic selection based on an estimate of the
+        //      computational complexity at each scale.
+
+        // The ``conv`` method complexity is ``O(len(scale) * len(data))``.
+        // The ``fft`` method is ``O(N * log2(N))`` with
+        // ``N = len(scale) + len(data) - 1``. It is well suited for large size
+        // signals but slightly slower than ``conv`` on small ones.
 
         //Returns
         //-------
@@ -16017,6 +16068,12 @@ public  class PyWavelets extends AlgorithmBase {
             //scales = np.array([scales])
         //if data.ndim == 1:
     	int i, k;
+    	int size_scale0 = -1;
+    	int size_scale;
+    	double fft_data[] = null;
+    	double fft_data_imag[] = null;
+    	double con[] = null;
+    	double con_imag[] = null;
     	double out[][] = null;
     	double out_imag[][] = null;
             if (w.complex_cwt) {
@@ -16065,11 +16122,63 @@ public  class PyWavelets extends AlgorithmBase {
                 		int_psi_imag_reverse[k] = int_psi_imag[jreverse[k]];
                 	}
                 }
-                double con[] = convolve(data, int_psi_reverse);
-                double con_imag[] = null;
-                if (w.complex_cwt) {
-                	con_imag = convolve(data, int_psi_imag_reverse);
-                }
+                if (method == "conv") {
+	                con = convolve(data, int_psi_reverse);
+	                con_imag = null;
+	                if (w.complex_cwt) {
+	                	con_imag = convolve(data, int_psi_imag_reverse);
+	                }
+                } // if (method == "conv")
+                else { // method == "fft"
+                	// The padding is selected for:
+                    // - optimal FFT complexity
+                    // - to be larger than the two signals length to avoid circular
+                    //   convolution
+                	size_scale = data.length + j.length - 1;
+                	if (size_scale != size_scale0) {
+                        // Must recompute fft_data when the padding size changes.
+                		 fft_data = new double[size_scale];
+                		 fft_data_imag = new double[size_scale];
+                		 for (k = 0; k < data.length; k++) {
+                			 fft_data[k] = data[k];
+                		 }
+                		 FFTUtility fft = new FFTUtility(fft_data, fft_data_imag, 1, size_scale, 1, -1,
+                					FFTUtility.FFT);
+                		 fft.setShowProgress(false);
+                		 fft.run();
+                		 fft.finalize();
+                		 fft = null;
+                	}
+                    size_scale0 = size_scale;
+                    double fft_wav[] = new double[size_scale];
+                    double fft_wav_imag[] = new double[size_scale];
+                    for (k = 0; k < j.length; k++) {
+                    	fft_wav[k] = int_psi_reverse[k];
+                    }
+                    if (w.complex_cwt) {
+                    	for (k = 0; k < j.length; k++) {
+                        	fft_wav_imag[k] = int_psi_imag_reverse[k];
+                        }	
+                    }
+                    FFTUtility fft = new FFTUtility(fft_wav, fft_wav_imag, 1, size_scale, 1, -1,
+        					FFTUtility.FFT);
+        		    fft.setShowProgress(false);
+        		    fft.run();
+        		    fft.finalize();
+        		    fft = null;
+        		    con = new double[size_scale];
+        		    con_imag = new double[size_scale];
+        		    for (k = 0; k < size_scale; k++) {
+        		    	con[k] = fft_data[k]*fft_wav[k] - fft_data_imag[k]*fft_wav_imag[k];
+        		    	con_imag[k] = fft_data[k]*fft_wav_imag[k] + fft_data_imag[k]*fft_wav[k];
+        		    }
+        		    FFTUtility ifft = new FFTUtility(con, con_imag, 1, size_scale, 1, 1,
+        					FFTUtility.FFT);
+        		    ifft.setShowProgress(false);
+        		    ifft.run();
+        		    ifft.finalize();
+        		    ifft = null;
+                } // method == "fft"
                 double diff[] = new double[con.length-1];
                 for (k = 0; k < con.length-1; k++) {
                 	diff[k] = con[k+1] - con[k];
