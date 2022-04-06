@@ -7384,7 +7384,9 @@ public  class PyWavelets extends AlgorithmBase {
               	    }
               	}
                 // Expect arr.length = 4 * levels for axes.length = 2 
-              	HashMap<String, double[][]> coeffsMap[] = swtn(bufxy, wavelets, levels, start_level, axes);
+              	boolean trim_approx = false;
+              	boolean norm = false;
+              	HashMap<String, double[][]> coeffsMap[] = swtn(bufxy, wavelets, levels, start_level, axes, trim_approx, norm);
               	double arr[][][] = null;
               	if (axes.length == 2) {
 	        		arr = new double[4*coeffsMap.length][][];
@@ -7862,7 +7864,9 @@ public  class PyWavelets extends AlgorithmBase {
 	        	}
         	}
         	// Expect arr.length = 8 * levels if axes.length = 3
-          	HashMap<String, double[][][]> coeffsMap[] = swtn(bufxyz, wavelets, levels, start_level, axes);
+        	boolean trim_approx = false;
+        	boolean norm = false;
+          	HashMap<String, double[][][]> coeffsMap[] = swtn(bufxyz, wavelets, levels, start_level, axes, trim_approx, norm);
           	double arr[][][][] = null;
           	if (axes.length == 3) {
 	    		arr = new double[8*coeffsMap.length][][][];
@@ -13783,7 +13787,9 @@ public  class PyWavelets extends AlgorithmBase {
 	    double rtol;
 	    int level = 3;
 	    int axes[] = new int[]{2};
-	    HashMap<String, double[][][]> ans[] = swtn(x, wavelets, level, 0, axes);
+	    boolean trim_approx = false;
+	    boolean norm = false;
+	    HashMap<String, double[][][]> ans[] = swtn(x, wavelets, level, 0, axes, trim_approx, norm);
 	    double cA3[] = ans[0].get("a")[0][0];
 	    double cD3[] = ans[0].get("d")[0][0];
 	    double cA2[] = ans[1].get("a")[0][0];
@@ -13900,7 +13906,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    for (i = 0; i < cA1.length; i++) {
 	    	cA13[0][0][i] = cA1[i];
 	    }
-	    HashMap<String, double[][][]> res[] = swtn(cA13, wavelets, level, start_level,axes);
+	    HashMap<String, double[][][]> res[] = swtn(cA13, wavelets, level, start_level,axes, trim_approx, norm);
 	    cA2 = res[0].get("a")[0][0];
 	    cD2 = res[0].get("d")[0][0];
 	    rtol = tol_double;
@@ -13933,7 +13939,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    	System.out.println("Error! cD2 is not close to expected_cD2");
 	    }
 
-	    HashMap<String, double[][][]> coeffs[] = swtn(x, wavelets, 3, 0,axes);
+	    HashMap<String, double[][][]> coeffs[] = swtn(x, wavelets, 3, 0,axes, trim_approx, norm);
 	    System.out.println("coeffs.length = " + coeffs.length + " expected value = 3");
 	    System.out.println("swt_max_level(x[0][0].length) = " + swt_max_level(x[0][0].length) + " expected value = 3");
 	}
@@ -14320,6 +14326,8 @@ public  class PyWavelets extends AlgorithmBase {
 	    double actualError;
 	    boolean correct;
 	    int axes[] = new int[]{0,1};
+	    boolean trim_approx = false;
+		boolean norm = false;
         for (i = 0; i < wName.length; i++) {
       	    for (j = 0; j < orders[i].length; j++) {
 	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
@@ -14340,7 +14348,7 @@ public  class PyWavelets extends AlgorithmBase {
 		        	}
 		        }
 		        int start_level = 0;
-		        double coeffs[][][] = swt2(X, current_wavelets, max_level,start_level,axes);
+		        double coeffs[][][] = swt2(X, current_wavelets, max_level,start_level,axes, trim_approx, norm);
 		        double Y[][] = iswt2(coeffs, current_wavelets);
 		        correct = true;
 		        for (k = 0; k < X.length; k++) {
@@ -14380,6 +14388,8 @@ public  class PyWavelets extends AlgorithmBase {
 		double actualError;
 		int numberCorrect = 0;
 		int numberWrong = 0;
+		boolean trim_approx = false;
+		boolean norm = false;
 		double X[][];
 		for (i = 0; i < 3; i++) {
 			nrow = nrows[i];
@@ -14391,7 +14401,7 @@ public  class PyWavelets extends AlgorithmBase {
 				}
 			}
 			int start_level = 0;
-	        double coeffs[][][] = swt2(X, wavelets, level,start_level,axes);
+	        double coeffs[][][] = swt2(X, wavelets, level,start_level,axes, trim_approx, norm);
 	        double Y[][] = iswt2(coeffs, wavelets);
 	        correct = true;
 	        for (k = 0; k < X.length; k++) {
@@ -14438,14 +14448,16 @@ public  class PyWavelets extends AlgorithmBase {
         	}
         }
         int axes[] = new int[]{0,1};
-        double coeffs[][][] = swt2(X, wavelets, level,start_level,axes);
+        boolean trim_approx = false;
+		boolean norm = false;
+        double coeffs[][][] = swt2(X, wavelets, level,start_level,axes, trim_approx, norm);
         double cA1[][] = coeffs[0];
         double cH1[][] = coeffs[1];
         double cV1[][] = coeffs[2];
         double cD1[][] = coeffs[3];
         // opposite order
         axes = new int[]{1,0};
-        double coeffs2[][][] = swt2(X, wavelets, level, start_level, axes);
+        double coeffs2[][][] = swt2(X, wavelets, level, start_level, axes, trim_approx, norm);
         double cA2[][] = coeffs2[0];
         double cH2[][] = coeffs2[1];
         double cV2[][] = coeffs2[2];
@@ -14549,14 +14561,16 @@ public  class PyWavelets extends AlgorithmBase {
         	}
         }
         int axes[] = new int[]{0,1};
-	    HashMap<String, double[][]>coeffs[] = swtn(X, wavelets, level, start_level, axes);
+        boolean trim_approx = false;
+		boolean norm = false;
+	    HashMap<String, double[][]>coeffs[] = swtn(X, wavelets, level, start_level, axes, trim_approx, norm);
 	    double aa[][] = coeffs[0].get("aa");
 	    double ad[][] = coeffs[0].get("ad");
 	    double da[][] = coeffs[0].get("da");
 	    double dd[][] = coeffs[0].get("dd");
 	    // opposite order
 	    axes = new int[]{1,0};
-	    HashMap<String, double[][]>coeffs2[] = swtn(X, wavelets, level, start_level, axes);
+	    HashMap<String, double[][]>coeffs2[] = swtn(X, wavelets, level, start_level, axes, trim_approx, norm);
 	    double aa2[][] = coeffs2[0].get("aa");
 	    double ad2[][] = coeffs2[0].get("ad");
 	    double da2[][] = coeffs2[0].get("da");
@@ -14630,7 +14644,7 @@ public  class PyWavelets extends AlgorithmBase {
 
 	    // 0-level transform
         axes = new int[]{0,1};
-	    HashMap<String, double[][]> empty[] = swtn(X, wavelets, 0, start_level, axes);
+	    HashMap<String, double[][]> empty[] = swtn(X, wavelets, 0, start_level, axes, trim_approx, norm);
 	    if (empty.length == 0) {
 	    	System.out.println("empty.length is 0 as expected");
 	    }
@@ -14704,6 +14718,8 @@ public  class PyWavelets extends AlgorithmBase {
 	    boolean correct;
 	    int ncorrect[] = new int[7];
 	    int nwrong[] = new int[7];
+	    boolean trim_approx = false;
+		boolean norm = false;
         for (i = 0; i < wName.length; i++) {
       	    for (j = 0; j < orders[i].length; j++) {
 	      		current_wavelet = discrete_wavelet(wName[i], orders[i][j]);
@@ -14732,7 +14748,7 @@ public  class PyWavelets extends AlgorithmBase {
 		        	}
 		        }
 		        int start_level = 0;
-		        HashMap<String, double[][]> coeffs[] = swtn(X, current_wavelets, max_level,start_level,axes[n]);
+		        HashMap<String, double[][]> coeffs[] = swtn(X, current_wavelets, max_level,start_level,axes[n], trim_approx, norm);
 		        HashMap<String, double[][]> coeffs_copy[] = new HashMap[coeffs.length];
 		        for (k = 0; k < coeffs.length; k++) {
 		        	coeffs_copy[k] = new HashMap<String, double[][]>();
@@ -14885,7 +14901,9 @@ public  class PyWavelets extends AlgorithmBase {
 		        	}
 		        }
 		        int start_level = 0;
-		        HashMap<String, double[][][]> coeffs[] = swtn(X, current_wavelets, max_level,start_level,axes[n]);
+		        boolean trim_approx = false;
+				boolean norm = false;
+		        HashMap<String, double[][][]> coeffs[] = swtn(X, current_wavelets, max_level,start_level,axes[n], trim_approx, norm);
 		        HashMap<String, double[][][]> coeffs_copy[] = new HashMap[coeffs.length];
 		        for (k = 0; k < coeffs.length; k++) {
 		        	coeffs_copy[k] = new HashMap<String, double[][][]>();
@@ -15043,6 +15061,41 @@ public  class PyWavelets extends AlgorithmBase {
 		coeffs = swt1D(x, wav, level, start_level, trim_approx, norm);
 	}
 	
+	public void test_swt2_variance_and_energy_preservation() {
+	    // """Verify that the 2D SWT partitions variance among the coefficients."""
+	    // When norm is True and the wavelet is orthogonal, the sum of the
+	    // variances of the coefficients should equal the variance of the signal.
+		int i,j;
+		DiscreteWavelet wav = discrete_wavelet(WAVELET_NAME.DB, 2);
+		DiscreteWavelet wavelets[] = new DiscreteWavelet[] {wav,wav};
+		double x[][] = new double[64][64];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+		        x[i][j] = randomGen.genStandardGaussian();
+			}
+		}
+		int level = 4;
+		int start_level = 0;
+		int axes[] = new int[] {0,1};
+		boolean trim_approx = true;
+		boolean norm = true;
+	    double coeffs[][][] = swt2(x, wavelets, level, start_level, axes, trim_approx, norm);
+	    /*coeff_list = [coeffs[0].ravel()]
+	    for d in coeffs[1:]:
+	        for v in d:
+	            coeff_list.append(v.ravel())
+	    variances = [np.var(v) for v in coeff_list]
+	    assert_allclose(np.sum(variances), np.var(x))
+
+	    # also verify L2-norm energy preservation property
+	    assert_allclose(np.linalg.norm(x),
+	                    np.linalg.norm(np.concatenate(coeff_list)))
+
+	    # non-orthogonal wavelet with norm=True raises a warning
+	    assert_warns(UserWarning, pywt.swt2, x, 'bior2.2', level=4, norm=True)*/
+	}
+	
 	public void test_per_axis_wavelets() {
 	    // tests separate wavelet for each axis.
 		int i,j,k;
@@ -15072,8 +15125,10 @@ public  class PyWavelets extends AlgorithmBase {
 	    double actualError;
 	    double allowedError;
 	    boolean correct;
+	    boolean trim_approx = false;
+		boolean norm = false;
 
-	    HashMap<String, double[][][]> coefs[] = swtn(data, waves3, level,start_level, axes3);
+	    HashMap<String, double[][][]> coefs[] = swtn(data, waves3, level,start_level, axes3, trim_approx, norm);
 	    double ans[][][] = iswtn(coefs, waves3, axes3);
 	    correct = true;
         for (i = 0; i < data.length; i++) {
@@ -15094,7 +15149,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    	System.out.println("swtn-iswtn for 3 different wavelets does not pass");
 	    }
 	    
-	    coefs = swtn(data, waves1, level,start_level, axes3);
+	    coefs = swtn(data, waves1, level,start_level, axes3, trim_approx, norm);
 	    ans = iswtn(coefs, waves1, axes3);
 	    correct = true;
         for (i = 0; i < data.length; i++) {
@@ -15115,7 +15170,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    	System.out.println("swtn-iswtn for 1 wavelet does not pass");
 	    }
 	    
-	    double coefs2[][][] = swt2(data2, waves2, level,start_level, axes2);
+	    double coefs2[][][] = swt2(data2, waves2, level,start_level, axes2, trim_approx, norm);
 	    double ans2[][] = iswt2(coefs2, waves2);
 	    correct = true;
         for (i = 0; i < data.length; i++) {
@@ -22003,10 +22058,13 @@ public  class PyWavelets extends AlgorithmBase {
         return output;
     }
     
-    private double[][][] swt2(double data[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+    private double[][][] swt2(double data[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[],
+    		boolean trim_approx, boolean norm) {
         // Default level = -1
     	// Default start_level = 0
         // Default axes = -2,-1
+    	// Default trim_approx = false
+    	// Defaul norm = false
         // Multilevel 2D stationary wavelet transform.
 
         // Parameters
@@ -22022,11 +22080,20 @@ public  class PyWavelets extends AlgorithmBase {
         //    The level at which the decomposition will start (default: 0)
         // axes : 2-tuple of ints, optional
         //    Axes over which to compute the SWT. Repeated elements are not allowed.
+    	// trim_approx : bool, optional
+        //    If True, approximation coefficients at the final level are retained.
+        // norm : bool, optional
+        //    If True, transform is normalized so that the energy of the coefficients
+        //    will be equal to the energy of ``data``. In other words,
+        //    ``np.linalg.norm(data.ravel())`` will equal the norm of the
+        //    concatenated transform coefficients when ``trim_approx`` is True.
 
         // Returns
         // -------
         // coeffs : list
         //    Approximation and details coefficients (for ``start_level = m``)::
+    	//    If ``trim_approx`` is ``False``, approximation coefficients are
+        //    retained for all levels::
 
         //        [
         //            (cA_m+level,
@@ -22043,6 +22110,18 @@ public  class PyWavelets extends AlgorithmBase {
 
         //    where cA is approximation, cH is horizontal details, cV is
         //    vertical details, cD is diagonal details and m is ``start_level``.
+    	
+    	// If ``trim_approx`` is ``True``, approximation coefficients are only
+        //  retained at the final level of decomposition. This matches the format
+        // used by ``pywt.wavedec2``::
+
+        //     [
+        //         cA_m+level,
+        //         (cH_m+level, cV_m+level, cD_m+level),
+        //         ...,
+        //         (cH_m+1, cV_m+1, cD_m+1),
+        //         (cH_m, cV_m, cD_m),
+        //     ]
 
         // Notes
         // -----
@@ -22050,6 +22129,24 @@ public  class PyWavelets extends AlgorithmBase {
         // the signal length along the transformed axes be a multiple of ``2**level``.
         // If this is not the case, the user should pad up to an appropriate size
         // using a function such as ``numpy.pad``.
+    	
+    	 //   A primary benefit of this transform in comparison to its decimated
+    	 //   counterpart (``pywt.wavedecn``), is that it is shift-invariant. This comes
+    	 //   at cost of redundancy in the transform (the size of the output coefficients
+    	 //   is larger than the input).
+
+    	 //   When the following three conditions are true:
+
+    	 //       1. The wavelet is orthogonal
+    	 //       2. ``swt2`` is called with ``norm=True``
+    	 //       3. ``swt2`` is called with ``trim_approx=True``
+
+    	 //   the transform has the following additional properties that may be
+    	 //   desirable in applications:
+
+    	 //       1. energy is conserved
+    	 //       2. variance is partitioned across scales
+
     	int i;
        
 		if ((axes != null) && (axes.length != 2)) {
@@ -22061,10 +22158,13 @@ public  class PyWavelets extends AlgorithmBase {
 		    return null;
         }
         
-		HashMap<String, double[][]> coeffsMap[] = swtn(data, wavelet, level, start_level, axes);
+		HashMap<String, double[][]> coeffsMap[] = swtn(data, wavelet, level, start_level, axes,
+				trim_approx, norm);
 		double coefs[][][] = new double[4*coeffsMap.length][][];
 		for (i = 0; i < coeffsMap.length; i++) {
-		    coefs[4*i] = coeffsMap[i].get("aa");
+			if ((i == 0) || (!trim_approx)) {
+		        coefs[4*i] = coeffsMap[i].get("aa");
+			}
 	        coefs[4*i+1] = coeffsMap[i].get("da");
 	        coefs[4*i+2] = coeffsMap[i].get("ad");
 	        coefs[4*i+3] = coeffsMap[i].get("dd");
@@ -22072,9 +22172,12 @@ public  class PyWavelets extends AlgorithmBase {
         return coefs;
     }
 
-    private HashMap<String, double[][]>[] swtn(double datain[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+    private HashMap<String, double[][]>[] swtn(double datain[][], DiscreteWavelet wavelet[], int level, int start_level, int axes[],
+    		boolean trim_approx, boolean norm) {
         // Default start_level = 0
     	// Default axes = null
+    	// Default trim_approx = false
+    	// Default norm = false
         // n-dimensional stationary wavelet transform.
 
         // Parameters
@@ -22091,6 +22194,13 @@ public  class PyWavelets extends AlgorithmBase {
         // axes : sequence of ints, optional
         //    Axes over which to compute the SWT. A value of ``None`` (the
         //    default) selects all axes. Axes may not be repeated.
+    	// trim_approx : bool, optional
+        //    If True, approximation coefficients at the final level are retained.
+        // norm : bool, optional
+        //    If True, transform is normalized so that the energy of the coefficients
+        //    will be equal to the energy of ``data``. In other words,
+        //    ``np.linalg.norm(data.ravel())`` will equal the norm of the
+        //    concatenated transform coefficients when ``trim_approx`` is True.
 
         // Returns
         // -------
@@ -22110,6 +22220,11 @@ public  class PyWavelets extends AlgorithmBase {
 
         //    For user-specified ``axes``, the order of the characters in the
         //    dictionary keys map to the specified ``axes``.
+    	
+    	//    If ``trim_approx`` is ``True``, the first element of the list contains
+        //    the array of approximation coefficients from the final level of
+        //    decomposition, while the remaining coefficient dictionaries contain
+        //    only detail coefficients. This matches the behavior of `pywt.wavedecn`.
 
         // Notes
         // -----
@@ -22117,6 +22232,23 @@ public  class PyWavelets extends AlgorithmBase {
         // the signal length along the transformed axes be a multiple of ``2**level``.
         // If this is not the case, the user should pad up to an appropriate size
         // using a function such as ``numpy.pad``.
+    	
+    	// A primary benefit of this transform in comparison to its decimated
+        // counterpart (``pywt.wavedecn``), is that it is shift-invariant. This comes
+        // at cost of redundancy in the transform (the size of the output coefficients
+        // is larger than the input).
+
+        // When the following three conditions are true:
+
+       //     1. The wavelet is orthogonal
+       //     2. ``swtn`` is called with ``norm=True``
+       //     3. ``swtn`` is called with ``trim_approx=True``
+
+       // the transform has the following additional properties that may be
+       // desirable in applications:
+
+       //     1. energy is conserved
+      //      2. variance is partitioned across scales
     	
     	int i, j;
     	int axis;
@@ -22150,11 +22282,26 @@ public  class PyWavelets extends AlgorithmBase {
         else {
         	wavelets = wavelet;
         }
+        
+        if (norm) {
+           boolean allOrthogonal = true;
+           for (i = 0; i < wavelets.length; i++) {
+        	   if (wavelets[i].base.orthogonal) {
+        		   allOrthogonal = false;
+        	   }
+           }
+           if (!allOrthogonal) {
+        	   System.out.println("Warning! norm=True, but the wavelets used are not orthogonal:");
+        	   System.out.println("The conditions for energy preservation are not satisfied.");
+           }
+           for (i = 0; i < wavelets.length; i++) {
+               wavelets[i] = rescale_wavelet_filterbank(wavelets[i], 1.0/Math.sqrt(2.0));   
+           }
+        } // if (norm)
 
         HashMap<String, double[][]> coeffs = new HashMap<String, double[][]>();
         HashMap<String, double[][]> new_coeffs = new HashMap<String, double[][]>();
         HashMap<String, double[][]> ret[] = new HashMap[level];
-        boolean trim_approx = false;
         for (i = 0; i < level; i++) {
         	ret[i] = new HashMap<String, double[][]>();
         }
@@ -22172,7 +22319,7 @@ public  class PyWavelets extends AlgorithmBase {
 	             	kEntry = (Map.Entry<String,double[][]>) allIter.next();
 	             	String subband = (String) kEntry.getKey();
 	             	double x[][] = (double[][]) kEntry.getValue();
-	             	double arr[][][] = swt_axis(x, wav, 1, i, axis, trim_approx);
+	             	double arr[][][] = swt_axis(x, wav, 1, i, axis, false);
 	             	double cA[][] = arr[0];
 	            	double cD[][] = arr[1];
 	            	new_coeffs.put(subband + "a", cA);
@@ -22202,8 +22349,24 @@ public  class PyWavelets extends AlgorithmBase {
             else if (axes.length == 2) {
                 data = coeffs.get("aa");
             }
+            if (trim_approx) {
+                if (axes.length == 1) {
+                	coeffs.remove("a");
+;               }
+                else if (axes.length == 2) {
+                	coeffs.remove("aa");
+                }
+            }
         } // for (i = start_level; i <  start_level + level; i++)
 
+        if (trim_approx) {
+        	if (axes.length == 1) {
+        	    ret[level-1].put("a",data);
+        	}
+        	else if (axes.length == 2) {
+        		ret[level-1].put("aa",data);
+        	}
+        }
         HashMap<String, double[][]> rev[] = new HashMap[level];
         for (i = 0; i < level; i++) {
         	rev[i] = ret[level-1-i];
@@ -22211,9 +22374,12 @@ public  class PyWavelets extends AlgorithmBase {
         return rev;    
     }
     
-    private HashMap<String, double[][][]>[] swtn(double datain[][][], DiscreteWavelet wavelet[], int level, int start_level, int axes[]) {
+    private HashMap<String, double[][][]>[] swtn(double datain[][][], DiscreteWavelet wavelet[], int level, int start_level, int axes[],
+    		boolean trim_approx, boolean norm) {
         // Default start_level = 0
     	// Default axes = null
+    	// Default trim_approx = false
+    	// Default norm = false
         // n-dimensional stationary wavelet transform.
 
         // Parameters
@@ -22230,6 +22396,14 @@ public  class PyWavelets extends AlgorithmBase {
         // axes : sequence of ints, optional
         //    Axes over which to compute the SWT. A value of ``None`` (the
         //    default) selects all axes. Axes may not be repeated.
+    	// trim_approx : bool, optional
+        //    If True, approximation coefficients at the final level are retained.
+        // norm : bool, optional
+        //    If True, transform is normalized so that the energy of the coefficients
+        //    will be equal to the energy of ``data``. In other words,
+        //    ``np.linalg.norm(data.ravel())`` will equal the norm of the
+        //    concatenated transform coefficients when ``trim_approx`` is True.
+
 
         // Returns
         // -------
@@ -22249,6 +22423,12 @@ public  class PyWavelets extends AlgorithmBase {
 
         //    For user-specified ``axes``, the order of the characters in the
         //    dictionary keys map to the specified ``axes``.
+    	
+        //    If ``trim_approx`` is ``True``, the first element of the list contains
+        //    the array of approximation coefficients from the final level of
+        //    decomposition, while the remaining coefficient dictionaries contain
+        //    only detail coefficients. This matches the behavior of `pywt.wavedecn`.
+
 
         // Notes
         // -----
@@ -22256,6 +22436,23 @@ public  class PyWavelets extends AlgorithmBase {
         // the signal length along the transformed axes be a multiple of ``2**level``.
         // If this is not the case, the user should pad up to an appropriate size
         // using a function such as ``numpy.pad``
+    	
+    	// A primary benefit of this transform in comparison to its decimated
+        // counterpart (``pywt.wavedecn``), is that it is shift-invariant. This comes
+        // at cost of redundancy in the transform (the size of the output coefficients
+        // is larger than the input).
+
+        // When the following three conditions are true:
+
+       //     1. The wavelet is orthogonal
+       //     2. ``swtn`` is called with ``norm=True``
+       //     3. ``swtn`` is called with ``trim_approx=True``
+
+       // the transform has the following additional properties that may be
+       // desirable in applications:
+
+       //     1. energy is conserved
+      //      2. variance is partitioned across scales
     	double data[][][] = new double[datain.length][datain[0].length][datain[0][0].length];
     	int i, j,k;
     	int axis;
@@ -22303,11 +22500,26 @@ public  class PyWavelets extends AlgorithmBase {
         else {
         	wavelets = wavelet;
         }
+        
+        if (norm) {
+            boolean allOrthogonal = true;
+            for (i = 0; i < wavelets.length; i++) {
+         	   if (wavelets[i].base.orthogonal) {
+         		   allOrthogonal = false;
+         	   }
+            }
+            if (!allOrthogonal) {
+         	   System.out.println("Warning! norm=True, but the wavelets used are not orthogonal:");
+         	   System.out.println("The conditions for energy preservation are not satisfied.");
+            }
+            for (i = 0; i < wavelets.length; i++) {
+                wavelets[i] = rescale_wavelet_filterbank(wavelets[i], 1.0/Math.sqrt(2.0));   
+            }
+         } // if (norm)
 
         HashMap<String, double[][][]> coeffs = new HashMap<String, double[][][]>();
         HashMap<String, double[][][]> new_coeffs = new HashMap<String, double[][][]>();
         HashMap<String, double[][][]> ret[] = new HashMap[level];
-        boolean trim_approx = false;
         for (i = 0; i < level; i++) {
         	ret[i] = new HashMap<String, double[][][]>();
         }
@@ -22325,7 +22537,7 @@ public  class PyWavelets extends AlgorithmBase {
 	             	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
 	             	String subband = (String) kEntry.getKey();
 	             	double x[][][] = (double[][][]) kEntry.getValue();
-	             	double arr[][][][] = swt_axis(x, wav, 1, i, axis, trim_approx);
+	             	double arr[][][][] = swt_axis(x, wav, 1, i, axis, false);
 	             	double cA[][][] = arr[0];
 	            	double cD[][][] = arr[1];
 	            	new_coeffs.put(subband + "a", cA);
@@ -22358,8 +22570,30 @@ public  class PyWavelets extends AlgorithmBase {
             else if (axes.length == 3) {
             	data = coeffs.get("aaa");
             }
+            if (trim_approx) {
+                if (axes.length == 1) {
+                	coeffs.remove("a");
+;               }
+                else if (axes.length == 2) {
+                	coeffs.remove("aa");
+                }
+                else if (axes.length == 3) {
+                	coeffs.remove("aaa");
+                }
+            }
         } // for (i = start_level; i <  start_level + level; i++)
 
+        if (trim_approx) {
+        	if (axes.length == 1) {
+        	    ret[level-1].put("a",data);
+        	}
+        	else if (axes.length == 2) {
+        		ret[level-1].put("aa",data);
+        	}
+        	else if (axes.length == 3) {
+        		ret[level-1].put("aaa",data);
+        	}
+        }
         HashMap<String, double[][][]> rev[] = new HashMap[level];
         for (i = 0; i < level; i++) {
         	rev[i] = ret[level-1-i];
