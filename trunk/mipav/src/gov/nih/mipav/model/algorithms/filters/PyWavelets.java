@@ -14964,7 +14964,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    //"""Verify that the 1D SWT partitions variance among the coefficients."""
 	    // When norm is True and the wavelet is orthogonal, the sum of the
 	    // variances of the coefficients should equal the variance of the signal.
-		int i;
+		int i,j;
 		DiscreteWavelet wav = discrete_wavelet(WAVELET_NAME.DB, 2);
 		double x[] = new double[256];
 		RandomNumberGen randomGen = new RandomNumberGen();
@@ -14972,16 +14972,75 @@ public  class PyWavelets extends AlgorithmBase {
 		     x[i] = randomGen.genStandardGaussian();
 		}
 	    //coeffs = pywt.swt(x, wav, trim_approx=True, norm=True)
-		/*coeffs = swt(x, wav, true, true);
-	    variances = [np.var(c) for c in coeffs]
-	    assert_allclose(np.sum(variances), np.var(x))
+		int level = -1;
+		int start_level = 0;
+		boolean trim_approx = true;
+		boolean norm = true;
+		double coeffs[][] = swt1D(x, wav, level, start_level, trim_approx, norm);
+		double sum;
+		double mean;
+		double diff;
+		double variance;
+		double sumOfVariances = 0.0;
+		for (i = 0; i < coeffs.length; i++) {
+			sum = 0.0;
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	sum += coeffs[i][j];
+		    }
+		    mean = sum/coeffs[i].length;
+		    sum = 0.0;
+		    for (j = 0; j < coeffs[i].length; j++) {
+		        diff = coeffs[i][j] - mean;	
+		        sum += diff * diff;
+		    }
+		    variance = sum/coeffs[i].length;
+		    sumOfVariances += variance;
+		}
+		
+		sum = 0.0;
+		for (i = 0; i < 256; i++) {
+		    sum += x[i];	
+		}
+		mean = sum/256;
+		sum = 0.0;
+		for (i = 0; i < 256; i++) {
+			diff = x[i] - mean;
+			sum += diff * diff;
+		}
+		variance = sum/256;
+		double ratio = Math.abs(sumOfVariances - variance)/variance;
+		if (ratio < 1.0E-7) {
+			System.out.println("sum(variances) in coefficients equal approximately variance of x within ratio = " + ratio);
+		}
+		else {
+			System.out.println("sum(variances) in coefficients does not equal approximately variance of x with a ratio = " + ratio);	
+		}
 
-	    # also verify L2-norm energy preservation property
-	    assert_allclose(np.linalg.norm(x),
-	                    np.linalg.norm(np.concatenate(coeffs)))
+	    // also verify L2-norm energy preservation property
+		double normx = 0.0;
+		for (i = 0; i < 256; i++) {
+		    normx += x[i]*x[i];	
+		}
+		normx = Math.sqrt(normx);
+		double normcoeffs = 0.0;
+		for (i = 0; i < coeffs.length; i++) {
+		    for (j = 0; j < coeffs[i].length; j++) {
+		        normcoeffs += coeffs[i][j] * coeffs[i][j];	
+		    }
+		}
+		normcoeffs = Math.sqrt(normcoeffs);
+		ratio = Math.abs(normx - normcoeffs)/normcoeffs;
+		if (ratio < 1.0E-7) {
+			System.out.println("normx equals approximately norm of coefficients within ratio = " + ratio);
+		}
+		else {
+			System.out.println("normx does not equal approximately norm of coefficients with a ratio = " + ratio);	
+		}
 
-	    # non-orthogonal wavelet with norm=True raises a warning
-	    assert_warns(UserWarning, pywt.swt, x, 'bior2.2', norm=True)*/
+	    // non-orthogonal wavelet with norm=True raises a warning
+	    //assert_warns(UserWarning, pywt.swt, x, 'bior2.2', norm=True)
+		wav = discrete_wavelet(WAVELET_NAME.BIOR, 22);
+		coeffs = swt1D(x, wav, level, start_level, trim_approx, norm);
 	}
 	
 	public void test_per_axis_wavelets() {
@@ -21483,6 +21542,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    for (m = 0; m < wav.rec_lo.length; m++) {
 	    	wav.rec_lo[m] *= sf;
 	    }
+	    wav.base = new BaseWavelet();
 	    wav.base.orthogonal = wavelet.base.orthogonal;
 	    wav.base.biorthogonal = wavelet.base.biorthogonal;	
         
