@@ -15065,7 +15065,7 @@ public  class PyWavelets extends AlgorithmBase {
 	    // """Verify that the 2D SWT partitions variance among the coefficients."""
 	    // When norm is True and the wavelet is orthogonal, the sum of the
 	    // variances of the coefficients should equal the variance of the signal.
-		int i,j;
+		int i,j,k;
 		DiscreteWavelet wav = discrete_wavelet(WAVELET_NAME.DB, 2);
 		DiscreteWavelet wavelets[] = new DiscreteWavelet[] {wav,wav};
 		double x[][] = new double[64][64];
@@ -15081,19 +15081,86 @@ public  class PyWavelets extends AlgorithmBase {
 		boolean trim_approx = true;
 		boolean norm = true;
 	    double coeffs[][][] = swt2(x, wavelets, level, start_level, axes, trim_approx, norm);
-	    /*coeff_list = [coeffs[0].ravel()]
-	    for d in coeffs[1:]:
-	        for v in d:
-	            coeff_list.append(v.ravel())
-	    variances = [np.var(v) for v in coeff_list]
-	    assert_allclose(np.sum(variances), np.var(x))
+	    double sum;
+	    int numVar;
+		double mean;
+		double diff;
+		double variance;
+		double sumOfVariances = 0.0;
+		for (i = 0; i < coeffs.length; i++) {
+			sum = 0.0;
+			numVar = 0;
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	for (k = 0; k < coeffs[i][j].length; k++) {
+		    	     sum += coeffs[i][j][k];
+		    	     numVar++;
+		    	}
+		    }
+		    mean = sum/numVar;
+		    sum = 0.0;
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	for (k = 0; k < coeffs[i][j].length; k++) {
+		           diff = coeffs[i][j][k] - mean;	
+		           sum += diff * diff;
+		    	}
+		    }
+		    variance = sum/numVar;
+		    sumOfVariances += variance;
+		}
+		
+		sum = 0.0;
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+		        sum += x[i][j];
+			}
+		}
+		mean = sum/(64*64);
+		sum = 0.0;
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+			    diff = x[i][j] - mean;
+			    sum += diff * diff;
+			}
+		}
+		variance = sum/(64*64);
+		double ratio = Math.abs(sumOfVariances - variance)/variance;
+		if (ratio < 1.0E-7) {
+			System.out.println("sum(variances) in coefficients equal approximately variance of x within ratio = " + ratio);
+		}
+		else {
+			System.out.println("sum(variances) in coefficients does not equal approximately variance of x with a ratio = " + ratio);	
+		}
 
-	    # also verify L2-norm energy preservation property
-	    assert_allclose(np.linalg.norm(x),
-	                    np.linalg.norm(np.concatenate(coeff_list)))
+	    // also verify L2-norm energy preservation property
+		double normx = 0.0;
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+		        normx += x[i][j]*x[i][j];	
+			}
+		}
+		normx = Math.sqrt(normx);
+		double normcoeffs = 0.0;
+		for (i = 0; i < coeffs.length; i++) {
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	for (k = 0; k < coeffs[i][j].length; k++) {
+		            normcoeffs += coeffs[i][j][k] * coeffs[i][j][k];
+		    	}
+		    }
+		}
+		normcoeffs = Math.sqrt(normcoeffs);
+		ratio = Math.abs(normx - normcoeffs)/normcoeffs;
+		if (ratio < 1.0E-7) {
+			System.out.println("normx equals approximately norm of coefficients within ratio = " + ratio);
+		}
+		else {
+			System.out.println("normx does not equal approximately norm of coefficients with a ratio = " + ratio);	
+		}
 
-	    # non-orthogonal wavelet with norm=True raises a warning
-	    assert_warns(UserWarning, pywt.swt2, x, 'bior2.2', level=4, norm=True)*/
+	    // non-orthogonal wavelet with norm=True raises a warning
+	    //assert_warns(UserWarning, pywt.swt2, x, 'bior2.2', level=4, norm=True)*/
+		wav = discrete_wavelet(WAVELET_NAME.BIOR, 22);
+		wavelets = new DiscreteWavelet[] {wav,wav};
+		coeffs = swt2(x, wavelets, level, start_level, axes, trim_approx, norm);
 	}
 	
 	public void test_per_axis_wavelets() {
@@ -22147,7 +22214,7 @@ public  class PyWavelets extends AlgorithmBase {
     	 //       1. energy is conserved
     	 //       2. variance is partitioned across scales
 
-    	int i;
+    	int i,index;
        
 		if ((axes != null) && (axes.length != 2)) {
             MipavUtil.displayError("Expected 2 axes");
@@ -22160,14 +22227,20 @@ public  class PyWavelets extends AlgorithmBase {
         
 		HashMap<String, double[][]> coeffsMap[] = swtn(data, wavelet, level, start_level, axes,
 				trim_approx, norm);
-		double coefs[][][] = new double[4*coeffsMap.length][][];
-		for (i = 0; i < coeffsMap.length; i++) {
+		double coefs[][][] = null;
+		if (trim_approx) {
+			coefs = new double[3*coeffsMap.length+1][][];
+		}
+		else {
+		    coefs = new double[4*coeffsMap.length][][];
+		}
+		for (i = 0,index = 0; i < coeffsMap.length; i++) {
 			if ((i == 0) || (!trim_approx)) {
-		        coefs[4*i] = coeffsMap[i].get("aa");
+		        coefs[index++] = coeffsMap[i].get("aa");
 			}
-	        coefs[4*i+1] = coeffsMap[i].get("da");
-	        coefs[4*i+2] = coeffsMap[i].get("ad");
-	        coefs[4*i+3] = coeffsMap[i].get("dd");
+	        coefs[index++] = coeffsMap[i].get("da");
+	        coefs[index++] = coeffsMap[i].get("ad");
+	        coefs[index++] = coeffsMap[i].get("dd");
 		}
         return coefs;
     }
@@ -22286,7 +22359,7 @@ public  class PyWavelets extends AlgorithmBase {
         if (norm) {
            boolean allOrthogonal = true;
            for (i = 0; i < wavelets.length; i++) {
-        	   if (wavelets[i].base.orthogonal) {
+        	   if (!wavelets[i].base.orthogonal) {
         		   allOrthogonal = false;
         	   }
            }
@@ -22337,9 +22410,18 @@ public  class PyWavelets extends AlgorithmBase {
             Map.Entry<String,double[][]> kEntry = null;
             while (allIter.hasNext()) {
             	kEntry = (Map.Entry<String,double[][]>) allIter.next();
+            	boolean allasubband = false;
             	String subband = (String) kEntry.getKey();
-             	double x[][] = (double[][]) kEntry.getValue();
-            	ret[i-start_level].put(subband, x);
+            	if ((axes.length == 1) && (subband.equalsIgnoreCase("a"))) {
+            		allasubband = true;
+            	}
+            	else if ((axes.length == 2) && (subband.equalsIgnoreCase("aa"))) {
+            		allasubband = true;
+            	}
+            	if ((i == start_level + level -1) || (!trim_approx) || (!allasubband)) {
+             	    double x[][] = (double[][]) kEntry.getValue();
+            	    ret[i-start_level].put(subband, x);
+            	}
             }
             
             // data for the next level is the approximation coeffs from this level
@@ -22349,24 +22431,9 @@ public  class PyWavelets extends AlgorithmBase {
             else if (axes.length == 2) {
                 data = coeffs.get("aa");
             }
-            if (trim_approx) {
-                if (axes.length == 1) {
-                	coeffs.remove("a");
-;               }
-                else if (axes.length == 2) {
-                	coeffs.remove("aa");
-                }
-            }
         } // for (i = start_level; i <  start_level + level; i++)
 
-        if (trim_approx) {
-        	if (axes.length == 1) {
-        	    ret[level-1].put("a",data);
-        	}
-        	else if (axes.length == 2) {
-        		ret[level-1].put("aa",data);
-        	}
-        }
+        
         HashMap<String, double[][]> rev[] = new HashMap[level];
         for (i = 0; i < level; i++) {
         	rev[i] = ret[level-1-i];
@@ -22504,7 +22571,7 @@ public  class PyWavelets extends AlgorithmBase {
         if (norm) {
             boolean allOrthogonal = true;
             for (i = 0; i < wavelets.length; i++) {
-         	   if (wavelets[i].base.orthogonal) {
+         	   if (!wavelets[i].base.orthogonal) {
          		   allOrthogonal = false;
          	   }
             }
@@ -22555,9 +22622,21 @@ public  class PyWavelets extends AlgorithmBase {
             Map.Entry<String,double[][][]> kEntry = null;
             while (allIter.hasNext()) {
             	kEntry = (Map.Entry<String,double[][][]>) allIter.next();
+            	boolean allasubband = false;
             	String subband = (String) kEntry.getKey();
-             	double x[][][] = (double[][][]) kEntry.getValue();
-            	ret[i-start_level].put(subband, x);
+            	if ((axes.length == 1) && (subband.equalsIgnoreCase("a"))) {
+            		allasubband = true;
+            	}
+            	else if ((axes.length == 2) && (subband.equalsIgnoreCase("aa"))) {
+            		allasubband = true;
+            	}
+            	else if ((axes.length == 3) && (subband.equalsIgnoreCase("aaa"))) {
+            		allasubband = true;
+            	}
+            	if ((i == start_level + level -1) || (!trim_approx) || (!allasubband)) {
+             	    double x[][][] = (double[][][]) kEntry.getValue();
+            	    ret[i-start_level].put(subband, x);
+            	}
             }
             
             // data for the next level is the approximation coeffs from this level
@@ -22570,30 +22649,9 @@ public  class PyWavelets extends AlgorithmBase {
             else if (axes.length == 3) {
             	data = coeffs.get("aaa");
             }
-            if (trim_approx) {
-                if (axes.length == 1) {
-                	coeffs.remove("a");
-;               }
-                else if (axes.length == 2) {
-                	coeffs.remove("aa");
-                }
-                else if (axes.length == 3) {
-                	coeffs.remove("aaa");
-                }
-            }
         } // for (i = start_level; i <  start_level + level; i++)
 
-        if (trim_approx) {
-        	if (axes.length == 1) {
-        	    ret[level-1].put("a",data);
-        	}
-        	else if (axes.length == 2) {
-        		ret[level-1].put("aa",data);
-        	}
-        	else if (axes.length == 3) {
-        		ret[level-1].put("aaa",data);
-        	}
-        }
+        
         HashMap<String, double[][][]> rev[] = new HashMap[level];
         for (i = 0; i < level; i++) {
         	rev[i] = ret[level-1-i];
