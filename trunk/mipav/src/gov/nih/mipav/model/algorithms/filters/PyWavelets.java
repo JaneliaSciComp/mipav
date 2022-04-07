@@ -15163,6 +15163,119 @@ public  class PyWavelets extends AlgorithmBase {
 		coeffs = swt2(x, wavelets, level, start_level, axes, trim_approx, norm);
 	}
 	
+	public void test_swtn_variance_and_energy_preservation() {
+	    // Verify that the nD SWT partitions variance among the coefficients."""
+	    // When norm is True and the wavelet is orthogonal, the sum of the
+	    // variances of the coefficients should equal the variance of the signal.
+		int i,j,k,index;
+		DiscreteWavelet wav = discrete_wavelet(WAVELET_NAME.DB, 2);
+		DiscreteWavelet wavelets[] = new DiscreteWavelet[] {wav,wav};
+		double x[][] = new double[64][64];
+		RandomNumberGen randomGen = new RandomNumberGen();
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+		        x[i][j] = randomGen.genStandardGaussian();
+			}
+		}
+		int level = 4;
+		int start_level = 0;
+		int axes[] = new int[] {0,1};
+		boolean trim_approx = true;
+		boolean norm = true;
+		HashMap<String, double[][]>[] coeffsMap = swtn(x, wavelets, level, start_level, axes, trim_approx, norm);
+		double coeffs[][][] = new double[3*coeffsMap.length+1][][];
+	
+	    for (i = 0,index = 0; i < coeffsMap.length; i++) {
+			if ((i == 0) || (!trim_approx)) {
+		        coeffs[index++] = coeffsMap[i].get("aa");
+			}
+		    coeffs[index++] = coeffsMap[i].get("da");
+		    coeffs[index++] = coeffsMap[i].get("ad");
+		    coeffs[index++] = coeffsMap[i].get("dd");
+	    }
+	    double sum;
+	    int numVar;
+		double mean;
+		double diff;
+		double variance;
+		double sumOfVariances = 0.0;
+		for (i = 0; i < coeffs.length; i++) {
+			sum = 0.0;
+			numVar = 0;
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	for (k = 0; k < coeffs[i][j].length; k++) {
+		    	     sum += coeffs[i][j][k];
+		    	     numVar++;
+		    	}
+		    }
+		    mean = sum/numVar;
+		    sum = 0.0;
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	for (k = 0; k < coeffs[i][j].length; k++) {
+		           diff = coeffs[i][j][k] - mean;	
+		           sum += diff * diff;
+		    	}
+		    }
+		    variance = sum/numVar;
+		    sumOfVariances += variance;
+		}
+		
+		sum = 0.0;
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+		        sum += x[i][j];
+			}
+		}
+		mean = sum/(64*64);
+		sum = 0.0;
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+			    diff = x[i][j] - mean;
+			    sum += diff * diff;
+			}
+		}
+		variance = sum/(64*64);
+		double ratio = Math.abs(sumOfVariances - variance)/variance;
+		if (ratio < 1.0E-7) {
+			System.out.println("sum(variances) in coefficients equal approximately variance of x within ratio = " + ratio);
+		}
+		else {
+			System.out.println("sum(variances) in coefficients does not equal approximately variance of x with a ratio = " + ratio);	
+		}
+	
+	    // also verify L2-norm energy preservation property
+		double normx = 0.0;
+		for (i = 0; i < 64; i++) {
+			for (j = 0; j < 64; j++) {
+		        normx += x[i][j]*x[i][j];	
+			}
+		}
+		normx = Math.sqrt(normx);
+		double normcoeffs = 0.0;
+		for (i = 0; i < coeffs.length; i++) {
+		    for (j = 0; j < coeffs[i].length; j++) {
+		    	for (k = 0; k < coeffs[i][j].length; k++) {
+		            normcoeffs += coeffs[i][j][k] * coeffs[i][j][k];
+		    	}
+		    }
+		}
+		normcoeffs = Math.sqrt(normcoeffs);
+		ratio = Math.abs(normx - normcoeffs)/normcoeffs;
+		if (ratio < 1.0E-7) {
+			System.out.println("normx equals approximately norm of coefficients within ratio = " + ratio);
+		}
+		else {
+			System.out.println("normx does not equal approximately norm of coefficients with a ratio = " + ratio);	
+		}
+	
+	    // non-orthogonal wavelet with norm=True raises a warning
+	    //assert_warns(UserWarning, pywt.swtn, x, 'bior2.2', level=4, norm=True)
+		wav = discrete_wavelet(WAVELET_NAME.BIOR, 22);
+		wavelets = new DiscreteWavelet[] {wav,wav};
+		coeffsMap = swtn(x, wavelets, level, start_level, axes, trim_approx, norm);
+	}
+	   
+	
 	public void test_per_axis_wavelets() {
 	    // tests separate wavelet for each axis.
 		int i,j,k;
