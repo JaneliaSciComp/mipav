@@ -159,6 +159,13 @@ public class WishartVariateGenerator {
 		        nq = nq - 2 * np + i + j - 1;
 		    } // for (j = 1; j <= i; j++)
 		} // for (i = 1; i <= np; i++)
+		
+		// Fill in lower triangle of symmetric SA
+		for (j = 0; j < np; j++) {
+			for (i = j+1; j < np; j++) {
+				SA[i][j] = SA[j][i];
+			}
+		}
 		return;
 	}
 	
