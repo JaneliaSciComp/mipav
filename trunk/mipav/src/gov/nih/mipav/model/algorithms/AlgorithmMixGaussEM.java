@@ -4,7 +4,8 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -44,9 +45,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
+	private double X[][];
+	private int z[];
+	private mixGaussOut model;
 	
 	public void runAlgorithm() {
 		
+	}
+	
+	class mixGaussOut {
+		double mu[][];
+		double Sigma[][][];
+		double w[];
+		
+		public mixGaussOut(double mu[][], double Sigma[][][], double w[]) {
+			this.mu = mu;
+			this.Sigma = Sigma;
+			this.w = w;
+		}
 	}
 	
 	//public function [X, z, model] = mixGaussRnd(d, k, n)
@@ -63,16 +79,27 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		// Written by Mo Chen (sth4nth@gmail.com).
 		double alpha0;
 		double W0[][];
-		int i,j,y,x;
-		double v0;
+		int i,j,y,x,index;
+		int v0;
 		double mu0[];
+		double mui[] = new double[d];
 		double beta0;
 		double w[];
 		double mv[];
-		int z[];
 		double mu[][];
 		double Sigma[][][];
-		double X[][];
+		
+		double Xout[][];
+		WishartVariateGenerator wvg;
+		double SA[][] = new double[d][d];
+		double SB[][] = new double[d][d];
+		double bSigma[][] = new double[d][d];
+		double gOut[] = new double[d];
+		LinearEquations2 le2 = new LinearEquations2();
+		int ipiv[] = new int[d];
+		int info[] = new int[1];
+		double work[];
+		int lwork;
 		
 		alpha0 = 1;  // hyperparameter of Dirichlet prior
 		W0 = new double[d][d];  // hyperparameter of inverse Wishart prior of covariances
@@ -93,17 +120,83 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		mu = new double[d][k];
 		Sigma = new double[d][d][k];
 		X = new double[d][n];
-		Vector<Integer> idxVec = new Vector<Integer>();
+		boolean idx[] = new boolean[z.length];
+		int idxSum;
 		for (i = 1; i <= k; i++) {
-			idxVec.clear();
+			idxSum = 0;
 		    for (j = 0; j < z.length; j++) {
 		        if (i == z[j]) {
-		            idxVec.add(j);	
+		            idx[j] = true;
+		            idxSum ++;
+		        }
+		        else {
+		        	idx[j] = false;
 		        }
 		    }
-		    //Sigma(:,:,i) = iwishrnd(W0,v0); % invpd(wishrnd(W0,v0));
+		    wvg = new WishartVariateGenerator(W0, v0, SA, SB);
+		    le2.dgetrf(d,d,SA,d,ipiv,info);
+		    boolean rankDeficient = true;
+		    if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetrf argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  return;
+		      }
+		      if (info[0] > 0) {
+		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		    	  return;
+		      }
+		      work = new double[1];
+		      lwork = -1;
+		      le2.dgetri(d,SA,d,ipiv,work,lwork,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetri argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  return;
+		      }
+		      lwork = (int)work[0];
+		      work = new double[lwork];
+		      le2.dgetri(d,SA,d,ipiv,work,lwork,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetri argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  return;
+		      }
+		      if (info[0] > 0) {
+		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		    	  return;
+		      }
+		      //Sigma(:,:,i) = iwishrnd(W0,v0); % invpd(wishrnd(W0,v0));
+		      for (y = 0; y < d; y++) {
+		    	  for (x = 0; x < d; x++) {
+		    		  Sigma[y][x][i] = SA[y][x];
+		    		  bSigma[y][x] = beta0*Sigma[y][x][i];
+		    	  }
+		      }
+		      gOut = gaussRnd(mu0, bSigma);
+		      for (y = 0; y < d; y++) {
+		    	  mu[y][i] = gOut[y];
+		      }
+		      for (y = 0; y < d; y++) {
+		    	  mui[y] = mu[y][i];
+		      }
+		      for (y = 0; y < d; y++) {
+		    	  for (x = 0; x < d; x++) {
+		    	      bSigma[y][x] = Sigma[y][x][i];  
+		    	  }
+		      }
+		      Xout = gaussRnd(mui, bSigma, idxSum);
+		      for (y = 0; y < Xout.length; y++) {
+		    	  for (x = 0, index = 0; x < Xout[0].length; x++) {
+		    		  if (idx[x]) {
+		    		      X[y][index++] = Xout[y][x];
+		    		  }
+		    	  }
+		      }
 		} // for (i = 1; i <= k; i++)
-		
+		model = new mixGaussOut(mu, Sigma, w);
+		return;
 	}
 	
 	public int[] discreteRnd(double p[], int n) {
@@ -204,6 +297,127 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
         	 var=var*Math.pow(uniform,(1.0/a));
          }
          return var;
+     }
+     
+     private double[] gaussRnd(double mu[], double Sigma[][]) {
+		 // Generate samples from a Gaussian distribution.
+		 // Input:
+		 //   mu: d x 1 mean vector
+		 //   Sigma: d x d covariance matrix
+		 //   n: number of samples
+		 // Output:
+		 //   x: d x n generated sample x~Gauss(mu,Sigma)
+		 // Written by Mo Chen (sth4nth@gmail.com).
+		 // if nargin == 2
+		 //    n = 1;
+		 // end
+    	 // Cholesky factorization
+    	 int i,j,k;
+    	 int d = Sigma.length;
+    	 double V[][] = new double[d][d];
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < d; j++) {
+    			 V[i][j] = Sigma[i][j];
+    		 }
+    	 }
+    	 RandomNumberGen randomGen = new RandomNumberGen();
+    	 GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    	 int info[] = new int[1];
+ 		 ge.dpotrf('U', Sigma[0].length, V, Sigma.length, info);
+ 		 if (info[0] < 0) {
+ 			System.err.println("In dpotrf argument " + (-info[0]) + " had an illegal value");
+ 			return null;
+ 		 }
+ 		 else if (info[0] > 0) {
+ 			System.err.println("In dpotrf the leading minor of order " + info[0] + " is not positive definite,"); 
+ 			System.err.println("and the factorization could not be completed.");
+ 			return null;
+ 		 }
+ 		 double ran[] = new double[d];
+		 for (i = 0; i < d; i++) {
+		     ran[i] = randomGen.genStandardGaussian();
+		 }
+		 double VT[][] = new double[d][d];
+		 for (j = 0; j < d; j++) {
+			 for (i = j; i < d; i++) {
+			     VT[i][j] = V[j][i];	 
+			 }
+		 }
+		 double VTran[] = new double[d];
+		 for (i = 0; i < d; i++) {
+		     for (k = 0; k < d; k++) {
+				 VTran[i] += VT[i][k] * ran[k];	 
+		     }
+		 }
+		 double x[] = new double[d];
+		 for (i = 0; i < d; i++) {
+		     x[i] = VTran[i] + mu[i];
+		 }
+		 return x;
+     }
+     
+     //function x = gaussRnd(mu, Sigma, n)
+     private double[][] gaussRnd(double mu[], double Sigma[][], int n) {
+		 // Generate samples from a Gaussian distribution.
+		 // Input:
+		 //   mu: d x 1 mean vector
+		 //   Sigma: d x d covariance matrix
+		 //   n: number of samples
+		 // Output:
+		 //   x: d x n generated sample x~Gauss(mu,Sigma)
+		 // Written by Mo Chen (sth4nth@gmail.com).
+		 // if nargin == 2
+		 //    n = 1;
+		 // end
+    	 // Cholesky factorization
+    	 int i,j,k;
+    	 int d = Sigma.length;
+    	 double V[][] = new double[d][d];
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < d; j++) {
+    			 V[i][j] = Sigma[i][j];
+    		 }
+    	 }
+    	 RandomNumberGen randomGen = new RandomNumberGen();
+    	 GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    	 int info[] = new int[1];
+ 		 ge.dpotrf('U', Sigma[0].length, V, Sigma.length, info);
+ 		 if (info[0] < 0) {
+ 			System.err.println("In dpotrf argument " + (-info[0]) + " had an illegal value");
+ 			return null;
+ 		 }
+ 		 else if (info[0] > 0) {
+ 			System.err.println("In dpotrf the leading minor of order " + info[0] + " is not positive definite,"); 
+ 			System.err.println("and the factorization could not be completed.");
+ 			return null;
+ 		 }
+ 		 double ran[][] = new double[d][n];
+		 for (i = 0; i < d; i++) {
+			 for (j = 0; j < n; j++) {
+				 ran[i][j] = randomGen.genStandardGaussian();
+			 }
+		 }
+		 double VT[][] = new double[d][d];
+		 for (j = 0; j < d; j++) {
+			 for (i = j; i < d; i++) {
+			     VT[i][j] = V[j][i];	 
+			 }
+		 }
+		 double VTran[][] = new double[d][n];
+		 for (i = 0; i < d; i++) {
+			 for (j = 0; j < n; j++) {
+				 for (k = 0; k < d; k++) {
+				     VTran[i][j] += VT[i][k] * ran[k][j];	 
+				 }
+			 }
+		 }
+		 double x[][] = new double[d][n];
+		 for (i = 0; i < d; i++) {
+			 for (j = 0; j < n; j++) {
+				 x[i][j] = VTran[i][j] + mu[i];
+			 }
+		 }
+		 return x;
      }
 	
 }
