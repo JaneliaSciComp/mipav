@@ -440,7 +440,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
      private void plotClass(double X[][], int label[]) {
 	     // Plot 2d/3d samples of different classes with different colors.
 	     // Written by Mo Chen (sth4nth@gmail.com).
-    	 int i;
+    	 int i,j,index,maxIndex;
     	 int d = X.length;
     	 int n = X[0].length;
 	     //if nargin == 1
@@ -451,15 +451,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	    	 return;
 	     }
 	
-	     int m = 7; // number of colors
-	     Color color[] = new Color[7];
-	     color[0] = Color.BLUE;
-	     color[1] = Color.RED;
-	     color[2] = Color.GREEN;
-	     color[3] = Color.MAGENTA;
-	     color[4] = Color.CYAN;
-	     color[5] = Color.YELLOW;
-	     color[6] = Color.BLACK;
 	     //c = max(label)
 	     int c = Integer.MIN_VALUE;
 	     for (i = 0; i < label.length; i++) {
@@ -471,9 +462,45 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	     
 	     switch(d) {
 	     case 2:
+	    	 float xInit[][] = new float[c][];
+		     float yInit[][] = new float[c][];
+		     maxIndex = 0;
 	    	 for (i = 1; i <= c; i++) {
-	    		 
+	    		 index = 0;
+	    	     for (j = 0; j < n; j++) {
+	    	    	 if (label[j]  == i) {
+	    	    		 index++;
+	    	    	 }
+	    	     }
+	    	     if (index > maxIndex) {
+	    	    	 maxIndex = index;
+	    	     }
+	    	 }
+	    	 for (i = 0; i < c; i++) {
+	    		 xInit[i] = new float[maxIndex];
+	    		 yInit[i] = new float[maxIndex];
+	    	 }
+	    	 for (i = 1; i <= c; i++) {
+	    	     index = 0;
+	    	     for (j = 0; j < n; j++) {
+	    	    	 if (label[j] == i) {
+	    	    	     xInit[i-1][index] = (float)X[0][j];
+	    	    	     yInit[i-1][index++] = (float)X[1][j];
+	    	    	 }
+	    	     }
+	    	     while (index < maxIndex) {
+    	    		 xInit[i-1][index] = xInit[i-1][index-1];
+    	    		 yInit[i-1][index] = yInit[i-1][index-1];
+    	    		 index++;
+    	    	 }
 	    	 } // for (i = 1; i <= c; i++)
+	    	 String title = "Classes";
+    	     String labelX = "X coordinate";
+    	     String labelY = "Y coordinate";
+    	     // Colors only for lines
+    	     ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY);
+    	     ViewJComponentGraph vcGraph = vFrameGraph.getGraph();
+    	     vcGraph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_ONLY);
 	    	 break;
 	     }
 	
