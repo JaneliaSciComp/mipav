@@ -199,7 +199,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		return;
 	}
 	
-	public int[] discreteRnd(double p[], int n) {
+	public int[] discreteRnd(double pin[], int n) {
 		// Generate samples from a discrete distribution (multinomial).
 		// Input:
 		//   p: k dimensional probability vector
@@ -217,8 +217,10 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		for (i = 0; i < n; i++) {
 			r[i] = randomGen.genUniformRandomNum(0.0,1.0);
 		}
+		double p[] = new double[pin.length];
+		p[0] = pin[0];
 		for (i = 1; i < p.length; i++) {
-			p[i] = p[i] + p[i-1];
+			p[i] = pin[i] + p[i-1];
 		}
 		double binranges[] = new double[p.length+1];
 		for (i = 1; i < binranges.length; i++) {
@@ -230,11 +232,11 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		    for (j = 0; j < binranges.length-1 && (!found); j++) {
 		        if ((r[i] >= binranges[j]) && (r[i] < binranges[j+1])) {
 		            found = true;
-		            x[i] = j+1;
+		            x[j] = x[j]+1;
 		        }
 		    }
 		    if (!found) {
-		    	x[i] = binranges.length;
+		    	x[binranges.length-1] = x[binranges.length-1] + 1;
 		    }
 		}
 	    return x;
