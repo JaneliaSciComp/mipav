@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.*;
 
+import java.awt.Color;
 import java.io.*;
 
 import java.util.*;
@@ -46,11 +47,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
 	private double X[][];
-	private int z[];
+	private int label[];
 	private mixGaussOut model;
+	
+	public AlgorithmMixGaussEM() {
+		
+	}
 	
 	public void runAlgorithm() {
 		
+	}
+	
+	public void mixGaussEm_demo() {
+		int d = 2;
+		int k = 3;
+		int n = 500;
+		mixGaussRnd(d,k,n);
+		plotClass(X,label);	
 	}
 	
 	class mixGaussOut {
@@ -74,7 +87,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		//   n: number of data
 		// Output:
 		//   X: d x n data matrix
-		//   z: 1 x n response variable
+		//   label: 1 x n response variable
 		//   model: model structure
 		// Written by Mo Chen (sth4nth@gmail.com).
 		double alpha0;
@@ -115,17 +128,17 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			mv[i] = 1.0/(double)k;
 		}
 		w = dirichletRnd(alpha0,mv);
-		z = discreteRnd(w,n);
+		label = discreteRnd(w,n);
 		
 		mu = new double[d][k];
 		Sigma = new double[d][d][k];
 		X = new double[d][n];
-		boolean idx[] = new boolean[z.length];
+		boolean idx[] = new boolean[label.length];
 		int idxSum;
 		for (i = 1; i <= k; i++) {
 			idxSum = 0;
-		    for (j = 0; j < z.length; j++) {
-		        if (i == z[j]) {
+		    for (j = 0; j < label.length; j++) {
+		        if (i == label[j]) {
 		            idx[j] = true;
 		            idxSum ++;
 		        }
@@ -420,6 +433,72 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 }
 		 }
 		 return x;
+     }
+     
+     private void plotClass(double X[][], int label[]) {
+	     // Plot 2d/3d samples of different classes with different colors.
+	     // Written by Mo Chen (sth4nth@gmail.com).
+    	 int i;
+    	 int d = X.length;
+    	 int n = X[0].length;
+	     //if nargin == 1
+	     //    label = ones(n,1);
+	     //end
+	     if (n != label.length) {
+	    	 System.err.println("In plotClass n = " + n + ", but label.length = " + label.length);
+	    	 return;
+	     }
+	
+	     int m = 7; // number of colors
+	     Color color[] = new Color[7];
+	     color[0] = Color.BLUE;
+	     color[1] = Color.RED;
+	     color[2] = Color.GREEN;
+	     color[3] = Color.MAGENTA;
+	     color[4] = Color.CYAN;
+	     color[5] = Color.YELLOW;
+	     color[6] = Color.BLACK;
+	     //c = max(label)
+	     int c = Integer.MIN_VALUE;
+	     for (i = 0; i < label.length; i++) {
+	    	 if (label[i] > c) {
+	    		 c = label[i];
+	    	 }
+	     }
+	     System.out.println("max label = " + c);
+	     
+	     switch(d) {
+	     case 2:
+	    	 for (i = 1; i <= c; i++) {
+	    		 
+	    	 } // for (i = 1; i <= c; i++)
+	    	 break;
+	     }
+	
+	     /*figure(gcf);
+	     clf;
+	     hold on;
+	     switch d
+	         case 2
+	             view(2);
+	             for i = 1:c
+	                 idc = label==i;
+	     %             plot(X(1,label==i),X(2,label==i),['.' color(i)],'MarkerSize',15);
+	                 scatter(X(1,idc),X(2,idc),36,color(mod(i-1,m)+1));
+	             end
+	         case 3
+	             view(3);
+	             for i = 1:c
+	                 idc = label==i;
+	     %             plot3(X(1,idc),X(2,idci),X(3,idc),['.' idc],'MarkerSize',15);
+	                 scatter3(X(1,idc),X(2,idc),X(3,idc),36,color(mod(i-1,m)+1));
+	             end
+	         otherwise
+	             error('ERROR: only support data of 2D or 3D.');
+	     end
+	     axis equal
+	     grid on
+	     hold off*/
      }
 	
 }
