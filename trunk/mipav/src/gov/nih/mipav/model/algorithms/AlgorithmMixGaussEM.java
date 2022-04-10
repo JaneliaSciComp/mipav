@@ -147,6 +147,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		        }
 		    }
 		    wvg = new WishartVariateGenerator(W0, v0, SA, SB);
+		    wvg.run();
 		    le2.dgetrf(d,d,SA,d,ipiv,info);
 		    boolean rankDeficient = true;
 		    if (info[0] < 0) {
@@ -183,20 +184,20 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		      //Sigma(:,:,i) = iwishrnd(W0,v0); % invpd(wishrnd(W0,v0));
 		      for (y = 0; y < d; y++) {
 		    	  for (x = 0; x < d; x++) {
-		    		  Sigma[y][x][i] = SA[y][x];
-		    		  bSigma[y][x] = beta0*Sigma[y][x][i];
+		    		  Sigma[y][x][i-1] = SA[y][x];
+		    		  bSigma[y][x] = beta0*Sigma[y][x][i-1];
 		    	  }
 		      }
 		      gOut = gaussRnd(mu0, bSigma);
 		      for (y = 0; y < d; y++) {
-		    	  mu[y][i] = gOut[y];
+		    	  mu[y][i-1] = gOut[y];
 		      }
 		      for (y = 0; y < d; y++) {
-		    	  mui[y] = mu[y][i];
+		    	  mui[y] = mu[y][i-1];
 		      }
 		      for (y = 0; y < d; y++) {
 		    	  for (x = 0; x < d; x++) {
-		    	      bSigma[y][x] = Sigma[y][x][i];  
+		    	      bSigma[y][x] = Sigma[y][x][i-1];  
 		    	  }
 		      }
 		      Xout = gaussRnd(mui, bSigma, idxSum);
@@ -239,17 +240,18 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		for (i = 1; i < binranges.length; i++) {
 			binranges[i] = p[i-1]/p[p.length-1];
 		}
-		int x[] = new int[binranges.length];
+		// bin indices
+		int x[] = new int[n];
 		for (i = 0; i < n; i++) {
 			found = false;
 		    for (j = 0; j < binranges.length-1 && (!found); j++) {
 		        if ((r[i] >= binranges[j]) && (r[i] < binranges[j+1])) {
 		            found = true;
-		            x[j] = x[j]+1;
+		            x[i] = j+1;
 		        }
 		    }
 		    if (!found) {
-		    	x[binranges.length-1] = x[binranges.length-1] + 1;
+		    	x[i] = binranges.length;
 		    }
 		}
 	    return x;
