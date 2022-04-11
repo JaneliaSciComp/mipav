@@ -48,7 +48,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 public class AlgorithmMixGaussEM extends AlgorithmBase {
 	private double X[][];
 	private int label[];
-	private mixGaussOut model;
+	private model mixGaussOut;
+	private double llh[];
+	private int iter;
 	
 	public AlgorithmMixGaussEM() {
 		
@@ -66,12 +68,12 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		plotClass(X,label);	
 	}
 	
-	class mixGaussOut {
+	class model {
 		double mu[][];
 		double Sigma[][][];
 		double w[];
 		
-		public mixGaussOut(double mu[][], double Sigma[][][], double w[]) {
+		public model(double mu[][], double Sigma[][][], double w[]) {
 			this.mu = mu;
 			this.Sigma = Sigma;
 			this.w = w;
@@ -209,7 +211,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		    	  }
 		      }
 		} // for (i = 1; i <= k; i++)
-		model = new mixGaussOut(mu, Sigma, w);
+		mixGaussOut = new model(mu, Sigma, w);
 		return;
 	}
 	
@@ -529,5 +531,328 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	     grid on
 	     hold off*/
      }
-	
+     
+     //function [label, model, llh] = mixGaussEm(X, init)
+     private void mixGaussEM(double X[][], int init) {
+		 // Perform EM algorithm for fitting the Gaussian mixture model.
+		 // Input: 
+		 //   X: d x n data matrix
+		 //   init: k (1 x 1) number of components or label (1 x n, 1<=label(i)<=k) or model structure
+		 // Output:
+		 //   label: 1 x n cluster label
+		 //   model: trained model structure
+		 //   llh: loglikelihood
+		 // Written by Mo Chen (sth4nth@gmail.com).
+		 // init
+    	 int i,j,index;
+		 System.out.println("EM for Gaussian mixture: running ...");
+		 double tol = 1e-6;
+		 int maxiter = 500;
+		 double llh[] = new double[maxiter];
+		 for (i = 0; i < maxiter; i++) {
+			 llh[i] = Double.NEGATIVE_INFINITY;
+		 }
+		 iter = 0;
+		 double R[][] = initialization(X,init);
+		 int n = R.length;
+		 int k = R[0].length;
+		 double maxVal;
+		 int maxIndex;
+		 for (iter = 1; iter < maxiter; iter++) {
+			 for (i = 0; i < n; i++) {
+				 maxVal = -Double.MAX_VALUE;
+				 maxIndex = -1;
+				 for (j = 0; j < k; j++) {
+					 if (R[i][j] > maxVal) {
+						 maxVal = R[i][j];
+						 maxIndex = j+1;
+					 }
+				 }
+				 label[i] = maxIndex;
+			 }
+		     boolean haveK[] = new boolean[k];
+		     for (i = 0; i < n; i++) {
+		    	 haveK[label[i]-1] = true;
+		     }
+		     int numLabel = 0;
+		     int newLabel[] = new int[k];
+		     for (i = 0, index = 0; i < k; i++) {
+		    	 if (haveK[i]) {
+		    		 newLabel[i] = index++;
+		    		 numLabel++;
+		    	 }
+		     }
+		     if (numLabel < k) {
+		    	 // Remove empty clusters
+		         double tempR[][] = new double[n][numLabel];
+		         for (i = 0; i < n; i++) {
+		        	 for (j = 0; j < k; j++) {
+		        		 if (haveK[j]) {
+		        			 tempR[i][newLabel[j]] = R[i][j];
+		        		 }
+		        	 }
+		         }
+		         k = numLabel;
+		         R = new double[n][k];
+		         for (i = 0; i < n; i++) {
+		        	 for (j = 0; j < k; j++) {
+		        		 R[i][j] = tempR[i][j];
+		        	 }
+		         }
+		         tempR = null;
+		     } // if (numLabel < k)
+		     
+		     model mod = maximization(X,R);
+		     /*[R, llh(iter)] = expectation(X,model);
+		     if abs(llh(iter)-llh(iter-1)) < tol*abs(llh(iter)); break; end;*/
+		 } // for (iter = 1; iter < maxiter; iter++)
+		 double llhtemp[] = new double[maxiter-1];
+		 for (i = 1; i < maxiter; i++) {
+			 llhtemp[i-1] = llh[i];
+		 }
+		 llh = new double[maxiter-1];
+		 for (i = 0; i < maxiter-1; i++) {
+			 llh[i] = llhtemp[i];
+		 }
+		 llhtemp = null;
+     }
+     
+     private double[][] initialization(double X[][], int init) {
+    	 // Init with random init k
+    	 int i;
+    	 int n = X[0].length;
+    	 int k = init;
+    	 RandomNumberGen randomGen = new RandomNumberGen();
+ 		 double r[] = new double[n];
+ 		 for (i = 0; i < n; i++) {
+ 			r[i] = randomGen.genUniformRandomNum(0.0,1.0);
+ 		 }
+ 		 int label[] = new int[n];
+ 		 for (i = 0; i < n; i++) {
+ 			label[i] = (int)Math.ceil(k*r[i]);
+ 			if (label[i] == 0) {
+ 				label[i] = 1;
+ 			}
+ 		 }
+ 		 double R[][] = new double[n][k];
+ 		 for (i = 0; i < n; i++) {
+ 			R[i][label[i]-1] = 1;
+ 		 }
+ 		 return R;
+     }
+     
+     private double[][] initialization(double X[][], int init[]) {
+    	 // Init with labels
+    	 int i;
+    	 int n = X[0].length;
+    	 int label[] = init;
+    	 int k = 0;
+ 		 for (i = 0; i < n; i++) {
+	 		 if (label[i] > k) {
+	 			 k = label[i];
+	 		 }
+ 		 }
+ 		 double R[][] = new double[n][k];
+ 		 for (i = 0; i < n; i++) {
+ 			R[i][label[i]-1] = 1;
+ 		 }
+ 		 return R;
+     }
+     
+     private double[][] initialization(double X[][], model init) {
+    	 // init with a model
+    	 double R[][] = expectation(X,init);
+    	 return R;
+     }
+     
+     //function [R, llh] = expectation(X, model)
+     private double[][] expectation(double X[][], model mod) {
+    	 int i,j,m;
+		 double mu[][] = mod.mu;
+		 double Sigma[][][] = mod.Sigma;
+		 double w[] = mod.w;
+
+		 int n = X[0].length;
+		 int k = mu[0].length;
+		 double R[][] = new double[n][k];
+		 int d = Sigma.length;
+		 double mui[] = new double[d];
+		 double Sigmai[][] = new double[d][d];
+		 double out[];
+		 for (i = 0; i < k; i++) {
+			 for (j = 0; j < d; j++) {
+				 mui[j] = mu[j][i];
+				 for (m = 0; m < d; m++) {
+					 Sigmai[j][m] = Sigma[j][m][i];
+				 }
+			 }
+		     out = loggausspdf(X,mui, Sigmai);
+		     for (j = 0; j < n; j++) {
+		    	 R[j][i] = out[j];
+		     }
+		 }
+		 for (j = 0; j < k; j++) {
+			 for (i = 0; i < n; i++) {
+				 R[i][k] = R[i][k] + Math.log(w[k]);
+			 }
+		 }
+		 // Form a column vector with the maximum number in each row
+		 double maxVal;
+		 double T[] = new double[n];
+		 double sumT = 0.0;
+		 for (i = 0; i < n; i++) {
+			 maxVal = -Double.MAX_VALUE;
+			 for (j = 0; j < k; j++) {
+				 if (R[i][j] > maxVal) {
+					 maxVal = R[i][j];
+				 }
+			 }
+			 for (j = 0; j < k; j++) {
+				 R[i][j] = R[i][j] - maxVal;
+				 T[i] += Math.exp(R[i][j]);
+			 }
+			 T[i] = Math.log(T[i]) + maxVal;
+			 sumT += T[i];
+		 }
+		 if (iter > 0) {
+		     llh[iter] = sumT/n; // loglikelihood
+		 }
+		 for (j = 0; j < k; j++) {
+			 for (i = 0; i < n; i++) {
+				 R[i][j] = R[i][j] - T[i];
+				 R[i][j] = Math.exp(R[i][j]);
+			 }
+		 }
+		 return R;
+     }
+
+     private double[] loggausspdf(double Xin[][], double mu[], double Sigma[][]) {
+    	 int i,j;
+		 int d = X.length;
+		 int n = X[0].length;
+		 double X[][] = new double[d][n];
+		 for (i = 0; i < d; i++) {
+			 for (j = 0; j < X[0].length; j++) {
+				 X[i][j] = Xin[i][j] - mu[i];
+			 }
+         }
+		 // dpotrf computes the Cholesky factorization of a real symmetric
+		 // positive definite matrix A
+		 // D is an upper triangular array, such that sigma = DPRIME * D
+		 // On output from dpotrf the leading n-by-n upper triangular part of D
+		 // contains the upper triangular part of the matrix D.
+		 GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+		 int info[] = new int[1];
+		 ge.dpotrf('U', d, Sigma, Sigma.length, info);
+		 if (info[0] < 0) {
+		     System.err.println("In loggausspdf dpotrf argument " + (-info[0]) + " had an illegal value");
+			 return null;
+		 }
+		 else if (info[0] > 0) {
+			 System.err.println("In loggausspdf dpotrf the leading minor of order " + info[0] + " is not positive definite,"); 
+			 System.err.println("and the factorization could not be completed.");
+			 return null;
+		 }
+		 double U[][] = new double[d][d];
+		 for (j = 0; j < d; j++) {
+			 for (i = 0; i <= j; i++) {
+				 U[i][j] = Sigma[i][j];
+			 }
+		 }
+		 double UT[][] = new double[d][d];
+		 for (j = 0; j < d; j++) {
+			 for (i = j; i < d; i++) {
+				 UT[i][j] = Sigma[j][i];
+			 }
+		 }
+		 LinearEquations2 le2 = new LinearEquations2();
+		 int ipiv[] = new int[d];
+		 le2.dgesv(d,n,UT,d,ipiv,X,d,info);
+		 if (info[0] < 0) {
+		     System.err.println("In loggausspdf dgesv argument " + (-info[0]) + " had an illegal value");
+			 return null;
+		 }
+		 else if (info[0] > 0) {
+			 System.err.println("In loggausspdf dgesv U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0"); 
+			 System.err.println("The factorization has been completed, but the factor U is exactly"); 
+	         System.err.println("singular, so the solution could not be computed");
+			 return null;
+		 }
+		 // X is d by n
+		 // q is quadratic term (M distance)
+		 double q[] = new double[n];
+		 for (j = 0; j < n; j++) {
+			 for (i = 0; i < d; i++) {
+			     q[j] += X[i][j] * X[i][j];	 
+			 }
+		 }
+		 double sum = 0.0;
+		 for (i = 0; i < d; i++) {
+			 sum += Math.log(U[i][i]);
+		 }
+		 // normalization constant c
+		 double c = d*Math.log(2*Math.PI)+2*sum;  
+		 double y[] = new double[n];
+		 for (i = 0; i < n; i++) {
+			 y[i] = -(c + q[i])/2.0;
+		 }
+		 return y;
+     }
+     
+     private model maximization(double X[][], double R[][]) {
+    	 int i,j,m;
+		 int d = X.length;
+		 int n = X[0].length;
+		 int k = R[0].length;
+		 double nk[] = new double[k];
+		 for (j = 0; j < k; j++) {
+			 for (i = 0; i < R.length; i++) {
+				 nk[j] += R[i][j];
+			 }
+		 }
+		 double w[] = new double[k];
+		 for (i = 0; i < k; i++) {
+			 w[i] = nk[i]/n;
+		 }
+		 double XR[][] = new double[d][k];
+		 for (i = 0; i < d; i++) {
+			 for (j = 0; j < k; j++) {
+				 for (m = 0; m < n; m++) {
+					 XR[i][j] += (X[i][m] * R[m][j]);
+				 }
+			 }
+		 }
+		 double mu[][] = new double[d][k];
+		 for (i = 0; i < d; i++) {
+			 for (j = 0; j < k; j++) {
+				 mu[i][j] = XR[i][j] * (1.0/nk[j]);
+			 }
+		 }
+
+		 double Sigma[][][] = new double[d][d][k];
+		 double r[][] = new double[n][k];
+		 for (i = 0; i < n; i++) {
+			 for (j = 0; j < k; j++) {
+				 r[i][j] = Math.sqrt(R[i][j]);
+			 }
+		 }
+		 double Xo[][] = new double[d][n];
+		 /*for (i = 0; i < k; i++) {
+			 for (j = 0; j < d; j++) {
+				 for (m = 0; m < n; m++) {
+					 Xo[j][m] = X[j][m] - mu[j][i];
+				 }
+			 }
+		     Xo = bsxfun(@minus,X,mu(:,i));
+		     Xo = bsxfun(@times,Xo,r(:,i)');
+		     Sigma(:,:,i) = Xo*Xo'/nk(i)+eye(d)*(1e-6);
+		 } // for (i = 0; i < k; i++)
+
+		 model.mu = mu;
+		 model.Sigma = Sigma;
+		 model.w = w;*/
+		 return null;
+     }
+
+     
 }
