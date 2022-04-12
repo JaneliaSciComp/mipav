@@ -61,11 +61,29 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	}
 	
 	public void mixGaussEm_demo() {
+		int i,j;
 		int d = 2;
 		int k = 3;
 		int n = 500;
 		mixGaussRnd(d,k,n);
-		plotClass(X,label);	
+		plotClass(X,label,"Initial Classes");
+		
+		int m = n/2;
+		// X is d by n
+		double X1[][] = new double[d][m];
+		double X2[][] = new double[d][n-m];
+		for (i = 0; i < d; i++) {
+			for (j = 0; j < m; j++) {
+				X1[i][j] = X[i][j];
+			}
+			for (j = m; j < n; j++) {
+				X2[i][j-m] = X[i][j];
+			}
+		}
+		// train
+		mixGaussEm(X1,k);
+		plot(llh);
+		plotClass(X1,label,"Trained Classes");
 	}
 	
 	class model {
@@ -439,7 +457,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 return x;
      }
      
-     private void plotClass(double X[][], int label[]) {
+     private void plotClass(double X[][], int label[], String title) {
 	     // Plot 2d/3d samples of different classes with different colors.
 	     // Written by Mo Chen (sth4nth@gmail.com).
     	 int i,j,index,maxIndex;
@@ -496,7 +514,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     	    		 index++;
     	    	 }
 	    	 } // for (i = 1; i <= c; i++)
-	    	 String title = "Classes";
     	     String labelX = "X coordinate";
     	     String labelY = "Y coordinate";
     	     // Colors only for lines
@@ -533,7 +550,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
      }
      
      //function [label, model, llh] = mixGaussEm(X, init)
-     private void mixGaussEM(double X[][], int init) {
+     private void mixGaussEm(double X[][], int init) {
 		 // Perform EM algorithm for fitting the Gaussian mixture model.
 		 // Input: 
 		 //   X: d x n data matrix
@@ -548,7 +565,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 System.out.println("EM for Gaussian mixture: running ...");
 		 double tol = 1e-6;
 		 int maxiter = 500;
-		 double llh[] = new double[maxiter];
+		 llh = new double[maxiter];
 		 for (i = 0; i < maxiter; i++) {
 			 llh[i] = Double.NEGATIVE_INFINITY;
 		 }
@@ -558,6 +575,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 int k = R[0].length;
 		 double maxVal;
 		 int maxIndex;
+		 label = new int[n];
 		 for (iter = 1; iter < maxiter; iter++) {
 			 for (i = 0; i < n; i++) {
 				 maxVal = -Double.MAX_VALUE;
@@ -572,7 +590,9 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 }
 		     boolean haveK[] = new boolean[k];
 		     for (i = 0; i < n; i++) {
-		    	 haveK[label[i]-1] = true;
+		    	 if (label[i] >= 1) {
+		    	     haveK[label[i]-1] = true;
+		    	 }
 		     }
 		     int numLabel = 0;
 		     int newLabel[] = new int[k];
@@ -583,6 +603,8 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		    	 }
 		     }
 		     if (numLabel < k) {
+		    	 System.out.println("iter = " + iter);
+		    	 System.out.println("numLabel = " + numLabel);
 		    	 // Remove empty clusters
 		         double tempR[][] = new double[n][numLabel];
 		         for (i = 0; i < n; i++) {
@@ -608,12 +630,12 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		    	 break;
 		     }
 		 } // for (iter = 1; iter < maxiter; iter++)
-		 double llhtemp[] = new double[maxiter-1];
-		 for (i = 1; i < maxiter; i++) {
+		 double llhtemp[] = new double[iter];
+		 for (i = 1; i <= iter; i++) {
 			 llhtemp[i-1] = llh[i];
 		 }
-		 llh = new double[maxiter-1];
-		 for (i = 0; i < maxiter-1; i++) {
+		 llh = new double[iter];
+		 for (i = 0; i < iter; i++) {
 			 llh[i] = llhtemp[i];
 		 }
 		 llhtemp = null;
@@ -677,6 +699,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 int n = X[0].length;
 		 int k = mu[0].length;
 		 double R[][] = new double[n][k];
+		 double Rbase[][] = new double[n][k];
 		 int d = Sigma.length;
 		 double mui[] = new double[d];
 		 double Sigmai[][] = new double[d][d];
@@ -695,7 +718,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 }
 		 for (j = 0; j < k; j++) {
 			 for (i = 0; i < n; i++) {
-				 R[i][k] = R[i][k] + Math.log(w[k]);
+				 R[i][j] = R[i][j] + Math.log(w[j]);
 			 }
 		 }
 		 // Form a column vector with the maximum number in each row
@@ -710,8 +733,8 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 				 }
 			 }
 			 for (j = 0; j < k; j++) {
-				 R[i][j] = R[i][j] - maxVal;
-				 T[i] += Math.exp(R[i][j]);
+				 Rbase[i][j] = R[i][j] - maxVal;
+				 T[i] += Math.exp(Rbase[i][j]);
 			 }
 			 T[i] = Math.log(T[i]) + maxVal;
 			 sumT += T[i];
@@ -730,11 +753,11 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 
      private double[] loggausspdf(double Xin[][], double mu[], double Sigma[][]) {
     	 int i,j;
-		 int d = X.length;
-		 int n = X[0].length;
+		 int d = Xin.length;
+		 int n = Xin[0].length;
 		 double X[][] = new double[d][n];
 		 for (i = 0; i < d; i++) {
-			 for (j = 0; j < X[0].length; j++) {
+			 for (j = 0; j < n; j++) {
 				 X[i][j] = Xin[i][j] - mu[i];
 			 }
          }
@@ -756,15 +779,11 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 return null;
 		 }
 		 double U[][] = new double[d][d];
+		 double UT[][] = new double[d][d];
 		 for (j = 0; j < d; j++) {
 			 for (i = 0; i <= j; i++) {
 				 U[i][j] = Sigma[i][j];
-			 }
-		 }
-		 double UT[][] = new double[d][d];
-		 for (j = 0; j < d; j++) {
-			 for (i = j; i < d; i++) {
-				 UT[i][j] = Sigma[j][i];
+				 UT[j][i] = Sigma[i][j];
 			 }
 		 }
 		 LinearEquations2 le2 = new LinearEquations2();
@@ -802,7 +821,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
      }
      
      private model maximization(double X[][], double R[][]) {
-    	 int i,j,m;
+    	 int i,j,m,p;
 		 int d = X.length;
 		 int n = X[0].length;
 		 int k = R[0].length;
@@ -832,25 +851,29 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 }
 
 		 double Sigma[][][] = new double[d][d][k];
-		 double r[][] = new double[n][k];
+		 double rT[][] = new double[k][n];
 		 for (i = 0; i < n; i++) {
 			 for (j = 0; j < k; j++) {
-				 r[i][j] = Math.sqrt(R[i][j]);
+				 rT[j][i] = Math.sqrt(R[i][j]);
 			 }
 		 }
 		 double Xo[][] = new double[d][n];
-		 double Xod[] = new double[d];
+		 double XoT[][] = new double[n][d];
 		 double XoXo[][] = new double[d][d];
 		 for (i = 0; i < k; i++) {
 			 for (j = 0; j < d; j++) {
 				 for (m = 0; m < n; m++) {
 					 Xo[j][m] = X[j][m] - mu[j][i];
-					 Xod[j] += Xo[j][m] * r[m][i];
+					 Xo[j][m] = Xo[j][m] * rT[i][m];
+					 XoT[m][j] = Xo[j][m];
 				 }
 			 }
 			 for (j = 0; j < d; j++) {
 				 for (m = 0; m < d; m++) {
-					 XoXo[j][m] = Xod[j]*Xod[m];
+					 XoXo[j][m] = 0.0;
+					 for (p = 0; p < n; p++) {
+					     XoXo[j][m] += Xo[j][p] * XoT[p][m]; 
+					 }
 				 }
 			 }
 			 for (j = 0; j < d; j++) {
@@ -867,6 +890,22 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 
 		 model mod = new model(mu, Sigma, w);
 		 return mod;
+     }
+     
+     private void plot(double llh[]) {
+    	 int i;
+	     float xInit[] = new float[llh.length];
+	     for (i = 0; i < llh.length; i++) {
+	    	 xInit[i] = i+1;
+	     }
+	     float yInit[] = new float[llh.length];
+	     for (i = 0; i < llh.length; i++) {
+	    	 yInit[i] = (float)llh[i];
+	     }
+	     String title = "llh";
+	     String labelX = "Iteration";
+	     String labelY = "Log likelihood";
+	     ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY);	 
      }
 
      
