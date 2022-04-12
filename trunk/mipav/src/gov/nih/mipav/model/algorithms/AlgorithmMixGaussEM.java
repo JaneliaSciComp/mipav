@@ -603,8 +603,10 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		     } // if (numLabel < k)
 		     
 		     model mod = maximization(X,R);
-		     /*[R, llh(iter)] = expectation(X,model);
-		     if abs(llh(iter)-llh(iter-1)) < tol*abs(llh(iter)); break; end;*/
+		     R = expectation(X,mod);
+		     if (Math.abs(llh[iter]-llh[iter-1]) < tol*Math.abs(llh[iter])) {
+		    	 break;
+		     }
 		 } // for (iter = 1; iter < maxiter; iter++)
 		 double llhtemp[] = new double[maxiter-1];
 		 for (i = 1; i < maxiter; i++) {
@@ -837,21 +839,34 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 }
 		 }
 		 double Xo[][] = new double[d][n];
-		 /*for (i = 0; i < k; i++) {
+		 double Xod[] = new double[d];
+		 double XoXo[][] = new double[d][d];
+		 for (i = 0; i < k; i++) {
 			 for (j = 0; j < d; j++) {
 				 for (m = 0; m < n; m++) {
 					 Xo[j][m] = X[j][m] - mu[j][i];
+					 Xod[j] += Xo[j][m] * r[m][i];
 				 }
 			 }
-		     Xo = bsxfun(@minus,X,mu(:,i));
-		     Xo = bsxfun(@times,Xo,r(:,i)');
-		     Sigma(:,:,i) = Xo*Xo'/nk(i)+eye(d)*(1e-6);
+			 for (j = 0; j < d; j++) {
+				 for (m = 0; m < d; m++) {
+					 XoXo[j][m] = Xod[j]*Xod[m];
+				 }
+			 }
+			 for (j = 0; j < d; j++) {
+				 for (m = 0; m < d; m++) {
+					 if (j == m) {
+						 Sigma[j][m][i] = XoXo[j][m]/nk[i] + 1.0E-6;
+					 }
+					 else {
+						 Sigma[j][m][i] = XoXo[j][m]/nk[i];
+					 }
+				 }
+			 }
 		 } // for (i = 0; i < k; i++)
-
-		 model.mu = mu;
-		 model.Sigma = Sigma;
-		 model.w = w;*/
-		 return null;
+		 
+		 model mod = new model(mu, Sigma, w);
+		 return mod;
      }
 
      
