@@ -851,10 +851,10 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 }
 
 		 double Sigma[][][] = new double[d][d][k];
-		 double rT[][] = new double[k][n];
+		 double r[][] = new double[n][k];
 		 for (i = 0; i < n; i++) {
 			 for (j = 0; j < k; j++) {
-				 rT[j][i] = Math.sqrt(R[i][j]);
+				 r[i][j] = Math.sqrt(R[i][j]);
 			 }
 		 }
 		 double Xo[][] = new double[d][n];
@@ -864,7 +864,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 for (j = 0; j < d; j++) {
 				 for (m = 0; m < n; m++) {
 					 Xo[j][m] = X[j][m] - mu[j][i];
-					 Xo[j][m] = Xo[j][m] * rT[i][m];
+					 Xo[j][m] = Xo[j][m] * r[m][i];
 					 XoT[m][j] = Xo[j][m];
 				 }
 			 }
