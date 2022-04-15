@@ -59,6 +59,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	// n - use n clusters in mixture model with n < init_number_of_subclasses
 	private int number_of_clusters;
 	private final int SIGNATURE_TYPE_MIXED = 1;
+	private double COVAR_DYNAMIC_RANGE = 1E5;
+	private final int CLUSTER_FULL = 1; /* Use full covariance matrix in clustering */
+	private final int CLUSTER_DIAG = 0; /* Use diagonal covariance matrix in clustering */
 	
 	public AlgorithmGaussianMixtureModelEM() {
 		
@@ -80,8 +83,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	
 	public void runAlgorithm() {
 		SigSet S;
-		int i,k;
-		ClassSig Sig;
+		int i,j,k;
+		ClassSig Sig = null;
 		int nclasses;
 		int vector_dimension;
 		File info_file;
@@ -90,8 +93,12 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		String tmpStr;
 		int nextIndex;
 		int index;
-		String classKPathName;
+		String classKName;
 		int num_of_samples;
+		File data_file;
+		RandomAccessFile raDataFile;
+		double Rmin;
+		int max_num[] = new int[1];
 		if (number_of_clusters <0) {
 			MipavUtil.displayError("number_of_clusters < 0");
 			setCompleted(false);
@@ -168,13 +175,112 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			}
 	    	
 	    	nextIndex = str.indexOf(" ", 0);
-	    	classKPathName = str.substring(0, nextIndex).trim();
+	    	classKName = str.substring(0, nextIndex).trim();
 	    	index = nextIndex + 1;
 	    	tmpStr = str.substring(index, str.length()).trim();
 	    	num_of_samples = Integer.valueOf(tmpStr).intValue();
 	    	
 	    	Sig = S.cSig.get(k);
+	    	
+	    	I_AllocClassData (S, Sig, num_of_samples);
+	    	
+	    	/* Read Data */
+	    	data_file = new File(input_file_directory + File.separator + classKName);
+			
+			try {
+			    raDataFile = new RandomAccessFile(data_file, "r");
+			}
+			catch (IOException e) {
+				MipavUtil.displayError("IOException " + e + "raDataFile = new RandomAccessFile(data_file, \"r\")");
+				setCompleted(false);
+				return;
+			}
+			
+			try {
+			    raDataFile.seek(0);
+			}
+			catch (IOException e) {
+				MipavUtil.displayError("IOException " + e + "raDataFile.seek(0)");
+				setCompleted(false);
+				return;
+			}
+			
+			for(i=0; i<Sig.cData.npixels; i++) {
+				try {
+		    	    str = raDataFile.readLine().trim();
+		    	    index = 0;
+		    	}
+		    	catch (IOException e) {
+					MipavUtil.displayError("IOException " + e + "String str = raDataFile.readLine().trim()");
+					setCompleted(false);
+					return;
+				}
+		        for(j=0; j<vector_dimension; j++) {
+		        	nextIndex = str.indexOf(" ", index);
+
+	                if (nextIndex != -1) {
+	                    tmpStr = str.substring(index, nextIndex).trim();
+	                    index = nextIndex + 1;
+	                } else { // spaces trimmed from end
+	                    tmpStr = str.substring(index, str.length()).trim();
+	                    index = nextIndex;
+	                }
+	                Sig.cData.x[i][j] = Double.valueOf(tmpStr).doubleValue();
+		        }
+		        
+		      }
+		      try {
+		    	  raDataFile.close();
+		      }
+		      catch (IOException e) {
+					MipavUtil.displayError("IOException " + e + "raDataFile.close()");
+					setCompleted(false);
+					return;
+			  }
+		      
+		      /* Set unity weights and compute SummedWeights */
+		      Sig.cData.SummedWeights = 0.0;
+		      for(i=0; i<Sig.cData.npixels; i++) {
+		        Sig.cData.w[i] = 1.0;
+		        Sig.cData.SummedWeights += Sig.cData.w[i];
+		      }
 	    } // for(k=0; k<nclasses; k++)
+	    
+	    try {
+	    	  raFile.close();
+	      }
+	      catch (IOException e) {
+				MipavUtil.displayError("IOException " + e + "raFile.close()");
+				setCompleted(false);
+				return;
+		  }
+	    
+	    /* Compute the average variance over all classes */
+	    Rmin = 0;
+	    for(k=0; k<nclasses; k++) {
+	      Sig = S.cSig.get(k);
+	      Rmin += AverageVariance(Sig, vector_dimension);
+	    }
+	    Rmin = Rmin/(COVAR_DYNAMIC_RANGE*nclasses);
+	    
+	    /* Perform clustering for each class */
+	    for(k=0; k<nclasses; k++) {
+
+	      Sig = S.cSig.get(k);
+	      
+	      if(clusterMessageVerboseLevel >= 1) {
+	          System.out.println("Start clustering class " + k + "\n");
+	      }
+	      
+	    } // for(k=0; k<nclasses; k++)
+
+	    if (!full) {
+	    	/* assume covariance matrices to be diagonal */
+	    	subcluster(S,k,number_of_clusters,CLUSTER_DIAG,Rmin,max_num);
+	    }
+	    else {
+	    	/* no assumption for covariance matrices */	
+	    }
 	}
 	
 	/* SigSet (Signature Set) data stucture used throughout package.         */
@@ -309,6 +415,198 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	  Sp.cnst = 0;
 	  C.sSig.add(Sp);
 	  return Sp;
+	}
+	
+	private ClassData I_AllocClassData(SigSet S, ClassSig C, int npixels)
+	{
+
+	  ClassData Data = C.cData;
+	  Data.npixels = npixels;
+	  Data.x = new double[npixels][S.nbands];
+	  Data.p = new double[npixels][C.nsubclasses];
+	  Data.w = new double[npixels];
+	  return Data;
+	}
+	
+	private double AverageVariance(ClassSig Sig, int nbands)
+	{
+	     int     i,b1;
+	     double  mean[];
+	     double R[][];
+	     double Rmin;
+
+	     /* Compute the mean of variance for each band */
+	     mean = new double[nbands];
+	     R = new double[nbands][nbands];
+	     
+	     for(b1=0; b1<nbands; b1++) {
+	         mean[b1] = 0.0;
+	         for(i=0; i<Sig.cData.npixels; i++) {
+	           mean[b1] += (Sig.cData.x[i][b1])*(Sig.cData.w[i]);
+	         }
+	         mean[b1] /= Sig.cData.SummedWeights;
+	     }
+	     
+	     for(b1=0; b1<nbands; b1++) {
+	         R[b1][b1] = 0.0;
+	         for(i=0; i<Sig.cData.npixels; i++) {
+	           R[b1][b1] += (Sig.cData.x[i][b1])*(Sig.cData.x[i][b1])*(Sig.cData.w[i]);
+	         }
+	         R[b1][b1] /= Sig.cData.SummedWeights;
+	         R[b1][b1] -= mean[b1]*mean[b1];
+	     }
+	     
+	     /* Compute average of diagonal entries */
+	     Rmin = 0.0;
+	     for(b1=0; b1<nbands; b1++) 
+	       Rmin += R[b1][b1];
+
+	     Rmin = Rmin/(nbands);
+	     
+	     mean = null;
+	     for (i = 0; i < R.length; i++) {
+	    	 R[i] = null;
+	     }
+         R = null;
+         
+	     return Rmin;
+
+	}
+	
+	private int subcluster(
+	    SigSet S, /* Input: structure contataining input data */ 
+	    int Class_Index,  /* Input: index corresponding to class to be processed */
+	    int desired_num,  /* Input: desired number of subclusters. */
+	                      /*      0=>ignore this input. */
+	    int option,       /* Input: type of clustering to use */
+	                      /*      option=1=CLUSTER_FULL=>full covariance matrix */
+	                      /*      option=0=CLUSTER_DIAG=>diagonal covariance matrix */
+	    double Rmin,      /* Minimum value for diagonal elements of convariance */
+	    int Max_num[])     /* Output: maximum number of allowed subclusters */
+		{
+		int nparams_clust;
+	    int ndata_points;
+	    int min_i,min_j;
+	    int status;
+	    int nbands;
+	    double rissanen;
+	    double min_riss;
+	    ClassSig Sig;
+	    // static struct SigSet Smin;
+	    SigSet Smin;
+
+	    status = 0;
+	    
+	    /* set class pointer */
+	    Sig = S.cSig.get(Class_Index);
+
+	    /* set number of bands */
+	    nbands = S.nbands;
+	    
+	    /* compute number of parameters per cluster */
+	    nparams_clust = (int)(1+nbands+0.5*(nbands+1)*nbands);
+	    if(option==CLUSTER_DIAG) nparams_clust = 1+nbands+nbands;
+	    
+	    /* compute number of data points */
+	    ndata_points = Sig.cData.npixels*nbands;
+
+	    /* compute maximum number of subclasses */
+	    ndata_points = Sig.cData.npixels*nbands;
+	    Max_num[0] = (ndata_points+1)/nparams_clust - 1;
+
+	    /* check for too many subclasses */
+	    if(Sig.nsubclasses > (Max_num[0]/2) )
+	    {
+	      Sig.nsubclasses = Max_num[0]/2;
+	      System.err.println("Too many subclasses for class index " + Class_Index);
+	      System.err.println("         number of subclasses set to " + Sig.nsubclasses + "\n");
+	      status = -2;
+	    }
+	    
+	    /* initialize clustering */
+	    seed(Sig,nbands,Rmin,option);
+	    
+	    return status;
+		
+		}
+	
+	/******************************************************************/
+	/* Computes initial values for parameters of Gaussian Mixture     */
+	/* model. The subroutine returns the minimum allowed value for    */
+	/* the diagonal entries of the convariance matrix of each class.  */
+	/*****************************************************************/
+	private void seed(ClassSig Sig, int nbands, double Rmin, int option)
+	{
+	     int     i,b1,b2;
+	     double  period;
+	     double  mean[];
+	     double R[][];
+	     
+	     /* Compute the mean of variance for each band */
+	     mean = new double[nbands];
+	     R = new double[nbands][nbands];
+	     
+	     for(b1=0; b1<nbands; b1++) {
+	         mean[b1] = 0.0;
+	         for(i=0; i<Sig.cData.npixels; i++) {
+	           mean[b1] += (Sig.cData.x[i][b1])*(Sig.cData.w[i]);
+	         }
+	         mean[b1] /= Sig.cData.SummedWeights;
+	     }
+	     
+	     for(b1=0; b1<nbands; b1++) 
+	         for(b2=0; b2<nbands; b2++) {
+	           R[b1][b2] = 0.0;
+	           for(i=0; i<Sig.cData.npixels; i++) {
+	             R[b1][b2] += (Sig.cData.x[i][b1])*(Sig.cData.x[i][b2])*(Sig.cData.w[i]);
+	           }
+	           R[b1][b2] /= Sig.cData.SummedWeights;
+	           R[b1][b2] -= mean[b1]*mean[b2];
+	     }
+	     
+	     /* If diagonal clustering is desired, then diagonalize matrix */
+	     if(option==CLUSTER_DIAG) DiagonalizeMatrix(R,nbands);
+	     
+	     /* Compute the sampling period for seeding */
+	     if(Sig.nsubclasses>1) {
+	       period = (Sig.cData.npixels-1)/(Sig.nsubclasses-1.0);
+	     }
+	     else period =0;
+	     
+	     /* Seed the means and set the covarience components */
+	     for(i=0; i<Sig.nsubclasses; i++) {
+	       for(b1=0; b1<nbands; b1++) {
+	         Sig.sSig.get(i).means[b1] = Sig.cData.x[(int)(i*period)][b1];
+	       }
+
+	       for(b1=0; b1<nbands; b1++)
+	       for(b2=0; b2<nbands; b2++) {
+	         Sig.sSig.get(i).R[b1][b2] = R[b1][b2];
+	       }
+	       for(b1=0; b1<nbands; b1++) {
+	         Sig.sSig.get(i).R[b1][b1] += Rmin;
+	       }
+	       Sig.sSig.get(i).pi = 1.0/Sig.nsubclasses;
+	     }
+
+	     mean = null;
+	     for (i = 0; i < R.length; i++) {
+	    	 R[i] = null;
+	     }
+	     R = null;
+
+	     /*compute_constants(Sig,nbands);
+	     normalize_pi(Sig);*/
+
+	}
+	
+	private void DiagonalizeMatrix(double R[][], int nbands)
+	{
+	    int b1,b2;
+
+	    for(b1=0; b1<nbands; b1++)
+	    for(b2=0; b2<nbands; b2++)
+	      if(b1!=b2) R[b1][b2] = 0;
 	}
 	
 }
