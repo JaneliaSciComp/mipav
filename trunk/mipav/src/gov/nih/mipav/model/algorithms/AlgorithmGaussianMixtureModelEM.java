@@ -449,7 +449,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	  SubSig Sp = new SubSig();
 	  C.nsubclasses++;
 	  
-	  Sp.used = 1;
+	  Sp.used = true;
 	  Sp.R = new double[S.nbands][S.nbands];
 	  Sp.Rinv = new double[S.nbands][S.nbands];
 	  Sp.means = new double[S.nbands];
