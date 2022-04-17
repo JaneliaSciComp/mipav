@@ -354,7 +354,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	    ClassData cData;
 	    
 	    public ClassSig() {
-	    	
+	        used = false;	
 	    }
 	}
 	
@@ -365,10 +365,10 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
         double R[][];     /* convarance of component in GMM */
         double Rinv[][];  /* inverse of R */
         double cnst;    /* normalizing constant for multivariate Gaussian */
-        int used;
+        boolean used;
         
         public SubSig() {
-        	
+            used = false;	
         }
 	}
 	
