@@ -347,7 +347,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	class ClassSig {
 	    long classnum;	
 	    String title;
-	    int used;
+	    boolean used;
 	    int type;
 	    int nsubclasses;
 	    Vector<SubSig> sSig;
@@ -425,7 +425,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 
 	  Sp.classnum = 0;
 	  Sp.nsubclasses = 0;
-	  Sp.used = 1;
+	  Sp.used = true;
 	  Sp.type = SIGNATURE_TYPE_MIXED;
 	  Sp.title = null;
 	  Sp.cData = new ClassData();
@@ -1357,7 +1357,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		  for (i=0; i < S.nclasses; i++)
 		  {
 		    Cp = S.cSig.get(i);
-		    if (Cp.used != 0) continue;
+		    if (!Cp.used) continue;
 		    raFile.writeBytes("class:\n");
 		    raFile.writeBytes(" classnum: " + String.valueOf(Cp.classnum) + "\n");
 		    raFile.writeBytes(" classtitle: " + I_GetClassTitle(Cp) + "\n");
