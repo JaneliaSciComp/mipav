@@ -14,9 +14,9 @@ the following two paragraphs appear in all copies of this software.
 In no event shall Purdue University be liable to any party for direct, indirect, special, incidental, or
 consequential damages arising out of the use of this software and its documentation, even if Purdue University
 has been advised of the possibility of such damage.
-Purdue University specifically disclaims any warranties, including, but not limited to, the implied warranties
- of merchantability and fitness for a particular purpose. The software provided hereunder is on an “as
-is” basis, and Purdue Univeristy has no obligation to provide maintenance, support, updates, enhancements,
+Purdue University specifically disclaims any warranties, including, but not limited to, the implied warranties
+ of merchantability and fitness for a particular purpose. The software provided hereunder is on an "as
+is" basis, and Purdue Univeristy has no obligation to provide maintenance, support, updates, enhancements,
 or modifications.
 
 This is a port of cluster-3.6.7 developed by:
