@@ -42,10 +42,10 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	// number of classes
 	private String input_file_directory;
 	private String input_file_name;
-	// data_file inputs not used by clust
-	// Only data_file and parameter_output_file used by classify
 	private String data_file_directory;
 	private String data_file_name;
+	private String parameter_input_file_directory;
+	private String parameter_input_file_name;
 	private String parameter_output_file_directory;
 	private String parameter_output_file_name;
 	// controls clustering model
@@ -64,21 +64,50 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 
 	}
 
+	// For clust
 	public AlgorithmGaussianMixtureModelEM(int clusterMessageVerboseLevel, int init_num_of_subclasses,
-			String input_file_directory, String input_file_name, String data_file_directory, String data_file_name,
+			String input_file_directory, String input_file_name, 
 			String parameter_output_file_directory, String parameter_output_file_name, boolean full,
 			int number_of_clusters) {
 		this.clusterMessageVerboseLevel = clusterMessageVerboseLevel;
 		this.init_num_of_subclasses = init_num_of_subclasses;
 		this.input_file_directory = input_file_directory;
 		this.input_file_name = input_file_name;
-		this.data_file_directory = data_file_directory;
-		this.data_file_name = data_file_name;
 		this.parameter_output_file_directory = parameter_output_file_directory;
 		this.parameter_output_file_name = parameter_output_file_name;
 		this.full = full;
 		this.number_of_clusters = number_of_clusters;
 	}
+	
+	// For classify and splitClasses
+	public AlgorithmGaussianMixtureModelEM(String parameter_input_file_directory, String parameter_input_file_name,
+			String file_directory,String file_name, boolean classify) {
+		this.parameter_input_file_directory = parameter_input_file_directory;
+		this.parameter_input_file_name = parameter_input_file_name;	
+		if (classify) {
+		    this.data_file_directory = file_directory;
+		    this.data_file_name = file_name;
+		}
+		else {
+			this.parameter_output_file_directory = file_directory;
+			this.parameter_output_file_name = file_name;	
+		}
+	}
+	
+	public void demoClust1() {
+		clusterMessageVerboseLevel = 2;
+		init_num_of_subclasses = 20;
+		input_file_directory = "C:\\cluster_3.6.7\\example1";
+		input_file_name = "info_file";
+		parameter_output_file_directory = "C:\\cluster_3.6.7\\example1";
+		parameter_output_file_name = "paramDemoClust1";
+		full = true;
+		number_of_clusters = 0;
+		clust();
+	}
+	
+	
+			
 
 	public void runAlgorithm() {
 
@@ -219,11 +248,18 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 					if (nextIndex != -1) {
 						tmpStr = str.substring(index, nextIndex).trim();
 						index = nextIndex + 1;
+						while (str.substring(index,index+1).equals(" ")) {
+							index++;
+						}
 					} else { // spaces trimmed from end
 						tmpStr = str.substring(index, str.length()).trim();
-						index = nextIndex;
 					}
-					Sig.cData.x[i][j] = Double.valueOf(tmpStr).doubleValue();
+					try {
+					    Sig.cData.x[i][j] = Double.valueOf(tmpStr).doubleValue();
+					}
+					catch (NumberFormatException e) {
+						System.exit(-1);
+					}
 				}
 
 			}
@@ -573,7 +609,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 				reduce_order(Sig, nbands, min_i, min_j);
 
 				if (clusterMessageVerboseLevel >= 2) {
-					System.out.println("Combining Subclasses (" + min_i + "," + min_j + ")");
+					System.out.println("Combining Subclasses (" + min_i[0] + "," + min_j[0] + ")");
 				}
 
 				rissanen = refine_clusters(Sig, nbands, Rmin, option);
@@ -595,7 +631,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 				reduce_order(Sig, nbands, min_i, min_j);
 
 				if (clusterMessageVerboseLevel >= 2) {
-					System.out.println("Combining Subclasses (" + min_i + "," + min_j + ")");
+					System.out.println("Combining Subclasses (" + min_i[0] + "," + min_j[0] + ")");
 				}
 
 				rissanen = refine_clusters(Sig, nbands, Rmin, option);
@@ -1298,14 +1334,18 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	private void I_DeallocClassData(SigSet S, ClassSig C) {
 		int i;
 		ClassData Data = C.cData;
-		for (i = 0; i < Data.x.length; i++) {
-			Data.x[i] = null;
+		if (Data.x != null) {
+			for (i = 0; i < Data.x.length; i++) {
+				Data.x[i] = null;
+			}
+			Data.x = null;
 		}
-		Data.x = null;
-		for (i = 0; i < Data.p.length; i++) {
-			Data.p[i] = null;
+		if (Data.p != null) {
+			for (i = 0; i < Data.p.length; i++) {
+				Data.p[i] = null;
+			}
+			Data.p = null;
 		}
-		Data.p = null;
 		Data.w = null;
 		Data.npixels = 0;
 		Data.SummedWeights = 0.0;
@@ -1385,7 +1425,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	    double maxval;
 		SigSet S = new SigSet();
 		/* Read SigSet from parameter file */
-        parameter_file = new File(parameter_output_file_directory + File.separator + parameter_output_file_name);
+        parameter_file = new File(parameter_input_file_directory + File.separator + parameter_input_file_name);
 		
 		try {
 		    raFile = new RandomAccessFile(parameter_file, "r");
@@ -1857,5 +1897,102 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			    diff = null;
 			    subll = null;
 			}
+	
+	private void splitClasses() {
+		File parameter_file;
+		RandomAccessFile raFile;
+		int i,j,k,l;
+		ClassSig Sig;
+		File output_file;
+		SigSet Sin = new SigSet();
+		SigSet Sout = new SigSet();
+		/* Read SigSet from parameter file */
+        parameter_file = new File(parameter_input_file_directory + File.separator + parameter_input_file_name);
+		
+		try {
+		    raFile = new RandomAccessFile(parameter_file, "r");
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "raFile = new RandomAccessFile(parameter_file, \"r\")");
+			setCompleted(false);
+			return;
+		}
+		
+		try {
+		    raFile.seek(0);
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "raFile.seek(0)");
+			setCompleted(false);
+			return;
+		}
+		I_ReadSigSet (raFile,Sin);
+		
+		try {
+			raFile.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "raFile.close()");
+			setCompleted(false);
+			return;
+		}
+		
+		/* Initialize SigSet data structure */
+	    I_InitSigSet (Sout);
+	    I_SigSetNBands (Sout, Sin.nbands);
+	    I_SetSigTitle (Sout, "signature set for unsupervised clustering");
+
+	    /* Copy each subcluster (subsignature) from input to cluster (class signature) of output */
+	    for(k=0; k<Sin.nclasses; k++) {
+	      for(l=0; l<(Sin.cSig.get(k).nsubclasses); l++) {
+	        Sig = I_NewClassSig(Sout);
+	        I_SetClassTitle (Sig, "Single Model Class");
+	        I_NewSubSig (Sout, Sig);
+	        Sig.sSig.get(0).pi = 1.0;
+	        for(i=0; i<Sin.nbands; i++) {
+	          Sig.sSig.get(0).means[i] = Sin.cSig.get(k).sSig.get(l).means[i];
+	        }
+	        for(i=0; i<Sin.nbands; i++)
+	        for(j=0; j<Sin.nbands; j++) {
+	          Sig.sSig.get(0).R[i][j] = Sin.cSig.get(k).sSig.get(l).R[i][j];
+	        }
+	      }
+	    }
+	    
+	    /* Write out result to output parameter file */
+		output_file = new File(parameter_output_file_directory + File.separator + parameter_output_file_name);
+
+		try {
+			raFile = new RandomAccessFile(output_file, "rw");
+		} catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "raFile = new RandomAccessFile(output_file, \"rw\")");
+			setCompleted(false);
+			return;
+		}
+
+		try {
+			raFile.seek(0);
+		} catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "raFile.seek(0)");
+			setCompleted(false);
+			return;
+		}
+
+		I_WriteSigSet(raFile, Sout);
+
+		try {
+			raFile.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "raFile.close()");
+			setCompleted(false);
+			return;
+		}
+		
+		/* De-allocate cluster signature memory */
+	    I_DeallocSigSet (Sin);
+	    I_DeallocSigSet (Sout);
+
+	    return;
+	
+	}
 	   
 }
