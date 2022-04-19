@@ -5,6 +5,7 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
  * Copyright (c) 1995 The Board of Trustees of Purdue University. Permission to
@@ -747,7 +748,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		int d_exp;
 
 		d_exp = 0;
-		if (ludcmp(a, n, indx, d_man) != 0) {
+		if (ludcmp(a, indx, d_man) != 0) {
 			for (j = 0; j < n; j++) {
 				d_man[0] *= a[j][j];
 				while (Math.abs(d_man[0]) > 10) {
@@ -765,7 +766,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 				for (i = 0; i < n; i++)
 					col[i] = 0.0;
 				col[j] = 1.0;
-				lubksb(a, n, indx, col);
+				lubksb(a, indx, col);
 				for (i = 0; i < n; i++)
 					y[i][j] = col[i];
 			}
@@ -781,92 +782,140 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		}
 	}
 
-	private int ludcmp(double a[][], int n, int indx[], double d[]) {
-		double TINY = 1.0e-20;
-
-		int i, j, k;
-		int imax = 0;
-		double big, dum, sum, temp;
-		double vv[];
-
-		vv = new double[n];
-		d[0] = 1.0;
-		for (i = 0; i < n; i++) {
-			big = 0.0;
-			for (j = 0; j < n; j++)
-				if ((temp = Math.abs(a[i][j])) > big)
-					big = temp;
-			if (big == 0.0)
-				return 0; /* Singular matrix */
-			vv[i] = 1.0 / big;
-		}
-		for (j = 0; j < n; j++) {
-			for (i = 0; i < j; i++) {
-				sum = a[i][j];
-				for (k = 0; k < i; k++)
-					sum -= a[i][k] * a[k][j];
-				a[i][j] = sum;
-			}
-			big = 0.0;
-			for (i = j; i < n; i++) {
-				sum = a[i][j];
-				for (k = 0; k < j; k++)
-					sum -= a[i][k] * a[k][j];
-				a[i][j] = sum;
-				if ((dum = vv[i] * Math.abs(sum)) >= big) {
-					big = dum;
-					imax = i;
-				}
-			}
-			if (j != imax) {
-				for (k = 0; k < n; k++) {
-					dum = a[imax][k];
-					a[imax][k] = a[j][k];
-					a[j][k] = dum;
-				}
-				d[0] = -(d[0]);
-				vv[imax] = vv[j];
-			}
-			indx[j] = imax;
-
-			/* Change made 3/27/98 for robustness */
-			if ((a[j][j] >= 0) && (a[j][j] < TINY))
-				a[j][j] = TINY;
-			if ((a[j][j] < 0) && (a[j][j] > -TINY))
-				a[j][j] = -TINY;
-
-			if (j != n - 1) {
-				dum = 1.0 / (a[j][j]);
-				for (i = j + 1; i < n; i++)
-					a[i][j] *= dum;
-			}
-		}
-		vv = null;
-		return (1);
+	private int ludcmp(double a[][], int indx[], double d[]) {
+		// Original ludcmp was derived from Numercial Recipes in C
+		// Use ludcmp from FIDASIM is licensed under the MIT License
+	/*
+	Copyright (c) 2013-2016: L. Stagner, B. Geiger, W.W. Heidbrink, and other contributors:
+	
+	Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+	and associated documentation files (the "Software"), to deal in the Software without restrictio
+	 including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+	 and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+	 subject to the following conditions:
+	
+	The above copyright notice and this permission notice shall be included in all copies or substantial
+	portions of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+	NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	*/
+	 // Calculates LU decomposition
+	// real(double), dimension(:,:),intent(INOUT):: a
+	// integer,dimension(:),  intent(OUT)        :: indx
+	// real(double),                intent(OUT)  :: d
+    double vv[] = new double[a.length];
+	int i,j,n,imax,k,m;
+	n= indx.length;
+    d[0]=1.0;
+    double maxval;
+    double tmp;
+    for (i = 0; i < a.length; i++) {
+    	maxval = 0.0;
+    	for (j = 0; j < a[0].length; j++) {
+    		if (Math.abs(a[i][j]) > maxval) {
+    			maxval = Math.abs(a[i][j]);
+    		}
+    	}
+    	if (maxval == 0) {
+    		System.err.println("Singular matrix in ludcmp");
+    		return 0;
+    	}
+    	vv[i] = maxval;
+    }
+	for (i = 0; i < vv.length; i++) {
+		vv[i] = 1.0/vv[i];
 	}
 
-	private void lubksb(double a[][], int n, int indx[], double b[]) {
-		int i, ii, ip, j;
-		double sum;
+	for (j = 0; j < n; j++) {
+	    maxval = -Double.MAX_VALUE;
+	    imax = -1;
+	    for (k = j; k < n; k++) {
+	    	if (vv[k]*Math.abs(a[k][j]) > maxval) {
+	    		maxval = vv[k]*Math.abs(a[k][j]);
+	    		imax = k;
+	    	}
+	    }
+	   if (j != imax) {
+		  for (k = 0; k < a[0].length; k++) {
+			  tmp = a[imax][k];
+			  a[imax][k] = a[j][k];
+			  a[j][k] = tmp;
+		  }
+	      d[0]=-d[0];
+	      vv[imax]=vv[j];
+	   } // if (j != imax)
+	   indx[j]=imax;
+	   if (a[j][j] == 0.0) a[j][j]=1.0e-20;
+	   for (k = j+1; k <n; k++) {
+		   a[k][j] = a[k][j]/a[j][j];
+	   }
+	   for (k = j+1; k < n; k++) {
+		   for (m = j+1; m < n; m++) {
+			   a[k][m] = a[k][m] - a[k][j]*a[j][m];
+		   }
+	   }
+	} // for (j = 0; j < n; j++)
+	return (1);
+	}
 
-		ii = -1;
-		for (i = 0; i < n; i++) {
-			ip = indx[i];
-			sum = b[ip];
-			b[ip] = b[i];
-			if (ii >= 0)
-				for (j = ii; j < i; j++)
-					sum -= a[i][j] * b[j];
-			else if (sum != 0)
-				ii = i;
-			b[i] = sum;
-		}
-		for (i = n - 1; i >= 0; i--) {
-			sum = b[i];
-			for (j = i + 1; j < n; j++)
-				sum -= a[i][j] * b[j];
-			b[i] = sum / a[i][i];
-		}
+	private void lubksb(double a[][], int indx[], double b[]) {
+		// Original lubksb was derived from Numercial Recipes in C
+				// Use lubksb from FIDASIM is licensed under the MIT License
+			/*
+			Copyright (c) 2013-2016: L. Stagner, B. Geiger, W.W. Heidbrink, and other contributors:
+			
+			Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+			and associated documentation files (the "Software"), to deal in the Software without restrictio
+			 including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+			 and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+			 subject to the following conditions:
+			
+			The above copyright notice and this permission notice shall be included in all copies or substantial
+			portions of the Software.
+			
+			THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+			NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+			IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+			WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+			SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+			*/
+		// Does LU back substitution
+	    //real(double), dimension(:,:),intent(IN)   :: a
+	    //integer,dimension(:),  intent(IN)         :: indx
+	    //real(double), dimension(:),  intent(INOUT):: b
+	    int i,j,n,ii,ll;
+	    double summ;
+	    n= indx.length;
+	    double dot_product;
+	    ii=0;
+	    for (i = 0; i < n; i++) {
+	       ll=indx[i];
+	       summ=b[ll];
+	       b[ll]=b[i];
+	       if (ii != 0) {
+	    	  dot_product = 0.0;
+	    	  for (j = ii; j <= i-1; j++) {
+	    	      dot_product += a[i][j]*b[j];
+	    	  }
+	          summ=summ-dot_product;
+	       }
+	       else if (summ != 0.0) {
+	          ii=i;
+	       }
+	       b[i]=summ;
+	    } // for (i = 0; i < n; i++)
+	    for (i=n-1; i >= 0; i--) {
+	       dot_product = 0.0;
+	       for (j = i+1; j < n; j++) {
+	    	   dot_product += a[i][j]*b[j];
+	       }
+	       b[i] = (b[i] - dot_product)/a[i][i];
+	    } // for (i=n-1; i >= 0; i--)
+		
 	}
 
 	private void normalize_pi(ClassSig Sig) {
@@ -1331,6 +1380,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	    String value;
 	    double dData;
 	    double data[][];
+	    double ll[];
+	    int maxindex;
+	    double maxval;
 		SigSet S = new SigSet();
 		/* Read SigSet from parameter file */
         parameter_file = new File(parameter_output_file_directory + File.separator + parameter_output_file_name);
@@ -1464,6 +1516,35 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			setCompleted(false);
 			return;
 		}
+		
+		/* Initialize constants for Log likelihood calculations */
+	    ClassLogLikelihood_init(S);
+	    
+	    /* Compute Log likelihood for each class*/
+	    ll = new double[S.nclasses];
+
+	    for(i=0; i<NDataVectors; i++) {
+	      ClassLogLikelihood(data[i],ll,S); 
+
+	      maxval = ll[0];
+	      maxindex = 0;
+	      for(j=0; j<S.nclasses; j++) {
+	        if( ll[j] > maxval ) {
+	          maxval = ll[j];
+	          maxindex = j;
+	        }
+	      }
+
+	      for(j=0; j<S.nclasses; j++) System.out.print("Loglike =  " + ll[j]); 
+	      System.out.println("ML Class = " + maxindex); 
+	    }
+
+	    ll = null;
+	    for (i = 0; i < data.length; i++) {
+	    	data[i] = null;
+	    }
+	    data = null;
+	    return;
 	}
 	
 	private void I_ReadSigSet(RandomAccessFile raFile, SigSet S) {
@@ -1595,4 +1676,186 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			}
 		} while (str != null);	
 	}
+	
+	private void ClassLogLikelihood_init(SigSet S)
+	{
+	   int m; 
+	   int i;
+	   int b1,b2;
+	   int nbands;
+	   double lambda[];
+	   ClassSig C;
+	   SubSig SubS;
+	   
+	   nbands = S.nbands;
+	   /* allocate scratch memory */
+	   lambda = new double[nbands];
+
+	   /* invert matrix and compute constant for each subclass */
+
+	   /* for each class */
+	   for(m=0; m <S.nclasses; m++) {
+		   C = S.cSig.get(m);
+
+		     /* for each subclass */
+		     for(i=0; i <C.nsubclasses; i++) {
+		        SubS = C.sSig.get(i); 
+		        
+		        /* Test for symetric  matrix */
+		        for(b1=0; b1<nbands; b1++)
+		        for(b2=0; b2<nbands; b2++) {
+		          if(SubS.R[b1][b2]!=SubS.R[b2][b1]) {
+		            System.out.print("\nWarning: nonsymetric covariance for class  " +(m+1));
+		            System.out.println("Subclass " + (i+1));
+		          }
+		          SubS.Rinv[b1][b2] = SubS.R[b1][b2];
+		        }
+		        
+		        /* Test for positive definite matrix */
+		        // SubS.rinv is the input matrix
+		        // lambda are the output eigenvalues
+		        // n is the input matrix dimension
+		        // Cannot use eigen in original code
+		        // because eigen uses tred2 and tqli
+		        // from Numerical Recipes in C
+		        // eigen computes eigenvalues for
+		        // symmetric matrices
+		        //eigen(SubS.Rinv,lambda,nbands);
+		        double[] eigenvalue = new double[SubS.Rinv[0].length];
+		        double[][] eigenvector = new double[SubS.Rinv.length][SubS.Rinv[0].length];
+		        // In EigenvalueDecomposition the columns represent the
+		        // eigenvectors
+		        Eigenvalue.decompose(SubS.Rinv, eigenvector, eigenvalue);
+
+		        for(b1=0; b1<nbands; b1++) {
+		          if(lambda[b1]<=0.0) {
+		            System.out.print("Warning: nonpositive eigenvalues for class " + (m+1));
+		            System.out.println("Subclass " + (i+1));
+		          }
+		        }
+		        
+		        /* Precomputes the cnst */
+		        SubS.cnst = (-nbands/2.0)*Math.log(2*Math.PI);
+		        for(b1=0; b1<nbands; b1++) {
+		            SubS.cnst += - 0.5*Math.log(lambda[b1]);
+		        }
+
+		        /* Precomputes the inverse of tex->R */
+		        invert(SubS.Rinv,nbands);
+		     } // for(i=0; i <C.nsubclasses; i++)
+	   } // for(m=0; m <S.nclasses; m++)
+	   lambda = null;
+	}
+	
+	/* inverts a matrix of arbitrary size input as a 2D array. */ 
+	private int invert( 
+	  double a[][], /* input/output matrix */
+	  int      n  /* dimension */
+	)
+	{
+	  int  status;
+	  int  i,j,indx[];
+	  double  y[][],col[],d[];
+
+	  indx = new int[n];
+	  y = new double[n][n]; 
+	  col = new double[n];
+	  d = new double[1];
+
+	  status = ludcmp(a,indx,d);
+	  if(status != 0) {
+	    for(j=0; j<n; j++) {
+	      for(i=0; i<n; i++) col[i]=0.0;
+	      col[j]=1.0;
+	      lubksb(a,indx,col);
+	      for(i=0; i<n; i++) y[i][j]=col[i];
+	    } 
+
+	    for(i=0; i<n; i++)
+	    for(j=0; j<n; j++) a[i][j]=y[i][j];
+	  }
+
+	  indx = null;
+	  for (i = 0; i < n; i++) {
+		  y[i] = null;
+	  }
+	  y = null;
+	  col = null;
+
+	  return(status);
+	}
+	
+	private void ClassLogLikelihood(
+			  double vector[], 
+			  double ll[],        /* log likelihood, ll[class] */
+			  SigSet S   /* class signatures */
+			)
+			{
+			    int  m;               /* class index */
+			    int  k;               /* subclass index */
+			    int  b1,b2;           /* spectral index */
+			    int  max_nsubclasses; /* maximum number of subclasses */
+			    int  nbands;          /* number of spectral bands */
+			    double subll[];        /* log likelihood of subclasses */
+			    double diff[]; 
+			    double maxlike = 0.0;
+			    double subsum;
+			    ClassSig C;
+			    SubSig SubS;
+
+			    nbands = S.nbands;
+
+			    /* determine the maximum number of subclasses */
+			    max_nsubclasses = 0;
+			    for(m=0; m<S.nclasses; m++ )
+			      if(S.cSig.get(m).nsubclasses>max_nsubclasses)
+			        max_nsubclasses = S.cSig.get(m).nsubclasses;
+
+			    /* allocate memory */
+			    diff = new double[nbands];
+			    subll = new double[max_nsubclasses];
+
+			    /* Compute log likelihood for each class */
+			    /* for each class */
+			    for(m=0; m<S.nclasses; m++ ) {
+			      C = S.cSig.get(m);
+
+			      /* compute log likelihood for each subclass */
+			      for(k=0; k<C.nsubclasses; k++) {
+			        SubS = C.sSig.get(k);
+			        subll[k] = SubS.cnst;
+			        for(b1=0; b1<nbands; b1++) {
+			          diff[b1] = vector[b1] - SubS.means[b1];
+			          subll[k] -= 0.5*diff[b1]*diff[b1]*SubS.Rinv[b1][b1];
+			        }
+			        for(b1=0; b1<nbands; b1++) 
+			        for(b2=b1+1; b2<nbands; b2++)
+			          subll[k] -= diff[b1]*diff[b2]*SubS.Rinv[b1][b2];
+			      }
+
+			      /* shortcut for one subclass */
+			      if(C.nsubclasses==1) {
+			        ll[m] = subll[0];
+			      }
+			      /* compute mixture likelihood */
+			      else {
+			        /* find the most likely subclass */
+			        for(k=0; k<C.nsubclasses; k++)
+			        {
+			          if(k==0) maxlike = subll[k];
+			          if(subll[k]>maxlike) maxlike = subll[k];
+			        }
+			        
+			        /* Sum weighted subclass likelihoods */
+			        subsum = 0;
+			        for(k=0; k<C.nsubclasses; k++)
+			          subsum += Math.exp( subll[k]-maxlike )*C.sSig.get(k).pi;
+
+			        ll[m] = Math.log(subsum) + maxlike;
+			      }
+			    }
+			    diff = null;
+			    subll = null;
+			}
+	   
 }
