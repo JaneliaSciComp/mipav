@@ -94,19 +94,71 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		}
 	}
 	
-	public void demoClust1() {
+	public void demoClustFull() {
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example1";
 		input_file_name = "info_file";
 		parameter_output_file_directory = "C:\\cluster_3.6.7\\example1";
-		parameter_output_file_name = "paramDemoClust1";
+		parameter_output_file_name = "paramDemoClustFull";
 		full = true;
 		number_of_clusters = 0;
 		clust();
 	}
 	
+	public void demoClustDiag() {
+		clusterMessageVerboseLevel = 2;
+		init_num_of_subclasses = 20;
+		input_file_directory = "C:\\cluster_3.6.7\\example1";
+		input_file_name = "info_file";
+		parameter_output_file_directory = "C:\\cluster_3.6.7\\example1";
+		parameter_output_file_name = "paramDemoClustDiag";
+		full = false;
+		number_of_clusters = 0;
+		clust();
+	}
 	
+	public void demoClustFull5() {
+		clusterMessageVerboseLevel = 2;
+		init_num_of_subclasses = 20;
+		input_file_directory = "C:\\cluster_3.6.7\\example1";
+		input_file_name = "info_file";
+		parameter_output_file_directory = "C:\\cluster_3.6.7\\example1";
+		parameter_output_file_name = "paramDemoClustFull5";
+		full = true;
+		number_of_clusters = 5;
+		clust();
+	}
+	
+	public void demoClustDiag5() {
+		clusterMessageVerboseLevel = 2;
+		init_num_of_subclasses = 20;
+		input_file_directory = "C:\\cluster_3.6.7\\example1";
+		input_file_name = "info_file";
+		parameter_output_file_directory = "C:\\cluster_3.6.7\\example1";
+		parameter_output_file_name = "paramDemoClustDiag5";
+		full = false;
+		number_of_clusters = 5;
+		clust();
+	}
+	
+	public void demoClassify() {
+		clusterMessageVerboseLevel = 2;
+		init_num_of_subclasses = 20;
+		input_file_directory = "C:\\cluster_3.6.7\\example2";
+		input_file_name = "info_file";
+		parameter_output_file_directory = "C:\\cluster_3.6.7\\example2";
+		parameter_output_file_name = "paramDemoClustFull";
+		full = true;
+		number_of_clusters = 0;
+		clust();	
+		
+		parameter_input_file_directory = "C:\\cluster_3.6.7\\example2";
+		parameter_input_file_name = "paramDemoClustFull";
+		data_file_directory = "C:\\cluster_3.6.7\\example2";
+		data_file_name = "TestingData";
+		classify();
+	}
 			
 
 	public void runAlgorithm() {
@@ -1473,7 +1525,28 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			return;
 		}
 		
+		long fileLength = 0;
+		long filePos = 0;
+		
+		try {
+		    fileLength = raFile.length();	
+		} catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "fileLength = raFile.length()");
+			setCompleted(false);
+			return;
+		}
+		
 		while (true) {
+			try {
+			    filePos = raFile.getFilePointer();	
+			} catch (IOException e) {
+				MipavUtil.displayError("IOException " + e + "filePos = raFile.getFilePointer()");
+				setCompleted(false);
+				return;
+			}
+			if (filePos == fileLength) {
+			   break;	
+			}
 			try {
 				str = raFile.readLine().trim();
 			} catch (IOException e) {
@@ -1594,14 +1667,37 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		int index;
 		String value = null;
 		I_InitSigSet (S);
+		long fileLength = 0;
+		long filePos = 0;
 		
-		do {
+		try {
+		    fileLength = raFile.length();	
+		} catch (IOException e) {
+			MipavUtil.displayError("IOException " + e + "fileLength = raFile.length()");
+			setCompleted(false);
+			return;
+		}
+		
+		while(true) {
+			try {
+			    filePos = raFile.getFilePointer();	
+			} catch (IOException e) {
+				MipavUtil.displayError("IOException " + e + "filePos = raFile.getFilePointer()");
+				setCompleted(false);
+				return;
+			}
+			if (filePos == fileLength) {
+			   break;	
+			}
 			try {
 				str = raFile.readLine().trim();
 			} catch (IOException e) {
 				MipavUtil.displayError("IOException " + e + "String str = raFile.readLine().trim()");
 				setCompleted(false);
 				return;
+			}
+			if (str == null) {
+				break;
 			}
 	
 			nextIndex = str.indexOf(" ", 0);
@@ -1622,7 +1718,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			else if (tag.equalsIgnoreCase("class:")) {
 			    get_class(raFile, S);	
 			}
-		} while (str != null);
+		} ;
 	}
 	
 	private void get_class(RandomAccessFile raFile, SigSet S) {
@@ -1674,6 +1770,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		String tag = null;
 		int nextIndex;
 		int index;
+		String valueStr = null;
 		String value = null;
 		int i,j;
 		SubSig Sp = I_NewSubSig(S,C);
@@ -1694,24 +1791,58 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			else {
 			    tag = str.substring(0, nextIndex).trim();
 			    index = nextIndex + 1;
-			    value = str.substring(index, str.length()).trim();
+			    while (str.substring(index,index+1).equals(" ")) {
+					index++;
+				}
+			    valueStr = str.substring(index, str.length()).trim();
 			}
 			if (tag.equalsIgnoreCase("endsubclass:")) {
 				break;
 			}
 			else if (tag.equalsIgnoreCase("pi:")) {
-			    Sp.pi = Double.valueOf(value).doubleValue();	
+			    Sp.pi = Double.valueOf(valueStr).doubleValue();	
 			}
 			else if (tag.equalsIgnoreCase("means:")) {
+				index = 0;
 			    for (i = 0; i < S.nbands; i++) {
+			    	nextIndex = valueStr.indexOf(" ", index);
+					if (nextIndex == -1) {
+						value = valueStr.substring(index, valueStr.length()).trim();
+					}
+					else {
+						value = valueStr.substring(index, nextIndex).trim();	
+						index = nextIndex + 1;
+					    while (valueStr.substring(index,index+1).equals(" ")) {
+							index++;
+						}
+					}
 			        Sp.means[i] = Double.valueOf(value).doubleValue();	
 			    }
 			}
 			else if (tag.equalsIgnoreCase("covar:")) {
 				for (i = 0; i < S.nbands; i++) {
-					  for (j = 0; j < S.nbands; j++) {
+					try {
+						str = raFile.readLine().trim();
+					} catch (IOException e) {
+						MipavUtil.displayError("IOException " + e + "String str = raFile.readLine().trim()");
+						setCompleted(false);
+						return;
+					}
+					index = 0;
+					for (j = 0; j < S.nbands; j++) {
+						nextIndex = valueStr.indexOf(" ", index);
+						if (nextIndex == -1) {
+							value = valueStr.substring(index, valueStr.length()).trim();
+						}
+						else {
+							value = valueStr.substring(index, nextIndex).trim();	
+							index = nextIndex + 1;
+						    while (valueStr.substring(index,index+1).equals(" ")) {
+								index++;
+							}
+						}
 					    Sp.R[i][j] = Double.valueOf(value).doubleValue();
-					  }
+					}
 				}
 			}
 		} while (str != null);	
@@ -1746,7 +1877,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		        for(b2=0; b2<nbands; b2++) {
 		          if(SubS.R[b1][b2]!=SubS.R[b2][b1]) {
 		            System.out.print("\nWarning: nonsymetric covariance for class  " +(m+1));
-		            System.out.println("Subclass " + (i+1));
+		            System.out.println(" Subclass " + (i+1));
 		          }
 		          SubS.Rinv[b1][b2] = SubS.R[b1][b2];
 		        }
@@ -1770,7 +1901,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		        for(b1=0; b1<nbands; b1++) {
 		          if(lambda[b1]<=0.0) {
 		            System.out.print("Warning: nonpositive eigenvalues for class " + (m+1));
-		            System.out.println("Subclass " + (i+1));
+		            System.out.println(" Subclass " + (i+1));
 		          }
 		        }
 		        
