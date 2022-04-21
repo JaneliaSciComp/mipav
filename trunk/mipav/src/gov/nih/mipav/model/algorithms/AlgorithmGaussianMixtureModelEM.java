@@ -159,6 +159,22 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		data_file_name = "TestingData";
 		classify();
 	}
+	
+	public void demoSplitClasses() {
+		clusterMessageVerboseLevel = 2;
+		init_num_of_subclasses = 20;
+		input_file_directory = "C:\\cluster_3.6.7\\example3";
+		input_file_name = "info_file";
+		parameter_output_file_directory = "C:\\cluster_3.6.7\\example3";
+		parameter_output_file_name = "paramDemoClustDiag";
+		full = false;
+		number_of_clusters = 0;
+		clust();
+		
+		parameter_input_file_directory = "C:\\cluster_3.6.7\\example3";
+		parameter_input_file_name = "paramDemoClustDiag";
+		splitClasses();
+	}
 			
 
 	public void runAlgorithm() {
