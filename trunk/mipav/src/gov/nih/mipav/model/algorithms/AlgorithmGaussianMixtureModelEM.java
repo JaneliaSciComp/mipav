@@ -66,6 +66,16 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	double compute_constants_y[][];
 	double compute_constants_col[];
 	private boolean compute_constants_first = true;
+	
+	private SigSet reduce_order_S = new SigSet();
+	private ClassSig reduce_order_Sig3;
+	SubSig reduce_order_SubSig3;
+	private boolean reduce_order_first = true;
+	
+	private SigSet distance_S = new SigSet();
+	private ClassSig distance_Sig3;
+	private SubSig distance_SubSig3;
+	private boolean distance_first = true;
 
 	public AlgorithmGaussianMixtureModelEM() {
 
@@ -1276,15 +1286,14 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		double min_dist = 0.0;
 		SubSig SubSig1, SubSig2;
 
-		SigSet S = new SigSet();
-		ClassSig Sig3;
-		SubSig SubSig3;
-
 		/* allocate scratch space first time subroutine is called */
-		I_InitSigSet(S);
-		I_SigSetNBands(S, nbands);
-		Sig3 = I_NewClassSig(S);
-		SubSig3 = I_NewSubSig(S, Sig3);
+		if (reduce_order_first) {
+			I_InitSigSet(reduce_order_S);
+			I_SigSetNBands(reduce_order_S, nbands);
+			reduce_order_Sig3 = I_NewClassSig(reduce_order_S);
+			reduce_order_SubSig3 = I_NewSubSig(reduce_order_S, reduce_order_Sig3);
+			reduce_order_first = false;
+		}
 
 		if (Sig.nsubclasses > 1) {
 			/* find the closest subclasses */
@@ -1310,8 +1319,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			/* Combine Subclasses */
 			SubSig1 = Sig.sSig.get(min_i);
 			SubSig2 = Sig.sSig.get(min_j);
-			add_SubSigs(SubSig1, SubSig2, SubSig3, nbands);
-			copy_SubSig(SubSig3, SubSig1, nbands);
+			add_SubSigs(SubSig1, SubSig2, reduce_order_SubSig3, nbands);
+			copy_SubSig(reduce_order_SubSig3, SubSig1, nbands);
 
 			/* remove extra subclass */
 			for (i = min_j; i < Sig.nsubclasses - 1; i++)
@@ -1330,24 +1339,23 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	private double distance(SubSig SubSig1, SubSig SubSig2, int nbands) {
 		double dist;
 
-		SigSet S = new SigSet();
-		ClassSig Sig3;
-		SubSig SubSig3;
-
 		/* allocate scratch space first time subroutine is called */
-		I_InitSigSet(S);
-		I_SigSetNBands(S, nbands);
-		Sig3 = I_NewClassSig(S);
-		SubSig3 = I_NewSubSig(S, Sig3);
+		if (distance_first) {
+			I_InitSigSet(distance_S);
+			I_SigSetNBands(distance_S, nbands);
+			distance_Sig3 = I_NewClassSig(distance_S);
+			distance_SubSig3 = I_NewSubSig(distance_S, distance_Sig3);
+			distance_first = false;
+		}
 
 		/* form SubSig3 by adding SubSig1 and SubSig2 */
-		add_SubSigs(SubSig1, SubSig2, SubSig3, nbands);
+		add_SubSigs(SubSig1, SubSig2, distance_SubSig3, nbands);
 
 		/* compute constant for SubSig3 */
-		compute_constants(Sig3, nbands);
+		compute_constants(distance_Sig3, nbands);
 
 		/* compute distance */
-		dist = SubSig1.N * SubSig1.cnst + SubSig2.N * SubSig2.cnst - SubSig3.N * SubSig3.cnst;
+		dist = SubSig1.N * SubSig1.cnst + SubSig2.N * SubSig2.cnst - distance_SubSig3.N * distance_SubSig3.cnst;
 
 		return (dist);
 	}
