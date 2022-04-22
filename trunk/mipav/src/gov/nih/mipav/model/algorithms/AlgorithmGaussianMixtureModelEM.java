@@ -60,7 +60,12 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	private final int CLUSTER_FULL = 1; /* Use full covariance matrix in clustering */
 	private final int CLUSTER_DIAG = 0; /* Use diagonal covariance matrix in clustering */
 	// put here to handle static struct SigSet Smin in subcluster;
-	SigSet Smin = new SigSet();
+	private SigSet Smin = new SigSet();
+	
+	private int compute_constants_indx[];
+	double compute_constants_y[][];
+	double compute_constants_col[];
+	private boolean compute_constants_first = true;
 
 	public AlgorithmGaussianMixtureModelEM() {
 
@@ -766,9 +771,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 
 		/* Compute the sampling period for seeding */
 		if (Sig.nsubclasses > 1) {
-			period = (Sig.cData.npixels - 1) / (Sig.nsubclasses - 1.0);
+			period = (Sig.cData.npixels - 1.0) / (Sig.nsubclasses - 1.0);
 		} else
-			period = 0;
+			period = 0.0;
 
 		/* Seed the means and set the covarience components */
 		for (i = 0; i < Sig.nsubclasses; i++) {
@@ -815,14 +820,15 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		double det_man[] = new double[1];
 		int det_exp[] = new int[1];
 
-		int indx[];
-		double y[][];
-		double col[];
+		
 
 		/* allocate memory first time subroutine is called */
-		indx = new int[nbands];
-		y = new double[nbands][nbands];
-		col = new double[nbands];
+		if (compute_constants_first) {
+			compute_constants_indx = new int[nbands];
+			compute_constants_y = new double[nbands][nbands];
+			compute_constants_col = new double[nbands];
+			compute_constants_first = false;
+		}
 
 		/* invert matrix and compute constant for each subclass */
 		for (i = 0; i < Sig.nsubclasses; i++) {
@@ -830,7 +836,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 				for (b2 = 0; b2 < nbands; b2++)
 					Sig.sSig.get(i).Rinv[b1][b2] = Sig.sSig.get(i).R[b1][b2];
 
-			clust_invert(Sig.sSig.get(i).Rinv, nbands, det_man, det_exp, indx, y, col);
+			clust_invert(Sig.sSig.get(i).Rinv, nbands, det_man, det_exp, compute_constants_indx, 
+					compute_constants_y, compute_constants_col);
 
 			Sig.sSig.get(i).cnst = (-nbands / 2.0) * Math.log(2 * Math.PI) - 0.5 * Math.log(det_man[0])
 					- 0.5 * det_exp[0] * Math.log(10.0);
