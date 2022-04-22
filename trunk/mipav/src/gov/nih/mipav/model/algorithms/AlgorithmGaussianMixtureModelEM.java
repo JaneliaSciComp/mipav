@@ -59,6 +59,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	private double COVAR_DYNAMIC_RANGE = 1E5;
 	private final int CLUSTER_FULL = 1; /* Use full covariance matrix in clustering */
 	private final int CLUSTER_DIAG = 0; /* Use diagonal covariance matrix in clustering */
+	// put here to handle static struct SigSet Smin in subcluster;
+	SigSet Smin = new SigSet();
 
 	public AlgorithmGaussianMixtureModelEM() {
 
@@ -628,8 +630,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		double rissanen;
 		double min_riss;
 		ClassSig Sig;
+		// Smin made a global
 		// static struct SigSet Smin;
-		SigSet Smin = new SigSet();
 
 		status = 0;
 
