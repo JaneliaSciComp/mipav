@@ -923,6 +923,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
     double vv[] = new double[a.length];
 	int i,j,n,imax,k,m;
 	n= indx.length;
+	double outerprod[][] = new double[n][n];
     d[0]=1.0;
     double maxval;
     double tmp;
@@ -968,7 +969,12 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	   }
 	   for (k = j+1; k < n; k++) {
 		   for (m = j+1; m < n; m++) {
-			   a[k][m] = a[k][m] - a[k][j]*a[j][m];
+			   outerprod[k][m] = a[k][j]*a[j][m];
+		   }
+	   }
+	   for (k = j+1; k < n; k++) {
+		   for (m = j+1; m < n; m++) {
+			   a[k][m] = a[k][m] - outerprod[k][m];
 		   }
 	   }
 	} // for (j = 0; j < n; j++)
