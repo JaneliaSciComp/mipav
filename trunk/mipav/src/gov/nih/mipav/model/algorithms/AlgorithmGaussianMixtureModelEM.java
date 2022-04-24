@@ -1608,6 +1608,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 				else {
 					value = str.substring(index, nextIndex).trim();
 				    index = nextIndex + 1;
+				    while (str.substring(index,index+1).equals(" ")) {
+						index++;
+					}
 				}
 				try {
 				    dData = Double.valueOf(value).doubleValue();	
@@ -1651,6 +1654,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 				else {
 					value = str.substring(index, nextIndex).trim();
 				    index = nextIndex + 1;
+				    while (str.substring(index,index+1).equals(" ")) {
+						index++;
+					}
 				}
 				try {
 				    data[i][j] = Double.valueOf(value).doubleValue();	
