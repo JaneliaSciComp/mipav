@@ -871,7 +871,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		int d_exp;
 
 		d_exp = 0;
-		if (ludcmp(a, indx, d_man) != 0) {
+		if (ludcmp(a, n, indx, d_man) != 0) {
 			for (j = 0; j < n; j++) {
 				d_man[0] *= a[j][j];
 				while (Math.abs(d_man[0]) > 10) {
@@ -905,90 +905,60 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		}
 	}
 
-	private int ludcmp(double a[][], int indx[], double d[]) {
+	private int ludcmp(double a[][], int n, int indx[], double d[]) {
 		// Original ludcmp was derived from Numercial Recipes in C
-		// Use ludcmp from FIDASIM is licensed under the MIT License
-	/*
-	Copyright (c) 2013-2016: L. Stagner, B. Geiger, W.W. Heidbrink, and other contributors:
-	
-	Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
-	and associated documentation files (the "Software"), to deal in the Software without restrictio
-	 including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-	 and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
-	 subject to the following conditions:
-	
-	The above copyright notice and this permission notice shall be included in all copies or substantial
-	portions of the Software.
-	
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-	NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-	*/
-	 // Calculates LU decomposition
-	// real(double), dimension(:,:),intent(INOUT):: a
-	// integer,dimension(:),  intent(OUT)        :: indx
-	// real(double),                intent(OUT)  :: d
-    double vv[] = new double[a.length];
-	int i,j,n,imax,k,m;
-	n= indx.length;
-	double outerprod[][] = new double[n][n];
-    d[0]=1.0;
-    double maxval;
-    double tmp;
-    for (i = 0; i < a.length; i++) {
-    	maxval = 0.0;
-    	for (j = 0; j < a[0].length; j++) {
-    		if (Math.abs(a[i][j]) > maxval) {
-    			maxval = Math.abs(a[i][j]);
-    		}
-    	}
-    	if (maxval == 0) {
-    		System.err.println("Singular matrix in ludcmp");
-    		return 0;
-    	}
-    	vv[i] = maxval;
-    }
-	for (i = 0; i < vv.length; i++) {
-		vv[i] = 1.0/vv[i];
-	}
-
-	for (j = 0; j < n; j++) {
-	    maxval = -Double.MAX_VALUE;
-	    imax = -1;
-	    for (k = j; k < n; k++) {
-	    	if (vv[k]*Math.abs(a[k][j]) > maxval) {
-	    		maxval = vv[k]*Math.abs(a[k][j]);
-	    		imax = k;
-	    	}
+		// Use ludcmp from GITHUB MMseqs2/lib/cacode/ludcmp
+		// Public domain code from Yi-Kuo Yu & Stephen Altschul, NCBI
+		double TINY = 1.0E-20;
+		
+		int i, j, k;
+		int imax = 0;
+	    double big, dum, sum, temp;
+	    double vv[] = new double[n];
+	    d[0] = 1.0;
+	    for (i = 0; i < n; i++) {
+	        big = 0.0;
+	        for (j = 0; j < n; j++)
+	            if ((temp = Math.abs(a[i][j])) > big) big = temp;
+	        if (big == 0.0) System.err.println("Singular matrix in routine LUDCMP");
+	        vv[i] = 1.0 / big;
 	    }
-	   if (j != imax) {
-		  for (k = 0; k < a[0].length; k++) {
-			  tmp = a[imax][k];
-			  a[imax][k] = a[j][k];
-			  a[j][k] = tmp;
-		  }
-	      d[0]=-d[0];
-	      vv[imax]=vv[j];
-	   } // if (j != imax)
-	   indx[j]=imax;
-	   if (a[j][j] == 0.0) a[j][j]=1.0e-20;
-	   for (k = j+1; k <n; k++) {
-		   a[k][j] = a[k][j]/a[j][j];
-	   }
-	   for (k = j+1; k < n; k++) {
-		   for (m = j+1; m < n; m++) {
-			   outerprod[k][m] = a[k][j]*a[j][m];
-		   }
-	   }
-	   for (k = j+1; k < n; k++) {
-		   for (m = j+1; m < n; m++) {
-			   a[k][m] = a[k][m] - outerprod[k][m];
-		   }
-	   }
-	} // for (j = 0; j < n; j++)
-	return (1);
+	    for (j = 0; j < n; j++) {
+	        for (i = 0; i < j; i++) {
+	            sum = a[i][j];
+	            for (k = 0; k < i; k++) sum -= a[i][k] * a[k][j];
+	            a[i][j] = sum;
+	        }
+	        big = 0.0;
+	        for (i = j; i < n; i++) {
+	            sum = a[i][j];
+	            for (k = 0; k < j; k++)
+	                sum -= a[i][k] * a[k][j];
+	            a[i][j] = sum;
+	            if ((dum = vv[i] * Math.abs(sum)) >= big) {
+	                big = dum;
+	                imax = i;
+	            }
+	        }
+	        if (j != imax) {
+	            for (k = 0; k < n; k++) {
+	                dum = a[imax][k];
+	                a[imax][k] = a[j][k];
+	                a[j][k] = dum;
+	            }
+	            d[0] = -(d[0]);
+	            vv[imax] = vv[j];
+	        }
+	        indx[j] = imax;
+	        if (a[j][j] == 0.0) a[j][j] = TINY;
+	        if (j != n) {
+	            dum = 1.0 / (a[j][j]);
+	            for (i = j + 1; i < n; i++) a[i][j] *= dum;
+	        }
+	    }
+	    vv = null;
+	
+	    return (1);
 	}
 
 	private void lubksb(double a[][], int indx[], double b[]) {
@@ -1982,7 +1952,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	  col = new double[n];
 	  d = new double[1];
 
-	  status = ludcmp(a,indx,d);
+	  status = ludcmp(a,n,indx,d);
 	  if(status != 0) {
 	    for(j=0; j<n; j++) {
 	      for(i=0; i<n; i++) col[i]=0.0;
