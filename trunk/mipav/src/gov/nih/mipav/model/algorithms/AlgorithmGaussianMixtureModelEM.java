@@ -1471,8 +1471,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 					raFile.writeBytes("  covar:\n");
 					for (b1 = 0; b1 < S.nbands; b1++) {
 						raFile.writeBytes("   ");
-						for (b2 = 0; b2 < S.nbands; b2++)
+						for (b2 = 0; b2 < S.nbands; b2++) {
 							raFile.writeBytes(" " + String.valueOf(Sp.R[b1][b2]));
+						}
 						raFile.writeBytes("\n");
 					} // for (b1 = 0; b1 < S.nbands; b1++)
 					raFile.writeBytes(" endsubclass:\n");
@@ -1875,14 +1876,14 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 					}
 					index = 0;
 					for (j = 0; j < S.nbands; j++) {
-						nextIndex = valueStr.indexOf(" ", index);
+						nextIndex = str.indexOf(" ", index);
 						if (nextIndex == -1) {
-							value = valueStr.substring(index, valueStr.length()).trim();
+							value = str.substring(index, str.length()).trim();
 						}
 						else {
-							value = valueStr.substring(index, nextIndex).trim();	
+							value = str.substring(index, nextIndex).trim();	
 							index = nextIndex + 1;
-						    while (valueStr.substring(index,index+1).equals(" ")) {
+						    while (str.substring(index,index+1).equals(" ")) {
 								index++;
 							}
 						}
