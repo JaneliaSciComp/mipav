@@ -1899,13 +1899,10 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	   int i;
 	   int b1,b2;
 	   int nbands;
-	   double lambda[];
 	   ClassSig C;
 	   SubSig SubS;
 	   
 	   nbands = S.nbands;
-	   /* allocate scratch memory */
-	   lambda = new double[nbands];
 
 	   /* invert matrix and compute constant for each subclass */
 
@@ -1944,7 +1941,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		        Eigenvalue.decompose(SubS.Rinv, eigenvector, eigenvalue);
 
 		        for(b1=0; b1<nbands; b1++) {
-		          if(lambda[b1]<=0.0) {
+		          if(eigenvalue[b1]<=0.0) {
 		            System.out.print("Warning: nonpositive eigenvalues for class " + (m+1));
 		            System.out.println(" Subclass " + (i+1));
 		          }
@@ -1953,14 +1950,14 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		        /* Precomputes the cnst */
 		        SubS.cnst = (-nbands/2.0)*Math.log(2*Math.PI);
 		        for(b1=0; b1<nbands; b1++) {
-		            SubS.cnst += - 0.5*Math.log(lambda[b1]);
+		            SubS.cnst += - 0.5*Math.log(eigenvalue[b1]);
 		        }
 
 		        /* Precomputes the inverse of tex->R */
 		        invert(SubS.Rinv,nbands);
 		     } // for(i=0; i <C.nsubclasses; i++)
 	   } // for(m=0; m <S.nclasses; m++)
-	   lambda = null;
+	   eigenvalue = null;
 	}
 	
 	/* inverts a matrix of arbitrary size input as a 2D array. */ 
