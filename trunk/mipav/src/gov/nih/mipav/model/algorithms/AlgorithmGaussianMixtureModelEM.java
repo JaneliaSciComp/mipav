@@ -553,7 +553,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 
 	private SubSig I_NewSubSig(SigSet S, ClassSig C) {
-		int i;
+		int n;
 
 		if (C.nsubclasses == 0) {
 			C.sSig = new Vector<SubSig>();
@@ -990,12 +990,12 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	    double summ;
 	    n= indx.length;
 	    double dot_product;
-	    ii=0;
+	    ii=-1;
 	    for (i = 0; i < n; i++) {
 	       ll=indx[i];
 	       summ=b[ll];
 	       b[ll]=b[i];
-	       if (ii != 0) {
+	       if (ii != -1) {
 	    	  dot_product = 0.0;
 	    	  for (j = ii; j <= i-1; j++) {
 	    	      dot_product += a[i][j]*b[j];
