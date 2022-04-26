@@ -665,7 +665,6 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		ndata_points = Sig.cData.npixels * nbands;
 
 		/* compute maximum number of subclasses */
-		ndata_points = Sig.cData.npixels * nbands;
 		Max_num[0] = (ndata_points + 1) / nparams_clust - 1;
 
 		/* check for too many subclasses */
