@@ -417,9 +417,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		}
 
 		try {
-			raFile.seek(0);
+			raFile.setLength(0);
 		} catch (IOException e) {
-			MipavUtil.displayError("IOException " + e + "raFile.seek(0)");
+			MipavUtil.displayError("IOException " + e + "raFile.setLength(0)");
 			setCompleted(false);
 			return;
 		}
@@ -2120,9 +2120,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		}
 
 		try {
-			raFile.seek(0);
+			raFile.setLength(0);
 		} catch (IOException e) {
-			MipavUtil.displayError("IOException " + e + "raFile.seek(0)");
+			MipavUtil.displayError("IOException " + e + "raFile.setLength(0)");
 			setCompleted(false);
 			return;
 		}
