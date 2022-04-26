@@ -183,13 +183,13 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		input_file_directory = "C:\\cluster_3.6.7\\example3";
 		input_file_name = "info_file";
 		parameter_output_file_directory = "C:\\cluster_3.6.7\\example3";
-		parameter_output_file_name = "paramDemoClustDiag";
-		full = false;
+		parameter_output_file_name = "paramDemoClustFull";
+		full = true;
 		number_of_clusters = 0;
 		clust();
 		
 		parameter_input_file_directory = "C:\\cluster_3.6.7\\example3";
-		parameter_input_file_name = "paramDemoClustDiag";
+		parameter_input_file_name = "paramDemoClustFull";
 		splitClasses();
 	}
 			
