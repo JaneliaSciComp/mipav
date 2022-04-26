@@ -1912,6 +1912,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		        // In EigenvalueDecomposition the columns represent the
 		        // eigenvectors
 		        Eigenvalue.decompose(SubS.Rinv, eigenvector, eigenvalue);
+		        // Eigenvalue.decompose has values in increasing order
+		        // eigen gives values in decreasing order
 
 		        for(b1=0; b1<nbands; b1++) {
 		          if(eigenvalue[b1]<=0.0) {
@@ -2144,5 +2146,5 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	    return;
 	
 	}
-	   
+	
 }
