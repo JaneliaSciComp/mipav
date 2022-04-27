@@ -1570,7 +1570,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			for (j = 0; j < S.nbands; j++) {
 				nextIndex = str.indexOf(" ", index);
 				if (nextIndex == -1) {
-				    value = str;
+				    value = str.substring(index,str.length()).trim();
 				    if (j < S.nbands-1) {
 				    	break;
 				    }
@@ -1616,7 +1616,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 			for (j = 0; j < S.nbands; j++) {
 				nextIndex = str.indexOf(" ", index);
 				if (nextIndex == -1) {
-				    value = str;
+					value = str.substring(index,str.length()).trim();
 				    if (j < S.nbands-1) {
 				    	break;
 				    }
@@ -1629,7 +1629,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 					}
 				}
 				try {
-				    data[i][j] = Double.valueOf(value).doubleValue();	
+				    data[i][j] = Double.valueOf(value).doubleValue();
 				}
 				catch (NumberFormatException e) {
 					break;
@@ -1663,7 +1663,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	        }
 	      }
 
-	      for(j=0; j<S.nclasses; j++) System.out.print("Loglike =  " + ll[j]); 
+	      for(j=0; j<S.nclasses; j++) System.out.print("Loglike =  " + ll[j] + " "); 
 	      System.out.println("ML Class = " + maxindex); 
 	    }
 
