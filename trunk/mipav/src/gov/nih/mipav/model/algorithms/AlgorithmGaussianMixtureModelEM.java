@@ -112,6 +112,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 	
 	public void demoClustFull() {
+		// Demo I:  Apply clust using default option which allows
+		// full convariance matrices
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example1";
@@ -124,6 +126,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 	
 	public void demoClustDiag() {
+		// Demo II:  Apply clust using default option 'diag' which
+		// uses diagonal convariance matrices "
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example1";
@@ -136,6 +140,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 	
 	public void demoClustFull5() {
+		// Demo III: Apply 'full' clustering, but specify a 5 cluster model
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example1";
@@ -148,6 +153,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 	
 	public void demoClustDiag5() {
+		// Demo IV: Apply 'diag' clustering, but specify a 5 cluster model
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example1";
@@ -160,6 +166,8 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 	
 	public void demoClassify() {
+		// This Demo show how you can estimate two (or more) Gaussian mixture models
+		// from training data, and then use these to classify testing vectors.
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example2";
@@ -178,6 +186,7 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	}
 	
 	public void demoSplitClasses() {
+		// Apply clust using default options
 		clusterMessageVerboseLevel = 2;
 		init_num_of_subclasses = 20;
 		input_file_directory = "C:\\cluster_3.6.7\\example3";
@@ -188,9 +197,16 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		number_of_clusters = 0;
 		clust();
 		
+		// Separate components of GMM into individual classes
 		parameter_input_file_directory = "C:\\cluster_3.6.7\\example3";
 		parameter_input_file_name = "paramDemoClustFull";
 		splitClasses();
+		
+		// Example showing how mixtured model can be used to classify "
+		// data vectors.
+		data_file_directory = "C:\\cluster_3.6.7\\example3";
+		data_file_name = "data";
+		classify();
 	}
 			
 
