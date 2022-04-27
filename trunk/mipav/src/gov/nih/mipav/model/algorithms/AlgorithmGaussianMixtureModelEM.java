@@ -1871,10 +1871,9 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 	   int nbands;
 	   ClassSig C;
 	   SubSig SubS;
-	   double eigenvalue[];
-	   double eigenvector[][] = null;
-	   
 	   nbands = S.nbands;
+	   double eigenvalue[] = new double[nbands];
+	   double eigenvector[][] = new double[nbands][nbands];
 
 	   /* invert matrix and compute constant for each subclass */
 
@@ -1906,8 +1905,6 @@ public class AlgorithmGaussianMixtureModelEM extends AlgorithmBase {
 		        // eigen computes eigenvalues for
 		        // symmetric matrices
 		        //eigen(SubS.Rinv,lambda,nbands);
-		        eigenvalue = new double[SubS.Rinv[0].length];
-		        eigenvector = new double[SubS.Rinv.length][SubS.Rinv[0].length];
 		        // In EigenvalueDecomposition the columns represent the
 		        // eigenvectors
 		        Eigenvalue.decompose(SubS.Rinv, eigenvector, eigenvalue);
