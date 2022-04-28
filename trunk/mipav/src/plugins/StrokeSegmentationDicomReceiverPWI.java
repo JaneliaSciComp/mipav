@@ -387,621 +387,627 @@ public class StrokeSegmentationDicomReceiverPWI {
                 }
                 
                 // check that a previous segmentation hasn't been done on this set of scans
+                boolean isPrevProcessed = false;
                 File[] outputDirFiles = baseOutputDir.listFiles();
                 for (File file : outputDirFiles) {
                     if (file.getName().equalsIgnoreCase("core_seg_report.html")) {
                         log("New data received for previously segmented subject.  Not running the segmentation again.");
-                        return;
+                        //fileListLock.unlock();
+                        isPrevProcessed = true;
+                        break;
+                        //return;
                     }
                 }
                 
-                // if we haven't received data from this subject/study before, created a new monitor thread.  otherwise get it so that we can add file counts
-                String baseOutputDirStr = baseOutputDir.getAbsolutePath();
-                CoreToolProcessingThread curDatasetThread;
-                if (!coreToolThreadTable.containsKey(baseOutputDirStr)) {
-                	curDatasetThread = new CoreToolProcessingThread(baseOutputDirStr, maxWaitTime, minExpectedSlicesPWI, minExpectedSlices);
-                	coreToolThreadTable.put(baseOutputDirStr, curDatasetThread);
-                	Thread thread = new Thread(curDatasetThread);
-                	thread.start();
-                } else {
-                	curDatasetThread = coreToolThreadTable.get(baseOutputDirStr);
-                }
-
-                // TODO - PWI support
-                // on getting new subject scan, start timer to wait for PWI
-                // on timer expiration, check that minimum number of PWI slices is met
-                // if enough slices, check that ADC/DWI are done transferring and run PWI-incorporating algorithm
-                // if not enough slices, check that ADC/DWI are done transferring and run non-PWI algorithm
-                // TODO - maybe also trigger if specific number of slices is hit exactly - 1600, 2400?
-                
-                if (foundADC) {
-                    // check for Reg series in the newly received files
-                    boolean isNewReg = false;
-                    Vector<File> adcRegFiles = new Vector<File>();
-                    
-                    for (int i = 0; i < adcFiles.size(); i++) {
-                        final Attributes attr = adcAttrList.get(i);
-                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
-                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
-                        
-                        if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
-                            adcRegFiles.add(adcFiles.get(i));
-                        }
-                    }
-                    
-                    if (adcRegFiles.size() > 0) {
-                        adcFiles = adcRegFiles;
-                        isNewReg = true;
-                    }
-                    
-                    // check for previous transfer
-                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-                    if (adcDirFile.exists()) {
-                        log("Found previously received ADC volume in output directory, but also received new ADC volume.");
-                        
-                        File prevFile = adcDirFile.listFiles()[0];
-                        Attributes prevAttr = null;
-                        try {
-                            prevAttr = parse(prevFile);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        
-                        Attributes newAttr = adcAttrList.get(0);
-                        
-                        boolean isPrevReg = isRegisteredVol(prevAttr);
-                        
-                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                        
-                        if (isNewReg && isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
-                            // both Reg w/ same study num - merge
-                            log("Merging new ADC files with previously received volume.");
-                            
-                            for (File file : adcFiles) {
-                                try {
-                                    renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (!isNewReg && !isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
-                            // both not Reg w/ same study num - merge
-                            log("Merging new ADC files with previously received volume.");
-                            
-                            for (File file : adcFiles) {
-                                try {
-                                    renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (isNewReg && !isPrevReg) {
-                            // move prev out of the way and use new files only
-                            log("Preferring newly received ADC volume.");
-
-                            // clean-up prev ADC dir
-                            File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-                            log("Moving to old ADC volume to " + backupDir);
-                            boolean success = adcDirFile.renameTo(backupDir);
-                            if (!success) {
-                                log("Failed to move previous ADC data to : " + backupDir);
-                            }
-                            curDatasetThread.resetAdcSliceCount();
-                            
-                            for (File file : adcFiles) {
-                                try {
-                                    renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (!isNewReg && isPrevReg) {
-                            // disregard new files and only use prev files
-                            log("Preferring previously received ADC volume.");
-                            
-                            // remove all the new files from our list
-                            adcFiles.clear();
-                        } else {
-                            // TODO non-matching study numbers w/ same Reg status - what should be done?
-                            log("Both previously received volume and new ADC files received, but study numbers do not match (old: " + prevStudyNum + " new: " + newStudyNum + ")");
-                        }
+                if (!isPrevProcessed) {
+                    // if we haven't received data from this subject/study before, created a new monitor thread.  otherwise get it so that we can add file counts
+                    String baseOutputDirStr = baseOutputDir.getAbsolutePath();
+                    CoreToolProcessingThread curDatasetThread;
+                    if (!coreToolThreadTable.containsKey(baseOutputDirStr)) {
+                    	curDatasetThread = new CoreToolProcessingThread(baseOutputDirStr, maxWaitTime, minExpectedSlicesPWI, minExpectedSlices);
+                    	coreToolThreadTable.put(baseOutputDirStr, curDatasetThread);
+                    	Thread thread = new Thread(curDatasetThread);
+                    	thread.start();
                     } else {
-                        // no prev transfer - use new files and move them to processing dir
-                        log("Received new ADC volume.  No previous ADC transfer for this subject/study.");
-
-                        if (!adcDirFile.mkdir()) {
-                            log("Failed to create directory: " + adcDirFile);
+                    	curDatasetThread = coreToolThreadTable.get(baseOutputDirStr);
+                    }
+    
+                    // TODO - PWI support
+                    // on getting new subject scan, start timer to wait for PWI
+                    // on timer expiration, check that minimum number of PWI slices is met
+                    // if enough slices, check that ADC/DWI are done transferring and run PWI-incorporating algorithm
+                    // if not enough slices, check that ADC/DWI are done transferring and run non-PWI algorithm
+                    // TODO - maybe also trigger if specific number of slices is hit exactly - 1600, 2400?
+                    
+                    if (foundADC) {
+                        // check for Reg series in the newly received files
+                        boolean isNewReg = false;
+                        Vector<File> adcRegFiles = new Vector<File>();
+                        
+                        for (int i = 0; i < adcFiles.size(); i++) {
+                            final Attributes attr = adcAttrList.get(i);
+                            final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                            final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                            
+                            if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
+                                adcRegFiles.add(adcFiles.get(i));
+                            }
+                        }
+                        
+                        if (adcRegFiles.size() > 0) {
+                            adcFiles = adcRegFiles;
+                            isNewReg = true;
+                        }
+                        
+                        // check for previous transfer
+                        File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+                        if (adcDirFile.exists()) {
+                            log("Found previously received ADC volume in output directory, but also received new ADC volume.");
+                            
+                            File prevFile = adcDirFile.listFiles()[0];
+                            Attributes prevAttr = null;
+                            try {
+                                prevAttr = parse(prevFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            
+                            Attributes newAttr = adcAttrList.get(0);
+                            
+                            boolean isPrevReg = isRegisteredVol(prevAttr);
+                            
+                            final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                            final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                            
+                            if (isNewReg && isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
+                                // both Reg w/ same study num - merge
+                                log("Merging new ADC files with previously received volume.");
+                                
+                                for (File file : adcFiles) {
+                                    try {
+                                        renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (!isNewReg && !isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
+                                // both not Reg w/ same study num - merge
+                                log("Merging new ADC files with previously received volume.");
+                                
+                                for (File file : adcFiles) {
+                                    try {
+                                        renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (isNewReg && !isPrevReg) {
+                                // move prev out of the way and use new files only
+                                log("Preferring newly received ADC volume.");
+    
+                                // clean-up prev ADC dir
+                                File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                                log("Moving to old ADC volume to " + backupDir);
+                                boolean success = adcDirFile.renameTo(backupDir);
+                                if (!success) {
+                                    log("Failed to move previous ADC data to : " + backupDir);
+                                }
+                                curDatasetThread.resetAdcSliceCount();
+                                
+                                for (File file : adcFiles) {
+                                    try {
+                                        renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (!isNewReg && isPrevReg) {
+                                // disregard new files and only use prev files
+                                log("Preferring previously received ADC volume.");
+                                
+                                // remove all the new files from our list
+                                adcFiles.clear();
+                            } else {
+                                // TODO non-matching study numbers w/ same Reg status - what should be done?
+                                log("Both previously received volume and new ADC files received, but study numbers do not match (old: " + prevStudyNum + " new: " + newStudyNum + ")");
+                            }
                         } else {
-                            for (File file : adcFiles) {
-                                try {
-                                    renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                            // no prev transfer - use new files and move them to processing dir
+                            log("Received new ADC volume.  No previous ADC transfer for this subject/study.");
+    
+                            if (!adcDirFile.mkdir()) {
+                                log("Failed to create directory: " + adcDirFile);
+                            } else {
+                                for (File file : adcFiles) {
+                                    try {
+                                        renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             }
                         }
                     }
+                    
+                    curDatasetThread.addToAdcSliceCount(adcFiles.size());
+                    
+                    if (foundDWI) {
+                        // check for Reg series in the newly received files
+                        boolean isNewReg = false;
+                        Vector<File> dwiRegFiles = new Vector<File>();
+                        
+                        for (int i = 0; i < dwiFiles.size(); i++) {
+                            final Attributes attr = dwiAttrList.get(i);
+                            final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                            final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                            
+                            if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
+                                dwiRegFiles.add(dwiFiles.get(i));
+                            }
+                        }
+                        
+                        if (dwiRegFiles.size() > 0) {
+                            dwiFiles = dwiRegFiles;
+                            isNewReg = true;
+                        }
+                        
+                        // check for previous transfer
+                        File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+                        if (dwiDirFile.exists()) {
+                            log("Found previously received DWI volume in output directory, but also received new DWI volume.");
+                            
+                            File prevFile = dwiDirFile.listFiles()[0];
+                            Attributes prevAttr = null;
+                            try {
+                                prevAttr = parse(prevFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            
+                            Attributes newAttr = dwiAttrList.get(0);
+                            
+                            boolean isPrevReg = isRegisteredVol(prevAttr);
+                            
+                            final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                            final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                            
+                            if (isNewReg && isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
+                                // both Reg w/ same study num - merge
+                                log("Merging new DWI files with previously received volume.");
+                                
+                                for (File file : dwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (!isNewReg && !isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
+                                // both not Reg w/ same study num - merge
+                                log("Merging new DWI files with previously received volume.");
+                                
+                                for (File file : dwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (isNewReg && !isPrevReg) {
+                                // move prev out of the way and use new files only
+                                log("Preferring newly received DWI volume.");
+    
+                                // clean-up prev DWI dir
+                                File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                                log("Moving to old DWI volume to " + backupDir);
+                                boolean success = dwiDirFile.renameTo(backupDir);
+                                if (!success) {
+                                    log("Failed to move previous DWI data to : " + backupDir);
+                                }
+                                curDatasetThread.resetDwiSliceCount();
+                                
+                                for (File file : dwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (!isNewReg && isPrevReg) {
+                                // disregard new files and only use prev files
+                                log("Preferring previously received DWI volume.");
+                                
+                                // remove all the new files from our list
+                                dwiFiles.clear();
+                            } else {
+                                // TODO non-matching study numbers w/ same Reg status - what should be done?
+                                log("Both previously received volume and new DWI files received, but study numbers do not match (old: " + prevStudyNum + " new: " + newStudyNum + ")");
+                            }
+                        } else {
+                            // no prev transfer - use new files and move them to processing dir
+                            log("Received new DWI volume.  No previous DWI transfer for this subject/study.");
+    
+                            if (!dwiDirFile.mkdir()) {
+                                log("Failed to create directory: " + dwiDirFile);
+                            } else {
+                                for (File file : dwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    curDatasetThread.addToDwiSliceCount(dwiFiles.size());
+                    
+                    if (foundPWI) {
+                        // check for Reg series in the newly received files
+                        boolean isNewReg = false;
+                        Vector<File> pwiRegFiles = new Vector<File>();
+                        
+                        for (int i = 0; i < pwiFiles.size(); i++) {
+                            final Attributes attr = pwiAttrList.get(i);
+                            final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
+                            final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
+                            
+                            if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
+                                pwiRegFiles.add(pwiFiles.get(i));
+                            }
+                        }
+                        
+                        if (pwiRegFiles.size() > 0) {
+                            pwiFiles = pwiRegFiles;
+                            isNewReg = true;
+                        }
+                        
+                        // check for previous transfer
+                        File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
+                        if (pwiDirFile.exists()) {
+                            log("Found previously received PWI volume in output directory, but also received new PWI volume.");
+                            
+                            File prevFile = pwiDirFile.listFiles()[0];
+                            Attributes prevAttr = null;
+                            try {
+                                prevAttr = parse(prevFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            
+                            Attributes newAttr = pwiAttrList.get(0);
+                            
+                            boolean isPrevReg = isRegisteredVol(prevAttr);
+                            
+                            final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                            final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+                            
+                            if (isNewReg && isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
+                                // both Reg w/ same study num - merge
+                                log("Merging new PWI files with previously received volume.");
+                                
+                                for (File file : pwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (!isNewReg && !isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
+                                // both not Reg w/ same study num - merge
+                                log("Merging new PWI files with previously received volume.");
+                                
+                                for (File file : pwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (isNewReg && !isPrevReg) {
+                                // move prev out of the way and use new files only
+                                log("Preferring newly received PWI volume.");
+    
+                                // clean-up prev PWI dir
+                                File backupDir = new File(pwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+                                log("Moving to old PWI volume to " + backupDir);
+                                boolean success = pwiDirFile.renameTo(backupDir);
+                                if (!success) {
+                                    log("Failed to move previous PWI data to : " + backupDir);
+                                }
+                                curDatasetThread.resetPwiSliceCount();
+                                
+                                for (File file : pwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (!isNewReg && isPrevReg) {
+                                // disregard new files and only use prev files
+                                log("Preferring previously received PWI volume.");
+                                
+                                // remove all the new files from our list
+                                pwiFiles.clear();
+                            } else {
+                                // TODO non-matching study numbers w/ same Reg status - what should be done?
+                                log("Both previously received volume and new PWI files received, but study numbers do not match (old: " + prevStudyNum + " new: " + newStudyNum + ")");
+                            }
+                        } else {
+                            // no prev transfer - use new files and move them to processing dir
+                            log("Received new PWI volume.  No previous PWI transfer for this subject/study.");
+    
+                            if (!pwiDirFile.mkdir()) {
+                                log("Failed to create directory: " + pwiDirFile);
+                            } else {
+                                for (File file : pwiFiles) {
+                                    try {
+                                        renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    curDatasetThread.addToPwiSliceCount(pwiFiles.size());
+                    
+    //                // if we didn't find both ADC and DWI, check for previous transfer in output dir
+    //                if (baseOutputDir != null && !foundADC || !foundDWI || !foundPWI) {
+    //                    File[] outputDirFiles = baseOutputDir.listFiles();
+    //                    for (File file : outputDirFiles) {
+    //                        if (file.isDirectory()) { 
+    //                            if (file.getName().equalsIgnoreCase("ADC")) {
+    //                                foundOutputDirADC = true;
+    //                            } else if (file.getName().equalsIgnoreCase("DWI")) {
+    //                                foundOutputDirDWI = true;
+    //                            } else if (file.getName().equalsIgnoreCase("PWI")) {
+    //                                foundOutputDirPWI = true;
+    //                            }
+    //                        } else if (file.getName().equalsIgnoreCase("core_seg_report.html")) {
+    //                            log("New data received for previously segmented subject.  Not running the segmentation again.");
+    //                            alreadySegmented = true;
+    //                        }
+    //                    }
+    //                    
+    //                    if (foundADC && foundOutputDirADC) {
+    //                        log("Found previously received ADC volume in output directory, but also received new ADC volume.");
+    //                        
+    //                        File prevFile = new File(baseOutputDir + File.separator + "ADC").listFiles()[0];
+    //                        Attributes prevAttr = null;
+    //                        try {
+    //                            prevAttr = parse(prevFile);
+    //                        } catch (IOException e) {
+    //                            e.printStackTrace();
+    //                        }
+    //                        Attributes newAttr = adcAttrList.get(0);
+    //                        
+    //                        boolean isPrevReg = isRegisteredVol(prevAttr);
+    //                        boolean isNewReg = isRegisteredVol(newAttr);
+    //                        
+    //                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+    //                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+    //                        
+    //                        // prefer series marked as 'reg', but otherwise go with the new one
+    //                        if (!isNewReg && isPrevReg) {
+    //                            log("Preferring previously received ADC volume.");
+    //                            usePrevADC = true;
+    //                        } else if (isNewReg && !isPrevReg) {
+    //                            log("Preferring newly received ADC volume.");
+    //                            usePrevADC = false;
+    //                        } else if (prevStudyNum.equals(newStudyNum)) {
+    //                            log("Merging new ADC files with previously received volume.");
+    //                            mergeADC = true;
+    //                        } else {
+    //                            log("Preferring newly received ADC volume.");
+    //                            usePrevADC = false;
+    //                        }
+    //                    } else if (!foundADC && foundOutputDirADC) {
+    //                        log("Found previously received ADC volume in output directory.");
+    //                        usePrevADC = true;
+    //                    }
+    //                    
+    //                    if (foundDWI && foundOutputDirDWI) {
+    //                        log("Found previously received DWI volume in output directory, but also received new DWI volume.");
+    //                        
+    //                        File prevFile = new File(baseOutputDir + File.separator + "DWI").listFiles()[0];
+    //                        Attributes prevAttr = null;
+    //                        try {
+    //                            prevAttr = parse(prevFile);
+    //                        } catch (IOException e) {
+    //                            e.printStackTrace();
+    //                        }
+    //                        Attributes newAttr = dwiAttrList.get(0);
+    //                        
+    //                        boolean isPrevReg = isRegisteredVol(prevAttr);
+    //                        boolean isNewReg = isRegisteredVol(newAttr);
+    //                        
+    //                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+    //                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+    //                        
+    //                        // prefer series marked as 'reg', but otherwise go with the new one
+    //                        if (!isNewReg && isPrevReg) {
+    //                            log("Preferring previously received DWI volume.");
+    //                            usePrevDWI = true;
+    //                        } else if (isNewReg && !isPrevReg) {
+    //                            log("Preferring newly received DWI volume.");
+    //                            usePrevDWI = false;
+    //                        } else if (prevStudyNum.equals(newStudyNum)) {
+    //                            log("Merging new DWI files with previously received volume.");
+    //                            mergeDWI = true;
+    //                        } else {
+    //                            log("Preferring newly received DWI volume.");
+    //                            usePrevDWI = false;
+    //                        }
+    //                    } else if (!foundDWI && foundOutputDirDWI) {
+    //                        log("Found previously received DWI volume in output directory.");
+    //                        usePrevDWI = true;
+    //                    }
+    //                    
+    //                    if (foundPWI && foundOutputDirPWI) {
+    //                        log("Found previously received PWI volume in output directory, but also received new PWI volume.");
+    //                        
+    //                        File prevFile = new File(baseOutputDir + File.separator + "PWI").listFiles()[0];
+    //                        Attributes prevAttr = null;
+    //                        try {
+    //                            prevAttr = parse(prevFile);
+    //                        } catch (IOException e) {
+    //                            e.printStackTrace();
+    //                        }
+    //                        Attributes newAttr = pwiAttrList.get(0);
+    //                        
+    //                        boolean isPrevReg = isRegisteredVol(prevAttr);
+    //                        boolean isNewReg = isRegisteredVol(newAttr);
+    //                        
+    //                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+    //                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
+    //                        
+    //                        // prefer series marked as 'reg', but otherwise go with the new one
+    //                        if (!isNewReg && isPrevReg) {
+    //                            log("Preferring previously received PWI volume.");
+    //                            usePrevPWI = true;
+    //                        } else if (isNewReg && !isPrevReg) {
+    //                            log("Preferring newly received PWI volume.");
+    //                            usePrevPWI = false;
+    //                        } else if (prevStudyNum.equals(newStudyNum)) {
+    //                            log("Merging new PWI files with previously received volume.");
+    //                            mergePWI = true;
+    //                        } else {
+    //                            log("Preferring newly received PWI volume.");
+    //                            usePrevPWI = false;
+    //                        }
+    //                    } else if (!foundPWI && foundOutputDirPWI) {
+    //                        log("Found previously received PWI volume in output directory.");
+    //                        usePrevPWI = true;
+    //                    }
+    //                }
+    //                
+    //                // move ADC and DWI files to their own dir under parent inside outputDir
+    //                if (foundADC && !usePrevADC) {
+    //                    log("Found ADC volume in completed transfer. Moving to " + baseOutputDir);
+    //                    
+    //                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+    //                    
+    //                    // clean-up prev ADC dir
+    //                    if (foundOutputDirADC && !mergeADC) {
+    //                        File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+    //                        boolean success = adcDirFile.renameTo(backupDir);
+    //                        if (success) {
+    //                            log("Failed to move previous ADC data to : " + backupDir);
+    //                        }
+    //                    }
+    //                    
+    //                    for (File file : adcFiles) {
+    //                        try {
+    //                            renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
+    //                        } catch (IOException e) {
+    //                            e.printStackTrace();
+    //                        }
+    //                    }
+    //                }
+    //                
+    //                if (foundDWI && !usePrevDWI) {
+    //                    log("Found DWI volume in completed transfer. Moving to " + baseOutputDir);
+    //                    
+    //                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+    //                    
+    //                    // clean-up prev DWI dir
+    //                    if (foundOutputDirDWI && !mergeDWI) {
+    //                        File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+    //                        boolean success = dwiDirFile.renameTo(backupDir);
+    //                        if (success) {
+    //                            log("Failed to move previous DWI data to : " + backupDir);
+    //                        }
+    //                    }
+    //                    
+    //                    for (File file : dwiFiles) {
+    //                        try {
+    //                            renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+    //                        } catch (IOException e) {
+    //                            e.printStackTrace();
+    //                        }
+    //                    }
+    //                }
+    //                
+    //                if (foundPWI && !usePrevPWI) {
+    //                    log("Found PWI volume in completed transfer. Moving to " + baseOutputDir);
+    //                    
+    //                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
+    //                    
+    //                    // clean-up prev PWI dir
+    //                    if (foundOutputDirPWI && !mergePWI) {
+    //                        File backupDir = new File(pwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
+    //                        boolean success = pwiDirFile.renameTo(backupDir);
+    //                        if (success) {
+    //                            log("Failed to move previous PWI data to : " + backupDir);
+    //                        }
+    //                    }
+    //                    
+    //                    for (File file : pwiFiles) {
+    //                        try {
+    //                            renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
+    //                        } catch (IOException e) {
+    //                            e.printStackTrace();
+    //                        }
+    //                    }
+    //                }
+    //                
+    //                
+    //                
+    //                if (!alreadySegmented) {
+    //                	if (foundPWI || usePrevPWI) {
+    //                		// use PWI version of the coretool algo
+    //	                	if (((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
+    //		                    // check that the number of files in the ADC and DWI directories are the same
+    //		                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+    //		                    int numAdcFiles = adcDirFile.listFiles().length;
+    //		                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+    //		                    int numDwiFiles = dwiDirFile.listFiles().length;
+    //		                    
+    //		                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
+    //		                    int numPwiFiles = pwiDirFile.listFiles().length;
+    //		                    
+    //		                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
+    //		                    	if (numPwiFiles >= minExpectedSlicesPWI) {
+    //		                    		log("Received " + numPwiFiles + " PWI files, meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+    //		                    		log("Running PWI-incorporating segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+    //		                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), false);
+    //		                    	} else {
+    //		                    		log("Received " + numPwiFiles + " PWI files, NOT meeting minimum threshold (" + minExpectedSlicesPWI + ")");
+    //		                    		log("Running non-PWI segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+    //		                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), true);
+    //		                    	}
+    //		                    } else {
+    //		                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+    //		                    }
+    //		                } else {
+    //		                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
+    //		                }
+    //                	} else {
+    //                		if (((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
+    //		                    // check that the number of files in the ADC and DWI directories are the same
+    //		                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
+    //		                    int numAdcFiles = adcDirFile.listFiles().length;
+    //		                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
+    //		                    int numDwiFiles = dwiDirFile.listFiles().length;
+    //		                    
+    //		                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
+    //	                    		log("Running non-PWI segmentation on datasets in " + baseOutputDir.getAbsolutePath());
+    //	                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), true);
+    //		                    } else {
+    //		                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
+    //		                    }
+    //		                } else {
+    //		                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
+    //		                }
+    //                	}
+    //                } else {
+    //                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
+    //                }
                 }
-                
-                curDatasetThread.addToAdcSliceCount(adcFiles.size());
-                
-                if (foundDWI) {
-                    // check for Reg series in the newly received files
-                    boolean isNewReg = false;
-                    Vector<File> dwiRegFiles = new Vector<File>();
-                    
-                    for (int i = 0; i < dwiFiles.size(); i++) {
-                        final Attributes attr = dwiAttrList.get(i);
-                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
-                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
-                        
-                        if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
-                            dwiRegFiles.add(dwiFiles.get(i));
-                        }
-                    }
-                    
-                    if (dwiRegFiles.size() > 0) {
-                        dwiFiles = dwiRegFiles;
-                        isNewReg = true;
-                    }
-                    
-                    // check for previous transfer
-                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-                    if (dwiDirFile.exists()) {
-                        log("Found previously received DWI volume in output directory, but also received new DWI volume.");
-                        
-                        File prevFile = dwiDirFile.listFiles()[0];
-                        Attributes prevAttr = null;
-                        try {
-                            prevAttr = parse(prevFile);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        
-                        Attributes newAttr = dwiAttrList.get(0);
-                        
-                        boolean isPrevReg = isRegisteredVol(prevAttr);
-                        
-                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                        
-                        if (isNewReg && isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
-                            // both Reg w/ same study num - merge
-                            log("Merging new DWI files with previously received volume.");
-                            
-                            for (File file : dwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (!isNewReg && !isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
-                            // both not Reg w/ same study num - merge
-                            log("Merging new DWI files with previously received volume.");
-                            
-                            for (File file : dwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (isNewReg && !isPrevReg) {
-                            // move prev out of the way and use new files only
-                            log("Preferring newly received DWI volume.");
-
-                            // clean-up prev DWI dir
-                            File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-                            log("Moving to old DWI volume to " + backupDir);
-                            boolean success = dwiDirFile.renameTo(backupDir);
-                            if (!success) {
-                                log("Failed to move previous DWI data to : " + backupDir);
-                            }
-                            curDatasetThread.resetDwiSliceCount();
-                            
-                            for (File file : dwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (!isNewReg && isPrevReg) {
-                            // disregard new files and only use prev files
-                            log("Preferring previously received DWI volume.");
-                            
-                            // remove all the new files from our list
-                            dwiFiles.clear();
-                        } else {
-                            // TODO non-matching study numbers w/ same Reg status - what should be done?
-                            log("Both previously received volume and new DWI files received, but study numbers do not match (old: " + prevStudyNum + " new: " + newStudyNum + ")");
-                        }
-                    } else {
-                        // no prev transfer - use new files and move them to processing dir
-                        log("Received new DWI volume.  No previous DWI transfer for this subject/study.");
-
-                        if (!dwiDirFile.mkdir()) {
-                            log("Failed to create directory: " + dwiDirFile);
-                        } else {
-                            for (File file : dwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                curDatasetThread.addToDwiSliceCount(dwiFiles.size());
-                
-                if (foundPWI) {
-                    // check for Reg series in the newly received files
-                    boolean isNewReg = false;
-                    Vector<File> pwiRegFiles = new Vector<File>();
-                    
-                    for (int i = 0; i < pwiFiles.size(); i++) {
-                        final Attributes attr = pwiAttrList.get(i);
-                        final String seriesDesc = attr.getString(TagUtils.toTag(0x0008, 0x103E));
-                        final String protocolName = attr.getString(TagUtils.toTag(0x0018, 0x1030));
-                        
-                        if (PlugInDialogStrokeSegmentationPWI.isRegisteredVol(seriesDesc, protocolName)) {
-                            pwiRegFiles.add(pwiFiles.get(i));
-                        }
-                    }
-                    
-                    if (pwiRegFiles.size() > 0) {
-                        pwiFiles = pwiRegFiles;
-                        isNewReg = true;
-                    }
-                    
-                    // check for previous transfer
-                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
-                    if (pwiDirFile.exists()) {
-                        log("Found previously received PWI volume in output directory, but also received new PWI volume.");
-                        
-                        File prevFile = pwiDirFile.listFiles()[0];
-                        Attributes prevAttr = null;
-                        try {
-                            prevAttr = parse(prevFile);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        
-                        Attributes newAttr = pwiAttrList.get(0);
-                        
-                        boolean isPrevReg = isRegisteredVol(prevAttr);
-                        
-                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-                        
-                        if (isNewReg && isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
-                            // both Reg w/ same study num - merge
-                            log("Merging new PWI files with previously received volume.");
-                            
-                            for (File file : pwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (!isNewReg && !isPrevReg && prevStudyNum.equalsIgnoreCase(newStudyNum)) {
-                            // both not Reg w/ same study num - merge
-                            log("Merging new PWI files with previously received volume.");
-                            
-                            for (File file : pwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (isNewReg && !isPrevReg) {
-                            // move prev out of the way and use new files only
-                            log("Preferring newly received PWI volume.");
-
-                            // clean-up prev PWI dir
-                            File backupDir = new File(pwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-                            log("Moving to old PWI volume to " + backupDir);
-                            boolean success = pwiDirFile.renameTo(backupDir);
-                            if (!success) {
-                                log("Failed to move previous PWI data to : " + backupDir);
-                            }
-                            curDatasetThread.resetPwiSliceCount();
-                            
-                            for (File file : pwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else if (!isNewReg && isPrevReg) {
-                            // disregard new files and only use prev files
-                            log("Preferring previously received PWI volume.");
-                            
-                            // remove all the new files from our list
-                            pwiFiles.clear();
-                        } else {
-                            // TODO non-matching study numbers w/ same Reg status - what should be done?
-                            log("Both previously received volume and new PWI files received, but study numbers do not match (old: " + prevStudyNum + " new: " + newStudyNum + ")");
-                        }
-                    } else {
-                        // no prev transfer - use new files and move them to processing dir
-                        log("Received new PWI volume.  No previous PWI transfer for this subject/study.");
-
-                        if (!pwiDirFile.mkdir()) {
-                            log("Failed to create directory: " + pwiDirFile);
-                        } else {
-                            for (File file : pwiFiles) {
-                                try {
-                                    renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                curDatasetThread.addToPwiSliceCount(pwiFiles.size());
-                
-//                // if we didn't find both ADC and DWI, check for previous transfer in output dir
-//                if (baseOutputDir != null && !foundADC || !foundDWI || !foundPWI) {
-//                    File[] outputDirFiles = baseOutputDir.listFiles();
-//                    for (File file : outputDirFiles) {
-//                        if (file.isDirectory()) { 
-//                            if (file.getName().equalsIgnoreCase("ADC")) {
-//                                foundOutputDirADC = true;
-//                            } else if (file.getName().equalsIgnoreCase("DWI")) {
-//                                foundOutputDirDWI = true;
-//                            } else if (file.getName().equalsIgnoreCase("PWI")) {
-//                                foundOutputDirPWI = true;
-//                            }
-//                        } else if (file.getName().equalsIgnoreCase("core_seg_report.html")) {
-//                            log("New data received for previously segmented subject.  Not running the segmentation again.");
-//                            alreadySegmented = true;
-//                        }
-//                    }
-//                    
-//                    if (foundADC && foundOutputDirADC) {
-//                        log("Found previously received ADC volume in output directory, but also received new ADC volume.");
-//                        
-//                        File prevFile = new File(baseOutputDir + File.separator + "ADC").listFiles()[0];
-//                        Attributes prevAttr = null;
-//                        try {
-//                            prevAttr = parse(prevFile);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        Attributes newAttr = adcAttrList.get(0);
-//                        
-//                        boolean isPrevReg = isRegisteredVol(prevAttr);
-//                        boolean isNewReg = isRegisteredVol(newAttr);
-//                        
-//                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-//                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-//                        
-//                        // prefer series marked as 'reg', but otherwise go with the new one
-//                        if (!isNewReg && isPrevReg) {
-//                            log("Preferring previously received ADC volume.");
-//                            usePrevADC = true;
-//                        } else if (isNewReg && !isPrevReg) {
-//                            log("Preferring newly received ADC volume.");
-//                            usePrevADC = false;
-//                        } else if (prevStudyNum.equals(newStudyNum)) {
-//                            log("Merging new ADC files with previously received volume.");
-//                            mergeADC = true;
-//                        } else {
-//                            log("Preferring newly received ADC volume.");
-//                            usePrevADC = false;
-//                        }
-//                    } else if (!foundADC && foundOutputDirADC) {
-//                        log("Found previously received ADC volume in output directory.");
-//                        usePrevADC = true;
-//                    }
-//                    
-//                    if (foundDWI && foundOutputDirDWI) {
-//                        log("Found previously received DWI volume in output directory, but also received new DWI volume.");
-//                        
-//                        File prevFile = new File(baseOutputDir + File.separator + "DWI").listFiles()[0];
-//                        Attributes prevAttr = null;
-//                        try {
-//                            prevAttr = parse(prevFile);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        Attributes newAttr = dwiAttrList.get(0);
-//                        
-//                        boolean isPrevReg = isRegisteredVol(prevAttr);
-//                        boolean isNewReg = isRegisteredVol(newAttr);
-//                        
-//                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-//                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-//                        
-//                        // prefer series marked as 'reg', but otherwise go with the new one
-//                        if (!isNewReg && isPrevReg) {
-//                            log("Preferring previously received DWI volume.");
-//                            usePrevDWI = true;
-//                        } else if (isNewReg && !isPrevReg) {
-//                            log("Preferring newly received DWI volume.");
-//                            usePrevDWI = false;
-//                        } else if (prevStudyNum.equals(newStudyNum)) {
-//                            log("Merging new DWI files with previously received volume.");
-//                            mergeDWI = true;
-//                        } else {
-//                            log("Preferring newly received DWI volume.");
-//                            usePrevDWI = false;
-//                        }
-//                    } else if (!foundDWI && foundOutputDirDWI) {
-//                        log("Found previously received DWI volume in output directory.");
-//                        usePrevDWI = true;
-//                    }
-//                    
-//                    if (foundPWI && foundOutputDirPWI) {
-//                        log("Found previously received PWI volume in output directory, but also received new PWI volume.");
-//                        
-//                        File prevFile = new File(baseOutputDir + File.separator + "PWI").listFiles()[0];
-//                        Attributes prevAttr = null;
-//                        try {
-//                            prevAttr = parse(prevFile);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        Attributes newAttr = pwiAttrList.get(0);
-//                        
-//                        boolean isPrevReg = isRegisteredVol(prevAttr);
-//                        boolean isNewReg = isRegisteredVol(newAttr);
-//                        
-//                        final String prevStudyNum = prevAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-//                        final String newStudyNum = newAttr.getString(TagUtils.toTag(0x0020, 0x0011));
-//                        
-//                        // prefer series marked as 'reg', but otherwise go with the new one
-//                        if (!isNewReg && isPrevReg) {
-//                            log("Preferring previously received PWI volume.");
-//                            usePrevPWI = true;
-//                        } else if (isNewReg && !isPrevReg) {
-//                            log("Preferring newly received PWI volume.");
-//                            usePrevPWI = false;
-//                        } else if (prevStudyNum.equals(newStudyNum)) {
-//                            log("Merging new PWI files with previously received volume.");
-//                            mergePWI = true;
-//                        } else {
-//                            log("Preferring newly received PWI volume.");
-//                            usePrevPWI = false;
-//                        }
-//                    } else if (!foundPWI && foundOutputDirPWI) {
-//                        log("Found previously received PWI volume in output directory.");
-//                        usePrevPWI = true;
-//                    }
-//                }
-//                
-//                // move ADC and DWI files to their own dir under parent inside outputDir
-//                if (foundADC && !usePrevADC) {
-//                    log("Found ADC volume in completed transfer. Moving to " + baseOutputDir);
-//                    
-//                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-//                    
-//                    // clean-up prev ADC dir
-//                    if (foundOutputDirADC && !mergeADC) {
-//                        File backupDir = new File(adcDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-//                        boolean success = adcDirFile.renameTo(backupDir);
-//                        if (success) {
-//                            log("Failed to move previous ADC data to : " + backupDir);
-//                        }
-//                    }
-//                    
-//                    for (File file : adcFiles) {
-//                        try {
-//                            renameTo(association, file, new File(adcDirFile.getAbsolutePath() + File.separator + file.getName()));
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
-//                
-//                if (foundDWI && !usePrevDWI) {
-//                    log("Found DWI volume in completed transfer. Moving to " + baseOutputDir);
-//                    
-//                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-//                    
-//                    // clean-up prev DWI dir
-//                    if (foundOutputDirDWI && !mergeDWI) {
-//                        File backupDir = new File(dwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-//                        boolean success = dwiDirFile.renameTo(backupDir);
-//                        if (success) {
-//                            log("Failed to move previous DWI data to : " + backupDir);
-//                        }
-//                    }
-//                    
-//                    for (File file : dwiFiles) {
-//                        try {
-//                            renameTo(association, file, new File(dwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
-//                
-//                if (foundPWI && !usePrevPWI) {
-//                    log("Found PWI volume in completed transfer. Moving to " + baseOutputDir);
-//                    
-//                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
-//                    
-//                    // clean-up prev PWI dir
-//                    if (foundOutputDirPWI && !mergePWI) {
-//                        File backupDir = new File(pwiDirFile.getAbsolutePath() + "_old_" + System.currentTimeMillis());
-//                        boolean success = pwiDirFile.renameTo(backupDir);
-//                        if (success) {
-//                            log("Failed to move previous PWI data to : " + backupDir);
-//                        }
-//                    }
-//                    
-//                    for (File file : pwiFiles) {
-//                        try {
-//                            renameTo(association, file, new File(pwiDirFile.getAbsolutePath() + File.separator + file.getName()));
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
-//                
-//                
-//                
-//                if (!alreadySegmented) {
-//                	if (foundPWI || usePrevPWI) {
-//                		// use PWI version of the coretool algo
-//	                	if (((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
-//		                    // check that the number of files in the ADC and DWI directories are the same
-//		                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-//		                    int numAdcFiles = adcDirFile.listFiles().length;
-//		                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-//		                    int numDwiFiles = dwiDirFile.listFiles().length;
-//		                    
-//		                    File pwiDirFile = new File(baseOutputDir + File.separator + "PWI");
-//		                    int numPwiFiles = pwiDirFile.listFiles().length;
-//		                    
-//		                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
-//		                    	if (numPwiFiles >= minExpectedSlicesPWI) {
-//		                    		log("Received " + numPwiFiles + " PWI files, meeting minimum threshold (" + minExpectedSlicesPWI + ")");
-//		                    		log("Running PWI-incorporating segmentation on datasets in " + baseOutputDir.getAbsolutePath());
-//		                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), false);
-//		                    	} else {
-//		                    		log("Received " + numPwiFiles + " PWI files, NOT meeting minimum threshold (" + minExpectedSlicesPWI + ")");
-//		                    		log("Running non-PWI segmentation on datasets in " + baseOutputDir.getAbsolutePath());
-//		                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), true);
-//		                    	}
-//		                    } else {
-//		                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
-//		                    }
-//		                } else {
-//		                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
-//		                }
-//                	} else {
-//                		if (((foundADC && foundDWI) || (foundADC && usePrevDWI) || (usePrevADC && foundDWI))) {
-//		                    // check that the number of files in the ADC and DWI directories are the same
-//		                    File adcDirFile = new File(baseOutputDir + File.separator + "ADC");
-//		                    int numAdcFiles = adcDirFile.listFiles().length;
-//		                    File dwiDirFile = new File(baseOutputDir + File.separator + "DWI");
-//		                    int numDwiFiles = dwiDirFile.listFiles().length;
-//		                    
-//		                    if (numAdcFiles == numDwiFiles && numAdcFiles >= minExpectedSlices) {
-//	                    		log("Running non-PWI segmentation on datasets in " + baseOutputDir.getAbsolutePath());
-//	                    		new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, baseOutputDir.getAbsolutePath(), true);
-//		                    } else {
-//		                        log("Expected number of DWI or ADC files not reached " + minExpectedSlices + ". Skipping segmentation. " + baseOutputDir + " --- ADC: " + numAdcFiles + " --- DWI: " + numDwiFiles);
-//		                    }
-//		                } else {
-//		                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
-//		                }
-//                	}
-//                } else {
-//                	log("DICOM transfer complete - no segmentation performed (new ADC: " + foundADC + " -- new DWI: " + foundDWI + " -- new PWI: " + foundPWI + " -- old ADC: " + usePrevADC + " -- old DWI: " + usePrevDWI + " -- old PWI: " + usePrevPWI + ").");
-//                }
                 
                 // check if incoming dicom dir is empty and remove if it is
                 try {
