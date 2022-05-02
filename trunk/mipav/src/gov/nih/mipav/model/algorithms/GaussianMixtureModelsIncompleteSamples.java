@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -271,6 +272,20 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    
 	    // data come from pure GMM model or one with background?
 	    double orig[][] = gmm.draw(N, rng);
+	    double orig_bg[][];
+	    Background bg;
+	    if (bg_amp == 0.0) {
+	        orig_bg = orig;	
+	        bg = null;
+	    }
+	    else {
+	        double footprint[][] = new double[][] {{-10,-10},{20,20}};
+	        bg = new Background(footprint,0.0);
+	        bg.amp = bg_amp;
+	        bg.adjust_amp = true;
+
+	        int bg_size = (int)(bg_amp/(1-bg_amp) * N);
+	    }
 	} // public void test()
 	
     
@@ -306,9 +321,14 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		// draw indices for components given amplitudes, need to make sure: sum=1
     		// ind = rng.choice(self.K, size=size, p=self.amp/self.amp.sum())
     		// N = np.bincount(ind, minlength=self.K)
-    		int i,j;
+    		int i,j,m,p;
     		boolean found;
     		double value;
+    		int lower;
+    		int upper;
+    		int N[];
+    		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    		
     		double sum = 0.0;
     		for (i = 0; i < K; i++) {
     			sum += amp[i];
@@ -333,21 +353,120 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		    	}
     		    }
     		}
-    		int N[] = new int[K];
+    		N = new int[K];
+    		
     		for (i = 0; i < K; i++) {
     			for (j = 0; j < size; j++) {
     				if (ind[j] == i) {
     					N[i]++;
     				}
+    				
     			}
     		}
 
     		// for each component: draw as many points as in ind from a normal
     		double samples[][] = new double[size][D];
-    		int lower = 0;
+    		double L[][] = new double[D][D];
+    		int info[] = new int[1];
+    		double u[] = new double[D];
+    		lower = 0;
+    		for (i = 0; i < K; i++) {
+    			if (N[i] != 0) {
+    			    upper = lower + N[i];
+    			    for (j = 0; j < D; j++) {
+    			    	for (m = 0; m < D; m++) {
+    			    		L[j][m] = covar[i][j][m];
+    			    	}
+    			    }
+    			    // dpotrf computes the Cholesky factorization of a real symmetric
+    			    // positive definite matrix A.  The factorization has the form A = U'*U, 
+    			    // if uplo = 'U', or A = L * L', if uplo = 'L', where U is an upper
+    			    // triangular matrix and L is lower triangular.  If uplo == 'L', the leading n-by-n lower
+    			    // triangular part of A contains the lower triangular part of the matrix A, 
+    			    // and the strictly upper triangular part of A is not referenced.
+    			    ge.dpotrf('L',D,L,D,info);
+    			    if (info[0] < 0) {
+    			    	System.err.println("In GMM.draw dpotrf had an illegal value for argument " + (-info[0]));
+    			    	System.exit(-1);
+    			    }
+    			    if (info[0] > 0) {
+    			    	System.err.println("In GMM.draw for dpotrf the leading minor of order " + info[0] + " is not positive definite");
+    			    	System.err.println("and the factorization could not be completed.");
+    			    	System.exit(-1);
+    			    }
+    			    for (j = 0; j < D; j++) {
+    			    	for (m = 0; m < j; m++) {
+    			    		L[j][m] = 0.0;
+    			    	}
+    			    }
+    			    for (j = lower; j < upper; j++) {
+    			        for (m = 0; m < D; m++) {
+    			        	u[m] = rng.nextGaussian();
+    			        }
+    			        for (m = 0; m < D; m++) {
+    			        	for (p = 0; p < D; p++) {
+    			        	    samples[j][m] += L[m][p]*u[p];	
+    			        	}
+    			        	samples[j][m] += mean[j][m];
+    			        }
+    			    } // for (j = lower; j < upper; j++)
+    			    lower = upper;
+    			} // if (N[i] != 0)
+    		} // for (i = 0; i < K; i++)
     		return samples;
     	}
     	
+    } // class GMM
+    
+    class Background {
+    	// Background object to be used in conjuction with GMM.
+
+        // For a normalizable uniform distribution, a support footprint must be set.
+        // It should be sufficiently large to explain all non-clusters samples.
+
+        // Attributes:
+            // amp (float): mixing amplitude default = 0.0;
+            // footprint: numpy array, (2, D) of rectangular volume
+            // adjust_amp (bool): whether amp will be adjusted as part of the fit
+            // amp_max (float): maximum value of amp allowed if adjust_amp=True
+    	
+    	double footprint[][];
+    	double amp = 0.0;
+    	boolean adjust_amp;
+    	double amp_max;
+    	double amp_min;
+    	
+    	public Background(double footprint[][], double amp) {
+    	    this.amp = amp;
+    	    this.footprint = footprint;
+    	    adjust_amp = true;
+    	    amp_max = 1.0;
+    	    amp_min = 0.0;
+    	}
+    	
+    	public double[][] draw(int size, Random rng) {
+    		// Draw samples from uniform background.
+
+            // Args:
+            //    size (int): number of samples to draw
+            //    rng: numpy.random.RandomState for deterministic draw
+
+            // Returns:
+            //    numpy array (size, D)
+    		int i,j;
+            double dx[] = new double[D];
+            for (i = 0; i < D; i++) {
+            	dx[i] = footprint[i][1] = footprint[i][0];
+            }
+            double result[][] = new double[size][D];
+            double ranarr[][] = new double[size][D];
+            for (i = 0; i < size; i++) {
+            	for (j = 0; j < D; j++) {
+            		ranarr[i][j] = rng.nextDouble();
+            	}
+            }
+            return result;
+    	}
     }
 }
 
