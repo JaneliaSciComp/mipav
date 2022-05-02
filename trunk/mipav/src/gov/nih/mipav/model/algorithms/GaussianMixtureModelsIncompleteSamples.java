@@ -285,7 +285,30 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        bg.adjust_amp = true;
 
 	        int bg_size = (int)(bg_amp/(1-bg_amp) * N);
+	        double orig2[][] = bg.draw(bg_size, rng);
+	        orig_bg = new double[orig.length + orig2.length][orig[0].length];
+	        for (i = 0; i < orig.length; i++) {
+	        	for (j = 0; j < orig[0].length; j++) {
+	        	    orig_bg[i][j] = orig[i][j];	
+	        	}
+	        }
+	        for (i = 0; i < orig2.length; i++) {
+	        	for (j = 0; j < orig[0].length; j++) {
+	        		orig_bg[orig.length + i][j] = orig2[i][j];
+	        	}
+	        }
+	    } // else
+	    
+	    // add isotropic errors on data
+	    double noisy[][] = new double[orig_bg.length][D];
+	    for (i = 0; i < orig_bg.length; i++) {
+	    	for (j = 0; j < D; j++) {
+	    		noisy[i][j] = orig_bg[i][j] + rng.nextGaussian()*disp; 
+	    	}
 	    }
+	    
+	    // get observational selection function
+	    //omega, ps = getSelection(sel_type, rng);
 	} // public void test()
 	
     
@@ -444,6 +467,19 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	    amp_min = 0.0;
     	}
     	
+    	public double p() {
+    		// Probability of the background model.
+
+            // Returns:
+                // float, equal to 1/volume, where volume is given by footprint.
+    		int i;
+    		double volume = footprint[1][0] - footprint[0][0];
+    		for (i = 1; i < D; i++) {
+    			volume *= (footprint[1][i] - footprint[0][i]); 
+    		}
+    		return (1.0/volume);
+    	}
+    	
     	public double[][] draw(int size, Random rng) {
     		// Draw samples from uniform background.
 
@@ -456,7 +492,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		int i,j;
             double dx[] = new double[D];
             for (i = 0; i < D; i++) {
-            	dx[i] = footprint[i][1] = footprint[i][0];
+            	dx[i] = footprint[1][i] - footprint[0][i];
             }
             double result[][] = new double[size][D];
             double ranarr[][] = new double[size][D];
@@ -465,8 +501,84 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             		ranarr[i][j] = rng.nextDouble();
             	}
             }
+            for (i = 0; i < size; i++) {
+            	for (j = 0; j < D; j++) {
+            	result[i][j] = footprint[0][j]	+ dx[j]*ranarr[i][j];
+            	}
+            }
             return result;
     	}
+    }
+    
+    /*getSelection(type="hole", rng=np.random):
+        if type == "hole":
+            cb = getHole
+            ps = patches.Circle([6.5, 6.], radius=2, fc="none", ec='k', lw=1, ls='dashed')
+        if type == "box":
+            cb = getBox
+            ps = patches.Rectangle([0,0], 10, 10, fc="none", ec='k', lw=1, ls='dashed')
+        if type == "boxWithHole":
+            cb = getBoxWithHole
+            ps = [patches.Circle([6.5, 6.], radius=2, fc="none", ec='k', lw=1, ls='dashed'),
+                patches.Rectangle([0,0], 10, 10, fc="none", ec='k', lw=1, ls='dashed')]
+        if type == "cut":
+            cb = getCut
+            ps = lines.Line2D([6, 6],[-5, 15], ls='dotted', lw=1, color='k')
+        if type == "all":
+            cb = getAll
+            ps = None
+        return cb, ps*/
+    
+    public boolean[] getBox(double coords[][]) {
+    	int i;
+        boolean result[] = new boolean[coords.length];
+        double box_limits[][] = new double[][] {{0.0,0.0},{10.0,10.0}};
+        for (i = 0; i < coords.length; i++) {
+        	if ((coords[i][0] > box_limits[0][0]) && (coords[i][0] < box_limits[1][0]) &&
+        			(coords[i][1] > box_limits[0][1]) && (coords[i][1] < box_limits[1][1])) {
+        		result[i] = true;
+        	}
+        }
+        return result;
+    }
+    
+    public boolean[] getHole(double coords[][]) {
+    	int i;
+    	boolean result[] = new boolean[coords.length];
+    	double x = 6.5;
+    	double y = 6.0;
+    	double r = 2.0;
+    	double xdiff;
+    	double ydiff;
+    	for (i = 0; i < coords.length; i++) {
+    	    xdiff = coords[i][0] - x;
+    	    ydiff = coords[i][1] - y;
+    	    if ((xdiff*xdiff + ydiff*ydiff) > r*r) {
+    	    	result[i] = true;
+    	    }
+    	}
+    	return result;
+    }
+    
+    public boolean[] getBoxWithHole(double coords[][]) {
+    	int i;
+        boolean result[] = new boolean[coords.length];
+        double box_limits[][] = new double[][] {{0.0,0.0},{10.0,10.0}};
+        double x = 6.5;
+    	double y = 6.0;
+    	double r = 2.0;
+    	double xdiff;
+    	double ydiff;
+        for (i = 0; i < coords.length; i++) {
+        	xdiff = coords[i][0] - x;
+    	    ydiff = coords[i][1] - y;
+        	if ((coords[i][0] > box_limits[0][0]) && (coords[i][0] < box_limits[1][0]) &&
+        			(coords[i][1] > box_limits[0][1]) && (coords[i][1] < box_limits[1][1]) && 
+        		((xdiff*xdiff + ydiff*ydiff) > r*r)) {
+        		result[i] = true;
+        	}
+        }
+        return result;
     }
 }
 
