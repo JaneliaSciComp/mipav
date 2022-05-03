@@ -309,6 +309,39 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    
 	    // get observational selection function
 	    //omega, ps = getSelection(sel_type, rng);
+	    
+	    // apply selection
+	    // sel = rng.rand(N) < omega(noisy)
+	    double ranarr[] = new double[N];
+	    for (i = 0; i < N; i++) {
+	    	ranarr[i] = rng.nextDouble();
+	    }
+	    double omega[] = getBoxWithHole(noisy);
+	    boolean sel[] = new boolean[N];
+	    int numSel = 0;
+	    for (i = 0; i < N; i++) {
+	    	if (omega[i] > ranarr[i]) {
+	    		sel[i] = true;
+	    		numSel++;
+	    	}
+	    }
+	    double data[][] = new double[numSel][D];
+	    for (i = 0, j = 0; i < N; i++) {
+	    	if (sel[i]) {
+	    		for (m = 0; m < D; m++) {
+	    	        data[j][m] = noisy[i][m];
+	    	        j++;
+	    		}
+	    	}
+	    }
+	    // single covariance for all samples
+	    double covar[][] = new double[D][D];
+	    for (i = 0; i < D; i++) {
+	    	covar[i][i] = disp*disp;
+	    }
+	    
+	    // plot data vs true model
+	    // plotResults(orig, data, gmm, patch=ps, description="Truth", disp=disp)
 	} // public void test()
 	
     
@@ -529,22 +562,22 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             ps = None
         return cb, ps*/
     
-    public boolean[] getBox(double coords[][]) {
+    public double[] getBox(double coords[][]) {
     	int i;
-        boolean result[] = new boolean[coords.length];
+        double result[] = new double[coords.length];
         double box_limits[][] = new double[][] {{0.0,0.0},{10.0,10.0}};
         for (i = 0; i < coords.length; i++) {
         	if ((coords[i][0] > box_limits[0][0]) && (coords[i][0] < box_limits[1][0]) &&
         			(coords[i][1] > box_limits[0][1]) && (coords[i][1] < box_limits[1][1])) {
-        		result[i] = true;
+        		result[i] = 1.0;
         	}
         }
         return result;
     }
     
-    public boolean[] getHole(double coords[][]) {
+    public double[] getHole(double coords[][]) {
     	int i;
-    	boolean result[] = new boolean[coords.length];
+    	double result[] = new double[coords.length];
     	double x = 6.5;
     	double y = 6.0;
     	double r = 2.0;
@@ -554,15 +587,15 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	    xdiff = coords[i][0] - x;
     	    ydiff = coords[i][1] - y;
     	    if ((xdiff*xdiff + ydiff*ydiff) > r*r) {
-    	    	result[i] = true;
+    	    	result[i] = 1.0;
     	    }
     	}
     	return result;
     }
     
-    public boolean[] getBoxWithHole(double coords[][]) {
+    public double[] getBoxWithHole(double coords[][]) {
     	int i;
-        boolean result[] = new boolean[coords.length];
+        double result[] = new double[coords.length];
         double box_limits[][] = new double[][] {{0.0,0.0},{10.0,10.0}};
         double x = 6.5;
     	double y = 6.0;
@@ -575,11 +608,41 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	if ((coords[i][0] > box_limits[0][0]) && (coords[i][0] < box_limits[1][0]) &&
         			(coords[i][1] > box_limits[0][1]) && (coords[i][1] < box_limits[1][1]) && 
         		((xdiff*xdiff + ydiff*ydiff) > r*r)) {
-        		result[i] = true;
+        		result[i] = 1.0;
         	}
         }
         return result;
     }
+    
+    public double[] getCut(double coords[][]) {
+    	int i;
+        double result[] = new double[coords.length];
+        for (i = 0; i < coords.length; i++) {
+        	if (coords[i][0] < 6) {
+        		result[i] = 1.0;
+        	}
+        }
+        return result;
+    }
+    
+    public double[] getAll(double coords[][]) {
+    	int i;
+    	double result[] = new double[coords.length];
+        for (i = 0; i < coords.length; i++) {
+            result[i] = 1.0;
+        }
+        return result;
+    }
+    
+    public double[] getHalf(double coords[][]) {
+    	int i;
+    	double result[] = new double[coords.length];
+        for (i = 0; i < coords.length; i++) {
+            result[i] = 0.5;
+        }
+        return result;
+    }
+
 }
 
     
