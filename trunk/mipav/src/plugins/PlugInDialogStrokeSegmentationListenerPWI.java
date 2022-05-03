@@ -52,7 +52,7 @@ public class PlugInDialogStrokeSegmentationListenerPWI extends JFrame implements
     
     private int minExpectedSlices = 30;
     
-    private int[] minExpectedSlicesPWI = new int[] {1600, 2400, 2640};
+    private int[] minExpectedSlicesPWI = new int[] {1200, 1600, 2400, 2640};
     
     private int maxWaitTime = 15;
     
