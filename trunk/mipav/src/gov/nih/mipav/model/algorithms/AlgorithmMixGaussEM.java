@@ -169,7 +169,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		    wvg = new WishartVariateGenerator(W0, v0, SA, SB);
 		    wvg.run();
 		    le2.dgetrf(d,d,SA,d,ipiv,info);
-		    boolean rankDeficient = true;
+		    boolean rankDeficient = false;
 		    if (info[0] < 0) {
 		    	  System.err.println("In le2.dgetrf argument number " + 
 		      (-info[0]) + " is illegal");
