@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -341,7 +342,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    }
 	    
 	    // plot data vs true model
-	    // plotResults(orig, data, gmm, patch=ps, description="Truth", disp=disp)
+	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", disp);
 	} // public void test()
 	
     
@@ -472,7 +473,168 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		return samples;
     	}
     	
+    	public double[] _call_(double coords[][], double cov[][][], boolean as_log) {
+    		// default cov = null, as_log = false 
+    		// Evaluate model PDF at given coordinates.
+
+            // see logL() for details.
+
+            // Args:
+            //    coords: numpy array (N, D) of test coordinates
+            //    cov:  numpy array (N, D, D) covariance matrix of coords
+            //    as_log (bool): return log(p) instead p
+
+            // Returns:
+            //     numpy array (N, 1) of PDF (or its log)
+    		int i;
+    		double result[] = logL(coords, cov);
+    		if (!as_log) {
+    			for (i = 0; i < result.length; i++) {
+    				result[i] = Math.exp(result[i]);
+    			}
+    		}
+    		return result;
+    	}
+    	
+    	public double[] logL(double coords[][], double cov[][][]) {
+    		// Log-likelihood of coords given all (i.e. the sum of) GMM components
+
+            // Distributes computation over all threads on the machine.
+
+            // If covar is None, this method returns
+                // log(sum_k(p(x | k)))
+            // of the data values x. If covar is set, the method returns
+                // log(sum_k(p(y | k))),
+            // where y = x + noise and noise ~ N(0, covar).
+
+            // Args:
+                // coords: numpy array (N, D) of test coordinates
+                // cov:  numpy array (N, D, D) covariance matrix of coords
+
+            // Returns:
+                // numpy array (N, 1) log(L)
+    		int i;
+    		double log_p_y_k[][] = new double[K][coords.length];
+    		for (i = 0; i < K; i++) {
+    			log_p_y_k[i] = logL_k(i, coords, cov, false);
+    		}
+    		return logsum(log_p_y_k);
+    	}
+    	
+    	public double[] logL_k(int k, double coords[][], double cov[][][], boolean chi2_only) {
+    		// defaults cov = null, chi2-only = false
+            // Log-likelihood of coords given only component k.
+
+            // Args:
+            //    k (int): component index
+            //    coords: numpy array (N, D) of test coordinates
+            //    cov:  numpy array (N, D, D) covariance matrix of coords
+            //    chi2_only (bool): only compute deltaX^T Sigma_k^-1 deltaX
+
+            // Returns:
+            //    numpy array (1,) or (N, 1) log(L), depending on shape of data
+    		
+    		// compute p(x | k)
+    		int i,j;
+    		LinearEquations2 le2 = new LinearEquations2();
+    		int N = coords.length;
+    		double dx[][] = new double[N][D];
+    		for (i = 0; i < N; i++) {
+    			for (j = 0; j < D; j++) {
+    				dx[i][j] = coords[i][j] - mean[k][j];
+    			}
+    		}
+    		double T_k[][];
+    		if (cov == null) {
+                T_k = covar[k];
+    		}
+            else {
+            	T_k = new double[D][D];
+            	for (i = 0; i < D; i++) {
+            		for (j = 0; j < D; j++) {
+                    T_k[i][j] = covar[k][i][j] + cov[0][i][j];
+            		}
+            	}
+            }
+    		// chi2 = np.einsum('...i,...ij,...j', dx, np.linalg.inv(T_k), dx)
+    		int ipiv[] = new int[D];
+    		int info[] = new int[1];
+    		double work[];
+    		int lwork;
+    		le2.dgetrf(D,D,T_k,D,ipiv,info);
+		    boolean rankDeficient = false;
+		    if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetrf argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  System.exit(-1);
+		      }
+		      if (info[0] > 0) {
+		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		    	  System.exit(-1);
+		      }
+		      work = new double[1];
+		      lwork = -1;
+		      le2.dgetri(D,T_k,D,ipiv,work,lwork,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetri argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  System.exit(-1);
+		      }
+		      lwork = (int)work[0];
+		      work = new double[lwork];
+		      le2.dgetri(D,T_k,D,ipiv,work,lwork,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetri argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  System.exit(-1);
+		      }
+		      if (info[0] > 0) {
+		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		    	  System.exit(-1);
+		      }
+		      return null;
+    	}
+    	
     } // class GMM
+    
+    public double[] logsum(double input[][]) {
+    	int i, j;
+    	double c;
+    	double result[] = new double[input[0].length];
+    	for (j = 0; j < input[0].length; j++) {
+    		/*for (i = 0; i < input.length; i++) {
+    			result[j] += input[i][j];
+    		}
+    		result[j] = Math.log(result[j]);*/
+    		double minValue = Double.MAX_VALUE;
+    		double maxValue = -Double.MAX_VALUE;
+    		for (i = 0; i < input.length; i++) {
+    			if (input[i][j] < minValue) {
+    				minValue = input[i][j];
+    			}
+    			if (input[i][j] > maxValue) {
+    				maxValue = input[i][j];
+    			}
+    		}
+    		double underflow = Math.log(Double.MIN_NORMAL) - minValue;
+    	    double overflow = Math.log(Double.MAX_VALUE) - maxValue - Math.log(input.length);
+    	    if (underflow < overflow) {
+    	    	c = underflow;
+    	    }
+    	    else {
+    	    	c = overflow;
+    	    }
+    	    double sum = 0.0;
+    	    for (i = 0; i < input.length; i++) {
+    	        double ex = Math.exp(input[i][j] + c);
+    	        sum += ex;
+    	    }
+    	    result[j] = Math.log(sum) - c;
+    	}
+    	return result;
+    }
     
     class Background {
     	// Background object to be used in conjuction with GMM.
@@ -641,6 +803,30 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             result[i] = 0.5;
         }
         return result;
+    }
+    
+    public void plotResults(double orig[][], double data[][], GMM gmm, /* patches ps, */
+    		String description, double disp) {
+        // orig is [N][D], D = 2
+    	// data is [numSel][D]
+    	int i;
+    	float xInit[][] = new float[2][orig.length];
+    	float yInit[][] = new float[2][orig.length];
+    	for (i = 0; i < orig.length; i++) {
+    		xInit[0][i] = (float)orig[i][0];
+    		yInit[0][i] = (float)orig[i][1];
+    	}
+    	for (i = 0; i < data.length-1; i++) {
+    		xInit[1][i] = (float)data[i][0];
+    		yInit[1][i] = (float)data[i][1];
+    	}
+    	for (i = data.length-1; i < orig.length; i++) {
+    		xInit[1][i] = (float)data[data.length-1][0];
+    		yInit[1][i] = (float)data[data.length-1][1];
+    	}
+    	ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, description, "X coordinate", "Y coordinate");
+    	ViewJComponentGraph vcGraph = vFrameGraph.getGraph();
+	    vcGraph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_ONLY);
     }
 
 }
