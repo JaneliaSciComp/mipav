@@ -7,6 +7,8 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
+
+import Jama.Matrix;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
@@ -220,7 +222,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	}
 	
 	public void test() {
-		int i,j,m;
+		int i,j,m,r;
 		// set up test
 	    int N = 400;         // number of samples
 	    int K = 3;           // number of components
@@ -343,6 +345,23 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    
 	    // plot data vs true model
 	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", disp);
+	    
+	    // repeated runs: store results and logL
+	    double l[] = new double[T];
+	    GMM gmms[] = new GMM[T];
+	    for (r = 0; r < T; r++) {
+	    	gmms[r] = new GMM(K,D);
+	    }
+	    
+	    // # 1) EM without imputation, ignoring errors
+	    long start = System.currentTimeMillis();
+	    rng = new Random(seed);
+	    for (r = 0; r < T; r++) {
+	        if (bg != null) {
+	            bg.amp = bg_amp;	
+	        }
+	        l[r] = fit(gmms[r], data, w, cutoff, bg, rng);
+	    } // for (r = 0; r < T; r++)
 	} // public void test()
 	
     
@@ -535,7 +554,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             //    numpy array (1,) or (N, 1) log(L), depending on shape of data
     		
     		// compute p(x | k)
-    		int i,j;
+    		int i,j,m;
     		LinearEquations2 le2 = new LinearEquations2();
     		int N = coords.length;
     		double dx[][] = new double[N][D];
@@ -557,11 +576,18 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             	}
             }
     		// chi2 = np.einsum('...i,...ij,...j', dx, np.linalg.inv(T_k), dx)
+    		// Equivalent to diagonal of (dx * TK.inverse * dx.transpose())
     		int ipiv[] = new int[D];
     		int info[] = new int[1];
     		double work[];
     		int lwork;
-    		le2.dgetrf(D,D,T_k,D,ipiv,info);
+    		double T_kinv[][] = new double[D][D];
+    		for (i = 0; i < D; i++) {
+    			for (j = 0; j < D; j++) {
+    				T_kinv[i][j] = T_k[i][j];
+    			}
+    		}
+    		le2.dgetrf(D,D,T_kinv,D,ipiv,info);
 		    boolean rankDeficient = false;
 		    if (info[0] < 0) {
 		    	  System.err.println("In le2.dgetrf argument number " + 
@@ -575,7 +601,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		      }
 		      work = new double[1];
 		      lwork = -1;
-		      le2.dgetri(D,T_k,D,ipiv,work,lwork,info);
+		      le2.dgetri(D,T_kinv,D,ipiv,work,lwork,info);
 		      if (info[0] < 0) {
 		    	  System.err.println("In le2.dgetri argument number " + 
 		      (-info[0]) + " is illegal");
@@ -583,7 +609,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		      }
 		      lwork = (int)work[0];
 		      work = new double[lwork];
-		      le2.dgetri(D,T_k,D,ipiv,work,lwork,info);
+		      le2.dgetri(D,T_kinv,D,ipiv,work,lwork,info);
 		      if (info[0] < 0) {
 		    	  System.err.println("In le2.dgetri argument number " + 
 		      (-info[0]) + " is illegal");
@@ -594,7 +620,55 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		    	  rankDeficient = true;
 		    	  System.exit(-1);
 		      }
-		      return null;
+		      double dxT[][] = new double[N][D];
+		      for (i = 0; i < N; i++) {
+		    	  for (m = 0; m < D; m++) {
+		    	      for (j = 0; j < D; j++) {
+		    	          dxT[i][m] += dx[i][j] * T_kinv[j][m]; 
+		    	      }
+		    	  }
+		      }
+		      double dxTdx[][] = new double[N][N];
+		      for (i = 0; i < N; i++) {
+		    	  for (m = 0; m < N; m++) {
+		    		  for (j = 0; j < D; j++) {
+		    			  dxTdx[i][m] += dxT[i][j] * dx[m][j];
+		    		  }
+		    	  }
+		      }
+		      double chi2[] = new double[N];
+		      for (i = 0; i < N; i++) {
+		    	  chi2[i] = dxTdx[i][i];
+		      }
+		      
+		      if (chi2_only) {
+		    	  return chi2;
+		      }
+		      
+		      // prevent tiny negative determinants to mess up
+		      // (sign, logdet) = np.linalg.slogdet(T_k)
+		      Matrix TkMat = new Matrix(T_k);
+		      double det = TkMat.det();
+		      double sign;
+		      double logdet;
+		      if (det < 0) {
+		          sign = -1.0;
+		          logdet = Math.log(-det);
+		      }
+		      else if (det == 0.0) {
+		    	  sign = 0.0;
+		    	  logdet = Double.NEGATIVE_INFINITY;
+		      }
+		      else {
+		    	  sign = 1.0;
+		    	  logdet = Math.log(det);
+		      }
+		      double log2piD2 = Math.log(2*Math.PI)*(0.5*D);
+		      double result[] = new double[N];
+		      for (i = 0; i < N; i++) {
+		    	  result[i] = Math.log(amp[k]) - log2piD2 - sign*logdet/2.0 - chi2[i]/2.0;
+		      }
+		      return result;
     	}
     	
     } // class GMM
@@ -809,7 +883,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		String description, double disp) {
         // orig is [N][D], D = 2
     	// data is [numSel][D]
-    	int i;
+    	int i,j;
     	float xInit[][] = new float[2][orig.length];
     	float yInit[][] = new float[2][orig.length];
     	for (i = 0; i < orig.length; i++) {
@@ -827,6 +901,99 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, description, "X coordinate", "Y coordinate");
     	ViewJComponentGraph vcGraph = vFrameGraph.getGraph();
 	    vcGraph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_ONLY);
+	    
+	    // prediction
+	    int B = 100;
+	    double step = (15.0 + 5.0)/(B - 1.0);
+        double x[][] = new double[B][B];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        		x[i][j] = -5 + j*step;
+        	}
+        }
+        double y[][] = new double[B][B];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        		y[i][j] = -5 + i*step;
+        	}
+        }
+        
+        double coords[][] = new double[B*B][2];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        	    coords[i*B +j][0] = x[i][j];
+        	    coords[i*B +j][1] = y[i][j];
+        	}
+        }
+        
+        // compute sum_k(p_k(x)) for all x
+        // p = gmm(coords).reshape((B,B))
+        double p1D[] = gmm._call_(coords,null,false);
+        double p[][] = new double[B][B];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        	    p[i][j] = p1D[i*B + j];	
+        	}
+        }
+        // for better visibility use arcshinh stretch
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+                p[i][j] = asinh(p[i][j]/1e-4);
+        	}
+        }
+    }
+    
+    double asinh(double x)
+    {
+    return Math.log(x + Math.sqrt(x*x + 1.0));
+    }
+    
+    public double fit(GMM gmm, double data[][], /*covar=None, R=None, init_method='random',*/ double w, double cutoff, /*sel_callback=None,
+    		 oversampling=10, covar_callback=None, */ Background background, 
+    		 /*tol=1e-3, miniter=1, maxiter=1000, frozen=None, split_n_merge=False,*/ Random rng) {
+    	        // Default w = 0.0
+    	        // Default cutoff = None
+    	        // Backround = None 
+    		    // Fit GMM to data.
+
+    		    // If given, init_callback is called to set up the GMM components. Then, the
+    		    // EM sequence is repeated until the mean log-likelihood converges within tol.
+
+    		    // Args:
+    		        // gmm: an instance if GMM
+    		        // data: numpy array (N,D)
+    		        // covar: sample noise covariance; numpy array (N,D,D) or (D,D) if i.i.d.
+    		        // R: sample projection matrix; numpy array (N,D,D)
+    		        // init_method (string): one of ['random', 'minmax', 'kmeans', 'none']
+    		            // defines the method to initialize the GMM components
+    		        // w (float): minimum covariance regularization
+    		        // cutoff (float): size of component neighborhood [in 1D equivalent sigmas]
+    		        // sel_callback: completeness callback to generate imputation samples.
+    		        // oversampling (int): number of imputation samples per data sample.
+    		            // only used if sel_callback is set.
+    		            // value of 1 is fine but results are noisy. Set as high as feasible.
+    		        // covar_callback: covariance callback for imputation samples.
+    		            // needs to be present if sel_callback and covar are set.
+    		        // background: an instance of Background if simultaneous fitting is desired
+    		        // tol (float): tolerance for covergence of mean log-likelihood
+    		        // maxiter (int): maximum number of iterations of EM
+    		        // frozen (iterable or dict): index list of components that are not updated
+    		        // split_n_merge (int): number of split & merge attempts
+    		        // rng: numpy.random.RandomState for deterministic behavior
+    		        
+    		        // Notes:
+    		            // If frozen is a simple list, it will be assumed that is applies to mean
+    		            // and covariance of the specified components. It can also be a dictionary
+    		            // with the keys "mean" and "covar" to specify them separately.
+    		            // In either case, amplitudes will be updated to reflect any changes made.
+    		            // If frozen["amp"] is set, it will use this list instead.
+
+    		        // Returns:
+    		            // mean log-likelihood (float), component neighborhoods (list of ints)
+
+    		        // Throws:
+    		            // RuntimeError for inconsistent argument combinations
+    	return 0.0;
     }
 
 }
