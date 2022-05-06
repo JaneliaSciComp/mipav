@@ -360,7 +360,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        if (bg != null) {
 	            bg.amp = bg_amp;	
 	        }
-	        l[r] = fit(gmms[r], data, w, cutoff, bg, rng);
+	        l[r] = fit(gmms[r], data, null, w, cutoff, bg, rng);
 	    } // for (r = 0; r < T; r++)
 	} // public void test()
 	
@@ -890,13 +890,36 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		xInit[0][i] = (float)orig[i][0];
     		yInit[0][i] = (float)orig[i][1];
     	}
-    	for (i = 0; i < data.length-1; i++) {
-    		xInit[1][i] = (float)data[i][0];
-    		yInit[1][i] = (float)data[i][1];
+    	double data_[][];
+    	boolean missing = false;
+    	for (i = 0; i < data.length; i++) {
+    		if ((Double.isNaN(data[i][0])) || (Double.isNaN(data[i][1]))) {
+    		    missing = true;	
+    		}
     	}
-    	for (i = data.length-1; i < orig.length; i++) {
-    		xInit[1][i] = (float)data[data.length-1][0];
-    		yInit[1][i] = (float)data[data.length-1][1];
+    	if (missing) {
+    		data_ = new double[data.length][D];
+    		for (i = 0; i < data.length; i++) {
+    			for (j = 0; j < D; j++) {
+	        		if (Double.isNaN(data[i][j])) {
+	        		    data_[i][j] = -5; // put at limits of plotting range
+	        		}
+	        		else {
+	        			data_[i][j] = data[i][j];
+	        		}
+    			}
+        	}
+    	} // if (missing)
+    	else {
+    		data_ = data;
+    	}
+    	for (i = 0; i < data_.length-1; i++) {
+    		xInit[1][i] = (float)data_[i][0];
+    		yInit[1][i] = (float)data_[i][1];
+    	}
+    	for (i = data_.length-1; i < orig.length; i++) {
+    		xInit[1][i] = (float)data_[data_.length-1][0];
+    		yInit[1][i] = (float)data_[data_.length-1][1];
     	}
     	ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, description, "X coordinate", "Y coordinate");
     	ViewJComponentGraph vcGraph = vFrameGraph.getGraph();
@@ -948,9 +971,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     return Math.log(x + Math.sqrt(x*x + 1.0));
     }
     
-    public double fit(GMM gmm, double data[][], /*covar=None, R=None, init_method='random',*/ double w, double cutoff, /*sel_callback=None,
+    public double fit(GMM gmm, double data[][], double covar[][][], /*R=None, init_method='random',*/ double w, double cutoff, /*sel_callback=None,
     		 oversampling=10, covar_callback=None, */ Background background, 
     		 /*tol=1e-3, miniter=1, maxiter=1000, frozen=None, split_n_merge=False,*/ Random rng) {
+    	        // Default covar = null;
     	        // Default w = 0.0
     	        // Default cutoff = None
     	        // Backround = None 
@@ -993,6 +1017,28 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 
     		        // Throws:
     		            // RuntimeError for inconsistent argument combinations
+    	int i,j;
+    	int N = data.length;
+    	// if there are data (features) missing, i.e. masked as np.nan, set them to zeros
+        // and create/set covariance elements to very large value to reduce its weight
+        // to effectively zero
+    	double data_[][] = new double[N][data[0].length];
+    	boolean missing = false;
+    	for (i = 0; i < N; i++) {
+    		for (j = 0; j < data[0].length; j++) {
+    			data_[i][j] = data[i][j];
+    			if (Double.isNaN(data[i][j])) {
+    				missing = true;
+    				data_[i][j] = 0; // value does not matter as long as it's not nan
+    			}
+    		}
+    	}
+    	if (missing) {
+    	    if (covar == null) {
+    	        covar = new double[1][gmm.D][gmm.D];
+    	        // need to create covar_callback if imputation is requested
+    	    }
+    	} // if (missing)
     	return 0.0;
     }
 
