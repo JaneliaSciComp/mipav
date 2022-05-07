@@ -319,7 +319,25 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    for (i = 0; i < N; i++) {
 	    	ranarr[i] = rng.nextDouble();
 	    }
-	    double omega[] = getBoxWithHole(noisy);
+	    double omega[] = null;
+	    if (sel_type.equalsIgnoreCase("hole")) {
+	       omega = getHole(noisy);	
+	    }
+	    else if (sel_type.equalsIgnoreCase("box")) {
+	        omega = getBox(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("boxWithHole")) {
+	        omega = getBoxWithHole(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("cut")) {
+	    	omega = getCut(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("all")) {
+	    	omega = getAll(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("half")) {
+	    	omega = getHalf(noisy);
+	    }
 	    boolean sel[] = new boolean[N];
 	    int numSel = 0;
 	    for (i = 0; i < N; i++) {
@@ -360,7 +378,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        if (bg != null) {
 	            bg.amp = bg_amp;	
 	        }
-	        l[r] = fit(gmms[r], data, null, w, cutoff, bg, rng);
+	        l[r] = fit(gmms[r], data, null, "random", w, cutoff, null, bg, rng);
 	    } // for (r = 0; r < T; r++)
 	} // public void test()
 	
@@ -971,12 +989,14 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     return Math.log(x + Math.sqrt(x*x + 1.0));
     }
     
-    public double fit(GMM gmm, double data[][], double covar[][][], /*R=None, init_method='random',*/ double w, double cutoff, /*sel_callback=None,
-    		 oversampling=10, covar_callback=None, */ Background background, 
+    public double fit(GMM gmm, double data[][], double covar[][][], /*R=None*/ String init_method, double w, double cutoff, String sel_callback,
+    		 /*oversampling=10, covar_callback=None, */ Background background, 
     		 /*tol=1e-3, miniter=1, maxiter=1000, frozen=None, split_n_merge=False,*/ Random rng) {
     	        // Default covar = null;
+    	        // Default init_method = "random"
     	        // Default w = 0.0
     	        // Default cutoff = None
+    	        // default sel_callback = null
     	        // Backround = None 
     		    // Fit GMM to data.
 
@@ -1017,29 +1037,190 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 
     		        // Throws:
     		            // RuntimeError for inconsistent argument combinations
-    	int i,j;
+    	int i,j,m;
     	int N = data.length;
     	// if there are data (features) missing, i.e. masked as np.nan, set them to zeros
         // and create/set covariance elements to very large value to reduce its weight
         // to effectively zero
     	double data_[][] = new double[N][data[0].length];
-    	boolean missing = false;
+    	boolean anymissing = false;
+    	boolean missing[][] = new boolean[N][data[0].length];
+    	double covar_[][][] = null;
     	for (i = 0; i < N; i++) {
     		for (j = 0; j < data[0].length; j++) {
     			data_[i][j] = data[i][j];
     			if (Double.isNaN(data[i][j])) {
-    				missing = true;
+    				anymissing = true;
     				data_[i][j] = 0; // value does not matter as long as it's not nan
+    				missing[i][j] = true;
     			}
     		}
     	}
-    	if (missing) {
+    	if (anymissing) {
     	    if (covar == null) {
     	        covar = new double[1][gmm.D][gmm.D];
     	        // need to create covar_callback if imputation is requested
+    	        if (sel_callback != null) {
+    	        	// covar_callback = partial(covar_callback_default, default=np.zeros((gmm.D, gmm.D)))	
+    	        } // if (sel_callback != null)
+    	    } // if (covar == null) 
+    	    if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {
+    	        covar_ = new double[N][gmm.D][gmm.D];	
+    	        for (i = 0; i < N; i++) {
+    	        	for (j = 0; j < gmm.D; j++) {
+    	        		for (m = 0; m < gmm.D; m++) {
+    	        			covar_[i][j][m] = covar[0][j][m];
+    	        		}
+    	        	}
+    	        }
     	    }
-    	} // if (missing)
+    	    else {
+    	    	covar_ = new double[covar.length][covar[0].length][covar[0][0].length];
+    	    	for (i = 0; i < N; i++) {
+    	        	for (j = 0; j < gmm.D; j++) {
+    	        		for (m = 0; m < gmm.D; m++) {
+    	        			covar_[i][j][m] = covar[i][j][m];
+    	        		}
+    	        	}
+    	        }
+    	    }
+    	    
+    	    double large = 1.0E10;
+    	    for (i = 0; i < N; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+        		    if (missing[i][j]) {	
+        		    	covar_[i][j][j] += large;
+        		    }
+        		}
+    	    }
+    	} // if (anymissing)
+    	else {
+    		if ((covar == null) || ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D))) {
+    			covar_ = covar;
+    		}
+    		else {
+    			covar_ = new double[covar.length][covar[0].length][covar[0][0].length];
+    	    	for (i = 0; i < N; i++) {
+    	        	for (j = 0; j < gmm.D; j++) {
+    	        		for (m = 0; m < gmm.D; m++) {
+    	        			covar_[i][j][m] = covar[i][j][m];
+    	        		}
+    	        	}
+    	        }	
+    		}
+    	}
+    	if ((!init_method.toLowerCase().equals("random")) && (!init_method.toLowerCase().equals("minmax")) &&
+    			(!init_method.toLowerCase().equals("kmeans")) && (!init_method.toLowerCase().equals("none"))) {
+    		System.err.println("Illegal value of " + init_method + " for init_method in fit");
+    		System.exit(-1);
+    	}
+    	if (init_method.toLowerCase().equals("random")) {
+            initFromDataAtRandom(gmm, data_, covar_, -1.0, null, rng);
+    	}
     	return 0.0;
+    }
+    
+    public double[][] covar_callback_default(double coords[][], double Default[][]) {
+    	// default: Default = null;
+    	int N = coords.length;
+    	int D = coords[0].length;
+        if ((Default.length != D) && (Default[0].length != D)) {
+            System.err.println("covar_callback received improper default covariance length = " + 
+            Default.length+","+Default[0].length);
+            System.exit(-1);
+        }
+        // no need to copy since a single covariance matrix is sufficient
+        // return np.tile(default, (N,1,1))
+        return Default;
+    }
+    
+    public void initFromDataAtRandom(GMM gmm, double data[][], double covar[][][], double s, int k[], Random rng) {
+    	// default covar = null, s = -1, k = null
+        // Initialization callback for component means to follow data on scales > s.
+
+        // Component amplitudes are set to 1/gmm.K, covariances are set to
+        // s**2*np.eye(D). For each mean, a data sample is selected at random, and a
+        // multivariant Gaussian offset is added, whose variance is given by s**2.
+
+        // If s is not given, it will be set such that the volume of all components
+        // completely fills the space covered by data.
+
+        // Args:
+        //    gmm: A GMM to be initialized
+        //    data: numpy array (N,D) to define the range of the component means
+        //    covar: ignored in this callback
+        //    s (double): if >= 0, sets component variances
+        //    k (iterable): list of components to set, is None sets all components
+        //    rng: numpy.random.RandomState for deterministic behavior
+
+        // Returns:
+        //    None
+       
+        int i,j,m;
+        int k_len;
+    	if (k == null) {
+            k = new int[gmm.K];
+            for (i = 0; i < gmm.K; i++) {
+            	k[i] = i;
+            }
+            k_len = gmm.K;
+        }
+        else {
+            k_len = k.length;
+        }
+        // initialize components around data points with uncertainty s
+    	int refs[] = new int[k_len];
+    	for (i = 0; i < k_len; i++) {
+    		refs[i] = rng.nextInt(data.length);
+    	}
+        D = data[0].length;
+		if (s < 0.0) {
+			double min_pos[] = new double[D];
+			double max_pos[] = new double[D];
+			double vol_data = 1.0;
+			for (j = 0; j < D; j++) {
+				min_pos[D] = Double.MAX_VALUE;
+				max_pos[D] = -Double.MAX_VALUE;
+				for (i = 0; i < data.length; i++) {
+					if (data[i][j] < min_pos[D]) {
+						min_pos[D] = data[i][j];
+					}
+					if (data[i][j] > max_pos[D]) {
+						max_pos[D] = data[i][j];
+					}
+				}
+				vol_data *= (max_pos[D] - min_pos[D]);
+			}
+			double result[] = new double[1];
+			Gamma gam = new Gamma((gmm.D*0.5 + 1),result);
+			gam.run();
+	        s = Math.pow((vol_data / gmm.K * result[0]),(1/gmm.D)) / Math.sqrt(Math.PI);
+	        System.out.println("initializing spheres with s = " + s + " near data points");
+		} // if (s < 0.0)
+
+		
+		for (i = 0; i < gmm.mean.length; i++) {
+			for (j = 0; j < gmm.mean[0].length; j++) {
+				gmm.mean[i][j] = 0.0;
+			}
+		}
+		for (i = 0; i < k_len; i++) {
+			for (j = 0; j < D; j++) {
+			    gmm.mean[k[i]][j] = data[refs[i]][j] + s*rng.nextGaussian();	
+			}
+		}
+		for (i = 0; i < gmm.covar.length; i++) {
+			for (j = 0; j < gmm.covar[0].length; j++) {
+				for (m = 0; m < gmm.covar[0][0].length; m++) {
+					gmm.covar[i][j][m] = 0.0;
+				}
+			}
+		}
+		for (i = 0; i < k_len; i++) {
+			for (j = 0; j < data[0].length; j++) {
+				gmm.covar[k[i]][j][j] = s*s;
+			}
+		}
     }
 
 }
