@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.*;
@@ -1117,6 +1118,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	if (init_method.toLowerCase().equals("random")) {
             initFromDataAtRandom(gmm, data_, covar_, -1.0, null, rng);
     	}
+    	else if (init_method.toLowerCase().equals("kmeans")) {
+            initFromKMeans(gmm, data_, rng);
+    	}
     	return 0.0;
     }
     
@@ -1221,6 +1225,128 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 				gmm.covar[k[i]][j][j] = s*s;
 			}
 		}
+    }
+    
+    public void initFromKMeans(GMM gmm, double data[][], Random rng) {
+        // Initialization callback from a k-means clustering run.
+
+        // See Algorithm 1 from Bloemer & Bujna (arXiv:1312.5946)
+        // NOTE: The result of this call are not deterministic even if rng is set
+        // because scipy.cluster.vq.kmeans2 uses its own initialization.
+
+        // Args:
+        //    gmm: A GMM to be initialized
+        //    data: numpy array (N,D) to define the range of the component means
+        //    rng: numpy.random.RandomState for deterministic behavior
+
+        //Returns:
+        //    None
+    	int i,j,m,p,index;
+    	AlgorithmKMeans kMeansAlgo;
+		ModelImage kMeansImage = null;
+		int algoSelection = AlgorithmKMeans.K_MEANS;
+		int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
+		// First subscript x = 0, y = 1, z = 2, t = 3
+	    // Second subscript 0 to nPoints-1 for each point
+	    // Value is the point position
+		double[][] pos = new double[data[0].length][data.length];
+		
+		for (i = 0; i < data.length; i++) {
+			for (j = 0; j < data[0].length; j++) {
+				pos[j][i] = data[i][j];
+			}
+		}
+		// Use 1.0 in every dimension if not scaled
+		double scale[] = new double[data[0].length];
+		for (i = 0; i < data[0].length; i++) {
+			scale[i] = 1.0;
+		}
+		// subscript goes from 0 to nPoints-1 for each point
+	    // Value is the cluster number from 0 to numberClusters-1.
+		int[] groupNum = new int[data.length];
+		// subscript goes form 0 to nPoints-1 for each point
+		// Value is the weight or number of occurrences of each point
+		double[] weight = new double[data.length];
+		for (i = 0; i < data.length; i++) {
+			weight[i] = 1.0;
+		}
+		// First subscript x = 0, y = 1, z = 2, t = 3
+	    // Second subscript 0 to numberClusters-1 for each cluster
+	    // Value is the cluster position
+	    double[][] centroidPos = new double[data[0].length][gmm.K];
+	    String resultsFileName = null;
+	    int initSelection = AlgorithmKMeans.RANDOM_INIT;
+	    float redBuffer[] = null;
+		float greenBuffer[] = null;
+		float blueBuffer[] = null;
+		// Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
+		double scaleMax = 255.0;
+		// If true, each color is weighed proportional to its frequency
+		boolean useColorHistogram = false;
+		boolean scaleVariablesToUnitVariance = false;
+		double axesRatio[] = null;
+		// If true, segment a black and white image using one dimensional kmeans
+		boolean bwSegmentedImage = false;
+		// Buffer containing original values of black and white image
+		double doubleBuffer[] = null;
+		boolean showKMeansSegmentedImage = false;
+		boolean followBatchWithIncremental = false;
+		// If true, three dimensional color segmenting in RGB. If false, two dimensional
+		// color segmenting in CIELAB
+		boolean colorSegmentInRGB = false;
+		kMeansAlgo = new AlgorithmKMeans(kMeansImage, algoSelection, distanceMeasure, pos, scale, groupNum,
+				weight, centroidPos, resultsFileName, initSelection, redBuffer, greenBuffer, blueBuffer, scaleMax,
+				useColorHistogram, scaleVariablesToUnitVariance, axesRatio, bwSegmentedImage, doubleBuffer,
+				showKMeansSegmentedImage, followBatchWithIncremental, colorSegmentInRGB);
+		kMeansAlgo.run();
+		boolean mask[] = new boolean[data.length];
+		double d_m[][];
+		double prod[][] = new double[data[0].length][data[0].length];
+        for (i = 0; i < gmm.K; i++) {
+        	int maskSum = 0;
+        	for (j = 0; j < data.length; j++) {
+        		if (groupNum[j] == i) {
+        			mask[j] = true;
+        			maskSum++;
+        		}
+        		else {
+        			mask[j] = false;
+        		}
+        	}
+            gmm.amp[i] = (double)maskSum / (double)data.length;
+            d_m = new double[maskSum][data[0].length];
+            for (j = 0; j < data[0].length; j++) {
+            	double dataSum = 0.0;
+                for (m = 0; m < data.length; m++) {
+                	if (mask[m]) {
+                	    dataSum += data[m][j];	
+                	}
+                }
+                gmm.mean[i][j] = dataSum/(double)maskSum;
+            }
+            for (j = 0, index = 0; j < data.length; j++) {
+            	if (mask[j]) {
+            	    for (m = 0; m < data[0].length; m++) {
+            	    	d_m[index][m] = data[j][m] - gmm.mean[i][m];
+            	    }
+            	    index++;
+            	}
+            }
+            // funny way of saying: for each point i, do the outer product
+            // of d_m with its transpose and sum over i
+            for (j = 0; j < data[0].length; j++) {
+            	for (m = 0; m < maskSum; m++) {
+            	    for (p = 0; p < data[0].length; p++) {
+            	    	prod[j][p] += (d_m[m][j] * d_m[m][p]);
+            	    }
+            	}
+            }
+            for (j = 0; j < data[0].length; j++) {
+            	for (p = 0; p < data[0].length; p++) {
+            		gmm.covar[i][j][p] = prod[j][p]/data.length;
+            	}
+            }
+        } //  for (i = 0; i < gmm.K; i++)
     }
 
 }
