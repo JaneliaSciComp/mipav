@@ -375,11 +375,25 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    // # 1) EM without imputation, ignoring errors
 	    long start = System.currentTimeMillis();
 	    rng = new Random(seed);
+	    double cov[][][] = null;
+	    double R[][][] = null;
+	    String sel_callback = null;
+	    String covar_callback = null;
+	    double tol = 1.0E-3;
+	    int miniter = 1;
+	    int maxiter = 1000;
+	    int frozen_amp[] = null;
+	    int frozen_mean[] = null;
+	    int frozen_covar[] = null;
+	    int split_n_merge = 0;
 	    for (r = 0; r < T; r++) {
 	        if (bg != null) {
 	            bg.amp = bg_amp;	
 	        }
-	        l[r] = fit(gmms[r], data, null, "random", w, cutoff, null, null, bg, rng);
+	        l[r] = fit(gmms[r], data, cov, R, "random", w, cutoff, sel_callback, 
+	        		oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter,
+	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
 	    } // for (r = 0; r < T; r++)
 	} // public void test()
 	
@@ -990,15 +1004,23 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     return Math.log(x + Math.sqrt(x*x + 1.0));
     }
     
-    public double fit(GMM gmm, double data[][], double covar[][][], /*R=None*/ String init_method, double w, double cutoff, String sel_callback,
-    		 /*oversampling=10*/ String covar_callback, Background background, 
-    		 /*tol=1e-3, miniter=1, maxiter=1000, frozen=None, split_n_merge=False,*/ Random rng) {
+    public double fit(GMM gmm, double data[][], double covar[][][],double R[][][], String init_method, double w, double cutoff, String sel_callback,
+    		 int oversampling, String covar_callback, Background background, 
+    		 double tol, int miniter, int maxiter,
+    		 int frozen_amp[], int frozen_mean[], int frozen_covar[], int split_n_merge, Random rng) {
     	        // Default covar = null;
+    	        // Default R = null;
     	        // Default init_method = "random"
     	        // Default w = 0.0
-    	        // Default cutoff = None
-    	        // default sel_callback = null
-    	        // Backround = None 
+    	        // Default cutoff = Double.NaN
+    	        // Default sel_callback = null
+    	        // Default oversampling = 10
+    	        // Default Backround = None 
+    	        // Default tol = 1.0E-3
+    	        // Default miniter = 1
+    	        // Default maxiter = 1000
+    	        // Default frozen_amp, frozen_mean, frozen_covar = null
+    	        // Default split_n_merge = 0
     		    // Fit GMM to data.
 
     		    // If given, init_callback is called to set up the GMM components. Then, the
@@ -1039,15 +1061,20 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		        // Throws:
     		            // RuntimeError for inconsistent argument combinations
     	int i,j,m;
-    	int N = data.length;
+    	int ND = data.length;
     	// if there are data (features) missing, i.e. masked as np.nan, set them to zeros
         // and create/set covariance elements to very large value to reduce its weight
         // to effectively zero
-    	double data_[][] = new double[N][data[0].length];
+    	double data_[][] = new double[ND][data[0].length];
     	boolean anymissing = false;
-    	boolean missing[][] = new boolean[N][data[0].length];
+    	boolean missing[][] = new boolean[ND][data[0].length];
     	double covar_[][][] = null;
-    	for (i = 0; i < N; i++) {
+    	boolean nondiag[][] = null;
+    	String mess = null;
+    	boolean changeable_amp[] = null;
+    	boolean changeable_mean[] = null;
+    	boolean changeable_covar[] = null;
+    	for (i = 0; i < ND; i++) {
     		for (j = 0; j < data[0].length; j++) {
     			data_[i][j] = data[i][j];
     			if (Double.isNaN(data[i][j])) {
@@ -1066,8 +1093,8 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	        } // if (sel_callback != null)
     	    } // if (covar == null) 
     	    if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {
-    	        covar_ = new double[N][gmm.D][gmm.D];	
-    	        for (i = 0; i < N; i++) {
+    	        covar_ = new double[ND][gmm.D][gmm.D];	
+    	        for (i = 0; i < ND; i++) {
     	        	for (j = 0; j < gmm.D; j++) {
     	        		for (m = 0; m < gmm.D; m++) {
     	        			covar_[i][j][m] = covar[0][j][m];
@@ -1077,7 +1104,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	    }
     	    else {
     	    	covar_ = new double[covar.length][covar[0].length][covar[0][0].length];
-    	    	for (i = 0; i < N; i++) {
+    	    	for (i = 0; i < ND; i++) {
     	        	for (j = 0; j < gmm.D; j++) {
     	        		for (m = 0; m < gmm.D; m++) {
     	        			covar_[i][j][m] = covar[i][j][m];
@@ -1087,7 +1114,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	    }
     	    
     	    double large = 1.0E10;
-    	    for (i = 0; i < N; i++) {
+    	    for (i = 0; i < ND; i++) {
         		for (j = 0; j < gmm.D; j++) {
         		    if (missing[i][j]) {	
         		    	covar_[i][j][j] += large;
@@ -1101,7 +1128,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		}
     		else {
     			covar_ = new double[covar.length][covar[0].length][covar[0][0].length];
-    	    	for (i = 0; i < N; i++) {
+    	    	for (i = 0; i < ND; i++) {
     	        	for (j = 0; j < gmm.D; j++) {
     	        		for (m = 0; m < gmm.D; m++) {
     	        			covar_[i][j][m] = covar[i][j][m];
@@ -1134,11 +1161,128 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // containers
         // precautions for cases when some points are treated as outliers
         // and not considered as belonging to any component
-        double log_S[] = new double[N];          // S = sum_k p(x|k)
-        double log_p[] = new double[gmm.K];        // P = p(x|k) for x in U[k]
+        double log_S[] = new double[ND];          // S = sum_k p(x|k)
+        double log_p[][] = new double[gmm.K][];        // P = p(x|k) for x in U[k]
         double T_inv[] = new double[gmm.K];      // T = covar(x) + gmm.covar[k]
         double U[] = new double[gmm.K];          // U = {x close to k}
-        Background p_bg = null;
+        for (i = 0; i < gmm.K; i++) {
+        	T_inv[i] = Double.NaN;
+        	U[i] = Double.NaN;
+        }
+        double p_bg[] = null;
+        if (background != null) {
+        	for (i = 0; i < gmm.amp.length; i++) {
+        	    gmm.amp[i] *= 1 - background.amp;          // GMM amp + BG amp = 1
+        	}
+        	p_bg = new double[] {Double.NaN};                   // p_bg = p(x|BG), no log because values are larger	
+        	if (covar != null) {
+        		// check if covar is diagonal and issue warning if not
+                mess = "background model will only consider diagonal elements of covar";	
+                boolean havenondiag = false;
+                if ((covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {
+                	for (i = 0; i < covar.length; i++) {
+                    	for (j = 0; j < gmm.D; j++) {
+                    		for (m = 0; m < gmm.D; m++) {
+	                    		if (j != m) {
+	                    		    if (covar[i][j][m] != 0.0) {
+	                    		    	havenondiag = true;
+	                    		    }
+	                    		}
+                    		}
+                    	}
+                	}
+                }
+                if (havenondiag) {
+                	System.out.println("Warning! " + mess);
+                }
+        	} // if (covar != null)
+        } // if (background != null)
+        
+        if (frozen_amp != null) {
+            changeable_amp = new boolean[gmm.K];
+            for (i = 0; i < gmm.K; i++) {
+            	changeable_amp[i] = true;
+            }
+            for (i = 0; i < frozen_amp.length; i++) {
+                if ((frozen_amp[i] >= 0) && (frozen_amp[i] < gmm.K)) {
+                	changeable_amp[i] = false;
+                }
+            }
+        }
+        if (frozen_mean != null) {
+            changeable_mean = new boolean[gmm.K];
+            for (i = 0; i < gmm.K; i++) {
+            	changeable_mean[i] = true;
+            }
+            for (i = 0; i < frozen_mean.length; i++) {
+                if ((frozen_mean[i] >= 0) && (frozen_mean[i] < gmm.K)) {
+                	changeable_mean[i] = false;
+                }
+            }
+        }
+        if (frozen_covar != null) {
+            changeable_covar = new boolean[gmm.K];
+            for (i = 0; i < gmm.K; i++) {
+            	changeable_covar[i] = true;
+            }
+            for (i = 0; i < frozen_covar.length; i++) {
+                if ((frozen_covar[i] >= 0) && (frozen_covar[i] < gmm.K)) {
+                	changeable_covar[i] = false;
+                }
+            }
+        }
+        double log_L[] = new double[1];
+        int N[] = new int[1];
+        int N2[] = new int[1];
+        String prefix = "";
+        _EM(log_L, N, N2, gmm, log_p, U, T_inv, log_S, data_, covar_, R,
+        		 sel_callback, oversampling, covar_callback, background, p_bg, w,
+        		 //pool=pool, chunksize=chunksize, 
+        		 cutoff, miniter, maxiter, tol, prefix,
+        		 changeable_amp, changeable_mean, changeable_covar,
+        		  rng);
+    	return 0.0;
+    }
+    
+    public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], double U[], double T_inv[],
+    		double log_S[], double data[][], double covar[][][], double R[][][], String sel_callback, int oversampling,
+    		String covar_callback, Background background, double p_g[], double w,
+    	    //pool=pool, chunksize=chunksize, 
+    		double cutoff, int miniter, int maxiter, double tol, String prefix,
+    		boolean changeable_amp[], boolean changeable_mean[], boolean changeable_covar[],
+    		Random rng) {
+        // Defaults: covar=null, R=null, sel_callback=null, oversampling=10, covar_callback=null,
+    	// background=null, p_bg=null, w=0, pool=null, chunksize=1, cutoff=Double.NaN, miniter=1, maxiter=1000, tol=1e-3, prefix="",
+    	// changeable_amp = null, changeable_mean = null, changeable_covar = null
+    	
+    	// compute effective cutoff for chi2 in D dimensions
+    	if (!Double.isNaN(cutoff)) {
+    		// note: subsequently the cutoff parameter, e.g. in _E(), refers to this:
+    	    // chi2 < cutoff,
+    	    // while in fit() it means e.g. "cut at 3 sigma".
+    	    // These differing conventions need to be documented well.	
+    	} // if (!Double.isNaN(cutoff))
+    }
+    
+    public double chi2_cutoff(int D, double cutoff) {
+    	// Default: cutoff = 3.0.
+        // D-dimensional eqiuvalent of "n sigma" cut.
+
+        // Evaluates the quantile function of the chi-squared distribution to determine
+        // the limit for the chi^2 of samples wrt to GMM so that they satisfy the
+        // 68-95-99.7 percent rule of the 1D Normal distribution.
+
+        // Args:
+        //    D (int): dimensions of the feature space
+        //    cutoff (float): 1D equivalent cut [in units of sigma]
+
+        // Returns:
+        //    float: upper limit for chi-squared in D dimensions
+       
+        /*cdf_1d = scipy.stats.norm.cdf(cutoff)
+        confidence_1d = 1-(1-cdf_1d)*2
+        cutoff_nd = scipy.stats.chi2.ppf(confidence_1d, D)
+        return cutoff_nd*/
     	return 0.0;
     }
     
