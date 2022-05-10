@@ -320,25 +320,8 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    for (i = 0; i < N; i++) {
 	    	ranarr[i] = rng.nextDouble();
 	    }
-	    double omega[] = null;
-	    if (sel_type.equalsIgnoreCase("hole")) {
-	       omega = getHole(noisy);	
-	    }
-	    else if (sel_type.equalsIgnoreCase("box")) {
-	        omega = getBox(noisy);
-	    }
-	    else if (sel_type.equalsIgnoreCase("boxWithHole")) {
-	        omega = getBoxWithHole(noisy);
-	    }
-	    else if (sel_type.equalsIgnoreCase("cut")) {
-	    	omega = getCut(noisy);
-	    }
-	    else if (sel_type.equalsIgnoreCase("all")) {
-	    	omega = getAll(noisy);
-	    }
-	    else if (sel_type.equalsIgnoreCase("half")) {
-	    	omega = getHalf(noisy);
-	    }
+	    double omega[] = getSelection(sel_type,noisy);
+	    
 	    boolean sel[] = new boolean[N];
 	    int numSel = 0;
 	    for (i = 0; i < N; i++) {
@@ -396,6 +379,32 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
 	    } // for (r = 0; r < T; r++)
 	} // public void test()
+	
+	public double[] getSelection(String sel_type, double noisy[][]) {
+		double omega[];
+		if (sel_type.equalsIgnoreCase("hole")) {
+	       omega = getHole(noisy);	
+	    }
+	    else if (sel_type.equalsIgnoreCase("box")) {
+	        omega = getBox(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("boxWithHole")) {
+	        omega = getBoxWithHole(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("cut")) {
+	    	omega = getCut(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("all")) {
+	    	omega = getAll(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("half")) {
+	    	omega = getHalf(noisy);
+	    }
+	    else {
+	    	omega = null;
+	    }
+		return omega;
+	}
 	
     
 	
@@ -1244,9 +1253,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	return 0.0;
     }
     
+    // run EM sequence
     public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], double U[], double T_inv[],
     		double log_S[], double data[][], double covar[][][], double R[][][], String sel_callback, int oversampling,
-    		String covar_callback, Background background, double p_g[], double w,
+    		String covar_callback, Background background, double p_bg[], double w,
     	    //pool=pool, chunksize=chunksize, 
     		double cutoff, int miniter, int maxiter, double tol, String prefix,
     		boolean changeable_amp[], boolean changeable_mean[], boolean changeable_covar[],
@@ -1254,14 +1264,142 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // Defaults: covar=null, R=null, sel_callback=null, oversampling=10, covar_callback=null,
     	// background=null, p_bg=null, w=0, pool=null, chunksize=1, cutoff=Double.NaN, miniter=1, maxiter=1000, tol=1e-3, prefix="",
     	// changeable_amp = null, changeable_mean = null, changeable_covar = null
+    	int i,j,m;
+    	double cutoff_nd;
+    	double shift_cutoff;
+    	double omega[];
+    	boolean anyomegazero;
+    	int it;
+    	String header;
+    	GMM gmm_;
+    	int N0;
+    	double bg_amp_;
+    	double log_L_[] = new double[1];
+    	int N2_[] = new int[1];
+    	int N0_[] = new int[1];
     	
     	// compute effective cutoff for chi2 in D dimensions
     	if (!Double.isNaN(cutoff)) {
     		// note: subsequently the cutoff parameter, e.g. in _E(), refers to this:
     	    // chi2 < cutoff,
     	    // while in fit() it means e.g. "cut at 3 sigma".
-    	    // These differing conventions need to be documented well.	
+    	    // These differing conventions need to be documented well.
+    		cutoff_nd = chi2_cutoff(gmm.D, cutoff);
+
+    		// store chi2 cutoff for component shifts, use 0.5 sigma
+    		shift_cutoff = chi2_cutoff(gmm.D, Math.min(0.1, cutoff/2.0));
     	} // if (!Double.isNaN(cutoff))
+    	else {
+            cutoff_nd = Double.NaN;
+            shift_cutoff = chi2_cutoff(gmm.D, 0.1);
+    	}
+    	
+    	if (sel_callback != null) {
+    	    omega = getSelection(sel_callback, data);
+    	    anyomegazero = false;
+    	    for (i = 0; i < omega.length; i++) {
+    	    	if (omega[i] == 0.0) {
+    	    		anyomegazero = true;
+    	    	}
+    	    }
+    	    if (anyomegazero) {
+    	    	System.out.println("Warning! Selection probability Omega = 0 for an observed sample.");
+                System.out.println("Selection callback likely incorrect! Bad things will happen!");
+    	    }
+    	} // if (sel_callback != null)
+    	else {
+    		omega = null;
+    	}
+    	
+    	it = 0;
+	    header = "ITER\tSAMPLES";
+	    if (sel_callback != null) {
+	        header += "\tIMPUTED\tORIG";
+	    }
+	    if (background != null) {
+	        header += "\tBG_AMP";
+	    }
+	    header += "\tLOG_L\tSTABLE";
+	    //logger.info(header)
+	    
+	    // save backup
+	    gmm_ = new GMM(gmm.K, gmm.D);
+	    for (i = 0; i < gmm.K; i++) {
+	    	gmm_.amp[i] = gmm.amp[i];
+	    	for (j = 0; j < gmm.D; j++) {
+	    		gmm_.mean[i][j] = gmm.mean[i][j];
+	    		for (m = 0; m < gmm.D; m++) {
+	    			gmm_.covar[i][j][m] = gmm.covar[i][j][m];
+	    		}
+	    	}
+	    }
+	    N0 = data.length; // size of original (unobscured) data set (signal and background)
+	    N2[0] = 0;        // size of imputed signal sample
+	    if (background != null) {
+	        bg_amp_ = background.amp;
+	    }
+	    
+	    while (it < maxiter) { // limit loop in case of slow convergence
+	    	_EMstep(log_L_, N, N2_, N0_,gmm, log_p, U, T_inv, log_S, N0, data, covar, R, sel_callback,
+	    			 omega, oversampling, covar_callback, background, p_bg, w,
+	    			 //pool=pool, chunksize=chunksize, 
+	    			 cutoff_nd, tol, changeable_amp, changeable_mean, changeable_covar, it, rng);	
+	    } // while (it < maxiter)
+    }
+    
+    // run one EM step
+    public void _EMstep(double log_L[], int N[], int N2[], int N0_[],
+    		GMM gmm, double log_p[][], double U[], double T_inv[], double log_S[], int N0, 
+    		double data[][], double covar[][][], double R[][][], String sel_callback,
+	    			 double omega[], int oversampling, String covar_callback, Background background, 
+	    			 double p_bg[], double w,
+	    			 //pool=pool, chunksize=chunksize, 
+	    			 double cutoff, double tol, boolean changeable_amp[], 
+	    			 boolean changeable_mean[], boolean changeable_covar[], int it, Random rng) {
+    	// Defaults: covar=null, R=null, sel_callback=null, omega=null, oversampling=10, covar_callback=null,
+    	// background=null, p_bg=null, w=0, pool=null, chunksize=1, cutoff=Double.NaN, tol=1e-3, 
+    	// changeable_amp = null, changeable_mean = null, changeable_covar = null, it=0
+    	// NOTE: T_inv (in fact (T_ik)^-1 for all samples i and components k)
+        // is very large and is unfortunately duplicated in the parallelized _Mstep.
+        // If memory is too limited, one can recompute T_inv in _Msums() instead.
+        log_L[0] = _Estep(gmm, log_p, U, T_inv, log_S, data, covar, R, omega, background, p_bg, 
+        		          // pool=pool, chunksize=chunksize, 
+        		          cutoff, it, rng);
+        N0_[0] = N0;
+        return;
+    }
+    
+    // perform E step calculations.
+    // If cutoff is set, this will also set the neighborhoods U
+    public double _Estep(GMM gmm, double log_p[][], double U[], double T_inv[], double log_S[],
+    		double data[][], double covar[][][], double R[][][], double omega[], Background background,
+    		double p_bg[], 
+    		// pool=None, chunksize=1,
+    		double cutoff, int it, Random rng) {
+    	// Defaults covar=null, R=null, omega=null, background=null, p_bg=null,
+    	// pool=null, chunksize=1, cutoff=null, it=0
+    	
+    	int i;
+    	boolean H[];
+    	int k;
+    	// compute p(i | k) for each k independently in the pool
+        // need S = sum_k p(i | k) for further calculation
+    	for (i = 0; i < log_S.length; i++) {
+            log_S[i] = 0.0;
+    	}
+    	
+    	// H = {i | i in neighborhood[k]} for any k, needed for outliers below
+        // TODO: Use only when cutoff is set
+        H = new boolean[data.length];
+        
+        k = 0;
+	    /*for log_p[k], U[k], T_inv[k] in \
+	    parmap.starmap(_Esum, zip(xrange(gmm.K), U), gmm, data, covar, R, cutoff, pool=pool, chunksize=chunksize):
+	        log_S[U[k]] += np.exp(log_p[k]) # actually S, not logS
+	        H[U[k]] = 1
+	        k += 1*/
+
+    	return 0.0;
     }
     
     public double chi2_cutoff(int D, double cutoff) {
@@ -1279,11 +1417,23 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // Returns:
         //    float: upper limit for chi-squared in D dimensions
        
-        /*cdf_1d = scipy.stats.norm.cdf(cutoff)
-        confidence_1d = 1-(1-cdf_1d)*2
-        cutoff_nd = scipy.stats.chi2.ppf(confidence_1d, D)
-        return cutoff_nd*/
-    	return 0.0;
+        double ansR[] = new double[1];
+    	Statistics stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, cutoff, 0, ansR);
+    	stat.run();
+    	double cdf_1d = ansR[0];
+        double confidence_1d = 1-(1-cdf_1d)*2;
+        // Percent point function Inverse of cdf-percentiles
+        //cutoff_nd = scipy.stats.chi2.ppf(confidence_1d, D)
+        // Regularized incomplete gamma function Q(D/2,1/(2*confidence_1d)) =
+        // 1 - regularized incomplete gamma function P(D/2,1/(2*confidence_1d))
+        double lowerIncompleteGamma[] = new double[1];
+        double upperIncompleteGamma[] = new double[1];
+        double regularizedGammaP[] = new double[1];
+        Gamma gam = new Gamma(D/2.0, 1.0/(2.0 * confidence_1d), lowerIncompleteGamma,
+        		upperIncompleteGamma, regularizedGammaP);
+        gam.run();
+        double cutoff_nd = 1.0 - regularizedGammaP[0];
+        return cutoff_nd;
     }
     
     public double[][] covar_callback_default(double coords[][], double Default[][]) {
