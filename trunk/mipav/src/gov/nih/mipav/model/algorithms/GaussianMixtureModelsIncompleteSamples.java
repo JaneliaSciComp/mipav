@@ -1171,12 +1171,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // precautions for cases when some points are treated as outliers
         // and not considered as belonging to any component
         double log_S[] = new double[ND];          // S = sum_k p(x|k)
-        double log_p[][] = new double[gmm.K][];        // P = p(x|k) for x in U[k]
+        double log_p[] = new double[gmm.K];        // P = p(x|k) for x in U[k]
         double T_inv[] = new double[gmm.K];      // T = covar(x) + gmm.covar[k]
-        double U[] = new double[gmm.K];          // U = {x close to k}
+        int U[] = new int[gmm.K];          // U = {x close to k}
         for (i = 0; i < gmm.K; i++) {
         	T_inv[i] = Double.NaN;
-        	U[i] = Double.NaN;
+        	U[i] = Integer.MIN_VALUE;
         }
         double p_bg[] = null;
         if (background != null) {
@@ -1254,7 +1254,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     }
     
     // run EM sequence
-    public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], double U[], double T_inv[],
+    public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[], int U[], double T_inv[],
     		double log_S[], double data[][], double covar[][][], double R[][][], String sel_callback, int oversampling,
     		String covar_callback, Background background, double p_bg[], double w,
     	    //pool=pool, chunksize=chunksize, 
@@ -1349,7 +1349,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     
     // run one EM step
     public void _EMstep(double log_L[], int N[], int N2[], int N0_[],
-    		GMM gmm, double log_p[][], double U[], double T_inv[], double log_S[], int N0, 
+    		GMM gmm, double log_p[], int U[], double T_inv[], double log_S[], int N0, 
     		double data[][], double covar[][][], double R[][][], String sel_callback,
 	    			 double omega[], int oversampling, String covar_callback, Background background, 
 	    			 double p_bg[], double w,
@@ -1371,7 +1371,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     
     // perform E step calculations.
     // If cutoff is set, this will also set the neighborhoods U
-    public double _Estep(GMM gmm, double log_p[][], double U[], double T_inv[], double log_S[],
+    public double _Estep(GMM gmm, double log_p[], int U[], double T_inv[], double log_S[],
     		double data[][], double covar[][][], double R[][][], double omega[], Background background,
     		double p_bg[], 
     		// pool=None, chunksize=1,
@@ -1392,14 +1392,92 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // TODO: Use only when cutoff is set
         H = new boolean[data.length];
         
-        k = 0;
-	    /*for log_p[k], U[k], T_inv[k] in \
-	    parmap.starmap(_Esum, zip(xrange(gmm.K), U), gmm, data, covar, R, cutoff, pool=pool, chunksize=chunksize):
-	        log_S[U[k]] += np.exp(log_p[k]) # actually S, not logS
-	        H[U[k]] = 1
-	        k += 1*/
+        
+        double logpk[] = new double[1];
+        int uk[] = new int[1];
+        for (k = 0; k < gmm.K; k++) {
+        	uk[0] = U[k];
+        	_Esum(logpk, k, uk, gmm, data, covar, R, cutoff /*, pool chunksize*/);
+        	log_p[k] = logpk[0];
+        	U[k] = uk[0];
+        	log_S[U[k]] += Math.exp(log_p[k]); // actually S, not logS
+        	H[U[k]] = true;
+        }
 
     	return 0.0;
+    }
+    
+    // compute chi^2, and apply selections on component neighborhood based in chi^2
+    public void _Esum(double logpk[], int k, int U_k[], GMM gmm, double data[][], double covar[][][], double R[][][], double cutoff
+    		/*, pool, chunksize*/) {
+    	 // since U_k could be Integer.MIN_VALUE, need explicit reshape
+    	int i,j;
+    	double d_[] = new double[gmm.D];
+    	double covar_[][] = null;
+    	double R_[][] = null;
+    	double dx[] = new double[gmm.D];
+    	for (i = 0; i < gmm.D; i++) {
+    		if (U_k[0] >= 0) {
+    		    d_[i] = data[U_k[0]][i];
+    		}
+    		else {
+    			d_[i] = Double.NaN;
+    		}
+    	}
+    	if (covar != null) {
+            if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {  // one-for-all
+                covar_ = covar[0];
+            }
+            else { // each datum has covariance
+            	covar_ = new double[gmm.D][gmm.D];
+            	for (i = 0; i < gmm.D; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			if (U_k[0] >= 0) {
+            				covar_[i][j] = covar[U_k[0]][i][j];
+            			}
+            			else {
+            				covar_[i][j] = Double.NaN;
+            			}
+            		}
+            	}
+            }
+    	} // if (covar != null)
+        if (R != null) {
+        	R_ = new double[gmm.D][gmm.D];
+        	for (i = 0; i < gmm.D; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+        			if (U_k[0] >= 0) {
+        				R_[i][j] = R[U_k[0]][i][j];
+        			}
+        			else {
+        				R_[i][j] = Double.NaN;
+        			}
+        		}
+        	}
+        }
+        
+        // p(x | k) for all x in the vicinity of k
+        // determine all points within cutoff sigma from mean[k]
+        if (R != null) {
+        	for (i = 0; i < gmm.D; i++) {
+                dx[i] = d_[i] - gmm.mean[k][i];
+        	}
+        }
+        else {
+        	double rg[] = new double[gmm.D];
+        	for (i = 0; i < gmm.D; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+        			rg[i] += R_[i][j] * gmm.mean[k][j];
+        		}
+        	}
+        	for (i = 0; i < gmm.D; i++) {
+        		dx[i] = d_[i] - rg[i];
+        	}
+        }
+        
+        if ((covar == null) && (R == null)) {
+           	
+        } // if ((covar == null) && (R == null))
     }
     
     public double chi2_cutoff(int D, double cutoff) {
