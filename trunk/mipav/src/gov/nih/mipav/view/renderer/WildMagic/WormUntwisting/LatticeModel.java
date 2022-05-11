@@ -82,6 +82,9 @@ public class LatticeModel {
 		}
 	}
 
+	static private String getImageName(ModelImage image) {
+		return JDialogBase.makeImageName(image.getImageFileName(),  "");
+	}
 
 	static public boolean match( Color c1, Color c2 )
 	{
@@ -684,6 +687,8 @@ public class LatticeModel {
 
 	protected ModelImage imageA;
 	private Vector3f imageDims;
+	private String outputDirectory;
+	private String sharedOutputDir;
 	
 	protected ModelImage seamCellImage;
 	// Set of two contours, each connected to the other pair-wise
@@ -691,11 +696,9 @@ public class LatticeModel {
 	// left side of the lattice:
 	protected VOI left;
 	protected VOI leftContour;
-//	protected VOIContour leftLattice;
 	// right side of the lattice:
 	protected VOI right;
 	protected VOI rightContour;
-//	protected VOIContour rightLattice;
 	// horizontal bars connecting left and right lattice pairs:
 	private VOIVector latticeGrid;
 	// center points half-way between left and right sides of the lattice:
@@ -783,7 +786,6 @@ public class LatticeModel {
 	protected Vector3f transformedOrigin = new Vector3f();
 
 	private Vector<VOI> neuriteData;
-	protected String outputDirectory;
 
 	protected Short voiID = 0;
 
@@ -837,22 +839,8 @@ public class LatticeModel {
 	 * 
 	 * @param imageA
 	 */
-	public LatticeModel(final ModelImage imageA) {
-		this.imageA = imageA;
-		if ( imageA != null )
-		{
-			String imageName = imageA.getImageName();
-			if (imageName.contains("_clone")) {
-				imageName = imageName.replaceAll("_clone", "");
-			}
-			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
-			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-			if ( !imageName.contains("straightened" ) ) {
-				checkParentDir(parentDir);
-			}
-			
-			imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
-		}
+	public LatticeModel(final ModelImage image) {
+		setImage(image);
 	}
 
 	/**
@@ -861,16 +849,8 @@ public class LatticeModel {
 	 * @param imageA
 	 * @param lattice
 	 */
-	public LatticeModel(final ModelImage imageA, final VOIVector lattice) {
-		this.imageA = imageA;
-		imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
-		String imageName = imageA.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
-		String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-		checkParentDir(parentDir);			
+	public LatticeModel(final ModelImage image, final VOIVector lattice) {
+		setImage(image);
 		this.lattice = lattice;
 
 		// Assume image is isotropic (square voxels).
@@ -947,6 +927,13 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
+	public void removeListeners()
+	{
+		if ( annotationListeners != null ) annotationListeners.clear();
+		if ( curveListeners != null ) curveListeners.clear();
+		if ( latticeListeners != null ) latticeListeners.clear();
+	}
+	
 	/**
 	 * Adds an annotation listener. The annotation listeners are updated when
 	 * the annotations change in any way.
@@ -1796,7 +1783,7 @@ public class LatticeModel {
 	
 	public TriMesh generateTriMesh2( boolean returnMesh, boolean saveMesh, int stepSize ) {
 		
-		saveLattice( outputDirectory + File.separator + WormData.editLatticeOutput + File.separator, "lattice.csv" );
+		saveLattice( sharedOutputDir + File.separator + WormData.editLatticeOutput + File.separator, "lattice.csv" );
 		readMeshContoursCSV();
 		
 		Vector<Vector3f> positions = new Vector<Vector3f>();
@@ -1924,7 +1911,7 @@ public class LatticeModel {
 		}
 		
 		// save contour boxes:
-		saveContours( imageA, "model", "_contours", contourBoxes );
+		saveContours( imageA, contourBoxes );
 
 
 		clipMask = new Vector<boolean[]>();
@@ -2037,11 +2024,13 @@ public class LatticeModel {
 			TriMesh mesh = new TriMesh(vBuf, iBuf);		
 			
 			if ( saveMesh ) {
-				saveTriMesh( imageA, "model", "_mesh_" + stepSize, mesh );
+				saveTriMesh( imageA, sharedOutputDir, "model", "_mesh_" + stepSize, mesh );
 				
 				// save the surface and interior images:
 				ModelImage surfaceMaskImage = getInsideMeshImage(mesh);
-				LatticeModel.saveImage(imageA, surfaceMaskImage, "model", "" );
+				ModelImage.saveImage(surfaceMaskImage, getImageName(surfaceMaskImage) + ".tif", sharedOutputDir + File.separator + "model" + File.separator, false);
+
+//				LatticeModel.saveImage(imageA, surfaceMaskImage, "model", "" );
 				
 //	        	SurfaceState surface = new SurfaceState( mesh, mesh.GetName() );
 //	        	VolumeImage volImage = new VolumeImage(false, imageA, "", null, 0);
@@ -2522,7 +2511,7 @@ public class LatticeModel {
 		return ( (pickedPoint != null) || (getPickedAnnotation() != null) ) ;
 	}
 
-	public void initializeInterpolation(boolean saveStats) {
+	public void initializeInterpolation( boolean saveStats) {
 		latticeInterpolationInit = true;
 
 		// The algorithm interpolates between the lattice points, creating two smooth curves from head to tail along
@@ -2544,7 +2533,7 @@ public class LatticeModel {
 	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straightened
 	 *            image.
 	 */
-	public void interpolateLattice(final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
+	public void interpolateLattice( final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
 
 		if ( !latticeInterpolationInit ) {
 			initializeInterpolation(true);
@@ -2738,7 +2727,7 @@ public class LatticeModel {
 	}
 
 
-	public VOI retwistAnnotations(VOIVector lattice) {	
+	public VOI retwistAnnotations( VOIVector lattice) {	
 		
 		setLattice(lattice);
 		if ( annotationVOIs == null ) return null;
@@ -2831,37 +2820,6 @@ public class LatticeModel {
 		return newLattice;
 	}
 
-	public void saveAnnotationStraight(final ModelImage image, String fileDirName, String fileName )
-	{
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}	
-
-		// Load the straightened image:
-		//		FileIO fileIO = new FileIO();
-		//		System.err.println( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-		//		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-
-
-		String voiDir;
-		// Save the markers as a VOI file:
-		//		resultImage.unregisterAllVOIs();
-		if ( annotationsStraight.getCurves().size() > 0 )
-		{
-			//			resultImage.registerVOI(annotationsStraight);
-			voiDir = outputDirectory + File.separator + fileDirName + File.separator;
-			//			saveAllVOIsTo(voiDir, resultImage);
-
-			LatticeModel.saveAnnotationsAsCSV(voiDir, fileName, annotationsStraight);
-			//			resultImage.unregisterAllVOIs();
-		}
-
-		//		resultImage.disposeLocal(false);
-		//		resultImage = null;
-	}
-
-
 	/**
 	 * Enables the user to save the lattice to a user-selected file.
 	 */
@@ -2936,17 +2894,17 @@ public class LatticeModel {
 	}
 	
 	private boolean getContourFile() {
-		String dir = outputDirectory + File.separator + "model_contours" + File.separator;
+		String dir = sharedOutputDir + File.separator + "model_contours" + File.separator;
 		File fileDir = new File(dir);
 		if ( !fileDir.exists() ) return false;
 		if ( !fileDir.isDirectory() ) return false;
-		dir = outputDirectory + File.separator + "model_contours" + File.separator + "wormContours.csv";
+		dir = sharedOutputDir + File.separator + "model_contours" + File.separator + "wormContours.csv";
 		File file = new File(dir);
 		return file.exists();
 	}
 	
 	private void saveMeshContoursCSV() {
-		String dir = outputDirectory + File.separator + "model_contours" + File.separator;
+		String dir = sharedOutputDir + File.separator + "model_contours" + File.separator;
 		File fileDir = new File(dir);
 
 		if ( !fileDir.exists() ) { // voiFileDir does not exist
@@ -2981,7 +2939,7 @@ public class LatticeModel {
 	}
 	
 	private void readMeshContoursCSV() {
-		String dir = outputDirectory + File.separator + "model_contours" + File.separator;
+		String dir = sharedOutputDir + File.separator + "model_contours" + File.separator;
 		File file = new File(dir + File.separator +  "wormContours.csv");
 		if ( file.exists() )
 		{		
@@ -3025,12 +2983,11 @@ public class LatticeModel {
 		}
 	}
 	
-	public void openNeuriteCurves()
+	public void openNeuriteCurves(String outputDirectory)
 	{
-		String dir = WormData.getOutputDirectory(imageA);
 		String fileName = WormData.neuriteOutput;
 		
-		final String voiDir = new String(dir + File.separator + fileName + File.separator);
+		final String voiDir = new String(outputDirectory + File.separator + fileName + File.separator);
 		File voiFileDir = new File(voiDir);
 		
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
@@ -3060,14 +3017,12 @@ public class LatticeModel {
 		if ( splineControlPtsList == null ) return;
 		if ( splineControlPtsList.size() <= 0 ) return;
 		
-	
-		String dir = WormData.getOutputDirectory(imageA) + File.separator;
 		String fileName = WormData.neuriteOutput;
 
 		String imageName = JDialogBase.makeImageName(imageA.getImageFileName(), "");
 		
 		
-		final String voiDir = new String(dir + fileName + File.separator);
+		final String voiDir = new String(sharedOutputDir + fileName + File.separator);
 		for ( int i = 0; i < splineControlPtsList.size(); i++ ) {
 			AnnotationSplineControlPts annotationSpline = splineControlPtsList.elementAt(i);
 			
@@ -3086,12 +3041,9 @@ public class LatticeModel {
 	
 
 	
-	public void untwistNeuriteCurves(boolean useLatticeModel)
+	public void untwistNeuriteCurves( boolean useLatticeModel)
 	{		
-		String dir = WormData.getOutputDirectory(imageA);
-		String fileName = WormData.neuriteOutput;
-		
-		final String voiDir = new String(dir + File.separator + fileName + File.separator);
+		final String voiDir = new String(sharedOutputDir + File.separator + WormData.neuriteOutput + File.separator);
 		File voiFileDir = new File(voiDir);
 		
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
@@ -3103,17 +3055,16 @@ public class LatticeModel {
 				if ( annotations != null ) {
 					setMarkers(annotations);
 					untwistMarkers(true);	
-					saveAnnotationStraight(imageA, "straightened_neurites", "straightened_" + list[i] );	
+					saveAnnotationsAsCSV(sharedOutputDir + File.separator + "straightened_neurites" + File.separator, 
+							"straightened_" + list[i], annotationsStraight);
 				}
 			}
 		} 
 	}
 	
-	public static void openStraightNeuriteCurves(ModelImage image) {
-
-		String dir = WormData.getOutputDirectory(image);
-		
-		final String voiDir = new String(dir + File.separator + "straightened_neurites" + File.separator );
+	public static void openStraightNeuriteCurves(ModelImage image, String outputDirectory) {
+	
+		final String voiDir = new String(outputDirectory + File.separator + "straightened_neurites" + File.separator );
 		File voiFileDir = new File(voiDir);
 		
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
@@ -3205,12 +3156,9 @@ public class LatticeModel {
 
 	public ModelImage segmentLattice(final ModelImage image, boolean saveContourImage, int paddingFactor, boolean segmentLattice )
 	{
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-
-		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
+		String imageName = getImageName(image);
+		
+		String voiDir = sharedOutputDir + File.separator + "contours" + File.separator;
 		final File voiFileDir = new File(voiDir);
 
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
@@ -3344,7 +3292,7 @@ public class LatticeModel {
 		saveImage(imageName, resultImage, true);
 
 		// Save the contour vois to file.
-		voiDir = outputDirectory + File.separator + "contours" + File.separator;
+		voiDir = sharedOutputDir + File.separator + "contours" + File.separator;
 		saveAllVOIsTo(voiDir, resultImage);
 		resultImage.unregisterAllVOIs();
 		System.err.println( "   save vois " + AlgorithmBase.computeElapsedTime(time) );
@@ -3364,7 +3312,7 @@ public class LatticeModel {
 
 		if ( saveContourImage ) {
 			contourImageBlur.setImageName( imageName + "_contours.xml" );
-			saveImage(imageName, contourImageBlur, false);
+			ModelImage.saveImage(contourImageBlur, contourImageBlur.getImageName() + ".xml", sharedOutputDir + File.separator + "output_images" + File.separator, false);
 			System.err.println( "   save image " + AlgorithmBase.computeElapsedTime(time) );
 			time = System.currentTimeMillis();
 			return contourImageBlur;
@@ -3379,11 +3327,8 @@ public class LatticeModel {
 
 	public void segmentLattice(final ModelImage image, final ModelImage contourImageBlur) {
 
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-
+		String imageName = getImageName(image);
+		
 		FileIO fileIO = new FileIO();
 		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 		int dimX = resultImage.getExtents().length > 0 ? resultImage.getExtents()[0] : 1;
@@ -3591,7 +3536,7 @@ public class LatticeModel {
 		{
 			return false;
 		}
-		VOIWormAnnotation nearest = findNearestAnnotation(startPt, endPt, pt);
+		VOIWormAnnotation nearest = (VOIWormAnnotation)VOILatticeManagerInterface.findNearestAnnotation(annotationVOIs, startPt, endPt, pt);
 //		System.err.println("selectAnnotation " + nearest );
 		if ( nearest == null ) {
 			return false;
@@ -3713,6 +3658,11 @@ public class LatticeModel {
 			updateLattice(false);
 			return true;
 		}
+		if ( startPt == null || endPt == null ) {
+			return false;
+		}
+		
+		
 		// look at the vector under the mouse and see which lattice point is closest...
 		final Segment3f mouseVector = new Segment3f(startPt, endPt);
 		float minDist = Float.MAX_VALUE;
@@ -3862,8 +3812,6 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
-	
-	
 	/**
 	 * Change the underlying image for the latticeModel. Update the output directories.
 	 * @param image
@@ -3872,19 +3820,24 @@ public class LatticeModel {
 	{
 		imageA = image;
 		if ( imageA != null )
-		{
-			String imageName = imageA.getImageName();
-			if (imageName.contains("_clone")) {
-				imageName = imageName.replaceAll("_clone", "");
-			}
-			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
-			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-			checkParentDir(parentDir);			
-			
+		{			
 			imageDims = new Vector3f( imageA.getExtents()[0] - 1, imageA.getExtents()[1] - 1, imageA.getExtents()[2] - 1 );
+			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageA.getImageFileName(), "") + File.separator);
+			boolean isStraight = image.getImageFileName().contains("_straight");
+			File file = new File(outputDirectory);
+			if ( !file.exists() && !isStraight ) file.mkdir();
+			outputDirectory += JDialogBase.makeImageName(imageA.getImageFileName(), "_results") + File.separator;
+			file = new File(outputDirectory);
+			if ( !file.exists() && !isStraight ) file.mkdir();
 		}
 	}
 
+	public void setSharedDirectory( String dir ) {
+		sharedOutputDir = new String(dir);
+		File file = new File(sharedOutputDir + File.separator + "output_images" + File.separator);
+		if ( !file.exists() ) file.mkdir();
+	}
+	
 	/**
 	 * Creates the worm model based on the segmented left-right marker images and the current lattice and natural
 	 * splines fitting the lattice.
@@ -4831,10 +4784,7 @@ public class LatticeModel {
 
 		final int[] resultExtents = new int[] {2 * extent, 2 * extent, samplingPlanes.getCurves().size()};
 
-		String imageName = imageA.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
+		String imageName = getImageName(imageA);
 		ModelImage model = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_model.xml");
 		JDialogBase.updateFileInfo(imageA, model);
 
@@ -5479,23 +5429,17 @@ public class LatticeModel {
 		//		untwistMarkers(imageA, resultExtents, !useLatticeModel);
 		untwistMarkers(imageA, resultExtents);
 	}
-
-	public void untwistMarkers() {		
-		setMarkers(annotationVOIs);
-		untwistMarkers(true);	
-		saveAnnotationStraight(imageA, "straightened_annotations", "straightened_annotations.csv" );	
-	}
 	
 	
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * @return untwisted image.
 	 */
-	public ModelImage untwistTest()
+	public ModelImage[] untwistTest(VolumeImage[] stack)
 	{
 		initializeInterpolation(false);
 		final int[] resultExtents = new int[] {((2 * extent)), ((2 * extent)), samplingPlanes.getCurves().size()};
-		return untwistTest(imageA, true, resultExtents);
+		return untwistTest(stack, resultExtents);
 
 	}
 
@@ -7336,21 +7280,6 @@ public class LatticeModel {
 		return new Vector3f(outputX, outputY, outputZ);
 	}
 
-
-	protected ModelImage readImage(String name, int sliceID)
-	{
-		String voiDir = outputDirectory + File.separator + JDialogBase.makeImageName(name, "") + File.separator;
-		String imageName = name + "_" + sliceID;
-		FileIO fileIO = new FileIO();
-		ModelImage image = fileIO.readImage(imageName + ".tif", voiDir, false, null);
-		fileIO.dispose();
-		fileIO = null;
-		return image;
-	}
-
-
-
-
 	/**
 	 * Saves the annotation statistics to a file.
 	 * 
@@ -7369,27 +7298,12 @@ public class LatticeModel {
 		if (annotationVOIs.getCurves().size() == 0) {
 			return null;
 		}
-
-		//		String imageName = image.getImageName();
-		//		if (imageName.contains("_clone")) {
-		//			imageName = imageName.replaceAll("_clone", "");
-		//		}
-		//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
-		//		File voiFileDir = new File(voiDir);
-		//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-		//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		//		} else { // voiFileDir does not exist
-		//			voiFileDir.mkdir();
-		//		}
-		//		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
-
-
+		
 		String voiDir = imageDir;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
-			//			System.err.println( "saveAnnotationStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
@@ -7397,10 +7311,6 @@ public class LatticeModel {
 
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir
-			// does
-			// not
-			// exist
-			//			System.err.println( "saveAnnotationStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7493,39 +7403,6 @@ public class LatticeModel {
 		}
 	}
 
-
-	/**
-	 * Saves the image to the output_images directory.
-	 * 
-	 * @param imageName
-	 * @param image
-	 * @param saveAsTif
-	 */
-	protected void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif) {
-		saveImage(imageName, image, saveAsTif, null);
-	}
-
-
-	protected void saveImage(String outputDirectory, final ModelImage image, int sliceID)
-	{
-		String imageName = image.getImageName();
-		String voiDir = outputDirectory + File.separator + JDialogBase.makeImageName(imageName, "") + File.separator;
-		File voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			//			System.err.println( "saveImage " + voiDir);
-			voiFileDir.mkdir();
-		}
-
-		imageName = imageName + "_" + sliceID;
-		final File file = new File(voiDir + imageName);
-		if (file.exists()) {
-			file.delete();
-		}
-		ModelImage.saveImage(image, imageName + ".tif", voiDir, false);
-		//		System.err.println( "saveImage " + voiDir + " " + imageName + ".tif" );
-	}
 
 	/**
 	 * Saves the lattice statistics to a file.
@@ -9096,50 +8973,6 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
-
-	private VOIWormAnnotation findNearestAnnotation( final Vector3f startPt, final Vector3f endPt, final Vector3f pt ) {
-		int pickedAnnotation = -1;
-		float minDist = Float.MAX_VALUE;
-		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
-		{
-			final Vector3f annotationPt = annotationVOIs.getCurves().elementAt(i).elementAt(0);
-			final float distance = pt.distance(annotationPt);
-			if ( distance < minDist )
-			{
-				minDist = distance;
-				if ( minDist <= 12 )
-				{
-					pickedAnnotation = i;
-				}
-			}
-		}
-//		System.err.println("findNearestAnnotation " + minDist + "  " + pickedAnnotation );
-		if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
-		{
-			minDist = Float.MAX_VALUE;
-			// look at the vector under the mouse and see which lattice point is closest...
-			final Segment3f mouseVector = new Segment3f(startPt, endPt);
-			for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
-			{
-				DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotationVOIs.getCurves().elementAt(i).elementAt(0), mouseVector);
-				float distance = dist.Get();
-				//					System.err.println( i + " " + distance );
-				if ( distance < minDist )
-				{
-					minDist = distance;
-					if ( minDist <= 12 )
-					{
-						pickedAnnotation = i;
-					}
-				}
-			}
-		}
-		if ( pickedAnnotation != -1 ) {
-			return (VOIWormAnnotation) annotationVOIs.getCurves().elementAt(pickedAnnotation);
-		}
-		return null;
-	}
-
 	private void generateEllipses()
 	{
 		boxBounds = new Vector<Box3f>();
@@ -9181,8 +9014,8 @@ public class LatticeModel {
 			boxBounds.add(box);
 		}
 
-		saveSamplePlanes( samplingPlanes, outputDirectory + File.separator );
-		saveDiameters( wormDiameters, outputDirectory + File.separator );
+		saveSamplePlanes( samplingPlanes, sharedOutputDir + File.separator );
+		saveDiameters( wormDiameters, sharedOutputDir + File.separator );
 	}
 
 
@@ -9223,7 +9056,7 @@ public class LatticeModel {
 	}
 
 
-	private void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif, String dir) {
+	protected void saveImage(final String imageName, final ModelImage image, final boolean saveAsTif) {
 		String voiDir = outputDirectory + File.separator;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
@@ -9233,16 +9066,9 @@ public class LatticeModel {
 			voiFileDir.mkdir();
 		}
 		voiDir = outputDirectory + File.separator + "output_images" + File.separator;
-		if ( dir != null )
-		{
-			voiDir = voiDir + dir + File.separator;
-		}
+		
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir
-			// does
-			// not
-			// exist
-			//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -9250,15 +9076,9 @@ public class LatticeModel {
 		if (file.exists()) {
 			file.delete();
 		}
-		// System.err.println( voiDir );
-		// System.err.println( image.getImageName() + ".xml" );
-		//		long time = System.currentTimeMillis();
-		ModelImage.saveImage(image, image.getImageName() + ".xml", voiDir, false);
-		//		System.err.println( "                saveImage XML " + AlgorithmBase.computeElapsedTime(time) );
+		ModelImage.saveImage(image, getImageName(image) + ".xml", voiDir, false);
 		if (saveAsTif) {
-			//			time = System.currentTimeMillis();
-			ModelImage.saveImage(image, image.getImageName() + ".tif", voiDir, false);
-			//			System.err.println( "               saveImage TIF " + AlgorithmBase.computeElapsedTime(time) );
+			ModelImage.saveImage(image, getImageName(image) + ".tif", voiDir, false);
 		}
 	}
 	
@@ -9358,7 +9178,7 @@ public class LatticeModel {
 			}
 		}
 
-		saveLatticeStatistics(outputDirectory + File.separator, centerSpline.GetLength(0, 1), left, right, leftDistances, rightDistances, "_before");
+		saveLatticeStatistics(sharedOutputDir + File.separator, centerSpline.GetLength(0, 1), left, right, leftDistances, rightDistances, "_before");
 	}
 
 	public static void saveContourAsCSV( ModelImage image, String subDir, String postScript, VOIContour contour )
@@ -9481,38 +9301,23 @@ public class LatticeModel {
 		}
 	}
 
-    public static void saveContours( ModelImage image, String subDir, String postScript, Box3f[] contours ) {
+    private void saveContours( ModelImage image, Box3f[] contours ) {
 		
-		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
-		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
-		checkParentDir(parentDir);	
-		
-		String voiDir = outputDirectory + File.separator;
-		File voiFileDir = new File(voiDir);
+    	String voiDir = sharedOutputDir + File.separator + "model" + File.separator;	
+    	File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
-			//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
-		}
-		voiDir = outputDirectory + File.separator + subDir + File.separator;	
-		voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			//			System.err.println( "saveImage " + voiDir);
-			voiFileDir.mkdir();
-		}	
-		
+		}			
 		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
-		imageName = imageName + postScript;
+		imageName = imageName + "_contours";
 
 		String contourCSV = imageName + ".csv";
 		File contourFile = new File(voiDir + contourCSV);
 		if (contourFile.exists() && !contourFile.isDirectory()) { 
 			contourFile.delete();
-		}
-		
+		}		
 
 		try {
 
@@ -9621,11 +9426,7 @@ public class LatticeModel {
 		return contours;
     }
     
-    public static void saveTriMesh( ModelImage image, String subDir, String postScript, TriMesh mesh ) {
-		
-		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
-		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
-		checkParentDir(parentDir);	
+    public static void saveTriMesh( ModelImage image, String outputDirectory, String subDir, String postScript, TriMesh mesh ) {
 		
 		String voiDir = outputDirectory + File.separator;
 		File voiFileDir = new File(voiDir);
@@ -9674,14 +9475,9 @@ public class LatticeModel {
 
 
 
-	private void saveSpline(final ModelImage image, VOI data, Vector3f transformedOrigin, final String postFix) {
+	private void saveSpline(String outputDirectory, VOI data, Vector3f transformedOrigin, final String postFix) {
 
 		VOIContour spline = (VOIContour) data.getCurves().elementAt(0);
-
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
 		String voiDir = outputDirectory + File.separator;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
@@ -9994,10 +9790,7 @@ public class LatticeModel {
 		long time = System.currentTimeMillis();
 		int size = samplingPlanes.getCurves().size();
 
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
+		String imageName = getImageName(image);
 		ModelImage resultImage;
 		if ( image.isColorImage() )
 		{
@@ -10045,10 +9838,8 @@ public class LatticeModel {
 		long time = System.currentTimeMillis();
 		int size = samplingPlanes.getCurves().size();
 
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
+		String imageName = getImageName(image);
+		
 		ModelImage resultImage = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), imageName + "_sampleCounts.xml");
 		resultImage.setResolutions(new float[] {1, 1, 1});
 
@@ -10102,10 +9893,7 @@ public class LatticeModel {
 	 */
 	private void untwistLattice(final ModelImage image, final int[] resultExtents)
 	{
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
+		String imageName = getImageName(image);
 
 		// Straightens the interpolation curves:
 		Vector3f[][] averageCenters = new Vector3f[centerPositions.size()][];
@@ -10120,17 +9908,9 @@ public class LatticeModel {
 		}
 
 		// saves the data to the output directory:
-		String voiDir = outputDirectory;
-		File voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			//			System.err.println( "untwistLattice" + voiDir);
-			voiFileDir.mkdir();
-		}
-		voiDir = outputDirectory + File.separator + "statistics" + File.separator;
+		String voiDir = sharedOutputDir + File.separator + "statistics" + File.separator;
 
-		voiFileDir = new File(voiDir);
+		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
 			//			System.err.println( "untwistLattice" + voiDir);
@@ -10258,7 +10038,7 @@ public class LatticeModel {
 //			resultImage.registerVOI(marker);
 //		}
 
-		voiDir = outputDirectory + File.separator + "straightened_lattice" + File.separator;
+		voiDir = sharedOutputDir + File.separator + "straightened_lattice" + File.separator;
 		//		saveAllVOIsTo(voiDir, resultImage);
 
 
@@ -10269,10 +10049,10 @@ public class LatticeModel {
 			latticePoints.getCurves().add(rightSide.getCurves().elementAt(j));
 		}
 		LatticeModel.saveAnnotationsAsCSV(voiDir, "straightened_lattice.csv", latticePoints);
-		saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
+		saveLatticeStatistics(sharedOutputDir + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 
 
-		String voiSeamDir = outputDirectory + File.separator + "straightened_seamcells" + File.separator;
+		String voiSeamDir = sharedOutputDir + File.separator + "straightened_seamcells" + File.separator;
 		latticePoints.getCurves().clear();
 		for ( int j = 0; j < leftSide.getCurves().size(); j++ )
 		{
@@ -10291,25 +10071,22 @@ public class LatticeModel {
 		resultImage = null;
 	}
 
-	private void untwistMarkers(final ModelImage image, final int[] resultExtents )
+	private void untwistMarkers(ModelImage image, final int[] resultExtents )
 	{
-		System.err.println( "untwistMarkers NEW " + paddingFactor);
-
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
+		System.err.println( "untwistMarkers NEW " + paddingFactor + "  " + image.getImageFileName() );
 
 		long time = System.currentTimeMillis();
 		if ( samplingPlanes == null )
 		{
-			samplingPlanes = loadSamplePlanes( outputDirectory + File.separator );
+			samplingPlanes = loadSamplePlanes( sharedOutputDir + File.separator );
 		}
 		if ( wormDiameters == null )
 		{
-			wormDiameters = loadDiameters( outputDirectory + File.separator );
+			wormDiameters = loadDiameters( sharedOutputDir + File.separator );
 		}
 		int size = samplingPlanes.getCurves().size();
+		
+		String imageName = getImageName(image);
 
         ModelImage contourImage = null;
 		VOIVector contourVector = new VOIVector();
@@ -10319,9 +10096,9 @@ public class LatticeModel {
 		}
 		else {
 			// Load skin marker contours:
-			System.err.println(outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+			System.err.println(sharedOutputDir + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 			FileIO fileIO = new FileIO();
-			contourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+			contourImage = fileIO.readImage( sharedOutputDir + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 		}
 		
 //		FileIO fileIO = new FileIO();
@@ -10446,174 +10223,162 @@ public class LatticeModel {
 //			insideImage = null;
 //		}
 		
-		
 		System.err.println( "TEST 2021: untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
 
 	}
 
 
-	private void untwistAll(final ModelImage image, final int[] resultExtents )
+//	private void untwistAll(final ModelImage image, final int[] resultExtents )
+//	{
+//		System.err.println( "untwist ALL " + paddingFactor);
+//
+//		String imageName = image.getImageName();
+//		if (imageName.contains("_clone")) {
+//			imageName = imageName.replaceAll("_clone", "");
+//		}
+//		ModelImage resultImage;
+//		if ( image.isColorImage() )
+//		{
+//			resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_new.xml");
+//		}
+//		else
+//		{
+//			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_new.xml");
+//		}	
+//		resultImage.setResolutions(new float[] {1, 1, 1});
+//
+//		if ( samplingPlanes == null )
+//		{
+//			samplingPlanes = loadSamplePlanes( outputDirectory + File.separator );
+//		}
+//		if ( wormDiameters == null )
+//		{
+//			wormDiameters = loadDiameters( outputDirectory + File.separator );
+//		}
+//		int size = samplingPlanes.getCurves().size();
+//
+//		
+//		FileIO fileIO = new FileIO();
+//		ModelImage insideImage = fileIO.readImage( outputDirectory + File.separator + "model" + File.separator + imageName + "_interior.tif" );
+//
+//		final Vector3f[] corners = new Vector3f[4];		
+//		float[] minDistance = new float[1];
+//
+//		int dimX = insideImage.getExtents().length > 0 ? insideImage.getExtents()[0] : 1;
+//		int dimY = insideImage.getExtents().length > 1 ? insideImage.getExtents()[1] : 1;
+//		int dimZ = insideImage.getExtents().length > 2 ? insideImage.getExtents()[2] : 1;
+//		
+//		Box3f[] orientedBoxes = readContours(  imageA, "model", "_contours"  );
+//
+//		Vector3f testPt = new Vector3f();
+//		for ( int z = 0; z < dimZ; z++ ) {
+//			System.err.println(z + " / " + dimZ );
+//			for ( int y = 0; y < dimY; y++ ) {
+////				System.err.print( y + " "  );
+//				for ( int x = 0; x < dimX; x++ ) {
+//					int index = x + (dimX * (y + (dimY * z)));
+//					if ( insideImage.getFloat(index) <= 0 ) continue;
+//					{
+//						testPt.set(x, y, z);
+//						float minUntwist = Float.MAX_VALUE;
+//						int minSlice = -1;
+//						Vector3f minPt = new Vector3f();
+//
+//						for ( int j = 0; j < size; j++ )
+//						{			
+//							boolean test = false;
+//							
+//							if ( j < orientedBoxes.length ) {
+//								test = ContBox3f.InBox(testPt, orientedBoxes[j] );
+//							}
+//							else if ( !test && j == orientedBoxes.length ) {
+//								test = ContBox3f.InBox(testPt, orientedBoxes[j-1] );
+//							}
+//							
+//							if ( test ) {	
+//								// Calculate the straightened marker location:
+//								VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+//								for (int k = 0; k < 4; k++) {
+//									corners[k] = kBox.elementAt(k);
+//								}
+//								Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, testPt, minDistance );
+//								if ( minDistance[0] < minUntwist ) {
+//									minUntwist = minDistance[0];
+//									minSlice = j;
+//									minPt.copy(markerPt);
+//								}
+//							}
+//						}
+//						if ( minSlice != -1 ) {
+//							float value = resultImage.getFloat((int)minPt.X, (int)minPt.Y, (int)minPt.Z);
+////							System.err.println((int)minPt.X + " " + (int)minPt.Y + " " + (int)minPt.Z + "   " + value);
+//							resultImage.set( (int)minPt.X, (int)minPt.Y, (int)minPt.Z, Math.max(value, image.getFloat(x,y,z)) );
+//						}
+//					}
+//				}
+//			}
+//			System.err.println( " "  );
+//		}
+//		saveImage(imageName, resultImage, true);
+//		new ViewJFrameImage(resultImage);
+//
+//		if ( insideImage != null ) {
+//			insideImage.disposeLocal(false);
+//			insideImage = null;
+//		}
+//	}
+
+	public ModelImage untwistAnnotations(String dir, ModelImage contourImage)
 	{
-		System.err.println( "untwist ALL " + paddingFactor);
-
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		ModelImage resultImage;
-		if ( image.isColorImage() )
-		{
-			resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_new.xml");
-		}
-		else
-		{
-			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_new.xml");
-		}	
-		resultImage.setResolutions(new float[] {1, 1, 1});
-
-		if ( samplingPlanes == null )
-		{
-			samplingPlanes = loadSamplePlanes( outputDirectory + File.separator );
-		}
-		if ( wormDiameters == null )
-		{
-			wormDiameters = loadDiameters( outputDirectory + File.separator );
-		}
-		int size = samplingPlanes.getCurves().size();
-
+		String imageName = getImageName(contourImage);
 		
-		FileIO fileIO = new FileIO();
-		ModelImage insideImage = fileIO.readImage( outputDirectory + File.separator + "model" + File.separator + imageName + "_interior.tif" );
-
-		final Vector3f[] corners = new Vector3f[4];		
-		float[] minDistance = new float[1];
-
-		int dimX = insideImage.getExtents().length > 0 ? insideImage.getExtents()[0] : 1;
-		int dimY = insideImage.getExtents().length > 1 ? insideImage.getExtents()[1] : 1;
-		int dimZ = insideImage.getExtents().length > 2 ? insideImage.getExtents()[2] : 1;
-		
-		Box3f[] orientedBoxes = readContours(  imageA, "model", "_contours"  );
-
-		Vector3f testPt = new Vector3f();
-		for ( int z = 0; z < dimZ; z++ ) {
-			System.err.println(z + " / " + dimZ );
-			for ( int y = 0; y < dimY; y++ ) {
-//				System.err.print( y + " "  );
-				for ( int x = 0; x < dimX; x++ ) {
-					int index = x + (dimX * (y + (dimY * z)));
-					if ( insideImage.getFloat(index) <= 0 ) continue;
-					{
-						testPt.set(x, y, z);
-						float minUntwist = Float.MAX_VALUE;
-						int minSlice = -1;
-						Vector3f minPt = new Vector3f();
-
-						for ( int j = 0; j < size; j++ )
-						{			
-							boolean test = false;
-							
-							if ( j < orientedBoxes.length ) {
-								test = ContBox3f.InBox(testPt, orientedBoxes[j] );
-							}
-							else if ( !test && j == orientedBoxes.length ) {
-								test = ContBox3f.InBox(testPt, orientedBoxes[j-1] );
-							}
-							
-							if ( test ) {	
-								// Calculate the straightened marker location:
-								VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
-								for (int k = 0; k < 4; k++) {
-									corners[k] = kBox.elementAt(k);
-								}
-								Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, testPt, minDistance );
-								if ( minDistance[0] < minUntwist ) {
-									minUntwist = minDistance[0];
-									minSlice = j;
-									minPt.copy(markerPt);
-								}
-							}
-						}
-						if ( minSlice != -1 ) {
-							float value = resultImage.getFloat((int)minPt.X, (int)minPt.Y, (int)minPt.Z);
-//							System.err.println((int)minPt.X + " " + (int)minPt.Y + " " + (int)minPt.Z + "   " + value);
-							resultImage.set( (int)minPt.X, (int)minPt.Y, (int)minPt.Z, Math.max(value, image.getFloat(x,y,z)) );
-						}
-					}
-				}
-			}
-			System.err.println( " "  );
-		}
-		saveImage(imageName, resultImage, true);
-		new ViewJFrameImage(resultImage);
-
-		if ( insideImage != null ) {
-			insideImage.disposeLocal(false);
-			insideImage = null;
-		}
-	}
-
-	public ModelImage untwistAnnotations(ModelImage contourImage)
-	{
-
-		String imageName = imageA.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		
-		String voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator + "straightened_annotations.csv";
+		String voiDir = dir + File.separator + "straightened_annotations" + File.separator + "straightened_annotations.csv";
 		File file = new File(voiDir);
 		boolean untwistAll = !file.exists();
 		
 		// if the lattice has changed untwist the image and generate the contours and contour image again:
-		File lattice = new File(outputDirectory + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
+		File lattice = new File(dir + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
 		long latticeChanged = lattice.lastModified();
-		File contourFile = new File( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+		File contourFile = new File( dir + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 		long contourChanged = contourFile.lastModified();
 		
 		ModelImage currentContourImage = contourImage;
-		if ( latticeChanged > contourChanged ) {
-//			Date latticeDate = new Date(latticeChanged);
-//			Date contourDate = new Date(contourChanged);
-//			System.err.println( lattice.getPath() + "  " + latticeDate );
-//			System.err.println( contourFile.getPath() + "  " + contourDate );
-//			System.err.println( (latticeChanged < contourChanged) );
-			
+		if ( latticeChanged > contourChanged ) {			
 			// lattice was changed more recently than the contour image - restraighten all.
 			untwistAll = true;
 		}		
 		if ( untwistAll || latticeChanged() ) 
 		{
-			System.err.println( "lattice changed" );
 			initializeInterpolation(true);
 			untwistImage( true );
 			segmentLattice(imageA, true, paddingFactor, false);
-			System.err.println( outputDirectory + File.separator + WormData.editLatticeOutput );
-			saveLattice( outputDirectory + File.separator, WormData.editLatticeOutput );
+			System.err.println( dir + File.separator + WormData.editLatticeOutput );
+			saveLattice( dir + File.separator, WormData.editLatticeOutput );
 			untwistAll = true;
 			
 			FileIO fileIO = new FileIO();
-			currentContourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+			currentContourImage = fileIO.readImage( dir + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
 		}		
 		else if ( !latticeInterpolationInit ) {
 			initializeInterpolation(false);
 		}
 		if ( currentContourImage == null ) {
 			FileIO fileIO = new FileIO();
-			currentContourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );	
+			currentContourImage = fileIO.readImage( dir + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );	
 		}
 
 
 		// load the existing annotation file - use it to determine which annotations need untwisting.
-		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(outputDirectory + File.separator + WormData.integratedAnnotationOutput + File.separator + "annotations.csv");
+		VOI originalAnnotation = LatticeModel.readAnnotationsCSV(dir + File.separator + WormData.integratedAnnotationOutput + File.separator + "annotations.csv");
 
 		// look for changes in annotations - build list to untwist:
 		VOI changed = annotationChanged( annotationVOIs, originalAnnotation );
 
 		// if the lattice has changed untwist the image and generate the contours and contour image again:
-		File annotationTwisted = new File(outputDirectory + File.separator + WormData.integratedAnnotationOutput + File.separator + "annotations.csv");
+		File annotationTwisted = new File(dir + File.separator + WormData.integratedAnnotationOutput + File.separator + "annotations.csv");
 		long twistedChanged = annotationTwisted.lastModified();
-		File annotationStraight = new File( outputDirectory + File.separator + "straightened_annotations" + File.separator + "straightened_annotations.csv" );
+		File annotationStraight = new File( dir + File.separator + "straightened_annotations" + File.separator + "straightened_annotations.csv" );
 		long straightChanged = annotationStraight.lastModified();
 
 		VOI originalStraight = null;
@@ -10807,9 +10572,9 @@ public class LatticeModel {
 		}
 		
 		// save annotations:
-		saveAnnotationsAsCSV(outputDirectory + File.separator + WormData.integratedAnnotationOutput + File.separator, "annotations.csv", annotationVOIs);
+		saveAnnotationsAsCSV(sharedOutputDir + File.separator + WormData.integratedAnnotationOutput + File.separator, "annotations.csv", annotationVOIs);
 		// save straight annotations:
-		saveAnnotationStraight(imageA, "straightened_annotations", "straightened_annotations.csv" );	
+		saveAnnotationsAsCSV(sharedOutputDir + File.separator + "straightened_annotations" + File.separator, "straightened_annotations.csv", annotationsStraight);
 		
 		return currentContourImage;
 	}
@@ -10822,27 +10587,25 @@ public class LatticeModel {
 	 * @param image
 	 * @param resultExtents
 	 */
-	private ModelImage untwistTest(final ModelImage image, boolean straightenImage, final int[] resultExtents)
+	private ModelImage[] untwistTest(final VolumeImage[] stack, final int[] resultExtents)
 	{
 		System.err.println("untwistTest "  + paddingFactor );
 		long time = System.currentTimeMillis();
 		int size = samplingPlanes.getCurves().size();
 
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		ModelImage resultImage = null;
-		if ( straightenImage ) {
-			if ( image.isColorImage() )
+		String imageName = getImageName(stack[0].GetImage());
+		ModelImage[] resultImage = new ModelImage[stack.length];
+		for ( int i = 0; i < stack.length; i++ ) 
+		{
+			if ( stack[i].GetImage().isColorImage() )
 			{
-				resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_unmasked.xml");
+				resultImage[i] = new ModelImage( ModelStorageBase.ARGB, resultExtents, imageName + "_straight_unmasked.xml");
 			}
 			else
 			{
-				resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_unmasked.xml");
+				resultImage[i] = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_unmasked.xml");
 			}	
-			resultImage.setResolutions(new float[] {1, 1, 1});
+			resultImage[i].setResolutions(new float[] {1, 1, 1});
 		}
 
 
@@ -10892,18 +10655,20 @@ public class LatticeModel {
 			}
 			latticeContours.getCurves().add( contour );
 
-			if ( straightenImage ) {
-				float radiusSq = radius*radius;
-				writeDiagonalTest(image, resultImage, 0, i, resultExtents, corners, radiusSq);
+			float radiusSq = radius*radius;
+			for ( int j = 0; j < stack.length; j++ ) {
+				writeDiagonalTest(stack[j].GetImage(), resultImage[j], 0, i, resultExtents, corners, radiusSq);
 			}
 		}
-		if ( straightenImage ) {
-			if ( resultImage.getMin() > 0 ) {
-				resultImage.setMin(0);
+
+		for ( int i = 0; i < stack.length; i++ ) {
+			if ( resultImage[i].getMin() > 0 ) {
+				resultImage[i].setMin(0);
 			}
 		}
+		
 		// straighten lattice:
-		short id = (short) image.getVOIs().getUniqueID();
+		short id = (short) imageA.getVOIs().getUniqueID();
 		latticeStraight = new VOIVector();
 		VOI leftSide = new VOI(id, "left", VOI.ANNOTATION, (float) Math.random());
 		VOI rightSide = new VOI(id++, "right", VOI.ANNOTATION, (float) Math.random());
@@ -10917,14 +10682,14 @@ public class LatticeModel {
 				corners[j] = kBox.elementAt(j);
 			}
 
-			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.getCurves().elementAt(i).elementAt(0), minDistance );
+			final Vector3f leftPt = writeDiagonal(imageA, latticeSlices[i], resultExtents, corners, left.getCurves().elementAt(i).elementAt(0), minDistance );
 			VOIWormAnnotation leftTemp = (VOIWormAnnotation)left.getCurves().elementAt(i);
 			VOIWormAnnotation leftAnnotation = new VOIWormAnnotation(leftTemp);
 			leftAnnotation.clear();
 			leftAnnotation.add(leftPt);			
 			leftSide.getCurves().add(leftAnnotation);
 			
-			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.getCurves().elementAt(i).elementAt(0), minDistance );
+			final Vector3f rightPt = writeDiagonal(imageA, latticeSlices[i], resultExtents, corners, right.getCurves().elementAt(i).elementAt(0), minDistance );
 			VOIWormAnnotation rightTemp = (VOIWormAnnotation)right.getCurves().elementAt(i);
 			VOIWormAnnotation rightAnnotation = new VOIWormAnnotation(rightTemp);
 			rightAnnotation.clear();
@@ -10985,7 +10750,7 @@ public class LatticeModel {
 								for (int k = 0; k < 4; k++) {
 									corners[k] = kBox.elementAt(k);
 								}
-								Vector3f untwistPt = writeDiagonal(image, i, resultExtents, corners, text.firstElement(), minDistance );
+								Vector3f untwistPt = writeDiagonal(imageA, i, resultExtents, corners, text.firstElement(), minDistance );
 
 								// If it is inside the skin marker contour:
 								if ( ( minDistance[0] < (tryCount * 5) ) && ((contours[i] == null) || contours[i].contains( untwistPt.X, untwistPt.Y )) )
@@ -11808,7 +11573,7 @@ public class LatticeModel {
 	
 	private boolean latticeChanged() {
 		
-		VOIVector finalLattice = readLatticeCSV(outputDirectory + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
+		VOIVector finalLattice = readLatticeCSV(sharedOutputDir + File.separator + WormData.editLatticeOutput + File.separator + "lattice.csv");
         if ( finalLattice == null ) 
         	return true;
 		if ( finalLattice.size() < 2 ) 
@@ -11906,7 +11671,7 @@ public class LatticeModel {
 
 	public ModelImage getInsideMeshImage(BitSet surfaceMask) 
 	{		
-		ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_interior"));
+		ModelImage surfaceMaskImage = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageFileName(),  "_interior"));
 		JDialogBase.updateFileInfo(imageA, surfaceMaskImage);
 
 		int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
@@ -11942,7 +11707,7 @@ public class LatticeModel {
 					false, false, null, 0, 0, -1, -1,
 					false, 0, regionGrowBounds);
 
-			volMaskImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageName(),  "_interior"));
+			volMaskImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, imageA.getExtents(), JDialogBase.makeImageName(imageA.getImageFileName(),  "_interior"));
 			JDialogBase.updateFileInfo(imageA, volMaskImage);
 
 			for ( int z = 0; z < dimZ; z++ ) {

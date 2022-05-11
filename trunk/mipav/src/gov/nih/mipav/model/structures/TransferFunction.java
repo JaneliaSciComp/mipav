@@ -178,6 +178,7 @@ public class TransferFunction extends ModelSerialCloneable {
         float rmValue = 0;
 
         if (pts == null) {
+        	System.err.println("getRemappedValue pts == null");
             return 0;
         }
 

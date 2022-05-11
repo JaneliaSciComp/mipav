@@ -69,6 +69,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     protected VolumeImage m_kVolumeImageA;
     /** VolumeImage for ModelImageB, contains data and textures. */
     protected VolumeImage m_kVolumeImageB;
+
+    protected VolumeImage[] hyperstack;
     
     protected VolumeImage m_kVolumeImageA_Old;
     protected VolumeImage m_kVolumeImageB_Old;

@@ -10,6 +10,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.CurveListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeListener;
@@ -35,6 +36,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
+import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
@@ -301,6 +304,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 
+	public void removeListeners() {
+		if ( latticeModel != null ) {
+			latticeModel.removeListeners();
+		}
+	}
+	
 	/**
 	 * Adds an annotation listener to the latticeModel.
 	 * @param listener
@@ -389,13 +398,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 
-	public void openNeuriteCurves() {
+	public void openNeuriteCurves(String dir) {
 
 		if ( latticeModel == null )
 		{
 			latticeModel = new LatticeModel( m_kImageA );
 		}
-		latticeModel.openNeuriteCurves();
+		latticeModel.openNeuriteCurves(dir);
 	}
 	
 	public void saveNeuriteCurves( )
@@ -421,28 +430,21 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.setLattice( lattice );	
 //		latticeModel.expandLattice();
 	}
-
-	
+		
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
 	 * @return untwisted image.
 	 */
-	public ModelImage untwistTest()
+	public ModelImage[] untwistTest(VolumeImage[] stack)
 	{
 		if ( latticeModel == null ) return null;
-		return latticeModel.untwistTest();
+		return latticeModel.untwistTest(stack);
 	}
 
-	public void untwistMarkers()
-	{
-		if ( latticeModel == null ) return;
-		latticeModel.untwistMarkers();		
-	}
-
-	public ModelImage untwistAnnotations(ModelImage image)
+	public ModelImage untwistAnnotations(String dir, ModelImage image)
 	{
 		if ( latticeModel == null ) return image;
-		return latticeModel.untwistAnnotations(image);		
+		return latticeModel.untwistAnnotations(dir, image);		
 	}
 	
 	public void openAnnotations( String directory, String fileName )
@@ -643,6 +645,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		if ( latticeModel != null )
 		{
 			latticeModel.setImage(imageA);
+		}
+	}
+	
+	public void setSharedDirectory( String dir ) 
+	{
+		if ( latticeModel != null ) {
+			latticeModel.setSharedDirectory(dir);
 		}
 	}
 	
@@ -1091,11 +1100,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	{
 		if ( latticeModel != null )
 		{
-//			if ( !movingPickedPoint )
-//			{
-//				movingPickedPoint = true;
-//				saveVOIs("selectAnnotations");
-//			}
 			return latticeModel.selectAnnotation(startPt, endPt, pt, rightMouse, multiSelect);
 		}
 		return false;
@@ -1166,6 +1170,52 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;
 	}
+	
+
+	public static VOIBase findNearestAnnotation( final VOI annotations, final Vector3f startPt, final Vector3f endPt, final Vector3f pt ) {
+		int pickedAnnotation = -1;
+		float minDist = Float.MAX_VALUE;
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			final Vector3f annotationPt = annotations.getCurves().elementAt(i).elementAt(0);
+			final float distance = pt.distance(annotationPt);
+			if ( distance < minDist )
+			{
+				minDist = distance;
+				if ( minDist <= 12 )
+				{
+					pickedAnnotation = i;
+				}
+			}
+		}
+//		System.err.println("findNearestAnnotation " + minDist + "  " + pickedAnnotation );
+		if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
+		{
+			minDist = Float.MAX_VALUE;
+			// look at the vector under the mouse and see which lattice point is closest...
+			final Segment3f mouseVector = new Segment3f(startPt, endPt);
+			for ( int i = 0; i < annotations.getCurves().size(); i++ )
+			{
+				DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotations.getCurves().elementAt(i).elementAt(0), mouseVector);
+				float distance = dist.Get();
+				//					System.err.println( i + " " + distance );
+				if ( distance < minDist )
+				{
+					minDist = distance;
+					if ( minDist <= 12 )
+					{
+						pickedAnnotation = i;
+					}
+				}
+			}
+		}
+		if ( pickedAnnotation != -1 ) {
+			return annotations.getCurves().elementAt(pickedAnnotation);
+		}
+		return null;
+	}
+
+
 	
 //	private void testSegmentation()
 //	{

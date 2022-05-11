@@ -1378,7 +1378,10 @@ public class VolumeImage implements Serializable {
 	public void UpdateImages(final ModelStorageBase kLUT) {
 		if ( (kLUT != null) && (kLUT instanceof ModelLUT)) {
 			VolumeImage.UpdateImages(m_kColorMapTarget, m_kColorMap, (ModelLUT)kLUT);
-			m_kLUT = (ModelLUT)kLUT;
+			m_kLUT = (ModelLUT)kLUT;		
+//			System.err.println("UpdateImages " + m_kColorMapTarget.GetName() + "  " + kLUT.
+//			System.err.println("             " + m_kColorMapTarget.GetID() );
+
 		}
 		if ( (kLUT != null) && (kLUT instanceof ModelRGB)) {
 			ModelLUT.exportIndexedLUTMin((ModelRGB)kLUT, m_kColorMap.GetData());

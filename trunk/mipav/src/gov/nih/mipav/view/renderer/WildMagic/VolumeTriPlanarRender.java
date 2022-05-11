@@ -62,6 +62,7 @@ import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -191,6 +192,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float) Math.PI / 18.0f);
 		m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float) Math.PI / 18.0f);
 		m_kParent = kParent;
+	}
+	
+	public VolumeTriPlanarRender( VolumeImage[] images )
+	{
+		this( null, images[0], new VolumeImage() );
+		hyperstack = images;
 	}
 
 	/**
@@ -1253,6 +1260,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 	public void mousePressed(MouseEvent e) {
 		super.mousePressed(e);
+//		System.err.println("MousePressed " + is3DSelectionEnabled());
 		if (e.isControlDown() && is3DSelectionEnabled()) {
 			rightMousePressed = ((e.getModifiers() & InputEvent.BUTTON3_MASK) != 0);
 			altPressed = e.isAltDown();
@@ -1283,6 +1291,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	{
     		m_kVOIInterface.mouseReleased(e);
     	}
+    	System.err.println("mouseReleased");
 	}
 
     public void setDefaultCursor( )
@@ -1526,267 +1535,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					GetHeight(),kPos,kDir))
 			{				
 				m_bPickPending = false;
-				if ( is3DSelectionEnabled() )
-				{
+				if ( is3DSelectionEnabled() ) {
 					Vector3f maxPt = new Vector3f();
+
 					if ( m_kSlices.GetDisplay() )
 					{
-						// pick on the slices
-						m_kPicker.Execute(m_kSlices.GetScene(),kPos,kDir,0.0f,
-								Float.MAX_VALUE);
-						if (m_kPicker.Records.size() > 0)
-						{ 
-							PickRecord kPickPoint = m_kPicker.GetClosestNonnegative();
-							TriMesh kMesh = (TriMesh)kPickPoint.Intersected;
-							int iPlane = m_kSlices.whichPlane(kMesh);
-
-							Vector3f kP0 = kMesh.VBuffer.GetPosition3( kPickPoint.iV0 );
-							kP0.scale(kPickPoint.B0);
-							Vector3f kP1 = kMesh.VBuffer.GetPosition3( kPickPoint.iV1 );
-							kP1.scale( kPickPoint.B1);
-							Vector3f kP2 = kMesh.VBuffer.GetPosition3( kPickPoint.iV2 );
-							kP2.scale( kPickPoint.B2 );
-							Vector3f kPoint = Vector3f.add( kP0, kP1 );
-							kPoint.add( kP2 );
-							m_kVolumeRayCast.localToVolumeCoords( kPoint );
-							maxPt.copy(kPoint);
-							
-							boolean picked = false;
-//							System.err.println("mouse drag? " + m_bMouseDrag );
-							if ( !m_bMouseDrag ) {
-								picked = select3DMarker( null, null, maxPt, rightMousePressed, altPressed );
-							}
-							else if ( m_bMouseDrag ) {
-								picked = modify3DMarker( null, null, maxPt );
-							}
-							
-							if ( picked && (m_kVOIInterface != null) )
-							{
-								Vector<VOIWormAnnotation> selectedAnnotations = m_kVOIInterface.getPickedAnnotation();
-								if ( selectedAnnotations != null ) {
-									for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
-										selectedAnnotations.elementAt(i).setPlane(iPlane);
-									}
-								}
-							}
-							if ( !picked )
-							{
-
-								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
-								int colorID = 0;
-								VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-								VOIText textVOI = new VOIText( );
-								textVOI.add( maxPt );
-								textVOI.add( maxPt );
-								textVOI.setText(""+id);
-								if ( m_kVOIInterface != null )
-								{
-									if ( doAutomaticLabels() )
-									{
-										textVOI.setText("" + m_kVOIInterface.getCurrentIndex() );
-									}
-									else
-									{
-										textVOI.setText(annotationPrefix() + m_kVOIInterface.getCurrentIndex() );	
-									}
-								}
-								else if ( doAutomaticLabels() )
-								{
-									textVOI.setText(""+id);										
-								}
-								else if ( !doAutomaticLabels() )
-								{
-									textVOI.setText(annotationPrefix() + id);	
-								}
-								newTextVOI.getCurves().add(textVOI);
-								textVOI.setPlane( iPlane );
-//								System.err.println("shift down? " + shiftPressed );
-								add3DMarker( newTextVOI, doAutomaticLabels(), altPressed );
-							}
-							m_kVOIInterface.updateDisplay();
-							return;
-						}
+						if ( PickSlice3D(kPos, kDir, maxPt) ) return;
 					}
-						
 					// pick in the volume.
-					m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
-							Float.MAX_VALUE);
-
-					if ( m_kPicker.Records.size() >= 2 )
-					{				        						
-						Vector3f firstIntersectionPoint = new Vector3f();
-						Vector3f secondIntersectionPoint = new Vector3f();
-						
-						Vector3f pickedPoints[] = new Vector3f[m_kPicker.Records.size()];
-						float distances[] = new float[m_kPicker.Records.size()];
-						
-						for ( int i = 0; i < m_kPicker.Records.size(); i++ )
-						{
-							PickRecord kPickPoint = m_kPicker.Records.elementAt(i);
-							Vector3f kP0 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV0 );
-							kP0.scale(kPickPoint.B0);
-							Vector3f kP1 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV1 );
-							kP1.scale( kPickPoint.B1);
-							Vector3f kP2 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV2 );
-							kP2.scale( kPickPoint.B2 );
-							Vector3f kPoint = Vector3f.add( kP0, kP1 );
-							kPoint.add( kP2 );
-							
-							m_kVolumeRayCast.localToVolumeCoords( kPoint );
-							pickedPoints[i] = kPoint;
-							distances[i] = kPickPoint.T;	
-						}
-						
-						if ( m_kPicker.Records.size() == 2 )
-						{
-							firstIntersectionPoint.copy(pickedPoints[0]);
-							secondIntersectionPoint.copy(pickedPoints[1]);
-							
-							float maxValue = -Float.MAX_VALUE;
-							
-							Vector3f p0 = new Vector3f(firstIntersectionPoint);
-							Vector3f p1 = new Vector3f(secondIntersectionPoint);
-							Vector3f step = Vector3f.sub(p1, p0);
-							Vector3f test = new Vector3f();
-							float numSteps = step.length() + 1;
-							step.normalize();
-							for ( int i = 0; i < numSteps; i++ )
-							{
-								// step along the ray and pick the voxel with the highest value:
-								p0.add(step);
-								// test for clipping:
-								if ( m_kVolumeRayCast.GetShaderEffect().isClip() )
-								{
-									test.copy( p0 );
-									Vector3f clip = m_kVolumeRayCast.GetShaderEffect().getClip();  
-									clip.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
-									Vector3f clipInv = m_kVolumeRayCast.GetShaderEffect().getClipInv();
-									clipInv.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
-									// axis aligned clipping:
-									if ( (test.X < clip.X) || (test.X > clipInv.X) || (test.Y < clip.Y) || (test.Y > clipInv.Y) || (test.Z < clip.Z) || (test.Z > clipInv.Z) )
-									{
-										continue;
-									}
-									// arbitrary clip plane:
-									Vector4f clipA = m_kVolumeRayCast.GetShaderEffect().getClipArb();
-									Vector4f clipAInv = m_kVolumeRayCast.GetShaderEffect().getClipArbInv();
-							    	Vector3f kExtentsScale = new Vector3f(1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
-							                1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
-							                1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
-							    	Vector3f texCoord = Vector3f.mult(test, kExtentsScale);
-							    	float fDotArb = texCoord.X * clipA.X + texCoord.Y * clipA.Y + texCoord.Z * clipA.Z;
-							    	if ( fDotArb > clipA.W || fDotArb < clipAInv.W )
-							    	{
-										continue;
-									}
-								}
-								if ( sphereClip != null )
-								{
-									test.copy( p0 );
-									m_kVolumeRayCast.volumeToLocalCoords( test );
-//									System.err.println( "Pick " + test + "     " + sphereClipLocal );
-//									if ( !ellipsoidClipLocal.Contains(test) ) {
-//										continue;
-//									}
-								}
-								if ( latticeClip && (latticeClipBox != null) ) {
-									if ( !ContBox3f.InBox( p0, latticeClipBox ) ) {
-										continue;
-									}
-								}
-								float value;
-								if ( m_kVolumeImageA.GetImage().isColorImage() )
-								{
-									boolean useRed = m_kVolumeImageA.GetRGB().getROn();
-									boolean useGreen = m_kVolumeImageA.GetRGB().getGOn();
-									boolean useBlue = m_kVolumeImageA.GetRGB().getBOn();
-									
-									float red = 0;
-									float green = 0;
-									float blue = 0;
-									if ( useRed && !(m_kVolumeRayCast.getDisplayGreenAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray())  )
-									{
-										red = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 1);
-									}
-									if ( useGreen && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray()) )
-									{
-										green = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 2);
-									}
-									if ( useBlue && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayGreenAsGray())  )
-									{
-										blue = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 3);
-									}
-									value = Math.max(red, Math.max(green, blue) );
-								}
-								else 
-								{
-									value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-									if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null))
-									{
-										float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-										float blend = getABBlend();
-										value = (blend * value + (1 - blend) * valueB);
-									}
-								}
-								if ( value > maxValue )
-								{
-									maxValue = value;
-									maxPt.copy(p0);
-								}
-							}
-							
-							if ( maxValue != -Float.MAX_VALUE )
-							{					
-								boolean picked = false;
-//								System.err.println( "mouse drag? " + m_bMouseDrag );
-								if ( !m_bMouseDrag ) {
-									// select or create a new marker:
-									picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed, altPressed );
-								}
-								else if ( m_bMouseDrag ) {
-									// modify currently selected, if exists
-									picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );
-								}
-								if ( !picked )
-								{
-									// add a new picked point:
-									short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
-									int colorID = 0;
-									VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-									VOIText textVOI = new VOIText( );
-									textVOI.add( maxPt );
-									textVOI.add( maxPt );
-//									Transformation world = m_kVolumeRayCast.getMesh().World;
-//									Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
-//									dir.scale(5);
-//									textVOI.add( Vector3f.add( dir, maxPt) );
-									textVOI.setText(""+id);
-									if ( m_kVOIInterface != null )
-									{
-										if ( doAutomaticLabels() )
-										{
-											textVOI.setText("" + m_kVOIInterface.getCurrentIndex() );
-										}
-										else
-										{
-											textVOI.setText(annotationPrefix() + m_kVOIInterface.getCurrentIndex() );	
-										}
-									}
-									else if ( doAutomaticLabels() )
-									{
-										textVOI.setText(""+id);										
-									}
-									else if ( !doAutomaticLabels() )
-									{
-										textVOI.setText(annotationPrefix() + id);	
-									}
-									newTextVOI.getCurves().add(textVOI);
-									add3DMarker( newTextVOI, doAutomaticLabels(), altPressed, shiftPressed );
-								}
-								m_kVOIInterface.updateDisplay();
-							}
-						}
-					}
+					PickVolume3D(kPos, kDir, maxPt );
 				}
 
 				else
@@ -1836,6 +1593,267 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			}
 		}
 		m_bMouseDrag = false;
+	}
+	
+	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
+	{
+		m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
+				Float.MAX_VALUE);
+
+		if ( m_kPicker.Records.size() >= 2 )
+		{				        						
+			Vector3f firstIntersectionPoint = new Vector3f();
+			Vector3f secondIntersectionPoint = new Vector3f();
+			
+			Vector3f pickedPoints[] = new Vector3f[m_kPicker.Records.size()];
+			float distances[] = new float[m_kPicker.Records.size()];
+			
+			for ( int i = 0; i < m_kPicker.Records.size(); i++ )
+			{
+				PickRecord kPickPoint = m_kPicker.Records.elementAt(i);
+				Vector3f kP0 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV0 );
+				kP0.scale(kPickPoint.B0);
+				Vector3f kP1 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV1 );
+				kP1.scale( kPickPoint.B1);
+				Vector3f kP2 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV2 );
+				kP2.scale( kPickPoint.B2 );
+				Vector3f kPoint = Vector3f.add( kP0, kP1 );
+				kPoint.add( kP2 );
+				
+				m_kVolumeRayCast.localToVolumeCoords( kPoint );
+				pickedPoints[i] = kPoint;
+				distances[i] = kPickPoint.T;	
+			}
+			
+			if ( m_kPicker.Records.size() == 2 )
+			{
+				firstIntersectionPoint.copy(pickedPoints[0]);
+				secondIntersectionPoint.copy(pickedPoints[1]);
+				
+				float maxValue = -Float.MAX_VALUE;
+				
+				Vector3f p0 = new Vector3f(firstIntersectionPoint);
+				Vector3f p1 = new Vector3f(secondIntersectionPoint);
+				Vector3f step = Vector3f.sub(p1, p0);
+				Vector3f test = new Vector3f();
+				float numSteps = step.length() + 1;
+				step.normalize();
+				for ( int i = 0; i < numSteps; i++ )
+				{
+					// step along the ray and pick the voxel with the highest value:
+					p0.add(step);
+					// test for clipping:
+					if ( m_kVolumeRayCast.GetShaderEffect().isClip() )
+					{
+						test.copy( p0 );
+						Vector3f clip = m_kVolumeRayCast.GetShaderEffect().getClip();  
+						clip.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
+						Vector3f clipInv = m_kVolumeRayCast.GetShaderEffect().getClipInv();
+						clipInv.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
+						// axis aligned clipping:
+						if ( (test.X < clip.X) || (test.X > clipInv.X) || (test.Y < clip.Y) || (test.Y > clipInv.Y) || (test.Z < clip.Z) || (test.Z > clipInv.Z) )
+						{
+							continue;
+						}
+						// arbitrary clip plane:
+						Vector4f clipA = m_kVolumeRayCast.GetShaderEffect().getClipArb();
+						Vector4f clipAInv = m_kVolumeRayCast.GetShaderEffect().getClipArbInv();
+				    	Vector3f kExtentsScale = new Vector3f(1f/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+				                1f/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+				                1f/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
+				    	Vector3f texCoord = Vector3f.mult(test, kExtentsScale);
+				    	float fDotArb = texCoord.X * clipA.X + texCoord.Y * clipA.Y + texCoord.Z * clipA.Z;
+				    	if ( fDotArb > clipA.W || fDotArb < clipAInv.W )
+				    	{
+							continue;
+						}
+					}
+					if ( sphereClip != null )
+					{
+						test.copy( p0 );
+						m_kVolumeRayCast.volumeToLocalCoords( test );
+//						System.err.println( "Pick " + test + "     " + sphereClipLocal );
+//						if ( !ellipsoidClipLocal.Contains(test) ) {
+//							continue;
+//						}
+					}
+					if ( latticeClip && (latticeClipBox != null) ) {
+						if ( !ContBox3f.InBox( p0, latticeClipBox ) ) {
+							continue;
+						}
+					}
+					float value;
+					if ( m_kVolumeImageA.GetImage().isColorImage() )
+					{
+						boolean useRed = m_kVolumeImageA.GetRGB().getROn();
+						boolean useGreen = m_kVolumeImageA.GetRGB().getGOn();
+						boolean useBlue = m_kVolumeImageA.GetRGB().getBOn();
+						
+						float red = 0;
+						float green = 0;
+						float blue = 0;
+						if ( useRed && !(m_kVolumeRayCast.getDisplayGreenAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray())  )
+						{
+							red = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 1);
+						}
+						if ( useGreen && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray()) )
+						{
+							green = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 2);
+						}
+						if ( useBlue && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayGreenAsGray())  )
+						{
+							blue = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 3);
+						}
+						value = Math.max(red, Math.max(green, blue) );
+					}
+					else 
+					{
+						value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+						if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null))
+						{
+							float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+							float blend = getABBlend();
+							value = (blend * value + (1 - blend) * valueB);
+						}
+					}
+					if ( value > maxValue )
+					{
+						maxValue = value;
+						maxPt.copy(p0);
+					}
+				}
+				
+				if ( maxValue != -Float.MAX_VALUE )
+				{					
+					boolean picked = false;
+//					System.err.println( "mouse drag? " + m_bMouseDrag );
+					if ( !m_bMouseDrag ) {
+						// select or create a new marker:
+						picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed, altPressed );
+					}
+					else if ( m_bMouseDrag ) {
+						// modify currently selected, if exists
+						picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );	
+					}
+					if ( !picked )
+					{
+						// add a new picked point:
+						short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+						int colorID = 0;
+						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+						VOIText textVOI = new VOIText( );
+						textVOI.add( maxPt );
+						textVOI.add( maxPt );
+//						Transformation world = m_kVolumeRayCast.getMesh().World;
+//						Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
+//						dir.scale(5);
+//						textVOI.add( Vector3f.add( dir, maxPt) );
+						textVOI.setText(""+id);
+						if ( m_kVOIInterface != null )
+						{
+							if ( doAutomaticLabels() )
+							{
+								textVOI.setText("" + m_kVOIInterface.getCurrentIndex() );
+							}
+							else
+							{
+								textVOI.setText(annotationPrefix() + m_kVOIInterface.getCurrentIndex() );	
+							}
+						}
+						else if ( doAutomaticLabels() )
+						{
+							textVOI.setText(""+id);										
+						}
+						else if ( !doAutomaticLabels() )
+						{
+							textVOI.setText(annotationPrefix() + id);	
+						}
+						newTextVOI.getCurves().add(textVOI);
+						add3DMarker( newTextVOI, doAutomaticLabels(), altPressed, shiftPressed );
+					}
+					m_kVOIInterface.updateDisplay();
+				}
+			}
+		}	
+	}
+	
+	private boolean PickSlice3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
+	{
+		// pick on the slices
+		m_kPicker.Execute(m_kSlices.GetScene(),kPos,kDir,0.0f,
+				Float.MAX_VALUE);
+		if (m_kPicker.Records.size() > 0)
+		{ 
+			PickRecord kPickPoint = m_kPicker.GetClosestNonnegative();
+			TriMesh kMesh = (TriMesh)kPickPoint.Intersected;
+			int iPlane = m_kSlices.whichPlane(kMesh);
+
+			Vector3f kP0 = kMesh.VBuffer.GetPosition3( kPickPoint.iV0 );
+			kP0.scale(kPickPoint.B0);
+			Vector3f kP1 = kMesh.VBuffer.GetPosition3( kPickPoint.iV1 );
+			kP1.scale( kPickPoint.B1);
+			Vector3f kP2 = kMesh.VBuffer.GetPosition3( kPickPoint.iV2 );
+			kP2.scale( kPickPoint.B2 );
+			Vector3f kPoint = Vector3f.add( kP0, kP1 );
+			kPoint.add( kP2 );
+			m_kVolumeRayCast.localToVolumeCoords( kPoint );
+			maxPt.copy(kPoint);
+
+			boolean picked = false;
+			//				System.err.println("mouse drag? " + m_bMouseDrag );
+			if ( !m_bMouseDrag ) {
+				picked = select3DMarker( null, null, maxPt, rightMousePressed, altPressed );
+			}
+			else if ( m_bMouseDrag ) {
+				picked = modify3DMarker( null, null, maxPt );
+			}
+
+			if ( picked && (m_kVOIInterface != null) )
+			{
+				Vector<VOIWormAnnotation> selectedAnnotations = m_kVOIInterface.getPickedAnnotation();
+				if ( selectedAnnotations != null ) {
+					for ( int i = 0; i < selectedAnnotations.size(); i++ ) {
+						selectedAnnotations.elementAt(i).setPlane(iPlane);
+					}
+				}
+			}
+			if ( !picked )
+			{
+				short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+				int colorID = 0;
+				VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+				VOIText textVOI = new VOIText( );
+				textVOI.add( maxPt );
+				textVOI.add( maxPt );
+				textVOI.setText(""+id);
+				if ( m_kVOIInterface != null )
+				{
+					if ( doAutomaticLabels() )
+					{
+						textVOI.setText("" + m_kVOIInterface.getCurrentIndex() );
+					}
+					else
+					{
+						textVOI.setText(annotationPrefix() + m_kVOIInterface.getCurrentIndex() );	
+					}
+				}
+				else if ( doAutomaticLabels() )
+				{
+					textVOI.setText(""+id);										
+				}
+				else if ( !doAutomaticLabels() )
+				{
+					textVOI.setText(annotationPrefix() + id);	
+				}
+				newTextVOI.getCurves().add(textVOI);
+				textVOI.setPlane( iPlane );
+				//					System.err.println("shift down? " + shiftPressed );
+				add3DMarker( newTextVOI, doAutomaticLabels(), altPressed );
+			}
+			m_kVOIInterface.updateDisplay();
+			return true;
+		}
+		return false;
 	}
 
 	protected void update4D( boolean bForward )
@@ -2472,8 +2490,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	}  
 	
 	
-	
-	
 	private boolean displayedNeurite( String neuriteName )
 	{
 		if ( neuriteVOIs == null )
@@ -2932,9 +2948,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //			neuriteVOIs[1].getCurves().add( neurites[annotationSpheresIndex][1] );
 			
 			
-			int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
-			int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
-			int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+//			int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+//			int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+//			int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
 			VOI currentTime = annotationPositions.elementAt( annotationSpheresIndex );
 //			m_kVolumeImageA.GetImage().registerVOI(currentTime);
 //			System.err.println( currentTime.getCurves().size() );

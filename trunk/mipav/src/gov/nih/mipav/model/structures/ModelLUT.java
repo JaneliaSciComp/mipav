@@ -335,6 +335,7 @@ public class ModelLUT extends ModelStorageBase {
         float fNew;
 
         int lutHeight = remappedLUTMin.length/4; //kLut.getExtents()[1];
+
         //remappedLUTMin = new byte[lutHeight * 4];
         for (int i = 0; i < lutHeight; i++) {
             fNew = (float) (xMin + ( ((float) i / (lutHeight - 1)) * (xMax - xMin)));

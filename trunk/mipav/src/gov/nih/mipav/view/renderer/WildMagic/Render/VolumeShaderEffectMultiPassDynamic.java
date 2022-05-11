@@ -640,6 +640,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
                                 Texture kSceneTarget )
     {
     	super( kVolumeImageA, kVolumeImageB, kSceneTarget );
+		
+        CreateVolumeTexture();
     }
     /**
      * The VolumeShaderEffect.CreateVolumeTexture() function constructs and
