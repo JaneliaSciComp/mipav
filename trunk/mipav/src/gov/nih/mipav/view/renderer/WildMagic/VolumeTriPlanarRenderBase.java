@@ -275,7 +275,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	protected Polyline kPoly;
 	protected Polyline kGeometryBranchPath;
 	
-
 	/**
 	 * Default Constructor.
 	 */
@@ -700,7 +699,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			// Profile.start();
 		}
 
-		// System.err.println( "fps: " + m_dFrameRate);
+//		 System.err.println( "fps: " + m_dFrameRate);
 
 		if (m_bPlay4D || m_bPlay4DVOIs ) {
 			if (m_iAnimateCount++ >= m_fAnimateRate) {
@@ -1996,7 +1995,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public void removeAll(String kSurfaceName) {
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i).GetName() != null) {
-				if (m_kDisplayList.get(i).GetName().contains(kSurfaceName)) {
+				if (m_kDisplayList.get(i).GetName().equals(kSurfaceName)) {
 					VolumeObject kObj = m_kDisplayList.remove(i);
 					if (kObj instanceof VolumeSurface) {
 						m_bSurfaceUpdate = true;
@@ -2712,6 +2711,15 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_kVolumeRayCast.recreateShaderEffect(m_pkRenderer,	m_akSceneTarget[3]);
     }
 
+    public void setHyperStack(VolumeImage[] images) {
+    	hyperstack = images;
+    	m_kVolumeImageA_New = images[0];
+    	m_bResetImages = true;
+    	if ( m_kVolumeRayCast != null ) {
+    		m_kVolumeRayCast.setHyperStack(images);
+    	}
+    }
+
 	/**
 	 * Sets the ModelImage to use as an alternative to the volume ModelImage for
 	 * surface texturing.
@@ -3325,6 +3333,9 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_spkScene.AttachGlobalState(m_spkCull);
 
 		m_kVolumeRayCast = new VolumeRayCast(m_kVolumeImageA, m_kVolumeImageB);
+		if ( hyperstack != null ) {
+			m_kVolumeRayCast.setHyperStack(hyperstack);
+		}
 		m_kDisplayList.add(0, m_kVolumeRayCast);
 		m_kVolumeRayCast.CreateScene();
 

@@ -1174,7 +1174,7 @@ public class VolumeSurface extends VolumeObject
     }
     
     public void SetTranslateVolumeCoords( Vector3f position )
-    {
+    {    	
     	position.mult( m_kVolumeScale ).scale( m_fVolumeDiv );	
 		m_kMesh.Local.SetTranslate( position );
 		m_kMesh.UpdateGS();

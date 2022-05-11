@@ -507,15 +507,15 @@ public class PlugInAlgorithmWormUntwisting
 	}
 	
 	public static void batchFlipLattices( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String[] baseFileDir, final String baseFileName)
+			final String outputDir, final String baseFileName)
 	{
 		if ( includeRange != null )
 		{
-			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
+			if ( !checkFilePaths( includeRange, outputDir, baseFileName ) ) return;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				// Build the full image name:
-				String baseDir = baseFileDir[0] + File.separator + baseFileName + "_" + includeRange.elementAt(i) + 
+				String baseDir = outputDir + File.separator + baseFileName + "_" + includeRange.elementAt(i) + 
 						File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_results" + 
 						File.separator;
 				String fileName = baseDir + "lattice_final" + File.separator + "lattice.csv";
@@ -543,9 +543,9 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String[] baseFileDir, final String baseFileName, final int paddingFactor, final boolean segmentLattice )
+			final String[] baseFileDir, final String baseFileName, final String outputDir, final int paddingFactor, final boolean segmentLattice )
 	{
-		long time = System.currentTimeMillis();
+		long time = System.currentTimeMillis();		
 		ModelImage wormImage = null;
 		ModelImage nucleiImage = null;
 		if ( includeRange != null )
@@ -553,26 +553,29 @@ public class PlugInAlgorithmWormUntwisting
 			if ( !checkFilePaths( includeRange, baseFileDir[0], baseFileName ) ) return;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				//    	    		String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_" + includeRange.elementAt(i) + ".tif";
+
+				String outputDirectory = outputDir + File.separator + 
+						baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_" + includeRange.elementAt(i) + "_results";
+				
 				// Build the full image name:
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
 				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
+				
 				if ( voiFile.exists() )
 				{
 					//					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
 					wormImage = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null);  
-					WormData wormData = new WormData(wormImage); 
-					VOIVector lattice = wormData.readFinalLattice();
+
+					VOIVector lattice = WormData.readFinalLattice(outputDirectory, false, wormImage);
 					if ( lattice == null )
 					{
 						MipavUtil.displayError( "Error in reading lattice file" );
 					}
-
-					ModelImage seamImage = wormData.readSeamSegmentation();					
 					LatticeModel model = new LatticeModel(wormImage);
+					model.setSharedDirectory(outputDirectory);
 					model.setPaddingFactor(paddingFactor);
-					model.setSeamCellImage(seamImage);
 					model.setLattice(lattice);
 
 					long timeInterpolateLattice = System.currentTimeMillis();
@@ -590,17 +593,16 @@ public class PlugInAlgorithmWormUntwisting
 					
 					// Untwist annotations:
 					boolean integratedMarkers = true;
-					VOI markers = wormData.getIntegratedMarkerAnnotations();
-					if ( markers == null ) {
-						markers = wormData.getMarkerAnnotations();
-						integratedMarkers = false;
-					}	
-
+					VOI markers = WormData.getIntegratedMarkerAnnotations(outputDirectory);
 					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
 						model.untwistMarkers(true);	
-						model.saveAnnotationStraight(wormImage, "straightened_annotations", "straightened_annotations.csv" );	
+
+						// save straight annotations:
+						LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + "straightened_annotations" + File.separator, 
+								"straightened_annotations.csv", model.getAnnotationsStraight());
+
 					}
 					System.err.println( "Annotation elapsed time =  " + AlgorithmBase.computeElapsedTime(timeAnnotation) );
 
@@ -626,10 +628,6 @@ public class PlugInAlgorithmWormUntwisting
 							{
 								wormImage.unregisterAllVOIs();
 								wormImage.disposeLocal(false);
-							}
-							if ( wormData != null )
-							{
-								wormData.dispose();
 							}
 
 							FileIO fileIO2 = new FileIO();
@@ -678,11 +676,6 @@ public class PlugInAlgorithmWormUntwisting
 					{
 						wormImage.disposeLocal(false);
 					}
-					if ( wormData != null )
-					{
-						wormData.dispose();
-					}
-
 				}
 				if ( batchProgress != null )
 				{
@@ -697,7 +690,7 @@ public class PlugInAlgorithmWormUntwisting
 			wormImage.disposeLocal(false);
 		}
 
-		System.err.println( "straignten elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
+		System.err.println( "straighten elapsed time =  " + AlgorithmBase.computeElapsedTime(time) );
 		MipavUtil.displayInfo( "Lattice straightening complete." );
 	}
 	

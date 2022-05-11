@@ -178,7 +178,18 @@ public class VOIWormAnnotation extends VOIText {
 		return minUntwistPt;
 	}
 	
-	public VOI updateSelected(ModelImage image ) {
+	public void updateSelected(ModelImage image ) {
+
+		if ( !selected && (showSelectedVOI != null))
+		{
+			// if !selected and is register unregister:
+			if (image.isRegistered(showSelectedVOI) != -1) {
+				image.unregisterVOI(showSelectedVOI);
+			}
+//			System.err.println("updateSelected UNregistering " + "showSelected"+getText() );
+			return;
+		}
+		
 		Vector3f pt = this.firstElement();
 		if (showSelectedVOI == null) {
 			showSelectedVOI = new VOI((short) image.getVOIs().getUniqueID(), "showSelected"+getText(), VOI.POLYLINE, (float) Math.random());
@@ -223,13 +234,6 @@ public class VOIWormAnnotation extends VOIText {
 			image.registerVOI(showSelectedVOI);
 //			System.err.println("updateSelected registering " + "showSelected"+getText() );
 		}
-		if ( !selected && (image.isRegistered(showSelectedVOI) != -1) )
-		{
-			// if !selected and is register unregister:
-			image.unregisterVOI(showSelectedVOI);
-//			System.err.println("updateSelected UNregistering " + "showSelected"+getText() );
-		}
-		return showSelectedVOI;
 	}
 
     

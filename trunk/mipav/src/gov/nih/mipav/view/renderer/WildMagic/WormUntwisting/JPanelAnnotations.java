@@ -369,7 +369,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				LatticeModel.saveImage( imageA.GetImage(), mask, "segmentation", "" );
 			}
 			if ( mesh != null ) {
-				LatticeModel.saveTriMesh( imageA.GetImage(), "segmentation", "_mesh", mesh );
+				LatticeModel.saveTriMesh( imageA.GetImage(), imageA.GetImage().getImageDirectory(), "segmentation", "_mesh", mesh );
 			}
 			// save the spline of the medial axis of the segmentation in .csv:
 			if ( segmentationContour != null ) {

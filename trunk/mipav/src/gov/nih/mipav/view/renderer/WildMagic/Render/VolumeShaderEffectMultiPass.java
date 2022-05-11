@@ -109,8 +109,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 		{
 			m_akLevWidget[i] = new ClassificationWidgetState();
 		}
-		
-        CreateVolumeTexture();
     }
 
     /**
@@ -356,7 +354,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         SetColorImage(pkCProgram);
         setRGBTA(m_kRGBT);
         setVolumeSamples( m_fSamples );
-        if ( m_kVolumeImageB.GetImage() != null )
+        if ( (m_kVolumeImageB != null) && (m_kVolumeImageB.GetImage() != null) )
         {
             //this.setABBlend(0.5f);
             if ( pkCProgram.GetUC("ShowB") != null ) 

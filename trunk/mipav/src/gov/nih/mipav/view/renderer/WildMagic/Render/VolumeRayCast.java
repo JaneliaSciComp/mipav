@@ -502,9 +502,19 @@ public class VolumeRayCast extends VolumeObject
     	}
     }
 
+    private VolumeImage[] hyperStack;
+    public void setHyperStack(VolumeImage[] images) {
+    	hyperStack = images;
+    }
+    
     public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
     {
-    	m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB, targetTexture);
+    	if ( hyperStack != null ) {
+        	m_kVolumeShaderEffect = new VSEMD_MultipleImages( hyperStack, targetTexture);
+    	}
+    	else {
+    		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB, targetTexture);
+    	}
     	m_kVolumeShaderEffect.LoadResources(kRenderer,m_kMesh);
     	kRenderer.LoadResources(m_kMesh);
         m_kScene.UpdateGS();
