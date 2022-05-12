@@ -503,14 +503,16 @@ public class VolumeRayCast extends VolumeObject
     }
 
     private VolumeImage[] hyperStack;
-    public void setHyperStack(VolumeImage[] images) {
+	private Texture hyperstackColormap;
+    public void setHyperStack(VolumeImage[] images, Texture colormap) {
+    	hyperstackColormap = colormap;
     	hyperStack = images;
     }
     
     public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
     {
     	if ( hyperStack != null ) {
-        	m_kVolumeShaderEffect = new VSEMD_MultipleImages( hyperStack, targetTexture);
+        	m_kVolumeShaderEffect = new VSEMD_MultipleImages( hyperStack, hyperstackColormap, targetTexture);
     	}
     	else {
     		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB, targetTexture);

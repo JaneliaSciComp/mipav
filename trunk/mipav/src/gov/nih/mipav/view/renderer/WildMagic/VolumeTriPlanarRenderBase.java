@@ -2711,12 +2711,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_kVolumeRayCast.recreateShaderEffect(m_pkRenderer,	m_akSceneTarget[3]);
     }
 
-    public void setHyperStack(VolumeImage[] images) {
+    public void setHyperStack(VolumeImage[] images, Texture colormap) {
     	hyperstack = images;
+    	hyperstackColormap = colormap;
     	m_kVolumeImageA_New = images[0];
     	m_bResetImages = true;
     	if ( m_kVolumeRayCast != null ) {
-    		m_kVolumeRayCast.setHyperStack(images);
+    		m_kVolumeRayCast.setHyperStack(images, colormap);
     	}
     }
 
@@ -3334,7 +3335,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		m_kVolumeRayCast = new VolumeRayCast(m_kVolumeImageA, m_kVolumeImageB);
 		if ( hyperstack != null ) {
-			m_kVolumeRayCast.setHyperStack(hyperstack);
+			m_kVolumeRayCast.setHyperStack(hyperstack, hyperstackColormap);
 		}
 		m_kDisplayList.add(0, m_kVolumeRayCast);
 		m_kVolumeRayCast.CreateScene();

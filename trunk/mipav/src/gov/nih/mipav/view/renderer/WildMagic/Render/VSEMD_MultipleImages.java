@@ -198,6 +198,7 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
 
     private boolean[] imageOn;
     private VolumeImage[] hyperstack;
+    private Texture hyperstackColormap;
     /** 
      * Creates a new VolumeShaderEffect object.
      * @param kImageA the VolumeImage containing the data and textures for
@@ -205,10 +206,11 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
      * @param kVolumeImageB second VolumeImage.
      * @param kSceneTarget the SceneImage texture with the back-facing polygon texture coordinates.
      */
-    public VSEMD_MultipleImages ( VolumeImage[] volumeImages, Texture kSceneTarget )
+    public VSEMD_MultipleImages ( VolumeImage[] volumeImages, Texture colormap, Texture kSceneTarget )
     {
     	super( volumeImages[0], null, kSceneTarget );
     	hyperstack = volumeImages;
+    	hyperstackColormap = colormap;
     	imageOn = new boolean[volumeImages.length];
     	for ( int i = 0; i < imageOn.length; i++ ) {
     		imageOn[i] = true;
@@ -307,6 +309,7 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     	createProgramText();
     }
     
+    private String[] lut = new String[] {"a", "b", "c", "d" };
     private String createProgramText()
     {
     	String text = "";
@@ -315,13 +318,10 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     	
     	// GLSL Program parameters:
     	text += basicParameters;
+		text += "uniform sampler2D colormap;\n";
     	for ( int i = 0; i < imageOn.length; i++ ) {
     		if ( imageOn[i] ) {
-//    			text += "uniform sampler1D colormap" + (imageOn.length - i) + "a;\n";
-    			text += "uniform sampler1D colormap" + (i) + "a;\n";
-    	    	text += "uniform sampler3D volume" + (imageOn.length + i) + ";\n";
-//    	    	text += "uniform sampler3D " + hyperstack[i].GetVolumeTarget().GetName() + ";\n";
-//    			text += "uniform sampler1D " + hyperstack[i].GetColorMapTarget().GetName() + ";\n";
+    	    	text += "uniform sampler3D volume" + (i) + ";\n";
     		}
     	}
     	
@@ -384,18 +384,17 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     	text += "   vec4 colorTemp = vec4(0.0);" + "\n";
     	text += "   vec4 color = vec4(0.0);" + "\n";
     	text += "   float opacity = 0.0;" + "\n";
-//    	for ( int i = 0; i < imageOn.length; i++ ) 
-        	for ( int i = imageOn.length - 1; i >= 0; i-- ) 
+    	text += "   vec2 cm = vec2(0.0);" + "\n";
+    	for ( int i = 0; i < imageOn.length; i++ ) 
     	{
     		if ( imageOn[i] ) 
     		{
     			String readImage = ""
-    					+ "   data = texture(volume"+ (imageOn.length + i) + ",position, 0.0);" + "\n";
-//    					+ "   data = texture(" + hyperstack[i].GetVolumeTarget().GetName() + ",position, 0.0);" + "\n";
+    					+ "   data = texture(volume"+ (i) + ",position, 0.0);" + "\n";
     			String readColorMap = ""
-//    		        	+ "   colorTemp = texture(colormap" + (imageOn.length - i) + "a,data.r, 0.0);" + "\n"	
-						+ "   colorTemp = texture(colormap" + i + "a,data.r, 0.0);" + "\n"	
-//						+ "   colorTemp = texture(" + hyperstack[i].GetColorMapTarget().GetName() + ",data.r, 0.0);" + "\n"	
+						+ "   cm.r = data.r;" + "\n"	
+						+ "   cm.g = " + ((float)i/(imageOn.length-1)) + ";" + "\n"	
+						+ "   colorTemp = texture(colormap,cm, 0.0);" + "\n"
     					+ "   color.rgb += colorTemp.a*colorTemp.rgb;" + "\n"
     		        	+ "   opacity += colorTemp.a;" + "\n";
     			
@@ -409,8 +408,10 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
 
 				+ "   color = clamp(color, vec4(0), vec4(1));" + "\n"
 				+ "   opacity = clamp(opacity, 0, 1);" + "\n"
-	            + "   fragColor.rgb = (1 - opacity)*fragColor.rgb + color.rgb;" + "\n"
-	            + "   fragColor.a   += opacity;" + "\n";
+				+ "   if ( (color.r != 0) || (color.g != 0) || (color.b != 0) ) { "
+	            + "     fragColor.rgb = (1 - opacity)*fragColor.rgb + color.rgb;" + "\n"
+	            + "     fragColor.a   += opacity;" + "\n"
+	            + "   }" + "\n";
 		
     	text += finalColor;
     	// loop end:
@@ -424,37 +425,25 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
 
     	if ( (m_kPShaderCMP != null) && (m_kPShaderCMP.GetProgram() != null) )
     	{
-    		// Add the used textures to the shader program data structures:
-    		int iTex = 0;
-    		m_kPShaderCMP.SetImageName(iTex, m_kSceneTarget.GetName(), "sceneImage");
-    		m_kPShaderCMP.SetTexture(iTex++, m_kSceneTarget, "sceneImage");
-    		for ( int i = 0; i < imageOn.length; i++ )
-    		{
-    			if ( imageOn[i] ) {
-//        			m_kPShaderCMP.SetImageName(iTex, hyperstack[i].GetVolumeTarget().GetName(), "volume" + i );
-        			m_kPShaderCMP.SetTexture(iTex++, hyperstack[i].GetVolumeTarget(), "volume" + (imageOn.length + i) );
-//        			m_kPShaderCMP.SetTexture(iTex++, hyperstack[i].GetVolumeTarget(), hyperstack[i].GetVolumeTarget().GetName() );
-
-//            		m_kPShaderCMP.SetImageName(iTex, hyperstack[i].GetColorMapTarget().GetName(), "colormap" + i);
-//            		m_kPShaderCMP.SetTexture(iTex++, hyperstack[i].GetColorMapTarget(), "colormap" + (imageOn.length - i) + "a");  
-            		m_kPShaderCMP.SetTexture(iTex++, hyperstack[i].GetColorMapTarget(), "colormap" + i + "a");  
-//            		m_kPShaderCMP.SetTexture(iTex++, hyperstack[i].GetColorMapTarget(), hyperstack[i].GetColorMapTarget().GetName());  
+    			// Add the used textures to the shader program data structures:
+    			int iTex = 0;
+//    			m_kPShaderCMP.SetImageName(iTex, m_kSceneTarget.GetName(), "sceneImage");
+    			m_kPShaderCMP.SetTexture(iTex++, m_kSceneTarget, "sceneImage");
+				m_kPShaderCMP.SetTexture(iTex++, hyperstackColormap, "colormap");  
+    			for ( int i = 0; i < imageOn.length; i++ )
+    			{
+    				if ( imageOn[i] ) {
+    					m_kPShaderCMP.SetTexture(iTex++, hyperstack[i].GetVolumeTarget(), "volume" + (i) );
+    				}
     			}
-    		}
-    		
-    		if ( !text.equals( m_kPShaderCMP.GetProgram().GetProgramText() ))
-    		{
-        		System.err.println("");
-        		System.err.println("");
-        		System.err.println("createProgram");
-        		for ( int i = 0; i < imageOn.length; i++ ) {
-        			if ( imageOn[i] ) {
-        				System.err.println(hyperstack[i].GetVolumeTarget().GetName() + " " + 
-        						hyperstack[i].GetColorMapTarget().GetName() );
-        			}
-        		}
+
+        		if ( !text.equals( m_kPShaderCMP.GetProgram().GetProgramText() ))
+        		{
+//    			System.err.println("");
+//    			System.err.println("");
+//    			System.err.println("createProgram");
     			m_kPShaderCMP.GetProgram().SetProgramText( text );
-    			//System.err.println( text );
+//    			System.err.println( text );
     			if ( GetCProgram(0) != null )
     			{
     				GetCProgram(0).Reload(true);

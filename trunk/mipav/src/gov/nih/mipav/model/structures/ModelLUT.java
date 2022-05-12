@@ -344,9 +344,34 @@ public class ModelLUT extends ModelStorageBase {
             remappedLUTMin[count++] = (byte) ( (remappedValue & 0x0000ff00) >> 8);
             remappedLUTMin[count++] = (byte) ( (remappedValue & 0x000000ff));
             //remappedLUTMin[count++] = (byte) ( (remappedValue & 0xff000000) >> 24);
+            
+            
             count++;
         }
         //return remappedLUTMin;
+    }
+
+    public static void exportIndexedLUTMin(ModelLUT kLut, byte[] remappedLUTMin, int index ) {
+        TransferFunction kTransferLine = kLut.getTransferFunction();
+
+        //byte[] remappedLUTMin = null;
+        int remappedValue;
+        int count = 0;
+        int nPts = kTransferLine.size();
+        float xMax = ((Vector2f) (kTransferLine.getPoint(nPts - 1))).X;
+        float xMin = ((Vector2f) (kTransferLine.getPoint(0))).X;
+        float fNew;
+
+        int lutHeight = 256;
+        int offset = index * lutHeight * 4;
+        for (int i = 0; i < lutHeight; i++) {
+            fNew = (float) (xMin + ( ((float) i / (lutHeight - 1)) * (xMax - xMin)));
+            remappedValue = kLut.indexedLUT[(int) (kTransferLine.getRemappedValue(fNew, lutHeight) + 0.5f)];
+            remappedLUTMin[offset+count++] = (byte) ( (remappedValue & 0x00ff0000) >> 16);
+            remappedLUTMin[offset+count++] = (byte) ( (remappedValue & 0x0000ff00) >> 8);
+            remappedLUTMin[offset+count++] = (byte) ( (remappedValue & 0x000000ff));
+            count++;
+        }
     }
 
     /**
