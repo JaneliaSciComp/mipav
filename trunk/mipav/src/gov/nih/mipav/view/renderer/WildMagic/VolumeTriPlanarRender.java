@@ -70,6 +70,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -194,10 +195,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		m_kParent = kParent;
 	}
 	
-	public VolumeTriPlanarRender( VolumeImage[] images )
+	public VolumeTriPlanarRender( VolumeImage[] images, Texture colormap )
 	{
 		this( null, images[0], new VolumeImage() );
 		hyperstack = images;
+		hyperstackColormap = colormap;
 	}
 
 	/**
@@ -1291,7 +1293,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
     	{
     		m_kVOIInterface.mouseReleased(e);
     	}
-    	System.err.println("mouseReleased");
 	}
 
     public void setDefaultCursor( )

@@ -53,6 +53,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.Picker;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Spatial;
@@ -71,6 +72,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     protected VolumeImage m_kVolumeImageB;
 
     protected VolumeImage[] hyperstack;
+    protected Texture hyperstackColormap;
     
     protected VolumeImage m_kVolumeImageA_Old;
     protected VolumeImage m_kVolumeImageB_Old;

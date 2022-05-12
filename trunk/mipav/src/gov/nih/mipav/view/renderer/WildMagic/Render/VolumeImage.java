@@ -278,7 +278,7 @@ public class VolumeImage implements Serializable {
 			ModelLUT.exportIndexedLUTMin(m_kLUT, aucData);
 		}
 		// Return the new GraphicsImage containing the table data:
-		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + m_kImage.getImageName() + m_kPostfix));
+		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, 1, aucData, new String("ColorMap" + m_kImage.getImageName() + m_kPostfix));
 	}
 
 

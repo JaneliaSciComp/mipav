@@ -113,6 +113,8 @@ import org.jocl.Sizeof;
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
@@ -253,6 +255,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private VolumeImage volumeImage;
 		private VolumeImage[] previewHS;
 		private VolumeImage[] hyperstack;
+		private Texture colormap;
 		private VOILatticeManagerInterface voiManager;
 		private JPanelVolumeOpacity[] volOpacityPanel;
 		private JFrameHistogram[] lutHistogramPanel;
@@ -467,7 +470,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					rightRenderer.displayVOIs(false);
 //					rightRenderer.setImages(rightImage.volumeImage);	
-					rightRenderer.setHyperStack(rightImage.hyperstack);
+					rightRenderer.setHyperStack(rightImage.hyperstack, rightImage.colormap);
 					if (rightImage.voiManager == null) {
 						rightImage.voiManager = new VOILatticeManagerInterface(null, rightImage.wormImage, null, 0,
 								true, null);
@@ -478,7 +481,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					leftImage = imageStack[imageIndex];
 					leftRenderer.displayVOIs(false);
 //					leftRenderer.setImages(leftImage.volumeImage);
-					leftRenderer.setHyperStack(leftImage.hyperstack);
+					leftRenderer.setHyperStack(leftImage.hyperstack, leftImage.colormap);
 					leftRenderer.resetAxisY();
 					leftRenderer.setVOILatticeManager(leftImage.voiManager);
 					if (editMode == EditLattice) {
@@ -507,7 +510,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					rightRenderer.displayVOIs(false);
 //					rightRenderer.setImages(rightImage.volumeImage);
-					rightRenderer.setHyperStack(rightImage.hyperstack);
+					rightRenderer.setHyperStack(rightImage.hyperstack, rightImage.colormap);
 
 					if (rightImage.voiManager == null) {
 						rightImage.voiManager = new VOILatticeManagerInterface(null, rightImage.wormImage, null, 0,
@@ -520,7 +523,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 					leftRenderer.displayVOIs(false);
 //					leftRenderer.setImages(leftImage.volumeImage);		
-					leftRenderer.setHyperStack(leftImage.hyperstack);
+					leftRenderer.setHyperStack(leftImage.hyperstack, leftImage.colormap);
 
 					leftRenderer.resetAxisY();
 					leftRenderer.setVOILatticeManager(leftImage.voiManager);
@@ -675,7 +678,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					activeImage.voiManager.removeListeners();
 					activeImage.voiManager.setImage(activeImage.previewHS[0].GetImage(), null);
 					activeImage.volumeImage = activeImage.previewHS[0];
-					activeRenderer.setHyperStack(activeImage.previewHS);
+					activeRenderer.setHyperStack(activeImage.previewHS, activeImage.colormap);
 				} 
 				else {
 					previewCount--;
@@ -745,7 +748,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 						}
 						activeImage.previewHS = null;
 					}
-					activeRenderer.setHyperStack(activeImage.hyperstack);
+					activeRenderer.setHyperStack(activeImage.hyperstack, activeImage.colormap);
 					
 					
 //					activeImage.voiManager.setImage(activeImage.wormImage, null);
@@ -994,7 +997,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	public void setActiveRenderer(VolumeTriPlanarRenderBase renderer) {
-		System.err.println("setActiveRenderer");
+//		System.err.println("setActiveRenderer");
 
 		VolumeTriPlanarRenderBase previousActive = activeRenderer;
 		if (leftRenderer == renderer) {
@@ -1180,14 +1183,15 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		String propertyName = event.getPropertyName();
 		if (propertyName.equals("Opacity")) {
 			int which = opacityTab.getSelectedIndex();
-			System.err.println("propertyChange " + which);
+//			System.err.println("propertyChange " + which);
 			if ( which != -1 ) {
 				final TransferFunction kTransfer = activeImage.volOpacityPanel[which].getCompA().getOpacityTransferFunction();
-				activeImage.hyperstack[which].UpdateImages(kTransfer, 0, null);
-
-				if ( activeImage.previewHS != null ) {
-					activeImage.previewHS[which].UpdateImages(kTransfer, 0, null);
-				}
+				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetImage(), kTransfer, which);
+//				activeImage.hyperstack[which].UpdateImages(kTransfer, 0, null);
+//
+//				if ( activeImage.previewHS != null ) {
+//					activeImage.previewHS[which].UpdateImages(kTransfer, 0, null);
+//				}
 			}
 		}
 	}
@@ -1211,19 +1215,42 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		if (activeImage.hyperstack != null && lutTab != null) {
 			int which = lutTab.getSelectedIndex();
 			if ( which != -1 ) {
-				System.err.println("updateImages " + which);
-				activeImage.hyperstack[which].UpdateImages(activeImage.hyperstack[which].getLUT());
-				if ( activeImage.previewHS != null ) {
-					activeImage.previewHS[which].UpdateImages(activeImage.hyperstack[which].getLUT());
-				}
-				if ((activeRenderer != null) && (activeImage.hyperstack[which].getLUT() instanceof ModelRGB)) {
-					activeRenderer.setRGBTA((ModelRGB) activeImage.hyperstack[which].getLUT());
-				}
+				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetLUT(), which );
+//				System.err.println("updateImages " + which);
+//				activeImage.hyperstack[which].UpdateImages(activeImage.hyperstack[which].getLUT());
+//				if ( activeImage.previewHS != null ) {
+//					activeImage.previewHS[which].UpdateImages(activeImage.hyperstack[which].getLUT());
+//				}
+//				if ((activeRenderer != null) && (activeImage.hyperstack[which].getLUT() instanceof ModelRGB)) {
+//					activeRenderer.setRGBTA((ModelRGB) activeImage.hyperstack[which].getLUT());
+//				}
 			}
 		}
 		return false;
 	}
+	
+	private void updateImages(Texture texture, ModelLUT lut, int index ) {
+		byte[] data = texture.GetImage().GetData();
+		ModelLUT.exportIndexedLUTMin(lut, data, index);
+		texture.Reload(true);
+	}
 
+	private void updateImages(Texture texture, ModelImage image, TransferFunction tf, int index ) {
+		final int lutHeight = texture.GetImage().GetBound(0);
+		final byte[] data = texture.GetImage().GetData();
+		int offset = index * lutHeight * 4;
+
+		final float fRange = (float) (image.getMax() - image.getMin());
+		final float fStep = fRange / lutHeight;
+		float fDataValue = (float) image.getMin();
+		float fVal;
+		for (int i = 0; i < lutHeight; i++) {
+			fVal = (tf.getRemappedValue(fDataValue, lutHeight) / 255.0f);
+			data[offset + i * 4 + 3] = (byte) (fVal * 255);
+			fDataValue += fStep;
+		}
+		texture.Reload(true);
+	}
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -1576,7 +1603,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 						if (imageFiles[j].exists()) {
 							images[j] = openImage(imageFiles[j], fileName);
-							System.err.println("Opening... " + fileName);
+							System.err.println("Opening... " + fileName + "  " + images[j].isColorImage() );
+							images[j].calcMinMax();
+							if ( images[j].isColorImage() ) {
+								images[j] = convertToGray(images[j]);
+							}
 						}
 					}
 
@@ -1639,6 +1670,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					leftImage.volumeImage = leftImage.hyperstack[0]; //new VolumeImage(false, leftImage.wormImage, "A", null, 0, false);
 					leftImage.voiManager = new VOILatticeManagerInterface(null, leftImage.volumeImage.GetImage(), null,
 							0, true, null);
+					
+					byte[] aucData = new byte[256 * 4 * images.length];
+					GraphicsImage cmImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, images.length, aucData, new String("colormap" + leftImage.volumeImage.GetImage().getImageFileName()));
+					leftImage.colormap = new Texture();
+					leftImage.colormap.SetImage(cmImage);
 
 					openAnnotations(leftImage);
 					openNeuriteCurves(leftImage);
@@ -1656,14 +1692,14 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					return false;
 				success = true;
 
-				leftRenderer = new VolumeTriPlanarRender( leftImage.hyperstack );
+				leftRenderer = new VolumeTriPlanarRender( leftImage.hyperstack, leftImage.colormap );
 				leftRenderer.setVisible(false);
 				leftRenderer.addConfiguredListener(this);
 
 				if ((imageIndex + 1) < imageStack.length) {
 					rightImage = imageStack[imageIndex + 1];
 
-					rightRenderer = new VolumeTriPlanarRender(rightImage.hyperstack);
+					rightRenderer = new VolumeTriPlanarRender(rightImage.hyperstack, rightImage.colormap);
 //					rightRenderer = new VolumeTriPlanarRender(null, rightImage.volumeImage, new VolumeImage());
 					rightRenderer.addConfiguredListener(this);
 					rightRenderer.setVisible(false);
@@ -1774,6 +1810,40 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		}
 	}
 
+	private ModelImage convertToGray(ModelImage image ) {
+		ModelImage result = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(),
+				JDialogBase.makeImageName(image.getImageFileName(), ""));
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; 
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;		
+		
+		float max = 0;
+		float maxSum = 0;
+		for ( int z = 0; z < dimZ; z++ ) {
+			for ( int y = 0; y < dimY; y++ ) {
+				for ( int x = 0; x < dimX; x++ ) {
+					float r = image.getFloatC(x, y, z, 1);
+					float g = image.getFloatC(x, y, z, 2);
+					float b = image.getFloatC(x, y, z, 3);
+					if ( r > max ) max = r;
+					if ( g > max ) max = g;
+					if ( b > max ) max = b;
+					float sum = r + b + g;
+					if ( sum > maxSum ) maxSum = sum;
+					result.set(x, y, z, sum);
+				}
+			}
+		}
+		if ( maxSum > max ) {
+			float scale = maxSum / max;
+			for ( int i = 0; i < result.getDataSize(); i++ ) {
+				result.set(i,  result.getFloat(i) / scale);;
+			}
+		}
+		result.calcMinMax();
+		return result;
+	}
+	
 	private ModelImage combineImages(ModelImage imageA, ModelImage imageB, ModelImage imageC) {
 		// imageA is never null and is always written into the 'green' channel...
 
@@ -3009,7 +3079,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	private void updateHistoLUTPanels(IntegratedWormData integratedData) {
-		 System.err.println("updateHistoLUTPanels");
+//		 System.err.println("updateHistoLUTPanels");
 		// integratedData.wormImage.getImageName() + " " +
 		// integratedData.lutHistogramPanel.getContainingPanel() );
 		opacityTab.removeAll();		
