@@ -1172,7 +1172,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // and not considered as belonging to any component
         double log_S[] = new double[ND];          // S = sum_k p(x|k)
         double log_p[][] = new double[gmm.K][];        // P = p(x|k) for x in U[k]
-        double T_inv[][][] = new double[gmm.K][][];      // T = covar(x) + gmm.covar[k]
+        double T_inv[][][][] = new double[gmm.K][][][];      // T = covar(x) + gmm.covar[k]
         int U[][] = new int[gmm.K][];          // U = {x close to k}
         double p_bg[] = null;
         if (background != null) {
@@ -1250,7 +1250,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     }
     
     // run EM sequence
-    public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], int U[][], double T_inv[][][],
+    public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], int U[][], double T_inv[][][][],
     		double log_S[], double data[][], double covar[][][], double R[][][], String sel_callback, int oversampling,
     		String covar_callback, Background background, double p_bg[], double w,
     	    //pool=pool, chunksize=chunksize, 
@@ -1345,7 +1345,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     
     // run one EM step
     public void _EMstep(double log_L[], int N[], int N2[], int N0_[],
-    		GMM gmm, double log_p[][], int U[][], double T_inv[][][], double log_S[], int N0, 
+    		GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[], int N0, 
     		double data[][], double covar[][][], double R[][][], String sel_callback,
 	    			 double omega[], int oversampling, String covar_callback, Background background, 
 	    			 double p_bg[], double w,
@@ -1367,7 +1367,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     
     // perform E step calculations.
     // If cutoff is set, this will also set the neighborhoods U
-    public double _Estep(GMM gmm, double log_p[][], int U[][], double T_inv[][][], double log_S[],
+    public double _Estep(GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[],
     		double data[][], double covar[][][], double R[][][], double omega[], Background background,
     		double p_bg[], 
     		// pool=None, chunksize=1,
@@ -1390,7 +1390,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         
         
         for (k = 0; k < gmm.K; k++) {
-        	_Esum(log_p[k], T_inv[k], k, U[k], gmm, data, covar, R, cutoff /*, pool chunksize*/);
+        	_Esum(log_p, T_inv, k, U, gmm, data, covar, R, cutoff /*, pool chunksize*/);
         	for (i = 0; i < U[k].length; i++) {
         	    log_S[U[k][i]] += Math.exp(log_p[k][i]); // actually S, not logS
         	    H[U[k][i]] = true;
@@ -1401,14 +1401,23 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     }
     
     // compute chi^2, and apply selections on component neighborhood based in chi^2
-    public void _Esum(double logpk[], double T_inv_k[][], int k, int U_k[], GMM gmm, double data[][], double covar[][][], double R[][][], double cutoff
+    public void _Esum(double log_p[][], double T_inv[][][][], int k, int U[][], GMM gmm, double data[][], double covar[][][], double R[][][], double cutoff
     		/*, pool, chunksize*/) {
     	 // since U_k could be Integer.MIN_VALUE, need explicit reshape
-    	int i,j,m;
+    	double logpk[] = log_p[k];
+    	double T_inv_k[][][] = T_inv[k];
+    	int U_k[] = U[k];
+    	int i,j,m,p;
     	double d_[][];
     	double covar_[][][] = null;
     	double R_[][][] = null;
     	double dx[][] = null;
+    	LinearEquations2 le2 = new LinearEquations2();
+    	double chi2[] = null;
+    	int ipiv[] = new int[gmm.D];
+		int info[] = new int[1];
+		double work[];
+		int lwork;
     	if (U_k == null) {
     		d_ = new double[data.length][gmm.D];
     		for (i = 0; i < data.length; i++) {
@@ -1428,7 +1437,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	
     	if (covar != null) {
             if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {  // one-for-all
-                covar_ = covar;
+            	covar_ = new double[1][gmm.D][gmm.D];
+            	for (i = 0; i < gmm.D; i++) {
+            	    for (j = 0; j < gmm.D; j++) {
+            		    covar_[0][i][j] = covar[0][i][j];	
+            		}
+            	}
             }
             else if (U_k == null) { // each datum has covariance
             	covar_ = new double[covar.length][gmm.D][gmm.D];
@@ -1502,8 +1516,157 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         }
         
         if ((covar == null) && (R == null)) {
-            T_inv_k = null;   	
+            T_inv_k = null;
+            // chi2 = np.einsum('...i,...ij,...j', dx, np.linalg.inv(gmm.covar[k]), dx)
+            // Equivalent to diagonal of (dx * covar[k].inverse * dx.transpose())
+    		double covarinv[][] = new double[gmm.D][gmm.D];
+    		for (i = 0; i < gmm.D; i++) {
+    			for (j = 0; j < gmm.D; j++) {
+    				covarinv[i][j] = gmm.covar[k][i][j];
+    			}
+    		}
+    		le2.dgetrf(gmm.D,gmm.D,covarinv,gmm.D,ipiv,info);
+		    boolean rankDeficient = false;
+		    if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetrf argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  System.exit(-1);
+		      }
+		      if (info[0] > 0) {
+		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		    	  System.exit(-1);
+		      }
+		      work = new double[1];
+		      lwork = -1;
+		      le2.dgetri(gmm.D,covarinv,gmm.D,ipiv,work,lwork,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetri argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  System.exit(-1);
+		      }
+		      lwork = (int)work[0];
+		      work = new double[lwork];
+		      le2.dgetri(gmm.D,covarinv,gmm.D,ipiv,work,lwork,info);
+		      if (info[0] < 0) {
+		    	  System.err.println("In le2.dgetri argument number " + 
+		      (-info[0]) + " is illegal");
+		    	  System.exit(-1);
+		      }
+		      if (info[0] > 0) {
+		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  rankDeficient = true;
+		    	  System.exit(-1);
+		      }
+		      double dxC[][] = new double[dx.length][gmm.D];
+		      for (i = 0; i < dx.length; i++) {
+		    	  for (m = 0; m < gmm.D; m++) {
+		    	      for (j = 0; j < gmm.D; j++) {
+		    	          dxC[i][m] += dx[i][j] * covarinv[j][m]; 
+		    	      }
+		    	  }
+		      }
+		      double dxCdx[][] = new double[dx.length][dx.length];
+		      for (i = 0; i < dx.length; i++) {
+		    	  for (m = 0; m < dx.length; m++) {
+		    		  for (j = 0; j < gmm.D; j++) {
+		    			  dxCdx[i][m] += dxC[i][j] * dx[m][j];
+		    		  }
+		    	  }
+		      }
+		      chi2 = new double[dx.length];
+		      for (i = 0; i < dx.length; i++) {
+		    	  chi2[i] = dxCdx[i][i];
+		      }
         } // if ((covar == null) && (R == null))
+        else {
+        	// with data errors: need to create and return T_ik = covar_i + C_k
+        	// and weight each datum appropriately	
+        	if (R == null) {
+        	    T_inv_k = new double[covar_.length][gmm.D][gmm.D];	
+        	    for (i = 0; i < covar_.length; i++) {
+        	    	for (j = 0; j < gmm.D; j++) {
+        	    		for (m = 0; m < gmm.D; m++) {
+        	    		    T_inv_k[i][j][m] = gmm.covar[k][j][m] + covar_[i][j][m];
+        	    		}
+        	    	}
+        	    }
+        	} // if (R == null)
+        	else { // need to project out missing elements: T_ik = R_i C_k R_i^R + covar_i
+        	    // T_inv_k = np.linalg.inv(np.einsum('...ij,jk,...lk', R_, gmm.covar[k], R_) + covar_)	
+        		// Code here is never executed in the test.py file
+        		// The einsum does a matrix multiplication of R_ and gmm.covar[k] resulting
+        		// in a matrix RC of length[R_.length][gmm.D][gmm.D].  The we multiply 2D
+        		// stacks of RC with 2D stacks of R_ with axes 1 and 2 transposed.  This gives
+        		// a final result with a length[R_.length][gmm.D][gmm.D].  A covar_ of the same
+        		// length is added. A np.linalg.inv will perform inverses on the stack of 2D 
+        		// matrices yielding a T_inv_k of length[R_.length][gmm.D][gmm.D]
+        		double RC[][][] = new double[R_.length][gmm.D][gmm.D];
+        		for (i = 0; i < R_.length; i++) {
+        			for (j = 0; j < gmm.D; j++) {
+        				for (m = 0; m < gmm.D; m++) {
+        					for (p = 0; p < gmm.D; p++) {
+        					    RC[i][j][m] += R_[i][j][p] * gmm.covar[k][p][m];
+        					}
+        				}
+        			}
+        		}
+        		double RCR[][][] = new double[R_.length][gmm.D][gmm.D];
+        		for (i = 0; i < R_.length; i++) {
+        			for (j = 0; j < gmm.D; j++) {
+        				for (m = 0; m < gmm.D; m++) {
+        					for (p = 0; p < gmm.D; p++) {
+        					    RCR[i][j][m] += R_[i][j][p] * R_[i][m][p];
+        					}
+        				}
+        			}
+        		}
+        		T_inv_k = new double[R_.length][gmm.D][gmm.D];
+        		for (i = 0; i < R_.length; i++) {
+        			for (j = 0; j < gmm.D; j++) {
+        				for (m = 0; m < gmm.D; m++) {
+        				    T_inv_k[i][j][m] = RCR[i][j][m] + covar_[i][j][m];
+        				}	
+        			}
+        		}
+        	} // else
+        	for (i = 0; i < T_inv_k.length; i++) {
+        	    le2.dgetrf(gmm.D,gmm.D,T_inv_k[i],gmm.D,ipiv,info);
+    		    boolean rankDeficient = false;
+    		    if (info[0] < 0) {
+    		    	  System.err.println("In le2.dgetrf argument number " + 
+    		      (-info[0]) + " is illegal");
+    		    	  System.exit(-1);
+    		      }
+    		      if (info[0] > 0) {
+    		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+    		    	  rankDeficient = true;
+    		    	  System.exit(-1);
+    		      }
+    		      work = new double[1];
+    		      lwork = -1;
+    		      le2.dgetri(gmm.D,T_inv_k[i],gmm.D,ipiv,work,lwork,info);
+    		      if (info[0] < 0) {
+    		    	  System.err.println("In le2.dgetri argument number " + 
+    		      (-info[0]) + " is illegal");
+    		    	  System.exit(-1);
+    		      }
+    		      lwork = (int)work[0];
+    		      work = new double[lwork];
+    		      le2.dgetri(gmm.D,T_inv_k[i],gmm.D,ipiv,work,lwork,info);
+    		      if (info[0] < 0) {
+    		    	  System.err.println("In le2.dgetri argument number " + 
+    		      (-info[0]) + " is illegal");
+    		    	  System.exit(-1);
+    		      }
+    		      if (info[0] > 0) {
+    		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+    		    	  rankDeficient = true;
+    		    	  System.exit(-1);
+    		      }
+    	    } // for (i = 0; i < T_inv_k.length; i++)
+        	// chi2 = np.einsum('...i,...ij,...j', dx, T_inv_k, dx)
+        } // else
     }
     
     public double chi2_cutoff(int D, double cutoff) {
