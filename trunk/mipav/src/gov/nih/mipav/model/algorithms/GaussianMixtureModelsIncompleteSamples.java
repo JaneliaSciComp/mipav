@@ -1418,6 +1418,8 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		int info[] = new int[1];
 		double work[];
 		int lwork;
+		double sign[];
+		double logdet[];
     	if (U_k == null) {
     		d_ = new double[data.length][gmm.D];
     		for (i = 0; i < data.length; i++) {
@@ -1666,7 +1668,154 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		      }
     	    } // for (i = 0; i < T_inv_k.length; i++)
         	// chi2 = np.einsum('...i,...ij,...j', dx, T_inv_k, dx)
+        	double dxT[][][] = new double[dx.length][dx.length][gmm.D];
+        	for (i = 0; i < dx.length; i++) {
+        		for (j = 0; j < dx.length; j++) {
+        			for (m = 0; m < gmm.D; m++) {
+        				for (p = 0; p < gmm.D; p++) {
+        					dxT[i][j][m] += dx[i][p] * T_inv_k[j][p][m];
+        				}
+        			}
+        		}
+        	}
+        	double dxTdx[][][] = new double[dx.length][dx.length][dx.length];
+        	for (i = 0; i < dx.length; i++) {
+        		for (j = 0; j < dx.length; j++) {
+        			for (m = 0; m < dx.length; m++) {
+        				for (p = 0; p < gmm.D; p++) {
+        					dxTdx[i][j][m] += dxT[i][j][p] * dx[m][p];
+        				}
+        			}
+        		}
+        	}
+        	chi2 = new double[dx.length];
+        	for (i = 0; i < dx.length; i++) {
+        		chi2[i] = dxTdx[i][i][i];
+        	}
         } // else
+        
+        // NOTE: close to convergence, we could stop applying the cutoff because
+        // changes to U will be minimal
+        if (!Double.isNaN(cutoff)) {
+        	int numindices = 0;
+        	for (i = 0; i < chi2.length; i++) {
+        		if (chi2[i] < cutoff) {
+        			numindices++;
+        		}
+        	}
+        	int indices[] = new int[numindices];
+        	for (i = 0, j = 0; i< chi2.length; i++) {
+        		if (chi2[i] < cutoff) {
+        		    indices[j++] = i;
+        		}
+        	}
+            double chi2temp[] = new double[chi2.length];
+            for (i = 0; i < chi2.length; i++) {
+            	chi2temp[i] = chi2[i];
+            }
+            chi2 = new double[numindices];
+            for (i = 0; i < numindices; i++) {
+            	chi2[i] = chi2temp[indices[i]];
+            }
+            chi2temp = null;
+            if (((covar != null) && ((covar.length != 1) || (covar[0].length != gmm.D) || (covar[0][0].length !=  gmm.D))) || (R != null)) {
+            	double T_inv_ktemp[][][] = new double[T_inv_k.length][gmm.D][gmm.D];
+            	for (i = 0; i < T_inv_k.length; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			for (m = 0; m < gmm.D; m++) {
+            				T_inv_ktemp[i][j][m] = T_inv_k[i][j][m];
+            			}
+            		}
+            	}
+            	T_inv_k = new double[numindices][gmm.D][gmm.D];
+            	for (i = 0; i < numindices; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			for (m = 0; m < gmm.D; m++) {
+            				T_inv_k[i][j][m] = T_inv_ktemp[indices[i]][j][m];
+            			}
+            		}
+            	}
+                T_inv_ktemp = null;
+            }
+            if (U_k == null) {
+            	int numnonzero = 0;
+            	for (i = 0; i < indices.length; i++) {
+            		if (indices[i] != 0) {
+            			numnonzero++;
+            		}
+            	}
+            	U_k = new int[numnonzero];
+            	for (i = 0, j = 0; i < indices.length; i++) {
+            		if (indices[i] != 0) {
+            			U_k[j++] = i;
+            		}
+            	}
+            }
+            else {
+            	int U_ktemp[] = new int[U_k.length];
+            	for (i = 0; i < U_k.length; i++) {
+            		U_ktemp[i] = U_k[i];
+            	}
+            	U_k = new int[indices.length];
+            	for (i = 0, j = 0; i < indices.length; i++) {
+            		U_k[j++] = U_k[indices[i]];
+            	}
+            	U_ktemp = null;
+            }
+        } // if (!Double.isNaN(cutoff))
+        
+        // prevent tiny negative determinants to mess up
+        if (covar == null) {
+        	Matrix detMat = new Matrix(gmm.covar[k]);
+		    double det = detMat.det();
+		    sign = new double[1];
+		    logdet = new double[1];
+		    if (det < 0) {
+		        sign[0] = -1.0;
+		        logdet[0] = Math.log(-det);
+		    }
+		    else if (det == 0.0) {
+		    	sign[0] = 0.0;
+		    	logdet[0] = Double.NEGATIVE_INFINITY;
+		    }
+		    else {
+		    	sign[0] = 1.0;
+		    	logdet[0] = Math.log(det);
+		    }
+        }
+        else {
+            //(sign, logdet) = np.linalg.slogdet(T_inv_k)
+            //sign *= -1 # since det(T^-1) = 1/det(T)
+        	sign = new double[T_inv_k.length];
+        	logdet = new double[T_inv_k.length];
+        	for (i = 0; i < T_inv_k.length; i++) {
+	            Matrix detMat = new Matrix(T_inv_k[i]);
+			    double det = detMat.det();
+			    if (det < 0) {
+			        sign[i] = -1.0;
+			        logdet[i] = Math.log(-det);
+			    }
+			    else if (det == 0.0) {
+			    	sign[i] = 0.0;
+			    	logdet[i] = Double.NEGATIVE_INFINITY;
+			    }
+			    else {
+			    	sign[i] = 1.0;
+			    	logdet[i] = Math.log(det);
+			    }
+			    sign[i] *= -1; // since det(T^-1) = 1/det(T)
+        	} // for (i = 0; i < T_inv_k.length; i++)
+        }
+
+        double log2piD2 = Math.log(2.0*Math.PI)*(0.5*gmm.D);
+        log_p[k] = new double[Math.max(chi2.length,logdet.length)];
+        for (i = 0; i < log_p[k].length; i++) {
+        	log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)]
+        			- chi2[Math.min(i,chi2.length-1)]/2;
+        }
+        U[k] = U_k;
+        T_inv[k] = T_inv_k;
+        return;
     }
     
     public double chi2_cutoff(int D, double cutoff) {
