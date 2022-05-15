@@ -1174,12 +1174,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         double log_p[][] = new double[gmm.K][];        // P = p(x|k) for x in U[k]
         double T_inv[][][][] = new double[gmm.K][][][];      // T = covar(x) + gmm.covar[k]
         int U[][] = new int[gmm.K][];          // U = {x close to k}
-        double p_bg[] = null;
+        double p_bg[][] = null;
         if (background != null) {
         	for (i = 0; i < gmm.amp.length; i++) {
         	    gmm.amp[i] *= 1 - background.amp;          // GMM amp + BG amp = 1
         	}
-        	p_bg = new double[] {Double.NaN};                   // p_bg = p(x|BG), no log because values are larger	
+        	p_bg = new double[][] {{Double.NaN}};                   // p_bg = p(x|BG), no log because values are larger	
         	if (covar != null) {
         		// check if covar is diagonal and issue warning if not
                 mess = "background model will only consider diagonal elements of covar";	
@@ -1252,7 +1252,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     // run EM sequence
     public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], int U[][], double T_inv[][][][],
     		double log_S[], double data[][], double covar[][][], double R[][][], String sel_callback, int oversampling,
-    		String covar_callback, Background background, double p_bg[], double w,
+    		String covar_callback, Background background, double p_bg[][], double w,
     	    //pool=pool, chunksize=chunksize, 
     		double cutoff, int miniter, int maxiter, double tol, String prefix,
     		boolean changeable_amp[], boolean changeable_mean[], boolean changeable_covar[],
@@ -1348,7 +1348,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[], int N0, 
     		double data[][], double covar[][][], double R[][][], String sel_callback,
 	    			 double omega[], int oversampling, String covar_callback, Background background, 
-	    			 double p_bg[], double w,
+	    			 double p_bg[][], double w,
 	    			 //pool=pool, chunksize=chunksize, 
 	    			 double cutoff, double tol, boolean changeable_amp[], 
 	    			 boolean changeable_mean[], boolean changeable_covar[], int it, Random rng) {
@@ -1369,15 +1369,17 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     // If cutoff is set, this will also set the neighborhoods U
     public double _Estep(GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[],
     		double data[][], double covar[][][], double R[][][], double omega[], Background background,
-    		double p_bg[], 
+    		double p_bg[][], 
     		// pool=None, chunksize=1,
     		double cutoff, int it, Random rng) {
     	// Defaults covar=null, R=null, omega=null, background=null, p_bg=null,
     	// pool=null, chunksize=1, cutoff=null, it=0
     	
-    	int i;
+    	int i,d;
     	boolean H[];
     	int k;
+    	double log_L;
+    	double denom[] = new double[covar.length];
     	// compute p(i | k) for each k independently in the pool
         // need S = sum_k p(i | k) for further calculation
     	for (i = 0; i < log_S.length; i++) {
@@ -1396,9 +1398,110 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	    H[U[k][i]] = true;
         	}
         }
+        
+        if (background != null) {
+        	p_bg[0] = new double[data.length];
+        	for (i = 0; i < data.length; i++) {
+                p_bg[0][i] = background.amp * background.p();
+        	}
+            if (covar != null) {
+                // This is the zeroth moment of a truncated Normal error distribution
+                // Its calculation is simple only of the covariance is diagonal!
+                // See e.g. Manjunath & Wilhem (2012) if not
+                double error[] = new double[data.length];
+                for (i = 0; i < error.length; i++) {
+                	error[i] = 1.0;
+                }
+                double x0[] = background.footprint[0];
+                double x1[] = background.footprint[1];
+                for (d = 0; d < gmm.D; d++) { 
+                    if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) { // one-for-all
+                        denom[0] = Math.sqrt(2 * covar[1][d][d]);
+                    }
+                    else {
+                    	for (i = 0; i < covar.length; i++ ) {
+                            denom[i] = Math.sqrt(2 * covar[i][d][d]);
+                    	}
+                    }
+                    // CAUTION: The erf is approximate and returns 0
+                    // Thus, we don't add the logs but multiple the value itself
+                    // underrun is not a big problem here
+                    for (i = 0; i < data.length; i++) {
+                        error[i] *= (erf((data[i][d] - x0[d])/denom[Math.min(i,denom.length-1)])  
+                        		- erf((data[i][d] - x1[d])/denom[Math.min(i,denom.length-1)])) / 2;
+                    }
+                } // for (d = 0; d < gmm.D; d++)
+                for (i = 0; i < error.length; i++) {
+                    p_bg[0][i] *= error[i];
+                }
+            } // if (covar != null)
+            for (i = 0; i < log_S.length; i++) {
+                log_S[i] = Math.log(log_S[i] + p_bg[0][i]);
+            }
+            if (omega != null) {
+                log_S[i] += Math.log(omega[i]);
+            }
+            log_L = 0.0;
+            for (i = 0; i < log_S.length; i++) {
+                log_L += log_S[i];
+            }
+        } // if (background != null)
+        else {
+            // need log(S), but since log(0) isn't a good idea, need to restrict to H
+        	for (i = 0; i < log_S.length; i++) {
+        		if (H[i]) {
+        			log_S[i] = Math.log(log_S[i]);
+        		}
+        	}
+            if (omega != null) {
+            	for (i = 0; i < log_S.length; i++) {
+                    log_S[i] += Math.log(omega[i]);
+            	}
+            }
+            log_L = 0.0;
+            for (i = 0; i < log_S.length; i++) {
+            	if (H[i]) {
+                    log_L += log_S[i];
+            	}
+            }
+        } // else
 
-    	return 0.0;
+    	return log_L;
     }
+    
+    // Error function erf(x) from Computation of Special Functions by 
+ 	// Shanjie Zhang and Jianming Jin. pp. 622-623.
+ 	private double erf(double x) {
+ 		double eps = 1.0E-15;
+ 		double x2, er, r, c0, err;
+ 		int k;
+ 		x2 = x * x;
+ 		if (Math.abs(x) < 3.5) {
+ 			er = 1.0;
+ 			r = 1.0;
+ 			for (k = 1; k <= 50; k++) {
+ 				r = r*x2/(k + 0.5);
+ 				er = er + r;
+ 				if (Math.abs(r) <= Math.abs(er)*eps) {
+ 					break;
+ 				}
+ 			} // for (k = 1; k <= 50; k++)
+ 			c0 = 2.0/Math.sqrt(Math.PI) * x * Math.exp(-x2);
+ 			err = c0 * er;
+ 		} // if (Math.abs(x) < 3.5)
+ 		else {
+ 			er = 1.0;
+ 			r = 1.0;
+ 			for (k = 1; k <= 12; k++) {
+ 				r = -r*(k - 0.5)/x2;
+ 				er = er + r;
+ 			}
+ 			c0 = Math.exp(-x2)/(Math.abs(x) * Math.sqrt(Math.PI));
+ 			err = 1.0 - c0 * er;
+ 			if (x < 0.0) err = -err;
+ 		} // else
+ 		return err;
+ 	}
     
     // compute chi^2, and apply selections on component neighborhood based in chi^2
     public void _Esum(double log_p[][], double T_inv[][][][], int k, int U[][], GMM gmm, double data[][], double covar[][][], double R[][][], double cutoff
