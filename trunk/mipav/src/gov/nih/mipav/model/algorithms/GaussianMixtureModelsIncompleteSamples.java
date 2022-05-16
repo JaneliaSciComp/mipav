@@ -715,6 +715,37 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	
     } // class GMM
     
+    public double logsum(double input[]) {
+    	int i;
+    	double c;
+    	double result;
+    	double minValue = Double.MAX_VALUE;
+		double maxValue = -Double.MAX_VALUE;
+		for (i = 0; i < input.length; i++) {
+			if (input[i] < minValue) {
+				minValue = input[i];
+			}
+			if (input[i] > maxValue) {
+				maxValue = input[i];
+			}
+		}
+		double underflow = Math.log(Double.MIN_NORMAL) - minValue;
+	    double overflow = Math.log(Double.MAX_VALUE) - maxValue - Math.log(input.length);
+	    if (underflow < overflow) {
+	    	c = underflow;
+	    }
+	    else {
+	    	c = overflow;
+	    }
+	    double sum = 0.0;
+	    for (i = 0; i < input.length; i++) {
+	        double ex = Math.exp(input[i] + c);
+	        sum += ex;
+	    }
+	    result = Math.log(sum) - c;
+	    return result;
+    }
+    
     public double[] logsum(double input[][]) {
     	int i, j;
     	double c;
@@ -1361,8 +1392,108 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         log_L[0] = _Estep(gmm, log_p, U, T_inv, log_S, data, covar, R, omega, background, p_bg, 
         		          // pool=pool, chunksize=chunksize, 
         		          cutoff, it, rng);
+        // save the M sums from the observed data
+        double A[] = new double[gmm.K]; // sum for amplitudes
+        double M[][] = new double[gmm.K][gmm.D]; // sum for means
+        double C[][][] = new double[gmm.K][gmm.D][gmm.D]; // sum for covariances
+        double B[] = new double[1];
+        N[0] = data.length;
+        _Mstep(A,M,C,B,gmm, U, log_p, T_inv, log_S, data, covar, R, p_bg 
+        		/*,pool=pool,chunksize=chunksize*/);
         N0_[0] = N0;
         return;
+    }
+    
+    // get zeroth, first, second moments of the data weighted with p_k(x) avgd over x
+    public void _Mstep(double A[], double M[][], double C[][][], double B[], GMM gmm, int U[][],
+    		double log_p[][], double T_inv[][][][], double log_S[], double data[][], double covar[][][],
+    		double R[][][], double p_bg[][]/*, pool=None, chunksize=1*/) {
+        // Defaults covar = null, R = null, p_bg = null
+    	
+    	// perform sums for M step in the pool
+        // NOTE: in a partial run, could work on changeable components only;
+        // however, there seem to be side effects or race conditions
+        int k;
+        for (k = 0; k < gmm.K; k++) {
+            _Msums(A, M, C, k, U, log_p, T_inv, gmm, data, R, log_S);	
+        }
+    }
+    
+    public void _Msums(double A[], double M[][], double C[][][], int k, int U[][], double log_p[][], 
+    		double T_inv[][][][], GMM gmm, double data[][], double R[][][], double log_S[]) {
+    	int i,j,p;
+    	double d[][];
+    	double R_[][][];
+        int U_k[] = U[k];
+        double log_p_k[] = log_p[k];
+        double T_inv_k[][][] = T_inv[k];
+        if ((log_p_k == null) || (log_p_k.length == 0)) {
+        	A[k] = 0;
+        	for (i = 0; i < gmm.D; i++) {
+        	    M[k][i] = 0;
+        	    for (j = 0; j < gmm.D; j++) {
+        	    	C[k][i][j] = 0;
+        	    }
+        	}
+        	return;
+        }
+        
+        // get log_q_ik by dividing with S = sum_k p_ik
+        // NOTE:  this modifies log_p_k in place, but is only relevant
+        // within this method since the call is parallel and its arguments
+        // therefore don't get updated across components.
+
+        // NOTE: reshape needed when U_k is None because of its
+        // implicit meaning as np.newaxis
+        if ((U_k == null) || (U_k.length == 0)) {
+        	for (i = 0; i < log_p_k.length; i++) {
+        		log_p_k[i] -= log_S[i];	
+        	}
+        }
+        else {
+        	for (i = 0, j = 0; i < log_p_k.length; i++) {
+        		log_p_k[i] -= log_S[U_k[i]];		
+        	}
+        }
+        d = new double[log_p_k.length][gmm.D];
+        if ((U_k == null) || (U_k.length == 0)) {
+        	for (i = 0; i < log_p_k.length; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+        		    d[i][j] = data[i][j];	
+        		}
+        	}
+        }
+        else {
+        	for (i = 0; i < log_p_k.length; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+        		    d[i][j] = data[U_k[i]][j];	
+        		}
+        	}	
+        }
+        if (R != null) {
+        	R_ = new double[log_p_k.length][gmm.D][gmm.D];
+        	if ((U_k == null) || (U_k.length == 0)) {
+        		for (i = 0; i < log_p_k.length; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			for (p = 0; p < gmm.D; p++) {
+            			    R_[i][j][p]	= R[i][j][p];
+            			}
+            		}
+        		}
+        	}
+        	else {
+        		for (i = 0; i < log_p_k.length; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			for (p = 0; p < gmm.D; p++) {
+            			    R_[i][j][p]	= R[U_k[i]][j][p];
+            			}
+            		}
+        		}	
+        	}
+        } // if (R != null)
+        
+        // amplitude: A_k = sum_i q_ik
+        A[k] = Math.exp(logsum(log_p_k));
     }
     
     // perform E step calculations.
@@ -1523,7 +1654,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		int lwork;
 		double sign[];
 		double logdet[];
-    	if (U_k == null) {
+    	if ((U_k == null) || (U_k.length == 0)) {
     		d_ = new double[data.length][gmm.D];
     		for (i = 0; i < data.length; i++) {
     			for (j = 0; j < gmm.D; j++) {
@@ -1549,7 +1680,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             		}
             	}
             }
-            else if (U_k == null) { // each datum has covariance
+            else if ((U_k == null) || (U_k.length == 0)) { // each datum has covariance
             	covar_ = new double[covar.length][gmm.D][gmm.D];
             	for (i = 0; i < covar.length; i++) {
             	    for (j = 0; j < gmm.D; j++) {
@@ -1572,7 +1703,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         } // if (covar != null)
     	    
         if (R != null) {
-        	if (U_k == null) {
+        	if ((U_k == null) || (U_k.length == 0)) {
 	        	R_ = new double[R.length][gmm.D][gmm.D];
 	        	for (i = 0; i < R.length; i++) {
 	        		for (j = 0; j < gmm.D; j++) {
@@ -1840,7 +1971,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             	}
                 T_inv_ktemp = null;
             }
-            if (U_k == null) {
+            if ((U_k == null) || (U_k.length == 0)) {
             	int numnonzero = 0;
             	for (i = 0; i < indices.length; i++) {
             		if (indices[i] != 0) {
