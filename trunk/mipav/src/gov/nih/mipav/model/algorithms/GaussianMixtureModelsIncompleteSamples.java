@@ -1421,9 +1421,11 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     
     public void _Msums(double A[], double M[][], double C[][][], int k, int U[][], double log_p[][], 
     		double T_inv[][][][], GMM gmm, double data[][], double R[][][], double log_S[]) {
-    	int i,j,p;
+    	int i,j,p,q;
     	double d[][];
-    	double R_[][][];
+    	double R_[][][] = null;
+    	double d_m[][];
+    	double q_k[];
         int U_k[] = U[k];
         double log_p_k[] = log_p[k];
         double T_inv_k[][][] = T_inv[k];
@@ -1494,6 +1496,211 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         
         // amplitude: A_k = sum_i q_ik
         A[k] = Math.exp(logsum(log_p_k));
+        
+        // in fact: q_ik, but we treat sample index i silently everywhere
+        q_k = new double[log_p_k.length];
+        for (i = 0; i < log_p_k.length; i++) {
+        	q_k[i] = Math.exp(log_p_k[i]);
+        }
+
+        
+        d_m = new double[log_p_k.length][gmm.D];
+        if (R == null) {
+        	for (i = 0; i < log_p_k.length; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+                    d_m[i][j] = d[i][j] - gmm.mean[k][j];
+        		}
+        	}
+        }
+        else {
+        	double Rg[][] = new double[log_p_k.length][gmm.D];
+        	for (i = 0; i < log_p_k.length; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+        			for (p = 0; p < gmm.D; p++) {
+        				Rg[i][j] += R_[i][j][p] * gmm.mean[k][p];
+        			}
+        		}
+        	}
+        	for (i = 0; i < log_p_k.length; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+                    d_m[i][j] = d[i][j] - Rg[i][j];
+        		}
+        	}
+        }
+        
+        // data with errors?
+	    if ((T_inv_k == null) && (R == null)) {
+	        // mean: M_k = sum_i x_i q_ik
+	    	for (j = 0; j < gmm.D; j++) {
+	    		for (i = 0; i < q_k.length; i++) {
+	    			M[k][j] += d[i][j] * q_k[i];
+	    		}
+	    	}
+
+	        // covariance: C_k = sum_i (x_i - mu_k)^T(x_i - mu_k) q_ik
+	        // funny way of saying: for each point i, do the outer product
+	        // of d_m with its transpose, multiply with pi[i], and sum over i
+	    		for (j = 0; j < gmm.D; j++) {
+	    			for (p = 0; p < gmm.D; p++) {
+	    			    for (i = 0; i < q_k.length; i++) {
+	    			    	C[k][j][p] += (q_k[i] * d_m[i][j] * d_m[i][p]);
+	    			}
+	    		}
+	    	}
+	    } // if ((T_inv_k == null) && (R == null))
+	    else {
+	    	double b_k[][] = new double[d_m.length][gmm.D];
+	    	double B_k[][][] = new double[T_inv_k.length][gmm.D][gmm.D];
+	    	if (R == null) { // that means T_ik is not None	
+	    		// b_ik = mu_k + C_k T_ik^-1 (x_i - mu_k)
+	    	    // B_ik = C_k - C_k T_ik^-1 C_k
+	    	    // b_k = gmm.mean[k] + np.einsum('ij,...jk,...k', gmm.covar[k], T_inv_k, d_m)
+	    		// B_k = gmm.covar[k] - np.einsum('ij,...jk,...kl', gmm.covar[k], T_inv_k, gmm.covar[k])
+	    		if (T_inv_k.length == 1) {
+	    		    double cT[][] = new double[gmm.D][gmm.D];
+	    		    for (i = 0; i < gmm.D; i++) {
+	    		    	for (j = 0; j < gmm.D; j++) {
+	    		    		for (p = 0; p < gmm.D; p++) {
+	    		    			cT[i][j] += gmm.covar[k][i][p] * T_inv_k[0][p][j]; 
+	    		    		}
+	    		    	}
+	    		    }
+		    		double cTd[][] = new double[d_m.length][gmm.D];
+		    		for (i = 0; i < d_m.length; i++) {
+		    			for (j = 0; j < gmm.D; j++) {
+		    				for (p = 0; p < gmm.D; p++) {
+		    					cTd[i][j] += d_m[i][p] * cT[j][p];
+		    				}
+		    			}
+		    		}
+		    		for (i = 0; i < d_m.length; i++) {
+		    			for (j = 0; j < gmm.D; j++) {
+		    				b_k[i][j] = gmm.mean[k][j] + cTd[i][j];
+		    			}
+		    		}
+		    		double cTc[][] = new double[gmm.D][gmm.D];
+		    		for (i = 0; i < gmm.D; i++) {
+		    			for (j = 0; j < gmm.D; j++) {
+		    				for (p = 0; p < gmm.D; p++) {
+		    				    cTc[i][j] += cT[i][p] * gmm.covar[k][p][j];
+		    				}
+		    			}
+		    		}
+		    	    for (i = 0; i < gmm.D; i++) {
+		    	    	for (j = 0; j < gmm.D; j++) {
+		    	    		B_k[0][i][j] = gmm.covar[k][i][j] - cTc[i][j];
+		    	    	}
+		    	    }
+	    		} // if (T_inv_k.length == 1)
+	    		else { // T_inv_k.length > 1
+	    		    for (i = 0; i < T_inv_k.length; i++) {
+	    		    	double cT[][] = new double[gmm.D][gmm.D];
+	    		    	for (j = 0; j < gmm.D; j++) {
+	    		    		for (p = 0; p < gmm.D; p++) {
+	    		    		    for (q = 0; q < gmm.D; q++) {
+	    		    		    	cT[j][p] += gmm.covar[k][j][q] * T_inv_k[i][q][p];
+	    		    		    }
+	    		    		}
+	    		    	}
+	    		    	double cTd[] = new double[gmm.D];
+			    		for (j = 0; j < gmm.D; j++) {
+			    			for (p = 0; p < gmm.D; p++) {
+			    				cTd[j] += cT[j][p] * d_m[i][p];
+			    			}
+			    		}
+			    		for (j = 0; j < gmm.D; j++) {
+			    			b_k[i][j] = gmm.mean[k][j] + cTd[j];
+			    		}
+			    		double cTc[][] = new double[gmm.D][gmm.D];
+			    		for (j = 0; j < gmm.D; j++) {
+			    			for (p = 0; p < gmm.D; p++) {
+			    				for (q = 0; q < gmm.D; q++) {
+			    					cTc[j][p] += cT[j][q] * gmm.covar[k][q][p]; 
+			    				}
+			    			}
+			    		}
+			    		for (j = 0; j < gmm.D; j++) {
+			    	    	for (p = 0; p < gmm.D; p++) {
+			    	    		B_k[i][j][p] = gmm.covar[k][j][p] - cTc[j][p];
+			    	    	}
+			    	    }
+	    		    } // for (i = 0; i < T_inv_k.length; i++)
+	    		} // T_inv_k.length > 1
+	    	} // if (R == null)
+	    	else {
+	           // F_ik = C_k R_i^T T_ik^-1
+	           // F_k = np.einsum('ij,...kj,...kl', gmm.covar[k], R_, T_inv_k)
+	           // b_k = gmm.mean[k] + np.einsum('...ij,...j', F_k, d_m)
+	           // B_k = gmm.covar[k] - np.einsum('...ij,...jk,kl', F_k, R_, gmm.covar[k])
+	    	   double cR[][][] = new double[R_.length][gmm.D][gmm.D];
+	    	   double F_k[][][] = new double[R_.length][gmm.D][gmm.D];
+	    	   for (i = 0; i < R_.length; i++) {
+	    		   for (j = 0; j < gmm.D; j++) {
+	    			   for (p = 0; p < gmm.D; p++) {
+	    				   for (q = 0; q < gmm.D; q++) {
+	    					   cR[i][j][p] += gmm.covar[k][j][q] * R_[i][q][p];
+	    				   }
+	    			   }
+	    		   }
+	    	   }
+	    	   if (T_inv_k.length == 1) {
+	    		   for (i = 0; i < R_.length; i++) {
+		    		   for (j = 0; j < gmm.D; j++) {
+		    			   for (p = 0; p < gmm.D; p++) {
+		    				   for (q = 0; q < gmm.D; q++) {
+		    					   F_k[i][j][p] += R_[i][j][q] * T_inv_k[0][q][p];
+		    				   }
+		    			   }
+		    		   }
+		    	   } 
+	    	   }
+	    	   else {
+	    		   for (i = 0; i < R_.length; i++) {
+		    		   for (j = 0; j < gmm.D; j++) {
+		    			   for (p = 0; p < gmm.D; p++) {
+		    				   for (q = 0; q < gmm.D; q++) {
+		    					   F_k[i][j][p] += R_[i][j][q] * T_inv_k[i][q][p];
+		    				   }
+		    			   }
+		    		   }
+		    	   }    
+	    	   }
+	    	   double Fd[] = new double[gmm.D];
+	    	   for (i = 0; i < F_k.length; i++) {
+	    		   for (j = 0; j < gmm.D; j++) {
+	    		       for (p = 0; p < gmm.D; p++) {
+	    		    	   Fd[j] += F_k[i][j][p] * d_m[i][p];
+	    		       }
+	    		   }
+	    		   for (j = 0; j < gmm.D; j++) {
+		    			b_k[i][j] = gmm.mean[k][j] + Fd[j];
+		    		}
+	    	   }
+	    	   for (i = 0; i < F_k.length; i++) {
+	    	       double FR[][] = new double[gmm.D][gmm.D];
+	    	       for (j = 0; j < gmm.D; j++) {
+	    			   for (p = 0; p < gmm.D; p++) {
+	    				   for (q = 0; q < gmm.D; q++) {
+	    					   FR[j][p] += F_k[i][j][q] * R_[i][q][p];
+	    				   }
+	    			   }
+	    		   }
+	    	       double FRc[][] = new double[gmm.D][gmm.D];
+	    	       for (j = 0; j < gmm.D; j++) {
+	    			   for (p = 0; p < gmm.D; p++) {
+	    				   for (q = 0; q < gmm.D; q++) {
+	    					   FRc[j][p] += FR[j][q] * gmm.covar[k][q][p];
+	    				   }
+	    			   }
+	    		   }
+	    	       for (j = 0; j < gmm.D; j++) {
+		    	    	for (p = 0; p < gmm.D; p++) {
+		    	    		B_k[i][j][p] = gmm.covar[k][j][p] - FRc[j][p];
+		    	    	}
+		    	    }
+	    	   } // for (i = 0; i < F_k.length; i++)
+	    	} // else for (R == null)
+	    } // else for ((T_inv_k == null) && (R == null))
     }
     
     // perform E step calculations.
