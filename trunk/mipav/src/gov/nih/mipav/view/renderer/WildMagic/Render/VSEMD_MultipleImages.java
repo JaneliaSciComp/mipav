@@ -385,6 +385,7 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     	text += "   vec4 color = vec4(0.0);" + "\n";
     	text += "   float opacity = 0.0;" + "\n";
     	text += "   vec2 cm = vec2(0.0);" + "\n";
+    	float scale = imageOn.length > 1 ? (1f/(float)(imageOn.length-1)) : 1f;
     	for ( int i = 0; i < imageOn.length; i++ ) 
     	{
     		if ( imageOn[i] ) 
@@ -393,7 +394,7 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     					+ "   data = texture(volume"+ (i) + ",position, 0.0);" + "\n";
     			String readColorMap = ""
 						+ "   cm.r = data.r;" + "\n"	
-						+ "   cm.g = " + ((float)i/(imageOn.length-1)) + ";" + "\n"	
+						+ "   cm.g = " + ((float)i * scale) + ";" + "\n"	
 						+ "   colorTemp = texture(colormap,cm, 0.0);" + "\n"
     					+ "   color.rgb += colorTemp.a*colorTemp.rgb;" + "\n"
     		        	+ "   opacity += colorTemp.a;" + "\n";
