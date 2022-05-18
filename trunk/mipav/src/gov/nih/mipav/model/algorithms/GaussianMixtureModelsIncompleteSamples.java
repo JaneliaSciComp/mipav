@@ -1375,7 +1375,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     }
     
     // run one EM step
-    public void _EMstep(double log_L[], int N[], int N2[], int N0_[],
+    public void _EMstep(double log_L[], int N[], int N2[], int N0update[],
     		GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[], int N0, 
     		double data[][], double covar[][][], double R[][][], String sel_callback,
 	    			 double omega[], int oversampling, String covar_callback, Background background, 
@@ -1400,8 +1400,91 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         N[0] = data.length;
         _Mstep(A,M,C,B,gmm, U, log_p, T_inv, log_S, data, covar, R, p_bg 
         		/*,pool=pool,chunksize=chunksize*/);
-        N0_[0] = N0;
+        double A2[] = new double[gmm.K]; // sum for amplitudes
+        double M2[][] = new double[gmm.K][gmm.D]; // sum for means
+        double C2[][][] = new double[gmm.K][gmm.D][gmm.D]; // sum for covariances
+        double B2[] = new double[1];
+        N2[0] = 0;
+        
+        // here the magic happens: imputation from the current model
+        if (sel_callback != null) {
+        	// if there are projections / missing data, we don't know how to
+            // generate those for the imputation samples
+            // NOTE: in principle, if there are only missing data, i.e. R is 1_D,
+            // we could ignore missingness for data2 because we'll do an analytic
+            // marginalization. This doesn't work if R is a non-trivial matrix.
+            if (R != null) {
+                System.err.println("Not implemente error.  R is not null: imputation samples likely inconsistent");
+                System.exit(-1);
+            } // if (R != null)
+            
+            // create fake data with same mechanism as the original data,
+            // but invert selection to get the missing part
+            Vector<double[][]>data2Vec = new Vector<double[][]>();
+            Vector<double[][][]>covar2Vec = new Vector<double[][][]>();
+            Vector<double[]>omega2Vec = new Vector<double[]>();
+            boolean invert_sel = true;
+            int orig_size = N0*oversampling;
+            draw(data2Vec, covar2Vec, N0update, omega2Vec, gmm, data.length*oversampling, sel_callback,
+            		invert_sel,orig_size,  covar_callback,
+            		background, rng);
+            //data2 = createShared(data2)
+            //if not(covar2 is None or covar2.shape == (gmm.D, gmm.D)):
+               // covar2 = createShared(covar2)
+        	
+        } // if (sel_callback != null)
         return;
+    }
+    
+    public void draw(Vector<double[][]> dataVec, Vector<double[][][]> covarVec, int updated_orig_size[], Vector<double[]> omegaVec,
+    		GMM gmm, int obs_size, String sel_callback, boolean invert_sel, int orig_size, String covar_callback, Background background,
+    		Random rng) {
+        // Draw from the GMM (and the Background) with noise and selection.
+
+        // Draws orig_size samples from the GMM and the Background, if set; calls
+        // covar_callback if set and applies resulting covariances; the calls
+        // sel_callback on the (noisy) samples and returns those matching ones.
+
+        // If the number is resulting samples is inconsistent with obs_size, i.e.
+        // outside of the 68 percent confidence limit of a Poisson draw, it will
+        // update its estimate for the original sample size orig_size.
+        // An estimate can be provided with orig_size, otherwise it will use obs_size.
+
+        // Note:
+        //    If sel_callback is set, the number of returned samples is not
+        //    necessarily given by obs_size.
+
+        //Args:
+        //    gmm: an instance if GMM
+        //    obs_size (int): number of observed samples
+        //    sel_callback: completeness callback to generate imputation samples.
+        //    invert_sel (bool): whether to invert the result of sel_callback
+        //    orig_size (int): an estimate of the original size of the sample.
+        //    background: an instance of Background
+        //    covar_callback: covariance callback for imputation samples.
+        //    rng: numpy.random.RandomState for deterministic behavior
+
+        // Returns:
+        //    sample: nunmpy array (N_orig, D)
+        //    covar_sample: numpy array (N_orig, D, D) or None of covar_callback=None
+        //    N_orig (int): updated estimate of orig_size if sel_callback is set
+
+        // Throws:
+        //    RuntimeError for inconsistent argument combinations
+    	
+    	if (orig_size <= 0) {
+            orig_size = obs_size;
+    	}
+    	
+    	// draw from model (with background) and add noise.
+        // TODO: may want to decide whether to add noise before selection or after
+        // Here we do noise, then selection, but this is not fundamental
+        _drawGMM_BG(dataVec, covarVec, gmm, orig_size, covar_callback, background, rng);
+    }
+    
+    public void _drawGMM_BG(Vector<double[][]> data2Vec, Vector<double[][][]> covar2Vec,
+    		GMM gmm , int size, String covar_callback, Background background, Random rng) {
+    	
     }
     
     // get zeroth, first, second moments of the data weighted with p_k(x) avgd over x
@@ -1417,6 +1500,21 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         for (k = 0; k < gmm.K; k++) {
             _Msums(A, M, C, k, U, log_p, T_inv, gmm, data, R, log_S);	
         }
+        
+        if (p_bg != null) {
+        	double q_bg[] = new double[log_S.length];
+        	B[0] = 0.0;
+        	for (k = 0; k < log_S.length; k++) {
+        		// # equivalent to A_k in _Msums, but done without logs
+        		B[0] += p_bg[0][k]/Math.exp(log_S[k]);
+        	} 
+        }
+        else {
+            B[0] = 0;
+        }
+        
+        return;
+        
     }
     
     public void _Msums(double A[], double M[][], double C[][][], int k, int U[][], double log_p[][], 
@@ -1638,7 +1736,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    		   for (j = 0; j < gmm.D; j++) {
 	    			   for (p = 0; p < gmm.D; p++) {
 	    				   for (q = 0; q < gmm.D; q++) {
-	    					   cR[i][j][p] += gmm.covar[k][j][q] * R_[i][q][p];
+	    					   cR[i][j][p] += gmm.covar[k][j][q] * R_[i][p][q];
 	    				   }
 	    			   }
 	    		   }
@@ -1648,7 +1746,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		    		   for (j = 0; j < gmm.D; j++) {
 		    			   for (p = 0; p < gmm.D; p++) {
 		    				   for (q = 0; q < gmm.D; q++) {
-		    					   F_k[i][j][p] += R_[i][j][q] * T_inv_k[0][q][p];
+		    					   F_k[i][j][p] += cR[i][j][q] * T_inv_k[0][q][p];
 		    				   }
 		    			   }
 		    		   }
@@ -1659,14 +1757,14 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		    		   for (j = 0; j < gmm.D; j++) {
 		    			   for (p = 0; p < gmm.D; p++) {
 		    				   for (q = 0; q < gmm.D; q++) {
-		    					   F_k[i][j][p] += R_[i][j][q] * T_inv_k[i][q][p];
+		    					   F_k[i][j][p] += cR[i][j][q] * T_inv_k[i][q][p];
 		    				   }
 		    			   }
 		    		   }
 		    	   }    
 	    	   }
-	    	   double Fd[] = new double[gmm.D];
 	    	   for (i = 0; i < F_k.length; i++) {
+	    		   double Fd[] = new double[gmm.D];
 	    		   for (j = 0; j < gmm.D; j++) {
 	    		       for (p = 0; p < gmm.D; p++) {
 	    		    	   Fd[j] += F_k[i][j][p] * d_m[i][p];
@@ -1700,7 +1798,43 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		    	    }
 	    	   } // for (i = 0; i < F_k.length; i++)
 	    	} // else for (R == null)
+	    	for (i = 0; i < gmm.D; i++) {
+	    		M[k][i] = 0;
+	    		for (j = 0; j < b_k.length; j++) {
+	    			M[k][i] += b_k[j][i] * q_k[j];
+	    		}
+	    	}
+	        for (i = 0; i < b_k.length; i++) {
+	        	for (j = 0; j < gmm.D; j++) {
+	        		b_k[i][j] -= gmm.mean[k][j];
+	        	}
+	        }
+	        double prod[][][] = new double[q_k.length][gmm.D][gmm.D];
+	        for (i = 0; i < q_k.length; i++) {
+	        	for (j = 0; j < gmm.D; j++) {
+	        		for (p = 0; p < gmm.D; p++) {
+	        			prod[i][j][p] = q_k[i]*b_k[i][j]*b_k[i][p];
+	        		}
+	        	}
+	        }
+	        double prodPlus[][][] = new double[q_k.length][gmm.D][gmm.D];
+	        for (i = 0; i < q_k.length; i++) {
+	        	for (j = 0; j < gmm.D; j++) {
+	        		for (p = 0; p < gmm.D; p++) {
+	        			prodPlus[i][j][p] = prod[i][j][p] + B_k[i][j][p];
+	        		}
+	        	}
+	        }
+	        for (j = 0; j < gmm.D; j++) {
+	        	for (p = 0; p < gmm.D; p++) {
+	        		C[k][j][p] = 0;
+	        		for (i = 0; i < q_k.length; i++) {
+	        			C[k][j][p] += prodPlus[i][j][p];
+	        		}
+	        	}
+	        }
 	    } // else for ((T_inv_k == null) && (R == null))
+	    return;
     }
     
     // perform E step calculations.
