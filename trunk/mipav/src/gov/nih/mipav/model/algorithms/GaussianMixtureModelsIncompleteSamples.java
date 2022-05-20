@@ -213,6 +213,7 @@ archivePrefix = "arXiv",
 public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	private int K; // K components
 	private int D; // D dimensions
+	private double covar_callback_default_arg[][][] = null;
 	
     public GaussianMixtureModelsIncompleteSamples() {
 		
@@ -1129,7 +1130,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	        covar = new double[1][gmm.D][gmm.D];
     	        // need to create covar_callback if imputation is requested
     	        if (sel_callback != null) {
-    	        	// covar_callback = partial(covar_callback_default, default=np.zeros((gmm.D, gmm.D)))	
+    	        	covar_callback_default_arg = new double[1][gmm.D][gmm.D];	
     	        } // if (sel_callback != null)
     	    } // if (covar == null) 
     	    if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {
@@ -1471,20 +1472,263 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 
         // Throws:
         //    RuntimeError for inconsistent argument combinations
+    	double omega[] = null;
+    	double data[][] = null;
+    	double covar[][][] = null;
+    	int i,j,p;
+    	Vector<Integer> selVec = null;
+    	double alpha;
+    	int obs_size_;
+    	int sel[] = null;
     	
     	if (orig_size <= 0) {
-            orig_size = obs_size;
+            updated_orig_size[0] = obs_size;
+    	}
+    	else {
+    		updated_orig_size[0] = orig_size;
     	}
     	
     	// draw from model (with background) and add noise.
         // TODO: may want to decide whether to add noise before selection or after
         // Here we do noise, then selection, but this is not fundamental
-        _drawGMM_BG(dataVec, covarVec, gmm, orig_size, covar_callback, background, rng);
+        _drawGMM_BG(dataVec, covarVec, gmm, updated_orig_size[0], covar_callback, background, rng);
+        
+        // apply selection
+        if (sel_callback != null) {
+        	data = dataVec.get(0);
+            omega = getSelection(sel_callback,data);
+            selVec = new Vector<Integer>();
+            for (i = 0; i < data.length; i++) {
+            	if (rng.nextDouble() < omega[i]) {
+            		selVec.add(i);
+            	}
+            }
+
+            // check if predicted observed size is consistent with observed data
+            // 68% confidence interval for Poisson variate: observed size
+            alpha = 0.32;
+            // lower = 0.5*scipy.stats.chi2.ppf(alpha/2, 2*obs_size)
+            // Percent point function Inverse of cdf-percentiles
+            //cutoff_nd = scipy.stats.chi2.ppf(confidence_1d, D)
+            // Regularized incomplete gamma function Q(D/2,1/(2*confidence_1d)) =
+            // 1 - regularized incomplete gamma function P(D/2,1/(2*confidence_1d))
+            double lowerIncompleteGamma[] = new double[1];
+            double upperIncompleteGamma[] = new double[1];
+            double regularizedGammaP[] = new double[1];
+            Gamma gam = new Gamma(obs_size, 1.0/alpha, lowerIncompleteGamma,
+            		upperIncompleteGamma, regularizedGammaP);
+            gam.run();
+            double lower = 0.5*(1.0 - regularizedGammaP[0]);
+            //upper = 0.5*scipy.stats.chi2.ppf(1 - alpha/2, 2*obs_size + 2)
+            gam = new Gamma(obs_size + 1, 1.0/(2.0 - alpha), lowerIncompleteGamma,
+            		upperIncompleteGamma, regularizedGammaP);
+            gam.run();
+            double upper = 0.5*(1.0 - regularizedGammaP[0]);
+            obs_size_ = selVec.size();
+            while ((obs_size_ > upper) || (obs_size_ < lower)) {
+                updated_orig_size[0] = (int)(updated_orig_size[0] / obs_size_ * obs_size);
+                dataVec.clear();
+                covarVec.clear();
+                _drawGMM_BG(dataVec, covarVec, gmm, updated_orig_size[0], covar_callback, background, rng);
+                data = dataVec.get(0);
+                omega = getSelection(sel_callback,data);
+                selVec.clear();
+                for (i = 0; i < data.length; i++) {
+                	if (rng.nextDouble() < omega[i]) {
+                		selVec.add(i);
+                	}
+                }
+                obs_size_ = selVec.size();
+            } // while ((obs_size_ > upper) || (obs_size_ < lower))
+
+            sel = new int[obs_size_];
+            for (i = 0; i < obs_size_; i++) {
+            	sel[i] = selVec.get(i);
+            }
+            if (invert_sel) {
+            	sel = new int[data.length - obs_size_];
+            	for (i = 0, j = 0; i < data.length; i++) {
+            	    if (!selVec.contains(i)) {
+            	        sel[j++] = i;	
+            	    }
+            	}
+            }
+            
+            double tempData[][] = new double[data.length][data[0].length];
+            for (i = 0; i < data.length; i++) {
+            	for (j = 0; j < data[0].length; j++) {
+            		tempData[i][j] = data[i][j];
+            	}
+            }
+            data = new double[sel.length][tempData[0].length];
+            for (i = 0; i < sel.length; i++) {
+            	for (j = 0; j < data[0].length; j++) {
+            		data[i][j] = tempData[sel[i]][j];
+            	}
+            }
+            
+            double tempOmega[] = new double[omega.length];
+            for (i = 0; i < omega.length; i++) {
+            	tempOmega[i] = omega[i];
+            }
+            omega = new double[sel.length];
+            for (i = 0; i < sel.length; i++) {
+            	omega[i] = tempOmega[sel[i]];
+            }
+            omegaVec.add(omega);
+            covar = covarVec.get(0);
+            if ((covar_callback != null) && ((covar.length != 1) || (covar[0].length != gmm.D) || (covar[0][0].length != gmm.D))) {
+            	double tempCovar[][][] = new double[covar.length][covar[0].length][covar[0][0].length];
+            	for (i = 0; i < covar.length; i++) {
+            		for (j = 0; j < covar[0].length; j++) {
+            			for (p = 0; p < covar[0][0].length; p++) {
+            				tempCovar[i][j][p] = covar[i][j][p];
+            			}
+            		}
+            	}
+            	covar = new double[sel.length][tempCovar[0].length][tempCovar[0][0].length];
+            	for (i = 0; i < sel.length; i++) {
+            		for (j = 0; j < covar[0].length; j++) {
+            			for (p = 0; p < covar[0][0].length; p++) {
+            				covar[i][j][p] = tempCovar[sel[i]][j][p];
+            			}
+            		}
+            	}
+            }
+        } // if (sel_callback != null)
+
+        dataVec.add(data);
+        covarVec.add(covar);
+        return;
     }
     
+    // draw from the model (+ background) and apply appropriate covariances
     public void _drawGMM_BG(Vector<double[][]> data2Vec, Vector<double[][][]> covar2Vec,
     		GMM gmm , int size, String covar_callback, Background background, Random rng) {
-    	
+    	int i,j,p;
+    	// draw sample from model, or from background+model
+    	double data2[][] = null;
+    	double covar2[][][] = null;
+        if (background == null) {
+            data2 = gmm.draw(size, rng);
+        }
+        else {
+            // model is GMM + Background
+            int bg_size = (int)(background.amp * size);
+            double data2a[][] = gmm.draw(size-bg_size, rng);
+            double data2b[][] = background.draw(bg_size, rng);
+            data2 = new double[data2a.length+data2b.length][data2a[0].length];
+            for (i = 0; i < data2a.length; i++) {
+            	for (j = 0; j < data2[0].length; j++) {
+            		data2[i][j] = data2a[i][j];
+            	}
+            }
+            for (i = 0; i < data2b.length; i++) {
+            	for (j = 0; j < data2b[0].length; j++) {
+            		data2[i+data2a.length][j] = data2b[i][j];
+            	}
+            }	
+        }
+        
+        // add noise
+        // NOTE: When background is set, adding noise is problematic if
+        // scattering them out is more likely than in.
+        // This can be avoided when the background footprint is large compared to
+        // selection region
+        if (covar_callback != null) {
+            covar2 = covar_callback_default(data2);
+            covar2Vec.add(covar2);
+            double L[][] = new double[gmm.D][gmm.D];
+            double u[] = new double[gmm.D];
+            GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    		int info[] = new int[1];
+    		double noise[][] = new double[data2.length][gmm.D];
+            if ((covar2.length == 1) && (covar2[0].length == gmm.D) && (covar2[0][0].length == gmm.D)) { // one-for-all
+            	for (i = 0; i < gmm.D; i++) {
+			    	for (j = 0; j < gmm.D; j++) {
+			    		L[i][j] = covar2[0][i][j];
+			    	}
+			    }
+			    // dpotrf computes the Cholesky factorization of a real symmetric
+			    // positive definite matrix A.  The factorization has the form A = U'*U, 
+			    // if uplo = 'U', or A = L * L', if uplo = 'L', where U is an upper
+			    // triangular matrix and L is lower triangular.  If uplo == 'L', the leading n-by-n lower
+			    // triangular part of A contains the lower triangular part of the matrix A, 
+			    // and the strictly upper triangular part of A is not referenced.
+			    ge.dpotrf('L',gmm.D,L,gmm.D,info);
+			    if (info[0] < 0) {
+			    	System.err.println("In GMM.draw dpotrf had an illegal value for argument " + (-info[0]));
+			    	System.exit(-1);
+			    }
+			    if (info[0] > 0) {
+			    	System.err.println("In GMM.draw for dpotrf the leading minor of order " + info[0] + " is not positive definite");
+			    	System.err.println("and the factorization could not be completed.");
+			    	System.exit(-1);
+			    }
+			    for (i = 0; i < gmm.D; i++) {
+			    	for (j = 0; j < i; j++) {
+			    		L[i][j] = 0.0;
+			    	}
+			    }
+			    for (i = 0; i < data2.length; i++) {
+			        for (j = 0; j < gmm.D; j++) {
+			        	u[j] = rng.nextGaussian();
+			        }
+			        for (j = 0; j < gmm.D; j++) {
+			        	for (p = 0; p < gmm.D; p++) {
+			        	    noise[i][j] += L[j][p]*u[p];	
+			        	}
+			        	// mean is zero
+			        	//noise[i][j] += mean[i][j];
+			        }
+			    } // for (i = 0; i < data2.length; i++)
+            }
+            else {
+                // create noise from unit covariance and then dot with eigenvalue
+                // decomposition of covar2 to get a the right noise distribution:
+                // n' = R V^1/2 n, where covar = R V R^-1
+                // faster than drawing one sample per each covariance
+            	for (i = 0; i < data2.length; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			noise[i][j] = rng.nextGaussian();
+            		}
+            	}
+            	
+            	double val[][] = new double[covar2.length][gmm.D];
+            	double rot[][][] = new double[covar2.length][gmm.D][gmm.D];
+            	for (i = 0; i < covar2.length; i++) {
+                	// In EigenvalueDecomposition the columns represent the
+                    // eigenvectors
+                	// Eigenvalue.decompose has values in increasing order
+            	    Eigenvalue.decompose(covar2[i], rot[i], val[i]);
+            	    for (j = 0; j < gmm.D; j++) {
+            	    	val[i][j] = Math.max(val[i][j], 0.0); // to prevent univariate errors to underflow
+            	    }
+            	}
+		        
+                //noise = np.einsum('...ij,...j', rot, np.sqrt(val)*noise)
+            	double valnoise[][] = new double[covar2.length][gmm.D];
+            	for (i = 0; i < covar2.length; i++) {
+	        		for (j = 0; j < gmm.D; j++) {
+	        			valnoise[i][j] = Math.sqrt(val[i][j])*noise[i][j];
+	        		}
+            	}
+            	for (i = 0; i < covar2.length; i++) {
+            		for (j = 0; j < gmm.D; j++) {
+            			for (p = 0; p < gmm.D; p++) {
+            				noise[i][j] += rot[i][j][p] * valnoise[i][p];
+            			}
+            		}
+            	}
+            }
+            for (i = 0; i < data2.length; i++) {
+            	for (j = 0; j < gmm.D; j++) {
+            		data2[i][j] += noise[i][j];
+            	}
+            }
+        } // if (covar_callback != null)
+        data2Vec.add(data2);
+        return;
     }
     
     // get zeroth, first, second moments of the data weighted with p_k(x) avgd over x
@@ -2427,18 +2671,18 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         return cutoff_nd;
     }
     
-    public double[][] covar_callback_default(double coords[][], double Default[][]) {
+    public double[][][] covar_callback_default(double coords[][]) {
     	// default: Default = null;
     	int N = coords.length;
     	int D = coords[0].length;
-        if ((Default.length != D) && (Default[0].length != D)) {
+        if ((covar_callback_default_arg.length != 1) && (covar_callback_default_arg[0].length != D) && (covar_callback_default_arg[0][0].length != D)) {
             System.err.println("covar_callback received improper default covariance length = " + 
-            Default.length+","+Default[0].length);
+            covar_callback_default_arg.length+","+covar_callback_default_arg[0].length+","+covar_callback_default_arg[0][0].length);
             System.exit(-1);
         }
         // no need to copy since a single covariance matrix is sufficient
         // return np.tile(default, (N,1,1))
-        return Default;
+        return covar_callback_default_arg;
     }
     
     public void initFromDataAtRandom(GMM gmm, double data[][], double covar[][][], double s, int k[], Random rng) {
