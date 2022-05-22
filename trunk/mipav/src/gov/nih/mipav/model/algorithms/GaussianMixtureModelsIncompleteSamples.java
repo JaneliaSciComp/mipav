@@ -1235,11 +1235,19 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	} // if (covar != null)
         } // if (background != null)
         
+        changeable_amp = new boolean[gmm.K];
+        for (i = 0; i < gmm.K; i++) {
+        	changeable_amp[i] = true;
+        }
+        changeable_mean = new boolean[gmm.K];
+        for (i = 0; i < gmm.K; i++) {
+        	changeable_mean[i] = true;
+        }
+        changeable_covar = new boolean[gmm.K];
+        for (i = 0; i < gmm.K; i++) {
+        	changeable_covar[i] = true;
+        }
         if (frozen_amp != null) {
-            changeable_amp = new boolean[gmm.K];
-            for (i = 0; i < gmm.K; i++) {
-            	changeable_amp[i] = true;
-            }
             for (i = 0; i < frozen_amp.length; i++) {
                 if ((frozen_amp[i] >= 0) && (frozen_amp[i] < gmm.K)) {
                 	changeable_amp[i] = false;
@@ -1247,10 +1255,6 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             }
         }
         if (frozen_mean != null) {
-            changeable_mean = new boolean[gmm.K];
-            for (i = 0; i < gmm.K; i++) {
-            	changeable_mean[i] = true;
-            }
             for (i = 0; i < frozen_mean.length; i++) {
                 if ((frozen_mean[i] >= 0) && (frozen_mean[i] < gmm.K)) {
                 	changeable_mean[i] = false;
@@ -1258,10 +1262,6 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             }
         }
         if (frozen_covar != null) {
-            changeable_covar = new boolean[gmm.K];
-            for (i = 0; i < gmm.K; i++) {
-            	changeable_covar[i] = true;
-            }
             for (i = 0; i < frozen_covar.length; i++) {
                 if ((frozen_covar[i] >= 0) && (frozen_covar[i] < gmm.K)) {
                 	changeable_covar[i] = false;
@@ -1303,8 +1303,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	int N0;
     	double bg_amp_;
     	double log_L_[] = new double[1];
-    	int N2_[] = new int[1];
-    	int N0_[] = new int[1];
+    	double N2_[] = new double[1];
+    	double N0_[] = new double[1];
+    	LinearEquations2 le2 = new LinearEquations2();
     	
     	// compute effective cutoff for chi2 in D dimensions
     	if (!Double.isNaN(cutoff)) {
@@ -1371,13 +1372,69 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    	_EMstep(log_L_, N, N2_, N0_,gmm, log_p, U, T_inv, log_S, N0, data, covar, R, sel_callback,
 	    			 omega, oversampling, covar_callback, background, p_bg, w,
 	    			 //pool=pool, chunksize=chunksize, 
-	    			 cutoff_nd, tol, changeable_amp, changeable_mean, changeable_covar, it, rng);	
+	    			 cutoff_nd, tol, changeable_amp, changeable_mean, changeable_covar, it, rng);
+	    	
+	    	// check if component has moved by more than sigma/2
+	        // shift2 = np.einsum('...i,...ij,...j', gmm.mean - gmm_.mean, np.linalg.inv(gmm_.covar), gmm.mean - gmm_.mean)
+	    	double dm[][] = new double[gmm.K][gmm.D];
+	    	for (i = 0; i < gmm.K; i++) {
+	    		for (j = 0; j < gmm.D; j++) {
+	    			dm[i][j] = gmm.mean[i][j] - gmm_.mean[i][j];
+	    		}
+	    	}
+	    	double invcovar[][][] = new double[gmm_.covar.length][gmm.D][gmm.D];
+	    	for (i = 0; i < gmm_.covar.length; i++) {
+	    	    for (j = 0; j < gmm.D; j++) {
+	    	    	for (m = 0; m < gmm.D; m++) {
+	    	    		invcovar[i][j][m] = gmm_.covar[i][j][m];
+	    	    	}
+	    	    }
+	    	}
+	    	int ipiv[] = new int[gmm.D];
+	    	int info[] = new int[1];
+	    	for (i = 0; i < invcovar.length; i++) {
+        	    le2.dgetrf(gmm.D,gmm.D,invcovar[i],gmm.D,ipiv,info);
+    		    boolean rankDeficient = false;
+    		    if (info[0] < 0) {
+    		    	  System.err.println("In le2.dgetrf argument number " + 
+    		      (-info[0]) + " is illegal");
+    		    	  System.exit(-1);
+    		      }
+    		      if (info[0] > 0) {
+    		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+    		    	  rankDeficient = true;
+    		    	  System.exit(-1);
+    		      }
+    		      double work[] = new double[1];
+    		      int lwork = -1;
+    		      le2.dgetri(gmm.D,invcovar[i],gmm.D,ipiv,work,lwork,info);
+    		      if (info[0] < 0) {
+    		    	  System.err.println("In le2.dgetri argument number " + 
+    		      (-info[0]) + " is illegal");
+    		    	  System.exit(-1);
+    		      }
+    		      lwork = (int)work[0];
+    		      work = new double[lwork];
+    		      le2.dgetri(gmm.D,invcovar[i],gmm.D,ipiv,work,lwork,info);
+    		      if (info[0] < 0) {
+    		    	  System.err.println("In le2.dgetri argument number " + 
+    		      (-info[0]) + " is illegal");
+    		    	  System.exit(-1);
+    		      }
+    		      if (info[0] > 0) {
+    		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+    		    	  rankDeficient = true;
+    		    	  System.exit(-1);
+    		      }
+    	    } // for (i = 0; i < invcovar.length; i++)
+	    	
+	    	
 	    } // while (it < maxiter)
     }
     
     // run one EM step
-    public void _EMstep(double log_L[], int N[], int N2[], int N0update[],
-    		GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[], int N0, 
+    public void _EMstep(double log_L[], int N[], double N2[], double N0update[],
+    		GMM gmm, double log_p[][], int U[][], double T_inv[][][][], double log_S[], double N0, 
     		double data[][], double covar[][][], double R[][][], String sel_callback,
 	    			 double omega[], int oversampling, String covar_callback, Background background, 
 	    			 double p_bg[][], double w,
@@ -1390,6 +1447,8 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	// NOTE: T_inv (in fact (T_ik)^-1 for all samples i and components k)
         // is very large and is unfortunately duplicated in the parallelized _Mstep.
         // If memory is too limited, one can recompute T_inv in _Msums() instead.
+    	double data2[][] = null;
+    	int i,j,p;
         log_L[0] = _Estep(gmm, log_p, U, T_inv, log_S, data, covar, R, omega, background, p_bg, 
         		          // pool=pool, chunksize=chunksize, 
         		          cutoff, it, rng);
@@ -1425,19 +1484,191 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             Vector<double[][][]>covar2Vec = new Vector<double[][][]>();
             Vector<double[]>omega2Vec = new Vector<double[]>();
             boolean invert_sel = true;
-            int orig_size = N0*oversampling;
+            int orig_size = (int)Math.round(N0*oversampling);
             draw(data2Vec, covar2Vec, N0update, omega2Vec, gmm, data.length*oversampling, sel_callback,
             		invert_sel,orig_size,  covar_callback,
             		background, rng);
+            data2 = data2Vec.get(0);
+            double covar2[][][] = covar2Vec.get(0);
+            double omega2[] = omega2Vec.get(0);
             //data2 = createShared(data2)
             //if not(covar2 is None or covar2.shape == (gmm.D, gmm.D)):
                // covar2 = createShared(covar2)
+            
+            N0update[0] = N0/oversampling;
+        	int U2[][] = new int[gmm.K][];
         	
+        	if (data2.length > 0) {
+        		double log_S2[] = new double[data2.length];
+        		double log_p2[][] = new double[gmm.K][];
+        		double T2_inv[][][][] = new double[gmm.K][][][];
+        		double R2[][][] = null;
+        		double p_bg2[][] = null;
+        		if (background != null) {
+        			p_bg2 = new double[][] {{Double.NaN}};
+        		}
+        		
+        		double log_L2 = _Estep(gmm, log_p2, U2, T2_inv, log_S2, data2, covar2, R2, null, background, p_bg2, 
+        				/*pool=pool, chunksize=chunksize, */
+        				cutoff, it, rng);
+        		N2[0] = data2.length;
+        		_Mstep(A2,M2,C2,B2,gmm, U2, log_p2, T2_inv, log_S2, data2, covar2, R2, p_bg2 
+                		/*,pool=pool,chunksize=chunksize*/);
+        		
+        		// normalize for oversampling
+        		for (i = 0; i < gmm.K; i++) {
+        			A2[i] /= oversampling;
+        			for (j = 0; j < gmm.D; j++) {
+        				M2[i][j] /= oversampling;
+        				for (p = 0; p < gmm.D; p++) {
+        					C2[i][j][p] /= oversampling;
+        				}
+        			}
+        		}
+                B2[0] /= oversampling;
+                N2[0] = N2[0]/oversampling; // need floating point precision in update
+                
+                // check if components have outside selection
+                boolean sel_outside  = false;
+                for (i = 0; i < gmm.K && (!sel_outside); i++) {
+                	if (A2[i] > tol * A[i]) {
+                		sel_outside = true;
+                	}
+                }
+                if (sel_outside) {
+                	Preferences.debug("component inside fractions A/(A+A2)\n", Preferences.DEBUG_ALGORITHM);
+                	for (i = 0; i < gmm.K; i++) {
+                		Preferences.debug("Fraction " + i + " = " + (A[i]/(A[i] + A2[i]))+"\n", Preferences.DEBUG_ALGORITHM);
+                	}
+                }
+        	} // if (data2.length > 0)
+        	// correct the observed likelihood for the overall normalization constant of
+            // of the data process with selection:
+            // logL(x | gmm) = sum_k p_k(x) / Z(gmm), with Z(gmm) = int dx sum_k p_k(x) = 1
+            // becomes
+            // logL(x | gmm) = sum_k Omega(x) p_k(x) / Z'(gmm),
+            // with Z'(gmm) = int dx Omega(x) sum_k p_k(x), which we can gt by MC integration
+        	double omegaSum = 0.0;
+        	for (i = 0; i < omega.length; i++) {
+        		omegaSum += omega[i];
+        	}
+        	double omega2Sum = 0.0;
+        	for (i = 0; i < omega2.length; i++) {
+        		omega2Sum += omega2[i];
+        	}
+            log_L[0] -= N[0] * Math.log((omegaSum + omega2Sum / oversampling) / (N[0] + N2[0]));
         } // if (sel_callback != null)
+        
+        _update(gmm, A, M, C, N, B, A2, M2, C2, N2, B2, w, changeable_amp, changeable_mean, changeable_covar, background);
         return;
     }
     
-    public void draw(Vector<double[][]> dataVec, Vector<double[][][]> covarVec, int updated_orig_size[], Vector<double[]> omegaVec,
+    // update component with the moment matrices.
+    // If changeable is set, update only those components and renormalize the amplitudes
+    public void _update(GMM gmm, double A[], double M[][], double C[][][], int N[], double B[],
+    		double A2[], double M2[][], double C2[][][], double N2[], double B2[], 
+    		double w, boolean changeable_amp[], boolean changeable_mean[], 
+    		boolean changeable_covar[], Background background) {
+    	int i,j,p;
+    	boolean allampchangeable = true;
+    	double total;
+    	double Asum;
+    	double w_eff;
+    	
+    	// recompute background amplitude
+        if ((background != null) && background.adjust_amp) {
+            background.amp = Math.max(Math.min((B[0] + B2[0]) / (N[0] + N2[0]), background.amp_max), background.amp_min);
+        }
+        
+        // amp update:
+        // for partial update: need to update amp for any component that is changeable
+        for (i = 0; i < changeable_amp.length && allampchangeable; i++) {
+        	if (!changeable_amp[i]) {
+        		allampchangeable = false;
+        	}
+        }
+        if (allampchangeable) { // it's a slice(None), not a bool array
+        	for (i = 0; i < gmm.amp.length; i++) {
+        		gmm.amp[i] = (A[i] + A2[i])/(N[0] + N2[0]);
+        	}
+        }
+        else {
+        	// Bovy eq. 31, with correction for bg.amp if needed
+            if (background == null) {
+                total = 1.0;
+            }
+            else {
+                total = 1 - background.amp;
+            }
+            Asum = 0.0;
+            double gsum = 0.0;
+            for (i = 0; i < A.length; i++) {
+            	if (changeable_amp[i]) {
+            		Asum += (A[i] + A2[i]);
+            	}
+            	else {
+            		gsum += gmm.amp[i];
+            	}
+            }
+            for (i = 0; i < gmm.amp.length; i++) {
+            	if (changeable_amp[i]) {
+            		gmm.amp[i] = (A[i] + A2[i])/Asum * (total - gsum);
+            	}
+            }
+        }
+        
+        // mean updateL
+        for (i = 0; i < M.length; i++) {
+        	if (changeable_mean[i]) {
+        		Asum = A[i] + A2[i];
+	        	for (j = 0; j < M[0].length; j++) {
+	        		gmm.mean[i][j] = (M[i][j] + M2[i][j])/Asum;
+	        	}
+        	}
+        }
+       
+        // covar updateL
+        // minimum covariance term?
+        if (w > 0) {
+            // we assume w to be a lower bound of the isotropic dispersion,
+            // C_k = w^2 I + ...
+            // then eq. 38 in Bovy et al. only ~works for N = 0 because of the
+            // prefactor 1 / (q_j + 1) = 1 / (A + 1) in our terminology
+            // On average, q_j = N/K, so we'll adopt that to correct.
+            w_eff = w*w * ((N[0]+N2[0])/gmm.K + 1);
+            for (i = 0; i < C.length; i++) {
+            	if (changeable_covar[i]) {
+            	    Asum = A[i] + A2[i] + 1.0;
+            	    for (j = 0; j < gmm.D; j++) {
+            	    	for (p = 0; p < gmm.D; p++) {
+            	    		if (j == p) {
+            	    			gmm.covar[i][j][p] = (C[i][j][p] + C2[i][j][p] + w_eff)/Asum;
+            	    		}
+            	    		else {
+            	    			gmm.covar[i][j][p] = (C[i][j][p] + C2[i][j][p])/Asum;
+            	    		}
+            	    	}
+            	    }
+            	}
+            }
+        }     		
+        else {
+        	for (i = 0; i < C.length; i++) {
+            	if (changeable_covar[i]) {
+            	    Asum = A[i] + A2[i];
+            	    for (j = 0; j < gmm.D; j++) {
+            	    	for (p = 0; p < gmm.D; p++) {
+            	    	    gmm.covar[i][j][p] = (C[i][j][p] + C2[i][j][p])/Asum;
+            	    	}
+            	    }
+            	}
+            }
+        }
+        
+        return;
+    }
+    
+    public void draw(Vector<double[][]> dataVec, Vector<double[][][]> covarVec, double updated_orig_size[], Vector<double[]> omegaVec,
     		GMM gmm, int obs_size, String sel_callback, boolean invert_sel, int orig_size, String covar_callback, Background background,
     		Random rng) {
         // Draw from the GMM (and the Background) with noise and selection.
@@ -1604,18 +1835,18 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     
     // draw from the model (+ background) and apply appropriate covariances
     public void _drawGMM_BG(Vector<double[][]> data2Vec, Vector<double[][][]> covar2Vec,
-    		GMM gmm , int size, String covar_callback, Background background, Random rng) {
+    		GMM gmm , double size, String covar_callback, Background background, Random rng) {
     	int i,j,p;
     	// draw sample from model, or from background+model
     	double data2[][] = null;
     	double covar2[][][] = null;
         if (background == null) {
-            data2 = gmm.draw(size, rng);
+            data2 = gmm.draw((int)Math.round(size), rng);
         }
         else {
             // model is GMM + Background
             int bg_size = (int)(background.amp * size);
-            double data2a[][] = gmm.draw(size-bg_size, rng);
+            double data2a[][] = gmm.draw((int)Math.round(size-bg_size), rng);
             double data2b[][] = background.draw(bg_size, rng);
             data2 = new double[data2a.length+data2b.length][data2a[0].length];
             for (i = 0; i < data2a.length; i++) {
@@ -1657,11 +1888,11 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 			    // and the strictly upper triangular part of A is not referenced.
 			    ge.dpotrf('L',gmm.D,L,gmm.D,info);
 			    if (info[0] < 0) {
-			    	System.err.println("In GMM.draw dpotrf had an illegal value for argument " + (-info[0]));
+			    	System.err.println("In _drawGMM_BG dpotrf had an illegal value for argument " + (-info[0]));
 			    	System.exit(-1);
 			    }
 			    if (info[0] > 0) {
-			    	System.err.println("In GMM.draw for dpotrf the leading minor of order " + info[0] + " is not positive definite");
+			    	System.err.println("In _drawGMM_BG for dpotrf the leading minor of order " + info[0] + " is not positive definite");
 			    	System.err.println("and the factorization could not be completed.");
 			    	System.exit(-1);
 			    }
