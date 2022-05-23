@@ -1270,7 +1270,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         }
         double log_L[] = new double[1];
         int N[] = new int[1];
-        int N2[] = new int[1];
+        double N2[] = new double[1];
         String prefix = "";
         _EM(log_L, N, N2, gmm, log_p, U, T_inv, log_S, data_, covar_, R,
         		 sel_callback, oversampling, covar_callback, background, p_bg, w,
@@ -1282,7 +1282,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     }
     
     // run EM sequence
-    public void _EM(double log_L[], int N[], int N2[], GMM gmm, double log_p[][], int U[][], double T_inv[][][][],
+    public void _EM(double log_L[], int N[], double N2[], GMM gmm, double log_p[][], int U[][], double T_inv[][][][],
     		double log_S[], double data[][], double covar[][][], double R[][][], String sel_callback, int oversampling,
     		String covar_callback, Background background, double p_bg[][], double w,
     	    //pool=pool, chunksize=chunksize, 
@@ -1292,7 +1292,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // Defaults: covar=null, R=null, sel_callback=null, oversampling=10, covar_callback=null,
     	// background=null, p_bg=null, w=0, pool=null, chunksize=1, cutoff=Double.NaN, miniter=1, maxiter=1000, tol=1e-3, prefix="",
     	// changeable_amp = null, changeable_mean = null, changeable_covar = null
-    	int i,j,m;
+    	int i,j,k,m,p;
     	double cutoff_nd;
     	double shift_cutoff;
     	double omega[];
@@ -1300,12 +1300,17 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	int it;
     	String header;
     	GMM gmm_;
-    	int N0;
-    	double bg_amp_;
+    	double N0;
+    	double bg_amp_ = 0.0;
     	double log_L_[] = new double[1];
     	double N2_[] = new double[1];
     	double N0_[] = new double[1];
     	LinearEquations2 le2 = new LinearEquations2();
+    	double shift2[];
+    	int moved[];
+    	int movedsize;
+    	String status_mess = null;
+    	boolean found;
     	
     	// compute effective cutoff for chi2 in D dimensions
     	if (!Double.isNaN(cutoff)) {
@@ -1427,9 +1432,143 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		    	  System.exit(-1);
     		      }
     	    } // for (i = 0; i < invcovar.length; i++)
+	    	double dmC[][][] = new double[gmm.K][gmm.K][gmm.D];
+        	for (i = 0; i < gmm.K; i++) {
+        		for (j = 0; j < gmm.K; j++) {
+        			for (m = 0; m < gmm.D; m++) {
+        				for (p = 0; p < gmm.D; p++) {
+        					dmC[i][j][m] += dm[i][p] * invcovar[j][p][m];
+        				}
+        			}
+        		}
+        	}
+        	double dmCdm[][][] = new double[gmm.K][gmm.K][gmm.K];
+        	for (i = 0; i < gmm.K; i++) {
+        		for (j = 0; j < gmm.K; j++) {
+        			for (m = 0; m < gmm.K; m++) {
+        				for (p = 0; p < gmm.D; p++) {
+        					dmCdm[i][j][m] += dmC[i][j][p] * dm[m][p];
+        				}
+        			}
+        		}
+        	}
+        	shift2 = new double[gmm.K];
+        	for (i = 0; i < gmm.K; i++) {
+        		shift2[i] = dmCdm[i][i][i];
+        	}
+	    	movedsize = 0;
+	    	for (i = 0; i < gmm.K; i++) {
+	    	    if (shift2[i] > shift_cutoff) {
+	    	        movedsize++;	
+	    	    }
+	    	}
+	    	if (movedsize == 0) {
+	    		moved = null;
+	    	}
+	    	else {
+	    		moved = new int[movedsize];
+	    		for (i = 0, j = 0; i < gmm.K; i++) {
+		    	    if (shift2[i] > shift_cutoff) {
+		    	        moved[j++] = i;	
+		    	    }
+		    	}
+	    	}
+	    	status_mess = prefix + " it = " + String.valueOf(it) + "  N[0] = " + String.valueOf(N[0]) + "\n";
+	    	if (sel_callback != null) {
+	    		status_mess += "N2_[0] = " + String.valueOf(N2_[0]) + "  N0_[0] = " + String.valueOf(N0_[0]) + "\n";
+	    	}
+	    	if (background != null) {
+	    		status_mess += "bg_amp_ = " + String.valueOf(bg_amp_) + "\n";
+	    	}
+	    	status_mess += "log_L_[0] = " + String.valueOf(log_L_[0]) + "  gmm.K - moved.size = " + (gmm.K - movedsize) + "\n";
+	    	Preferences.debug(status_mess, Preferences.DEBUG_ALGORITHM);
 	    	
-	    	
+	    	// convergence tests
+	        if (it > miniter) {
+	            if (sel_callback == null) {
+	                if ((Math.abs(log_L_[0] - log_L[0]) < tol * Math.abs(log_L[0])) && (movedsize == 0)) {
+	                    log_L[0] = log_L_[0];
+	                    Preferences.debug("Likelihood converged within relative tolerance " + tol + "  Stopping here.\n",
+	                    		Preferences.DEBUG_ALGORITHM);
+	                    break;
+	                }
+	            } // if (sel_callback == null)
+	            else {
+	                if ((Math.abs(N0_[0] - N0) < tol * N0) && (Math.abs(N2_[0] - N2[0]) < tol * N2[0]) && (movedsize == 0)) {
+	                    log_L[0] = log_L_[0];
+	                    Preferences.debug("Imputation sample size converged within relative tolerance " + tol + " Stopping here.\n",
+	                    		Preferences.DEBUG_ALGORITHM);
+	                    break;
+	                }
+	            } // else 
+	        } // if (it > miniter)
+	        
+	        // force update to U for all moved components
+	        if ((!Double.isNaN(cutoff)) && (moved != null)) {
+	        	int Utemp[][] = new int[U.length][U[0].length];
+	        	for (i = 0; i < U.length; i++) {
+	        		for (j = 0; j < U[0].length; j++) {
+	        		    Utemp[i][j] = U[i][j];
+	        		}
+	        	}
+	        	for (i = 0; i < U.length; i++) {
+	        		int uisize = U[i].length;
+	        		for (j = 0; j < U[i].length; j++) {
+	        			found = false;
+	        			for (k = 0; k < movedsize  && (!found); k++) {
+	        				if (U[i][j] == moved[k]) {
+	        					found = true;
+	        					uisize--;
+	        				}
+	        			}
+	        		}
+	        		U[i] = new int[uisize];
+	        		for (j = 0, p = 0; j < Utemp[i].length; j++) {
+	        		    found = false;
+	        		    for (k = 0; k < movedsize && (!found); k++) {
+	        		    	if (U[i][j] == moved[k]) {
+	        		    		found = true;
+	        		    	}
+	        		    }
+	        		    if (!found) {
+	        		        U[i][p++] = Utemp[i][j];	
+	        		    }
+	        		}
+	        	}
+	        } // if ((!Double.isNaN(cutoff)) && (moved != null)) 
+	        
+	        if (movedsize > 0) {
+	            Preferences.debug("Resetting neighborhoods of moving components:\n", Preferences.DEBUG_ALGORITHM);
+	            for (i = 0; i < movedsize-1; i++) {
+	            	Preferences.debug(String.valueOf(moved[i]) + " ",Preferences.DEBUG_ALGORITHM);
+	            }
+	            Preferences.debug(String.valueOf(moved[movedsize-1]) + "\n", Preferences.DEBUG_ALGORITHM);
+	        }
+	        
+	        // update all important _ quantities for convergence test(s)
+	        log_L[0] = log_L_[0];
+	        N0 = N0_[0];
+	        N2[0] = N2_[0];
+
+	        // backup to see if components move or if next step gets worse
+	        // note: not gmm = gmm_ !
+	        for (i = 0; i < gmm.K; i++ ) {
+	        	gmm_.amp[i] = gmm.amp[i];
+	        	for (j = 0; j < gmm.D; j++) {
+	        		gmm_.mean[i][j] = gmm.mean[i][j];
+	        		for (k = 0; k < gmm.D; k++) {
+	        			gmm_.covar[i][j][k] = gmm.covar[i][j][k];
+	        		}
+	        	}
+	        }
+	        if (background != null) {
+	            bg_amp_ = background.amp;
+	        }
+
+	        it += 1;
 	    } // while (it < maxiter)
+	    
+	    return;
     }
     
     // run one EM step
