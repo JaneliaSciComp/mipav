@@ -374,7 +374,8 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        if (bg != null) {
 	            bg.amp = bg_amp;	
 	        }
-	        l[r] = fit(gmms[r], data, cov, R, "random", w, cutoff, sel_callback, 
+	        int U[][] = new int[gmm.K][]; 
+	        l[r] = fit(U, gmms[r], data, cov, R, "random", w, cutoff, sel_callback, 
 	        		oversampling, covar_callback, bg,
 	        		tol, miniter, maxiter,
 	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
@@ -1045,7 +1046,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     return Math.log(x + Math.sqrt(x*x + 1.0));
     }
     
-    public double fit(GMM gmm, double data[][], double covar[][][],double R[][][], String init_method, double w, double cutoff, String sel_callback,
+    public double fit(int U[][], GMM gmm, double data[][], double covar[][][],double R[][][], String init_method, double w, double cutoff, String sel_callback,
     		 int oversampling, String covar_callback, Background background, 
     		 double tol, int miniter, int maxiter,
     		 int frozen_amp[], int frozen_mean[], int frozen_covar[], int split_n_merge, Random rng) {
@@ -1205,7 +1206,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         double log_S[] = new double[ND];          // S = sum_k p(x|k)
         double log_p[][] = new double[gmm.K][];        // P = p(x|k) for x in U[k]
         double T_inv[][][][] = new double[gmm.K][][][];      // T = covar(x) + gmm.covar[k]
-        int U[][] = new int[gmm.K][];          // U = {x close to k}
+        // U = {x close to k}
         double p_bg[][] = null;
         if (background != null) {
         	for (i = 0; i < gmm.amp.length; i++) {
@@ -1278,7 +1279,184 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         		 cutoff, miniter, maxiter, tol, prefix,
         		 changeable_amp, changeable_mean, changeable_covar,
         		  rng);
-    	return 0.0;
+        
+        // should we try to improve by split'n'merge of components?
+	    // if so, keep backup copy
+	    GMM gmm_ = null;
+	    if (((frozen_amp != null) || (frozen_mean != null) || (frozen_covar != null)) && (split_n_merge > 0)) {
+	        System.out.println("Warning! Forgoing split'n'merge because some components are frozen");
+	    }
+	    else {
+	    	while ((split_n_merge > 0) && (gmm.K >= 3)) {
+	    	
+	    		if (gmm_ == null) {
+	                gmm_ = new GMM(gmm.K, gmm.D);
+	    		}
+	    		
+	    		for (i = 0; i < gmm.K; i++) {
+	    			gmm_.amp[i] = gmm.amp[i];
+	    			for (j = 0; j < gmm.D; j++) {
+	    				gmm_.mean[i][j] = gmm.mean[i][j];
+	    				for (m = 0; m < gmm.D; m++) {
+	    				    gmm_.covar[i][j][m] = gmm.covar[i][j][m];	
+	    				}
+	    			}
+	    		}
+	    		
+	    		int U_[][] = new int[gmm.K][];
+	    		for (i = 0; i < gmm.K; i++) {
+	    			U_[i] = new int[U[i].length];
+	    			for (j = 0; j < U[i].length; j++) {
+	    				U_[i][j] = U[i][j];
+	    			}
+	    		}
+
+	    		/* changing, cleanup = */ _findSNMComponents(gmm, U, log_p, log_S, N[0]+N2[0]
+	    				/*, pool=pool, chunksize=chunksize*/);
+	    	} // while ((split_n_merge > 0) && (gmm.K >= 3))
+	    } // else
+    	return log_L[0];
+    }
+    
+    public void _findSNMComponents(GMM gmm, int U[][], double log_p[][], double log_S[], double N
+    		/*, pool=None, chunksize=1*/) {
+    	int i,j,k;
+    	boolean presorted = true;
+    	Vector<Integer> i_kVec = new Vector<Integer>();
+    	Vector<Integer> i_jVec = new Vector<Integer>();
+    	// find those components that are most similar
+        double JM[][] = new double[gmm.K][gmm.K];
+        // compute log_q (posterior for k given i), but use normalized probabilities
+        // to allow for merging of empty components
+        double log_q[][] = new double[gmm.K][];	
+        for (i = 0; i < gmm.K; i++) {
+        	log_q[i] = new double[log_p[i].length];
+        	for (j = 0; j < log_p[i].length; j++) {
+        		log_q[i][j] = log_p[i][j] - log_S[U[i][j]] - Math.log(gmm.amp[i]);
+        	}
+        }
+        for (k = 0; k < gmm.K; k++) {
+        	// don't need diagonal (can merge), and JM is symmetric
+            for (j = k+1; j < gmm.K; j++) {
+            	// get index list for intersection of U of k and l
+                // FIXME: match1d fails if either U is empty
+                // SOLUTION: merge empty U, split another
+            	
+            	i_kVec.clear();
+            	i_jVec.clear();
+                match1d(i_kVec, i_jVec, U[k], U[j], presorted);
+                for (i = 0; i < i_kVec.size(); i++) {
+                	JM[k][j] += Math.exp(log_q[k][i_kVec.get(i)]) * Math.exp(log_q[j][i_jVec.get(i)]);
+                }	
+            } // for (j = k+1; j < gmm.K; j++)
+        } // for (k = 0; k < gmm.K; k++)
+        // merge_jk = np.unravel_index(JM.argmax(), JM.shape)
+    }
+    
+    // Blantant copy from Erin Sheldon's esutil
+    // https://github.com/esheldon/esutil/blob/master/esutil/numpy_util.py
+    public void match1d(Vector<Integer>sub1Vec, Vector<Integer>sub2Vec, int arr1Input[], int arr2[], boolean presorted) {
+    	// default presorted = false
+    	// NAME:
+        //     match
+        // CALLING SEQUENCE:
+        //    ind1,ind2 = match(arr1, arr2, presorted=False)
+        // PURPOSE:
+        //    Match two numpy arrays.  Return the indices of the matches or empty
+        //    arrays if no matches are found.  This means arr1[ind1] == arr2[ind2] is
+        //    true for all corresponding pairs.  arr1 must contain only unique
+        //    inputs, but arr2 may be non-unique.
+        //    If you know arr1 is sorted, set presorted=True and it will run
+        //    even faster
+        // METHOD:
+        //    uses searchsorted with some sugar.  Much faster than old version
+        //    based on IDL code.
+        // REVISION HISTORY:
+        //    Created 2015, Eli Rykoff, SLAC.
+    	int i,j;
+    	boolean unique;
+    	boolean found;
+    	int arr1[] = null;
+    	if ((arr1Input.length == 0) || (arr2.length == 0)) {
+            System.err.println("Error in match1d: arr1Input and arr2 must each be non-zero length");
+            System.exit(-1);
+    	}
+    	
+    	// make sure that arr1 has unique values...
+    	unique = true;
+    	for (i = 0; i < arr1Input.length && unique; i++) {
+    		for (j = i+1; j < arr1Input.length && unique; j++) {
+    			if (arr1Input[i] == arr1Input[j]) {
+    				unique = false;
+    			}
+    		}
+    	}
+        if (!unique) {
+            System.err.println("Error in match1d: arr1Input must be unique");
+            System.exit(-1);
+        }
+        
+        // sort arr1 if not presorted
+        if (!presorted) {
+        	arr1 = new int[arr1Input.length];
+        	for (i = 0; i < arr1.length; i++) {
+        		arr1[i] = arr1Input[i];
+        	}
+            Arrays.sort(arr1);
+        }
+        else {
+        	arr1 = arr1Input;
+        }
+        
+        // search the sorted array
+        // sub1=np.searchsorted(arr1,arr2,sorter=st1)
+        int sub1[] = new int[arr2.length];
+        for (i = 0; i < arr2.length; i++) {
+        	if (arr2[i] < arr1[0]) {
+        		sub1[i] = 0;
+        	}
+        	else if (arr2[i] > arr1[arr1.length-1]) {
+        		sub1[i] = arr1.length;
+        	}
+        	else {
+        		found = false;
+        		for (j = 1; j <= arr1.length-1 && (!found); j++) {
+        		    if ((arr2[i] > arr1[j-1] && (arr2[i] <= arr1[j]))) {
+        		    	found = true;
+        		    	sub1[i] = j;
+        		    }
+        		}
+        	}
+        } // for (i = 0; i < arr2.length; i++)
+        
+        // check for out-of-bounds at the high end if necessary
+        int arr2max = Integer.MIN_VALUE;
+        for (i = 0; i < arr2.length; i++) {
+        	if (arr2[i] > arr2max) {
+        		arr2max = arr2[i];
+        	}
+        }
+        int arr1max = arr1[arr1.length-1];
+        if (arr2max > arr1max) {
+        	for (i = 0; i < sub1.length; i++) {
+        		if (sub1[i] == arr1.length) {
+        			sub1[i] = arr1.length-1;
+        		}
+        	}
+        }
+        
+        for (i = 0; i < sub1.length; i++) {
+            for (j = 0; j < arr2.length; j++) {
+            	if (arr1[sub1[i]] == arr2[j]) {
+            		sub2Vec.add(j);
+            	}
+            }
+        }
+        for (i = 0; i < sub2Vec.size(); i++) {
+        	sub1Vec.add(sub1[sub2Vec.get(i)]);
+        }
+        return;
+
     }
     
     // run EM sequence
