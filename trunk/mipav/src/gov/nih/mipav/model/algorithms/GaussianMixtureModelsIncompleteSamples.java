@@ -1442,9 +1442,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    	JS[i] = EV[i][0] * gmm.amp[i];
 	    }
 	    double minVal = Double.MAX_VALUE;
-	    int minIndex = -1;
 	    maxVal = -Double.MAX_VALUE;
-	    int maxIndex = -1;
 	    for (i = gmm.K-3; i <= gmm.K-1; i++) {
 	        if (JS[i] < minVal) {
 	            minVal = JS[i];
