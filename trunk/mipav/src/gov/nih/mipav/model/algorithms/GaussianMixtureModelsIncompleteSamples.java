@@ -1316,9 +1316,165 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    		int changing[] = new int[3];
 	    		_findSNMComponents(changing, cleanup, gmm, U, log_p, log_S, N[0]+N2[0]
 	    				/*, pool=pool, chunksize=chunksize*/);
+	    		Preferences.debug("merging " + changing[0] + " and " + changing[1] + " , splitting " + changing[2] + "\n",
+	    				Preferences.DEBUG_ALGORITHM);
+
+	            // modify components
+	            _update_snm(gmm, changing, U, N[0]+N2[0], cleanup[0]);
+	            
+	            // run partial EM on changeable components
+	            // NOTE: for a partial run, we'd only need the change to Log_S from the
+	            // changeable components. However, the neighborhoods can change from _update_snm
+	            // or because they move, so that operation is ill-defined.
+	            // Thus, we'll always run a full E-step, which is pretty cheap for
+	            // converged neighborhood.
+	            // The M-step could in principle be run on the changeable components only,
+	            // but there seem to be side effects in what I've tried.
+	            // Similar to the E-step, the imputation step needs to be run on all
+	            // components, otherwise the contribution of the changeable ones to the mixture
+	            // would be over-estimated.
+	            // Effectively, partial runs are as expensive as full runs.
+	            
+	            //changeable['amp'] = changeable['mean'] = changeable['covar'] = np.in1d(xrange(gmm.K), changing, assume_unique=True)
+	            double log_L_[] = new double[1];
+	            int N_[] = new int[1];
+	            double N2_[] = new double[1];
+	            prefix = "SNM_P";
+	            _EM(log_L_, N_, N2_, gmm, log_p, U, T_inv, log_S, data_, covar_, R, 
+	            		sel_callback, oversampling, covar_callback, background, p_bg, w,
+	           		 //pool=pool, chunksize=chunksize, 
+	           		 cutoff, miniter, maxiter, tol, prefix,
+	           		 changeable_amp, changeable_mean, changeable_covar,
+	           		 rng);
+	            		
 	    	} // while ((split_n_merge > 0) && (gmm.K >= 3))
 	    } // else
     	return log_L[0];
+    }
+    
+    public void _update_snm( GMM gmm, int changeable[], int U[][], double N, boolean cleanup) {
+    	int i,j,k;
+    	double A[] = new double[gmm.K];
+    	double gsum[] = new double[gmm.D];
+    	double Asum;
+        // reconstruct A from gmm.amp
+    	for (i = 0; i < gmm.K; i++) {
+            A[i] = gmm.amp[i] * N;
+    	}
+    	
+    	// update parameters and U
+        // merge 0 and 1, store in 0, Bovy eq. 39
+    	gmm.amp[changeable[0]] = gmm.amp[changeable[0]] + gmm.amp[changeable[1]] + gmm.amp[changeable[2]];
+        if (!cleanup) {
+        	Asum = A[changeable[0]] + A[changeable[1]] + A[changeable[2]];
+        	for (i = 0; i < gmm.D; i++) {
+        	    for (j = 0; j < 3; j++) {
+        	    	gmm.mean[changeable[0]][i] += (gmm.mean[changeable[j]][i] * A[changeable[j]]);
+        	    	gmm.mean[changeable[0]][i] /= Asum;
+        	    }
+        	}
+        	for (i = 0; i < gmm.D; i++) {
+        		for (j = 0; j < gmm.D; j++) {
+	        	    for (k = 0; k < 3; k++) {
+	        	    	gmm.covar[changeable[0]][i][j] += (gmm.covar[changeable[k]][i][j] * A[changeable[k]]);
+	        	    	gmm.covar[changeable[0]][i][j] /= Asum;
+	        	    }
+        		}
+        	}
+        	Vector<Integer>Utemp = new Vector<Integer>();
+        	for (i = 0; i < U[changeable[0]].length; i++) {
+        		if (!Utemp.contains(U[changeable[0]][i])) {
+        			Utemp.add(U[changeable[0]][i]);
+        		}
+        	}
+        	for (i = 0; i < U[changeable[1]].length; i++) {
+        		if (!Utemp.contains(U[changeable[1]][i])) {
+        			Utemp.add(U[changeable[1]][i]);
+        		}
+        	}
+        	U[changeable[0]] = new int[Utemp.size()];
+        	for (i = 0; i < Utemp.size(); i++) {
+        		U[changeable[0]][i] = Utemp.get(i);
+        	}
+        	Arrays.sort(U[changeable[0]]);
+        	Utemp.clear();
+        } // if (!cleanup)
+        else {
+            // if we're cleaning up the weakest components:
+            // merging does not lead to valid component parameters as the original
+            // ones can be anywhere. Simply adopt second one.
+        	for (i = 0; i < gmm.D; i++) {
+        		gmm.mean[changeable[0]][i] = gmm.mean[changeable[1]][i];
+        		for (j = 0; j < gmm.D; j++) {
+        			gmm.covar[changeable[0]][i][j] = gmm.covar[changeable[1]][i][j];
+        		}
+        	}
+            U[changeable[0]] = new int[U[changeable[1]].length];
+            for (i = 0; i < U[changeable[1]].length; i++) {
+                U[changeable[0]][i] = U[changeable[1]][i];	
+            }
+        } // else
+        
+        // split 2, store in 1 and 2
+        // following SVD method in Zhang 2003, with alpha=1/2, u = 1/4
+        gmm.amp[changeable[1]] = gmm.amp[changeable[2]] = gmm.amp[changeable[2]] / 2;
+        // TODO: replace with linalg.eigvalsh, but eigenvalues are not always ordered
+        //_, radius2, rotation = np.linalg.svd(gmm.covar[changeable[2]])
+        SVD svd = new SVD();
+        double radius2[] = new double[gmm.D];
+	    int ldu = 1;
+	    double UU[][] = new double[1][1];
+	    int ldvt = gmm.D;
+	    double rotation[][] = new double[gmm.D][gmm.D];
+	    int info[] = new int[1];
+    	double cov[][] = new double[gmm.D][gmm.D];
+    	for (j = 0; j < gmm.D; j++) {
+    		for (k = 0; k < gmm.D; k++) {
+    			cov[j][k] = gmm.covar[changeable[2]][j][k];
+    		}
+    	}
+    	 double work[] = new double[1];
+    	 int lwork = -1;
+         svd.dgesvd('N','A',gmm.D, gmm.D, cov, gmm.D, radius2, UU, ldu, rotation, ldvt, work, lwork, info);
+         lwork = (int)work[0];
+         work = new double[lwork];
+         svd.dgesvd('N','A',gmm.D, gmm.D, cov, gmm.D, radius2, UU, ldu, rotation, ldvt, work, lwork, info);
+         if (info[0] < 0) {
+           	System.err.println("In svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+           	Preferences.debug("In svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+           	System.exit(-1);
+        }
+         if (info[0] > 0) {
+           	System.err.println("In svd.dgesvd dbdsqr did not converge.");
+           	Preferences.debug("In svd.dgesvd dbdsqr did not converge.\n",
+           			Preferences.DEBUG_ALGORITHM);
+           	System.exit(-1);
+        }
+        double dl;
+        for (i = 0; i < gmm.D; i++) {
+        	dl = Math.sqrt(radius2[0]) * rotation[0][i]/4.0;
+        	gmm.mean[changeable[1]][i] = gmm.mean[changeable[2]][i] - dl;
+        	gmm.mean[changeable[2]][i] = gmm.mean[changeable[2]][i] + dl;
+        }
+        double det = (new Matrix(gmm.covar[changeable[2]])).det();
+        double var = Math.pow(det,1.0/gmm.D);
+        for (i = 0; i < gmm.D; i++) {
+        	for (j = 0; j < gmm.D; j++) {
+        		if (i == j) {
+        			gmm.covar[changeable[1]][i][j] = var;
+        		}
+        		else {
+        			gmm.covar[changeable[1]][i][j] = 0.0;
+        		}
+        	}
+        }
+        // Now 1 and 2 have the same U
+        U[changeable[1]] = new int[U[changeable[2]].length];
+        for (i = 0; i < U[changeable[2]].length; i++) {
+            U[changeable[1]][i] = U[changeable[2]][i];	
+        }
+        
+        return;
     }
     
     public void _findSNMComponents(int changing[], boolean cleanup[], GMM gmm, int U[][], double log_p[][], double log_S[], double N
