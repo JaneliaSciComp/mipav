@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.model.structures.jama.SVD;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -1311,24 +1312,34 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    			}
 	    		}
 
-	    		/* changing, cleanup = */ _findSNMComponents(gmm, U, log_p, log_S, N[0]+N2[0]
+	    		boolean cleanup[] = new boolean[1];
+	    		int changing[] = new int[3];
+	    		_findSNMComponents(changing, cleanup, gmm, U, log_p, log_S, N[0]+N2[0]
 	    				/*, pool=pool, chunksize=chunksize*/);
 	    	} // while ((split_n_merge > 0) && (gmm.K >= 3))
 	    } // else
     	return log_L[0];
     }
     
-    public void _findSNMComponents(GMM gmm, int U[][], double log_p[][], double log_S[], double N
+    public void _findSNMComponents(int changing[], boolean cleanup[], GMM gmm, int U[][], double log_p[][], double log_S[], double N
     		/*, pool=None, chunksize=1*/) {
     	int i,j,k;
     	boolean presorted = true;
     	Vector<Integer> i_kVec = new Vector<Integer>();
     	Vector<Integer> i_jVec = new Vector<Integer>();
+    	int merge_jk[] = new int[2];
+    	double maxVal;
+    	double JS[];
+    	double A[];
     	// find those components that are most similar
         double JM[][] = new double[gmm.K][gmm.K];
         // compute log_q (posterior for k given i), but use normalized probabilities
         // to allow for merging of empty components
         double log_q[][] = new double[gmm.K][];	
+        double EV[][];
+        double cov[][];
+        SVD svd = new SVD();
+        int split_l3[] = new int[3];
         for (i = 0; i < gmm.K; i++) {
         	log_q[i] = new double[log_p[i].length];
         	for (j = 0; j < log_p[i].length; j++) {
@@ -1351,6 +1362,133 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             } // for (j = k+1; j < gmm.K; j++)
         } // for (k = 0; k < gmm.K; k++)
         // merge_jk = np.unravel_index(JM.argmax(), JM.shape)
+        // Index of first occurrence of maximum value
+        maxVal = -Double.MAX_VALUE;
+        for (i = 0; i < gmm.K; i++) {
+        	for (j = 0; j < gmm.K; j++) {
+        		if (JM[i][j] > maxVal) {
+        			maxVal = JM[i][j];
+        			merge_jk[0] = i;
+        			merge_jk[1] = j;
+        		}
+        	}
+        }
+        // if all Us are disjunct, JM is blank and merge_jk = [0,0]
+	    // merge two smallest components and clean up from the bottom
+	    cleanup[0] = false;
+	    if ((merge_jk[0] == 0) && (merge_jk[1] == 0)) {
+	        Preferences.debug("Neighborhoods disjunct. merging components " + merge_jk[0] + " and " + merge_jk[1] + "\n",
+	        		Preferences.DEBUG_ALGORITHM);
+	        if (gmm.amp[1] >= gmm.amp[0]) {
+	            merge_jk[0] = 0;
+	            merge_jk[1] = 1;
+	        }
+	        else {
+	        	merge_jk[0] = 1;
+	        	merge_jk[1] = 0;
+	        }
+	        cleanup[0] = true;
+	    } // if ((merge_jk[0] == 0) && (merge_jk[1] == 0))
+	    
+	    // split the one whose p(x|k) deviate most from current Gaussian
+	    // ask for the three worst components to avoid split being in merge_jk
+	    
+	    JS = new double[gmm.K];
+	    A = new double[gmm.K];
+	    for (i = 0; i < gmm.K; i++) {
+	        A[i] = gmm.amp[i] * N;
+	    }
+	    for (k = 0; k < gmm.K; k++) {
+	       JS[k] = _JS(k, gmm, log_p, log_S, U, A);	
+	    }
+	    
+	    // get largest Eigenvalue, weighed by amplitude
+	    // Large EV implies extended object, which often is caused by coverving
+	    // multiple clusters. This happes also for almost empty components, which
+	    // should rather be merged than split, hence amplitude weights.
+	    // TODO: replace with linalg.eigvalsh, but eigenvalues are not always ordered
+	    EV = new double[gmm.K][gmm.D];
+	    int ldu = 1;
+	    double UU[][] = new double[1][1];
+	    int ldvt = 1;
+	    double VT[][] = new double[1][1];
+	    int info[] = new int[1];
+	    for (i = 0; i < gmm.K; i++) {
+	    	cov = new double[gmm.D][gmm.D];
+	    	for (j = 0; j < gmm.D; j++) {
+	    		for (k = 0; k < gmm.D; k++) {
+	    			cov[j][k] = gmm.covar[i][j][k];
+	    		}
+	    	}
+	    	 double work[] = new double[1];
+	    	 int lwork = -1;
+	         svd.dgesvd('N','N',gmm.D, gmm.D, cov, gmm.D, EV[i], UU, ldu, VT, ldvt, work, lwork, info);
+	         lwork = (int)work[0];
+	         work = new double[lwork];
+	         svd.dgesvd('N','N',gmm.D, gmm.D, cov, gmm.D, EV[i], UU, ldu, VT, ldvt, work, lwork, info);
+	         if (info[0] < 0) {
+               	System.err.println("In svd.dgesvd argument " + (-info[0]) + " had an illegal value");
+               	Preferences.debug("In svd.dgesvd argument " + (-info[0]) + " had an illegal value\n", Preferences.DEBUG_ALGORITHM);
+               	System.exit(-1);
+            }
+	         if (info[0] > 0) {
+               	System.err.println("In svd.dgesvd dbdsqr did not converge.");
+               	Preferences.debug("In svd.dgesvd dbdsqr did not converge.\n",
+               			Preferences.DEBUG_ALGORITHM);
+               	System.exit(-1);
+            }
+	    }
+	    for (i = 0; i < gmm.K; i++) {
+	    	JS[i] = EV[i][0] * gmm.amp[i];
+	    }
+	    double minVal = Double.MAX_VALUE;
+	    int minIndex = -1;
+	    maxVal = -Double.MAX_VALUE;
+	    int maxIndex = -1;
+	    for (i = gmm.K-3; i <= gmm.K-1; i++) {
+	        if (JS[i] < minVal) {
+	            minVal = JS[i];
+	            split_l3[2] = i;
+	        }
+	        if (JS[i] > maxVal) {
+	        	maxVal = JS[i];
+	        	split_l3[0] = i;
+	        }
+	    }
+	    for (i = gmm.K-3; i <= gmm.K-1; i++) {
+	    	if ((i != split_l3[0]) && (i != split_l3[2])) {
+	    		split_l3[1] = i;
+	    	}
+	    }
+	    
+	    // check that the three indices are unique
+	    changing[0] = merge_jk[0];
+	    changing[1] = merge_jk[1];
+	    changing[2] = split_l3[0];
+	    if ((split_l3[0] == merge_jk[0]) || (split_l3[0] == merge_jk[1])) {
+	        if ((split_l3[1] != merge_jk[0]) && (split_l3[1] != merge_jk[1])) {
+	            changing[2] = split_l3[1];
+	        }
+	        else {
+	            changing[2] = split_l3[2];
+	        }
+	    }
+	    return;
+	    
+    }
+    
+    public double _JS(int k, GMM gmm, double log_p[][], double log_S[], int U[][], double A[]) {
+    	int i;
+    	// compute Kullback-Leiber divergence
+    	double log_q_k[] = new double[log_p[k].length];
+    	for (i = 0; i < log_p[k].length; i++) {
+    		log_q_k[i] = log_p[k][i] - log_S[U[k][i]];
+    	}
+        double prod = 0.0;
+        for (i = 0; i < log_q_k.length; i++) {
+        	prod += Math.exp(log_q_k[i]) * (log_q_k[i] - Math.log(A[k]) - log_p[k][i] + Math.log(gmm.amp[k]));
+        }
+        return (prod/A[k]);
     }
     
     // Blantant copy from Erin Sheldon's esutil
