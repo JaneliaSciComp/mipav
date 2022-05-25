@@ -343,12 +343,16 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    }
 	    // single covariance for all samples
 	    double covar[][] = new double[D][D];
+	    double covartest2[][][] = new double[1][D][D];
+	    double covartest4[][][] = new double[1][D][D];
 	    for (i = 0; i < D; i++) {
 	    	covar[i][i] = disp*disp;
+	    	covartest2[0][i][i] = disp*disp;
+	    	covartest4[0][i][i] = disp*disp;
 	    }
 	    
 	    // plot data vs true model
-	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", disp);
+	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", Double.NaN);
 	    
 	    // repeated runs: store results and logL
 	    double l[] = new double[T];
@@ -381,8 +385,112 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        		tol, miniter, maxiter,
 	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
 	    } // for (r = 0; r < T; r++)
-	    //avg = pygmmis.stack(gmms, l);
+	    GMM avg = stack(gmms, l);
+	    double test1time = (System.currentTimeMillis() - start)/1000.0;
+	    System.out.println("Test 1 execution time = " + test1time + " seconds");
+	    plotResults(orig, data, avg, /*ps,*/ "Standard EM", Double.NaN);
+	    
+	    // 2) EM without imputation, deconvolving via Extreme Deconvolution
+	    start = System.currentTimeMillis();
+	    rng = new Random(seed);
+	    for (r = 0; r < T; r++) {
+	        if (bg != null) {
+	            bg.amp = bg_amp;	
+	        }
+	        int U[][] = new int[gmm.K][]; 
+	        l[r] = fit(U, gmms[r], data, covartest2, R, "random", w, cutoff, sel_callback, 
+	        		oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter,
+	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+	    } // for (r = 0; r < T; r++)
+	    avg = stack(gmms, l);
+	    double test2time = (System.currentTimeMillis() - start)/1000.0;
+	    System.out.println("Test 2 execution time = " + test2time + " seconds");
+	    plotResults(orig, data, avg, /*ps,*/ "Standard EM & noise deconvolution", disp);
+	    
+	    // 3) pygmmis with imputation, igoring errors
+	    // We need a good initial location to explore the
+	    // volume that is spanned by the missing part of the data
+	    // We therefore run a standard GMM without imputation first
+	    start = System.currentTimeMillis();
+	    rng = new Random(seed);
+	    for (r = 0; r < T; r++) {
+	        if (bg != null) {
+	            bg.amp = bg_amp;	
+	        }
+	        int U[][] = new int[gmm.K][]; 
+	        sel_callback = null;
+	        fit(U, gmms[r], data, cov, R, "random", w, cutoff, sel_callback, 
+	        		oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter,
+	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+	        
+	        sel_callback = "boxWithHole";
+	        l[r] = fit(U, gmms[r], data, cov, R, "none", w, cutoff, sel_callback, 
+	        		oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter,
+	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+	    } // for (r = 0; r < T; r++)
+	    avg = stack(gmms, l);
+	    double test3time = (System.currentTimeMillis() - start)/1000.0;
+	    System.out.println("Test 3 execution time = " + test3time + " seconds");
+	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis}",Double.NaN);
+	    
+	    // 4) pygmmis with imputation, incorporating errors
+	    //covar_cb = partial(pygmmis.covar_callback_default, default=np.eye(D)*disp**2)
+	    start = System.currentTimeMillis();
+	    rng = new Random(seed);
+	    
+	    for (r = 0; r < T; r++) {
+	        if (bg != null) {
+	            bg.amp = bg_amp;	
+	        }
+	        int U[][] = new int[gmm.K][]; 
+	        sel_callback = null;
+	        covar_callback = null;
+	        fit(U, gmms[r], data, cov, R, "random", w, cutoff, sel_callback, 
+	        		oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter,
+	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+	        
+	        sel_callback = "boxWithHole";
+	        covar_callback = "covar_cb";
+	        l[r] = fit(U, gmms[r], data, covartest4, R, "none", w, cutoff, sel_callback, 
+	        		oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter,
+	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+	    } // for (r = 0; r < T; r++)
+	    avg = stack(gmms, l);
+	    double test4time = (System.currentTimeMillis() - start)/1000.0;
+	    System.out.println("Test 4 execution time = " + test4time + " seconds");
+	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis} & noise deconvolution",disp);
 	} // public void test()
+	
+	public GMM stack(GMM gmms[] , double weights[]) {
+	    // build stacked model by combining all gmms and applying weights to amps
+		int m;
+		int i,j,p;
+		double sum = 0.0;
+		int K = gmms[0].K*gmms.length;
+		int D = gmms[0].D;
+	    GMM stacked = new GMM(K,D);
+	    for (m = 0; m < gmms.length; m++) {
+	    	for (i = 0; i < gmms[0].K; i++) {
+	            stacked.amp[m*gmms[0].K + i] = weights[m]*gmms[m].amp[i];
+	            sum += stacked.amp[m*gmms[0].K + i];
+	            for (j = 0; j < D; j++) {
+	                stacked.mean[m*gmms[0].K + i][j] = gmms[m].mean[i][j];
+	                for (p = 0; p < D; p++) {
+	                    stacked.covar[m*gmms[0].K + i][j][p] = gmms[m].covar[i][j][p];
+	                }
+	            }
+	    	} // for (i = 0; i < gmms[0].K; i++)
+	    } // for (m = 0; m < gmms.length; m++)
+	    for (i = 0; i < gmms.length*gmms[0].K; i++) {
+	        stacked.amp[i] /= sum;
+	    }
+	    return stacked;
+	}
 	
 	public double[] getSelection(String sel_type, double noisy[][]) {
 		double omega[];
