@@ -381,6 +381,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        		tol, miniter, maxiter,
 	        		frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
 	    } // for (r = 0; r < T; r++)
+	    //avg = pygmmis.stack(gmms, l);
 	} // public void test()
 	
 	public double[] getSelection(String sel_type, double noisy[][]) {
@@ -1335,7 +1336,16 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	            // would be over-estimated.
 	            // Effectively, partial runs are as expensive as full runs.
 	            
-	            //changeable['amp'] = changeable['mean'] = changeable['covar'] = np.in1d(xrange(gmm.K), changing, assume_unique=True)
+	            for (i = 0; i < gmm.K; i++) {
+	            	changeable_amp[i] = false;
+	            	changeable_mean[i] = false;
+	            	changeable_covar[i] = false;
+	            }
+	            for (i = 0; i < 3; i++) {
+	            	changeable_amp[changing[i]] = true;
+	            	changeable_mean[changing[i]] = true;
+	            	changeable_covar[changing[i]] = true;
+	            }
 	            double log_L_[] = new double[1];
 	            int N_[] = new int[1];
 	            double N2_[] = new double[1];
@@ -1346,9 +1356,62 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	           		 cutoff, miniter, maxiter, tol, prefix,
 	           		 changeable_amp, changeable_mean, changeable_covar,
 	           		 rng);
+	            
+	            for (i = 0; i < gmm.K; i++) {
+	            	changeable_amp[i] = true;
+	            	changeable_mean[i] = true;
+	            	changeable_covar[i] = true;
+	            }
+	            
+	            prefix = "SNM_F";
+	            _EM(log_L_, N_, N2_, gmm, log_p, U, T_inv, log_S, data_, covar_, R, 
+	            		sel_callback, oversampling, covar_callback, background, p_bg, w,
+	           		 //pool=pool, chunksize=chunksize, 
+	           		 cutoff, miniter, maxiter, tol, prefix,
+	           		 changeable_amp, changeable_mean, changeable_covar,
+	           		 rng);
+	            
+	            if (log_L[0] >= log_L_[0]) {
+	                // revert to backup
+            		for (i = 0; i < gmm.K; i++) {
+    	    			gmm.amp[i] = gmm_.amp[i];
+    	    			for (j = 0; j < gmm.D; j++) {
+    	    				gmm.mean[i][j] = gmm_.mean[i][j];
+    	    				for (m = 0; m < gmm.D; m++) {
+    	    				    gmm.covar[i][j][m] = gmm_.covar[i][j][m];	
+    	    				}
+    	    			}
+    	    		}
+            		for (i = 0; i < gmm.K; i++) {
+    	    			U[i] = new int[U_[i].length];
+    	    			for (j = 0; j < U_[i].length; j++) {
+    	    				U[i][j] = U_[i][j];
+    	    			}	
+            		}
+	                Preferences.debug("Split'n'merge likelihood decreased: reverting to previous model\n",
+	                		Preferences.DEBUG_ALGORITHM);
+	                break;
+	            } // if (log_L[0] >= log_L_[0])
+	            
+	            log_L[0] = log_L_[0];
+	            split_n_merge -= 1;
 	            		
 	    	} // while ((split_n_merge > 0) && (gmm.K >= 3))
 	    } // else
+	    for (i = 0; i < data_.length; i++) {
+	    	data_[i] = null;
+	    }
+	    data_ = null;
+	    for (i = 0; i < covar_.length; i++) {
+	    	for (j = 0; j < covar_[0].length; j++) {
+	    		covar_[i][j] = null;
+	    	}
+	    }
+	    for (i = 0; i < covar_.length; i++) {
+	    	covar_[i] = null;
+	    }
+	    covar_ = null;
+	    log_S = null;
     	return log_L[0];
     }
     
