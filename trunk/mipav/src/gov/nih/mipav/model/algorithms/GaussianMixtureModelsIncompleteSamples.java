@@ -464,6 +464,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    double test4time = (System.currentTimeMillis() - start)/1000.0;
 	    System.out.println("Test 4 execution time = " + test4time + " seconds");
 	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis} & noise deconvolution",disp);
+	    
+	    if (T > 1) {
+	        plotDifferences(orig, data, gmms, avg, l/*, patch=ps*/);
+	    }
 	} // public void test()
 	
 	public GMM stack(GMM gmms[] , double weights[]) {
@@ -1062,6 +1066,96 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             result[i] = 0.5;
         }
         return result;
+    }
+    
+    public void plotDifferences(double orig[][], double data[][], GMM gmms[], GMM avg, double l[] /*, patch=None*/) {
+    	int i,j,r;
+    	double diff;
+    	float xInit[] = new float[data.length];
+    	float yInit[] = new float[data.length];
+    	for (i = 0; i < data.length; i++) {
+    		xInit[i] = (float)data[i][0];
+    		yInit[i] = (float)data[i][1];
+    	}	
+    	
+    	ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, "data", "X coordinate", "Y coordinate");
+    	ViewJComponentGraph vcGraph = vFrameGraph.getGraph();
+    	vcGraph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_ONLY);
+    	
+    	// prediction
+	    int B = 100;
+	    double step = (15.0 + 5.0)/(B - 1.0);
+        double x[][] = new double[B][B];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        		x[i][j] = -5 + j*step;
+        	}
+        }
+        double y[][] = new double[B][B];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        		y[i][j] = -5 + i*step;
+        	}
+        }
+        
+        double coords[][] = new double[B*B][2];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        	    coords[i*B +j][0] = x[i][j];
+        	    coords[i*B +j][1] = y[i][j];
+        	}
+        }
+        
+        // compute sum_k(p_k(x)) for all x
+        //pw = avg(coords).reshape((B,B))
+        double pwD[] = avg._call_(coords,null,false);
+        double pw[][] = new double[B][B];
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        	    pw[i][j] = pwD[i*B + j];	
+        	}
+        }
+        
+        // use each run and compute weighted std
+        double p[][][] = new double[gmms.length][B][B];
+        for (r = 0; r < gmms.length; r++) {
+        	// compute sum_k(p_k(x)) for all x
+            //p[r,:,:] = gmms[r](coords).reshape((B,B))
+        	double pD[] = gmms[r]._call_(coords,null,false);
+        	for (i = 0; i < B; i++) {
+            	for (j = 0; j < B; j++) {
+            	    p[r][i][j] = pD[i*B + j];	
+            	}
+            }
+        }
+        
+        double psum[][] = new double[B][B];
+        for (r = 0; r < gmms.length; r++) {
+        	for (i = 0; i < B; i++) {
+        		for (j = 0; j < B; j++) {
+        		    diff = p[r][i][j] - pw[i][j];
+        		    psum[i][j] += diff*diff + l[r];
+        		}
+        	}
+        }
+        double V1 = 0;
+        double V2 = 0;
+        for (i = 0; i < r; i++) {
+        	V1 += l[r];
+        	V2 += l[r]*l[r];
+        }
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+        		psum[i][j] /= (V1 - V2/V1);
+        	}
+        }
+        
+        for (i = 0; i < B; i++) {
+        	for (j = 0; j < B; j++) {
+                psum[i][j] = asinh(Math.sqrt(psum[i][j])/1e-4);
+        	}
+        }
+        
     }
     
     public void plotResults(double orig[][], double data[][], GMM gmm, /* patches ps, */
