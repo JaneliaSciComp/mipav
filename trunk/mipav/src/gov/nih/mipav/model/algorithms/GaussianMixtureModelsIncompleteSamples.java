@@ -337,18 +337,20 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    	if (sel[i]) {
 	    		for (m = 0; m < D; m++) {
 	    	        data[j][m] = noisy[i][m];
-	    	        j++;
 	    		}
+	    		j++;
 	    	}
 	    }
 	    // single covariance for all samples
 	    double covar[][] = new double[D][D];
 	    double covartest2[][][] = new double[1][D][D];
 	    double covartest4[][][] = new double[1][D][D];
+	    double covarstack[][][] = new double[1][D][D];
 	    for (i = 0; i < D; i++) {
 	    	covar[i][i] = disp*disp;
 	    	covartest2[0][i][i] = disp*disp;
 	    	covartest4[0][i][i] = disp*disp;
+	    	covarstack[0][i][i] = disp*disp;
 	    }
 	    
 	    // plot data vs true model
@@ -468,7 +470,30 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    if (T > 1) {
 	        plotDifferences(orig, data, gmms, avg, l/*, patch=ps*/);
 	    }
+	    // In test.py all code after here is commented out with triple quotes.
+	    
+	    // stacked estimator: needs to do init by hand to keep it fixed
+	    //start = System.currentTimeMillis();
+	    //rng = new Random(seed);
+	    //for (r = 0; r < gmms.length; r++) {
+	    	// init_cb not present
+	        //init_cb(gmms[r], data, covar, rng);
+	    //}
+	    
+	    //int L = 10;
+	    //tol = 1.0E-5;
+	    //String init_callback = null;
+	    //sel_callback = "boxWithHole";
+        //covar_callback = "covar_cb";
+	    //GMM stacked = stack_fit(gmms, data, covarstack, init_callback, w, cutoff, 
+	    		//sel_callback, covar_callback, bg, L, tol, rng);
 	} // public void test()
+	
+	public GMM stack_fit(GMM gmms[], double data[][], double covar[][][], String init_callback, double w, double cutoff, 
+			String sel_callback, String covar_callack, Background bg,
+			int L, double tol, Random rng) {
+		return null;
+	}
 	
 	public GMM stack(GMM gmms[] , double weights[]) {
 	    // build stacked model by combining all gmms and applying weights to amps
@@ -641,7 +666,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     			        	for (p = 0; p < D; p++) {
     			        	    samples[j][m] += L[m][p]*u[p];	
     			        	}
-    			        	samples[j][m] += mean[j][m];
+    			        	samples[j][m] += mean[i][m];
     			        }
     			    } // for (j = lower; j < upper; j++)
     			    lower = upper;
@@ -1604,15 +1629,17 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    	data_[i] = null;
 	    }
 	    data_ = null;
-	    for (i = 0; i < covar_.length; i++) {
-	    	for (j = 0; j < covar_[0].length; j++) {
-	    		covar_[i][j] = null;
-	    	}
-	    }
-	    for (i = 0; i < covar_.length; i++) {
-	    	covar_[i] = null;
-	    }
-	    covar_ = null;
+	    if (covar_ != null) {
+		    for (i = 0; i < covar_.length; i++) {
+		    	for (j = 0; j < covar_[0].length; j++) {
+		    		covar_[i][j] = null;
+		    	}
+		    }
+		    for (i = 0; i < covar_.length; i++) {
+		    	covar_[i] = null;
+		    }
+		    covar_ = null;
+	    } // if (covar_ != null)
 	    log_S = null;
     	return log_L[0];
     }
@@ -3170,7 +3197,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        for (i = 0; i < q_k.length; i++) {
 	        	for (j = 0; j < gmm.D; j++) {
 	        		for (p = 0; p < gmm.D; p++) {
-	        			prodPlus[i][j][p] = prod[i][j][p] + B_k[i][j][p];
+	        			prodPlus[i][j][p] = prod[i][j][p] + B_k[Math.min(i,B_k.length-1)][j][p];
 	        		}
 	        	}
 	        }
@@ -3200,7 +3227,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	boolean H[];
     	int k;
     	double log_L;
-    	double denom[] = new double[covar.length];
+    	double denom[] = null;
+    	if (covar != null) {
+    		denom = new double[covar.length];
+    	}
     	// compute p(i | k) for each k independently in the pool
         // need S = sum_k p(i | k) for further calculation
     	for (i = 0; i < log_S.length; i++) {
@@ -3418,7 +3448,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // p(x | k) for all x in the vicinity of k
         // determine all points within cutoff sigma from mean[k]
         dx = new double[d_.length][gmm.D];
-        if (R != null) {
+        if (R == null) {
         	for (i = 0; i < d_.length; i++) {
         		for (j = 0; j < gmm.D; j++) {
                     dx[i][j] = d_[i][j] - gmm.mean[k][j];
@@ -3592,29 +3622,56 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		      }
     	    } // for (i = 0; i < T_inv_k.length; i++)
         	// chi2 = np.einsum('...i,...ij,...j', dx, T_inv_k, dx)
-        	double dxT[][][] = new double[dx.length][dx.length][gmm.D];
-        	for (i = 0; i < dx.length; i++) {
-        		for (j = 0; j < dx.length; j++) {
+        	//System.out.println("dx.length = " + dx.length);
+        	//System.out.println("dx[0].length = " + dx[0].length);
+        	//System.out.println("T_inv_K.length = " + T_inv_k.length);
+        	if (T_inv_k.length == dx.length) {
+	        	double dxT[][][] = new double[dx.length][dx.length][gmm.D];
+	        	for (i = 0; i < dx.length; i++) {
+	        		for (j = 0; j < dx.length; j++) {
+	        			for (m = 0; m < gmm.D; m++) {
+	        				for (p = 0; p < gmm.D; p++) {
+	        					dxT[i][j][m] += dx[i][p] * T_inv_k[j][p][m];
+	        				}
+	        			}
+	        		}
+	        	}
+	        	double dxTdx[][][] = new double[dx.length][dx.length][dx.length];
+	        	for (i = 0; i < dx.length; i++) {
+	        		for (j = 0; j < dx.length; j++) {
+	        			for (m = 0; m < dx.length; m++) {
+	        				for (p = 0; p < gmm.D; p++) {
+	        					dxTdx[i][j][m] += dxT[i][j][p] * dx[m][p];
+	        				}
+	        			}
+	        		}
+	        	}
+	        	chi2 = new double[dx.length];
+	        	for (i = 0; i < dx.length; i++) {
+	        		chi2[i] = dxTdx[i][i][i];
+	        	}
+        	}
+        	else if (T_inv_k.length == 1) {
+        		double dxT[][] = new double[dx.length][gmm.D];
+        		for (i = 0; i < dx.length; i++) {
         			for (m = 0; m < gmm.D; m++) {
         				for (p = 0; p < gmm.D; p++) {
-        					dxT[i][j][m] += dx[i][p] * T_inv_k[j][p][m];
+        					dxT[i][m] += dx[i][p] * T_inv_k[0][p][m];
         				}
         			}
-        		}
-        	}
-        	double dxTdx[][][] = new double[dx.length][dx.length][dx.length];
-        	for (i = 0; i < dx.length; i++) {
-        		for (j = 0; j < dx.length; j++) {
+	        	}
+        		double dxTdx[][] = new double[dx.length][dx.length];
+	        	for (i = 0; i < dx.length; i++) {
         			for (m = 0; m < dx.length; m++) {
         				for (p = 0; p < gmm.D; p++) {
-        					dxTdx[i][j][m] += dxT[i][j][p] * dx[m][p];
+        					dxTdx[i][m] += dxT[i][p] * dx[m][p];
         				}
-        			}
-        		}
-        	}
-        	chi2 = new double[dx.length];
-        	for (i = 0; i < dx.length; i++) {
-        		chi2[i] = dxTdx[i][i][i];
+	        		}
+	        	}
+	        	chi2 = new double[dx.length];
+	        	for (i = 0; i < dx.length; i++) {
+	        		chi2[i] = dxTdx[i][i];
+	        	}
         	}
         } // else
         
@@ -3734,8 +3791,13 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         double log2piD2 = Math.log(2.0*Math.PI)*(0.5*gmm.D);
         log_p[k] = new double[Math.max(chi2.length,logdet.length)];
         for (i = 0; i < log_p[k].length; i++) {
-        	log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)]
+        	if (chi2.length > 0) {
+        	    log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)]
         			- chi2[Math.min(i,chi2.length-1)]/2;
+        	}
+        	else {
+        		log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)];	
+        	}
         }
         U[k] = U_k;
         T_inv[k] = T_inv_k;
@@ -3831,21 +3893,21 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	}
         int D = data[0].length;
 		if (s < 0.0) {
-			double min_pos[] = new double[D];
-			double max_pos[] = new double[D];
+			double min_pos;
+			double max_pos;
 			double vol_data = 1.0;
 			for (j = 0; j < D; j++) {
-				min_pos[D] = Double.MAX_VALUE;
-				max_pos[D] = -Double.MAX_VALUE;
+				min_pos = Double.MAX_VALUE;
+				max_pos = -Double.MAX_VALUE;
 				for (i = 0; i < data.length; i++) {
-					if (data[i][j] < min_pos[D]) {
-						min_pos[D] = data[i][j];
+					if (data[i][j] < min_pos) {
+						min_pos = data[i][j];
 					}
-					if (data[i][j] > max_pos[D]) {
-						max_pos[D] = data[i][j];
+					if (data[i][j] > max_pos) {
+						max_pos = data[i][j];
 					}
 				}
-				vol_data *= (max_pos[D] - min_pos[D]);
+				vol_data *= (max_pos - min_pos);
 			}
 			double result[] = new double[1];
 			Gamma gam = new Gamma((gmm.D*0.5 + 1),result);
