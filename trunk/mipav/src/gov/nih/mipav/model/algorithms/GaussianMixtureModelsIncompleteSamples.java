@@ -2640,22 +2640,15 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             // 68% confidence interval for Poisson variate: observed size
             alpha = 0.32;
             // lower = 0.5*scipy.stats.chi2.ppf(alpha/2, 2*obs_size)
-            // Percent point function Inverse of cdf-percentiles
-            //cutoff_nd = scipy.stats.chi2.ppf(confidence_1d, D)
-            // Regularized incomplete gamma function Q(D/2,1/(2*confidence_1d)) =
-            // 1 - regularized incomplete gamma function P(D/2,1/(2*confidence_1d))
-            double lowerIncompleteGamma[] = new double[1];
-            double upperIncompleteGamma[] = new double[1];
-            double regularizedGammaP[] = new double[1];
-            Gamma gam = new Gamma(obs_size, 1.0/alpha, lowerIncompleteGamma,
-            		upperIncompleteGamma, regularizedGammaP);
-            gam.run();
-            double lower = 0.5*(1.0 - regularizedGammaP[0]);
+            // lower = 0.5*chdtri(2*observed_size, 1,0 - alpha/2)
+            double result[] = new double[1];
+            Cephes ceph = new Cephes(2*obs_size, 1.0 - alpha/2, Cephes.CHDTRI, result);
+            ceph.run();
+            double lower = 0.5*result[0];
             //upper = 0.5*scipy.stats.chi2.ppf(1 - alpha/2, 2*obs_size + 2)
-            gam = new Gamma(obs_size + 1, 1.0/(2.0 - alpha), lowerIncompleteGamma,
-            		upperIncompleteGamma, regularizedGammaP);
-            gam.run();
-            double upper = 0.5*(1.0 - regularizedGammaP[0]);
+            ceph = new Cephes(2*obs_size + 2, alpha/2.0, Cephes.CHDTRI, result);
+            ceph.run();
+            double upper = 0.5*result[0];
             obs_size_ = selVec.size();
             while ((obs_size_ > upper) || (obs_size_ < lower)) {
                 updated_orig_size[0] = (int)(updated_orig_size[0] / obs_size_ * obs_size);
@@ -3826,15 +3819,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         double confidence_1d = 1-(1-cdf_1d)*2;
         // Percent point function Inverse of cdf-percentiles
         //cutoff_nd = scipy.stats.chi2.ppf(confidence_1d, D)
-        // Regularized incomplete gamma function Q(D/2,1/(2*confidence_1d)) =
-        // 1 - regularized incomplete gamma function P(D/2,1/(2*confidence_1d))
-        double lowerIncompleteGamma[] = new double[1];
-        double upperIncompleteGamma[] = new double[1];
-        double regularizedGammaP[] = new double[1];
-        Gamma gam = new Gamma(D/2.0, 1.0/(2.0 * confidence_1d), lowerIncompleteGamma,
-        		upperIncompleteGamma, regularizedGammaP);
-        gam.run();
-        double cutoff_nd = 1.0 - regularizedGammaP[0];
+        //cutoff_nd = chdtri(D, 1.0 - confidence_1d);
+        double result[] = new double[1];
+        Cephes ceph = new Cephes(D, 1.0 - confidence_1d, Cephes.CHDTRI, result);
+        ceph.run();
+        double cutoff_nd = result[0];
+        
         return cutoff_nd;
     }
     
