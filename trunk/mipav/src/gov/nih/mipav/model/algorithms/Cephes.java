@@ -39,6 +39,8 @@ public class Cephes {
 	public final static int IGAMC = 3;
 	public final static int IGAM = 4;
 	public final static int NDTRI = 5;
+	public final static int POLEVL = 6;
+	public final static int P1EVL = 7;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -167,6 +169,12 @@ public class Cephes {
 		}
 		else if (version == NDTRI) {
 			ndtri(par1);
+		}
+		else if (version == POLEVL) {
+			polevl(par1, par3, par4);
+		}
+		else if (version == P1EVL) {
+			p1evl(par1, par3, par4);
 		}
 	}
 	
@@ -786,12 +794,37 @@ public class Cephes {
 	*/
 	
 	private void polevl(double x, double coef[], int N ) {
-		result[0] = 0.0;
+		double ans;
+		int i;
+		int coefindex = 0;
+
+		ans = coef[coefindex++];
+		i = N;
+
+		do {
+			ans = ans * x  +  coef[coefindex++];
+			--i;
+		} while (i > 0);
+		
+
+		result[0] = ans;
 		return;
 	}
 	
 	private void p1evl(double x, double coef[], int N ) {
-		result[0] = 0.0;
+		double ans;
+		int coefindex = 0;
+		int i;
+
+		ans = x + coef[coefindex++];
+		i = N-1;
+
+		do {
+			ans = ans * x  + coef[coefindex++];
+			--i;
+		} while(i > 0);
+
+		result[0] = ans;
 		return;
 	}
 	
