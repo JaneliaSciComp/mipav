@@ -13,17 +13,15 @@ public class Statistics {
     
     public static final int GAUSSIAN_PROBABILITY_INTEGRAL = 2;
     
-    public static final int GAUSSIAN_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION = 3;
+    public static final int STUDENTS_T_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION = 3;
     
-    public static final int STUDENTS_T_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION = 4;
+    public static final int STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION = 4;
     
-    public static final int STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION = 5;
+    public static final int STUDENTS_T_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION = 5;
     
-    public static final int STUDENTS_T_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION = 6;
+    public static final int CHI_SQUARED_PROBABILITY_DENSITY_FUNCTION = 6;
     
-    public static final int CHI_SQUARED_PROBABILITY_DENSITY_FUNCTION = 7;
-    
-    public static final int CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION = 8;
+    public static final int CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION = 7;
     
     private int statisticType;
     
@@ -48,9 +46,6 @@ public class Statistics {
             case GAUSSIAN_PROBABILITY_INTEGRAL:
                 gaussianProbabilityIntegral();
                 break;
-            case GAUSSIAN_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION:
-            	GaussianInverseCumulativeDistributionFunction();
-            	break;
             case STUDENTS_T_DISTRIBUTION_PROBABILITY_DENSITY_FUNCTION:
                 tProbabilityFunction();
                 break;
@@ -133,52 +128,6 @@ public class Statistics {
         		//new Complex(1.5), new Complex(-x*x/v) );
         //System.err.println( result[0] + "   " + testR.getRe() );
         return;
-    }
-    
-    private void GaussianInverseCumulativeDistributionFunction() {
-    	double desiredtCum = x;
-    	double epsilon = 1.0E-10;
-    	x = 1.0;
-    	double xlow = 1.0;
-    	double xhigh = 1.0;
-    	double tCum;
-    	gaussianProbabilityIntegral();
-    	tCum = ansR[0];
-    	if (Math.abs(tCum-desiredtCum) < epsilon) {
-    		ansR[0] = x;
-    		return;
-    	}
-    	if (tCum < desiredtCum) {
-    		while (tCum < desiredtCum) {
-    			xlow = x;
-    			x *= 2.0;
-    			gaussianProbabilityIntegral();
-    	    	tCum = ansR[0];
-    		}
-    		xhigh = x;
-    	}
-    	else {
-    		while (tCum > desiredtCum) {
-    			xhigh = x;
-    			x /= 2.0;
-    			gaussianProbabilityIntegral();
-    	    	tCum = ansR[0];
-    		}
-    		xlow = x;
-    	}
-    	while (Math.abs(tCum - desiredtCum) >= epsilon) {
-    		x = Math.sqrt(xlow * xhigh);
-    		gaussianProbabilityIntegral();
-	    	tCum = ansR[0];
-    		if (tCum < desiredtCum) {
-    			xlow = x;
-    		}
-    		else {
-    			xhigh = x;
-    		}
-    	}
-    	ansR[0] = x;
-    	return;
     }
     
     private void tInverseCumulativeDistributionFunction() {
