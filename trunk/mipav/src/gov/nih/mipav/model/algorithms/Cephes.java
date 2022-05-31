@@ -132,7 +132,8 @@ public class Cephes {
 	    	result[0] = 0.0;
 	    }
 	    
-	    x = igami( 0.5 * df, y )[0];
+	    igami( 0.5 * df, y );
+	    x = result[0];
 	    result[0] = (2.0 * x );
 	    
 	}
@@ -186,7 +187,7 @@ public class Cephes {
 	Cephes Math Library Release 2.3:  March, 1995
 	Copyright 1984, 1987, 1995 by Stephen L. Moshier
 	*/
-	private double[] igami(double a, double y0) {
+	private void igami(double a, double y0) {
 		double x0, x1, x, yl, yh, y, d, lgm, dithresh;
 		int i, dir;
 
@@ -199,11 +200,8 @@ public class Cephes {
 		
 		/* approximation to inverse function */
 		d = 1.0/(9.0*a);
-		double df = Double.MAX_VALUE;
-		double ansR[] = new double[1];
-		Statistics stat = new Statistics(Statistics.GAUSSIAN_INVERSE_CUMULATIVE_DISTRIBUTION_FUNCTION, y0, df, ansR);
-		stat.run();
-		y = ( 1.0 - d - ansR[0] * Math.sqrt(d) );
+		ndtri(y0);
+		y = ( 1.0 - d - result[0] * Math.sqrt(d) );
 		x = a * y * y * y;
 		
 		double ansG[] = new double[1];
@@ -215,7 +213,8 @@ public class Cephes {
 		{
 		if( x > x0 || x < x1 )
 			break;
-		y = igamc(a,x)[0];
+		igamc(a,x);
+		y = result[0];
 		if( y < yl || y > yh )
 			break;
 		if( y < y0 )
@@ -237,13 +236,12 @@ public class Cephes {
 		d = (y - y0)/d;
 		if( Math.abs(d/x) < MACHEP ) {
 			result[0] = x;
-			return result;
+			return;
 		}
 		x = x - d;
 		} // for( i=0; i<10; i++ )
 		
 		/* Resort to interval halving if Newton iteration did not converge. */
-		ihalve:
 
 		d = 0.0625;
 		if( x0 == MAXNUM )
@@ -253,7 +251,8 @@ public class Cephes {
 			while( x0 == MAXNUM )
 				{
 				x = (1.0 + d) * x;
-				y = igamc( a, x )[0];
+				igamc( a, x );
+				y = result[0];
 				if( y < y0 )
 					{
 					x0 = x;
@@ -269,7 +268,8 @@ public class Cephes {
 		for( i=0; i<400; i++ )
 			{
 			x = x1  +  d * (x0 - x1);
-			y = igamc( a, x )[0];
+			igamc( a, x );
+			y = result[0];
 			lgm = (x0 - x1)/(x1 + x0);
 			if( Math.abs(lgm) < dithresh )
 				break;
@@ -312,10 +312,10 @@ public class Cephes {
 		if( x == 0.0 ) {
 			MipavUtil.displayError( "igami UNDERFLOW ERROR");
 			result[0] = 0.0;
-			return result;
+			return;
 		}
         result[0] = x;
-		return result;
+		return;
 	}
 	
 	/*							igamc()
@@ -366,19 +366,20 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 
-	private double[] igamc(double  a, double x )
+	private void igamc(double  a, double x )
 	{
 	double ans, ax, c, yc, r, t, y, z;
 	double pk, pkm1, pkm2, qk, qkm1, qkm2;
 
 	if( (x <= 0) || ( a <= 0) ) {
 		result[0] = 1.0;
-		return result;
+		return;
 	}
 
 	if( (x < 1.0) || (x < a) ) {
-		result[0] = 1.0 - igam(a,x)[0];
-		return result;
+		igam(a,x);
+		result[0] = 1.0 - result[0];
+		return;
 	}
 
 	double ansG[] = new double[1];
@@ -390,7 +391,7 @@ public class Cephes {
 		{
 		MipavUtil.displayError("igamc UNDERFLOW");
 		result[0] = 0.0;
-		return result;
+		return;
 		}
 	ax = Math.exp(ax);
 
@@ -435,7 +436,7 @@ public class Cephes {
 	while( t > MACHEP );
      
 	result[0] = ans * ax;
-	return result;
+	return;
 	}
 
 	/*							igam.c
@@ -486,18 +487,19 @@ public class Cephes {
 	 *
 	 */
 
-	private double[] igam(double a, double x)
+	private void igam(double a, double x)
 	{
 	double ans, ax, c, r;
 
 	if( (x <= 0) || ( a <= 0) ) {
 		result[0] = 0.0;
-		return result;
+		return;
 	}
 
 	if( (x > 1.0) && (x > a ) ) {
-		result[0] = 1.0 - igamc(a,x)[0];
-		return result;
+		igamc(a,x);
+		result[0] = 1.0 - result[0];
+		return;
 	}
 
 	/* Compute  x**a * exp(-x) / gamma(a)  */
@@ -510,7 +512,7 @@ public class Cephes {
 		{
 		MipavUtil.displayError( "igam UNDERFLOW");
 		result[0] = 0.0;
-		return result;
+		return;
 		}
 	ax = Math.exp(ax);
 
@@ -528,9 +530,12 @@ public class Cephes {
 	while( c/ans > MACHEP );
 
 	result[0] = ans * ax/a;
-	return result;
+	return;
 	}
 
-	
+	private void ndtri(double y0) {
+		result[0] = 0.0;
+		return;
+	}
 	
 }
