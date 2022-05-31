@@ -3712,17 +3712,11 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
                 T_inv_ktemp = null;
             }
             if ((U_k == null) || (U_k.length == 0)) {
-            	int numnonzero = 0;
+            	//  U_k = np.flatnonzero(indices) not correct
+            	// Removing 0 index makes U_k length 1 less than chi2 length, T_inv_k length, and log_p[k].length
+            	U_k = new int[numindices];
             	for (i = 0; i < indices.length; i++) {
-            		if (indices[i] != 0) {
-            			numnonzero++;
-            		}
-            	}
-            	U_k = new int[numnonzero];
-            	for (i = 0, j = 0; i < indices.length; i++) {
-            		if (indices[i] != 0) {
-            			U_k[j++] = i;
-            		}
+            	    U_k[i] = indices[i];
             	}
             }
             else {
