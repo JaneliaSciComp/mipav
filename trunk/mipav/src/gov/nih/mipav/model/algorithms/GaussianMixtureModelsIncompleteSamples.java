@@ -2267,36 +2267,8 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        
 	        // force update to U for all moved components
 	        if ((!Double.isNaN(cutoff)) && (moved != null)) {
-	        	int Utemp[][] = new int[U.length][];
-	        	for (i = 0; i < U.length; i++) {
-	        		Utemp[i] = new int[U[i].length];
-	        		for (j = 0; j < U[i].length; j++) {
-	        		    Utemp[i][j] = U[i][j];
-	        		}
-	        	}
-	        	for (i = 0; i < U.length; i++) {
-	        		int uisize = U[i].length;
-	        		for (j = 0; j < U[i].length; j++) {
-	        			found = false;
-	        			for (k = 0; k < movedsize  && (!found); k++) {
-	        				if (U[i][j] == moved[k]) {
-	        					found = true;
-	        					uisize--;
-	        				}
-	        			}
-	        		}
-	        		U[i] = new int[uisize];
-	        		for (j = 0, p = 0; j < Utemp[i].length; j++) {
-	        		    found = false;
-	        		    for (k = 0; k < movedsize && (!found); k++) {
-	        		    	if (U[i][j] == moved[k]) {
-	        		    		found = true;
-	        		    	}
-	        		    }
-	        		    if (!found) {
-	        		        U[i][p++] = Utemp[i][j];	
-	        		    }
-	        		}
+	        	for (i = 0; i < moved.length; i++) {
+	        		U[moved[i]] = null;
 	        	}
 	        } // if ((!Double.isNaN(cutoff)) && (moved != null)) 
 	        
@@ -3727,7 +3699,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             	}
             	U_k = new int[indices.length];
             	for (i = 0, j = 0; i < indices.length; i++) {
-            		U_k[j++] = U_k[indices[i]];
+            		U_k[j++] = U_ktemp[indices[i]];
             	}
             	U_ktemp = null;
             }
