@@ -214,7 +214,7 @@ archivePrefix = "arXiv",
 public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	private int K; // K components
 	private int D; // D dimensions
-	private double covar_callback_default_arg[][][] = null;
+	private double covar_callback_default_arr[][][] = null;
 	
     public GaussianMixtureModelsIncompleteSamples() {
 		
@@ -442,6 +442,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    //covar_cb = partial(pygmmis.covar_callback_default, default=np.eye(D)*disp**2)
 	    start = System.currentTimeMillis();
 	    rng = new Random(seed);
+	    covar_callback_default_arr = new double[1][D][D];
+	    for (i = 0; i < D; i++) {
+	    	covar_callback_default_arr[0][i][i] = disp*disp;
+	    }
 	    
 	    for (r = 0; r < T; r++) {
 	        if (bg != null) {
@@ -1360,7 +1364,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	        covar = new double[1][gmm.D][gmm.D];
     	        // need to create covar_callback if imputation is requested
     	        if (sel_callback != null) {
-    	        	covar_callback_default_arg = new double[1][gmm.D][gmm.D];	
+    	        	covar_callback_default_arr = new double[1][gmm.D][gmm.D];	
     	        } // if (sel_callback != null)
     	    } // if (covar == null) 
     	    if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) {
@@ -3801,14 +3805,14 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	// default: Default = null;
     	int N = coords.length;
     	int D = coords[0].length;
-        if ((covar_callback_default_arg.length != 1) && (covar_callback_default_arg[0].length != D) && (covar_callback_default_arg[0][0].length != D)) {
+        if ((covar_callback_default_arr.length != 1) && (covar_callback_default_arr[0].length != D) && (covar_callback_default_arr[0][0].length != D)) {
             System.err.println("covar_callback received improper default covariance length = " + 
-            covar_callback_default_arg.length+","+covar_callback_default_arg[0].length+","+covar_callback_default_arg[0][0].length);
+            covar_callback_default_arr.length+","+covar_callback_default_arr[0].length+","+covar_callback_default_arr[0][0].length);
             System.exit(-1);
         }
         // no need to copy since a single covariance matrix is sufficient
         // return np.tile(default, (N,1,1))
-        return covar_callback_default_arg;
+        return covar_callback_default_arr;
     }
     
     public void initFromDataAtRandom(GMM gmm, double data[][], double covar[][][], double s, int k[], Random rng) {
