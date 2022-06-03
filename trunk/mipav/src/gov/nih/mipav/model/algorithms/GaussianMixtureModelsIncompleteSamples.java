@@ -2674,7 +2674,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             	omega[i] = tempOmega[sel[i]];
             }
             omegaVec.add(omega);
-            covar = covarVec.get(0);
+            if (covarVec.size() > 0) {
+                covar = covarVec.get(0);
+            }
             if ((covar_callback != null) && ((covar.length != 1) || (covar[0].length != gmm.D) || (covar[0][0].length != gmm.D))) {
             	double tempCovar[][][] = new double[covar.length][covar[0].length][covar[0][0].length];
             	for (i = 0; i < covar.length; i++) {
