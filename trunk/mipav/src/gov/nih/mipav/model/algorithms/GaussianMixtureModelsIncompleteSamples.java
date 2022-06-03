@@ -2267,9 +2267,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        
 	        // force update to U for all moved components
 	        if ((!Double.isNaN(cutoff)) && (moved != null)) {
-	        	int Utemp[][] = new int[U.length][U[0].length];
+	        	int Utemp[][] = new int[U.length][];
 	        	for (i = 0; i < U.length; i++) {
-	        		for (j = 0; j < U[0].length; j++) {
+	        		Utemp[i] = new int[U[i].length];
+	        		for (j = 0; j < U[i].length; j++) {
 	        		    Utemp[i][j] = U[i][j];
 	        		}
 	        	}
@@ -3870,6 +3871,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         else {
             k_len = k.length;
         }
+    	for (i = 0; i < k_len; i++) {
+    		gmm.amp[k[i]] = 1.0/gmm.K;
+    	}
         // initialize components around data points with uncertainty s
     	int refs[] = new int[k_len];
     	for (i = 0; i < k_len; i++) {
