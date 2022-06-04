@@ -469,7 +469,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    avg = stack(gmms, l);
 	    double test4time = (System.currentTimeMillis() - start)/1000.0;
 	    System.out.println("Test 4 execution time = " + test4time + " seconds");
-	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis} & noise deconvolution",disp);
+	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis} & noise deconvolution",Double.NaN);
 	    
 	    if (T > 1) {
 	        plotDifferences(orig, data, gmms, avg, l/*, patch=ps*/);
