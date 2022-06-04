@@ -354,7 +354,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    }
 	    
 	    // plot data vs true model
-	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", Double.NaN);
+	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", disp);
 	    
 	    // repeated runs: store results and logL
 	    double l[] = new double[T];
