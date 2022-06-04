@@ -658,7 +658,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     			    	System.exit(-1);
     			    }
     			    for (j = 0; j < D; j++) {
-    			    	for (m = 0; m < j; m++) {
+    			    	for (m = j+1; m < D; m++) {
     			    		L[j][m] = 0.0;
     			    	}
     			    }
@@ -2770,7 +2770,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 			    	System.exit(-1);
 			    }
 			    for (i = 0; i < gmm.D; i++) {
-			    	for (j = 0; j < i; j++) {
+			    	for (j = i+1; j < gmm.D; j++) {
 			    		L[i][j] = 0.0;
 			    	}
 			    }
