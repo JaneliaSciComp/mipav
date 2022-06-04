@@ -2222,8 +2222,6 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	for (i = 0; i < gmm.K; i++) {
         		shift2[i] = dmCdm[i][i][i];
         	}
-        	// moved = np.flatnonzero(shift2 > shift_cutoff)
-        	// Original code excludes index 0.  I have left index 0 in.
 	    	movedsize = 0;
 	    	for (i = 0; i < gmm.K; i++) {
 	    	    if (shift2[i] > shift_cutoff) {
