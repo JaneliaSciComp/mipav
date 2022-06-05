@@ -519,7 +519,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	            }
 	    	} // for (i = 0; i < gmms[0].K; i++)
 	    } // for (m = 0; m < gmms.length; m++)
-	    for (i = 0; i < gmms.length*gmms[0].K; i++) {
+	    for (i = 0; i < K; i++) {
 	        stacked.amp[i] /= sum;
 	    }
 	    return stacked;
@@ -1272,6 +1272,15 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
                 p[i][j] = asinh(p[i][j]/1e-4);
         	}
         }
+        
+        // add description and complete data logL to plot
+        //logL = gmm(orig, as_log=True).mean()
+        double logL_array[] = gmm._call_(orig, null, true);
+        double logL = 0.0;
+        for (i = 0; i < logL_array.length; i++) {
+        	logL += logL_array[i];
+        }
+        logL /= logL_array.length;
     }
     
     double asinh(double x)
