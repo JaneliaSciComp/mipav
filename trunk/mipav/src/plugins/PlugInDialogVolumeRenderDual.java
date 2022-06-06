@@ -256,6 +256,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		private VolumeImage[] previewHS;
 		private VolumeImage[] hyperstack;
 		private Texture colormap;
+		private boolean colorMapInit = false;
 		private VOILatticeManagerInterface voiManager;
 		private JPanelVolumeOpacity[] volOpacityPanel;
 		private JFrameHistogram[] lutHistogramPanel;
@@ -3079,25 +3080,72 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	private void updateHistoLUTPanels(IntegratedWormData integratedData) {
-//		 System.err.println("updateHistoLUTPanels");
+		 System.err.println("updateHistoLUTPanels");
 		// integratedData.wormImage.getImageName() + " " +
 		// integratedData.lutHistogramPanel.getContainingPanel() );
-		opacityTab.removeAll();		
 		int numImages = integratedData.hyperstack.length;
 		String[] subDir = new String[numImages];
+		if ( !integratedData.colorMapInit ) {
+			integratedData.colorMapInit = true;
+			for ( int i = 0; i < numImages; i++ ) {
+				int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
+				int len = baseFileDir[i].length();
+				subDir[i] = baseFileDir[i].substring(index,len);
+				if ( subDir[i].equals("405") ) {
+					// set transfer function:
+					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
+					lut.makeBlueTransferFunctions();
+					TransferFunction tf = lut.getTransferFunction();
+					tf.replacePoint(34, 128, 1);
+					tf.replacePoint(64, 0, 2);
+					lut.makeLUT(256);
+				}
+				if ( subDir[i].equals("488") ) {
+					// set transfer function:
+					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
+					lut.makeGreenTransferFunctions();
+					TransferFunction tf = lut.getTransferFunction();
+					tf.replacePoint(34, 128, 1);
+					tf.replacePoint(64, 0, 2);
+					lut.makeLUT(256);
+				}
+				if ( subDir[i].equals("561") ) {
+					// set transfer function:
+					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
+					lut.makeRedTransferFunctions();
+					TransferFunction tf = lut.getTransferFunction();
+					tf.replacePoint(34, 128, 1);
+					tf.replacePoint(64, 0, 2);
+					lut.makeLUT(256);
+				}
+				if ( subDir[i].equals("637") ) {
+					// set transfer function:
+					ModelLUT lut = integratedData.hyperstack[i].GetLUT();
+					TransferFunction tf = lut.getTransferFunction();
+					tf.replacePoint(34, 128, 1);
+					tf.replacePoint(64, 0, 2);
+					lut.makeLUT(256);
+				}
+			}
+		}
+		
+		opacityTab.removeAll();		
 		for ( int i = 0; i < numImages; i++ ) {
 			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
 			int len = baseFileDir[i].length();
 			subDir[i] = baseFileDir[i].substring(index,len);
+			
 			opacityTab.addTab( subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), 
 					null, integratedData.volOpacityPanel[i].getMainPanel() );
 
 			
 			final TransferFunction kTransfer = integratedData.volOpacityPanel[i].getCompA().getOpacityTransferFunction();
+			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetImage(), kTransfer, i);
+			integratedData.volOpacityPanel[i].getCompA().showHistogram();
 			if ( integratedData.previewHS != null ) {
 				integratedData.previewHS[i].UpdateImages(kTransfer, 0, null);
 			}
-		}		
+		}
 		if (tabbedPane.getSelectedComponent() == opacityPanel) {
 			int which = opacityTab.getSelectedIndex();
 			if ( which != -1 ) {
@@ -3109,10 +3157,12 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		for ( int i = 0; i < numImages; i++ ) {
 			lutTab.addTab( subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), 
 					null, integratedData.lutHistogramPanel[i].getContainingPanel());
+			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetLUT(), i );
 
 			if ( integratedData.previewHS != null ) {
 				integratedData.previewHS[i].UpdateImages(integratedData.hyperstack[i].getLUT());
 			}
+			integratedData.lutHistogramPanel[i].redrawFrames();
 		}
 		if (tabbedPane.getSelectedComponent() == lutPanel) {
 			int which = lutTab.getSelectedIndex();			
@@ -3120,16 +3170,9 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				integratedData.lutHistogramPanel[which].redrawFrames();
 			}
 		}
+		
+		
 		lutPanel.revalidate();
-
-//		if (integratedData.displayChannel1 != null) {
-//			integratedData.displayChannel1.setSelected(integratedData.displayRedAsGray);
-//			integratedData.displayChannel2.setSelected(integratedData.displayGreenAsGray);
-//			integratedData.displayChannel3.setSelected(integratedData.displayBlueAsGray);
-//			integratedData.displayBothChannels
-//					.setSelected(!integratedData.displayRedAsGray && !integratedData.displayGreenAsGray
-//							 && !integratedData.displayBlueAsGray);
-//		}
 	}
 
 	private void updateClipPanel(IntegratedWormData integratedData, VolumeTriPlanarRender renderer,
