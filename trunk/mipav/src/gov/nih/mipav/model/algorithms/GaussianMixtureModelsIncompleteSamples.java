@@ -1738,17 +1738,15 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         if (!cleanup) {
         	Asum = A[changeable[0]] + A[changeable[1]] + A[changeable[2]];
         	for (i = 0; i < gmm.D; i++) {
-        	    for (j = 0; j < 3; j++) {
-        	    	gmm.mean[changeable[0]][i] += (gmm.mean[changeable[j]][i] * A[changeable[j]]);
-        	    	gmm.mean[changeable[0]][i] /= Asum;
-        	    }
+        	    gmm.mean[changeable[0]][i] = (gmm.mean[changeable[0]][i] * A[changeable[0]]) + 
+        	    		(gmm.mean[changeable[1]][i] * A[changeable[1]]) + (gmm.mean[changeable[2]][i] * A[changeable[2]]);
+        	    gmm.mean[changeable[0]][i] /= Asum;
         	}
         	for (i = 0; i < gmm.D; i++) {
         		for (j = 0; j < gmm.D; j++) {
-	        	    for (k = 0; k < 3; k++) {
-	        	    	gmm.covar[changeable[0]][i][j] += (gmm.covar[changeable[k]][i][j] * A[changeable[k]]);
+	        	    gmm.covar[changeable[0]][i][j] = (gmm.covar[changeable[0]][i][j] * A[changeable[0]]) +
+	        	    		(gmm.covar[changeable[1]][i][j] * A[changeable[1]]) + (gmm.covar[changeable[2]][i][j] * A[changeable[2]]);
 	        	    	gmm.covar[changeable[0]][i][j] /= Asum;
-	        	    }
         		}
         	}
         	Vector<Integer>Utemp = new Vector<Integer>();
