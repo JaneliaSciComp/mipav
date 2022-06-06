@@ -1228,7 +1228,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	for (i = 0; i < B; i++) {
         		for (j = 0; j < B; j++) {
         		    diff = p[r][i][j] - pw[i][j];
-        		    psum[i][j] += diff*diff + l[r];
+        		    psum[i][j] += diff*diff * l[r];
         		}
         	}
         }
