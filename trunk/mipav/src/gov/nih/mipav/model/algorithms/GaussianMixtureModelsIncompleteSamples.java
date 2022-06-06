@@ -898,6 +898,20 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     } // class GMM
     
     public double logsum(double input[]) {
+    	// Computes log of the sum along give axis from the log of the summands.
+
+        //This method tries hard to avoid over- or underflow.
+        // See appendix A of Bovy, Hogg, Roweis (2009).
+
+        // Args:
+            // logX: numpy array of logarithmic summands
+            // axis (int): axis to sum over
+
+        // Returns:
+            // log of the sum, shortened by one axis
+
+        // Throws:
+            // ValueError if logX has length 0 along given axis
     	int i;
     	double c;
     	double result;
@@ -929,6 +943,20 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     }
     
     public double[] logsum(double input[][]) {
+    	// Computes log of the sum along give axis from the log of the summands.
+
+        //This method tries hard to avoid over- or underflow.
+        // See appendix A of Bovy, Hogg, Roweis (2009).
+
+        // Args:
+            // logX: numpy array of logarithmic summands
+            // axis (int): axis to sum over
+
+        // Returns:
+            // log of the sum, shortened by one axis
+
+        // Throws:
+            // ValueError if logX has length 0 along given axis
     	int i, j;
     	double c;
     	double result[] = new double[input[0].length];
