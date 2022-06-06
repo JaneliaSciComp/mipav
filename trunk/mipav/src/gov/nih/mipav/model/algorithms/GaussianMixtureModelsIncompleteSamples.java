@@ -741,7 +741,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             //    numpy array (1,) or (N, 1) log(L), depending on shape of data
     		
     		// compute p(x | k)
-    		int i,j,m;
+    		int i,j,m,p;
     		LinearEquations2 le2 = new LinearEquations2();
     		int N = coords.length;
     		double dx[][] = new double[N][D];
@@ -750,15 +750,18 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     				dx[i][j] = coords[i][j] - mean[k][j];
     			}
     		}
-    		double T_k[][];
+    		double T_k[][][];
     		if (cov == null) {
-                T_k = covar[k];
+    			T_k = new double[1][][];
+                T_k[0] = covar[k];
     		}
             else {
-            	T_k = new double[D][D];
-            	for (i = 0; i < D; i++) {
+            	T_k = new double[cov.length][D][D];
+            	for (i = 0; i < cov.length; i++) {
             		for (j = 0; j < D; j++) {
-                    T_k[i][j] = covar[k][i][j] + cov[0][i][j];
+            			for (m = 0; m < D; m++) {
+                            T_k[i][j][m] = covar[k][j][m] + cov[i][j][m];
+            			}
             		}
             	}
             }
@@ -768,65 +771,96 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		int info[] = new int[1];
     		double work[];
     		int lwork;
-    		double T_kinv[][] = new double[D][D];
-    		for (i = 0; i < D; i++) {
-    			for (j = 0; j < D; j++) {
-    				T_kinv[i][j] = T_k[i][j];
+    		double T_kinv[][][] = new double[T_k.length][D][D];
+    		for (i = 0; i < T_k.length; i++) {
+    		    for (j = 0; j < D; j++) {
+    			    for (m = 0; m < D; m++) {
+    				    T_kinv[i][j][m] = T_k[i][j][m];
+    			    }
     			}
     		}
-    		le2.dgetrf(D,D,T_kinv,D,ipiv,info);
-		    boolean rankDeficient = false;
-		    if (info[0] < 0) {
-		    	  System.err.println("In le2.dgetrf argument number " + 
-		      (-info[0]) + " is illegal");
-		    	  System.exit(-1);
-		      }
-		      if (info[0] > 0) {
-		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
-		    	  rankDeficient = true;
-		    	  System.exit(-1);
-		      }
-		      work = new double[1];
-		      lwork = -1;
-		      le2.dgetri(D,T_kinv,D,ipiv,work,lwork,info);
-		      if (info[0] < 0) {
-		    	  System.err.println("In le2.dgetri argument number " + 
-		      (-info[0]) + " is illegal");
-		    	  System.exit(-1);
-		      }
-		      lwork = (int)work[0];
-		      work = new double[lwork];
-		      le2.dgetri(D,T_kinv,D,ipiv,work,lwork,info);
-		      if (info[0] < 0) {
-		    	  System.err.println("In le2.dgetri argument number " + 
-		      (-info[0]) + " is illegal");
-		    	  System.exit(-1);
-		      }
-		      if (info[0] > 0) {
-		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
-		    	  rankDeficient = true;
-		    	  System.exit(-1);
-		      }
-		      double dxT[][] = new double[N][D];
-		      for (i = 0; i < N; i++) {
-		    	  for (m = 0; m < D; m++) {
-		    	      for (j = 0; j < D; j++) {
-		    	          dxT[i][m] += dx[i][j] * T_kinv[j][m]; 
-		    	      }
-		    	  }
-		      }
-		      double dxTdx[][] = new double[N][N];
-		      for (i = 0; i < N; i++) {
-		    	  for (m = 0; m < N; m++) {
-		    		  for (j = 0; j < D; j++) {
-		    			  dxTdx[i][m] += dxT[i][j] * dx[m][j];
-		    		  }
-		    	  }
-		      }
-		      double chi2[] = new double[N];
-		      for (i = 0; i < N; i++) {
-		    	  chi2[i] = dxTdx[i][i];
-		      }
+    		for (i = 0; i < T_kinv.length; i++) {
+	    		le2.dgetrf(D,D,T_kinv[i],D,ipiv,info);
+			    boolean rankDeficient = false;
+			    if (info[0] < 0) {
+			    	  System.err.println("In le2.dgetrf argument number " + 
+			      (-info[0]) + " is illegal");
+			    	  System.exit(-1);
+			      }
+			      if (info[0] > 0) {
+			    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+			    	  rankDeficient = true;
+			    	  System.exit(-1);
+			      }
+			      work = new double[1];
+			      lwork = -1;
+			      le2.dgetri(D,T_kinv[i],D,ipiv,work,lwork,info);
+			      if (info[0] < 0) {
+			    	  System.err.println("In le2.dgetri argument number " + 
+			      (-info[0]) + " is illegal");
+			    	  System.exit(-1);
+			      }
+			      lwork = (int)work[0];
+			      work = new double[lwork];
+			      le2.dgetri(D,T_kinv[i],D,ipiv,work,lwork,info);
+			      if (info[0] < 0) {
+			    	  System.err.println("In le2.dgetri argument number " + 
+			      (-info[0]) + " is illegal");
+			    	  System.exit(-1);
+			      }
+			      if (info[0] > 0) {
+			    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+			    	  rankDeficient = true;
+			    	  System.exit(-1);
+			      }
+    		  } // for (i = 0; i < T_kinv.length; i++)
+    		  double chi2[] = new double[N];
+		      if (T_kinv.length == 1) {
+		    	  double dxT[][] = new double[N][D];
+			      for (i = 0; i < N; i++) {
+			    	  for (m = 0; m < D; m++) {
+			    	      for (j = 0; j < D; j++) {
+			    	          dxT[i][m] += dx[i][j] * T_kinv[0][j][m]; 
+			    	      }
+			    	  }
+			      }
+			      double dxTdx[][] = new double[N][N];
+			      for (i = 0; i < N; i++) {
+			    	  for (m = 0; m < N; m++) {
+			    		  for (j = 0; j < D; j++) {
+			    			  dxTdx[i][m] += dxT[i][j] * dx[m][j];
+			    		  }
+			    	  }
+			      }
+			      for (i = 0; i < N; i++) {
+			    	  chi2[i] = dxTdx[i][i];
+			      }
+		      } // if (T_kinv.length == 1)
+		      else if (T_kinv.length == N) {
+		    	  double dxT[][][] = new double[N][N][D];
+		        	for (i = 0; i < N; i++) {
+		        		for (j = 0; j < N; j++) {
+		        			for (m = 0; m < D; m++) {
+		        				for (p = 0; p < D; p++) {
+		        					dxT[i][j][m] += dx[i][p] * T_kinv[j][p][m];
+		        				}
+		        			}
+		        		}
+		        	}
+		        	double dxTdx[][][] = new double[N][N][N];
+		        	for (i = 0; i < N; i++) {
+		        		for (j = 0; j < N; j++) {
+		        			for (m = 0; m < N; m++) {
+		        				for (p = 0; p < D; p++) {
+		        					dxTdx[i][j][m] += dxT[i][j][p] * dx[m][p];
+		        				}
+		        			}
+		        		}
+		        	}
+		        	for (i = 0; i < N; i++) {
+				        chi2[i] = dxTdx[i][i][i];
+				    }
+		      } // else if (T_kinv.length == N)
 		      
 		      if (chi2_only) {
 		    	  return chi2;
@@ -834,26 +868,29 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		      
 		      // prevent tiny negative determinants to mess up
 		      // (sign, logdet) = np.linalg.slogdet(T_k)
-		      Matrix TkMat = new Matrix(T_k);
-		      double det = TkMat.det();
-		      double sign;
-		      double logdet;
-		      if (det < 0) {
-		          sign = -1.0;
-		          logdet = Math.log(-det);
-		      }
-		      else if (det == 0.0) {
-		    	  sign = 0.0;
-		    	  logdet = Double.NEGATIVE_INFINITY;
-		      }
-		      else {
-		    	  sign = 1.0;
-		    	  logdet = Math.log(det);
+		      double logdet[] = new double[N];
+		      double sign[] = new double[N];
+		      
+		      for (i = 0; i < T_k.length; i++) {
+			      Matrix TkMat = new Matrix(T_k[i]);
+			      double det = TkMat.det();
+			      if (det < 0) {
+			          sign[i] = -1.0;
+			          logdet[i] = Math.log(-det);
+			      }
+			      else if (det == 0.0) {
+			    	  sign[i] = 0.0;
+			    	  logdet[i] = Double.NEGATIVE_INFINITY;
+			      }
+			      else {
+			    	  sign[i] = 1.0;
+			    	  logdet[i] = Math.log(det);
+			      }
 		      }
 		      double log2piD2 = Math.log(2*Math.PI)*(0.5*D);
 		      double result[] = new double[N];
 		      for (i = 0; i < N; i++) {
-		    	  result[i] = Math.log(amp[k]) - log2piD2 - sign*logdet/2.0 - chi2[i]/2.0;
+		    	  result[i] = Math.log(amp[k]) - log2piD2 - sign[Math.min(sign.length-1,i)]*logdet[Math.min(logdet.length-1,i)]/2.0 - chi2[i]/2.0;
 		      }
 		      return result;
     	}
