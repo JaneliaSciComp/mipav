@@ -2191,6 +2191,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    }
 	    header += "\tLOG_L\tSTABLE";
 	    //logger.info(header)
+	    Preferences.debug(header+"\n",Preferences.DEBUG_ALGORITHM);
 	    
 	    // save backup
 	    gmm_ = new GMM(gmm.K, gmm.D);
