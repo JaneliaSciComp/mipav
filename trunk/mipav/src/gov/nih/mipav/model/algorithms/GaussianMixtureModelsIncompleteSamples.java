@@ -2688,7 +2688,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             // 68% confidence interval for Poisson variate: observed size
             alpha = 0.32;
             // lower = 0.5*scipy.stats.chi2.ppf(alpha/2, 2*obs_size)
-            // lower = 0.5*chdtri(2*observed_size, 1,0 - alpha/2)
+            // lower = 0.5*chdtri(2*observed_size, 1.0 - alpha/2)
             double result[] = new double[1];
             Cephes ceph = new Cephes(2*obs_size, 1.0 - alpha/2, Cephes.CHDTRI, result);
             ceph.run();
@@ -2890,6 +2890,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             	}
             	for (i = 0; i < covar2.length; i++) {
             		for (j = 0; j < gmm.D; j++) {
+            			noise[i][j] = 0.0;
             			for (p = 0; p < gmm.D; p++) {
             				noise[i][j] += rot[i][j][p] * valnoise[i][p];
             			}
