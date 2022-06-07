@@ -2423,7 +2423,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             // we could ignore missingness for data2 because we'll do an analytic
             // marginalization. This doesn't work if R is a non-trivial matrix.
             if (R != null) {
-                System.err.println("Not implemente error.  R is not null: imputation samples likely inconsistent");
+                System.err.println("Not implemented error.  R is not null: imputation samples likely inconsistent");
                 System.exit(-1);
             } // if (R != null)
             
@@ -2444,7 +2444,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             //if not(covar2 is None or covar2.shape == (gmm.D, gmm.D)):
                // covar2 = createShared(covar2)
             
-            N0update[0] = N0/oversampling;
+            N0update[0] = N0update[0]/oversampling;
         	int U2[][] = new int[gmm.K][];
         	
         	if (data2.length > 0) {
