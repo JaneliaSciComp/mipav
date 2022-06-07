@@ -2072,7 +2072,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // sub1=np.searchsorted(arr1,arr2,sorter=st1)
         int sub1[] = new int[arr2.length];
         for (i = 0; i < arr2.length; i++) {
-        	if (arr2[i] < arr1[0]) {
+        	if (arr2[i] <= arr1[0]) {
         		sub1[i] = 0;
         	}
         	else if (arr2[i] > arr1[arr1.length-1]) {
@@ -2106,11 +2106,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         }
         
         for (i = 0; i < sub1.length; i++) {
-            for (j = 0; j < arr2.length; j++) {
-            	if (arr1[sub1[i]] == arr2[j]) {
-            		sub2Vec.add(j);
-            	}
-            }
+        	if (arr1[sub1[i]] == arr2[i]) {
+        		sub2Vec.add(i);
+        	}
         }
         for (i = 0; i < sub2Vec.size(); i++) {
         	sub1Vec.add(sub1[sub2Vec.get(i)]);
