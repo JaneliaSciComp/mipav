@@ -3311,7 +3311,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
                 double x1[] = background.footprint[1];
                 for (d = 0; d < gmm.D; d++) { 
                     if ((covar.length == 1) && (covar[0].length == gmm.D) && (covar[0][0].length == gmm.D)) { // one-for-all
-                        denom[0] = Math.sqrt(2 * covar[1][d][d]);
+                        denom[0] = Math.sqrt(2 * covar[0][d][d]);
                     }
                     else {
                     	for (i = 0; i < covar.length; i++ ) {
