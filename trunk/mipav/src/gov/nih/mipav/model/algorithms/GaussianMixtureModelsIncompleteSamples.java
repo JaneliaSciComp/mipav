@@ -3583,14 +3583,54 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	// with data errors: need to create and return T_ik = covar_i + C_k
         	// and weight each datum appropriately	
         	if (R == null) {
-        	    T_inv_k = new double[covar_.length][gmm.D][gmm.D];	
+        	    double T_k[][] = new double[gmm.D][gmm.D];
+        	    T_inv_k = new double[covar_.length][gmm.D][gmm.D];
         	    for (i = 0; i < covar_.length; i++) {
         	    	for (j = 0; j < gmm.D; j++) {
         	    		for (m = 0; m < gmm.D; m++) {
-        	    		    T_inv_k[i][j][m] = gmm.covar[k][j][m] + covar_[i][j][m];
+        	    		    T_k[j][m] = gmm.covar[k][j][m] + covar_[i][j][m];
         	    		}
         	    	}
-        	    }
+        	    	le2.dgetrf(gmm.D,gmm.D,T_k,gmm.D,ipiv,info);
+        		    boolean rankDeficient = false;
+        		    if (info[0] < 0) {
+        		    	  System.err.println("In le2.dgetrf argument number " + 
+        		      (-info[0]) + " is illegal");
+        		    	  System.exit(-1);
+        		      }
+        		      if (info[0] > 0) {
+        		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+        		    	  rankDeficient = true;
+        		    	  System.exit(-1);
+        		      }
+        		      work = new double[1];
+        		      lwork = -1;
+        		      le2.dgetri(gmm.D,T_k,gmm.D,ipiv,work,lwork,info);
+        		      if (info[0] < 0) {
+        		    	  System.err.println("In le2.dgetri argument number " + 
+        		      (-info[0]) + " is illegal");
+        		    	  System.exit(-1);
+        		      }
+        		      lwork = (int)work[0];
+        		      work = new double[lwork];
+        		      le2.dgetri(gmm.D,T_k,gmm.D,ipiv,work,lwork,info);
+        		      if (info[0] < 0) {
+        		    	  System.err.println("In le2.dgetri argument number " + 
+        		      (-info[0]) + " is illegal");
+        		    	  System.exit(-1);
+        		      }
+        		      if (info[0] > 0) {
+        		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+        		    	  rankDeficient = true;
+        		    	  System.exit(-1);
+        		      }
+        		      for (j = 0; j < gmm.D; j++) {
+          	    		for (m = 0; m < gmm.D; m++) {
+          	    		    T_inv_k[i][j][m] = T_k[j][m];
+          	    		}
+          	    	}
+        	    } // for (i = 0; i < covar_.length; i++) {
+    	    	
         	} // if (R == null)
         	else { // need to project out missing elements: T_ik = R_i C_k R_i^R + covar_i
         	    // T_inv_k = np.linalg.inv(np.einsum('...ij,jk,...lk', R_, gmm.covar[k], R_) + covar_)	
@@ -3616,7 +3656,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         			for (j = 0; j < gmm.D; j++) {
         				for (m = 0; m < gmm.D; m++) {
         					for (p = 0; p < gmm.D; p++) {
-        					    RCR[i][j][m] += R_[i][j][p] * R_[i][m][p];
+        					    RCR[i][j][m] += RC[i][j][p] * R_[i][m][p];
         					}
         				}
         			}
@@ -3716,7 +3756,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        	for (i = 0; i < dx.length; i++) {
 	        		chi2[i] = dxTdx[i][i];
 	        	}
-        	}
+        	} // else if (T_inv_k.length == 1) {
         } // else
         
         // NOTE: close to convergence, we could stop applying the cutoff because
@@ -3729,7 +3769,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         		}
         	}
         	int indices[] = new int[numindices];
-        	for (i = 0, j = 0; i< chi2.length; i++) {
+        	for (i = 0, j = 0; i < chi2.length; i++) {
         		if (chi2[i] < cutoff) {
         		    indices[j++] = i;
         		}
@@ -3830,11 +3870,11 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         log_p[k] = new double[Math.max(chi2.length,logdet.length)];
         for (i = 0; i < log_p[k].length; i++) {
         	if (chi2.length > 0) {
-        	    log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)]
+        	    log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)]/2.0
         			- chi2[Math.min(i,chi2.length-1)]/2;
         	}
         	else {
-        		log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)];	
+        		log_p[k][i] = Math.log(gmm.amp[k]) - log2piD2 -sign[Math.min(i,sign.length-1)]*logdet[Math.min(i,logdet.length-1)]/2.0;	
         	}
         }
         U[k] = U_k;
