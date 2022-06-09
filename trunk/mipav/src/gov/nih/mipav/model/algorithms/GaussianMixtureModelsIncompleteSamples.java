@@ -3528,12 +3528,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     		le2.dgetrf(gmm.D,gmm.D,covarinv,gmm.D,ipiv,info);
 		    boolean rankDeficient = false;
 		    if (info[0] < 0) {
-		    	  System.err.println("In le2.dgetrf argument number " + 
+		    	  System.err.println("In _Esum 1 le2.dgetrf argument number " + 
 		      (-info[0]) + " is illegal");
 		    	  System.exit(-1);
 		      }
 		      if (info[0] > 0) {
-		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  System.err.println("In _Esum 2 le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
 		    	  rankDeficient = true;
 		    	  System.exit(-1);
 		      }
@@ -3541,7 +3541,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		      lwork = -1;
 		      le2.dgetri(gmm.D,covarinv,gmm.D,ipiv,work,lwork,info);
 		      if (info[0] < 0) {
-		    	  System.err.println("In le2.dgetri argument number " + 
+		    	  System.err.println("In _ESum 3 le2.dgetri argument number " + 
 		      (-info[0]) + " is illegal");
 		    	  System.exit(-1);
 		      }
@@ -3549,12 +3549,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		      work = new double[lwork];
 		      le2.dgetri(gmm.D,covarinv,gmm.D,ipiv,work,lwork,info);
 		      if (info[0] < 0) {
-		    	  System.err.println("In le2.dgetri argument number " + 
+		    	  System.err.println("In _ESum 4 le2.dgetri argument number " + 
 		      (-info[0]) + " is illegal");
 		    	  System.exit(-1);
 		      }
 		      if (info[0] > 0) {
-		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+		    	  System.err.println("In _ESum 5 le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
 		    	  rankDeficient = true;
 		    	  System.exit(-1);
 		      }
@@ -3594,12 +3594,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         	    	le2.dgetrf(gmm.D,gmm.D,T_k,gmm.D,ipiv,info);
         		    boolean rankDeficient = false;
         		    if (info[0] < 0) {
-        		    	  System.err.println("In le2.dgetrf argument number " + 
+        		    	  System.err.println("In _Esum 6 le2.dgetrf argument number " + 
         		      (-info[0]) + " is illegal");
         		    	  System.exit(-1);
         		      }
         		      if (info[0] > 0) {
-        		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+        		    	  System.err.println("In _Esum 7 le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
         		    	  rankDeficient = true;
         		    	  System.exit(-1);
         		      }
@@ -3607,7 +3607,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         		      lwork = -1;
         		      le2.dgetri(gmm.D,T_k,gmm.D,ipiv,work,lwork,info);
         		      if (info[0] < 0) {
-        		    	  System.err.println("In le2.dgetri argument number " + 
+        		    	  System.err.println("In _Esum 8 le2.dgetri argument number " + 
         		      (-info[0]) + " is illegal");
         		    	  System.exit(-1);
         		      }
@@ -3615,12 +3615,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         		      work = new double[lwork];
         		      le2.dgetri(gmm.D,T_k,gmm.D,ipiv,work,lwork,info);
         		      if (info[0] < 0) {
-        		    	  System.err.println("In le2.dgetri argument number " + 
+        		    	  System.err.println("In _Esum 9 le2.dgetri argument number " + 
         		      (-info[0]) + " is illegal");
         		    	  System.exit(-1);
         		      }
         		      if (info[0] > 0) {
-        		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+        		    	  System.err.println("In _Esum 10 le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
         		    	  rankDeficient = true;
         		    	  System.exit(-1);
         		      }
@@ -3669,42 +3669,43 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         				}	
         			}
         		}
+        		for (i = 0; i < T_inv_k.length; i++) {
+            	    le2.dgetrf(gmm.D,gmm.D,T_inv_k[i],gmm.D,ipiv,info);
+        		    boolean rankDeficient = false;
+        		    if (info[0] < 0) {
+        		    	  System.err.println("In _Esum 11 i = " + i + " le2.dgetrf argument number " + 
+        		      (-info[0]) + " is illegal");
+        		    	  System.exit(-1);
+        		      }
+        		      if (info[0] > 0) {
+        		    	  System.err.println("In _Esum 12 i = " + i + " le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+        		    	  rankDeficient = true;
+        		    	  System.exit(-1);
+        		      }
+        		      work = new double[1];
+        		      lwork = -1;
+        		      le2.dgetri(gmm.D,T_inv_k[i],gmm.D,ipiv,work,lwork,info);
+        		      if (info[0] < 0) {
+        		    	  System.err.println("In _Esum 13 i = " + i + " le2.dgetri argument number " + 
+        		      (-info[0]) + " is illegal");
+        		    	  System.exit(-1);
+        		      }
+        		      lwork = (int)work[0];
+        		      work = new double[lwork];
+        		      le2.dgetri(gmm.D,T_inv_k[i],gmm.D,ipiv,work,lwork,info);
+        		      if (info[0] < 0) {
+        		    	  System.err.println("In _Esum 14 i = " + i + " le2.dgetri argument number " + 
+        		      (-info[0]) + " is illegal");
+        		    	  System.exit(-1);
+        		      }
+        		      if (info[0] > 0) {
+        		    	  System.err.println("In _Esum 15 i = " + i + " le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
+        		    	  rankDeficient = true;
+        		    	  System.exit(-1);
+        		      }
+        	    } // for (i = 0; i < T_inv_k.length; i++)
         	} // else
-        	for (i = 0; i < T_inv_k.length; i++) {
-        	    le2.dgetrf(gmm.D,gmm.D,T_inv_k[i],gmm.D,ipiv,info);
-    		    boolean rankDeficient = false;
-    		    if (info[0] < 0) {
-    		    	  System.err.println("In le2.dgetrf argument number " + 
-    		      (-info[0]) + " is illegal");
-    		    	  System.exit(-1);
-    		      }
-    		      if (info[0] > 0) {
-    		    	  System.err.println("In le2.dgetrf U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
-    		    	  rankDeficient = true;
-    		    	  System.exit(-1);
-    		      }
-    		      work = new double[1];
-    		      lwork = -1;
-    		      le2.dgetri(gmm.D,T_inv_k[i],gmm.D,ipiv,work,lwork,info);
-    		      if (info[0] < 0) {
-    		    	  System.err.println("In le2.dgetri argument number " + 
-    		      (-info[0]) + " is illegal");
-    		    	  System.exit(-1);
-    		      }
-    		      lwork = (int)work[0];
-    		      work = new double[lwork];
-    		      le2.dgetri(gmm.D,T_inv_k[i],gmm.D,ipiv,work,lwork,info);
-    		      if (info[0] < 0) {
-    		    	  System.err.println("In le2.dgetri argument number " + 
-    		      (-info[0]) + " is illegal");
-    		    	  System.exit(-1);
-    		      }
-    		      if (info[0] > 0) {
-    		    	  System.err.println("In le2.dgetri U["+(info[0]-1)+"]["+(info[0]-1)+"] is exactly 0");
-    		    	  rankDeficient = true;
-    		    	  System.exit(-1);
-    		      }
-    	    } // for (i = 0; i < T_inv_k.length; i++)
+        	
         	// chi2 = np.einsum('...i,...ij,...j', dx, T_inv_k, dx)
         	//System.out.println("dx.length = " + dx.length);
         	//System.out.println("dx[0].length = " + dx[0].length);
