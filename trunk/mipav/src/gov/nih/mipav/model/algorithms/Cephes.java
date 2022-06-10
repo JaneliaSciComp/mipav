@@ -163,7 +163,7 @@ public class Cephes {
 	
 	public void testCephes() {
 		// The test for chdtri(4,0.3) passed
-		// The test for igmai(2,0.3) passed
+		// The test for igami(2,0.3) passed
 		// The test for igmac(2,1) passed
 		// The test for igam(1,2) passed
 		// The test for ndtri(0.6) passed
@@ -181,11 +181,11 @@ public class Cephes {
 	    
 	    igami(2,0.3);
 	    if (Math.abs(result[0] - 2.439216483280204) < 1.0E-7) {
-	    	System.out.println("The test for igmai(2,0.3) passed");
+	    	System.out.println("The test for igami(2,0.3) passed");
 	    }
 	    else {
-	    	System.out.println("The test for igmai(2,0.3) failed");
-	    	System.out.println("Implemented igmai gave " + result[0]);
+	    	System.out.println("The test for igami(2,0.3) failed");
+	    	System.out.println("Implemented igami gave " + result[0]);
 	    	System.out.println("Correct answer is 2.439216483280204");
 	    }
 	    
