@@ -95,13 +95,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class Cephes {
-	public final static int CHDTRI = 1;
-	public final static int IGAMI = 2;
-	public final static int IGAMC = 3;
+	
+	public final static int CHDTR = 1;
+	public final static int CHDTRC = 2;
+	public final static int CHDTRI = 3;
 	public final static int IGAM = 4;
-	public final static int NDTRI = 5;
-	public final static int POLEVL = 6;
-	public final static int P1EVL = 7;
+	public final static int IGAMI = 5;
+	public final static int IGAMC = 6;
+	public final static int NDTRI = 7;
+	public final static int POLEVL = 8;
+	public final static int P1EVL = 9;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -111,6 +114,61 @@ public class Cephes {
 	private final static double biginv =  2.22044604925031308085e-16;
 	/* sqrt(2pi) */
 	private final static double s2pi = 2.50662827463100050242E0;
+	// For ndtr:
+	private final static double P[] = new double[]{
+		 2.46196981473530512524E-10,
+		 5.64189564831068821977E-1,
+		 7.46321056442269912687E0,
+		 4.86371970985681366614E1,
+		 1.96520832956077098242E2,
+		 5.26445194995477358631E2,
+		 9.34528527171957607540E2,
+		 1.02755188689515710272E3,
+		 5.57535335369399327526E2
+		};
+	private final static double Q[] = new double[]{
+			/* 1.00000000000000000000E0,*/
+		 1.32281951154744992508E1,
+		 8.67072140885989742329E1,
+		 3.54937778887819891062E2,
+		 9.75708501743205489753E2,
+		 1.82390916687909736289E3,
+		 2.24633760818710981792E3,
+		 1.65666309194161350182E3,
+		 5.57535340817727675546E2
+		};
+    private final static double R[] = new double[]{
+		 5.64189583547755073984E-1,
+		 1.27536670759978104416E0,
+		 5.01905042251180477414E0,
+		 6.16021097993053585195E0,
+		 7.40974269950448939160E0,
+		 2.97886665372100240670E0
+		};
+	private final static double S[] = new double[]{
+		/* 1.00000000000000000000E0,*/
+		 2.26052863220117276590E0,
+		 9.39603524938001434673E0,
+		 1.20489539808096656605E1,
+		 1.70814450747565897222E1,
+		 9.60896809063285878198E0,
+		 3.36907645100081516050E0
+		};
+	private final static double T[] = new double[]{
+		 9.60497373987051638749E0,
+		 9.00260197203842689217E1,
+		 2.23200534594684319226E3,
+		 7.00332514112805075473E3,
+		 5.55923013010394962768E4
+		};
+	private final static double U[] = new double[]{
+		/* 1.00000000000000000000E0,*/
+		 3.35617141647503099647E1,
+		 5.21357949780152679795E2,
+		 4.59432382970980127987E3,
+		 2.26290000613890934246E4,
+		 4.92673942608635921086E4
+		};
 	// P and Q approximations for ndtri
 	/* approximation for 0 <= |y - 0.5| <= 3/8 */
 	private final static double P0[] = new double[]{
@@ -197,14 +255,34 @@ public class Cephes {
 	private int par4;
 	
 	public void testCephes() {
+		// The test for chdtr(4,5) passed
+		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
-		// The test for igami(2,0.3) passed
-		// The test for igmac(2,1) passed
 		// The test for igam(1,2) passed
+		// The test for igmac(2,1) passed
+		// The test for igami(2,0.3) passed
 		// The test for ndtri(0.6) passed
 		// The test for ndtri(0.5) passed
 
 		result = new double[1];
+		chdtr(4,5);
+		if (Math.abs(result[0] - 0.7127025048163542) < 1.0E-7) {
+	    	System.out.println("The test for chdtr(4,5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for chdtr(4,5) failed");
+	    	System.out.println("Implemented chdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.7127025048163542");
+	    }
+		chdtrc(4,5);
+		if (Math.abs(result[0] - 0.2872974951836458) < 1.0E-7) {
+	    	System.out.println("The test for chdtrc(4,5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for chdtrc(4,5) failed");
+	    	System.out.println("Implemented chdtrc gave " + result[0]);
+	    	System.out.println("Correct answer is 0.2872974951836458");
+	    }
 	    chdtri(4,0.3);
 	    if (Math.abs(result[0] - 4.8784329665604087) < 1.0E-7) {
 	    	System.out.println("The test for chdtri(4,0.3) passed");
@@ -215,14 +293,14 @@ public class Cephes {
 	    	System.out.println("Correct answer is 4.8784329665604087");
 	    }
 	    
-	    igami(2,0.3);
-	    if (Math.abs(result[0] - 2.439216483280204) < 1.0E-7) {
-	    	System.out.println("The test for igami(2,0.3) passed");
+	    igam(1,2);
+	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
+	    	System.out.println("The test for igam(1,2) passed");
 	    }
 	    else {
-	    	System.out.println("The test for igami(2,0.3) failed");
-	    	System.out.println("Implemented igami gave " + result[0]);
-	    	System.out.println("Correct answer is 2.439216483280204");
+	    	System.out.println("The test for igam(1,2) failed");
+	    	System.out.println("Implemented igam gave " + result[0]);
+	    	System.out.println("Correct answer is 0.8646647167633873");
 	    }
 	    
 	    igamc(2,1);
@@ -235,14 +313,14 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.7357588823428847");
 	    }
 	    
-	    igam(1,2);
-	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
-	    	System.out.println("The test for igam(1,2) passed");
+	    igami(2,0.3);
+	    if (Math.abs(result[0] - 2.439216483280204) < 1.0E-7) {
+	    	System.out.println("The test for igami(2,0.3) passed");
 	    }
 	    else {
-	    	System.out.println("The test for igam(1,2) failed");
-	    	System.out.println("Implemented igam gave " + result[0]);
-	    	System.out.println("Correct answer is 0.8646647167633873");
+	    	System.out.println("The test for igami(2,0.3) failed");
+	    	System.out.println("Implemented igami gave " + result[0]);
+	    	System.out.println("Correct answer is 2.439216483280204");
 	    }
 	    
 	    ndtri(0.6);
@@ -287,7 +365,13 @@ public class Cephes {
 	}
 	
 	public void run() {
-		if (version == CHDTRI) {
+		if (version == CHDTR) {
+			chdtr(par1, par2);
+		}
+	    else if (version == CHDTRC) {
+			chdtrc(par1, par2);
+		}
+	    else if (version == CHDTRI) {
 			chdtri(par1, par2);
 		}
 		else if (version == IGAMI) {
@@ -308,6 +392,129 @@ public class Cephes {
 		else if (version == P1EVL) {
 			p1evl(par1, par3, par4);
 		}
+	}
+	
+	/*							chdtr.c
+	 *
+	 *	Chi-square distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double df, x, y, chdtr();
+	 *
+	 * y = chdtr( df, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the area under the left hand tail (from 0 to x)
+	 * of the Chi square probability density function with
+	 * v degrees of freedom.
+	 *
+	 *
+	 *                                  inf.
+	 *                                    -
+	 *                        1          | |  v/2-1  -t/2
+	 *  P( x | v )   =   -----------     |   t      e     dt
+	 *                    v/2  -       | |
+	 *                   2    | (v/2)   -
+	 *                                   x
+	 *
+	 * where x is the Chi-square variable.
+ *
+ * The incomplete gamma integral is used, according to the
+ * formula
+ *
+ *	y = chdtr( v, x ) = igam( v/2.0, x/2.0 ).
+ *
+ *
+ * The arguments must both be positive.
+ *
+ *
+ *
+ * ACCURACY:
+ *
+ * See igam().
+ *
+ * ERROR MESSAGES:
+ *
+ *   message         condition      value returned
+ * chdtr domain   x < 0 or v < 1        0.0
+ */
+	
+	private void chdtr(double df, double x) {
+
+	if( (x < 0.0) || (df < 1.0) )
+		{
+		    MipavUtil.displayError("Domain error in chdtr()");
+		    result[0] = 0.0;
+		    return;
+		}
+        igam( df/2.0, x/2.0 );
+        return;
+	}
+	
+	/*							chdtrc()
+	 *
+	 *	Complemented Chi-square distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double v, x, y, chdtrc();
+	 *
+	 * y = chdtrc( v, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the area under the right hand tail (from x to
+	 * infinity) of the Chi square probability density function
+	 * with v degrees of freedom:
+	 *
+	 *
+	 *                                  inf.
+	 *                                    -
+	 *                    v/2  -       | |
+	 *                   2    | (v/2)   -
+	 *                                   x
+	 *
+	 * where x is the Chi-square variable.
+	 *
+	 * The incomplete gamma integral is used, according to the
+	 * formula
+	 *
+	 *	y = chdtr( v, x ) = igamc( v/2.0, x/2.0 ).
+	 *
+	 *
+	 * The arguments must both be positive.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * See igamc().
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * chdtrc domain  x < 0 or v < 1        0.0
+	 */
+	private void chdtrc(double df, double x)
+	{
+
+	if( (x < 0.0) || (df < 1.0) )
+		{
+		MipavUtil.displayError("Domain error in chdtrc()");
+		result[0] = 0;
+		}
+	    igamc( df/2.0, x/2.0 );
+	    return;
 	}
 	
 	/*							chdtri()
@@ -361,6 +568,7 @@ public class Cephes {
 	    if ((y < 0) || ( y > 1.0) || (df < 1.0)) {
 	    	MipavUtil.displayError("Domain error in chdtri()");
 	    	result[0] = 0.0;
+	    	return;
 	    }
 	    
 	    igami( 0.5 * df, y );
