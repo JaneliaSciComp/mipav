@@ -33,6 +33,32 @@ IN AN ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTUOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+/**
+ * Correct values for Cephes functions are taken from hcephes-master/test/src/hcephes.c provided under the MIT license
+ * The MIT License (MIT)
+=====================
+
+Copyright (c) 2018 Danilo Horta
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ *  */
+
 public class Cephes {
 	public final static int CHDTRI = 1;
 	public final static int IGAMI = 2;
@@ -135,6 +161,65 @@ public class Cephes {
 	
 	private int par4;
 	
+	public void testCephes() {
+		// The test for chdtri(4,0.3) passed
+		// The test for igmai(2,0.3) passed
+		// The test for igmac(2,1) passed
+		// The test for igam(1,2) passed
+		// The test for ndtri(0.6) passed
+
+		result = new double[1];
+	    chdtri(4,0.3);
+	    if (Math.abs(result[0] - 4.8784329665604087) < 1.0E-7) {
+	    	System.out.println("The test for chdtri(4,0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for chdtri(4,0.3) failed");
+	    	System.out.println("Implemented chdtri gave " + result[0]);
+	    	System.out.println("Correct answer is 4.8784329665604087");
+	    }
+	    
+	    igami(2,0.3);
+	    if (Math.abs(result[0] - 2.439216483280204) < 1.0E-7) {
+	    	System.out.println("The test for igmai(2,0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for igmai(2,0.3) failed");
+	    	System.out.println("Implemented igmai gave " + result[0]);
+	    	System.out.println("Correct answer is 2.439216483280204");
+	    }
+	    
+	    igamc(2,1);
+	    if (Math.abs(result[0] - 0.7357588823428847) < 1.0E-7) {
+	    	System.out.println("The test for igmac(2,1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for igmac(2,1) failed");
+	    	System.out.println("Implemented igmac gave " + result[0]);
+	    	System.out.println("Correct answer is 0.7357588823428847");
+	    }
+	    
+	    igam(1,2);
+	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
+	    	System.out.println("The test for igam(1,2) passed");
+	    }
+	    else {
+	    	System.out.println("The test for igam(1,2) failed");
+	    	System.out.println("Implemented igam gave " + result[0]);
+	    	System.out.println("Correct answer is 0.8646647167633873");
+	    }
+	    
+	    ndtri(0.6);
+	    if (Math.abs(result[0] - 0.25334710313579972) < 1.0E-7) {
+	    	System.out.println("The test for ndtri(0.6) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ndtri(0.6) failed");
+	    	System.out.println("Implemented ndtri gave " + result[0]);
+	    	System.out.println("Correct answer is 0.25334710313579972");
+	    }
+	}
+	
 	public Cephes() {
 		
 	}
@@ -152,7 +237,7 @@ public class Cephes {
 		this.par4 = par4;
 		this.version = version;
 		this.result = result;
-;	}
+	}
 	
 	public void run() {
 		if (version == CHDTRI) {
