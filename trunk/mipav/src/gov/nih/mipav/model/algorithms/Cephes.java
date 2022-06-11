@@ -99,12 +99,18 @@ public class Cephes {
 	public final static int CHDTR = 1;
 	public final static int CHDTRC = 2;
 	public final static int CHDTRI = 3;
-	public final static int IGAM = 4;
-	public final static int IGAMI = 5;
-	public final static int IGAMC = 6;
-	public final static int NDTRI = 7;
-	public final static int POLEVL = 8;
-	public final static int P1EVL = 9;
+	public final static int ELLIE = 4;
+	public final static int ELLPE = 5;
+	public final static int ELLPK = 6;
+	public final static int ERF = 7;
+	public final static int ERFC = 8;
+	public final static int IGAM = 9;
+	public final static int IGAMI = 10;
+	public final static int IGAMC = 11;
+	public final static int NDTR = 12;
+	public final static int NDTRI = 13;
+	public final static int POLEVL = 14;
+	public final static int P1EVL = 15;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -114,6 +120,8 @@ public class Cephes {
 	private final static double biginv =  2.22044604925031308085e-16;
 	/* sqrt(2pi) */
 	private final static double s2pi = 2.50662827463100050242E0;
+	private final static double PIO2   =  1.57079632679489661923; // pi/2
+	private final static double SQRTH  =  7.07106781186547524401E-1; // sqrt(2)/2
 	// For ndtr:
 	private final static double P[] = new double[]{
 		 2.46196981473530512524E-10,
@@ -216,6 +224,7 @@ public class Cephes {
 	-9.33259480895457427372E-4,
 	};
 	
+	
 	/* Approximation for interval z = sqrt(-2 log y ) between 8 and 64
 	 * i.e., y between exp(-32) = 1.27e-14 and exp(-2048) = 3.67e-890.
 	 */
@@ -242,6 +251,63 @@ public class Cephes {
 	  2.89247864745380683936E-6,
 	  6.79019408009981274425E-9,
 	};
+	
+	// For ellpe:
+	private final static double PELLPE[] = new double[]{
+		  1.53552577301013293365E-4,
+		  2.50888492163602060990E-3,
+		  8.68786816565889628429E-3,
+		  1.07350949056076193403E-2,
+		  7.77395492516787092951E-3,
+		  7.58395289413514708519E-3,
+		  1.15688436810574127319E-2,
+		  2.18317996015557253103E-2,
+		  5.68051945617860553470E-2,
+		  4.43147180560990850618E-1,
+		  1.00000000000000000299E0
+		};
+	private final static double QELLPE[] = new double[]{
+		  3.27954898576485872656E-5,
+		  1.00962792679356715133E-3,
+		  6.50609489976927491433E-3,
+		  1.68862163993311317300E-2,
+		  2.61769742454493659583E-2,
+		  3.34833904888224918614E-2,
+		  4.27180926518931511717E-2,
+		  5.85936634471101055642E-2,
+		  9.37499997197644278445E-2,
+		  2.49999999999888314361E-1
+		};
+	
+	// For ellpk:
+	private final static double C1 = 1.3862943611198906188E0; /* log(4) */
+	private final static double PELLPK[] = new double[]{
+		 1.37982864606273237150E-4,
+		 2.28025724005875567385E-3,
+		 7.97404013220415179367E-3,
+		 9.85821379021226008714E-3,
+		 6.87489687449949877925E-3,
+		 6.18901033637687613229E-3,
+		 8.79078273952743772254E-3,
+		 1.49380448916805252718E-2,
+		 3.08851465246711995998E-2,
+		 9.65735902811690126535E-2,
+		 1.38629436111989062502E0
+		};
+
+	private final static double QELLPK[] = new double[]{
+		 2.94078955048598507511E-5,
+		 9.14184723865917226571E-4,
+		 5.94058303753167793257E-3,
+		 1.54850516649762399335E-2,
+		 2.39089602715924892727E-2,
+		 3.01204715227604046988E-2,
+		 3.73774314173823228969E-2,
+		 4.88280347570998239232E-2,
+		 7.03124996963957469739E-2,
+		 1.24999999999870820058E-1,
+		 4.99999999999999999821E-1
+		};
 	private double result[];
 	
 	private int version;
@@ -258,12 +324,15 @@ public class Cephes {
 		// The test for chdtr(4,5) passed
 		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
+		// The test for ellie(-5.3, 0.12) passed
 		// The test for igam(1,2) passed
 		// The test for igmac(2,1) passed
 		// The test for igami(2,0.3) passed
-		// The test for ndtri(0.6) passed
+		// The test for ndtr(0.0) passed
+		// The test for ndtr(0.3) passed
+		// The test for ndtr(1) passed
 		// The test for ndtri(0.5) passed
-
+		// The test for ndtri(0.6) passed
 		result = new double[1];
 		chdtr(4,5);
 		if (Math.abs(result[0] - 0.7127025048163542) < 1.0E-7) {
@@ -292,6 +361,40 @@ public class Cephes {
 	    	System.out.println("Implemented chdtri gave " + result[0]);
 	    	System.out.println("Correct answer is 4.8784329665604087");
 	    }
+	    
+	    ellie(-5.3, 0.12);
+	    if (Math.abs(result[0] + 5.12290521194) < 1.0E-7) {
+	    	System.out.println("The test for ellie(-5.3, 0.12) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellie(-5.3, 0.12) failed");
+	    	System.out.println("Implemented ellie gave " + result[0]);
+	    	System.out.println("Correct answer is -5.12290521194");
+	    }
+	    
+	    // ellpe and ellpk answers here from hcephes versions which
+	    // start with a line not present in cephes version
+	    // line added by Danilo x = 1.0 - x;
+	    /*ellpe(0.12);
+	    if (Math.abs(result[0] - 1.522555369217904) < 1.0E-7) {
+	    	System.out.println("The test for ellpe(0.12) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellpe(0.12) failed");
+	    	System.out.println("Implemented ellpe gave " + result[0]);
+	    	System.out.println("Correct answer is 1.522555369217904");
+	    }
+	    
+	    ellpk(0.12);
+	    if (Math.abs(result[0] - 1.621393137980658) < 1.0E-7) {
+	    	System.out.println("The test for ellpk(0.12) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellpk(0.12) failed");
+	    	System.out.println("Implemented ellpk gave " + result[0]);
+	    	System.out.println("Correct answer is 1.621393137980658");
+	    }
+	    */
 	    
 	    igam(1,2);
 	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
@@ -323,14 +426,34 @@ public class Cephes {
 	    	System.out.println("Correct answer is 2.439216483280204");
 	    }
 	    
-	    ndtri(0.6);
-	    if (Math.abs(result[0] - 0.25334710313579972) < 1.0E-7) {
-	    	System.out.println("The test for ndtri(0.6) passed");
+	    ndtr(0.0);
+	    if (result[0] == 0.5) {
+	    	System.out.println("The test for ndtr(0.0) passed");
 	    }
 	    else {
-	    	System.out.println("The test for ndtri(0.6) failed");
-	    	System.out.println("Implemented ndtri gave " + result[0]);
-	    	System.out.println("Correct answer is 0.25334710313579972");
+	    	System.out.println("The test for ndtr(0.0) failed");
+	    	System.out.println("Implemented ndtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.5");
+	    }
+	    
+	    ndtr(0.3);
+	    if (Math.abs(result[0] - 0.61791142218895256) < 1.0E-7) {
+	    	System.out.println("The test for ndtr(0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ndtr(0.3) failed");
+	    	System.out.println("Implemented ndtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.61791142218895256");
+	    }
+	    
+	    ndtr(1);
+	    if (Math.abs(result[0] - 0.8413447460685429) < 1.0E-7) {
+	    	System.out.println("The test for ndtr(1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ndtr(1) failed");
+	    	System.out.println("Implemented ndtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.8413447460685429");
 	    }
 	    
 	    ndtri(0.5);
@@ -343,10 +466,26 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.0");
 	    }
 	    
+	    ndtri(0.6);
+	    if (Math.abs(result[0] - 0.25334710313579972) < 1.0E-7) {
+	    	System.out.println("The test for ndtri(0.6) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ndtri(0.6) failed");
+	    	System.out.println("Implemented ndtri gave " + result[0]);
+	    	System.out.println("Correct answer is 0.25334710313579972");
+	    }
+	    
 	}
 	
 	public Cephes() {
 		
+	}
+	
+	public Cephes(double par1, int version, double result[]) {
+		this.par1 = par1;
+		this.version = version;
+		this.result = result;
 	}
 	
 	public Cephes(double par1, double par2, int version, double result[]) {
@@ -374,6 +513,20 @@ public class Cephes {
 	    else if (version == CHDTRI) {
 			chdtri(par1, par2);
 		}
+	    else if (version == ELLIE) {
+	    	ellie(par1, par2);
+	    }
+	    else if (version == ELLPE) {
+	    	ellpe(par1);
+	    }
+	    else if (version == ELLPK)
+	    	ellpk(par1);
+	    else if (version == ERF) {
+	    	erf(par1);
+	    }
+	    else if (version == ERFC) {
+	    	erfc(par1);
+	    }
 		else if (version == IGAMI) {
 			igami(par1, par2);
 		}
@@ -382,6 +535,9 @@ public class Cephes {
 		}
 		else if (version == IGAM) {
 			igam(par1,par2);
+		}
+		else if (version == NDTR) {
+			ndtr(par1);
 		}
 		else if (version == NDTRI) {
 			ndtri(par1);
@@ -575,6 +731,257 @@ public class Cephes {
 	    x = result[0];
 	    result[0] = (2.0 * x );
 	    
+	}
+	
+	/*							erf.c
+	 *
+	 *	Error function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, erf();
+	 *
+	 * y = erf( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * The integral is
+	 *
+	 *                           x 
+	 *                            -
+	 *                 2         | |          2
+	 *   erf(x)  =  --------     |    exp( - t  ) dt.
+	 *              sqrt(pi)   | |
+	 *                          -
+	 *                           0
+	 *
+	 * The magnitude of x is limited to 9.231948545 for DEC
+	 * arithmetic; 1 or -1 is returned outside this range.
+	 *
+	 * For 0 <= |x| < 1, erf(x) = x * P4(x**2)/Q5(x**2); otherwise
+	 * erf(x) = 1 - erfc(x).
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC       0,1         14000       4.7e-17     1.5e-17
+	 *    IEEE      0,1         30000       3.7e-16     1.0e-16
+	 *
+	 */
+	private void erf(double x)
+	{
+	double pol, p1, z;
+
+	if( Math.abs(x) > 1.0 ) {
+		erfc(x);
+		result[0] = 1.0 - result[0];
+		return;
+	}
+	z = x * x;
+	polevl(z, T, 4);
+	pol = result[0];
+	p1evl(z, U, 5);
+	p1 = result[0];
+	result[0] = x * pol / p1;
+	return;
+	}
+	
+	/*							erfc.c
+	 *
+	 *	Complementary error function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, erfc();
+	 *
+	 * y = erfc( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 *
+	 *  1 - erf(x) =
+	 *
+	 *                           inf. 
+	 *                             -
+	 *                  2         | |          2
+	 *   erfc(x)  =  --------     |    exp( - t  ) dt
+	 *               sqrt(pi)   | |
+	 *                           -
+	 *                            x
+	 *
+	 *
+	 * For small x, erfc(x) = 1 - erf(x); otherwise rational
+	 * approximations are computed.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC       0, 9.2319   12000       5.1e-16     1.2e-16
+	 *    IEEE      0,26.6417   30000       5.7e-14     1.5e-14
+	 *
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition              value returned
+	 * erfc underflow    x > 9.231948545 (DEC)       0.0
+	 *
+	 *
+	 */
+	private void erfc(double a)
+	{
+	double p,q,x,y,z;
+
+
+	if( a < 0.0 )
+		x = -a;
+	else
+		x = a;
+
+	if( x < 1.0 ) {
+		erf(a);
+		result[0] = 1.0 - result[0];
+		return;
+	}
+
+	z = -a * a;
+
+	if( z < -MAXLOG )
+		{
+	under:
+			System.err.println("Underflow in erfc()");
+			if( a < 0 ) {
+				result[0] = 2.0;
+				return;
+			}
+			else {
+				result[0] = 0.0;
+				return;
+			}
+		
+		} // if( z < -MAXLOG )
+
+	z = Math.exp(z);
+
+	if( x < 8.0 )
+		{
+		polevl( x, P, 8 );
+		p = result[0];
+		p1evl( x, Q, 8 );
+		q = result[0];
+		}
+	else
+		{
+		polevl( x, R, 5 );
+		p = result[0];
+		p1evl( x, S, 6 );
+		q = result[0];
+		}
+	y = (z * p)/q;
+
+	if( a < 0 )
+		y = 2.0 - y;
+
+	if ( y == 0.0 ) {
+		System.err.println("Underflow in erfc()");
+		if( a < 0 ) {
+			result[0] = 2.0;
+			return;
+		}
+		else {
+			result[0] = 0.0;
+			return;
+		}	
+	} // if ( y == 0.0 )
+
+	result[0] = y;
+	return;
+	}
+	
+	/*							ndtr.c
+	 *
+	 *	Normal distribution function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, ndtr();
+	 *
+	 * y = ndtr( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the area under the Gaussian probability density
+	 * function, integrated from minus infinity to x:
+	 *
+	 *                            x
+	 *                             -
+	 *                   1        | |          2
+	 *    ndtr(x)  = ---------    |    exp( - t /2 ) dt
+	 *               sqrt(2pi)  | |
+	 *                           -
+	 *                          -inf.
+	 *
+	 *             =  ( 1 + erf(z) ) / 2
+	 *             =  erfc(z) / 2
+	 *
+	 * where z = x/sqrt(2). Computation is via the functions
+	 * erf and erfc.
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC      -13,0         8000       2.1e-15     4.8e-16
+	 *    IEEE     -13,0        30000       3.4e-14     6.7e-15
+	 *
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition         value returned
+	 * erfc underflow    x > 37.519379347       0.0
+	 *
+	 */
+	private void ndtr(double a)
+	{
+	double x, y, z;
+
+	x = a * SQRTH;
+	z = Math.abs(x);
+
+	if( z < SQRTH ) {
+		erf(x);
+		y = 0.5 + 0.5 * result[0];
+	}
+
+	else
+		{
+		erfc(z);
+		y = 0.5 * result[0];
+
+		if( x > 0 )
+			y = 1.0 - y;
+		}
+
+	result[0] = y;
+	return;
 	}
 	
 	/*							igami()
@@ -1168,4 +1575,332 @@ public class Cephes {
 		return;
 	}
 	
+	/*							ellie.c
+	 *
+	 *	Incomplete elliptic integral of the second kind
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double phi, m, y, ellie();
+	 *
+	 * y = ellie( phi, m );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Approximates the integral
+	 *
+	 *
+	 *                phi
+	 *                 -
+	 *                | |
+	 *                |                   2
+	 * E(phi_\m)  =    |    sqrt( 1 - m sin t ) dt
+	 *                |
+	 *              | |    
+	 *               -
+	 *                0
+	 *
+	 * of amplitude phi and modulus m, using the arithmetic -
+	 * geometric mean algorithm.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at random arguments with phi in [-10, 10] and m in
+	 * [0, 1].
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC        0,2         2000       1.9e-16     3.4e-17
+	 *    IEEE     -10,10      150000       3.3e-15     1.4e-16
+	 *
+	 *
+	 */
+	
+
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1984, 1987, 1993 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+
+	/*	Incomplete elliptic integral of second kind	*/
+
+	private void ellie(double phi, double m )
+	{
+	double a, b, c, e, temp;
+	double lphi, t, E;
+	int d, mod, npio2, sign;
+
+	if( m == 0.0 ) {
+		result[0] = phi;
+		return;
+	}
+	lphi = phi;
+	npio2 =(int)Math.floor( lphi/PIO2 );
+	if(( npio2 & 1 ) != 0)
+		npio2 += 1;
+	lphi = lphi - npio2 * PIO2;
+	if( lphi < 0.0 )
+		{
+		lphi = -lphi;
+		sign = -1;
+		}
+	else
+		{
+		sign = 1;
+		}
+	a = 1.0 - m;
+	ellpe(a);
+	E = result[0];
+	if( a == 0.0 )
+		{
+		temp = Math.sin( lphi );
+		if( sign < 0 )
+			temp = -temp;
+		temp += npio2 * E;
+		result[0] = temp;
+		return;
+		}
+	t = Math.tan( lphi );
+	b = Math.sqrt(a);
+	/* Thanks to Brian Fitzgerald <fitzgb@mml0.meche.rpi.edu>
+	   for pointing out an instability near odd multiples of pi/2.  */
+	if( Math.abs(t) > 10.0 )
+		{
+		/* Transform the amplitude */
+		e = 1.0/(b*t);
+		/* ... but avoid multiple recursions.  */
+		if( Math.abs(e) < 10.0 )
+			{
+			e = Math.atan(e);
+			ellie(e,m);
+			temp = E + m * Math.sin( lphi ) * Math.sin( e ) - result[0];
+			if( sign < 0 )
+				temp = -temp;
+			temp += npio2 * E;
+			result[0] = temp;
+			return;
+			}
+		}
+	c = Math.sqrt(m);
+	a = 1.0;
+	d = 1;
+	e = 0.0;
+	mod = 0;
+
+	while( Math.abs(c/a) > MACHEP )
+		{
+		temp = b/a;
+		lphi = lphi + Math.atan(t*temp) + mod * Math.PI;
+		mod = (int)((lphi + PIO2)/Math.PI);
+		t = t * ( 1.0 + temp )/( 1.0 - temp * t * t );
+		c = ( a - b )/2.0;
+		temp = Math.sqrt( a * b );
+		a = ( a + b )/2.0;
+		b = temp;
+		d += d;
+		e += c * Math.sin(lphi);
+		}
+
+	ellpk(1.0 - m);
+	temp = E / result[0];
+	temp *= (Math.atan(t) + mod * Math.PI)/(d * a);
+	temp += e;
+
+	done:
+
+	if( sign < 0 )
+		temp = -temp;
+	temp += npio2 * E;
+	result[0] = temp;
+	return;
+	}
+	
+	/*							ellpe.c
+	 *
+	 *	Complete elliptic integral of the second kind
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double m1, y, ellpe();
+	 *
+	 * y = ellpe( m1 );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Approximates the integral
+	 *
+	 *
+	 *            pi/2
+	 *             -
+	 *            | |                 2
+	 * E(m)  =    |    sqrt( 1 - m sin t ) dt
+	 *          | |    
+	 *           -
+	 *            0
+	 *
+	 * Where m = 1 - m1, using the approximation
+	 *
+	 *      P(x)  -  x log x Q(x).
+	 *
+	 * Though there are no singularities, the argument m1 is used
+	 * rather than m for compatibility with ellpk().
+	 *
+	 * E(1) = 1; E(0) = pi/2.
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC        0, 1       13000       3.1e-17     9.4e-18
+	 *    IEEE       0, 1       10000       2.1e-16     7.3e-17
+	 *
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * ellpe domain      x<0, x>1            0.0
+	 *
+	 */
+	
+	/*							ellpe.c		*/
+
+	/* Elliptic integral of second kind */
+
+	/*
+	Cephes Math Library, Release 2.1:  February, 1989
+	Copyright 1984, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	private void ellpe(double x)
+	{
+    double pol1, pol2;
+    // hcephes_ellpe adds line by danilo x = 1.0 - x
+	if( (x <= 0.0) || (x > 1.0) )
+		{
+		if( x == 0.0 ) {
+			result[0] = 1.0;
+			return;
+		}
+		MipavUtil.displayError("Domain error in ellpe()");
+		result[0] = 0.0;
+		return;
+		}
+	polevl(x,PELLPE,10);
+	pol1 = result[0];
+	polevl(x,QELLPE,9);
+	pol2 = result[0];
+	result[0] = pol1 - Math.log(x) * (x * pol2);
+	return;
+	}
+	
+	/*							ellpk.c
+	 *
+	 *	Complete elliptic integral of the first kind
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double m1, y, ellpk();
+	 *
+	 * y = ellpk( m1 );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Approximates the integral
+	 *
+	 *
+	 *
+	 *            pi/2
+	 *             -
+	 *            | |
+	 *            |           dt
+	 * K(m)  =    |    ------------------
+	 *            |                   2
+	 *          | |    sqrt( 1 - m sin t )
+	 *           -
+	 *            0
+	 *
+	 * where m = 1 - m1, using the approximation
+	 *
+	 *     P(x)  -  log x Q(x).
+	 *
+	 * The argument m1 is used rather than m so that the logarithmic
+	 * singularity at m = 1 will be shifted to the origin; this
+	 * preserves maximum accuracy.
+	 *
+	 * K(0) = pi/2.
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC        0,1        16000       3.5e-17     1.1e-17
+	 *    IEEE       0,1        30000       2.5e-16     6.8e-17
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * ellpk domain       x<0, x>1           0.0
+	 *
+	 */
+	
+	/*							ellpk.c */
+
+
+	/*
+	Cephes Math Library, Release 2.0:  April, 1987
+	Copyright 1984, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+
+	private void ellpk(double x)
+	{
+		double pol1, pol2;
+		 // hcephes_ellpk adds line by danilo x = 1.0 - x
+
+	if( (x < 0.0) || (x > 1.0) )
+		{
+		MipavUtil.displayError("Domain error in ellpk()");
+		result[0] = 0.0;
+		return;
+		}
+
+	if( x > MACHEP )
+		{
+		polevl(x,PELLPK,10);
+		pol1 = result[0];
+		polevl(x,QELLPK,10);
+		pol2 = result[0];
+		result[0] = pol1 - Math.log(x) * pol2;
+		}
+	else
+		{
+		if( x == 0.0 )
+			{
+			MipavUtil.displayError("Singularity in ellpk()");
+			result[0] = MAXNUM;
+			return;
+			}
+		else
+			{
+			result[0] = C1 - 0.5 * Math.log(x);
+			return;
+			}
+		}
+	}
 }
