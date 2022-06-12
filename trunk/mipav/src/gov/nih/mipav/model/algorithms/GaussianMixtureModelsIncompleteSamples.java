@@ -355,6 +355,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    
 	    // plot data vs true model
 	    plotResults(orig, data, gmm, /*patch=ps,*/ "Truth", disp);
+	    printResults(gmm, "Truth");
 	    
 	    // repeated runs: store results and logL
 	    double l[] = new double[T];
@@ -391,6 +392,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    double test1time = (System.currentTimeMillis() - start)/1000.0;
 	    System.out.println("Test 1 execution time = " + test1time + " seconds");
 	    plotResults(orig, data, avg, /*ps,*/ "Standard EM", Double.NaN);
+	    printResults(avg, "Standard EM");
 	    
 	    // 2) EM without imputation, deconvolving via Extreme Deconvolution
 	    start = System.currentTimeMillis();
@@ -409,6 +411,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    double test2time = (System.currentTimeMillis() - start)/1000.0;
 	    System.out.println("Test 2 execution time = " + test2time + " seconds");
 	    plotResults(orig, data, avg, /*ps,*/ "Standard EM & noise deconvolution", disp);
+	    printResults(avg, "Standard EM & noise deconvolution");
 	    
 	    // 3) pygmmis with imputation, igoring errors
 	    // We need a good initial location to explore the
@@ -437,6 +440,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    double test3time = (System.currentTimeMillis() - start)/1000.0;
 	    System.out.println("Test 3 execution time = " + test3time + " seconds");
 	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis}",Double.NaN);
+	    printResults(avg,"mathtt{GMMis}");
 	    
 	    // 4) pygmmis with imputation, incorporating errors
 	    //covar_cb = partial(pygmmis.covar_callback_default, default=np.eye(D)*disp**2)
@@ -470,6 +474,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    double test4time = (System.currentTimeMillis() - start)/1000.0;
 	    System.out.println("Test 4 execution time = " + test4time + " seconds");
 	    plotResults(orig, data, avg, /*ps,*/ "mathtt{GMMis} & noise deconvolution",Double.NaN);
+	    printResults(avg, "mathtt{GMMis} & noise deconvolution");
 	    
 	    if (T > 1) {
 	        plotDifferences(orig, data, gmms, avg, l/*, patch=ps*/);
@@ -492,6 +497,28 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    //GMM stacked = stack_fit(gmms, data, covarstack, init_callback, w, cutoff, 
 	    		//sel_callback, covar_callback, bg, L, tol, rng);
 	} // public void test()
+	
+	public void printResults(GMM gmm, String description) {
+		int i,j,m;
+	    System.out.println("Results for " + description);
+	    System.out.println("gmm.K = " + gmm.K);
+	    System.out.println("gmm.D = " + gmm.D);
+	    for (i = 0; i < gmm.K; i++) {
+	    	System.out.println("amp["+i+"] = " + gmm.amp[i]);
+	    }
+	    for (i = 0; i < gmm.K; i++) {
+	    	for (j = 0; j < gmm.D; j++) {
+	    		System.out.println("mean["+i+"]["+j+"] = " + gmm.mean[i][j]);
+	    	}
+	    }
+	    for (i = 0; i < gmm.K; i++) {
+	    	for (j = 0; j < gmm.D; j++) {
+	    		for (m = 0; m < gmm.D; m++) {
+	    			System.out.println("covar["+i+"]["+j+"]["+m+"] = " + gmm.covar[i][j][m]);
+	    		}
+	    	}
+	    }
+	}
 	
 	public GMM stack_fit(GMM gmms[], double data[][], double covar[][][], String init_callback, double w, double cutoff, 
 			String sel_callback, String covar_callack, Background bg,
