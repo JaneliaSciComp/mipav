@@ -4196,7 +4196,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
             }
         }
     	for (i = 0; i < k.length; i++) {
-            gmm.amp[k[i]] = 1/gmm.K;
+            gmm.amp[k[i]] = 1.0/gmm.K;
     	}
         // set model to random positions with equally sized spheres within
         // volumne spanned by data
@@ -4205,17 +4205,17 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		double max_pos[] = new double[D];
 		double vol_data = 1.0;
 		for (j = 0; j < D; j++) {
-			min_pos[D] = Double.MAX_VALUE;
-			max_pos[D] = -Double.MAX_VALUE;
+			min_pos[j] = Double.MAX_VALUE;
+			max_pos[j] = -Double.MAX_VALUE;
 			for (i = 0; i < data.length; i++) {
-				if (data[i][j] < min_pos[D]) {
-					min_pos[D] = data[i][j];
+				if (data[i][j] < min_pos[j]) {
+					min_pos[j] = data[i][j];
 				}
-				if (data[i][j] > max_pos[D]) {
-					max_pos[D] = data[i][j];
+				if (data[i][j] > max_pos[j]) {
+					max_pos[j] = data[i][j];
 				}
 			}
-			vol_data *= (max_pos[D] - min_pos[D]);
+			vol_data *= (max_pos[j] - min_pos[j]);
 		}
 		for (i = 0, index = 0; i < k.length; i++) {
 			for (j = 0; j < gmm.D; j++) {
