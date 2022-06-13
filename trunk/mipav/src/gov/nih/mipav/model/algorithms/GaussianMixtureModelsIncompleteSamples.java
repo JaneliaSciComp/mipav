@@ -3692,7 +3692,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         		for (i = 0; i < R_.length; i++) {
         			for (j = 0; j < gmm.D; j++) {
         				for (m = 0; m < gmm.D; m++) {
-        				    T_inv_k[i][j][m] = RCR[i][j][m] + covar_[i][j][m];
+        				    T_inv_k[i][j][m] = RCR[i][j][m] + covar_[Math.min(i,covar_.length-1)][j][m];
         				}	
         			}
         		}
