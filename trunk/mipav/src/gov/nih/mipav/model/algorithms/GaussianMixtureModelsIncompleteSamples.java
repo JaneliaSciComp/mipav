@@ -322,7 +322,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    for (i = 0; i < N; i++) {
 	    	ranarr[i] = rng.nextDouble();
 	    }
-	    double omega[] = getSelection(sel_type,noisy);
+	    double omega[] = getSelection(sel_type,noisy,rng);
 	    
 	    boolean sel[] = new boolean[N];
 	    int numSel = 0;
@@ -498,6 +498,87 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    		//sel_callback, covar_callback, bg, L, tol, rng);
 	} // public void test()
 	
+	public void test_3D() {
+		int c,i,j,m,r;
+		int N = 10000;
+	    int K = 50;
+	    int D = 3;
+	    int C = 50;
+	    double w = 0.001;
+	    double inner_cutoff = 1;
+	    
+	    long seed = 42;
+	    Random rng = new Random(seed);
+	    
+	    // define selection and create Omega in cube:
+	    // expensive, only do once
+	    //sel_callback = partial(slopeSel, rng=rng)
+	    String sel_callback = null;
+	    
+	    double omega_cube[][][] = new double[C][C][C];
+	    for (i = 0; i < C; i++) {
+	    	for (j = 0; j < C; j++) {
+	    	    for (m = 0; m < C; m++) {
+	    	    	omega_cube[i][j][m] = 1.0;
+	    	    }
+	    	}
+	    }
+	    for (c = 0; c < C; c++) {
+	    	for (j = 0; j < C; j++) {
+	    		for (m = 0; m < C; m++) {
+	    			omega_cube[c][j][m] *= 1 - (c+0.5)/C;
+	    		}
+	    	}
+	    }
+
+	    double count_cube[][][] = new double[C][C][C];
+	    double count__cube[][][] = new double[C][C][C];
+	    double count0_cube[][][] = new double[C][C][C];
+
+	    int R = 10;
+	    double amp0[] = new double[R*K];
+	    double frac[] = new double[R*K];
+	    double Omega[] = new double[R*K];
+	    double assoc_frac[] = new double[R*K];
+	    double posterior[] = new double[R*K];
+	    
+	    double cutoff_nd = chi2_cutoff(D, inner_cutoff);
+	    int counter = 0;
+	    for (r = 0; r < R; r++) {
+	    	System.out.println("start");
+	        // create original sample from GMM
+	        GMM gmm0 = new GMM(K, D);	
+	        initCube(gmm0, w*10, rng); // use larger size floor than in fit
+	    } // for (r = 0; r < R; r++)
+	
+	} // public void test_3D()
+	
+	public void initCube(GMM gmm, double w, Random rng) {
+		
+	}
+	
+	public double[] getSlopeSel(double coords[][], Random rng) {
+    	int i;
+        double result[] = new double[coords.length];
+        
+        for (i = 0; i < coords.length; i++) {
+        	if (rng.nextDouble() > coords[i][0]) {
+        		result[i] = 1.0;
+        	}
+        }
+        return result;
+    }
+	
+	public double[] getNoSel(double coords[][]) {
+		int i;
+        double result[] = new double[coords.length];
+        
+        for (i = 0; i < coords.length; i++) {
+            result[i] = 1.0;
+        }
+        return result;	
+	}
+	
 	public void printResults(GMM gmm, String description) {
 		int i,j,m;
 	    System.out.println("Results for " + description);
@@ -552,7 +633,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    return stacked;
 	}
 	
-	public double[] getSelection(String sel_type, double noisy[][]) {
+	public double[] getSelection(String sel_type, double noisy[][], Random rng) {
 		double omega[];
 		if (sel_type.equalsIgnoreCase("hole")) {
 	       omega = getHole(noisy);	
@@ -571,6 +652,12 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    }
 	    else if (sel_type.equalsIgnoreCase("half")) {
 	    	omega = getHalf(noisy);
+	    }
+	    else if (sel_type.equalsIgnoreCase("slopeSel")) {
+	    	omega = getSlopeSel(noisy, rng);
+	    }
+	    else if (sel_type.equalsIgnoreCase("noSel")) {
+	    	omega = getNoSel(noisy);
 	    }
 	    else {
 	    	omega = null;
@@ -2192,7 +2279,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	}
     	
     	if (sel_callback != null) {
-    	    omega = getSelection(sel_callback, data);
+    	    omega = getSelection(sel_callback, data,rng);
     	    anyomegazero = false;
     	    for (i = 0; i < omega.length; i++) {
     	    	if (omega[i] == 0.0) {
@@ -2703,7 +2790,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
         // apply selection
         if (sel_callback != null) {
         	data = dataVec.get(0);
-            omega = getSelection(sel_callback,data);
+            omega = getSelection(sel_callback,data,rng);
             selVec = new Vector<Integer>();
             for (i = 0; i < data.length; i++) {
             	if (rng.nextDouble() < omega[i]) {
@@ -2731,7 +2818,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
                 covarVec.clear();
                 _drawGMM_BG(dataVec, covarVec, gmm, updated_orig_size[0], covar_callback, background, rng);
                 data = dataVec.get(0);
-                omega = getSelection(sel_callback,data);
+                omega = getSelection(sel_callback,data,rng);
                 selVec.clear();
                 for (i = 0; i < data.length; i++) {
                 	if (rng.nextDouble() < omega[i]) {
