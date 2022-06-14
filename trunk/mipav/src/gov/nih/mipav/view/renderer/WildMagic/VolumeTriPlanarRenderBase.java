@@ -2720,7 +2720,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
     		m_kVolumeRayCast.setHyperStack(images, colormap);
     	}
     }
-
+    
+    public void setImageOn(int which, boolean on) {
+    	if ( m_kVolumeRayCast != null ) {
+    		m_kVolumeRayCast.setImageOn(which, on);
+    	}
+    }
 	/**
 	 * Sets the ModelImage to use as an alternative to the volume ModelImage for
 	 * surface texturing.

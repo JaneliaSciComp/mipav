@@ -178,13 +178,13 @@ implements StreamInterface
 	    	+ "in vec3 varTexCoord;" + "\n"
     	+ "uniform mat4 WVPMatrix;" + "\n"
     	+ "uniform sampler3D bVolumeImageA; " + "\n"
-    	+ "uniform sampler1D cColorMapA; " + "\n"
+    	+ "uniform sampler2D cColorMapA; " + "\n"
     	+ "uniform float Blend; " + "\n"
     	+ "" + "\n";
 	
 	private static String basicParametersB = ""
     	+ "uniform sampler3D jVolumeImageB; " + "\n"
-    	+ "uniform sampler1D kColorMapB; " + "\n"
+    	+ "uniform sampler2D kColorMapB; " + "\n"
     	+ "uniform float ABBlend; " + "\n"
     	+ "" + "\n";
 
@@ -233,38 +233,46 @@ implements StreamInterface
     	
     	text += "vec4 kOutputColor = vec4(0.0);" + "\n";
     	text += "vec4 color = texture(bVolumeImageA, varTexCoord, 0.0 );" + "\n";
+		text += "vec2 cm = vec2(0.0);" + "\n";
     	if ( m_kVolumeImageA.GetImage().isColorImage() )
     	{
     		if ( rgbA != null )
     		{
     			if ( rgbA.getROn() )
     			{
-    				text += "kOutputColor.r = texture(cColorMapA,color.r, 0.0).r;" + "\n";
+    	    		text += "cm.r = color.r;" + "\n";
+    				text += "kOutputColor.r = texture(cColorMapA,cm, 0.0).r;" + "\n";
     			}
     			if ( rgbA.getGOn() )
     			{
-    				text += "kOutputColor.g = texture(cColorMapA,color.g, 0.0).g;" + "\n";
+    	    		text += "cm.r = color.g;" + "\n";
+    				text += "kOutputColor.g = texture(cColorMapA,cm, 0.0).g;" + "\n";
     			}
     			if ( rgbA.getBOn() )
     			{
-    				text += "kOutputColor.b = texture(cColorMapA,color.b, 0.0).b;" + "\n";
+    	    		text += "cm.r = color.b;" + "\n";
+    				text += "kOutputColor.b = texture(cColorMapA,cm, 0.0).b;" + "\n";
     			}
     		}
     	}
     	else
     	{
-    		text += "kOutputColor.rgb = texture(cColorMapA, color.r, 0.0).rgb;" + "\n";
+    		text += "cm.r = color.r;" + "\n";
+    		text += "kOutputColor.rgb = texture(cColorMapA, cm, 0.0).rgb;" + "\n";
+//    		text += "kOutputColor.rgb = texture(cColorMapA, color.r, 0.0).rgb;" + "\n";
     	}
     	if ( m_kVolumeImageB.GetImage() != null )
     	{
     		text += "color = texture(jVolumeImageB, varTexCoord, 0.0 );" + "\n";
+    		text += "cm.r = color.r;" + "\n";
     		if ( m_kVolumeImageB.GetImage().isColorImage() )
     		{
     			if ( rgbB != null )
     			{
     				if ( rgbB.getROn() )
     				{
-    					text += "kOutputColor.r = ABBlend * kOutputColor.r + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).r;" + "\n";
+    	        		text += "cm.r = color.r;" + "\n";
+    					text += "kOutputColor.r = ABBlend * kOutputColor.r + (1.0 - ABBlend) * texture(kColorMapB, cm, 0.0).r;" + "\n";
     				}
     				else
     				{
@@ -272,7 +280,8 @@ implements StreamInterface
     				}
     				if ( rgbB.getGOn() )
     				{
-    					text += "kOutputColor.g = ABBlend * kOutputColor.g + (1.0 - ABBlend) * texture(kColorMapB, color.g, 0.0).g;" + "\n";
+    	        		text += "cm.r = color.g;" + "\n";
+    					text += "kOutputColor.g = ABBlend * kOutputColor.g + (1.0 - ABBlend) * texture(kColorMapB, cm, 0.0).g;" + "\n";
     				}
     				else
     				{
@@ -280,7 +289,8 @@ implements StreamInterface
     				}
     				if ( rgbB.getBOn() )
     				{
-    					text += "ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture(kColorMapB, color.b, 0.0).b;" + "\n";
+    	        		text += "cm.r = color.b;" + "\n";
+    					text += "ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture(kColorMapB, cm, 0.0).b;" + "\n";
     				}
     				else
     				{
@@ -290,7 +300,8 @@ implements StreamInterface
     		}
     		else
     		{
-    			text += "kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).rgb;" + "\n";
+//    			text += "kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).rgb;" + "\n";
+    			text += "kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture(kColorMapB, cm, 0.0).rgb;" + "\n";
     		}
     	}
     	
