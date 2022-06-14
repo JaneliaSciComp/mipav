@@ -302,8 +302,17 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     	super.SetClipOBB(center, scale, axes, extents, bEnable);
     	checkPixelProgram();
     }
+    
+    public void SetImageOn(int which, boolean on) {
+    	if ( which >= 0 && which < imageOn.length ) {
+    		if ( imageOn[which] != on ) {
+    			imageOn[which] = on;
+    			createProgramText();
+    		}
+    	}
+    }
 
-   
+
     private void checkPixelProgram()
     {
     	createProgramText();

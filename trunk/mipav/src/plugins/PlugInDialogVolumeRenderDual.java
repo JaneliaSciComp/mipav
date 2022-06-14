@@ -156,7 +156,6 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JPanel choicePanel;
 	private JButton closeButton;
 	private JRadioButton createAnimation;
-	private JDialogStandalonePlugin dialogGUI;
 	private GuiBuilder gui;
 	private JButton doneButton;
 	private JRadioButton editLattice;
@@ -170,7 +169,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private JPanel inputsPanel;
 	private JPanel optionsPanel;
 	private JPanel displayControls;
-	// private JRadioButton[] latticeChoices;
+	private JPanel imageChannels;
+
 	private JPanel latticeSelectionPanel;
 	private JRadioButton latticeStraighten;
 
@@ -301,6 +301,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
+		Object source = event.getSource();
 		
 		if ( command.equals("BrowseConclude") ) {
 			UntwistDialog inputs = new UntwistDialog(baseFileLocText.getText());
@@ -819,6 +820,15 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 				activeImage.voiManager.setPaddingFactor(paddingFactor);
 			}
 		} 
+		
+		if ( source instanceof JCheckBox ) {
+			boolean selected = ((JCheckBox)source).isSelected();
+			int which =  imageChannel(command);
+//			System.err.println(which + "  " + selected );
+			if ( which != -1 ) {
+				activeRenderer.setImageOn(which, selected);	
+			}
+		}
 	}
 
 	private void checkAnnotations() {
@@ -958,6 +968,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			renderer.resetAxisXInv();
 		}
 
+
+		initImageChannels(activeImage);
 		updateHistoLUTPanels(activeImage);
 		updateClipPanel(activeImage, activeRenderer, true);
 		updateSurfacePanels();
@@ -2142,7 +2154,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 		}
 
-		dialogGUI = new JDialogStandalonePlugin();
+		JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
 		GuiBuilder gui = new GuiBuilder(dialogGUI);
 
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -2235,7 +2247,11 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		displayControls.add(dialogGUI.getContentPane(), BorderLayout.NORTH);
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.add(displayControls, BorderLayout.NORTH);
-		leftPanel.add(tabbedPane, BorderLayout.CENTER);
+		
+		imageChannels = new JPanel();
+		imageChannels.add(new JLabel("Select image channel:") );
+		leftPanel.add(imageChannels, BorderLayout.CENTER);
+		leftPanel.add(tabbedPane, BorderLayout.SOUTH);
 
 		JScrollPane scroller = new JScrollPane(leftPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -2273,7 +2289,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private Container initGPUPanel(int editMode) {
 		MipavInitGPU.InitGPU();
 
-		dialogGUI = new JDialogStandalonePlugin();
+		JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
 		gui = new GuiBuilder(dialogGUI);
 
 		backNextPanel = new JPanel();
@@ -2991,6 +3007,37 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		return (includeRange != null);
 	}
 
+	private boolean imageChannelsInit = false;
+	private void initImageChannels(IntegratedWormData integratedData) {
+		if ( imageChannelsInit ) return;
+		imageChannelsInit = true;
+		int numImages = integratedData.hyperstack.length;
+		String[] subDir = new String[numImages];
+		for ( int i = 0; i < numImages; i++ ) {
+			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
+			int len = baseFileDir[i].length();
+			subDir[i] = baseFileDir[i].substring(index,len);
+			JCheckBox box = new JCheckBox(subDir[i], true);
+			box.setActionCommand(subDir[i]);
+			box.addActionListener(this);
+			imageChannels.add( box );
+		}
+	}
+	
+	private int imageChannel(String cmd) {
+
+		int numImages = activeImage.hyperstack.length;
+		for ( int i = 0; i < numImages; i++ ) {
+			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
+			int len = baseFileDir[i].length();
+			String subDir = baseFileDir[i].substring(index,len);
+			if ( subDir.equals(cmd) ) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	/**
 	 * Creates or updates the histogram / LUT panel and opacity panels when a new
 	 * image is loaded.
@@ -3080,7 +3127,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	}
 
 	private void updateHistoLUTPanels(IntegratedWormData integratedData) {
-		 System.err.println("updateHistoLUTPanels");
+//		 System.err.println("updateHistoLUTPanels");
 		// integratedData.wormImage.getImageName() + " " +
 		// integratedData.lutHistogramPanel.getContainingPanel() );
 		int numImages = integratedData.hyperstack.length;

@@ -39,10 +39,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform float ABBlend;" + "\n";
 
 	private static String colorMapA = ""
-    	+ "uniform sampler1D cColorMapA;" + "\n";
+    	+ "uniform sampler2D cColorMapA;" + "\n";
 	
 	private static String colorMapB = ""
-	    	+ "uniform sampler1D kColorMapB;" + "\n";
+	    	+ "uniform sampler2D kColorMapB;" + "\n";
 
 	private static String colorMapGMA = ""
     	+ "uniform sampler1D gOpacityMapA_GM;" + "\n";
@@ -203,18 +203,26 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "color = texture(jVolumeImageB,position, 0.0);" + "\n";
 
     private static String readColorMapA = ""
-    	+ "color = texture(cColorMapA,color.r, 0.0);" + "\n"
+        + "vec2 cm = vec2(0.0);" + "\n"
+        + "cm.r = color.r;" + "\n"
+    	+ "color = texture(cColorMapA,cm, 0.0);" + "\n"
+//    	+ "color = texture(cColorMapA,color.r, 0.0);" + "\n"
     	+ "opacity = color.a;" + "\n";
 
     private static String readColorMapB = ""
-    	+ "color = texture(kColorMapB,color.r, 0.0);" + "\n"
+        + "vec2 cm = vec2(0.0);" + "\n"
+        + "cm.r = color.r;" + "\n"
+        + "color = texture(kColorMapB,cm, 0.0);" + "\n"
+//    	+ "color = texture(kColorMapB,color.r, 0.0);" + "\n"
     	+ "opacity = color.a;" + "\n";
 
     private static String readColorMapRGBA = ""
+        + "vec2 cm = vec2(0.0);" + "\n"
+        + "cm.r = color.r;" + "\n"
     	+ "vec4 colorTemp = vec4(0);" + "\n"
     	+ "opacity = 0;" + "\n"
     	+ "if ( ColorLUTOnA.x != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture(cColorMapA,color.r, 0.0);" + "\n"
+    	+ "   colorTemp = texture(cColorMapA,cm, 0.0);" + "\n"
     	+ "   color.r = colorTemp.r;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -222,7 +230,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.r = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnA.y != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture(cColorMapA,color.g, 0.0);" + "\n"
+        + "   cm.r = color.g;" + "\n"
+    	+ "   colorTemp = texture(cColorMapA,cm, 0.0);" + "\n"
     	+ "   color.g = colorTemp.g;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -230,7 +239,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.g = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnA.z != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture(cColorMapA,color.b, 0.0);" + "\n"
+        + "   cm.r = color.b;" + "\n"
+    	+ "   colorTemp = texture(cColorMapA,cm, 0.0);" + "\n"
     	+ "   color.b = colorTemp.b;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -239,10 +249,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "}" + "\n";
 
     private static String readColorMapRGBB = ""
+        + "vec2 cm = vec2(0.0);" + "\n"
+        + "cm.r = color.r;" + "\n"
     	+ "vec4 colorTemp = vec4(0);" + "\n"
     	+ "opacity = 0;" + "\n"
     	+ "if ( ColorLUTOnB.x != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture(kColorMapB,color.r, 0.0);" + "\n"
+    	+ "   colorTemp = texture(kColorMapB,cm, 0.0);" + "\n"
     	+ "   color.r = colorTemp.r;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -250,7 +262,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.r = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnB.y != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture(kColorMapB,color.g, 0.0);" + "\n"
+        + "   cm.r = color.g;" + "\n"
+    	+ "   colorTemp = texture(kColorMapB,cm, 0.0);" + "\n"
     	+ "   color.g = colorTemp.g;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -258,7 +271,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.g = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnB.z != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture(kColorMapB,color.b, 0.0);" + "\n"
+        + "   cm.r = color.b;" + "\n"
+    	+ "   colorTemp = texture(kColorMapB,cm, 0.0);" + "\n"
     	+ "   color.b = colorTemp.b;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
