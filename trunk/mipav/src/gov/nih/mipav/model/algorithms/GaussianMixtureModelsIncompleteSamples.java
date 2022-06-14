@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.*;
 
 import Jama.Matrix;
+import Jama.QRDecomposition;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
@@ -210,6 +211,37 @@ archivePrefix = "arXiv",
                                                  invert_sel=False, orig_size=None,\
                                                  covar_callback=covar_cb,background=bg)
  */
+
+/**
+ * dirichletRnd ported from mixGaussRnd.m by Mo Chen
+ * Copyright (c) 2016, Mo Chen
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution
+* Neither the name of  nor the names of its
+  contributors may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+   
 
 public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	private int K; // K components
@@ -554,8 +586,113 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	} // public void test_3D()
 	
 	public void initCube(GMM gmm, double w, Random rng) {
-		
+		int i,j,k;
+		double var;
+		double ain[] = new double[gmm.K];
+		double m[] = new double[gmm.K];
+		for (i = 0; i < gmm.K; i++) {
+			ain[i] = 1.0;
+			m[i] = 1.0;
+		}
+	    gmm.amp = dirichletRnd(ain, m);	
+	    for (i = 0; i < gmm.K; i++) {
+	    	for (j = 0; j < gmm.D; j++) {
+	    		gmm.mean[i][j] = rng.nextDouble();
+	    	}
+	    }
+	    for (k = 0; k < gmm.K; k++) {
+	        for (i = 0; i < gmm.D; i++) {
+	        	for (j = 0; j < gmm.D; j++) {
+	        		if (i == j) {
+	        		    var = w + rng.nextDouble()/30.0;
+	        		    gmm.covar[k][i][j] = var*var;
+	        		}
+	        		else {
+	        			gmm.covar[k][i][j] = 0.0;
+	        		}
+	        	}
+	        }
+	    } // for (k = 0; k < gmm.K; k++)
+	    // use random rotations for each component covariance
+	    // from http://www.mathworks.com/matlabcentral/newsreader/view_thread/298500
+	    // since we don't care about parity flips we don't have to check
+	    // the determinant of R (and hence don't need R)
+	    double normalArr[][] = new double[gmm.D][gmm.D];
+	    for (k = 0; k < gmm.K; k++) {
+	        for (i = 0; i < gmm.D; i++) {
+	        	for (j = 0; j < gmm.D; j++) {
+	        		normalArr[i][j] = rng.nextGaussian();
+	        		Matrix normalMat = new Matrix(normalArr);
+	        		QRDecomposition QR = new QRDecomposition(normalMat);
+	        		Matrix QMat = QR.getQ();
+	        		Matrix QTMat = QMat.transpose();
+	        		Matrix covarMat = new Matrix(gmm.covar[k]);
+	        		Matrix cQT = covarMat.times(QTMat);
+	        		Matrix QcQT = QMat.times(cQT);
+	        		gmm.covar[k] = QcQT.getArray();
+	        	}
+	        }
+	    } // for (k = 0; k < gmm.K; k++)
 	}
+	
+	public double[] dirichletRnd(double ain[], double m[]) {
+		// Generate samples from a Dirichlet distribution.
+		// Input:
+		//   a: k dimensional vector
+		//   m: k dimensional mean vector
+		// Output:
+		//   x: generated sample x~Dir(a,m)
+		// Written by Mo Chen (sth4nth@gmail.com).
+        int i;
+        double a[] = new double[m.length];
+		for (i = 0; i < a.length; i++) {
+			a[i] = ain[i]*m[i];
+		}
+		double x[] = new double[m.length];
+		double sumx = 0.0;
+		for (i = 0; i < x.length; i++) {
+			x[i] = gamrnd(a[i],1.0);
+			sumx += x[i];
+		}
+		for (i = 0; i < x.length; i++) {
+			x[i] = x[i]/sumx;
+		}
+		return x;
+    }
+	
+	public double gamrnd(double a, double b) {
+   	 // From A Simple Method for Generating Gamma Variables
+   	 // by George Marsaglia and Wai Wan Tsang
+   	 double d;
+   	 double c;
+   	 boolean cycle = true;
+   	 RandomNumberGen randomGen = new RandomNumberGen();
+   	 double x;
+   	 double v = 0.0;
+   	 double cuberootv;
+   	 double uniform;
+   	 double var;
+        if (a > 1) {
+            d = a - 1.0/3.0;
+            c = 1.0/Math.sqrt(9.0*d);
+            while (cycle) {
+           	 x = randomGen.genStandardGaussian();
+           	 if (x > -1.0/c) {
+           	     cuberootv = 1.0 + c*x;
+           	     v = cuberootv*cuberootv*cuberootv;
+           	     uniform = randomGen.genUniformRandomNum(0.0,1.0);
+           	     cycle= (0.5*x*x+d-d*v+d*Math.log(v)) < Math.log(uniform);
+           	 } // if (x > -1.0/c)	 
+            } // while (cycle) 
+            var = d*v/b;
+        } // if (a > 1)
+        else {
+       	 var =gamrnd(a+1,b);
+       	 uniform = randomGen.genUniformRandomNum(0.0,1.0);
+       	 var=var*Math.pow(uniform,(1.0/a));
+        }
+        return var;
+    }
 	
 	public double[] getSlopeSel(double coords[][], Random rng) {
     	int i;
