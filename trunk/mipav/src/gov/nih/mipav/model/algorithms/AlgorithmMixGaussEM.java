@@ -46,6 +46,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
+	// Results are currently unsatisfactory.
+	// 1 of the classes generated has 1 member.
 	private double X[][];
 	private int label[];
 	private model mixGaussOut;
