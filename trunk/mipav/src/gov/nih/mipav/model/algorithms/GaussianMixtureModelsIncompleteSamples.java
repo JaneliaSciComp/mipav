@@ -531,7 +531,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	} // public void test()
 	
 	public void test_3D() {
-		int c,i,j,m,r;
+		int c,i,j,k,m,r;
 		int N = 10000;
 	    int K = 50;
 	    int D = 3;
@@ -545,6 +545,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    // define selection and create Omega in cube:
 	    // expensive, only do once
 	    //sel_callback = partial(slopeSel, rng=rng)
+	    String sel_type = "slopeSel";
 	    String sel_callback = null;
 	    
 	    double omega_cube[][][] = new double[C][C][C];
@@ -581,9 +582,170 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        // create original sample from GMM
 	        GMM gmm0 = new GMM(K, D);	
 	        initCube(gmm0, w*10, rng); // use larger size floor than in fit
+	        double data0[][] = new double[N][gmm0.D];
+	        int nbh0[][] = new int[gmm0.K][];
+	        drawWithNbh(data0, nbh0, gmm0, N, rng);
+	        
+	        // apply selection
+	        double sel0[] = getSelection(sel_type, data0,rng);
+	        int numsel0 = 0;
+	        for (i = 0; i < sel0.length; i++) {
+	        	if (sel0[i] == 1.0) {
+	        		numsel0++;
+	        	}
+	        }
+	        
+	        // how often is each component used
+	        int comp0[] = new int[data0.length];
+	        for (k = 0; k < gmm0.K; k++) {
+	        	if (nbh0[k] != null) {
+	        		for (m = 0; m < nbh0[k].length; m++) {
+	                    comp0[nbh0[k][m]] = k;
+	        		}
+	        	}
+	        }
+	        int count0[] = bincount(comp0, gmm0.K);
+	        
+	        // compute effective Omega
+	        int comp[] = new int[numsel0];
+	        for (i = 0, j = 0; i < comp0.length; i++) {
+	            if (sel0[i] == 1.0) {
+	            	comp[j++] = comp0[i];
+	            }
+	        }
+	        int count[] = bincount(comp, gmm0.K);
+	        int countsum = 0;
+	        for (i = 0; i < gmm0.K; i++) {
+	        	countsum += count[i];
+	        }
+	        
+	        double frac__[] = new double[gmm0.K];
+	        for (i = 0; i < gmm0.K; i++) {
+	        	frac__[i] = (double)count[i]/(double)countsum;
+	        }
+	        double Omega__[] = new double[gmm0.K];
+	        for (i = 0; i < gmm0.K; i++) {
+	        	Omega__[i] = (double)count[i]/(double)count0[i];
+	        }
+	        
+	        // restrict to "safe" components
+	        boolean safe[] = new boolean[gmm0.K];
+	        int safesum = 0;
+	        for (i = 0; i < gmm0.K; i++) {
+	        	if (frac__[i] > 1.0/K) {
+	        		safe[i] = true;
+	        		safesum++;
+	        	}
+	        }
+	        if (safesum < gmm0.K) {
+	            System.out.println("reset to safe components");	
+	        } // if (safesum < gmm0.K)
 	    } // for (r = 0; r < R; r++)
 	
 	} // public void test_3D()
+	
+	public void drawWithNbh(double samples[][], int nbh[][], GMM gmm, int size, Random rng) {
+		// default size = 1;
+	    // draw indices for components given amplitudes, need to make sure: sum=1
+		int i,j,m,p,s;
+		double value;
+		int N_k[];
+		int counter;
+		double prob[] = new double[gmm.K];
+		double gmmampsum = 0.0;
+		for (i = 0; i < gmm.K; i++) {
+			gmmampsum += gmm.amp[i];
+		}
+		for (i = 0; i < gmm.K; i++) {
+			prob[i] = gmm.amp[i]/gmmampsum;
+		}
+		double upperLimit[] = new double[gmm.K];
+		upperLimit[gmm.K-1] = 1.0;
+		upperLimit[0] = prob[0];
+		for (i = 1; i < gmm.K-1; i++) {
+			upperLimit[i] = upperLimit[i-1] + prob[i];
+		}
+		int ind[] = new int[size];
+		for (i = 0; i < size; i++) {
+		    value = rng.nextDouble();
+		    for (j = 0; j < gmm.K; j++) {
+		    	if (value < upperLimit[j]) {
+		    		ind[i] = j;
+		    		break;
+		    	}
+		    }
+		}
+		N_k = bincount(ind, gmm.K);
+		
+		GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+		double L[][] = new double[gmm.D][gmm.D];
+		int info[] = new int[1];
+		double u[] = new double[gmm.D];
+		counter = 0;
+		for (i = 0; i < gmm.K; i++) {
+			if (N_k[i] != 0) {
+				s = N_k[i];
+			    for (j = 0; j < gmm.D; j++) {
+			    	for (m = 0; m < gmm.D; m++) {
+			    		L[j][m] = gmm.covar[i][j][m];
+			    	}
+			    }
+			    // dpotrf computes the Cholesky factorization of a real symmetric
+			    // positive definite matrix A.  The factorization has the form A = U'*U, 
+			    // if uplo = 'U', or A = L * L', if uplo = 'L', where U is an upper
+			    // triangular matrix and L is lower triangular.  If uplo == 'L', the leading n-by-n lower
+			    // triangular part of A contains the lower triangular part of the matrix A, 
+			    // and the strictly upper triangular part of A is not referenced.
+			    ge.dpotrf('L',gmm.D,L,gmm.D,info);
+			    if (info[0] < 0) {
+			    	System.err.println("In drawWithNbh dpotrf had an illegal value for argument " + (-info[0]));
+			    	System.exit(-1);
+			    }
+			    if (info[0] > 0) {
+			    	System.err.println("In drawWithNbh for dpotrf the leading minor of order " + info[0] + " is not positive definite");
+			    	System.err.println("and the factorization could not be completed.");
+			    	System.exit(-1);
+			    }
+			    for (j = 0; j < gmm.D; j++) {
+			    	for (m = j+1; m < gmm.D; m++) {
+			    		L[j][m] = 0.0;
+			    	}
+			    }
+			    for (j = counter; j < counter+s; j++) {
+			        for (m = 0; m < gmm.D; m++) {
+			        	u[m] = rng.nextGaussian();
+			        }
+			        for (m = 0; m < gmm.D; m++) {
+			        	for (p = 0; p < gmm.D; p++) {
+			        	    samples[j][m] += L[m][p]*u[p];	
+			        	}
+			        	samples[j][m] += gmm.mean[i][m];
+			        }
+			    } // for (j = counter; j < counter + s; j++)
+			    nbh[i] = new int[s];
+			    for (j = counter; j < counter + s; j++) {
+			    	nbh[i][j-counter] = j;
+			    }
+			    counter += s;
+			} // if (N_k[i] != 0)
+		} // for (i = 0; i < gmm.K; i++)
+	    return;
+	}
+	
+	public int[] bincount(int indices[], int minlength) {
+		int i,j;
+        int N[] = new int[minlength];
+		
+		for (i = 0; i < minlength; i++) {
+			for (j = 0; j < indices.length; j++) {
+				if (indices[j] == i) {
+					N[i]++;
+				}
+				
+			}
+		}
+		return N;
+	}
 	
 	public void initCube(GMM gmm, double w, Random rng) {
 		int i,j,k;
