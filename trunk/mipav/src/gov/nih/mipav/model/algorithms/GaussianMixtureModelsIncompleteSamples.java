@@ -719,6 +719,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		int L = 1;
 		double dl = L*1./C;
 		int N = coords.length;
+		// from sklearn.neighbors import KDTree
+	    // chebyshev metric: results in cube selection
+	    // tree = KDTree(coords, leaf_size=N/100, metric="chebyshev")
 	    return null;	
 	}
 	
