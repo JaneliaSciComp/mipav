@@ -531,7 +531,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	} // public void test()
 	
 	public void test_3D() {
-		int c,i,j,k,m,r;
+		int c,i,j,k,m,p,r;
 		int N = 10000;
 	    int K = 50;
 	    int D = 3;
@@ -639,10 +639,88 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        }
 	        if (safesum < gmm0.K) {
 	            System.out.println("reset to safe components");	
+	            double ampsum = 0.0;
+	            double ampsafe[] = new double[safesum];
+	            double meansafe[][] = new double[safesum][gmm0.D];
+	            double covarsafe[][][] = new double[safesum][gmm0.D][gmm0.D];
+	            for (i = 0, j = 0; i < gmm0.K; i++) {
+	            	if (safe[i]) {
+	            		ampsafe[j] = gmm0.amp[i];
+	            		ampsum += ampsafe[j];
+	            		for (m = 0; m < gmm0.D; m++) {
+	            			meansafe[j][m] = gmm0.mean[i][m];
+	            			for (p = 0; p < gmm0.D; p++) {
+	            				covarsafe[j][m][p] = gmm0.covar[i][m][p];
+	            			}
+	            		}
+	            		j++;
+	            	} // if (safe[i])
+	            } // for (i = 0, j = 0; i < gmm0.K; i++)
+	            gmm0.amp = ampsafe;
+	            for (i = 0; i < safesum; i++) {
+	            	gmm0.amp[i] /= ampsum;
+	            }
+	            gmm0.mean = meansafe;
+	            gmm0.covar = covarsafe;
+	            gmm0.K = safesum; // this line missing from original code
+	            
+	            // redraw data0 and sel0
+	            drawWithNbh(data0, nbh0, gmm0, N, rng);
+	            sel0 = getSelection(sel_type, data0,rng);
+		        numsel0 = 0;
+		        for (i = 0; i < sel0.length; i++) {
+		        	if (sel0[i] == 1.0) {
+		        		numsel0++;
+		        	}
+		        }
+	            
+		        // recompute effective Omega and frac
+	            // how often is each component used
+		        comp0 = new int[data0.length];
+		        for (k = 0; k < gmm0.K; k++) {
+		        	if (nbh0[k] != null) {
+		        		for (m = 0; m < nbh0[k].length; m++) {
+		                    comp0[nbh0[k][m]] = k;
+		        		}
+		        	}
+		        }
+		        count0 = bincount(comp0, gmm0.K);
+		        comp = new int[numsel0];
+		        for (i = 0, j = 0; i < comp0.length; i++) {
+		            if (sel0[i] == 1.0) {
+		            	comp[j++] = comp0[i];
+		            }
+		        }
+		        count = bincount(comp, gmm0.K);
+		        countsum = 0;
+		        for (i = 0; i < gmm0.K; i++) {
+		        	countsum += count[i];
+		        }
+		        
+		        frac__ = new double[gmm0.K];
+		        for (i = 0; i < gmm0.K; i++) {
+		        	frac__[i] = (double)count[i]/(double)countsum;
+		        }
+		        Omega__ = new double[gmm0.K];
 	        } // if (safesum < gmm0.K)
+	        
+	        for (i = counter; i < counter + gmm0.K; i++) {
+	        	frac[i] = frac__[i-counter];
+	        	Omega[i] = Omega__[i-counter];
+	        	amp0[i] = gmm0.amp[i-counter];
+	        }
+	        //count0_cube += binSample(data0, C)
+
 	    } // for (r = 0; r < R; r++)
 	
 	} // public void test_3D()
+	
+	public int[][][] binSample(double coords[][], int C) {
+		int L = 1;
+		double dl = L*1./C;
+		int N = coords.length;
+	    return null;	
+	}
 	
 	public void drawWithNbh(double samples[][], int nbh[][], GMM gmm, int size, Random rng) {
 		// default size = 1;
