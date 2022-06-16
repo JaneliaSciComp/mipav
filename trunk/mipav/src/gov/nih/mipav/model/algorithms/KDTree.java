@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,6 +43,46 @@ public class KDTree {
 	/* special list node allocators. */
 	static res_node free_nodes;
 	final Lock alloc = new ReentrantLock();
+	
+	public KDTree() {
+		
+	}
+	
+	public void test() {
+	    int i;
+	    int vcount = 10;
+	    kdtree kd;
+	    kdres set;
+	    Random rand = new Random();
+	    double x,y,z;
+	    int retVal;
+	    System.out.println("Inserting " + vcount + " random vectors...");
+	    kd = kd_create(3);
+	    long start = System.currentTimeMillis();
+	    for (i = 0; i < vcount; i++) {
+	        x = 200.0 * rand.nextDouble() - 100.0;
+	        y = 200.0 * rand.nextDouble() - 100.0;
+	        z = 200.0 * rand.nextDouble() - 100.0;
+	        
+	        retVal = kd_insert3(kd, x, y, z, null);
+	        if (retVal != 0) {
+	        	System.err.println("Error! kd_insert3 returned " + retVal + " instead of the expected 0");
+	        }
+	    }
+	    
+	    long executionTime1 = System.currentTimeMillis() - start;
+	    System.out.println("Execution time 1 = " + (executionTime1/1000.0) + " seconds");
+	    
+	    start = System.currentTimeMillis();
+	    set = kd_nearest_range3(kd, 0, 0, 0, 40);
+	    long executionTime2 = System.currentTimeMillis() - start;
+	    System.out.println("Range query returned " + kd_res_size(set) + " items");
+	    System.out.println("Execution time 2 = " + (executionTime2/1000.0) + " seconds");
+	    kd_res_free(set);
+
+		kd_free(kd);
+		return;
+	}
 	
 	public double SQ(double x) {
 		return x*x;
