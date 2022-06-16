@@ -688,21 +688,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         checkPixelProgram();
     }
     
-    public void SetDisplayRedAsGray( boolean display ) {
-    	m_bDisplayRedAsGray = display;
-        checkPixelProgram();
-    }
-    
-    public void SetDisplayGreenAsGray( boolean display ) {
-    	m_bDisplayGreenAsGray = display;
-        checkPixelProgram();
-    }
-    
-    public void SetDisplayBlueAsGray( boolean display ) {
-    	m_bDisplayBlueAsGray = display;
-        checkPixelProgram();
-    }
-
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend blend factor (range = 0-1).
@@ -1299,15 +1284,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		}
     		if ( m_kVolumeImageA.GetImage().isColorImage() )
     		{
-    			if ( m_bDisplayRedAsGray ) {
-    				text += useRedOnly;
-    			}
-    			else if ( m_bDisplayGreenAsGray ) {
-    				text += useGreenOnly;
-    			}
-    			else if ( m_bDisplayBlueAsGray ) {
-    				text += useBlueOnly;
-    			}
     			text += readColorMapRGBA;
     		}
     		else

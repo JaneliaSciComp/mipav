@@ -1683,39 +1683,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							continue;
 						}
 					}
-					float value;
-					if ( m_kVolumeImageA.GetImage().isColorImage() )
-					{
-						boolean useRed = m_kVolumeImageA.GetRGB().getROn();
-						boolean useGreen = m_kVolumeImageA.GetRGB().getGOn();
-						boolean useBlue = m_kVolumeImageA.GetRGB().getBOn();
-						
-						float red = 0;
-						float green = 0;
-						float blue = 0;
-						if ( useRed && !(m_kVolumeRayCast.getDisplayGreenAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray())  )
-						{
-							red = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 1);
+					float value = 0;
+					int sampleX = Math.round(p0.X);
+					int sampleY = Math.round(p0.Y);
+					int sampleZ = Math.round(p0.Z);
+					// loop over imageA, imageB, hyperstack, get value, apply color & opacity for 'value'
+					// take the maximum value:
+					if ( hyperstack != null ) {
+						for ( int h = 0; h < hyperstack.length; h++ ) {
+							if ( (hyperstack[h] != null) && (hyperstack[h].GetImage() != null) )
+							{
+								if ( m_kVolumeRayCast.getImageOn(h) )
+								{
+									value = Math.max(value, hyperstack[h].GetTransferedValue(sampleX, sampleY, sampleZ));
+								}
+							}
 						}
-						if ( useGreen && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayBlueAsGray()) )
-						{
-							green = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 2);
-						}
-						if ( useBlue && !(m_kVolumeRayCast.getDisplayRedAsGray() || m_kVolumeRayCast.getDisplayGreenAsGray())  )
-						{
-							blue = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z, 3);
-						}
-						value = Math.max(red, Math.max(green, blue) );
 					}
-					else 
+					else if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null)) {
+						float valueA = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
+						float valueB = m_kVolumeImageB.GetTransferedValue(sampleX, sampleY, sampleZ);
+						float blend = getABBlend();
+						value = (blend * valueA + (1 - blend) * valueB);
+					}
+					else
 					{
-						value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-						if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null))
-						{
-							float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-							float blend = getABBlend();
-							value = (blend * value + (1 - blend) * valueB);
-						}
+						// Only one imageA:
+						value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
 					}
 					if ( value > maxValue )
 					{
