@@ -82,9 +82,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     protected float[] m_afABBlendParam = new float[]{1f,0f,0f,0f};
     protected ModelRGB m_kRGBT;
     protected boolean m_bGradientMag = false;
-    protected boolean m_bDisplayRedAsGray = false;
-    protected boolean m_bDisplayGreenAsGray = false;
-    protected boolean m_bDisplayBlueAsGray = false;
     protected float m_fSamples;
     
     /** 
@@ -515,32 +512,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
         //System.err.println( kColor.A );
     }
-    
-    public void SetDisplayRedAsGray( boolean display ) {
-    	m_bDisplayRedAsGray = display;
-    }
-    
-    public boolean getDisplayRedAsGray() {
-    	return m_bDisplayRedAsGray;
-    }
-    
-    public void SetDisplayGreenAsGray( boolean display ) {
-    	m_bDisplayGreenAsGray = display;
-    }
-    
-    public boolean getDisplayGreenAsGray() {
-    	return m_bDisplayGreenAsGray;
-    }
-    
-    public void SetDisplayBlueAsGray( boolean display ) {
-    	m_bDisplayBlueAsGray = display;
-    }
-    
-    public boolean getDisplayBlueAsGray() {
-    	return m_bDisplayBlueAsGray;
-    }
-    
-    
+        
     public boolean GetGradientMagnitude()
     {
     	return m_bGradientMag;

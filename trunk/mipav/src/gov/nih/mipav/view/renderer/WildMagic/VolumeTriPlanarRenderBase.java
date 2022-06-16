@@ -723,9 +723,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		{		
 			m_kSlices.SetDisplay(false);
 			m_kVolumeRayCast.SetDisplay(true);
-			
-			m_kVolumeRayCast.setDisplayRedAsGray(displayRedAsGray);
-			m_kVolumeRayCast.setDisplayGreenAsGray(displayGreenAsGray);
 		}
 		
 //		Render(arg0);
@@ -2498,51 +2495,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			m_bSurfaceUpdate |= bDisplay;
 		}
 	}
-
-	private boolean displayRedAsGray = false;
-    public boolean getDisplayRedAsGray() {
-		if (m_kVolumeRayCast != null) {
-			return m_kVolumeRayCast.getDisplayRedAsGray();
-		}
-		return displayRedAsGray;
-    }
-
-    public void setDisplayRedAsGray(boolean display) {
-    	displayRedAsGray = display;
-		if (m_kVolumeRayCast != null) {
-			m_kVolumeRayCast.setDisplayRedAsGray(display);
-		}
-    }
-
-    private boolean displayGreenAsGray = false;
-    public void setDisplayGreenAsGray(boolean display) {
-    	displayGreenAsGray = display;
-		if (m_kVolumeRayCast != null) {
-			m_kVolumeRayCast.setDisplayGreenAsGray(display);
-		}
-    }
-
-    public boolean getDisplayGreenAsGray() {
-		if (m_kVolumeRayCast != null) {
-			return m_kVolumeRayCast.getDisplayGreenAsGray();
-		}
-		return displayGreenAsGray;
-    }
-
-    private boolean displayBlueAsGray = false;
-    public void setDisplayBlueAsGray(boolean display) {
-    	displayBlueAsGray = display;
-		if (m_kVolumeRayCast != null) {
-			m_kVolumeRayCast.setDisplayBlueAsGray(display);
-		}
-    }
-    
-    public boolean getDisplayBlueAsGray() {
-		if (m_kVolumeRayCast != null) {
-			return m_kVolumeRayCast.getDisplayBlueAsGray();
-		}
-		return displayBlueAsGray;
-    }
 
 	/**
 	 * Sets the sculpt drawing shape.

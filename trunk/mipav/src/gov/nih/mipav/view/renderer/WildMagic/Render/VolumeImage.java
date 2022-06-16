@@ -945,9 +945,24 @@ public class VolumeImage implements Serializable {
 		return m_kRGBT;
 	}
 
-	public ColorRGBA GetTransferedValue( float x, float y, float z )
+	public float GetTransferedValue( int x, int y, int z )
 	{
-		float value = m_kImage.getFloatTriLinearBounds(x, y, z);
+		int dimX = m_kImage.getExtents().length > 0 ? m_kImage.getExtents()[0] : 1;
+		int dimY = m_kImage.getExtents().length > 1 ? m_kImage.getExtents()[1] : 1;
+		int dimZ = m_kImage.getExtents().length > 2 ? m_kImage.getExtents()[2] : 1;
+		if ( x < 0 || x >= dimX || y < 0 || y >= dimY || z < 0 || z >= dimZ ) return -1;
+		
+		if ( m_kImage.isColorImage() ) {
+			float r = m_kRGBT.getROn() ? TransferValue(m_kImage.getFloat(x, y, z, 1)) : -1;
+			float g = m_kRGBT.getGOn() ? TransferValue(m_kImage.getFloat(x, y, z, 2)) : -1;
+			float b = m_kRGBT.getBOn() ? TransferValue(m_kImage.getFloat(x, y, z, 3)) : -1;
+			return Math.max( r, Math.max(g, b));
+		}
+		float value = m_kImage.getFloat(x, y, z);
+		return TransferValue(value);
+	}
+	
+	private float TransferValue(float value) {
 		float min = (float) m_kImage.getMin();
 		float max = (float) m_kImage.getMax();
 		float diff = max - min;
@@ -966,9 +981,9 @@ public class VolumeImage implements Serializable {
 			byte g = m_kColorMap.GetData()[index * 4 + 1];
 			byte b = m_kColorMap.GetData()[index * 4 + 2];
 			byte a = m_kColorMap.GetData()[index * 4 + 3];
-			return new ColorRGBA(r, g, b, a);
+			return Math.max(r*a, Math.max(g*a, b*a));
 		}
-		return new ColorRGBA(0,0,0,0);
+		return -1;
 	}
 	
 	

@@ -515,6 +515,14 @@ public class VolumeRayCast extends VolumeObject
     	}
     }
     
+    public boolean getImageOn(int which) {
+    	if ( hyperStack != null ) {
+        	return ((VSEMD_MultipleImages)m_kVolumeShaderEffect).GetImageOn(which);
+    	}
+    	return false;
+    }
+    
+    
     public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
     {
     	if ( hyperStack != null ) {
@@ -696,30 +704,6 @@ public class VolumeRayCast extends VolumeObject
         m_kMesh.AttachGlobalState(m_kMaterial);
         m_kMesh.UpdateMS(true);
         m_kMesh.UpdateRS();
-    }
-
-    public void setDisplayRedAsGray(boolean display) {
-        m_kVolumeShaderEffect.SetDisplayRedAsGray(display);
-    }
-
-    public boolean getDisplayRedAsGray() {
-        return m_kVolumeShaderEffect.getDisplayRedAsGray();
-    }
-
-    public void setDisplayGreenAsGray(boolean display) {
-        m_kVolumeShaderEffect.SetDisplayGreenAsGray(display);
-    }
-
-    public boolean getDisplayGreenAsGray() {
-        return m_kVolumeShaderEffect.getDisplayGreenAsGray();
-    }
-
-    public void setDisplayBlueAsGray(boolean display) {
-        m_kVolumeShaderEffect.SetDisplayBlueAsGray(display);
-    }
-
-    public boolean getDisplayBlueAsGray() {
-        return m_kVolumeShaderEffect.getDisplayBlueAsGray();
     }
     
     public void setRGBTA(ModelRGB RGBT) {

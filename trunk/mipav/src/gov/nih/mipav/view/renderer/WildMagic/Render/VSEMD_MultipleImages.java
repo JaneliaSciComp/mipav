@@ -312,6 +312,12 @@ public class VSEMD_MultipleImages extends VolumeShaderEffectMultiPass
     	}
     }
 
+    public boolean GetImageOn(int which ) {
+    	if ( which >= 0 && which < imageOn.length ) {
+    		return imageOn[which];
+    	}
+    	return false;
+    }
 
     private void checkPixelProgram()
     {
