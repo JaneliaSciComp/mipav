@@ -49,6 +49,15 @@ public class KDTree {
 	}
 	
 	public void test() {
+		// One sample run:
+		// Inserting 10 random vectors...
+		// Execution time 1 = 0.002 seconds
+		// Range query returned 0 items for range 40
+		// Execution time 2 = 0.002 seconds
+		// Range query returned 2 items for range 80
+		// Execution time 3 = 0.0 seconds
+		// Range query returned 10 items for range 400
+		// Execution time 4 = 0.0 seconds
 	    int i;
 	    int vcount = 10;
 	    kdtree kd;
@@ -94,6 +103,84 @@ public class KDTree {
 
 		kd_free(kd);
 		return;
+	}
+	
+	public void test2() {
+		// Sample test run works:
+		// Found 3 results
+		// Node at (0.342441182898126,3.080631838451662,9.022622816724176) is 8.600583430631325 away and has data = 7.5
+		// Node at (-5.390746577442254,4.895129480676994,3.288425374918962) is 7.632780095834766 away and has data = 5.5
+		// Node at (0.04258996752281874,-2.6600690773943185,-8.12944018791437) is 9.509177648280055 away and has data = 4.5
+		/* Extended test program, contributed by David Underhill */
+		int DEF_NUM_PTS = 10;
+		Random rnd = new Random();
+		int i;
+		int num_pts = DEF_NUM_PTS;
+		kdtree ptree;
+		double data[][][];
+		double pch[][];
+		kdres presults;
+		double pos[] = new double[3];
+		double dist;
+		double pt[] = new double[]{ 0, 0, 1 };
+		double radius = 10;
+		int retVal;
+		
+		data = new double[num_pts][1][1];
+		
+		/* create a k-d tree for 3-dimensional points */
+		ptree = kd_create( 3 );
+		
+		/* add some random nodes to the tree (assert nodes are successfully inserted) */
+		  for( i=0; i<num_pts; i++ ) {
+		    data[i][0][0] = i + 0.5;
+		    retVal =  kd_insert3( ptree, rd(rnd), rd(rnd), rd(rnd), data[i]);
+		    if (retVal != 0) {
+		    	System.err.println("kd_insert3 returned " + retVal + " instead of the expected 0");
+		    }
+		  }
+		  
+		  /* find points closest to the origin and within distance radius */
+		  presults = kd_nearest_range( ptree, pt, radius );
+		  
+		  /* print out all the points found in results */
+		  System.out.println("Found " + kd_res_size(presults) + " results");
+		  
+		  while(kd_res_end(presults) == 0) {
+			  /* get the data and position of the current result item */
+			  pch = kd_res_item( presults, pos );
+			    
+			  /* compute the distance of the current result from the pt */
+			  dist = Math.sqrt( dist_sq( pt, pos, 3 ) );
+			  
+			  /* print out the retrieved data */
+			  System.out.println("Node at (" + pos[0]+","+pos[1]+","+pos[2]+") is " + dist + " away and has data = " + pch[0][0]);
+			  
+			  /* go to the next entry */
+			  kd_res_next( presults );
+		  } // while(kd_res_end( presults ) != 0)
+		  
+		  /* free our tree, results set, and other allocated memory */
+		  data = null;
+		  kd_res_free( presults );
+		  kd_free( ptree );
+
+		  return;
+	}
+	
+	/* returns the distance squared between two dims-dimensional double arrays */
+	public double dist_sq(double a1[], double a2[], int dims) {
+		double dist_sq = 0, diff;
+		  while( --dims >= 0 ) {
+		    diff = (a1[dims] - a2[dims]);
+		    dist_sq += diff*diff;
+		  }
+		  return dist_sq;	
+	}
+	
+	/* get a random double between -10 and 10 */
+	public double rd(Random rnd) {
+	   return (20.0 * rnd.nextDouble() - 10.0 );	
 	}
 	
 	public double SQ(double x) {
