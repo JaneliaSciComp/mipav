@@ -50,7 +50,7 @@ This particular implementation is designed to be efficient and very easy to
 use. It is completely written in ANSI/ISO C, and thus completely
 cross-platform. 
 
-See under the ``doc/`` and ``examples/`` directories to find out how to use the
+See under the doc/ and examples/ directories to find out how to use the
 kdtree library.
 
 License
@@ -98,7 +98,7 @@ kd_insert, and kd_insertf expect a pointer to an array of k doubles or floats re
 which contain the position of the inserted point. So for example, for a 3D tree you need to pass an array of 3 values.
 
 The convenience kd_insert3, and kd_insert3f are meant to be called for 3-dimensional kd-trees
- (which is considered the most common case), and expect 3 values (doubles or floats) signifying the position of the 3-dimensional point to be stored.
+(which is considered the most common case), and expect 3 values (doubles or floats) signifying the position of the 3-dimensional point to be stored.
 
 Performing nearest-neighbor queries
 After you have your data in the kd-tree, you can perform queries for discoverying nearest neighbors in a given range around an arbitrary point.
