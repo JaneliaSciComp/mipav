@@ -76,8 +76,20 @@ public class KDTree {
 	    start = System.currentTimeMillis();
 	    set = kd_nearest_range3(kd, 0, 0, 0, 40);
 	    long executionTime2 = System.currentTimeMillis() - start;
-	    System.out.println("Range query returned " + kd_res_size(set) + " items");
+	    System.out.println("Range query returned " + kd_res_size(set) + " items for range 40");
 	    System.out.println("Execution time 2 = " + (executionTime2/1000.0) + " seconds");
+	    
+	    start = System.currentTimeMillis();
+	    set = kd_nearest_range3(kd, 0, 0, 0, 80);
+	    long executionTime3 = System.currentTimeMillis() - start;
+	    System.out.println("Range query returned " + kd_res_size(set) + " items for range 80");
+	    System.out.println("Execution time 3 = " + (executionTime3/1000.0) + " seconds");
+	    
+	    start = System.currentTimeMillis();
+	    set = kd_nearest_range3(kd, 0, 0, 0, 400);
+	    long executionTime4 = System.currentTimeMillis() - start;
+	    System.out.println("Range query returned " + kd_res_size(set) + " items for range 400");
+	    System.out.println("Execution time 4 = " + (executionTime4/1000.0) + " seconds");
 	    kd_res_free(set);
 
 		kd_free(kd);
@@ -191,37 +203,57 @@ public class KDTree {
 		node = null;
 	}
 	
-	public int insert_rec(kdnode nptr, double pos[], double data[][], int dir, int dim)
+	public int insert_rec(kdnode nptr, boolean nptrwasnull, double pos[], double data[][], int dir, int dim)
 	{ 
 		int i;
 		int new_dir;
-		kdnode node;
+		boolean leftnptrwasnull;
+		boolean rightnptrwasnull;
 
-		if(nptr == null) {
-			node = new kdnode();
-			node.pos = new double[dim];
+		if(nptrwasnull) {
+			nptr.pos = new double[dim];
 			for (i = 0; i < dim; i++) {
-				node.pos[i] = pos[i];
+				nptr.pos[i] = pos[i];
 			}
-			node.data = data;
-			node.dir = dir;
-			node.left = node.right = null;
-			nptr = node;
+			nptr.data = data;
+			nptr.dir = dir;
+			nptr.left = nptr.right = null;
 			return 0;
 		}
 
-		node = nptr;
-		new_dir = (node.dir + 1) % dim;
-		if(pos[node.dir] < node.pos[node.dir]) {
-			return insert_rec(nptr.left, pos, data, new_dir, dim);
+		new_dir = (nptr.dir + 1) % dim;
+		if(pos[nptr.dir] < nptr.pos[nptr.dir]) {
+			if (nptr.left == null) {
+				nptr.left = new kdnode();
+				leftnptrwasnull = true;
+			}
+			else {
+				leftnptrwasnull = false;
+			}
+			return insert_rec(nptr.left, leftnptrwasnull, pos, data, new_dir, dim);
 		}
-		return insert_rec(nptr.right, pos, data, new_dir, dim);
+		if (nptr.right == null) {
+			nptr.right = new kdnode();
+			rightnptrwasnull = true;
+		}
+		else {
+			rightnptrwasnull = false;
+		}
+		return insert_rec(nptr.right, rightnptrwasnull, pos, data, new_dir, dim);
 	}
 	
 	/* insert a node, specifying its position, and optional data */
 	public int kd_insert(kdtree tree, double pos[], double data[][])
 	{
-		if (insert_rec(tree.root, pos, data, 0, tree.dim) != 0) {
+		boolean nptrwasnull;
+		if (tree.root == null) {
+			tree.root = new kdnode();
+			nptrwasnull = true;
+		}
+		else {
+			nptrwasnull = false;
+		}
+		if (insert_rec(tree.root, nptrwasnull, pos, data, 0, tree.dim) != 0) {
 			return -1;
 		}
 
