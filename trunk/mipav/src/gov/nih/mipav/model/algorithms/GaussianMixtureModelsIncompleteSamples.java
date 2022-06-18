@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.KDTree.kdres;
+import gov.nih.mipav.model.algorithms.KDTree.kdtree;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
@@ -716,13 +718,60 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	} // public void test_3D()
 	
 	public int[][][] binSample(double coords[][], int C) {
+		int i,j,k,index,x,y,z;
+		int retVal;
 		int L = 1;
 		double dl = L*1./C;
 		int N = coords.length;
 		// from sklearn.neighbors import KDTree
 	    // chebyshev metric: results in cube selection
 	    // tree = KDTree(coords, leaf_size=N/100, metric="chebyshev")
-	    return null;	
+		KDTree kd = new KDTree();
+		/* create a k-d tree for 3-dimensional points */
+		kdtree tree = kd.kd_create(3);
+		double dummyData[] = new double[3];
+		for (i = 0; i < N; i++) {
+		    retVal = kd.kd_insert3(tree, coords[i][0], coords[i][1], coords[i][2], dummyData);
+		    if (retVal != 0) {
+		    	System.err.println("kd_insert3 returned " + retVal + " instead of the expected 0");
+		    }
+		}
+		int numRows = C*C*C;
+		double samples[][] = new double[numRows][3];
+		for (x = 0; x < C; x++) {
+			for (y = 0; y < C; y++) {
+				for (z = 0; z < C; z++) {
+				    index = x*C*C + y*C + z;
+				    samples[index][0] = x;
+				    samples[index][1] = y;
+				    samples[index][2] = z;
+				}
+			}
+		}
+		for (i = 0; i < numRows; i++) {
+		    for (j = 0; j < 3; j++) {
+		    	samples[i][j] = dl * (samples[i][j] + 0.5);
+		    }
+		}
+		
+		// get counts in boxes
+	    // c = tree.query_radius(samples, r=0.5*dl, count_only=True)
+		double pt[] = new double[3];
+		int counts[][][] = new int[C][C][C];
+		for (x = 0; x < C; x++) {
+			for (y = 0; y < C; y++) {
+				for (z = 0; z < C; z++) {
+					index = x*C*C + y*C + z;
+					pt[0] = samples[index][0];
+					pt[1] = samples[index][1];
+					pt[2] = samples[index][2];
+					/* find points closest to pt and within chebyshev distance 0.5*dl */
+					kdres presults = kd.kd_nearest_range_chebyshev( tree, pt, 0.5*dl);
+					counts[x][y][z] = kd.kd_res_size(presults);
+				}
+			}
+		}
+	    return counts;	
 	}
 	
 	public void drawWithNbh(double samples[][], int nbh[][], GMM gmm, int size, Random rng) {
