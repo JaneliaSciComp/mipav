@@ -196,8 +196,8 @@ public class KDTree {
 		int i;
 		int num_pts = DEF_NUM_PTS;
 		kdtree ptree;
-		double data[][][];
-		double pch[][];
+		double data[][];
+		double pch[];
 		kdres presults;
 		double pos[] = new double[3];
 		double dist;
@@ -205,14 +205,14 @@ public class KDTree {
 		double radius = 10;
 		int retVal;
 		
-		data = new double[num_pts][1][1];
+		data = new double[num_pts][1];
 		
 		/* create a k-d tree for 3-dimensional points */
 		ptree = kd_create( 3 );
 		
 		/* add some random nodes to the tree (assert nodes are successfully inserted) */
 		  for( i=0; i<num_pts; i++ ) {
-		    data[i][0][0] = i + 0.5;
+		    data[i][0] = i + 0.5;
 		    retVal =  kd_insert3( ptree, rd(rnd), rd(rnd), rd(rnd), data[i]);
 		    if (retVal != 0) {
 		    	System.err.println("kd_insert3 returned " + retVal + " instead of the expected 0");
@@ -233,7 +233,7 @@ public class KDTree {
 			  dist = Math.sqrt( dist_sq( pt, pos, 3 ) );
 			  
 			  /* print out the retrieved data */
-			  System.out.println("Node at (" + pos[0]+","+pos[1]+","+pos[2]+") is " + dist + " away and has data = " + pch[0][0]);
+			  System.out.println("Node at (" + pos[0]+","+pos[1]+","+pos[2]+") is " + dist + " away and has data = " + pch[0]);
 			  
 			  /* go to the next entry */
 			  kd_res_next( presults );
@@ -281,7 +281,7 @@ public class KDTree {
 		double pos[];
 		int dir;
 		//void *data;
-		double data[][];
+		double data[];
 		/* negative/positive side */
 		kdnode left;
 		kdnode right;
@@ -301,7 +301,7 @@ public class KDTree {
 		}
 	};
 	
-	class kdtree {
+	public class kdtree {
 		int dim;
 		kdnode root;
 		kdhyperrect rect;
@@ -369,7 +369,7 @@ public class KDTree {
 		node = null;
 	}
 	
-	public int insert_rec(kdnode nptr, boolean nptrwasnull, double pos[], double data[][], int dir, int dim)
+	public int insert_rec(kdnode nptr, boolean nptrwasnull, double pos[], double data[], int dir, int dim)
 	{ 
 		int i;
 		int new_dir;
@@ -409,7 +409,7 @@ public class KDTree {
 	}
 	
 	/* insert a node, specifying its position, and optional data */
-	public int kd_insert(kdtree tree, double pos[], double data[][])
+	public int kd_insert(kdtree tree, double pos[], double data[])
 	{
 		boolean nptrwasnull;
 		if (tree.root == null) {
@@ -432,7 +432,7 @@ public class KDTree {
 		return 0;
 	}
 	
-	public int kd_insertf(kdtree tree, double pos[], double data[][])
+	public int kd_insertf(kdtree tree, double pos[], double data[])
 	{
 		int index;
 		double sbuf[] = new double[16];
@@ -461,7 +461,7 @@ public class KDTree {
 		return res;
 	}
 	
-	public int kd_insert3(kdtree tree, double x, double y, double z, double data[][])
+	public int kd_insert3(kdtree tree, double x, double y, double z, double data[])
 	{
 		double buf[] = new double[3];
 		buf[0] = x;
@@ -470,13 +470,52 @@ public class KDTree {
 		return kd_insert(tree, buf, data);
 	}
 	
-	public int kd_insert3f(kdtree tree, float x, float y, float z, double data[][])
+	public int kd_insert3f(kdtree tree, float x, float y, float z, double data[])
 	{
 		double buf[] = new double[3];
 		buf[0] = x;
 		buf[1] = y;
 		buf[2] = z;
 		return kd_insert(tree, buf, data);
+	}
+	
+	/* Find the nearest node from a given point.
+	 *
+	 * This function returns a pointer to a result set with at most one element.
+	 */
+	public int find_nearest_chebyshev(kdnode node, double pos[], double range, res_node list, int ordered, int dim)
+	{
+		double dx;
+		int i, ret, added_res = 0;
+
+		if(node == null) return 0;
+
+		double dist_chebyshev = 0;
+		for(i=0; i<dim; i++) {
+			if (Math.abs(node.pos[i] - pos[i]) > dist_chebyshev) {
+				dist_chebyshev = Math.abs(node.pos[i] - pos[i]);
+			}
+		}
+		if(dist_chebyshev <= range) {
+			if(rlist_insert(list, node, (ordered != 0) ? dist_chebyshev : -1.0) == -1) {
+				return -1;
+			}
+			added_res = 1;
+		}
+
+		dx = pos[node.dir] - node.pos[node.dir];
+
+		ret = find_nearest_chebyshev(dx <= 0.0 ? node.left : node.right, pos, range, list, ordered, dim);
+		if(ret >= 0 && Math.abs(dx) < range) {
+			added_res += ret;
+			ret = find_nearest_chebyshev(dx <= 0.0 ? node.right : node.left, pos, range, list, ordered, dim);
+		}
+		if(ret == -1) {
+			return -1;
+		}
+		added_res += ret;
+
+		return added_res;
 	}
 	
 	/* Find the nearest node from a given point.
@@ -703,6 +742,25 @@ public class KDTree {
 		return rset;
 	}
 	
+	public kdres kd_nearest_range_chebyshev(kdtree kd, double pos[], double range)
+	{
+		int ret;
+		kdres rset;
+
+		rset = new kdres();
+		rset.rlist = alloc_resnode();
+		rset.rlist.next = null;
+		rset.tree = kd;
+
+		if((ret = find_nearest_chebyshev(kd.root, pos, range, rset.rlist, 0, kd.dim)) == -1) {
+			kd_res_free(rset);
+			return null;
+		}
+		rset.size = ret;
+		kd_res_rewind(rset);
+		return rset;
+	}
+	
 	public kdres kd_nearest_rangef(kdtree kd, float pos[], float range)
 	{
 		double sbuf[] = new double[16];
@@ -797,7 +855,7 @@ public class KDTree {
 	/* returns the data pointer (can be null) of the current result set item
 	 * and optionally sets its position to the pointers(s) if not null.
 	 */
-	public double[][] kd_res_item(kdres rset, double pos[])
+	public double[] kd_res_item(kdres rset, double pos[])
 	{
 		int i;
 		if(rset.riter != null) {
@@ -811,7 +869,7 @@ public class KDTree {
 		return null;
 	}
 	
-	public double[][] kd_res_itemf(kdres rset, float pos[])
+	public double[] kd_res_itemf(kdres rset, float pos[])
 	{
 		int i;
 		if(rset.riter != null) {
@@ -825,7 +883,7 @@ public class KDTree {
 		return null;
 	}
 	
-	public double[][] kd_res_item3(kdres rset, double x[], double y[], double z[])
+	public double[] kd_res_item3(kdres rset, double x[], double y[], double z[])
 	{
 		if(rset.riter != null) {
 			if(x != null) x[0] = rset.riter.item.pos[0];
@@ -836,7 +894,7 @@ public class KDTree {
 		return null;
 	}
 	
-	public double[][] kd_res_item3f(kdres rset, float x[], float y[], float z[])
+	public double[] kd_res_item3f(kdres rset, float x[], float y[], float z[])
 	{
 		if(rset.riter != null) {
 			if(x != null) x[0] = (float)rset.riter.item.pos[0];
@@ -848,7 +906,7 @@ public class KDTree {
 	}
 	
 	/* equivalent to kd_res_item(set, 0) */
-	public double[][] kd_res_item_data(kdres set)
+	public double[] kd_res_item_data(kdres set)
 	{
 		return kd_res_item(set, null);
 	}
