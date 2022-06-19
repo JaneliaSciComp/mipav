@@ -540,6 +540,15 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    int C = 50;
 	    double w = 0.001;
 	    double inner_cutoff = 1;
+	    int K_;
+	    double data[][];
+	    int split_n_merge;
+	    GMM gmm;
+	    GMM gmm_;
+	    double logL;
+	    double logL_;
+	    double sample[][];
+	    double sample_[][];
 	    
 	    long seed = 42;
 	    Random rng = new Random(seed);
@@ -566,9 +575,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	    	}
 	    }
 
-	    double count_cube[][][] = new double[C][C][C];
-	    double count__cube[][][] = new double[C][C][C];
-	    double count0_cube[][][] = new double[C][C][C];
+	    int count_cube[][][] = new int[C][C][C];
+	    int count__cube[][][] = new int[C][C][C];
+	    int count0_cube[][][] = new int[C][C][C];
 
 	    int R = 10;
 	    double amp0[] = new double[R*K];
@@ -711,8 +720,89 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	        	Omega[i] = Omega__[i-counter];
 	        	amp0[i] = gmm0.amp[i-counter];
 	        }
-	        //count0_cube += binSample(data0, C)
+	        for (i = 0; i < C; i++) {
+	        	for (j = 0; j < C; j++) {
+	        		for (m = 0; m < C; m++) {
+	                    count0_cube[i][j][m] = count0_cube[i][j][m] + binSample(data0, C)[i][j][m];
+	        		}
+	        	}
+	        }
+	        
+	        // which K: K0 or K/N = const?
+	        K_ = gmm0.K; // int(K*omega_cube.mean())
+	        
+	        // fit model after selection
+	        data = new double[numsel0][data0[0].length];
+	        for (i = 0, j = 0; i < numsel0; i++) {
+	        	if (sel0[i] == 1.0) {
+	        		for (m = 0; m < data[0].length; m++) {
+	        			data[j][m] = data0[i][m];
+	        		}
+	        		j++;
+	        	}
+	        }
 
+	        split_n_merge = K_/3; // 0
+	        gmm = new GMM(K_, 3);
+	        int U[][] = new int[gmm.K][];
+	        double cov[][][] = null;
+	        double Rarr[][][] = null;
+	        double cutoff  = 5;
+	        sel_callback = null;
+	        int oversampling = 10;
+	        String covar_callback = null;
+	        Background bg = null;
+	        double tol = 1.0E-3;
+		    int miniter = 1;
+		    int maxiter = 1000;
+		    int frozen_amp[] = null;
+		    int frozen_mean[] = null;
+		    int frozen_covar[] = null;
+	        logL = fit(U, gmm, data, cov, Rarr, "minmax", w, cutoff, sel_callback, oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter, frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+	        sample = gmm.draw(N, rng);
+    		for (i = 0; i < C; i++) {
+	        	for (j = 0; j < C; j++) {
+	        		for (m = 0; m < C; m++) {
+	                    count_cube[i][j][m] = count_cube[i][j][m] + binSample(sample, C)[i][j][m];
+	        		}
+	        	}
+	        }
+    		
+    		// fit_forever = try_forever(pygmmis.fit)
+    		// means keep retrying fit until it runs without an exception
+    		gmm_ = new GMM(K_, 3);
+    		for (i = 0; i < gmm.K; i++) {
+    		    gmm_.amp[i] = gmm.amp[i];
+    		    for (j = 0; j < gmm.D; j++) {
+    		    	gmm_.mean[i][j] = gmm.mean[i][j];
+    		    	for (m = 0; m < gmm.D; m++) {
+    		    	    gmm_.covar[i][j][m] = 2.0 * gmm.covar[i][j][m];	
+    		    	}
+    		    }
+    		}
+    		sel_callback = "slopeSel";
+    		int U_[][] = new int[gmm_.K][];
+    		// fit_forever for the below fit
+    		logL_ = fit(U_, gmm_, data, cov, Rarr, "none", w, cutoff, sel_callback, oversampling, covar_callback, bg,
+	        		tol, miniter, maxiter, frozen_amp, frozen_mean, frozen_covar, split_n_merge, rng);
+    		sample_ = gmm_.draw(N, rng);
+    		for (i = 0; i < C; i++) {
+	        	for (j = 0; j < C; j++) {
+	        		for (m = 0; m < C; m++) {
+	                    count__cube[i][j][m] = count__cube[i][j][m] + binSample(sample_, C)[i][j][m];
+	        		}
+	        	}
+	        }
+    		
+    		// find density threshold to be associated with any fit GMM component:
+    	    // below a threshold, the EM algorithm won't bother to put a component.
+    	    // under selection, that threshold applies to the observed sample.
+    	        
+    	    // 1) compute fraction of observed points for each component of gmm0
+    		for (k = 0; k < K_; k++) {
+    			// select data that is within cutoff of any component of sel_gmm	
+    		} // for (k = 0; k < K_; k++)
 	    } // for (r = 0; r < R; r++)
 	
 	} // public void test_3D()
@@ -729,8 +819,9 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 		KDTree kd = new KDTree();
 		/* create a k-d tree for 3-dimensional points */
 		kdtree tree = kd.kd_create(3);
-		double dummyData[] = new double[3];
+		double dummyData[];
 		for (i = 0; i < N; i++) {
+			dummyData = new double[1];
 		    retVal = kd.kd_insert3(tree, coords[i][0], coords[i][1], coords[i][2], dummyData);
 		    if (retVal != 0) {
 		    	System.err.println("kd_insert3 returned " + retVal + " instead of the expected 0");
