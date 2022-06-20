@@ -801,11 +801,135 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	        
     	    // 1) compute fraction of observed points for each component of gmm0
     		for (k = 0; k < K_; k++) {
-    			// select data that is within cutoff of any component of sel_gmm	
+    			// select data that is within cutoff of any component of sel_gmm
+    			double data0nbh0k[][] = null;
+    			boolean sel__[];
+    			if ((nbh0[k] != null) && (nbh0[k].length >= 1)) {
+    				data0nbh0k = new double[nbh0[k].length][data0[0].length];
+    				for (i = 0; i < nbh0[k].length; i++) {
+    				    for (j = 0; j < data[0].length; j++) {
+    				    	data0nbh0k[i][j] = data0[nbh0[k][i]][j];
+    				    }
+    				}
+    			}
+    		    sel__ = GMMSel(data0nbh0k, cov, gmm_, cutoff_nd, rng);
+    		    int sel__sum = 0;
+    		    for (i = 0; i < sel__.length; i++) {
+    		    	if (sel__[i]) {
+    		    		sel__sum++;
+    		    	}
+    		    }
+    		    assoc_frac[k + counter] = sel__sum * 1./ nbh0[k].length;
     		} // for (k = 0; k < K_; k++)
+    		
+    		counter += gmm0.K;
 	    } // for (r = 0; r < R; r++)
-	
+	    
+	    // plot average cell density as function of cell omega:
+	    // biased estimate will avoid low-omega region and (over)compensate in
+	    // high-omega regions
+	    int B = 10;
+	    double bins[] = new double[B+1];
+	    bins[0] = 0.0;
+	    bins[B] = 1.0;
+	    for (i = 1; i < B; i++) {
+	    	bins[i] = (double)i/(double)B;
+	    }
+	    
+	    double mean_rho0[] = new double[B];
+	    double mean_rho[] = new double[B];
+	    double mean_rho_[] = new double[B];
+	    double mean_omega[] = new double[B];
+	    double std_rho0[] = new double[B];
+	    double std_rho[] = new double[B];
+	    double std_rho_[] = new double[B];
+	    double std_omega[] = new double[B];
+	    double omega_cube_sum;
+	    double count0_cube_sum;
+	    double count_cube_sum;
+	    double count__cube_sum;
+	    double omega_cube_sumSq;
+	    double count0_cube_sumSq;
+	    double count_cube_sumSq;
+	    double count__cube_sumSq;
+	    int masksum = 0;
+	    for (i = 0; i < B; i++) {
+	    	masksum = 0;
+	    	omega_cube_sum = 0.0;
+	    	count0_cube_sum = 0.0;
+		    count_cube_sum = 0.0;
+		    count__cube_sum = 0.0;
+		    omega_cube_sumSq = 0.0;
+		    count0_cube_sumSq = 0.0;
+		    count_cube_sumSq = 0.0;
+		    count__cube_sumSq = 0.0;
+	        for (j = 0; j < C; j++) {
+	        	for (m = 0; m < C; m++) {
+	        		for (p = 0; p < C; p++) {
+			            if ((omega_cube[j][m][p] > bins[i]) && (omega_cube[j][m][p] <= bins[i+1])) {	
+			                masksum++;
+			                omega_cube_sum += omega_cube[j][m][p];
+			                omega_cube_sumSq += omega_cube[j][m][p]*omega_cube[j][m][p];
+			                count0_cube_sum += count0_cube[j][m][p];
+			                count0_cube_sumSq += count0_cube[j][m][p]*count0_cube[j][m][p];
+			                count_cube_sum += count_cube[j][m][p];
+			                count_cube_sumSq += count_cube[j][m][p]*count_cube[j][m][p];
+			                count__cube_sum += count__cube[j][m][p];
+			                count__cube_sumSq += count__cube[j][m][p]*count__cube[j][m][p];
+			            }
+	        		}
+	        	}
+	        }
+	        double sqrtN = Math.sqrt(masksum);
+	        mean_omega[i] = omega_cube_sum/masksum;
+	        std_omega[i] = Math.sqrt((omega_cube_sumSq - omega_cube_sum*omega_cube_sum)/masksum);
+	        mean_rho0[i] = count0_cube_sum/masksum;
+	        std_rho0[i] = Math.sqrt((count0_cube_sumSq - count0_cube_sum*count0_cube_sum)/masksum)/sqrtN;
+	        mean_rho[i] = count_cube_sum/masksum;
+	        std_rho[i] = Math.sqrt((count_cube_sumSq - count_cube_sum*count_cube_sum)/masksum)/sqrtN;
+	        mean_rho_[i] = count__cube_sum/masksum;
+	        std_rho_[i] = Math.sqrt((count__cube_sumSq - count__cube_sum*count__cube_sum)/masksum)/sqrtN;
+	    } // for (i = 0; i < B; i++)
 	} // public void test_3D()
+	
+	public boolean[] GMMSel(double coords[][], double covar[][][], GMM sel_gmm, double cutoff_nd, Random rng) {
+		
+	    // swiss cheese selection based on a GMM:
+	    // if within 1 sigma of any component: you're out!
+	    //import multiprocessing, parmap
+	    //n_chunks, chunksize = sel_gmm._mp_chunksize()
+		int i,k;
+		boolean inside[];
+		boolean barray[] = new boolean[sel_gmm.K];
+		for (k = 0; k < sel_gmm.K; k++) {
+		    inside = insideComponent(k, sel_gmm, coords, covar, cutoff_nd);
+		    for (i = 0; i < inside.length  && (!barray[k]); i++) {
+		    	if (inside[i]) {
+		    		barray[k] = true;
+		    	}
+		    }
+		}
+	    return barray;
+	}
+	
+	public boolean[] insideComponent(int k, GMM gmm, double coords[][], double covar[][][], double cutoff) {
+		int i;
+		boolean output[] = null;
+		if (gmm.amp[k]*K > 0.01) {
+	        double result[] = gmm.logL_k(k, coords, covar, true);	
+	        output = new boolean[result.length];
+	        for (i = 0; i < result.length; i++) {
+	        	if (result[i] < cutoff) {
+	        		output[i] = true;
+	        	}
+	        }
+		}
+		else {
+		    output = new boolean[coords.length];	
+		}
+		return output;
+	}
+
 	
 	public int[][][] binSample(double coords[][], int C) {
 		int i,j,k,index,x,y,z;
