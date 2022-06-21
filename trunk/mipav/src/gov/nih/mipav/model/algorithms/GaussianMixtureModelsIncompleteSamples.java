@@ -2923,6 +2923,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	}
     	
     	if (sel_callback != null) {
+    		System.err.println("sel_callback = " + sel_callback);
     	    omega = getSelection(sel_callback, data,rng);
     	    anyomegazero = false;
     	    for (i = 0; i < omega.length; i++) {
@@ -2931,7 +2932,7 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	    	}
     	    }
     	    if (anyomegazero) {
-    	    	System.err.println("Warning! Selection probability Omega = 0 for an observed sample.");
+    	    	System.err.println("Error! Selection probability Omega = 0 for an observed sample.");
                 System.err.println("Selection callback likely incorrect! Bad things will happen!");
                 System.err.println("In _Estep log_S[i] += Math.log(omega[i]) will set log_S[i] to -Infinity");
                 System.exit(-1);
