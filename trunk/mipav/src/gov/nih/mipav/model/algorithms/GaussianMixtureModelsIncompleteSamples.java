@@ -533,11 +533,15 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
 	} // public void test()
 	
 	public void test_3D() {
+		// Original test_3D does not run in Visual Studio
+		// sel_callback = slopeSel introduces omega[i] == 0 which in turn introduces 
+		// -Infinity into log_S[i] in _Estep.
 		int c,i,j,k,m,p,r;
 		int N = 10000;
 	    int K = 50;
 	    int D = 3;
 	    int C = 50;
+	    //int C = 5;
 	    double w = 0.001;
 	    double inner_cutoff = 1;
 	    int K_;
@@ -2923,7 +2927,6 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	}
     	
     	if (sel_callback != null) {
-    		System.err.println("sel_callback = " + sel_callback);
     	    omega = getSelection(sel_callback, data,rng);
     	    anyomegazero = false;
     	    for (i = 0; i < omega.length; i++) {
