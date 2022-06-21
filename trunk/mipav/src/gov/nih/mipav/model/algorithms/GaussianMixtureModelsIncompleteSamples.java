@@ -2931,8 +2931,10 @@ public class GaussianMixtureModelsIncompleteSamples extends AlgorithmBase {
     	    	}
     	    }
     	    if (anyomegazero) {
-    	    	System.out.println("Warning! Selection probability Omega = 0 for an observed sample.");
-                System.out.println("Selection callback likely incorrect! Bad things will happen!");
+    	    	System.err.println("Warning! Selection probability Omega = 0 for an observed sample.");
+                System.err.println("Selection callback likely incorrect! Bad things will happen!");
+                System.err.println("In _Estep log_S[i] += Math.log(omega[i]) will set log_S[i] to -Infinity");
+                System.exit(-1);
     	    }
     	} // if (sel_callback != null)
     	else {
