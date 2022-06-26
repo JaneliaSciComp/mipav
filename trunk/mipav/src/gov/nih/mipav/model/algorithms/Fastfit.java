@@ -671,10 +671,25 @@ public class Fastfit {
 		return cholX;
 	}
 	
+	public void test_logsumexp() {
+		// logsumexp handled [-Inf; -Inf] correctly
+		double x[][] = new double[2][1];
+		x[0][0] = Double.NEGATIVE_INFINITY;
+		x[1][0] = Double.NEGATIVE_INFINITY;
+		double ans[] = logsumexp(x,0);
+		if ((ans.length != 1) || (ans[0] != Double.NEGATIVE_INFINITY)) {
+			System.err.println("logsumexp[-Inf; -Inf] should be -Inf");
+		}
+		else {
+			System.out.println("logsumexp handled [-Inf; -Inf] correctly");
+		}
+		
+	}
+	
 	public double[] logsumexp(double ain[][], int dim) {
 		// Returns log(sum(exp(a),dim)) while avoiding numerical underflow.
-		// Default is dim = 1 (columns).
-		// logsumexp(a, 2) will sum across rows instead of columns.
+		// Default is dim = 0 (columns).
+		// logsumexp(a, 1) will sum across rows instead of columns.
 		// Unlike matlab's "sum", it will not switch the summing direction
 		// if you provide a row vector.
 
@@ -682,7 +697,7 @@ public class Fastfit {
 		// (c) Microsoft Corporation. All rights reserved.
 
 		//if nargin < 2
-		//  dim = 1;
+		//  dim = 0;
 		// end
 
 		// subtract the largest in each column
@@ -698,16 +713,15 @@ public class Fastfit {
 				a[j][k] = ain[j][k];
 			}
 		}
-		double maxval;
-		if (dim == 1) {
+		if (dim == 0) {
 		    y = new double[a[0].length];
 		    s = new double[a[0].length];
 		    i = new int[a[0].length];
 		    for (k = 0; k < a[0].length; k++) {
-		        maxval = -Double.MAX_VALUE;
+		        y[k] = -Double.MAX_VALUE;
 		        for (j = 0; j < a.length; j++) {
-		            if (a[j][k] > maxval) {
-		            	y[k] = maxval;
+		            if (a[j][k] > y[k]) {
+		            	y[k] = a[j][k];
 		            }
 		        }
 		    }
@@ -730,15 +744,15 @@ public class Fastfit {
 		        }
 		    }
 		}
-		else if (dim == 2) {
+		else if (dim == 1) {
 			y = new double[a.length];
 			s = new double[a.length];
 			i = new int[a.length];
 			for (j = 0; j < a.length; j++) {
-				maxval = -Double.MAX_VALUE;
+				y[j] = -Double.MAX_VALUE;
 				for (k = 0; k < a[0].length; k++) {
-					if (a[j][k] > maxval) {
-						y[j] = maxval;
+					if (a[j][k] >y[j]) {
+						y[j] = a[j][k];
 					}
 				}
 			}
@@ -762,6 +776,93 @@ public class Fastfit {
 			}
 		}
 		return s;
+	}
+	
+	public void test_logmulexp() {
+		// i = 0 j = 0 logmulexp = 0.563803136450568 true answer = 0.5638031364505682
+		// i = 0 j = 1 logmulexp = 0.47737565601251886 true answer = 0.47737565601251886
+		// i = 0 j = 2 logmulexp = 0.8948147556170905 true answer = 0.8948147556170905
+		// i = 0 j = 3 logmulexp = 0.7411210877603489 true answer = 0.741121087760349
+		// i = 1 j = 0 logmulexp = 0.7643419913938545 true answer = 0.7643419913938545
+		// i = 1 j = 1 logmulexp = 0.6779145109558053 true answer = 0.6779145109558052
+		// i = 1 j = 2 logmulexp = 1.095353610560377 true answer = 1.0953536105603767
+		// i = 1 j = 3 logmulexp = 0.9416599427036354 true answer = 0.9416599427036354
+		// i = 2 j = 0 logmulexp = 0.9994491204781111 true answer = 0.9994491204781112
+		// i = 2 j = 1 logmulexp = 0.9130216400400619 true answer = 0.9130216400400619
+		// i = 2 j = 2 logmulexp = 1.3304607396446335 true answer = 1.3304607396446335
+		// i = 2 j = 3 logmulexp = 1.176767071787892 true answer = 1.176767071787892
+		int i,j;
+	    double a[][] = new double[3][1];
+	    double b[][] = new double[1][4];
+	    double abtrue[][] = new double[3][4];
+	    for (i = 0; i < 3; i++) {
+	    	a[i][0] = Rand();
+	    }
+	    for (i = 0; i < 4; i++) {
+	    	b[0][i] = Rand();
+	    }
+	    for (i = 0; i < 3; i++) {
+	    	for (j = 0; j < 4; j++) {
+	    	    abtrue[i][j] = Math.log(Math.exp(a[i][0])*Math.exp(b[0][j]));	
+	    	}
+	    }
+	    double abcalc[][] = logmulexp(a,b);
+	    for (i = 0; i < 3; i++) {
+	    	for (j = 0; j <4; j++) {
+	    		System.out.println("i = " + i + " j = " + j + " logmulexp = " + abcalc[i][j] + " true answer = " + abtrue[i][j]);
+	    	}
+	    }
+	}
+	
+	public double[][] logmulexp(double a[][], double b[][]) {
+		// LOGMULEXP        Matrix multiply in the log domain.
+		// logmulexp(a,b) returns log(exp(a)*exp(b)) while avoiding numerical underflow.
+		// The * is matrix multiplication.
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+        int i,j,k;
+        // Must have a[0].length = b.length;
+		// s = repmat(a,cols(b),1) + kron(b',ones(rows(a),1));
+		// s = reshape(logsumexp(s,2),rows(a),cols(b));
+		double repa[][] = new double[a.length*b[0].length][a[0].length];
+		for (i = 0; i < b[0].length; i++) {
+			for (j = 0; j < a.length; j++) {
+				for (k = 0; k < a[0].length; k++) {
+					repa[i*a.length + j][k] = a[j][k];
+				}
+			}
+		}
+		double bT[][] = new double[b[0].length][b.length];
+		for (i = 0; i < b.length; i++) {
+			for (j = 0; j < b[0].length; j++) {
+				bT[j][i] = b[i][j];
+			}
+		}
+		double kb[][] = new double[a.length*b[0].length][b.length];
+		for (i = 0; i < a.length; i++) {
+			for (j = 0; j < b[0].length; j++) {
+				for (k = 0; k < b.length; k++) {
+				    kb[i + j*a.length][k] = bT[j][k];
+				}
+			}
+		}
+        double s[][] = new double[a.length*b[0].length][a[0].length];
+        for (i = 0; i < a.length*b[0].length; i++) {
+        	for (j = 0; j < a[0].length; j++) {
+        		s[i][j] = repa[i][j] + kb[i][j];
+        	}
+        }
+        double ans[] = logsumexp(s,1);
+        s = new double[a.length][b[0].length];
+        for (j = 0; j < b[0].length; j++) {
+            for (i = 0; i < a.length; i++) {
+        		s[i][j] = ans[i + j*a.length];
+        	}
+        }
+        return s;
+		// s = kron(a',ones(1,cols(b))) + repmat(b,1,rows(a));
+		// s = reshape(logsumexp(s),cols(b),rows(a))';
 	}
 
 }
