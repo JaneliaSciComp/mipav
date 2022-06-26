@@ -864,5 +864,398 @@ public class Fastfit {
 		// s = kron(a',ones(1,cols(b))) + repmat(b,1,rows(a));
 		// s = reshape(logsumexp(s),cols(b),rows(a))';
 	}
+	
+	public void test_normcdf() {
+		// normcdf gave 0.6179114221889526
+		// Statistics.GAUSSIAN_PROBABILITY_INTEGRAL gave 0.6179113580156126
+		double x = 0.3;
+		double m = 0.0;
+		double s = 1.0;
+		double ans = normcdf(x, m, s);
+		double ans2[] = new double[1];
+		Statistics stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, x, 0.0, ans2);
+		stat.run();
+		System.out.println("normcdf gave " + ans);
+		System.out.println("Statistics.GAUSSIAN_PROBABILITY_INTEGRAL gave " + ans2[0]);
+	}
+	
+	public double normcdf(double x, double m, double s) {
+		// Default m = 0.0, s = 1.0
+		// NORMCDF   Normal Cumulative Density Function.
+		// P = NORMCDF(X) returns the probability that a standard normal variate will
+		// be less than X.
+		
+		// P = NORMCDF(X,M,S) returns the probability that a normal variate with
+		// mean M and standard deviation S will be less than x.
+		double p;
+		x = (x-m)/s;
+		double var = x/Math.sqrt(2.0);
+		double result[] = new double[1];
 
+		Cephes ce = new Cephes(var, Cephes.ERF, result);
+		ce.run();
+		p = 0.5*result[0] + 0.5;
+		return p;
+	}
+	
+	public double normcdfln(double x) {
+		// NORMCDFLN   log of normal cumulative density function.
+		// More accurate than log(normcdf(x)) when x is small.
+		// The following is a quick and dirty approximation to normcdfln:
+		// normcdfln(x) =approx -(log(1+exp(0.88-x))/1.5)^2
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+		double e;
+		double t = -6.5;
+		double y, z;
+		if (x >= t) {
+			e = Math.log(normcdf(x, 0.0, 1.0));
+			return e;
+		}
+		else {
+		    z = 1.0/(x*x);
+		    // asymptotic series for logcdf
+		    // subs(x=-x,asympt(log(gauss_cdf(-x)),x));
+		    double c[] = new double[] {-1.0, 5.0/2.0, -37.0/3.0, 353.0/4.0, -4081.0/5.0, 55205.0/6.0, -854197.0/7.0};
+		    y = z*(c[0]+z*(c[1]+z*(c[2]+z*(c[3]+z*(c[4]+z*(c[5]+z*c[6]))))));
+		    e = y -0.5*Math.log(2.0*Math.PI) -0.5*x*x - Math.log(-x);
+		    return e;
+		}
+	}
+	
+	public double normcdflogit(double x) {
+		// NORMCDFLOGIT   log(normcdf/(1-normcdf))
+		// More accurate than explicitly evaluating log(normcdf/(1-normcdf)), and
+		// retains more precision than normcdfln when x is large.
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+
+		double e;
+		double small = -7.0;
+		double large = 7.0;
+		if ((x >= small) && (x <= large)) {
+		  e = normcdf(x, 0.0, 1.0);
+		  e = Math.log(e/(1.0-e));
+		}
+		else if (x < small) {
+		  e = normcdfln(x);
+		}
+		else { // x > large
+		  e = -normcdfln(-x);
+		}
+		return e;
+	}
+
+	public double[][] cholproj(double A[][], boolean isPosDef[]) {
+		// CHOLPROJ  Projected Cholesky factorization.
+		// cholproj(A) returns an upper triangular matrix U so that U'*U = A,
+		// provided A is symmetric positive semidefinite (sps).
+		
+		// If A is not sps, then U will approximately satisfy U'*U = A.   
+		// This is useful when dealing with matrices that are affected
+		// by roundoff errors.  By multiplying U'*U you effectively round A to the 
+		// nearest sps matrix.
+		//
+		// U = cholproj(A, isPOSdEF) also returns whether A is positive definite.
+
+		double U[][] = new double[A.length][A[0].length];
+		isPosDef[0] = true;
+		int i,j,k;
+		double s;
+		for (i = 0; i < A[0].length; i++) {
+		  for (j = i; j < A.length; j++) {
+		    for (k = 0; k <= (i-1); k++) {
+		    s = A[i][j] - U[k][i]*U[k][j];
+		    if (i == j) {
+		      if (s <= 0) {
+			      isPosDef[0] = false;
+			      U[i][i] = 0.0;
+		      }
+		      else { // s > 0
+			      U[i][i] = Math.sqrt(s);
+		      }
+		    }
+		    else {// i != j
+		      if (U[i][i] > 0) {
+			      U[i][j] = s / U[i][i];
+		      }
+		      else {
+			      U[i][j] = 0;
+		      }
+		    } // else i != j
+		    } // for (k = 0; k <= (i-1); k++)
+		} // for (j = i; j < A.length; j++)
+	  } // for (i = 0; i < A[0].length; i++)
+	  return U;
+	}
+	
+	/* Logarithm of multivariate Gamma function, defined as
+	 * Gamma_d(x) = pi^(d*(d-1)/4)*prod_(i=1..d) Gamma(x + (1-i)/2)
+	 * http://en.wikipedia.org/wiki/Multivariate_gamma_function
+	 */
+	double gammaln2(double x, double d)
+	{
+	  double M_lnPI = 1.14472988584940;
+	  double r = d*(d-1)/4*M_lnPI;
+	  int i;
+	  for(i=0; i<d; i++) r += gammaln(x - 0.5*i);
+	  return r;
+	}
+	
+	public void test_gammaln() {
+		// test_gammaln() passed all tests
+		int i;
+		int numFailed = 0;
+		double pairs[][] = new double[][] {{0.1, 2.2527126517342059598697},
+		{0.6 ,.39823385806923489961685},
+		{0.7, .26086724653166651438573},
+		{1.0, 0},
+		{2.0, 0},
+		{3.4, 1.0923280598027415674947},
+		{4.0, 1.791759469228055000812477},
+		{8.0, 8.525161361065414300165531},
+		{64.0, 201.00931639928152667928},
+		{256.0, 1161.71210111840065079}};
+	    double err;
+		for (i = 0; i < pairs.length; i++) {
+		    err = Math.abs(gammaln(pairs[i][0]) - pairs[i][1])/pairs[i][0];	
+		    if (err > 1.0E-10) {
+		    	System.err.println("For gammaln("+pairs[i][0]+") error = " + err);
+		    	numFailed++;
+		    }
+		}
+		
+		err = Math.abs(gammaln2(1.1,2) - 0.920726359734123);
+		if (err > 1.0E-10) {
+		    System.out.println("Error for gammaln2 = " + err);
+		    numFailed++;
+		}
+		if (gammaln(0) != Double.POSITIVE_INFINITY) {
+		    System.err.println("gammaln(0) = " + gammaln(0) + " instead of the correct Infinity");
+		    numFailed++;
+		}
+		if (!Double.isNaN(gammaln(-1))) {
+			System.err.println("gammaln(-1) = " + gammaln(-1) + " instead of the correct NaN");
+		    numFailed++;
+		}
+		if (gammaln(Double.POSITIVE_INFINITY) != Double.POSITIVE_INFINITY) {
+			System.err.println("gammaln(Double.POSITIVE_INFINITY) = " + gammaln(Double.POSITIVE_INFINITY) + " instead of the correct Infinity");
+		    numFailed++;
+		}
+		
+		// should be NaN?
+		//gammaln(-Inf)
+		if (!Double.isNaN(gammaln(Double.NaN))) {
+			System.err.println("gammaln(Double.NaN) = " + gammaln(Double.NaN) + " instead of the correct NaN");
+		    numFailed++;
+		}
+		
+        if (numFailed == 0) {
+        	System.out.println("test_gammaln() passed all tests");
+        }
+
+	}
+
+	/* Logarithm of the gamma function.
+	   Returns NaN for negative arguments, even though log(gamma(x)) may
+	   actually be defined.
+	*/
+	double gammaln(double x)
+	{
+	  double M_lnSqrt2PI = 0.91893853320467274178;
+	  double gamma_series[] = new double[]{
+	    76.18009172947146,
+	    -86.50532032941677,
+	    24.01409824083091,
+	    -1.231739572450155,
+	    0.1208650973866179e-2,
+	    -0.5395239384953e-5
+	  };
+	  int i;
+	  double denom, x1, series;
+	  if (Double.isNaN(x)) return Double.NaN;
+	  if(x < 0) return Double.NaN;
+	  if(x == 0) return Double.POSITIVE_INFINITY;
+	  if(Double.isInfinite(x)) return x;
+	  /* Lanczos method */
+	  denom = x+1;
+	  x1 = x + 5.5;
+	  series = 1.000000000190015;
+	  for(i = 0; i < 6; i++) {
+	    series += gamma_series[i] / denom;
+	    denom += 1.0;
+	  }
+	  return( M_lnSqrt2PI + (x+0.5)*Math.log(x1) - x1 + Math.log(series/x) );
+	}
+	
+	public double wishpdfln(double X, double a, double B, boolean inverse) {
+		// WISHPDFLN    Logarithm of Wishart probability density function.
+		//  See WISHPDF for argument description.
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+
+		//if nargin < 3
+		//  B = null;
+		//end
+		//if nargin < 4
+		//  inverse = false;
+		//end
+		int d;
+		double d2;
+		double XB;
+		double logDetB;
+		double logDetXB;
+		double lp;
+        
+		if (inverse) {
+		  X = 1.0/X;
+		}
+		if (B == Double.NaN) {
+		  XB = X;
+		  logDetB = 0;
+		}
+		else {
+		  XB = X*B;
+		  logDetB = Math.log(B);
+		}
+		d = 1;
+		d2 = (d+1.0)/2.0;
+		if (inverse) {
+		  d2 = -d2;
+		}
+		logDetXB = (a-d2)*Math.log(XB);
+		lp = logDetXB - XB + d2*logDetB - gammaln2(a,d);
+		return lp;
+	}
+
+	
+	public double wishpdfln(double Xin[][], double a, double B[][], boolean inverse) {
+		// WISHPDFLN    Logarithm of Wishart probability density function.
+		//  See WISHPDF for argument description.
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+
+		//if nargin < 3
+		//  B = null;
+		//end
+		//if nargin < 4
+		//  inverse = false;
+		//end
+		int d,i,j;
+		double d2;
+		double XB[][];
+		double logDetB;
+		double logDetXB;
+		double lp;
+		double traceXB;
+        double X[][] = new double[Xin.length][Xin[0].length];
+        for (i = 0; i < X.length; i++) {
+        	for (j = 0; j < X[0].length; j++) {
+        		X[i][j] = Xin[i][j];
+        	}
+        }
+		if (inverse) {
+		  X = ((new Matrix(X)).inverse()).getArray();
+		}
+		if (B == null) {
+		  XB = X;
+		  logDetB = 0;
+		}
+		else {
+		  XB = ((new Matrix(X)).times(new Matrix(B))).getArray();
+		  logDetB = logdet(B);
+		}
+		d = X.length;
+		d2 = (d+1.0)/2.0;
+		if (inverse) {
+		  d2 = -d2;
+		}
+		logDetXB = (a-d2)*logdet(XB);
+		traceXB = 0.0;
+		for (i = 0; i < XB.length; i++) {
+			traceXB += XB[i][i];
+		}
+		lp = logDetXB - traceXB + d2*logDetB - gammaln2(a,d);
+		return lp;
+	}
+	
+	public void test_wishpdf() {
+		// wishpdf passed 2 tests
+		// gampdf(2,3,4)
+		int numFailed = 0;
+		double p = 0.018954;
+		double q = wishpdf(2,3,1.0/4.0,false);
+		if (Math.abs(q - p) > 1e-6) {
+			System.err.println("wishpdf failed on scalars");
+			numFailed++;
+		}
+
+		double x[][] = new double[][]{{2, 1}, {1, 3}};
+		double a = 5;
+		p = 0.0038062;
+		double B[][] = null;
+		q = wishpdf(x,a, B, false);
+		if (Math.abs(q - p) > 1e-6) {
+			System.err.println("wishpdf failed on matrix");
+			numFailed++;
+		}
+		
+		if (numFailed == 0) {
+			System.out.println("wishpdf passed 2 tests");
+		}
+
+	}
+	
+	public double wishpdf(double X, double a, double B, boolean inverse) {
+		// WISHPDF     Wishart probability density function.
+		// WISHPDF(X,A) returns the density at X under a Wishart distribution with 
+		// shape parameter A and unit scale parameter.  
+		// X is a positive definite matrix and A is scalar.
+		// WISHPDF(X,A,B) specifies the scale parameter of the distribution (a 
+		// positive definite matrix with the same size as X).
+		
+		// The probability density function has the form:
+		// p(X) = |X|^(a-(d+1)/2)*exp(-tr(X*B))*|B|^a/Gamma_d(a)
+		// where Gamma_d is the multivariate Gamma function.
+		
+		// WISHPDF(X,A,B,'inv') returns the density at X under an inverse Wishart
+		// distribution.  The probability density function for an inverse Wishart is:
+		// p(X) = |X|^(-a-(d+1)/2)*exp(-tr(inv(X)*B))*|B|^a/Gamma_d(a)
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+        double p;
+		p = Math.exp(wishpdfln(X, a, B, inverse));
+		return p;
+    }
+	
+	public double wishpdf(double X[][], double a, double B[][], boolean inverse) {
+		// WISHPDF     Wishart probability density function.
+		// WISHPDF(X,A) returns the density at X under a Wishart distribution with 
+		// shape parameter A and unit scale parameter.  
+		// X is a positive definite matrix and A is scalar.
+		// WISHPDF(X,A,B) specifies the scale parameter of the distribution (a 
+		// positive definite matrix with the same size as X).
+		
+		// The probability density function has the form:
+		// p(X) = |X|^(a-(d+1)/2)*exp(-tr(X*B))*|B|^a/Gamma_d(a)
+		// where Gamma_d is the multivariate Gamma function.
+		
+		// WISHPDF(X,A,B,'inv') returns the density at X under an inverse Wishart
+		// distribution.  The probability density function for an inverse Wishart is:
+		// p(X) = |X|^(-a-(d+1)/2)*exp(-tr(inv(X)*B))*|B|^a/Gamma_d(a)
+
+		// Written by Tom Minka
+		// (c) Microsoft Corporation. All rights reserved.
+        double p;
+		p = Math.exp(wishpdfln(X, a, B, inverse));
+		return p;
+    }
+
+
+    
 }
