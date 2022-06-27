@@ -330,6 +330,61 @@ public class Fastfit {
 	    //} if (x >= large)
 	} // public double trigamma(double x)
 	
+	/* Evaluate the tetragamma function (the derivative of the trigamma function)
+	 */
+	public double tetragamma(double x)
+	{
+	  double
+	    small = 1e-4,
+	    large = 8,
+	    tetragamma1 = -2.404113806319188570799476,  /* -2 Zeta(3) */
+			pentagamma1 = 6.49393940226682914909602217, /* 6 Zeta(4) */
+	    b2 =  1./6,
+	    b4 = -1./30,
+	    b6 =  1./42,
+	    b8 = -1./30,
+	    b10 = 5./66;
+	  double result;
+	  /* Illegal arguments */
+	  if((x == Double.NEGATIVE_INFINITY) || Double.isNaN(x)) {
+	    return Double.NaN;
+	  }
+	  /* Singularities */
+	  if((x <= 0) && (Math.floor(x) == x)) {
+	    return Double.NEGATIVE_INFINITY;
+	  }
+	  /* Negative values */
+	  /* Use the derivative of the trigamma reflection formula:
+	   * -trigamma(-x) = trigamma(x+1) - (pi*csc(pi*x))^2
+	   * tetragamma(-x) = tetragamma(x+1) + 2*pi^3*cos(pi*x)/sin(pi*x)^3
+	   */
+	  if(x < 0) {
+			double pix = Math.PI*x;
+			double cospix = Math.cos(pix);
+	    double cscpix = Math.PI/Math.sin(pix);
+			double cscpix3 = cscpix*cscpix*cscpix;
+	    return tetragamma(1-x) + 2*cscpix3*cospix;
+	  }
+	  /* Use Taylor series if argument <= small */
+	  if(x <= small) {
+	    return -2/(x*x*x) + tetragamma1 + pentagamma1*x;
+	  }
+	  result = 0;
+	  /* Reduce to tetragamma(x+n) where ( X + N ) >= B */
+	  while(x < large) {
+	    result -= 2/(x*x*x);
+	    x++;
+	  }
+	  /* Apply asymptotic formula when X >= B */
+	  /* This expansion can be computed in Maple via asympt(Psi(2,x),x) */
+	  if(x >= large) {
+	    double r = 1/(x*x), t;
+	    t = (5*b4 + r*(7*b6 + r*(9*b8 + r*11*b10)));
+	    result -= r/x + r*(1 + r*(3*b2 + r*t));
+	  }
+	  return result;
+	}
+	
 
     // From the file random.c	
 	static long ix = 101;
@@ -1256,6 +1311,315 @@ public class Fastfit {
 		return p;
     }
 
+    int CACHE_SIZE = 200;
+    
+    /* Requires: n >= 0 */
+    public double pochhammer(double x, int n)
+    {
+      double cache_x = -1;
+      double cache_v[] = new double[CACHE_SIZE];
+      int max_cached = 1;
+      double result;
+      int i;
+      /* the maximum n for which we have a cached value */
+      if(n == 0) return 0;
+      if(n > CACHE_SIZE) {
+        if(x >= 1.e4*n) {
+          return Math.log(x) + (n-1)*Math.log(x+n/2);
+        }
+        return gammaln(x+n) - gammaln(x);
+      }
+      if(x != cache_x) {
+        max_cached = 1;
+        cache_v[0] = Math.log(x);
+        cache_x = x;
+      }
+      if(n <= max_cached) return cache_v[n-1];
+      result = cache_v[max_cached-1];
+      x = x + max_cached-1;
+      for(i=max_cached;i<n;i++) {
+        x = x + 1;
+        result += Math.log(x);
+        cache_v[i] = result;
+      }
+      max_cached = n;
+      return result;
+    }
+    
+    /* Requires: n >= 0 */
+    public double slow_pochhammer(double x, int n)
+    {
+      double result;
+      if(n == 0) return 0;
+      if(n <= 20) {
+        int i;
+        double xi = x;
+        /* this assumes x is not too large */
+        result = xi;
+        for(i=n-1; i > 0; i--) {
+          xi = xi + 1;
+          result *= xi;
+        }
+        result = Math.log(result);
+      }
+      else if(x >= 1.e4*n) {
+        result = Math.log(x) + (n-1)*Math.log(x+n/2);
+      }
+      else result = gammaln(x+n) - gammaln(x);
+      return result;
+    }
+    
+    public double di_pochhammer(double x, int n)
+    {
+      double cache_x = -1;
+      double cache_v[] = new double[CACHE_SIZE];
+      int max_cached = 1;
+      double result;
+      int i;
+      /* the maximum n for which we have a cached value */
+      if(n == 0) return 0;
+      if(n > CACHE_SIZE) {
+        return digamma(x+n) - digamma(x);
+      }
+      if(x != cache_x) {
+        max_cached = 1;
+        cache_v[0] = 1/x;
+        cache_x = x;
+      }
+      if(n <= max_cached) return cache_v[n-1];
+      result = cache_v[max_cached-1];
+      x = x + max_cached-1;
+      for(i=max_cached;i<n;i++) {
+        x = x + 1;
+        result += 1/x;
+        cache_v[i] = result;
+      }
+      max_cached = n;
+      return result;
+    }
+    
+    public double slow_di_pochhammer(double x, int n)
+    {
+      double result;
+      if(n == 0) return 0;
+      if(n <= 20) {
+        int i;
+        double xi = x;
+        result = 1/xi;
+        for(i=n-1; i > 0; i--) {
+          xi = xi + 1;
+          result += 1/xi;
+        }
+      }
+      else result = digamma(x+n) - digamma(x);
+      return result;
+    }
+    
+    public double tri_pochhammer(double x, int n)
+    {
+      double cache_x = -1;
+      double cache_v[] = new double[CACHE_SIZE];
+      int max_cached = 1;
+      double result;
+      int i;
+      /* the maximum n for which we have a cached value */
+      if(n == 0) return 0;
+      if(n > CACHE_SIZE) {
+        return trigamma(x+n) - trigamma(x);
+      }
+      if(x != cache_x) {
+        max_cached = 1;
+        cache_v[0] = -1/(x*x);
+        cache_x = x;
+      }
+      if(n <= max_cached) return cache_v[n-1];
+      result = cache_v[max_cached-1];
+      x = x + max_cached-1;
+      for(i=max_cached;i<n;i++) {
+        x = x + 1;
+        result -= 1/(x*x);
+        cache_v[i] = result;
+      }
+      max_cached = n;
+      return result;
+    }
+    
+    public double slow_tri_pochhammer(double x, int n)
+    {
+      double result;
+      if(n == 0) return 0;
+      if(n <= 20) {
+        result = -1/(x*x);
+        n--;
+        while(n > 0) {
+          x = x + 1;
+          result -= 1/(x*x);
+          n--;
+        }
+        return result;
+      }
+      return trigamma(x+n) - trigamma(x);
+    }
+    
+    public double[][] solve_tril(double T[][], double b[][]) {
+    	// SOLVE_TRIL      Left division by lower triangular matrix.
+    	// SOLVE_TRIL(T,b) is the same as T\b but requires T to be lower triangular 
+    	// and runs faster.
+    	GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    	char side='L',uplo='L',trans='N',diag='N';
+    	int m = T.length;
+    	int n = T[0].length;
+    	/* n = cols(b) */
+    	if (m != n) {
+    		System.err.println("T must be square in solve_tril");
+    		System.exit(-1);
+    	}
+    	double alpha = 1.0;
+    	double x[][] = new double[b.length][b[0].length];
+    	int i,j;
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			x[i][j] = b[i][j];
+    		}
+    	}
+    	ge.dtrsm(side, uplo, trans, diag, m, n, alpha, T, m, x, m);
+    	return x;
+    }
+    
+    public double[][] solve_tril2(double T[][], double b[][]) {
+    	int m = T.length;
+    	int n = T[0].length;
+    	/* n = cols(b) */
+    	if (m != n) {
+    		System.err.println("T must be square in solve_tril");
+    		System.exit(-1);
+    	}
+    	double x[][] = new double[b.length][b[0].length];
+    	int i,j,k;
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			x[i][j] = b[i][j];
+    		}
+    	}
+    	/* Lower triangular */
+    	  for(j=0;j<n;j++) x[0][j] = b[0][j]/T[0][0];
+    	  for(i=1;i<m;i++) {
+    	    for(j=0;j<n;j++) {
+    	      double s = 0;
+    	      for(k=0;k<i;k++) {
+    		s += T[i][k]*x[k][j];
+    	      }
+    	      x[i][j] = (b[i][j] - s)/T[i][i];
+    	    }
+    	  }
+    	  return x;
+    }
+    
+    public void test_solve_tri() {
+    	// ansU[0][0] = 1.0 ansU2[0][0] = 1.0
+		// ansU[0][1] = 2.0 ansU2[0][1] = 2.0
+		// ansU[0][2] = 3.0 ansU2[0][2] = 3.0
+		// ansU[1][0] = 4.0 ansU2[1][0] = 4.0
+		// ansU[1][1] = 5.0 ansU2[1][1] = 5.0
+		// ansU[1][2] = 6.0 ansU2[1][2] = 6.0
+		// ansU[2][0] = 7.0 ansU2[2][0] = 7.0
+		// ansU[2][1] = 8.0 ansU2[2][1] = 8.0
+		// ansU[2][2] = 9.0 ansU2[2][2] = 9.0
+		// ansL[0][0] = 0.1 ansL2[0][0] = 0.1
+		// ansL[0][1] = 0.2 ansL2[0][1] = 0.2
+		// ansL[0][2] = 0.3 ansL2[0][2] = 0.3
+		// ansL[1][0] = 1.6 ansL2[1][0] = 1.6
+		// ansL[1][1] = 2.0 ansL2[1][1] = 2.0
+		// ansL[1][2] = 2.4 ansL2[1][2] = 2.4
+		// ansL[2][0] = 1.129032258064516 ansL2[2][0] = 1.129032258064516
+		// ansL[2][1] = 1.2903225806451613 ansL2[2][1] = 1.2903225806451613
+		// ansL[2][2] = 1.4516129032258065 ansL2[2][2] = 1.4516129032258065
+    	int i,j;
+    	double U[][] = new double[][] {{1.0, 0.0, 0.0},{0.5, 1.0, 0.0},{-0.3, -0.04, 1.0}};
+    	double L[][] = new double[][] {{10.0, -7.0, 0.0},{0.0, 2.5, 5.0}, {0.0, 0.0, 6.2}};
+    	double b[][] = new double[][] {{1.0, 2.0, 3.0},{4.0,5.0,6.0},{7.0,8.0,9.0}};
+    	double ansU[][] = solve_triu(U, b);
+    	double ansU2[][] = solve_triu2(U,b);
+    	for (i = 0; i < 3; i++) {
+    		for (j = 0; j < 3; j++) {
+    		    System.out.println("ansU["+i+"]["+j+"] = " + ansU[i][j] + " ansU2["+i+"]["+j+"] = " + ansU2[i][j]);
+    		}
+    	}
+    	double ansL[][] = solve_tril(L, b);
+    	double ansL2[][] = solve_tril2(L,b);
+    	for (i = 0; i < 3; i++) {
+    		for (j = 0; j < 3; j++) {
+    		    System.out.println("ansL["+i+"]["+j+"] = " + ansL[i][j] + " ansL2["+i+"]["+j+"] = " + ansL2[i][j]);
+    		}
+    	}
+    }
+    
+    public double[][] solve_triu(double T[][], double b[][]) {
+    	// SOLVE_TRIU      Left division by upper triangular matrix.
+    	// SOLVE_TRIU(T,b) is the same as T\b but requires T to be upper triangular 
+    	// and runs faster.
+    	GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    	char side='L',uplo='U',trans='N',diag='N';
+    	int m = T.length;
+    	int n = T[0].length;
+    	/* n = cols(b) */
+    	if (m != n) {
+    		System.err.println("T must be square in solve_triu");
+    		System.exit(-1);
+    	}
+    	double alpha = 1.0;
+    	double x[][] = new double[b.length][b[0].length];
+    	int i,j;
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			x[i][j] = b[i][j];
+    		}
+    	}
+    	ge.dtrsm(side, uplo, trans, diag, m, n, alpha, T, m, x, m);
+    	return x;
+    }
+    
+    public double[][] solve_triu2(double T[][], double b[][]) {
+    	int m = T.length;
+    	int n = T[0].length;
+    	/* n = cols(b) */
+    	if (m != n) {
+    		System.err.println("T must be square in solve_triu");
+    		System.exit(-1);
+    	}
+    	double x[][] = new double[b.length][b[0].length];
+    	int i,j,k;
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			x[i][j] = b[i][j];
+    		}
+    	}
+    	/* Upper triangular */
+    	  for(j=0;j<n;j++) x[m-1][j] = b[m-1][j]/T[m-1][m - 1];
+    	  for(i=m-2;i>=0;i--) {
+    	    for(j=0;j<n;j++) {
+    	      double s = 0;
+    	      for(k=i+1;k<m;k++) {
+    		s += T[i][k]*x[k][j];
+    	      }
+    	      x[i][j] = (b[i][j] - s)/T[i][i];
+    	    }
+    	  }   
+    	return x;
+    }
+    
+    public double[][] inv_triu(double U[][]) {
+		// INV_TRIU     Invert upper triangular matrix.
 
+		// Singularity test: 
+		// inv_triu([1 1; 0 0])
+    	double B[][] = new double[U.length][U.length];
+    	for (int i = 0; i < U.length; i++) {
+    		B[i][i] = 1.0;
+    	}
+
+		double x[][] = solve_triu(U,B);
+		return x;
+    }
     
 }
