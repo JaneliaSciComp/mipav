@@ -1002,6 +1002,28 @@ public class Fastfit {
 		}
 		return e;
 	}
+	
+	public void test_cholproj() {
+		// i = 0 j = 0 A = 10.0 Arec = 10.000000000000002
+		// i = 0 j = 1 A = 5.0 Arec = 5.0
+		// i = 0 j = 2 A = 2.0 Arec = 2.0
+		// i = 1 j = 0 A = 5.0 Arec = 5.0
+		// i = 1 j = 1 A = 3.0 Arec = 3.0
+		// i = 1 j = 2 A = 2.0 Arec = 2.0
+		// i = 2 j = 0 A = 2.0 Arec = 2.0
+		// i = 2 j = 1 A = 2.0 Arec = 2.0
+		// i = 2 j = 2 A = 3.0 Arec = 3.0
+		int i,j;
+    	double A[][] = new double[][] {{10.0, 5.0, 2.0},{5.0, 3.0, 2.0},{2.0, 2.0, 3.0}};
+    	boolean isPosDef[] = new boolean[1];
+    	double U[][] = cholproj(A, isPosDef);
+    	double Arec[][] = (((new Matrix(U)).transpose()).times(new Matrix(U))).getArray();
+    	for (i = 0; i < 3; i++) {
+    		for (j = 0; j < 3; j++) {
+    			System.out.println("i = " + i + " j = " + j + " A = " + A[i][j] + " Arec = " + Arec[i][j]);
+    		}
+    	}
+	}
 
 	public double[][] cholproj(double A[][], boolean isPosDef[]) {
 		// CHOLPROJ  Projected Cholesky factorization.
@@ -1019,10 +1041,14 @@ public class Fastfit {
 		isPosDef[0] = true;
 		int i,j,k;
 		double s;
-		for (i = 0; i < A[0].length; i++) {
-		  for (j = i; j < A.length; j++) {
+		double usum;
+		for (i = 0; i < A.length; i++) {
+		  for (j = i; j < A[0].length; j++) {
+			usum = 0.0;
 		    for (k = 0; k <= (i-1); k++) {
-		    s = A[i][j] - U[k][i]*U[k][j];
+		    	 usum += U[k][i]*U[k][j];
+		    }
+		    s = A[i][j] - usum;
 		    if (i == j) {
 		      if (s <= 0) {
 			      isPosDef[0] = false;
@@ -1040,7 +1066,6 @@ public class Fastfit {
 			      U[i][j] = 0;
 		      }
 		    } // else i != j
-		    } // for (k = 0; k <= (i-1); k++)
 		} // for (j = i; j < A.length; j++)
 	  } // for (i = 0; i < A[0].length; i++)
 	  return U;
@@ -1496,11 +1521,6 @@ public class Fastfit {
     	}
     	double x[][] = new double[b.length][b[0].length];
     	int i,j,k;
-    	for (i = 0; i < x.length; i++) {
-    		for (j = 0; j < x[0].length; j++) {
-    			x[i][j] = b[i][j];
-    		}
-    	}
     	/* Lower triangular */
     	  for(j=0;j<n;j++) x[0][j] = b[0][j]/T[0][0];
     	  for(i=1;i<m;i++) {
@@ -1589,11 +1609,6 @@ public class Fastfit {
     	}
     	double x[][] = new double[b.length][b[0].length];
     	int i,j,k;
-    	for (i = 0; i < x.length; i++) {
-    		for (j = 0; j < x[0].length; j++) {
-    			x[i][j] = b[i][j];
-    		}
-    	}
     	/* Upper triangular */
     	  for(j=0;j<n;j++) x[m-1][j] = b[m-1][j]/T[m-1][m - 1];
     	  for(i=m-2;i>=0;i--) {
@@ -1621,5 +1636,51 @@ public class Fastfit {
 		double x[][] = solve_triu(U,B);
 		return x;
     }
+    
+    public void test_inv_posdef() {
+    	// AIdent[0][0] = 0.999999999999996
+        // AIdent[0][1] = 5.329070518200751E-15
+    	// AIdent[0][2] = -1.7763568394002505E-15
+    	// AIdent[1][0] = -4.440892098500626E-16
+    	// AIdent[1][1] = 1.0000000000000018
+        // AIdent[1][2] = -8.881784197001252E-16
+    	// AIdent[2][0] = -8.881784197001252E-16
+    	// AIdent[2][1] = 0.0
+    	// AIdent[2][2] = 0.9999999999999996
+    	int i,j;
+    	double A[][] = new double[][] {{10.0, 5.0, 2.0},{5.0, 3.0, 2.0},{2.0, 2.0, 3.0}};
+        //double A[][] = new double[][] {{2.0, -1.0, 0.0}, {-1.0, 2.0, -1.0},{0.0, -1.0, 2.0}};
+        double Ainv[][] = inv_posdef(A);
+        double AIdent[][] = ((new Matrix(A)).times(new Matrix(Ainv))).getArray();
+        for (i = 0; i < 3; i++) {
+        	for (j = 0; j < 3; j++) {
+        		System.out.println("AIdent["+i+"]["+j+"] = " + AIdent[i][j]);
+        	}
+        }
+    }
+    
+    public double[][] inv_posdef(double A[][]) {
+		// INV_POSDEF        Invert positive definite matrix.
+		// INV_POSDEF(A) is like INV(A) but faster and more numerically stable.
+		// See test_inv_posdef for a timing test.
+
+		// Written by Tom Minka
+        boolean isPosDef[] = new boolean[1];
+		double U[][] = cholproj(A,isPosDef);
+		int i,j;
+		double iU[][] = inv_triu(U);
+		double x[][] = ((new Matrix(iU)).times((new Matrix(iU)).transpose())).getArray();
+		return x;
+    }
+    
+    /*public double invnormcdf(double p) {
+		// INVNORMCDF(P)  Normal quantile function
+		// X = INVNORMCDF(P) returns the P-th quantile of the standard normal distribution.
+		// In other words, it returns X such that P = NORMCDF(X).
+
+		double x = erfinv(2*p-1)*Math.sqrt(2);
+		return x;
+    }*/
+
     
 }
