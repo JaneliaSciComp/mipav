@@ -1673,14 +1673,15 @@ public class Fastfit {
 		return x;
     }
     
-    /*public double invnormcdf(double p) {
+    public double invnormcdf(double p) {
 		// INVNORMCDF(P)  Normal quantile function
 		// X = INVNORMCDF(P) returns the P-th quantile of the standard normal distribution.
 		// In other words, it returns X such that P = NORMCDF(X).
 
-		double x = erfinv(2*p-1)*Math.sqrt(2);
+		Erfinv erf = new Erfinv();
+    	double x = erf.erfinv(2*p-1)*Math.sqrt(2);
 		return x;
-    }*/
+    }
 
     
 }
