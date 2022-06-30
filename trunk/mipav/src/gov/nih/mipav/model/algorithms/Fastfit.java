@@ -1682,6 +1682,307 @@ public class Fastfit {
     	double x = erf.erfinv(2*p-1)*Math.sqrt(2);
 		return x;
     }
+    
+    public double[] col_sum(double x[][]) {
+		// COL_SUM   Sum for each column.
+		// A more readable alternative to sum(x,0).
+		// s = sum(x,0);
+    	int i,j;
+    	double sum[] = new double[x[0].length];
+    	for (j = 0; j < x[0].length; j++) {
+    		for (i = 0; i < x.length; i++) {
+    			sum[j] += x[i][j];
+    		}
+    	}
+    	return sum;
+    }
+    
+    public double[] mvnormpdf(double x[][], double m[][], double S[][], double iS[][], double V[][], double iV[][]) {
+    	// MVNORMPDF    Multivariate normal probability density function.
+    	// MVNORMPDF(x) returns a row vector giving the density at each column of x 
+    	//   under a standard multivariate normal.
+    	// MVNORMPDF(x,m) subtracts m from x first.  
+    	//   If cols(m) == 1, subtracts m from each column of x.
+    	//   If cols(m) == cols(x), subtracts corresponding columns.
+    	//   If cols(x) == 1, x is repeated to match cols(m).
+    	// MVNORMPDF(x,m,S) specifies the standard deviation, or more generally
+    	//   an upper triangular Cholesky factor of the covariance matrix.
+    	//   In the univariate case, multiple standard deviations can be specified.
+    	//   If m is empty, no subtraction is done (zero mean).
+    	// MVNORMPDF(x,m,[],V) specifies the variance or covariance matrix.
+    	// MVNORMPDF(x,m,'inv',iV) specifies the inverse of the covariance matrix, i.e.
+    	//   the precision matrix.
+    	// MVNORMPDF(x,m,iS,'inv') specifies the reciprocal of the standard deviation,
+    	//   or more generally the upper triangular Cholesky factor of the
+    	//   inverse covariance matrix.
+    	//   This is the most efficient option.
+    	// See test_normpdf for a timing test.
+
+    	// this may look strange, but computing normpdf directly is no faster or
+    	// more stable than exp(mvnormpdfln).
+    	int i;
+    	double p[] = mvnormpdfln(x, m, S, iS, V, iV);
+        for (i = 0; i < p.length; i++) {
+        	p[i] = Math.exp(p[i]);
+        }
+        return p;
+    }
+    
+    public double[] mvnormpdfln(double x[][], double m[][], double S[][], double iS[][], double V[][], double iV[][]) {
+    	// MVNORMPDFLN    log of multivariate normal density.
+    	//   See MVNORMPDF for argument description.
+    	double log2pi = 1.83787706640935;
+    	int d = x.length;
+    	int n = x[0].length;
+    	double dx[][] = null;
+    	int sz[] = new int[2];
+    	int nm;
+    	int i,j;
+    	double p[] = null;
+    	double dxdx[][] = null;
+    	double cs[] = null;
+    	boolean have_inv = false;
+    	double logdetiS[] = null;
+    	if (m == null) {
+    	    dx = x;	
+    	}
+    	else {
+    		// m specified
+    		sz[0] = m.length;
+    		sz[1] = m[0].length;
+    		if (sz[0] != d) {
+    		    System.err.println("rows(m) != rows(x) in mvnormpdfln");
+    		    System.exit(-1);
+    		}
+    		nm = sz[1];
+    		if (nm == 1) {
+    		    dx = new double[d][n];
+    		    for (i = 0; i < d; i++) {
+    		        for (j = 0; j < n; j++) {
+    		            dx[i][j] = x[i][j] - m[i][0];	
+    		        }
+    		    }
+    		} // if (nm == 1)
+    		else if (n == 1) {
+    		    dx = new double[d][nm];	
+    		    for (i = 0; i < d; i++) {
+    		    	for (j = 0; j < nm; j++) {
+    		    		dx[i][j] = x[i][0] - m[i][j];
+    		    	}
+    		    }
+    		} // else if (n == 1)
+    		else if (nm == n) {
+    		    dx = new double[d][n];
+    		    for (i = 0; i < d; i++) {
+    		    	for (j = 0; j < n; j++) {
+    		    		dx[i][j] = x[i][j] - m[i][j];
+    		    	}
+    		    }
+    		} // else if (nm == n)
+    		else {
+    			System.err.println("Incompatible number of columns in x and m in mvnormpdfln");
+    			System.exit(-1);
+    		}
+    	} // else m specified
+    	if ((S == null) && (iS == null) && (V == null) && (iV == null)) {
+    		// unit variance
+    		dxdx = new double[dx.length][dx[0].length];
+    		for (i = 0; i < dx.length; i++) {
+    			for (j = 0; j < dx[0].length; j++) {
+    				dxdx[i][j] = dx[i][j]*dx[i][j];
+    			}
+    		}
+    		cs = col_sum(dxdx);
+    		p = new double[cs.length];
+    		for (i = 0; i < p.length; i++) {
+    			p[i] = -0.5*(d*log2pi + cs[i]);
+    		}
+    		return p;
+    	} // if ((S == null) && (iS == null) && (V == null) && (iV == null))
+    	if ((S != null) && (iS == null) && (V == null) && (iV == null)) {
+    	    // standard deviation given	
+    		if (d == 1) {
+    			// if (d == 1) dx.length == 1
+    		    if ((S.length == 1) && (S[0].length == 1)) {
+		        	for (j = 0; j < dx[0].length; j++) {
+		        		dx[0][j] = dx[0][j]/S[0][0];
+		        	}
+    		        dxdx = new double[1][dx[0].length];
+	    			for (j = 0; j < dx[0].length; j++) {
+	    				dxdx[0][j] = dx[0][j]*dx[0][j];
+	    			}
+	    			p = new double[dx[0].length];
+	    			for (i = 0; i < dx[0].length; i++) {
+	    				p[i] = (-Math.log(S[0][0]) -0.5*log2pi) - 0.5*(dxdx[0][i]);	
+	    			}
+	    			return p;
+    		    } // if ((S.length == 1) && (S[0].length == 1))
+    		    else if ((S.length == dx[0].length) && (S[0].length == 1)) {
+    		    	for (j = 0; j < dx[0].length; j++) {
+		        		dx[0][j] = dx[0][j]/S[j][0];
+		        	}
+    		        dxdx = new double[1][dx[0].length];
+	    			for (j = 0; j < dx[0].length; j++) {
+	    				dxdx[0][j] = dx[0][j]*dx[0][j];
+	    			}
+	    			p = new double[dx[0].length];
+	    			for (i = 0; i < dx[0].length; i++) {
+	    				p[i] = (-Math.log(S[i][0]) -0.5*log2pi) - 0.5*(dxdx[0][i]);	
+	    			}
+	    			return p;	
+    		    } // else if ((S.length == dx[0].length) && (S[0].length == 1))
+    		    else if ((S.length == 1) && (S[0].length == dx[0].length)) {
+    		    	for (j = 0; j < dx[0].length; j++) {
+		        		dx[0][j] = dx[0][j]/S[0][j];
+		        	}
+    		        dxdx = new double[1][dx[0].length];
+	    			for (j = 0; j < dx[0].length; j++) {
+	    				dxdx[0][j] = dx[0][j]*dx[0][j];
+	    			}
+	    			p = new double[dx[0].length];
+	    			for (i = 0; i < dx[0].length; i++) {
+	    				p[i] = (-Math.log(S[0][i]) -0.5*log2pi) - 0.5*(dxdx[0][i]);	
+	    			}
+	    			return p;	
+    		    } // else if ((S.length == 1) && (S[0].length == dx[0].length))
+    		    else {
+    		    	System.err.println("For d == 1 S lengths and dx[0].length do not match in mvnormpdfln");
+    		    	System.exit(-1);
+    		    }
+    		} // if (d == 1)
+    		if (S[1][0] != 0) {
+    	        System.err.println("S is not upper triangular in mvnorfmpdfln");
+    	        System.exit(-1);
+    		}
+    		if ((S.length != d) || (S[0].length != d)) {
+    		    System.err.println("S is not the right size in mvnormpdfln");
+    		    System.exit(-1);
+    		}
+    	} // if ((S != null) && (iS == null) && (V == null) && (iV == null))
+    	else {
+    		if (iS != null) {
+    		    // inverse stddev given	
+    			have_inv = true;
+    		}
+    		else if (iV != null) {
+    		    // inverse variance given
+    			if (d == 1) {
+    			    iS = new double[iV.length][iV[0].length];	
+    			    for (i = 0; i < iS.length; i++) {
+    			    	for (j = 0; j < iS[0].length; j++) {
+    			    		iS[i][j] = Math.sqrt(iV[i][j]);
+    			    	}
+    			    }
+    			} // if (d == 1)
+    			else { // d != 1
+    				iS = new double[iV.length][iV[0].length];	
+    			    for (i = 0; i < iS.length; i++) {
+    			    	for (j = 0; j < iS[0].length; j++) {
+    			    		iS[i][j] = iV[i][j];
+    			    	}
+    			    }
+    			    GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    			    int info[] = new int[1];
+    			    ge.dpotrf('U',iS.length,iS,iS.length,info);
+    			} // else d != 1
+    			have_inv = true;
+    		} // else if (iV != null)
+    		else { // variance given
+    			if (d == 1) {
+    			    S = new double[V.length][V[0].length];	
+    			    for (i = 0; i < S.length; i++) {
+    			    	for (j = 0; j < S[0].length; j++) {
+    			    		S[i][j] = Math.sqrt(V[i][j]);
+    			    	}
+    			    }
+    			} // if (d == 1)
+    			else { // d != 1
+    				S = new double[V.length][V[0].length];	
+    			    for (i = 0; i < S.length; i++) {
+    			    	for (j = 0; j < S[0].length; j++) {
+    			    		S[i][j] = V[i][j];
+    			    	}
+    			    }
+    			    GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    			    int info[] = new int[1];
+    			    ge.dpotrf('U',S.length,S,S.length,info);
+    			} // else d != 1	
+    		} // else variance given
+    	} // else
+    	if (have_inv) {
+    	    if (d == 1) {
+    	    	// if (d == 1) dx.length == 1
+    	    	for (j = 0; j < dx[0].length; j++) {
+    	    	    dx[0][j] = iS[0][j] * dx[0][j];	
+    	    	}
+    	    	logdetiS = new double[iS[0].length];
+    	    	for (i = 0; i < logdetiS.length; i++) {
+    	    		logdetiS[i] = Math.log(iS[0][i]);
+    	    	}
+    	    } // if (d == 1)
+    	    else { // d != 1
+    	        dx = ((new Matrix(iS)).times(new Matrix(dx))).getArray();	
+    	        logdetiS = new double[1];
+    	        for (i = 0; i < iS.length; i++) {
+    	        	logdetiS[0] += Math.log(iS[i][i]);
+    	        }
+    	    } // else d != 1
+    	} // if (have_inv)
+    	else { // !have_inv
+    	    if (d == 1) {
+    	    	if ((S.length == 1) && (S[0].length == 1)) {
+		        	for (j = 0; j < dx[0].length; j++) {
+		        		dx[0][j] = dx[0][j]/S[0][0];
+		        	}
+		        	logdetiS = new double[1];
+	    	    	logdetiS[0] = -Math.log(S[0][0]);
+    	    	}
+    	    	 else if ((S.length == dx[0].length) && (S[0].length == 1)) {
+     		    	for (j = 0; j < dx[0].length; j++) {
+ 		        		dx[0][j] = dx[0][j]/S[j][0];
+ 		        	}
+     		    	logdetiS = new double[S.length];
+     		    	for (i = 0; i < S.length; i++) {
+     		    		logdetiS[i] = -Math.log(S[i][0]);
+     		    	}
+    	    	 }
+    	    	 else if ((S.length == 1) && (S[0].length == dx[0].length)) {
+     		    	for (j = 0; j < dx[0].length; j++) {
+ 		        		dx[0][j] = dx[0][j]/S[0][j];
+ 		        	}
+     		    	logdetiS = new double[S[0].length];
+     		    	for (i = 0; i < S[0].length; i++) {
+     		    		logdetiS[i] = -Math.log(S[0][i]);
+     		    	}
+    	    	 }
+    	    } // if (d == 1)
+    	    else { // d != 1
+    	    	double ST[][] = new double[S[0].length][S.length];
+    	    	for (i = 0; i < S.length; i++) {
+    	    		for (j = 0; j < S[0].length; j++) {
+    	    			ST[j][i] = S[i][j];
+    	    		}
+    	    	}
+    	    	dx = solve_tril(ST,dx);	
+    	    	logdetiS = new double[1];
+    	    	for (i = 0; i < iS.length; i++) {
+    	        	logdetiS[0] -= Math.log(iS[i][i]);
+    	        }
+    	    } // else d != 1
+    	} // else !have_inv
+    	dxdx = new double[dx.length][dx[0].length];
+		for (i = 0; i < dx.length; i++) {
+			for (j = 0; j < dx[0].length; j++) {
+				dxdx[i][j] = dx[i][j]*dx[i][j];
+			}
+		}
+		cs = col_sum(dxdx);
+		p = new double[cs.length];
+		for (i = 0; i < p.length; i++) {
+			p[i] = (logdetiS[Math.min(logdetiS.length-1,i)] -0.5*d*log2pi) - 0.5*cs[i];
+		}
+		return p;
+    }
 
     
 }
