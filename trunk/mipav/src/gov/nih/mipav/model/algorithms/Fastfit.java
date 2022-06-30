@@ -1338,6 +1338,48 @@ public class Fastfit {
 
     int CACHE_SIZE = 200;
     
+    public void test_pochhammer() {
+    	// test_pochhammer() passes
+    	// For pochhammer(5.6, 0) actual result = 0.0 correct result = 0.0
+		// For pochhammer(1.0E4, 3) actual result = 27.63132109093155 correct result = 27.63132109093154778328
+		// For pochhammer(1.0E4, 1000) actual result = 9258.704693976295 correct result = 9258.70469397627827724045
+		// For pochhammer(1.0E5, 3) actual result = 34.53880639466069 correct result = 34.538806394660688260
+		// For pochhammer(1.0E6, 3) actual result = 41.44653467389032 correct result = 41.44653467389032232
+		// For pochhammer(0.1, 100) actual result = 357.3415591371228 correct result = 357.3415591371226056543663
+		// For slow_pochhammer(5.6, 0) actual result = 0.0 correct result = 0.0
+		// For slow_pochhammer(1.0E4, 3) actual result = 27.631321090931547 correct result = 27.63132109093154778328
+		// For slow_pochhammer(1.0E4, 1000) actual result = 9258.704693976295 correct result = 9258.70469397627827724045
+		// For slow_pochhammer(1.0E5, 3) actual result = 34.53880639466069 correct result = 34.538806394660688260
+		// For slow_pochhammer(1.0E6, 3) actual result = 41.44653467389032 correct result = 41.44653467389032232
+		// For slow_pochhammer(0.1, 100) actual result = 357.3415591372267 correct result = 357.3415591371226056543663
+    	double poch;
+    	poch = pochhammer(5.6, 0);
+    	System.out.println("For pochhammer(5.6, 0) actual result = " + poch + " correct result = 0.0");
+    	poch = pochhammer(1.0E4, 3);
+    	System.out.println("For pochhammer(1.0E4, 3) actual result = " + poch + " correct result = 27.63132109093154778328");
+    	poch = pochhammer(1.0E4, 1000);
+    	System.out.println("For pochhammer(1.0E4, 1000) actual result = " + poch + " correct result = 9258.70469397627827724045");
+    	poch = pochhammer(1.0E5, 3);
+    	System.out.println("For pochhammer(1.0E5, 3) actual result = " + poch + " correct result = 34.538806394660688260");
+    	poch = pochhammer(1.0E6, 3);
+    	System.out.println("For pochhammer(1.0E6, 3) actual result = " + poch + " correct result = 41.44653467389032232");
+    	poch = pochhammer(0.1, 100);
+    	System.out.println("For pochhammer(0.1, 100) actual result = " + poch + " correct result = 357.3415591371226056543663");
+    	
+    	poch = slow_pochhammer(5.6, 0);
+    	System.out.println("For slow_pochhammer(5.6, 0) actual result = " + poch + " correct result = 0.0");
+    	poch = slow_pochhammer(1.0E4, 3);
+    	System.out.println("For slow_pochhammer(1.0E4, 3) actual result = " + poch + " correct result = 27.63132109093154778328");
+    	poch = slow_pochhammer(1.0E4, 1000);
+    	System.out.println("For slow_pochhammer(1.0E4, 1000) actual result = " + poch + " correct result = 9258.70469397627827724045");
+    	poch = slow_pochhammer(1.0E5, 3);
+    	System.out.println("For slow_pochhammer(1.0E5, 3) actual result = " + poch + " correct result = 34.538806394660688260");
+    	poch = slow_pochhammer(1.0E6, 3);
+    	System.out.println("For slow_pochhammer(1.0E6, 3) actual result = " + poch + " correct result = 41.44653467389032232");
+    	poch = slow_pochhammer(0.1, 100);
+    	System.out.println("For slow_pochhammer(0.1, 100) actual result = " + poch + " correct result = 357.3415591371226056543663");
+    }
+    
     /* Requires: n >= 0 */
     public double pochhammer(double x, int n)
     {
@@ -1697,6 +1739,23 @@ public class Fastfit {
     	return sum;
     }
     
+    public double[] row_sum(double x[][]) {
+		// ROW_SUM   Sum for each row.
+		// A faster and more readable alternative to sum(x,1).
+
+		// unfortunately, this removes any sparseness of x.
+		// = x*ones(cols(x),1);
+    	int i,j;
+    	double sum[] = new double[x.length];
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			sum[i] += x[i][j];
+    		}
+    	}
+    	return sum;
+    }
+
+    
     public double[] mvnormpdf(double x[][], double m[][], double S[][], double iS[][], double V[][], double iV[][]) {
     	// MVNORMPDF    Multivariate normal probability density function.
     	// MVNORMPDF(x) returns a row vector giving the density at each column of x 
@@ -1983,6 +2042,105 @@ public class Fastfit {
 		}
 		return p;
     }
+    
+    public double[][] sqdist(double p[][], double q[][], double A[][]) {
+		// SQDIST      Squared Euclidean or Mahalanobis distance.
+		// SQDIST(p,q)   returns m(i,j) = (p(:,i) - q(:,j))'*(p(:,i) - q(:,j)).
+		// SQDIST(p,q,A) returns m(i,j) = (p(:,i) - q(:,j))'*A*(p(:,i) - q(:,j)).
+
+		// Written by Tom Minka
+
+    	int i,j;    	
+    	//[d, pn] = size(p);
+		//[d, qn] = size(q);
+    	int d = p.length;
+    	int pn = p[0].length;
+    	int qn = q[0].length;
+    	double m[][] = null;
+    	double pmag[] = null;
+    	double qmag[] = null;
+		if ((pn == 0) || (qn == 0)) {
+		  m = new double[pn][qn];
+		  return m;
+		}
+
+		if (A == null) {
+		  double pp[][] = new double[d][pn];
+		  for (i = 0; i < d; i++) {
+			  for (j = 0; j < pn; j++) {
+			      pp[i][j] = p[i][j]*p[i][j];	  
+			  }
+		  }
+		  pmag = col_sum(pp);
+		  double qq[][] = new double[d][qn];
+		  for (i = 0; i < d; i++) {
+			  for (j = 0; j < qn; j++) {
+				  qq[i][j] = q[i][j]*q[i][j];
+			  }
+		  }
+		  qmag = col_sum(qq);
+		  double qp[][] = new double[pn][qn];
+		  for (i = 0; i < pn; i++) {
+			  for (j = 0; j < qn; j++) {
+				  qp[i][j] = qmag[j];
+			  }
+		  }
+		  double pq[][] = new double[pn][qn];
+		  for (i = 0; i < pn; i++) {
+			  for (j = 0; j < qn; j++) {
+				  pq[i][j] = pmag[i];
+			  }
+		  }
+		  double pTq[][] = (((new Matrix(p)).transpose()).times(new Matrix(q))).getArray();
+		  m = new double[pn][qn];
+		  for (i = 0; i < pn; i++) {
+			  for (j = 0; j < qn; j++) {
+				  m[i][j] = qp[i][j] + pq[i][j] - 2.0*pTq[i][j];
+			  }
+		  }
+		}
+		else {
+
+		  double Ap[][] = ((new Matrix(A)).times(new Matrix(p))).getArray();
+		  double Aq[][] = ((new Matrix(A)).times(new Matrix(q))).getArray();
+		  double pAp[][] = new double[d][pn];
+		  for (i = 0; i < d; i++) {
+			  for (j = 0; j < pn; j++) {
+			      pAp[i][j] = p[i][j]*Ap[i][j];	  
+			  }
+		  }
+		  pmag = col_sum(pAp);
+		  double qAq[][] = new double[d][qn];
+		  for (i = 0; i < d; i++) {
+			  for (j = 0; j < qn; j++) {
+				  qAq[i][j] = Aq[i][j]*q[i][j];
+			  }
+		  }
+		  qmag = col_sum(qAq);
+		  double qp[][] = new double[pn][qn];
+		  for (i = 0; i < pn; i++) {
+			  for (j = 0; j < qn; j++) {
+				  qp[i][j] = qmag[j];
+			  }
+		  }
+		  double pq[][] = new double[pn][qn];
+		  for (i = 0; i < pn; i++) {
+			  for (j = 0; j < qn; j++) {
+				  pq[i][j] = pmag[i];
+			  }
+		  }
+		  double pTAq[][] = (((new Matrix(p)).transpose()).times(new Matrix(Aq))).getArray();
+		  m = new double[pn][qn];
+		  for (i = 0; i < pn; i++) {
+			  for (j = 0; j < qn; j++) {
+				  m[i][j] = qp[i][j] + pq[i][j] - 2.0*pTAq[i][j];
+			  }
+		  }
+		  
+		}
+		return m;
+    }
+
 
     
 }
