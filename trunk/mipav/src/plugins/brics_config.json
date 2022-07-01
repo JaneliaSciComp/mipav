@@ -37,18 +37,18 @@
 	 }],
 	 "PDBP_Stage": [
 	 {
-	 	"dictionaryServer": "https://pdbp-stage.cit.nih.gov/",
-	 	"authServer": "https://pdbp-stage.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbpcld-stage.cit.nih.gov/",
+	 	"authServer": "https://pdbpcld-stage.cit.nih.gov/"
 	 }],
 	 "PDBP_UAT": [
 	 {
-	 	"dictionaryServer": "https://pdbp-uat.cit.nih.gov/",
-	 	"authServer": "https://pdbp-uat.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbpcld-uat.cit.nih.gov/",
+	 	"authServer": "https://pdbpcld-uat.cit.nih.gov/"
 	 }],
 	 "PDBP_Dev": [
 	 {
-	 	"dictionaryServer": "https://pdbp-dev.cit.nih.gov/",
-	 	"authServer": "https://pdbp-dev.cit.nih.gov/"
+	 	"dictionaryServer": "https://pdbpcld-dev.cit.nih.gov/",
+	 	"authServer": "https://pdbpcld-dev.cit.nih.gov/"
 	 }],
 	 
 	 "NEI_BRICS_Prod": [
