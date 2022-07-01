@@ -233,9 +233,9 @@
 	 	"authServer": ""
 	 }],
 	 
-	 "BRICS_Intramural": [
+	 "BRICS_Prod": [
 	 {
-	 	"dictionaryServer": "https://bricsintramural.cit.nih.gov/",
+	 	"dictionaryServer": "https://brics-intramural.cit.nih.gov/",
 	 	"authServer": "https://brics-intramural.cit.nih.gov/"
 	 }],
 	 "BRICS_Demo": [
