@@ -2141,6 +2141,130 @@ public class Fastfit {
 		return m;
     }
 
+    public double[][] dirichlet_sample(double a[][], int n) {
+    	// a is either a row vector or a column vector
+    	// a.length = 1 or a[0].length == 1
+		// DIRICHLET_SAMPLE   Sample from Dirichlet distribution.
+		
+		// DIRICHLET_SAMPLE(a) returns a probability vector sampled from a 
+		// Dirichlet distribution with parameter vector A.
+		// DIRICHLET_SAMPLE(a,n) returns N samples, collected into a matrix, each 
+		// vector having the same orientation as A.
+		
+		//   References:
+		//      [1]  L. Devroye, "Non-Uniform Random Variate Generation", 
+		//      Springer-Verlag, 1986
 
+		// This is essentially a generalization of the method for Beta rv's.
+		// Theorem 4.1, p.594
+
+		//if nargin < 2
+		//  n = 1;
+		//end
+    	int i,j;
+    	boolean row;
+    	if (a.length == 1) {
+    		row = true; // row vector
+    	}
+    	else {
+    		row = false; // column vector
+    	}
+
+		double acol[] = new double[a.length*a[0].length];
+        for (j = 0; j < a[0].length; j++) {
+        	for(i = 0; i < a.length; i++) {
+        		acol[i + j*a.length] = a[i][j];
+        	}
+        }
+		double y[][] = new double[acol.length][n];
+		for (i = 0; i < acol.length; i++) {
+			for (j = 0; j < n; j++) {
+				y[i][j] = GammaRand(acol[i]);
+			}
+		}
+		double r[] = col_sum(y); // r is a row vector of length n
+		for (i = 0; i < n; i++) {
+			if (r[i] == 0) {
+				r[i] = 1;
+			}
+		}
+		double rarr[][];
+		if (row) {
+		    rarr = new double[n][acol.length];	
+		}
+		else {
+		    rarr = new double[acol.length][n];
+		}
+		for (i = 0; i < acol.length; i++) {
+			for (j = 0; j < n; j++) {
+				if (row) {
+					rarr[j][i] = y[i][j]/r[j];
+				}
+				else {
+				    rarr[i][j] = y[i][j]/r[j];
+				}
+			}
+		}
+		return rarr;
+    }
+    
+    public double[] dirichlet_moment_match(double p[][]) {
+		// Each row of p is a multivariate observation on the probability simplex.
+        int i,j;
+        double sum;
+		// a = mean(p); // row vector containing mean of each column
+    	double a[] = new double[p[0].length];
+    	for (j = 0; j < p[0].length; j++) {
+    	    sum = 0.0;
+    	    for (i = 0; i < p.length; i++) {
+    	    	sum += p[i][j];
+    	    }
+    	    a[j] = sum/p.length;
+    	}
+    	double pp[][] = new double[p.length][p[0].length];
+    	for (i = 0; i < p.length; i++) {
+    		for (j = 0; j < p[0].length; j++) {
+    			pp[i][j] = p[i][j]*p[i][j];
+    		}
+    	}
+		//m2 = mean(p.*p);
+    	double m2[] = new double[p[0].length];
+    	for (j = 0; j < p[0].length; j++) {
+    	    sum = 0.0;
+    	    for (i = 0; i < p.length; i++) {
+    	    	sum += pp[i][j];
+    	    }
+    	    m2[j] = sum/p.length;
+    	}
+		// ok = (a > 0);
+    	int numok = 0;
+    	for (i = 0; i < a.length; i++) {
+    		if (a[i] > 0.0) {
+    			numok++;
+    		}
+    	}
+    	double s[] = new double[numok];
+    	for (i = 0, j = 0; i < a.length; i++) {
+    		if (a[i] > 0.0) {
+    		    s[j++] = (a[i] - m2[i])/( m2[i] - a[i]*a[i]);	
+    		}
+    	}
+		// each dimension of p gives an independent estimate of s, so take the median.
+		Arrays.sort(s);
+		double meds;
+		if ((s.length%2) == 1) {
+		    meds = s[(s.length-1)/2];	
+		}
+		else {
+			meds = (s[s.length/2] + s[(s.length/2)-1])/2.0;
+		}
+		if (meds == 0) {
+		  meds = 1;
+		}
+		for (i = 0; i < a.length; i++) {
+			a[i] *= meds;
+		}
+		return a;
+    }
     
 }
