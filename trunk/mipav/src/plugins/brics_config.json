@@ -233,12 +233,12 @@
 	 	"authServer": ""
 	 }],
 	 
-	 "BRICS_Prod": [
+	 "BRICSIM_Demo": [
 	 {
 	 	"dictionaryServer": "https://brics-intramural.cit.nih.gov/",
 	 	"authServer": "https://brics-intramural.cit.nih.gov/"
 	 }],
-	 "BRICS_Demo": [
+	 "BRICSEX_Demo": [
 	 {
 	 	"dictionaryServer": "https://brics-demo.cit.nih.gov/",
 	 	"authServer": "https://brics-demo.cit.nih.gov/"
