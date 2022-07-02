@@ -2267,4 +2267,146 @@ public class Fastfit {
 		return a;
     }
     
+    public double[] dirichlet_fit_s(double data[][], double ain[], double bar_p[], int niter) {
+    	// default niter = 100;
+		// DIRICHLET_FIT_S   Maximum-likelihood Dirichlet precision.
+		
+		// DIRICHLET_FIT_S(data,a) returns the MLE (a) for the matrix DATA,
+		// subject to a constraint on A/sum(A).
+		// Each row of DATA is a probability vector.
+		// A is a row vector providing the initial guess for the parameters.
+		
+		// A is decomposed into S*M, where M is a vector such that sum(M)=1,
+		// and only S is changed by this function.  In other words, A/sum(A)
+		// is unchanged by this function.
+		
+		// The algorithm is a generalized Newton iteration, described in
+		// "Estimating a Dirichlet distribution" by T. Minka.
+
+		// Written by Tom Minka
+        int i,j;
+        double s;
+        double a[] = new double[ain.length];
+        for (i = 0; i < a.length; i++) {
+        	a[i] = ain[i];
+        }
+        double m[] = new double[a.length];
+		boolean show_progress = false;
+		double bar_p_sum;
+		int iter;
+		double old_s;
+		double sumd;
+		double g;
+		double h;
+		double summ;
+		boolean success;
+		double e[] = null;
+        
+		s = 0.0;
+		for (i = 0; i < a.length; i++) {
+		    s += a[i];	
+		}
+		for (i = 0; i < a.length; i++) {
+			m[i] = a[i]/s;
+		}
+
+		// sufficient statistics
+		if (bar_p == null) {
+			bar_p = new double[data[0].length];
+			for (j = 0; j < data[0].length; j++) {
+			    for (i = 0; i < data.length; i++) {
+			    	bar_p[j] += Math.log(data[i][j]);
+			    }
+			    bar_p[j] = bar_p[j]/data.length;
+			}
+			
+		}
+		
+		bar_p_sum = 0.0;
+		for (i = 0; i < m.length; i++) {
+			bar_p_sum += m[i]*bar_p[i];
+		}
+
+		if (show_progress) {
+			e = new double[niter];
+		}
+		for (iter = 1; iter <= niter; iter++) {
+		  old_s = s;
+		  sumd = 0.0;
+		  for (i = 0; i < m.length; i++) {
+			  sumd += (m[i] * digamma(s * m[i]));
+		  }
+		  g = digamma(s) - sumd + bar_p_sum;
+		  summ = 0.0;
+		  for (i = 0; i < m.length; i++) {
+			  summ += (m[i]*m[i]*trigamma(s*m[i]));
+		  }
+		  h = trigamma(s) - summ;
+		  success = false;
+		  if (g + s*h < 0) {
+		    s = 1/(1/s + g/h/(s*s));
+		    if (s > 0) {
+		      success = true;
+		    }
+		    else {
+		      s = old_s;
+		    }
+		  } // if (g + s*h < 0)
+		  if (!success) {
+		    // Newton on log(s)
+		    s = s*Math.exp(-g/(s*h + g));
+		    if (s > 0) {
+		      success = true;
+		    }
+		    else {
+		      s = old_s;
+		    }
+		  } // if (!success)
+		  if (!success) {
+		    // Newton on 1/s
+		    s = 1/(1/s + g/(s*s*h + 2*s*g));
+		    if (s > 0) {
+		      success = true;
+		    }
+		    else {
+		      s = old_s;
+		    }
+		  } // if (!success)
+		  if (!success) {
+		    // Newton
+		    s = s - g/h;
+		    if (s > 0) {
+		      success = true;
+		    }
+		    else {
+		      s = old_s;
+		    }
+		  } // if (!success)
+		  if (!success) {
+		    System.err.println("All updates failed for iter = " + iter + " in dirichlet_fit_s");
+		    System.exit(-1);
+		  }
+		  for (i = 0; i < a.length; i++) {
+			  a[i] = s * m[i];
+		  }
+		  if (show_progress) {
+		    //e[iter-1] = sum(dirichlet_logProb(a, data));
+		  }
+		  if (Math.abs(s - old_s) < 1e-6) {
+		    break;
+		  }
+		} // for (iter = 1; iter <= niter; iter++)
+		if (show_progress) {
+			float xInit[][] = new float[1][iter];
+			float eshowInit[][] = new float[1][iter];
+			for (i = 0; i < iter; i++) {
+				xInit[0][i] = i+1;
+				eshowInit[0][i] = (float)e[i];
+			}
+		    new ViewJFrameGraph(xInit, eshowInit, "e");
+		}
+		return a;
+    }
+
+    
 }
