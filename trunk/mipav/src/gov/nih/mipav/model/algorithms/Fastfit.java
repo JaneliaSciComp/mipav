@@ -2319,7 +2319,6 @@ public class Fastfit {
 			    }
 			    bar_p[j] = bar_p[j]/data.length;
 			}
-			
 		}
 		
 		bar_p_sum = 0.0;
@@ -2390,7 +2389,10 @@ public class Fastfit {
 			  a[i] = s * m[i];
 		  }
 		  if (show_progress) {
-		    //e[iter-1] = sum(dirichlet_logProb(a, data));
+			 double sumdlog[] = dirichlet_logProb(a, data);
+			 for (i = 0; i < sumdlog.length; i++) {
+				 e[iter-1] += sumdlog[i];
+			 }
 		  }
 		  if (Math.abs(s - old_s) < 1e-6) {
 		    break;
@@ -2403,8 +2405,299 @@ public class Fastfit {
 				xInit[0][i] = i+1;
 				eshowInit[0][i] = (float)e[i];
 			}
-		    new ViewJFrameGraph(xInit, eshowInit, "e");
+		    new ViewJFrameGraph(xInit, eshowInit, "dirichlet_fit_s e");
 		}
+		return a;
+    }
+    
+    public double[] dirichlet_logProb(double a[], double data[][]) {
+		// DIRICHLET_LOGPROB  Evaluate a Dirichlet distribution.
+		
+		// DIRICHLET_LOGPROB(a,data) returns a vector containing the log-probability
+		// of each vector in DATA, under the Dirichlet distribution with parameter A.
+		// DATA is a matrix of probability vectors.
+		// If A is a row vector, then the vectors are the rows, otherwise columns.
+    	// a from dirichlet_fit_s is a row vector
+    	int i,j;
+    	double expandedData[][] = null;
+    	if (data[0].length == (a.length-1)) {
+    		double rdata[] = row_sum(data);
+    		expandedData = new double[data.length][data[0].length+1];
+    		for (i = 0; i < data.length; i++) {
+    			for (j = 0; j < data[0].length; j++) {
+    				expandedData[i][j] = data[i][j];
+    			}
+    			expandedData[i][data[0].length] = 1 - rdata[i];
+    		}
+    	}
+    	else {
+    		expandedData = data;
+    	}
+    	
+    	double am1[] = new double[a.length];
+    	for (i = 0; i < a.length; i++) {
+    	   am1[i] = a[i] - 1.0;	
+    	}
+    	double p[] = new double[data.length];
+    	for (i = 0; i < data.length; i++) {
+    		for (j = 0; j < data[0].length; j++) {
+    			p[i] += (Math.log(data[i][j]) * am1[j]);
+    		}
+    	}
+    	double suma = 0.0;
+    	for (i = 0; i < a.length; i++) {
+    		suma += a[i];
+    	}
+    	double gammalnsuma = gammaln(suma);
+    	double sumgammalna = 0.0;
+    	for (i = 0; i < a.length; i++) {
+    		sumgammalna += (gammaln(a[i]));
+    	}
+		for (i = 0; i < p.length; i++) {
+		  p[i] = p[i] + gammalnsuma - sumgammalna;
+		}
+
+		return p;
+    }
+
+    public double[] dirichlet_fit_m(double data[][], double ain[], double bar_p[], int niter) {
+		// DIRICHLET_FIT_M   Maximum-likelihood Dirichlet mean.
+		
+		// DIRICHLET_FIT_M(data,a) returns the MLE (a) for the matrix DATA,
+		// subject to a constraint on sum(A).
+		// Each row of DATA is a probability vector.
+		// A is a row vector providing the initial guess for the parameters.
+		// A is decomposed into S*M, where M is a vector such that sum(M)=1,
+		// and only M is changed by this function.  In other words, sum(A)
+		// is unchanged by this function.
+		
+		// The algorithm is a generalized Newton iteration, described in
+		// "Estimating a Dirichlet distribution" by T. Minka.
+
+		// Written by Tom Minka
+        int i,j;
+        double a[] = new double[ain.length];
+        for (i = 0; i < a.length; i++) {
+        	a[i] = ain[i];
+        }
+		boolean show_progress = false;
+		int diter = 4;
+		double e[] = null;
+		int iter;
+		double sa;
+		double old_a[] = new double[a.length];
+		double w[] = new double[a.length];
+		double sumw;
+		double g[];
+		double suma;
+		double maxDiff;
+
+		// sufficient statistics
+		if (bar_p == null) {
+			bar_p = new double[data[0].length];
+			for (j = 0; j < data[0].length; j++) {
+			    for (i = 0; i < data.length; i++) {
+			    	bar_p[j] += Math.log(data[i][j]);
+			    }
+			    bar_p[j] = bar_p[j]/data.length;
+			}
+		}
+		g = new double[bar_p.length];
+		
+
+		if (show_progress) {
+			e = new double[niter];
+		}
+		for (iter = 1; iter <= niter; iter++) {
+		  sa = 0.0;
+		  for (i = 0; i < a.length; i++) {
+			  sa += a[i];
+			  old_a[i] = a[i];
+		  }
+		  // convergence is guaranteed for any w, but this one is fastest
+		    for (i = 0; i < a.length; i++) {
+		    	w[i] = a[i]/sa;
+		    }
+		    sumw = 0.0;
+		    for (i = 0; i < w.length; i++) {
+		    	sumw += (w[i]*(digamma(a[i]) - bar_p[i]));
+		    }
+		    for (i = 0; i < bar_p.length; i++) {
+		    	g[i] = sumw + bar_p[i];
+		    }
+		    for (i = 0; i < g.length; i++) {
+		        a[i] = inv_digamma(g[i],diter);
+		    }
+		    // project back onto the constraint
+		    suma = 0.0;
+		    for (i = 0; i < a.length; i++) {
+		    	suma += a[i];
+		    }
+		    for (i = 0; i < a.length; i++) {
+		    	a[i] = a[i]/suma*sa;
+		    }
+		    if (show_progress) {
+				 double sumdlog[] = dirichlet_logProb(a, data);
+				 for (i = 0; i < sumdlog.length; i++) {
+					 e[iter-1] += sumdlog[i];
+				 }
+			}
+			maxDiff = 0.0;
+			for (i = 0; i < a.length; i++) {
+				maxDiff = Math.max(maxDiff,Math.abs(a[i] - old_a[i]));
+			}
+		    if (maxDiff < 1.0E-6) {
+		    	break;
+		    }
+		} // for (iter = 1; iter <= niter; iter++)
+		if (show_progress) {
+			float xInit[][] = new float[1][iter];
+			float eshowInit[][] = new float[1][iter];
+			for (i = 0; i < iter; i++) {
+				xInit[0][i] = i+1;
+				eshowInit[0][i] = (float)e[i];
+			}
+		    new ViewJFrameGraph(xInit, eshowInit, "dirichlet_fit_m e");
+		}
+		return a;
+    }
+    
+    public double inv_digamma(double y,int niter) {
+    	// Never need more than 5 iterations
+    	// Default niter = 5
+		// INV_DIGAMMA    Inverse of the digamma function.
+		
+		// inv_digamma(y) returns x such that digamma(x) = y.
+
+		// a different algorithm is provided by Paul Fackler:
+		// http://www.american.edu/academic.depts/cas/econ/gaussres/pdf/loggamma.src
+
+		// Newton iteration to solve digamma(x)-y = 0
+    	int iter;
+		double x = Math.exp(y)+1/2;
+		if (y <= -2.22) {
+			x = -1.0/(y - digamma(1.0));
+		}
+		
+		for (iter = 1; iter <= niter; iter++) {
+		  x = x - (digamma(x)-y)/trigamma(x);
+		}
+		return x;
+
+		// test
+		// = -3:0.01:0.1;
+		// = digamma(inv_digamma(y));
+		// max(abs(x-y))
+		// max(abs(x-y)./inv_digamma(y))
+    }
+
+    public double dirichlet_logProb_fast(double a[], double meanlog[]) {
+        int i;
+        double p;
+        double suma = 0.0;
+        for (i = 0; i < a.length; i++) {
+        	suma += a[i];
+        }
+        double gammalnsuma = gammaln(suma);
+        double sumgammalna = 0.0;
+    	for (i = 0; i < a.length; i++) {
+    		sumgammalna += (gammaln(a[i]));
+    	}
+		double sumam = 0.0;
+		for (i = 0; i < a.length; i++) {
+			sumam += ((a[i]-1.0)*meanlog[i]);
+		}
+		p = gammalnsuma + sumgammalna + sumam;
+        return p;
+    }
+    
+    public double[] dirichlet_fit(double e[], double data[][], double ain[], double bar_p[]) {
+    	// Initialize all e[i] to Double.NaN
+		// DIRICHLET_FIT   Maximum-likelihood Dirichlet distribution.
+		
+		// DIRICHLET_FIT(data) returns the MLE (a) for the matrix DATA.
+		// Each row of DATA is a probability vector.
+		// DIRICHLET_FIT(data,a) provides an initial guess A to speed up the search.
+		
+		// The Dirichlet distribution is parameterized as
+		//   p(p) = (Gamma(sum_k a_k)/prod_k Gamma(a_k)) prod_k p_k^(a_k-1)
+		
+		// The algorithm is an alternating optimization for m and for s, described in
+		// "Estimating a Dirichlet distribution" by T. Minka.
+
+		// Written by Tom Minka
+        int i,j;
+        double a[] = null;
+        double s;
+        int iter;
+        double maxDiff;
+        if (ain != null) {
+	        a = new double[ain.length];
+	        for (i = 0; i < a.length; i++) {
+	        	a[i] = ain[i];
+	        }
+        }
+        
+        if (bar_p == null) {
+			bar_p = new double[data[0].length];
+			for (j = 0; j < data[0].length; j++) {
+			    for (i = 0; i < data.length; i++) {
+			    	bar_p[j] += Math.log(data[i][j]);
+			    }
+			    bar_p[j] = bar_p[j]/data.length;
+			}
+		}
+		
+        if (ain == null) {
+        	a = dirichlet_moment_match(data);
+        }
+        double old_a[] = new double[a.length];
+        double m[] = new double[a.length];
+		
+        s = 0.0;
+        for (i = 0; i < a.length; i++) {
+        	s += a[i];
+        }
+		if (s <= 0) {
+		  // bad initial guess; fix it
+		  System.out.println("Fixing initial guess in dirichlet_fit");
+		  if (s == 0) {
+			  for (i = 0; i < a.length; i++) {
+				  a[i] = 1.0/a.length;
+			  }
+		  }
+		  else {
+			  for (i = 0; i < a.length; i++) {
+				  a[i] = a[i]/s;
+			  }
+		  }
+		  s = 1.0;
+		} // if (s <= 0)
+		for (iter = 1; iter <= 100; iter++) {
+		  for (i = 0; i < a.length; i++) {
+			  old_a[i] = a[i];
+		  }
+		  // time for fit_s is negligible compared to fit_m
+		  a = dirichlet_fit_s(data, a, bar_p, 100);
+		  s = 0.0;
+          for (i = 0; i < a.length; i++) {
+        	  s += a[i];
+          }
+		  a = dirichlet_fit_m(data, a, bar_p, 1);
+		  for (i = 0; i < a.length; i++) {
+			  m[i] = a[i]/s;
+		  }
+		  if (e != null) {
+			  e[iter-1] = dirichlet_logProb_fast(a, bar_p);
+		  }
+		  maxDiff = 0.0;
+			for (i = 0; i < a.length; i++) {
+				maxDiff = Math.max(maxDiff,Math.abs(a[i] - old_a[i]));
+			}
+		    if (maxDiff < 1.0E-4) {
+		    	break;
+		    }
+		} // for (iter = 1; iter <= 100; iter++) 
 		return a;
     }
 
