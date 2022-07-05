@@ -2721,6 +2721,9 @@ public class Fastfit {
 	        	a[i] = ain[i];
 	        }
         }
+        else {
+        	a = dirichlet_moment_match(data);	
+        }
         
         if (bar_p == null) {
 			bar_p = new double[data[0].length];
@@ -2732,9 +2735,6 @@ public class Fastfit {
 			}
 		}
 		
-        if (ain == null) {
-        	a = dirichlet_moment_match(data);
-        }
         double old_a[] = new double[a.length];
         double m[] = new double[a.length];
 		
@@ -2785,5 +2785,218 @@ public class Fastfit {
 		return a;
     }
 
+    public double[] dirichlet_fit_simple(double e[], double data[][], double ain[]) {
+		// DIRICHLET_FIT_SIMPLE   Maximum-likelihood Dirichlet distribution.
+		
+		// Same as DIRICHLET_FIT but uses the simple fixed-point iteration described in
+		// "Estimating a Dirichlet distribution" by T. Minka. 
+        int i,j;
+		boolean show_progress = false;
+		double a[] = null;
+		int iter;
+		double sa;
+		double maxDiff;
+		if (ain != null) {
+		   a = new double[ain.length];	
+		   for (i = 0; i < a.length; i++) {
+			   a[i] = ain[i];
+		   }
+		}
+		else {
+		    a = dirichlet_moment_match(data);
+		}
+		double old_a[] = new double[a.length];
+		double bar_p[] = new double[data[0].length];
+		for (j = 0; j < data[0].length; j++) {
+		    for (i = 0; i < data.length; i++) {
+		    	bar_p[j] += Math.log(data[i][j]);
+		    }
+		    bar_p[j] = bar_p[j]/data.length;
+		}
+		double g;
+
+		// fixed-pt iteration
+		for (iter = 1; iter <= 1000; iter++) {
+		  sa = 0.0;
+		  for (i = 0; i < a.length; i++) {
+		    old_a[i] = a[i];
+		    sa += a[i];
+		  }
+		  for (i = 0; i < bar_p.length; i++) {
+		      g = digamma(sa) + bar_p[i];
+		      a[i] = inv_digamma(g,5);
+		  }
+		  if (e != null) {
+			  double sumdlog[] = dirichlet_logProb(a, data);
+			  for (i = 0; i < sumdlog.length; i++) {
+			      e[iter-1] += sumdlog[i];
+			  }  
+		  }
+		  maxDiff = 0.0;
+		  for (i = 0; i < a.length; i++) {
+		      maxDiff = Math.max(maxDiff,Math.abs(a[i] - old_a[i]));
+		  }
+		  if (maxDiff < 1.0E-6) {
+		      break;
+		  }
+		} // for (iter = 1; iter <= 1000; iter++)
+		if (show_progress) {
+			float xInit[][] = new float[1][iter];
+			float eshowInit[][] = new float[1][iter];
+			for (i = 0; i < iter; i++) {
+				xInit[0][i] = i+1;
+				eshowInit[0][i] = (float)e[i];
+			}
+		    new ViewJFrameGraph(xInit, eshowInit, "dirichlet_fit_simple e");
+		}
+		return a;		
+    }
     
+    public double[] dirichlet_fit_newton(double e[], double data[][], double ain[],double bar_p[]) {
+		// DIRICHLET_FIT_NEWTON   Maximum-likelihood Dirichlet distribution.
+		
+		// Same as DIRICHLET_FIT but uses the Newton iteration described in
+		// "Estimating a Dirichlet distribution" by T. Minka. 
+
+		// Written by Tom Minka
+        int i,j;
+		boolean show_progress = false;
+		double a[] = null;
+		double old_e;
+		double lambda;
+		int iter;
+		double suma;
+		double digammasuma;
+		boolean abort;
+		double hg[];
+		boolean allhglessthana;
+		double maxDiff;
+		if (ain != null) {
+		   a = new double[ain.length];	
+		   for (i = 0; i < a.length; i++) {
+			   a[i] = ain[i];
+		   }
+		}
+		else {
+		    a = dirichlet_moment_match(data);
+		}
+		double old_a[] = new double[a.length];
+		double g[] = new double[a.length];
+		double aminushg[] = new double[a.length];
+		
+		if (bar_p == null) {
+			bar_p = new double[data[0].length];
+			for (j = 0; j < data[0].length; j++) {
+			    for (i = 0; i < data.length; i++) {
+			    	bar_p[j] += Math.log(data[i][j]);
+			    }
+			    bar_p[j] = bar_p[j]/data.length;
+			}
+		}
+		
+
+		old_e = dirichlet_logProb_fast(a, bar_p);
+		lambda = 0.1;
+		for (iter = 1; iter <= 100; iter++) {
+		  suma = 0.0;
+		  for (i = 0; i < a.length; i++) {
+			  old_a[i] = a[i];
+			  suma += a[i];
+		  }
+		  if (suma == 0) {
+		    break;
+		  }
+		  digammasuma = digamma(suma);
+		  for (i = 0; i < a.length; i++) {
+			  g[i] = digammasuma - digamma(a[i]) + bar_p[i];
+		  }
+		  abort = false;
+		  // Newton iteration
+		  // loop until we get a nonsingular hessian matrix
+		  while(true) {
+		    hg = hessian_times_gradient(a, g, lambda);
+		    allhglessthana = true;
+		    for (i = 0; i < a.length; i++) {
+		    	if (hg[i] >= a[i]) {
+		    		allhglessthana = false;
+		    	}
+		    }
+		    if (allhglessthana) {
+		      for (i = 0; i < a.length; i++) {
+		    	  aminushg[i] = a[i] - hg[i];
+		      }
+		      e[iter-1] = dirichlet_logProb_fast(aminushg, bar_p);
+		      if(e[iter-1] > old_e) {
+			      old_e = e[iter-1];
+			      for (i = 0; i < a.length; i++) {
+			    	  a[i] = a[i] - hg[i];
+			      }
+				  lambda = lambda/10;
+				  break;
+		      } // if(e[iter-1] > old_e)
+		    } // if (allhglessthana)
+		    lambda = lambda*10;
+		    if (lambda > 1e+6) {
+		      abort = true;
+		      break;
+		    } // if (lambda > 1e+6)
+		  } // while(true)
+		  if (abort) {
+		    Preferences.debug("Search aborted in dirichlet_fit_newton\n", Preferences.DEBUG_ALGORITHM);
+		    e[iter-1] = old_e;
+		    break;
+		  } // if (abort)
+		  for (i = 0; i < a.length; i++) {
+			  if (a[i] < epsilon) {
+				  a[i] = epsilon;
+			  }
+		  }
+		  maxDiff = 0.0;
+		  for (i = 0; i < a.length; i++) {
+		      maxDiff = Math.max(maxDiff,Math.abs(a[i] - old_a[i]));
+		  }
+		  if (maxDiff < 1.0E-10) {
+		      break;
+		  }
+		} // for (iter = 1; iter <= 100; iter++)
+		if (show_progress) {
+			float xInit[][] = new float[1][iter];
+			float eshowInit[][] = new float[1][iter];
+			for (i = 0; i < iter; i++) {
+				xInit[0][i] = i+1;
+				eshowInit[0][i] = (float)e[i];
+			}
+		    new ViewJFrameGraph(xInit, eshowInit, "dirichlet_fit_newton e");
+		}
+		return a;	
+    }
+
+    public double[] hessian_times_gradient(double a[], double g[], double lambda) {
+            int i;
+            double sa = 0.0;
+            double q[] = new double[a.length];
+            for (i = 0; i < a.length; i++) {
+            	sa += a[i];
+            	q[i] = -trigamma(a[i]);
+            }
+    		double z = trigamma(sa);
+    		for (i = 0; i < a.length; i++) {
+    		    q[i] = q[i] - lambda;
+    		    q[i] = 1./q[i];
+    		}
+    		double sumgq = 0.0;
+    		double sumq = 0.0;
+    		for (i = 0; i < a.length; i++) {
+    			sumgq += (g[i]*q[i]);
+    			sumq += q[i];
+    		}
+    		double b = sumgq/(1/z + sumq);
+    		double hg[] = new double[a.length];
+    		for (i = 0; i < a.length; i++) {
+    			hg[i] = (g[i] - b) * q[i];
+    		}
+    		return hg;
+    }
+
+   
 }
