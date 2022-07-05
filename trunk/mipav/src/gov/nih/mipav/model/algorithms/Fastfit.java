@@ -2140,6 +2140,90 @@ public class Fastfit {
 		}
 		return m;
     }
+    
+    public void test_dirichlet_sample() {
+    	// test_dirichlet_sample() passes
+    	// exactlogp1 = -1.1154640891413887
+		// empiricallogp1 = -1.1134617132837537
+		// exactp1logp1 = -0.36071025193601863
+		// empiricalp1logp1 = -0.3606366289107984
+		// exactonedivp1 = 3.1052631578947367
+		// empiricalonedivp1 = 3.0997973803343424
+		// exactp1divp1plusq1 = 0.4
+		// empiricalp1divp1plusq1 = 0.4091696162839972
+		// exactloga1plusb1 = -0.2204021757054968
+		// empiricaloga1plusb1 = -0.19635320762479835
+
+    	int i;
+        double a[][] = new double[3][1];
+        a[0][0] = 20.0;
+        a[1][0] = 20.0;
+        a[2][0] = 20.0;
+        double x[][] = dirichlet_sample(a, 1000);
+        // E[log p1]
+        double suma = 60.0;
+        double exactlogp1 = digamma(a[0][0]) - digamma(suma);
+        System.out.println("exactlogp1 = " + exactlogp1);
+        double sumlogx0 = 0.0;
+        for (i = 0; i < x[0].length; i++) {
+            sumlogx0 += Math.log(x[0][i]);	
+        }
+        double empiricallogp1 = sumlogx0/x[0].length;
+        System.out.println("empiricallogp1 = " + empiricallogp1);
+        
+        // E[p1logp1]
+        double exactp1logp1 = a[0][0]/suma * (digamma(a[0][0]+1.0) - digamma(suma + 1));
+        System.out.println("exactp1logp1 = " + exactp1logp1);
+        double sum = 0.0;
+        for (i = 0; i < x[0].length; i++) {
+        	sum += (x[0][i]*Math.log(x[0][i]));
+        }
+        double empiricalp1logp1 = sum/x[0].length;
+        System.out.println("empiricalp1logp1 = " + empiricalp1logp1);
+        
+        // E[1/p1]
+        double exactonedivp1 = (suma - 1.0)/(a[0][0] - 1.0);
+        System.out.println("exactonedivp1 = " + exactonedivp1);
+        double sumonedivx0 = 0.0;
+        for (i = 0; i < x[0].length; i++) {
+        	sumonedivx0 += 1.0/x[0][i];
+        }
+        double empiricalonedivp1 = sumonedivx0/x[0].length;
+        System.out.println("empiricalonedivp1 = " + empiricalonedivp1);
+        
+        double b[][] = new double[3][1];
+        b[0][0] = 5.0;
+        b[1][0] = 2.0;
+        b[2][0] = 3.0;
+        double y[][] = dirichlet_sample(b, 1000);
+        
+        // E[ p1/(p1 + q1) ]
+        double sumb = 10.0;
+        double a1 = a[0][0]/suma;
+        double b1 = b[0][0]/sumb;
+        double exactp1divp1plusq1 = a1/(a1+b1);
+        System.out.println("exactp1divp1plusq1 = " + exactp1divp1plusq1);
+        sum = 0.0;
+        for (i = 0; i < x[0].length; i++) {
+            sum += (x[0][i]/(x[0][i] + y[0][i]));	
+        }
+        double empiricalp1divp1plusq1 = sum/x[0].length;
+        System.out.println("empiricalp1divp1plusq1 = " + empiricalp1divp1plusq1);
+        
+        // E[ log (p1 + q1) ]
+        a1 = (a[0][0] - 0.1)/(suma - 0.1);
+        a1 = Math.exp(digamma(a[0][0]) - digamma(suma));
+        b1 = (b[0][0] - 0.1)/(sumb - 0.1);
+        b1 = Math.exp(digamma(b[0][0]) - digamma(sumb));
+        double exactloga1plusb1 = Math.log(a1 + b1);
+        System.out.println("exactloga1plusb1 = " + exactloga1plusb1);
+        sum = 0.0;
+        for (i = 0; i < x[0].length; i++) {
+        	sum += Math.log(x[0][i] + y[0][i]);
+        }
+        double empiricalloga1plusb1 = sum/x[0].length;
+        System.out.println("empiricaloga1plusb1 = " + empiricalloga1plusb1);
+    }
 
     public double[][] dirichlet_sample(double a[][], int n) {
     	// a is either a row vector or a column vector
