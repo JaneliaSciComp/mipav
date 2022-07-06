@@ -1380,6 +1380,17 @@ public class Fastfit {
     	System.out.println("For slow_pochhammer(0.1, 100) actual result = " + poch + " correct result = 357.3415591371226056543663");
     }
     
+    public double pochhammer(double x, double n) {
+    	// pochhammer(x,n) returns the rising log-factorial log(gamma(x+n)/gamma(x))
+    	// Named after the corresponding Mathematica function.
+        if (n == 0.0) {
+        	return 0.0;
+        }
+        else {
+        	return (gammaln(x + n) - gammaln(x));
+        }
+    }
+    
     /* Requires: n >= 0 */
     public double pochhammer(double x, int n)
     {
@@ -3229,6 +3240,71 @@ public class Fastfit {
 		  }
 		} // for (iter = 1; iter <= 100; iter++)  
 		b[0] = m/a[0];
+    }
+    
+    public double[] polya_moment_match(double data[][]) {
+		// DATA is a matrix of count vectors (rows)
+        int i,j;
+		double sdata[] = row_sum(data);
+		double cdata[] = col_sum(data);
+		Vector<Integer>nzrows = new Vector<Integer>();
+		for (i = 0; i < sdata.length; i++) {
+			if (sdata[i] > 0) {
+				nzrows.add(i);
+			}
+		}
+		Vector<Integer>nzcols = new Vector<Integer>();
+		for (i = 0; i < cdata.length; i++) {
+			if (cdata[i] > 0) {
+				nzcols.add(i);
+			}
+		}
+		double p[][] = new double[data.length][data[0].length];
+		for (i = 0; i < nzrows.size(); i++) {
+			for (j = 0; j < nzcols.size(); j++) {
+				p[nzrows.get(i)][nzcols.get(j)] = data[nzrows.get(i)][nzcols.get(j)]/(sdata[nzrows.get(i)] + epsilon);
+			}
+		}
+		double a[] = dirichlet_moment_match(p);
+		return a;
+    }
+    
+    public double[]polya_logProb(double a[], double data[][]) {
+		// POLYA_LOGPROB   Dirichlet-multinomial (Polya) distribution.
+		
+		// POLYA_LOGPROB(a,data) returns a vector containing the log-probability of 
+		// each histogram in DATA, under the Polya distribution with parameter A.
+		// DATA is a matrix of histograms.
+		// If A is a row vector, then the histograms are the rows, otherwise columns.
+    	// a is a row vector
+    	int i,k;
+    	double p[] = new double[data.length];
+    	double dk;
+    	for (i = 0; i < a.length; i++) {
+    		if (a[i] < 0.0) {
+    		    for (k = 0; k < data.length; k++) {
+    		    	p[k] = Double.NEGATIVE_INFINITY;
+    		    }
+    		    return p;
+    		}
+    	}
+
+		double s = 0.0;
+		for (i = 0; i < a.length; i++) {
+			s += a[i];
+		}
+		
+		double sdata[] = row_sum(data);
+		for (k = 0; k < data[0].length; k++) {
+		    for (i = 0; i < data.length; i++) {
+		    	dk = data[i][k];
+		    	p[i] = p[i] + pochhammer(a[k],dk);
+		    }
+		}
+		for (i = 0; i < data.length; i++) {
+			p[i] = p[i] - pochhammer(s, sdata[i]);
+		}
+		return p;
     }
    
 }
