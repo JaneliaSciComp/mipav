@@ -3158,6 +3158,77 @@ public class Fastfit {
     		}
     		return hg;
     }
+    
+    public void test_gamma_fit() {
+    	// Test passes
+    	// a = 7.3 acalc[0] = 7.243850921724396
+    	// b = 4.5 bcalc[0] = 4.537971005083331
+    	int i;
+    	int n = 10000;
+    	double a = 7.3;
+    	double b = 4.5;
+    	double x[] = new double[n];
+    	for (i = 0; i < n; i++) {
+    	    x[i] = GammaRand(a)*b;
+    	}
+    	double acalc[] = new double[1];
+    	double bcalc[] = new double[1];
+    	gamma_fit(acalc, bcalc, x, Double.NaN);
+    	System.out.println("a = " + a + " acalc[0] = " + acalc[0]);
+    	System.out.println("b = " + b + " bcalc[0] = " + bcalc[0]);
+    }
 
+    public void gamma_fit(double a[], double b[], double x[], double s) {
+		// GAMMA_FIT     Maximum-likelihood gamma distribution.
+		
+		// GAMMA_FIT(x) returns the MLE (a,b) for the data in vector x.
+		
+		// GAMMA_FIT(m,s) returns the MLE (a,b) for data with sufficient statistics
+		// given by 
+		//   m = mean(x)
+		//   s = log(m) - mean(log(x))
+		
+		// The gamma distribution is parameterized as
+		//   p(x) = x^(a-1)/(Gamma(a) b^a) exp(-x/b)
+		//   E[x] = ab
+		
+		// The algorithm is a generalized Newton iteration, described in
+		// "Estimating a Gamma distribution" by T. Minka.
+
+		// Written by Tom Minka
+
+		int i;
+		int iter;
+		double old_a;
+		double g;
+		double h;
+    	double m = 0.0;
+    	for (i = 0; i < x.length; i++) {
+    		m += x[i];
+    	}
+    	m = m/x.length;
+    	if (Double.isNaN(s)) {
+    		double meanlogx = 0.0;
+    		for (i = 0; i < x.length; i++) {
+    			meanlogx += Math.log(x[i]);
+    		}
+    		meanlogx = meanlogx/x.length;
+    		s = Math.log(m) - meanlogx;
+    	} // if (s == Double.NaN)
+    	
+		a[0] = 0.5/s;
+
+		// gen Newton
+		for (iter = 1; iter <= 100; iter++) {
+		  old_a = a[0];
+		  g = Math.log(a[0])-s-digamma(a[0]);
+		  h = 1/a[0] - trigamma(a[0]);
+		  a[0] = 1/(1/a[0] + g/(a[0]*a[0]*h));
+		  if(Math.abs(a[0] - old_a) < 1e-8) {
+			  break;
+		  }
+		} // for (iter = 1; iter <= 100; iter++)  
+		b[0] = m/a[0];
+    }
    
 }
