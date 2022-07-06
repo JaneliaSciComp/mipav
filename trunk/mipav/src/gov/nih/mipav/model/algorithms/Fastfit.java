@@ -2522,10 +2522,10 @@ public class Fastfit {
     	for (i = 0; i < a.length; i++) {
     	   am1[i] = a[i] - 1.0;	
     	}
-    	double p[] = new double[data.length];
-    	for (i = 0; i < data.length; i++) {
-    		for (j = 0; j < data[0].length; j++) {
-    			p[i] += (Math.log(data[i][j]) * am1[j]);
+    	double p[] = new double[expandedData.length];
+    	for (i = 0; i < expandedData.length; i++) {
+    		for (j = 0; j < expandedData[0].length; j++) {
+    			p[i] += (Math.log(expandedData[i][j]) * am1[j]);
     		}
     	}
     	double suma = 0.0;
@@ -2693,6 +2693,152 @@ public class Fastfit {
 		}
 		p = gammalnsuma + sumgammalna + sumam;
         return p;
+    }
+    
+    public void test_dirichlet_fit() {
+    	// dirichlet_fit_simple ok err = 3.262224557154525E-8
+		// dirichlet_fit_simple had ebest = 925.4592744344884
+		// dirichlet_fit ok err = 7.123190925995004E-12
+		// dirichlet_fit had ebest = 248.88807229877784
+		// dirichlet_fit_newton ok err = 8.881784197001252E-16
+		// dirichlet_fit_newton had ebest = 248.6273106945127
+    	int i,j;
+        double ain[][] = new double[1][3];
+        ain[0][0] = 30.0;
+        ain[0][1] = 10.0;
+        ain[0][2] = 20.0;
+        double data[][] = dirichlet_sample(ain,100*ain[0].length);
+        double e[] = new double[1000];
+        double ebest;
+        for (i = 0; i < e.length; i++) {
+        	e[i] = 0.0;
+        }
+        double a[] = dirichlet_fit_simple(e, data, null);
+        // check it is a maximum
+        double bar_p[] = new double[data[0].length];
+		for (j = 0; j < data[0].length; j++) {
+		    for (i = 0; i < data.length; i++) {
+		    	bar_p[j] += Math.log(data[i][j]);
+		    }
+		    bar_p[j] = bar_p[j]/data.length;
+		}
+		double suma = 0.0;
+		for (i = 0; i < a.length; i++) {
+			suma += a[i];
+		}
+		double digammasuma = digamma(suma);
+		double err = 0.0;
+		for (i = 0; i < a.length; i++) {
+			err = Math.max(err,Math.abs(digammasuma - digamma(a[i]) + bar_p[i]));
+		}
+        if (err < 1e-6) {
+          System.out.println("dirichlet_fit_simple ok err = " + err);
+        }
+        else {
+          System.err.println("dirichlet_fit_simple normal equations not satisfied err = " + err);
+        }
+        
+    	ebest = Double.NEGATIVE_INFINITY;
+    	for (i = 0; i <= e.length-1; i++) {
+    		ebest = Math.max(ebest, e[i]);
+    	}
+    	System.out.println("dirichlet_fit_simple had ebest = " + ebest);
+        
+        e = new double[100];
+        for (i = 0; i < e.length; i++) {
+        	e[i] = Double.NaN;
+        }
+        a = dirichlet_fit(e, data, null, null);
+        // check it is a maximum
+        bar_p = new double[data[0].length];
+		for (j = 0; j < data[0].length; j++) {
+		    for (i = 0; i < data.length; i++) {
+		    	bar_p[j] += Math.log(data[i][j]);
+		    }
+		    bar_p[j] = bar_p[j]/data.length;
+		}
+		suma = 0.0;
+		for (i = 0; i < a.length; i++) {
+			suma += a[i];
+		}
+		digammasuma = digamma(suma);
+		err = 0.0;
+		for (i = 0; i < a.length; i++) {
+			err = Math.max(err,Math.abs(digammasuma - digamma(a[i]) + bar_p[i]));
+		}
+        if (err < 1e-6) {
+          System.out.println("dirichlet_fit ok err = " + err);
+        }
+        else {
+          System.err.println("dirichlet_fit normal equations not satisfied err = " + err);
+        }
+        int lastValideIndex = -2;
+        for (i = 0; i < e.length && (lastValideIndex == -2); i++) {
+        	if (Double.isNaN(e[i])) {
+        	    lastValideIndex = i-1;	
+        	}
+        }
+        if (lastValideIndex == -2) {
+        	lastValideIndex = e.length-1;
+        }
+        if (lastValideIndex == -1) {
+        	System.err.println("No valid e found in dirichlet_fit");
+        }
+        else {
+        	ebest = Double.NEGATIVE_INFINITY;
+        	for (i = 0; i <= lastValideIndex; i++) {
+        		ebest = Math.max(ebest, e[i]);
+        	}
+        	System.out.println("dirichlet_fit had ebest = " + ebest);
+        }
+        
+        e = new double[100];
+        for (i = 0; i < e.length; i++) {
+        	e[i] = Double.NaN;
+        }
+        a = dirichlet_fit_newton(e, data, null, null);
+        // check it is a maximum
+        bar_p = new double[data[0].length];
+		for (j = 0; j < data[0].length; j++) {
+		    for (i = 0; i < data.length; i++) {
+		    	bar_p[j] += Math.log(data[i][j]);
+		    }
+		    bar_p[j] = bar_p[j]/data.length;
+		}
+		suma = 0.0;
+		for (i = 0; i < a.length; i++) {
+			suma += a[i];
+		}
+		digammasuma = digamma(suma);
+		err = 0.0;
+		for (i = 0; i < a.length; i++) {
+			err = Math.max(err,Math.abs(digammasuma - digamma(a[i]) + bar_p[i]));
+		}
+        if (err < 1e-6) {
+          System.out.println("dirichlet_fit_newton ok err = " + err);
+        }
+        else {
+          System.err.println("dirichlet_fit_newton normal equations not satisfied err = " + err);
+        }
+        lastValideIndex = -2;
+        for (i = 0; i < e.length && (lastValideIndex == -2); i++) {
+        	if (Double.isNaN(e[i])) {
+        	    lastValideIndex = i-1;	
+        	}
+        }
+        if (lastValideIndex == -2) {
+        	lastValideIndex = e.length-1;
+        }
+        if (lastValideIndex == -1) {
+        	System.err.println("No valid e found in dirichlet_fit_newton");
+        }
+        else {
+        	ebest = Double.NEGATIVE_INFINITY;
+        	for (i = 0; i <= lastValideIndex; i++) {
+        		ebest = Math.max(ebest, e[i]);
+        	}
+        	System.out.println("dirichlet_fit_newton had ebest = " + ebest);
+        }
     }
     
     public double[] dirichlet_fit(double e[], double data[][], double ain[], double bar_p[]) {
