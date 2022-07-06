@@ -2711,7 +2711,7 @@ public class Fastfit {
         double e[] = new double[1000];
         double ebest;
         for (i = 0; i < e.length; i++) {
-        	e[i] = 0.0;
+        	e[i] = Double.NaN;
         }
         double a[] = dirichlet_fit_simple(e, data, null);
         // check it is a maximum
@@ -2738,11 +2738,25 @@ public class Fastfit {
           System.err.println("dirichlet_fit_simple normal equations not satisfied err = " + err);
         }
         
-    	ebest = Double.NEGATIVE_INFINITY;
-    	for (i = 0; i <= e.length-1; i++) {
-    		ebest = Math.max(ebest, e[i]);
-    	}
-    	System.out.println("dirichlet_fit_simple had ebest = " + ebest);
+        int lastValideIndex = -2;
+        for (i = 0; i < e.length && (lastValideIndex == -2); i++) {
+        	if (Double.isNaN(e[i])) {
+        	    lastValideIndex = i-1;	
+        	}
+        }
+        if (lastValideIndex == -2) {
+        	lastValideIndex = e.length-1;
+        }
+        if (lastValideIndex == -1) {
+        	System.err.println("No valid e found in dirichlet_fit_simple");
+        }
+        else {
+        	ebest = Double.NEGATIVE_INFINITY;
+        	for (i = 0; i <= lastValideIndex; i++) {
+        		ebest = Math.max(ebest, e[i]);
+        	}
+        	System.out.println("dirichlet_fit_simple had ebest = " + ebest);
+        }
         
         e = new double[100];
         for (i = 0; i < e.length; i++) {
@@ -2772,7 +2786,7 @@ public class Fastfit {
         else {
           System.err.println("dirichlet_fit normal equations not satisfied err = " + err);
         }
-        int lastValideIndex = -2;
+        lastValideIndex = -2;
         for (i = 0; i < e.length && (lastValideIndex == -2); i++) {
         	if (Double.isNaN(e[i])) {
         	    lastValideIndex = i-1;	
@@ -2974,6 +2988,7 @@ public class Fastfit {
 		  }
 		  if (e != null) {
 			  double sumdlog[] = dirichlet_logProb(a, data);
+			  e[iter-1] = 0.0;
 			  for (i = 0; i < sumdlog.length; i++) {
 			      e[iter-1] += sumdlog[i];
 			  }  
