@@ -4157,15 +4157,19 @@ public class Fastfit {
 		for (i = 0; i < p[0].length; i++) {
 			js[i] = i;
 		}
+		double nd[] = new double[n.length];
+		for (i = 0; i < n.length; i++) {
+			nd[i] = n[i];
+		}
 		// loop bins
 		for (i = 0; i < p.length-1; i++) {
 		  // the count in bin i is a binomial distribution
 		  for (k = 0; k < js.length; k++) {
 			j = js[k];
-		    h[i][j] = BinoRand(p[i][j]/z[j], n[j]);
+		    h[i][j] = BinoRand(p[i][j]/z[j], (long)nd[j]);
 		  }
-		  for (k = 0; k < n.length; k++) {
-			  n[k] = (int)(n[k] - h[i][k]);
+		  for (k = 0; k < nd.length; k++) {
+			  nd[k] = nd[k] - h[i][k];
 		  }
 		  for (k = 0; k < js.length; k++) {
 			  j = js[k];
@@ -4184,8 +4188,8 @@ public class Fastfit {
 		      }
 		  }
 		} // for (i = 0; i < p.length-1; i++) 
-		for (i = 0; i < n.length; i++) {
-			h[h.length-1][i] = n[i];
+		for (i = 0; i < nd.length; i++) {
+			h[h.length-1][i] = nd[i];
 		}
 		return h;
     }
