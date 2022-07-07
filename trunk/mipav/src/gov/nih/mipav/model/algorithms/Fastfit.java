@@ -1447,6 +1447,17 @@ public class Fastfit {
       return result;
     }
     
+    public double di_pochhammer(double x, double n) {
+    	// di_pochhammer(x,n) returns digamma(x+n)-digamma(x), 
+    	// with special attention to the case n==0.
+    	if (n == 0.0) {
+    		return 0.0;
+    	}
+    	else {
+    		return (digamma(x+n) - digamma(x));
+    	}
+    }
+    
     public double di_pochhammer(double x, int n)
     {
       double cache_x = -1;
@@ -1491,6 +1502,17 @@ public class Fastfit {
       }
       else result = digamma(x+n) - digamma(x);
       return result;
+    }
+    
+    public double tri_pochhammer(double x, double n) {
+    	// tri_pochhammer(x,n) returns trigamma(x+n)-trigamma(x), 
+    	// with special attention to the case n==0.
+    	if (n == 0.0) {
+    		return 0.0;
+    	}
+    	else {
+    		return (trigamma(x+n) - trigamma(x));
+    	}
     }
     
     public double tri_pochhammer(double x, int n)
@@ -3306,5 +3328,223 @@ public class Fastfit {
 		}
 		return p;
     }
-   
+    
+    public double[] gradient2(double a[], double data[][], double sdata[]) {
+        int i,j;
+		int N = data.length;
+		double g[] = new double [a.length];
+		double sa = 0.0;
+		for (i = 0; i < a.length; i++) {
+			sa += a[i];
+		}
+		for (i = 0; i < N; i++) {
+			for (j = 0; j < data[0].length; j++) {
+				if (data[i][j] > 0.0) {
+					g[j] = g[j] + di_pochhammer(a[j],data[i][j]);
+				}
+			}
+		} // for (i = 0; i < N; i++)
+		double sum = 0.0;
+		for (i = 0; i < sdata.length; i++) {
+			sum += di_pochhammer(sa, sdata[i]);
+		}
+		for (i = 0; i < g.length; i++) {
+		    g[i] = g[i] - sum;
+		    // scale for numerical stability
+		    g[i] = g[i]/N;
+		}
+		return g;
+    }
+    
+    public double[] hessian_times_gradient2(double a[], double data[][], double sdata[], double g[], double lambda) {
+		int i,j;
+
+		int N = data.length;
+		double sa = 0.0;
+		for (i = 0; i < a.length; i++) {
+			sa += a[i];
+		}
+		double q[] = new double[a.length];
+		for (i = 0; i < N; i++) {
+			for (j = 0; j < data[0].length; j++) {
+				if (data[i][j] > 0.0) {
+					q[j] = q[j] + tri_pochhammer(a[j],data[i][j]);
+				}
+			}
+		} // for (i = 0; i < N; i++)
+		for (i = 0; i < q.length; i++) {
+		    q[i] = q[i]/N;
+		}
+		double mean = 0.0;
+		for (i = 0; i < sdata.length; i++) {
+			mean += tri_pochhammer(sa, sdata[i]);
+		}
+		mean = mean/sdata.length;
+		double z = -mean;
+		double sumgq = 0.0;
+		double sumq = 0.0;
+		for (i = 0; i < q.length; i++) {
+		    q[i] = q[i] - lambda;
+		    q[i] = 1./q[i];
+		    sumgq += (g[i]*q[i]);
+		    sumq += q[i];
+		}
+		double b = sumgq/(1/z + sumq);
+		double hg[] = new double[g.length];
+		for (i = 0; i < hg.length; i++) {
+		    hg[i] = (g[i] - b)*q[i];
+		}
+		return hg;
+    }
+    
+    public double[] polya_fit(double data[][], double ain[]) {
+		// POLYA_FIT    Maximum-likelihood Dirichlet-multinomial (Polya) distribution.
+		
+		// POLYA_FIT(data) returns the MLE (a) for the matrix DATA.
+		// Each row of DATA is a histogram of counts.
+		// POLYA_FIT(data,a) provides an initial guess A to speed up the search.
+		
+		// The Polya distribution is parameterized as
+		//  p(x) = (Gamma(sum_k a_k)/prod_k Gamma(a_k)) prod_k Gamma(x_k+a_k)/Gamma(a_k)
+		//
+		// The algorithm is Newton iteration, described in
+		// "Estimating a Dirichlet distribution" by T. Minka.
+
+		// Written by Tom Minka
+        int i,j,k;
+		boolean show_progress = false;
+        double a[];
+        int iter;
+        double suma;
+        double g[];
+        boolean abort;
+        double hg[];
+        boolean allhglessthana;
+        double maxabsg = 0.0;
+        if (ain == null) {
+        	a = polya_moment_match(data);
+        }
+        else {
+        	a = new double[ain.length];
+        	for (i = 0; i < a.length; i++) {
+        		a[i] = ain[i];
+        	}
+        }
+		double csum[] = col_sum(data);
+		int numok = 0;
+		for (i = 0; i < csum.length; i++) {
+		    if (csum[i] > 0.0) {
+		    	numok++;
+		    }
+		}
+		if (numok != csum.length) {
+			double dataok[][] = new double[data.length][numok];
+			double aokin[] = new double[numok];
+			for (k = 0,j = 0; j < data[0].length; j++) {
+				if (csum[j] > 0.0) {
+				    aokin[k++] = a[j];	
+				}
+			}
+			for (i = 0; i < data.length; i++) {
+				for (k = 0, j = 0; j < data[0].length; j++) {
+					if (csum[j] > 0.0) {
+						dataok[i][k++] = data[i][j];
+					}
+				}
+			}
+			double aok[] = polya_fit(dataok, aokin);
+			for (k = 0,j = 0; j < data[0].length; j++) {
+				if (csum[j] > 0.0) {
+				    a[j] = aokin[k++];	
+				}
+			}
+			return a;
+		} // if (numok != csum.length)
+		double sdata[] = row_sum(data);
+
+		// Newton-Raphson
+		double polylog[] = polya_logProb(a, data);
+		double old_e = 0.0;
+		for (i = 0; i < polylog.length; i++) {
+			old_e += polylog[i];
+		}
+		double lambda = 0.1;
+		double e[] = new double[100];
+		double aminushg[] = new double[a.length];
+		for (iter = 1; iter <= 100; iter++) {
+		  suma = 0.0;
+		  for (i = 0; i < a.length; i++) {
+			  suma += a[i];
+		  }
+		  if (suma == 0) {
+		    break;
+		  }
+		  g = gradient2(a, data, sdata);
+		  abort = false;
+		  // Newton iteration
+		  // loop until we get a nonsingular hessian matrix
+		  while(true) {
+		    hg = hessian_times_gradient2(a, data, sdata, g, lambda);
+		    allhglessthana = true;
+		    for (i = 0; i < a.length; i++) {
+		    	if (hg[i] >= a[i]) {
+		    		allhglessthana = false;
+		    	}
+		    }
+		    if (allhglessthana) {
+		      for (i = 0; i < a.length; i++) {
+		    	  aminushg[i] = a[i] - hg[i];
+		      }
+		      polylog = polya_logProb(aminushg, data);
+		      for (i = 0; i < polylog.length; i++) {
+		    	  e[iter-1] += polylog[i];
+		      }
+		      if(e[iter-1] > old_e) {
+			      old_e = e[iter-1];
+			      for (i = 0; i < a.length; i++) {
+			          a[i] = a[i] - hg[i];
+			      }
+			      lambda = lambda/10;
+			      break;
+		      } // if(e[iter-1] > old_e)
+		    } // if (allhglessthana) 
+		    lambda = lambda*10;
+		    if (lambda > 1e+6) {
+		      abort = true;
+		      break;
+		    } // if (lambda > 1e+6)
+		  } // while(true)
+		  if (abort) {
+		    System.out.println("Search aborted in polya_fit");
+		    Preferences.debug("search aborted in polya_fit\n", Preferences.DEBUG_ALGORITHM);
+		    e[iter-1] = old_e;
+		    break;
+		  } // if (abort)
+		  for (i = 0; i < a.length; i++) {
+			  if (a[i] < epsilon) {
+				  a[i] = epsilon;
+			  }
+		  }
+		  maxabsg = 0.0;
+		  for (i = 0; i < g.length; i++) {
+			  maxabsg = Math.max(maxabsg,Math.abs(g[i]));
+		  }
+		  if (maxabsg < 1e-16) {
+		    break;
+		  }
+		} // for (iter = 1; iter <= 100; iter++)
+		if (show_progress) { 
+		  System.out.println("gradient at exit = " + maxabsg);
+		  float xInit[][] = new float[1][iter];
+		  float eshowInit[][] = new float[1][iter];
+		  for (i = 0; i < iter; i++) {
+				xInit[0][i] = i+1;
+				eshowInit[0][i] = (float)e[i];
+		  }
+		  new ViewJFrameGraph(xInit, eshowInit, "polya_fit e");
+		} // if (show_progress)
+		return a;
+    }
+
+    		
 }
