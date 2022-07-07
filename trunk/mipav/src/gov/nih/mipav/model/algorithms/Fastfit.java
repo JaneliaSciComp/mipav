@@ -2325,6 +2325,60 @@ public class Fastfit {
 		return rarr;
     }
     
+    public double[][] dirichlet_sample_col(double acol[], int n) {
+        // acol is a column vector
+		// DIRICHLET_SAMPLE   Sample from Diriachlet distribution.
+		
+		// DIRICHLET_SAMPLE(a) returns a probability vector sampled from a 
+		// Dirichlet distribution with parameter vector A.
+		// DIRICHLET_SAMPLE(a,n) returns N samples, collected into a matrix, each 
+		// vector having the same orientation as A.
+		
+		//   References:
+		//      [1]  L. Devroye, "Non-Uniform Random Variate Generation", 
+		//      Springer-Verlag, 1986
+
+		// This is essentially a generalization of the method for Beta rv's.
+		// Theorem 4.1, p.594
+
+		//if nargin < 2
+		//  n = 1;
+		//end
+    	int i,j;
+    	boolean row = false;
+    	
+		double y[][] = new double[acol.length][n];
+		for (i = 0; i < acol.length; i++) {
+			for (j = 0; j < n; j++) {
+				y[i][j] = GammaRand(acol[i]);
+			}
+		}
+		double r[] = col_sum(y); // r is a row vector of length n
+		for (i = 0; i < n; i++) {
+			if (r[i] == 0) {
+				r[i] = 1;
+			}
+		}
+		double rarr[][];
+		if (row) {
+		    rarr = new double[n][acol.length];	
+		}
+		else {
+		    rarr = new double[acol.length][n];
+		}
+		for (i = 0; i < acol.length; i++) {
+			for (j = 0; j < n; j++) {
+				if (row) {
+					rarr[j][i] = y[i][j]/r[j];
+				}
+				else {
+				    rarr[i][j] = y[i][j]/r[j];
+				}
+			}
+		}
+		return rarr;
+    }
+    
     public double[] dirichlet_moment_match(double p[][]) {
 		// Each row of p is a multivariate observation on the probability simplex.
         int i,j;
@@ -3546,5 +3600,595 @@ public class Fastfit {
 		return a;
     }
 
-    		
+    public double[] polya_fit_simple(double data[][], double ain[]) {
+		// POLYA_FIT_SIMPLE   Maximum-likelihood Polya distribution.
+		
+		// Same as POLYA_FIT but uses the simple fixed-point iteration described in
+		// "Estimating a Dirichlet distribution" by T. Minka. 
+    	int i,j;
+    	int N = data.length;
+ 		boolean show_progress = false;
+        double a[];
+        int iter;
+        double sa;
+        double g[];
+        double h;
+        double polylog[];
+        double maxabsadiff;
+        double e[] = null;
+        if (ain == null) {
+            a = polya_moment_match(data);
+        }
+        else {
+         	a = new double[ain.length];
+         	for (i = 0; i < a.length; i++) {
+         		a[i] = ain[i];
+         	}
+        }
+        double old_a[] = new double[a.length];
+		
+		double sdata[] = row_sum(data);
+
+		// fixed-point iteration
+		if (show_progress) {
+			e = new double[1000];
+		}
+		for (iter = 1; iter <= 1000; iter++) {
+		  sa = 0.0;
+		  for (i = 0; i < a.length; i++) {
+		      old_a[i] = a[i];
+		      sa += a[i];
+		  }
+		  double dipochmat[][] = new double[N][data[0].length];
+		  for (i = 0; i < N; i++) {
+			  for (j = 0; j <  data[0].length; j++) {
+				  dipochmat[i][j] = di_pochhammer(a[j], data[i][j]);
+			  }
+		  }
+		  g = col_sum(dipochmat);
+		  h = 0.0;
+		  for (i = 0; i < sdata.length; i++) {
+			  h += di_pochhammer(sa, sdata[i]);
+		  }
+		  for (i = 0; i < a.length; i++) {
+			  a[i] = a[i] * g[i]/h;
+		  }
+		  if (show_progress) {
+			polylog = polya_logProb(a, data);
+			for (i = 0; i < polylog.length; i++) {
+				e[iter-1] += polylog[i];
+			}
+		  }
+		  maxabsadiff = 0.0;
+		  for (i = 0; i < a.length; i++) {
+			  maxabsadiff = Math.max(maxabsadiff,Math.abs(a[i] - old_a[i]));
+		  }
+		  if (maxabsadiff < 1e-6) {
+		    break;
+		  }
+		} // for (iter = 1; iter <= 1000; iter++)  
+		if (show_progress) { 
+		  float xInit[][] = new float[1][iter];
+		  float eshowInit[][] = new float[1][iter];
+		  for (i = 0; i < iter; i++) {
+				xInit[0][i] = i+1;
+				eshowInit[0][i] = (float)e[i];
+		  }
+		  new ViewJFrameGraph(xInit, eshowInit, "polya_fit_simple e");
+		} // if (show_progress)
+		return a;
+    }
+    
+    public double[] polya_fit_m(double data[][], double ain[], double weight[]) {
+		// POLYA_FIT_M   Maximum-likelihood Dirichlet-multinomial (Polya) mean.
+		
+		// POLYA_FIT_M(data,a) returns the MLE (a) for the matrix DATA,
+		// subject to a constraint on sum(A).
+		// Each row of DATA is a histogram of counts.
+		// A is a row vector providing the initial guess for the parameters.
+		
+		// POLYA_FIT_M(data,a,weight) returns the MLE where each histogram is weighted.
+		// WEIGHT is a column vector of numbers in [0,1] (default all ones).
+		
+		// A is decomposed into S*M, where M is a vector such that sum(M)=1,
+		// and only M is changed by this function.  In other words, sum(A)
+		// is unchanged by this function.
+		
+		// The algorithm is a generalized Newton iteration, described in
+		// "Estimating a Dirichlet distribution" by T. Minka.
+
+		// Written by Tom Minka
+        int i,k;
+        int iter;
+        double a[] = new double[ain.length];
+        double dk;
+        double vdk;
+        double summ;
+        double maxabsmdiff;
+        double s = 0.0;
+        for (i = 0; i < a.length; i++) {
+        	a[i] = ain[i];
+        	s += a[i];
+        }
+
+		double m[] = new double[a.length];
+		for (i = 0; i < a.length; i++) {
+			m[i] = a[i]/s;
+		}
+		double old_m[] = new double[m.length];
+
+		for (iter = 1; iter <= 20; iter++) {
+		  for (i = 0; i < m.length; i++) {
+		      old_m[i] = m[i];
+		  }
+		  for (i = 0; i < a.length; i++) {
+			  a[i] = s * m[i];
+		  }
+		  summ = 0.0;
+		  for (k = 0; k < m.length; k++) {
+			  m[k] = 0.0;
+			  for (i = 0; i < data.length; i++) {
+				  dk = data[i][k];
+				  vdk = a[k] * di_pochhammer(a[k],dk);
+				  if (weight != null) {
+					  vdk = vdk * weight[i];
+				  }
+				  m[k] += vdk;
+			  } // for (i = 0; i < data.length; i++)
+			  summ += m[k];
+		  } // for (k = 0; k < m.length; k++)
+		  for (i = 0; i < m.length; i++) {
+			  m[i] = m[i]/summ;
+		  }
+		  maxabsmdiff = 0.0;
+		  for (i = 0; i < m.length; i++) {
+			  maxabsmdiff = Math.max(maxabsmdiff,Math.abs(m[i] - old_m[i]));
+		  }
+		  if (maxabsmdiff < 1e-4) {
+		    break;
+		  }
+		} // for (iter = 1; iter <= 20; iter++)
+		for (i = 0; i < a.length; i++) {
+		    a[i] = s*m[i];
+		}    
+		return a;
+    }
+
+    public void quad_roots(double r1[], double r2[], double a2, double a1, double a0) {
+		// quad_roots(a2,a1,a0) 
+		// returns the two roots of the polynomial a2*x^2 + a1*x + a0.
+
+		double t1 = -a1/2./a2;
+		double t2 = Math.sqrt(a1*a1 - 4*a2*a0)/2./a2;
+		r1[0] = t1 + t2;
+		r2[0] = t1 - t2;
+		return;
+    }
+    
+    public double special_case(double s, double g, double h, double c1, double c3) {
+
+    		double a0 = h*s*s + c1;
+    		double a1 = 2*s*s*(h*s + g);
+    		double a2;
+    		if (Math.abs(2*g + h*s) < 1e-13) {
+    		  a2 = c3;
+    		}
+    		else {
+    		  a2 = s*s*s*(2*g + h*s);
+    		}
+    		double b[] = new double[1];
+    		double b2[] = new double[1];
+    	    quad_roots(b, b2, a2, a1, a0);
+    	    double var = (s + b[0])/b[0];
+    		double a = (g/c1)*var*var;
+    		s = 1./(1./s - a);
+    		return s;
+    }
+    
+    public void s_derivatives_c(double g[], double h[], double c1[], double c3[], 
+    		double a[], double data[][], double len[], double weight[]) {
+    	// From s_derivatives.c
+    	/* a is a row or col vector 
+	    * data is a matrix of rows
+	    * len is a row or col vector
+	    * weight is a row or col vector
+	    */
+    	
+    	/* c1 is the limiting log(s) coefficient
+    	* c3 is the limiting 1/s^2 coefficient 
+    	*/
+    	double s;
+    	int i, k;
+    	int N = data.length;
+    	int K = a.length;
+    	g[0] = h[0] = c1[0] = c3[0] = 0;
+    	
+    	/* compute current s */
+    	s = 0;
+    	for(k=0;k<K;k++) s += a[k];
+    	
+    	/* loop words */
+    	  for(k=0;k<K;k++) {
+    	    double c3k = 0;
+    	    double m = a[k]/s, m2 = m*m;
+    	    if(m == 0) continue;
+    	    for(i=0;i<N;i++) {
+    		double w = 1;
+    		int count = (int)data[i][k];
+    		if(count == 0) continue;
+    		if(weight != null) w = weight[i];
+    		g[0] += m*di_pochhammer(a[k], count)*w;
+    		h[0] += m2*tri_pochhammer(a[k], count)*w;
+    		c1[0] += w;
+    		c3k += (double)count*(count-1)*(2*count-1)*w;
+    	    } // for(i=0;i<N;i++) 
+    	    
+    	    c3[0] -= c3k/m2;
+    	  } // for(k=0;k<K;k++)
+    	  
+    	  for(i=0;i<N;i++) {
+		    int count = (int)len[i];
+		    if(count > 0) {
+		      double w = 1;
+		      if(weight != null) w = weight[i];
+		      g[0] -= di_pochhammer(s, count)*w;
+		      h[0] -= tri_pochhammer(s, count)*w;
+		      c1[0] -= w;
+		      c3[0] += (double)count*(count-1)*(2*count-1)*w;
+		    }
+		  }
+		  c3[0] /= 6;
+		  return;
+    }
+    
+    public void s_derivatives(double g[], double h[], double c1[], double c3[], 
+    		double a[], double data[][], double sdata[], double weight[]) {
+    	// From s_derivatives.m
+		// Returns derivatives of the log-likelihood bound:
+		//   sum_i w_i log p(x_i | s, m)
+		// Outputs are scalars.
+		// DATA is a matrix of histograms, which must be rows.
+		// SDATA is a vector of histogram totals.
+		// WEIGHT is a vector of numbers in [0,1] (default all ones),
+		//   oriented opposite the histograms.
+        int i,j,k;
+        double dk;
+        double sumd;
+        double sumt;
+        double c3k;
+        double s = 0.0;
+        for (i = 0; i < a.length; i++) {
+        	s += a[i];
+        }
+		double m[] = new double[a.length];
+		for (i = 0; i < a.length; i++) {
+		    m[i] = a[i]/s;
+		}
+
+		int N = data.length;
+		if (weight == null) {
+			weight = new double[N];
+			for (i = 0; i < N; i++) {
+				weight[i] = 1.0;
+			}
+		}
+		g[0] = 0.0;
+		h[0] = 0.0;
+		for (i = 0; i < sdata.length; i++) {
+			g[0] -= di_pochhammer(s, sdata[i]) * weight[i];
+			h[0] -= tri_pochhammer(s, sdata[i]) * weight[i];
+		}
+        double datagtzero[][] = new double[N][data[0].length];
+        for (i = 0; i < N; i++) {
+        	for (j = 0; j < data[0].length; j++) {
+        		if (data[i][j] > 0) {
+        			datagtzero[i][j] = 1.0;
+        		}
+        	}
+        }
+        double rsum[] = row_sum(datagtzero);
+        double c11 = 0.0;
+        for (i = 0; i < rsum.length; i++) {
+        	c11 += rsum[i]*weight[i];
+        }
+        double sdatagtzero[] = new double[sdata.length];
+        for (i = 0; i < sdata.length; i++) {
+        	if (sdata[i] > 0.0) {
+        		sdatagtzero[i] = 1.0;
+        	}
+        }
+        double c12 = 0;
+        for (i = 0; i < weight.length; i++) {
+        	c12 += (sdatagtzero[i] * weight[i]);
+        }
+        c1[0] = c11 - c12;
+		c3[0] = 0.0;
+		for (i = 0; i < sdata.length; i++) {
+			c3[0] += (sdata[i]*(sdata[i]-1.0)*(2.0*sdata[i]-1.0)*weight[i]);
+		}
+		c3[0] = c3[0]/6;
+		for (k = 0; k < a.length; k++) {
+			sumd = 0.0;
+			sumt = 0.0;
+			c3k = 0.0;
+			for (i = 0; i < N; i++) {
+				dk = data[i][k];
+				sumd += (di_pochhammer(a[k],dk)*weight[i]);
+				sumt += (tri_pochhammer(a[k],dk)*weight[i]);
+				c3k += (dk*(dk-1.0)*(2.0*dk-1.0)*weight[i]);
+			}
+			g[0] = g[0] + m[k]*sumd;
+			h[0] = h[0] + m[k]*m[k]*sumt;
+			c3k = c3k/6;
+		    if (c3k > 0) {
+		      c3[0] = c3[0] - c3k/(m[k]*m[k]);
+		    }
+		} // for (k = 0; k < a.length; k++)
+        return;
+    }
+    
+    public double[] polya_fit_s(double data[][], double ain[], double weight[]) {
+		// POLYA_FIT_S   Maximum-likelihood Dirichlet-multinomial (Polya) precision.
+		
+		// POLYA_FIT_S(data,a) returns the MLE (a) for the matrix DATA,
+		// subject to a constraint on A/sum(A).
+		// Each row of DATA is a histogram of counts.
+		// A is a row vector providing the initial guess for the parameters.
+		
+		// POLYA_FIT_S(data,a,weight) returns the MLE where each histogram is weighted.
+		// WEIGHT is a column vector of numbers in [0,1] (default all ones).
+		
+		// A is decomposed into S*M, where M is a vector such that sum(M)=1,
+		// and only S is changed by this function.  In other words, A/sum(A)
+		// is unchanged by this function.
+		
+		// The algorithm is a generalized Newton iteration, described in
+		// "Estimating a Dirichlet distribution" by T. Minka.
+
+		// Written by Tom Minka
+        int i;
+        int iter;
+        double old_s;
+        double a[] = new double[ain.length];
+        double s = 0.0;
+        for (i = 0; i < a.length; i++) {
+        	a[i] = ain[i];
+        	s += a[i];
+        }
+		boolean show_progress = false;
+        double m[] = new double[a.length];
+        for (i = 0; i < a.length; i++) {
+        	m[i] = a[i]/s;
+        }
+	    double sdata[] = row_sum(data);
+        double e[] = null;
+        if (show_progress) {
+        	e = new double[10];
+        }
+		
+		double g[] = new double[1];
+		double h[] = new double[1];
+		double c1[] = new double[1];
+		double c3[] = new double[1];
+		double r;
+		double p[];
+        // generalized Newton algorithm
+		for (iter = 1; iter <= 10; iter++) {
+		  old_s = s;
+		  s_derivatives(g, h, c1, c3, a, data, sdata, weight);
+		  if (g[0] > epsilon) {
+		    r = g[0] + s*h[0];
+		    if (r >= 0) {
+		      // the maximum is infinity
+		      s = Double.POSITIVE_INFINITY;
+		    }
+		    else {
+		      s = s/(1 + g[0]/h[0]/s);
+		    }
+		  } // if (g[0] > epsilon)
+		  if ((g[0] < -epsilon) && (c1[0] > epsilon)) {
+		    s = special_case(s, g[0], h[0], c1[0], c3[0]);
+		  } 
+		  for (i = 0; i < a.length; i++) {
+			  a[i] = s*m[i];
+		  }
+		  if (show_progress) {
+		    p = polya_logProb(a, data);
+		    if (weight != null) {
+		      for (i = 0; i < p.length; i++) {
+		          p[i] = p[i]*weight[i];
+		      }
+		    }
+		    for (i = 0; i < p.length; i++) {
+		        e[iter-1] += p[i];
+		    }
+		  } // if (show_progress)
+		  if (Double.isInfinite(s)) {
+			  break;
+		  }
+			  
+		  if (Math.abs(s - old_s) < 1e-6) {
+		    break;
+		  }
+		} // for (iter = 1; iter <= 10; iter++)
+		  if (show_progress) { 
+			  float xInit[][] = new float[1][iter];
+			  float eshowInit[][] = new float[1][iter];
+			  for (i = 0; i < iter; i++) {
+					xInit[0][i] = i+1;
+					eshowInit[0][i] = (float)e[i];
+			  }
+			  new ViewJFrameGraph(xInit, eshowInit, "polya_fit_s e");
+		  } // if (show_progress)
+		  return a;
+    }
+
+    public double[] polya_fit_ms(double data[][], double ain[], double weight[]) {
+		// POLYA_FIT_MS   Maximum-likelihood Polya distribution.
+		//
+		// Same as POLYA_FIT but uses alternating optimization for M and S.
+		// DATA is a matrix of histograms, oriented the same way as A.
+
+		// Written by Tom Minka
+        int i;
+        double s;
+        int iter;
+        double old_s;
+        double a[];
+        if (ain == null) {
+		    a = polya_moment_match(data);
+        }
+        else {
+        	a = new double[ain.length];
+        	for (i = 0; i < a.length; i++) {
+        		a[i] = ain[i];
+        	}
+        }
+        double m[] = new double[a.length];
+
+		// alternate between polya_fit_m and polya_fit_s
+        int N = data.length;
+        if (weight == null) {
+        	weight = new double[N];
+        	for (i = 0; i < N; i++) {
+        		weight[i] = 1.0;
+        	}
+        }
+		s = 0.0;
+		for (i = 0; i < a.length; i++) {
+			s += a[i];
+		}
+		for (iter = 1; iter <= 10; iter++) {
+		  old_s = s;
+		  a = polya_fit_m(data, a, weight);
+		  for (i = 0; i < a.length; i++) {
+			  m[i] = a[i]/s;
+		  }
+		  a = polya_fit_s(data, a, weight);
+		  s = 0.0;
+	      for (i = 0; i < a.length; i++) {
+		      s += a[i];
+		  }
+		  if (Double.isInfinite(s)) {
+		    s = 1e7;
+		    for (i = 0; i < a.length; i++) {
+		    	a[i] = s*m[i];
+		    }
+		  }
+		  if (Math.abs(s - old_s) < 1e-4) {
+		    break;
+		  }
+		} // for (iter = 1; iter <= 10; iter++)
+		return a;
+    }
+    
+    public double[][] polya_sample(double a[][],int n[]) {
+    		// POLYA_SAMPLE      Sample from Dirichlet-multinomial (Polya) distribution.
+    		// POLYA_SAMPLE(a,n) returns a matrix of histograms.
+    		// If A is a row, the histograms are the rows, others they are the columns.
+    		// N is a vector whose length is the number of histograms.
+    		// N(i) will be the total count in histogram i.
+
+    		int i,j;
+        	boolean row;
+        	if (a.length == 1) {
+        		row = true; // row vector
+        	}
+        	else {
+        		row = false; // column vector
+        	}
+        	
+        	double acol[] = new double[a.length*a[0].length];
+            for (j = 0; j < a[0].length; j++) {
+            	for(i = 0; i < a.length; i++) {
+            		acol[i + j*a.length] = a[i][j];
+            	}
+            }
+
+    		double p[][] = dirichlet_sample_col(acol,n.length);
+    		double r[][] = new double[p.length][p[0].length];
+    		for (i = 0; i < n.length; i++) {
+    			double pcol[][] = new double[p.length][1];
+    			for (j = 0; j < p.length; j++) {
+    				pcol[j][0] = p[j][i];
+    			}
+    			int nval[] = new int[1];
+    			nval[0] = n[i];
+    			double rcol[][] = sample_hist(pcol,nval);
+    			for (j = 0; j < p.length; j++) {
+    				r[j][i] = rcol[j][0];
+    			}
+    		  //r(:,i) = sample_hist(p(:,i),n(i));
+    		}
+    		if (row) {
+    		  double rT[][] = new double[r[0].length][r.length];
+    		  for (i = 0; i < r.length; i++) {
+    			  for (j = 0; j < r[0].length; j++) {
+    				  rT[j][i] = r[i][j];
+    			  }
+    		  }
+    		  return rT;
+    		}
+    		else {
+    			return r;
+    		}
+    }
+
+    public double[][] sample_hist(double p[][], int n[]) {
+    	// Defualt n = 1
+		// SAMPLE_HIST     Sample from a multinomial distribution.
+		// SAMPLE_HIST(P,N) returns a random matrix of counts, same size as P, 
+		// whose column sums are all N.  Column j is sampled from a multinomial with
+		// the probabilities p(:,j).
+		
+		// Example:
+		//   sample_hist([0.2 0.4; 0.8 0.6],100)
+
+		// The advantage of this alg is that the running time grows slowly with n.
+		// It is the same alg used by BUGS.
+		// If n is very small then it is faster to just take n samples from p.
+        int i,j,k;
+		double h[][] = new double[p.length][p[0].length];
+		double z[] = new double[p[0].length];
+		for (i = 0; i < z.length; i++) {
+			z[i] = 1.0;
+		}
+		int js[] = new int[p[0].length];
+		for (i = 0; i < p[0].length; i++) {
+			js[i] = i;
+		}
+		// loop bins
+		for (i = 0; i < p.length-1; i++) {
+		  // the count in bin i is a binomial distribution
+		  for (k = 0; k < js.length; k++) {
+			j = js[k];
+		    h[i][j] = BinoRand(p[i][j]/z[j], n[j]);
+		  }
+		  for (k = 0; k < n.length; k++) {
+			  n[k] = (int)(n[k] - h[i][k]);
+		  }
+		  for (k = 0; k < js.length; k++) {
+			  j = js[k];
+			  z[j] = z[j] - p[i][j];
+		  }
+		  int numjs = 0;
+		  for (k = 0; k < z.length; k++) {
+			  if (z[k] > 0) {
+			      numjs++;  
+			  }
+		  }
+		  js = new int[numjs];
+		  for (j = 0, k = 0; k < z.length; k++) {
+		      if (z[k] > 0) {
+		    	  js[j++] = k;
+		      }
+		  }
+		} // for (i = 0; i < p.length-1; i++) 
+		for (i = 0; i < n.length; i++) {
+			h[h.length-1][i] = n[i];
+		}
+		return h;
+    }
+
+  		
 }
