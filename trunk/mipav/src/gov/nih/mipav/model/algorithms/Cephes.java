@@ -111,6 +111,10 @@ public class Cephes {
 	public final static int NDTRI = 13;
 	public final static int POLEVL = 14;
 	public final static int P1EVL = 15;
+	public final static int STIRF = 16;
+	public final static int TRUE_GAMMA = 17;
+	public final static int ZETA = 18;
+	public final static int ZETAC = 19;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -122,6 +126,9 @@ public class Cephes {
 	private final static double s2pi = 2.50662827463100050242E0;
 	private final static double PIO2   =  1.57079632679489661923; // pi/2
 	private final static double SQRTH  =  7.07106781186547524401E-1; // sqrt(2)/2
+	private final static int MAXL2 = 127;
+	private final static double MAXSTIR = 143.01608;
+	private final static double SQTPI = 2.50662827463100050242E0;
 	// For ndtr:
 	private final static double P[] = new double[]{
 		 2.46196981473530512524E-10,
@@ -308,6 +315,158 @@ public class Cephes {
 		 1.24999999999870820058E-1,
 		 4.99999999999999999821E-1
 		};
+	
+	/* Expansion coefficients
+	 * for Euler-Maclaurin summation formula
+	 * (2k)! / B2k
+	 * where B2k are Bernoulli numbers
+	 */
+	private final static double AZETA[] = new double[]{
+	12.0,
+	-720.0,
+	30240.0,
+	-1209600.0,
+	47900160.0,
+	-1.8924375803183791606e9, /*1.307674368e12/691*/
+	7.47242496e10,
+	-2.950130727918164224e12, /*1.067062284288e16/3617*/
+	1.1646782814350067249e14, /*5.109094217170944e18/43867*/
+	-4.5979787224074726105e15, /*8.028576626982912e20/174611*/
+	1.8152105401943546773e17, /*1.5511210043330985984e23/854513*/
+	-7.1661652561756670113e18 /*1.6938241367317436694528e27/236364091*/
+	};
+	
+	
+	private final static double azetac[] = new double[]{
+			-1.50000000000000000000E0,
+			 1.70141183460469231730E38, /* infinity. */
+			 6.44934066848226436472E-1,
+			 2.02056903159594285400E-1,
+			 8.23232337111381915160E-2,
+			 3.69277551433699263314E-2,
+			 1.73430619844491397145E-2,
+			 8.34927738192282683980E-3,
+			 4.07735619794433937869E-3,
+			 2.00839282608221441785E-3,
+			 9.94575127818085337146E-4,
+			 4.94188604119464558702E-4,
+			 2.46086553308048298638E-4,
+			 1.22713347578489146752E-4,
+			 6.12481350587048292585E-5,
+			 3.05882363070204935517E-5,
+			 1.52822594086518717326E-5,
+			 7.63719763789976227360E-6,
+			 3.81729326499983985646E-6,
+			 1.90821271655393892566E-6,
+			 9.53962033872796113152E-7,
+			 4.76932986787806463117E-7,
+			 2.38450502727732990004E-7,
+			 1.19219925965311073068E-7,
+			 5.96081890512594796124E-8,
+			 2.98035035146522801861E-8,
+			 1.49015548283650412347E-8,
+			 7.45071178983542949198E-9,
+			 3.72533402478845705482E-9,
+			 1.86265972351304900640E-9,
+			 9.31327432419668182872E-10
+			};
+	/* 2**x (1 - 1/x) (zeta(x) - 1) = P(1/x)/Q(1/x), 1 <= x <= 10 */
+	private final static double PZETAC[] = new double[]{
+			  5.85746514569725319540E11,
+			  2.57534127756102572888E11,
+			  4.87781159567948256438E10,
+			  5.15399538023885770696E9,
+			  3.41646073514754094281E8,
+			  1.60837006880656492731E7,
+			  5.92785467342109522998E5,
+			  1.51129169964938823117E4,
+			  2.01822444485997955865E2,
+			};
+	private final static double QZETAC[] = new double[]{
+			/*  1.00000000000000000000E0,*/
+			  3.90497676373371157516E11,
+			  5.22858235368272161797E10,
+			  5.64451517271280543351E9,
+			  3.39006746015350418834E8,
+			  1.79410371500126453702E7,
+			  5.66666825131384797029E5,
+			  1.60382976810944131506E4,
+			  1.96436237223387314144E2,
+			};
+	/* log(zeta(x) - 1 - 2**-x), 10 <= x <= 50 */
+	private final static double AZETAC[] = new double[]{
+			 8.70728567484590192539E6,
+			 1.76506865670346462757E8,
+			 2.60889506707483264896E10,
+			 5.29806374009894791647E11,
+			 2.26888156119238241487E13,
+			 3.31884402932705083599E14,
+			 5.13778997975868230192E15,
+			-1.98123688133907171455E15,
+			-9.92763810039983572356E16,
+			 7.82905376180870586444E16,
+			 9.26786275768927717187E16,
+			};
+	private final static double BZETAC[] = new double[]{
+			/* 1.00000000000000000000E0,*/
+			-7.92625410563741062861E6,
+			-1.60529969932920229676E8,
+			-2.37669260975543221788E10,
+			-4.80319584350455169857E11,
+			-2.07820961754173320170E13,
+			-2.96075404507272223680E14,
+			-4.86299103694609136686E15,
+			 5.34589509675789930199E15,
+			 5.71464111092297631292E16,
+			-1.79915597658676556828E16,
+			};
+	/* (1-x) (zeta(x) - 1), 0 <= x <= 1 */
+	private final static double RZETAC[] = new double[]{
+			-3.28717474506562731748E-1,
+			 1.55162528742623950834E1,
+			-2.48762831680821954401E2,
+			 1.01050368053237678329E3,
+			 1.26726061410235149405E4,
+			-1.11578094770515181334E5,
+			};
+	private final static double SZETAC[] = new double[]{
+			/* 1.00000000000000000000E0,*/
+			 1.95107674914060531512E1,
+			 3.17710311750646984099E2,
+			 3.03835500874445748734E3,
+			 2.03665876435770579345E4,
+			 7.43853965136767874343E4,
+			};
+	
+	/* Stirling's formula for the gamma function */
+	private final static double STIR[] = new double[]{
+	 7.87311395793093628397E-4,
+	-2.29549961613378126380E-4,
+	-2.68132617805781232825E-3,
+	 3.47222221605458667310E-3,
+	 8.33333333333482257126E-2,
+	};
+	
+	private final static double PGAMMA[] = new double[]{
+			  1.60119522476751861407E-4,
+			  1.19135147006586384913E-3,
+			  1.04213797561761569935E-2,
+			  4.76367800457137231464E-2,
+			  2.07448227648435975150E-1,
+			  4.94214826801497100753E-1,
+			  9.99999999999999996796E-1
+			};
+	private final static double QGAMMA[] = new double[]{
+			-2.31581873324120129819E-5,
+			 5.39605580493303397842E-4,
+			-4.45641913851797240494E-3,
+			 1.18139785222060435552E-2,
+			 3.58236398605498653373E-2,
+			-2.34591795718243348568E-1,
+			 7.14304917030273074085E-2,
+			 1.00000000000000000320E0
+			};
+	
 	private double result[];
 	
 	private int version;
@@ -547,6 +706,18 @@ public class Cephes {
 		}
 		else if (version == P1EVL) {
 			p1evl(par1, par3, par4);
+		}
+		else if (version == STIRF) {
+			stirf(par1);
+		}
+		else if (version == TRUE_GAMMA) {
+			true_gamma(par1);
+		}
+		else if (version == ZETA) {
+			zeta(par1, par2);
+		}
+		else if (version == ZETAC) {
+			zetac(par1);
 		}
 	}
 	
@@ -1903,4 +2074,465 @@ public class Cephes {
 			}
 		}
 	}
+	
+	/*							zeta.c
+	 *
+	 *	Riemann zeta function of two arguments
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, q, y, zeta();
+	 *
+	 * y = zeta( x, q );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 *
+	 *
+	 *                 inf.
+	 *                  -        -x
+	 *   zeta(x,q)  =   >   (k+q)  
+	 *                  -
+	 *                 k=0
+	 *
+	 * where x > 1 and q is not a negative integer or zero.
+	 * The Euler-Maclaurin summation formula is used to obtain
+	 * the expansion
+	 *
+	 *                n         
+	 *                -       -x
+	 * zeta(x,q)  =   >  (k+q)  
+	 *                -         
+	 *               k=1        
+	 *
+	 *           1-x                 inf.  B   x(x+1)...(x+2j)
+	 *      (n+q)           1         -     2j
+	 *  +  ---------  -  -------  +   >    --------------------
+	 *        x-1              x      -                   x+2j+1
+	 *                   2(n+q)      j=1       (2j)! (n+q)
+	 *
+	 * where the B2j are Bernoulli numbers.  Note that (see zetac.c)
+	 * zeta(x,1) = zetac(x) + 1.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *
+	 *
+	 * REFERENCE:
+	 *
+	 * Gradshteyn, I. S., and I. M. Ryzhik, Tables of Integrals,
+	 * Series, and Products, p. 1073; Academic Press, 1980.
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1984, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	private void zeta(double x,double q) {
+	int i;
+	double a, b, k, s, t, w;
+
+	if( x == 1.0 ) {
+		result[0] = MAXNUM;
+		return;
+	}
+		
+
+	if( x < 1.0 )
+		{
+		MipavUtil.displayError("Domain error in zeta");
+		result[0] = 0.0;
+		return;
+		}
+
+	if( q <= 0.0 )
+		{
+		if(q == Math.floor(q))
+			{
+			MipavUtil.displayError("Singularity error in zeta");
+			result[0] = MAXNUM;
+			return;
+			}
+		if( x != Math.floor(x) )
+			/* because q^-x not defined */
+			MipavUtil.displayError("Domain error in zeta");
+		    result[0] = 0.0;
+		    return;
+		}
+
+	/* Euler-Maclaurin summation formula */
+	/*
+	if( x < 25.0 )
+	*/
+	{
+	/* Permit negative q but continue sum until n+q > +9 .
+	 * This case should be handled by a reflection formula.
+	 * If q<0 and x is an integer, there is a relation to
+	 * the polygamma function.
+	 */
+	s = Math.pow( q, -x );
+	a = q;
+	i = 0;
+	b = 0.0;
+	while( (i < 9) || (a <= 9.0) )
+		{
+		i += 1;
+		a += 1.0;
+		b = Math.pow( a, -x );
+		s += b;
+		if( Math.abs(b/s) < MACHEP ) {
+			result[0] = s;
+		    return;
+		}
+		}
+
+	w = a;
+	s += b*w/(x-1.0);
+	s -= 0.5 * b;
+	a = 1.0;
+	k = 0.0;
+	for( i=0; i<12; i++ )
+		{
+		a *= x + k;
+		b /= w;
+		t = a*b/AZETA[i];
+		s = s + t;
+		t = Math.abs(t/s);
+		if( t < MACHEP ) {
+			result[0] = s;
+		    return;
+		}
+		k += 1.0;
+		a *= x + k;
+		b /= w;
+		k += 1.0;
+		}
+		result[0] = s;
+	    return;
+	}
+
+
+
+	/* Basic sum of inverse powers */
+	/*
+	pseres:
+
+	s = pow( q, -x );
+	a = q;
+	do
+		{
+		a += 2.0;
+		b = pow( a, -x );
+		s += b;
+		}
+	while( b/s > MACHEP );
+
+	b = pow( 2.0, -x );
+	s = (s + b)/(1.0-b);
+	return(s);
+	*/
+	}
+	
+	/* Gamma function computed by Stirling's formula.
+	 * The polynomial STIR is valid for 33 <= x <= 172.
+	 */
+	private void stirf(double x) {
+	double y, w, v;
+
+	w = 1.0/x;
+	polevl(w, STIR, 4);
+	w = 1.0 + w * result[0];
+	y = Math.exp(x);
+	if( x > MAXSTIR )
+		{ /* Avoid overflow in pow() */
+		v = Math.pow( x, 0.5 * x - 0.25 );
+		y = v * (v / y);
+		}
+	else
+		{
+		y = Math.pow( x, x - 0.5 ) / y;
+		}
+	y = SQTPI * y * w;
+	result[0] = y;
+	return;
+	}
+	
+	private void true_gamma(double x) {
+	double p, q, z;
+	int i;
+
+	int sgngam = 1;
+	q = Math.abs(x);
+
+	if( q > 33.0 )
+		{
+		if( x < 0.0 )
+			{
+			p = Math.floor(q);
+			if( p == q ) {
+				MipavUtil.displayError("OVERFLOW in true_gamma");
+				result[0] = sgngam * MAXNUM;
+				return;
+			}    
+			i = (int)p;
+			if( (i & 1) == 0 )
+				sgngam = -1;
+			z = q - p;
+			if( z > 0.5 )
+				{
+				p += 1.0;
+				z = q - p;
+				}
+			z = q * Math.sin(Math.PI * z );
+			if( z == 0.0 )
+				{
+				MipavUtil.displayError("OVERFLOW in true_gamma");
+				result[0] = sgngam * MAXNUM;
+				return;
+				}
+			z = Math.abs(z);
+			stirf(q);
+			z = Math.PI/(z * result[0] );
+			}
+		else
+			{
+			stirf(x);
+			z = result[0];
+			}
+		result[0] = sgngam * z;
+		return;
+		}
+
+	z = 1.0;
+	while( x >= 3.0 )
+		{
+		x -= 1.0;
+		z *= x;
+		}
+
+	while( x < 0.0 )
+		{
+		if( x > -1.E-9 ) {
+			if( x == 0.0 )
+			{
+			MipavUtil.displayError("Singularity in true_gamma");
+			result[0] = MAXNUM;
+			return;
+			}
+		else {
+			result[0] = ( z/((1.0 + 0.5772156649015329 * x) * x) );
+			return;
+		}
+		}
+		z /= x;
+		x += 1.0;
+		}
+
+	while( x < 2.0 )
+		{
+		if( x < 1.e-9 ) {
+			if( x == 0.0 )
+			{
+			MipavUtil.displayError("Singularity in true_gamma");
+			result[0] = MAXNUM;
+			return;
+			}
+		else {
+			result[0] = ( z/((1.0 + 0.5772156649015329 * x) * x) );
+			return;
+		}
+		}
+		z /= x;
+		x += 1.0;
+		}
+
+	if( (x == 2.0) || (x == 3.0) ) {
+		result[0] = z;
+		return;
+	}
+
+	x -= 2.0;
+	polevl( x, PGAMMA, 6 );
+	p = result[0];
+	polevl( x, QGAMMA, 7 );
+	q = result[0];
+	result[0] = z * p / q;
+	return;
+	    
+	}
+	
+	/*							zetac.c
+	 *
+	 *	Riemann zeta function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, zetac();
+	 *
+	 * y = zetac( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 *
+	 *
+	 *                inf.
+	 *                 -    -x
+	 *   zetac(x)  =   >   k   ,   x > 1,
+	 *                 -
+	 *                k=2
+	 *
+	 * is related to the Riemann zeta function by
+	 *
+	 *	Riemann zeta(x) = zetac(x) + 1.
+	 *
+	 * Extension of the function definition for x < 1 is implemented.
+	 * Zero is returned for x > log2(MAXNUM).
+	 *
+	 * An overflow error may occur for large negative x, due to the
+	 * gamma function in the reflection formula.
+	 *
+	 * ACCURACY:
+	 *
+	 * Tabulated values have full machine accuracy.
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    IEEE      1,50        10000       9.8e-16	    1.3e-16
+	 *    DEC       1,50         2000       1.1e-16     1.9e-17
+	 *
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.1:  January, 1989
+	Copyright 1984, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	/* Riemann zeta(x) - 1
+	 * for integer arguments between 0 and 30.
+	 */
+	
+	private void zetac(double x) {
+	int i;
+	double a, b, s, w, tr;
+	double p0, p1;
+
+	if( x < 0.0 )
+		{
+		if( x < -30.8148 )
+			{
+			MipavUtil.displayError("OVERFLOW error in zetac");
+			result[0] = 0.0;
+			return;
+			}
+		s = 1.0 - x;
+		zetac( s );
+		w = result[0];
+		true_gamma(s);
+		tr = result[0];
+		b = Math.sin(0.5*Math.PI*x) * Math.pow(2.0*Math.PI, x) * tr * (1.0 + w) / Math.PI;
+		result[0] = b - 1.0;
+		return;
+		}
+
+	if( x >= MAXL2 ) {
+		/* because first term is 2**-x */
+		result[0] = 0.0;
+		return;
+	}
+
+	/* Tabulated values for integer argument */
+	w = Math.floor(x);
+	if( w == x )
+		{
+		i = (int)x;
+		if( i < 31 )
+			{
+	        result[0] = azetac[i];
+	        return;
+			
+			}
+		}
+
+
+	if( x < 1.0 )
+		{
+		w = 1.0 - x;
+		polevl(x, RZETAC, 5);
+	    p0 = result[0];
+	    p1evl(x, SZETAC, 5);
+	    p1 = result[0];
+		a = p0 / ( w * p1);
+		result[0] = a;
+		return;
+		}
+
+	if( x == 1.0 )
+		{
+		MipavUtil.displayError("SINGULARITY IN zetac");
+		result[0] = MAXNUM;
+		return;
+		}
+
+	if( x <= 10.0 )
+		{
+		b = Math.pow( 2.0, x ) * (x - 1.0);
+		w = 1.0/x;
+		polevl(w, PZETAC, 8);
+		p0 = result[0];
+		p1evl(w, QZETAC, 8);
+		p1 = result[0];
+		s = (x * p0) / (b * p1);
+		result[0] = s;
+		return;
+		}
+
+	if( x <= 50.0 )
+		{
+		b = Math.pow( 2.0, -x );
+		polevl(x, AZETAC, 10);
+		p0 = result[0];
+		p1evl(x, BZETAC, 10);
+		p1 = result[0];
+		w = p0/ p1;
+		w = Math.exp(w) + b;
+		result[0] = w;
+		return;
+		}
+
+
+	/* Basic sum of inverse powers */
+
+
+	s = 0.0;
+	a = 1.0;
+	do
+		{
+		a += 2.0;
+		b = Math.pow( a, -x );
+		s += b;
+		}
+	while( b/s > MACHEP );
+
+	b = Math.pow( 2.0, -x );
+	s = (s + b)/(1.0-b);
+	result[0] = s;
+	return;
+	}
+
+
 }
