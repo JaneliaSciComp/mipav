@@ -3509,7 +3509,7 @@ public class Fastfit {
 			double aok[] = polya_fit(dataok, aokin);
 			for (k = 0,j = 0; j < data[0].length; j++) {
 				if (csum[j] > 0.0) {
-				    a[j] = aokin[k++];	
+				    a[j] = aok[k++];	
 				}
 			}
 			return a;
@@ -3550,6 +3550,7 @@ public class Fastfit {
 		    	  aminushg[i] = a[i] - hg[i];
 		      }
 		      polylog = polya_logProb(aminushg, data);
+		      e[iter-1] = 0.0;
 		      for (i = 0; i < polylog.length; i++) {
 		    	  e[iter-1] += polylog[i];
 		      }
@@ -3569,8 +3570,7 @@ public class Fastfit {
 		    } // if (lambda > 1e+6)
 		  } // while(true)
 		  if (abort) {
-		    System.out.println("Search aborted in polya_fit");
-		    Preferences.debug("search aborted in polya_fit\n", Preferences.DEBUG_ALGORITHM);
+		    Preferences.debug("search aborted in polya_fit for iter = " + iter +"\n", Preferences.DEBUG_ALGORITHM);
 		    e[iter-1] = old_e;
 		    break;
 		  } // if (abort)
@@ -4194,5 +4194,58 @@ public class Fastfit {
 		return h;
     }
 
-  		
+    public void test_polya_fit() {
+    	// test_polya_fit passes
+    	// a for poly_fit_simple: 
+		// a[0] = 2.6975229303271284
+		// a[1] = 0.8019295032405716
+        // a[2] = 1.7665463296981274
+		// a[3] = 0.0
+    	// a for poly_fit:
+    	// a[0] = 2.6975392038813317
+    	// a[1] = 0.8019337605711784
+    	// a[2] = 1.7665564543809995
+    	// a[3] = 0.0
+		// a for poly_fit_ms: 
+		// a[0] = 2.6975210300120565
+		// a[1] = 0.8019374076632737
+		// a[2] = 1.7665590534315179
+		// a[3] = 0.0
+
+    	int i,j;
+        double ain[][] = new double[1][3];
+        ain[0][0] = 3.0;
+        ain[0][1] = 1.0;
+        ain[0][2] = 2.0;
+        int n[] = new int[100];
+        for (i = 0; i < 100; i++) {
+        	n[i] = 10;
+        }
+        double predata[][] = polya_sample(ain, n);
+        // last	 column of data is zeroes
+        double data[][] = new double[predata.length][predata[0].length+1];
+        for (i = 0; i < predata.length; i++) {
+        	for (j = 0; j < predata[0].length; j++) {
+        		data[i][j] = predata[i][j];
+        	}
+        }
+        
+        double a[] = polya_fit_simple(data, null);
+        System.out.println("a for poly_fit_simple: ");
+        for (i = 0; i < a.length; i++) {
+        	System.out.println("a["+i+"] = " + a[i]);
+        }
+        
+        a = polya_fit(data, null);
+        System.out.println("a for poly_fit: ");
+        for (i = 0; i < a.length; i++) {
+        	System.out.println("a["+i+"] = " + a[i]);
+        }
+        
+        a = polya_fit_ms(data, null, null);
+        System.out.println("a for poly_fit_ms: ");
+        for (i = 0; i < a.length; i++) {
+        	System.out.println("a["+i+"] = " + a[i]);
+        }
+    }
 }
