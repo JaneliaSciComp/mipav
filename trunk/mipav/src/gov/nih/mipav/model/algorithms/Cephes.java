@@ -493,7 +493,7 @@ public class Cephes {
 		// The test for ndtri(0.5) passed
 		// The test for ndtri(0.6) passed
 		result = new double[1];
-		chdtr(4,5);
+		result[0] = chdtr(4,5);
 		if (Math.abs(result[0] - 0.7127025048163542) < 1.0E-7) {
 	    	System.out.println("The test for chdtr(4,5) passed");
 	    }
@@ -502,7 +502,7 @@ public class Cephes {
 	    	System.out.println("Implemented chdtr gave " + result[0]);
 	    	System.out.println("Correct answer is 0.7127025048163542");
 	    }
-		chdtrc(4,5);
+		result[0] = chdtrc(4,5);
 		if (Math.abs(result[0] - 0.2872974951836458) < 1.0E-7) {
 	    	System.out.println("The test for chdtrc(4,5) passed");
 	    }
@@ -511,7 +511,7 @@ public class Cephes {
 	    	System.out.println("Implemented chdtrc gave " + result[0]);
 	    	System.out.println("Correct answer is 0.2872974951836458");
 	    }
-	    chdtri(4,0.3);
+	    result[0] = chdtri(4,0.3);
 	    if (Math.abs(result[0] - 4.8784329665604087) < 1.0E-7) {
 	    	System.out.println("The test for chdtri(4,0.3) passed");
 	    }
@@ -521,7 +521,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 4.8784329665604087");
 	    }
 	    
-	    ellie(-5.3, 0.12);
+	    result[0] = ellie(-5.3, 0.12);
 	    if (Math.abs(result[0] + 5.12290521194) < 1.0E-7) {
 	    	System.out.println("The test for ellie(-5.3, 0.12) passed");
 	    }
@@ -534,7 +534,7 @@ public class Cephes {
 	    // ellpe and ellpk answers here from hcephes versions which
 	    // start with a line not present in cephes version
 	    // line added by Danilo x = 1.0 - x;
-	    /*ellpe(0.12);
+	    /* result[0] = ellpe(0.12);
 	    if (Math.abs(result[0] - 1.522555369217904) < 1.0E-7) {
 	    	System.out.println("The test for ellpe(0.12) passed");
 	    }
@@ -544,7 +544,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 1.522555369217904");
 	    }
 	    
-	    ellpk(0.12);
+	    result[0] = ellpk(0.12);
 	    if (Math.abs(result[0] - 1.621393137980658) < 1.0E-7) {
 	    	System.out.println("The test for ellpk(0.12) passed");
 	    }
@@ -555,7 +555,7 @@ public class Cephes {
 	    }
 	    */
 	    
-	    igam(1,2);
+	    result[0] = igam(1,2);
 	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
 	    	System.out.println("The test for igam(1,2) passed");
 	    }
@@ -565,7 +565,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.8646647167633873");
 	    }
 	    
-	    igamc(2,1);
+	    result[0] = igamc(2,1);
 	    if (Math.abs(result[0] - 0.7357588823428847) < 1.0E-7) {
 	    	System.out.println("The test for igmac(2,1) passed");
 	    }
@@ -575,7 +575,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.7357588823428847");
 	    }
 	    
-	    igami(2,0.3);
+	    result[0] = igami(2,0.3);
 	    if (Math.abs(result[0] - 2.439216483280204) < 1.0E-7) {
 	    	System.out.println("The test for igami(2,0.3) passed");
 	    }
@@ -585,7 +585,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 2.439216483280204");
 	    }
 	    
-	    ndtr(0.0);
+	    result[0] = ndtr(0.0);
 	    if (result[0] == 0.5) {
 	    	System.out.println("The test for ndtr(0.0) passed");
 	    }
@@ -595,7 +595,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.5");
 	    }
 	    
-	    ndtr(0.3);
+	    result[0] = ndtr(0.3);
 	    if (Math.abs(result[0] - 0.61791142218895256) < 1.0E-7) {
 	    	System.out.println("The test for ndtr(0.3) passed");
 	    }
@@ -605,7 +605,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.61791142218895256");
 	    }
 	    
-	    ndtr(1);
+	    result[0] = ndtr(1);
 	    if (Math.abs(result[0] - 0.8413447460685429) < 1.0E-7) {
 	    	System.out.println("The test for ndtr(1) passed");
 	    }
@@ -615,7 +615,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.8413447460685429");
 	    }
 	    
-	    ndtri(0.5);
+	    result[0] = ndtri(0.5);
 	    if (result[0] == 0.0) {
 	    	System.out.println("The test for ndtri(0.5) passed");
 	    }
@@ -625,7 +625,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.0");
 	    }
 	    
-	    ndtri(0.6);
+	    result[0] = ndtri(0.6);
 	    if (Math.abs(result[0] - 0.25334710313579972) < 1.0E-7) {
 	    	System.out.println("The test for ndtri(0.6) passed");
 	    }
@@ -664,60 +664,60 @@ public class Cephes {
 	
 	public void run() {
 		if (version == CHDTR) {
-			chdtr(par1, par2);
+			result[0] = chdtr(par1, par2);
 		}
 	    else if (version == CHDTRC) {
-			chdtrc(par1, par2);
+	    	result[0] = chdtrc(par1, par2);
 		}
 	    else if (version == CHDTRI) {
-			chdtri(par1, par2);
+	    	result[0] = chdtri(par1, par2);
 		}
 	    else if (version == ELLIE) {
-	    	ellie(par1, par2);
+	    	result[0] = ellie(par1, par2);
 	    }
 	    else if (version == ELLPE) {
-	    	ellpe(par1);
+	    	result[0] = ellpe(par1);
 	    }
 	    else if (version == ELLPK)
-	    	ellpk(par1);
+	    	result[0] = ellpk(par1);
 	    else if (version == ERF) {
-	    	erf(par1);
+	    	result[0] = erf(par1);
 	    }
 	    else if (version == ERFC) {
-	    	erfc(par1);
+	    	result[0] = erfc(par1);
 	    }
 		else if (version == IGAMI) {
-			igami(par1, par2);
+			result[0] = igami(par1, par2);
 		}
 		else if (version == IGAMC) {
-			igamc(par1, par2);
+			result[0] = igamc(par1, par2);
 		}
 		else if (version == IGAM) {
-			igam(par1,par2);
+			result[0] = igam(par1,par2);
 		}
 		else if (version == NDTR) {
-			ndtr(par1);
+			result[0] = ndtr(par1);
 		}
 		else if (version == NDTRI) {
-			ndtri(par1);
+			result[0] = ndtri(par1);
 		}
 		else if (version == POLEVL) {
-			polevl(par1, par3, par4);
+			result[0] = polevl(par1, par3, par4);
 		}
 		else if (version == P1EVL) {
-			p1evl(par1, par3, par4);
+			result[0] = p1evl(par1, par3, par4);
 		}
 		else if (version == STIRF) {
-			stirf(par1);
+			result[0] = stirf(par1);
 		}
 		else if (version == TRUE_GAMMA) {
-			true_gamma(par1);
+			result[0] = true_gamma(par1);
 		}
 		else if (version == ZETA) {
-			zeta(par1, par2);
+			result[0] = zeta(par1, par2);
 		}
 		else if (version == ZETAC) {
-			zetac(par1);
+			result[0] = zetac(par1);
 		}
 	}
 	
@@ -772,16 +772,14 @@ public class Cephes {
  * chdtr domain   x < 0 or v < 1        0.0
  */
 	
-	private void chdtr(double df, double x) {
+	private double chdtr(double df, double x) {
 
 	if( (x < 0.0) || (df < 1.0) )
 		{
 		    MipavUtil.displayError("Domain error in chdtr()");
-		    result[0] = 0.0;
-		    return;
+		    return(0.0);
 		}
-        igam( df/2.0, x/2.0 );
-        return;
+        return(igam( df/2.0, x/2.0 ));
 	}
 	
 	/*							chdtrc()
@@ -832,16 +830,15 @@ public class Cephes {
 	 *   message         condition      value returned
 	 * chdtrc domain  x < 0 or v < 1        0.0
 	 */
-	private void chdtrc(double df, double x)
+	private double chdtrc(double df, double x)
 	{
 
 	if( (x < 0.0) || (df < 1.0) )
 		{
 		MipavUtil.displayError("Domain error in chdtrc()");
-		result[0] = 0;
+		return(0.0);
 		}
-	    igamc( df/2.0, x/2.0 );
-	    return;
+	    return(igamc( df/2.0, x/2.0 ));
 	}
 	
 	/*							chdtri()
@@ -890,17 +887,15 @@ public class Cephes {
 	Copyright 1984, 1987 by Stephen L. Moshier
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
-	private void chdtri(double df, double y) {
+	private double chdtri(double df, double y) {
 	    double x;
 	    if ((y < 0) || ( y > 1.0) || (df < 1.0)) {
 	    	MipavUtil.displayError("Domain error in chdtri()");
-	    	result[0] = 0.0;
-	    	return;
+	    	return (0.0);
 	    }
 	    
-	    igami( 0.5 * df, y );
-	    x = result[0];
-	    result[0] = (2.0 * x );
+	    x = igami( 0.5 * df, y );
+	    return (2.0 * x );
 	    
 	}
 	
@@ -946,22 +941,16 @@ public class Cephes {
 	 *    IEEE      0,1         30000       3.7e-16     1.0e-16
 	 *
 	 */
-	private void erf(double x)
+	private double erf(double x)
 	{
-	double pol, p1, z;
+	double z;
 
 	if( Math.abs(x) > 1.0 ) {
-		erfc(x);
-		result[0] = 1.0 - result[0];
-		return;
+		return (1.0 - erfc(x));
 	}
 	z = x * x;
-	polevl(z, T, 4);
-	pol = result[0];
-	p1evl(z, U, 5);
-	p1 = result[0];
-	result[0] = x * pol / p1;
-	return;
+	
+	return (x * polevl(z, T, 4) /p1evl(z, U, 5)) ;
 	}
 	
 	/*							erfc.c
@@ -1012,7 +1001,7 @@ public class Cephes {
 	 *
 	 *
 	 */
-	private void erfc(double a)
+	private double erfc(double a)
 	{
 	double p,q,x,y,z;
 
@@ -1023,24 +1012,19 @@ public class Cephes {
 		x = a;
 
 	if( x < 1.0 ) {
-		erf(a);
-		result[0] = 1.0 - result[0];
-		return;
+		return (1.0 - erf(a));
 	}
 
 	z = -a * a;
 
 	if( z < -MAXLOG )
 		{
-	under:
 			System.err.println("Underflow in erfc()");
 			if( a < 0 ) {
-				result[0] = 2.0;
-				return;
+				return (2.0);
 			}
 			else {
-				result[0] = 0.0;
-				return;
+				return (0.0);
 			}
 		
 		} // if( z < -MAXLOG )
@@ -1049,17 +1033,13 @@ public class Cephes {
 
 	if( x < 8.0 )
 		{
-		polevl( x, P, 8 );
-		p = result[0];
-		p1evl( x, Q, 8 );
-		q = result[0];
+		p = polevl( x, P, 8 );
+		q = p1evl( x, Q, 8 );
 		}
 	else
 		{
-		polevl( x, R, 5 );
-		p = result[0];
-		p1evl( x, S, 6 );
-		q = result[0];
+		p = polevl( x, R, 5 );
+		q = p1evl( x, S, 6 );
 		}
 	y = (z * p)/q;
 
@@ -1069,17 +1049,14 @@ public class Cephes {
 	if ( y == 0.0 ) {
 		System.err.println("Underflow in erfc()");
 		if( a < 0 ) {
-			result[0] = 2.0;
-			return;
+			return (2.0);
 		}
 		else {
-			result[0] = 0.0;
-			return;
+			return (0.0);
 		}	
 	} // if ( y == 0.0 )
 
-	result[0] = y;
-	return;
+	return y;
 	}
 	
 	/*							ndtr.c
@@ -1130,7 +1107,7 @@ public class Cephes {
 	 * erfc underflow    x > 37.519379347       0.0
 	 *
 	 */
-	private void ndtr(double a)
+	private double ndtr(double a)
 	{
 	double x, y, z;
 
@@ -1138,21 +1115,18 @@ public class Cephes {
 	z = Math.abs(x);
 
 	if( z < SQRTH ) {
-		erf(x);
-		y = 0.5 + 0.5 * result[0];
+		y = 0.5 + 0.5 * erf(x);
 	}
 
 	else
 		{
-		erfc(z);
-		y = 0.5 * result[0];
+		y = 0.5 * erfc(z);
 
 		if( x > 0 )
 			y = 1.0 - y;
 		}
 
-	result[0] = y;
-	return;
+	return y ;
 	}
 	
 	/*							igami()
@@ -1204,7 +1178,7 @@ public class Cephes {
 	Cephes Math Library Release 2.3:  March, 1995
 	Copyright 1984, 1987, 1995 by Stephen L. Moshier
 	*/
-	private void igami(double a, double y0) {
+	private double igami(double a, double y0) {
 		double x0, x1, x, yl, yh, y, d, lgm, dithresh;
 		int i, dir;
 
@@ -1217,8 +1191,7 @@ public class Cephes {
 		
 		/* approximation to inverse function */
 		d = 1.0/(9.0*a);
-		ndtri(y0);
-		y = ( 1.0 - d - result[0] * Math.sqrt(d) );
+		y = ( 1.0 - d - ndtri(y0) * Math.sqrt(d) );
 		x = a * y * y * y;
 		
 		double ansG[] = new double[1];
@@ -1230,8 +1203,7 @@ public class Cephes {
 		{
 		if( x > x0 || x < x1 )
 			break;
-		igamc(a,x);
-		y = result[0];
+		y = igamc(a,x);
 		if( y < yl || y > yh )
 			break;
 		if( y < y0 )
@@ -1252,8 +1224,7 @@ public class Cephes {
 	/* compute the step to the next approximation of x */
 		d = (y - y0)/d;
 		if( Math.abs(d/x) < MACHEP ) {
-			result[0] = x;
-			return;
+			return x;
 		}
 		x = x - d;
 		} // for( i=0; i<10; i++ )
@@ -1268,8 +1239,7 @@ public class Cephes {
 			while( x0 == MAXNUM )
 				{
 				x = (1.0 + d) * x;
-				igamc( a, x );
-				y = result[0];
+				y = igamc( a, x );
 				if( y < y0 )
 					{
 					x0 = x;
@@ -1285,8 +1255,7 @@ public class Cephes {
 		for( i=0; i<400; i++ )
 			{
 			x = x1  +  d * (x0 - x1);
-			igamc( a, x );
-			y = result[0];
+			y = igamc( a, x );
 			lgm = (x0 - x1)/(x1 + x0);
 			if( Math.abs(lgm) < dithresh )
 				break;
@@ -1328,11 +1297,9 @@ public class Cephes {
 			}
 		if( x == 0.0 ) {
 			MipavUtil.displayError( "igami UNDERFLOW ERROR");
-			result[0] = 0.0;
-			return;
+			return (0.0);
 		}
-        result[0] = x;
-		return;
+		return x;
 	}
 	
 	/*							igamc()
@@ -1383,20 +1350,17 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 
-	private void igamc(double  a, double x )
+	private double igamc(double  a, double x )
 	{
 	double ans, ax, c, yc, r, t, y, z;
 	double pk, pkm1, pkm2, qk, qkm1, qkm2;
 
 	if( (x <= 0) || ( a <= 0) ) {
-		result[0] = 1.0;
-		return;
+		return (1.0);
 	}
 
 	if( (x < 1.0) || (x < a) ) {
-		igam(a,x);
-		result[0] = 1.0 - result[0];
-		return;
+		return (1.0 - igam(a,x));
 	}
 
 	double ansG[] = new double[1];
@@ -1407,8 +1371,7 @@ public class Cephes {
 	if( ax < -MAXLOG )
 		{
 		MipavUtil.displayError("igamc UNDERFLOW");
-		result[0] = 0.0;
-		return;
+		return (0.0);
 		}
 	ax = Math.exp(ax);
 
@@ -1452,8 +1415,7 @@ public class Cephes {
 		}
 	while( t > MACHEP );
      
-	result[0] = ans * ax;
-	return;
+	return (ans * ax);
 	}
 
 	/*							igam.c
@@ -1504,19 +1466,16 @@ public class Cephes {
 	 *
 	 */
 
-	private void igam(double a, double x)
+	private double igam(double a, double x)
 	{
 	double ans, ax, c, r;
 
 	if( (x <= 0) || ( a <= 0) ) {
-		result[0] = 0.0;
-		return;
+		return (0.0);
 	}
 
 	if( (x > 1.0) && (x > a ) ) {
-		igamc(a,x);
-		result[0] = 1.0 - result[0];
-		return;
+		return (1.0 - igamc(a,x));
 	}
 
 	/* Compute  x**a * exp(-x) / gamma(a)  */
@@ -1528,8 +1487,7 @@ public class Cephes {
 	if( ax < -MAXLOG )
 		{
 		MipavUtil.displayError( "igam UNDERFLOW");
-		result[0] = 0.0;
-		return;
+		return (0.0);
 		}
 	ax = Math.exp(ax);
 
@@ -1546,8 +1504,7 @@ public class Cephes {
 		}
 	while( c/ans > MACHEP );
 
-	result[0] = ans * ax/a;
-	return;
+	return (ans * ax/a);
 	}
 
 	/*							ndtri.c
@@ -1597,22 +1554,19 @@ public class Cephes {
  * ndtri domain       x >= 1         MAXNUM
  *
  */
-	private void ndtri(double y0) {
+	private double ndtri(double y0) {
 		double x, y, z, y2, x0, x1;
 		int code;
-		double pol, p1;
 
 		if( y0 <= 0.0 )
 			{
 			MipavUtil.displayError( "ndtri DOMAIN error");
-			result[0] = -MAXNUM;
-			return;
+			return (-MAXNUM);
 			}
 		if( y0 >= 1.0 )
 			{
 			MipavUtil.displayError( "ndtri DOMAIN error");
-			result[0] = MAXNUM;
-			return;
+			return (MAXNUM);
 			}
 		code = 1;
 		y = y0;
@@ -1626,14 +1580,9 @@ public class Cephes {
 			{
 			y = y - 0.5;
 			y2 = y * y;
-			polevl(y2, P0, 4);
-			pol = result[0];
-			p1evl(y2, Q0, 8);
-			p1 = result[0];
-			x = y + y * (y2 * pol/p1);
+			x = y + y * (y2 * polevl(y2, P0, 4)/p1evl(y2, Q0, 8));
 			x = x * s2pi; 
-			result[0] = x;
-			return;
+			return x;
 			}
 
 		x = Math.sqrt( -2.0 * Math.log(y) );
@@ -1641,24 +1590,15 @@ public class Cephes {
 
 		z = 1.0/x;
 		if( x < 8.0 ) /* y > exp(-32) = 1.2664165549e-14 */ {
-			polevl(z, P1, 8);
-			pol = result[0];
-			p1evl(z, Q1, 8);
-			p1 = result[0];
-			x1 = z * pol/p1;
+			x1 = z * polevl(z, P1, 8)/p1evl(z, Q1, 8);
 		}
 		else {
-			polevl(z, P2, 8);
-			pol = result[0];
-			p1evl(z, Q2, 8);
-			p1 = result[0];
-			x1 = z * pol/p1;
+			x1 = z * polevl(z, P2, 8)/p1evl(z, Q2, 8);
 		}
 		x = x0 - x1;
 		if( code != 0 )
 			x = -x;
-		result[0] = x;
-		return;
+		return x;
 	}
 	
 	/*							polevl.c
@@ -1711,7 +1651,7 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 	
-	private void polevl(double x, double coef[], int N ) {
+	private double polevl(double x, double coef[], int N ) {
 		double ans;
 		int i;
 		int coefindex = 0;
@@ -1725,11 +1665,10 @@ public class Cephes {
 		} while (i > 0);
 		
 
-		result[0] = ans;
-		return;
+		return ans;
 	}
 	
-	private void p1evl(double x, double coef[], int N ) {
+	private double p1evl(double x, double coef[], int N ) {
 		double ans;
 		int coefindex = 0;
 		int i;
@@ -1742,8 +1681,7 @@ public class Cephes {
 			--i;
 		} while(i > 0);
 
-		result[0] = ans;
-		return;
+		return ans;
 	}
 	
 	/*							ellie.c
@@ -1801,15 +1739,14 @@ public class Cephes {
 
 	/*	Incomplete elliptic integral of second kind	*/
 
-	private void ellie(double phi, double m )
+	private double ellie(double phi, double m )
 	{
 	double a, b, c, e, temp;
 	double lphi, t, E;
 	int d, mod, npio2, sign;
 
 	if( m == 0.0 ) {
-		result[0] = phi;
-		return;
+		return phi;
 	}
 	lphi = phi;
 	npio2 =(int)Math.floor( lphi/PIO2 );
@@ -1826,16 +1763,14 @@ public class Cephes {
 		sign = 1;
 		}
 	a = 1.0 - m;
-	ellpe(a);
-	E = result[0];
+	E = ellpe(a);
 	if( a == 0.0 )
 		{
 		temp = Math.sin( lphi );
 		if( sign < 0 )
 			temp = -temp;
 		temp += npio2 * E;
-		result[0] = temp;
-		return;
+		return temp;
 		}
 	t = Math.tan( lphi );
 	b = Math.sqrt(a);
@@ -1849,13 +1784,11 @@ public class Cephes {
 		if( Math.abs(e) < 10.0 )
 			{
 			e = Math.atan(e);
-			ellie(e,m);
-			temp = E + m * Math.sin( lphi ) * Math.sin( e ) - result[0];
+			temp = E + m * Math.sin( lphi ) * Math.sin( e ) - ellie(e,m);;
 			if( sign < 0 )
 				temp = -temp;
 			temp += npio2 * E;
-			result[0] = temp;
-			return;
+			return temp;
 			}
 		}
 	c = Math.sqrt(m);
@@ -1878,18 +1811,14 @@ public class Cephes {
 		e += c * Math.sin(lphi);
 		}
 
-	ellpk(1.0 - m);
-	temp = E / result[0];
+	temp = E / ellpk(1.0 - m);
 	temp *= (Math.atan(t) + mod * Math.PI)/(d * a);
 	temp += e;
-
-	done:
 
 	if( sign < 0 )
 		temp = -temp;
 	temp += npio2 * E;
-	result[0] = temp;
-	return;
+	return temp;
 	}
 	
 	/*							ellpe.c
@@ -1954,26 +1883,18 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 	
-	private void ellpe(double x)
+	private double ellpe(double x)
 	{
-    double pol1, pol2;
     // hcephes_ellpe adds line by danilo x = 1.0 - x
 	if( (x <= 0.0) || (x > 1.0) )
 		{
 		if( x == 0.0 ) {
-			result[0] = 1.0;
-			return;
+			return (1.0);
 		}
 		MipavUtil.displayError("Domain error in ellpe()");
-		result[0] = 0.0;
-		return;
+		return (0.0);
 		}
-	polevl(x,PELLPE,10);
-	pol1 = result[0];
-	polevl(x,QELLPE,9);
-	pol2 = result[0];
-	result[0] = pol1 - Math.log(x) * (x * pol2);
-	return;
+	return (polevl(x,PELLPE,10) - Math.log(x) * (x * polevl(x,QELLPE,9)));
 	}
 	
 	/*							ellpk.c
@@ -2039,38 +1960,30 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 
-	private void ellpk(double x)
+	private double ellpk(double x)
 	{
-		double pol1, pol2;
 		 // hcephes_ellpk adds line by danilo x = 1.0 - x
 
 	if( (x < 0.0) || (x > 1.0) )
 		{
 		MipavUtil.displayError("Domain error in ellpk()");
-		result[0] = 0.0;
-		return;
+		return (0.0);
 		}
 
 	if( x > MACHEP )
 		{
-		polevl(x,PELLPK,10);
-		pol1 = result[0];
-		polevl(x,QELLPK,10);
-		pol2 = result[0];
-		result[0] = pol1 - Math.log(x) * pol2;
+		return (polevl(x,PELLPK,10) - Math.log(x) * polevl(x,QELLPK,10));
 		}
 	else
 		{
 		if( x == 0.0 )
 			{
 			MipavUtil.displayError("Singularity in ellpk()");
-			result[0] = MAXNUM;
-			return;
+			return (MAXNUM);
 			}
 		else
 			{
-			result[0] = C1 - 0.5 * Math.log(x);
-			return;
+			return (C1 - 0.5 * Math.log(x));
 			}
 		}
 	}
@@ -2137,21 +2050,19 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 	
-	private void zeta(double x,double q) {
+	private double zeta(double x,double q) {
 	int i;
 	double a, b, k, s, t, w;
 
 	if( x == 1.0 ) {
-		result[0] = MAXNUM;
-		return;
+		return (MAXNUM);
 	}
 		
 
 	if( x < 1.0 )
 		{
 		MipavUtil.displayError("Domain error in zeta");
-		result[0] = 0.0;
-		return;
+		return (0.0);
 		}
 
 	if( q <= 0.0 )
@@ -2159,14 +2070,12 @@ public class Cephes {
 		if(q == Math.floor(q))
 			{
 			MipavUtil.displayError("Singularity error in zeta");
-			result[0] = MAXNUM;
-			return;
+			return (MAXNUM);
 			}
 		if( x != Math.floor(x) )
 			/* because q^-x not defined */
 			MipavUtil.displayError("Domain error in zeta");
-		    result[0] = 0.0;
-		    return;
+		    return (0.0);
 		}
 
 	/* Euler-Maclaurin summation formula */
@@ -2190,8 +2099,7 @@ public class Cephes {
 		b = Math.pow( a, -x );
 		s += b;
 		if( Math.abs(b/s) < MACHEP ) {
-			result[0] = s;
-		    return;
+			return s;
 		}
 		}
 
@@ -2208,16 +2116,14 @@ public class Cephes {
 		s = s + t;
 		t = Math.abs(t/s);
 		if( t < MACHEP ) {
-			result[0] = s;
-		    return;
+		    return s;
 		}
 		k += 1.0;
 		a *= x + k;
 		b /= w;
 		k += 1.0;
 		}
-		result[0] = s;
-	    return;
+	    return s;
 	}
 
 
@@ -2245,12 +2151,11 @@ public class Cephes {
 	/* Gamma function computed by Stirling's formula.
 	 * The polynomial STIR is valid for 33 <= x <= 172.
 	 */
-	private void stirf(double x) {
+	private double stirf(double x) {
 	double y, w, v;
 
 	w = 1.0/x;
-	polevl(w, STIR, 4);
-	w = 1.0 + w * result[0];
+	w = 1.0 + w * polevl(w, STIR, 4);
 	y = Math.exp(x);
 	if( x > MAXSTIR )
 		{ /* Avoid overflow in pow() */
@@ -2262,11 +2167,10 @@ public class Cephes {
 		y = Math.pow( x, x - 0.5 ) / y;
 		}
 	y = SQTPI * y * w;
-	result[0] = y;
-	return;
+	return y;
 	}
 	
-	private void true_gamma(double x) {
+	private double true_gamma(double x) {
 	double p, q, z;
 	int i;
 
@@ -2280,8 +2184,7 @@ public class Cephes {
 			p = Math.floor(q);
 			if( p == q ) {
 				MipavUtil.displayError("OVERFLOW in true_gamma");
-				result[0] = sgngam * MAXNUM;
-				return;
+				return (sgngam * MAXNUM);
 			}    
 			i = (int)p;
 			if( (i & 1) == 0 )
@@ -2296,20 +2199,16 @@ public class Cephes {
 			if( z == 0.0 )
 				{
 				MipavUtil.displayError("OVERFLOW in true_gamma");
-				result[0] = sgngam * MAXNUM;
-				return;
+				return (sgngam * MAXNUM);
 				}
 			z = Math.abs(z);
-			stirf(q);
-			z = Math.PI/(z * result[0] );
+			z = Math.PI/(z * stirf(q) );
 			}
 		else
 			{
-			stirf(x);
-			z = result[0];
+			z = stirf(x);
 			}
-		result[0] = sgngam * z;
-		return;
+		return (sgngam * z);
 		}
 
 	z = 1.0;
@@ -2325,12 +2224,10 @@ public class Cephes {
 			if( x == 0.0 )
 			{
 			MipavUtil.displayError("Singularity in true_gamma");
-			result[0] = MAXNUM;
-			return;
+			return (MAXNUM);
 			}
 		else {
-			result[0] = ( z/((1.0 + 0.5772156649015329 * x) * x) );
-			return;
+			return ( z/((1.0 + 0.5772156649015329 * x) * x) );
 		}
 		}
 		z /= x;
@@ -2343,12 +2240,10 @@ public class Cephes {
 			if( x == 0.0 )
 			{
 			MipavUtil.displayError("Singularity in true_gamma");
-			result[0] = MAXNUM;
-			return;
+			return (MAXNUM);
 			}
 		else {
-			result[0] = ( z/((1.0 + 0.5772156649015329 * x) * x) );
-			return;
+			return ( z/((1.0 + 0.5772156649015329 * x) * x) );
 		}
 		}
 		z /= x;
@@ -2356,17 +2251,11 @@ public class Cephes {
 		}
 
 	if( (x == 2.0) || (x == 3.0) ) {
-		result[0] = z;
-		return;
+		return z;
 	}
 
 	x -= 2.0;
-	polevl( x, PGAMMA, 6 );
-	p = result[0];
-	polevl( x, QGAMMA, 7 );
-	q = result[0];
-	result[0] = z * p / q;
-	return;
+	return (z * polevl( x, PGAMMA, 6 ) / polevl( x, QGAMMA, 7 ));
 	    
 	}
 	
@@ -2426,33 +2315,26 @@ public class Cephes {
 	 * for integer arguments between 0 and 30.
 	 */
 	
-	private void zetac(double x) {
+	private double zetac(double x) {
 	int i;
-	double a, b, s, w, tr;
-	double p0, p1;
+	double a, b, s, w;
 
 	if( x < 0.0 )
 		{
 		if( x < -30.8148 )
 			{
 			MipavUtil.displayError("OVERFLOW error in zetac");
-			result[0] = 0.0;
-			return;
+			return (0.0);
 			}
 		s = 1.0 - x;
-		zetac( s );
-		w = result[0];
-		true_gamma(s);
-		tr = result[0];
-		b = Math.sin(0.5*Math.PI*x) * Math.pow(2.0*Math.PI, x) * tr * (1.0 + w) / Math.PI;
-		result[0] = b - 1.0;
-		return;
+		w = zetac( s );
+		b = Math.sin(0.5*Math.PI*x) * Math.pow(2.0*Math.PI, x) * true_gamma(s) * (1.0 + w) / Math.PI;
+		return (b - 1.0);
 		}
 
 	if( x >= MAXL2 ) {
 		/* because first term is 2**-x */
-		result[0] = 0.0;
-		return;
+		return (0.0);
 	}
 
 	/* Tabulated values for integer argument */
@@ -2462,8 +2344,7 @@ public class Cephes {
 		i = (int)x;
 		if( i < 31 )
 			{
-	        result[0] = azetac[i];
-	        return;
+	        return azetac[i];
 			
 			}
 		}
@@ -2472,46 +2353,30 @@ public class Cephes {
 	if( x < 1.0 )
 		{
 		w = 1.0 - x;
-		polevl(x, RZETAC, 5);
-	    p0 = result[0];
-	    p1evl(x, SZETAC, 5);
-	    p1 = result[0];
-		a = p0 / ( w * p1);
-		result[0] = a;
-		return;
+		a = polevl(x, RZETAC, 5) / ( w * p1evl(x, SZETAC, 5));
+		return a;
 		}
 
 	if( x == 1.0 )
 		{
 		MipavUtil.displayError("SINGULARITY IN zetac");
-		result[0] = MAXNUM;
-		return;
+		return (MAXNUM);
 		}
 
 	if( x <= 10.0 )
 		{
 		b = Math.pow( 2.0, x ) * (x - 1.0);
 		w = 1.0/x;
-		polevl(w, PZETAC, 8);
-		p0 = result[0];
-		p1evl(w, QZETAC, 8);
-		p1 = result[0];
-		s = (x * p0) / (b * p1);
-		result[0] = s;
-		return;
+		s = (x * polevl(w, PZETAC, 8)) / (b * p1evl(w, QZETAC, 8));
+		return s;
 		}
 
 	if( x <= 50.0 )
 		{
 		b = Math.pow( 2.0, -x );
-		polevl(x, AZETAC, 10);
-		p0 = result[0];
-		p1evl(x, BZETAC, 10);
-		p1 = result[0];
-		w = p0/ p1;
+		w = polevl(x, AZETAC, 10)/ p1evl(x, BZETAC, 10);
 		w = Math.exp(w) + b;
-		result[0] = w;
-		return;
+		return w;
 		}
 
 
@@ -2530,8 +2395,7 @@ public class Cephes {
 
 	b = Math.pow( 2.0, -x );
 	s = (s + b)/(1.0-b);
-	result[0] = s;
-	return;
+	return s;
 	}
 
 
