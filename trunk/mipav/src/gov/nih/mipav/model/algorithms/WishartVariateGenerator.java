@@ -26,6 +26,7 @@ public class WishartVariateGenerator {
 	private double sigma[][];
 	// N = n if mean known
 	// N = n-1 if mean unknown
+	// N is degrees of freedom
 	private int N;
 	// SA is np * np symmetric matrix
 	private double SA[][];
@@ -55,6 +56,7 @@ public class WishartVariateGenerator {
 		double u1[] = new double[1];
 		double u2[] = new double[1];
 		int info[] = new int[1];
+		// np is the number of variables
 		int np = sigma[0].length;
 		int nnp = np * (np + 1)/2;
 		double D[] = new double[nnp];
@@ -79,7 +81,7 @@ public class WishartVariateGenerator {
 		k = 1;
 		row = 0;
 		col = 0;
-		while (k <= nnp) {
+		do {
 			rand(u1,u2);
 			
 			// Load SB with independent normal(0,1) variates
@@ -105,13 +107,15 @@ public class WishartVariateGenerator {
 				row = 0;
 				col++;
 			}
-		} // while (k <= nnp)
+		} while (k <= nnp);
 		
 		// Load diagonal elements with square root of chi-square variates
 		
 		diag = -1;
 		for (i = 1; i <= np; i++) {
-		  df = N - i + 1;
+		  //df = N - i + 1;
+	      // Changed from N in original code to np.
+		  df = np - i + 1;
 		  diag++;
 		  u1[0] = 2.0 / (9.0 * df);
 		  u2[0] = 1.0 - u1[0];
@@ -119,7 +123,8 @@ public class WishartVariateGenerator {
 		  
 		  // Wilson-Hilferty formula for approxmating chi-square variates
 		  // from normal variates
-		  SB[diag][diag] = Math.sqrt(df * Math.pow((u2[0] + SB[diag][diag] * u1[0]),3.0));
+		  // abs added to prevent square root of negative values
+		  SB[diag][diag] = Math.sqrt(df * Math.pow(Math.abs(u2[0] + SB[diag][diag] * u1[0]),3.0));
 		} // for (i = 1; i <= np; i++)
 		
 		rn = N;
@@ -195,13 +200,13 @@ public class WishartVariateGenerator {
 		double x = 0.0;
 	    double y = 0.0;
 		double s = Double.MAX_VALUE;
-		while ( s > 1.0) {
+		do {
 		    x = random.genUniformRandomNum(0.0, 1.0);
 		    y = random.genUniformRandomNum(0.0, 1.0);
 		    x = 2.0 * x - 1.0;
 		    y = 2.0 * y - 1.0;
 		    s = x*x + y*y;
-		} // while ( s > 1.0)
+		} while ( s > 1.0);
 		s = Math.sqrt(-2.0 * Math.log(s) / s);
 		u1[0] = x*s;
 		u2[0] = y*s;
