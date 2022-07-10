@@ -66,7 +66,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	public void mixGaussEm_demo() {
 		int i,j;
 		int d = 2;
-		int k =3;
+		int k = 3;
 		int n = 500;
 		mixGaussRnd(d,k,n);
 		plotClass(X,label,"Initial Classes");
@@ -529,6 +529,12 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     	 int i,j,index,maxIndex;
     	 int d = X.length;
     	 int n = X[0].length;
+    	 int numCount[];
+    	 boolean haveEmptyClass = false;
+	     int numEmptyClasses = 0;
+	     int newC;
+	     int newLabel[];
+	     int presentLabelNum;
 	     //if nargin == 1
 	     //    label = ones(n,1);
 	     //end
@@ -547,7 +553,42 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	     System.out.println("max label = " + c);
 	     
 	     switch(d) {
+	     
 	     case 2:
+	    	 numCount = new int[c];
+	    	 for (i = 1; i <= c; i++) {
+	    		 numCount[c-1] = 0;
+	    		 for (j = 0; j < n; j++) {
+	    			 if (label[j] == i) {
+	    			     numCount[c-1]++;	 
+	    			 }
+	    		 }
+	    		 System.out.println("Number in class " + i + " is " + numCount[c-1]);
+	    		 if (numCount[c-1] == 0) {
+	    			 haveEmptyClass = true;
+	    			 numEmptyClasses++;
+	    		 }
+	    	 }
+	    	 
+	    	 if (haveEmptyClass) {
+	    		 newC = c - numEmptyClasses;
+	    		 System.out.println("Reducing to " + newC + " classes");
+	    		 newLabel = new int[label.length];
+	    		 presentLabelNum = 1;
+	    		 for (i = 1; i <= c; i++) {
+	    			 if (numCount[c-1] != 0) {
+	    				 for (j = 0; j < n; j++) {
+	    					 if (label[j] == i) { 
+	    						 newLabel[j] = presentLabelNum;
+	    					 }
+	    				 }
+	    				 presentLabelNum++;
+	    			 }
+	    		 }
+	    		 c = newC;
+	    		 label = newLabel;
+	    	 }
+	    	 
 	    	 float xInit[][] = new float[c][];
 		     float yInit[][] = new float[c][];
 		     maxIndex = 0;
@@ -574,11 +615,13 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	    	    	     yInit[i-1][index++] = (float)X[1][j];
 	    	    	 }
 	    	     }
-	    	     while (index < maxIndex) {
-    	    		 xInit[i-1][index] = xInit[i-1][index-1];
-    	    		 yInit[i-1][index] = yInit[i-1][index-1];
-    	    		 index++;
-    	    	 }
+	    	     if (index > 0) {
+		    	     while (index < maxIndex) {
+	    	    		 xInit[i-1][index] = xInit[i-1][index-1];
+	    	    		 yInit[i-1][index] = yInit[i-1][index-1];
+	    	    		 index++;
+	    	    	 }
+	    	     }
 	    	 } // for (i = 1; i <= c; i++)
     	     String labelX = "X coordinate";
     	     String labelY = "Y coordinate";
@@ -787,21 +830,9 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 }
 		 }
 		 // Form a column vector with the maximum number in each row
-		 double maxVal;
-		 double T[] = new double[n];
+		 double T[] = logsumexp(R,1);
 		 double sumT = 0.0;
 		 for (i = 0; i < n; i++) {
-			 maxVal = -Double.MAX_VALUE;
-			 for (j = 0; j < k; j++) {
-				 if (R[i][j] > maxVal) {
-					 maxVal = R[i][j];
-				 }
-			 }
-			 for (j = 0; j < k; j++) {
-				 Rbase[i][j] = R[i][j] - maxVal;
-				 T[i] += Math.exp(Rbase[i][j]);
-			 }
-			 T[i] = Math.log(T[i]) + maxVal;
 			 sumT += T[i];
 		 }
 		 if (iter > 0) {
@@ -972,6 +1003,89 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	     String labelY = "Log likelihood";
 	     ViewJFrameGraph vFrameGraph = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY);	 
      }
+     
+     public double[] logsumexp(double ain[][], int dim) {
+ 		// Returns log(sum(exp(a),dim)) while avoiding numerical underflow.
+ 		// Default is dim = 0 (columns).
+ 		// logsumexp(a, 1) will sum across rows instead of columns.
+
+ 		// subtract the largest in each column
+ 		double y[];
+ 		int i[];
+ 		int j,k;
+ 		double a[][] = new double[ain.length][ain[0].length];
+ 		double s[] = null;
+ 		double expsum;
+ 		double logsum;
+ 		for (j = 0; j < a.length; j++) {
+ 			for (k = 0; k < a[0].length; k++) {
+ 				a[j][k] = ain[j][k];
+ 			}
+ 		}
+ 		if (dim == 0) {
+ 		    y = new double[a[0].length];
+ 		    s = new double[a[0].length];
+ 		    i = new int[a[0].length];
+ 		    for (k = 0; k < a[0].length; k++) {
+ 		        y[k] = -Double.MAX_VALUE;
+ 		        for (j = 0; j < a.length; j++) {
+ 		            if (a[j][k] > y[k]) {
+ 		            	y[k] = a[j][k];
+ 		            }
+ 		        }
+ 		    }
+ 		    for (j = 0; j < a.length; j++) {
+ 		    	for (k = 0; k < a[0].length; k++) {
+ 		    		a[j][k] = a[j][k] - y[k];
+ 		    	}
+ 		    }
+ 		    for (k = 0; k < a[0].length; k++) {
+ 		    	expsum = 0.0;
+ 		        for (j = 0; j < a.length; j++) {
+ 		        	expsum += Math.exp(a[j][k]);
+ 		        }
+ 		        logsum = Math.log(expsum);
+ 		        if (Double.isInfinite(y[k])) {
+ 		        	s[k] = y[k];
+ 		        }
+ 		        else {
+ 		            s[k] = y[k] + logsum;
+ 		        }
+ 		    }
+ 		}
+ 		else if (dim == 1) {
+ 			y = new double[a.length];
+ 			s = new double[a.length];
+ 			i = new int[a.length];
+ 			for (j = 0; j < a.length; j++) {
+ 				y[j] = -Double.MAX_VALUE;
+ 				for (k = 0; k < a[0].length; k++) {
+ 					if (a[j][k] >y[j]) {
+ 						y[j] = a[j][k];
+ 					}
+ 				}
+ 			}
+ 			for (j = 0; j < a.length; j++) {
+ 				for (k = 0; k < a[0].length; k++) {
+ 					a[j][k] = a[j][k] - y[j];
+ 				}
+ 			}
+ 			for (j = 0; j < a.length; j++) {
+ 				expsum = 0.0;
+ 				for (k = 0; k < a[0].length; k++) {
+ 					expsum += Math.exp(a[j][k]);
+ 				}
+ 				logsum = Math.log(expsum);
+ 				if (Double.isInfinite(y[j])) {
+ 					s[j]= y[j];
+ 				}
+ 				else {
+ 				  s[j] = y[j] + logsum;
+ 				}
+ 			}
+ 		}
+ 		return s;
+ 	}
 
      
 }
