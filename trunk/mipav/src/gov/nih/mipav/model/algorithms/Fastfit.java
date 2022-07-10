@@ -2327,7 +2327,7 @@ public class Fastfit {
     
     public double[][] dirichlet_sample_col(double acol[], int n) {
         // acol is a column vector
-		// DIRICHLET_SAMPLE   Sample from Diriachlet distribution.
+		// DIRICHLET_SAMPLE   Sample from Dirichlet distribution.
 		
 		// DIRICHLET_SAMPLE(a) returns a probability vector sampled from a 
 		// Dirichlet distribution with parameter vector A.
