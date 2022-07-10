@@ -53,6 +53,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	private model mixGaussOut;
 	private double llh[];
 	private int iter;
+	RandomNumberGen randomGen = new RandomNumberGen();
 	
 	public AlgorithmMixGaussEM() {
 		
@@ -65,7 +66,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	public void mixGaussEm_demo() {
 		int i,j;
 		int d = 2;
-		int k = 3;
+		int k =3;
 		int n = 500;
 		mixGaussRnd(d,k,n);
 		plotClass(X,label,"Initial Classes");
@@ -248,7 +249,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		//end
 		int i,j;
 		boolean found;
-		RandomNumberGen randomGen = new RandomNumberGen();
 		double r[] = new double[n];
 		for (i = 0; i < n; i++) {
 			r[i] = randomGen.genUniformRandomNum(0.0,1.0);
@@ -303,6 +303,22 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			}
 			return x;
     }
+	
+	public void test_gamrnd() {
+		// Expected meanx = (a/b) = 1.875 Actual meanx = 1.8758717848708735
+		double a = 3.75;
+		double b = 2.0;
+		int i;
+		double x;
+		double xsum = 0.0;
+		for (i = 0; i < 100000; i++) {
+		    x = gamrnd(a,b);	
+		    xsum += x;
+		}
+		
+	    double meanx = xsum/100000.0;
+	    System.out.println("Expected meanx = (a/b) = " + (a/b) + " Actual meanx = " + meanx);
+	}
 
      public double gamrnd(double a, double b) {
     	 // From A Simple Method for Generating Gamma Variables
@@ -310,7 +326,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     	 double d;
     	 double c;
     	 boolean cycle = true;
-    	 RandomNumberGen randomGen = new RandomNumberGen();
     	 double x;
     	 double v = 0.0;
     	 double cuberootv;
@@ -359,7 +374,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     			 V[i][j] = Sigma[i][j];
     		 }
     	 }
-    	 RandomNumberGen randomGen = new RandomNumberGen();
     	 GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
     	 int info[] = new int[1];
  		 ge.dpotrf('U', Sigma[0].length, V, Sigma.length, info);
@@ -417,7 +431,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     			 V[i][j] = Sigma[i][j];
     		 }
     	 }
-    	 RandomNumberGen randomGen = new RandomNumberGen();
     	 GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
     	 int info[] = new int[1];
  		 ge.dpotrf('U', Sigma[0].length, V, Sigma.length, info);
@@ -648,7 +661,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     	 int i;
     	 int n = X[0].length;
     	 int k = init;
-    	 RandomNumberGen randomGen = new RandomNumberGen();
  		 double r[] = new double[n];
  		 for (i = 0; i < n; i++) {
  			r[i] = randomGen.genUniformRandomNum(0.0,1.0);
