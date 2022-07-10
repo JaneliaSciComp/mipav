@@ -279,6 +279,56 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	    return x;
 	}
 	
+	public void test_dirichletRnd() {
+		// test_dirichletRnd passes
+		// expectedAverage[0] = 0.0
+		// expectedAverage[1] = 0.022222222222222223
+		// expectedAverage[2] = 0.044444444444444446
+		// expectedAverage[3] = 0.06666666666666667
+		// expectedAverage[4] = 0.08888888888888889
+		// expectedAverage[5] = 0.1111111111111111
+		// expectedAverage[6] = 0.13333333333333333
+		// expectedAverage[7] = 0.15555555555555556
+		// expectedAverage[8] = 0.17777777777777778
+		// expectedAverage[9] = 0.2
+		// actualAverage[0] = 0.0
+		// actualAverage[1] = 0.022128327702693545
+		// actualAverage[2] = 0.04469011010870423
+		// actualAverage[3] = 0.06674813589550753
+		// actualAverage[4] = 0.08856580860958682
+		// actualAverage[5] = 0.11148441317509951
+		// actualAverage[6] = 0.13346869394877817
+		// actualAverage[7] = 0.1556538683773657
+		// actualAverage[8] = 0.17774747770886784
+		// actualAverage[9] = 0.19951316447339668
+
+		int i,j;
+		double m[] = new double[10];
+		double msum = 0.0;
+		for (i = 0; i < m.length; i++) {
+			m[i] = i;
+			msum += i;
+		}
+		double expectedAverage[] = new double[m.length];
+		for (i = 0; i < m.length; i++) {
+			expectedAverage[i] = m[i]/msum;
+			System.out.println("expectedAverage["+i+"] = " + expectedAverage[i]);
+		}
+		double ain = 20.0;
+		double actualAverage[] = new double[m.length];
+		for (i = 0; i < 1000; i++) {
+		    double x[] = dirichletRnd(ain, m);
+		    for (j = 0; j < m.length; j++) {
+		    	actualAverage[j] += x[j];
+		    }
+		}
+		for (i = 0; i < m.length; i++) {
+			actualAverage[i] = actualAverage[i]/1000;
+			System.out.println("actualAverage["+i+"] = " + actualAverage[i]);
+		}
+		
+	}
+	
 	public double[] dirichletRnd(double ain, double m[]) {
 			// Generate samples from a Dirichlet distribution.
 			// Input:
@@ -305,6 +355,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
     }
 	
 	public void test_gamrnd() {
+		// test_gamrnd passes
 		// Expected meanx = (a/b) = 1.875 Actual meanx = 1.8758717848708735
 		double a = 3.75;
 		double b = 2.0;
