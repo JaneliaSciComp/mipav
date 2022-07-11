@@ -46,8 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
-	// Results are currently unsatisfactory.
-	// 1 of the classes generated has 1 member.
 	private double X[][];
 	private int label[];
 	private model mixGaussOut;
@@ -404,6 +402,56 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
          return var;
      }
      
+     public void test_gaussRnd2() {
+    	 // test_gaussRnd2 passes
+    	 // Requested mu[0] = 1.5 calculated mu[0] = 1.502759682658677
+		 // Requested mu[1] = 3.4 calculated mu[1] = 3.400619707092323
+		 // Requested mu[2] = 6.5 calculated mu[2] = 6.507958541033659
+		 // Requested covariance[0][0] = 3.0 calculated covariance[0][0] = 3.0104961516943454
+		 // Requested covariance[0][1] = 2.0 calculated covariance[0][1] = 2.0164865293532612
+		 // Requested covariance[0][2] = 1.0 calculated covariance[0][2] = 1.0008600259521765
+		 // Requested covariance[1][0] = 2.0 calculated covariance[1][0] = 2.0164865293532612
+		 // Requested covariance[1][1] = 4.0 calculated covariance[1][1] = 4.013134531525033
+		 // Requested covariance[1][2] = 1.5 calculated covariance[1][2] = 1.5255898932111716
+		 // Requested covariance[2][0] = 1.0 calculated covariance[2][0] = 1.0008600259521765
+		 // Requested covariance[2][1] = 1.5 calculated covariance[2][1] = 1.5255898932111716
+		 // Requested covariance[2][2] = 6.0 calculated covariance[2][2] = 6.007168895800442
+    	 int i,j,k;
+    	 int d = 3;
+    	 int n = 100000;
+    	 double mu[] = new double[] {1.5, 3.4, 6.5};
+    	 double Sigma[][] = new double[][] {{3.0, 2.0, 1.0}, {2.0, 4.0, 1.5}, {1.0, 1.5, 6.0}};
+    	 double x[][] = new double[n][];
+    	 for (i = 0; i < n; i++) {
+    	     x[i] = gaussRnd(mu, Sigma);
+    	 }
+    	 double mucalc[] = new double[3];
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < n; j++) {
+    		     mucalc[i] += x[j][i];	 
+    		 }
+    	 }
+    	 for (i = 0; i < d; i++) {
+    		 mucalc[i] = mucalc[i]/n;
+    		 System.out.println("Requested mu["+i+"] = " + mu[i] + " calculated mu["+i+"] = " + mucalc[i]);
+    	 }
+    	 double calcCov[][] = new double[3][3];
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < d; j++) {
+    		     for (k = 0; k < n; k++) {
+    		    	 calcCov[i][j] += (x[k][i] - mucalc[i])*(x[k][j] - mucalc[j]);
+    		     }
+    		 }
+    	 }
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < d; j++) {
+    			 calcCov[i][j] = calcCov[i][j]/(n-1);
+    			 System.out.println("Requested covariance["+i+"]["+j+"] = " + Sigma[i][j] + 
+    					 " calculated covariance["+i+"]["+j+"] = " + calcCov[i][j]);
+    		 }
+    	 }
+     }
+     
      private double[] gaussRnd(double mu[], double Sigma[][]) {
 		 // Generate samples from a Gaussian distribution.
 		 // Input:
@@ -458,6 +506,53 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		     x[i] = VTran[i] + mu[i];
 		 }
 		 return x;
+     }
+     
+     public void test_gaussRnd() {
+    	 // test_gaussRnd passes.
+    	 // Requested mu[0] = 1.5 calculated mu[0] = 1.4842322099613756
+		 // Requested mu[1] = 3.4 calculated mu[1] = 3.396309971060101
+		 // Requested mu[2] = 6.5 calculated mu[2] = 6.499841239593269
+		 // Requested covariance[0][0] = 3.0 calculated covariance[0][0] = 2.986776038743687
+		 // Requested covariance[0][1] = 2.0 calculated covariance[0][1] = 1.9865031922704346
+		 // Requested covariance[0][2] = 1.0 calculated covariance[0][2] = 1.0099657551698031
+		 // Requested covariance[1][0] = 2.0 calculated covariance[1][0] = 1.9865031922704346
+		 // Requested covariance[1][1] = 4.0 calculated covariance[1][1] = 3.9715560645648176
+		 // Requested covariance[1][2] = 1.5 calculated covariance[1][2] = 1.4952752061897359
+		 // Requested covariance[2][0] = 1.0 calculated covariance[2][0] = 1.0099657551698031
+		 // Requested covariance[2][1] = 1.5 calculated covariance[2][1] = 1.4952752061897359
+		 // Requested covariance[2][2] = 6.0 calculated covariance[2][2] = 5.992249921374945
+    	 int i,j,k;
+    	 int d = 3;
+    	 double mu[] = new double[] {1.5, 3.4, 6.5};
+    	 double Sigma[][] = new double[][] {{3.0, 2.0, 1.0}, {2.0, 4.0, 1.5}, {1.0, 1.5, 6.0}};
+    	 int n = 100000;
+    	 double x[][] = gaussRnd(mu, Sigma, n);
+    	 double mucalc[] = new double[3];
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < n; j++) {
+    		     mucalc[i] += x[i][j];	 
+    		 }
+    	 }
+    	 for (i = 0; i < d; i++) {
+    		 mucalc[i] = mucalc[i]/n;
+    		 System.out.println("Requested mu["+i+"] = " + mu[i] + " calculated mu["+i+"] = " + mucalc[i]);
+    	 }
+    	 double calcCov[][] = new double[3][3];
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < d; j++) {
+    		     for (k = 0; k < n; k++) {
+    		    	 calcCov[i][j] += (x[i][k] - mucalc[i])*(x[j][k] - mucalc[j]);
+    		     }
+    		 }
+    	 }
+    	 for (i = 0; i < d; i++) {
+    		 for (j = 0; j < d; j++) {
+    			 calcCov[i][j] = calcCov[i][j]/(n-1);
+    			 System.out.println("Requested covariance["+i+"]["+j+"] = " + Sigma[i][j] + 
+    					 " calculated covariance["+i+"]["+j+"] = " + calcCov[i][j]);
+    		 }
+    	 }
      }
      
      //function x = gaussRnd(mu, Sigma, n)
