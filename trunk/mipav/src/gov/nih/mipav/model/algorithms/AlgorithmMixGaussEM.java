@@ -222,10 +222,10 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		    	  }
 		      }
 		      Xout = gaussRnd(mui, bSigma, idxSum);
-		      for (y = 0; y < Xout.length; y++) {
-		    	  for (x = 0, index = 0; x < Xout[0].length; x++) {
+		      for (y = 0; y < d; y++) {
+		    	  for (x = 0, index = 0; x < n; x++) {
 		    		  if (idx[x]) {
-		    		      X[y][index++] = Xout[y][x];
+		    		      X[y][x] = Xout[y][index++];
 		    		  }
 		    	  }
 		      }
@@ -271,6 +271,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		        }
 		    }
 		    if (!found) {
+		    	// Only has the value for r[i] = 1.0;
 		    	x[i] = binranges.length;
 		    }
 		}
