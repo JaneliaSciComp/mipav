@@ -46,6 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
+	// Seeiing split classes.  One class on 2 opposite sides of another class
 	private double X[][];
 	private int label[];
 	private model mixGaussOut;
@@ -933,7 +934,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 int n = X[0].length;
 		 int k = mu[0].length;
 		 double R[][] = new double[n][k];
-		 double Rbase[][] = new double[n][k];
 		 int d = Sigma.length;
 		 double mui[] = new double[d];
 		 double Sigmai[][] = new double[d][d];
