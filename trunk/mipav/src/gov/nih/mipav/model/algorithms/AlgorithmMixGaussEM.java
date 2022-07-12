@@ -46,6 +46,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
+	// Note that since classes can belong to intersecting ellipses in different orientations
+	// classes can split and overlap other classes.
 	private double X[][];
 	private int label[];
 	private model mixGaussOut;
@@ -805,11 +807,13 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 			 llh[i] = Double.NEGATIVE_INFINITY;
 		 }
 		 iter = 0;
+		 // Do not pass label from initialization
 		 double R[][] = initialization(X,init);
 		 int n = R.length;
 		 int k = R[0].length;
 		 double maxVal;
 		 int maxIndex;
+		 label = new int[n];
 		 for (iter = 1; iter < maxiter; iter++) {
 			 for (i = 0; i < n; i++) {
 				 maxVal = -Double.MAX_VALUE;
@@ -884,7 +888,8 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
  		 for (i = 0; i < n; i++) {
  			r[i] = randomGen.genUniformRandomNum(0.0,1.0);
  		 }
- 		 label = new int[n];
+ 		 // Note that here label should be a local
+ 		 int label[] = new int[n];
  		 for (i = 0; i < n; i++) {
  			label[i] = (int)Math.ceil(k*r[i]);
  			if (label[i] == 0) {
