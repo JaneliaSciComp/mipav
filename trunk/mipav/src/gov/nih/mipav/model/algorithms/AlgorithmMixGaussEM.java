@@ -46,7 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 public class AlgorithmMixGaussEM extends AlgorithmBase {
-	// Seeiing split classes.  One class on 2 opposite sides of another class
 	private double X[][];
 	private int label[];
 	private model mixGaussOut;
@@ -811,7 +810,6 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		 int k = R[0].length;
 		 double maxVal;
 		 int maxIndex;
-		 label = new int[n];
 		 for (iter = 1; iter < maxiter; iter++) {
 			 for (i = 0; i < n; i++) {
 				 maxVal = -Double.MAX_VALUE;
@@ -886,7 +884,7 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
  		 for (i = 0; i < n; i++) {
  			r[i] = randomGen.genUniformRandomNum(0.0,1.0);
  		 }
- 		 int label[] = new int[n];
+ 		 label = new int[n];
  		 for (i = 0; i < n; i++) {
  			label[i] = (int)Math.ceil(k*r[i]);
  			if (label[i] == 0) {
