@@ -234,6 +234,36 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		return;
 	}
 	
+	public void test_discreteRnd() {
+		// test_discreteRnd passes
+		// Requested probability = 0.1
+		// Requested probability = 0.3
+		// Requested probability = 0.6
+		// Calculated probability = 0.10037
+		// Calculated probability = 0.29944
+		// Calculated probability = 0.60019
+		int i,j;
+		double pin[] = new double[] {0.1,0.3,0.6};
+		int numOut[] = new int[pin.length];
+		double pout[] = new double[pin.length];
+		for (i = 0; i < pin.length; i++) {
+			System.out.println("Requested probability = " + pin[i]);
+		}
+		int n = 100000;
+		int samples[] = discreteRnd(pin, n);
+		for (j = 1; j <= pin.length; j++) {
+			for (i = 0; i < n; i++) {
+				if (samples[i] == j) {
+					numOut[j-1]++;
+				}
+			}
+		}
+		for (i = 0; i < pout.length; i++) {
+			pout[i] = (double)numOut[i]/(double)n;
+			System.out.println("Calculated probability = " + pout[i]);
+		}
+	}
+	
 	public int[] discreteRnd(double pin[], int n) {
 		// Generate samples from a discrete distribution (multinomial).
 		// Input:
