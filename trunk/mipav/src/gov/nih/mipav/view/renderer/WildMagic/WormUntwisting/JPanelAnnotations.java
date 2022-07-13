@@ -28,26 +28,19 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************
  ******************************************************************/
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphSamples;
 import gov.nih.mipav.view.renderer.flythroughview.ModelImage3DLayout;
@@ -92,7 +85,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
-import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -282,7 +274,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 						maxThreshold = Float.valueOf(thresholdMax.getText().trim());
 					} catch(NumberFormatException e) {}
 					
-					int count = WormSegmentation.fill(imageA.GetImage(), minThreshold, maxThreshold, seedList, visited, mask);
+					int count = fill(imageA.GetImage(), minThreshold, maxThreshold, seedList, visited, mask);
 
 					
 //					System.err.println("Segmentation results " + imageA.GetImage().getImageName() + "  " + count );
@@ -1493,5 +1485,59 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			}
 		}
 	}
+	
+
+
+	public static int fill(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, BitSet visited, ModelImage mask) {
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+		int count = 0;
+		while (seedList.size() > 0) {
+			final Vector3f seed = seedList.remove(0);
+
+			final int z = Math.round(seed.Z);
+			final int y = Math.round(seed.Y);
+			final int x = Math.round(seed.X);
+			int index = z*dimY*dimX + y*dimX + x;			
+			
+			if ( visited.get(index) )
+			{
+				continue;
+			}
+			visited.set(index);
+			
+			float value = image.getFloat(x, y, z);
+			if ( (value >= cutOffMin) && (value < cutOffMax) )
+			{
+				mask.set(x, y, z, 1);
+				count++;
+			}
+
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
+							index = z1*dimY*dimX + y1*dimX + x1;
+							if ( !visited.get(index) )
+							{
+								value = image.getFloat(x1, y1, z1);
+								if ( (value >= cutOffMin) && (value < cutOffMax) )
+								{
+									seedList.add( new Vector3f(x1,y1,z1) );
+								}
+							}
+						}
+					}
+				}
+			}							
+		}
+		return count;
+	}
+
 	
 }

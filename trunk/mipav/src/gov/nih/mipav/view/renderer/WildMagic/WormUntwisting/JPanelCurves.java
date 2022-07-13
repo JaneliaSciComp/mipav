@@ -1,56 +1,12 @@
 package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
 
-import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
-import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmMarchingCubes;
-
 //MIPAV is freely available from http://mipav.cit.nih.gov
-
-//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-//EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-//OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-//NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-//HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-//WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-//FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//OR OTHER DEALINGS IN THE SOFTWARE. 
-
-/*****************************************************************
- ******************************************************************
-
-The MIPAV application is intended for research use only.
-This application has NOT been approved for ANY diagnostic use 
-by the Food and Drug Administration. There is currently no 
-approval process pending. 
-
-This software may NOT be used for diagnostic purposes.
-
- ******************************************************************
- ******************************************************************/
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.util.MipavCoordinateSystems;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
-import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
-import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphSamples;
-import gov.nih.mipav.view.renderer.flythroughview.ModelImage3DLayout;
-import gov.nih.mipav.view.renderer.flythroughview.Skeleton3D;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -62,36 +18,21 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
-import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
-
-import WildMagic.LibFoundation.Curves.Curve3f;
-import WildMagic.LibFoundation.Mathematics.ColorRGB;
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
-import WildMagic.LibGraphics.SceneGraph.TriMesh;
-import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
 public class JPanelCurves extends JInterfaceBase implements ActionListener, TableModelListener, ListSelectionListener, KeyListener, MouseListener, CurveListener {
@@ -115,8 +56,6 @@ public class JPanelCurves extends JInterfaceBase implements ActionListener, Tabl
 	// Original names:
 	private Vector<String> curveList;
 	
-	private int displayChannel = 1;
-
 	public JPanelCurves( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
 		voiManager = voiInterface;
 		volumeRenderer = renderer;

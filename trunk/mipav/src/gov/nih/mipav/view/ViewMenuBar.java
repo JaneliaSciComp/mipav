@@ -1377,26 +1377,6 @@ public class ViewMenuBar {
 						new JMenuItem[] { menuBuilder.buildMenuItem("Open Neurite", "OpenNeurite", 0, null, false), }),
 						menuBuilder.makeMenu("Worm VOI", true, new JMenuItem[] { 
 								menuBuilder.buildMenuItem("select nerve ring", "SegmentNerveRing", 0, null, false)
-//								menuBuilder.buildRadioButtonMenuItem("Add Lattice Points", "AddLattice", false, new ButtonGroup()),
-//								menuBuilder.buildRadioButtonMenuItem("Edit Lattice", "EditLattice", false),
-//								menuBuilder.buildMenuItem("Save Lattice", "SaveLattice", 0, null, false),
-//								menuBuilder.buildMenuItem("Open Lattice", "OpenLattice", 0, null, false),
-//								menuBuilder.buildCheckBoxMenuItem("Show Model", "ShowModel", false),
-//								menuBuilder.buildCheckBoxMenuItem("Show Expanded Model", "ShowExpandedModel", false),
-//								menuBuilder.buildMenuItem("Straighten", "StraightenLattice", 0, null, false),
-//								menuBuilder.buildMenuItem("Test Lattice", "TestLattice", 0, null, false),
-////								menuBuilder.buildMenuItem("Segment Neuclei", "SegmentNeuclei", 0, null, false),
-//								menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null, false) 
-								/*
-												 * , menuBuilder.buildMenuItem(
-												 * "Animate Straightening",
-												 * "animateStraightening", 0,
-												 * null, false),
-												 * menuBuilder.buildMenuItem(
-												 * "Record Straightening",
-												 * "recordStraightening", 0,
-												 * null, false)
-												 */
 				}), ViewMenuBar.separator,
 						// menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES,
 						// false),
