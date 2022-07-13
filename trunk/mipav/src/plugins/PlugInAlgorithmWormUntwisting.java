@@ -54,7 +54,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 import ij.ImagePlus;
 import ij.ImageStack;
 
@@ -89,46 +88,7 @@ public class PlugInAlgorithmWormUntwisting
 	public static final String straightenedLattice = new String("straightened_lattice");
 	public static final String straightenedAnnotations = new String("straightened_annotations");
 	
-	/**
-	 * Runs the automatic lattice-building algorithm on a batch of files.
-	 * @param batchProgress progress bar (may be null).
-	 * @param includeRange the list of file IDs to run the algorithm on.
-	 * @param baseFileDir  the base file directory containing the volume data files.
-	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
-	 */
-	public static void buildLattice( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
-	{
-		ModelImage image = null;
-		if ( includeRange != null )
-		{
-			int count = 0;
-			int foundCount = 0;
-			// Loop over the images in the list:
-			for ( int i = 0; i < includeRange.size(); i++ )
-			{
-				// build the full image file name:
-				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				FileIO fileIO = new FileIO();
-				if ( image != null )
-				{
-					image.disposeLocal(false);
-				}
-				image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
-				WormData wormData = new WormData(image);
-				foundCount += wormData.generateLattice() > 0 ? 1 : 0;
-				wormData.dispose();
-				count++;
-			}
-			MipavUtil.displayInfo( "Found lattices for " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/count) + "%)" );
-		}
 
-		if ( image != null )
-		{
-			image.disposeLocal(false);
-			image = null;
-		}		
-	}
-	
 	/**
 	 * Run the maximum projection algorithm on the batch of input files.
 	 * @param batchProgress progress bar (may be null).
@@ -371,10 +331,6 @@ public class PlugInAlgorithmWormUntwisting
 					{
 						wormImage.unregisterAllVOIs();
 						wormImage.disposeLocal(false);
-					}
-					if ( wormData != null )
-					{
-						wormData.dispose();
 					}
 				}
 				if ( batchProgress != null )
@@ -637,7 +593,6 @@ public class PlugInAlgorithmWormUntwisting
 
 							timeInterpolateLattice = System.currentTimeMillis();
 							model.setImage(nucleiImage);
-							model.setSeamCellImage(null);
 							model.untwistImage( false );
 							System.err.println( "interpolateLattice elapsed time =  " + AlgorithmBase.computeElapsedTime(timeInterpolateLattice) );
 
@@ -933,102 +888,6 @@ public class PlugInAlgorithmWormUntwisting
 		
 	}
 	
-	/**
-	 * Run the automatic seam-cell segmentation algorithm for the list of input files.
-	 * @param batchProgress progress bar (may be null).
-	 * @param includeRange the list of file IDs to run the algorithm on.
-	 * @param baseFileDir  the base file directory containing the volume data files.
-	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
-	 */
-	public static void segmentSeamCells( JProgressBar batchProgress, final Vector<Integer> includeRange, final String[] baseFileDir,
-			final String baseFileName, final int minRadius, final int maxRadius)
-	{
-		ModelImage image = null; 
-		if ( includeRange != null )
-		{
-			int numSteps = 6;
-			int step = 0;
-			int foundCount = 0;
-			int count = 0;
-			for ( int i = 0; i < includeRange.size(); i++ )
-			{
-				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				File voiFile = new File(baseFileDir[0] + File.separator + fileName);
-				if ( voiFile.exists() )
-				{
-					step = 1;
-					FileIO fileIO = new FileIO();
-					if(image != null) {
-						if ( (i%10) == 0 )
-						{
-							image.disposeLocal(true);
-						}
-						else
-						{
-							image.disposeLocal();
-						}
-						image = null;
-					}
-					image = fileIO.readImage(fileName, baseFileDir[0] + File.separator, false, null); 
-					image.calcMinMax();
-					String imageName = image.getImageName();
-					if (imageName.contains("_clone")) {
-						imageName = imageName.replaceAll("_clone", "");
-					}
-					if (imageName.contains("_laplace")) {
-						imageName = imageName.replaceAll("_laplace", "");
-					}
-					if (imageName.contains("_gblur")) {
-						imageName = imageName.replaceAll("_gblur", "");
-					}
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
-					if ( image.isColorImage() )
-					{
-						// Extract the green channel for segmentation:
-						System.err.println("extracting green channel");
-						ModelImage green = extractGreen(image);
-						if ( green != null )
-						{
-							String name = image.getImageName();
-							image.disposeLocal();
-							image = green;
-							image.setImageName(name);
-						}
-					}
-					WormData wormData = new WormData(image); 
-					wormData.segmentSeamCells(minRadius, maxRadius);
-					if ( wormData.getSeamCells().size() > 0 )
-					{
-						foundCount++;
-					}
-					count++;
-					wormData.dispose();
-					
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
-				}
-			}
-			if ( batchProgress != null )
-			{
-				batchProgress.setValue(100);
-				batchProgress.update(batchProgress.getGraphics());
-			}
-			MipavUtil.displayInfo( "Finished seam cell segmentation. Segmented " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/count) + "%)" );
-		}
-		
-		if ( image != null )
-		{
-			image.disposeLocal();
-			image = null;
-		}
-	}
 
 	/**
 	 * Calculate the maximum projection along the y-axis of the input image. The 2D projection is saved in the output image.

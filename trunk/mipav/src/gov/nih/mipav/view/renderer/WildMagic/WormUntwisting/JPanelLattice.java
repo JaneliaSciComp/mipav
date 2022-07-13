@@ -26,12 +26,10 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************/
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -43,10 +41,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Vector;
 
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -63,7 +59,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
 
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -484,95 +479,7 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	}
 
 	private boolean ctrlKey = false;
-	public void keyTyped(KeyEvent e) {
-
-		//		ctrlKey = e.isControlDown();
-		//
-		//		System.err.println("keyTyped");
-		//		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
-		//			if ( voiManager != null )
-		//			{
-		//				if ( (e.getSource() == annotationTable) ) {
-		//					// add a new annotation by tabbing:
-		//					int row = annotationTable.getSelectedRow();
-		//					int col = annotationTable.getSelectedColumn();
-		//					if ( (row == 0)  && (col == 0) ) {
-		//
-		//						VOIWormAnnotation text = new VOIWormAnnotation();
-		//						text.setText("center" );
-		//						int dimX = imageA.getExtents()[0];
-		//						int dimY = imageA.getExtents()[1];
-		//						int dimZ = imageA.getExtents()[2];
-		//						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-		//						text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
-		//
-		//						short id = (short) imageA.getVOIs().getUniqueID();
-		//						int colorID = 0;
-		//						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-		//						newTextVOI.getCurves().add(text);
-		//
-		//						voiManager.clear3DSelection();
-		//						voiManager.addAnnotation( newTextVOI );
-		//						voiManager.clear3DSelection();
-		//						int nRows = annotationTable.getRowCount();
-		//						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
-		//					}
-		//				}
-		////				else if ( e.getSource() == annotationGroupTable ) {
-		////					int row = annotationGroupTable.getSelectedRow();
-		////					int col = annotationGroupTable.getSelectedColumn();
-		////					if ( (row == 0)  && (col == 0) ) {
-		////						annotationGroupTableModel.removeTableModelListener(this);
-		////						annotationGroupTableModel.addRow( new Object[]{  } );
-		////						annotationGroupTableModel.addTableModelListener(this);
-		////
-		////						int nRows = annotationGroupTable.getRowCount();
-		////						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
-		////					}	
-		////				}
-		//			}
-		//		}
-		//		else if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
-		//			System.err.println("delete");
-		//			if ( (e.getSource() == annotationTable) ) {
-		//				int row = annotationTable.getSelectedRow();
-		//				int col = annotationTable.getSelectedColumn();
-		//				if ( col == 0 && row >= 0 )
-		//				{
-		//					TableCellEditor editor = annotationTable.getCellEditor();
-		//					if ( editor != null )
-		//						editor.stopCellEditing();
-		//					voiManager.deleteSelectedPoint();
-		//					int nRows = annotationTable.getRowCount();
-		//					if ( row < nRows ) {
-		//						annotationTable.setRowSelectionInterval(row, row);
-		//					}
-		//					else if ( nRows > 0 ) {
-		//						annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
-		//					}
-		//				}
-		//			}
-		////			else if ( (e.getSource() == annotationGroupTable) ) {
-		////				int row = annotationGroupTable.getSelectedRow();
-		////				int col = annotationGroupTable.getSelectedColumn();
-		////				if ( col == 0 && row >= 0 )
-		////				{
-		////					TableCellEditor editor = annotationGroupTable.getCellEditor();
-		////					if ( editor != null )
-		////						editor.stopCellEditing();
-		////
-		////					voiManager.deleteSelectedPoint();
-		////					int nRows = annotationGroupTable.getRowCount();
-		////					if ( row < nRows ) {
-		////						annotationGroupTable.setRowSelectionInterval(row, row);
-		////					}
-		////					else if ( nRows > 0 ) {
-		////						annotationGroupTable.setRowSelectionInterval(nRows-1, nRows-1);
-		////					}
-		////				}
-		////			}
-		//		}
-	}
+	public void keyTyped(KeyEvent e) {}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
@@ -677,10 +584,6 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
-//		if ( source == latticePosition ) {
-//			int value = latticePosition.getValue();
-//			setLatticeClip( clipLattice.isSelected(), value );
-//		}
 		if ( source == clipDistance ) {
 			if ( clipDistance.getMaximum() == 0 ) {
 				clipDistance.setMaximum(voiManager.getLatticeCurveLength() - 1);
@@ -756,169 +659,6 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			rightAnnotation.update();
 		}
 		latticeChanged();
-		
-//		
-//		
-//		boolean qValue = false;
-//		int totalSeamCount = 0;
-//		for ( int i = 0; i < left.getCurves().size(); i++ ) {
-//			VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(i);
-//			if ( leftAnnotation.isSeamCell() ) {
-//				totalSeamCount++;
-//			}
-//		}
-//
-//		int aCount = -1;
-//		int aCountPrev = -1;
-//		int aRename = -1;
-//		int aRenameStartValue = -1;
-//		int hCount = -1;
-//		int hCountPrev = -1;
-//		int hRename = -1;
-//		int hRenameStartValue = -1;
-//		int vCount = 0;
-//		int vCountPrev = 0;
-//		int vRename = -1;
-//		int vRenameStartValue = -1;
-//		boolean changed = false;
-//		// check if lattice is already named, if so return as is:
-//		for ( int i = 0; i < left.getCurves().size(); i++ ) {
-//			VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(i);
-//			String leftText = leftAnnotation.getText();
-//			VOIWormAnnotation rightAnnotation = (VOIWormAnnotation) right.getCurves().elementAt(i);
-//			String rightText = rightAnnotation.getText();
-//			
-//			// make sure the pairs match names:
-//			String testLeft = leftText.replace("L", "");
-//			String testRight = rightText.replace("R", "");
-//			if ( !testLeft.equals(testRight) ) {
-//				if ( leftChanged ) {
-//					// match right to left:
-//					testRight = leftText.replace("L", "R");
-//					rightAnnotation.setText(testRight);
-//					rightAnnotation.updateText();
-//					rightAnnotation.update();
-//					rightAnnotation.retwist(previewMode);
-//					changed = true;
-//				}
-//				else if ( rightChanged ) {
-//					// match left to right:
-//					testLeft = rightText.replace("R", "L");
-//					leftAnnotation.setText(testLeft);
-//					leftAnnotation.updateText();
-//					leftAnnotation.update();
-//					leftAnnotation.retwist(previewMode);
-//					changed = true;
-//				}
-//			}
-//		}
-//			
-//			// get the number from the names:
-//			leftText = leftAnnotation.getText();
-//			int value = 0;
-//			for ( int j = 0; j < leftText.length(); j++ ) {
-//				if ( Character.isDigit(leftText.charAt(j)) ) {
-//					value += 10 * value + Integer.parseInt(leftText.substring(j, j+1));
-//				}
-//			}
-////			System.err.println( leftText + "   " + value );
-//			if ( leftText.startsWith("a") ) {
-//				aCountPrev = aCount;
-//				aCount = value;
-//				if ( (aCount - aCountPrev) != 1 ) {
-//					// rename a starting at index i:
-//					aRename = i;
-//					aRenameStartValue = aCountPrev + 1;
-//				}
-//			}
-//			else if ( leftText.startsWith("H") ) {
-//				hCountPrev = hCount;
-//				hCount = value;
-//				if ( (hCount - hCountPrev) != 1 ) {
-//					// rename a starting at index i:
-//					hRename = i;
-//					hRenameStartValue = hCountPrev + 1;
-//				}
-//			}
-//			else if ( leftText.startsWith("V") ) {
-//				vCountPrev = vCount;
-//				vCount = value;
-//				if ( (vCount - vCountPrev) != 1 ) {
-//					// rename a starting at index i:
-//					vRename = i;
-//					vRenameStartValue = vCountPrev + 1;
-//				}
-//			}
-//		}
-//		if ( (aRename != -1) || (aRename != -1) || (vRename != -1) ) {
-//
-//			for ( int i = 0; i < left.getCurves().size(); i++ ) {
-//				VOIWormAnnotation leftAnnotation = (VOIWormAnnotation) left.getCurves().elementAt(i);
-//				String leftText = leftAnnotation.getText();
-//				VOIWormAnnotation rightAnnotation = (VOIWormAnnotation) right.getCurves().elementAt(i);
-//				String rightText = rightAnnotation.getText();
-//				if ( (aRename != -1) && (i >= aRename) && leftText.startsWith("a") ) {
-//					leftAnnotation.setText("a" + aRenameStartValue + "L");
-//					leftAnnotation.updateText();
-//					leftAnnotation.update();
-//					leftAnnotation.retwist(previewMode);
-//					
-//					rightAnnotation.setText("a" + aRenameStartValue + "R");
-//					rightAnnotation.updateText();
-//					rightAnnotation.update();
-//					rightAnnotation.retwist(previewMode);
-//					
-//					aRenameStartValue++;
-//					changed = true;
-//				}
-//				if ( (hRename != -1) && (i >= hRename) && leftText.startsWith("H") ) {
-//
-//					leftAnnotation.setText("H" + hRenameStartValue + "L" );
-//					leftAnnotation.updateText();
-//					leftAnnotation.update();
-//					leftAnnotation.retwist(previewMode);
-//					
-//					rightAnnotation.setText("H" + hRenameStartValue + "R" );
-//					rightAnnotation.updateText();
-//					rightAnnotation.update();
-//					rightAnnotation.retwist(previewMode);
-//					
-//					hRenameStartValue++;
-//					changed = true;
-//				}
-//				if ( (vRename != -1) && (i >= vRename) && leftText.startsWith("V") ) {
-//
-//					String nameL = "";
-//					String nameR = "";
-//					if ( (totalSeamCount <= 10) || qValue ) {
-//						// H0-H1-H2-V1-V2-V3-V4-V5-V6-T 
-//						nameL = "V" + vRenameStartValue + "L";
-//						nameR = "V" + vRenameStartValue + "R";
-//						vRenameStartValue++;
-//					}
-//					else if ( (totalSeamCount > 10) && !qValue && (vRenameStartValue == 5) ) {
-//						// H0-H1-H2-V1-V2-V3-V4-Q-V5-V6-T 
-//						nameL = "Q" + "L";
-//						nameR = "Q" + "R";
-//						qValue = true;
-//					}
-//					
-//					leftAnnotation.setText(nameL);
-//					leftAnnotation.updateText();
-//					leftAnnotation.update();
-//					leftAnnotation.retwist(previewMode);
-//					
-//					rightAnnotation.setText(nameR);
-//					rightAnnotation.updateText();
-//					rightAnnotation.update();
-//					rightAnnotation.retwist(previewMode);
-//					
-//					changed = true;
-//				}
-//			}
-//		}
-		
-//		if ( changed ) latticeChanged();
 	}
 
 }

@@ -3,7 +3,6 @@ package gov.nih.mipav.view.renderer.WildMagic.VOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
@@ -16,7 +15,6 @@ import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.CurveListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -25,7 +23,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -197,18 +194,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			{
 				latticeModel.saveLattice( );
 			}
-		} 
-		else if ( command.equals("ShowExpandedModel") ) {
-			if ( latticeModel != null )
-			{
-				latticeModel.showExpandedModel( );
-			}
-		} 
-		else if ( command.equals("ShowModel") ) {
-			if ( latticeModel != null )
-			{
-				latticeModel.showModel( );
-			}
 		}
 		else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )
@@ -244,31 +229,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		else if ( command.equals("SegmentNerveRing") ) {
 			mouseSelection3D = true;
 		}
-		else if ( command.equals("animateStraightening") )
-		{
-			System.err.println("Starting Worm Straightening Animation");
-			animationStep = 1;
-		}
-		else if ( command.equals("recordStraightening") )
-		{
-			System.err.println("Starting Worm Straightening Recording");
-			animationStep = 2;
-		}
 		else {
 			super.actionPerformed(event);
 		}
 
-	}
-	
-	private int animationStep = -1;
-	public int getAnimationStep()
-	{
-		return animationStep;
-	}
-	
-	public void setAnimationStep(int i)
-	{
-		animationStep = -1;
 	}
 
 	public String getAnnotationPrefix()
@@ -428,7 +392,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			saveVOIs("loadLattice");
 		}
 		latticeModel.setLattice( lattice );	
-//		latticeModel.expandLattice();
 	}
 		
 	/**
@@ -655,15 +618,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
-	public ModelImage getImage()
-	{
-		if ( latticeModel == null )
-		{
-			return null;
-		}
-		return latticeModel.getImage();
-	}
-	
 	public void updateManager( int index, int orientation )
 	{
 		m_kVOIManagers.elementAt(index).setImage(m_kImageA, orientation);
@@ -797,30 +751,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return null;
 	}
 	
-	public TriMesh[] generateMeshs( ) {
-		if ( latticeModel != null )
-		{
-			return latticeModel.generateMeshs( );
-		}		
-		return null;
-	}
-	
-	public TriMesh generateConvexHull( ) {
-		if ( latticeModel != null )
-		{
-			return latticeModel.generateConvexHull();
-		}		
-		return null;
-	}
-	
-	public void testConflicts( boolean display, BitSet surfaceMask ) {
-		if ( latticeModel != null )
-		{
-			latticeModel.testConflicts( display, surfaceMask );
-		}		
-		return;
-	}
-	
 	public void setPaddingFactor( int padding ) {
 		if ( latticeModel != null )
 		{
@@ -858,15 +788,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public void addAnnotation( VOI textVOI )
 	{       
 		addAnnotation(textVOI, false);
-	}
-	
-	public void displayAnnotation( String name, boolean display )
-	{
-		if ( latticeModel == null )
-		{
-			return;
-		}
-		latticeModel.displayAnnotation(name, display);
 	}
 	
 	/**
@@ -1105,15 +1026,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return false;
 	}
 
-	public void updateAnnotation( VOIWormAnnotation annotation )
-	{
-		if ( latticeModel != null )
-		{
-			saveVOIs("updateAnnotation");
-			latticeModel.updateAnnotation(annotation);
-		}
-	}
-
 	public void updateAnnotation( VOIText annotation )
 	{
 		if ( latticeModel != null )
@@ -1215,140 +1127,4 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		return null;
 	}
 
-
-	
-//	private void testSegmentation()
-//	{
-//        long time = System.currentTimeMillis();
-//		Random r = new Random(time);
-//		System.err.println( Math.random() );
-//		
-//		ModelImage test = new ModelImage( ModelStorageBase.ARGB_FLOAT, m_kImageA.getExtents(), "testNuclei" );
-//		final int dimX = m_kImageA.getExtents().length > 0 ? m_kImageA.getExtents()[0] : 1;
-//		final int dimY = m_kImageA.getExtents().length > 1 ? m_kImageA.getExtents()[1] : 1;
-//		final int dimZ = m_kImageA.getExtents().length > 2 ? m_kImageA.getExtents()[2] : 1;
-//		
-//		int[] radiiCounts = new int[12];
-//		int count = (int) (Math.random() * 100 + 400);
-//		Vector<Vector3f> nuclei = new Vector<Vector3f>();
-//		Vector<Integer> radii = new Vector<Integer>();
-//		while ( nuclei.size() < count )
-//		{
-//			int exp = (int) (1 + 10*Math.random());
-//			int plusMinus = (int) Math.pow( -1, exp );
-//			float shift = (float) (5 * plusMinus * Math.random());
-//			Integer radius = new Integer( (int) Math.round(10 + shift) );
-//			float x = (float) Math.random() * (dimX - radius * 4) + radius * 2;
-//			float y = (float) Math.random() * (dimY - radius * 4) + radius * 2;
-//			float z = (float) Math.random() * (dimZ - radius * 4) + radius * 2;
-//			Vector3f pt = new Vector3f( Math.round(x), Math.round(y), Math.round(z) );
-//			boolean found = false;
-//			for ( int i = 0; i < nuclei.size(); i++ )
-//			{
-//				if ( nuclei.elementAt(i).distance(pt) < 2*radius )
-//				{
-//					found = true;
-//					break;
-//				}
-//			}
-//			if ( !found )
-//			{
-//				nuclei.add(pt);
-//				radii.add(radius);
-////				System.err.println( nuclei.size() + " " + pt + " " + radius );
-//				radiiCounts[radius-5]++;
-//			}
-////			System.err.println( nuclei.size() );
-//		}
-//		
-//		int minValue = 100;
-//		int maxValue = 255;
-//		Vector3f newPt = new Vector3f();
-//    	for ( int z = 0; z < dimZ; z++ )
-//    	{
-//    		for ( int y = 0; y < dimY; y++ )
-//    		{
-//    			for ( int x = 0; x < dimX; x++ )
-//    			{
-//    				newPt.set(x,y,z);
-//    				for ( int i = 0; i < nuclei.size(); i++ )
-//    				{
-//    					Integer radius = radii.elementAt(i);
-//    					if ( newPt.distance(nuclei.elementAt(i)) <= radius )
-//    					{
-//    						int currentValue = (int) Math.min( 255, Math.max(0, (minValue + (maxValue - minValue) * Math.random()) ));
-//    						test.setC(x,  y, z, 0, 255);
-//    						test.setC(x,  y, z, 1, currentValue);
-//    						test.setC(x,  y, z, 2, currentValue);
-//    						test.setC(x,  y, z, 3, currentValue);
-//    						break;
-//    					}
-//    				}
-//    			}
-//    		}
-////			System.err.println( z );
-//    	}
-//    	test.calcMinMax();
-////    	new ViewJFrameImage(test);
-//
-//		System.err.println( "seeded " + count + " nuclei" );
-//    	for ( int i = 0; i < radiiCounts.length; i++ )
-//    	{
-//    		System.err.println( (i+5) + " " + radiiCounts[i] );
-//    	}
-////		Vector<Vector3f> nuclei = WormSegmentationWindowing.nucleiSegmentation(m_kImageA, 150, 10, 20);
-//    	VOI foundNuclei = WormSegmentationWindowing.findMarkers(test, minValue -1, maxValue, 5, 15 );
-////		Vector<Vector3f> foundNuclei = WormSegmentationKMeans.segmentAll1(test, 100f, 255, 500);
-//		if ( foundNuclei != null )
-//		{
-//			Vector3f pt = new Vector3f();
-////			for ( int i = 0; i < foundNuclei.size(); i++ )
-////			{
-////				pt.copy(foundNuclei.elementAt(i));
-////				if ( test.getFloatC( (int)pt.X, (int)pt.Y, (int)pt.Z, 1 ) < 255 )
-////					System.err.println( i + " zero center value " +  test.getFloatC( (int)pt.X, (int)pt.Y, (int)pt.Z, 1 ) );
-////			}
-//			
-//	    	for ( int z = 0; z < dimZ; z++ )
-//	    	{
-//	    		for ( int y = 0; y < dimY; y++ )
-//	    		{
-//	    			for ( int x = 0; x < dimX; x++ )
-//	    			{
-//	    				pt.set(x,y,z);
-//	    				boolean found = false;
-//	    				for ( int i = 0; i < foundNuclei.getCurves().size() && !found; i++ )
-//	    				{
-//	    					VOIContour contour = (VOIContour) foundNuclei.getCurves().elementAt(i);
-//	    					for ( int j = 0; j < contour.size(); j++ )
-//	    					{
-//	    						if ( contour.elementAt(j).distance(pt) < 2 )
-//	    						{
-//	    							test.setC(x,  y, z, 1, 255);
-//	    							test.setC(x,  y, z, 2, 0);
-//	    							test.setC(x,  y, z, 3, 0);
-//	    							found = true;
-//	    							break;
-//	    						}
-//	    					}
-//	    				}
-//	    			}
-//	    		}
-////				System.err.println( z );
-//	    	}	    	
-//	    	count = 0;
-//			for ( int i = 0; i < foundNuclei.getCurves().size(); i++ )
-//			{
-//				count += foundNuclei.getCurves().elementAt(i).size();
-//			}
-//	    	System.err.println( "Found " + count + " nuclei " );
-//		}
-//		else
-//		{
-//	    	System.err.println( "Found 0 nuclei " );				
-//		}
-//    	test.calcMinMax();
-//    	new ViewJFrameImage(test);
-//	}
-	
 }
