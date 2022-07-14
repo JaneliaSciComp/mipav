@@ -487,11 +487,23 @@ public class Cephes {
 		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
 		// The test for ellie(-5.3, 0.12) passed
+        // The test for ellpe(0.0) passed
+        // The test for ellpe(0.12) passed
+        // The test for ellpe(0.50) passed
+        // The test for ellpk(0.0) passed
+        // The test for ellpk(0.12) passed
+        // The test for ellpk(0.50) passed
 		// The test for erf(0) passed
 		// The test for erf(0.4) passed
 		// The test for erf(0.9) passed
 		// The test for erf(0.9) passed
+		// The test for igam(0.5,0) passed
 		// The test for igam(1,2) passed
+		// The test for igam(5,10) failed
+		// Implemented igam gave 0.9707473119230389
+		// Correct answer is 23.29793549
+		// Calculated answer for igam(100,100) = 0.5132987982791313
+		// Correct answer for igam(100,100) = 4.7904235E155
 		// The test for igmac(2,1) passed
 		// The test for igami(2,0.3) passed
 		// The test for ndtr(0.0) passed
@@ -550,7 +562,17 @@ public class Cephes {
 	    // ellpe and ellpk answers here from hcephes versions which
 	    // start with a line not present in cephes version
 	    // line added by Danilo x = 1.0 - x;
-	     result[0] = ellpe(0.12);
+	    result[0] = ellpe(0.0);
+	    if (Math.abs(result[0] - 1.570796327) < 1.0E-7) {
+	    	System.out.println("The test for ellpe(0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellpe(0.0) failed");
+	    	System.out.println("Implemented ellpe gave " + result[0]);
+	    	System.out.println("Correct answer is 1.570796327");
+	    }
+	    
+	    result[0] = ellpe(0.12);
 	    if (Math.abs(result[0] - 1.522555369217904) < 1.0E-7) {
 	    	System.out.println("The test for ellpe(0.12) passed");
 	    }
@@ -558,6 +580,26 @@ public class Cephes {
 	    	System.out.println("The test for ellpe(0.12) failed");
 	    	System.out.println("Implemented ellpe gave " + result[0]);
 	    	System.out.println("Correct answer is 1.522555369217904");
+	    }
+	    
+	    result[0] = ellpe(0.50);
+	    if (Math.abs(result[0] - 1.350643881) < 1.0E-7) {
+	    	System.out.println("The test for ellpe(0.50) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellpe(0.50) failed");
+	    	System.out.println("Implemented ellpe gave " + result[0]);
+	    	System.out.println("Correct answer is 1.350643881");
+	    }
+	    
+	    result[0] = ellpk(0.0);
+	    if (Math.abs(result[0] - 1.570796327) < 1.0E-7) {
+	    	System.out.println("The test for ellpk(0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellpk(0.0) failed");
+	    	System.out.println("Implemented ellpk gave " + result[0]);
+	    	System.out.println("Correct answer is 1.570796327");
 	    }
 	    
 	    result[0] = ellpk(0.12);
@@ -568,6 +610,16 @@ public class Cephes {
 	    	System.out.println("The test for ellpk(0.12) failed");
 	    	System.out.println("Implemented ellpk gave " + result[0]);
 	    	System.out.println("Correct answer is 1.621393137980658");
+	    }
+	    
+	    result[0] = ellpk(0.50);
+	    if (Math.abs(result[0] - 1.8540746773) < 1.0E-7) {
+	    	System.out.println("The test for ellpk(0.50) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellpk(0.50) failed");
+	    	System.out.println("Implemented ellpk gave " + result[0]);
+	    	System.out.println("Correct answer is 1.8540746773");
 	    }
 	    
 	    result[0] = erf(0);
@@ -610,6 +662,16 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.9661051465");
 	    }
 	    
+	    result[0] = igam(0.5,0);
+	    if (Math.abs(result[0]) < 1.0E-7) {
+	    	System.out.println("The test for igam(0.5,0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for igam(0.5,0) failed");
+	    	System.out.println("Implemented igam gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0");
+	    }
+	    
 	    result[0] = igam(1,2);
 	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
 	    	System.out.println("The test for igam(1,2) passed");
@@ -619,6 +681,20 @@ public class Cephes {
 	    	System.out.println("Implemented igam gave " + result[0]);
 	    	System.out.println("Correct answer is 0.8646647167633873");
 	    }
+	    
+	    result[0] = igam(5,10);
+	    if (Math.abs(result[0] - 23.29793549) < 1.0E-7) {
+	    	System.out.println("The test for igam(5,10) passed");
+	    }
+	    else {
+	    	System.out.println("The test for igam(5,10) failed");
+	    	System.out.println("Implemented igam gave " + result[0]);
+	    	System.out.println("Correct answer is 23.29793549");
+	    }
+	    
+	    result[0] = igam(100,100);
+	    System.out.println("Calculated answer for igam(100,100) = " + result[0]);
+	    System.out.println("Correct answer for igam(100,100) = 4.7904235E155");
 	    
 	    result[0] = igamc(2,1);
 	    if (Math.abs(result[0] - 0.7357588823428847) < 1.0E-7) {
