@@ -487,6 +487,10 @@ public class Cephes {
 		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
 		// The test for ellie(-5.3, 0.12) passed
+		// The test for erf(0) passed
+		// The test for erf(0.4) passed
+		// The test for erf(0.9) passed
+		// The test for erf(0.9) passed
 		// The test for igam(1,2) passed
 		// The test for igmac(2,1) passed
 		// The test for igami(2,0.3) passed
@@ -546,7 +550,7 @@ public class Cephes {
 	    // ellpe and ellpk answers here from hcephes versions which
 	    // start with a line not present in cephes version
 	    // line added by Danilo x = 1.0 - x;
-	    /* result[0] = ellpe(0.12);
+	     result[0] = ellpe(0.12);
 	    if (Math.abs(result[0] - 1.522555369217904) < 1.0E-7) {
 	    	System.out.println("The test for ellpe(0.12) passed");
 	    }
@@ -565,7 +569,46 @@ public class Cephes {
 	    	System.out.println("Implemented ellpk gave " + result[0]);
 	    	System.out.println("Correct answer is 1.621393137980658");
 	    }
-	    */
+	    
+	    result[0] = erf(0);
+	    if (Math.abs(result[0]) < 1.0E-7) {
+	    	System.out.println("The test for erf(0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for erf(0) failed");
+	    	System.out.println("Implemented erf gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0");
+	    }
+	    
+	    result[0] = erf(0.4);
+	    if (Math.abs(result[0] - 0.4283923550) < 1.0E-7) {
+	    	System.out.println("The test for erf(0.4) passed");
+	    }
+	    else {
+	    	System.out.println("The test for erf(0.4) failed");
+	    	System.out.println("Implemented erf gave " + result[0]);
+	    	System.out.println("Correct answer is 0.4283923550");
+	    }
+	    
+	    result[0] = erf(0.9);
+	    if (Math.abs(result[0] - 0.7969082124) < 1.0E-7) {
+	    	System.out.println("The test for erf(0.9) passed");
+	    }
+	    else {
+	    	System.out.println("The test for erf(0.9) failed");
+	    	System.out.println("Implemented erf gave " + result[0]);
+	    	System.out.println("Correct answer is 0.7969082124");
+	    }
+	    
+	    result[0] = erf(1.5);
+	    if (Math.abs(result[0] - 0.9661051465) < 1.0E-7) {
+	    	System.out.println("The test for erf(0.9) passed");
+	    }
+	    else {
+	    	System.out.println("The test for erf(1.5) failed");
+	    	System.out.println("Implemented erf gave " + result[0]);
+	    	System.out.println("Correct answer is 0.9661051465");
+	    }
 	    
 	    result[0] = igam(1,2);
 	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
@@ -1867,8 +1910,9 @@ public class Cephes {
 		{
 		sign = 1;
 		}
+	// Changed to reflect change in ellpe
 	a = 1.0 - m;
-	E = ellpe(a);
+	E = ellpe(1.0 - a);
 	if( a == 0.0 )
 		{
 		temp = Math.sin( lphi );
@@ -1916,7 +1960,8 @@ public class Cephes {
 		e += c * Math.sin(lphi);
 		}
 
-	temp = E / ellpk(1.0 - m);
+	// Changed to reflect change in ellpk
+	temp = E / ellpk(m);
 	temp *= (Math.atan(t) + mod * Math.PI)/(d * a);
 	temp += e;
 
@@ -1991,6 +2036,7 @@ public class Cephes {
 	public double ellpe(double x)
 	{
     // hcephes_ellpe adds line by danilo x = 1.0 - x
+	x = 1.0 - x;
 	if( (x <= 0.0) || (x > 1.0) )
 		{
 		if( x == 0.0 ) {
@@ -2068,6 +2114,7 @@ public class Cephes {
 	public double ellpk(double x)
 	{
 		 // hcephes_ellpk adds line by danilo x = 1.0 - x
+		x = 1.0 - x;
 
 	if( (x < 0.0) || (x > 1.0) )
 		{
