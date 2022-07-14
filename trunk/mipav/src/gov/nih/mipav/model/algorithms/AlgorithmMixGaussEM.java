@@ -87,6 +87,10 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 		mixGaussEm(X1,k);
 		plot(llh);
 		plotClass(X1,label,"Trained Classes");
+		// predict
+		double R[][] = new double[n][k];
+		mixGaussPred(R, X2, mixGaussOut);
+		plotClass(X2, label, "Predicted Classes");
 	}
 	
 	class model {
@@ -785,6 +789,70 @@ public class AlgorithmMixGaussEM extends AlgorithmBase {
 	     grid on
 	     hold off*/
      }
+     
+     private void mixGaussPred(double R[][], double X[][], model mod) {
+		 // Predict label and responsibility for Gaussian mixture model.
+		 // Input:
+		 //   X: d x n data matrix
+		 //   model: trained model structure outputed by the EM algirthm
+		 // Output:
+		 //   label: 1 x n cluster label
+		 //   R: n x k responsibility
+		 // Written by Mo Chen (sth4nth@gmail.com).
+    	 int i,j,m;
+    	 double maxVal;
+    	 int index;
+		 double mu[][] = mod.mu;
+		 double Sigma[][][] = mod.Sigma;
+		 double w[] = mod.w;
+
+		 int n = X[0].length;
+		 int k = mu[0].length;
+		 double logRho[][] = new double[n][k];
+
+		 int d = Sigma.length;
+		 double mui[] = new double[d];
+		 double Sigmai[][] = new double[d][d];
+		 double out[];
+		 for (i = 0; i < k; i++) {
+			 for (j = 0; j < d; j++) {
+				 mui[j] = mu[j][i];
+				 for (m = 0; m < d; m++) {
+					 Sigmai[j][m] = Sigma[j][m][i];
+				 }
+			 }
+		     out = loggausspdf(X,mui, Sigmai);
+		     for (j = 0; j < n; j++) {
+		    	 logRho[j][i] = out[j];
+		     }
+		 } // for (i = 0; i < k; i++)
+		 for (j = 0; j < k; j++) {
+			 for (i = 0; i < n; i++) {
+				 logRho[i][j] = logRho[i][j] + Math.log(w[j]);
+			 }
+		 }
+		 double T[] = logsumexp(logRho,1);
+		 double logR[][] = new double[n][k];
+		 for (j = 0; j < k; j++) {
+			 for (i = 0; i < n; i++) {
+				 logR[i][j] = logRho[i][j] - T[i];
+				 R[i][j] = Math.exp(logR[i][j]);
+			 }
+		 }
+		 label = new int[n];
+		 for (i = 0; i < n; i++) {
+			 maxVal = -Double.MAX_VALUE;
+			 index = -1;
+			 for (j = 0; j < k; j++) {
+				 if (R[i][j] > maxVal) {
+					 maxVal = R[i][j];
+					 index = j + 1;
+				 }
+			 }
+			 label[i] = index;
+		 }
+     }
+
      
      //function [label, model, llh] = mixGaussEm(X, init)
      private void mixGaussEm(double X[][], int init) {
