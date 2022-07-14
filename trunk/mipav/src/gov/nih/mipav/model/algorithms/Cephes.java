@@ -112,9 +112,10 @@ public class Cephes {
 	public final static int POLEVL = 14;
 	public final static int P1EVL = 15;
 	public final static int STIRF = 16;
-	public final static int TRUE_GAMMA = 17;
-	public final static int ZETA = 18;
-	public final static int ZETAC = 19;
+	public final static int STRUVE = 17;
+	public final static int TRUE_GAMMA = 18;
+	public final static int ZETA = 19;
+	public final static int ZETAC = 20;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -129,6 +130,8 @@ public class Cephes {
 	private final static int MAXL2 = 127;
 	private final static double MAXSTIR = 143.01608;
 	private final static double SQTPI = 2.50662827463100050242E0;
+	private final static double stop = 1.37e-17;
+	private final boolean DEBUG = false;
 	// For ndtr:
 	private final static double P[] = new double[]{
 		 2.46196981473530512524E-10,
@@ -339,7 +342,7 @@ public class Cephes {
 	
 	private final static double azetac[] = new double[]{
 			-1.50000000000000000000E0,
-			 1.70141183460469231730E38, /* infinity. */
+			 Double.POSITIVE_INFINITY, /* infinity. */
 			 6.44934066848226436472E-1,
 			 2.02056903159594285400E-1,
 			 8.23232337111381915160E-2,
@@ -492,6 +495,15 @@ public class Cephes {
 		// The test for ndtr(1) passed
 		// The test for ndtri(0.5) passed
 		// The test for ndtri(0.6) passed
+		// The test for struve(0.0,0.0) passed
+		// The test for struve(0.0,5.0) passed
+		// The test for struve(1.0,0.0) passed
+		// The test for struve(1.0,5.0) passed
+		// The test for zetac(-3.0) passed
+		// The test for zetac(-2.0) passed
+		// The test for zetac(-1.0) passed
+		// The test for zetac(0.0) passed
+		// The test for zetac(1.0) passed
 		result = new double[1];
 		result[0] = chdtr(4,5);
 		if (Math.abs(result[0] - 0.7127025048163542) < 1.0E-7) {
@@ -635,6 +647,96 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.25334710313579972");
 	    }
 	    
+	    result[0] = struve(0.0,0.0);
+	    if (Math.abs(result[0]) < 1.0E-7) {
+	    	System.out.println("The test for struve(0.0,0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for struve(0.0,0.0) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0");
+	    }
+	    
+	    result[0] = struve(0.0,5.0);
+	    if (Math.abs(result[0] + 0.1852168) < 1.0E-7) {
+	    	System.out.println("The test for struve(0.0,5.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for struve(0.0,5.0) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is -0.1852168");
+	    }
+	    
+	    result[0] = struve(1.0,0.0);
+	    if (Math.abs(result[0]) < 1.0E-7) {
+	    	System.out.println("The test for struve(1.0,0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for struve(1.0,0.0) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0");
+	    }
+	    
+	    result[0] = struve(1.0,5.0);
+	    if (Math.abs(result[0] - 0.8078119) < 1.0E-7) {
+	    	System.out.println("The test for struve(1.0,5.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for struve(1.0,5.0) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 0.8078119");
+	    }
+	    
+	    result[0] = zetac(-3.0);
+	    if (Math.abs(result[0] + (119.0/120.0)) < 1.0E-7) {
+	    	System.out.println("The test for zetac(-3.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for zetac(-3.0) failed");
+	    	System.out.println("Implemented zetac gave " + result[0]);
+	    	System.out.println("Correct answer is " + (-119.0/120.0));
+	    }
+	    
+	    result[0] = zetac(-2.0);
+	    if (Math.abs(result[0] + 1.0) < 1.0E-7) {
+	    	System.out.println("The test for zetac(-2.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for zetac(-2.0) failed");
+	    	System.out.println("Implemented zetac gave " + result[0]);
+	    	System.out.println("Correct answer is -1.0");
+	    }
+	    
+	    result[0] = zetac(-1.0);
+	    if (Math.abs(result[0] + (13.0/12.0)) < 1.0E-7) {
+	    	System.out.println("The test for zetac(-1.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for zetac(-1.0) failed");
+	    	System.out.println("Implemented zetac gave " + result[0]);
+	    	System.out.println("Correct answer is " + (-13.0/12.0));
+	    }
+	    
+	    result[0] = zetac(0.0);
+	    if (Math.abs(result[0] + 1.5) < 1.0E-7) {
+	    	System.out.println("The test for zetac(0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for zetac(0.0) failed");
+	    	System.out.println("Implemented zetac gave " + result[0]);
+	    	System.out.println("Correct answer is -1.5");
+	    }
+	    
+	    result[0] = zetac(1.0);
+	    if (Double.isInfinite(result[0])) {
+	    	System.out.println("The test for zetac(1.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for zetac(1.0) failed");
+	    	System.out.println("Implemented zetac gave " + result[0]);
+	    	System.out.println("Correct answer is Double.POSITIVE_INFINITY");
+	    }
+	    
 	}
 	
 	public Cephes() {
@@ -710,6 +812,9 @@ public class Cephes {
 		else if (version == STIRF) {
 			result[0] = stirf(par1);
 		}
+		else if (version == STRUVE) {
+			result[0] = struve(par1, par2);
+		}
 		else if (version == TRUE_GAMMA) {
 			result[0] = true_gamma(par1);
 		}
@@ -772,7 +877,7 @@ public class Cephes {
  * chdtr domain   x < 0 or v < 1        0.0
  */
 	
-	private double chdtr(double df, double x) {
+	public double chdtr(double df, double x) {
 
 	if( (x < 0.0) || (df < 1.0) )
 		{
@@ -830,7 +935,7 @@ public class Cephes {
 	 *   message         condition      value returned
 	 * chdtrc domain  x < 0 or v < 1        0.0
 	 */
-	private double chdtrc(double df, double x)
+	public double chdtrc(double df, double x)
 	{
 
 	if( (x < 0.0) || (df < 1.0) )
@@ -887,7 +992,7 @@ public class Cephes {
 	Copyright 1984, 1987 by Stephen L. Moshier
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
-	private double chdtri(double df, double y) {
+	public double chdtri(double df, double y) {
 	    double x;
 	    if ((y < 0) || ( y > 1.0) || (df < 1.0)) {
 	    	MipavUtil.displayError("Domain error in chdtri()");
@@ -941,7 +1046,7 @@ public class Cephes {
 	 *    IEEE      0,1         30000       3.7e-16     1.0e-16
 	 *
 	 */
-	private double erf(double x)
+	public double erf(double x)
 	{
 	double z;
 
@@ -1001,7 +1106,7 @@ public class Cephes {
 	 *
 	 *
 	 */
-	private double erfc(double a)
+	public double erfc(double a)
 	{
 	double p,q,x,y,z;
 
@@ -1107,7 +1212,7 @@ public class Cephes {
 	 * erfc underflow    x > 37.519379347       0.0
 	 *
 	 */
-	private double ndtr(double a)
+	public double ndtr(double a)
 	{
 	double x, y, z;
 
@@ -1178,7 +1283,7 @@ public class Cephes {
 	Cephes Math Library Release 2.3:  March, 1995
 	Copyright 1984, 1987, 1995 by Stephen L. Moshier
 	*/
-	private double igami(double a, double y0) {
+	public double igami(double a, double y0) {
 		double x0, x1, x, yl, yh, y, d, lgm, dithresh;
 		int i, dir;
 
@@ -1350,7 +1455,7 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 
-	private double igamc(double  a, double x )
+	public double igamc(double  a, double x )
 	{
 	double ans, ax, c, yc, r, t, y, z;
 	double pk, pkm1, pkm2, qk, qkm1, qkm2;
@@ -1466,7 +1571,7 @@ public class Cephes {
 	 *
 	 */
 
-	private double igam(double a, double x)
+	public double igam(double a, double x)
 	{
 	double ans, ax, c, r;
 
@@ -1554,7 +1659,7 @@ public class Cephes {
  * ndtri domain       x >= 1         MAXNUM
  *
  */
-	private double ndtri(double y0) {
+	public double ndtri(double y0) {
 		double x, y, z, y2, x0, x1;
 		int code;
 
@@ -1651,7 +1756,7 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 	
-	private double polevl(double x, double coef[], int N ) {
+	public double polevl(double x, double coef[], int N ) {
 		double ans;
 		int i;
 		int coefindex = 0;
@@ -1668,7 +1773,7 @@ public class Cephes {
 		return ans;
 	}
 	
-	private double p1evl(double x, double coef[], int N ) {
+	public double p1evl(double x, double coef[], int N ) {
 		double ans;
 		int coefindex = 0;
 		int i;
@@ -1739,7 +1844,7 @@ public class Cephes {
 
 	/*	Incomplete elliptic integral of second kind	*/
 
-	private double ellie(double phi, double m )
+	public double ellie(double phi, double m )
 	{
 	double a, b, c, e, temp;
 	double lphi, t, E;
@@ -1883,7 +1988,7 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 	
-	private double ellpe(double x)
+	public double ellpe(double x)
 	{
     // hcephes_ellpe adds line by danilo x = 1.0 - x
 	if( (x <= 0.0) || (x > 1.0) )
@@ -1960,7 +2065,7 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 
-	private double ellpk(double x)
+	public double ellpk(double x)
 	{
 		 // hcephes_ellpk adds line by danilo x = 1.0 - x
 
@@ -2050,7 +2155,7 @@ public class Cephes {
 	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 	*/
 	
-	private double zeta(double x,double q) {
+	public double zeta(double x,double q) {
 	int i;
 	double a, b, k, s, t, w;
 
@@ -2151,7 +2256,7 @@ public class Cephes {
 	/* Gamma function computed by Stirling's formula.
 	 * The polynomial STIR is valid for 33 <= x <= 172.
 	 */
-	private double stirf(double x) {
+	public double stirf(double x) {
 	double y, w, v;
 
 	w = 1.0/x;
@@ -2170,7 +2275,7 @@ public class Cephes {
 	return y;
 	}
 	
-	private double true_gamma(double x) {
+	public double true_gamma(double x) {
 	double p, q, z;
 	int i;
 
@@ -2315,7 +2420,7 @@ public class Cephes {
 	 * for integer arguments between 0 and 30.
 	 */
 	
-	private double zetac(double x) {
+	public double zetac(double x) {
 	int i;
 	double a, b, s, w;
 
@@ -2360,7 +2465,7 @@ public class Cephes {
 	if( x == 1.0 )
 		{
 		MipavUtil.displayError("SINGULARITY IN zetac");
-		return (MAXNUM);
+		return (Double.POSITIVE_INFINITY);
 		}
 
 	if( x <= 10.0 )
@@ -2396,6 +2501,314 @@ public class Cephes {
 	b = Math.pow( 2.0, -x );
 	s = (s + b)/(1.0-b);
 	return s;
+	}
+
+	/*							struve.c
+	 *
+	 *      Struve function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double v, x, y, struve();
+	 *
+	 * y = struve( v, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Computes the Struve function Hv(x) of order v, argument x.
+	 * Negative x is rejected unless v is an integer.
+	 *
+	 * This module also contains the hypergeometric functions 1F2
+	 * and 3F0 and a routine for the Bessel function Yv(x) with
+	 * noninteger v.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * Not accurately characterized, but spot checked against tables.
+	 *
+	 */
+
+	/*
+	Cephes Math Library Release 2.1:  January, 1989
+	Copyright 1984, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	/* Crossover points between ascending series and asymptotic series
+	 * for Struve function
+	 *
+	 *	 v	 x
+	 * 
+	 *	 0	19.2
+	 *	 1	18.95
+	 *	 2	19.15
+	 *	 3	19.3
+	 *	 5	19.7
+	 *	10	21.35
+	 *	20	26.35
+	 *	30	32.31
+	 *	40	40.0
+	 */
+	
+	public double onef2(double a, double b, double c, double x, double err[] ) {
+	double n, a0, sum, t;
+	double an, bn, cn, max, z;
+
+	an = a;
+	bn = b;
+	cn = c;
+	a0 = 1.0;
+	sum = 1.0;
+	n = 1.0;
+	t = 1.0;
+	max = 0.0;
+
+	do
+		{
+		if( an == 0 ) {
+			err[0] = Math.abs( MACHEP*max /sum );
+
+			if (DEBUG) {
+				System.out.println(" onef2 cancellation error = " + err[0] );
+			}
+			
+			if (DEBUG) {
+			    System.out.println("onef2("+a+ " "+b+ " " + c + " "+ x+")");
+			    System.out.println("n = " + n + " sum = " + sum);
+			}
+			return(sum);
+		}
+		if(( bn == 0 ) || (cn == 0) || (a0 > 1.0E34) || (n > 200)) {
+			if (DEBUG) {
+			    System.out.println("onef2 does not converge");
+			}
+			err[0] = 1.0e38;
+			if (DEBUG) {
+			    System.out.println("onef2("+a+ ", "+b+ ", " + c + ", "+ x+")");
+			    System.out.println("n = " + n + " sum = " + sum);
+			}
+			return(sum);
+		}
+		
+		a0 *= (an * x) / (bn * cn * n);
+		sum += a0;
+		an += 1.0;
+		bn += 1.0;
+		cn += 1.0;
+		n += 1.0;
+		z = Math.abs( a0 );
+		if( z > max )
+			max = z;
+		if( sum != 0 )
+			t = Math.abs( a0 / sum );
+		else
+			t = z;
+		}
+	while( t > stop );
+	err[0] = Math.abs( MACHEP*max /sum );
+
+	if (DEBUG) {
+		System.out.println(" onef2 cancellation error = " + err[0] );
+	}
+	
+	if (DEBUG) {
+	    System.out.println("onef2("+a+ ", "+b+ ", " + c + ", "+ x+")");
+	    System.out.println("n = " + n + " sum = " + sum);
+	}
+	return(sum);
+	}
+
+	public double threef0(double a, double b, double c, double x, double err[]) {
+	double n, a0, sum, t, conv, conv1;
+	double an, bn, cn, max, z;
+
+	an = a;
+	bn = b;
+	cn = c;
+	a0 = 1.0;
+	sum = 1.0;
+	n = 1.0;
+	t = 1.0;
+	max = 0.0;
+	conv = 1.0e38;
+	conv1 = conv;
+
+	do
+		{
+		if(( an == 0.0 ) || (bn == 0.0) || (cn == 0.0)) {
+			t = Math.abs( MACHEP*max/sum );
+			if (DEBUG) {
+				System.out.println("threef0 cancellation error = " + t );
+			}
+
+			max = Math.abs( conv/sum );
+			if( max > t ) {
+				t = max;
+			}
+			if (DEBUG) {
+				System.out.println("threef0 convergence = " + max );
+			}
+			
+			if (DEBUG) {
+				System.out.println("threef0("+a+ ", "+b+ ", " + c + ", "+ x+")");
+			    System.out.println("n = " + n + " sum = " + sum);
+			}
+
+			err[0] = t;
+			return(sum);
+		}
+			
+		if( (a0 > 1.0e34) || (n > 200) ) {
+			if (DEBUG) {
+			    System.out.println("threef0 does not converge");
+			}
+			t = 1.0e38;
+			
+			if (DEBUG) {
+				System.out.println("threef0("+a+ ", "+b+ ", " + c + ", "+ x+")");
+			    System.out.println("n = " + n + " sum = " + sum);
+			}
+
+			err[0] = t;
+			return(sum);
+		}
+		a0 *= (an * bn * cn * x) / n;
+		an += 1.0;
+		bn += 1.0;
+		cn += 1.0;
+		n += 1.0;
+		z = Math.abs( a0 );
+		if( z > max )
+			max = z;
+		if( z >= conv )
+			{
+			if( (z < max) && (z > conv1) ) {
+				t = Math.abs( MACHEP*max/sum );
+				if (DEBUG) {
+					System.out.println("threef0 cancellation error = " + t );
+				}
+
+				max = Math.abs( conv/sum );
+				if( max > t ) {
+					t = max;
+				}
+				if (DEBUG) {
+					System.out.println("threef0 convergence = " + max );
+				}
+				
+				if (DEBUG) {
+					System.out.println("threef0("+a+ ", "+b+ ", " + c + ", "+ x+")");
+				    System.out.println("n = " + n + " sum = " + sum);
+				}
+
+				err[0] = t;
+				return(sum);	
+			}
+			}
+				
+		conv1 = conv;
+		conv = z;
+		sum += a0;
+		if( sum != 0 )
+			t = Math.abs( a0 / sum );
+		else
+			t = z;
+		}
+	while( t > stop );
+	t = Math.abs( MACHEP*max/sum );
+	if (DEBUG) {
+		System.out.println("threef0 cancellation error = " + t );
+	}
+
+	max = Math.abs( conv/sum );
+	if( max > t ) {
+		t = max;
+	}
+	if (DEBUG) {
+		System.out.println("threef0 convergence = " + max );
+	}
+	
+	if (DEBUG) {
+		System.out.println("threef0("+a+ ", "+b+ ", " + c + ", "+ x+")");
+	    System.out.println("n = " + n + " sum = " + sum);
+	}
+
+	err[0] = t;
+	return(sum);	
+	}
+
+	public double struve(double v, double x ) {
+	double y, ya, f, g, h, t;
+	double onef2err[] = new double[1];
+	double threef0err[] = new double[1];
+	double[] cyr = new double[1];
+	double[] cyi = new double[1];
+	int[] nz = new int[1];
+	int[] errorFlag = new int[1];
+	
+	if ((v == 0.0) && (x == 0.0)) {
+		return 0.0;
+	}
+
+	f = Math.floor(v);
+	if( (v < 0) && ( v-f == 0.5 ) )
+		{
+		Bessel besj = new Bessel(Bessel.BESSEL_J,-v,0.0,x,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);
+		besj.run();
+		y = cyr[0];
+		f = 1.0 - f;
+		g =  2.0 * Math.floor(f/2.0);
+		if( g != f )
+			y = -y;
+		return(y);
+		}
+	t = 0.25*x*x;
+	f = Math.abs(x);
+	g = 1.5 * Math.abs(v);
+	if( (f > 30.0) && (f > g) )
+		{
+		onef2err[0] = 1.0e38;
+		y = 0.0;
+		}
+	else
+		{
+		y = onef2( 1.0, 1.5, 1.5+v, -t, onef2err );
+		}
+
+	if( (f < 18.0) || (x < 0.0) )
+		{
+		threef0err[0] = 1.0e38;
+		ya = 0.0;
+		}
+	else
+		{
+		ya = threef0( 1.0, 0.5, 0.5-v, -1.0/t, threef0err );
+		}
+
+	f = Math.sqrt( Math.PI );
+	h = Math.pow( 0.5*x, v-1.0 );
+
+	if( onef2err[0] <= threef0err[0] )
+		{
+		g = true_gamma( v + 1.5 );
+		y = y * h * t / ( 0.5 * f * g );
+		return(y);
+		}
+	else
+		{
+		g = true_gamma( v + 0.5 );
+		ya = ya * h / ( f * g );
+		Bessel besy = new Bessel(Bessel.BESSEL_Y,v,0.0,x,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);
+		besy.run();
+		ya = ya + cyr[0];
+		return(ya);
+		}
 	}
 
 
