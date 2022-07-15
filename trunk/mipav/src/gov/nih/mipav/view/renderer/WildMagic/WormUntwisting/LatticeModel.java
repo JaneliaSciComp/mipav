@@ -683,6 +683,9 @@ public class LatticeModel {
 
 	private VOI[] displayContours;
 	private VOI displayContours2;
+	
+	private VOI ellipseCurvesVOI;
+	protected VOIContour[] ellipseCurves;
 
 	protected VOI displayInterpolatedContours;
 
@@ -1971,11 +1974,25 @@ public class LatticeModel {
 	{
 		return latticeStraight;
 	}
-	
+
 	public VOIContour getCenter()
 	{
 		return centerPositions;
 	}
+	
+	public VOI getPlanes()
+	{
+		if ( samplingPlanes == null ) {
+			generateEllipses( extent / 2 );
+		}
+		return samplingPlanes;
+	}
+	
+	public VOIContour[] getEllipseCurves()
+	{
+		return ellipseCurves;
+	}
+
 	
 	public int getLatticeCurveLength()
 	{
@@ -2184,7 +2201,7 @@ public class LatticeModel {
 		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
 		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
 		generateCurves(1);
-		generateEllipses();
+		generateEllipses(extent);
 		if ( saveStats ) {
 			saveLatticeStatistics();
 		}
@@ -3737,6 +3754,14 @@ public class LatticeModel {
 		
 		curvatureNormals = new Vector<Vector3f>();
 		curvature = new Vector<Float>();
+		
+		ellipseCurvesVOI = new VOI((short)0, "ellipseCurvesVOI");;
+		ellipseCurves = new VOIContour[numEllipsePts];
+//		ellipseControlPts = new VOIContour[numEllipsePts];
+		for ( int i = 0; i < numEllipsePts; i++ ) {
+			ellipseCurves[i] = new VOIContour(false);
+			ellipseCurvesVOI.getCurves().add(ellipseCurves[i]);
+		}
 
 		// 3. The center curve is uniformly sampled along the length of the curve.
 		// The step size is set to be one voxel. This determines the length of the final straightened
@@ -4041,7 +4066,7 @@ public class LatticeModel {
 
         short sID = 1;
         
-		numEllipsePts = 16;
+//		numEllipsePts = 16;
 		displayContours = new VOI[latticeSlices.length + numEllipsePts];
 		displayContours2 = new VOI((short)0, "wormContours2");
 
@@ -4060,6 +4085,11 @@ public class LatticeModel {
 			radius += paddingFactor;
 
 			makeEllipse2DA(rkRVector, rkUVector, rkEye, radius, curvatureNormals.elementAt(i), curvature.elementAt(i), ellipse, ellipseCross, ellipseScale );	
+
+			for ( int j = 0; j < numEllipsePts; j++ )
+			{
+				ellipseCurves[j].add( new Vector3f(ellipse.elementAt(j)) );
+			}
 			
 			if ( !splineModel) {
 				displayContours2.getCurves().add(ellipse);
@@ -4082,6 +4112,10 @@ public class LatticeModel {
 //			if ( !contourAdded && (i%contourSteps == 0) ) {
 //				displayContours2.getCurves().add(ellipse);
 //			}
+		}
+
+		for ( int i = 0; i < numEllipsePts; i++ ) {
+			ellipseCurves[i].update(new ColorRGBA(0,.3f,.7f,1));
 		}
 
 //		System.err.println("");
@@ -5859,7 +5893,7 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
-	private void generateEllipses()
+	private void generateEllipses( int extent )
 	{
 		boxBounds = new Vector<Box3f>();
 		ellipseBounds = new Vector<Ellipsoid3f>();

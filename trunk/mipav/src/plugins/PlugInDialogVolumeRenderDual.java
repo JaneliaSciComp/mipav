@@ -552,6 +552,10 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 					enableNext(editMode);
 				}
 			}
+			else if (command.equals("demo")) {
+				updateSurfacePanels();
+				activeRenderer.addAnimationLattice( activeImage.voiManager.getLattice() );
+			}
 			// Enables user to generate a new lattice (when none of the automatic ones match
 			// well)
 			else if (command.equals("newLattice")) {
@@ -1164,7 +1168,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			if ( which != -1 ) {
 				final TransferFunction kTransfer = activeImage.volOpacityPanel[which].getCompA().getOpacityTransferFunction();
 				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetImage(), kTransfer, which);
-//				activeImage.hyperstack[which].UpdateImages(kTransfer, 0, null);
+				activeImage.hyperstack[which].UpdateImages(kTransfer, 0, null);
 //
 //				if ( activeImage.previewHS != null ) {
 //					activeImage.previewHS[which].UpdateImages(kTransfer, 0, null);
@@ -1194,7 +1198,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			if ( which != -1 ) {
 				updateImages(activeImage.colormap, activeImage.hyperstack[which].GetLUT(), which );
 //				System.err.println("updateImages " + which);
-//				activeImage.hyperstack[which].UpdateImages(activeImage.hyperstack[which].getLUT());
+				activeImage.hyperstack[which].UpdateImages(activeImage.hyperstack[which].getLUT());
 //				if ( activeImage.previewHS != null ) {
 //					activeImage.previewHS[which].UpdateImages(activeImage.hyperstack[which].getLUT());
 //				}
@@ -2274,16 +2278,16 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 		doneButton.setVisible(true);
 		doneButton.setEnabled(true);
 		backNextPanel.add(doneButton);
+		
+		JButton demo = gui.buildButton("demo");
+		demo.addActionListener(this);
+		demo.setActionCommand("demo");
+		demo.setVisible(true);
+		demo.setEnabled(true);
+//		backNextPanel.add(demo);
 
-		ButtonGroup latticeGroup = new ButtonGroup();
 		latticeSelectionPanel = new JPanel();
-		// latticeChoices = new JRadioButton[5];
-		// for ( int i = 0; i < latticeChoices.length; i++ )
-		// {
-		// latticeChoices[i] = gui.buildRadioButton("lattice_" + (i+1), i==0 );
-		// latticeChoices[i].addActionListener(this);
-		// latticeGroup.add(latticeChoices[i]);
-		// }
+		
 		newLatticeButton = gui.buildButton("new lattice");
 		newLatticeButton.addActionListener(this);
 		newLatticeButton.setActionCommand("newLattice");
@@ -3136,6 +3140,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			final TransferFunction kTransfer = integratedData.volOpacityPanel[i].getCompA().getOpacityTransferFunction();
 			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetImage(), kTransfer, i);
 			integratedData.volOpacityPanel[i].getCompA().showHistogram();
+			integratedData.hyperstack[i].UpdateImages(kTransfer, 0, null);
+
 			if ( integratedData.previewHS != null ) {
 				integratedData.previewHS[i].UpdateImages(kTransfer, 0, null);
 			}
@@ -3152,6 +3158,8 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			lutTab.addTab( subDir[i] + File.separator + integratedData.hyperstack[i].GetImage().getImageName(), 
 					null, integratedData.lutHistogramPanel[i].getContainingPanel());
 			updateImages(integratedData.colormap, integratedData.hyperstack[i].GetLUT(), i );
+			
+			integratedData.hyperstack[i].UpdateImages(integratedData.hyperstack[i].getLUT());
 
 			if ( integratedData.previewHS != null ) {
 				integratedData.previewHS[i].UpdateImages(integratedData.hyperstack[i].getLUT());
