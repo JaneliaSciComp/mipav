@@ -107,6 +107,104 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
         m_kVolumeImage = kImageA;
     }
+
+    public SurfaceLightingEffect (VolumeImage[] images, Texture colormap)
+    {
+        SetPassQuantity(1);
+        
+        String text = ""
+        		+ "uniform mat4 WVPMatrix;"
+        		+ "in vec3 inPosition;"
+        		+ "in vec3 inTexcoord0;"
+        		+ "out vec3 varTexCoord;"
+        		+ "void v_VolumeTexturesC ()"
+        		+ "{"
+            // Transform the position from model space to clip space.
+        		+ "gl_Position = WVPMatrix * vec4(inPosition, 1.0);"
+
+            // Pass through the texture coordinate.
+        		+ "varTexCoord = inTexcoord0;"
+        		+ "}";
+        
+        m_kVVertexLighting = new VertexShader("VolumeTexturesC", text);
+        m_kVPixelLighting = new VertexShader("VolumeTexturesC", text);
+        
+        text = ""
+    	    	+ "in vec3 varTexCoord;" + "\n"
+    	    	+ "out vec4 fragColor;" + "\n";
+        
+		text += "uniform sampler2D colormap;\n";
+
+    	for ( int i = 0; i < images.length; i++ ) {
+    	   text += "uniform sampler3D volume" + (i) + ";\n";
+    	}
+    	text += "void p_VolumeTexture() {" + "\n";
+
+    	text += "   vec4 data = vec4(0.0);" + "\n";
+    	text += "   vec4 colorTemp = vec4(0.0);" + "\n";
+    	text += "   vec4 color = vec4(0.0);" + "\n";
+    	text += "   float opacity = 0.0;" + "\n";
+    	text += "   vec2 cm = vec2(0.0);" + "\n";
+    	
+    	
+    	float scale = images.length > 1 ? (1f/(float)(images.length-1)) : 1f;
+    	for ( int i = 0; i < images.length; i++ ) 
+    	{
+    		{
+    			String readImage = ""
+    					+ "   data = texture(volume"+ (i) + ",varTexCoord, 0.0);" + "\n";
+    			String readColorMap = ""
+						+ "   cm.r = data.r;" + "\n"	
+						+ "   cm.g = " + ((float)i * scale) + ";" + "\n"	
+						+ "   colorTemp = texture(colormap,cm, 0.0);" + "\n"
+    		        	+ "   colorTemp.a = 0.9;" + "\n"
+    					+ "   color.rgb += colorTemp.a*colorTemp.rgb;" + "\n"
+    		        	+ "   opacity += colorTemp.a;" + "\n";
+    			
+    	    	text += readImage;
+    	    	text += readColorMap;
+    		}
+    	}		
+    	
+    	String finalColor = ""
+				+ "   color = clamp(color, vec4(0), vec4(1));" + "\n"
+				+ "   opacity = clamp(opacity, 0, 1);" + "\n"
+				+ "   if ( (color.r != 0) || (color.g != 0) || (color.b != 0) ) { "
+	            + "     fragColor.rgb = (1 - opacity)*fragColor.rgb + color.rgb;" + "\n"
+	            + "     fragColor.a   += opacity;" + "\n"
+	            + "   }" + "\n";
+		
+    	text += finalColor;
+    	
+    	text += "fragColor = clamp(fragColor, vec4(0), vec4(1));" + "\n"
+        + "if ( fragColor == vec4(0) ) {" + "\n"
+    	+ "   discard;" + "\n"
+    	+ "}" + "\n"
+    	// program end
+    	+ "}" + "\n";
+
+
+        m_kPVertexLighting = new PixelShader("VolumeTexture", text);
+        m_kPPixelLighting = new PixelShader("VolumeTexture", text);
+        if ( (m_kPVertexLighting != null) && (m_kPVertexLighting.GetProgram() != null) )
+    	{
+    		int iTex = 0;
+    		for ( int i = 0; i < images.length; i++ ) {
+    			m_kPVertexLighting.SetTexture(iTex++, images[i].GetVolumeTarget(), "volume" + i);
+    			m_kPPixelLighting.SetTexture(iTex++, images[i].GetVolumeTarget(), "volume" + i);
+    		}
+    		m_kPVertexLighting.SetTexture(iTex++, colormap, "colormap");
+    		m_kPPixelLighting.SetTexture(iTex++, colormap, "colormap");
+    	}
+    	
+        m_kVShader.set(0, m_kVPixelLighting);
+        m_kPShader.set(0, m_kPPixelLighting);
+    }
+
+    
+    
+    
+    
     /**
      * Sets surface blend/transparency value for alph-blending in the shader.
      * @param fValue surface blend/transparency value for alph-blending in the shader.

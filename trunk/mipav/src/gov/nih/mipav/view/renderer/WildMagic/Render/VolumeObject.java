@@ -421,6 +421,13 @@ public abstract class VolumeObject
         m_kTranslate.add(kTranslate);
     }
     
+    public Vector3f getTexCoord( Vector3f pos ) {
+
+        return new Vector3f( 
+                (pos.X  - m_kTranslate.X) * 1.0f/m_fX,
+                (pos.Y  - m_kTranslate.Y) * 1.0f/m_fY,
+                (pos.Z  - m_kTranslate.Z) * 1.0f/m_fZ);
+    }
     
     /**
      * Converts the input point from volume-index coordinates into local coordinates used to display the object in the volume renderer.

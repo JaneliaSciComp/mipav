@@ -40,6 +40,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
@@ -51,6 +52,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -676,8 +679,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 		
 		MeasureTime();
-		
-		
+
 		if (m_kDeleteList.size() > 0) {
 			for (int i = m_kDeleteList.size() - 1; i >= 0; i--) {
 				VolumeObject kObj = m_kDeleteList.remove(0);
@@ -714,6 +716,103 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				}
 			}
 		}
+		
+
+		if ( animateLattices ) {
+			{	    	
+				if ( animateCurve ) {
+					VOI voi = new VOI((short)0, "wormContours");
+
+					VOIContour head = new VOIContour(true);
+					VOIContour tail = new VOIContour(true);
+					VOIContour center = animateLatticeModel.getCenter();
+					VOIContour[] ellipseContours = animateLatticeModel.getEllipseCurves();
+					VOIContour tempC = new VOIContour(false);
+					VOIContour[] tempE = new VOIContour[ellipseContours.length];
+
+					for ( int i = center.size() - 1 - segmentIndex; i < center.size(); i++ ) {
+						tempC.add(center.elementAt(i));
+						for ( int j = 0; j < ellipseContours.length; j++ ) {
+
+							if ( tempE[j] == null ) 
+							{
+								tempE[j] = new VOIContour(false);
+							}	
+							tempE[j].add(ellipseContours[j].elementAt(i) );
+							if ( i == (center.size() - 1 - segmentIndex) ) {
+								tail.add(ellipseContours[j].elementAt(i));
+							}
+							if ( i == (center.size() - 1) ) {
+								head.add(ellipseContours[j].elementAt(i));
+							}
+						}
+					}
+
+					voi.getCurves().add( tempC );
+					tempC.update(new ColorRGBA(1,0,1,1));
+
+					for ( int j = 0; j < ellipseContours.length; j++ ) {
+						tempE[j].update(new ColorRGBA(.3f,0,.7f,1));
+						voi.getCurves().add( tempE[j] );
+					}
+					head.update(new ColorRGBA(.3f,0,.7f,1));
+					tail.update(new ColorRGBA(.3f,0,.7f,1));
+					voi.getCurves().add(head);
+					voi.getCurves().add(tail);
+					
+					
+					m_kVolumeImageA.GetImage().unregisterAllVOIs();
+					m_kVolumeImageA.GetImage().registerVOI(voi);
+
+					segmentIndex++;
+					if ( segmentIndex >= center.size() ) {
+						segmentIndex = 0;
+						animateCurve = false;
+						animateSlice = true;
+					}
+					else {
+						takeScreenShot = true;
+					}
+				}
+				else if ( animateSlice ){
+					VOIContour center = animateLatticeModel.getCenter();
+					VOI planes = animateLatticeModel.getPlanes();
+					if ( planeVOI != null ) {
+						m_kVolumeImageA.GetImage().unregisterVOI(planeVOI);
+					}
+					planeVOI = new VOI((short)0, "samplePlane");
+
+		
+					m_kVolumeImageA.GetImage().registerVOI(planeVOI);
+
+					segmentIndex += sliceDir;
+					if ( segmentIndex >= center.size() ) {
+						segmentIndex = 0;
+//						animateSlice = false;
+					}
+					if ( segmentIndex < 0 ) {
+						segmentIndex = center.size() - 1;
+//						animateSlice = false;
+					}
+					else {
+						takeScreenShot = false;		
+						m_bTestFrameRate = false;
+					}
+					
+					VOIContour box = new VOIContour((VOIContour)planes.getCurves().elementAt(center.size() - 1 - segmentIndex));
+					createSamplePlane(box);
+					planeVOI.getCurves().add(box);
+
+					
+					animateSlice = false;
+				}
+			}
+		}
+		
+		
+		
+		
+		
 		updateVOIs(m_kVolumeImageA.GetImage().getVOIs());
 
 		Move();
@@ -751,6 +850,49 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			// Profile.shutdown();
 			// System.err.println( "Profile DONE" );
 			profile = false;
+		}
+		
+
+		if ( animateLattices ) 
+		{
+			if ( !m_bTestFrameRate && takeScreenShot ) {
+				m_bTestFrameRate = true;
+                ResetTime();
+			}
+			if ( takeScreenShot ) {
+				takeScreenShot = false;
+				if ( screenShotRotateCount < 300 ) {
+					takeScreenShot = true;
+					screenShotRotateCount++;
+					if (screenShotRotateCount == 300 ) {
+//						animateStop = true;
+//						takeScreenShot = false;
+						
+
+//						animateSurface = false;
+//						removeAllSurfaces();
+//						segmentIndex = 0;
+//						meshStep = 1;
+//						animateIndex += 10;
+//						if ( animateIndex >= lattices.length ) {
+//							animateIndex = 0;
+//						}
+//						animateLatticeModel.setLattice( lattices[animateIndex] );
+					}
+				}
+
+//				if ( screenShots == null )
+//				{
+//					screenShots = new Vector<BufferedImage>();
+//				}
+//				System.err.println("Screenshot");
+//				screenShots.add(m_pkRenderer.Screenshot());
+			}
+			if ( animateStop ) {
+				animateStop = false;
+				System.err.println("saving worm animation");
+//				writeData("worm"+animateIndex);
+			}
 		}
 	}
 
@@ -1056,7 +1198,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			kVolumeVOI.GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
 			kVolumeVOI.GetScene().UpdateGS();
 		} else {
-			System.err.println(kVolumeVOI.GetName());
+//			System.err.println(kVolumeVOI.GetName());
 		}
 		
 		kVolumeVOI.showTextBox(true);
@@ -1989,6 +2131,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			}
 		}
 	}
+	
 	public void removeAll(String kSurfaceName) {
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i).GetName() != null) {
@@ -2003,6 +2146,24 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				}
 			}
 		}
+	}
+
+	public void removeAllSurfaces() {
+		boolean temp = m_bDisplay;
+		m_bDisplay = false;
+		for (int i = m_kDisplayList.size() - 1; i >= 0; i--) {
+			if (m_kDisplayList.get(i) instanceof VolumeSurface) {
+				VolumeObject kObj = m_kDisplayList.remove(i);
+
+				m_bSurfaceUpdate = true;
+				m_bSurfaceMaskUpdate = true;
+				m_kVolumeImageA.removeSurfaceMask(kObj.GetName());
+
+//				System.err.println("removeSurface " + kObj.GetName());
+				m_kDeleteList.add(kObj);
+			}
+		}
+		m_bDisplay = temp;
 	}
 
 	/**
@@ -4334,4 +4495,207 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
     	}
     	return true;
     }
+    
+    
+
+
+
+	private boolean animateLattices = false;
+	private boolean animateStop = false;
+	private boolean takeScreenShot = false;
+	private int screenShotRotateCount = 600;
+	private boolean animateCurve = false;
+	protected boolean animateSlice = false;
+	protected int sliceDir = 1;
+	private LatticeModel animateLatticeModel = null;
+	private VOIVector lattice = null;
+	private VOI planeVOI = null;
+	private int segmentIndex = 0;
+	private TriMesh plane = null;
+	public void addAnimationLattice( VOIVector latticeAnim )
+	{
+		displayVOIs(false);
+		if ( latticeAnim != null  ) {
+			lattice = latticeAnim;
+			animateLattices = true;
+			animateCurve = true;
+			animateLatticeModel = new LatticeModel((ModelImage)m_kVolumeImageA.GetImage().clone());
+			animateLatticeModel.setLattice( lattice );	
+			
+			System.err.println("addAnimationLattice");
+		}
+	}
+	private String planeName;
+	private void createSamplePlane( VOIBase box ) {
+		if ( box.size() != 4 ) {
+			System.err.println("bad box " + segmentIndex );
+			return;
+		}
+
+		
+		
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+		Vector3f extents = new Vector3f(1f/(float)(dimX-1),1f/(float)(dimY-1),1f/(float)(dimZ-1));
+
+		planeName = "samplePlaneMesh";
+		
+		if ( plane == null ) 
+		{
+	        Attributes attr = new Attributes();
+	        attr.SetPChannels(3);
+	        attr.SetCChannels(0,3);
+	        attr.SetTChannels(0,3);
+	        VertexBuffer vb = new VertexBuffer(attr, 4);
+
+	        
+			for ( int i = 0; i < box.size(); i++ ) {
+				Vector3f pos = new Vector3f(box.elementAt(i));
+//				System.err.println(pos);
+				vb.SetPosition3(i, pos);
+				vb.SetTCoord3(0, i, pos.mult(extents));
+				vb.SetColor3(0, i, 0, 0, 1);
+			}
+			
+			
+			int[] indexInput = new int[] { 0, 1, 2, 0, 2, 3 };
+			IndexBuffer ib = new IndexBuffer(indexInput);
+			
+			plane = new TriMesh(vb, ib);
+			
+			SurfaceState surface = new SurfaceState(plane, planeName);
+			surface.BackfaceCull = false;
+			// surface.Fill = WireframeState.FillMode.FM_LINE;
+			
+			VolumeSurface kVolumeSurfaces = new VolumeSurface(hyperstack, hyperstackColormap, m_kTranslate, m_fX, m_fY, m_fZ, surface, false, true);
+			m_kDisplayList.add(kVolumeSurfaces);
+			m_bSurfaceUpdate = true;
+			m_bSurfaceMaskUpdate = true;
+			displaySurface(true);        
+			setBackface(planeName, false);
+			setSurfaceTexture(planeName, true, false, false);
+			
+//			System.err.println("add " + planeName);
+
+		}
+		else {    
+			VolumeSurface surface = getVolumeSurface(planeName);
+			for ( int i = 0; i < box.size(); i++ ) {
+				Vector3f pos = new Vector3f(box.elementAt(i));
+				surface.volumeToLocalCoords(pos);
+//				System.err.println(pos);
+				plane.VBuffer.SetPosition3(i, pos);
+				plane.VBuffer.SetTCoord3(0, i, surface.getTexCoord(pos));
+				plane.VBuffer.SetColor3(0, i, 0, 0, 1);
+				plane.Reload(true);
+			}
+		}
+	}
+
+	public void addSphereVOIs( VOI annotations )
+	{		
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			text.setUseMarker( false );
+		}
+		
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,4);
+		attributes.SetTChannels(0,3);
+		StandardMesh std = new StandardMesh(attributes);
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+		float sphereScale = 12*afResolutions[0];
+		System.err.println( sphereScale );
+		Transformation xfrm = new Transformation();
+		xfrm.SetScale( sphereScale/(2*afResolutions[0]), sphereScale/(2*afResolutions[1]), sphereScale/(2*afResolutions[2]) );
+
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			VOIText text = new VOIText( (VOIText)annotations.getCurves().elementAt(i) );
+			text.setUseMarker(false);
+			Color c = text.getColor();
+			
+			VOI annotationVOI = new VOI( (short)i, text.getName(), VOI.ANNOTATION, 0 );
+			annotationVOI.setColor(c);
+			annotationVOI.getCurves().add(text);
+			text.createVolumeVOI( m_kVolumeImageA, m_kTranslate );
+			m_kVolumeImageA.GetImage().registerVOI( annotationVOI );
+			
+			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
+						
+			float radius = Math.max(20, text.elementAt(0).distance(text.elementAt(1)));
+//			System.err.println(i + " " + radius);
+			xfrm.SetScale( radius*sphereScale/(2*afResolutions[0]), radius*sphereScale/(2*afResolutions[1]), radius*sphereScale/(2*afResolutions[2]) );
+			std.SetTransformation( xfrm );
+			TriMesh sphere = std.Sphere(2);
+			updateSphere( sphere, 0, 0, 0, colorRGBA );
+			SurfaceState kSurface = new SurfaceState( sphere, text.getText() );	
+			addSurface( kSurface, false, true );
+		}
+		m_bSurfaceUpdate = true;
+	}  
+
+	private Vector<BufferedImage> screenShots;
+
+	private void writeData( String fileName )
+	{
+		String imageName = m_kVolumeImageA.GetImage().getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		String directory = m_kVolumeImageA.GetImage().getImageDirectory() + imageName + File.separator;
+		directory = directory + "WormAnimation" + File.separator;
+		File dir = new File( directory );
+		if ( !dir.exists() )
+		{
+			dir.mkdir();
+		}
+
+		System.err.println( "writeData " + screenShots.size() );
+		int length = Math.min( 800, screenShots.size() );
+		BufferedImage bImage = screenShots.elementAt(0);
+		ModelImage movieImage = new ModelImage( ModelStorageBase.ARGB, new int[]{bImage.getWidth(), bImage.getHeight(), length}, fileName );
+
+		for ( int z = 0; z < length; z++ )
+		{
+			bImage = screenShots.elementAt(z);
+			for ( int y = 0; y < bImage.getHeight(); y++ )
+			{
+				for ( int x = 0; x < bImage.getWidth(); x++ )
+				{
+					int index = z * bImage.getWidth()*bImage.getHeight() + y * bImage.getWidth() + x;
+					int iARGB = bImage.getRGB( x, y );				
+					movieImage.set( index * 4 + 0, (byte)((iARGB & 0xff000000) >> 32) );
+					movieImage.set( index * 4 + 1, (byte)((iARGB & 0x00ff0000) >> 16) );
+					movieImage.set( index * 4 + 2, (byte)((iARGB & 0x0000ff00) >> 8) );
+					movieImage.set( index * 4 + 3, (byte)((iARGB & 0x000000ff)) );
+				}
+			}
+		}
+		movieImage.setImageName(fileName);
+		ModelImage.saveImage(movieImage, movieImage.getImageName() + ".xml", directory, false);
+		ModelImage.saveImage(movieImage, movieImage.getImageName() + ".tif", directory, false);
+		movieImage.disposeLocal();
+
+		for ( int z = 0; z < length; z++ )
+		{
+			screenShots.remove(0);
+		}
+		if ( screenShots.size() > 0 )
+		{
+			writeData( fileName + "_" + length );
+		}
+		else
+		{
+			screenShots.clear();
+		}
+	}
 }

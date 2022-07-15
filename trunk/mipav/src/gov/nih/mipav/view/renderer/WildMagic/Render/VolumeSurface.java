@@ -38,6 +38,7 @@ import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.BoxBV;
@@ -62,6 +63,7 @@ public class VolumeSurface extends VolumeObject
     /** Surface shader effect. */
     private SurfaceLightingEffect m_kLightShader;
     private SurfaceLightingEffect m_kLightShaderTransparent;
+    
     /** Surface volume. */
     private float m_fVolume = 0;
     /** Surface area. */
@@ -195,6 +197,85 @@ public class VolumeSurface extends VolumeObject
     	}
     }
 
+    public VolumeSurface ( VolumeImage[] images, Texture colormap, Vector3f kTranslate, 
+            float fX, float fY, float fZ, SurfaceState kSurface, boolean bComputeSurfaceMask, boolean isFileCoords )
+    {
+        super(images[0],null,kTranslate,fX,fY,fZ);
+        m_kSurfaceState = kSurface;
+        CreateScene();
+        m_kMesh = kSurface.Surface;
+        m_kMesh.SetName( new String( kSurface.Name ) );
+        
+        boolean bHasMaterial = true;
+        m_kMaterial = (MaterialState)m_kMesh.GetGlobalState( GlobalState.StateType.MATERIAL );
+        if ( m_kMaterial == null )
+        {
+            bHasMaterial = false;
+            m_kMaterial = new MaterialState();
+            m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+            m_kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+            m_kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
+            m_kMaterial.Shininess = 32f;
+        }
+        m_kSurfaceState.Material = m_kMaterial;
+        m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
+
+//		Vector3f center = new Vector3f();
+//		Vector3f min = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+//		Vector3f max = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+        	if ( isFileCoords )
+        	{
+        		Vector3f pos = m_kMesh.VBuffer.GetPosition3( i );
+        		volumeToLocalCoords(pos);
+        		m_kMesh.VBuffer.SetPosition3( i, pos );
+//        		center.add( pos );
+//        		min.min( pos );
+//        		max.max( pos );
+        	}
+            if ( m_kMesh.VBuffer.GetAttributes().HasTCoord(0) )
+            {
+                m_kMesh.VBuffer.SetTCoord3( 0, i, 
+                        (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X) * 1.0f/m_fX,
+                        (m_kMesh.VBuffer.GetPosition3fY(i)  - kTranslate.Y) * 1.0f/m_fY,
+                        (m_kMesh.VBuffer.GetPosition3fZ(i)  - kTranslate.Z) * 1.0f/m_fZ);
+                //System.err.println( "Set TexCoord: " + m_kMesh.VBuffer.GetTCoord3(0, i).ToString() );
+            }
+            m_akBackupColor[i] = new ColorRGBA();
+            m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
+        }
+        m_kMesh.UpdateMS();
+//        System.err.println( center );
+//        System.err.println( min );
+//        System.err.println( max );
+        
+        m_kLightShader = new SurfaceLightingEffect( images, colormap );
+        m_kLightShaderTransparent = new SurfaceLightingEffect( images, colormap );
+        m_kLightShader.SetPerPixelLighting(false);
+        m_kLightShaderTransparent.SetPerPixelLighting(false);
+
+        if ( !bHasMaterial )
+        {
+            m_kMesh.AttachGlobalState(m_kMaterial);
+        }
+        m_kMesh.AttachEffect(m_kLightShader);
+        m_kMesh.UpdateRS();
+        
+        m_kScene.AttachChild(m_kMesh);
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();    
+    	
+    	m_akUnitsLabel = new String[3];
+    	for ( int i = 0; i < 3; i++ )
+    	{
+    		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
+    	}
+    }
+
+    
+    
     public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
             float fX, float fY, float fZ, SurfaceState kSurface, boolean isFileCoords )
     {
