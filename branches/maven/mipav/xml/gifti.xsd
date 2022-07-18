@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="CoordinateSystemTransformMatrix">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="DataSpace" />
+        <xs:element ref="TransformedSpace" />
+        <xs:element ref="MatrixData" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Data">
+    <xs:complexType mixed="true" />
+  </xs:element>
+
+  <xs:element name="DataArray">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MetaData" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="CoordinateSystemTransformMatrix" minOccurs="0" />
+        <xs:element ref="Data" maxOccurs="1" />
+      </xs:sequence>
+      <xs:attribute name="Dimensionality" type="xs:NMTOKEN" use="required" />
+      <xs:attribute name="Dim0" type="xs:NMTOKEN" use="required" />
+      <xs:attribute name="Dim1" type="xs:NMTOKEN" use="optional" />
+      <xs:attribute name="Dim2" type="xs:NMTOKEN" use="optional" />
+      <xs:attribute name="Dim3" type="xs:NMTOKEN" use="optional" />
+      <xs:attribute name="Dim4" type="xs:NMTOKEN" use="optional" />
+      <xs:attribute name="Dim5" type="xs:NMTOKEN" use="optional" />
+      <xs:attribute name="Intent" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="NIFTI_INTENT_NONE" />
+            <xs:enumeration value="NIFTI_INTENT_CORREL" />
+            <xs:enumeration value="NIFTI_INTENT_TTEST" />
+            <xs:enumeration value="NIFTI_INTENT_FTEST" />
+            <xs:enumeration value="NIFTI_INTENT_ZSCORE" />
+            <xs:enumeration value="NIFTI_INTENT_CHISQ" />
+            <xs:enumeration value="NIFTI_INTENT_BETA" />
+            <xs:enumeration value="NIFTI_INTENT_BINOM" />
+            <xs:enumeration value="NIFTI_INTENT_GAMMA" />
+            <xs:enumeration value="NIFTI_INTENT_POISSON" />
+            <xs:enumeration value="NIFTI_INTENT_NORMAL" />
+            <xs:enumeration value="NIFTI_INTENT_FTEST_NONC" />
+            <xs:enumeration value="NIFTI_INTENT_CHISQ_NONC" />
+            <xs:enumeration value="NIFTI_INTENT_LOGISTIC" />
+            <xs:enumeration value="NIFTI_INTENT_LAPLACE" />
+            <xs:enumeration value="NIFTI_INTENT_UNIFORM" />
+            <xs:enumeration value="NIFTI_INTENT_TTEST_NONC" />
+            <xs:enumeration value="NIFTI_INTENT_WEIBULL" />
+            <xs:enumeration value="NIFTI_INTENT_CHI" />
+            <xs:enumeration value="NIFTI_INTENT_INVGAUSS" />
+            <xs:enumeration value="NIFTI_INTENT_EXTVAL" />
+            <xs:enumeration value="NIFTI_INTENT_PVAL" />
+            <xs:enumeration value="NIFTI_INTENT_LOGPVAL" />
+            <xs:enumeration value="NIFTI_INTENT_LOG10PVAL" />
+            <xs:enumeration value="NIFTI_INTENT_ESTIMATE" />
+            <xs:enumeration value="NIFTI_INTENT_LABEL" />
+            <xs:enumeration value="NIFTI_INTENT_NEURONAME" />
+            <xs:enumeration value="NIFTI_INTENT_GENMATRIX" />
+            <xs:enumeration value="NIFTI_INTENT_SYMMATRIX" />
+            <xs:enumeration value="NIFTI_INTENT_DISPVECT" />
+            <xs:enumeration value="NIFTI_INTENT_VECTOR" />
+            <xs:enumeration value="NIFTI_INTENT_POINTSET" />
+            <xs:enumeration value="NIFTI_INTENT_TRIANGLE" />
+            <xs:enumeration value="NIFTI_INTENT_QUATERNION" />
+            <xs:enumeration value="NIFTI_INTENT_DIMLESS" />
+            <xs:enumeration value="NIFTI_INTENT_TIME_SERIES" />
+            <xs:enumeration value="NIFTI_INTENT_RGB_VECTOR" />
+            <xs:enumeration value="NIFTI_INTENT_RGBA_VECTOR" />
+            <xs:enumeration value="NIFTI_INTENT_NODE_INDEX_LIST" />
+            <xs:enumeration value="NIFTI_INTENT_SHAPE" />
+            <xs:enumeration value="NIFTI_INTENT_UNKNOWN" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="ArrayIndexingOrder" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="RowMajorOrder" />
+            <xs:enumeration value="ColumnMajorOrder" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="NIFTI_TYPE_UINT8" />
+            <xs:enumeration value="NIFTI_TYPE_INT32" />
+            <xs:enumeration value="NIFTI_TYPE_FLOAT32" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Endian" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="BigEndian" />
+            <xs:enumeration value="LittleEndian" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="ExternalFileName" type="xs:string" use="optional" />
+      <xs:attribute name="ExternalFileOffset" type="xs:string" use="optional" />
+      <xs:attribute name="Encoding" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="ASCII" />
+            <xs:enumeration value="Base64Binary" />
+            <xs:enumeration value="GZipBase64Binary" />
+            <xs:enumeration value="ExternalFileBinary" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DataSpace">
+    <xs:complexType mixed="true" />
+  </xs:element>
+
+  <xs:element name="GIFTI">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MetaData" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="LabelTable" minOccurs="0" />
+        <xs:element ref="DataArray" maxOccurs="unbounded" />
+      </xs:sequence>
+      <xs:attribute name="NumberOfDataArrays" type="xs:NMTOKEN" use="required" />
+      <xs:attribute name="Version" type="xs:NMTOKEN" use="required" />
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Label">
+    <xs:complexType mixed="true">
+      <xs:attribute name="Index" type="xs:NMTOKEN" use="required" />
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="LabelTable">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Label" minOccurs="0" maxOccurs="1" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MatrixData">
+    <xs:complexType mixed="true" />
+  </xs:element>
+
+  <xs:element name="MD">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Name" />
+        <xs:element ref="Value" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="MetaData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MD" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Name">
+    <xs:complexType mixed="true" />
+  </xs:element>
+
+  <xs:element name="TransformedSpace">
+    <xs:complexType mixed="true" />
+  </xs:element>
+
+  <xs:element name="Value">
+    <xs:complexType mixed="true" />
+  </xs:element>
+
+</xs:schema>
