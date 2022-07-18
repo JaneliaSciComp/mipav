@@ -499,11 +499,15 @@ public class Cephes {
 		// The test for erf(0.9) passed
 		// The test for igam(0.5,0) passed
 		// The test for igam(1,2) passed
-		// The test for igam(5,10) failed
-		// Implemented igam gave 0.9707473119230389
-		// Correct answer is 23.29793549
+		// lowerIncompleteGamma = 23.297935486152934
+		// upperIncompleteGamma = 0.7020645138470673
+		// regularizedGammaP = 0.9707473119230389
+		// The test for igam(5,10) passed
+		// lowerIncompleteGamma = 4.790423305785542E155
+		// upperIncompleteGamma = 4.542198238608868E155
+		// regularizedGammaP = 0.5132987856625221
 		// Calculated answer for igam(100,100) = 0.5132987982791313
-		// Correct answer for igam(100,100) = 4.7904235E155
+		// Correct answer for igam(100,100) = 0.5132987856625221
 		// The test for igmac(2,1) passed
 		// The test for igami(2,0.3) passed
 		// The test for ndtr(0.0) passed
@@ -662,39 +666,56 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.9661051465");
 	    }
 	    
+	    double lowerIncompleteGamma[] = new double[1];
+	    double upperIncompleteGamma[] = new double[1];
+	    double regularizedGammaP[] = new double[1];
+	    Gamma gam = new Gamma(0.5, 0, lowerIncompleteGamma, upperIncompleteGamma, regularizedGammaP);
+	    gam.run();
 	    result[0] = igam(0.5,0);
-	    if (Math.abs(result[0]) < 1.0E-7) {
+	    if (Math.abs(result[0] - regularizedGammaP[0]) < 1.0E-7) {
 	    	System.out.println("The test for igam(0.5,0) passed");
 	    }
 	    else {
 	    	System.out.println("The test for igam(0.5,0) failed");
 	    	System.out.println("Implemented igam gave " + result[0]);
-	    	System.out.println("Correct answer is 0.0");
+	    	System.out.println("Correct answer is " + regularizedGammaP[0]);
 	    }
 	    
+	    gam = new Gamma(1, 2, lowerIncompleteGamma, upperIncompleteGamma, regularizedGammaP);
+	    gam.run();
 	    result[0] = igam(1,2);
-	    if (Math.abs(result[0] - 0.8646647167633873) < 1.0E-7) {
+	    if (Math.abs(result[0] - regularizedGammaP[0]) < 1.0E-7) {
 	    	System.out.println("The test for igam(1,2) passed");
 	    }
 	    else {
 	    	System.out.println("The test for igam(1,2) failed");
 	    	System.out.println("Implemented igam gave " + result[0]);
-	    	System.out.println("Correct answer is 0.8646647167633873");
+	    	System.out.println("Correct answer is " + regularizedGammaP[0]);
 	    }
 	    
+	    gam = new Gamma(5, 10, lowerIncompleteGamma, upperIncompleteGamma, regularizedGammaP);
+	    gam.run();
+	    System.out.println("lowerIncompleteGamma = " + lowerIncompleteGamma[0]);
+	    System.out.println("upperIncompleteGamma = " + upperIncompleteGamma[0]);
+	    System.out.println("regularizedGammaP = " + regularizedGammaP[0]);
 	    result[0] = igam(5,10);
-	    if (Math.abs(result[0] - 23.29793549) < 1.0E-7) {
+	    if (Math.abs(result[0] - regularizedGammaP[0]) < 1.0E-7) {
 	    	System.out.println("The test for igam(5,10) passed");
 	    }
 	    else {
 	    	System.out.println("The test for igam(5,10) failed");
 	    	System.out.println("Implemented igam gave " + result[0]);
-	    	System.out.println("Correct answer is 23.29793549");
+	    	System.out.println("Correct answer is " + regularizedGammaP[0]);
 	    }
 	    
+	    gam = new Gamma(100, 100, lowerIncompleteGamma, upperIncompleteGamma, regularizedGammaP);
+	    gam.run();
+	    System.out.println("lowerIncompleteGamma = " + lowerIncompleteGamma[0]);
+	    System.out.println("upperIncompleteGamma = " + upperIncompleteGamma[0]);
+	    System.out.println("regularizedGammaP = " + regularizedGammaP[0]);
 	    result[0] = igam(100,100);
 	    System.out.println("Calculated answer for igam(100,100) = " + result[0]);
-	    System.out.println("Correct answer for igam(100,100) = 4.7904235E155");
+	    System.out.println("Correct answer for igam(100,100) = " + regularizedGammaP[0]);
 	    
 	    result[0] = igamc(2,1);
 	    if (Math.abs(result[0] - 0.7357588823428847) < 1.0E-7) {
