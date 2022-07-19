@@ -96,42 +96,54 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 public class Cephes {
 	
-	public final static int CHDTR = 1;
-	public final static int CHDTRC = 2;
-	public final static int CHDTRI = 3;
-	public final static int ELLIE = 4;
-	public final static int ELLPE = 5;
-	public final static int ELLPK = 6;
-	public final static int ERF = 7;
-	public final static int ERFC = 8;
-	public final static int IGAM = 9;
-	public final static int IGAMI = 10;
-	public final static int IGAMC = 11;
-	public final static int NDTR = 12;
-	public final static int NDTRI = 13;
-	public final static int POLEVL = 14;
-	public final static int P1EVL = 15;
-	public final static int STIRF = 16;
-	public final static int STRUVE = 17;
-	public final static int TRUE_GAMMA = 18;
-	public final static int ZETA = 19;
-	public final static int ZETAC = 20;
+	public final static int BETA = 1;
+	public final static int CHBEVL = 2;
+	public final static int CHDTR = 3;
+	public final static int CHDTRC = 4;
+	public final static int CHDTRI = 5;
+	public final static int DAWSN = 6;
+	public final static int ELLIE = 7;
+	public final static int ELLIK = 8;
+	public final static int ELLPE = 9;
+	public final static int ELLPK = 10;
+	public final static int ERF = 11;
+	public final static int ERFC = 12;
+	public final static int IGAM = 13;
+	public final static int IGAMI = 14;
+	public final static int IGAMC = 15;
+	public final static int LBETA = 16;
+	public final static int LGAM = 17;
+	public final static int NDTR = 18;
+	public final static int NDTRI = 19;
+	public final static int POLEVL = 20;
+	public final static int P1EVL = 21;
+	public final static int STIRF = 22;
+	public final static int STRUVE = 23;
+	public final static int TRUE_GAMMA = 24;
+	public final static int ZETA = 25;
+	public final static int ZETAC = 26;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
     private final static double MINLOG = -7.08396418532264106224E2;   // log(2**-1022)
     private final static double MAXNUM =  Double.MAX_VALUE; // 1.7976931348623158E308 2**1024
+    private final static double MAXGAM  = 171.624376956302725;
+    private final static double MAXLGM = 2.556348e305;
     private final static double big = 4.503599627370496e15;
 	private final static double biginv =  2.22044604925031308085e-16;
 	/* sqrt(2pi) */
 	private final static double s2pi = 2.50662827463100050242E0;
 	private final static double PIO2   =  1.57079632679489661923; // pi/2
+	private final static double LOGPI = 1.14472988584940017414;
+	/* log( sqrt( 2*pi ) ) */
+	private final static double LS2PI  =  0.91893853320467274178;
 	private final static double SQRTH  =  7.07106781186547524401E-1; // sqrt(2)/2
 	private final static int MAXL2 = 127;
 	private final static double MAXSTIR = 143.01608;
 	private final static double SQTPI = 2.50662827463100050242E0;
 	private final static double stop = 1.37e-17;
 	private final boolean DEBUG = false;
+	private int sgngam;
 	// For ndtr:
 	private final static double P[] = new double[]{
 		 2.46196981473530512524E-10,
@@ -470,6 +482,104 @@ public class Cephes {
 			 1.00000000000000000320E0
 			};
 	
+	/* A[]: Stirling's formula expansion of log gamma
+	 * B[], C[]: log gamma function between 2 and 3
+	 */
+	private final static double ALGAM[] = new double[]{
+	 8.11614167470508450300E-4,
+	-5.95061904284301438324E-4,
+	 7.93650340457716943945E-4,
+	-2.77777777730099687205E-3,
+	 8.33333333333331927722E-2
+	};
+	private final static double BLGAM[] = new double[]{
+	-1.37825152569120859100E3,
+	-3.88016315134637840924E4,
+	-3.31612992738871184744E5,
+	-1.16237097492762307383E6,
+	-1.72173700820839662146E6,
+	-8.53555664245765465627E5
+	};
+	private final static double CLGAM[] = new double[]{
+	/* 1.00000000000000000000E0, */
+	-3.51815701436523470549E2,
+	-1.70642106651881159223E4,
+	-2.20528590553854454839E5,
+	-1.13933444367982507207E6,
+	-2.53252307177582951285E6,
+	-2.01889141433532773231E6
+	};
+	
+	/* Dawson's integral, interval 0 to 3.25 */
+	private final static double AN[] = new double[] {
+	 1.13681498971755972054E-11,
+	 8.49262267667473811108E-10,
+	 1.94434204175553054283E-8,
+	 9.53151741254484363489E-7,
+	 3.07828309874913200438E-6,
+	 3.52513368520288738649E-4,
+	-8.50149846724410912031E-4,
+	 4.22618223005546594270E-2,
+	-9.17480371773452345351E-2,
+	 9.99999999999999994612E-1,
+	};
+	private final static double AD[] = new double[] {
+	 2.40372073066762605484E-11,
+	 1.48864681368493396752E-9,
+	 5.21265281010541664570E-8,
+	 1.27258478273186970203E-6,
+	 2.32490249820789513991E-5,
+	 3.25524741826057911661E-4,
+	 3.48805814657162590916E-3,
+	 2.79448531198828973716E-2,
+	 1.58874241960120565368E-1,
+	 5.74918629489320327824E-1,
+	 1.00000000000000000539E0,
+	};
+	/* interval 3.25 to 6.25 */
+	private final static double BN[] = new double[] {
+	 5.08955156417900903354E-1,
+	-2.44754418142697847934E-1,
+	 9.41512335303534411857E-2,
+	-2.18711255142039025206E-2,
+	 3.66207612329569181322E-3,
+	-4.23209114460388756528E-4,
+	 3.59641304793896631888E-5,
+	-2.14640351719968974225E-6,
+	 9.10010780076391431042E-8,
+	-2.40274520828250956942E-9,
+	 3.59233385440928410398E-11,
+	};
+	private final static double BD[] = new double[] {
+	/*  1.00000000000000000000E0,*/
+	-6.31839869873368190192E-1,
+	 2.36706788228248691528E-1,
+	-5.31806367003223277662E-2,
+	 8.48041718586295374409E-3,
+	-9.47996768486665330168E-4,
+	 7.81025592944552338085E-5,
+	-4.55875153252442634831E-6,
+	 1.89100358111421846170E-7,
+	-4.91324691331920606875E-9,
+	 7.18466403235734541950E-11,
+	};
+	/* 6.25 to infinity */
+	private final static double CN[] = new double[]{
+	-5.90592860534773254987E-1,
+	 6.29235242724368800674E-1,
+	-1.72858975380388136411E-1,
+	 1.64837047825189632310E-2,
+	-4.86827613020462700845E-4,
+	};
+	private final static double CD[] = new double[] {
+	/* 1.00000000000000000000E0,*/
+	-2.69820057197544900361E0,
+	 1.73270799045947845857E0,
+	-3.93708582281939493482E-1,
+	 3.44278924041233391079E-2,
+	-9.73655226040941223894E-4,
+	};
+	
 	private double result[];
 	
 	private int version;
@@ -483,10 +593,15 @@ public class Cephes {
 	private int par4;
 	
 	public void testCephes() {
+		// The test for beta(6.3,2.9) passed
 		// The test for chdtr(4,5) passed
 		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
+		// The test for dawsn(0.0) passed
+		// The test for dawsn(1.0) passed
+		// The test for dawsn(2.0) passed
 		// The test for ellie(-5.3, 0.12) passed
+		// The test for ellik(-5.3, 0.12) passed
         // The test for ellpe(0.0) passed
         // The test for ellpe(0.12) passed
         // The test for ellpe(0.50) passed
@@ -506,10 +621,11 @@ public class Cephes {
 		// lowerIncompleteGamma = 4.790423305785542E155
 		// upperIncompleteGamma = 4.542198238608868E155
 		// regularizedGammaP = 0.5132987856625221
-		// Calculated answer for igam(100,100) = 0.5132987982791313
-		// Correct answer for igam(100,100) = 0.5132987856625221
+		// The test for igam(100,100) passed
 		// The test for igmac(2,1) passed
 		// The test for igami(2,0.3) passed
+		// The test for lbeta(10.0,3.0) passed
+		// The test for lgam(3.4) passed
 		// The test for ndtr(0.0) passed
 		// The test for ndtr(0.3) passed
 		// The test for ndtr(1) passed
@@ -525,6 +641,17 @@ public class Cephes {
 		// The test for zetac(0.0) passed
 		// The test for zetac(1.0) passed
 		result = new double[1];
+		
+		result[0] = beta(6.3,2.9);
+		if (Math.abs(result[0] - 0.005947104834350) < 1.0E-7) {
+	    	System.out.println("The test for beta(6.3,2.9) passed");
+	    }
+	    else {
+	    	System.out.println("The test for beta(6.3,2.9) failed");
+	    	System.out.println("Implemented beta gave " + result[0]);
+	    	System.out.println("Correct answer is 0.005947104834350");
+	    }
+		
 		result[0] = chdtr(4,5);
 		if (Math.abs(result[0] - 0.7127025048163542) < 1.0E-7) {
 	    	System.out.println("The test for chdtr(4,5) passed");
@@ -534,6 +661,17 @@ public class Cephes {
 	    	System.out.println("Implemented chdtr gave " + result[0]);
 	    	System.out.println("Correct answer is 0.7127025048163542");
 	    }
+		
+		result[0] = chdtr(4,5);
+		if (Math.abs(result[0] - 0.7127025048163542) < 1.0E-7) {
+	    	System.out.println("The test for chdtr(4,5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for chdtr(4,5) failed");
+	    	System.out.println("Implemented chdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.7127025048163542");
+	    }
+		
 		result[0] = chdtrc(4,5);
 		if (Math.abs(result[0] - 0.2872974951836458) < 1.0E-7) {
 	    	System.out.println("The test for chdtrc(4,5) passed");
@@ -543,6 +681,7 @@ public class Cephes {
 	    	System.out.println("Implemented chdtrc gave " + result[0]);
 	    	System.out.println("Correct answer is 0.2872974951836458");
 	    }
+		
 	    result[0] = chdtri(4,0.3);
 	    if (Math.abs(result[0] - 4.8784329665604087) < 1.0E-7) {
 	    	System.out.println("The test for chdtri(4,0.3) passed");
@@ -553,6 +692,36 @@ public class Cephes {
 	    	System.out.println("Correct answer is 4.8784329665604087");
 	    }
 	    
+	    result[0] = dawsn(0.0);
+	    if (Math.abs(result[0]) < 1.0E-7) {
+	    	System.out.println("The test for dawsn(0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for dawsn(0.0) failed");
+	    	System.out.println("Implemented dawsn gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0");
+	    }
+	    
+	    result[0] = dawsn(1.0);
+	    if (Math.abs(result[0] - 0.5380795069) < 1.0E-7) {
+	    	System.out.println("The test for dawsn(1.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for dawsn(1.0) failed");
+	    	System.out.println("Implemented dawsn gave " + result[0]);
+	    	System.out.println("Correct answer is 0.5380795069");
+	    }
+	    
+	    result[0] = dawsn(2.0);
+	    if (Math.abs(result[0] - 0.3013403889) < 1.0E-7) {
+	    	System.out.println("The test for dawsn(2.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for dawsn(2.0) failed");
+	    	System.out.println("Implemented dawsn gave " + result[0]);
+	    	System.out.println("Correct answer is 0.3013403889");
+	    }
+	    
 	    result[0] = ellie(-5.3, 0.12);
 	    if (Math.abs(result[0] + 5.12290521194) < 1.0E-7) {
 	    	System.out.println("The test for ellie(-5.3, 0.12) passed");
@@ -561,6 +730,16 @@ public class Cephes {
 	    	System.out.println("The test for ellie(-5.3, 0.12) failed");
 	    	System.out.println("Implemented ellie gave " + result[0]);
 	    	System.out.println("Correct answer is -5.12290521194");
+	    }
+	    
+	    result[0] = ellik(-5.3, 0.12);
+	    if (Math.abs(result[0] + 5.48607395126) < 1.0E-7) {
+	    	System.out.println("The test for ellik(-5.3, 0.12) passed");
+	    }
+	    else {
+	    	System.out.println("The test for ellik(-5.3, 0.12) failed");
+	    	System.out.println("Implemented ellik gave " + result[0]);
+	    	System.out.println("Correct answer is -5.48607395126");
 	    }
 	    
 	    // ellpe and ellpk answers here from hcephes versions which
@@ -714,8 +893,14 @@ public class Cephes {
 	    System.out.println("upperIncompleteGamma = " + upperIncompleteGamma[0]);
 	    System.out.println("regularizedGammaP = " + regularizedGammaP[0]);
 	    result[0] = igam(100,100);
-	    System.out.println("Calculated answer for igam(100,100) = " + result[0]);
-	    System.out.println("Correct answer for igam(100,100) = " + regularizedGammaP[0]);
+	    if (Math.abs(result[0] - regularizedGammaP[0]) < 1.0E-7) {
+	    	System.out.println("The test for igam(100,100) passed");
+	    }
+	    else {
+	    	System.out.println("The test for igam(100,100) failed");
+	    	System.out.println("Implemented igam gave " + result[0]);
+	    	System.out.println("Correct answer is " + regularizedGammaP[0]);
+	    }
 	    
 	    result[0] = igamc(2,1);
 	    if (Math.abs(result[0] - 0.7357588823428847) < 1.0E-7) {
@@ -735,6 +920,26 @@ public class Cephes {
 	    	System.out.println("The test for igami(2,0.3) failed");
 	    	System.out.println("Implemented igami gave " + result[0]);
 	    	System.out.println("Correct answer is 2.439216483280204");
+	    }
+	    
+	    result[0] = lbeta(10.0,3.0);
+		if (Math.abs(result[0] + 6.4922398350204711) < 1.0E-7) {
+	    	System.out.println("The test for lbeta(10.0,3.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for lbeta(10.0,3.0) failed");
+	    	System.out.println("Implemented lbeta gave " + result[0]);
+	    	System.out.println("Correct answer is -6.4922398350204711");
+	    }
+		
+		result[0] = lgam(3.4);
+		if (Math.abs(result[0] - 1.0923280598027414) < 1.0E-7) {
+	    	System.out.println("The test for lgam(3.4) passed");
+	    }
+	    else {
+	    	System.out.println("The test for lgam(3.4) failed");
+	    	System.out.println("Implemented lgam gave " + result[0]);
+	    	System.out.println("Correct answer is 1.0923280598027414");
 	    }
 	    
 	    result[0] = ndtr(0.0);
@@ -905,7 +1110,13 @@ public class Cephes {
 	}
 	
 	public void run() {
-		if (version == CHDTR) {
+		if (version == BETA) {
+			result[0] = beta(par1, par2);
+		}
+		else if (version == CHBEVL) {
+			result[0] = chbevl(par1, par3, par4);
+		}
+		else if (version == CHDTR) {
 			result[0] = chdtr(par1, par2);
 		}
 	    else if (version == CHDTRC) {
@@ -914,8 +1125,14 @@ public class Cephes {
 	    else if (version == CHDTRI) {
 	    	result[0] = chdtri(par1, par2);
 		}
+	    else if (version == DAWSN) {
+	    	result[0] = dawsn(par1);
+	    }
 	    else if (version == ELLIE) {
 	    	result[0] = ellie(par1, par2);
+	    }
+	    else if (version == ELLIK) {
+	    	result[0] = ellik(par1, par2);
 	    }
 	    else if (version == ELLPE) {
 	    	result[0] = ellpe(par1);
@@ -936,6 +1153,12 @@ public class Cephes {
 		}
 		else if (version == IGAM) {
 			result[0] = igam(par1,par2);
+		}
+		else if (version == LBETA) {
+			result[0] = lbeta(par1,par2);
+		}
+		else if (version == LGAM) {
+			result[0] = lgam(par1);
 		}
 		else if (version == NDTR) {
 			result[0] = ndtr(par1);
@@ -1439,10 +1662,7 @@ public class Cephes {
 		y = ( 1.0 - d - ndtri(y0) * Math.sqrt(d) );
 		x = a * y * y * y;
 		
-		double ansG[] = new double[1];
-		Gamma gam = new Gamma(a, 0, ansG);
-		gam.run();
-		lgm = ansG[0];
+		lgm = lgam(a);
 
 		for( i=0; i<10; i++ )
 		{
@@ -1608,11 +1828,7 @@ public class Cephes {
 		return (1.0 - igam(a,x));
 	}
 
-	double ansG[] = new double[1];
-	Gamma gam = new Gamma(a, 0, ansG);
-	gam.run();
-	double lgm = ansG[0];
-	ax = a * Math.log(x) - x - lgm;
+	ax = a * Math.log(x) - x - lgam(a);
 	if( ax < -MAXLOG )
 		{
 		MipavUtil.displayError("igamc UNDERFLOW");
@@ -1724,11 +1940,7 @@ public class Cephes {
 	}
 
 	/* Compute  x**a * exp(-x) / gamma(a)  */
-	double ansG[] = new double[1];
-	Gamma gam = new Gamma(a, 0, ansG);
-	gam.run();
-	double lgm = ansG[0];
-	ax = a * Math.log(x) - x - lgm;
+	ax = a * Math.log(x) - x - lgam(a);
 	if( ax < -MAXLOG )
 		{
 		MipavUtil.displayError( "igam UNDERFLOW");
@@ -2953,6 +3165,565 @@ public class Cephes {
 		ya = ya + cyr[0];
 		return(ya);
 		}
+	}
+	
+	/* Logarithm of gamma function */
+
+	public double lgam(double x) {
+	double p, q, w, z;
+	int i;
+
+	sgngam = 1;
+
+	if( x < -34.0 )
+		{
+		q = -x;
+		w = lgam(q); /* note this modifies sgngam! */
+		p = Math.floor(q);
+		if( p == q ) {
+			MipavUtil.displayError("OVERFLOW in lgam");
+			return( sgngam * MAXNUM );
+		}
+		i = (int)p;
+		if( (i & 1) == 0 )
+			sgngam = -1;
+		else
+			sgngam = 1;
+		z = q - p;
+		if( z > 0.5 )
+			{
+			p += 1.0;
+			z = p - q;
+			}
+		z = q * Math.sin( Math.PI * z );
+		if( z == 0.0 ) {
+			MipavUtil.displayError("OVERFLOW in lgam");
+			return( sgngam * MAXNUM );	
+		}
+		z = LOGPI - Math.log( z ) - w;
+		return( z );
+		}
+
+	if( x < 13.0 )
+		{
+		z = 1.0;
+		while( x >= 3.0 )
+			{
+			x -= 1.0;
+			z *= x;
+			}
+		while( x < 2.0 )
+			{
+			if( x == 0.0 ) {
+				MipavUtil.displayError("OVERFLOW in lgam");
+				return( sgngam * MAXNUM );		
+			}
+			z /= x;
+			x += 1.0;
+			}
+		if( z < 0.0 )
+			{
+			sgngam = -1;
+			z = -z;
+			}
+		else
+			sgngam = 1;
+		if( x == 2.0 )
+			return( Math.log(z) );
+		x -= 2.0;
+		p = x * polevl( x, BLGAM, 5 ) / p1evl( x, CLGAM, 6);
+		return( Math.log(z) + p );
+		}
+
+	if( x > MAXLGM )
+		{
+		MipavUtil.displayError("OVERFLOW in lgam");
+		return( sgngam * MAXNUM );
+		}
+
+	q = ( x - 0.5 ) * Math.log(x) - x + LS2PI;
+	if( x > 1.0e8 )
+		return( q );
+
+	p = 1.0/(x*x);
+	if( x >= 1000.0 )
+		q += ((   7.9365079365079365079365e-4 * p
+			- 2.7777777777777777777778e-3) *p
+			+ 0.0833333333333333333333) / x;
+	else
+		q += polevl( p, ALGAM, 4 ) / x;
+	return( q );
+	}
+
+
+	
+	/*							beta.c
+	 *
+	 *	Beta function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, y, beta();
+	 *
+	 * y = beta( a, b );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 *                   -     -
+	 *                  | (a) | (b)
+	 * beta( a, b )  =  -----------.
+	 *                     -
+	 *                    | (a+b)
+	 *
+	 * For large arguments the logarithm of the function is
+	 * evaluated using lgam(), then exponentiated.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC        0,30        1700       7.7e-15     1.5e-15
+	 *    IEEE       0,30       30000       8.1e-14     1.1e-14
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition          value returned
+	 * beta overflow    log(beta) > MAXLOG       0.0
+	 *                  a or b <0 integer        0.0
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1984, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double beta(double a, double b ) {
+	double y;
+	int sign;
+
+	sign = 1;
+
+	if( a <= 0.0 )
+		{
+		if( a == Math.floor(a) ) {
+			MipavUtil.displayError("OVERFLOW in beta");
+			return (sign * MAXNUM);
+		}
+		
+		}
+	if( b <= 0.0 )
+		{
+		if( b == Math.floor(b) ) {
+			MipavUtil.displayError("OVERFLOW in beta");
+			return (sign * MAXNUM);
+		}
+		}
+
+
+	y = a + b;
+	if( Math.abs(y) > MAXGAM )
+		{
+		y = lgam(y);
+		sign *= sgngam; /* keep track of the sign */
+		y = lgam(b) - y;
+		sign *= sgngam;
+		y = lgam(a) + y;
+		sign *= sgngam;
+		if( y > MAXLOG )
+			{
+		    MipavUtil.displayError("OVERFLOW in beta");
+			return( sign * MAXNUM );
+			}
+		return( sign * Math.exp(y) );
+		}
+
+	y = true_gamma(y);
+	if( y == 0.0 ) {
+		MipavUtil.displayError("OVERFLOW in beta");
+		return( sign * MAXNUM );	
+	}
+
+	if( a > b )
+		{
+		y = true_gamma(a)/y;
+		y *= true_gamma(b);
+		}
+	else
+		{
+		y = true_gamma(b)/y;
+		y *= true_gamma(a);
+		}
+
+	return(y);
+	}
+
+	/* Natural log of |beta|.  Return the sign of beta in sgngam.  */
+
+	public double lbeta(double a, double b ) {
+	double y;
+	int sign;
+
+	sign = 1;
+
+	if( a <= 0.0 )
+		{
+		if( a == Math.floor(a) ) {
+			MipavUtil.displayError("OVERFLOW in lbeta");
+			return( sign * MAXNUM );
+		}
+		}
+	if( b <= 0.0 )
+		{
+		if( b == Math.floor(b) ) {
+			MipavUtil.displayError("OVERFLOW in lbeta");
+			return( sign * MAXNUM );	
+		}
+		}
+
+
+	y = a + b;
+	if( Math.abs(y) > MAXGAM )
+		{
+		y = lgam(y);
+		sign *= sgngam; /* keep track of the sign */
+		y = lgam(b) - y;
+		sign *= sgngam;
+		y = lgam(a) + y;
+		sign *= sgngam;
+		sgngam = sign;
+		return( y );
+		}
+
+	y = true_gamma(y);
+	if( y == 0.0 )
+		{
+		MipavUtil.displayError("OVERFLOW in lbeta");
+		return( sign * MAXNUM );
+		}
+
+	if( a > b )
+		{
+		y = true_gamma(a)/y;
+		y *= true_gamma(b);
+		}
+	else
+		{
+		y = true_gamma(b)/y;
+		y *= true_gamma(a);
+		}
+
+	if( y < 0 )
+	  {
+	    sgngam = -1;
+	    y = -y;
+	  }
+	else
+	  sgngam = 1;
+
+	return( Math.log(y) );
+	}
+
+	/*							chbevl.c
+	 *
+	 *	Evaluate Chebyshev series
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int N;
+	 * double x, y, coef[N], chebevl();
+	 *
+	 * y = chbevl( x, coef, N );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Evaluates the series
+	 *
+	 *        N-1
+	 *         - '
+	 *  y  =   >   coef[i] T (x/2)
+	 *         -            i
+	 *        i=0
+	 *
+	 * of Chebyshev polynomials Ti at argument x/2.
+	 *
+	 * Coefficients are stored in reverse order, i.e. the zero
+	 * order term is last in the array.  Note N is the number of
+	 * coefficients, not the order.
+	 *
+	 * If coefficients are for the interval a to b, x must
+	 * have been transformed to x -> 2(2x - b - a)/(b-a) before
+	 * entering the routine.  This maps x from (a, b) to (-1, 1),
+	 * over which the Chebyshev polynomials are defined.
+	 *
+	 * If the coefficients are for the inverted interval, in
+	 * which (a, b) is mapped to (1/b, 1/a), the transformation
+	 * required is x -> 2(2ab/x - b - a)/(b-a).  If b is infinity,
+	 * this becomes x -> 4a/x - 1.
+	 *
+	 *
+	 *
+	 * SPEED:
+	 *
+	 * Taking advantage of the recurrence properties of the
+	 * Chebyshev polynomials, the routine requires one more
+	 * addition per loop than evaluating a nested polynomial of
+	 * the same degree.
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1985, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double chbevl(double x, double array[], int n ) {
+	double b0, b1, b2, p[];
+	int index = 0;
+	int i;
+
+	p = array;
+	b0 = p[index++];
+	b1 = 0.0;
+	i = n - 1;
+
+	do
+		{
+		b2 = b1;
+		b1 = b0;
+		b0 = x * b1  -  b2  + p[index++];
+		}
+	while( --i > 0);
+
+	return( 0.5*(b0-b2) );
+	}
+	
+	/*							dawsn.c
+	 *
+	 *	Dawson's Integral
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, dawsn();
+	 *
+	 * y = dawsn( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Approximates the integral
+	 *
+	 *                             x
+	 *                             -
+	 *                      2     | |        2
+	 *  dawsn(x)  =  exp( -x  )   |    exp( t  ) dt
+	 *                          | |
+	 *                           -
+	 *                           0
+	 *
+	 * Three different rational approximations are employed, for
+	 * the intervals 0 to 3.25; 3.25 to 6.25; and 6.25 up.
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    IEEE      0,10        10000       6.9e-16     1.0e-16
+	 *    DEC       0,10         6000       7.4e-17     1.4e-17
+	 *
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.1:  January, 1989
+	Copyright 1984, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+
+	public double dawsn(double xx ) {
+	double x, y;
+	int sign;
+
+
+	sign = 1;
+	if( xx < 0.0 )
+		{
+		sign = -1;
+		xx = -xx;
+		}
+
+	if( xx < 3.25 )
+	{
+	x = xx*xx;
+	y = xx * polevl( x, AN, 9 )/polevl( x, AD, 10 );
+	return( sign * y );
+	}
+
+
+	x = 1.0/(xx*xx);
+
+	if( xx < 6.25 )
+		{
+		y = 1.0/xx + x * polevl( x, BN, 10) / (p1evl( x, BD, 10) * xx);
+		return( sign * 0.5 * y );
+		}
+
+
+	if( xx > 1.0e9 )
+		return( (sign * 0.5)/xx );
+
+	/* 6.25 to infinity */
+	y = 1.0/xx + x * polevl( x, CN, 4) / (p1evl( x, CD, 5) * xx);
+	return( sign * 0.5 * y );
+	}
+	
+	/*							ellik.c
+	 *
+	 *	Incomplete elliptic integral of the first kind
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double phi, m, y, ellik();
+	 *
+	 * y = ellik( phi, m );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Approximates the integral
+	 *
+	 *
+	 *
+	 *                phi
+	 *                 -
+	 *                | |
+	 *                |           dt
+	 * F(phi_\m)  =    |    ------------------
+	 *                |                   2
+	 *              | |    sqrt( 1 - m sin t )
+	 *               -
+	 *                0
+	 *
+	 * of amplitude phi and modulus m, using the arithmetic -
+	 * geometric mean algorithm.
+	 *
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at random points with m in [0, 1] and phi as indicated.
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    IEEE     -10,10       200000      7.4e-16     1.0e-16
+	 *
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1984, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double ellik(double phi, double m ) {
+	double a, b, c, e, temp, t, K;
+	int d, mod, sign, npio2;
+
+	if( m == 0.0 )
+		return( phi );
+	a = 1.0 - m;
+	if( a == 0.0 )
+		{
+		if( Math.abs(phi) >= PIO2 )
+			{
+			MipavUtil.displayError("SINGULARITY in ellik");
+			return( MAXNUM );
+			}
+		return(  Math.log(  Math.tan( (PIO2 + phi)/2.0 )  )   );
+		}
+	npio2 = (int)Math.floor( phi/PIO2 );
+	if( (npio2 & 1) != 0)
+		npio2 += 1;
+	if( npio2 != 0)
+		{
+		// Changed from K = ellpk(a)
+		K = ellpk(1.0 - a );
+		phi = phi - npio2 * PIO2;
+		}
+	else
+		K = 0.0;
+	if( phi < 0.0 )
+		{
+		phi = -phi;
+		sign = -1;
+		}
+	else
+		sign = 0;
+	b = Math.sqrt(a);
+	t = Math.tan( phi );
+	if( Math.abs(t) > 10.0 )
+		{
+		/* Transform the amplitude */
+		e = 1.0/(b*t);
+		/* ... but avoid multiple recursions.  */
+		if( Math.abs(e) < 10.0 )
+			{
+			e = Math.atan(e);
+			if( npio2 == 0 )
+				// Changed from K = ellpk(a)
+				K = ellpk(1.0 - a );
+			temp = K - ellik( e, m );
+			if( sign < 0 )
+				temp = -temp;
+			temp += npio2 * K;
+			return( temp );
+			}
+		}
+	a = 1.0;
+	c = Math.sqrt(m);
+	d = 1;
+	mod = 0;
+
+	while( Math.abs(c/a) > MACHEP )
+		{
+		temp = b/a;
+		phi = phi + Math.atan(t*temp) + mod * Math.PI;
+		mod = (int)((phi + PIO2)/Math.PI);
+		t = t * ( 1.0 + temp )/( 1.0 - temp * t * t );
+		c = ( a - b )/2.0;
+		temp = Math.sqrt( a * b );
+		a = ( a + b )/2.0;
+		b = temp;
+		d += d;
+		}
+
+	temp = (Math.atan(t) + mod * Math.PI)/(d * a);
+
+	if( sign < 0 )
+		temp = -temp;
+	temp += npio2 * K;
+	return( temp );
 	}
 
 
