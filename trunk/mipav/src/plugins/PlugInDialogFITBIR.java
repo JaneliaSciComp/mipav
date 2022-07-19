@@ -154,11 +154,11 @@ public class PlugInDialogFITBIR extends JFrame
     private static boolean ddUseAuthService = false;
     
     private enum BricsInstance {
-        FITBIR, PDBP, NEI_BRICS, NINR, CNRM, CISTAR, GRDR, COVID19, NTRR, BRICS;
+        FITBIR, PDBP, NEI_BRICS, NINR, CNRM, CISTAR, GRDR, COVID19, NTRR, BRICSIM, BRICSEX;
     }
     
     private enum BricsEnv {
-        Prod, Demo, Stage, UAT, Dev, Intramural;
+        Prod, Demo, Stage, UAT, Dev;
     }
     
     private BricsInstance selectedDictionaryInstance = BricsInstance.FITBIR;
@@ -10162,8 +10162,10 @@ public class PlugInDialogFITBIR extends JFrame
                 return "COVID-19";
             case NTRR:
                 return "NTRR";
-            case BRICS:
-                return "BRICS";
+            case BRICSIM:
+                return "BRICS Intramural";
+            case BRICSEX:
+                return "BRICS Extramural";
             default:
                 return inst.toString();
         }
@@ -10188,8 +10190,10 @@ public class PlugInDialogFITBIR extends JFrame
             return BricsInstance.COVID19;
         } else if (inst.equalsIgnoreCase(BricsInstance.NTRR.toString()) || inst.equalsIgnoreCase("NTI")) {
             return BricsInstance.NTRR;
-        } else if (inst.equalsIgnoreCase(BricsInstance.BRICS.toString()) || inst.equalsIgnoreCase("BRICS")) {
-            return BricsInstance.BRICS;
+        } else if (inst.equalsIgnoreCase(BricsInstance.BRICSIM.toString()) || inst.equalsIgnoreCase("BRICSIM")) {
+            return BricsInstance.BRICSIM;
+        } else if (inst.equalsIgnoreCase(BricsInstance.BRICSEX.toString()) || inst.equalsIgnoreCase("BRICSEX")) {
+            return BricsInstance.BRICSEX;
         }
         
         throw new IllegalArgumentException("Unknown BRICS instance selection string: " + inst);
@@ -10206,8 +10210,6 @@ public class PlugInDialogFITBIR extends JFrame
             return BricsEnv.UAT;
         } else if (env.equalsIgnoreCase(BricsEnv.Dev.toString())) {
             return BricsEnv.Dev;
-        } else if (env.equalsIgnoreCase(BricsEnv.Intramural.toString())) {
-            return BricsEnv.Intramural;
         }
         
         throw new IllegalArgumentException("Unknown BRICS environment selection string: " + env);
@@ -10225,7 +10227,8 @@ public class PlugInDialogFITBIR extends JFrame
             case GRDR:
             case COVID19:
             case NTRR:
-            case BRICS:
+            case BRICSIM:
+            case BRICSEX:
             default:
                 return "All Diseases";
         }
