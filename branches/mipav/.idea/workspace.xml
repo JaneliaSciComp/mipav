@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="5c0850a1-ec9b-4197-84c2-52e2f9875f66" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="checksumPolicy" value="WARN" />
+        <option name="useMavenConfig" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectId" id="26pwVqUZd5CcTCigayhu8iKVr2S" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "vcs.Subversion"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/main/resources" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.MipavMain">
+    <configuration name="MipavMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="gov.nih.mipav.MipavMain" />
+      <module name="mipav" />
+      <option name="PROGRAM_PARAMETERS" value="-Xmx8g -Xms8g" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="gov.nih.mipav.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AlgorithmDWI2DTITest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="mipav" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="gov.nih.mipav.model.algorithms.DiffusionTensorImaging" />
+      <option name="MAIN_CLASS_NAME" value="gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTITest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="All in mipav" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="mipav" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="TEST_OBJECT" value="package" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="gov.nih.mipav.model.algorithms in mipav" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="mipav" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="gov.nih.mipav.model.algorithms.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="gov.nih.mipav.model.algorithms" />
+      <option name="TEST_OBJECT" value="package" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="mipav-1.0.jar" type="JarApplication" temporary="true">
+      <option name="JAR_PATH" value="$PROJECT_DIR$/target/mipav-1.0.jar" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Application.MipavMain" />
+      <item itemvalue="JAR Application.mipav-1.0.jar" />
+      <item itemvalue="JUnit.AlgorithmDWI2DTITest" />
+      <item itemvalue="JUnit.All in mipav" />
+      <item itemvalue="JUnit.gov.nih.mipav.model.algorithms in mipav" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.MipavMain" />
+        <item itemvalue="JAR Application.mipav-1.0.jar" />
+        <item itemvalue="JUnit.AlgorithmDWI2DTITest" />
+        <item itemvalue="JUnit.gov.nih.mipav.model.algorithms in mipav" />
+        <item itemvalue="JUnit.All in mipav" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration>$USER_HOME$/.subversion</configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5c0850a1-ec9b-4197-84c2-52e2f9875f66" name="Changes" comment="" />
+      <created>1648133863196</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1648133863196</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="LAST_COMMIT_MESSAGE" value="" />
+  </component>
+</project>
