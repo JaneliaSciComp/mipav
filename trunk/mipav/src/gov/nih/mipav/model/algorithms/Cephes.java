@@ -108,20 +108,27 @@ public class Cephes {
 	public final static int ELLPK = 10;
 	public final static int ERF = 11;
 	public final static int ERFC = 12;
-	public final static int IGAM = 13;
-	public final static int IGAMI = 14;
-	public final static int IGAMC = 15;
-	public final static int LBETA = 16;
-	public final static int LGAM = 17;
-	public final static int NDTR = 18;
-	public final static int NDTRI = 19;
-	public final static int POLEVL = 20;
-	public final static int P1EVL = 21;
-	public final static int STIRF = 22;
-	public final static int STRUVE = 23;
-	public final static int TRUE_GAMMA = 24;
-	public final static int ZETA = 25;
-	public final static int ZETAC = 26;
+	public final static int EXPN = 13;
+	public final static int FAC = 14;
+	public final static int FDTR = 15;
+	public final static int FDTRC = 16;
+	public final static int FDTRI = 17;
+	public final static int IGAM = 18;
+	public final static int IGAMI = 19;
+	public final static int IGAMC = 20;
+	public final static int INCBET = 21;
+	public final static int INCBI = 22;
+	public final static int LBETA = 23;
+	public final static int LGAM = 24;
+	public final static int NDTR = 25;
+	public final static int NDTRI = 26;
+	public final static int POLEVL = 27;
+	public final static int P1EVL = 28;
+	public final static int STIRF = 29;
+	public final static int STRUVE = 30;
+	public final static int TRUE_GAMMA = 31;
+	public final static int ZETA = 32;
+	public final static int ZETAC = 33;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -131,6 +138,8 @@ public class Cephes {
     private final static double MAXLGM = 2.556348e305;
     private final static double big = 4.503599627370496e15;
 	private final static double biginv =  2.22044604925031308085e-16;
+	private final static double BIG  = 1.44115188075855872E+17;
+	private final static double EUL = 0.57721566490153286060;
 	/* sqrt(2pi) */
 	private final static double s2pi = 2.50662827463100050242E0;
 	private final static double PIO2   =  1.57079632679489661923; // pi/2
@@ -142,6 +151,7 @@ public class Cephes {
 	private final static double MAXSTIR = 143.01608;
 	private final static double SQTPI = 2.50662827463100050242E0;
 	private final static double stop = 1.37e-17;
+	private final static int MAXFAC = 170;
 	private final boolean DEBUG = false;
 	private int sgngam;
 	// For ndtr:
@@ -580,6 +590,44 @@ public class Cephes {
 	-9.73655226040941223894E-4,
 	};
 	
+	/* Factorials of integers from 0 through 33 */
+	private final static double factbl[] = new double[]{
+	  1.00000000000000000000E0,
+	  1.00000000000000000000E0,
+	  2.00000000000000000000E0,
+	  6.00000000000000000000E0,
+	  2.40000000000000000000E1,
+	  1.20000000000000000000E2,
+	  7.20000000000000000000E2,
+	  5.04000000000000000000E3,
+	  4.03200000000000000000E4,
+	  3.62880000000000000000E5,
+	  3.62880000000000000000E6,
+	  3.99168000000000000000E7,
+	  4.79001600000000000000E8,
+	  6.22702080000000000000E9,
+	  8.71782912000000000000E10,
+	  1.30767436800000000000E12,
+	  2.09227898880000000000E13,
+	  3.55687428096000000000E14,
+	  6.40237370572800000000E15,
+	  1.21645100408832000000E17,
+	  2.43290200817664000000E18,
+	  5.10909421717094400000E19,
+	  1.12400072777760768000E21,
+	  2.58520167388849766400E22,
+	  6.20448401733239439360E23,
+	  1.55112100433309859840E25,
+	  4.03291461126605635584E26,
+	  1.0888869450418352160768E28,
+	  3.04888344611713860501504E29,
+	  8.841761993739701954543616E30,
+	  2.6525285981219105863630848E32,
+	  8.22283865417792281772556288E33,
+	  2.6313083693369353016721801216E35,
+	  8.68331761881188649551819440128E36
+	};
+	
 	private double result[];
 	
 	private int version;
@@ -591,6 +639,10 @@ public class Cephes {
 	private double[] par3;
 	
 	private int par4;
+	
+	private double par5;
+	
+	private int par6;
 	
 	public void testCephes() {
 		// The test for beta(6.3,2.9) passed
@@ -612,6 +664,16 @@ public class Cephes {
 		// The test for erf(0.4) passed
 		// The test for erf(0.9) passed
 		// The test for erf(0.9) passed
+		// The test for expn(1, 0.1) passed
+		// The test for expn(2, 0.0) passed
+		// The test for expn(2, 3.0) passed
+		// The test for expn(20, 1.5) passed
+		// The test for expn(20, 100.0) passed
+		// The test for fac(40) passed
+		// The test for fac(100) passed
+		// The test for fdtr(4, 5, 0.3) passed
+		// The test for fdtrc(4, 5, 0.3) passed
+		// The test for fdtri(4, 5, 0.3) passed
 		// The test for igam(0.5,0) passed
 		// The test for igam(1,2) passed
 		// lowerIncompleteGamma = 23.297935486152934
@@ -624,6 +686,8 @@ public class Cephes {
 		// The test for igam(100,100) passed
 		// The test for igmac(2,1) passed
 		// The test for igami(2,0.3) passed
+		// The test for incbet(1.0, 3.0, 0.3) passed
+		// The test for incbi(1.0, 3.0, 0.3) passed
 		// The test for lbeta(10.0,3.0) passed
 		// The test for lgam(3.4) passed
 		// The test for ndtr(0.0) passed
@@ -845,6 +909,106 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.9661051465");
 	    }
 	    
+	    result[0] = expn(1, 0.1);
+	    if (Math.abs(result[0] - 1.8229239) < 1.0E-7) {
+	    	System.out.println("The test for expn(1, 0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expn(1, 0.1) failed");
+	    	System.out.println("Implemented expn gave " + result[0]);
+	    	System.out.println("Correct answer is 1.8229239");
+	    }
+	    
+	    result[0] = expn(2, 0.0);
+	    if (Math.abs(result[0] - 1.0000000) < 1.0E-7) {
+	    	System.out.println("The test for expn(2, 0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expn(2, 0.0) failed");
+	    	System.out.println("Implemented expn gave " + result[0]);
+	    	System.out.println("Correct answer is 1.0000000");
+	    }
+	    
+	    result[0] = expn(2, 3.0);
+	    if (Math.abs(result[0] - 1.0641925E-2) < 1.0E-9) {
+	    	System.out.println("The test for expn(2, 3.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expn(2, 3.0) failed");
+	    	System.out.println("Implemented expn gave " + result[0]);
+	    	System.out.println("Correct answer is 1.0641925E-2");
+	    }
+	    
+	    result[0] = expn(20, 1.5);
+	    if (Math.abs(result[0] - 1.0844039E-2) < 1.0E-9) {
+	    	System.out.println("The test for expn(20, 1.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expn(20, 1.5) failed");
+	    	System.out.println("Implemented expn gave " + result[0]);
+	    	System.out.println("Correct answer is 1.0844039E-2");
+	    }
+	    
+	    result[0] = expn(20, 100.0);
+	    if (Math.abs(result[0] - 3.1043160E-46) < 1.0E-53) {
+	    	System.out.println("The test for expn(20, 100.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expn(20, 100.0) failed");
+	    	System.out.println("Implemented expn gave " + result[0]);
+	    	System.out.println("Correct answer is 3.1043160E-46");
+	    }
+	    
+	    result[0] = fac(40);
+	    if (Math.abs(result[0] - 8.1591528325E47) < 1.0E40) {
+	    	System.out.println("The test for fac(40) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fac(40) failed");
+	    	System.out.println("Implemented fac gave " + result[0]);
+	    	System.out.println("Correct answer is 8.1591528325E47");
+	    }
+	    
+	    result[0] = fac(100);
+	    if (Math.abs(result[0] - 9.3326215444E157) < 1.0E150) {
+	    	System.out.println("The test for fac(100) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fac(100) failed");
+	    	System.out.println("Implemented fac gave " + result[0]);
+	    	System.out.println("Correct answer is 9.3326215444E157");
+	    }
+	    
+	    result[0] = fdtr(4, 5, 0.3);
+	    if (Math.abs(result[0] - 0.1333536247071635) < 1.0E-7) {
+	    	System.out.println("The test for fdtr(4, 5, 0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fdtr(4, 5, 0.3) failed");
+	    	System.out.println("Implemented fdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.1333536247071635");
+	    }
+	    
+	    result[0] = fdtrc(4, 5, 0.3);
+	    if (Math.abs(result[0] - 0.8666463752928364) < 1.0E-7) {
+	    	System.out.println("The test for fdtrc(4, 5, 0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fdtrc(4, 5, 0.3) failed");
+	    	System.out.println("Implemented fdtrc gave " + result[0]);
+	    	System.out.println("Correct answer is 0.8666463752928364");
+	    }
+	    
+	    result[0] = fdtri(4, 5, 0.3);
+	    if (Math.abs(result[0] - 0.56493190151185757) < 1.0E-7) {
+	    	System.out.println("The test for fdtri(4, 5, 0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fdtri(4, 5, 0.3) failed");
+	    	System.out.println("Implemented fdtri gave " + result[0]);
+	    	System.out.println("Correct answer is 0.56493190151185757");
+	    }
+	    
 	    double lowerIncompleteGamma[] = new double[1];
 	    double upperIncompleteGamma[] = new double[1];
 	    double regularizedGammaP[] = new double[1];
@@ -920,6 +1084,26 @@ public class Cephes {
 	    	System.out.println("The test for igami(2,0.3) failed");
 	    	System.out.println("Implemented igami gave " + result[0]);
 	    	System.out.println("Correct answer is 2.439216483280204");
+	    }
+	    
+	    result[0] = incbet(1.0, 3.0, 0.3);
+	    if (Math.abs(result[0] - 0.65699999999999992) < 1.0E-7) {
+	    	System.out.println("The test for incbet(1.0, 3.0, 0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for incbet(1.0, 3.0, 0.3) failed");
+	    	System.out.println("Implemented incbet gave " + result[0]);
+	    	System.out.println("Correct answer is 0.65699999999999992");
+	    }
+	    
+	    result[0] = incbi(1.0, 3.0, 0.3);
+	    if (Math.abs(result[0] - 0.1120959982573993) < 1.0E-7) {
+	    	System.out.println("The test for incbi(1.0, 3.0, 0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for incbi(1.0, 3.0, 0.3) failed");
+	    	System.out.println("Implemented incbi gave " + result[0]);
+	    	System.out.println("Correct answer is 0.1120959982573993");
 	    }
 	    
 	    result[0] = lbeta(10.0,3.0);
@@ -1101,6 +1285,35 @@ public class Cephes {
 		this.result = result;
 	}
 	
+	public Cephes(double par1, double par2, double par5, int version, double result[]) {
+		this.par1 = par1;
+		this.par2 = par2;
+		this.par5 = par5;
+		this.version = version;
+		this.result = result;
+	}
+	
+	public Cephes(int par4, int version, double result[]) {
+		this.par4 = par4;
+		this.version = version;
+		this.result = result;
+	}
+	
+	public Cephes(int par4, double par1, int version, double result[]) {
+		this.par4 = par4;
+		this.par1 = par1;
+		this.version = version;
+		this.result = result;
+	}
+	
+	public Cephes(int par4, int par6, double par1, int version, double result[]) {
+		this.par4 = par4;
+		this.par6 = par6;
+		this.par1 = par1;
+		this.version = version;
+		this.result = result;
+	}
+	
 	public Cephes(double par1, double par3[], int par4, int version, double result[]) {
 		this.par1 = par1;
 		this.par3 = par3;
@@ -1145,6 +1358,21 @@ public class Cephes {
 	    else if (version == ERFC) {
 	    	result[0] = erfc(par1);
 	    }
+	    else if (version == EXPN) {
+	    	result[0] = expn(par4, par1);
+	    }
+	    else if (version == FAC) {
+	    	result[0] = fac(par4);
+	    }
+	    else if (version == FDTR) {
+	    	result[0] = fdtr(par4, par6, par1);
+	    }
+	    else if (version == FDTRC) {
+	    	result[0] = fdtrc(par4, par6, par1);
+	    }
+	    else if (version == FDTRI) {
+	    	result[0] = fdtri(par4, par6, par1);
+	    }
 		else if (version == IGAMI) {
 			result[0] = igami(par1, par2);
 		}
@@ -1153,6 +1381,12 @@ public class Cephes {
 		}
 		else if (version == IGAM) {
 			result[0] = igam(par1,par2);
+		}
+		else if (version == INCBET) {
+			result[0] = incbet(par1, par2, par5);
+		}
+		else if (version == INCBI) {
+			result[0] = incbi(par1, par2, par5);
 		}
 		else if (version == LBETA) {
 			result[0] = lbeta(par1,par2);
@@ -3725,6 +3959,1257 @@ public class Cephes {
 	temp += npio2 * K;
 	return( temp );
 	}
+	
+	/*							expn.c
+	 *
+	 *		Exponential integral En
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int n;
+	 * double x, y, expn();
+	 *
+	 * y = expn( n, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Evaluates the exponential integral
+	 *
+	 *                 inf.
+	 *                   -
+	 *                  | |   -xt
+	 *                  |    e
+	 *      E (x)  =    |    ----  dt.
+	 *       n          |      n
+	 *                | |     t
+	 *                 -
+	 *                  1
+	 *
+	 *
+	 * Both n and x must be nonnegative.
+	 *
+	 * The routine employs either a power series, a continued
+	 * fraction, or an asymptotic formula depending on the
+	 * relative values of n and x.
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC       0, 30        5000       2.0e-16     4.6e-17
+	 *    IEEE      0, 30       10000       1.7e-15     3.6e-16
+	 *
+	 */
+	
+	/* Cephes Math Library Release 1.1:  March, 1985
+	 * Copyright 1985 by Stephen L. Moshier
+	 * Direct inquiries to 30 Frost Street, Cambridge, MA 02140 */
 
+	public double expn(int n, double x ) {
+	double ans, r, t, yk, xk;
+	double pk, pkm1, pkm2, qk, qkm1, qkm2;
+	double psi, z;
+	int i, k;
+	double big = BIG;
+
+	if( n < 0 ) {
+		MipavUtil.displayError("Domain error in expn n < 0");
+		return (MAXNUM);
+	}
+
+	if( x < 0 )
+		{
+		MipavUtil.displayError("Domain error in expn x < 0");
+		return (MAXNUM);
+		}
+
+	if( x > MAXLOG )
+		return( 0.0 );
+
+	if( x == 0.0 )
+		{
+		if( n < 2 )
+			{
+			MipavUtil.displayError("SINGULARITY error in expn");
+			return( MAXNUM );
+			}
+		else
+			return( 1.0/(n-1.0) );
+		}
+
+	if( n == 0 )
+		return( Math.exp(-x)/x );
+	
+	/*							expn.c	*/
+	/*		Expansion for large n		*/
+
+	if( n > 5000 )
+		{
+		xk = x + n;
+		yk = 1.0 / (xk * xk);
+		t = n;
+		ans = yk * t * (6.0 * x * x  -  8.0 * t * x  +  t * t);
+		ans = yk * (ans + t * (t  -  2.0 * x));
+		ans = yk * (ans + t);
+		ans = (ans + 1.0) * Math.exp( -x ) / xk;
+		return (ans);
+		}
+
+	if(x <=  1.0 ) {
+	/*							expn.c	*/
+
+	/*		Power series expansion		*/
+
+	psi = -EUL - Math.log(x);
+	for( i=1; i<n; i++ )
+		psi = psi + 1.0/i;
+
+	z = -x;
+	xk = 0.0;
+	yk = 1.0;
+	pk = 1.0 - n;
+	if( n == 1 )
+		ans = 0.0;
+	else
+		ans = 1.0/pk;
+	do
+		{
+		xk += 1.0;
+		yk *= z/xk;
+		pk += 1.0;
+		if( pk != 0.0 )
+			{
+			ans += yk/pk;
+			}
+		if( ans != 0.0 )
+			t = Math.abs(yk/ans);
+		else
+			t = 1.0;
+		}
+	while( t > MACHEP );
+	k = (int)xk;
+	t = n;
+	r = n - 1;
+	ans = (Math.pow(z, r) * psi / true_gamma(t)) - ans;
+	return (ans);
+	} // if (x <= 1.0)
+	
+	/*							expn.c	*/
+	/*		continued fraction		*/
+	k = 1;
+	pkm2 = 1.0;
+	qkm2 = x;
+	pkm1 = 1.0;
+	qkm1 = x + n;
+	ans = pkm1/qkm1;
+
+	do
+		{
+		k += 1;
+		if( (k & 1) != 0 )
+			{
+			yk = 1.0;
+			xk = n + (k-1)/2;
+			}
+		else
+			{
+			yk = x;
+			xk = k/2;
+			}
+		pk = pkm1 * yk  +  pkm2 * xk;
+		qk = qkm1 * yk  +  qkm2 * xk;
+		if( qk != 0 )
+			{
+			r = pk/qk;
+			t = Math.abs( (ans - r)/r );
+			ans = r;
+			}
+		else
+			t = 1.0;
+		pkm2 = pkm1;
+		pkm1 = pk;
+		qkm2 = qkm1;
+		qkm1 = qk;
+	if( Math.abs(pk) > big )
+			{
+			pkm2 /= big;
+			pkm1 /= big;
+			qkm2 /= big;
+			qkm1 /= big;
+			}
+		}
+	while( t > MACHEP );
+
+	ans *= Math.exp( -x );
+
+	return( ans );
+	}
+
+	/*							fac.c
+	 *
+	 *	Factorial function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double y, fac();
+	 * int i;
+	 *
+	 * y = fac( i );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns factorial of i  =  1 * 2 * 3 * ... * i.
+	 * fac(0) = 1.0.
+	 *
+	 * Due to machine arithmetic bounds the largest value of
+	 * i accepted is 33 in DEC arithmetic or 170 in IEEE
+	 * arithmetic.  Greater values, or negative ones,
+	 * produce an error message and return MAXNUM.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * For i < 34 the values are simply tabulated, and have
+	 * full machine accuracy.  If i > 55, fac(i) = true_gamma(i+1);
+	 * see gamma.c.
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain      peak
+	 *    IEEE      0, 170    1.4e-15
+	 *    DEC       0, 33      1.4e-17
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1984, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double fac(int i) {
+	double x, f, n;
+	int j;
+
+	if( i < 0 )
+		{
+		MipavUtil.displayError("SINGULARITY in fac");
+		return( MAXNUM );
+		}
+
+	if( i > MAXFAC )
+		{
+		MipavUtil.displayError("OVERFLOW in fac");
+		return( MAXNUM );
+		}
+
+	/* Get answer from table for small i. */
+	if( i < 34 )
+		{
+		return( factbl[i] );
+		}
+	/* Use gamma function for large i. */
+	if( i > 55 )
+		{
+		x = i + 1;
+		return( true_gamma(x) );
+		}
+	/* Compute directly for intermediate i. */
+	n = 34.0;
+	f = 34.0;
+	for( j=35; j<=i; j++ )
+		{
+		n += 1.0;
+		f *= n;
+		}
+		f *= factbl[33];
+	return( f );
+	}
+	
+	/*							incbet.c
+	 *
+	 *	Incomplete beta integral
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, x, y, incbet();
+	 *
+	 * y = incbet( a, b, x );
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns incomplete beta integral of the arguments, evaluated
+	 * from zero to x.  The function is defined as
+	 *
+	 *                  x
+	 *     -            -
+	 *    | (a+b)      | |  a-1     b-1
+	 *  -----------    |   t   (1-t)   dt.
+	 *   -     -     | |
+	 *  | (a) | (b)   -
+	 *                 0
+	 *
+	 * The domain of definition is 0 <= x <= 1.  In this
+	 * implementation a and b are restricted to positive values.
+	 * The integral from x to 1 may be obtained by the symmetry
+	 * relation
+	 *
+	 *    1 - incbet( a, b, x )  =  incbet( b, a, 1-x ).
+	 *
+	 * The integral is evaluated by a continued fraction expansion
+	 * or, when b*x is small, by a power series.
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at uniformly distributed random points (a,b,x) with a and b
+	 * in "domain" and x between 0 and 1.
+	 *                                        Relative error
+	 * arithmetic   domain     # trials      peak         rms
+	 *    IEEE      0,5         10000       6.9e-15     4.5e-16
+	 *    IEEE      0,85       250000       2.2e-13     1.7e-14
+	 *    IEEE      0,1000      30000       5.3e-12     6.3e-13
+	 *    IEEE      0,10000    250000       9.3e-11     7.1e-12
+	 *    IEEE      0,100000    10000       8.7e-10     4.8e-11
+	 * Outputs smaller than the IEEE gradual underflow threshold
+	 * were excluded from these statistics.
+	 *
+	 * ERROR MESSAGES:
+	 *   message         condition      value returned
+	 * incbet domain      x<0, x>1          0.0
+	 * incbet underflow                     0.0
+	 */
+	
+	/*
+	Cephes Math Library, Release 2.3:  March, 1995
+	Copyright 1984, 1995 by Stephen L. Moshier
+	*/
+	
+	public double incbet(double aa, double bb, double xx ) {
+	double a, b, t, x, xc, w, y;
+	int flag;
+
+	if( aa <= 0.0 || bb <= 0.0 ) {
+		MipavUtil.displayError("Domain error in incbet");
+		return (0.0);
+	}
+
+	if( (xx <= 0.0) || ( xx >= 1.0) )
+		{
+		if( xx == 0.0 )
+			return(0.0);
+		if( xx == 1.0 )
+			return( 1.0 );
+		MipavUtil.displayError("Domain error in incbet");
+		return( 0.0 );
+		}
+
+	flag = 0;
+	if( (bb * xx) <= 1.0 && xx <= 0.95)
+		{
+		t = pseries(aa, bb, xx);
+		if( flag == 1 )
+		{
+		if( t <= MACHEP )
+			t = 1.0 - MACHEP;
+		else
+			t = 1.0 - t;
+		}
+	    return( t );
+		}
+
+	w = 1.0 - xx;
+
+	/* Reverse a and b if x is greater than the mean. */
+	if( xx > (aa/(aa+bb)) )
+		{
+		flag = 1;
+		a = bb;
+		b = aa;
+		xc = xx;
+		x = w;
+		}
+	else
+		{
+		a = aa;
+		b = bb;
+		xc = w;
+		x = xx;
+		}
+
+	if( flag == 1 && (b * x) <= 1.0 && x <= 0.95)
+		{
+		t = pseries(a, b, x);
+		if( flag == 1 )
+		{
+		if( t <= MACHEP )
+			t = 1.0 - MACHEP;
+		else
+			t = 1.0 - t;
+		}
+	    return( t );
+		}
+
+	/* Choose expansion for better convergence. */
+	y = x * (a+b-2.0) - (a-1.0);
+	if( y < 0.0 )
+		w = incbcf( a, b, x );
+	else
+		w = incbd( a, b, x ) / xc;
+
+	/* Multiply w by the factor
+	     a      b   _             _     _
+	    x  (1-x)   | (a+b) / ( a | (a) | (b) ) .   */
+
+	y = a * Math.log(x);
+	t = b * Math.log(xc);
+	if( (a+b) < MAXGAM && Math.abs(y) < MAXLOG && Math.abs(t) < MAXLOG )
+		{
+		t = Math.pow(xc,b);
+		t *= Math.pow(x,a);
+		t /= a;
+		t *= w;
+		t *= true_gamma(a+b) / (true_gamma(a) * true_gamma(b));
+		if( flag == 1 )
+		{
+		if( t <= MACHEP )
+			t = 1.0 - MACHEP;
+		else
+			t = 1.0 - t;
+		}
+	    return( t );
+		}
+	/* Resort to logarithms.  */
+	y += t + lgam(a+b) - lgam(a) - lgam(b);
+	y += Math.log(w/a);
+	if( y < MINLOG )
+		t = 0.0;
+	else
+		t = Math.exp(y);
+
+	if( flag == 1 )
+		{
+		if( t <= MACHEP )
+			t = 1.0 - MACHEP;
+		else
+			t = 1.0 - t;
+		}
+	return( t );
+	}
+	
+	/* Continued fraction expansion #1
+	 * for incomplete beta integral
+	 */
+
+	public double incbcf(double a, double b, double x ) {
+	double xk, pk, pkm1, pkm2, qk, qkm1, qkm2;
+	double k1, k2, k3, k4, k5, k6, k7, k8;
+	double r, t, ans, thresh;
+	int n;
+
+	k1 = a;
+	k2 = a + b;
+	k3 = a;
+	k4 = a + 1.0;
+	k5 = 1.0;
+	k6 = b - 1.0;
+	k7 = k4;
+	k8 = a + 2.0;
+
+	pkm2 = 0.0;
+	qkm2 = 1.0;
+	pkm1 = 1.0;
+	qkm1 = 1.0;
+	ans = 1.0;
+	r = 1.0;
+	n = 0;
+	thresh = 3.0 * MACHEP;
+	do
+		{
+		
+		xk = -( x * k1 * k2 )/( k3 * k4 );
+		pk = pkm1 +  pkm2 * xk;
+		qk = qkm1 +  qkm2 * xk;
+		pkm2 = pkm1;
+		pkm1 = pk;
+		qkm2 = qkm1;
+		qkm1 = qk;
+
+		xk = ( x * k5 * k6 )/( k7 * k8 );
+		pk = pkm1 +  pkm2 * xk;
+		qk = qkm1 +  qkm2 * xk;
+		pkm2 = pkm1;
+		pkm1 = pk;
+		qkm2 = qkm1;
+		qkm1 = qk;
+
+		if( qk != 0 )
+			r = pk/qk;
+		if( r != 0 )
+			{
+			t = Math.abs( (ans - r)/r );
+			ans = r;
+			}
+		else
+			t = 1.0;
+
+		if( t < thresh )
+			return (ans);
+
+		k1 += 1.0;
+		k2 += 1.0;
+		k3 += 2.0;
+		k4 += 2.0;
+		k5 += 1.0;
+		k6 -= 1.0;
+		k7 += 2.0;
+		k8 += 2.0;
+
+		if( (Math.abs(qk) + Math.abs(pk)) > big )
+			{
+			pkm2 *= biginv;
+			pkm1 *= biginv;
+			qkm2 *= biginv;
+			qkm1 *= biginv;
+			}
+		if( (Math.abs(qk) < biginv) || (Math.abs(pk) < biginv) )
+			{
+			pkm2 *= big;
+			pkm1 *= big;
+			qkm2 *= big;
+			qkm1 *= big;
+			}
+		}
+	while( ++n < 300 );
+
+	return(ans);
+	}
+	
+	/* Continued fraction expansion #2
+	 * for incomplete beta integral
+	 */
+
+	public double incbd(double a, double b, double x) {
+	double xk, pk, pkm1, pkm2, qk, qkm1, qkm2;
+	double k1, k2, k3, k4, k5, k6, k7, k8;
+	double r, t, ans, z, thresh;
+	int n;
+
+	k1 = a;
+	k2 = b - 1.0;
+	k3 = a;
+	k4 = a + 1.0;
+	k5 = 1.0;
+	k6 = a + b;
+	k7 = a + 1.0;;
+	k8 = a + 2.0;
+
+	pkm2 = 0.0;
+	qkm2 = 1.0;
+	pkm1 = 1.0;
+	qkm1 = 1.0;
+	z = x / (1.0-x);
+	ans = 1.0;
+	r = 1.0;
+	n = 0;
+	thresh = 3.0 * MACHEP;
+	do
+		{
+		
+		xk = -( z * k1 * k2 )/( k3 * k4 );
+		pk = pkm1 +  pkm2 * xk;
+		qk = qkm1 +  qkm2 * xk;
+		pkm2 = pkm1;
+		pkm1 = pk;
+		qkm2 = qkm1;
+		qkm1 = qk;
+
+		xk = ( z * k5 * k6 )/( k7 * k8 );
+		pk = pkm1 +  pkm2 * xk;
+		qk = qkm1 +  qkm2 * xk;
+		pkm2 = pkm1;
+		pkm1 = pk;
+		qkm2 = qkm1;
+		qkm1 = qk;
+
+		if( qk != 0 )
+			r = pk/qk;
+		if( r != 0 )
+			{
+			t = Math.abs( (ans - r)/r );
+			ans = r;
+			}
+		else
+			t = 1.0;
+
+		if( t < thresh )
+			return ans;
+
+		k1 += 1.0;
+		k2 -= 1.0;
+		k3 += 2.0;
+		k4 += 2.0;
+		k5 += 1.0;
+		k6 += 1.0;
+		k7 += 2.0;
+		k8 += 2.0;
+
+		if( (Math.abs(qk) + Math.abs(pk)) > big )
+			{
+			pkm2 *= biginv;
+			pkm1 *= biginv;
+			qkm2 *= biginv;
+			qkm1 *= biginv;
+			}
+		if( (Math.abs(qk) < biginv) || (Math.abs(pk) < biginv) )
+			{
+			pkm2 *= big;
+			pkm1 *= big;
+			qkm2 *= big;
+			qkm1 *= big;
+			}
+		}
+	while( ++n < 300 );
+	
+	return(ans);
+	}
+	
+	/* Power series for incomplete beta integral.
+	   Use when b*x is small and x not too close to 1.  */
+
+	public double pseries(double a, double b, double x) {
+	double s, t, u, v, n, t1, z, ai;
+
+	ai = 1.0 / a;
+	u = (1.0 - b) * x;
+	v = u / (a + 1.0);
+	t1 = v;
+	t = u;
+	n = 2.0;
+	s = 0.0;
+	z = MACHEP * ai;
+	while( Math.abs(v) > z )
+		{
+		u = (n - b) * x / n;
+		t *= u;
+		v = t / (a + n);
+		s += v; 
+		n += 1.0;
+		}
+	s += t1;
+	s += ai;
+
+	u = a * Math.log(x);
+	if( (a+b) < MAXGAM && Math.abs(u) < MAXLOG )
+		{
+		t = true_gamma(a+b)/(true_gamma(a)*true_gamma(b));
+		s = s * t * Math.pow(x,a);
+		}
+	else
+		{
+		t = lgam(a+b) - lgam(a) - lgam(b) + u + Math.log(s);
+		if( t < MINLOG )
+			s = 0.0;
+		else
+		s = Math.exp(t);
+		}
+	return(s);
+	}
+
+	/*							incbi()
+	 *
+	 *      Inverse of imcomplete beta integral
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, x, y, incbi();
+	 *
+	 * x = incbi( a, b, y );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Given y, the function finds x such that
+	 *
+	 *  incbet( a, b, x ) = y .
+	 *
+	 * The routine performs interval halving or Newton iterations to find the
+	 * root of incbet(a,b,x) - y = 0.
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 *                x     a,b
+	 * arithmetic   domain  domain  # trials    peak       rms
+	 *    IEEE      0,1    .5,10000   50000    5.8e-12   1.3e-13
+	 *    IEEE      0,1   .25,100    100000    1.8e-13   3.9e-15
+	 *    IEEE      0,1     0,5       50000    1.1e-12   5.5e-15
+	 *    VAX       0,1    .5,100     25000    3.5e-14   1.1e-15
+	 * With a and b constrained to half-integer or integer values:
+	 *    IEEE      0,1    .5,10000   50000    5.8e-12   1.1e-13
+	 *    IEEE      0,1    .5,100    100000    1.7e-14   7.9e-16
+	 * With a = .5, b constrained to half-integer or integer values:
+	 *    IEEE      0,1    .5,10000   10000    8.3e-11   1.0e-11
+	 */
+	
+	/*
+	Cephes Math Library Release 2.4:  March,1996
+	Copyright 1984, 1996 by Stephen L. Moshier
+	*/
+	
+	double incbi(double aa, double bb, double yy0 ) {
+	double d, x0, x1, lgm, yp, di, dithresh, yl, yh, xt;
+	double a = 0.0;
+	double b = 0.0;
+	double y0 = 0.0;
+	double y = 0.0;
+	double x = 0.0;
+	int i, dir, nflg;
+	int rflg = 0;
+	boolean doseg1 = true;
+	boolean doseg2 = true;
+    boolean doseg3 = true;
+
+	i = 0;
+	if( yy0 <= 0 )
+		return(0.0);
+	if( yy0 >= 1.0 )
+		return(1.0);
+	x0 = 0.0;
+	yl = 0.0;
+	x1 = 1.0;
+	yh = 1.0;
+	nflg = 0;
+
+	if( aa <= 1.0 || bb <= 1.0 )
+		{
+		dithresh = 1.0e-6;
+		rflg = 0;
+		a = aa;
+		b = bb;
+		y0 = yy0;
+		x = a/(a+b);
+		y = incbet( a, b, x );
+		doseg1 = false;;
+		}
+	else
+		{
+		dithresh = 1.0e-4;
+		}
+	/* approximation to inverse function */
+    if (doseg1) {
+	yp = -ndtri(yy0);
+
+	if( yy0 > 0.5 )
+		{
+		rflg = 1;
+		a = bb;
+		b = aa;
+		y0 = 1.0 - yy0;
+		yp = -yp;
+		}
+	else
+		{
+		rflg = 0;
+		a = aa;
+		b = bb;
+		y0 = yy0;
+		}
+
+	lgm = (yp * yp - 3.0)/6.0;
+	x = 2.0/( 1.0/(2.0*a-1.0)  +  1.0/(2.0*b-1.0) );
+	d = yp * Math.sqrt( x + lgm ) / x
+		- ( 1.0/(2.0*b-1.0) - 1.0/(2.0*a-1.0) )
+		* (lgm + 5.0/6.0 - 2.0/(3.0*x));
+	d = 2.0 * d;
+	if( d < MINLOG )
+		{
+		x = 1.0;
+		MipavUtil.displayError("UNDERFLOW in incbi");
+		x = 0.0;
+		if( rflg != 0)
+		{
+		if( x <= MACHEP )
+			x = 1.0 - MACHEP;
+		else
+			x = 1.0 - x;
+		}
+	    return( x );
+		}
+	x = a/( a + b * Math.exp(d) );
+	y = incbet( a, b, x );
+	yp = (y - y0)/y0;
+	if( Math.abs(yp) < 0.2 )
+		doseg2 = false;
+    } // if (doseg1)
+    
+	/* Resort to interval halving if not close enough. */
+	ihalve: while (true) {
+    if (doseg2) {
+	dir = 0;
+	di = 0.5;
+	for( i=0; i<100; i++ )
+		{
+		if( i != 0 )
+			{
+			x = x0  +  di * (x1 - x0);
+			if( x == 1.0 )
+				x = 1.0 - MACHEP;
+			if( x == 0.0 )
+				{
+				di = 0.5;
+				x = x0  +  di * (x1 - x0);
+				if( x == 0.0 ) {
+					x = 1.0;
+					MipavUtil.displayError("UNDERFLOW in incbi");
+					x = 0.0;
+					if( rflg != 0)
+					{
+					if( x <= MACHEP )
+						x = 1.0 - MACHEP;
+					else
+						x = 1.0 - x;
+					}
+				    return( x );	
+				}
+				}
+			y = incbet( a, b, x );
+			yp = (x1 - x0)/(x1 + x0);
+			if( Math.abs(yp) < dithresh ) {
+				doseg3 = false;
+				break;
+			}
+			yp = (y-y0)/y0;
+			if( Math.abs(yp) < dithresh ) {
+				doseg3 = false;
+				break;
+			}
+			}
+		if( y < y0 )
+			{
+			x0 = x;
+			yl = y;
+			if( dir < 0 )
+				{
+				dir = 0;
+				di = 0.5;
+				}
+			else if( dir > 3 )
+				di = 1.0 - (1.0 - di) * (1.0 - di);
+			else if( dir > 1 )
+				di = 0.5 * di + 0.5; 
+			else
+				di = (y0 - y)/(yh - yl);
+			dir += 1;
+			if( x0 > 0.75 )
+				{
+				if( rflg == 1 )
+					{
+					rflg = 0;
+					a = aa;
+					b = bb;
+					y0 = yy0;
+					}
+				else
+					{
+					rflg = 1;
+					a = bb;
+					b = aa;
+					y0 = 1.0 - yy0;
+					}
+				x = 1.0 - x;
+				y = incbet( a, b, x );
+				x0 = 0.0;
+				yl = 0.0;
+				x1 = 1.0;
+				yh = 1.0;
+				continue ihalve;
+				}
+			}
+		else
+			{
+			x1 = x;
+			if( rflg == 1 && x1 < MACHEP )
+				{
+				x = 0.0;
+				if( rflg != 0)
+				{
+				if( x <= MACHEP )
+					x = 1.0 - MACHEP;
+				else
+					x = 1.0 - x;
+				}
+			    return( x );
+				}
+			yh = y;
+			if( dir > 0 )
+				{
+				dir = 0;
+				di = 0.5;
+				}
+			else if( dir < -3 )
+				di = di * di;
+			else if( dir < -1 )
+				di = 0.5 * di;
+			else
+				di = (y - y0)/(yh - yl);
+			dir -= 1;
+			}
+		}
+	if (doseg3) {
+	MipavUtil.displayError("PRECISION LOSS in incbi");
+	if( x0 >= 1.0 )
+		{
+		x = 1.0 - MACHEP;
+		if( rflg != 0)
+		{
+		if( x <= MACHEP )
+			x = 1.0 - MACHEP;
+		else
+			x = 1.0 - x;
+		}
+	    return( x );
+		}
+	if( x <= 0.0 )
+		{
+		MipavUtil.displayError("UNDERFLOW in incbi");
+		x = 0.0;
+		if( rflg != 0)
+		{
+		if( x <= MACHEP )
+			x = 1.0 - MACHEP;
+		else
+			x = 1.0 - x;
+		}
+	    return( x );
+		}
+	} // if (doseg3)
+	doseg3 = true;
+    } // if (doseg2)
+    doseg2 = true;
+
+	if( nflg != 0) {
+		if( rflg != 0)
+		{
+		if( x <= MACHEP )
+			x = 1.0 - MACHEP;
+		else
+			x = 1.0 - x;
+		}
+	    return( x );	
+	}
+	nflg = 1;
+	lgm = lgam(a+b) - lgam(a) - lgam(b);
+
+	for( i=0; i<8; i++ )
+		{
+		/* Compute the function at this point. */
+		if( i != 0 )
+			y = incbet(a,b,x);
+		if( y < yl )
+			{
+			x = x0;
+			y = yl;
+			}
+		else if( y > yh )
+			{
+			x = x1;
+			y = yh;
+			}
+		else if( y < y0 )
+			{
+			x0 = x;
+			yl = y;
+			}
+		else
+			{
+			x1 = x;
+			yh = y;
+			}
+		if( x == 1.0 || x == 0.0 )
+			break;
+		/* Compute the derivative of the function at this point. */
+		d = (a - 1.0) * Math.log(x) + (b - 1.0) * Math.log(1.0-x) + lgm;
+		if( d < MINLOG ) {
+			if( rflg != 0)
+			{
+			if( x <= MACHEP )
+				x = 1.0 - MACHEP;
+			else
+				x = 1.0 - x;
+			}
+		    return( x );	
+		}
+		if( d > MAXLOG )
+			break;
+		d = Math.exp(d);
+		/* Compute the step to the next approximation of x. */
+		d = (y - y0)/d;
+		xt = x - d;
+		if( xt <= x0 )
+			{
+			y = (x - x0) / (x1 - x0);
+			xt = x0 + 0.5 * y * (x - x0);
+			if( xt <= 0.0 )
+				break;
+			}
+		if( xt >= x1 )
+			{
+			y = (x1 - x) / (x1 - x0);
+			xt = x1 - 0.5 * y * (x1 - x);
+			if( xt >= 1.0 )
+				break;
+			}
+		x = xt;
+		if( Math.abs(d/x) < 128.0 * MACHEP ) {
+			if( rflg != 0)
+			{
+			if( x <= MACHEP )
+				x = 1.0 - MACHEP;
+			else
+				x = 1.0 - x;
+			}
+		    return( x );
+		}
+		}
+	/* Did not converge.  */
+	dithresh = 256.0 * MACHEP;
+	} // ihalve: while (true)
+
+	}
+	
+	/*							fdtr.c
+	 *
+	 *	F distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int df1, df2;
+	 * double x, y, fdtr();
+	 *
+	 * y = fdtr( df1, df2, x );
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the area from zero to x under the F density
+	 * function (also known as Snedcor's density or the
+	 * variance ratio density).  This is the density
+	 * of x = (u1/df1)/(u2/df2), where u1 and u2 are random
+	 * variables having Chi square distributions with df1
+	 * and df2 degrees of freedom, respectively.
+	 *
+	 * The incomplete beta integral is used, according to the
+	 * formula
+	 *
+	 *	P(x) = incbet( df1/2, df2/2, (df1*x/(df2 + df1*x) ).
+	 *
+	 *
+	 * The arguments a and b are greater than zero, and x is
+	 * nonnegative.
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at random points (a,b,x).
+	 *
+	 *                x     a,b                     Relative error:
+	 * arithmetic  domain  domain     # trials      peak         rms
+	 *    IEEE      0,1    0,100       100000      9.8e-15     1.7e-15
+	 *    IEEE      1,5    0,100       100000      6.5e-15     3.5e-16
+	 *    IEEE      0,1    1,10000     100000      2.2e-11     3.3e-12
+	 *    IEEE      1,5    1,10000     100000      1.1e-11     1.7e-13
+	 * See also incbet.c.
+	 *
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * fdtr domain     a<0, b<0, x<0         0.0
+	 *
+	 */
+	
+	/*							fdtrc()
+	 *
+	 *	Complemented F distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int df1, df2;
+	 * double x, y, fdtrc();
+	 *
+	 * y = fdtrc( df1, df2, x );
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the area from x to infinity under the F density
+	 * function (also known as Snedcor's density or the
+	 * variance ratio density).
+	 *
+	 *
+	 *                      inf.
+	 *                       -
+	 *              1       | |  a-1      b-1
+	 * 1-P(x)  =  ------    |   t    (1-t)    dt
+	 *            B(a,b)  | |
+	 *                     -
+	 *                      x
+	 *
+	 *
+	 * The incomplete beta integral is used, according to the
+	 * formula
+	 *
+	 *	P(x) = incbet( df2/2, df1/2, (df2/(df2 + df1*x) ).
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at random points (a,b,x) in the indicated intervals.
+	 *                x     a,b                     Relative error:
+	 * arithmetic  domain  domain     # trials      peak         rms
+	 *    IEEE      0,1    1,100       100000      3.7e-14     5.9e-16
+	 *    IEEE      1,5    1,100       100000      8.0e-15     1.6e-15
+	 *    IEEE      0,1    1,10000     100000      1.8e-11     3.5e-13
+	 *    IEEE      1,5    1,10000     100000      2.0e-11     3.0e-12
+	 * See also incbet.c.
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * fdtrc domain    a<0, b<0, x<0         0.0
+	 *
+	 */
+	
+	/*							fdtri()
+	 *
+	 *	Inverse of complemented F distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int df1, df2;
+	 * double x, p, fdtri();
+	 *
+	 * x = fdtri( df1, df2, p );
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Finds the F density argument x such that the integral
+	 * from x to infinity of the F density is equal to the
+	 * given probability p.
+	 *
+	 * This is accomplished using the inverse beta integral
+	 * function and the relations
+	 *
+	 *      z = incbi( df2/2, df1/2, p )
+	 *      x = df2 (1-z) / (df1 z).
+	 *
+	 * Note: the following relations hold for the inverse of
+	 * the uncomplemented F distribution:
+	 *
+	 *      z = incbi( df1/2, df2/2, p )
+	 *      x = df2 z / (df1 (1-z)).
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at random points (a,b,p).
+	 *
+	 *              a,b                     Relative error:
+	 * arithmetic  domain     # trials      peak         rms
+	 *  For p between .001 and 1:
+	 *    IEEE     1,100       100000      8.3e-15     4.7e-16
+	 *    IEEE     1,10000     100000      2.1e-11     1.4e-13
+	 *  For p between 10^-6 and 10^-3:
+	 *    IEEE     1,100        50000      1.3e-12     8.4e-15
+	 *    IEEE     1,10000      50000      3.0e-12     4.8e-14
+	 * See also fdtrc.c.
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * fdtri domain   p <= 0 or p > 1       0.0
+	 *                     v < 1
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.3:  March, 1995
+	Copyright 1984, 1987, 1995 by Stephen L. Moshier
+	*/
+	
+	public double fdtrc(int ia, int ib, double x) {
+	double a, b, w;
+
+	if( (ia < 1) || (ib < 1) || (x < 0.0) )
+		{
+		MipavUtil.displayError("DOMAIN error in fdtrc");
+		return( 0.0 );
+		}
+	a = ia;
+	b = ib;
+	w = b / (b + a * x);
+	return( incbet( 0.5*b, 0.5*a, w ) );
+	}
+	
+	public double fdtr(int ia, int ib, double x) {
+	double a, b, w;
+
+	if( (ia < 1) || (ib < 1) || (x < 0.0) )
+		{
+		MipavUtil.displayError("DOMAIN error in fdtr");
+		return( 0.0 );
+		}
+	a = ia;
+	b = ib;
+	w = a * x;
+	w = w / (b + w);
+	return( incbet(0.5*a, 0.5*b, w) );
+	}
+	
+	public double fdtri(int ia, int ib, double y) {
+	double a, b, w, x;
+	
+	// added by danilo
+    y = 1.0 - y;
+
+	if( (ia < 1) || (ib < 1) || (y <= 0.0) || (y > 1.0) )
+		{
+		MipavUtil.displayError("DOMAIN error in fdtri");
+		return( 0.0 );
+		}
+	a = ia;
+	b = ib;
+	/* Compute probability for x = 0.5.  */
+	w = incbet( 0.5*b, 0.5*a, 0.5 );
+	/* If that is greater than y, then the solution w < .5.
+	   Otherwise, solve at 1-y to remove cancellation in (b - b*w).  */
+	if( w > y || y < 0.001)
+		{
+		w = incbi( 0.5*b, 0.5*a, y );
+		x = (b - b*w)/(a*w);
+		}
+	else
+		{
+		w = incbi( 0.5*a, 0.5*b, 1.0-y );
+		x = b*w/(a*(1.0-w));
+		}
+	return(x);
+	}
 
 }
