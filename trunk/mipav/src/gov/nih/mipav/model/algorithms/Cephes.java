@@ -113,22 +113,27 @@ public class Cephes {
 	public final static int FDTR = 15;
 	public final static int FDTRC = 16;
 	public final static int FDTRI = 17;
-	public final static int IGAM = 18;
-	public final static int IGAMI = 19;
-	public final static int IGAMC = 20;
-	public final static int INCBET = 21;
-	public final static int INCBI = 22;
-	public final static int LBETA = 23;
-	public final static int LGAM = 24;
-	public final static int NDTR = 25;
-	public final static int NDTRI = 26;
-	public final static int POLEVL = 27;
-	public final static int P1EVL = 28;
-	public final static int STIRF = 29;
-	public final static int STRUVE = 30;
-	public final static int TRUE_GAMMA = 31;
-	public final static int ZETA = 32;
-	public final static int ZETAC = 33;
+	public final static int FRESNL = 18;
+	public final static int GDTR = 19;
+	public final static int GDTRC = 20;
+	public final static int HYP2F1 = 21;
+	public final static int IGAM = 22;
+	public final static int IGAMI = 23;
+	public final static int IGAMC = 24;
+	public final static int INCBET = 25;
+	public final static int INCBI = 26;
+	public final static int LBETA = 27;
+	public final static int LGAM = 28;
+	public final static int NDTR = 29;
+	public final static int NDTRI = 30;
+	public final static int POLEVL = 31;
+	public final static int P1EVL = 32;
+	public final static int PSI = 33;
+	public final static int STIRF = 34;
+	public final static int STRUVE = 35;
+	public final static int TRUE_GAMMA = 36;
+	public final static int ZETA = 37;
+	public final static int ZETAC = 38;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -152,6 +157,10 @@ public class Cephes {
 	private final static double SQTPI = 2.50662827463100050242E0;
 	private final static double stop = 1.37e-17;
 	private final static int MAXFAC = 170;
+	private final static double EPS = 1.0e-13;
+	private final static double EPS2 = 1.0e-10;
+	private final static double ETHRESH = 1.0e-12;
+
 	private final boolean DEBUG = false;
 	private int sgngam;
 	// For ndtr:
@@ -628,6 +637,110 @@ public class Cephes {
 	  8.68331761881188649551819440128E36
 	};
 	
+	/* S(x) for small x */
+	private final static double sn[] = new double[] {
+	-2.99181919401019853726E3,
+	 7.08840045257738576863E5,
+	-6.29741486205862506537E7,
+	 2.54890880573376359104E9,
+	-4.42979518059697779103E10,
+	 3.18016297876567817986E11,
+	};
+	private final static double sd[] = new double[] {
+	/* 1.00000000000000000000E0,*/
+	 2.81376268889994315696E2,
+	 4.55847810806532581675E4,
+	 5.17343888770096400730E6,
+	 4.19320245898111231129E8,
+	 2.24411795645340920940E10,
+	 6.07366389490084639049E11,
+	};
+	
+	/* C(x) for small x */
+	private final static double cn[] = new double[] {
+	-4.98843114573573548651E-8,
+	 9.50428062829859605134E-6,
+	-6.45191435683965050962E-4,
+	 1.88843319396703850064E-2,
+	-2.05525900955013891793E-1,
+	 9.99999999999999998822E-1,
+	};
+	private final static double cd[] = new double[] {
+	 3.99982968972495980367E-12,
+	 9.15439215774657478799E-10,
+	 1.25001862479598821474E-7,
+	 1.22262789024179030997E-5,
+	 8.68029542941784300606E-4,
+	 4.12142090722199792936E-2,
+	 1.00000000000000000118E0,
+	};
+	
+	/* Auxiliary function f(x) */
+	private final static double fn[] = new double[] {
+	  4.21543555043677546506E-1,
+	  1.43407919780758885261E-1,
+	  1.15220955073585758835E-2,
+	  3.45017939782574027900E-4,
+	  4.63613749287867322088E-6,
+	  3.05568983790257605827E-8,
+	  1.02304514164907233465E-10,
+	  1.72010743268161828879E-13,
+	  1.34283276233062758925E-16,
+	  3.76329711269987889006E-20,
+	};
+	private final static double fd[] = new double[] {
+	/*  1.00000000000000000000E0,*/
+	  7.51586398353378947175E-1,
+	  1.16888925859191382142E-1,
+	  6.44051526508858611005E-3,
+	  1.55934409164153020873E-4,
+	  1.84627567348930545870E-6,
+	  1.12699224763999035261E-8,
+	  3.60140029589371370404E-11,
+	  5.88754533621578410010E-14,
+	  4.52001434074129701496E-17,
+	  1.25443237090011264384E-20,
+	};
+	
+	/* Auxiliary function g(x) */
+	private final static double gn[] = new double[] {
+	  5.04442073643383265887E-1,
+	  1.97102833525523411709E-1,
+	  1.87648584092575249293E-2,
+	  6.84079380915393090172E-4,
+	  1.15138826111884280931E-5,
+	  9.82852443688422223854E-8,
+	  4.45344415861750144738E-10,
+	  1.08268041139020870318E-12,
+	  1.37555460633261799868E-15,
+	  8.36354435630677421531E-19,
+	  1.86958710162783235106E-22,
+	};
+	private final static double gd[] = new double[] {
+	/*  1.00000000000000000000E0,*/
+	  1.47495759925128324529E0,
+	  3.37748989120019970451E-1,
+	  2.53603741420338795122E-2,
+	  8.14679107184306179049E-4,
+	  1.27545075667729118702E-5,
+	  1.04314589657571990585E-7,
+	  4.60680728146520428211E-10,
+	  1.10273215066240270757E-12,
+	  1.38796531259578871258E-15,
+	  8.39158816283118707363E-19,
+	  1.86958710162783236342E-22,
+	};
+	
+	private final static double APSI[] = new double[] {
+		 8.33333333333333333333E-2,
+		-2.10927960927960927961E-2,
+		 7.57575757575757575758E-3,
+		-4.16666666666666666667E-3,
+		 3.96825396825396825397E-3,
+		-8.33333333333333333333E-3,
+		 8.33333333333333333333E-2
+		};
+	
 	private double result[];
 	
 	private int version;
@@ -643,6 +756,12 @@ public class Cephes {
 	private double par5;
 	
 	private int par6;
+	
+	private double par7;
+	
+	private double ssa[];
+	
+	private double cca[];
 	
 	public void testCephes() {
 		// The test for beta(6.3,2.9) passed
@@ -674,6 +793,12 @@ public class Cephes {
 		// The test for fdtr(4, 5, 0.3) passed
 		// The test for fdtrc(4, 5, 0.3) passed
 		// The test for fdtri(4, 5, 0.3) passed
+		// The test for fresnl(0.0, ssa, cca) passed
+		// The test for fresnl(0.2, ssa, cca) passed
+		// The test for fresnl(10.0, ssa, cca) passed
+		// The test for fresnl(500.0, ssa, cca) passed
+		// The test for gdtr(1, 2, 0.1) passed
+		// The test for gdtrc(1, 2, 0.1) passed
 		// The test for igam(0.5,0) passed
 		// The test for igam(1,2) passed
 		// lowerIncompleteGamma = 23.297935486152934
@@ -695,6 +820,11 @@ public class Cephes {
 		// The test for ndtr(1) passed
 		// The test for ndtri(0.5) passed
 		// The test for ndtri(0.6) passed
+		// The test for psi(-4.9) passed
+		// The test for psi(-0.1) passed
+		// The test for psi(0.1) passed
+		// The test for psi(1.0) passed
+		// The test for psi(4.5) passed
 		// The test for struve(0.0,0.0) passed
 		// The test for struve(0.0,5.0) passed
 		// The test for struve(1.0,0.0) passed
@@ -1009,6 +1139,84 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.56493190151185757");
 	    }
 	    
+	    ssa = new double[1];
+	    cca = new double[1];
+	    fresnl(0.0, ssa, cca);
+	    if ((Math.abs(ssa[0]) < 1.0E-7) && (Math.abs(cca[0]) < 1.0E-7)) {
+	    	System.out.println("The test for fresnl(0.0, ssa, cca) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fresnl(0.0, ssa, cca) failed");
+	    	System.out.println("Implemented fresnl gave ssa[0] = " + ssa[0] + " cca[0] = " + cca[0]);
+	    	System.out.println("Correct answer is ssa[0] = 0.0 cca[0] = 0.0");
+	    }
+	    
+	    fresnl(0.2, ssa, cca);
+	    if ((Math.abs(ssa[0] - 0.00418761) < 1.0E-7) && (Math.abs(cca[0] - 0.19992106) < 1.0E-7)) {
+	    	System.out.println("The test for fresnl(0.2, ssa, cca) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fresnl(0.2, ssa, cca) failed");
+	    	System.out.println("Implemented fresnl gave ssa[0] = " + ssa[0] + " cca[0] = " + cca[0]);
+	    	System.out.println("Correct answer is ssa[0] = 0.00418761 cca[0] = 0.19992106");
+	    }
+	    
+	    fresnl(10.0, ssa, cca);
+	    if ((Math.abs(ssa[0] - 0.46816998) < 1.0E-7) && (Math.abs(cca[0] - 0.49989869) < 1.0E-7)) {
+	    	System.out.println("The test for fresnl(10.0, ssa, cca) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fresnl(10.0, ssa, cca) failed");
+	    	System.out.println("Implemented fresnl gave ssa[0] = " + ssa[0] + " cca[0] = " + cca[0]);
+	    	System.out.println("Correct answer is ssa[0] = 0.46816998 cca[0] = 0.49989869");
+	    }
+	    
+	    fresnl(500.0, ssa, cca);
+	    if ((Math.abs(ssa[0] - 0.49936338) < 1.0E-7) && (Math.abs(cca[0] - 0.5000000) < 1.0E-7)) {
+	    	System.out.println("The test for fresnl(500.0, ssa, cca) passed");
+	    }
+	    else {
+	    	System.out.println("The test for fresnl(500.0, ssa, cca) failed");
+	    	System.out.println("Implemented fresnl gave ssa[0] = " + ssa[0] + " cca[0] = " + cca[0]);
+	    	System.out.println("Correct answer is ssa[0] = 0.49936338 cca[0] = 0.5000000");
+	    }
+	    
+	    result[0] = gdtr(1, 2, 0.1);
+	    if (Math.abs(result[0] -  0.0046788401604445) < 1.0E-7) {
+	    	System.out.println("The test for gdtr(1, 2, 0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for gdtr(1, 2, 0.1) failed");
+	    	System.out.println("Implemented gdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0046788401604445");
+	    }
+	    
+	    result[0] = gdtrc(1, 2, 0.1);
+	    if (Math.abs(result[0] -  0.9953211598395555) < 1.0E-7) {
+	    	System.out.println("The test for gdtrc(1, 2, 0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for gdtrc(1, 2, 0.1) failed");
+	    	System.out.println("Implemented gdtrc gave " + result[0]);
+	    	System.out.println("Correct answer is 0.9953211598395555");
+	    }
+	    
+	    // ax = abs(x) = 1.0
+	    // d = c - a - b = -1.0
+	    // so goes into if( fabs(ax-1.0) < EPS )			/* |x| == 1.0	*/
+	    // then goes into if( d <= -1.0 )
+	    // which takes it to the overflow exit at hypdiv
+	    // so the code cannot handle this example
+	    /*result[0] = hyp2f1(0.2, 1.1, 0.3, -1);
+	    if (Math.abs(result[0] -  0.62482831198989075) < 1.0E-7) {
+	    	System.out.println("The test for hyp2f1(0.2, 1.1, 0.3, -1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for hyp2f1(0.2, 1.1, 0.3, -1) failed");
+	    	System.out.println("Implemented hyp2f1 gave " + result[0]);
+	    	System.out.println("Correct answer is 0.62482831198989075");
+	    }*/
+	    
 	    double lowerIncompleteGamma[] = new double[1];
 	    double upperIncompleteGamma[] = new double[1];
 	    double regularizedGammaP[] = new double[1];
@@ -1176,6 +1384,56 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.25334710313579972");
 	    }
 	    
+	    result[0] = psi(-4.9);
+	    if (Math.abs(result[0] + 7.9810086) < 1.0E-7) {
+	    	System.out.println("The test for psi(-4.9) passed");
+	    }
+	    else {
+	    	System.out.println("The test for psi(-4.9) failed");
+	    	System.out.println("Implemented psi gave " + result[0]);
+	    	System.out.println("Correct answer is -7.9810086");
+	    }
+	    
+	    result[0] = psi(-0.1);
+	    if (Math.abs(result[0] - 9.2450731) < 1.0E-7) {
+	    	System.out.println("The test for psi(-0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for psi(-0.1) failed");
+	    	System.out.println("Implemented psi gave " + result[0]);
+	    	System.out.println("Correct answer is 9.2450731");
+	    }
+	    
+	    result[0] = psi(0.1);
+	    if (Math.abs(result[0] + 10.4237549) < 1.0E-7) {
+	    	System.out.println("The test for psi(0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for psi(0.1) failed");
+	    	System.out.println("Implemented psi gave " + result[0]);
+	    	System.out.println("Correct answer is -10.4237549");
+	    }
+	    
+	    result[0] = psi(1.0);
+	    if (Math.abs(result[0] + 0.57721566) < 1.0E-7) {
+	    	System.out.println("The test for psi(1.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for psi(1.0) failed");
+	    	System.out.println("Implemented psi gave " + result[0]);
+	    	System.out.println("Correct answer is -0.57721566");
+	    }
+	    
+	    result[0] = psi(4.5);
+	    if (Math.abs(result[0] - 1.38887093) < 1.0E-7) {
+	    	System.out.println("The test for psi(4.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for psi(4.5) failed");
+	    	System.out.println("Implemented psi gave " + result[0]);
+	    	System.out.println("Correct answer is 1.38887093");
+	    }
+	    
 	    result[0] = struve(0.0,0.0);
 	    if (Math.abs(result[0]) < 1.0E-7) {
 	    	System.out.println("The test for struve(0.0,0.0) passed");
@@ -1278,6 +1536,14 @@ public class Cephes {
 		this.result = result;
 	}
 	
+	
+	public Cephes(double par1, int version, double ssa[], double cca[]) {
+		this.par1 = par1;
+		this.version = version;
+		this.ssa = ssa;
+		this.cca = cca;
+	}
+	
 	public Cephes(double par1, double par2, int version, double result[]) {
 		this.par1 = par1;
 		this.par2 = par2;
@@ -1373,6 +1639,18 @@ public class Cephes {
 	    else if (version == FDTRI) {
 	    	result[0] = fdtri(par4, par6, par1);
 	    }
+	    else if (version == FRESNL) {
+	    	fresnl(par1, ssa, cca);
+	    }
+	    else if (version == GDTR) {
+	    	result[0] = gdtr(par1, par2, par5);
+	    }
+	    else if (version == GDTRC) {
+	    	result[0] = gdtrc(par1, par2, par5);
+	    }
+	    else if (version == HYP2F1) {
+	    	result[0] = hyp2f1(par1, par2, par5, par7);
+	    }
 		else if (version == IGAMI) {
 			result[0] = igami(par1, par2);
 		}
@@ -1405,6 +1683,9 @@ public class Cephes {
 		}
 		else if (version == P1EVL) {
 			result[0] = p1evl(par1, par3, par4);
+		}
+		else if (version == PSI) {
+			result[0] = psi(par1);
 		}
 		else if (version == STIRF) {
 			result[0] = stirf(par1);
@@ -5210,6 +5491,853 @@ public class Cephes {
 		x = b*w/(a*(1.0-w));
 		}
 	return(x);
+	}
+	
+	/*							fresnl.c
+	 *
+	 *	Fresnel integral
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, S, C;
+	 * void fresnl();
+	 *
+	 * fresnl( x, _&S, _&C );
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Evaluates the Fresnel integrals
+	 *
+	 *           x
+	 *           -
+	 *          | |
+	 * C(x) =   |   cos(pi/2 t**2) dt,
+	 *        | |
+	 *         -
+	 *          0
+	 *
+	 *           x
+	 *           -
+	 *          | |
+	 * S(x) =   |   sin(pi/2 t**2) dt.
+	 *        | |
+	 *         -
+	 *          0
+	 *
+	 *
+	 * The integrals are evaluated by a power series for x < 1.
+	 * For x >= 1 auxiliary functions f(x) and g(x) are employed
+	 * such that
+	 *
+	 * C(x) = 0.5 + f(x) sin( pi/2 x**2 ) - g(x) cos( pi/2 x**2 )
+	 * S(x) = 0.5 - f(x) cos( pi/2 x**2 ) - g(x) sin( pi/2 x**2 )
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *  Relative error.
+	 *
+	 * Arithmetic  function   domain     # trials      peak         rms
+	 *   IEEE       S(x)      0, 10       10000       2.0e-15     3.2e-16
+	 *   IEEE       C(x)      0, 10       10000       1.8e-15     3.3e-16
+	 *   DEC        S(x)      0, 10        6000       2.2e-16     3.9e-17
+	 *   DEC        C(x)      0, 10        5000       2.3e-16     3.9e-17
+	 */
+	
+	/*
+	Cephes Math Library Release 2.1:  January, 1989
+	Copyright 1984, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public int fresnl(double xxa, double ssa[], double cca[]) {
+	double f, g, cc, ss, c, s, t, u;
+	double x, x2;
+
+	x = Math.abs(xxa);
+	x2 = x * x;
+	if( x2 < 2.5625 )
+		{
+		t = x2 * x2;
+		ss = x * x2 * polevl( t, sn, 5)/p1evl( t, sd, 6 );
+		cc = x * polevl( t, cn, 5)/polevl(t, cd, 6 );
+		if( xxa < 0.0 )
+		{
+		cc = -cc;
+		ss = -ss;
+		}
+
+	    cca[0] = cc;
+	    ssa[0] = ss;
+	    return(0);
+		}
+
+
+
+
+
+
+	if( x > 36974.0 )
+		{
+		cc = 0.5;
+		ss = 0.5;
+		if( xxa < 0.0 )
+		{
+		cc = -cc;
+		ss = -ss;
+		}
+
+	    cca[0] = cc;
+	    ssa[0] = ss;
+	    return(0);
+		}
+
+
+	/*		Asymptotic power series auxiliary functions
+	 *		for large argument
+	 */
+		x2 = x * x;
+		t = Math.PI * x2;
+		u = 1.0/(t * t);
+		t = 1.0/t;
+		f = 1.0 - u * polevl( u, fn, 9)/p1evl(u, fd, 10);
+		g = t * polevl( u, gn, 10)/p1evl(u, gd, 11);
+
+		t = PIO2 * x2;
+		c = Math.cos(t);
+		s = Math.sin(t);
+		t = Math.PI * x;
+		cc = 0.5  +  (f * s  -  g * c)/t;
+		ss = 0.5  -  (f * c  +  g * s)/t;
+
+	if( xxa < 0.0 )
+		{
+		cc = -cc;
+		ss = -ss;
+		}
+
+	cca[0] = cc;
+	ssa[0] = ss;
+	return(0);
+	}
+	
+	/*							gdtr.c
+	 *
+	 *	Gamma distribution function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, x, y, gdtr();
+	 *
+	 * y = gdtr( a, b, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the integral from zero to x of the gamma probability
+	 * density function:
+	 *
+	 *
+	 *                x
+	 *        b       -
+	 *       a       | |   b-1  -at
+	 * y =  -----    |    t    e    dt
+	 *       -     | |
+	 *      | (b)   -
+	 *               0
+	 *
+	 *  The incomplete gamma integral is used, according to the
+	 * relation
+	 *
+	 * y = igam( b, ax ).
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * See igam().
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * gdtr domain         x < 0            0.0
+	 *
+	 */
+	
+	/*							gdtrc.c
+	 *
+	 *	Complemented gamma distribution function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, x, y, gdtrc();
+	 *
+	 * y = gdtrc( a, b, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the integral from x to infinity of the gamma
+	 * probability density function:
+	 *
+	 *
+	 *               inf.
+	 *        b       -
+	 *       a       | |   b-1  -at
+	 * y =  -----    |    t    e    dt
+	 *       -     | |
+	 *      | (b)   -
+	 *               x
+	 *
+	 *  The incomplete gamma integral is used, according to the
+	 * relation
+	 *
+	 * y = igamc( b, ax ).
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * See igamc().
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * gdtrc domain         x < 0            0.0
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.3:  March,1995
+	Copyright 1984, 1987, 1995 by Stephen L. Moshier
+	*/
+
+	public double gdtr(double a, double b, double x) {
+
+	if( x < 0.0 )
+		{
+		MipavUtil.displayError("DOMAIN error in gdtr");
+		return( 0.0 );
+		}
+	return(  igam( b, a * x )  );
+	}
+	
+	public double gdtrc(double a, double b, double x) {
+
+	if( x < 0.0 )
+		{
+		MipavUtil.displayError("DOMAIN error in gdtrc");
+		return( 0.0 );
+		}
+	return(  igamc( b, a * x )  );
+	}
+	
+	/*							psi.c
+	 *
+	 *	Psi (digamma) function
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, psi();
+	 *
+	 * y = psi( x );
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 *              d      -
+	 *   psi(x)  =  -- ln | (x)
+	 *              dx
+	 *
+	 * is the logarithmic derivative of the gamma function.
+	 * For integer x,
+	 *                   n-1
+	 *                    -
+	 * psi(n) = -EUL  +   >  1/k.
+	 *                    -
+	 *                   k=1
+	 *
+	 * This formula is used for 0 < n <= 10.  If x is negative, it
+	 * is transformed to a positive argument by the reflection
+	 * formula  psi(1-x) = psi(x) + pi cot(pi x).
+	 * For general positive x, the argument is made greater than 10
+	 * using the recurrence  psi(x+1) = psi(x) + 1/x.
+	 * Then the following asymptotic expansion is applied:
+	 *
+	 *                           inf.   B
+	 *                            -      2k
+	 * psi(x) = log(x) - 1/2x -   >   -------
+	 *                            -        2k
+	 *                           k=1   2k x
+	 *
+	 * where the B2k are Bernoulli numbers.
+	 *
+	 * ACCURACY:
+	 *    Relative error (except absolute when |psi| < 1):
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC       0,30         2500       1.7e-16     2.0e-17
+	 *    IEEE      0,30        30000       1.3e-15     1.4e-16
+	 *    IEEE      -30,0       40000       1.5e-15     2.2e-16
+	 *
+	 * ERROR MESSAGES:
+	 *     message         condition      value returned
+	 * psi singularity    x integer <=0      MAXNUM
+	 */
+	
+	/*
+	Cephes Math Library Release 2.2:  July, 1992
+	Copyright 1984, 1987, 1992 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double psi(double x) {
+	double p, q, nz, s, w, y, z;
+	int i, n, negative;
+
+	negative = 0;
+	nz = 0.0;
+
+	if( x <= 0.0 )
+		{
+		negative = 1;
+		q = x;
+		p = Math.floor(q);
+		if( p == q )
+			{
+			MipavUtil.displayError("SINGULARITY in psi");
+			return( MAXNUM );
+			}
+	/* Remove the zeros of tan(PI x)
+	 * by subtracting the nearest integer from x
+	 */
+		nz = q - p;
+		if( nz != 0.5 )
+			{
+			if( nz > 0.5 )
+				{
+				p += 1.0;
+				nz = q - p;
+				}
+			nz = Math.PI/Math.tan(Math.PI*nz);
+			}
+		else
+			{
+			nz = 0.0;
+			}
+		x = 1.0 - x;
+		}
+
+	/* check for positive integer up to 10 */
+	if( (x <= 10.0) && (x == Math.floor(x)) )
+		{
+		y = 0.0;
+		n = (int)x;
+		for( i=1; i<n; i++ )
+			{
+			w = i;
+			y += 1.0/w;
+			}
+		y -= EUL;
+		if( negative != 0)
+		{
+		y -= nz;
+		}
+
+	    return(y);
+		}
+
+	s = x;
+	w = 0.0;
+	while( s < 10.0 )
+		{
+		w += 1.0/s;
+		s += 1.0;
+		}
+
+	if( s < 1.0e17 )
+		{
+		z = 1.0/(s * s);
+		y = z * polevl( z, APSI, 6 );
+		}
+	else
+		y = 0.0;
+
+	y = Math.log(s)  -  (0.5/s)  -  y  -  w;
+
+	if( negative != 0)
+		{
+		y -= nz;
+		}
+
+	return(y);
+	}
+
+	/*							hyp2f1.c
+	 *
+	 *	Gauss hypergeometric function   F
+	 *	                               2 1
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, c, x, y, hyp2f1();
+	 *
+	 * y = hyp2f1( a, b, c, x );
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 *
+	 *  hyp2f1( a, b, c, x )  =   F ( a, b; c; x )
+	 *                           2 1
+	 *
+	 *           inf.
+	 *            -   a(a+1)...(a+k) b(b+1)...(b+k)   k+1
+	 *   =  1 +   >   -----------------------------  x   .
+	 *            -         c(c+1)...(c+k) (k+1)!
+	 *          k = 0
+	 *
+	 *  Cases addressed are
+	 *	Tests and escapes for negative integer a, b, or c
+	 *	Linear transformation if c - a or c - b negative integer
+	 *	Special case c = a or c = b
+	 *	Linear transformation for  x near +1
+	 *	Transformation for x < -0.5
+	 *	Psi function expansion if x > 0.5 and c - a - b integer
+	 *      Conditionally, a recurrence on c to make c-a-b > 0
+	 *
+	 * |x| > 1 is rejected.
+	 *
+	 * The parameters a, b, c are considered to be integer
+	 * valued if they are within 1.0e-14 of the nearest integer
+	 * (1.0e-13 for IEEE arithmetic).
+	 *
+	 * ACCURACY:
+	 *
+	 *
+	 *               Relative error (-1 < x < 1):
+	 * arithmetic   domain     # trials      peak         rms
+	 *    IEEE      -1,7        230000      1.2e-11     5.2e-14
+	 *
+	 * Several special cases also tested with a, b, c in
+	 * the range -7 to 7.
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 * A "partial loss of precision" message is printed if
+	 * the internally estimated relative error exceeds 1^-12.
+	 * A "singularity" message is printed on overflow or
+	 * in cases not addressed (such as x < -1).
+	 */
+	
+	/*
+	Cephes Math Library Release 2.2:  November, 1992
+	Copyright 1984, 1987, 1992 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double hyp2f1(double a, double b, double c, double x) {
+	double d, d1, d2, e;
+	double p, q, r, s, y, ax;
+	double ia, ib, ic, id;
+	int flag, i, aid;
+
+	double err[] = new double[] {0.0};
+	ax = Math.abs(x);
+	s = 1.0 - x;
+	flag = 0;
+	ia = Math.round(a); /* nearest integer to a */
+	ib = Math.round(b);
+
+	if( a <= 0 )
+		{
+		if( Math.abs(a-ia) < EPS )		/* a is a negative integer */
+			flag |= 1;
+		}
+
+	if( b <= 0 )
+		{
+		if( Math.abs(b-ib) < EPS )		/* b is a negative integer */
+			flag |= 2;
+		}
+
+	if( ax < 1.0 )
+		{
+		if( Math.abs(b-c) < EPS )		/* b = c */
+			{
+			y = Math.pow( s, -a );	/* s to the -a power */
+			if( err[0] > ETHRESH )
+			{
+			System.err.println("PRECISION LOSS in hyp2f1");
+		    System.err.println( "Estimated err = " + err[0] );
+			}
+		    return(y);
+			}
+		if( Math.abs(a-c) < EPS )		/* a = c */
+			{
+			y = Math.pow( s, -b );	/* s to the -b power */
+			if( err[0] > ETHRESH )
+			{
+			System.err.println("PRECISION LOSS in hyp2f1");
+		    System.err.println( "Estimated err = " + err[0] );
+			}
+		    return(y);
+			}
+		}
+
+
+
+	if( c <= 0.0 )
+		{
+		ic = Math.round(c); 	/* nearest integer to c */
+		if( Math.abs(c-ic) < EPS )		/* c is a negative integer */
+			{
+			/* check if termination before explosion */
+			if( ((flag & 1) != 0) && (ia > ic) ) {
+				y = hyt2f1( a, b, c, x, err );
+				if( err[0] > ETHRESH )
+					{
+					System.err.println("PRECISION LOSS in hyp2f1");
+				    System.err.println( "Estimated err = " + err );
+					}
+				return(y);
+			}
+			if( ((flag & 2) != 0) && (ib > ic) ) {
+				y = hyt2f1( a, b, c, x, err );
+				if( err[0] > ETHRESH )
+					{
+					System.err.println("PRECISION LOSS in hyp2f1");
+				    System.err.println( "Estimated err = " + err );
+					}
+				return(y);	
+			}
+			MipavUtil.displayError("OVERFLOW case 1 in hyp2f1");
+			return( MAXNUM );
+			}
+		}
+
+	if( flag != 0) {			/* function is a polynomial */
+		y = hyt2f1( a, b, c, x, err );
+		if( err[0] > ETHRESH )
+			{
+			System.err.println("PRECISION LOSS in hyp2f1");
+		    System.err.println( "Estimated err = " + err );
+			}
+		return(y);		
+	}
+
+	if( ax > 1.0 )	{		
+		/* series diverges	*/
+		MipavUtil.displayError("OVERFLOW case 2 in hyp2f1");
+		return( MAXNUM );
+	}
+
+	p = c - a;
+	ia = Math.round(p); /* nearest integer to c-a */
+	if( (ia <= 0.0) && (Math.abs(p-ia) < EPS) )	/* negative int c - a */
+		flag |= 4;
+
+	r = c - b;
+	ib = Math.round(r); /* nearest integer to c-b */
+	if( (ib <= 0.0) && (Math.abs(r-ib) < EPS) )	/* negative int c - b */
+		flag |= 8;
+
+	d = c - a - b;
+	id = Math.round(d); /* nearest integer to d */
+	q = Math.abs(d-id);
+
+	/* Thanks to Christian Burger <BURGER@DMRHRZ11.HRZ.Uni-Marburg.DE>
+	 * for reporting a bug here.  */
+	if( Math.abs(ax-1.0) < EPS )			/* |x| == 1.0	*/
+		{
+		if( x > 0.0 )
+			{
+			if( (flag & 12) != 0 ) /* negative int c-a or c-b */
+				{
+				if( d >= 0.0 ) {
+					y = Math.pow( s, d ) * hys2f1( c-a, c-b, c, x, err );
+					if( err[0] > ETHRESH )
+					{
+					System.err.println("PRECISION LOSS in hyp2f1");
+				    System.err.println( "Estimated err = " + err );
+					}
+				    return(y);
+				}
+				else {
+					MipavUtil.displayError("OVERFLOW case 3 in hyp2f1");
+					return( MAXNUM );	
+				}
+				}
+			if( d <= 0.0 ) {
+				MipavUtil.displayError("OVERFLOW case 4 in hyp2f1");
+				return( MAXNUM );
+			}
+			y = true_gamma(c)*true_gamma(d)/(true_gamma(p)*true_gamma(r));
+			if( err[0] > ETHRESH )
+			{
+			System.err.println("PRECISION LOSS in hyp2f1");
+		    System.err.println( "Estimated err = " + err );
+			}
+		    return(y);
+			}
+
+		if( d <= -1.0 ) {
+			MipavUtil.displayError("OVERFLOW case 5 in hyp2f1");
+			return( MAXNUM );
+		}
+
+		}
+
+	/* Conditionally make d > 0 by recurrence on c
+	 * AMS55 #15.2.27
+	 */
+	if( d < 0.0 )
+		{
+	/* Try the power series first */
+		y = hyt2f1( a, b, c, x, err );
+		if( err[0] < ETHRESH ) {
+		    return(y);	
+		}
+	
+	/* Apply the recurrence if power series fails */
+		err[0] = 0.0;
+		aid = (int)(2 - id);
+		e = c + aid;
+		d2 = hyp2f1(a,b,e,x);
+		d1 = hyp2f1(a,b,e+1.0,x);
+		q = a + b + 1.0;
+		for( i=0; i<aid; i++ )
+			{
+			r = e - 1.0;
+			y = (e*(r-(2.0*e-q)*x)*d2 + (e-a)*(e-b)*x*d1)/(e*r*s);
+			e = r;
+			d1 = d2;
+			d2 = y;
+			}
+		if( err[0] > ETHRESH )
+		{
+		System.err.println("PRECISION LOSS in hyp2f1");
+	    System.err.println( "Estimated err = " + err );
+		}
+	    return(y);
+		}
+
+
+	if( (flag & 12) != 0 ) {
+	    /* negative integer c-a or c-b */
+		y = Math.pow( s, d ) * hys2f1( c-a, c-b, c, x, err );
+		if( err[0] > ETHRESH )
+		{
+		System.err.println("PRECISION LOSS in hyp2f1");
+	    System.err.println( "Estimated err = " + err );
+		}
+	    return(y);
+	}
+
+	y = hyt2f1( a, b, c, x, err );
+
+	if( err[0] > ETHRESH )
+		{
+		System.err.println("PRECISION LOSS in hyp2f1");
+	    System.err.println( "Estimated err = " + err );
+		}
+	return(y);
+
+	
+	}
+	
+	/* Apply transformations for |x| near 1
+	 * then call the power series
+	 */
+	public double hyt2f1(double a, double b, double c, double x, double loss[]) {
+	double p, q, r, s, t, y, d;
+	double ax, id, d1, d2, e, y1;
+	int i, aid;
+
+	double err[] = new double[] {0.0};
+	double err1[] = new double[1];
+	s = 1.0 - x;
+	if( x < -0.5 )
+		{
+		if( b > a )
+			y = Math.pow( s, -a ) * hys2f1( a, c-b, c, -x/s, err );
+
+		else
+			y = Math.pow( s, -b ) * hys2f1( c-a, b, c, -x/s, err );
+
+		loss[0] = err[0];
+		return(y);
+		}
+
+	d = c - a - b;
+	id = Math.round(d);	/* nearest integer to d */
+
+	if( x > 0.9 )
+	{
+	if( Math.abs(d-id) > EPS ) /* test for integer c-a-b */
+		{
+	/* Try the power series first */
+		y = hys2f1( a, b, c, x, err );
+		if( err[0] < ETHRESH ) {
+			loss[0] = err[0];
+			return(y);
+		}
+	/* If power series fails, then apply AMS55 #15.3.6 */
+		q = hys2f1( a, b, 1.0-d, s, err );	
+		q *= true_gamma(d) /(true_gamma(c-a) * true_gamma(c-b));
+		r = Math.pow(s,d) * hys2f1( c-a, c-b, d+1.0, s, err1 );
+		r *= true_gamma(-d)/(true_gamma(a) * true_gamma(b));
+		y = q + r;
+
+		q = Math.abs(q); /* estimate cancellation error */
+		r = Math.abs(r);
+		if( q > r )
+			r = q;
+		err[0] += err1[0] + (MACHEP*r)/y;
+
+		y *= true_gamma(c);
+		loss[0] = err[0];
+		return(y);
+		}
+	else
+		{
+	/* Psi function expansion, AMS55 #15.3.10, #15.3.11, #15.3.12 */
+		if( id >= 0.0 )
+			{
+			e = d;
+			d1 = d;
+			d2 = 0.0;
+			aid = (int)id;
+			}
+		else
+			{
+			e = -d;
+			d1 = 0.0;
+			d2 = d;
+			aid = (int)(-id);
+			}
+
+		ax = Math.log(s);
+
+		/* sum for t = 0 */
+		y = psi(1.0) + psi(1.0+e) - psi(a+d1) - psi(b+d1) - ax;
+		y /= true_gamma(e+1.0);
+
+		p = (a+d1) * (b+d1) * s / true_gamma(e+2.0);	/* Poch for t=1 */
+		t = 1.0;
+		do
+			{
+			r = psi(1.0+t) + psi(1.0+t+e) - psi(a+t+d1)
+				- psi(b+t+d1) - ax;
+			q = p * r;
+			y += q;
+			p *= s * (a+t+d1) / (t+1.0);
+			p *= (b+t+d1) / (t+1.0+e);
+			t += 1.0;
+			}
+		while( Math.abs(q/y) > EPS );
+
+
+		if( id == 0.0 )
+			{
+			y *= true_gamma(c)/(true_gamma(a)*true_gamma(b));
+			loss[0] = err[0];
+			return(y);
+			}
+
+		y1 = 1.0;
+
+		if( aid != 1 ) {
+
+		t = 0.0;
+		p = 1.0;
+		for( i=1; i<aid; i++ )
+			{
+			r = 1.0-e+t;
+			p *= s * (a+t+d2) * (b+t+d2) / r;
+			t += 1.0;
+			p /= t;
+			y1 += p;
+			}
+		} // if (aid != 1)
+	
+		p = true_gamma(c);
+		y1 *= true_gamma(e) * p / (true_gamma(a+d1) * true_gamma(b+d1));
+
+		y *= p / (true_gamma(a+d2) * true_gamma(b+d2));
+		if( (aid & 1) != 0 )
+			y = -y;
+
+		q = Math.pow( s, id );	/* s to the id power */
+		if( id > 0.0 )
+			y *= q;
+		else
+			y1 *= q;
+
+		y += y1;
+		loss[0] = err[0];
+		return(y);
+		}
+
+	}
+
+	/* Use defining power series if no special cases */
+	y = hys2f1( a, b, c, x, err );
+
+	loss[0] = err[0];
+	return(y);
+	}
+
+	/* Defining power series expansion of Gauss hypergeometric function */
+
+	public double hys2f1(double a, double b, double c, double x, double loss[]) {
+	//double *loss; /* estimates loss of significance */
+	double f, g, h, k, m, s, u, umax;
+	int i;
+
+	i = 0;
+	umax = 0.0;
+	f = a;
+	g = b;
+	h = c;
+	s = 1.0;
+	u = 1.0;
+	k = 0.0;
+	do
+		{
+		if( Math.abs(h) < EPS )
+			{
+			loss[0] = 1.0;
+			return( MAXNUM );
+			}
+		m = k + 1.0;
+		u = u * ((f+k) * (g+k) * x / ((h+k) * m));
+		s += u;
+		k = Math.abs(u);  /* remember largest term summed */
+		if( k > umax )
+			umax = k;
+		k = m;
+		if( ++i > 10000 ) /* should never happen */
+			{
+			loss[0] = 1.0;
+			return(s);
+			}
+		}
+	while( Math.abs(u/s) > MACHEP );
+
+	/* return estimated relative error */
+	loss[0] = (MACHEP*umax)/Math.abs(s) + (MACHEP*i);
+
+	return(s);
 	}
 
 }
