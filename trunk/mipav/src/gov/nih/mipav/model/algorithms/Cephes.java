@@ -117,23 +117,27 @@ public class Cephes {
 	public final static int GDTR = 19;
 	public final static int GDTRC = 20;
 	public final static int HYP2F1 = 21;
-	public final static int IGAM = 22;
-	public final static int IGAMI = 23;
-	public final static int IGAMC = 24;
-	public final static int INCBET = 25;
-	public final static int INCBI = 26;
-	public final static int LBETA = 27;
-	public final static int LGAM = 28;
-	public final static int NDTR = 29;
-	public final static int NDTRI = 30;
-	public final static int POLEVL = 31;
-	public final static int P1EVL = 32;
-	public final static int PSI = 33;
-	public final static int STIRF = 34;
-	public final static int STRUVE = 35;
-	public final static int TRUE_GAMMA = 36;
-	public final static int ZETA = 37;
-	public final static int ZETAC = 38;
+	public final static int HYPERG = 22;
+	public final static int IGAM = 23;
+	public final static int IGAMI = 24;
+	public final static int IGAMC = 25;
+	public final static int INCBET = 26;
+	public final static int INCBI = 27;
+	public final static int LBETA = 28;
+	public final static int LGAM = 29;
+	public final static int NDTR = 30;
+	public final static int NDTRI = 31;
+	public final static int POLEVL = 32;
+	public final static int P1EVL = 33;
+	public final static int PDTR = 34;
+	public final static int PDTRC = 35;
+	public final static int PDTRI = 36;
+	public final static int PSI = 37;
+	public final static int STIRF = 38;
+	public final static int STRUVE = 39;
+	public final static int TRUE_GAMMA = 40;
+	public final static int ZETA = 31;
+	public final static int ZETAC = 42;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -801,6 +805,8 @@ public class Cephes {
 		// The test for gdtr(1, 2, 0.1) passed
 		// The test for gdtrc(1, 2, 0.1) passed
 		// The test for hyp2f1(0.2, 1.1, 0.3, -1) passed
+		// The test for hyperg(-1.0, 0.2, 0.5) passed
+		// The test for hyperg(0.1, 0.2, 0.5) passed
 		// The test for igam(0.5,0) passed
 		// The test for igam(1,2) passed
 		// lowerIncompleteGamma = 23.297935486152934
@@ -822,6 +828,9 @@ public class Cephes {
 		// The test for ndtr(1) passed
 		// The test for ndtri(0.5) passed
 		// The test for ndtri(0.6) passed
+		// The test for pdtr(2, 0.15) passed
+		// The test for pdtrc(2, 0.15) passed
+		// The test for pdtri(2, 0.15) passed
 		// The test for psi(-4.9) passed
 		// The test for psi(-0.1) passed
 		// The test for psi(0.1) passed
@@ -1213,6 +1222,26 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.62482831198989075");
 	    }
 	    
+	    result[0] = hyperg(-1.0, 0.2, 0.5);
+	    if (Math.abs(result[0] + 1.5000000) < 1.0E-7) {
+	    	System.out.println("The test for hyperg(-1.0, 0.2, 0.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for hyperg(-1.0, 0.2, 0.5) failed");
+	    	System.out.println("Implemented hyperg gave " + result[0]);
+	    	System.out.println("Correct answer is -1.5000000");
+	    }
+	    
+	    result[0] = hyperg(0.1, 0.2, 0.5);
+	    if (Math.abs(result[0] -  1.3176272) < 1.0E-7) {
+	    	System.out.println("The test for hyperg(0.1, 0.2, 0.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for hyperg(0.1, 0.2, 0.5) failed");
+	    	System.out.println("Implemented hyperg gave " + result[0]);
+	    	System.out.println("Correct answer is 1.3176272");
+	    }
+	    
 	    double lowerIncompleteGamma[] = new double[1];
 	    double upperIncompleteGamma[] = new double[1];
 	    double regularizedGammaP[] = new double[1];
@@ -1378,6 +1407,36 @@ public class Cephes {
 	    	System.out.println("The test for ndtri(0.6) failed");
 	    	System.out.println("Implemented ndtri gave " + result[0]);
 	    	System.out.println("Correct answer is 0.25334710313579972");
+	    }
+	    
+	    result[0] = pdtr(2, 0.15);
+	    if (Math.abs(result[0] - 0.99949713762359838) < 1.0E-7) {
+	    	System.out.println("The test for pdtr(2, 0.15) passed");
+	    }
+	    else {
+	    	System.out.println("The test for pdtr(2, 0.15) failed");
+	    	System.out.println("Implemented pdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.99949713762359838");
+	    }
+	    
+	    result[0] = pdtrc(2, 0.15);
+	    if (Math.abs(result[0] - 0.00050286237640162121) < 1.0E-11) {
+	    	System.out.println("The test for pdtrc(2, 0.15) passed");
+	    }
+	    else {
+	    	System.out.println("The test for pdtrc(2, 0.15) failed");
+	    	System.out.println("Implemented pdtrc gave " + result[0]);
+	    	System.out.println("Correct answer is 0.00050286237640162121");
+	    }
+	    
+	    result[0] = pdtri(2, 0.15);
+	    if (Math.abs(result[0] - 4.7230515633946668) < 1.0E-7) {
+	    	System.out.println("The test for pdtri(2, 0.15) passed");
+	    }
+	    else {
+	    	System.out.println("The test for pdtri(2, 0.15) failed");
+	    	System.out.println("Implemented pdtri gave " + result[0]);
+	    	System.out.println("Correct answer is 4.7230515633946668");
 	    }
 	    
 	    result[0] = psi(-4.9);
@@ -1647,6 +1706,9 @@ public class Cephes {
 	    else if (version == HYP2F1) {
 	    	result[0] = hyp2f1(par1, par2, par5, par7);
 	    }
+	    else if (version == HYPERG) {
+	    	result[0] = hyperg(par1, par2, par5);
+	    }
 		else if (version == IGAMI) {
 			result[0] = igami(par1, par2);
 		}
@@ -1679,6 +1741,15 @@ public class Cephes {
 		}
 		else if (version == P1EVL) {
 			result[0] = p1evl(par1, par3, par4);
+		}
+		else if (version == PDTR) {
+			result[0] = pdtr(par4, par1);
+		}
+		else if (version == PDTRC) {
+			result[0] = pdtrc(par4, par1);
+		}
+		else if (version == PDTRI) {
+			result[0] = pdtri(par4, par1);
 		}
 		else if (version == PSI) {
 			result[0] = psi(par1);
@@ -6408,7 +6479,7 @@ public class Cephes {
 
 	    if (Math.abs(da) > MAX_ITERATIONS) {
 	        /* Too expensive to compute this value, so give up */
-	       MipavUtil.displayError ("TOO EXPENSIVE TO COMPUTE hyp2f1");
+	       MipavUtil.displayError ("TOTAL LOSS OF PRECISION in hyp2f1");
 	        loss[0] = 1.0;
 	        return Double.NaN;
 	    }
@@ -6450,27 +6521,546 @@ public class Cephes {
 	/*
     15.4.2 Abramowitz & Stegun.
 */
-public double hcephes_hyp2f1_neg_c_equal_bc(double a, double b, double x) {
-    double k;
-    double collector = 1;
-    double sum = 1;
-    double collector_max = 1;
+	public double hcephes_hyp2f1_neg_c_equal_bc(double a, double b, double x) {
+	    double k;
+	    double collector = 1;
+	    double sum = 1;
+	    double collector_max = 1;
+	
+	    if (!(Math.abs(b) < 1e5)) {
+	        return Double.NaN;
+	    }
+	
+	    for (k = 1; k <= -b; k++) {
+	        collector *= (a + k - 1) * x / k;
+	        collector_max = Math.max(Math.abs(collector), collector_max);
+	        sum += collector;
+	    }
+	
+	    if (1e-16 * (1 + collector_max / Math.abs(sum)) > 1e-7) {
+	        return Double.NaN;
+	    }
+	
+	    return sum;
+	}
+	
+	/*							hyperg.c
+	 *
+	 *	Confluent hypergeometric function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double a, b, x, y, hyperg();
+	 *
+	 * y = hyperg( a, b, x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Computes the confluent hypergeometric function
+	 *
+	 *                          1           2
+	 *                       a x    a(a+1) x
+	 *   F ( a,b;x )  =  1 + ---- + --------- + ...
+	 *  1 1                  b 1!   b(b+1) 2!
+	 *
+	 * Many higher transcendental functions are special cases of
+	 * this power series.
+	 *
+	 * As is evident from the formula, b must not be a negative
+	 * integer or zero unless a is an integer with 0 >= a > b.
+	 *
+	 * The routine attempts both a direct summation of the series
+	 * and an asymptotic expansion.  In each case error due to
+	 * roundoff, cancellation, and nonconvergence is estimated.
+	 * The result with smaller estimated error is returned.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * Tested at random points (a, b, x), all three variables
+	 * ranging from 0 to 30.
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC       0,30         2000       1.2e-15     1.3e-16
+	 *    IEEE      0,30        30000       1.8e-14     1.1e-15
+	 *
+	 * Larger errors can be observed when b is near a negative
+	 * integer or zero.  Certain combinations of arguments yield
+	 * serious cancellation error in the power series summation
+	 * and also are not in the region of near convergence of the
+	 * asymptotic series.  An error message is printed if the
+	 * self-estimated relative error is greater than 1.0e-12.
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.1:  November, 1988
+	Copyright 1984, 1987, 1988 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double hyperg(double a, double b, double x) {
+	double asum, psum;
+    double acanc[] = new double[1];
+    double pcanc[] = new double[1];
 
-    if (!(Math.abs(b) < 1e5)) {
-        return Double.NaN;
-    }
+	/* See if a Kummer transformation will help */
+	/*
+	temp = b - a;
+	if( fabs(temp) < fabs(b) )
+		return( exp(x) * hyperg( temp, b, -x )  );
+	*/
 
-    for (k = 1; k <= -b; k++) {
-        collector *= (a + k - 1) * x / k;
-        collector_max = Math.max(Math.abs(collector), collector_max);
-        sum += collector;
-    }
+	psum = hy1f1p( a, b, x, pcanc );
+	if( pcanc[0] < 1.0e-15 )
+		return (psum);
 
-    if (1e-16 * (1 + collector_max / Math.abs(sum)) > 1e-7) {
-        return Double.NaN;
-    }
 
-    return sum;
-}
+	/* try asymptotic series */
+
+	asum = hy1f1a( a, b, x, acanc );
+
+
+	/* Pick the result with less estimated error */
+
+	if( acanc[0] < pcanc[0] )
+		{
+		pcanc[0] = acanc[0];
+		psum = asum;
+		}
+
+	if( pcanc[0] > 1.0e-12 )
+		System.err.println("PRECISION LOSS in hyperg");
+
+	return( psum );
+	}
+
+	/* Power series summation for confluent hypergeometric function		*/
+
+
+	public double hy1f1p(double a, double b, double x, double err[]) {
+	double n, a0, sum, t, u, temp;
+	double an, bn, maxt, pcanc;
+
+
+	/* set up for power series summation */
+	an = a;
+	bn = b;
+	a0 = 1.0;
+	sum = 1.0;
+	n = 1.0;
+	t = 1.0;
+	maxt = 0.0;
+
+
+	while( t > MACHEP )
+		{
+		if( bn == 0 )			/* check bn first since if both	*/
+			{
+			MipavUtil.displayError("SINGULARITY in hyperg");
+			return( MAXNUM );	/* an and bn are zero it is	*/
+			}
+		if( an == 0 )			/* a singularity		*/
+			return( sum );
+		if( n <= 200 ) {
+			u = x * ( an / (bn * n) );
+	
+			/* check for blowup */
+			temp = Math.abs(u);
+			if( (temp > 1.0 ) && (maxt > (MAXNUM/temp)) )
+				{
+				pcanc = 1.0;	/* estimate 100% error */
+				err[0] = pcanc;
+				return( sum );
+				}
+	
+			a0 *= u;
+			sum += a0;
+			t = Math.abs(a0);
+			if( t > maxt )
+				maxt = t;
+		/*
+			if( (maxt/fabs(sum)) > 1.0e17 )
+				{
+				pcanc = 1.0;
+				goto blowup;
+				}
+		*/
+			an += 1.0;
+			bn += 1.0;
+			n += 1.0;
+			}
+		} // if (n <= 200)
+
+	/* estimate error due to roundoff and cancellation */
+	if( sum != 0.0 )
+		maxt /= Math.abs(sum);
+	maxt *= MACHEP; 	/* this way avoids multiply overflow */
+	pcanc = Math.abs( MACHEP * n  +  maxt );
+
+	err[0] = pcanc;
+
+	return( sum );
+	}
+
+	/*							hy1f1a()	*/
+	/* asymptotic formula for hypergeometric function:
+	 *
+	 *        (    -a                         
+	 *  --    ( |z|                           
+	 * |  (b) ( -------- 2f0( a, 1+a-b, -1/x )
+	 *        (  --                           
+	 *        ( |  (b-a)                      
+	 *
+	 *
+	 *                                x    a-b                     )
+	 *                               e  |x|                        )
+	 *                             + -------- 2f0( b-a, 1-a, 1/x ) )
+	 *                                --                           )
+	 *                               |  (a)                        )
+	 */
+
+	public double hy1f1a(double a, double b, double x, double err[]) {
+	double h1, h2, t, u, temp, acanc, asum;
+	double err1[] = new double[1];
+	double err2[] = new double[1];
+
+	if( x == 0 )
+		{
+		acanc = 1.0;
+		asum = MAXNUM;
+		err[0] = acanc;
+		return( asum );
+		}
+	temp = Math.log( Math.abs(x) );
+	t = x + temp * (a-b);
+	u = -temp * a;
+
+	if( b > 0 )
+		{
+		temp = lgam(b);
+		t += temp;
+		u += temp;
+		}
+
+	h1 = hyp2f0( a, a-b+1, -1.0/x, 1, err1 );
+
+	temp = Math.exp(u) / true_gamma(b-a);
+	h1 *= temp;
+	err1[0] *= temp;
+
+	h2 = hyp2f0( b-a, 1.0-a, 1.0/x, 2, err2 );
+
+	if( a < 0 )
+		temp = Math.exp(t) / true_gamma(a);
+	else
+		temp = Math.exp( t - lgam(a) );
+
+	h2 *= temp;
+	err2[0] *= temp;
+
+	if( x < 0.0 )
+		asum = h1;
+	else
+		asum = h2;
+
+	acanc = Math.abs(err1[0]) + Math.abs(err2[0]);
+
+
+	if( b < 0 )
+		{
+		temp = true_gamma(b);
+		asum *= temp;
+		acanc *= Math.abs(temp);
+		}
+
+
+	if( asum != 0.0 )
+		acanc /= Math.abs(asum);
+
+	acanc *= 30.0;	/* fudge factor, since error of asymptotic formula
+			 * often seems this much larger than advertised */
+
+	err[0] = acanc;
+	return( asum );
+	}
+	
+	double hyp2f0(double a, double b, double x, int type, double err[]) {
+	// int type;	/* determines what converging factor to use */
+	double a0, alast, t, tlast, maxt;
+	double n, an, bn, u, sum, temp;
+	boolean pdoneseg = true;
+
+	an = a;
+	bn = b;
+	a0 = 1.0e0;
+	alast = 1.0e0;
+	sum = 0.0;
+	n = 1.0e0;
+	t = 1.0e0;
+	tlast = 1.0e9;
+	maxt = 0.0;
+
+	do
+		{
+		if(( an == 0 ) || (bn == 0)) {
+			/* estimate error due to roundoff and cancellation */
+			err[0] = Math.abs(  MACHEP * (n + maxt)  );
+
+			alast = a0;
+			sum += alast;
+			return( sum );	
+		}
+			
+
+		u = an * (bn * x / n);
+
+		/* check for blowup */
+		temp = Math.abs(u);
+		if( (temp > 1.0 ) && (maxt > (MAXNUM/temp)) ) {
+			/* series blew up: */
+			err[0] = MAXNUM;
+			MipavUtil.displayError("TOTAL LOSS OF PRECISION in hyperg");
+			return( sum );
+		}
+
+		a0 *= u;
+		t = Math.abs(a0);
+
+		/* terminating condition for asymptotic series */
+		if( t > tlast ) {
+			pdoneseg = false;
+			break;
+		}
+
+		tlast = t;
+		sum += alast;	/* the sum is one term behind */
+		alast = a0;
+
+		if( n > 200 ) {
+			pdoneseg = false;
+			break;
+		}
+
+		an += 1.0e0;
+		bn += 1.0e0;
+		n += 1.0e0;
+		if( t > maxt )
+			maxt = t;
+		}
+	while( t > MACHEP );
+
+
+	if (pdoneseg) {
+		/* series converged! */
+	
+		/* estimate error due to roundoff and cancellation */
+		err[0] = Math.abs(  MACHEP * (n + maxt)  );
+	
+		alast = a0;
+		sum += alast;
+		return( sum );
+	}
+
+	/* series did not converge */
+
+	/* The following "Converging factors" are supposed to improve accuracy,
+	 * but do not actually seem to accomplish very much. */
+
+	n -= 1.0;
+	x = 1.0/x;
+
+	switch( type )	/* "type" given as subroutine argument */
+	{
+	case 1:
+		alast *= ( 0.5 + (0.125 + 0.25*b - 0.5*a + 0.25*x - 0.25*n)/x );
+		break;
+
+	case 2:
+		alast *= 2.0/3.0 - b + 2.0*a + x - n;
+		break;
+
+	default:
+		;
+	}
+
+	/* estimate error due to roundoff, cancellation, and nonconvergence */
+	err[0] = MACHEP * (n + maxt)  +  Math.abs ( a0 );
+
+
+	sum += alast;
+	return( sum );
+	}
+	
+	/*							pdtr.c
+	 *
+	 *	Poisson distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int k;
+	 * double m, y, pdtr();
+	 *
+	 * y = pdtr( k, m );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the sum of the first k terms of the Poisson
+	 * distribution:
+	 *
+	 *   k         j
+	 *   --   -m  m
+	 *   >   e    --
+	 *   --       j!
+	 *  j=0
+	 *
+	 * The terms are not summed directly; instead the incomplete
+	 * gamma integral is employed, according to the relation
+	 *
+	 * y = pdtr( k, m ) = igamc( k+1, m ).
+	 *
+	 * The arguments must both be positive.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * See igamc().
+	 *
+	 */
+	
+	/*							pdtrc()
+	 *
+	 *	Complemented poisson distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int k;
+	 * double m, y, pdtrc();
+	 *
+	 * y = pdtrc( k, m );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns the sum of the terms k+1 to infinity of the Poisson
+	 * distribution:
+	 *
+	 *  inf.       j
+	 *   --   -m  m
+	 *   >   e    --
+	 *   --       j!
+	 *  j=k+1
+	 *
+	 * The terms are not summed directly; instead the incomplete
+	 * gamma integral is employed, according to the formula
+	 *
+	 * y = pdtrc( k, m ) = igam( k+1, m ).
+	 *
+	 * The arguments must both be positive.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * See igam.c.
+	 *
+	 */
+	
+	/*							pdtri()
+	 *
+	 *	Inverse Poisson distribution
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * int k;
+	 * double m, y, pdtr();
+	 *
+	 * m = pdtri( k, y );
+	 *
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Finds the Poisson variable x such that the integral
+	 * from 0 to x of the Poisson density is equal to the
+	 * given probability y.
+	 *
+	 * This is accomplished using the inverse gamma integral
+	 * function and the relation
+	 *
+	 *    m = igami( k+1, y ).
+	 *
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * See igami.c.
+	 *
+	 * ERROR MESSAGES:
+	 *
+	 *   message         condition      value returned
+	 * pdtri domain    y < 0 or y >= 1       0.0
+	 *                     k < 0
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.3:  March, 1995
+	Copyright 1984, 1987, 1995 by Stephen L. Moshier
+	*/
+	
+	public double pdtrc(int k, double m ) {
+	double v;
+
+	if( (k < 0) || (m <= 0.0) )
+		{
+		MipavUtil.displayError("DOMAIN error in pdtrc");
+		return( 0.0 );
+		}
+	v = k+1;
+	return( igam( v, m ) );
+	}
+
+	public double pdtr(int k, double m ) {
+	double v;
+
+	if( (k < 0) || (m <= 0.0) )
+		{
+		MipavUtil.displayError("DOMAIN error in pdtr");
+		return( 0.0 );
+		}
+	v = k+1;
+	return( igamc( v, m ) );
+	}
+	
+	public double pdtri(int k, double y ) {
+	double v;
+
+	if( (k < 0) || (y < 0.0) || (y >= 1.0) )
+		{
+		MipavUtil.displayError("DOMAIN error in pdtri");
+		return( 0.0 );
+		}
+	v = k+1;
+	v = igami( v, y );
+	return( v );
+	}
 
 }
