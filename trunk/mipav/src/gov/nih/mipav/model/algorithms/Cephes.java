@@ -160,6 +160,7 @@ public class Cephes {
 	private final static double EPS = 1.0e-13;
 	private final static double EPS2 = 1.0e-10;
 	private final static double ETHRESH = 1.0e-12;
+	private final static int MAX_ITERATIONS = 10000;
 
 	private final boolean DEBUG = false;
 	private int sgngam;
@@ -799,6 +800,7 @@ public class Cephes {
 		// The test for fresnl(500.0, ssa, cca) passed
 		// The test for gdtr(1, 2, 0.1) passed
 		// The test for gdtrc(1, 2, 0.1) passed
+		// The test for hyp2f1(0.2, 1.1, 0.3, -1) passed
 		// The test for igam(0.5,0) passed
 		// The test for igam(1,2) passed
 		// lowerIncompleteGamma = 23.297935486152934
@@ -1201,13 +1203,7 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.9953211598395555");
 	    }
 	    
-	    // ax = abs(x) = 1.0
-	    // d = c - a - b = -1.0
-	    // so goes into if( fabs(ax-1.0) < EPS )			/* |x| == 1.0	*/
-	    // then goes into if( d <= -1.0 )
-	    // which takes it to the overflow exit at hypdiv
-	    // so the code cannot handle this example
-	    /*result[0] = hyp2f1(0.2, 1.1, 0.3, -1);
+	    result[0] = hyp2f1(0.2, 1.1, 0.3, -1);
 	    if (Math.abs(result[0] -  0.62482831198989075) < 1.0E-7) {
 	    	System.out.println("The test for hyp2f1(0.2, 1.1, 0.3, -1) passed");
 	    }
@@ -1215,7 +1211,7 @@ public class Cephes {
 	    	System.out.println("The test for hyp2f1(0.2, 1.1, 0.3, -1) failed");
 	    	System.out.println("Implemented hyp2f1 gave " + result[0]);
 	    	System.out.println("Correct answer is 0.62482831198989075");
-	    }*/
+	    }
 	    
 	    double lowerIncompleteGamma[] = new double[1];
 	    double upperIncompleteGamma[] = new double[1];
@@ -5939,219 +5935,240 @@ public class Cephes {
 	 * in cases not addressed (such as x < -1).
 	 */
 	
-	/*
-	Cephes Math Library Release 2.2:  November, 1992
-	Copyright 1984, 1987, 1992 by Stephen L. Moshier
-	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
-	*/
-	
 	public double hyp2f1(double a, double b, double c, double x) {
-	double d, d1, d2, e;
-	double p, q, r, s, y, ax;
-	double ia, ib, ic, id;
-	int flag, i, aid;
+		// hcephes version
+		double d, d1, d2, e;
+	    double p, q, r, s, y, ax;
+	    double ia, ib, ic, id;
+	    double t1;
+	    int i, aid;
+	    int neg_int_a = 0, neg_int_b = 0;
+	    int neg_int_ca_or_cb = 0;
 
-	double err[] = new double[] {0.0};
-	ax = Math.abs(x);
-	s = 1.0 - x;
-	flag = 0;
-	ia = Math.round(a); /* nearest integer to a */
-	ib = Math.round(b);
+	    double err[] = new double[] {0.0};
+	    ax = Math.abs(x);
+	    s = 1.0 - x;
+	    ia = Math.round(a); /* nearest integer to a */
+	    ib = Math.round(b);
 
-	if( a <= 0 )
-		{
-		if( Math.abs(a-ia) < EPS )		/* a is a negative integer */
-			flag |= 1;
-		}
+	    if (x == 0.0) {
+	        return 1.0;
+	    }
 
-	if( b <= 0 )
-		{
-		if( Math.abs(b-ib) < EPS )		/* b is a negative integer */
-			flag |= 2;
-		}
+	    d = c - a - b;
+	    id = Math.round(d);
 
-	if( ax < 1.0 )
-		{
-		if( Math.abs(b-c) < EPS )		/* b = c */
-			{
-			y = Math.pow( s, -a );	/* s to the -a power */
-			if( err[0] > ETHRESH )
-			{
-			System.err.println("PRECISION LOSS in hyp2f1");
-		    System.err.println( "Estimated err = " + err[0] );
-			}
-		    return(y);
-			}
-		if( Math.abs(a-c) < EPS )		/* a = c */
-			{
-			y = Math.pow( s, -b );	/* s to the -b power */
-			if( err[0] > ETHRESH )
-			{
-			System.err.println("PRECISION LOSS in hyp2f1");
-		    System.err.println( "Estimated err = " + err[0] );
-			}
-		    return(y);
-			}
-		}
+	    if ((a == 0 || b == 0) && c != 0) {
+	        return 1.0;
+	    }
 
+	    if (a <= 0 && Math.abs(a - ia) < EPS) { /* a is a negative integer */
+	        neg_int_a = 1;
+	    }
 
+	    if (b <= 0 && Math.abs(b - ib) < EPS) { /* b is a negative integer */
+	        neg_int_b = 1;
+	    }
 
-	if( c <= 0.0 )
-		{
-		ic = Math.round(c); 	/* nearest integer to c */
-		if( Math.abs(c-ic) < EPS )		/* c is a negative integer */
-			{
-			/* check if termination before explosion */
-			if( ((flag & 1) != 0) && (ia > ic) ) {
-				y = hyt2f1( a, b, c, x, err );
-				if( err[0] > ETHRESH )
-					{
-					System.err.println("PRECISION LOSS in hyp2f1");
-				    System.err.println( "Estimated err = " + err );
-					}
-				return(y);
-			}
-			if( ((flag & 2) != 0) && (ib > ic) ) {
-				y = hyt2f1( a, b, c, x, err );
-				if( err[0] > ETHRESH )
-					{
-					System.err.println("PRECISION LOSS in hyp2f1");
-				    System.err.println( "Estimated err = " + err );
-					}
-				return(y);	
-			}
-			MipavUtil.displayError("OVERFLOW case 1 in hyp2f1");
-			return( MAXNUM );
-			}
-		}
+	    if ((d <= -1) && (!(Math.abs(d - id) > EPS && s < 0)) && (!((neg_int_a != 0)|| (neg_int_b != 0)))) {
+	        return (Math.pow(s, d) * hyp2f1(c - a, c - b, c, x));
+	    }
+	    if (d <= 0 && x == 1 && !((neg_int_a != 0)|| (neg_int_b != 0))) {
+	    	MipavUtil.displayError("OVERFLOW in hyp2f1");
+	 	    return Double.POSITIVE_INFINITY;
+	    }
 
-	if( flag != 0) {			/* function is a polynomial */
-		y = hyt2f1( a, b, c, x, err );
-		if( err[0] > ETHRESH )
-			{
-			System.err.println("PRECISION LOSS in hyp2f1");
-		    System.err.println( "Estimated err = " + err );
-			}
-		return(y);		
-	}
-
-	if( ax > 1.0 )	{		
-		/* series diverges	*/
-		MipavUtil.displayError("OVERFLOW case 2 in hyp2f1");
-		return( MAXNUM );
-	}
-
-	p = c - a;
-	ia = Math.round(p); /* nearest integer to c-a */
-	if( (ia <= 0.0) && (Math.abs(p-ia) < EPS) )	/* negative int c - a */
-		flag |= 4;
-
-	r = c - b;
-	ib = Math.round(r); /* nearest integer to c-b */
-	if( (ib <= 0.0) && (Math.abs(r-ib) < EPS) )	/* negative int c - b */
-		flag |= 8;
-
-	d = c - a - b;
-	id = Math.round(d); /* nearest integer to d */
-	q = Math.abs(d-id);
-
-	/* Thanks to Christian Burger <BURGER@DMRHRZ11.HRZ.Uni-Marburg.DE>
-	 * for reporting a bug here.  */
-	if( Math.abs(ax-1.0) < EPS )			/* |x| == 1.0	*/
-		{
-		if( x > 0.0 )
-			{
-			if( (flag & 12) != 0 ) /* negative int c-a or c-b */
+	    if (ax < 1.0 || x == -1.0) {
+	        /* 2F1(a,b;b;x) = (1-x)**(-a) */
+	        if (Math.abs(b - c) < EPS) { /* b = c */
+	            if (neg_int_b != 0) {
+	                y = hcephes_hyp2f1_neg_c_equal_bc(a, b, x);
+	            } else {
+	                y = Math.pow(s, -a); /* s to the -a power */
+	            }
+	            if( err[0] > ETHRESH )
 				{
-				if( d >= 0.0 ) {
-					y = Math.pow( s, d ) * hys2f1( c-a, c-b, c, x, err );
-					if( err[0] > ETHRESH )
-					{
-					System.err.println("PRECISION LOSS in hyp2f1");
-				    System.err.println( "Estimated err = " + err );
-					}
-				    return(y);
+				System.err.println("PRECISION LOSS in hyp2f1");
+			    System.err.println( "Estimated err = " + err );
 				}
-				else {
-					MipavUtil.displayError("OVERFLOW case 3 in hyp2f1");
-					return( MAXNUM );	
+			    return(y);
+	        }
+	        if (Math.abs(a - c) < EPS) { /* a = c */
+	            y = Math.pow(s, -b);      /* s to the -b power */
+	            if( err[0] > ETHRESH )
+				{
+				System.err.println("PRECISION LOSS in hyp2f1");
+			    System.err.println( "Estimated err = " + err );
 				}
-				}
-			if( d <= 0.0 ) {
-				MipavUtil.displayError("OVERFLOW case 4 in hyp2f1");
-				return( MAXNUM );
-			}
-			y = true_gamma(c)*true_gamma(d)/(true_gamma(p)*true_gamma(r));
-			if( err[0] > ETHRESH )
+			    return(y);
+	        }
+	    }
+
+	    if (c <= 0.0) {
+	        ic = Math.round(c);            /* nearest integer to c */
+	        if (Math.abs(c - ic) < EPS) { /* c is a negative integer */
+	            /* check if termination before explosion */
+	            if ((neg_int_a != 0) && (ia > ic)) {
+	            	y = hyt2f1(a, b, c, x, err);
+            		if( err[0] > ETHRESH )
+            		{
+            		System.err.println("PRECISION LOSS in hyp2f1");
+            	    System.err.println( "Estimated err = " + err );
+            		}
+            	    return(y);
+	            }
+	            if ((neg_int_b != 0) && (ib > ic)) {
+	            	y = hyt2f1(a, b, c, x, err);
+            		if( err[0] > ETHRESH )
+            		{
+            		System.err.println("PRECISION LOSS in hyp2f1");
+            	    System.err.println( "Estimated err = " + err );
+            		}
+            	    return(y);	
+	            }
+	            MipavUtil.displayError("OVERFLOW in hyp2f1");
+	    	    return Double.POSITIVE_INFINITY;
+	        }
+	    }
+
+	    if ((neg_int_a != 0) || (neg_int_b != 0))  { /* function is a polynomial */
+	    	y = hyt2f1(a, b, c, x, err);
+    		if( err[0] > ETHRESH )
+    		{
+    		System.err.println("PRECISION LOSS in hyp2f1");
+    	    System.err.println( "Estimated err = " + err );
+    		}
+    	    return(y);		
+	    }
+
+	    t1 = Math.abs(b - a);
+	    if (x < -2.0 && Math.abs(t1 - Math.round(t1)) > EPS) {
+	        /* This transform has a pole for b-a integer, and
+	         * may produce large cancellation errors for |1/x| close 1
+	         */
+	        p = hyp2f1(a, 1 - c + a, 1 - b + a, 1.0 / x);
+	        q = hyp2f1(b, 1 - c + b, 1 - a + b, 1.0 / x);
+	        p *= Math.pow(-x, -a);
+	        q *= Math.pow(-x, -b);
+	        t1 = true_gamma(c);
+	        s = t1 * true_gamma(b - a) / (true_gamma(b) * true_gamma(c - a));
+	        y = t1 * true_gamma(a - b) / (true_gamma(a) * true_gamma(c - b));
+	        return s * p + y * q;
+	    } else if (x < -1.0) {
+	        if (Math.abs(a) < Math.abs(b)) {
+	            return Math.pow(s, -a) * hyp2f1(a, c - b, c, x / (x - 1));
+	        } else {
+	            return Math.pow(s, -b) * hyp2f1(b, c - a, c, x / (x - 1));
+	        }
+	    }
+
+	    if (ax > 1.0) { /* series diverges  */
+	        MipavUtil.displayError("OVERFLOW in hyp2f1");
+	 	    return Double.POSITIVE_INFINITY;	
+	    }
+
+	    p = c - a;
+	    ia = Math.round(p);                           /* nearest integer to c-a */
+	    if ((ia <= 0.0) && (Math.abs(p - ia) < EPS)) /* negative int c - a */
+	        neg_int_ca_or_cb = 1;
+
+	    r = c - b;
+	    ib = Math.round(r);                           /* nearest integer to c-b */
+	    if ((ib <= 0.0) && (Math.abs(r - ib) < EPS)) /* negative int c - b */
+	        neg_int_ca_or_cb = 1;
+
+	    id = Math.round(d); /* nearest integer to d */
+	    q = Math.abs(d - id);
+
+	    /* Thanks to Christian Burger <BURGER@DMRHRZ11.HRZ.Uni-Marburg.DE>
+	     * for reporting a bug here.  */
+	    if (Math.abs(ax - 1.0) < EPS) { /* |x| == 1.0   */
+	        if (x > 0.0) {
+	            if (neg_int_ca_or_cb != 0) {
+	                if (d >= 0.0) {
+	                	y = Math.pow(s, d) * hys2f1(c - a, c - b, c, x, err);
+	                	if( err[0] > ETHRESH )
+	            		{
+	            		System.err.println("PRECISION LOSS in hyp2f1");
+	            	    System.err.println( "Estimated err = " + err );
+	            		}
+	            	    return(y);
+	                }
+	                else {
+	                	MipavUtil.displayError("OVERFLOW in hyp2f1");
+	            	    return Double.POSITIVE_INFINITY;	
+	                }
+	            }
+	            if (d <= 0.0) {
+	            	MipavUtil.displayError("OVERFLOW in hyp2f1");
+	        	    return Double.POSITIVE_INFINITY;
+	            }
+	            y = true_gamma(c) * true_gamma(d) /
+	                (true_gamma(p) * true_gamma(r));
+	            if( err[0] > ETHRESH )
+	    		{
+	    		System.err.println("PRECISION LOSS in hyp2f1");
+	    	    System.err.println( "Estimated err = " + err );
+	    		}
+	    	    return(y);
+	        }
+	        if (d <= -1.0) {
+	        	MipavUtil.displayError("OVERFLOW in hyp2f1");
+	     	    return Double.POSITIVE_INFINITY;	
+	        }
+	    }
+
+	    /* Conditionally make d > 0 by recurrence on c
+	     * AMS55 #15.2.27
+	     */
+	    if (d < 0.0) {
+	        /* Try the power series first */
+	        y = hyt2f1(a, b, c, x, err);
+	        if (err[0] < ETHRESH) {
+	    	    return(y);
+	        }
+	        /* Apply the recurrence if power series fails */
+	        err[0] = 0.0;
+	        aid = (int)(2 - id);
+	        e = c + aid;
+	        d2 = hyp2f1(a, b, e, x);
+	        d1 = hyp2f1(a, b, e + 1.0, x);
+	        q = a + b + 1.0;
+	        for (i = 0; i < aid; i++) {
+	            r = e - 1.0;
+	            y = (e * (r - (2.0 * e - q) * x) * d2 + (e - a) * (e - b) * x * d1) /
+	                (e * r * s);
+	            e = r;
+	            d1 = d2;
+	            d2 = y;
+	        }
+	        if( err[0] > ETHRESH )
+    		{
+    		System.err.println("PRECISION LOSS in hyp2f1");
+    	    System.err.println( "Estimated err = " + err );
+    		}
+	        return (y);
+	    }
+
+	    if (neg_int_ca_or_cb != 0) {
+	    	/* negative integer c-a or c-b */
+	    	y = Math.pow(s, d) * hys2f1(c - a, c - b, c, x, err);
+	    	if( err[0] > ETHRESH )
 			{
 			System.err.println("PRECISION LOSS in hyp2f1");
 		    System.err.println( "Estimated err = " + err );
 			}
-		    return(y);
-			}
+		    return (y);
+	    }
 
-		if( d <= -1.0 ) {
-			MipavUtil.displayError("OVERFLOW case 5 in hyp2f1");
-			return( MAXNUM );
-		}
+	    y = hyt2f1(a, b, c, x, err);
 
-		}
-
-	/* Conditionally make d > 0 by recurrence on c
-	 * AMS55 #15.2.27
-	 */
-	if( d < 0.0 )
-		{
-	/* Try the power series first */
-		y = hyt2f1( a, b, c, x, err );
-		if( err[0] < ETHRESH ) {
-		    return(y);	
-		}
-	
-	/* Apply the recurrence if power series fails */
-		err[0] = 0.0;
-		aid = (int)(2 - id);
-		e = c + aid;
-		d2 = hyp2f1(a,b,e,x);
-		d1 = hyp2f1(a,b,e+1.0,x);
-		q = a + b + 1.0;
-		for( i=0; i<aid; i++ )
-			{
-			r = e - 1.0;
-			y = (e*(r-(2.0*e-q)*x)*d2 + (e-a)*(e-b)*x*d1)/(e*r*s);
-			e = r;
-			d1 = d2;
-			d2 = y;
-			}
 		if( err[0] > ETHRESH )
 		{
 		System.err.println("PRECISION LOSS in hyp2f1");
 	    System.err.println( "Estimated err = " + err );
 		}
-	    return(y);
-		}
-
-
-	if( (flag & 12) != 0 ) {
-	    /* negative integer c-a or c-b */
-		y = Math.pow( s, d ) * hys2f1( c-a, c-b, c, x, err );
-		if( err[0] > ETHRESH )
-		{
-		System.err.println("PRECISION LOSS in hyp2f1");
-	    System.err.println( "Estimated err = " + err );
-		}
-	    return(y);
-	}
-
-	y = hyt2f1( a, b, c, x, err );
-
-	if( err[0] > ETHRESH )
-		{
-		System.err.println("PRECISION LOSS in hyp2f1");
-	    System.err.println( "Estimated err = " + err );
-		}
-	return(y);
-
+	    return (y);
 	
 	}
 	
@@ -6300,44 +6317,160 @@ public class Cephes {
 	/* Defining power series expansion of Gauss hypergeometric function */
 
 	public double hys2f1(double a, double b, double c, double x, double loss[]) {
+    // hcephes version
 	//double *loss; /* estimates loss of significance */
 	double f, g, h, k, m, s, u, umax;
 	int i;
+	int ib, intflag = 0;
 
-	i = 0;
-	umax = 0.0;
-	f = a;
-	g = b;
-	h = c;
-	s = 1.0;
-	u = 1.0;
-	k = 0.0;
-	do
-		{
-		if( Math.abs(h) < EPS )
-			{
-			loss[0] = 1.0;
-			return( MAXNUM );
-			}
-		m = k + 1.0;
-		u = u * ((f+k) * (g+k) * x / ((h+k) * m));
-		s += u;
-		k = Math.abs(u);  /* remember largest term summed */
-		if( k > umax )
-			umax = k;
-		k = m;
-		if( ++i > 10000 ) /* should never happen */
-			{
-			loss[0] = 1.0;
-			return(s);
-			}
-		}
-	while( Math.abs(u/s) > MACHEP );
+    if (Math.abs(b) > Math.abs(a)) {
+        /* Ensure that |a| > |b| ... */
+        f = b;
+        b = a;
+        a = f;
+    }
 
-	/* return estimated relative error */
-	loss[0] = (MACHEP*umax)/Math.abs(s) + (MACHEP*i);
+    ib = (int)Math.round(b);
 
-	return(s);
+    if (Math.abs(b - ib) < EPS && ib <= 0 && Math.abs(b) < Math.abs(a)) {
+        /* .. except when `b` is a smaller negative integer */
+        f = b;
+        b = a;
+        a = f;
+        intflag = 1;
+    }
+
+    if ((Math.abs(a) > Math.abs(c) + 1 || (intflag != 0)) && Math.abs(c - a) > 2 && Math.abs(a) > 2) {
+        /* |a| >> |c| implies that large cancellation error is to be expected.
+         *
+         * We try to reduce it with the recurrence relations
+         */
+        return hcephes_hyp2f1ra(a, b, c, x, loss);
+    }
+
+    i = 0;
+    umax = 0.0;
+    f = a;
+    g = b;
+    h = c;
+    s = 1.0;
+    u = 1.0;
+    k = 0.0;
+    do {
+        if (Math.abs(h) < EPS) {
+            loss[0] = 1.0;
+            return Double.POSITIVE_INFINITY;
+        }
+        m = k + 1.0;
+        u = u * ((f + k) * (g + k) * x / ((h + k) * m));
+        s += u;
+        k = Math.abs(u); /* remember largest term summed */
+        if (k > umax)
+            umax = k;
+        k = m;
+        if (++i > MAX_ITERATIONS) { /* should never happen */
+            loss[0] = 1.0;
+            return (s);
+        }
+    } while (s == 0 || Math.abs(u / s) > MACHEP);
+
+    /* return estimated relative error */
+    loss[0] = (MACHEP * umax) / Math.abs(s) + (MACHEP * i);
+
+    return (s);
+	
 	}
+	
+	/*
+	 * Evaluate hypergeometric function by two-term recurrence in `a`.
+	 *
+	 * This avoids some of the loss of precision in the strongly alternating
+	 * hypergeometric series, and can be used to reduce the `a` and `b` parameters
+	 * to smaller values.
+	 *
+	 * AMS55 #15.2.10
+	 */
+	public double hcephes_hyp2f1ra(double a, double b, double c, double x, double loss[]) {
+	    double f2, f1, f0;
+	    int n;
+	    double t, da;
+	    double err[] = new double[1];
+
+	    /* Don't cross c or zero */
+	    if ((c < 0 && a <= c) || (c >= 0 && a >= c)) {
+	        da = Math.round(a - c);
+	    } else {
+	        da = Math.round(a);
+	    }
+	    t = a - da;
+
+	    loss[0] = 0;
+
+	    if (Math.abs(da) > MAX_ITERATIONS) {
+	        /* Too expensive to compute this value, so give up */
+	       MipavUtil.displayError ("TOO EXPENSIVE TO COMPUTE hyp2f1");
+	        loss[0] = 1.0;
+	        return Double.NaN;
+	    }
+
+	    if (da < 0) {
+	        /* Recurse down */
+	        f2 = 0;
+	        f1 = hys2f1(t, b, c, x, err);
+	        loss[0] += err[0];
+	        f0 = hys2f1(t - 1, b, c, x, err);
+	        loss[0] += err[0];
+	        t -= 1;
+	        for (n = 1; n < -da; ++n) {
+	            f2 = f1;
+	            f1 = f0;
+	            f0 =
+	                -(2 * t - c - t * x + b * x) / (c - t) * f1 - t * (x - 1) / (c - t) * f2;
+	            t -= 1;
+	        }
+	    } else {
+	        /* Recurse up */
+	        f2 = 0;
+	        f1 = hys2f1(t, b, c, x, err);
+	        loss[0] += err[0];
+	        f0 = hys2f1(t + 1, b, c, x, err);
+	        loss[0] += err[0];
+	        t += 1;
+	        for (n = 1; n < da; ++n) {
+	            f2 = f1;
+	            f1 = f0;
+	            f0 = -((2 * t - c - t * x + b * x) * f1 + (c - t) * f2) / (t * (x - 1));
+	            t += 1;
+	        }
+	    }
+
+	    return f0;
+	}
+	
+	/*
+    15.4.2 Abramowitz & Stegun.
+*/
+public double hcephes_hyp2f1_neg_c_equal_bc(double a, double b, double x) {
+    double k;
+    double collector = 1;
+    double sum = 1;
+    double collector_max = 1;
+
+    if (!(Math.abs(b) < 1e5)) {
+        return Double.NaN;
+    }
+
+    for (k = 1; k <= -b; k++) {
+        collector *= (a + k - 1) * x / k;
+        collector_max = Math.max(Math.abs(collector), collector_max);
+        sum += collector;
+    }
+
+    if (1e-16 * (1 + collector_max / Math.abs(sum)) > 1e-7) {
+        return Double.NaN;
+    }
+
+    return sum;
+}
 
 }
