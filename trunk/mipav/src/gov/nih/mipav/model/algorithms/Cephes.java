@@ -100,44 +100,51 @@ public class Cephes {
 	public final static int CHBEVL = 2;
 	public final static int CHDTR = 3;
 	public final static int CHDTRC = 4;
-	public final static int CHDTRI = 5;
-	public final static int DAWSN = 6;
-	public final static int ELLIE = 7;
-	public final static int ELLIK = 8;
-	public final static int ELLPE = 9;
-	public final static int ELLPK = 10;
-	public final static int ERF = 11;
-	public final static int ERFC = 12;
-	public final static int EXPN = 13;
-	public final static int FAC = 14;
-	public final static int FDTR = 15;
-	public final static int FDTRC = 16;
-	public final static int FDTRI = 17;
-	public final static int FRESNL = 18;
-	public final static int GDTR = 19;
-	public final static int GDTRC = 20;
-	public final static int HYP2F1 = 21;
-	public final static int HYPERG = 22;
-	public final static int IGAM = 23;
-	public final static int IGAMI = 24;
-	public final static int IGAMC = 25;
-	public final static int INCBET = 26;
-	public final static int INCBI = 27;
-	public final static int LBETA = 28;
-	public final static int LGAM = 29;
-	public final static int NDTR = 30;
-	public final static int NDTRI = 31;
-	public final static int POLEVL = 32;
-	public final static int P1EVL = 33;
-	public final static int PDTR = 34;
-	public final static int PDTRC = 35;
-	public final static int PDTRI = 36;
-	public final static int PSI = 37;
-	public final static int STIRF = 38;
-	public final static int STRUVE = 39;
-	public final static int TRUE_GAMMA = 40;
-	public final static int ZETA = 31;
-	public final static int ZETAC = 42;
+	public final static int COSM1 = 5;
+	public final static int CHDTRI = 6;
+	public final static int DAWSN = 7;
+	public final static int ELLIE = 8;
+	public final static int ELLIK = 9;
+	public final static int ELLPE = 10;
+	public final static int ELLPK = 11;
+	public final static int ERF = 12;
+	public final static int ERFC = 13;
+	public final static int EXPM1 = 14;
+	public final static int EXPN = 15;
+	public final static int FAC = 16;
+	public final static int FDTR = 17;
+	public final static int FDTRC = 18;
+	public final static int FDTRI = 19;
+	public final static int FRESNL = 20;
+	public final static int GDTR = 21;
+	public final static int GDTRC = 22;
+	public final static int HYP2F1 = 23;
+	public final static int HYPERG = 24;
+	public final static int IGAM = 25;
+	public final static int IGAMI = 26;
+	public final static int IGAMC = 27;
+	public final static int INCBET = 28;
+	public final static int INCBI = 29;
+	public final static int LBETA = 20;
+	public final static int LGAM = 31;
+	public final static int LOG1P = 32;
+	public final static int NDTR = 33;
+	public final static int NDTRI = 34;
+	public final static int POLEVL = 35;
+	public final static int P1EVL = 36;
+	public final static int PDTR = 37;
+	public final static int PDTRC = 38;
+	public final static int PDTRI = 39;
+	public final static int PSI = 40;
+	public final static int RGAMMA = 41;
+	public final static int SHICHI = 42;
+	public final static int SICI = 43;
+	public final static int SPENCE = 44;
+	public final static int STIRF = 45;
+	public final static int STRUVE = 46;
+	public final static int TRUE_GAMMA = 47;
+	public final static int ZETA = 48;
+	public final static int ZETAC = 49;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -151,10 +158,12 @@ public class Cephes {
 	private final static double EUL = 0.57721566490153286060;
 	/* sqrt(2pi) */
 	private final static double s2pi = 2.50662827463100050242E0;
+	private final static double PIO4   =  7.85398163397448309616E-1;  // pi/4
 	private final static double PIO2   =  1.57079632679489661923; // pi/2
 	private final static double LOGPI = 1.14472988584940017414;
 	/* log( sqrt( 2*pi ) ) */
 	private final static double LS2PI  =  0.91893853320467274178;
+	private final static double SQRT2  =  1.41421356237309504880;    // sqrt(2)
 	private final static double SQRTH  =  7.07106781186547524401E-1; // sqrt(2)/2
 	private final static int MAXL2 = 127;
 	private final static double MAXSTIR = 143.01608;
@@ -736,6 +745,29 @@ public class Cephes {
 	  1.86958710162783236342E-22,
 	};
 	
+	/* Chebyshev coefficients for reciprocal gamma function
+	 * in interval 0 to 1.  Function is 1/(x gamma(x)) - 1
+	 */
+
+	private final static double RGAM[] = new double[] {
+	 3.13173458231230000000E-17,
+	-6.70718606477908000000E-16,
+	 2.20039078172259550000E-15,
+	 2.47691630348254132600E-13,
+	-6.60074100411295197440E-12,
+	 5.13850186324226978840E-11,
+	 1.08965386454418662084E-9,
+	-3.33964630686836942556E-8,
+	 2.68975996440595483619E-7,
+	 2.96001177518801696639E-6,
+	-8.04814124978471142852E-5,
+	 4.16609138709688864714E-4,
+	 5.06579864028608725080E-3,
+	-6.41925436109158228810E-2,
+	-4.98558728684003594785E-3,
+	 1.27546015610523951063E-1
+	};
+	
 	private final static double APSI[] = new double[] {
 		 8.33333333333333333333E-2,
 		-2.10927960927960927961E-2,
@@ -745,6 +777,308 @@ public class Cephes {
 		-8.33333333333333333333E-3,
 		 8.33333333333333333333E-2
 		};
+	
+	/* x exp(-x) shi(x), inverted interval 8 to 18 */
+	private final static double S1SHI[] = new double[] {
+	 1.83889230173399459482E-17,
+	-9.55485532279655569575E-17,
+	 2.04326105980879882648E-16,
+	 1.09896949074905343022E-15,
+	-1.31313534344092599234E-14,
+	 5.93976226264314278932E-14,
+	-3.47197010497749154755E-14,
+	-1.40059764613117131000E-12,
+	 9.49044626224223543299E-12,
+	-1.61596181145435454033E-11,
+	-1.77899784436430310321E-10,
+	 1.35455469767246947469E-9,
+	-1.03257121792819495123E-9,
+	-3.56699611114982536845E-8,
+	 1.44818877384267342057E-7,
+	 7.82018215184051295296E-7,
+	-5.39919118403805073710E-6,
+	-3.12458202168959833422E-5,
+	 8.90136741950727517826E-5,
+	 2.02558474743846862168E-3,
+	 2.96064440855633256972E-2,
+	 1.11847751047257036625E0
+	};
+	
+	/* x exp(-x) shi(x), inverted interval 18 to 88 */
+	private final static double S2SHI[] = new double[] {
+	-1.05311574154850938805E-17,
+	 2.62446095596355225821E-17,
+	 8.82090135625368160657E-17,
+	-3.38459811878103047136E-16,
+	-8.30608026366935789136E-16,
+	 3.93397875437050071776E-15,
+	 1.01765565969729044505E-14,
+	-4.21128170307640802703E-14,
+	-1.60818204519802480035E-13,
+	 3.34714954175994481761E-13,
+	 2.72600352129153073807E-12,
+	 1.66894954752839083608E-12,
+	-3.49278141024730899554E-11,
+	-1.58580661666482709598E-10,
+	-1.79289437183355633342E-10,
+	 1.76281629144264523277E-9,
+	 1.69050228879421288846E-8,
+	 1.25391771228487041649E-7,
+	 1.16229947068677338732E-6,
+	 1.61038260117376323993E-5,
+	 3.49810375601053973070E-4,
+	 1.28478065259647610779E-2,
+	 1.03665722588798326712E0
+	};
+	
+	/* x exp(-x) chin(x), inverted interval 8 to 18 */
+	private final static double C1CHI[] = new double[] {
+	-8.12435385225864036372E-18,
+	 2.17586413290339214377E-17,
+	 5.22624394924072204667E-17,
+	-9.48812110591690559363E-16,
+	 5.35546311647465209166E-15,
+	-1.21009970113732918701E-14,
+	-6.00865178553447437951E-14,
+	 7.16339649156028587775E-13,
+	-2.93496072607599856104E-12,
+	-1.40359438136491256904E-12,
+	 8.76302288609054966081E-11,
+	-4.40092476213282340617E-10,
+	-1.87992075640569295479E-10,
+	 1.31458150989474594064E-8,
+	-4.75513930924765465590E-8,
+	-2.21775018801848880741E-7,
+	 1.94635531373272490962E-6,
+	 4.33505889257316408893E-6,
+	-6.13387001076494349496E-5,
+	-3.13085477492997465138E-4,
+	 4.97164789823116062801E-4,
+	 2.64347496031374526641E-2,
+	 1.11446150876699213025E0
+	};
+	
+	/* x exp(-x) chin(x), inverted interval 18 to 88 */
+	private final static double C2CHI[] = new double[] {
+	 8.06913408255155572081E-18,
+	-2.08074168180148170312E-17,
+	-5.98111329658272336816E-17,
+	 2.68533951085945765591E-16,
+	 4.52313941698904694774E-16,
+	-3.10734917335299464535E-15,
+	-4.42823207332531972288E-15,
+	 3.49639695410806959872E-14,
+	 6.63406731718911586609E-14,
+	-3.71902448093119218395E-13,
+	-1.27135418132338309016E-12,
+	 2.74851141935315395333E-12,
+	 2.33781843985453438400E-11,
+	 2.71436006377612442764E-11,
+	-2.56600180000355990529E-10,
+	-1.61021375163803438552E-9,
+	-4.72543064876271773512E-9,
+	-3.00095178028681682282E-9,
+	 7.79387474390914922337E-8,
+	 1.06942765566401507066E-6,
+	 1.59503164802313196374E-5,
+	 3.49592575153777996871E-4,
+	 1.28475387530065247392E-2,
+	 1.03665693917934275131E0
+	};
+	
+	private final static double SNSI[] = new double[] {
+		-8.39167827910303881427E-11,
+		 4.62591714427012837309E-8,
+		-9.75759303843632795789E-6,
+		 9.76945438170435310816E-4,
+		-4.13470316229406538752E-2,
+		 1.00000000000000000302E0,
+		};
+	private final static double SDSI[] = new double[] {
+		  2.03269266195951942049E-12,
+		  1.27997891179943299903E-9,
+		  4.41827842801218905784E-7,
+		  9.96412122043875552487E-5,
+		  1.42085239326149893930E-2,
+		  9.99999999999999996984E-1,
+		};
+	private final static double CNCI[] = new double[] {
+	 2.02524002389102268789E-11,
+	-1.35249504915790756375E-8,
+	 3.59325051419993077021E-6,
+	-4.74007206873407909465E-4,
+	 2.89159652607555242092E-2,
+	-1.00000000000000000080E0,
+	};
+	private final static double CDCI[] = new double[] {
+	  4.07746040061880559506E-12,
+	  3.06780997581887812692E-9,
+	  1.23210355685883423679E-6,
+	  3.17442024775032769882E-4,
+	  5.10028056236446052392E-2,
+	  4.00000000000000000080E0,
+	};
+	private final static double FN4[] = new double[] {
+		  4.23612862892216586994E0,
+		  5.45937717161812843388E0,
+		  1.62083287701538329132E0,
+		  1.67006611831323023771E-1,
+		  6.81020132472518137426E-3,
+		  1.08936580650328664411E-4,
+		  5.48900223421373614008E-7,
+		};
+	private final static double FD4[] = new double[] {
+		/*  1.00000000000000000000E0,*/
+		  8.16496634205391016773E0,
+		  7.30828822505564552187E0,
+		  1.86792257950184183883E0,
+		  1.78792052963149907262E-1,
+		  7.01710668322789753610E-3,
+		  1.10034357153915731354E-4,
+		  5.48900252756255700982E-7,
+		};
+	private final static double FN8[] = new double[] {
+		  4.55880873470465315206E-1,
+		  7.13715274100146711374E-1,
+		  1.60300158222319456320E-1,
+		  1.16064229408124407915E-2,
+		  3.49556442447859055605E-4,
+		  4.86215430826454749482E-6,
+		  3.20092790091004902806E-8,
+		  9.41779576128512936592E-11,
+		  9.70507110881952024631E-14,
+		};
+	private final static double FD8[] = new double[] {
+		/*  1.00000000000000000000E0,*/
+		  9.17463611873684053703E-1,
+		  1.78685545332074536321E-1,
+		  1.22253594771971293032E-2,
+		  3.58696481881851580297E-4,
+		  4.92435064317881464393E-6,
+		  3.21956939101046018377E-8,
+		  9.43720590350276732376E-11,
+		  9.70507110881952025725E-14,
+		};
+	private final static double GN4[] = new double[] {
+		  8.71001698973114191777E-2,
+		  6.11379109952219284151E-1,
+		  3.97180296392337498885E-1,
+		  7.48527737628469092119E-2,
+		  5.38868681462177273157E-3,
+		  1.61999794598934024525E-4,
+		  1.97963874140963632189E-6,
+		  7.82579040744090311069E-9,
+		};
+	private final static double GD4[] = new double[] {
+		/*  1.00000000000000000000E0,*/
+		  1.64402202413355338886E0,
+		  6.66296701268987968381E-1,
+		  9.88771761277688796203E-2,
+		  6.22396345441768420760E-3,
+		  1.73221081474177119497E-4,
+		  2.02659182086343991969E-6,
+		  7.82579218933534490868E-9,
+		};
+	private final static double GN8[] = new double[] {
+		  6.97359953443276214934E-1,
+		  3.30410979305632063225E-1,
+		  3.84878767649974295920E-2,
+		  1.71718239052347903558E-3,
+		  3.48941165502279436777E-5,
+		  3.47131167084116673800E-7,
+		  1.70404452782044526189E-9,
+		  3.85945925430276600453E-12,
+		  3.14040098946363334640E-15,
+		};
+	private final static double GD8[] = new double[] {
+		/*  1.00000000000000000000E0,*/
+		  1.68548898811011640017E0,
+		  4.87852258695304967486E-1,
+		  4.67913194259625806320E-2,
+		  1.90284426674399523638E-3,
+		  3.68475504442561108162E-5,
+		  3.57043223443740838771E-7,
+		  1.72693748966316146736E-9,
+		  3.87830166023954706752E-12,
+		  3.14040098946363335242E-15,
+		};
+	
+	private final static double ASPENCE[] = new double[] {
+		  4.65128586073990045278E-5,
+		  7.31589045238094711071E-3,
+		  1.33847639578309018650E-1,
+		  8.79691311754530315341E-1,
+		  2.71149851196553469920E0,
+		  4.25697156008121755724E0,
+		  3.29771340985225106936E0,
+		  1.00000000000000000126E0,
+		};
+	private final static double BSPENCE[] = new double[] {
+		  6.90990488912553276999E-4,
+		  2.54043763932544379113E-2,
+		  2.82974860602568089943E-1,
+		  1.41172597751831069617E0,
+		  3.63800533345137075418E0,
+		  5.03278880143316990390E0,
+		  3.54771340985225096217E0,
+		  9.99999999999999998740E-1,
+		};
+	
+	/* log1p(x) = log(1 + x)  */
+
+	/* Coefficients for log(1+x) = x - x**2/2 + x**3 P(x)/Q(x)
+	 * 1/sqrt(2) <= x < sqrt(2)
+	 * Theoretical peak relative error = 2.32e-20
+	 */
+	private final static double LP[] = new double[] {
+	 4.5270000862445199635215E-5,
+	 4.9854102823193375972212E-1,
+	 6.5787325942061044846969E0,
+	 2.9911919328553073277375E1,
+	 6.0949667980987787057556E1,
+	 5.7112963590585538103336E1,
+	 2.0039553499201281259648E1,
+	};
+	private final static double LQ[] = new double[] {
+	/* 1.0000000000000000000000E0,*/
+	 1.5062909083469192043167E1,
+	 8.3047565967967209469434E1,
+	 2.2176239823732856465394E2,
+	 3.0909872225312059774938E2,
+	 2.1642788614495947685003E2,
+	 6.0118660497603843919306E1,
+	};
+	
+	/* expm1(x) = exp(x) - 1  */
+
+	/*  e^x =  1 + 2x P(x^2)/( Q(x^2) - P(x^2) )
+	 * -0.5 <= x <= 0.5
+	 */
+
+	private final static double EP[] = new double[] {
+	 1.2617719307481059087798E-4,
+	 3.0299440770744196129956E-2,
+	 9.9999999999999999991025E-1,
+	};
+	private final static double EQ[] = new double[] {
+	 3.0019850513866445504159E-6,
+	 2.5244834034968410419224E-3,
+	 2.2726554820815502876593E-1,
+	 2.0000000000000000000897E0,
+	};
+	
+	/* cosm1(x) = cos(x) - 1  */
+
+	private final static double coscof[] = new double[] {
+	 4.7377507964246204691685E-14,
+	-1.1470284843425359765671E-11,
+	 2.0876754287081521758361E-9,
+	-2.7557319214999787979814E-7,
+	 2.4801587301570552304991E-5,
+	-1.3888888888888872993737E-3,
+	 4.1666666666666666609054E-2,
+	};
+
 	
 	private double result[];
 	
@@ -768,11 +1102,20 @@ public class Cephes {
 	
 	private double cca[];
 	
+	private double chi[];
+	
+	private double shi[];
+	
+	private double si[];
+	
+	private double ci[];
+	
 	public void testCephes() {
 		// The test for beta(6.3,2.9) passed
 		// The test for chdtr(4,5) passed
 		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
+		// The test for cosm1(0.9) passed
 		// The test for dawsn(0.0) passed
 		// The test for dawsn(1.0) passed
 		// The test for dawsn(2.0) passed
@@ -788,6 +1131,7 @@ public class Cephes {
 		// The test for erf(0.4) passed
 		// The test for erf(0.9) passed
 		// The test for erf(0.9) passed
+		// The test for expm1(0.5) passed
 		// The test for expn(1, 0.1) passed
 		// The test for expn(2, 0.0) passed
 		// The test for expn(2, 3.0) passed
@@ -823,6 +1167,7 @@ public class Cephes {
 		// The test for incbi(1.0, 3.0, 0.3) passed
 		// The test for lbeta(10.0,3.0) passed
 		// The test for lgam(3.4) passed
+		// The test for log1p(0.1) passed
 		// The test for ndtr(0.0) passed
 		// The test for ndtr(0.3) passed
 		// The test for ndtr(1) passed
@@ -836,6 +1181,14 @@ public class Cephes {
 		// The test for psi(0.1) passed
 		// The test for psi(1.0) passed
 		// The test for psi(4.5) passed
+		// The test for sici(0.5,si,ci) passed
+		// The test for sici(3.0,si,ci) passed
+		// The test for sici(5.0,si,ci) passed
+		// The test for sici(10.0,si,ci) passed
+		// The test for spence(0.0) passed
+		// The test for spence(0.01) passed
+		// The test for spence(0.10) passed
+		// The test for spence(0.50) passed
 		// The test for struve(0.0,0.0) passed
 		// The test for struve(0.0,5.0) passed
 		// The test for struve(1.0,0.0) passed
@@ -895,6 +1248,16 @@ public class Cephes {
 	    	System.out.println("The test for chdtri(4,0.3) failed");
 	    	System.out.println("Implemented chdtri gave " + result[0]);
 	    	System.out.println("Correct answer is 4.8784329665604087");
+	    }
+	    
+	    result[0] = cosm1(0.9);
+	    if (Math.abs(result[0] + 0.378390031729) < 1.0E-12) {
+	    	System.out.println("The test for cosm1(0.9) passed");
+	    }
+	    else {
+	    	System.out.println("The test for cosm1 failed");
+	    	System.out.println("Implemented cosm1 gave " + result[0]);
+	    	System.out.println("Correct answer is -0.378390031729");
 	    }
 	    
 	    result[0] = dawsn(0.0);
@@ -1048,6 +1411,16 @@ public class Cephes {
 	    	System.out.println("The test for erf(1.5) failed");
 	    	System.out.println("Implemented erf gave " + result[0]);
 	    	System.out.println("Correct answer is 0.9661051465");
+	    }
+	    
+	    result[0] = expm1(0.5);
+	    if (Math.abs(result[0] - 0.6487212707) < 1.0E-10) {
+	    	System.out.println("The test for expm1(0.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expm1(0.5) failed");
+	    	System.out.println("Implemented erf gave " + result[0]);
+	    	System.out.println("Correct answer is 0.6487212707");
 	    }
 	    
 	    result[0] = expn(1, 0.1);
@@ -1358,6 +1731,16 @@ public class Cephes {
 	    	System.out.println("Implemented lgam gave " + result[0]);
 	    	System.out.println("Correct answer is 1.0923280598027414");
 	    }
+		
+		result[0] = log1p(0.1);
+		if (Math.abs(result[0] - 0.0953101798043) < 1.0E-13) {
+	    	System.out.println("The test for log1p(0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for log1p(0.1) failed");
+	    	System.out.println("Implemented log1p gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0953101798043");
+	    }
 	    
 	    result[0] = ndtr(0.0);
 	    if (result[0] == 0.5) {
@@ -1489,6 +1872,88 @@ public class Cephes {
 	    	System.out.println("Correct answer is 1.38887093");
 	    }
 	    
+	    si = new double[1];
+	    ci = new double[1];
+	    sici(0.5,si,ci);
+	    if ((Math.abs(si[0] - .49310742) < 1.0E-7)  && (Math.abs(ci[0] + .17778408) < 1.0E-7)) {
+	    	System.out.println("The test for sici(0.5,si,ci) passed");
+	    }
+	    else {
+	    	System.out.println("The test for sici(0.5,si,ci) failed");
+	    	System.out.println("Implemented sici gave si[0] = " + si[0] + " ci[0] = " + ci[0]);
+	    	System.out.println("Correct answer is si[0] = 0.49310742 ci[0] = -0.17778408");
+	    }
+	    
+	    sici(3.0,si,ci);
+	    if ((Math.abs(si[0] - 1.84865253) < 1.0E-7)  && (Math.abs(ci[0] - 0.11962979) < 1.0E-7)) {
+	    	System.out.println("The test for sici(3.0,si,ci) passed");
+	    }
+	    else {
+	    	System.out.println("The test for sici(3.0,si,ci) failed");
+	    	System.out.println("Implemented sici gave si[0] = " + si[0] + " ci[0] = " + ci[0]);
+	    	System.out.println("Correct answer is si[0] = 1.84865253 ci[0] = 0.11962979");
+	    }
+	    
+	    sici(5.0,si,ci);
+	    if ((Math.abs(si[0] - 1.54993124) < 1.0E-7)  && (Math.abs(ci[0] + 0.19002975) < 1.0E-7)) {
+	    	System.out.println("The test for sici(5.0,si,ci) passed");
+	    }
+	    else {
+	    	System.out.println("The test for sici(5.0,si,ci) failed");
+	    	System.out.println("Implemented sici gave si[0] = " + si[0] + " ci[0] = " + ci[0]);
+	    	System.out.println("Correct answer is si[0] = 1.54993124 ci[0] = -0.19002975");
+	    }
+	    
+	    sici(10.0,si,ci);
+	    if ((Math.abs(si[0] - 1.65834759) < 1.0E-7)  && (Math.abs(ci[0] + 0.04545643) < 1.0E-7)) {
+	    	System.out.println("The test for sici(10.0,si,ci) passed");
+	    }
+	    else {
+	    	System.out.println("The test for sici(10.0,si,ci) failed");
+	    	System.out.println("Implemented sici gave si[0] = " + si[0] + " ci[0] = " + ci[0]);
+	    	System.out.println("Correct answer is si[0] = 1.65834759 ci[0] = -0.04545643");
+	    }
+	    
+	    result[0] = spence(0.0);
+	    if (Math.abs(result[0] - 1.644934067) < 1.0E-7) {
+	    	System.out.println("The test for spence(0.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for spence(0.0) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 1.644934067");
+	    }
+	    
+	    result[0] = spence(0.01);
+	    if (Math.abs(result[0] - 1.588625448) < 1.0E-7) {
+	    	System.out.println("The test for spence(0.01) passed");
+	    }
+	    else {
+	    	System.out.println("The test for spence(0.01) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 1.588625448");
+	    }
+	    
+	    result[0] = spence(0.10);
+	    if (Math.abs(result[0] - 1.299714723) < 1.0E-7) {
+	    	System.out.println("The test for spence(0.10) passed");
+	    }
+	    else {
+	    	System.out.println("The test for spence(0.10) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 1.299714723");
+	    }
+	    
+	    result[0] = spence(0.50);
+	    if (Math.abs(result[0] - 0.582240526) < 1.0E-7) {
+	    	System.out.println("The test for spence(0.50) passed");
+	    }
+	    else {
+	    	System.out.println("The test for spence(0.50) failed");
+	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Correct answer is 0.582240526");
+	    }
+	    		
 	    result[0] = struve(0.0,0.0);
 	    if (Math.abs(result[0]) < 1.0E-7) {
 	    	System.out.println("The test for struve(0.0,0.0) passed");
@@ -1659,6 +2124,9 @@ public class Cephes {
 	    else if (version == CHDTRI) {
 	    	result[0] = chdtri(par1, par2);
 		}
+	    else if (version == COSM1) {
+	    	result[0] = cosm1(par1);
+	    }
 	    else if (version == DAWSN) {
 	    	result[0] = dawsn(par1);
 	    }
@@ -1678,6 +2146,9 @@ public class Cephes {
 	    }
 	    else if (version == ERFC) {
 	    	result[0] = erfc(par1);
+	    }
+	    else if (version == EXPM1) {
+	    	result[0] = expm1(par1);
 	    }
 	    else if (version == EXPN) {
 	    	result[0] = expn(par4, par1);
@@ -1730,6 +2201,9 @@ public class Cephes {
 		else if (version == LGAM) {
 			result[0] = lgam(par1);
 		}
+		else if (version == LOG1P) {
+			result[0] = log1p(par1);
+		}
 		else if (version == NDTR) {
 			result[0] = ndtr(par1);
 		}
@@ -1753,6 +2227,18 @@ public class Cephes {
 		}
 		else if (version == PSI) {
 			result[0] = psi(par1);
+		}
+		else if (version == RGAMMA) {
+			result[0] = rgamma(par1);
+		}
+		else if (version == SHICHI) {
+			shichi(par1, shi, chi);
+		}
+		else if (version == SICI) {
+			sici(par1, si, ci);
+		}
+		else if (version == SPENCE) {
+			result[0] = spence(par1);
 		}
 		else if (version == STIRF) {
 			result[0] = stirf(par1);
@@ -7062,5 +7548,538 @@ public class Cephes {
 	v = igami( v, y );
 	return( v );
 	}
+	
+	/*						rgamma.c
+	 *
+	 *	Reciprocal gamma function
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, rgamma();
+	 *
+	 * y = rgamma( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Returns one divided by the gamma function of the argument.
+	 *
+	 * The function is approximated by a Chebyshev expansion in
+	 * the interval [0,1].  Range reduction is by recurrence
+	 * for arguments between -34.034 and +34.84425627277176174.
+	 * 1/MAXNUM is returned for positive arguments outside this
+	 * range.  For arguments less than -34.034 the cosecant
+	 * reflection formula is applied; lograrithms are employed
+	 * to avoid unnecessary overflow.
+	 *
+	 * The reciprocal gamma function has no singularities,
+	 * but overflow and underflow may occur for large arguments.
+	 * These conditions return either MAXNUM or 1/MAXNUM with
+	 * appropriate sign.
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    DEC      -30,+30       4000       1.2e-16     1.8e-17
+	 *    IEEE     -30,+30      30000       1.1e-15     2.0e-16
+	 * For arguments less than -34.034 the peak error is on the
+	 * order of 5e-15 (DEC), excepting overflow or underflow.
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1985, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double rgamma(double x)
+	{
+	double w, y, z;
+	int sign;
+
+	if( x > 34.84425627277176174)
+		{
+		MipavUtil.displayError("UNDERFLOW in rgamma");
+		return(1.0/MAXNUM);
+		}
+	if( x < -34.034 )
+		{
+		w = -x;
+		z = Math.sin(Math.PI*w );
+		if( z == 0.0 )
+			return(0.0);
+		if( z < 0.0 )
+			{
+			sign = 1;
+			z = -z;
+			}
+		else
+			sign = -1;
+
+		y = Math.log( w * z ) - Math.log(Math.PI) + lgam(w);
+		if( y < -MAXLOG )
+			{
+			MipavUtil.displayError("UNDERFLOW in rgamma");
+			return( sign * 1.0 / MAXNUM );
+			}
+		if( y > MAXLOG )
+			{
+			MipavUtil.displayError("OVERFLOW in rgamma");
+			return( sign * MAXNUM );
+			}
+		return( sign * Math.exp(y));
+		}
+	z = 1.0;
+	w = x;
+
+	while( w > 1.0 )	/* Downward recurrence */
+		{
+		w -= 1.0;
+		z *= w;
+		}
+	while( w < 0.0 )	/* Upward recurrence */
+		{
+		z /= w;
+		w += 1.0;
+		}
+	if( w == 0.0 )		/* Nonpositive integer */
+		return(0.0);
+	if( w == 1.0 )		/* Other integer */
+		return( 1.0/z );
+
+	y = w * ( 1.0 + chbevl( 4.0*w-2.0, RGAM, 16 ) ) / z;
+	return(y);
+	}
+	
+	/*							shichi.c
+	 *
+	 *	Hyperbolic sine and cosine integrals
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, Chi, Shi, shichi();
+	 *
+	 * shichi( x, &Chi, &Shi );
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Approximates the integrals
+	 *
+	 *                            x
+	 *                            -
+	 *                           | |   cosh t - 1
+	 *   Chi(x) = eul + ln x +   |    -----------  dt,
+	 *                         | |          t
+	 *                          -
+	 *                          0
+	 *
+	 *               x
+	 *               -
+	 *              | |  sinh t
+	 *   Shi(x) =   |    ------  dt
+	 *            | |       t
+	 *             -
+	 *             0
+	 *
+	 * where eul = 0.57721566490153286061 is Euler's constant.
+	 * The integrals are evaluated by power series for x < 8
+	 * and by Chebyshev expansions for x between 8 and 88.
+	 * For large x, both functions approach exp(x)/2x.
+	 * Arguments greater than 88 in magnitude return MAXNUM.
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 * Test interval 0 to 88.
+	 *                      Relative error:
+	 * arithmetic   function  # trials      peak         rms
+	 *    DEC          Shi       3000       9.1e-17
+	 *    IEEE         Shi      30000       6.9e-16     1.6e-16
+	 *        Absolute error, except relative when |Chi| > 1:
+	 *    DEC          Chi       2500       9.3e-17
+	 *    IEEE         Chi      30000       8.4e-16     1.4e-16
+	 */
+	
+	/*
+	Cephes Math Library Release 2.0:  April, 1987
+	Copyright 1984, 1987 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public void shichi(double x, double shi[], double chi[]) {
+	double k, z, c, s, a;
+	short sign;
+
+	if( x < 0.0 )
+		{
+		sign = -1;
+		x = -x;
+		}
+	else
+		sign = 0;
+
+
+	if( x == 0.0 )
+		{
+		shi[0] = 0.0;
+		chi[0] = -MAXNUM;
+		return;
+		}
+
+	if( x < 8.0 ) {
+
+	z = x * x;
+
+	/*	Direct power series expansion	*/
+
+	a = 1.0;
+	s = 1.0;
+	c = 0.0;
+	k = 2.0;
+
+	do
+		{
+		a *= z/k;
+		c += a/k;
+		k += 1.0;
+		a /= k;
+		s += a/k;
+		k += 1.0;
+		}
+	while( Math.abs(a/s) > MACHEP );
+
+	s *= x;
+	} // if (x < 8.0)
+	else if (x < 18.0) {
+		a = (576.0/x - 52.0)/10.0;
+		k = Math.exp(x) / x;
+		s = k * chbevl( a, S1SHI, 22 );
+		c = k * chbevl( a, C1CHI, 23 );
+	}
+	else if( x <= 88.0 )
+		{
+		a = (6336.0/x - 212.0)/70.0;
+		k = Math.exp(x) / x;
+		s = k * chbevl( a, S2SHI, 23 );
+		c = k * chbevl( a, C2CHI, 24 );
+	}
+	else
+		{
+		if( sign != 0)
+			shi[0] = -MAXNUM;
+		else
+			shi[0] = MAXNUM;
+		chi[0] = MAXNUM;
+		return;
+		}
+	
+	if( sign != 0)
+		s = -s;
+
+	shi[0] = s;
+
+	chi[0] = EUL + Math.log(x) + c;
+	return;
+	}
+
+	/*							sici.c
+	 *
+	 *	Sine and cosine integrals
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, Ci, Si, sici();
+	 *
+	 * sici( x, &Si, &Ci );
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Evaluates the integrals
+	 *
+	 *                          x
+	 *                          -
+	 *                         |  cos t - 1
+	 *   Ci(x) = eul + ln x +  |  --------- dt,
+	 *                         |      t
+	 *                        -
+	 *                         0
+	 *             x
+	 *             -
+	 *            |  sin t
+	 *   Si(x) =  |  ----- dt
+	 *            |    t
+	 *           -
+	 *            0
+	 *
+	 * where eul = 0.57721566490153286061 is Euler's constant.
+	 * The integrals are approximated by rational functions.
+	 * For x > 8 auxiliary functions f(x) and g(x) are employed
+	 * such that
+	 *
+	 * Ci(x) = f(x) sin(x) - g(x) cos(x)
+	 * Si(x) = pi/2 - f(x) cos(x) - g(x) sin(x)
+	 *
+	 *
+	 * ACCURACY:
+	 *    Test interval = [0,50].
+	 * Absolute error, except relative when > 1:
+	 * arithmetic   function   # trials      peak         rms
+	 *    IEEE        Si        30000       4.4e-16     7.3e-17
+	 *    IEEE        Ci        30000       6.9e-16     5.1e-17
+	 *    DEC         Si         5000       4.4e-17     9.0e-18
+	 *    DEC         Ci         5300       7.9e-17     5.2e-18
+	 */
+	
+	/*
+	Cephes Math Library Release 2.1:  January, 1989
+	Copyright 1984, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public void sici(double x, double si[], double ci[]) {
+	double z, c, s, f, g;
+	short sign;
+
+	if( x < 0.0 )
+		{
+		sign = -1;
+		x = -x;
+		}
+	else
+		sign = 0;
+
+
+	if( x == 0.0 )
+		{
+		si[0] = 0.0;
+		ci[0] = -MAXNUM;
+		return;
+		}
+
+
+	if( x > 1.0e9 )
+		{
+		si[0] = PIO2 - Math.cos(x)/x;
+		ci[0] = Math.sin(x)/x;
+		}
+
+
+
+	if( x <= 4.0 ) {
+
+		z = x * x;
+		s = x * polevl( z, SNSI, 5 ) / polevl( z, SDSI, 5 );
+		c = z * polevl( z, CNCI, 5 ) / polevl( z, CDCI, 5 );
+	
+		if( sign != 0)
+			s = -s;
+		si[0] = s;
+		ci[0] = EUL + Math.log(x) + c;	/* real part if x < 0 */
+		return;
+	} // if (x <= 4.0)
+
+
+
+	/* The auxiliary functions are:
+	 *
+	 *
+	 * *si = *si - PIO2;
+	 * c = cos(x);
+	 * s = sin(x);
+	 *
+	 * t = *ci * s - *si * c;
+	 * a = *ci * c + *si * s;
+	 *
+	 * *si = t;
+	 * *ci = -a;
+	 */
+
+
+	else { // x >= 4.0
+
+		s = Math.sin(x);
+		c = Math.cos(x);
+		z = 1.0/(x*x);
+		if( x < 8.0 )
+			{
+			f = polevl( z, FN4, 6 ) / (x * p1evl( z, FD4, 7 ));
+			g = z * polevl( z, GN4, 7 ) / p1evl( z, GD4, 7 );
+			}
+		else
+			{
+			f = polevl( z, FN8, 8 ) / (x * p1evl( z, FD8, 8 ));
+			g = z * polevl( z, GN8, 8 ) / p1evl( z, GD8, 9 );
+			}
+		si[0] = PIO2 - f * c - g * s;
+		if( sign != 0)
+			si[0] = -si[0];
+		ci[0] = f * s - g * c;
+	
+		return;
+	} // else x >= 4.0
+	}
+
+	/*							spence.c
+	 *
+	 *	Dilogarithm
+	 *
+	 *
+	 *
+	 * SYNOPSIS:
+	 *
+	 * double x, y, spence();
+	 *
+	 * y = spence( x );
+	 *
+	 *
+	 *
+	 * DESCRIPTION:
+	 *
+	 * Computes the integral
+	 *
+	 *                    x
+	 *                    -
+	 *                   | | log t
+	 * spence(x)  =  -   |   ----- dt
+	 *                 | |   t - 1
+	 *                  -
+	 *                  1
+	 *
+	 * for x >= 0.  A rational approximation gives the integral in
+	 * the interval (0.5, 1.5).  Transformation formulas for 1/x
+	 * and 1-x are employed outside the basic expansion range.
+	 *
+	 *
+	 *
+	 * ACCURACY:
+	 *
+	 *                      Relative error:
+	 * arithmetic   domain     # trials      peak         rms
+	 *    IEEE      0,4         30000       3.9e-15     5.4e-16
+	 *    DEC       0,4          3000       2.5e-16     4.5e-17
+	 *
+	 *
+	 */
+	
+	/*
+	Cephes Math Library Release 2.1:  January, 1989
+	Copyright 1985, 1987, 1989 by Stephen L. Moshier
+	Direct inquiries to 30 Frost Street, Cambridge, MA 02140
+	*/
+	
+	public double spence(double x) {
+	double w, y, z;
+	int flag;
+
+	if( x < 0.0 )
+		{
+		MipavUtil.displayError("DOMAIN error in spence");
+		return(0.0);
+		}
+
+	if( x == 1.0 )
+		return( 0.0 );
+
+	if( x == 0.0 )
+		return(Math.PI*Math.PI/6.0 );
+
+	flag = 0;
+
+	if( x > 2.0 )
+		{
+		x = 1.0/x;
+		flag |= 2;
+		}
+
+	if( x > 1.5 )
+		{
+		w = (1.0/x) - 1.0;
+		flag |= 2;
+		}
+
+	else if( x < 0.5 )
+		{
+		w = -x;
+		flag |= 1;
+		}
+
+	else
+		w = x - 1.0;
+
+
+	y = -w * polevl( w, ASPENCE, 7) / polevl( w, BSPENCE, 7 );
+
+	if( (flag & 1) != 0 )
+		y = (Math.PI * Math.PI)/6.0  - Math.log(x) * Math.log(1.0-x) - y;
+
+	if( (flag & 2) != 0 )
+		{
+		z = Math.log(x);
+		y = -0.5 * z * z  -  y;
+		}
+
+	return( y );
+	}
+	
+	/*							unity.c
+	 *
+	 * Relative error approximations for function arguments near
+	 * unity.
+	 *
+	 *    log1p(x) = log(1+x)
+	 *    expm1(x) = exp(x) - 1
+	 *    cosm1(x) = cos(x) - 1
+	 *
+	 */
+	
+	/* log1p(x) = log(1 + x)  */
+
+	/* Coefficients for log(1+x) = x - x**2/2 + x**3 P(x)/Q(x)
+	 * 1/sqrt(2) <= x < sqrt(2)
+	 * Theoretical peak relative error = 2.32e-20
+	 */
+	
+	public double log1p(double x) {
+	double z;
+
+	z = 1.0 + x;
+	if( (z < SQRTH) || (z > SQRT2) )
+		return( Math.log(z) );
+	z = x*x;
+	z = -0.5 * z + x * ( z * polevl( x, LP, 6 ) / p1evl( x, LQ, 6 ) );
+	return (x + z);
+	}
+	
+	public double expm1(double x) {
+	double r, xx;
+
+	if( (x < -0.5) || (x > 0.5) )
+		return(Math.exp(x) - 1.0 );
+	xx = x * x;
+	r = x * polevl( xx, EP, 2 );
+	r = r/( polevl( xx, EQ, 3 ) - r );
+	return (r + r);
+	}
+
+	public double cosm1(double x) {
+	double xx;
+
+	if( (x < -PIO4) || (x > PIO4) )
+		return( Math.cos(x) - 1.0 );
+	xx = x * x;
+	xx = -0.5*xx + xx * xx * polevl( xx, coscof, 6 );
+	return xx;
+	}
+
 
 }
