@@ -96,55 +96,69 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 public class Cephes {
 	
-	public final static int BETA = 1;
-	public final static int CHBEVL = 2;
-	public final static int CHDTR = 3;
-	public final static int CHDTRC = 4;
-	public final static int COSM1 = 5;
-	public final static int CHDTRI = 6;
-	public final static int DAWSN = 7;
-	public final static int ELLIE = 8;
-	public final static int ELLIK = 9;
-	public final static int ELLPE = 10;
-	public final static int ELLPK = 11;
-	public final static int ERF = 12;
-	public final static int ERFC = 13;
-	public final static int EXPM1 = 14;
-	public final static int EXPN = 15;
-	public final static int FAC = 16;
-	public final static int FDTR = 17;
-	public final static int FDTRC = 18;
-	public final static int FDTRI = 19;
-	public final static int FRESNL = 20;
-	public final static int GDTR = 21;
-	public final static int GDTRC = 22;
-	public final static int HYP2F1 = 23;
-	public final static int HYPERG = 24;
-	public final static int IGAM = 25;
-	public final static int IGAMI = 26;
-	public final static int IGAMC = 27;
-	public final static int INCBET = 28;
-	public final static int INCBI = 29;
-	public final static int LBETA = 20;
-	public final static int LGAM = 31;
-	public final static int LOG1P = 32;
-	public final static int NDTR = 33;
-	public final static int NDTRI = 34;
-	public final static int POLEVL = 35;
-	public final static int P1EVL = 36;
-	public final static int PDTR = 37;
-	public final static int PDTRC = 38;
-	public final static int PDTRI = 39;
-	public final static int PSI = 40;
-	public final static int RGAMMA = 41;
-	public final static int SHICHI = 42;
-	public final static int SICI = 43;
-	public final static int SPENCE = 44;
-	public final static int STIRF = 45;
-	public final static int STRUVE = 46;
-	public final static int TRUE_GAMMA = 47;
-	public final static int ZETA = 48;
-	public final static int ZETAC = 49;
+	public final static int BDTR = 1;
+	public final static int BDTRC = 2;
+	public final static int BDTRI = 3;
+	public final static int BETA = 4;
+	public final static int BTDTR = 5; // same as INCBET
+	public final static int CHBEVL = 6;
+	public final static int CHDTR = 7;
+	public final static int CHDTRC = 8;
+	public final static int COSM1 = 9;
+	public final static int CHDTRI = 10;
+	public final static int DAWSN = 11;
+	public final static int ELLIE = 12;
+	public final static int ELLIK = 13;
+	public final static int ELLPE = 14;
+	public final static int ELLPK = 15;
+	public final static int ERF = 16;
+	public final static int ERFC = 17;
+	public final static int EXPM1 = 18;
+	public final static int EXPN = 19;
+	public final static int EXPX2 = 20;
+	public final static int FAC = 21;
+	public final static int FDTR = 22;
+	public final static int FDTRC = 23;
+	public final static int FDTRI = 24;
+	public final static int FRESNL = 25;
+	public final static int GDTR = 26;
+	public final static int GDTRC = 27;
+	public final static int HYP2F1 = 28;
+	public final static int HYPERG = 29;
+	public final static int IGAM = 30;
+	public final static int IGAMI = 31;
+	public final static int IGAMC = 32;
+	public final static int INCBET = 33;
+	public final static int INCBI = 34;
+	public final static int KOLMOGI = 35;
+	public final static int KOLMOGOROV = 36;
+	public final static int LBETA = 37;
+	public final static int LGAM = 38;
+	public final static int LOG1P = 39;
+	public final static int NBDTR = 40;
+	public final static int NBDTRC = 41;
+	public final static int NBDTRI = 42;
+	public final static int NDTR = 43;
+	public final static int NDTRI = 44;
+	public final static int POLEVL = 45;
+	public final static int P1EVL = 46;
+	public final static int PDTR = 47;
+	public final static int PDTRC = 48;
+	public final static int PDTRI = 49;
+	public final static int PSI = 50;
+	public final static int RGAMMA = 51;
+	public final static int SHICHI = 52;
+	public final static int SICI = 53;
+	public final static int SMIRNOV = 54;
+	public final static int SMIRNOVI = 55;
+	public final static int SPENCE = 56;
+	public final static int STDTR = 57;
+	public final static int STDTRI = 58;
+	public final static int STIRF = 59;
+	public final static int STRUVE = 60;
+	public final static int TRUE_GAMMA = 61;
+	public final static int ZETA = 62;
+	public final static int ZETAC = 63;
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -1111,7 +1125,11 @@ public class Cephes {
 	private double ci[];
 	
 	public void testCephes() {
+		// The test for bdtr(4,5,0.25) passed
+		// The test for bdtrc(4,5,0.25) passed
+		// The test for bdtri(4,5,0.25) passed
 		// The test for beta(6.3,2.9) passed
+		// The test for btdtr(4,5,0.25) passed
 		// The test for chdtr(4,5) passed
 		// The test for chdtrc(4,5) passed
 		// The test for chdtri(4,0.3) passed
@@ -1137,6 +1155,7 @@ public class Cephes {
 		// The test for expn(2, 3.0) passed
 		// The test for expn(20, 1.5) passed
 		// The test for expn(20, 100.0) passed
+		// The test for expx2(2.1, 1) passed
 		// The test for fac(40) passed
 		// The test for fac(100) passed
 		// The test for fdtr(4, 5, 0.3) passed
@@ -1165,9 +1184,14 @@ public class Cephes {
 		// The test for igami(2,0.3) passed
 		// The test for incbet(1.0, 3.0, 0.3) passed
 		// The test for incbi(1.0, 3.0, 0.3) passed
+		// The test for kolmogi(0.24) passed
+		// The test for kolmogorov(2.0) passed
 		// The test for lbeta(10.0,3.0) passed
 		// The test for lgam(3.4) passed
 		// The test for log1p(0.1) passed
+		// The test for nbdtr(1,3,0.5) passed
+		// The test for nbdtrc(1,3,0.5) passed
+		// The test for nbdtri(1,3,0.5) passed
 		// The test for ndtr(0.0) passed
 		// The test for ndtr(0.3) passed
 		// The test for ndtr(1) passed
@@ -1180,15 +1204,19 @@ public class Cephes {
 		// The test for psi(-0.1) passed
 		// The test for psi(0.1) passed
 		// The test for psi(1.0) passed
-		// The test for psi(4.5) passed
+		// The test for psi( 4.5) passed
 		// The test for sici(0.5,si,ci) passed
 		// The test for sici(3.0,si,ci) passed
 		// The test for sici(5.0,si,ci) passed
 		// The test for sici(10.0,si,ci) passed
+		// The test for smirnov(2,0.3) passed
+		// The test for smirnovi(2,0.3) passed
 		// The test for spence(0.0) passed
 		// The test for spence(0.01) passed
 		// The test for spence(0.10) passed
 		// The test for spence(0.50) passed
+		// The test for stdtr(2, 3.0) passed
+		// The test for stdtri(5, 0.1) passed
 		// The test for struve(0.0,0.0) passed
 		// The test for struve(0.0,5.0) passed
 		// The test for struve(1.0,0.0) passed
@@ -1200,6 +1228,36 @@ public class Cephes {
 		// The test for zetac(1.0) passed
 		result = new double[1];
 		
+		result[0] = bdtr(4,5,0.25);
+		if (Math.abs(result[0] - 0.9990234375000000) < 1.0E-10) {
+	    	System.out.println("The test for bdtr(4,5,0.25) passed");
+	    }
+	    else {
+	    	System.out.println("The test for bdtr(4,5,0.25) failed");
+	    	System.out.println("Implemented bdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.9990234375000000");
+	    }
+		
+		result[0] = bdtrc(4,5,0.25);
+		if (Math.abs(result[0] - 0.0009765625000000) < 1.0E-10) {
+	    	System.out.println("The test for bdtrc(4,5,0.25) passed");
+	    }
+	    else {
+	    	System.out.println("The test for bdtrc(4,5,0.25) failed");
+	    	System.out.println("Implemented bdtrc gave " + result[0]);
+	    	System.out.println("Correct answer is 0.0009765625000000");
+	    }
+		
+		result[0] = bdtri(4,5,0.25);
+		if (Math.abs(result[0] - 0.9440875112949020) < 1.0E-10) {
+	    	System.out.println("The test for bdtri(4,5,0.25) passed");
+	    }
+	    else {
+	    	System.out.println("The test for bdtri(4,5,0.25) failed");
+	    	System.out.println("Implemented bdtri gave " + result[0]);
+	    	System.out.println("Correct answer is 0.9440875112949020");
+	    }
+		
 		result[0] = beta(6.3,2.9);
 		if (Math.abs(result[0] - 0.005947104834350) < 1.0E-7) {
 	    	System.out.println("The test for beta(6.3,2.9) passed");
@@ -1208,6 +1266,16 @@ public class Cephes {
 	    	System.out.println("The test for beta(6.3,2.9) failed");
 	    	System.out.println("Implemented beta gave " + result[0]);
 	    	System.out.println("Correct answer is 0.005947104834350");
+	    }
+		
+		result[0] = btdtr(4,5,0.25);
+		if (Math.abs(result[0] - 0.1138153076171875) < 1.0E-10) {
+	    	System.out.println("The test for btdtr(4,5,0.25) passed");
+	    }
+	    else {
+	    	System.out.println("The test for btdtr(4,5,0.25) failed");
+	    	System.out.println("Implemented btdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.1138153076171875");
 	    }
 		
 		result[0] = chdtr(4,5);
@@ -1473,6 +1541,16 @@ public class Cephes {
 	    	System.out.println("Correct answer is 3.1043160E-46");
 	    }
 	    
+	    result[0] = expx2(2.1, 1);
+	    if (Math.abs(result[0] - 82.269463504201681) < 1.0E-7) {
+	    	System.out.println("The test for expx2(2.1, 1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for expx2(2.1, 1) failed");
+	    	System.out.println("Implemented expx2 gave " + result[0]);
+	    	System.out.println("Correct answer is 82.269463504201681");
+	    }
+	    
 	    result[0] = fac(40);
 	    if (Math.abs(result[0] - 8.1591528325E47) < 1.0E40) {
 	    	System.out.println("The test for fac(40) passed");
@@ -1712,6 +1790,26 @@ public class Cephes {
 	    	System.out.println("Correct answer is 0.1120959982573993");
 	    }
 	    
+	    result[0] = kolmogi(0.24);
+		if (Math.abs(result[0] - 1.02920479826) < 1.0E-7) {
+	    	System.out.println("The test for kolmogi(0.24) passed");
+	    }
+	    else {
+	    	System.out.println("The test for kolmogi(0.24) failed");
+	    	System.out.println("Implemented kolmogi gave " + result[0]);
+	    	System.out.println("Correct answer is 1.02920479826");
+	    }
+		
+		result[0] = kolmogorov(2.0);
+		if (Math.abs(result[0] - 0.00067092525578) < 1.0E-11) {
+	    	System.out.println("The test for kolmogorov(2.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for kolmogorov(2.0) failed");
+	    	System.out.println("Implemented kolmogogorov gave " + result[0]);
+	    	System.out.println("Correct answer is 0.00067092525578");
+	    }
+	    
 	    result[0] = lbeta(10.0,3.0);
 		if (Math.abs(result[0] + 6.4922398350204711) < 1.0E-7) {
 	    	System.out.println("The test for lbeta(10.0,3.0) passed");
@@ -1740,6 +1838,36 @@ public class Cephes {
 	    	System.out.println("The test for log1p(0.1) failed");
 	    	System.out.println("Implemented log1p gave " + result[0]);
 	    	System.out.println("Correct answer is 0.0953101798043");
+	    }
+		
+		result[0] = nbdtr(1,3,0.5);
+		if (Math.abs(result[0] - 0.3125) < 1.0E-7) {
+	    	System.out.println("The test for nbdtr(1,3,0.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for nbdtr(1,3,0.5) failed");
+	    	System.out.println("Implemented nbdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.3125");
+	    }
+		
+		result[0] = nbdtrc(1,3,0.5);
+		if (Math.abs(result[0] - 0.6875) < 1.0E-7) {
+	    	System.out.println("The test for nbdtrc(1,3,0.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for nbdtrc(1,3,0.5) failed");
+	    	System.out.println("Implemented nbdtrc gave " + result[0]);
+	    	System.out.println("Correct answer is 0.6875");
+	    }
+		
+		result[0] = nbdtri(1,3,0.5);
+		if (Math.abs(result[0] - 0.61427243186761038) < 1.0E-7) {
+	    	System.out.println("The test for nbdtri(1,3,0.5) passed");
+	    }
+	    else {
+	    	System.out.println("The test for nbdtri(1,3,0.5) failed");
+	    	System.out.println("Implemented nbdtri gave " + result[0]);
+	    	System.out.println("Correct answer is 0.61427243186761038");
 	    }
 	    
 	    result[0] = ndtr(0.0);
@@ -1914,13 +2042,33 @@ public class Cephes {
 	    	System.out.println("Correct answer is si[0] = 1.65834759 ci[0] = -0.04545643");
 	    }
 	    
+	    result[0] = smirnov(2,0.3);
+	    if (Math.abs(result[0] - 0.60999999999999999) < 1.0E-7) {
+	    	System.out.println("The test for smirnov(2,0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for smirnov(2,0.3) failed");
+	    	System.out.println("Implemented smirnov gave " + result[0]);
+	    	System.out.println("Correct answer is 0.60999999999999999");
+	    }
+	    
+	    result[0] = smirnovi(2,0.3);
+	    if (Math.abs(result[0] - 0.4746794344877307) < 1.0E-7) {
+	    	System.out.println("The test for smirnovi(2,0.3) passed");
+	    }
+	    else {
+	    	System.out.println("The test for smirnovi(2,0.3) failed");
+	    	System.out.println("Implemented smirnovi gave " + result[0]);
+	    	System.out.println("Correct answer is 0.4746794344877307");
+	    }
+	    
 	    result[0] = spence(0.0);
 	    if (Math.abs(result[0] - 1.644934067) < 1.0E-7) {
 	    	System.out.println("The test for spence(0.0) passed");
 	    }
 	    else {
 	    	System.out.println("The test for spence(0.0) failed");
-	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Implemented spence gave " + result[0]);
 	    	System.out.println("Correct answer is 1.644934067");
 	    }
 	    
@@ -1930,7 +2078,7 @@ public class Cephes {
 	    }
 	    else {
 	    	System.out.println("The test for spence(0.01) failed");
-	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Implemented spence gave " + result[0]);
 	    	System.out.println("Correct answer is 1.588625448");
 	    }
 	    
@@ -1940,7 +2088,7 @@ public class Cephes {
 	    }
 	    else {
 	    	System.out.println("The test for spence(0.10) failed");
-	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Implemented spence gave " + result[0]);
 	    	System.out.println("Correct answer is 1.299714723");
 	    }
 	    
@@ -1950,8 +2098,28 @@ public class Cephes {
 	    }
 	    else {
 	    	System.out.println("The test for spence(0.50) failed");
-	    	System.out.println("Implemented struve gave " + result[0]);
+	    	System.out.println("Implemented spence gave " + result[0]);
 	    	System.out.println("Correct answer is 0.582240526");
+	    }
+	    
+	    result[0] = stdtr(2, 3.0);
+	    if (Math.abs(result[0] - 0.95226701686664539) < 1.0E-7) {
+	    	System.out.println("The test for stdtr(2, 3.0) passed");
+	    }
+	    else {
+	    	System.out.println("The test for stdtr(2, 3.0) failed");
+	    	System.out.println("Implemented stdtr gave " + result[0]);
+	    	System.out.println("Correct answer is 0.95226701686664539");
+	    }
+	    
+	    result[0] = stdtri(5, 0.1);
+	    if (Math.abs(result[0] + 1.4758840487820271) < 1.0E-7) {
+	    	System.out.println("The test for stdtri(5, 0.1) passed");
+	    }
+	    else {
+	    	System.out.println("The test for stdtri(5, 0.1) failed");
+	    	System.out.println("Implemented stdtri gave " + result[0]);
+	    	System.out.println("Correct answer is -1.4758840487820271");
 	    }
 	    		
 	    result[0] = struve(0.0,0.0);
@@ -2109,8 +2277,20 @@ public class Cephes {
 	}
 	
 	public void run() {
-		if (version == BETA) {
+		if (version == BDTR) {
+			result[0] = bdtr(par4, par6, par1);
+		}
+		else if (version == BDTRC) {
+			result[0] = bdtrc(par4, par6, par1);
+		}
+		else if (version == BDTRI) {
+			result[0] = bdtri(par4, par6, par1);
+		}
+	    else if (version == BETA) {
 			result[0] = beta(par1, par2);
+		}
+	    else if (version == BTDTR) {
+			result[0] = btdtr(par1, par2, par5);
 		}
 		else if (version == CHBEVL) {
 			result[0] = chbevl(par1, par3, par4);
@@ -2152,6 +2332,9 @@ public class Cephes {
 	    }
 	    else if (version == EXPN) {
 	    	result[0] = expn(par4, par1);
+	    }
+	    else if (version == EXPX2) {
+	    	result[0] = expx2(par1, par4);
 	    }
 	    else if (version == FAC) {
 	    	result[0] = fac(par4);
@@ -2195,6 +2378,12 @@ public class Cephes {
 		else if (version == INCBI) {
 			result[0] = incbi(par1, par2, par5);
 		}
+		else if (version == KOLMOGI) {
+			result[0] = kolmogi(par1);
+		}
+		else if (version == KOLMOGOROV) {
+			result[0] = kolmogorov(par1);
+		}
 		else if (version == LBETA) {
 			result[0] = lbeta(par1,par2);
 		}
@@ -2203,6 +2392,15 @@ public class Cephes {
 		}
 		else if (version == LOG1P) {
 			result[0] = log1p(par1);
+		}
+		else if (version == NBDTR) {
+			result[0] = nbdtr(par4, par6, par1);
+		}
+		else if (version == NBDTRC) {
+			result[0] = nbdtrc(par4, par6, par1);
+		}
+		else if (version == NBDTRI) {
+			result[0] = nbdtri(par4, par6, par1);
 		}
 		else if (version == NDTR) {
 			result[0] = ndtr(par1);
@@ -2237,8 +2435,20 @@ public class Cephes {
 		else if (version == SICI) {
 			sici(par1, si, ci);
 		}
+		else if (version == SMIRNOV) {
+			result[0] = smirnov(par4, par1);
+		}
+		else if (version == SMIRNOVI) {
+			result[0] = smirnovi(par4, par1);
+		}
 		else if (version == SPENCE) {
 			result[0] = spence(par1);
+		}
+		else if (version == STDTR) {
+			result[0] = stdtr(par4, par1);
+		}
+		else if (version == STDTRI) {
+			result[0] = stdtri(par4, par1);
 		}
 		else if (version == STIRF) {
 			result[0] = stirf(par1);
@@ -8079,6 +8289,416 @@ public class Cephes {
 	xx = x * x;
 	xx = -0.5*xx + xx * xx * polevl( xx, coscof, 6 );
 	return xx;
+	}
+	
+	public double bdtrc(int k, int n, double p) {
+		// hcephes version
+	    double dk, dn;
+
+	    if ((p < 0.0) || (p > 1.0)) {
+	    	MipavUtil.displayError("DOMAIN error in bdtrc");
+	    	return 0.0;
+	    }
+	    if (k < 0)
+	        return (1.0);
+
+	    if (n < k) {
+	    	MipavUtil.displayError("DOMAIN error in bdtrc");
+	        return (0.0);
+	    }
+
+	    if (k == n)
+	        return (0.0);
+	    dn = n - k;
+	    if (k == 0) {
+	        if (p < .01)
+	            dk = -expm1(dn * log1p(-p));
+	        else
+	            dk = 1.0 - Math.pow(1.0 - p, dn);
+	    } else {
+	        dk = k + 1;
+	        dk = incbet(dk, dn, p);
+	    }
+	    return (dk);
+	}
+	
+	public double bdtr(int k, int n, double p) {
+		// hcephes version
+	    double dk, dn;
+
+	    if ((p < 0.0) || (p > 1.0)) {
+	    	MipavUtil.displayError("DOMAIN error in bdtr");
+	        return (0.0);	
+	    }
+	    if ((k < 0) || (n < k)) {
+	    	MipavUtil.displayError("DOMAIN error in bdtr");
+	        return (0.0);
+	    }
+
+	    if (k == n)
+	        return (1.0);
+
+	    dn = n - k;
+	    if (k == 0) {
+	        dk = Math.pow(1.0 - p, dn);
+	    } else {
+	        dk = k + 1;
+	        dk = incbet(dn, dk, 1.0 - p);
+	    }
+	    return (dk);
+	}
+	
+	public double bdtri(int k, int n, double y) {
+		// hcephes version
+	    double dk, dn, p;
+
+	    if ((y < 0.0) || (y > 1.0)) {
+	    	MipavUtil.displayError("DOMAIN error in bdtri");
+	        return (0.0);		
+	    }
+	    
+	    if ((k < 0) || (n <= k)) {
+	    	MipavUtil.displayError("DOMAIN error in bdtri");
+	        return (0.0);
+	    }
+
+	    dn = n - k;
+	    if (k == 0) {
+	        if (y > 0.8)
+	            p = -expm1(log1p(y - 1.0) / dn);
+	        else
+	            p = 1.0 - Math.pow(y, 1.0 / dn);
+	    } else {
+	        dk = k + 1;
+	        p = incbet(dn, dk, 0.5);
+	        if (p > 0.5)
+	            p = incbi(dk, dn, 1.0 - y);
+	        else
+	            p = 1.0 - incbi(dn, dk, y);
+	    }
+	    return (p);
+	}
+	
+	public double btdtr(double a, double b, double x) {
+		// hcephes version
+	    return (incbet(a, b, x));
+	}
+	
+	/* Exact Smirnov statistic, for one-sided test.  */
+	public double smirnov(int n, double e) {
+		// hcephes version
+	    int v, nn;
+	    double evn, omevn, p, t, c, lgamnp1;
+
+	    if (n <= 0 || e < 0.0 || e > 1.0)
+	        return (-1.0);
+	    nn = (int)Math.floor((double)n * (1.0 - e));
+	    p = 0.0;
+	    if (n < 1013) {
+	        c = 1.0;
+	        for (v = 0; v <= nn; v++) {
+	            evn = e + ((double)v) / n;
+	            p += c * Math.pow(evn, (double)(v - 1)) * Math.pow(1.0 - evn, (double)(n - v));
+	            /* Next combinatorial term; worst case error = 4e-15.  */
+	            c *= ((double)(n - v)) / (v + 1);
+	        }
+	    } else {
+	        lgamnp1 = lgam((double)(n + 1));
+	        for (v = 0; v <= nn; v++) {
+	            evn = e + ((double)v) / n;
+	            omevn = 1.0 - evn;
+	            if (Math.abs(omevn) > 0.0) {
+	                t = lgamnp1 - lgam((double)(v + 1)) -
+	                    lgam((double)(n - v + 1)) + (v - 1) * Math.log(evn) +
+	                    (n - v) * Math.log(omevn);
+	                if (t > -MAXLOG)
+	                    p += Math.exp(t);
+	            }
+	        }
+	    }
+	    return (p * e);
+	}
+
+	/* Kolmogorov's limiting distribution of two-sided test, returns
+	   probability that sqrt(n) * max deviation > y,
+	   or that max deviation > y/sqrt(n).
+	   The approximation is useful for the tail of the distribution
+	   when n is large.  */
+	public double kolmogorov(double y) {
+		// hcephes version
+	    double p, t, r, sign, x;
+
+	    x = -2.0 * y * y;
+	    sign = 1.0;
+	    p = 0.0;
+	    r = 1.0;
+	    do {
+	        t = Math.exp(x * r * r);
+	        p += sign * t;
+	        if (t == 0.0)
+	            break;
+	        r += 1.0;
+	        sign = -sign;
+	    } while ((t / p) > 1.1e-16);
+	    return (p + p);
+	}
+
+	/* Functional inverse of Smirnov distribution
+	   finds e such that smirnov(n,e) = p.  */
+	public double smirnovi(int n, double p) {
+		// hcephes version
+	    double e, t, dpde;
+
+	    if (p <= 0.0 || p > 1.0) {
+	        MipavUtil.displayError("DOMAIN error in smirnovi");
+	        return 0.0;
+	    }
+	    /* Start with approximation p = exp(-2 n e^2).  */
+	    e = Math.sqrt(-Math.log(p) / (2.0 * n));
+	    do {
+	        /* Use approximate derivative in Newton iteration. */
+	        t = -2.0 * n * e;
+	        dpde = 2.0 * t * Math.exp(t * e);
+	        if (Math.abs(dpde) > 0.0)
+	            t = (p - smirnov(n, e)) / dpde;
+	        else {
+	            MipavUtil.displayError("UNDERFLOW in smirnovi");
+	            return 0.0;
+	        }
+	        e = e + t;
+	        if (e >= 1.0 || e <= 0.0) {
+	            MipavUtil.displayError("OVERFLOW in smirnovi");
+	            return 0.0;
+	        }
+	    } while (Math.abs(t / e) > 1e-10);
+	    return (e);
+	}
+
+	/* Functional inverse of Kolmogorov statistic for two-sided test.
+	   Finds y such that kolmogorov(y) = p.
+	   If e = hcephes_smirnovi (n,p), then hcephes_kolmogi(2 * p) / sqrt(n) should
+	   be close to e.  */
+	public double kolmogi(double p) {
+		// hcephes version
+	    double y, t, dpdy;
+
+	    if (p <= 0.0 || p > 1.0) {
+	        MipavUtil.displayError("DOMAIN error in kolmogi");
+	        return 0.0;
+	    }
+	    /* Start with approximation p = 2 exp(-2 y^2).  */
+	    y = Math.sqrt(-0.5 * Math.log(0.5 * p));
+	    do {
+	        /* Use approximate derivative in Newton iteration. */
+	        t = -2.0 * y;
+	        dpdy = 4.0 * t * Math.exp(t * y);
+	        if (Math.abs(dpdy) > 0.0)
+	            t = (p - kolmogorov(y)) / dpdy;
+	        else {
+	            MipavUtil.displayError("UNDERFLOW in kolmogi");
+	            return 0.0;
+	        }
+	        y = y + t;
+	    } while (Math.abs(t / y) > 1e-10);
+	    return (y);
+	}
+
+	public double expx2(double x, int sign) {
+		// hcephes version
+	    double u, u1, m, f;
+	    double M = 128.0;
+	    double MINV = .0078125;
+	    
+
+	    x = Math.abs(x);
+	    if (sign < 0)
+	        x = -x;
+
+	    /* Represent x as an exact multiple of M plus a residual.
+	       M is a power of 2 chosen so that exp(m * m) does not overflow
+	       or underflow and so that |x - m| is small.  */
+	    m = MINV * Math.floor(M * x + 0.5);
+	    f = x - m;
+
+	    /* x^2 = m^2 + 2mf + f^2 */
+	    u = m * m;
+	    u1 = 2 * m * f + f * f;
+
+	    if (sign < 0) {
+	        u = -u;
+	        u1 = -u1;
+	    }
+
+	    if ((u + u1) > MAXLOG)
+	        return (MAXNUM);
+
+	    /* u is exact, u1 is small.  */
+	    u = Math.exp(u) * Math.exp(u1);
+	    return (u);
+	}
+	
+	double stdtr(int k, double t) {
+		// hcephes version
+	    double x, rk, z, f, tz, p, xsqk;
+	    int j;
+
+	    if (k <= 0) {
+	        MipavUtil.displayError("DOMAIN error in stdtr");
+	        return (0.0);
+	    }
+
+	    if (t == 0)
+	        return (0.5);
+
+	    if (t < -2.0) {
+	        rk = k;
+	        z = rk / (rk + t * t);
+	        p = 0.5 * incbet(0.5 * rk, 0.5, z);
+	        return (p);
+	    }
+
+	    /*	compute integral from -t to + t */
+
+	    if (t < 0)
+	        x = -t;
+	    else
+	        x = t;
+
+	    rk = k; /* degrees of freedom */
+	    z = 1.0 + (x * x) / rk;
+
+	    /* test if k is odd or even */
+	    if ((k & 1) != 0) {
+
+	        /*	computation for odd k	*/
+
+	        xsqk = x / Math.sqrt(rk);
+	        p = Math.atan(xsqk);
+	        if (k > 1) {
+	            f = 1.0;
+	            tz = 1.0;
+	            j = 3;
+	            while ((j <= (k - 2)) && ((tz / f) > MACHEP)) {
+	                tz *= (j - 1) / (z * j);
+	                f += tz;
+	                j += 2;
+	            }
+	            p += f * xsqk / z;
+	        }
+	        p *= 2.0 / Math.PI;
+	    }
+
+	    else {
+
+	        /*	computation for even k	*/
+
+	        f = 1.0;
+	        tz = 1.0;
+	        j = 2;
+
+	        while ((j <= (k - 2)) && ((tz / f) > MACHEP)) {
+	            tz *= (j - 1) / (z * j);
+	            f += tz;
+	            j += 2;
+	        }
+	        p = f * x / Math.sqrt(z * rk);
+	    }
+
+	    /*	common exit	*/
+
+	    if (t < 0)
+	        p = -p; /* note destruction of relative accuracy */
+
+	    p = 0.5 + 0.5 * p;
+	    return (p);
+	}
+
+	public double stdtri(int k, double p) {
+		// hcephes version
+	    double t, rk, z;
+	    int rflg;
+
+	    if (k <= 0 || p <= 0.0 || p >= 1.0) {
+	    	MipavUtil.displayError("DOMAIN error in stdtri");
+	        return (0.0);
+	    }
+
+	    rk = k;
+
+	    if (p > 0.25 && p < 0.75) {
+	        if (p == 0.5)
+	            return (0.0);
+	        z = 1.0 - 2.0 * p;
+	        z = incbi(0.5, 0.5 * rk, Math.abs(z));
+	        t = Math.sqrt(rk * z / (1.0 - z));
+	        if (p < 0.5)
+	            t = -t;
+	        return (t);
+	    }
+	    rflg = -1;
+	    if (p >= 0.5) {
+	        p = 1.0 - p;
+	        rflg = 1;
+	    }
+	    z = incbi(0.5 * rk, 0.5, 2.0 * p);
+
+	    if (MAXNUM * z < rk)
+	        return (rflg * MAXNUM);
+	    t = Math.sqrt(rk / z - rk);
+	    return (rflg * t);
+	}
+
+	public double nbdtrc(int k, int n, double p) {
+		// hcephes version
+	    double dk, dn;
+
+	    if ((p < 0.0) || (p > 1.0)) {
+	    	MipavUtil.displayError("DOMAIN error in nbdtrc");
+	    	return (0.0);
+	    }
+	    if (k < 0) {
+	    	MipavUtil.displayError("DOMAIN error in nbdtrc");
+	        return (0.0);
+	    }
+
+	    dk = k + 1;
+	    dn = n;
+	    return (incbet(dk, dn, 1.0 - p));
+	}
+
+	public double nbdtr(int k, int n, double p) {
+		// hcephes version
+	    double dk, dn;
+
+	    if ((p < 0.0) || (p > 1.0)) {
+	    	MipavUtil.displayError("DOMAIN error in nbdtr");
+	    	return (0.0);	
+	    }
+	    if (k < 0) {
+	    	MipavUtil.displayError("DOMAIN error in nbdtr");
+	        return (0.0);
+	    }
+	    dk = k + 1;
+	    dn = n;
+	    return (incbet(dn, dk, p));
+	}
+
+	public double nbdtri(int k, int n, double p) {
+		// hcephes version
+	    double dk, dn, w;
+
+	    if ((p < 0.0) || (p > 1.0)) {
+	    	MipavUtil.displayError("DOMAIN error in nbdtri");
+	    	return (0.0);		
+	    }
+	    if (k < 0) {
+	    	MipavUtil.displayError("DOMAIN error in nbdtri");
+	        return (0.0);
+	    }
+	    dk = k + 1;
+	    dn = n;
+	    w = incbi(dn, dk, p);
+	    return (w);
 	}
 
 
