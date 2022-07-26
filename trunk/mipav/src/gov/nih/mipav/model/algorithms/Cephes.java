@@ -99,66 +99,66 @@ public class Cephes {
 	public final static int BDTR = 1;
 	public final static int BDTRC = 2;
 	public final static int BDTRI = 3;
-	public final static int BETA = 4;
+	public final static int BETA = 4; // Beta function
 	public final static int BTDTR = 5; // same as INCBET
-	public final static int CHBEVL = 6;
-	public final static int CHDTR = 7;
-	public final static int CHDTRC = 8;
-	public final static int COSM1 = 9;
-	public final static int CHDTRI = 10;
-	public final static int DAWSN = 11;
-	public final static int ELLIE = 12;
-	public final static int ELLIK = 13;
-	public final static int ELLPE = 14;
-	public final static int ELLPK = 15;
-	public final static int ERF = 16;
-	public final static int ERFC = 17;
-	public final static int EXPM1 = 18;
-	public final static int EXPN = 19;
+	public final static int CHBEVL = 6; // Evaluate Chebyshev series
+	public final static int CHDTR = 7; // Chi-square distribution
+	public final static int CHDTRC = 8; // Complemented Chi-square distribution
+	public final static int CHDTRI = 9; // Inverse of complemented Chi-square distribution
+	public final static int COSM1 = 10; // cosm1(x) = cos(x) - 1 
+	public final static int DAWSN = 11; // Dawson's Integral
+	public final static int ELLIE = 12; // Incomplete elliptic integral of the second kind
+	public final static int ELLIK = 13; // Incomplete elliptic integral of the first kind
+	public final static int ELLPE = 14; // Complete elliptic integral of the second kind
+	public final static int ELLPK = 15; // Complete elliptic integral of the first kind
+	public final static int ERF = 16; // Error function
+	public final static int ERFC = 17; // Complementary error function
+	public final static int EXPM1 = 18; // expm1(x) = exp(x) - 1
+	public final static int EXPN = 19; // Exponential integral En
 	public final static int EXPX2 = 20;
-	public final static int FAC = 21;
-	public final static int FDTR = 22;
-	public final static int FDTRC = 23;
-	public final static int FDTRI = 24;
-	public final static int FRESNL = 25;
-	public final static int GDTR = 26;
-	public final static int GDTRC = 27;
-	public final static int HYP2F1 = 28;
-	public final static int HYPERG = 29;
-	public final static int IGAM = 30;
-	public final static int IGAMI = 31;
-	public final static int IGAMC = 32;
-	public final static int INCBET = 33;
-	public final static int INCBI = 34;
-	public final static int KOLMOGI = 35;
-	public final static int KOLMOGOROV = 36;
-	public final static int LBETA = 37;
-	public final static int LGAM = 38;
-	public final static int LOG1P = 39;
+	public final static int FAC = 21; // Factorial function
+	public final static int FDTR = 22; // F distribution
+	public final static int FDTRC = 23; // Complemented F distribution
+	public final static int FDTRI = 24; // Inverse of complemented F distribution
+	public final static int FRESNL = 25; // Fresnel integral
+	public final static int GDTR = 26; // Gamma distribution function
+	public final static int GDTRC = 27; // Complemented gamma distribution function
+	public final static int HYP2F1 = 28; // Gauss hypergeometric function
+	public final static int HYPERG = 29; // Confluent hypergeometric function
+	public final static int IGAM = 30; // Incomplete gamma integral
+	public final static int IGAMC = 31; // Complemented incomplete gamma integral
+	public final static int IGAMI = 32; // Inverse of complemented imcomplete gamma integral
+	public final static int INCBET = 33; // Incomplete beta integral
+	public final static int INCBI = 34; // Inverse of imcomplete beta integral
+	public final static int KOLMOGI = 35; // Functional inverse of Kolmogorov statistic for two-sided test.
+	public final static int KOLMOGOROV = 36; // Kolmogorov's limiting distribution of two-sided test
+	public final static int LBETA = 37; //  Natural log of |beta|.  Return the sign of beta in sgngam.
+	public final static int LGAM = 38; // Logarithm of gamma function
+	public final static int LOG1P = 39; // log1p(x) = log(1+x)
 	public final static int NBDTR = 40;
 	public final static int NBDTRC = 41;
 	public final static int NBDTRI = 42;
-	public final static int NDTR = 43;
-	public final static int NDTRI = 44;
-	public final static int POLEVL = 45;
-	public final static int P1EVL = 46;
-	public final static int PDTR = 47;
-	public final static int PDTRC = 48;
-	public final static int PDTRI = 49;
-	public final static int PSI = 50;
-	public final static int RGAMMA = 51;
-	public final static int SHICHI = 52;
-	public final static int SICI = 53;
-	public final static int SMIRNOV = 54;
-	public final static int SMIRNOVI = 55;
-	public final static int SPENCE = 56;
-	public final static int STDTR = 57;
-	public final static int STDTRI = 58;
-	public final static int STIRF = 59;
-	public final static int STRUVE = 60;
+	public final static int NDTR = 43; // Normal distribution function
+	public final static int NDTRI = 44; // Inverse of Normal distribution function
+	public final static int PDTR = 45; // Poisson distribution
+	public final static int PDTRC = 46; // Complemented poisson distribution
+	public final static int PDTRI = 47; // Inverse Poisson distribution
+	public final static int POLEVL = 48; // Evaluates polynomial of degree N
+	public final static int P1EVL = 49; // Evaluate polynomial when coefficient of x**N  is 1.0.
+	public final static int PSI = 50; // Psi (digamma) function
+	public final static int RGAMMA = 51; // Reciprocal gamma function
+	public final static int SHICHI = 52; // Hyperbolic sine and cosine integrals
+	public final static int SICI = 53; // Sine and cosine integrals
+	public final static int SMIRNOV = 54; // Exact Smirnov statistic, for one-sided test.
+	public final static int SMIRNOVI = 55; // Functional inverse of Smirnov distribution
+	public final static int SPENCE = 56; // Dilogarithm
+	public final static int STDTR = 57; // Student's t distribution
+	public final static int STDTRI = 58; // Functional inverse of Student's t distribution
+	public final static int STIRF = 59; // Gamma function computed by Stirling's formula.
+	public final static int STRUVE = 60; // Struve function
 	public final static int TRUE_GAMMA = 61;
-	public final static int ZETA = 62;
-	public final static int ZETAC = 63;
+	public final static int ZETA = 62; // Riemann zeta function of two arguments
+	public final static int ZETAC = 63; // Riemann zeta function
 	// For IEEE arithmetic (IBMPC):
     private final static double MACHEP =  1.11022302462515654042E-16; // 2**-53
     private final static double MAXLOG =  7.09782712893383996843E2;   // log(2**1024)
@@ -1487,7 +1487,7 @@ public class Cephes {
 	    }
 	    else {
 	    	System.out.println("The test for expm1(0.5) failed");
-	    	System.out.println("Implemented erf gave " + result[0]);
+	    	System.out.println("Implemented expm1 gave " + result[0]);
 	    	System.out.println("Correct answer is 0.6487212707");
 	    }
 	    
