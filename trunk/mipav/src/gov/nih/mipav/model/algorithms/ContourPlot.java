@@ -74,8 +74,10 @@ public class ContourPlot {
 	SOFTWARE.
 	*/
 
-	
-	
+	/**
+	Code from Contours.java added.  Necessary supporting code from Pixel.java, ColorOperations.interpolateColor,
+	 Utils.Copy, Lines.SegmentDetails, and TriangleDetails added.  Need to add code from ContourPlot.java and IsolinesViz.java.	
+	 */
 	
 	
 	/**
