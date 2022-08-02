@@ -120,11 +120,8 @@ public class ContourPlot extends AlgorithmBase {
 	*/
 
 	/**
-	Code from Contours.java added.  Necessary supporting code from Pixel.java, ColorOperations.interpolateColor,
-	 Utils.Copy, Lines.SegmentDetails, and TriangleDetails added.  Need to add code from ContourPlot.java and IsolinesViz.java.
-	 Adding code from ContourPlot.	
-	 In class Points in public Points link to DefaultGlyph not implemented.
-	 In class CoordSysRenderer in renderFallback and renderPDF link to AdaptableView not yet implemented.
+	Example from source ContourPlot.java draws contour plot of function surface correctly.
+	Need to work on example in IsolinesViz.java.
 	 */
 	
 	private static ContourPlot cp = new ContourPlot();
@@ -1682,7 +1679,7 @@ public class ContourPlot extends AlgorithmBase {
 	 * 
 	 * @author hageldave
 	 */
-	public class CompleteRenderer implements Renderer {
+	public class CompleteRenderer implements Renderer, AdaptableView {
 		
 		public final LinesRenderer lines = new LinesRenderer();
 		//public final PointsRenderer points = new PointsRenderer();
@@ -1755,6 +1752,19 @@ public class ContourPlot extends AlgorithmBase {
 			}
 			return this;
 		}
+		
+		/**
+		 * Sets the view matrix for each of the renderers
+		 */
+		@Override
+		public void setView(Rectangle2D rect) {
+			triangles.setView(rect);
+			lines.setView(rect);
+			//points.setView(rect);
+			text.setView(rect);
+			//curves.setView(rect);
+		}
+
 
 	}
 	
@@ -1791,6 +1801,7 @@ public class ContourPlot extends AlgorithmBase {
 				if(tris.isAAinFallbackEnabled()) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				else g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 				for(TriangleDetails tri : tris.getIntersectingTriangles(view != null ? view:viewportRect)){
+					
 					double x0,y0, x1,y1, x2,y2;
 					x0=tri.p0.getX(); y0=tri.p0.getY(); x1=tri.p1.getX(); y1=tri.p1.getY(); x2=tri.p2.getX(); y2=tri.p2.getY();
 					
@@ -1810,6 +1821,7 @@ public class ContourPlot extends AlgorithmBase {
 					c2 = ColorOperations.scaleColorAlpha(c2, tris.getGlobalAlphaMultiplier());
 					
 					g.setPaint(new BarycentricGradientPaint(tricoords[0], tricoords[1], new Color(c0, true), new Color(c1, true), new Color(c2, true)));
+					
 
 					int minx = (int)Utils.min3(x0, x1, x2);
 					int miny = (int)Utils.min3(y0, y1, y2);
@@ -1971,10 +1983,10 @@ public class ContourPlot extends AlgorithmBase {
 	 * 
 	 * @author hageldave
 	 */
-	public static class BarycentricGradientPaintContext implements PaintContext {
-		protected static final float[] MSAA_SAMPLES;
+	public class BarycentricGradientPaintContext implements PaintContext {
+		protected final float[] MSAA_SAMPLES;
 
-		static {
+		{
 			MSAA_SAMPLES = new float[8];
 			AffineTransform xform = new AffineTransform();
 			xform.translate(.5, .5);
@@ -2203,11 +2215,11 @@ public class ContourPlot extends AlgorithmBase {
 			return raster;
 		}
 
-		private static int[] dataFromRaster(WritableRaster wr) {
+		private int[] dataFromRaster(WritableRaster wr) {
 			return ((DataBufferInt)wr.getDataBuffer()).getData();
 		}
 		
-		private static int mixColor3(int c1, int c2, int c3, float m1, float m2, float m3) {
+		private int mixColor3(int c1, int c2, int c3, float m1, float m2, float m3) {
 			float normalize = 1f/(m1+m2+m3);
 			float a = (a(c1)*m1 + a(c2)*m2 + a(c3)*m3)*normalize;
 			float r = (r(c1)*m1 + r(c2)*m2 + r(c3)*m3)*normalize;
@@ -2216,7 +2228,7 @@ public class ContourPlot extends AlgorithmBase {
 			return argb((int)a, (int)r, (int)g, (int)b);
 		}
 		
-		private static int mixColor4(int c1, int c2, int c3, int c4, float m1, float m2, float m3, float m4) {
+		private int mixColor4(int c1, int c2, int c3, int c4, float m1, float m2, float m3, float m4) {
 			float normalize = 1f/(m1+m2+m3+m4);
 			float a = (a(c1)*m1 + a(c2)*m2 + a(c3)*m3 + a(c4)*m4)*normalize;
 			float r = (r(c1)*m1 + r(c2)*m2 + r(c3)*m3 + r(c4)*m4)*normalize;
@@ -2225,27 +2237,27 @@ public class ContourPlot extends AlgorithmBase {
 			return argb((int)a, (int)r, (int)g, (int)b);
 		}
 		
-		private static int a(int argb) {
+		private int a(int argb) {
 			return (argb >> 24) & 0xff;
 		}
 		
-		private static int r(int argb) {
+		private int r(int argb) {
 			return (argb >> 16) & 0xff;
 		}
 		
-		private static int g(int argb) {
+		private int g(int argb) {
 			return (argb >> 8) & 0xff;
 		}
 		
-		private static int b(int argb) {
+		private int b(int argb) {
 			return (argb) & 0xff;
 		}
 		
-		private static int argb(final int a, final int r, final int g, final int b){
+		private int argb(final int a, final int r, final int g, final int b){
 			return (a<<24)|(r<<16)|(g<<8)|b;
 		}
 		
-		private static int scaleColorAlpha(int color, float m) {
+		private int scaleColorAlpha(int color, float m) {
 			float normalize = 1f/255f;
 			float af = a(color)*normalize*m;
 			int a = (((int)(af*255f)) & 0xff) << 24;
@@ -2253,6 +2265,8 @@ public class ContourPlot extends AlgorithmBase {
 		}
 
 	}
+
+
 
 	
 	/**
@@ -3150,7 +3164,7 @@ public class ContourPlot extends AlgorithmBase {
 		}
 
 		/**
-		 * Removes all triangles from this collection.
+		 * Removes all TriangleDetails from this collection.
 		 * Sets the {@link #isDirty()} state to true.
 		 * @return this for chaining
 		 */
@@ -3178,8 +3192,8 @@ public class ContourPlot extends AlgorithmBase {
 	 * Specification of a line segment which comprises vertex locations, colors, picking color, and thicknesses.
 	 * @author hageldave
 	 */
-	public static class SegmentDetails implements Cloneable {
-		protected static final DoubleSupplier[] PREDEFINED_THICKNESSES = new DoubleSupplier[]
+	public class SegmentDetails implements Cloneable {
+		protected final DoubleSupplier[] PREDEFINED_THICKNESSES = new DoubleSupplier[]
 				{()->0f, ()->1f, ()->2f, ()->3f, ()->4f};
 		
 		public Point2D p0;
@@ -3334,7 +3348,7 @@ public class ContourPlot extends AlgorithmBase {
 			return this;
 		}
 		
-		protected static DoubleSupplier sup4thick(double t){
+		protected DoubleSupplier sup4thick(double t){
 			if( t == ((int)t) && t >= 0 && t < PREDEFINED_THICKNESSES.length){
 				return PREDEFINED_THICKNESSES[(int)t];
 			}
@@ -3980,7 +3994,7 @@ public class ContourPlot extends AlgorithmBase {
 						y0 = ty0+m0*(ty1-ty0);
 						x1 = tx0+m1*(tx2-tx0);
 						y1 = ty0+m1*(ty2-ty0);
-						cntrLineSegments.add(new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
+						cntrLineSegments.add(cp.new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
 						break;
 					}
 					case 0b010:{
@@ -3991,7 +4005,7 @@ public class ContourPlot extends AlgorithmBase {
 						y0 = ty1+m0*(ty0-ty1);
 						x1 = tx1+m1*(tx2-tx1);
 						y1 = ty1+m1*(ty2-ty1);
-						cntrLineSegments.add(new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
+						cntrLineSegments.add(cp.new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
 						break;
 					}
 					case 0b001:{
@@ -4002,7 +4016,7 @@ public class ContourPlot extends AlgorithmBase {
 						y0 = ty2+m0*(ty0-ty2);
 						x1 = tx2+m1*(tx1-tx2);
 						y1 = ty2+m1*(ty1-ty2);
-						cntrLineSegments.add(new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
+						cntrLineSegments.add(cp.new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
 						break;
 					}
 					case 0b011:{
@@ -4013,7 +4027,7 @@ public class ContourPlot extends AlgorithmBase {
 						y0 = ty0+m0*(ty1-ty0);
 						x1 = tx0+m1*(tx2-tx0);
 						y1 = ty0+m1*(ty2-ty0);
-						cntrLineSegments.add(new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
+						cntrLineSegments.add(cp.new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
 						break;
 					}
 					case 0b101:{
@@ -4024,7 +4038,7 @@ public class ContourPlot extends AlgorithmBase {
 						y0 = ty1+m0*(ty0-ty1);
 						x1 = tx1+m1*(tx2-tx1);
 						y1 = ty1+m1*(ty2-ty1);
-						cntrLineSegments.add(new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
+						cntrLineSegments.add(cp.new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
 						break;
 					}
 					case 0b110:{
@@ -4035,7 +4049,7 @@ public class ContourPlot extends AlgorithmBase {
 						y0 = ty2+m0*(ty0-ty2);
 						x1 = tx2+m1*(tx1-tx2);
 						y1 = ty2+m1*(ty1-ty2);
-						cntrLineSegments.add(new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
+						cntrLineSegments.add(cp.new SegmentDetails(new Point2D.Double(x0, y0), new Point2D.Double(x1, y1)).setColor(color_));
 						break;
 					}
 					default:
@@ -4726,7 +4740,7 @@ public class ContourPlot extends AlgorithmBase {
 	
 	}
 	
-	public abstract class GenericRenderer<T extends Renderable> implements Renderer {
+	public abstract class GenericRenderer<T extends Renderable> implements Renderer, AdaptableView {
 		protected LinkedList<T> itemsToRender = new LinkedList<>();
 		protected Rectangle2D view = null;
 		protected boolean isEnabled = true;
@@ -5427,6 +5441,36 @@ public class ContourPlot extends AlgorithmBase {
 
 	}
 
+	/**
+	 * The AdaptableView interface defines the {@link #setView(Rectangle2D)}
+	 * method.
+	 * An implementing class of this interface is meant to be able to adjust its
+	 * view based on the view rectangle passed to the method.
+	 * This is implemented for example by {@link GenericRenderer}.
+	 * 
+	 * @author hageldave
+	 */
+	public interface AdaptableView {
+
+		/**
+		 * Sets the view rectangle that is the range of coordinates to be
+		 * projected onto the view port.
+		 * <p>
+		 * For example when setting a view rectangle of (x=-1,y=-1,w=2,h=2)
+		 * given a viewport of size (w=100,h=100), then a point with coordinates
+		 * (x=0,y=0) will be projected to (x=50,y=50) on the viewport.
+		 * A point with coordinates (x=-1,y=-1) will be projected to (x=0,y=0).
+		 * <p>
+		 * When setting the view rectangle to null, then no projection is happening
+		 * and the coordinates are mapped directly to view port coordinates.
+		 * E.g. coordinates (40,40) will be (40,40) on the viewport, as if the
+		 * view rectangles size was coupled to the viewport size.
+		 * 
+		 * @param view the view rectangle (can be null)
+		 */
+		public void setView(Rectangle2D view);
+		
+	}
 
 
 	
@@ -5760,9 +5804,9 @@ public class ContourPlot extends AlgorithmBase {
 				int viewPortY = (int)coordsysAreaLB.getY();
 				int viewPortW = (int)coordsysAreaLB.distance(coordsysAreaRB);
 				int viewPortH = (int)coordsysAreaLB.distance(coordsysAreaLT);
-				/*if(content instanceof AdaptableView){
+				if(content instanceof AdaptableView){
 					((AdaptableView) content).setView(coordinateView);
-				}*/
+				}
 				// create viewport graphics
 				Graphics2D g_ = (Graphics2D)g.create(viewPortX, viewPortY, viewPortW, viewPortH);
 				Graphics2D p_ = (Graphics2D)p.create(viewPortX, viewPortY, viewPortW, viewPortH);
@@ -5802,9 +5846,9 @@ public class ContourPlot extends AlgorithmBase {
 				int viewPortY = (int)(coordsysAreaLB.getY()+y);
 				int viewPortW = (int)coordsysAreaLB.distance(coordsysAreaRB);
 				int viewPortH = (int)coordsysAreaLB.distance(coordsysAreaLT);
-				/*if(content instanceof AdaptableView){
+				if(content instanceof AdaptableView){
 					((AdaptableView) content).setView(coordinateView);
-				}*/
+				}
 				// render the content into the group
 				content.renderPDF(doc, page, viewPortX, viewPortY, viewPortW, viewPortH);
 			}
