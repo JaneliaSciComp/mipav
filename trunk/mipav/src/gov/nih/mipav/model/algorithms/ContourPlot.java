@@ -10,6 +10,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -128,6 +133,137 @@ public class ContourPlot extends AlgorithmBase {
 	
 	public ContourPlot() {
 		 
+	}
+	
+	public void testIsolinesViz() {
+		JFrame frame = new JFrame("Iso Lines");
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.getContentPane().setLayout(new BorderLayout());
+		frame.getContentPane().setPreferredSize(new Dimension(500, 450));
+		JPlotterCanvas canvas = new BlankCanvasFallback();
+		CoordSysRenderer coordsys = new CoordSysRenderer();
+		canvas.setRenderer(coordsys);
+		CompleteRenderer content = new CompleteRenderer();
+		coordsys.setContent(content);
+		Legend legend = new Legend();
+		coordsys.setLegendRight(legend);
+		coordsys.setLegendRightWidth(50);
+		canvas.asComponent().setBackground(Color.WHITE);
+
+		// setup content
+		DoubleBinaryOperator f1 = (x,y)->Math.exp(-(x*x+y*y));
+		DoubleBinaryOperator f2 = (x,y)->(x*y)-(y+1)*y;
+		DoubleBinaryOperator f = (x,y)->f1.applyAsDouble(x, y)-f2.applyAsDouble(x, y);
+		final int resolution = 200;
+		double[][] X = new double[resolution][resolution];
+		double[][] Y = new double[resolution][resolution];
+		double[][] Z = new double[resolution][resolution];
+		for(int j=0; j<X.length;j++) {
+			for(int i=0; i<X[0].length; i++) {
+				double x = i*8.0/(resolution-1) -4.0;
+				double y = j*8.0/(resolution-1) -4.0;
+				double z = f.applyAsDouble(x, y);
+				X[j][i] = x;
+				Y[j][i] = y;
+				Z[j][i] = z;
+			}
+		}
+		// make contour plot
+		Lines contourlines = new Lines();
+		Triangles contourbands = new Triangles();
+		double[] isoValues = new double[] {
+			-2,
+			-1,
+			-.5,
+			0,
+			.5,
+			1,
+			2,
+		};
+		ColorMap isoColors = DefaultColorMap.S_COPPER;
+		for(int i = isoValues.length-1; i >= 0; i--) {
+			List<SegmentDetails> contours = computeContourLines(X, Y, Z, isoValues[i], isoColors.getColor(i));
+			contourlines.getSegments().addAll(contours);
+			legend.addLineLabel(1, isoColors.getColor(i), isoValues[i] < 0 ? ""+isoValues[i]:" "+isoValues[i]);
+		}
+		for(int i = 0; i < isoValues.length-1; i++) {
+			List<TriangleDetails> contours = computeContourBands(X, Y, Z, isoValues[i], isoValues[i+1], isoColors.getColor(i), isoColors.getColor(i+1));
+			contourbands.getTriangleDetails().addAll(contours);
+		}
+		content.addItemToRender(contourlines).addItemToRender(contourbands);
+		contourlines.setGlobalThicknessMultiplier(1);
+		contourbands.setGlobalAlphaMultiplier(0.3);
+		new CoordSysScrollZoom(canvas, coordsys).register();
+		new CoordSysPanning(canvas, coordsys).register();
+		
+		Lines userContour = new Lines();
+		Text userIsoLabel = new Text("", 10, Font.ITALIC);
+		content.addItemToRender(userContour);
+		content.addItemToRender(userIsoLabel);
+		MouseAdapter contourPlacer = new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				if(e.getModifiersEx() == MouseEvent.BUTTON1_DOWN_MASK)
+					calcContour(e.getPoint());
+			};
+			
+			public void mouseDragged(MouseEvent e) {
+				if(e.getModifiersEx() == MouseEvent.BUTTON1_DOWN_MASK)
+					calcContour(e.getPoint());
+			};
+			
+			void calcContour(Point mp){
+				Point2D p = coordsys.transformAWT2CoordSys(mp, canvas.asComponent().getHeight());
+				double isoValue = f.applyAsDouble(p.getX(), p.getY());
+				userIsoLabel
+					.setTextString(String.format("%.3f", isoValue))
+					.setColor(0xff8844bb)
+					.setOrigin(p)
+					.setBackground(0xaaffffff);
+				List<SegmentDetails> contourSegments = computeContourLines(X, Y, Z, isoValue, 0xff8844bb);
+				userContour.removeAllSegments().getSegments().addAll(contourSegments);
+				canvas.scheduleRepaint();
+			}
+		};
+		canvas.asComponent().addMouseListener(contourPlacer);
+		canvas.asComponent().addMouseMotionListener(contourPlacer);
+		
+		canvas.asComponent().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(SwingUtilities.isRightMouseButton(e)){
+					/*Document doc = canvas.paintSVG();
+					SVGUtils.documentToXMLFile(doc, new File("svgtest.svg"));
+					System.out.println("svg exported.");*/
+				}
+			}
+		});
+
+		canvas.asComponent().addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(SwingUtilities.isMiddleMouseButton(e)){
+					/*try {
+						PDDocument doc = canvas.paintPDF();
+						doc.save("pdf_isolinesViz.pdf");
+						doc.close();
+						System.out.println("pdf exported.");
+					} catch (IOException ex) {
+						ex.printStackTrace();
+					}*/
+				}
+			}
+		});
+
+		frame.getContentPane().add(canvas.asComponent(), BorderLayout.CENTER);
+		canvas.addCleanupOnWindowClosingListener(frame);
+		SwingUtilities.invokeLater(()->{
+			frame.pack();
+			frame.setVisible(true);
+			frame.transferFocus();
+		});
+
+
+	    System.out.println("Finished testIsolinesViz");
 	}
 	
 	public void runAlgorithm() {
@@ -249,7 +385,7 @@ public class ContourPlot extends AlgorithmBase {
 		}
 
 
-     	System.out.println("Finished runAlgorithm()");
+     	//System.out.println("Finished runAlgorithm()");
 	} // public void runAlgorithm()
 
 	/**
@@ -1146,6 +1282,16 @@ public class ContourPlot extends AlgorithmBase {
 	}
 
 	public enum DefaultColorMap implements ColorMap {
+		S_COPPER(
+				0xff_000000,
+				0xff_330000,
+				0xff_660000,
+				0xff_993322,
+				0xff_cc6644,
+				0xff_ff9966,
+				0xff_ffcc88
+				),
+
 		D_COOL_WARM(
 				0xff_3b4cc0,
 				0xff_6688ee,
@@ -1612,6 +1758,24 @@ public class ContourPlot extends AlgorithmBase {
 			public static final double hypot(double x, double y){
 				return Math.sqrt(x*x + y*y);
 			}
+			
+			/**
+			 * Swaps between GL and AWT coordinates, AWT coordinate system
+			 * has its origin in the top left corner of a component and downwards pointing
+			 * y axis, whereas GL has its origin in the bottom left corner of the viewport
+			 * (at least in JPlotter) and upwards pointing y axis.
+			 * @param point to swap the y axis of
+			 * @param height of the component or viewport
+			 * @return point in coordinates of the other reference coordinate system.
+			 * 
+			 * @param <P> type of Point2D
+			 */
+			public static <P extends Point2D> P swapYAxis(P point, int height){
+				P copy = copy(point);
+				copy.setLocation(copy.getX(), height-1-copy.getY());
+				return copy;
+			}
+
 
 		}
 		
@@ -2791,6 +2955,42 @@ public class ContourPlot extends AlgorithmBase {
 			return false;
 		}
 
+		/**
+		 * Adds a label for a line to this legend.
+		 * @param thickness of the line to appear in front of the label text
+		 * @param color integer packed ARGB color value of the glyph
+		 * @param strokePattern lines stroke pattern (see {@link Lines#setStrokePattern(int)})
+		 * @param labeltxt text of the label
+		 * @param pickColor picking color (see {@link FBOCanvas})
+		 * @return this for chaining
+		 */
+		public Legend addLineLabel(double thickness, int color, int strokePattern, String labeltxt, int pickColor){
+			this.lineLabels.add(new LineLabel(labeltxt, thickness, color, pickColor, strokePattern));
+			return setDirty();
+		}
+
+		/**
+		 * Adds a label for a line to this legend.
+		 * @param thickness of the line to appear in front of the label text
+		 * @param color integer packed ARGB color value of the glyph
+		 * @param labeltxt text of the label
+		 * @param pickColor picking color (see {@link FBOCanvas})
+		 * @return this for chaining
+		 */
+		public Legend addLineLabel(double thickness, int color, String labeltxt, int pickColor){
+			return addLineLabel(thickness, color, 0xffff, labeltxt, pickColor);
+		}
+
+		/**
+		 * Adds a label for a line to this legend.
+		 * @param thickness of the line to appear in front of the label text
+		 * @param color integer packed ARGB color value of the glyph
+		 * @param labeltxt text of the label
+		 * @return this for chaining
+		 */
+		public Legend addLineLabel(double thickness, int color, String labeltxt){
+			return addLineLabel(thickness, color, labeltxt, 0);
+		}
 
 
 	}
@@ -5559,6 +5759,250 @@ public class ContourPlot extends AlgorithmBase {
 		public void setView(Rectangle2D view);
 		
 	}
+ 
+	public interface InteractionConstants {
+
+		public static int X_AXIS=1;
+		public static int Y_AXIS=2;
+		
+	}
+	
+	/**
+	 * The CoordSysPanning class implements a {@link MouseListener}
+	 * and {@link MouseMotionListener} that realize panning functionality
+	 * for the coordinate view of the {@link CoordSysRenderer}.
+	 * When registering this with an {@link JPlotterCanvas} and CoordSysRenderer dragging with the left mouse
+	 * button over the Canvas while holding down CTRL will set the coordinate view accordingly.
+	 * <p>
+	 * Intended use: {@code CoordSysPanning pan = new CoordSysPanning(canvas, coordsys).register(); }
+	 * <p>
+	 * Per default the extended modifier mask for a dragging mouse event to trigger
+	 * panning is {@link InputEvent#CTRL_DOWN_MASK}. 
+	 * If this is undesired the {@link #extModifierMask} has to be overridden.<br>
+	 * For example to not need to press any key:
+	 * <pre>new CoordSysPanning(canvas){{extModifierMask=0;}}.register();</pre>
+	 * 
+	 * @author hageldave
+	 */
+	public class CoordSysPanning extends MouseAdapter implements InteractionConstants {
+		
+		protected Point startPoint;
+		protected Component canvas;
+		protected CoordSysRenderer coordsys;
+		protected int extModifierMask = InputEvent.CTRL_DOWN_MASK;
+		protected int axes = X_AXIS | Y_AXIS;
+		
+		/**
+		 * Creates a new {@link CoordSysPanning} for the specified canvas and corresponding coordinate system.
+		 * @param canvas displaying the coordsys
+		 * @param coordsys the coordinate system to apply the panning in
+		 */
+		public CoordSysPanning(JPlotterCanvas canvas, CoordSysRenderer coordsys) {
+			this.canvas = canvas.asComponent();
+			this.coordsys = coordsys;
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if(isTriggerMouseEvent(e, MouseEvent.MOUSE_PRESSED))
+				this.startPoint = e.getPoint();
+		}
+
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			if(startPoint!= null && isTriggerMouseEvent(e, MouseEvent.MOUSE_DRAGGED)){
+				Point dragPoint = e.getPoint();
+				double mouseTx = 0;
+				double mouseTy = 0;
+				if((axes & X_AXIS) != 0)
+					mouseTx = dragPoint.getX()-startPoint.getX();
+				if((axes & Y_AXIS) != 0)
+					mouseTy = dragPoint.getY()-startPoint.getY();
+				startPoint = dragPoint;
+				Rectangle2D coordSysFrame = coordsys.getCoordSysArea();
+				Rectangle2D coordinateArea = coordsys.getCoordinateView();
+				double relativeTx = mouseTx/coordSysFrame.getWidth();
+				double relativeTy = mouseTy/coordSysFrame.getHeight();
+				double areaTx = relativeTx*coordinateArea.getWidth();
+				double areaTy = relativeTy*coordinateArea.getHeight();
+				coordsys.setCoordinateView(
+						coordinateArea.getMinX()-areaTx, 
+						coordinateArea.getMinY()+areaTy,  
+						coordinateArea.getMaxX()-areaTx, 
+						coordinateArea.getMaxY()+areaTy
+				);
+				canvas.repaint();
+			}
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			startPoint = null;
+		}
+		
+		
+		protected boolean isTriggerMouseEvent(MouseEvent e, int method){
+			return SwingUtilities.isLeftMouseButton(e) 
+					&& 
+					(e.getModifiersEx()&extModifierMask) == extModifierMask
+					&&
+					(method!=MouseEvent.MOUSE_PRESSED || coordsys.getCoordSysArea().contains(Utils.swapYAxis(e.getPoint(), canvas.getHeight())))
+					;
+		}
+		
+		/**
+		 * Sets the axes to which this panning is applied. 
+		 * Default are both x and y axis.
+		 * @param axes {@link InteractionConstants#X_AXIS}, {@link InteractionConstants#Y_AXIS} or {@code X_AXIS|Y_AXIS}
+		 * @return this for chaining
+		 */
+		public CoordSysPanning setPannedAxes(int axes){
+			this.axes = axes;
+			return this;
+		}
+		
+		/**
+		 * @return the axes this panning applies to, i.e.
+		 * {@link InteractionConstants#X_AXIS}, {@link InteractionConstants#Y_AXIS} or {@code X_AXIS|Y_AXIS}
+		 */
+		public int getPannedAxes() {
+			return axes;
+		}
+
+		/**
+		 * Adds this {@link CoordSysPanning} as {@link MouseListener} and
+		 * {@link MouseMotionListener} to the associated canvas.
+		 * @return this for chaining
+		 */
+		public CoordSysPanning register(){
+			if( ! Arrays.asList(canvas.getMouseListeners()).contains(this))
+				canvas.addMouseListener(this);
+			if( ! Arrays.asList(canvas.getMouseMotionListeners()).contains(this))
+				canvas.addMouseMotionListener(this);
+			return this;
+		}
+		
+		/**
+		 * Removes this {@link CoordSysPanning} from the associated canvas'
+		 * mouse and mouse motion listeners.
+		 * @return this for chaining
+		 */
+		public CoordSysPanning deRegister(){
+			canvas.removeMouseListener(this);
+			canvas.removeMouseMotionListener(this);
+			return this;
+		}
+		
+		
+	}
+
+
+	
+	/**
+	 * The CoordSysScrollZoom class implements a {@link MouseWheelListener}
+	 * that realize zooming functionality for the coordinate view of the {@link CoordSysRenderer}.
+	 * When registering this with an {@link JPlotterCanvas} and corresponding {@link CoordSysRenderer} turning the scroll wheel zooms into or out of
+	 * the current coordinate system view.
+	 * The zoom factor can be set and is by default 2.0.
+	 * <p>
+	 * Intended use: {@code CoordSysScrollZoom zoom = new CoordSysScrollZoom(canvas, coordsys).register(); }
+	 * 
+	 * @author hageldave
+	 */
+	public class CoordSysScrollZoom implements MouseWheelListener, InteractionConstants {
+
+		protected Component canvas;
+		protected CoordSysRenderer coordsys;
+		protected double zoomFactor = 2;
+		protected int axes = X_AXIS | Y_AXIS;
+		
+		public CoordSysScrollZoom(JPlotterCanvas canvas, CoordSysRenderer coordsys) {
+			this.canvas = canvas.asComponent();
+			this.coordsys = coordsys;
+		}
+		
+		
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent e) {
+			if(!coordsys.getCoordSysArea().contains(Utils.swapYAxis(e.getPoint(), canvas.getHeight())))
+				return;
+			
+			int wheelRotation = e.getWheelRotation();
+			double zoom = Math.pow(zoomFactor, wheelRotation);
+			double centerX = coordsys.getCoordinateView().getCenterX();
+			double centerY = coordsys.getCoordinateView().getCenterY();
+			double width = coordsys.getCoordinateView().getWidth();
+			double height = coordsys.getCoordinateView().getHeight();
+			if((axes & X_AXIS) != 0) 
+				width *= zoom;
+			if((axes & Y_AXIS) != 0)
+				height *= zoom;
+			coordsys.setCoordinateView(
+					centerX-width/2,
+					centerY-height/2,
+					centerX+width/2,
+					centerY+height/2
+			);
+			canvas.repaint();
+		}
+		
+		/**
+		 * Sets the zoom factor of this {@link CoordSysScrollZoom}.
+		 * The default value is 2.0.
+		 * Using a value in ]0,1[ will reverse the zoom direction.
+		 * @param zoomFactor to be set
+		 * @return this for chaining
+		 */
+		public CoordSysScrollZoom setZoomFactor(double zoomFactor) {
+			this.zoomFactor = zoomFactor;
+			return this;
+		}
+		
+		public double getZoomFactor() {
+			return zoomFactor;
+		}
+		
+		/**
+		 * Adds this {@link CoordSysScrollZoom} as {@link MouseWheelListener} to the associated canvas.
+		 * @return this for chaining
+		 */
+		public CoordSysScrollZoom register(){
+			if( ! Arrays.asList(canvas.getMouseWheelListeners()).contains(this))
+				canvas.addMouseWheelListener(this);
+			return this;
+		}
+		
+		/**
+		 * Sets the axes to which this scroll zoom is applied. 
+		 * Default are both x and y axis.
+		 * @param axes {@link InteractionConstants#X_AXIS}, {@link InteractionConstants#Y_AXIS} or {@code X_AXIS|Y_AXIS}
+		 * @return this for chaining
+		 */
+		public CoordSysScrollZoom setZoomedAxes(int axes){
+			this.axes = axes;
+			return this;
+		}
+		
+		/**
+		 * @return the axes this scroll zoom applies to, i.e.
+		 * {@link InteractionConstants#X_AXIS}, {@link InteractionConstants#Y_AXIS} or {@code X_AXIS|Y_AXIS}
+		 */
+		public int getZoomedAxes() {
+			return axes;
+		}
+		
+		/**
+		 * Removes this {@link CoordSysScrollZoom} from the associated canvas'
+		 * mouse wheel listeners.
+		 * @return this for chaining
+		 */
+		public CoordSysScrollZoom deRegister(){
+			canvas.removeMouseWheelListener(this);
+			return this;
+		}
+
+	}
+
 
 
 	
@@ -6068,6 +6512,82 @@ public class ContourPlot extends AlgorithmBase {
 			Renderer old = this.content;
 			this.content = content;
 			return old;
+		}
+		
+		/**
+		 * Sets the renderer that will draw the legend to the right of the coordinate system.
+		 * The view port area for this renderer will start at the top edge of the coordinate system,
+		 * be {@link #getLegendRightWidth()} wide and extend to the bottom (-padding).
+		 * @param legend renderer for right side of coordinate system
+		 * @return the previous legend renderer (which may need to be closed to free GL resources),
+		 * null if none was set
+		 */
+		public Renderer setLegendRight(Renderer legend) {
+			Renderer old = this.legendRight;
+			this.legendRight = legend;
+
+			// if the legend is of type Legend, a color scheme is automatically set
+			updateLegendColorScheme(legend);
+			return old;
+		}
+
+		/**
+		 * Sets the width of the legend area right to the coordinate system.
+		 * (height is determined by the space available until the bottom of the renderer's viewport)
+		 * @param legendRightWidth width of the right legend area.
+		 * (default is 70 px)
+		 * @return this for chaining
+		 */
+		public CoordSysRenderer setLegendRightWidth(int legendRightWidth) {
+			this.legendRightWidth = legendRightWidth;
+			return this;
+		}
+		
+		/**
+		 * @return the area of this renderer in which the coordinate system contents are rendered.
+		 * It is the viewPort for the {@link #content} renderer which is enclosed by
+		 * the coordinate system axes.
+		 */
+		//@GLCoordinates
+		public Rectangle2D getCoordSysArea() {
+			return new Rectangle2D.Double(
+					coordsysAreaLB.getX()+currentViewPort.x, 
+					coordsysAreaLB.getY()+currentViewPort.y, 
+					coordsysAreaLB.distance(coordsysAreaRB), 
+					coordsysAreaLB.distance(coordsysAreaLT)
+					);
+		}
+
+		/**
+		 * Transforms a location in AWT coordinates (y axis extends to bottom) 
+		 * on this renderer to the corresponding coordinates in the coordinate 
+		 * system view (in GL coords).
+		 * @param awtPoint to be transformed
+		 * @param canvasheight height of the canvas this {@link CoordSysRenderer} is drawn to
+		 * @return transformed location
+		 */
+		public Point2D transformAWT2CoordSys(Point2D awtPoint, int canvasheight){
+			Point2D glp = Utils.swapYAxis(awtPoint, canvasheight);
+			return transformGL2CoordSys(glp);
+		}
+		
+		/**
+		 * Transforms a location in GL coordinates on this renderer to the 
+		 * corresponding coordinates in the coordinate system view.
+		 * @param point to be transformed
+		 * @return transformed location
+		 */
+		//@GLCoordinates
+		public Point2D transformGL2CoordSys(Point2D point){
+			Rectangle2D coordSysArea = getCoordSysArea();
+			Rectangle2D coordinateView = getCoordinateView();
+			double x = point.getX()-coordSysArea.getMinX();
+			double y = point.getY()-coordSysArea.getMinY();
+			x /= coordSysArea.getWidth()-1;
+			y /= coordSysArea.getHeight()-1;
+			x = x*coordinateView.getWidth()+coordinateView.getMinX();
+			y = y*coordinateView.getHeight()+coordinateView.getMinY();
+			return new Point2D.Double(x, y);
 		}
 
 
