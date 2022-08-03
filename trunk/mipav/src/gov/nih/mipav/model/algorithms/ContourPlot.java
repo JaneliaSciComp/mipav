@@ -266,7 +266,7 @@ public class ContourPlot extends AlgorithmBase {
 	    System.out.println("Finished testIsolinesViz");
 	}
 	
-	public void runAlgorithm() {
+	public void testContourPlot() {
 		// formulate bivariate function that defines the 2D surface
 		DoubleBinaryOperator bivariateFn = (x,y)->(x*y + x*x - y*y -.01);
 		// sample the function
@@ -386,7 +386,11 @@ public class ContourPlot extends AlgorithmBase {
 
 
      	//System.out.println("Finished runAlgorithm()");
-	} // public void runAlgorithm()
+	} // public void testContourPlot()
+	
+	public void runAlgorithm() {
+		
+	}
 
 	/**
 	 * Class providing convenience methods for saving Images to file.
