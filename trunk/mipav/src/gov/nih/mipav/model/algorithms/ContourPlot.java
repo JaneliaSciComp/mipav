@@ -5178,6 +5178,94 @@ public class ContourPlot extends AlgorithmBase {
 	public class TextRenderer extends GenericRenderer<Text> {
 
 		protected static final char NL = '\n';
+		
+		@Override
+		public void renderFallback(Graphics2D g, Graphics2D p, int w, int h) {
+			if(!isEnabled()){
+				return;
+			}
+			
+			double translateX = Objects.isNull(view) ? 0:view.getX();
+			double translateY = Objects.isNull(view) ? 0:view.getY();
+			double scaleX = Objects.isNull(view) ? 1:w/view.getWidth();
+			double scaleY = Objects.isNull(view) ? 1:h/view.getHeight();
+			
+			Rectangle vpRect = new Rectangle(w, h);
+			
+			for(Text txt: getItemsToRender()){
+				if(txt.isHidden() || txt.getTextString().isEmpty()){
+					continue;
+				}
+				{
+					double x1,y1,angle;
+					x1 = txt.getOrigin().getX();
+					y1 = txt.getOrigin().getY();
+					angle = txt.getAngle();
+					
+					x1-=translateX;
+					y1-=translateY;
+					x1*=scaleX;
+					y1*=scaleY;
+					
+					y1+=1;
+					
+					double effectiveTx = x1-txt.getOrigin().getX();
+					double effectiveTy = y1-txt.getOrigin().getY();
+					// test if inside of view port
+					Rectangle2D txtrect = txt.getBoundsWithRotation();
+					txtrect.setRect(
+							txtrect.getX()+effectiveTx, 
+							txtrect.getY()+effectiveTy, 
+							txtrect.getWidth(), txtrect.getHeight()
+					);
+					
+					if(!txtrect.intersects(vpRect)) {
+						continue;
+					}
+					// create a proxy graphics object to draw the string to
+					Graphics2D g_ = (Graphics2D) g.create();
+					Graphics2D p_ = (Graphics2D) p.create();
+					
+					//Font font = FontProvider.getUbuntuMono(txt.fontsize, txt.style);
+					Font font = MipavUtil.font12;
+					g_.setFont(font);
+					p_.setFont(font);
+					
+					/* translate to text origin, 
+					 * flip vertically (AWT coordinates, so text is not upside down), 
+					 * rotate according to angle */
+					AffineTransform trnsfrm = new AffineTransform();
+					trnsfrm.translate(x1, y1);
+					trnsfrm.scale(1, -1);
+					if(angle != 0.0)
+						trnsfrm.rotate(-angle);
+					g_.transform(trnsfrm);
+					p_.transform(trnsfrm);
+					
+					// draw background rectangle
+					if(txt.getBackground().getRGB() != 0){
+						g_.setColor(txt.getBackground());
+						Rectangle2D bounds = txt.getBounds();
+						float rightpadding = 0.4f*((float)bounds.getWidth()/txt.getTextString().length());
+						Rectangle2D rect = new Rectangle2D.Double(0.0, -bounds.getHeight(), bounds.getWidth()+rightpadding, bounds.getHeight());
+						g_.fill(rect);
+					}
+					// draw string
+					int maxDescent = g_.getFontMetrics().getMaxDescent();
+					g_.setColor(txt.getColor());
+					g_.drawString(txt.getTextString(), 0, -maxDescent);
+					
+					if(txt.getPickColor() != 0) {
+						p_.setColor(new Color(txt.getPickColor()));
+						Rectangle2D bounds = txt.getBounds();
+						float rightpadding = 0.4f*((float)bounds.getWidth()/txt.getTextString().length());
+						Rectangle2D rect = new Rectangle2D.Double(0.0, -bounds.getHeight(), bounds.getWidth()+rightpadding, bounds.getHeight());
+						p_.fill(rect);
+					}
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -6096,6 +6184,14 @@ public class ContourPlot extends AlgorithmBase {
 			this.textSize = CharacterAtlas.boundsForText(txtStr.length(), fontsize, style).getBounds().getSize();
 			return setDirty();
 		}
+		
+		/**
+		 * @return the String this text object displays
+		 */
+		public String getTextString(){
+			return txtStr;
+		}
+
 		
 		@Override
 		public boolean intersects(Rectangle2D rect) {
