@@ -1,4 +1,4 @@
-package gov.nih.mipav.model.algorithms.utilities;
+package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
