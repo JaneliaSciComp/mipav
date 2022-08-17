@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -758,6 +759,56 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
                                     zero_padd_ratio);
         }
 	    return padd_arrays;
+    }
+    
+    
+    public double[][] rfft(double x[]) {
+    	// reals in FFTUtility requires an even number of input points
+    	// so if x has an odd number of points add on an extra zero point
+    	int i,j;
+    	int xlen = x.length;
+    	int outlen;
+    	if ((xlen % 2) == 0) {
+    		outlen = (xlen/2) + 1;
+    	}
+    	else {
+    		outlen = (xlen + 1)/2 + 1;
+    	}
+    	double output[][] = new double[2][outlen];
+    	for (i = 0, j = 0; i < outlen -1; i++) {
+    		output[0][i] = x[j++];
+    		if (j < xlen) {
+    		    output[1][i] = x[j++];
+    		}
+    	}
+    	FFTUtility fft = new FFTUtility(output[0],output[1],1,outlen-1,1,-1,FFTUtility.FFT);
+    	fft.run();
+    	fft = new FFTUtility(output[0],output[1],1,outlen-1,1,-1,FFTUtility.REALS);
+        fft.run();
+        return output;
+    }
+    
+    public double[] irfft(double x[][], boolean isOdd) {
+    	int i, j = 0;
+    	int n = x[0].length-1;
+    	FFTUtility fft = new FFTUtility(x[0],x[1],1,n,1,1,FFTUtility.REALS);
+        fft.run();	
+        fft = new FFTUtility(x[0],x[1],1,n,1,1,FFTUtility.FFT);
+        fft.run();
+        double output[];
+        if (isOdd) {
+        	output = new double[2*n-1];
+        }
+        else {
+        	output = new double[2*n];
+        }
+        for (i = 0, j = 0; i < n; i++) {
+        	output[j++] = x[0][i];
+        	if (j < output.length) {
+        		output[j++] = x[1][i];
+        	}
+        }
+        return output;
     }
 	    
 
