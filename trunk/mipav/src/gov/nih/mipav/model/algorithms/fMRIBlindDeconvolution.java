@@ -155,9 +155,11 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 	    // c : double,
 	    //    value to padd with.
+		// Default 0
 
 	    // paddtype : "left", "right", "center"
 	    //    where to place the padding.
+		// Default "center"
 
 	    // Results
 	    // -------
@@ -219,9 +221,11 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 		    // c : double,
 		    //    value to padd with.
+		    // Default 0
 
 		    // paddtype : "left", "right", "center"
 		    //    where to place the padding.
+		    // Default "center"
 
 		    // Results
 		    // -------
@@ -285,6 +289,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 	    // c : double,
 	    //    value to padd with.
+		// Default 0
 
 	    // paddtype : ['center'],
 	    //    where to place the padding.
@@ -332,6 +337,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 		    // c : double,
 		    //    value to padd with.
+		    // Default 0
 
 		    // paddtype : ['center'],
 		    //    where to place the padding.
@@ -382,6 +388,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 	    // paddtype : left, right, or center,
 	    //    where to place the padding.
+		// Default center
 
 	    // Results
 	    // -------
@@ -433,6 +440,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 	    // paddtype : left, right, or center,
 	    //    where to place the padding.
+		// Default center
 
 	    // Results
 	    // -------
@@ -551,4 +559,207 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		}
 		return unpaddedArray;
 	}
+	
+	public double log2(double x) {
+		return (Math.log(x)/Math.log(2.0));
+	}
+	
+	public double[] _custom_padd(int p_total[], double a[], int min_power_of_2, int min_zero_padd,
+		            double zero_padd_ratio) {
+		// Private helper to make a zeros-mirror-zeros padd to the next power of
+		// two of a.
+		
+		// Parameters
+		// ----------
+		// arrays : np.ndarray,
+		//   array to padd.
+		
+		// min_power_of_2 : int (default=1024),
+		//   min length (power of two) for the padded array.
+		   
+		// min_zero_padd : int (default=50)
+		//   min zero padd, either for the first or the second zero-padd.
+		
+		// zero_padd_ratio : float (default=0.5),
+		//   determine the ratio of the length of zero padds (either for the first
+		//   or the second zero-padd) w.r.t the array length.
+		
+		
+		
+		// Note:
+		// -----
+		// Having a signal close to ~200 can make trouble.
+		
+		// Results
+		// -------
+		// arrays : np.ndarray
+		//   the padded array.
+		
+		// p_total int[2]
+		//   the applied padd.
+		double divby2;
+		int nextpow2;
+		int diff;
+		int zero_padd_len;
+		boolean too_short;
+		int p_zeros[];
+		int len_padd_left;
+		int len_padd_right;
+		double paddeda[];
+		int len_reflect_padd_left;
+		int len_reflect_padd_right;
+		int p_reflect[];
+		double reflecta[];
+		int i,j;
+		
+	
+	    divby2 = min_power_of_2;
+	    while (divby2 >= 1.0) {
+	    	divby2 = divby2/2.0;
+	    }
+	    if (divby2 != 1.0) {
+	    	System.err.println("In _custom_padd min_power_of_2 should be a power of two");
+	    	System.err.println("min_power_of_2 = " + min_power_of_2);
+	    	System.exit(-1);
+	    }
+		
+		nextpow2 = (int)(Math.pow(2, Math.ceil(log2(a.length))));
+		if (nextpow2 < min_power_of_2) {
+			nextpow2 = min_power_of_2;
+		}
+		
+		diff = nextpow2 - a.length;
+		
+		// define the three possible padding
+		zero_padd_len = (int)(zero_padd_ratio * a.length);
+		
+		too_short = zero_padd_len < min_zero_padd;
+		if (too_short) {
+			zero_padd_len = min_zero_padd;
+		}
+		p_zeros = new int[] {zero_padd_len, zero_padd_len};
+		
+		len_padd_left = (diff / 2);
+		len_padd_right = (diff / 2) + (a.length % 2);
+		p_total[0] = len_padd_left;
+		p_total[1] = len_padd_right;
+		
+		if (diff == 0) {
+		   // [ s ]
+		
+		   p_total[0] = 0;
+		   p_total[1] = 0;
+		
+		   return a;
+		}
+		
+		else if ((0 < diff) && (diff < 2 * zero_padd_len)) {
+		   // [ /zeros | s | zeros/ ]
+		   if (p_total[0] == p_total[1]) {
+			   paddeda = _padd_symetric(a, p_total[0] + p_total[1], 0.0, "center");
+		   }
+		   else {
+			   paddeda = _padd_assymetric(a, p_total, 0.0, "center");
+		   }
+		
+		   return paddeda;
+		}
+		
+		else if ((2 * zero_padd_len < diff) && (diff < 4 * zero_padd_len)) {
+		   // [ zeros | mirror-signal | s | mirror-signal | zeros ]
+		
+		   len_reflect_padd_left = len_padd_left - zero_padd_len;
+		   len_reflect_padd_right = len_padd_right - zero_padd_len;
+		   p_reflect = new int[] {len_reflect_padd_left, len_reflect_padd_right};
+		
+		   // padding
+		   reflecta = new double[p_reflect[0] + a.length + p_reflect[1]];
+		   for (i = p_reflect[0]; i < p_reflect[0] + a.length; i++) {
+			   reflecta[i] = a[i - p_reflect[0]];
+		   }
+		   for (i = p_reflect[0] - 1, j = 0; i >= 0; i--, j++) {
+			   reflecta[i] = reflecta[p_reflect[0]+1+j];
+		   }
+		   for (i = p_reflect[0] + a.length, j = 0; i < p_reflect[0] + a.length + p_reflect[1]; i++, j++) {
+			   reflecta[i] = reflecta[p_reflect[0] + a.length - 2 - j];
+		   }
+		   paddeda = _padd_symetric(reflecta, p_zeros[0] + p_zeros[1], 0.0, "center");
+		
+		   return paddeda;
+		}
+		
+		else {
+		   // [ zeros | mirror-signal | zeros | s | zeros | mirror-signal | zeros ]
+		
+		   len_reflect_padd_left = len_padd_left - 2 * zero_padd_len;
+		   len_reflect_padd_right = len_padd_right - 2 * zero_padd_len;
+		   p_reflect = new int[] {len_reflect_padd_left, len_reflect_padd_right};
+		
+		   // padding
+		   paddeda = _padd_symetric(a, p_zeros[0] + p_zeros[1], 0.0, "center");
+		   reflecta = new double[p_reflect[0] + paddeda.length + p_reflect[1]];
+		   for (i = p_reflect[0]; i < p_reflect[0] + a.length; i++) {
+			   reflecta[i] = paddeda[i - p_reflect[0]];
+		   }
+		   for (i = p_reflect[0] - 1, j = 0; i >= 0; i--, j++) {
+			   reflecta[i] = reflecta[p_reflect[0]+1+j];
+		   }
+		   for (i = p_reflect[0] + paddeda.length, j = 0; i < p_reflect[0] + paddeda.length + p_reflect[1]; i++, j++) {
+			   reflecta[i] = reflecta[p_reflect[0] + paddeda.length - 2 - j];
+		   }
+		   paddeda = _padd_symetric(reflecta, p_zeros[0] + p_zeros[1], 0.0, "center");
+		
+		   return paddeda;
+		}
+    }
+	
+
+    public double[][] custom_padd(int padd[], double arrays[][], int min_power_of_2, int min_zero_padd,
+                double zero_padd_ratio) {
+        // Zeros-mirror-zeros padding function to the next power of two of arrays.
+
+	    // Parameters
+	    // ----------
+	    // arrays :list of np.ndarray,
+	       // list of arrays to padd.
+	
+	    // min_power_of_2 : int (default=1024),
+	    //     min length (power of two) for the padded array.
+	        
+	    // min_zero_padd : int (default=50)
+	    //    min zero padd, either for the first or the second zero-padd.
+	
+	
+	    // zero_padd_ratio : float (default=0.5),
+	    //    determine the ratio of the length of zero padds (either for the first
+	    //    or the second zero-padd) w.r.t the array length.
+	
+	    // Note:
+	    // -----
+	    // Having a signal close to ~200 can make trouble.
+	
+	    // Results
+	    // ------
+	    // padd_arrays : list of np.ndarray
+	       // list of arrays.
+	
+	    // padd : int[2]
+	    //    the applied padd (might not be the same for all the arrays).
+	    int i;
+        _custom_padd(padd, arrays[0],
+                               min_power_of_2,
+                               min_zero_padd,
+                               zero_padd_ratio);
+        double padd_arrays[][] = new double[arrays.length][];
+        for (i = 0; i < arrays.length; i++) {
+            padd_arrays[i] = _custom_padd(padd, arrays[i],
+                                    min_power_of_2,
+                                    min_zero_padd,
+                                    zero_padd_ratio);
+        }
+	    return padd_arrays;
+    }
+	    
+
+
 }
