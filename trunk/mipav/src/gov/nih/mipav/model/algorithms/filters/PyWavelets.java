@@ -331,7 +331,7 @@ public  class PyWavelets extends AlgorithmBase {
         double dec_lo[];  /* lowpass decomposition */
         double rec_hi[];  /* highpass reconstruction */
         double rec_lo[];  /* lowpass reconstruction */
-        int dec_len;   /* length of decomposition filter */
+        public int dec_len;   /* length of decomposition filter */
         int rec_len;   /* length of reconstruction filter */
 
         int vanishing_moments_psi = 0;
@@ -3555,7 +3555,7 @@ public  class PyWavelets extends AlgorithmBase {
 	 * name - (currently) a character codename of a wavelet family
 	 * order - order of the wavelet (ie. coif3 has order 3)
 	 */
-    DiscreteWavelet discrete_wavelet(WAVELET_NAME name, int order)
+    public DiscreteWavelet discrete_wavelet(WAVELET_NAME name, int order)
     {
     	int tmpInt;
     	double tmpDouble;
@@ -4116,7 +4116,7 @@ public  class PyWavelets extends AlgorithmBase {
     }
     
     /* Maximum useful level of DWT decomposition. */
-    private short dwt_max_level(int input_len, int filter_len){
+    public short dwt_max_level(int input_len, int filter_len){
         if(filter_len <= 1 || input_len < (filter_len-1))
             return 0;
 
@@ -17575,7 +17575,7 @@ public  class PyWavelets extends AlgorithmBase {
         return ret;
     }
     
-    private double[][] wavedec(double data[], DiscreteWavelet wavelet, MODE mode, int level) {
+    public double[][] wavedec(double data[], DiscreteWavelet wavelet, MODE mode, int level) {
         // Default mode is symmetric
     	// Default -1 means level is calculated with dwt_max_level function
     	// Default axis = -1 means last axis is used
@@ -17639,7 +17639,7 @@ public  class PyWavelets extends AlgorithmBase {
         return coeffs_list2;
     }
     
-    private double[][][] wavedec(double data[][], DiscreteWavelet wavelet, MODE mode, int level, int axis) {
+    public double[][][] wavedec(double data[][], DiscreteWavelet wavelet, MODE mode, int level, int axis) {
         // Default mode is symmetric
     	// Default -1 means level is calculated with dwt_max_level function
     	// Default axis = -1 means last axis is used
@@ -17708,7 +17708,7 @@ public  class PyWavelets extends AlgorithmBase {
         return coeffs_list2;
     }
     
-    private double[][][][] wavedec(double data[][][], DiscreteWavelet wavelet, MODE mode, int level, int axis) {
+    public double[][][][] wavedec(double data[][][], DiscreteWavelet wavelet, MODE mode, int level, int axis) {
         // Default mode is symmetric
     	// Default -1 means level is calculated with dwt_max_level function
     	// Default axis = -1 means last axis is used
