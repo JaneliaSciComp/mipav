@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
+import gov.nih.mipav.model.algorithms.filters.PyWavelets;
+import gov.nih.mipav.model.algorithms.filters.PyWavelets.DiscreteWavelet;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -1193,6 +1195,53 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
         return k_conv_x;
     }
+    
+    public double median(double x[]) {
+    	int i;
+    	double med;
+    	double xsort[] = new double[x.length];
+    	for (i = 0; i < x.length; i++) {
+    		xsort[i] = x[i];
+    	}
+    	Arrays.sort(xsort);
+    	if ((x.length % 2) == 1) {
+    	    med = xsort[(x.length-1)/2];	
+    	}
+    	else {
+    		med = (xsort[x.length/2] + xsort[(x.length/2)-1])/2.0;
+    	}
+    	return med;
+    }
+    
+    public double mad(double x[], double c) {
+        // Median absolute deviation.
+        // Default c = 0.6744
+    	int i;
+    	double absxm[] = new double[x.length];
+    	double medx = median(x);
+    	for (i = 0; i < x.length; i++) {
+    		absxm[i] = Math.abs(x[i] - medx);
+    	}
+        return median(absxm) / c;
+    }
+
+
+    public double mad_daub_noise_est(double x[], double c) {
+        // Estimate the statistical dispersion of the noise with Median Absolute
+        // Deviation on the first order detail coefficients of the 1d-Daubechies
+        // wavelets transform.
+    	// Default c = 0.6744
+    	PyWavelets py = new PyWavelets();
+    	PyWavelets.WAVELET_NAME wavelet_name = PyWavelets.WAVELET_NAME.DB;
+    	int wavelet_order = 3;
+		DiscreteWavelet w  = py.discrete_wavelet(wavelet_name, wavelet_order);
+		short max_level = py.dwt_max_level(x.length, w.dec_len);
+		PyWavelets.MODE mode = PyWavelets.MODE.MODE_SYMMETRIC;
+		double coeffs[][] = py.wavedec(x, w, mode, Math.min(1, max_level));
+		double cD[] = coeffs[coeffs.length-1];
+        return mad(cD, c);
+    }
+
 
 
 }
