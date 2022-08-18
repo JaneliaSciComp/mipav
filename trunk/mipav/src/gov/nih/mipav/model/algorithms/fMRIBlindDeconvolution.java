@@ -811,6 +811,388 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         return output;
     }
 	    
+    public double[] spectral_convolve(double k[], double x[]) {
+        // Return k.conv(x).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //    kernel.
+        // x : 1d np.ndarray,
+        //    signal.
+
+        // Results:
+        // --------
+        // k_conv_x : 1d np.ndarray,
+        //    the convolved signal.
+    	int i;
+        int p[] = new int[2];
+        x = _custom_padd(p, x, 1024, 50, 0.5);
+        int N = x.length;
+        double kAdj[] = new double[N];
+        for (i = 0; i < Math.min(N, k.length); i++) {
+        	kAdj[i] = k[i];
+        }
+        double fft_k[][] = rfft(kAdj);
+        double fft_x[][] = rfft(x);
+        double fft_xk[][] = new double[2][fft_k[0].length];
+        for (i = 0; i < fft_k[0].length; i++) {
+        	fft_xk[0][i] = fft_k[0][i]*fft_x[0][i] - fft_k[1][i]*fft_x[1][i];
+        	fft_xk[1][i] = fft_k[0][i]*fft_x[1][i] + fft_k[1][i]*fft_x[0][i];
+        }
+        boolean isOdd = ((N % 2) == 1);
+        double padded_h_conv_x[] = irfft(fft_xk, isOdd);
+        double k_conv_x[];
+        int ptotal = p[0] + p[1];
+        if ((ptotal) == 0) {
+            k_conv_x = padded_h_conv_x;	
+        }
+        else if ((p[0] == ptotal/2) && (p[1] == (ptotal/2 + (ptotal % 2)))) {
+            k_conv_x = _unpadd_symetric(padded_h_conv_x, ptotal, "center");	
+        }
+        else {
+        	k_conv_x = _unpadd_assymetric(padded_h_conv_x, p, "center");
+        }
+
+        return k_conv_x;
+    }
+    
+    public double[] spectral_retro_convolve(double k[], double x[]) {
+        // Return k_t.conv(x).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //    kernel.
+        // x : 1d np.ndarray,
+        //    signal.
+
+        // Results:
+        // --------
+        // k_conv_x : 1d np.ndarray,
+        //     the convolved signal.
+    	int i;
+        int p[] = new int[2];
+        x = _custom_padd(p, x, 1024, 50, 0.5);
+        int N = x.length;
+        double kAdj[] = new double[N];
+        for (i = 0; i < Math.min(N, k.length); i++) {
+        	kAdj[i] = k[i];
+        }
+        double fft_k[][] = rfft(kAdj);
+        for (i = 0; i < fft_k[1].length; i++) {
+        	fft_k[1][i] = -fft_k[1][i];
+        }
+        double fft_x[][] = rfft(x);
+        double fft_xk[][] = new double[2][fft_k[0].length];
+        for (i = 0; i < fft_k[0].length; i++) {
+        	fft_xk[0][i] = fft_k[0][i]*fft_x[0][i] - fft_k[1][i]*fft_x[1][i];
+        	fft_xk[1][i] = fft_k[0][i]*fft_x[1][i] + fft_k[1][i]*fft_x[0][i];
+        }
+        boolean isOdd = ((N % 2) == 1);
+        double padded_h_conv_x[] = irfft(fft_xk, isOdd);
+        double k_conv_x[];
+        int ptotal = p[0] + p[1];
+        if ((ptotal) == 0) {
+            k_conv_x = padded_h_conv_x;	
+        }
+        else if ((p[0] == ptotal/2) && (p[1] == (ptotal/2 + (ptotal % 2)))) {
+            k_conv_x = _unpadd_symetric(padded_h_conv_x, ptotal, "center");	
+        }
+        else {
+        	k_conv_x = _unpadd_assymetric(padded_h_conv_x, p, "center");
+        }
+
+        return k_conv_x;
+    }
+    
+    /**
+     * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
+     * 
+     * @param zr double
+     * @param zi double
+     * 
+     * @return double
+     */
+    private double zabs(final double zr, final double zi) {
+        double u, v, q, s;
+        u = Math.abs(zr);
+        v = Math.abs(zi);
+        s = u + v;
+
+        // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+        // floating zero
+        s = s * 1.0;
+
+        if (s == 0.0) {
+            return 0.0;
+        } else if (u > v) {
+            q = v / u;
+
+            return (u * Math.sqrt(1.0 + (q * q)));
+        } else {
+            q = u / v;
+
+            return (v * Math.sqrt(1.0 + (q * q)));
+        }
+    }
+    
+    /**
+     * complex divide c = a/b.
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
+     */
+    private void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
+        double bm, cc, cd, ca, cb;
+
+        bm = 1.0 / zabs(br, bi);
+        cc = br * bm;
+        cd = bi * bm;
+        ca = ( (ar * cc) + (ai * cd)) * bm;
+        cb = ( (ai * cc) - (ar * cd)) * bm;
+        cr[0] = ca;
+        ci[0] = cb;
+
+        return;
+    }
+
+    public double[] spectral_deconvolve(double k[], double x[]) {
+        // Return k.conv(x).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //    kernel.
+        // x : 1d np.ndarray,
+        //    signal.
+
+        // Results:
+        // --------
+        // k_conv_x : 1d np.ndarray,
+        //     the convolved signal.
+    	int i;
+        int p[] = new int[2];
+        x = _custom_padd(p, x, 1024, 50, 0.5);
+        int N = x.length;
+        double kAdj[] = new double[N];
+        for (i = 0; i < Math.min(N, k.length); i++) {
+        	kAdj[i] = k[i];
+        }
+        double fft_kinv[][] = rfft(kAdj);
+        double fft_k[][] = new double[2][fft_kinv[0].length];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        for (i = 0; i < fft_k[0].length; i++) {
+            zdiv(1.0, 0.0, fft_kinv[0][i], fft_kinv[1][i], cr, ci);
+            fft_k[0][i] = cr[0];
+            fft_k[1][i] = ci[0];
+        }
+        double fft_x[][] = rfft(x);
+        double fft_xk[][] = new double[2][fft_k[0].length];
+        for (i = 0; i < fft_k[0].length; i++) {
+        	fft_xk[0][i] = fft_k[0][i]*fft_x[0][i] - fft_k[1][i]*fft_x[1][i];
+        	fft_xk[1][i] = fft_k[0][i]*fft_x[1][i] + fft_k[1][i]*fft_x[0][i];
+        }
+        boolean isOdd = ((N % 2) == 1);
+        double padded_h_conv_x[] = irfft(fft_xk, isOdd);
+        double k_conv_x[];
+        int ptotal = p[0] + p[1];
+        if ((ptotal) == 0) {
+            k_conv_x = padded_h_conv_x;	
+        }
+        else if ((p[0] == ptotal/2) && (p[1] == (ptotal/2 + (ptotal % 2)))) {
+            k_conv_x = _unpadd_symetric(padded_h_conv_x, ptotal, "center");	
+        }
+        else {
+        	k_conv_x = _unpadd_assymetric(padded_h_conv_x, p, "center");
+        }
+
+        return k_conv_x;
+    }
+    
+    public double[] spectral_retro_deconvolve(double k[], double x[]) {
+        // Return k.conv(x).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //     kernel.
+        // x : 1d np.ndarray,
+        //    signal.
+
+        // Results:
+        // --------
+        // k_conv_x : 1d np.ndarray,
+        //    the convolved signal.
+    	int i;
+        int p[] = new int[2];
+        x = _custom_padd(p, x, 1024, 50, 0.5);
+        int N = x.length;
+        double kAdj[] = new double[N];
+        for (i = 0; i < Math.min(N, k.length); i++) {
+        	kAdj[i] = k[i];
+        }
+        double fft_kinv[][] = rfft(kAdj);
+        double fft_k[][] = new double[2][fft_kinv[0].length];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        for (i = 0; i < fft_k[0].length; i++) {
+            zdiv(1.0, 0.0, fft_kinv[0][i], fft_kinv[1][i], cr, ci);
+            fft_k[0][i] = cr[0];
+            fft_k[1][i] = ci[0];
+        }
+        for (i = 0; i < fft_k[1].length; i++) {
+        	fft_k[1][i] = -fft_k[1][i];
+        }
+        double fft_x[][] = rfft(x);
+        double fft_xk[][] = new double[2][fft_k[0].length];
+        for (i = 0; i < fft_k[0].length; i++) {
+        	fft_xk[0][i] = fft_k[0][i]*fft_x[0][i] - fft_k[1][i]*fft_x[1][i];
+        	fft_xk[1][i] = fft_k[0][i]*fft_x[1][i] + fft_k[1][i]*fft_x[0][i];
+        }
+        boolean isOdd = ((N % 2) == 1);
+        double padded_h_conv_x[] = irfft(fft_xk, isOdd);
+        double k_conv_x[];
+        int ptotal = p[0] + p[1];
+        if ((ptotal) == 0) {
+            k_conv_x = padded_h_conv_x;	
+        }
+        else if ((p[0] == ptotal/2) && (p[1] == (ptotal/2 + (ptotal % 2)))) {
+            k_conv_x = _unpadd_symetric(padded_h_conv_x, ptotal, "center");	
+        }
+        else {
+        	k_conv_x = _unpadd_assymetric(padded_h_conv_x, p, "center");
+        }
+
+        return k_conv_x;
+    }
+
+    public double[][] toeplitz_from_kernel(double k[], int dim_in, int dim_out) {
+        // Return the Toeplitz matrix that correspond to k.conv(.).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //     kernel.
+        // dim_in : int,
+        //     dimension of the input vector (dim of x in y = k.conv(x)).
+        // dim_out : int (default None),
+        //    dimension of the ouput vector (dim of y in y = in k.conv(x)). If None
+        //    dim_out = dim_in.
+
+        // Results:
+        // --------
+        // K : 2d np.ndarray,
+        //    the Toeplitz matrix corresponding to the convolution specified.
+       
+        // if dim_out is None:
+        //    dim_out = dim_in
+        int i,j;
+        int start_idx;
+        double padded_k[] = new double[2*dim_in + k.length];
+        for (i = dim_in; i < dim_in + k.length; i++) {
+        	padded_k[i] = k[k.length - 1 - (i - dim_in)];
+        }
+        double K[][] = new double[dim_out][dim_in];
+        for (i = 0; i < dim_out; i++) {
+            start_idx = (dim_in + k.length - 1) - i;
+            for (j= 0; j < dim_in; j++) {
+                K[i][j] = padded_k[start_idx + j];
+            }
+        }
+
+        return K;
+    }
+    
+    public double[] simple_convolve(double k[], double x[], int dim_out) {
+        // Return k.conv(x).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //    kernel.
+        // x : 1d np.ndarray,
+        //    signal.
+        // dim_out : int (default None),
+        //    dimension of the ouput vector (dim of y in y = in k.conv(x)). If None
+        //    d = len(x).
+
+        // Results:
+        // --------
+        // k_conv_x : 1d np.ndarray,
+        //    the convolved signal.
+       
+        // if dim_out is None:
+        //    dim_out = len(x)
+    	int i,j;
+    	int dim_in;
+    	double k_conv_x[];
+    	int start_idx;
+        dim_in = x.length;
+ 
+        double padded_k[] = new double[2*dim_in + k.length];
+        for (i = dim_in; i < dim_in + k.length; i++) {
+        	padded_k[i] = k[k.length - 1 - (i - dim_in)];
+        }
+        k_conv_x = new double[dim_out];
+
+        for (i = 0; i < dim_out; i++) {
+            start_idx = (dim_in + k.length - 1) - i;
+            for (j = 0; j < dim_in; j++) {
+                k_conv_x[i] += (padded_k[start_idx + j] * x[j]);
+            }
+        }
+
+        return k_conv_x;
+    }
+
+    public double[] simple_retro_convolve(double k[], double x[], int dim_out) {
+        // Return k_t.conv(x).
+
+        // Parameters:
+        // -----------
+        // k : 1d np.ndarray,
+        //    kernel
+        // x : 1d np.ndarray,
+        //    signal.
+        // dim_out : int (default None),
+        //    dimension of the ouput vector (dim of y in y = in k.conv(x)). If None
+        //    d = len(x).
+
+        // Results:
+        // --------
+        // k_conv_x : 1d np.ndarray,
+        //    the convolved signal.
+       
+        // if dim_out is None:
+        //    dim_out = len(x)
+    	int i,j;
+    	int dim_in;
+    	double k_conv_x[];
+    	int start_idx;
+        dim_in = x.length;
+ 
+        double padded_k[] = new double[2*dim_out - 2 + k.length];
+        for (i = dim_out-1; i < dim_out - 1 + k.length; i++) {
+        	padded_k[i] = k[k.length - 1 - (i - (dim_out - 1))];
+        }
+        k_conv_x = new double[dim_out];
+
+        for (i = 0; i < dim_out; i++) {
+            start_idx = dim_out - 1 - i;
+            for (j = 0; j < dim_in; j++) {
+                k_conv_x[i] += (padded_k[start_idx + j] * x[j]);
+            }
+        }
+
+        return k_conv_x;
+    }
 
 
 }
