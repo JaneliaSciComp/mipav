@@ -333,7 +333,7 @@ public class curfit {
 		      wrk[4] = new double[nest][k2];
 		      wrk[5] = new double[m][k1];
 		      fpcurf(iopt,x,y,w,m,xb,xe,k,s,nest,tol,maxit,k1,k2,n,t,c,fp,
-		      wrk[0],wrk[1],wrk[2],wrk[3],wrk[4],wrk[5],iwrk,ier);
+		      wrk[0][0],wrk[1][0],wrk[2],wrk[3],wrk[4],wrk[5],iwrk,ier);
 		      return;
      }
      
@@ -426,8 +426,8 @@ public class curfit {
 
      public void fpcurf(int iopt, double x[], double y[], double w[],int m,double xb,double xe,
     		 int k,double s,int nest, double tol,
-    	     int maxit,int k1,int k2,int n[], double t[],double c[], double fp[], double fpint[][],
-    	     double z[][], double a[][], double b[][], double g[][], double q[][], int nrdata[], int ier[]) {
+    	     int maxit,int k1,int k2,int n[], double t[],double c[], double fp[], double fpint[],
+    	     double z[], double a[][], double b[][], double g[][], double q[][], int nrdata[], int ier[]) {
     	 /**
     	      implicit none
     	c  ..
@@ -440,18 +440,25 @@ public class curfit {
     	      integer nrdata(nest)
     	      */
     	// local scalars..
-    	      double con1,con4,con9,half,fpart,fpms,f1,f2,f3,
-    	     one,p,pinv,piv,p1,p2,p3,rn,store,term,wi,xi;
+    	      double con1,con4,con9,half,fpart,f2,
+    	     one,p,pinv,piv,p2,rn,store,term,wi,xi;
     	      double acc = 0.0;
     	      double fp0 = 0.0;
     	      double fpold = 0.0;
+    	      double fpms = 0.0;
     	      double cos[] = new double[1];
     	      double sin[] = new double[1];
     	      double yi[] = new double[1];
     	      double temp[] = new double[1];
     	      double temp2[] = new double[1];
+    	      double f1[] = new double[1];
+    	      double f3[] = new double[1];
+    	      double p1[] = new double[1];
+    	      double p3[] = new double[1];
+    	      double prod;
     	      int i,ich1,ich3,it,iter,i1,i2,i3,j,k3,l,l0,
-    	      mk1,newi,nk1,nmin,npl1,nrint,n8;
+    	      mk1,newi,nmin,npl1,nrint,n8;
+    	      int nk1 = 0;
     	      int nmax = 0;
     	      int nplus = 0;
     	//  ..local arrays..
@@ -543,8 +550,8 @@ public class curfit {
 			    	//  according to the set of knots found at the last call of the routine.
 			    	  if(iopt != 0) {
 				    	      if(n[0] != nmin) {
-					    	      fp0 = fpint[0][n[0]-1];
-					    	      fpold = fpint[0][n[0]-2];
+					    	      fp0 = fpint[n[0]-1];
+					    	      fpold = fpint[n[0]-2];
 					    	      nplus = nrdata[n[0]-1];
 					    	      if(fp0 > s) {
 					    	    	  do50 = false;
@@ -581,7 +588,7 @@ public class curfit {
     	        fp[0] = 0.0;
     	//  initialize the observation matrix a.
     	        for (i=1; i <= nk1; i++) {
-    	          z[0][i-1] = 0.0;
+    	          z[i-1] = 0.0;
     	          for (j=1; j <= k1; j++) {
     	            a[i-1][j-1] = 0.0;
     	          }
@@ -616,9 +623,9 @@ public class curfit {
 	    	            fpgivs(piv,temp,cos,sin);
 	    	            a[j-1][0] = temp[0];
 	    	//  transformations to right hand side.
-	    	            temp[0] = z[0][j-1];
+	    	            temp[0] = z[j-1];
 	    	            fprota(cos[0],sin[0],yi,temp);
-	    	            z[0][j-1] = temp[0];
+	    	            z[j-1] = temp[0];
 	    	            if(i == k1) {
 	    	            	break;
 	    	            }
@@ -640,11 +647,11 @@ public class curfit {
     	          fp[0] = fp[0]+yi[0]*yi[0];
     	        } // for (it=1; it <= m; it++)
     	        if(ier[0] == (-2)) fp0 = fp[0];
-    	        fpint[0][n[0]-1] = fp0;
-    	        fpint[0][n[0]-2] = fpold;
+    	        fpint[n[0]-1] = fp0;
+    	        fpint[n[0]-2] = fpold;
     	        nrdata[n[0]-1] = nplus;
     	//  backward substitution to obtain the b-spline coefficients.
-    	        fpback(a,z[0],nk1,k1,c,nest);
+    	        fpback(a,z,nk1,k1,c,nest);
     	//  test whether the approximation sinf(x) is an acceptable solution.
     	        if(iopt < 0) {
     	        	return;
@@ -703,16 +710,16 @@ public class curfit {
     	          fpart = fpart+term;
     	          if(newi != 0) {
 	    	          store = term*half;
-	    	          fpint[0][i-1] = fpart-store;
+	    	          fpint[i-1] = fpart-store;
 	    	          i = i+1;
 	    	          fpart = store;
 	    	          newi = 0;
     	          } // if (newi != 0)
     	        } // for (it=1; it <= m; it++)
-    	        fpint[0][nrint-1] = fpart;
+    	        fpint[nrint-1] = fpart;
     	        for (l=1; l <= nplus; l++) {
     	//  add a new knot.
-    	          fpknot(x,m,t,n,fpint[0],nrdata,nrint,nest,1);
+    	          fpknot(x,m,t,n,fpint,nrdata,nrint,nest,1);
     	//  if n=nmax we locate the knots as for interpolation.
     	          if(n[0] == nmax) {
     	        	  do50 = true;
@@ -755,117 +762,135 @@ public class curfit {
     	// ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     	//  evaluate the discontinuity jump of the kth derivative of the
     	//  b-splines at the knots t(l),l=k+2,...n-k-1 and store in b.
-    	/**
-    	      call fpdisc(t,n,k2,b,nest)
-    	c  initial value for p.
-    	      p1 = 0.0d0
-    	      f1 = fp0-s
-    	      p3 = -one
-    	      f3 = fpms
-    	      p = 0.
-    	      do 255 i=1,nk1
-    	         p = p+a(i,1)
-    	 255  continue
-    	      rn = nk1
-    	      p = rn/p
-    	      ich1 = 0
-    	      ich3 = 0
-    	      n8 = n-nmin
-    	c  iteration process to find the root of f(p) = s.
-    	      do 360 iter=1,maxit
-    	c  the rows of matrix b with weight 1/p are rotated into the
-    	c  triangularised observation matrix a which is stored in g.
-    	        pinv = one/p
-    	        do 260 i=1,nk1
-    	          c(i) = z(i)
-    	          g(i,k2) = 0.0d0
-    	          do 260 j=1,k1
-    	            g(i,j) = a(i,j)
-    	 260    continue
-    	        do 300 it=1,n8
-    	c  the row of matrix b is rotated into triangle by givens transformation
-    	          do 270 i=1,k2
-    	            h(i) = b(it,i)*pinv
-    	 270      continue
-    	          yi = 0.0d0
-    	          do 290 j=it,nk1
-    	            piv = h(1)
-    	c  calculate the parameters of the givens transformation.
-    	            call fpgivs(piv,g(j,1),cos,sin)
-    	c  transformations to right hand side.
-    	            call fprota(cos,sin,yi,c(j))
-    	            if(j.eq.nk1) go to 300
-    	            i2 = k1
-    	            if(j.gt.n8) i2 = nk1-j
-    	            do 280 i=1,i2
-    	c  transformations to left hand side.
-    	              i1 = i+1
-    	              call fprota(cos,sin,h(i1),g(j,i1))
-    	              h(i) = h(i1)
-    	 280        continue
-    	            h(i2+1) = 0.0d0
-    	 290      continue
-    	 300    continue
-    	c  backward substitution to obtain the b-spline coefficients.
-    	        call fpback(g,c,nk1,k2,c,nest)
-    	c  computation of f(p).
-    	        fp = 0.0d0
-    	        l = k2
-    	        do 330 it=1,m
-    	          if(x(it).lt.t(l) .or. l.gt.nk1) go to 310
-    	          l = l+1
-    	 310      l0 = l-k2
-    	          term = 0.0d0
-    	          do 320 j=1,k1
-    	            l0 = l0+1
-    	            term = term+c(l0)*q(it,j)
-    	 320      continue
-    	          fp = fp+(w(it)*(term-y(it)))**2
-    	 330    continue
-    	c  test whether the approximation sp(x) is an acceptable solution.
-    	        fpms = fp-s
-    	        if(abs(fpms).lt.acc) go to 440
-    	c  test whether the maximal number of iterations is reached.
-    	        if(iter.eq.maxit) go to 400
-    	c  carry out one more step of the iteration process.
-    	        p2 = p
-    	        f2 = fpms
-    	        if(ich3.ne.0) go to 340
-    	        if((f2-f3).gt.acc) go to 335
-    	c  our initial choice of p is too large.
-    	        p3 = p2
-    	        f3 = f2
-    	        p = p*con4
-    	        if(p.le.p1) p=p1*con9 + p2*con1
-    	        go to 360
-    	 335    if(f2.lt.0.0d0) ich3=1
-    	 340    if(ich1.ne.0) go to 350
-    	        if((f1-f2).gt.acc) go to 345
-    	c  our initial choice of p is too small
-    	        p1 = p2
-    	        f1 = f2
-    	        p = p/con4
-    	        if(p3.lt.0.) go to 360
-    	        if(p.ge.p3) p = p2*con1 + p3*con9
-    	        go to 360
-    	 345    if(f2.gt.0.0d0) ich1=1
-    	c  test whether the iteration process proceeds as theoretically
-    	c  expected.
-    	 350    if(f2.ge.f1 .or. f2.le.f3) go to 410
-    	c  find the new value for p.
-    	        p = fprati(p1,f1,p2,f2,p3,f3)
-    	 360  continue
-    	c  error codes and messages.
-    	 400  ier = 3
-    	      go to 440
-    	 410  ier = 2
-    	      go to 440
-    	 420  ier = 1
-    	      go to 440
-    	 430  ier = -1
-    	 440  return
-    	      end
-    	      */
+    
+    	      fpdisc(t,n[0],k2,b,nest);
+    	//  initial value for p.
+    	      p1[0] = 0.0;
+    	      f1[0] = fp0-s;
+    	      p3[0] = -one;
+    	      f3[0] = fpms;
+    	      p = 0.0;
+    	      for (i = 1; i <= nk1; i++) {
+    	         p = p+a[i-1][0];
+    	      }
+    	      rn = nk1;
+    	      p = rn/p;
+    	      ich1 = 0;
+    	      ich3 = 0;
+    	      n8 = n[0]-nmin;
+    	//  iteration process to find the root of f(p) = s.
+    	      for (iter = 1; iter <= maxit; iter++) {
+    	//  the rows of matrix b with weight 1/p are rotated into the
+    	//  triangularised observation matrix a which is stored in g.
+    	        pinv = one/p;
+    	        for  (i = 1; i <= nk1; i++) {
+    	          c[i-1] = z[i-1];
+    	          g[i-1][k2-1] = 0.0;
+    	          for (j = 1; j <= k1; j++) {
+    	            g[i-1][j-1] = a[i-1][j-1];
+    	          }
+    	        } // for  (i = 1; i <= nk1; i++)
+    	        for (it = 1; it <= n8; it++) {
+    	//  the row of matrix b is rotated into triangle by givens transformation
+    	          for (i = 1; i <= k2; i++) {
+    	            h[i-1] = b[it-1][i-1]*pinv;
+    	          } // for (i = 1; i <= k2; i++)
+    	          yi[0] = 0.0;
+    	          for (j = it; j <= nk1; j++) {
+    	            piv = h[0];
+    	//  calculate the parameters of the givens transformation.
+    	            temp[0] = g[j-1][0];
+    	            fpgivs(piv,temp,cos,sin);
+    	            g[j-1][0] = temp[0];
+    	//  transformations to right hand side.
+    	            temp[0] = c[j-1];
+    	            fprota(cos[0],sin[0],yi,temp);
+    	            c[j-1] = temp[0];
+    	            if(j == nk1) {
+    	            	break;
+    	            }
+    	            i2 = k1;
+    	            if(j > n8) i2 = nk1-j;
+    	            for (i=1; i <= i2; i++) {
+    	//  transformations to left hand side.
+    	              i1 = i+1;
+    	              temp[0] = h[i1-1];
+    	              temp2[0] = g[j-1][i1-1];
+    	              fprota(cos[0],sin[0],temp,temp2);
+    	              h[i1-1] = temp[0];
+    	              g[j-1][i1-1] = temp2[0];
+    	              h[i-1] = h[i1-1];
+    	            } //  for (i=1; i <= i2; i++)
+    	            h[i2] = 0.0;
+    	          } // for (j = it; j <= nk1; j++)
+    	        } // for (it = 1; it <= n8; it++)
+    	//  backward substitution to obtain the b-spline coefficients.
+    	        fpback(g,c,nk1,k2,c,nest);
+    	//  computation of f(p).
+    	        fp[0] = 0.0;
+    	        l = k2;
+    	        for (it = 1; it <= m; it++) {
+    	          if(!((x[it-1] < t[l-1]) || (l > nk1))) {
+    	              l = l+1;
+    	          }
+    	          l0 = l-k2;
+    	          term = 0.0;
+    	          for (j = 1; j <= k1; j++) {
+    	            l0 = l0+1;
+    	            term = term+c[l0-1]*q[it-1][j-1];
+    	          } // for (j = 1; j <= k1; j++)
+    	          prod = w[it-1]*(term - y[it-1]);
+    	          fp[0] = fp[0]+ prod * prod;
+    	        } // for (it = 1; it <= m; it++)
+    	//  test whether the approximation sp(x) is an acceptable solution.
+    	        fpms = fp[0]-s;
+    	        if(Math.abs(fpms) < acc) {
+    	        	return;
+    	        }
+    	//  test whether the maximal number of iterations is reached.
+    	        if(iter == maxit) {
+    	        	ier[0] = 3;
+    	        	return;
+    	        }
+    	//  carry out one more step of the iteration process.
+    	        p2 = p;
+    	        f2 = fpms;
+    	        if (ich3 == 0) {
+	    	        if((f2-f3[0]) <= acc) {
+	    	//  our initial choice of p is too large.
+	    	        p3[0] = p2;
+	    	        f3[0] = f2;
+	    	        p = p*con4;
+	    	        if(p <= p1[0]) p=p1[0]*con9 + p2*con1;
+	    	        continue;
+	    	        } // if((f2-f3) <= acc)
+	    	        if(f2 < 0.0) ich3=1;
+    	        } // if (ich3 == 0)
+    	        if (ich1 == 0) {
+	    	        if ((f1[0]-f2) <= acc) {
+	    	//  our initial choice of p is too small
+	    	        p1[0] = p2;
+	    	        f1[0] = f2;
+	    	        p = p/con4;
+	    	        if(p3[0] < 0.0) {
+	    	        	continue;
+	    	        }
+	    	        if(p >= p3[0]) p = p2*con1 + p3[0]*con9;
+	    	        continue;
+	    	        } // if ((f1-f2) <= acc)
+    	        if(f2 > 0.0) ich1=1;
+    	        } //  if (ich1 == 0)
+    	//  test whether the iteration process proceeds as theoretically
+    	//  expected.
+    	        if ((f2 >= f1[0]) || (f2 <= f3[0])) {
+    	        	ier[0] = 2;
+    	        	return;
+    	        }
+    	//  find the new value for p.
+    	        p = fprati(p1,f1,p2,f2,p3,f3);
+    	      } // for (iter = 1; iter <= maxit; iter++)
+    	      ier[0] = 3;
+    	      return;
      }
 
      public void fpbspl(double t[], int n,int k,double x,int l, double h[]) {
@@ -1011,8 +1036,151 @@ public class curfit {
     	//  ..array arguments..
 	    //	real*8 x(m),t(nest),fpint(nest)
 	    //    integer nrdata(nest)
+    	//  ..local scalars..
+        double an,am,fpmax;
+         int ihalf,j,jbegin,jj,jk,jpoint,k,
+             next,nrx;
+         int maxbeg = 0;
+         int maxpt = 0;
+         int number = 0;
+
+   //  note: do not initialize on the same line to avoid saving between calls
+         boolean iserr;
+         iserr = true;
+
+         k = (n[0]-nrint-1)/2;
+   //  search for knot interval t(number+k) <= x <= t(number+k+1) where
+   //  fpint(number) is maximal on the condition that nrdata(number)
+   //  not equals zero.
+         fpmax = 0.0;
+         jbegin = istart;
+         for (j = 1; j <= nrint; j++) {
+           jpoint = nrdata[j-1];
+           if (!((fpmax >= fpint[j-1]) || (jpoint == 0))) {
+	           iserr = false;
+	           fpmax = fpint[j-1];
+	           number = j;
+	           maxpt = jpoint;
+	           maxbeg = jbegin;
+           }
+           jbegin = jbegin+jpoint+1;
+         } // for (j = 1; j <= nrint; j++)
+   //  error condition detected, go to exit
+         if (iserr) {
+        	 n[0] = n[0]+1;
+        	 nrint = nrint+1;
+        	 return;
+         }
+   //  let coincide the new knot t(number+k+1) with a data point x(nrx)
+   //  inside the old knot interval t(number+k) <= x <= t(number+k+1).
+         ihalf = maxpt/2+1;
+         nrx = maxbeg+ihalf;
+         next = number+1;
+         if(next <= nrint) {
+   //  adjust the different parameters.
+	         for (j=next; j <= nrint; j++) {
+	           jj = next+nrint-j;
+	           fpint[jj] = fpint[jj-1];
+	           nrdata[jj] = nrdata[jj-1];
+	           jk = jj+k;
+	           t[jk] = t[jk-1];
+	         } // for (j=next; j <= nrint; j++)
+         }
+         nrdata[number-1] = ihalf-1;
+         nrdata[next-1] = maxpt-ihalf;
+         am = maxpt;
+         an = nrdata[number-1];
+         fpint[number-1] = fpmax*an/am;
+         an = nrdata[next-1];
+         fpint[next-1] = fpmax*an/am;
+         jk = next+k;
+         t[jk-1] = x[nrx-1];
+         n[0] = n[0]+1;
+         nrint = nrint+1;
+         return;
      }
 
+     public void fpdisc(double t[], int n, int k2, double b[][], int nest) {
+	     // implicit none
+	//  subroutine fpdisc calculates the discontinuity jumps of the kth
+	//  derivative of the b-splines of degree k at the knots t(k+2)..t(n-k-1)
+	//  ..scalar arguments..
+	//     integer n,k2,nest
+	//  ..array arguments..
+	//     real*8 t(n),b(nest,k2)
+	//  ..local scalars..
+	     double an,fac,prod;
+	     int i,ik,j,jk,k,k1,l,lj,lk,lmk,lp,nk1,nrint;
+	//  ..local array..
+	     double h[] = new double[12];
+	
+	     k1 = k2-1;
+	     k = k1-1;
+	     nk1 = n-k1;
+	     nrint = nk1-k;
+	     an = nrint;
+	     fac = an/(t[nk1]-t[k1-1]);
+	     for (l = k2; l <= nk1; l++) {
+	       lmk = l-k1;
+	       for  (j = 1; j <= k1; j++) {
+	         ik = j+k1;
+	         lj = l+j;
+	         lk = lj-k2;
+	         h[j-1] = t[l-1]-t[lk-1];
+	         h[ik-1] = t[l-1]-t[lj-1];
+	       } // for  (j = 1; j <= k1; j++)
+	       lp = lmk;
+	       for  (j = 1; j <= k2; j++) {
+	         jk = j;
+	         prod = h[j-1];
+	         for (i = 1; i <= k; i++) {
+	           jk = jk+1;
+	           prod = prod*h[jk-1]*fac;
+	         } // for (i = 1; i <= k; i++)
+	         lk = lp+k1;
+	         b[lmk-1][j-1] = (t[lk-1]-t[lp-1])/prod;
+	         lp = lp+1;
+	       } // for  (j = 1; j <= k2; j++)
+	     } // for (l = k2; l <= nk1; l++) 
+	     return;
+     }
+
+     public double fprati(double p1[], double f1[], double p2,double f2,
+    		 double p3[], double f3[]) { 
+	     // result(fprati_res)
+		     // implicit none
+		     // real*8 :: fprati_res
+		//  given three points (p1,f1),(p2,f2) and (p3,f3), function fprati
+		//  gives the value of p such that the rational interpolating function
+		//  of the form r(p) = (u*p+v)/(p+w) equals zero at p.
+	
+		//  ..scalar arguments..
+		//     real*8 p1,f1,p2,f2,p3,f3
+		//  ..local scalars..
+		     double h1,h2,h3,p;
+		
+		     if (p3[0] <= 0.0) {
+		//  value of p in case p3 = infinity.
+		         p = (p1[0]*(f1[0]-f3[0])*f2-p2*(f2-f3[0])*f1[0])/((f1[0]-f2)*f3[0]);
+		     }
+		     else {
+		//  value of p in case p3 ^= infinity.
+		         h1 = f1[0]*(f2-f3[0]);
+		         h2 = f2*(f3[0]-f1[0]);
+		         h3 = f3[0]*(f1[0]-f2);
+		         p = -(p1[0]*p2*h3+p2*p3[0]*h1+p3[0]*p1[0]*h2)/(p1[0]*h1+p2*h2+p3[0]*h3);
+		     }
+		//  adjust the value of p1,f1,p3 and f3 such that f1 > 0 and f3 < 0.
+		     if (f2 >= 0.0) {
+			     p1[0] = p2;
+			     f1[0] = f2;
+		     }
+		     else {
+		         p3[0] = p2;
+		         f3[0] = f2;
+             }
+		     return p;
+     }
 
 
 
