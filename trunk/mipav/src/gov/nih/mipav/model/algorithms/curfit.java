@@ -1,12 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.MipavUtil;
-
-import java.awt.Graphics;
-import java.io.*;
-import java.util.*;
-
 public class curfit {
 	// ported from scipy package
 	/**
@@ -41,11 +34,50 @@ public class curfit {
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	*/
+	private int iopt;
+	private int m;
+	private double x[];
+	private double y[];
+	private double w[];
+	private double xb;
+	private double xe;
+	private int k;
+	private double s;
+	private int nest;
+	private int n[];
+	private double t[];
+	private double c[];
+	private double fp[];
+	private int lwrk;
+	private int iwrk[];
+	private int ier[];
+	private double wrk[][][];
 	
-     public void curfit(int iopt,int m, double x[], double y[], double w[],
+     public curfit(int iopt,int m, double x[], double y[], double w[],
     		 double xb,double xe, int k, double s, int nest,int n[],
-		     double t[], double c[], double fp[], double wrk[][][], int lwrk,
+		     double t[], double c[], double fp[], int lwrk,
 		     int iwrk[], int ier[]) {
+    	 this.iopt = iopt;
+    	 this.m = m;
+    	 this.x = x;
+    	 this.y = y;
+    	 this.w = w;
+    	 this.xb = xb;
+    	 this.xe = xe;
+    	 this.k = k;
+    	 this.s = s;
+    	 this.nest = nest;
+    	 this.n = n;
+    	 this.t = t;
+    	 this.c = c;
+    	 this.fp = fp;
+    	 this.lwrk = lwrk;
+    	 this.iwrk = iwrk;
+    	 this.ier = ier;
+    	 wrk = new double[6][][];
+     }
+     
+     public void run() {
     	 /**
 		      implicit none
 		c  given the set of data points (x(i),y(i)) and the set of positive
