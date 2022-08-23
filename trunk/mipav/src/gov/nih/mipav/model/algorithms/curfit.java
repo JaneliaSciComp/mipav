@@ -296,7 +296,8 @@ public class curfit {
 		*/
 		// local scalars..
 		      double tol;
-		      int i,ia,ib,ifp,ig,iq,iz,j,k1,k2,lwest,maxit,nmin;
+		      // int ia, ib, ifp, ig, iq, iz;
+		      int i,j,k1,k2,lwest,maxit,nmin;
 		//  ..
 		//  we set up the parameters tol and maxit
 		      maxit = 20;
@@ -352,12 +353,12 @@ public class curfit {
 			      }
 		      } // else iopt >= 0
 		  // we partition the working space and determine the spline approximation.
-		      ifp = 1;
-		      iz = ifp+nest;
-		      ia = iz+nest;
-		      ib = ia+nest*k1;
-		      ig = ib+nest*k2;
-		      iq = ig+nest*k2;
+		      //ifp = 1;
+		      //iz = ifp+nest;
+		      //ia = iz+nest;
+		      //ib = ia+nest*k1;
+		      //ig = ib+nest*k2;
+		      //iq = ig+nest*k2;
 		      wrk[0] = new double[1][nest];
 		      wrk[1] = new double[1][nest];
 		      wrk[2] = new double[nest][k1];
