@@ -533,7 +533,7 @@ public class curfit {
     	//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     	//  determine nmin, the number of knots for polynomial approximation.
     	      nmin = 2*k1;
-    	      do {
+    	      doloop: do {
     	      if ((iopt >= 0) || loopback) {
 	    	//  calculation of acc, the absolute tolerance for the root of f(p)=s.
     	    	  if (!loopback) {
@@ -699,7 +699,7 @@ public class curfit {
     	        }
     	//  if f(p=inf) < s accept the choice of knots.
     	        if(fpms < 0.0) {
-    	        	break;
+    	        	break doloop;
     	        }
     	//  if n = nmax, sinf(x) is an interpolating spline.
     	        if(n[0] == nmax) {
