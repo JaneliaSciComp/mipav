@@ -575,8 +575,8 @@ public class curfit {
 				    	      } // for (l=1; l <= mk1; l++)
 			    	      } // else k3*2 == k
 		    	      } // if (mk1 != 0)
-	    	      } // if (s <= 0.0)
-	    	      else { // s > 0.0
+	    	      } // if ((s <= 0.0) || loopback)
+	    	      else { // s > 0.0 && !loopback
 			    	//  if s>0 our initial choice of knots depends on the value of iopt.
 			    	//  if iopt=0 or iopt=1 and s>=fp0, we start computing the least-squares
 			    	//  polynomial of degree k which is a spline without interior knots.
@@ -598,8 +598,11 @@ public class curfit {
 			    	      nplus = 0;
 			    	      nrdata[0] = m-2;
 				      } // if (do50)
+				      else {
+				    	  do50 = true;
+				      }
 	    	      } // else s > 0.0 
-    	      } // if (iopt >= 0) 
+    	      } // if ((iopt >= 0) || loopback)
     	//  main loop for the different sets of knots. m is a save upper bound
     	//  for the number of trials.
     	  iterloop: for (iter = 1; iter <= m; iter++) {
