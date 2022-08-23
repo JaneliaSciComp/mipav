@@ -769,7 +769,7 @@ public class curfit {
     	          }
     	        } // for (l=1; l <= nplus; l++)
     	//  restart the computations with the new set of knots.
-    	  } // for (iter = 1; iter <= m; iter++)
+    	  } // iterloop: for (iter = 1; iter <= m; iter++)
     	} while (loopback);
     	//  test whether the least-squares kth degree polynomial is a solution
     	//  of our approximation problem.
