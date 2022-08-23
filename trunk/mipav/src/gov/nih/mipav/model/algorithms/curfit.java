@@ -489,10 +489,11 @@ public class curfit {
     	      double p3[] = new double[1];
     	      double prod;
     	      int i,ich1,ich3,it,iter,i1,i2,i3,j,k3,l,l0,
-    	      mk1,newi,nmin,npl1,nrint,n8;
+    	      mk1,newi,nmin,npl1,n8;
     	      int nk1 = 0;
     	      int nmax = 0;
     	      int nplus = 0;
+    	      int nrint[] = new int[1];
     	//  ..local arrays..
     	      double h[] = new double[7];
     	      boolean do50 = true;
@@ -603,7 +604,7 @@ public class curfit {
     	  iterloop: for (iter = 1; iter <= m; iter++) {
     	        if(n[0] == nmin) ier[0] = -2;
     	//  find nrint, tne number of knot intervals.
-    	        nrint = n[0]-nmin+1;
+    	        nrint[0] = n[0]-nmin+1;
     	//  find the position of the additional knots which are needed for
     	//  the b-spline representation of s(x).
     	        nk1 = n[0]-k1;
@@ -748,7 +749,7 @@ public class curfit {
 	    	          newi = 0;
     	          } // if (newi != 0)
     	        } // for (it=1; it <= m; it++)
-    	        fpint[nrint-1] = fpart;
+    	        fpint[nrint[0]-1] = fpart;
     	        for (l=1; l <= nplus; l++) {
     	//  add a new knot.
     	          fpknot(x,m,t,n,fpint,nrdata,nrint,nest,1);
@@ -1049,7 +1050,7 @@ public class curfit {
 		     return;
      }
      
-     public void fpknot(double x[], int m,double t[] ,int n[], double fpint[], int nrdata[], int nrint, int nest,
+     public void fpknot(double x[], int m,double t[] ,int n[], double fpint[], int nrdata[], int nrint[], int nest,
     	     int istart) {
     	//      implicit none
     	//  subroutine fpknot locates an additional knot for a spline of degree
@@ -1080,13 +1081,13 @@ public class curfit {
          boolean iserr;
          iserr = true;
 
-         k = (n[0]-nrint-1)/2;
+         k = (n[0]-nrint[0]-1)/2;
    //  search for knot interval t(number+k) <= x <= t(number+k+1) where
    //  fpint(number) is maximal on the condition that nrdata(number)
    //  not equals zero.
          fpmax = 0.0;
          jbegin = istart;
-         for (j = 1; j <= nrint; j++) {
+         for (j = 1; j <= nrint[0]; j++) {
            jpoint = nrdata[j-1];
            if (!((fpmax >= fpint[j-1]) || (jpoint == 0))) {
 	           iserr = false;
@@ -1100,7 +1101,7 @@ public class curfit {
    //  error condition detected, go to exit
          if (iserr) {
         	 n[0] = n[0]+1;
-        	 nrint = nrint+1;
+        	 nrint[0] = nrint[0]+1;
         	 return;
          }
    //  let coincide the new knot t(number+k+1) with a data point x(nrx)
@@ -1108,10 +1109,10 @@ public class curfit {
          ihalf = maxpt/2+1;
          nrx = maxbeg+ihalf;
          next = number+1;
-         if(next <= nrint) {
+         if(next <= nrint[0]) {
    //  adjust the different parameters.
-	         for (j=next; j <= nrint; j++) {
-	           jj = next+nrint-j;
+	         for (j=next; j <= nrint[0]; j++) {
+	           jj = next+nrint[0]-j;
 	           fpint[jj] = fpint[jj-1];
 	           nrdata[jj] = nrdata[jj-1];
 	           jk = jj+k;
@@ -1128,7 +1129,7 @@ public class curfit {
          jk = next+k;
          t[jk-1] = x[nrx-1];
          n[0] = n[0]+1;
-         nrint = nrint+1;
+         nrint[0] = nrint[0]+1;
          return;
      }
 
