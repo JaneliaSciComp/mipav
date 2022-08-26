@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.filters.PyWavelets;
 import gov.nih.mipav.model.algorithms.filters.PyWavelets.DiscreteWavelet;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.awt.Graphics;
 import java.io.*;
@@ -1242,6 +1243,237 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         return mad(cD, c);
     }
 
+    public double fwhm(double t_hrf[], double hrf[], int k) {
+        // Return the full width at half maximum.
 
+        // Parameters:
+        // -----------
+        // t_hrf : 1d np.ndarray,
+        //    the sampling od time.
+
+        // hrf : 1d np.ndarray,
+        //    the HRF.
+
+        // k : int (default=3),
+        //    the degree of spline to fit the HRF.
+
+        // Return:
+        // -------
+        // fwhm : float,
+        //     the FWHM
+    	int i;
+        double maxhrf = -Double.MAX_VALUE;
+        for (i = 0; i < hrf.length; i++) {
+        	if (hrf[i] > maxhrf) {
+        		maxhrf = hrf[i];
+        	}
+        }
+        
+        double half_max = maxhrf / 2.0;
+        int iopt = 0;
+        int m = t_hrf.length;
+        double x[] = t_hrf;
+        double y[] = new double[hrf.length];
+        for (i = 0; i  < y.length; i++) {
+        	y[i] = hrf[i] - half_max;
+        }
+        double w[] = null;
+        double xb = x[0];
+        double xe = x[x.length-1];
+        double s = 0.0;
+        int nest = m + k + 1;
+        int n[] = new int[1];
+        double t[] = new double[nest];
+        double c[] = new double[nest];
+        double fp[] = new double[1];
+        int lwrk = nest*(3*k + 7) + m*(k + 1);
+        int iwrk[] = new int[nest];
+        int ier[] = new int[1];
+        curfit cur = new curfit(iopt, m, x, y, w, xb, xe, k, s, nest, n,
+        		t, c, fp, lwrk, iwrk, ier);
+        cur.run();
+        if (ier[0] == -1) {
+        	Preferences.debug("Normal return from curfit\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("The spline returned is an interpolating spline (fp[0] = 0)\n",
+        			Preferences.DEBUG_ALGORITHM);
+        }
+        else if (ier[0] == 1) {
+        	System.err.println("In curfit the required storage space exceeds the available storage space");
+        	System.exit(-1);
+        }
+        else if (ier[0] == 10) {
+        	System.err.println("In curfit the input data are invalid");
+        	System.exit(-1);
+        }
+        int mest = 10;
+        double zero[] = new double[mest];
+        int marr[] = new int[1];
+        sproot spr = new sproot(t,n[0],c,zero,mest,marr,ier);
+        spr.run();
+        if (ier[0] == 0) {
+        	Preferences.debug("Normal return from curfit\n", Preferences.DEBUG_ALGORITHM);	
+        }
+        else if (ier[0] == 1) {
+        	System.err.println("In sproot the number of zeros exceeds mest");
+        	System.exit(-1);
+        }
+        else if (ier[0] == 10) {
+        	System.err.println("In sproot the input data is invalid");
+        	System.exit(-1);
+        }
+        if (marr[0] == 0) {
+        	System.err.println("sproot did not return any zeros");
+        	return -1.0;
+        }
+        else if (marr[0] == 1) {
+        	System.err.println("sproot only returned 1 zero at " + zero[0]);
+        	return -1.0;
+        }
+        else {
+        	return Math.abs(zero[1] - zero[0]);
+        }
+    }
+    
+    public double tp(double t_hrf[], double hrf[]) {
+        // Return time to peak oh the signal.
+        
+    	int i;
+    	double maxhrf = -Double.MAX_VALUE;
+    	int maxind = -1;
+    	for (i = 0; i < hrf.length; i++) {
+    		if (hrf[i] > maxhrf) {
+    			maxhrf = hrf[i];
+    			maxind = i;
+    		}
+    	}
+    	return t_hrf[maxind];
+    }
+
+    public Random random_generator(long random_state) {
+        // Return a random instance with a fix seed if random_state is a int.
+        Random ran = new Random(random_state);
+        return ran;
+    }
+    
+    /*
+    def spectral_radius_est(L, x_shape, nb_iter=30, tol=1.0e-6, verbose=False):
+        """ EStimation of the spectral radius of the operator L.
+        """
+        x_old = np.random.randn(*x_shape)
+
+        stopped = False
+        for i in range(nb_iter):
+            x_new = L.adj(L.op(x_old)) / norm_2(x_old)
+            if(np.abs(norm_2(x_new) - norm_2(x_old)) < tol):
+                stopped = True
+                break
+            x_old = x_new
+        if not stopped and verbose:
+            print("Spectral radius estimation did not converge")
+
+        return norm_2(x_new)
+        */
+   
+    public double[] __inf_norm(double x[]) {
+        // Private helper for inf-norm normalization a list of arrays.
+        
+    	int i;
+    	double maxabsx = 0.0;
+    	for (i = 0; i < x.length; i++) {
+    		if (Math.abs(x[i]) > maxabsx) {
+    			maxabsx = Math.abs(x[i]);
+    		}
+    	}
+    	double xnorm[] = new double[x.length];
+    	for (i = 0; i < x.length; i++) {
+    		xnorm[i] = x[i]/(maxabsx + 1.0E-12);
+    	}
+    	return xnorm;
+    }
+
+    public double[][] _inf_norm(double arr[][], int axis) {
+    	// default axis = 1;
+    	int rownum = arr.length;
+    	int colnum = arr[0].length;
+    	double normarr[][] = new double[arr.length][arr[0].length];
+    	int i,j;
+    	if (axis == 0) {
+    		double colarr[] = new double[rownum];
+    	    for (j = 0; j < colnum; j++) {
+    	        for (i = 0; i < rownum; i++) {
+    	        	colarr[i] = arr[i][j];
+    	        }
+    	        double infarr[] = __inf_norm(colarr);
+    	        for (i = 0; i < rownum; i++) {
+    	        	normarr[i][j] = infarr[i];
+    	        }
+    	    }
+    	}
+    	else {
+    		for (i = 0; i < rownum; i++) {
+    			double infarr[] = __inf_norm(arr[i]);
+    			for (j = 0; j < colnum; j++) {
+    				normarr[i][j] = infarr[j];
+    			}
+    		}
+    	}
+    	return normarr;
+    }
+    
+    public double[][] _inf_norm(double arr[][][], int axis) {
+    	// default axis = 1;
+    	int rownum = arr[0].length;
+    	int colnum = arr[0][0].length;
+    	double normarr[][] = new double[arr.length*arr[0].length][arr[0][0].length];
+    	int i,j,k;
+    	for (k = 0; k < arr.length; k++) {
+	    	if (axis == 0) {
+	    		double colarr[] = new double[rownum];
+	    	    for (j = 0; j < colnum; j++) {
+	    	        for (i = 0; i < rownum; i++) {
+	    	        	colarr[i] = arr[k][i][j];
+	    	        }
+	    	        double infarr[] = __inf_norm(colarr);
+	    	        for (i = 0; i < rownum; i++) {
+	    	        	normarr[k*rownum+i][j] = infarr[i];
+	    	        }
+	    	    }
+	    	}
+	    	else {
+	    		for (i = 0; i < rownum; i++) {
+	    			double infarr[] = __inf_norm(arr[k][i]);
+	    			for (j = 0; j < colnum; j++) {
+	    				normarr[k*rownum+i][j] = infarr[j];
+	    			}
+	    		}
+	    	}
+    	} // for (k = 0; k < arr.length; k++)
+    	return normarr;
+    }
+    
+    public double[][][] __inf_norm(double x[][][]) {
+        // Private helper for inf-norm normalization a list of arrays.
+        
+    	int i,j,k;
+    	double maxabsx = 0.0;
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			for (k = 0; k < x[0][0].length; k++) {
+		    		if (Math.abs(x[i][j][k]) > maxabsx) {
+		    			maxabsx = Math.abs(x[i][j][k]);
+		    		}
+    			}
+    		}
+    	}
+    	double xnorm[][][] = new double[x.length][x[0].length][x[0][0].length];
+    	for (i = 0; i < x.length; i++) {
+    		for (j = 0; j < x[0].length; j++) {
+    			for (k = 0; k < x[0][0].length; k++) {
+    		        xnorm[i][j][k] = x[i][j][k]/(maxabsx + 1.0E-12);
+    			}
+    		}
+    	}
+    	return xnorm;
+    }
 
 }
