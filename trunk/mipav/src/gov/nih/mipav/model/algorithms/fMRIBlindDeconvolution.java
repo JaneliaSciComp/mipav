@@ -1528,6 +1528,45 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
         return norm_2(x_new)
         */
+    
+    public void test_inf_norm() {
+    	// In test_inf_norm() no errors were detected
+        // Test (max - min) of the min-max-normalized array is 1.0.
+    	int i,j;
+		int N;
+		int arr[] = new int[]{100, 128, 200, 256, 250, 300, 500, 600, 1000};
+		Random rand = new Random();
+		double signal[];
+		int numErrors = 0;
+		double maxabssignal;
+        
+        for (i = 0; i < arr.length; i++) {
+        	N = arr[i];
+        	signal = new double[N];
+        	for (j = 0; j < N; j++) {
+        		signal[j] = rand.nextGaussian();
+        	}
+        	signal = __inf_norm(signal);
+        	 maxabssignal = 0.0;
+             for (j = 0; j < N; j++) {
+            	 if (Math.abs(signal[j]) > maxabssignal) {
+            		 maxabssignal = Math.abs(signal[j]);
+            	 }
+             }
+             if (Math.abs(maxabssignal - 1.0) >= 1.5E-7) {
+            	 numErrors++;
+            	 System.err.println("In test_inf_norm() for N = " + N + " maxabssignal = " + maxabssignal);
+             }
+        }
+        if (numErrors > 0) {
+        	System.err.println("In test_inf_norm() " + numErrors + " errors were detected");
+        }
+        else {
+        	System.out.println("In test_inf_norm() no errors were detected");
+        }
+    }
+
+
    
     public double[] __inf_norm(double x[]) {
         // Private helper for inf-norm normalization a list of arrays.
