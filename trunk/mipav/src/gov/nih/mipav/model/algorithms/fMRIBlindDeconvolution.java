@@ -51,6 +51,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	
 	private final double MIN_DELTA = 0.5;
     private final double MAX_DELTA = 2.0;
+    
+    public fMRIBlindDeconvolution() {
+    	
+    }
 
 
 	public void runAlgorithm() {
@@ -143,6 +147,156 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		}
 		return;
 	}
+	
+	public void test_power_2_padding_length() {
+		// In test_power_2_padding_length() no errors were detected
+        // Test if the output of next_power_of_2_padding is a power of two.
+		int i,j;
+		int N;
+		int arr[] = new int[]{100, 128, 200, 256, 250, 300, 500, 600, 1000};
+		int min_power_of_2 = 1024;
+		int min_zero_padd = 50;
+		double zero_padd_ratio = 0.5;
+		int ans[] = new int[]{1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024};
+		Random rand = new Random();
+		double signal[];
+		int numErrors = 0;
+        
+        for (i = 0; i < arr.length; i++) {
+        	N = arr[i];
+        	signal = new double[N];
+        	for (j = 0; j < N; j++) {
+        		signal[j] = rand.nextGaussian();
+        	}
+        	int p_total[] = new int[2];
+            double padded_signal[] = _custom_padd(p_total, signal, min_power_of_2, min_zero_padd, zero_padd_ratio);
+            if (padded_signal.length != ans[i]) {
+                numErrors++;
+                System.err.println("In test_power_2_padding_length() padded_signal.length = " + padded_signal.length + " instead of the correct " + ans[i]);
+            }
+        }
+        if (numErrors > 0) {
+        	System.err.println("In test_power_2_padding_length() " + numErrors + " errors were detected");
+        }
+        else {
+        	System.out.println("In test_power_2_padding_length() no errors were detected");
+        }
+	}
+	
+	public void test_zero_padd_unpadd() {
+		// In test_zero_padd_unpadd() no errors were detected
+        // Test if the padded-unpadded array is equal to the orig.
+		int i,j,k,m,p;
+		int N;
+		int arr[] = new int[]{100, 128, 200, 256, 250, 300, 500, 600, 1000};
+		Random rand = new Random();
+		double s[];
+		int numErrors = 0;
+		int padlr[] = new int[] {10,20,214};
+		String paddarr[] = new String[] {"left", "right"};
+		String paddtype;
+		double padded_s[];
+		double test_s[];
+		int differences;
+		int padcenter[][] = new int[][] {{5,10}, {20,20}, {214,145}};
+		int parr[];
+		for (i = 0; i < arr.length; i++) {
+        	N = arr[i];
+            s = new double[N];
+            for (j = 0; j < N; j++) {
+        		s[j] = rand.nextGaussian();
+        	}
+            for (j = 0; j < padlr.length; j++) {
+                p = padlr[j];
+                for (k = 0; k < paddarr.length; k++) {
+                	paddtype = paddarr[k];
+                    padded_s = _padd_symetric(s, p, 0.0, paddtype);
+                    test_s = _unpadd_symetric(padded_s, p, paddtype);
+                    differences = 0;
+                    for (m = 0; m < N; m++) {
+                        if (s[m] != test_s[m]) {
+                            differences++;	
+                        }
+                    }
+                    if (differences != 0) {
+                    	numErrors++;
+                    	System.err.println("For N = " + N + " pad = " + p + " pad type = " +paddtype + "  " + differences + " differences were found");
+                    }
+                } // for (k = 0; k < paddarr.length; k++) 
+            } // for (j = 0; j < padlr.length; j++) 
+
+            paddtype = "center";
+            for (j = 0; j < padcenter.length; j++) {
+                parr = padcenter[j];
+                padded_s = _padd_assymetric(s, parr, 0.0, paddtype);
+                test_s = _unpadd_assymetric(padded_s, parr, paddtype);
+                differences = 0;
+                for (m = 0; m < N; m++) {
+                    if (s[m] != test_s[m]) {
+                        differences++;	
+                    }
+                }
+                if (differences != 0) {
+                	numErrors++;
+                	System.err.println("For N = " + N + " pad left = " + parr[0] + " pad right = " + parr[1] + " pad type = " +paddtype + "  " + differences + " differences were found");
+                }
+            } // for (j = 0; j < padcenter.length; j++)
+		} // for (i = 0; i < arr.length; i++)
+		if (numErrors > 0) {
+        	System.err.println("In test_zero_padd_unpadd() " + numErrors + " errors were detected");
+        }
+        else {
+        	System.out.println("In test_zero_padd_unpadd() no errors were detected");
+        }
+	}
+	
+	public void test_zero_mirror_zero_padd_unpadd() {
+		// In test_zero_mirror_zero_padd_unpadd() no errors were detected
+        // Test if the padded-unpadded array is equal to the orig.
+		int i,j;
+		int N;
+		int arr[] = new int[]{100, 128, 200, 256, 250, 300, 500, 600, 900, 1000};
+		int min_power_of_2 = 1024;
+		int min_zero_padd = 50;
+		double zero_padd_ratio = 0.5;
+		Random rand = new Random();
+		double signal[];
+		int numErrors = 0;
+		String paddtype = "center";
+		double test_signal[];
+		int differences;
+		int m;
+        
+        for (i = 0; i < arr.length; i++) {
+        	N = arr[i];
+        	signal = new double[N];
+        	for (j = 0; j < N; j++) {
+        		signal[j] = rand.nextGaussian();
+        	}
+        	int p_total[] = new int[2];
+            double padded_signal[] = _custom_padd(p_total, signal, min_power_of_2, min_zero_padd, zero_padd_ratio);
+            test_signal = _unpadd_assymetric(padded_signal, p_total, paddtype);
+            differences = 0;
+            for (m = 0; m < N; m++) {
+                if (signal[m] != test_signal[m]) {
+                    differences++;	
+                }
+            }
+            if (differences != 0) {
+            	numErrors++;
+            	System.err.println("For N = " + N + " pad left = " + p_total[0] + " pad right = " + p_total[1] + " pad type = " + paddtype + "  " + differences + " differences were found");
+            }
+        } // for (i = 0; i < arr.length; i++)
+        if (numErrors > 0) {
+        	System.err.println("In test_zero_mirror_zero_padd_unpadd() " + numErrors + " errors were detected");
+        }
+        else {
+        	System.out.println("In test_zero_mirror_zero_padd_unpadd() no errors were detected");
+        }
+	}
+
+
+
 	
 	// This module provide the padding functions used with the Fourier
 	// implementation for the HRF operator.
@@ -514,9 +668,9 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         	System.err.println("paddtype should center");
         	System.exit(-1);	
 		}
-
-		double unpaddedArray[] = new double[arrays.length-p[0]-p[1]];
-		for (i = p[0]; i < p[0] + arrays.length; i++) {
+		int unpaddedLength = arrays.length-p[0]-p[1];
+		double unpaddedArray[] = new double[unpaddedLength];
+		for (i = p[0]; i < p[0] + unpaddedLength; i++) {
 			unpaddedArray[i-p[0]] = arrays[i];
 		}
 		return unpaddedArray;
@@ -556,8 +710,9 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 		double unpaddedArray[][] = new double[arrays.length][];
 		for (i = 0; i < arrays.length; i++) {
-			unpaddedArray[i] = new double[arrays[i].length-p[0]-p[1]];
-			for (j = p[0]; j < p[0] + arrays[i].length; j++) {
+			int unpaddedLength = arrays[i].length-p[0]-p[1];
+			unpaddedArray[i] = new double[unpaddedLength];
+			for (j = p[0]; j < p[0] + unpaddedLength; j++) {
 				unpaddedArray[i][j-p[0]] = arrays[i][j];
 			}
 		}
@@ -618,7 +773,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		
 	
 	    divby2 = min_power_of_2;
-	    while (divby2 >= 1.0) {
+	    while (divby2 > 1.0) {
 	    	divby2 = divby2/2.0;
 	    }
 	    if (divby2 != 1.0) {
@@ -702,7 +857,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		   // padding
 		   paddeda = _padd_symetric(a, p_zeros[0] + p_zeros[1], 0.0, "center");
 		   reflecta = new double[p_reflect[0] + paddeda.length + p_reflect[1]];
-		   for (i = p_reflect[0]; i < p_reflect[0] + a.length; i++) {
+		   for (i = p_reflect[0]; i < p_reflect[0] + paddeda.length; i++) {
 			   reflecta[i] = paddeda[i - p_reflect[0]];
 		   }
 		   for (i = p_reflect[0] - 1, j = 0; i >= 0; i--, j++) {
