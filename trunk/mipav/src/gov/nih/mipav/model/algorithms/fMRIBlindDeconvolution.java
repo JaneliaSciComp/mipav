@@ -1669,5 +1669,342 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	}
     	return xnorm;
     }
+    
+    public void gen_rnd_ai_s(double ai_s[], double i_s[], double t[], int dur, 
+    		double tr, int nb_events, int avg_dur, int std_dur,
+            boolean middle_spike, boolean overlapping, boolean unitary_block,
+            boolean haveSeed, long random_state, int nb_try, int nb_try_duration,
+            boolean centered) {
+		// Generate a Activity inducing signal.
+		// dur : int (default=3),
+		//   The length of the BOLD signal (in minutes).
+		
+		// tr : float (default=1.0),
+		//   Repetition time
+		
+		// nb_events : int (default=4),
+		//   Number of neural activity on-sets.
+		
+		// avg_dur : int (default=5),
+		//   The average duration (in second) of neural activity on-sets.
+		
+		// std_dur : int (default=1),
+		//   The standard deviation (in second) on the duration of neural
+		//   activity on-sets.
+		
+		// middle_spike : bool (default=False),
+		//   Whether to force a dirac on the middle on the BOLD signal.
+		
+		// overlapping : bool (default=False),
+		//   Whether to authorize overlapping between on-sets.
+		
+		// unitary_block : bool (default=False),
+		//   force the block to have unitary amplitude.
+    	
+    	// boolean haveSeed = false if random_state = None
+    	// else haveSeed = true if random_state is a long
+		   
+		// random_state : int or None (default=None),
+		//   Whether to impose a seed on the random generation or not (for
+		//   reproductability).
+		
+		// nb_try : int (default=1000),
+		//   Number of try to generate the BOLD signal.
+		
+		// nb_try_duration : int (default=1000),
+		//   Number of try to generate the each neural activity on-set.
+		
+		// centered : boolean default false
+		
+		// Return
+    	// All 3 outputs have the same length
+    	// length = 1 + (int)((60000*dur-1)/(int)(1000tr))
+		// ------
+		
+		// ai_s : np.ndarray
+		//   Activity inducing signal.
+		
+		// i_s : np.ndarray,
+		//   Innovation signal.
+		
+		// t : np.ndarray,
+		//   time scale signal.
+		double dt;
+		int N;
+		double var_dur;
+		int center_neighbors[];
+		Random r;
+		int i,j,k;
+		double durs[] = new double[nb_events];
+		int durations[] = new int[nb_events];
+		boolean lessthanone;
+		boolean greaterthanone;
+		int offset;
+		int duration;
+		double ai_s_unsampled[];
+		int step;
+		double inc;
+		int current_nb_events;
+		double ai_s_mean;
+		double i_s_mean;
+	
+		dt = 0.001;  // to similate continious signal generation
+		N = (int)((dur * 60) / dt);
+		avg_dur /= dt;
+		var_dur = std_dur * std_dur;
+		var_dur /= dt;
+		center_neighbors = new int[] {(N/2)-1, (N/2)+1};
+		
+		// for reproductibility
+		
+		if (haveSeed) {
+			nb_try = 1;
+			r = random_generator(random_state);
+		}
+		else {
+			r = new Random();
+		}
+		
+		// generate the block
+		for (i = 0; i < nb_try; i++) {
+		   int offsets[] = r.ints(nb_events, 0, N).toArray();
+		   for (j = 0; j < nb_try_duration; j++) {
+			   lessthanone = false;
+			   for (k = 0; k < nb_events; k++) {
+			       durs[k] =  avg_dur + var_dur*r.nextGaussian(); 
+			       if (durs[k] < 1.0) {
+			    	   lessthanone = true;
+			       }
+			   } // for (k = 0; k < nb_events; k++)
+			   if (lessthanone) {
+				   continue;
+			   }
+			   else {
+				   break;
+			   }
+		   } // for (j = 0; j < nb_try_duration; j++)
+		      
+		
+		   // place the block
+		   for (j = 0; j < nb_events; j++) {
+			   durations[j] = (int)durs[j];
+		   }
+		   ai_s_unsampled = new double[N];
+		   loop1: for (j = 0; j < nb_events; j++) {
+		       offset = offsets[j];
+		       duration = durations[j];
+		       for (k = offset; k < offset + duration; k++) {
+		    	   if (k >= N) {
+		    	       break loop1;   
+		    	   }
+		    	   else {
+		    		   ai_s_unsampled[k] += 1;
+		    	   }
+		       }
+		   } // loop1: for (j = 0; j < nb_events; j++)
+		
+		   // check optional conditions
+		   if (middle_spike) {
+		       ai_s_unsampled[N/2] += 1;  // put a dirac une the center
+		   }
+		   greaterthanone = false;
+		   for (j = 0; j < N; j++) {
+			   if (ai_s_unsampled[j] > 1) {
+				   greaterthanone = true;
+			   }
+		   }
+		   if ((!overlapping) && greaterthanone) {
+		       continue;  // overlapping events: retry
+		   }
+		   if (overlapping) {
+		       if (unitary_block) {
+		    	   for (j = 0; j < N; j++) {
+		    		   if (ai_s_unsampled[j] > 1.0) {
+		    			   ai_s_unsampled[j] = 1.0; // normalized overlapping ai_s_unsampled
+		    		   }
+		    	   }
+		       } // if (unitary_block)
+		   } if (overlapping)
+		   if (middle_spike && ((ai_s_unsampled[center_neighbors[0]] > 0) || (ai_s_unsampled[center_neighbors[1]] > 0))) {
+		       continue;  // middle-spike not isolated: retry
+		   }
+		
+		   // subsample signal at 1/TR
+		   step = (int)(tr/dt);
+		   for (j = 0, k = 0; k < N; j++, k += step) {
+			   ai_s[j] = ai_s_unsampled[k];
+		   }
+		
+		   // generate innovation signal and the time scale on 'dur' duration with
+		   // '1/TR' sample rate
+		   i_s[0] = 0;
+		   for (j = 1; j < ai_s.length; j++) {
+			   i_s[j] = ai_s[j] - ai_s[j-1];
+		   }
+		   inc = dur*60/(ai_s.length-1);
+		   t[0] = 0;
+		   t[ai_s.length-1] = dur*60;
+		   for (j = 1; j < ai_s.length-1; j++) {
+			   t[j] = j*inc;
+		   }
+		
+		   current_nb_events = 0;
+		   for (j = 0; j < i_s.length; j++) {
+			   if (i_s[j] > 0.5) {
+				   current_nb_events++;
+			   }
+		   }
+		
+		   if( (!overlapping) && (current_nb_events != nb_events)) {
+		       continue;  // decimation step erase an event
+		   }
+		
+		   if (centered) {
+			   ai_s_mean = 0.0;
+			   i_s_mean = 0.0;
+			   for (j = 0; j < ai_s.length; j++) {
+				   ai_s_mean += ai_s[j];
+				   i_s_mean += i_s[j];
+			   }
+			   ai_s_mean /= ai_s.length;
+			   i_s_mean /= i_s.length;
+			   for (j = 0; j < ai_s.length; j++) {
+		           ai_s[j] -= ai_s_mean;
+		           i_s[j] -= i_s_mean;
+			   }
+		   }
+		
+		   return; //  ai_s, i_s, t
+		} // for (i = 0; i < nb_try; i++)
+		
+		System.err.println("[Failure] Failed to produce an activity-inducing signal");
+		System.err.println("Please re-run gen_ai_s function with possibly new arguments.");
+		return;
+    }
+    
+    public void yield_diracs_signal(double i_s[][], double hrf[][], double alpha[][], double tr[]) {
+        // Yield diracs signals on which to test the convolution functions.
+    	int i,j;
+        int durm;
+        double tr_s[];
+        double delta_s[];
+        double delta;
+        double t[];
+        int tlength;
+        double tstep;
+        int onset_event;
+        double dur = 60.0;
+        boolean normalized_hrf = true;
+        double dt = 0.001;
+        double p_delay = 6.0;
+        double undershoot = 16.0;
+        double p_disp = 1.0;
+        double u_disp = 1.0;
+        double p_u_ratio = 0.167;
+        double onset = 0.0;
+        int numsamples;
+        int step;
+        int returnedsamples;
+        double t_hrf[];
+        int nb_atoms = 20;
+        
+        durm = 1;  // minutes
+        tr_s = new double[] {0.1, 2.0};
+        delta_s = new double[] {0.5, 1.0};
+        for (i = 0; i < 2; i++) {
+            tr[i] = tr_s[i];
+            delta = delta_s[i];
+            tlength = (int)(durm*60/tr[i]);
+            t = new double[tlength];
+            t[0] = 0;
+            t[tlength-1] = durm*60;
+            tstep = durm*60/(tlength-1);
+            for (j = 1; j < tlength-1; j++) {
+                t[j] = j*tstep;	
+            }
+            // place Dirac at 20% of dur
+            onset_event = (int)(0.20 * durm * 60 / tr[i]);
+            i_s[i] = new double[tlength];
+            i_s[i][onset_event] = 1;
+            numsamples = (int)(dur/ dt);
+    		step = (int)(tr[i]/dt);
+    		returnedsamples = ((numsamples-1)/step) + 1; // length of hrf[] and t_hrf[]
+    		hrf[i] = new double[returnedsamples];
+    		t_hrf = new double[returnedsamples];
+            spm_hrf(hrf[i], t_hrf, delta, tr[i],
+            	    dur, normalized_hrf, dt, p_delay,
+            	    undershoot, p_disp, u_disp, p_u_ratio, onset);
+            alpha[i] = new double[nb_atoms];
+            alpha[i][10] = 1.0;
+            //yield i_s, hrf, alpha, tr
+        } // for (i = 0; i < 2; i++)
+    }
+
+    public void yield_blocks_signal(double ai_s[][], double hrf[][], double alpha[][], double tr[]) {
+        // Yield blocks signals on which to test the convolution functions.
+        int i;
+        long random_state = 0;
+        double tr_s[] = new double[] {0.1, 2.0};
+        int dur_orig_s[] = new int[] {3, 10};  // minutes
+        double delta_s[] = new double[] {0.5, 1.0};
+        int dur_orig;
+        double delta;
+        int ailength;
+        double i_s[];
+        double t[];
+        int nb_events;
+        int avg_dur = 1;
+        int std_dur = 5;
+        boolean middle_spike = false;
+        boolean overlapping = true;
+        boolean unitary_block = false;
+        boolean haveSeed = true;
+        int nb_try = 1000;
+        int nb_try_duration = 1000;
+        boolean centered = false;
+        double dur = 60.0;
+        boolean normalized_hrf = true;
+        double dt = 0.001;
+        double p_delay = 6.0;
+        double undershoot = 16.0;
+        double p_disp = 1.0;
+        double u_disp = 1.0;
+        double p_u_ratio = 0.167;
+        double onset = 0.0;
+        int numsamples;
+        int step;
+        int returnedsamples;
+        double t_hrf[];
+        int nb_atoms = 20;
+        for (i = 0; i < 2; i++) {
+            tr[i] = tr_s[i];
+            dur_orig = dur_orig_s[i];
+            delta = delta_s[i];
+            ailength = 1 + (int)((60000*dur_orig-1)/(int)(1000*tr[i]));
+            ai_s[i] = new double[ailength];
+            i_s = new double[ailength];
+            t = new double[ailength];
+            // nb_events should be adapted to
+            // the length of the signal
+            nb_events = dur_orig/2;
+            gen_rnd_ai_s(ai_s[i], i_s, t, dur_orig, 
+            	         tr[i], nb_events, avg_dur, std_dur,
+            	            middle_spike, overlapping, unitary_block,
+            	            haveSeed, random_state, nb_try, nb_try_duration,
+            	            centered);
+            numsamples = (int)(dur/ dt);
+    		step = (int)(tr[i]/dt);
+    		returnedsamples = ((numsamples-1)/step) + 1; // length of hrf[] and t_hrf[]
+    		hrf[i] = new double[returnedsamples];
+    		t_hrf = new double[returnedsamples];
+            spm_hrf(hrf[i], t_hrf, delta, tr[i],
+            	    dur, normalized_hrf, dt, p_delay,
+            	    undershoot, p_disp, u_disp, p_u_ratio, onset);
+            alpha[i] = new double[nb_atoms];
+            alpha[i][10] = 1.0;
+            //yield ai_s, hrf, alpha, tr
+        } // for (i = 0; i < 2; i++)
+    }
+
 
 }
