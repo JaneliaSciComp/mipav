@@ -825,6 +825,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		}
 		
 		else if ((2 * zero_padd_len < diff) && (diff < 4 * zero_padd_len)) {
+			System.out.println("Section 3");
 		   // [ zeros | mirror-signal | s | mirror-signal | zeros ]
 		
 		   len_reflect_padd_left = len_padd_left - zero_padd_len;
@@ -969,7 +970,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         return output;
     }
 	    
-    public double[] spectral_convolve(double k[], double x[]) {
+    public double[] spectral_convolve(double k[], double xin[]) {
         // Return k.conv(x).
 
         // Parameters:
@@ -984,9 +985,20 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         // k_conv_x : 1d np.ndarray,
         //    the convolved signal.
     	int i;
+    	double x[] = new double[xin.length];
+    	for (i = 0; i < x.length; i++) {
+    		x[i] = xin[i];
+    	}
         int p[] = new int[2];
-        x = _custom_padd(p, x, 1024, 50, 0.5);
+        // Smallest power of 2 >= k.length + xin.length -1
+        int minpowerof2 = 2;
+        int minrequiredlength = k.length + xin.length - 1;
+        while (minpowerof2 < minrequiredlength) {
+        	minpowerof2 *= 2;
+        }
+        x = _custom_padd(p, x, minpowerof2, 50, 0.5);
         int N = x.length;
+        boolean isOdd = ((N % 2) == 1);
         double kAdj[] = new double[N];
         for (i = 0; i < Math.min(N, k.length); i++) {
         	kAdj[i] = k[i];
@@ -998,7 +1010,6 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         	fft_xk[0][i] = fft_k[0][i]*fft_x[0][i] - fft_k[1][i]*fft_x[1][i];
         	fft_xk[1][i] = fft_k[0][i]*fft_x[1][i] + fft_k[1][i]*fft_x[0][i];
         }
-        boolean isOdd = ((N % 2) == 1);
         double padded_h_conv_x[] = irfft(fft_xk, isOdd);
         double k_conv_x[];
         int ptotal = p[0] + p[1];
@@ -1015,7 +1026,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         return k_conv_x;
     }
     
-    public double[] spectral_retro_convolve(double k[], double x[]) {
+    public double[] spectral_retro_convolve(double k[], double xin[]) {
         // Return k_t.conv(x).
 
         // Parameters:
@@ -1030,8 +1041,18 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         // k_conv_x : 1d np.ndarray,
         //     the convolved signal.
     	int i;
+    	double x[] = new double[xin.length];
+    	for (i = 0; i < x.length; i++) {
+    		x[i] = xin[i];
+    	}
         int p[] = new int[2];
-        x = _custom_padd(p, x, 1024, 50, 0.5);
+        // Smallest power of 2 >= k.length + xin.length -1
+        int minpowerof2 = 2;
+        int minrequiredlength = k.length + xin.length - 1;
+        while (minpowerof2 < minrequiredlength) {
+        	minpowerof2 *= 2;
+        }
+        x = _custom_padd(p, x, minpowerof2, 50, 0.5);
         int N = x.length;
         double kAdj[] = new double[N];
         for (i = 0; i < Math.min(N, k.length); i++) {
@@ -1337,13 +1358,13 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         dim_in = x.length;
  
         double padded_k[] = new double[2*dim_out - 2 + k.length];
-        for (i = dim_out-1; i < dim_out - 1 + k.length; i++) {
-        	padded_k[i] = k[k.length - 1 - (i - (dim_out - 1))];
+        for (i = dim_out-1; i < dim_out -1 + k.length; i++) {
+        	padded_k[i] = k[i - (dim_out-1)];
         }
         k_conv_x = new double[dim_out];
-
+        
         for (i = 0; i < dim_out; i++) {
-            start_idx = dim_out - 1 - i;
+        	start_idx = dim_out - 1 - i;
             for (j = 0; j < dim_in; j++) {
                 k_conv_x[i] += (padded_k[start_idx + j] * x[j]);
             }
@@ -2005,6 +2026,262 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
             //yield ai_s, hrf, alpha, tr
         } // for (i = 0; i < 2; i++)
     }
+    
+    // Here we test three implementations for the convolution:
+	// - the mathematical definition (two for loops)
+	// - the Toeplitz matrix product
+	// - the Fourier (spectral multiplication)
+	
+	// We test the direct convolution as long as the adjoint operator in the case
+	// where kernel = HRF and kernel = block signal (for different HRF and block
+	// signal)
+
+
+	// case kernel = HRF
+
+	// direct op
+
+	// Toeplitz
+
+
+	public void _test_conv_toeplitz_kernel_hrf(double ai_s[], double hrf[], String testname) {
+	    // Helper to test the conv with a Toeplitz implementation,
+	    // the kernel being the HRF.
+	    int i,j;
+	    int numDifferences = 0;
+	    double H[][] = toeplitz_from_kernel(hrf, ai_s.length, ai_s.length);
+	    double ar_s_ref[] = simple_convolve(hrf, ai_s, ai_s.length);
+	    double ar_s_test[] = new double[H.length];
+	    for (i = 0; i < H.length; i++) {
+	    	for (j = 0; j < H[0].length; j++) {
+	    		ar_s_test[i] += (H[i][j]*ai_s[j]);
+	    	}
+	    }
+	    for (i = 0; i < ar_s_ref.length; i++) {
+	    	if (Math.abs(ar_s_ref[i] - ar_s_test[i]) > (1.0E-7 + 1.0E-5*Math.abs(ar_s_test[i]))) {
+	    	    numDifferences++;	
+	    	}
+	    }
+	    if (numDifferences > 0) {
+	    	System.err.println(numDifferences + " differences were found in " + testname);
+	    }
+	    else {
+	    	System.out.println("No differences were found in " + testname);
+	    }
+	}
+	
+	public void test_toeplitz_convolution_kernel_hrf_on_dirac() {
+		// No differences were found in test_toeplitz_convolution_kernel_hrf_on_dirac 0
+		// No differences were found in test_toeplitz_convolution_kernel_hrf_on_dirac 1
+        // Test Toeplitz implementation of the convolution on a single dirac,
+        // the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_diracs_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_toeplitz_kernel_hrf(ai_s[i], hrf[i], "test_toeplitz_convolution_kernel_hrf_on_dirac " + i);	
+		}
+	}
+
+	public void test_toeplitz_convolution_kernel_hrf_on_ai_s() {
+		// No differences were found in test_toeplitz_convolution_kernel_hrf_on_ai_s 0
+		// No differences were found in test_toeplitz_convolution_kernel_hrf_on_ai_s 1
+        // Test Toeplitz implementation of the convolution on a block signal,
+        // the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_blocks_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_toeplitz_kernel_hrf(ai_s[i], hrf[i], "test_toeplitz_convolution_kernel_hrf_on_ai_s " + i);	
+		}
+	}
+
+	// Fourier
+
+
+	public void _test_conv_fourier_kernel_hrf(double ai_s[], double hrf[], String testname) {
+	    // Helper to test the conv with a Fourier implementation,
+	    // the kernel being the HRF.
+		int i;
+	    int numDifferences = 0;
+	    double ar_s_ref[] = simple_convolve(hrf, ai_s, ai_s.length);
+	    double ar_s_test[] = spectral_convolve(hrf, ai_s);
+	    for (i = 0; i < ar_s_ref.length; i++) {
+	    	if (Math.abs(ar_s_ref[i] - ar_s_test[i]) > (1.0E-7 + 1.0E-5*Math.abs(ar_s_test[i]))) {
+	    	    numDifferences++;	
+	    	}
+	    }
+	    if (numDifferences > 0) {
+	    	System.err.println(numDifferences + " differences were found in " + testname);
+	    }
+	    else {
+	    	System.out.println("No differences were found in " + testname);
+	    }
+	}
+
+	public void test_fourier_convolution_kernel_hrf_on_dirac() {
+		// No differences were found in test_fourier_convolution_kernel_hrf_on_dirac 0
+		// No differences were found in test_fourier_convolution_kernel_hrf_on_dirac 1
+        // Test Fourier implementation of the convolution on a single dirac,
+        // the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_diracs_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_fourier_kernel_hrf(ai_s[i], hrf[i], "test_fourier_convolution_kernel_hrf_on_dirac " + i);	
+		}
+	}
+	
+	public void test_fourier_convolution_kernel_hrf_on_ai_s() {
+        // Test Fourier implementation of the convolution on a block signal,
+        // the kernel being the HRF.
+		// No differences were found in test_fourier_convolution_kernel_hrf_on_ai_s 0
+		// No differences were found in test_fourier_convolution_kernel_hrf_on_ai_s 1
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_blocks_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_fourier_kernel_hrf(ai_s[i], hrf[i], "test_fourier_convolution_kernel_hrf_on_ai_s " + i);	
+		}
+	}
+
+	// adj op
+
+
+	// Toeplitz
+
+
+	public void _test_conv_adj_toeplitz_kernel_hrf(double ai_s[], double hrf[], String testname) {
+	    // Helper to test the adj conv with a Toeplitz implementation,
+	    // the kernel being the HRF.
+	    int i,j;
+	    int numDifferences = 0;
+	    double H[][] = toeplitz_from_kernel(hrf, ai_s.length, ai_s.length);
+	    double HT[][] = new double[H[0].length][H.length];
+	    for (i = 0; i < H.length; i++) {
+	    	for (j = 0; j < H[0].length; j++) {
+	    		HT[j][i] = H[i][j];
+	    	}
+	    }
+	    double ar_s_ref[] = simple_retro_convolve(hrf, ai_s, ai_s.length);
+	    double ar_s_test[] = new double[HT.length];
+	    for (i = 0; i < HT.length; i++) {
+	    	for (j = 0; j < HT[0].length; j++) {
+	    		ar_s_test[i] += (HT[i][j]*ai_s[j]);
+	    	}
+	    }
+	    for (i = 0; i < ar_s_ref.length; i++) {
+	    	if (Math.abs(ar_s_ref[i] - ar_s_test[i]) > (1.0E-7 + 1.0E-5*Math.abs(ar_s_test[i]))) {
+	    	    numDifferences++;	
+	    	}
+	    }
+	    if (numDifferences > 0) {
+	    	System.err.println(numDifferences + " differences were found in " + testname);
+	    }
+	    else {
+	    	System.out.println("No differences were found in " + testname);
+	    }
+	}
+	
+	public void test_toeplitz_adj_convolution_kernel_hrf_on_dirac() {
+		// No differences were found in test_conv_adj_toeplitz_kernel_hrf_on_dirac 0
+		// No differences were found in test_conv_adj_toeplitz_kernel_hrf_on_dirac 1
+        // Test Toeplitz implementation of the adj convolution on a single
+        // dirac, the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_diracs_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_adj_toeplitz_kernel_hrf(ai_s[i], hrf[i], "test_conv_adj_toeplitz_kernel_hrf_on_dirac " + i);	
+		}
+	}
+
+	public void test_toeplitz_adj_convolution_kernel_hrf_on_ai_s() {
+		// No differences were found in test_conv_adj_toeplitz_kernel_hrf_on_ai_s 0
+		// No differences were found in test_conv_adj_toeplitz_kernel_hrf_on_ai_s 1
+        // Test Toeplitz implementation of the adj convolution on a block
+        // signal, the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_blocks_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_adj_toeplitz_kernel_hrf(ai_s[i], hrf[i], "test_conv_adj_toeplitz_kernel_hrf_on_ai_s " + i);	
+		}
+	}
+	
+	// Fourier
+
+
+	public void _test_conv_adj_fourier_hrf(double ai_s[], double hrf[], String testname) {
+	    // Helper to test the adj conv with a Fourier implementation,
+	    // the kernel being the HRF.
+	    int i;
+	    int numDifferences = 0;
+	    double adj_ar_s_ref[] = simple_retro_convolve(hrf, ai_s, ai_s.length);
+	    double adj_ar_s_test[] = spectral_retro_convolve(hrf, ai_s);
+	    for (i = 0; i < adj_ar_s_ref.length; i++) {
+	    	if (Math.abs(adj_ar_s_ref[i] - adj_ar_s_test[i]) > (1.0E-7 + 1.0E-5*Math.abs(adj_ar_s_test[i]))) {
+	    	    numDifferences++;	
+	    	}
+	    }
+	    if (numDifferences > 0) {
+	    	System.err.println(numDifferences + " differences were found in " + testname);
+	    }
+	    else {
+	    	System.out.println("No differences were found in " + testname);
+	    }
+	}
+
+	public void test_fourier_adj_convolution_kernel_hrf_on_dirac() {
+		// No differences were found in test_fourier_adj_convolution_kernel_hrf_on_dirac 0
+		// No differences were found in test_fourier_adj_convolution_kernel_hrf_on_dirac 1
+        // Test Fourier implementation of the adj convolution on a single
+        // dirac, the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_diracs_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_adj_fourier_hrf(ai_s[i], hrf[i], "test_fourier_adj_convolution_kernel_hrf_on_dirac " + i);	
+		}
+	}
+	
+	public void test_fourier_adj_convolution_kernel_hrf_on_ai_s() {
+		// 511 differences were found in test_fourier_adj_convolution_kernel_hrf_on_ai_s 0
+		// 511 differences were found in test_fourier_adj_convolution_kernel_hrf_on_ai_s 0
+        // Test Fourier implementation of the adj convolution on a block
+        // signal, the kernel being the HRF.
+		int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_blocks_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_adj_fourier_hrf(ai_s[i], hrf[i], "test_fourier_adj_convolution_kernel_hrf_on_ai_s " + i);	
+		}
+	}
+
 
 
 }
