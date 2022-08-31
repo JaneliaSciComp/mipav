@@ -1693,6 +1693,73 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	return xnorm;
     }
     
+    public double norm(double x[]) {
+    	int i;
+    	double sum = 0.0;
+    	for (i = 0; i < x.length; i++) {
+    	    sum += (x[i]*x[i]);	
+    	}
+    	return Math.sqrt(sum);
+    }
+    
+    public void add_gaussian_noise(double noisy_signal[], double noise[], double signal[],
+    		double snr, boolean haveSeed, long random_state) {
+        // Add a Gaussian noise to signal to ouput a signal with the targeted snr.
+
+        // Parameters
+        // ----------
+        // signal : np.ndarray,
+        //    The given signal on which add a Guassian noise.
+
+        // snr : float,
+        //    The expected SNR for the output signal.
+    	
+    	// boolean haveSeed default false
+
+        // random_state :  int or None (default=None),
+        //    Whether to impose a seed on the random generation or not (for
+        //    reproductability).
+
+        // Return
+        // ------
+        // noisy_signal: np.ndarray,
+        //    the noisy produced signal.
+
+        // noise:  np.ndarray,
+        //    the additif produced noise.
+    	int i;
+        Random r;
+     // epsilon = D1MACH(4)
+        // Machine epsilon is the smallest positive epsilon such that
+        // (1.0 + epsilon) != 1.0.
+        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+        // epsilon is called the largest relative spacing
+        double epsilon = 2.2204460e-16;
+    	if (haveSeed) {
+			r = random_generator(random_state);
+		}
+		else {
+			r = new Random();
+		}
+        
+        int s_shape = signal.length;
+        for (i = 0; i < s_shape; i++) {
+        	noise[i] = r.nextGaussian();
+        }
+
+        double true_snr_num = norm(signal);
+        double true_snr_deno = norm(noise);
+        double true_snr = true_snr_num / (true_snr_deno + epsilon);
+        double std_dev = (1.0 / Math.sqrt(Math.pow(10,(snr/10.0)))) * true_snr;
+        for (i = 0; i < s_shape; i++) {
+            noise[i] = std_dev * noise[i];
+            noisy_signal[i] = signal[i] + noise[i];
+        }
+
+        return; // noisy_signal, noise
+    }
+
+    
     public void gen_rnd_ai_s(double ai_s[], double i_s[], double t[], int dur, 
     		double tr, int nb_events, int avg_dur, int std_dur,
             boolean middle_spike, boolean overlapping, boolean unitary_block,
@@ -1904,6 +1971,294 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		System.err.println("Please re-run gen_ai_s function with possibly new arguments.");
 		return;
     }
+    
+    public void gen_rnd_bloc_bold(double noisy_ar_s[],double ar_s[], double ai_s[],
+    		double i_s[],  double t[], double noise[],
+    		int dur, double tr, boolean sourcehrf, double hrf[], int nb_events, int avg_dur,
+            int std_dur, boolean middle_spike, boolean overlapping,
+            boolean unitary_block, double snr, int nb_try,
+            int nb_try_duration, boolean centered, boolean haveSeed, long random_state) {
+		// Generate synthetic BOLD signal.
+		
+		// Parameters
+		// ----------
+		// dur : int (default=5),
+		// The length of the BOLD signal (in minutes).
+		
+		// tr : float (default=1.0),
+		// Repetition time
+    	
+    	// sourcehrf: boolean default: false
+		
+		// hrf : np.ndarray (default=None),
+		// Specified HRF, if None a SPM like HRF is used based on
+		// hrf_time_length arg.
+		
+		// nb_events : int (default=4),
+		// Number of neural activity on-sets.
+		
+		// avg_dur : int (default=5),
+		// The average duration (in second) of neural activity on-sets.
+		
+		// std_dur : int (default=1),
+		// The standard deviation (in second) on the duration of neural
+		// activity on-sets.
+		
+		// middle_spike : bool (default=False),
+		// Whether to force a dirac on the middle on the BOLD signal.
+		
+		// overlapping : bool (default=False),
+		// Whether to authorize overlapping between on-sets.
+		
+		// unitary_block : bool (default=False),
+		// force the block to have unitary amplitude.
+		
+		// snr: float (default=1.0),
+		// SNR of the noisy BOLD signal.
+		
+		// nb_try: int (default = 1000);
+    
+        // nb_try_duration: int (default = 1000)
+    	
+    	// // centered : boolean default false
+        
+        // haveSeed: boolean (default = false)
+		
+		// random_state : int or None (default=None),
+		// Whether to impose a seed on the random generation or not (for
+		// reproductability).
+		
+		// Return
+		// ------
+    	// noisy_ar_s, ar_s, ai_s, i_s, t, noise all have the same length;
+    	// length = 1 + (int)((60000*dur-1)/(int)(1000tr))
+    	// if sourcehrf = false length of hrf is given by:
+    	// int numsamples = (int)(dur/ dt);
+		// int step = (int)(t_r/dt);
+		// int returnedsamples = ((numsamples-1)/step) + 1; length of hrf[]
+		
+		// noisy_ar_s : np.ndarray,
+		// Noisy activity related signal.
+		
+		// ar_s : np.ndarray,
+		// Activity related signal.
+		
+		// ai_s : np.ndarray,
+		// Activity inducing signal.
+		
+		// i_s : np.ndarray,
+		// Innovation signal.
+		
+		// t : np.ndarray,
+		// time scale signal.
+		
+		// hrf : np.ndarray,
+		// HRF.
+		
+		// t_hrf : np.ndarray,
+		// time scale HRF, if an HRF is specified then t_hrf is None and the user
+		// should be aware of the corresponding time scale HRF.
+		
+		// noise : np.ndarray,
+		// Noise.
+		
+	
+		gen_rnd_ai_s(ai_s, i_s, t, dur, tr, nb_events,
+		                      avg_dur, std_dur,
+		                      middle_spike,
+		                      overlapping,
+		                      unitary_block,
+		                      haveSeed, random_state,
+		                      nb_try, nb_try_duration, centered);
+		
+		if (!sourcehrf) {
+		     double dt = 0.001;
+			 int numsamples = (int)(dur/ dt);
+		     int step = (int)(tr/dt);
+		     int returnedsamples = ((numsamples-1)/step) + 1;
+		     double t_hrf[] = new double[returnedsamples];
+		     double delta = 1.0;
+		     double durs = 60.0;
+		     boolean normalized_hrf = true;
+		     double p_delay = 6.0;
+		     double undershoot = 16.0;
+		     double p_disp = 1.0;
+		     double u_disp = 1.0;
+		     double p_u_ratio = 0.167;
+		     double onset = 0.0;
+		     spm_hrf(hrf, t_hrf, delta, tr,
+		            durs, normalized_hrf, dt, p_delay,
+                    undershoot, p_disp, u_disp, p_u_ratio, onset);
+		} // if (!sourcehrf)
+		ar_s = simple_convolve(hrf, ai_s, ai_s.length);
+		
+		add_gaussian_noise(noisy_ar_s, noise, ar_s, snr,
+		                   haveSeed, random_state);
+		
+		return; // noisy_ar_s, ar_s, ai_s, i_s, t, hrf, noise
+    }
+    
+    public void _yield_data(double noisy_ar_s[][], double ar_s[][], double ai_s[][],
+    		double i_s[][], double hrf[][], double noise[][],
+    		double snr[], int nb_events[]) {
+        // Yield signals for unittests.
+        
+        // caution random_state should be fixed but it could also systematically
+        // lead to failing signal generation, so this arg is carefully set
+    	int i;
+        long random_state = 99;
+        double snr_s[] = new double[]{1.0, 10.0, 20.0};
+        double tr_s[] = new double[] {0.1, 2.0, 2.0};
+        int dur_orig_s[] = new int[] {3, 5, 10};  // minutes
+        double delta_s[] = new double[] {0.5, 1.0, 1.0};
+        double tr;
+        int dur_orig;
+        double delta;
+        double t[];
+        double dt = 0.001;
+        double dur = 60.0;
+		int numsamples = (int)(dur/ dt);
+	    boolean normalized_hrf = true;
+	    double p_delay = 6.0;
+	    double undershoot = 16.0;
+	    double p_disp = 1.0;
+	    double u_disp = 1.0;
+	    double p_u_ratio = 0.167;
+	    double onset = 0.0;
+	    boolean sourcehrf = true;
+	    int avg_dur = 1;
+	    int std_dur = 5;
+	    boolean middle_spike = false;
+	    boolean overlapping = false;
+	    boolean unitary_block = false;
+	    int nb_try = 1000;
+	    int nb_try_duration = 1000;
+	    boolean centered = false;
+	    boolean haveSeed = true;
+        for (i = 0; i < 3; i++) {
+            snr[i] = snr_s[i];
+            tr = tr_s[i];
+            dur_orig = dur_orig_s[i];
+            delta = delta_s[i];
+            nb_events[i] = (int)(dur_orig/2);
+            int step = (int)(tr/dt);
+    	    int returnedsamples = ((numsamples-1)/step) + 1;
+    	    hrf[i] = new double[returnedsamples];
+    	    double t_hrf[] = new double[returnedsamples];
+		    spm_hrf(hrf[i], t_hrf, delta, tr,
+		            dur, normalized_hrf, dt, p_delay,
+                    undershoot, p_disp, u_disp, p_u_ratio, onset);
+		    int genlength = 1 + (int)((60000*dur_orig-1)/(int)(1000*tr));
+		    noisy_ar_s[i] = new double[genlength];
+		    ar_s[i] = new double[genlength];
+		    ai_s[i] = new double[genlength];
+		    i_s[i] = new double[genlength];
+		    t = new double[genlength];
+		    noise[i] = new double[genlength];
+            gen_rnd_bloc_bold(noisy_ar_s[i], ar_s[i], ai_s[i],
+            		i_s[i],  t, noise[i],
+            		dur_orig, tr, sourcehrf, hrf[i], nb_events[i], avg_dur,
+                    std_dur, middle_spike, overlapping,
+                    unitary_block, snr[i], nb_try,
+                    nb_try_duration, centered, haveSeed, random_state);
+        } // for (i = 0; i < 3; i++)
+    }
+    
+    public void _test_data(double noisy_ar_s[], double ar_s[], double ai_s[], 
+    		double i_s[], double hrf[], double noise[], 
+    		double snr, int nb_events, String testnum) {
+        // Helper to test:
+        // - Manually reconvolve the block signal
+        //  and compare it to the BOLD signal
+        // - test the produce signal SNR
+        // - test if noise == (noisy_ar_s - ar_s)
+
+        // test if the 'ar_s = (hrf * ai_s)'
+    	int i;
+    	System.out.println("Testing with snr = " + snr + " nb_events = " + nb_events + " for test number " + testnum);
+        double ar_s_test[] = simple_convolve(hrf, ai_s, ai_s.length);
+        int numDifferences = 0;
+        for (i = 0; i < ar_s.length; i++) {
+            if (Math.abs(ar_s[i] - ar_s_test[i]) >= 1.5E-7) {
+            	numDifferences++;
+            }
+        }
+        if (numDifferences > 0) {
+        	System.err.println(numDifferences + " differences were detected for allclose(ar_s, ar_s_test)");
+        }
+        else {
+        	System.out.println("No differences were detected for allclose(ar_s, ar_s_test)");
+        }
+
+        // test if expect snr == data snr
+        double true_snr = 20.0 * Math.log10(norm(ar_s) / norm(noise));
+        if (Math.abs(snr - true_snr) > 1.5E-7) {
+        	System.err.println("snr = " + snr + " true_snr = " + true_snr);
+        }
+        else {
+        	System.out.println("snr is close to true_snr");
+        }
+
+        // test if expect noise == (noisy_ar_s - ar_s)
+        double residual[] = new double[ar_s.length];
+        for (i = 0; i < ar_s.length; i++) {
+        	residual[i] = noisy_ar_s[i] - ar_s[i];
+        }
+        numDifferences = 0;
+        for (i = 0; i < residual.length; i++) {
+            if (Math.abs(noise[i] - residual[i]) >= 1.5E-7) {
+            	numDifferences++;
+            }
+        }
+        if (numDifferences > 0) {
+        	System.err.println(numDifferences + " differences were detected for allclose(residual, noise)");
+        }
+        else {
+        	System.out.println("No differences were detected for allclose(resiudal, noise)");
+        }
+
+        // test if nb_events is respected
+        int true_nb_events = nb_events;
+        nb_events = 0;
+        for (i = 0; i < i_s.length; i++) {
+        	if (i_s[i] > 0.5) {
+        		nb_events++;
+        	}
+        }
+        if (nb_events != true_nb_events) {
+            System.err.println("nb_events = " + nb_events + " true_nb_events = " + true_nb_events);	
+        }
+        else {
+        	System.out.println("nb_events = true_nb_events");
+        }
+    }
+
+
+    public void test_data_gen() {
+        // Test the data generation function:
+           // - Manually reconvolve the block signal
+           //   and compare it to the BOLD signal
+           // - test the produce signal SNR
+           // - test if noise == (noisy_ar_s - ar_s)
+    	int i;
+    	double noisy_ar_s[][] = new double[3][];
+    	double ar_s[][] = new double[3][];
+    	double ai_s[][] = new double[3][];
+    	double i_s[][] = new double[3][];
+    	double hrf[][] = new double[3][];
+    	double noise[][] = new double[3][];
+    	double snr[] = new double[3];
+    	int nb_events[] = new int[3];
+    	_yield_data(noisy_ar_s, ar_s, ai_s,
+        		i_s, hrf, noise,
+        		snr, nb_events);
+    	for (i = 0; i < 3; i++) {
+    		_test_data(noisy_ar_s[i], ar_s[i], ai_s[i], 
+    	    		i_s[i], hrf[i], noise[i], 
+    	    		snr[i], nb_events[i], String.valueOf(i));	
+    	}
+    }
+
     
     public void yield_diracs_signal(double i_s[][], double hrf[][], double alpha[][], double tr[]) {
         // Yield diracs signals on which to test the convolution functions.
