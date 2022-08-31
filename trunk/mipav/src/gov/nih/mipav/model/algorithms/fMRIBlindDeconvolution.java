@@ -2284,6 +2284,143 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		}
 	}
 
+	// case kernel = block signal
 
+	// direct op
+
+	// Toeplitz
+
+    public void _test_conv_toeplitz_kernel_signal(double ai_s[], double hrf[], String testname) {
+	    // Helper to test the conv with a Toeplitz implementation,
+	    // the kernel being the block signal.
+    	int i,j;
+	    int numDifferences = 0;
+	    double H[][] = toeplitz_from_kernel(ai_s, hrf.length, ai_s.length);
+	    double ar_s_ref[] = simple_convolve(hrf, ai_s, ai_s.length);
+	    double ar_s_test[] = new double[H.length];
+	    for (i = 0; i < H.length; i++) {
+	    	for (j = 0; j < H[0].length; j++) {
+	    		ar_s_test[i] += (H[i][j]*hrf[j]);
+	    	}
+	    }
+	    for (i = 0; i < ar_s_ref.length; i++) {
+	    	if (Math.abs(ar_s_ref[i] - ar_s_test[i]) > (1.0E-7 + 1.0E-5*Math.abs(ar_s_test[i]))) {
+	    	    numDifferences++;	
+	    	}
+	    }
+	    if (numDifferences > 0) {
+	    	System.err.println(numDifferences + " differences were found in " + testname);
+	    }
+	    else {
+	    	System.out.println("No differences were found in " + testname);
+	    }
+    }
+    
+    public void test_toeplitz_convolution_kernel_signal_on_dirac() {
+    	// No differences were found in test_toeplitz_convolution_kernel_signal_on_dirac 0
+    	// No differences were found in test_toeplitz_convolution_kernel_signal_on_dirac 1
+        // Test Toeplitz implementation of the convolution on a single dirac,
+        // the kernel being the block signal.
+    	int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_diracs_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_toeplitz_kernel_signal(ai_s[i], hrf[i], "test_toeplitz_convolution_kernel_signal_on_dirac " + i);	
+		}
+    }
+
+    public void test_toeplitz_convolution_kernel_signal_on_ai_s() {
+    	// No differences were found in test_toeplitz_convolution_kernel_signal_on_ai_s 0
+    	// No differences were found in test_toeplitz_convolution_kernel_signal_on_ai_s 1
+        // Test Toeplitz implementation of the convolution on a block signal,
+        // the kernel being the block signal.
+    	int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_blocks_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_toeplitz_kernel_signal(ai_s[i], hrf[i], "test_toeplitz_convolution_kernel_signal_on_ai_s " + i);	
+		}
+    }
+    
+    // adj op
+
+    // Toeplitz
+
+
+    public void _test_conv_adj_toeplitz_kernel_signal(double ai_s[], double hrf[], String testname) {
+        // Helper to test the adj conv with a Toeplitz implementation,
+        // the kernel being the block signal.
+    	int i,j;
+	    int numDifferences = 0;
+        double H[][] = toeplitz_from_kernel(ai_s, hrf.length, ai_s.length);
+        double Hdothrf[] = new double[H.length];
+        for (i = 0; i < H.length; i++) {
+        	for (j = 0; j < hrf.length; j++) {
+        		Hdothrf[i] += (H[i][j] * hrf[j]);
+        	}
+        }
+        double adj_ar_s_ref[] = simple_retro_convolve(ai_s, Hdothrf, hrf.length);
+        double HT[][] = new double[H[0].length][H.length];
+        for (i = 0; i < H.length; i++) {
+        	for (j = 0; j < H[0].length; j++) {
+        		HT[j][i] = H[i][j];
+        	}
+        }
+        double adj_ar_test[] = new double[HT.length];
+        for (i = 0; i < HT.length; i++) {
+        	for (j = 0; j < HT[0].length; j++) {
+        		adj_ar_test[i] += (HT[i][j] * Hdothrf[j]);
+        	}
+        }
+        for (i = 0; i < adj_ar_s_ref.length; i++) {
+	    	if (Math.abs(adj_ar_s_ref[i] - adj_ar_test[i]) > (1.0E-7 + 1.0E-5*Math.abs(adj_ar_test[i]))) {
+	    	    numDifferences++;	
+	    	}
+	    }
+	    if (numDifferences > 0) {
+	    	System.err.println(numDifferences + " differences were found in " + testname);
+	    }
+	    else {
+	    	System.out.println("No differences were found in " + testname);
+	    }
+    }
+
+    public void test_toeplitz_adj_convolution_kernel_signal_on_dirac() {
+    	// No differences were found in test_toeplitz_adj_convolution_kernel_signal_on_dirac 0
+    	// No differences were found in test_toeplitz_adj_convolution_kernel_signal_on_dirac 1
+        // Test Toeplitz implementation of the adj convolution on a single
+        // dirac, the kernel being the block signal.
+    	int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_diracs_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_adj_toeplitz_kernel_signal(ai_s[i], hrf[i], "test_toeplitz_adj_convolution_kernel_signal_on_dirac " + i);	
+		}
+    }
+
+    public void test_toeplitz_adj_convolution_kernel_signal_on_ai_s() {
+    	// No differences were found in test_toeplitz_adj_convolution_kernel_signal_on_ai_s 0
+    	// No differences were found in test_toeplitz_adj_convolution_kernel_signal_on_ai_s 1
+        // Test Toeplitz implementation of the adj convolution on a block
+        // signal, the kernel being the block signal.
+    	int i;
+        double ai_s[][] = new double[2][];
+        double hrf[][] = new double[2][];
+        double alpha[][] = new double[2][];
+        double tr[] = new double[2];
+		yield_blocks_signal(ai_s, hrf, alpha, tr);
+		for (i = 0; i < 2; i++) {
+			_test_conv_adj_toeplitz_kernel_signal(ai_s[i], hrf[i], "test_toeplitz_adj_convolution_kernel_signal_on_ai_s " + i);	
+		}
+    }
 
 }
