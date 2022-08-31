@@ -990,9 +990,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     		x[i] = xin[i];
     	}
         int p[] = new int[2];
-        // Smallest power of 2 >= k.length + xin.length -1
+        // Smallest power of 2 >= k.length + xin.length -1 for padding on one side
+        // So use that 2 times that amount to cover both sides for center padding
         int minpowerof2 = 2;
-        int minrequiredlength = k.length + xin.length - 1;
+        int minrequiredlength = 2*(k.length + xin.length - 1);
         while (minpowerof2 < minrequiredlength) {
         	minpowerof2 *= 2;
         }
@@ -1046,9 +1047,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     		x[i] = xin[i];
     	}
         int p[] = new int[2];
-        // Smallest power of 2 >= k.length + xin.length -1
+        // Smallest power of 2 >= k.length + xin.length -1 for padding on one side
+        // So use that 2 times that amount to cover both sides for center padding
         int minpowerof2 = 2;
-        int minrequiredlength = k.length + xin.length - 1;
+        int minrequiredlength = 2*(k.length + xin.length - 1);
         while (minpowerof2 < minrequiredlength) {
         	minpowerof2 *= 2;
         }
@@ -2267,8 +2269,8 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	}
 	
 	public void test_fourier_adj_convolution_kernel_hrf_on_ai_s() {
-		// 511 differences were found in test_fourier_adj_convolution_kernel_hrf_on_ai_s 0
-		// 511 differences were found in test_fourier_adj_convolution_kernel_hrf_on_ai_s 0
+		// No differences were found in test_fourier_adj_convolution_kernel_hrf_on_ai_s 0
+		// No differences were found in test_fourier_adj_convolution_kernel_hrf_on_ai_s 1
         // Test Fourier implementation of the adj convolution on a block
         // signal, the kernel being the HRF.
 		int i;
