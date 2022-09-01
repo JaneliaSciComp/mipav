@@ -3,15 +3,10 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.filters.PyWavelets;
 import gov.nih.mipav.model.algorithms.filters.PyWavelets.DiscreteWavelet;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
-import java.awt.Graphics;
-import java.io.*;
 import java.util.*;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.SystemMenuBar;
 
 public class fMRIBlindDeconvolution extends AlgorithmBase {
 	// Ported from the Python pyBOLD package
@@ -326,13 +321,13 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	    // arrays : np.ndarray
 	    // the padded array
 		int p_left;
-		int p_right;
+		//int p_right;
 		double paddedArray[] = new double[arrays.length + p];
 		int i;
 		
 		if (paddtype.equalsIgnoreCase("center")) {
             p_left = (int)(p / 2);
-            p_right = (int)(p / 2) + (p % 2);
+            //p_right = (int)(p / 2) + (p % 2);
             for (i = 0; i < p_left; i++) {
             	paddedArray[i] = c;
             }
@@ -2274,6 +2269,340 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	    		i_s[i], hrf[i], noise[i], 
     	    		snr[i], nb_events[i], String.valueOf(i));	
     	}
+    }
+    
+    public void gen_regular_ai_s(double ai_s[], double i_s[], double t[], 
+    		int dur, double tr, double dur_bloc, boolean centered) {
+        // Generate a Activity inducing signal.
+        // Defaults:
+    	// dur = 10
+    	// tr = 1.0
+    	// dur_bloc = 30.0
+    	// centered = true
+    	int i;
+    	double ai_s_mean;
+    	double i_s_mean;
+        int N = (int)(dur * 60 / tr);
+        //i_s = np.zeros(N)
+        for (i = 0; i < N; i++) {
+        	i_s[i] = 0.0;
+        }
+        int step = (int)(dur_bloc/tr);
+        int sign = 1;
+        for (i = 0; i < N; i += step) {
+        	i_s[i] = sign;
+        	sign *= -1;
+        }
+        ai_s[0] = i_s[0];
+        for (i = 1; i < N; i++) {
+        	ai_s[i] = ai_s[i-1] + i_s[i];
+        }
+        double inc = dur*60.0/(ai_s.length-1.0);
+		t[0] = 0;
+		t[ai_s.length-1] = dur*60;
+		for (i = 1; i < ai_s.length-1; i++) {
+			   t[i] = i*inc;
+		}
+		
+		if (centered) {
+		   ai_s_mean = 0.0;
+		   i_s_mean = 0.0;
+		   for (i = 0; i < ai_s.length; i++) {
+			   ai_s_mean += ai_s[i];
+			   i_s_mean += i_s[i];
+		   }
+		   ai_s_mean /= ai_s.length;
+		   i_s_mean /= i_s.length;
+		   for (i = 0; i < ai_s.length; i++) {
+	           ai_s[i] -= ai_s_mean;
+	           i_s[i] -= i_s_mean;
+		   }
+	   }
+		   
+	   return; //  ai_s, i_s, t
+    }
+
+    public void gen_regular_bloc_bold(double noisy_ar_s[], double ar_s[], double ai_s[],
+    		double i_s[], double t[], double noise[], int dur, double tr, double dur_bloc,
+    		boolean sourcehrf, double hrf[], double snr, boolean haveSeed, long random_state) {
+		// Generate a Activity inducing signal.
+		// Defaults:
+    	// int dur = 10
+    	// double tr = 1.0
+    	// double dur_bloc = 30.0
+    	// boolean sourcehrf = false
+    	// double snr = 1.0
+    	// boolean haveSeed = false
+    	int i;
+		gen_regular_ai_s(ai_s, i_s, t, dur, tr, dur_bloc, true);
+		
+		if (!sourcehrf) {
+		     double dt = 0.001;
+			 int numsamples = (int)(dur/ dt);
+		     int step = (int)(tr/dt);
+		     int returnedsamples = ((numsamples-1)/step) + 1;
+		     double t_hrf[] = new double[returnedsamples];
+		     double delta = 1.0;
+		     double durs = 60.0;
+		     boolean normalized_hrf = true;
+		     double p_delay = 6.0;
+		     double undershoot = 16.0;
+		     double p_disp = 1.0;
+		     double u_disp = 1.0;
+		     double p_u_ratio = 0.167;
+		     double onset = 0.0;
+		     spm_hrf(hrf, t_hrf, delta, tr,
+		            durs, normalized_hrf, dt, p_delay,
+                   undershoot, p_disp, u_disp, p_u_ratio, onset);
+		} // if (!sourcehrf)
+		double ar_s_copy[] = simple_convolve(hrf, ai_s, ai_s.length);
+		for (i = 0; i < ar_s.length; i++) {
+			ar_s[i] = ar_s_copy[i];
+		}
+		
+		add_gaussian_noise(noisy_ar_s, noise, ar_s, snr,
+		                   haveSeed, random_state);
+		
+		return; // noisy_ar_s, ar_s, ai_s, i_s, t, hrf, noise
+    }
+    
+    public void gen_rnd_i_s(double i_s[], double t[], int dur, double tr, int nb_events,
+    		double avg_ampl, double std_ampl, boolean haveSeed, 
+            long random_state, int nb_try, int nb_try_duration,
+		    boolean centered) {
+		// Generate a innovation signal.
+		//dur : int (default=3),
+		//    The length of the BOLD signal (in minutes).
+		
+		// tr : float (default=1.0),
+		//    Repetition time
+		
+		// nb_events : int (default=4),
+		//    Number of neural activity on-sets.
+		
+		// avg_ampl : double (default=1),
+		//    The average of the amplitude of the events.
+		
+		// std_ampl : double (default=0.5),
+		//    The standard deviation of the amplitude of the events.
+    	
+    	// boolean haveSeed = false
+    	
+    	// random_state : int or None (default=None),
+	    // Whether to impose a seed on the random generation or not (for
+	    // reproductability).
+		
+		// nb_try : int (default=1000),
+		//    Number of try to generate the BOLD signal.
+		
+		// nb_try_duration : int (default=1000),
+		//    Number of try to generate the each neural activity on-set.
+		
+		// boolean centered = false
+		
+		// Return
+		// ------
+		
+		// i_s : np.ndarray,
+		//    Innovation signal.
+		
+		// t : np.ndarray,
+		//    time scale signal.
+		
+	    int N;
+	    int i,j,k;
+	    boolean lessthanzero;
+	    double var_ampl;
+	    double ampls[] = new double[nb_events];
+	    Random r;
+	    int offset;
+	    double ampl;
+	    int current_nb_events;
+	    double i_s_mean;
+		N = (int)((dur * 60) / tr);
+		var_ampl = std_ampl * std_ampl;
+		
+		// for reproductibility
+		if (haveSeed) {
+			nb_try = 1;
+			r = random_generator(random_state);
+		}
+		else {
+			r = new Random();
+		}
+		
+		// generate the block
+		for (i = 0; i < nb_try; i++) {
+		   int offsets[] = r.ints(nb_events, 0, N).toArray();
+		   for (j = 0; j < nb_try_duration; j++) {
+			   lessthanzero = false;
+			   for (k = 0; k < nb_events; k++) {
+			       ampls[k] =  avg_ampl + var_ampl*r.nextGaussian(); 
+			       if (ampls[k] < 0.0) {
+			    	   lessthanzero = true;
+			       }
+			   } // for (k = 0; k < nb_events; k++)
+			   if (lessthanzero) {
+				   continue; // null or negative duration events: retry
+			   }
+			   else {
+				   break;
+			   }
+		   } // for (j = 0; j < nb_try_duration; j++)
+		
+		   // place the block
+		   // i_s = np.zeros(N)
+		   for (j = 0; j < N; j++) {
+			   i_s[j] = 0.0;
+		   }
+		   for (j = 0; j < N; j++) {
+		       offset = offsets[j];
+		       ampl = ampls[j];
+		       if (offset >= N) {
+		    	   break;
+		       }
+		       else {
+		    	   i_s[offset] += ampl;
+		       }
+		   }
+		
+		    // generate innovation signal and the time scale on 'dur' duration with
+		    // '1/TR' sample rate
+		    double inc = dur*60.0/(i_s.length-1.0);
+			t[0] = 0;
+			t[i_s.length-1] = dur*60;
+			for (j = 1; j < i_s.length-1; j++) {
+				   t[i] = i*inc;
+			}
+		
+		    current_nb_events = 0;
+		    for (j = 0; j < N; j++) {
+		    	if (i_s[j] > 0.0) {
+		    		current_nb_events++;
+		    	}
+		    }
+		    
+		    if (current_nb_events != nb_events) {
+		        continue;  // decimation step erase an event
+		    }
+		
+		    if (centered) {
+		    	i_s_mean = 0.0;
+		    	for (j = 0; j < N; j++) {
+		    		i_s_mean += i_s[j];
+		    	}
+		    	i_s_mean = i_s_mean/N;
+		    	for (j = 0; j < N; j++) {
+		            i_s[j] -= i_s_mean;
+		    	}
+		    }
+		
+		    return; // i_s, t
+		} // for for (i = 0; i < nb_try; i++)
+		
+		System.err.println("[Failure] Failed to produce an activity-inducing signal");
+		System.err.println("Please re-run gen_ai_s function with possibly new arguments.");
+		System.exit(-1);
+    }
+
+    public void gen_rnd_event_bold(double noisy_ar_s[], double ar_s[], double i_s[], double t[], double noise[],
+    		int dur, double tr, boolean sourcehrf, double hrf[], int nb_events, double avg_ampl,
+            double std_ampl, double snr, boolean haveSeed, long random_state) {
+		// Generate synthetic BOLD signal.
+		
+		// Parameters
+		// ----------
+		// dur : int (default=5),
+		// The length of the BOLD signal (in minutes).
+		
+		// tr : float (default=1.0),
+		// Repetition time
+    	
+    	// boolean sourcehrf: default = false;
+		
+		// hrf : np.ndarray (default=None),
+		// Specified HRF, if None a SPM like HRF is used based on
+		// hrf_time_length arg.
+		
+		// nb_events : int (default=4),
+		// Number of neural activity on-sets.
+		
+		// avg_ampl : double (default=5),
+		// The average of the amplitude of the events.
+		
+		// std_ampl : double (default=1),
+		// The standard deviation of the amplitude of the events.
+		
+		// snr: float (default=1.0),
+		// SNR of the noisy BOLD signal.
+    	
+    	// boolean haveSeed (default = false)
+		
+		// random_state : int or None (default=None),
+		// Whether to impose a seed on the random generation or not (for
+		// reproductability).
+		
+		// Return
+		// ------
+		
+		// noisy_ar_s : np.ndarray,
+		// Noisy activity related signal.
+		
+		// ar_s : np.ndarray,
+		// Activity related signal.
+		
+		// i_s : np.ndarray,
+		// Innovation signal.
+		
+		// t : np.ndarray,
+		// time scale signal.
+		
+		// hrf : np.ndarray,
+		// HRF.
+		
+		// t_hrf : np.ndarray,
+		// time scale HRF, if an HRF is specified then t_hrf is None and the user
+		// should be aware of the corresponding time scale HRF.
+		
+		// noise : np.ndarray,
+		// Noise.
+		int i;
+	    int nb_try = 1000;
+	    int nb_try_duration = 1000;
+	    boolean centered = false;
+		gen_rnd_i_s(i_s, t, dur, tr, nb_events,
+		              avg_ampl, std_ampl,
+		              haveSeed, random_state, 
+		              nb_try, nb_try_duration, centered);
+		
+		if (!sourcehrf) {
+		     double dt = 0.001;
+			 int numsamples = (int)(dur/ dt);
+		     int step = (int)(tr/dt);
+		     int returnedsamples = ((numsamples-1)/step) + 1;
+		     double t_hrf[] = new double[returnedsamples];
+		     double delta = 1.0;
+		     double durs = 60.0;
+		     boolean normalized_hrf = true;
+		     double p_delay = 6.0;
+		     double undershoot = 16.0;
+		     double p_disp = 1.0;
+		     double u_disp = 1.0;
+		     double p_u_ratio = 0.167;
+		     double onset = 0.0;
+		     spm_hrf(hrf, t_hrf, delta, tr,
+		            durs, normalized_hrf, dt, p_delay,
+                  undershoot, p_disp, u_disp, p_u_ratio, onset);
+		} // if (!sourcehrf)
+		double ar_s_copy[] = simple_convolve(hrf, i_s, i_s.length);
+		for (i = 0; i < ar_s.length; i++) {
+			ar_s[i] = ar_s_copy[i];
+		}
+		
+		add_gaussian_noise(noisy_ar_s, noise, ar_s, snr,
+		                   haveSeed, random_state);
+		
+		return; // noisy_ar_s, ar_s, i_s, t, hrf, noise
     }
 
     
