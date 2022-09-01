@@ -1931,7 +1931,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		   for (j = 1; j < ai_s.length; j++) {
 			   i_s[j] = ai_s[j] - ai_s[j-1];
 		   }
-		   inc = dur*60/(ai_s.length-1);
+		   inc = dur*60.0/(ai_s.length-1.0);
 		   t[0] = 0;
 		   t[ai_s.length-1] = dur*60;
 		   for (j = 1; j < ai_s.length-1; j++) {
@@ -1969,7 +1969,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		
 		System.err.println("[Failure] Failed to produce an activity-inducing signal");
 		System.err.println("Please re-run gen_ai_s function with possibly new arguments.");
-		return;
+		System.exit(-1);
     }
     
     public void gen_rnd_bloc_bold(double noisy_ar_s[],double ar_s[], double ai_s[],
