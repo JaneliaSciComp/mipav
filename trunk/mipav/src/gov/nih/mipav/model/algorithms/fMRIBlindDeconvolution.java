@@ -11,6 +11,8 @@ import java.awt.Graphics;
 import java.io.*;
 import java.util.*;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.SystemMenuBar;
+
 public class fMRIBlindDeconvolution extends AlgorithmBase {
 	// Ported from the Python pyBOLD package
 	/*Copyright (c) 2018, pyBOLD
@@ -2064,7 +2066,8 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		// Noise.
 		
 	
-		gen_rnd_ai_s(ai_s, i_s, t, dur, tr, nb_events,
+		int i;
+    	gen_rnd_ai_s(ai_s, i_s, t, dur, tr, nb_events,
 		                      avg_dur, std_dur,
 		                      middle_spike,
 		                      overlapping,
@@ -2091,7 +2094,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		            durs, normalized_hrf, dt, p_delay,
                     undershoot, p_disp, u_disp, p_u_ratio, onset);
 		} // if (!sourcehrf)
-		ar_s = simple_convolve(hrf, ai_s, ai_s.length);
+		double ar_s_copy[] = simple_convolve(hrf, ai_s, ai_s.length);
+		for (i = 0; i < ar_s.length; i++) {
+			ar_s[i] = ar_s_copy[i];
+		}
 		
 		add_gaussian_noise(noisy_ar_s, noise, ar_s, snr,
 		                   haveSeed, random_state);
@@ -2236,6 +2242,16 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 
 
     public void test_data_gen() {
+    	// Testing with snr = 1.0 nb_events = 1 for test number 0
+		// No differences were detected for allclose(ar_s, ar_s_test)
+		// snr is close to true_snr
+		// No differences were detected for allclose(resiudal, noise)
+		// nb_events = true_nb_events
+		// Testing with snr = 10.0 nb_events = 2 for test number 1
+		// No differences were detected for allclose(ar_s, ar_s_test)
+		// snr is close to true_snr
+		// No differences were detected for allclose(resiudal, noise)
+		// nb_events = true_nb_events
         // Test the data generation function:
            // - Manually reconvolve the block signal
            //   and compare it to the BOLD signal
