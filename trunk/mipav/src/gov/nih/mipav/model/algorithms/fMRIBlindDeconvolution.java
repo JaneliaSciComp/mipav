@@ -1906,6 +1906,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		   if ((!overlapping) && greaterthanone) {
 		       continue;  // overlapping events: retry
 		   }
+		   
 		   if (overlapping) {
 		       if (unitary_block) {
 		    	   for (j = 0; j < N; j++) {
@@ -1944,7 +1945,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 				   current_nb_events++;
 			   }
 		   }
-		
+		  
 		   if( (!overlapping) && (current_nb_events != nb_events)) {
 		       continue;  // decimation step erase an event
 		   }
@@ -1963,7 +1964,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		           i_s[j] -= i_s_mean;
 			   }
 		   }
-		
+		   
 		   return; //  ai_s, i_s, t
 		} // for (i = 0; i < nb_try; i++)
 		
@@ -2107,10 +2108,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         // lead to failing signal generation, so this arg is carefully set
     	int i;
         long random_state = 99;
-        double snr_s[] = new double[]{1.0, 10.0, 20.0};
-        double tr_s[] = new double[] {0.1, 2.0, 2.0};
-        int dur_orig_s[] = new int[] {3, 5, 10};  // minutes
-        double delta_s[] = new double[] {0.5, 1.0, 1.0};
+        double snr_s[] = new double[]{1.0, 10.0/*, 20.0*/};
+        double tr_s[] = new double[] {0.1, 2.0};
+        int dur_orig_s[] = new int[] {3, 5/*, 10*/};  // minutes
+        double delta_s[] = new double[] {0.5, 1.0};
         double tr;
         int dur_orig;
         double delta;
@@ -2135,7 +2136,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	    int nb_try_duration = 1000;
 	    boolean centered = false;
 	    boolean haveSeed = true;
-        for (i = 0; i < 3; i++) {
+        for (i = 0; i < 2; i++) {
             snr[i] = snr_s[i];
             tr = tr_s[i];
             dur_orig = dur_orig_s[i];
@@ -2161,7 +2162,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
                     std_dur, middle_spike, overlapping,
                     unitary_block, snr[i], nb_try,
                     nb_try_duration, centered, haveSeed, random_state);
-        } // for (i = 0; i < 3; i++)
+        } // for (i = 0; i < 2; i++)
     }
     
     public void _test_data(double noisy_ar_s[], double ar_s[], double ai_s[], 
@@ -2241,18 +2242,18 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
            // - test the produce signal SNR
            // - test if noise == (noisy_ar_s - ar_s)
     	int i;
-    	double noisy_ar_s[][] = new double[3][];
-    	double ar_s[][] = new double[3][];
-    	double ai_s[][] = new double[3][];
-    	double i_s[][] = new double[3][];
-    	double hrf[][] = new double[3][];
-    	double noise[][] = new double[3][];
-    	double snr[] = new double[3];
-    	int nb_events[] = new int[3];
+    	double noisy_ar_s[][] = new double[2][];
+    	double ar_s[][] = new double[2][];
+    	double ai_s[][] = new double[2][];
+    	double i_s[][] = new double[2][];
+    	double hrf[][] = new double[2][];
+    	double noise[][] = new double[2][];
+    	double snr[] = new double[2];
+    	int nb_events[] = new int[2];
     	_yield_data(noisy_ar_s, ar_s, ai_s,
         		i_s, hrf, noise,
         		snr, nb_events);
-    	for (i = 0; i < 3; i++) {
+    	for (i = 0; i < 2; i++) {
     		_test_data(noisy_ar_s[i], ar_s[i], ai_s[i], 
     	    		i_s[i], hrf[i], noise[i], 
     	    		snr[i], nb_events[i], String.valueOf(i));	
