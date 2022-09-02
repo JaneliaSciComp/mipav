@@ -1530,24 +1530,45 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         return ran;
     }
     
-    /*
-    def spectral_radius_est(L, x_shape, nb_iter=30, tol=1.0e-6, verbose=False):
-        """ EStimation of the spectral radius of the operator L.
-        """
-        x_old = np.random.randn(*x_shape)
+    
+    public double spectral_radius_est(ConvAndLinear L, int x_shape, int nb_iter,
+    		double tol, boolean verbose) {
+        // EStimation of the spectral radius of the operator L.
+        // int nb_iter default = 30
+    	// double tol default = 1.0E-6
+        // boolean verbose default = false;
+    	int i,j;
+    	Random r = new Random();
+    	double x_old[] = new double[x_shape];
+    	for (i = 0; i < x_shape; i++) {
+    		x_old[i] = r.nextGaussian();
+    	}
 
-        stopped = False
-        for i in range(nb_iter):
-            x_new = L.adj(L.op(x_old)) / norm_2(x_old)
-            if(np.abs(norm_2(x_new) - norm_2(x_old)) < tol):
-                stopped = True
-                break
-            x_old = x_new
-        if not stopped and verbose:
-            print("Spectral radius estimation did not converge")
+        boolean stopped = false;
+        double x_new_num[];
+        double x_new_denom;
+        double x_new[] = null;
+        for (i = 0; i < nb_iter; i++) {
+        	x_new_num = L.adj(L.op(x_old));
+        	x_new_denom = norm(x_old);
+        	x_new = new double[x_new_num.length];
+        	for (j = 0; j < x_new.length; j++) {
+        		x_new[j] = x_new_num[j]/x_new_denom;
+        	}
+            if(Math.abs(norm(x_new) - x_new_denom) < tol) {
+                stopped = true;
+                break;
+            }
+            for (j = 0; j < x_shape; j++) {
+                x_old[j] = x_new[j];
+            }
+        } // for (i = 0; i < nb_iter; i++)
+        if ((!stopped) && verbose) {
+            System.out.println("Spectral radius estimation did not converge");
+        }
 
-        return norm_2(x_new)
-        */
+        return norm(x_new);
+    }
     
     public void test_inf_norm() {
     	// In test_inf_norm() no errors were detected
@@ -3259,12 +3280,11 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         double K[][];
         double K_T[][];
         boolean spectral_conv = false;
-        public ConvAndLinear(/*M, */ double kernel[], int dim_in, int dim_out, boolean spectral_conv) {
+        DiscretInteg di;
+        public ConvAndLinear(double kernel[], int dim_in, int dim_out, boolean spectral_conv) {
             // ConvAndLinear linear operator class.
             // Parameters:
             // -----------
-            // M : Matrix class,
-            //    the first linear operator.
 
             // kernel : 1d np.ndarray,
             //    kernel.
@@ -3277,7 +3297,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         	
         	// boolean spectral_conv default = false;
             
-            // self.M = M
+            di = new DiscretInteg();
             k = kernel;
             this.spectral_conv = spectral_conv;
             if (!spectral_conv) {
@@ -3306,9 +3326,8 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
             // img_x : np.ndarray,
             //    the resulting 1d vector.
             
-            //bloc_signal = self.M.op(x)
+            double bloc_signal[] = di.op(x);
         	int i,j;
-        	double bloc_signal[] = null;
         	double convolved_signal[];
 
             if (spectral_conv) {
@@ -3353,11 +3372,197 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
             	}
             }
 
-            //return self.M.adj(retro_convolved_signal)
-            return null;
+            return di.adj(retro_convolved_signal);
         }
     }
+    
+    public double sign(double x) {
+    	if (Double.isNaN(x)) {
+    		return Double.NaN;
+    	}
+    	else if (x > 0.0) {
+    		return 1.0;
+    	}
+    	else if (x < 0.0) {
+    		return -1.0;
+    	}
+    	else {
+    		return 0.0;
+    	}
+    }
 
+    public void deconv(double x[], double z[], double diff_z[], Vector<Double> J,
+    		double y[], double t_r, double hrf[], double lbda, boolean early_stopping, double tol,  // noqa
+            int wind, int nb_iter, int nb_sub_iter, int verbose) {
+	     // Deconvolve the given BOLD signal given an HRF convolution kernel.
+	     // The source signal is supposed to be a bloc signal.
+	
+	     // Parameters:
+	     // ----------
+	     // y : 1d np.ndarray,
+	     //    the observed bold signal.
+	
+	     // t_r : float,
+	     //    the TR.
+	
+	     // hrf : 1d np.ndarray,
+	     //    the HRF.
+	
+	     // lbda : float (default=Double.NaN), otherwise 1.0 is the second default
+	     //    the regularization parameter.
+    	
+    	// boolean early_stopping default = true;
+    	
+    	// double tol default = 1.0E_6
+    	
+    	// int wind default = 6
+    	
+    	// int nb_iter default = 1000
+    	
+    	// int nb_sub_iter default = 1000
+	
+	     // verbose : int (default=0),
+	     //    the verbosity level.
+	
+	     // Return:
+	     // ------
+	     // x : 1d np.ndarray, same length as y
+	     //    the estimated convolved signal.
+	
+	     // z : 1d np.ndarray, same length as y
+	     //    the estimated convolved signal.
+	
+	     // diff_z : 1d np.ndarray, same length as y
+	     //    the estimated convolved signal.
+	
+	     // J : Vector<Integer>,
+	     //    the evolution of the cost-function.
+	     
+    	 int i,j;
+    	 for (i = 0; i < diff_z.length; i++) {
+    		 diff_z[i] = 0;
+    	 }
+         //diff_z = np.zeros_like(y)
+	     ConvAndLinear H = new ConvAndLinear(hrf, y.length, y.length, false);
+	     double H_adj_y[] = H.adj(y);
+	     double grad_lipschitz_cst = 0.9 * spectral_radius_est(H, diff_z.length, 30, 1.0E-6, false);
+	     double step = 1.0 / grad_lipschitz_cst;
+	     
+	     if (!Double.isNaN(lbda)) {
+
+	         double th = lbda / grad_lipschitz_cst;
+	         double diff_z_old[] = new double[y.length];
+	         J.clear();
+	         Vector<double[]> xx = new Vector<double[]>();
+	         double t;
+	         double t_old;
+	         t = t_old = 1;
+	         int idx;
+	         double grad1[];
+	         double grad[] = new double[y.length];
+	         double diff;
+	         double sum1;
+	         double sum2;
+	         int sub_wind_len;
+	         double old_iter[] = new double[y.length];
+	         double new_iter[] = new double[y.length];
+	         double diff_iter[] = new double[y.length];
+	         int old_iter_size;
+	         int new_iter_size;
+	         double crit_num;
+	         double crit_deno;
+	         double Jdenom;
+
+	         for (idx = 0; idx < nb_iter; idx++) {
+                 grad1 = H.adj(H.op(diff_z));
+                 for (i = 0; i < y.length; i++) {
+                	 grad[i] = grad1[i] - H_adj_y[i];
+                	 diff_z[i] -= step * grad[i];
+                	 diff_z[i] = sign(diff_z[i]) * Math.max(Math.abs(diff_z[i]) - th, 0);
+                 }
+
+	             t = 0.5 * (1.0 + Math.sqrt(1 + 4*t_old*t_old));
+	             for (i = 0; i < y.length; i++) {
+	                 diff_z[i] = diff_z[i] + (t_old-1)/t * (diff_z[i] - diff_z_old[i]);
+	             }
+
+	             t_old = t;
+	             for (i = 0; i < y.length; i++) {
+	                 diff_z_old[i] = diff_z[i];
+	             }
+
+	             z[0] = diff_z[0];
+	             for (i = 1; i < y.length; i++) {
+	            	 z[i] = z[i-1] + diff_z[i];
+	             }
+	             x = spectral_convolve(hrf, z);
+	             sum1 = 0.0;
+	             sum2 = 0.0;
+	             for (i = 0; i < y.length; i++) {
+	                 diff = x[i] - y[i];
+	                 sum1 += (diff * diff);
+	                 sum2 += Math.abs(diff_z[i]);
+	             }
+	             J.add(0.5*sum1 + lbda*sum2);
+
+	             System.out.println("Main loop: iteration " + idx + " |grad| = " + norm(grad)
+	                   + " j = " + J.get(idx));
+
+	             xx.add(diff_z_old);
+	             if (xx.size() > wind) {
+	                 xx.remove(0);
+	             }
+
+	             if (early_stopping) {
+	                 if (idx > wind) {
+	                     sub_wind_len = (int)(wind/2);
+	                     sum1 = 0.0;
+	                     for (i = 0; i < y.length; i++) {
+	                    	 old_iter[i] = 0;
+	                    	 new_iter[i] = 0;
+	                     }
+	                     old_iter_size = Math.max(xx.size()-sub_wind_len, 0);
+	                     for (i = 0; i < old_iter_size; i++) {
+	                         for (j = 0; j < y.length; j++) {
+	                        	 old_iter[j] += xx.get(i)[j];
+	                         }
+	                     }
+	                     if (old_iter_size > 1) {
+	                    	 for (i = 0; i < y.length; i++) {
+	                    		 old_iter[i] = old_iter[i]/old_iter_size;
+	                    	 }
+	                     }
+	                     new_iter_size = sub_wind_len;
+	                     for (i = xx.size()-sub_wind_len; i < xx.size(); i++) {
+	                    	 for (j = 0; j < y.length; j++) {
+	                    		 new_iter[j] += xx.get(i)[j];
+	                    	 }
+	                     }
+	                     if (new_iter_size > 1) {
+	                    	 for (i = 0; i < y.length; i++) {
+	                    		 new_iter[i] = new_iter[i]/new_iter_size;
+	                    	 }
+	                     }
+	                     for (i = 0; i < y.length; i++) {
+	                    	 diff_iter[i] = new_iter[i] - old_iter[i];
+	                     }
+	                     crit_num = norm(diff_iter);
+	                     crit_deno = norm(new_iter);
+	                     diff = crit_num / (crit_deno + 1.0e-10);
+	                     if (diff < tol) {
+	                         break;
+	                     }
+	                 } // if (idx > wind)
+	             } // if (early_stopping)
+	         } // for (idx = 0; idx < nb_iter; idx++)
+	         Jdenom = J.get(0) + 1.0E-30;
+             for (i = 0; i < J.size(); i++) {
+                 J.set(i, J.get(i)/Jdenom);	 
+             }
+	         return; // x, z, diff_z, np.array(J) / (J[0] + 1.0e-30), None, None
+	     } // if (!Double.isNaN(lbda))
+
+    }
 
 
 }
