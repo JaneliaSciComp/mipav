@@ -3123,5 +3123,241 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 			_test_conv_adj_toeplitz_kernel_signal(ai_s[i], hrf[i], "test_toeplitz_adj_convolution_kernel_signal_on_ai_s " + i);	
 		}
     }
+    
+    class DiscretInteg {
+        // Intergrator operator.
+        
+        public DiscretInteg() {
+        	
+        }
+
+        public double[] op(double x[]) {
+            // Return time integration of x.
+
+            // Parameters:
+            // -----------
+            // x : 1d np.ndarray,
+            //    signal.
+
+            // Results:
+            // --------
+            // integ_x : np.ndarray,
+            //    the integrated 1d vector.
+            int i;
+            double integ_x[] = new double[x.length];
+            integ_x[0] = x[0];
+            for (i =1; i < integ_x.length; i++) {
+            	integ_x[i] = integ_x[i-1] + x[i];
+            }
+            return integ_x;
+        }
+
+        public double[] adj(double x[]) {
+            // Return adj time integrated of x.
+
+            // Parameters:
+            // -----------
+            // x : 1d np.ndarray,
+            //    signal.
+
+            // Results:
+            // --------
+            // adj_integ_x : np.ndarray,
+            //    the adj integretated 1d vector.
+            int i;
+            double flipx[] = new double[x.length];
+            for (i = 0; i < x.length; i++) {
+            	flipx[i] = x[x.length - 1 - i];
+            }
+            double cumx[] = new double[x.length];
+            cumx[0] = flipx[0];
+            for (i = 1; i < x.length; i++) {
+            	cumx[i] = cumx[i-1] + flipx[i];
+            }
+            double adj_integ_x[] = new double[x.length];
+            for (i = 0; i < x.length; i++) {
+            	adj_integ_x[i] = cumx[x.length-i-1];
+            }
+            return adj_integ_x;
+        }
+    }
+    
+    public void test_integ_op() {
+    	// No differences were found in test_integ_op
+        // Test the  operator.
+        
+        DiscretInteg integ_op = new DiscretInteg();
+        Random r = new Random();
+        int i;
+        double signal[] = new double[500];
+        for (i = 0; i < 500; i++) {
+        	signal[i] = r.nextGaussian();
+        }
+        double test_integ_signal[] = integ_op.op(signal);
+        double ref_integ_signal[] = new double[500];
+        ref_integ_signal[0] = signal[0];
+        for (i = 1; i < 500; i++) {
+        	ref_integ_signal[i] = ref_integ_signal[i-1] + signal[i];
+        }
+        int numDifferences = 0;
+        for (i = 0; i < 500; i++) {
+        	if (test_integ_signal[i] != ref_integ_signal[i]) {
+        		numDifferences++;
+        	}
+        }
+
+        if (numDifferences > 0) {
+        	System.err.println(numDifferences + " differences were found in test_integ_op");
+        }
+        else {
+        	System.out.println("No differences were found in test_integ_op");
+        }
+    }
+
+    public void test_integ_adj() {
+    	// No differences were found in test_integ_adj
+        // Test the integ adj operator.
+    	DiscretInteg integ_op = new DiscretInteg();
+        Random r = new Random();
+        int i;
+        double signal[] = new double[500];
+        for (i = 0; i < 500; i++) {
+        	signal[i] = r.nextGaussian();
+        }
+        double test_integ_signal[] = integ_op.adj(signal);
+        double flip_signal[] = new double[500];
+        for (i = 0; i < 500; i++) {
+        	flip_signal[i] = signal[500 - i - 1];
+        }
+        double cum_signal[] = new double[500];
+        cum_signal[0] = flip_signal[0];
+        for (i = 1; i < 500; i++) {
+        	cum_signal[i] = cum_signal[i-1] + flip_signal[i];
+        }
+        double ref_integ_signal[] = new double[500];
+        for (i = 0; i < 500; i++) {
+        	ref_integ_signal[i] = cum_signal[500 - i - 1];
+        }
+        int numDifferences = 0;
+        for (i = 0; i < 500; i++) {
+        	if (test_integ_signal[i] != ref_integ_signal[i]) {
+        		numDifferences++;
+        	}
+        }
+
+        if (numDifferences > 0) {
+        	System.err.println(numDifferences + " differences were found in test_integ_adj");
+        }
+        else {
+        	System.out.println("No differences were found in test_integ_adj");
+        }
+    }
+    
+    class ConvAndLinear {
+        // Linear (Matrix) operator followed by a convolution.
+        double k[];
+        double K[][];
+        double K_T[][];
+        boolean spectral_conv = false;
+        public ConvAndLinear(/*M, */ double kernel[], int dim_in, int dim_out, boolean spectral_conv) {
+            // ConvAndLinear linear operator class.
+            // Parameters:
+            // -----------
+            // M : Matrix class,
+            //    the first linear operator.
+
+            // kernel : 1d np.ndarray,
+            //    kernel.
+
+            // dim_in : int,
+            //    chosen convolution input dimension.
+
+            // dim_out : int (default None),
+            //    chosen convolution ouput dimension.
+        	
+        	// boolean spectral_conv default = false;
+            
+            // self.M = M
+            k = kernel;
+            this.spectral_conv = spectral_conv;
+            if (!spectral_conv) {
+            	int i,j;
+                K = toeplitz_from_kernel(k, dim_in, dim_out);
+                K_T = new double[K[0].length][K.length];
+                for (i = 0; i < K.length; i++) {
+                	for (j = 0; j < K[0].length; j++) {
+                		K_T[j][i] = K[i][j];
+                	}
+                }
+            }
+        }
+                
+
+        public double[] op(double x[]) {
+            // Return k.convolve(D_hrf.dot(x)).
+
+            // Parameters:
+            // -----------
+            // x : 1d np.ndarray,
+            //    signal.
+
+            // Results:
+            // --------
+            // img_x : np.ndarray,
+            //    the resulting 1d vector.
+            
+            //bloc_signal = self.M.op(x)
+        	int i,j;
+        	double bloc_signal[] = null;
+        	double convolved_signal[];
+
+            if (spectral_conv) {
+                convolved_signal = spectral_convolve(k, bloc_signal);
+            }
+            else {
+            	convolved_signal = new double[K.length];
+            	for (i = 0; i < K.length; i++) {
+            		for (j = 0; j < K[0].length; j++) {
+            			convolved_signal[i] += (K[i][j]*bloc_signal[j]);
+            		}
+            	}
+            	
+            }
+
+            return convolved_signal;
+        }
+
+        public double[] adj(double x[]) {
+            // Return k.T.convolve(D_hrf.T.dot(x)).
+
+            // Parameters:
+            // -----------
+            // x : 1d np.ndarray,
+            //    signal.
+
+            // Results:
+            // --------
+            // img_x : np.ndarray,
+            //    the resulting 1d vector.
+        	int i,j;
+            double retro_convolved_signal[];
+            if (spectral_conv) {
+                retro_convolved_signal = spectral_retro_convolve(k, x);
+            }
+            else {
+            	retro_convolved_signal = new double[K_T.length];
+            	for (i = 0; i < K_T.length; i++) {
+            		for (j = 0; j < K_T[0].length; j++) {
+            			retro_convolved_signal[i] += (K_T[i][j]*x[j]);
+            		}
+            	}
+            }
+
+            //return self.M.adj(retro_convolved_signal)
+            return null;
+        }
+    }
+
+
 
 }
