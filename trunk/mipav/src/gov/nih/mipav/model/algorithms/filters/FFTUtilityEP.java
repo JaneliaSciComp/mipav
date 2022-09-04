@@ -107,6 +107,8 @@ public class FFTUtilityEP extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int nspn;
+    
+    private boolean showProgress = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -173,6 +175,14 @@ public class FFTUtilityEP extends AlgorithmBase {
         adbl = null;
         bdbl = null;
         super.finalize();
+    }
+    
+    /**
+     *    
+     * @param showProgress
+     */
+    public void setShowProgress(boolean showProgress) {
+    	this.showProgress = showProgress;
     }
 
     /**
@@ -374,7 +384,9 @@ public class FFTUtilityEP extends AlgorithmBase {
         boolean goBack7 = false;
         boolean goBack8 = false;
 
-        fireProgressStateChanged("FFT", "Performing FFT...");
+        if (showProgress) {
+            fireProgressStateChanged("FFT", "Performing FFT...");
+        }
 
         // DETERMINE THE FACTORS OF n
         m = 0;
@@ -1549,7 +1561,9 @@ public class FFTUtilityEP extends AlgorithmBase {
         DoubleDouble em;
         int j;
 
-        fireProgressStateChanged("FFT", "Performing FFT REALS...");
+        if (showProgress) {
+            fireProgressStateChanged("FFT", "Performing FFT REALS...");
+        }
 
         inc = Math.abs(isn);
         nf = Math.abs(n);
@@ -1703,7 +1717,9 @@ public class FFTUtilityEP extends AlgorithmBase {
         DoubleDouble em;
         boolean goBack = false;
 
-        fireProgressStateChanged("FFT", "Performing FFT REALT...");
+        if (showProgress) {
+            fireProgressStateChanged("FFT", "Performing FFT REALT...");
+        }
 
         inc = Math.abs(isn);
         ks = Math.abs(nspn) * inc;
