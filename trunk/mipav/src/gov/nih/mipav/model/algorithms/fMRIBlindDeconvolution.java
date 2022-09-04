@@ -938,8 +938,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     		}
     	}
     	FFTUtility fft = new FFTUtility(output[0],output[1],1,outlen-1,1,-1,FFTUtility.FFT);
+    	fft.setShowProgress(false);
     	fft.run();
     	fft = new FFTUtility(output[0],output[1],1,outlen-1,1,-1,FFTUtility.REALS);
+    	fft.setShowProgress(false);
         fft.run();
         return output;
     }
@@ -948,8 +950,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	int i, j = 0;
     	int n = x[0].length-1;
     	FFTUtility fft = new FFTUtility(x[0],x[1],1,n,1,1,FFTUtility.REALS);
+    	fft.setShowProgress(false);
         fft.run();	
         fft = new FFTUtility(x[0],x[1],1,n,1,1,FFTUtility.FFT);
+        fft.setShowProgress(false);
         fft.run();
         double output[];
         if (isOdd) {
@@ -3391,7 +3395,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	}
     }
 
-    public void deconv(double x[], double z[], double diff_z[], Vector<Double> J,
+    public void deconv(double x[], double z[], double diff_z[], Vector<Double> J, Vector<Double> R, Vector<Double> G,
     		double y[], double t_r, double hrf[], double lbda, boolean early_stopping, double tol,  // noqa
             int wind, int nb_iter, int nb_sub_iter, int verbose) {
 	     // Deconvolve the given BOLD signal given an HRF convolution kernel.
@@ -3435,14 +3439,22 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	     // diff_z : 1d np.ndarray, same length as y
 	     //    the estimated convolved signal.
 	
-	     // J : Vector<Integer>,
+	     // J : Vector<Double>,
 	     //    the evolution of the cost-function.
+    	
+    	// R: Vector<Double>
+    	
+    	// G: Vector<Double>
 	     
     	 int i,j;
     	 for (i = 0; i < diff_z.length; i++) {
     		 diff_z[i] = 0;
     	 }
          //diff_z = np.zeros_like(y)
+    	 double diff_z_old[] = new double[y.length];
+    	 double t;
+         double t_old;
+         Vector<double[]> xx = new Vector<double[]>();
 	     ConvAndLinear H = new ConvAndLinear(hrf, y.length, y.length, false);
 	     double H_adj_y[] = H.adj(y);
 	     double grad_lipschitz_cst = 0.9 * spectral_radius_est(H, diff_z.length, 30, 1.0E-6, false);
@@ -3451,11 +3463,9 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	     if (!Double.isNaN(lbda)) {
 
 	         double th = lbda / grad_lipschitz_cst;
-	         double diff_z_old[] = new double[y.length];
+	         ;
 	         J.clear();
-	         Vector<double[]> xx = new Vector<double[]>();
-	         double t;
-	         double t_old;
+	        
 	         t = t_old = 1;
 	         int idx;
 	         double grad1[];
@@ -3561,6 +3571,367 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
              }
 	         return; // x, z, diff_z, np.array(J) / (J[0] + 1.0e-30), None, None
 	     } // if (!Double.isNaN(lbda))
+	     else {
+	    	 double sigma;
+	    	 double alpha;
+	    	 double mu;
+	    	 double th;
+	    	 double diff_z1[];
+	    	 int k,m;
+	         Vector<Double>l_alpha = new Vector<Double>();
+	         J.clear();
+	         R.clear();
+	         G.clear();
+	         double diff;
+	         int sub_wind_len;
+	         double old_iter[] = new double[y.length];
+	         double new_iter[] = new double[y.length];
+	         double diff_iter[] = new double[y.length];
+	         int old_iter_size;
+	         int new_iter_size;
+	         double crit_num;
+	         double crit_deno;
+	         double grad;
+	         double r;
+	         double g;
+	         double old_iter_scalar;
+	         double new_iter_scalar;
+	         sigma = mad_daub_noise_est(y, 0.6744);
+	         alpha = 1.0;
+	         lbda = 1.0 / (2.0 * alpha);
+	         mu = 1.0e-4;
+	         
+	         for (i = 0; i < nb_iter; i++) {
+
+	             // deconvolution step
+	             th = lbda / grad_lipschitz_cst;
+	             xx.clear();
+	             t = t_old = 1;
+
+	             for (j = 0; j < nb_sub_iter; j++) {
+
+	            	 diff_z1 = H.adj(H.op(diff_z));
+	            	 for (k = 0; k < y.length; k++) {
+	            		 diff_z[k] -= step * (diff_z1[k] - H_adj_y[k]);
+	            		 diff_z[k] = sign(diff_z[k]) * Math.max(Math.abs(diff_z[k]) - th, 0.0);
+	            	 }
+
+	                 t = 0.5 * (1.0 + Math.sqrt(1 + 4*t_old*t_old));
+	                 for (k = 0; k < y.length; k++) {
+	                     diff_z[k] = diff_z[k] + (t_old-1)/t * (diff_z[k] - diff_z_old[k]);
+	                 }
+
+	                 t_old = t;
+	                 for (k = 0; k < y.length; k++) {
+	                     diff_z_old[k] = diff_z[k];
+	                 }
+
+	                 xx.add(diff_z_old);
+	                 if (xx.size() > wind) {
+	                	 xx.remove(0);
+	                 }
+
+	                 if (early_stopping) {
+	                     if (j > wind) {
+	                    	 sub_wind_len = (int)(wind/2);
+		                     for (k = 0; k < y.length; k++) {
+		                    	 old_iter[k] = 0;
+		                    	 new_iter[k] = 0;
+		                     }
+		                     old_iter_size = Math.max(xx.size()-sub_wind_len, 0);
+		                     for (k = 0; k < old_iter_size; k++) {
+		                         for (m = 0; m < y.length; m++) {
+		                        	 old_iter[m] += xx.get(k)[m];
+		                         }
+		                     }
+		                     if (old_iter_size > 1) {
+		                    	 for (k = 0; k < y.length; k++) {
+		                    		 old_iter[k] = old_iter[k]/old_iter_size;
+		                    	 }
+		                     }
+		                     new_iter_size = sub_wind_len;
+		                     for (k = xx.size()-sub_wind_len; k < xx.size(); k++) {
+		                    	 for (m = 0; m < y.length; m++) {
+		                    		 new_iter[m] += xx.get(k)[m];
+		                    	 }
+		                     }
+		                     if (new_iter_size > 1) {
+		                    	 for (k = 0; k < y.length; k++) {
+		                    		 new_iter[k] = new_iter[k]/new_iter_size;
+		                    	 }
+		                     }
+		                     for (k = 0; k < y.length; k++) {
+		                    	 diff_iter[k] = new_iter[k] - old_iter[k];
+		                     }
+		                     crit_num = norm(diff_iter);
+		                     crit_deno = norm(new_iter);
+		                     diff = crit_num / (crit_deno + 1.0e-10);
+		                     if (diff < tol) {
+		                         break;
+		                     }
+	                     } // if (j > wind)
+	                 } // if (early_stopping)
+	             } // for (j = 0; j < nb_sub_iter; j++)
+
+	             // lambda optimization
+	             z[0] = diff_z[0];
+	             for (k = 1; k < y.length; k++) {
+	            	 z[k] = z[k-1] + diff_z[k];
+	             }
+	             x = spectral_convolve(hrf, z);
+	             
+	             grad = 0.0;
+	             for (k = 0; k < y.length; k++) {
+	            	 diff = x[k] - y[k];
+	            	 grad += (diff * diff);
+	             }
+	             grad = grad - y.length * sigma*sigma;
+	             alpha += mu * grad;
+	             lbda = 1.0 / (2.0 * alpha);
+
+	             // iterate update and saving
+	             l_alpha.add(alpha);
+	             if (l_alpha.size() > wind) {  // # only hold the 'wind' last iterates
+	                 l_alpha.remove(0);
+	             }
+
+	             // metrics evolution
+	             r = 0.0;
+	             g = 0.0;
+	             for (k = 0; k < y.length; k++) {
+	            	 diff = x[k] - y[k];
+	            	 r += (diff * diff);
+	            	 g += Math.abs(diff_z[k]);
+	             }
+	             R.add(r);
+	             G.add(g);
+	             J.add(0.5 * r + lbda * g);
+	             if (verbose > 0) {
+	                 System.out.println("Main loop: iteration " + (i+1) + " |grad| = " + Math.abs(grad) + " lbda = " + lbda);
+	             } // if (verbose > 0)
+
+	             // early stopping
+	             if (early_stopping) {
+	                 if (i > wind) {
+	                     sub_wind_len = (int)(wind/2);
+	                     old_iter_scalar = 0.0;
+	                     old_iter_size = Math.max(l_alpha.size()-sub_wind_len, 0);
+	                     for (k = 0; k < old_iter_size; k++) {
+	                         old_iter_scalar += l_alpha.get(k);	 
+	                     }
+	                     if (old_iter_size > 1) {
+	                    	 old_iter_scalar = old_iter_scalar/old_iter_size;
+	                     }
+	                     new_iter_scalar = 0.0;
+	                     new_iter_size = sub_wind_len;
+	                     for (k = l_alpha.size() - sub_wind_len; k < l_alpha.size(); k++) {
+	                    	 new_iter_scalar += l_alpha.get(k);
+	                     }
+	                     if (new_iter_size > 1) {
+	                    	 new_iter_scalar = new_iter_scalar/new_iter_size;
+	                     }
+	                     crit_num = Math.abs(new_iter_scalar - old_iter_scalar);
+	                     crit_deno = Math.abs(new_iter_scalar);
+	                     diff = crit_num / crit_deno;
+	                     if (diff < tol) {
+	                         if (verbose > 1) {
+	                             System.out.println("\n-----> early-stopping done at " + i + "/" + nb_iter);
+	                             System.out.println("Cost function = " + J.get(i));
+	                         break;
+	                         } // if (verbose > 1)
+	                     } // if (dif < tol)
+	                 } // if (i > wind)
+	             } // if (early_stopping)
+	         } // for (i = 0; i < nb_iter; i++)
+	         
+	         // last deconvolution with larger number of iterations
+	         th = lbda / grad_lipschitz_cst;
+	         xx.clear();
+	         t = t_old = 1;
+
+	         for (j = 0; j < nb_sub_iter; j++) {
+
+	        	 diff_z1 = H.adj(H.op(diff_z));
+            	 for (k = 0; k < y.length; k++) {
+            		 diff_z[k] -= step * (diff_z1[k] - H_adj_y[k]);
+            		 diff_z[k] = sign(diff_z[k]) * Math.max(Math.abs(diff_z[k]) - th, 0.0);
+            	 }
+
+	             t = 0.5 * (1.0 + Math.sqrt(1 + 4*t_old*t_old));
+	             for (k = 0; k < y.length; k++) {
+	                 diff_z[k] = diff_z[k] + (t_old-1)/t * (diff_z[k] - diff_z_old[k]);
+	             }
+
+	             t_old = t;
+	             for (k = 0; k < y.length; k++) {
+	                 diff_z_old[k] = diff_z[k];
+	             }
+
+	             xx.add(diff_z_old);
+	             if (xx.size() > wind) {
+	                 xx.remove(0);
+	             }
+
+	                 if (early_stopping) {
+	                     if (j > wind) {
+	                    	 sub_wind_len = (int)(wind/2);
+		                     for (k = 0; k < y.length; k++) {
+		                    	 old_iter[k] = 0;
+		                    	 new_iter[k] = 0;
+		                     }
+		                     old_iter_size = Math.max(xx.size()-sub_wind_len, 0);
+		                     for (k = 0; k < old_iter_size; k++) {
+		                         for (m = 0; m < y.length; m++) {
+		                        	 old_iter[m] += xx.get(k)[m];
+		                         }
+		                     }
+		                     if (old_iter_size > 1) {
+		                    	 for (k = 0; k < y.length; k++) {
+		                    		 old_iter[k] = old_iter[k]/old_iter_size;
+		                    	 }
+		                     }
+		                     new_iter_size = sub_wind_len;
+		                     for (k = xx.size()-sub_wind_len; k < xx.size(); k++) {
+		                    	 for (m = 0; m < y.length; m++) {
+		                    		 new_iter[m] += xx.get(k)[m];
+		                    	 }
+		                     }
+		                     if (new_iter_size > 1) {
+		                    	 for (k = 0; k < y.length; k++) {
+		                    		 new_iter[k] = new_iter[k]/new_iter_size;
+		                    	 }
+		                     }
+		                     for (k = 0; k < y.length; k++) {
+		                    	 diff_iter[k] = new_iter[k] - old_iter[k];
+		                     }
+		                     crit_num = norm(diff_iter);
+		                     crit_deno = norm(new_iter);
+		                     diff = crit_num / (crit_deno + 1.0e-10);
+		                     if (diff < tol) {
+		                         break;
+		                     }
+	                     } // if (j > wind)
+	                 } // if (early_stopping)
+	         } // for (j = 0; j < nb_sub_iter; j++)
+
+	         z[0] = diff_z[0];
+	         for (k = 1; k < y.length; k++) {
+	        	 z[k] = z[k-1] + diff_z[k];
+	         }
+	         x = spectral_convolve(hrf, z);
+
+	         return;  // x, z, diff_z, J, R, G
+
+
+	     } // else 
+
+    } // deconv
+    
+    public double std(double x[]) {
+    	int i;
+    	double mean = 0.0;
+    	for (i = 0; i < x.length; i++) {
+    		mean += x[i];
+    	}
+    	mean = mean/x.length;
+    	double stdev = 0.0;
+    	double diff;
+    	for (i = 0; i < x.length; i++) {
+    		diff = x[i] - mean;
+    		stdev += (diff * diff);
+    	}
+    	stdev = Math.sqrt(stdev/x.length);
+    	return stdev;
+    }
+    
+    public void deconv_example() {
+    	// deconv duration in seconds = 1.21
+    	// Standard deviation of noise = 2.131560152061249
+    	// Standard deviation of est_noise = 3.3182179338286604
+    	// Euclidean norm of noise = 52.220970328069214
+    	// Euclidean norm of est_noise = 81.30312022084752
+
+    	int i;
+    	// generate data
+    	double hrf_dur = 30.0;
+    	int dur = 10;  // minutes
+    	double TR = 1.0;
+    	double snr = 1.0;
+
+    	// True HRF
+    	double true_hrf_delta = 1.5;
+    	double dt = 0.001;
+    	int numsamples = (int)(hrf_dur/ dt);
+    	int step = (int)(TR/dt);
+    	int returnedsamples = ((numsamples-1)/step) + 1; // length of orig_hrf[] and t_hrf[]
+    	double orig_hrf[] = new double[returnedsamples];
+    	double t_hrf[] = new double[returnedsamples];
+    	boolean normalized_hrf = true;
+    	double p_delay = 6.0;
+    	double undershoot = 16.0;
+    	double p_disp = 1.0;
+    	double u_disp = 1.0;
+    	double p_u_ratio = 0.167;
+    	double onset = 0.0;
+    	spm_hrf(orig_hrf, t_hrf, true_hrf_delta, TR,
+    				    hrf_dur, normalized_hrf, dt, p_delay,
+    		            undershoot, p_disp, u_disp, p_u_ratio, onset);
+    			
+    	boolean sourcehrf = true;
+    	boolean haveSeed = true;
+    	long random_state = 0L;
+    	// For noisy_ar_s, ar_s, ai_s, i_s, t, noise length is int N = (int)(dur * 60 / TR);
+    	int N = (int)(dur * 60 / TR);
+    	double noisy_ar_s[] = new double[N];
+    	double ar_s[] = new double[N];
+    	double ai_s[] = new double[N];
+    	double i_s[] = new double[N];
+    	double t[] = new double[N];
+    	double noise[] = new double[N];
+    	gen_regular_bloc_bold(noisy_ar_s, ar_s, ai_s,
+    		    		i_s, t, noise, dur, TR, hrf_dur,
+    		    		sourcehrf, orig_hrf, snr, haveSeed, random_state);
+    				
+    	// deconvolve the signal
+    	int nb_iter = 100;
+
+    	long t0 = System.currentTimeMillis();
+    	double est_ar_s[] = new double[N];
+    	double est_ai_s[] = new double[N];
+    	double est_i_s[] = new double[N];
+    	Vector<Double> J = new Vector<Double>();
+    	Vector<Double> R = new Vector<Double>();
+    	Vector<Double> G = new Vector<Double>();
+    	double lbda = Double.NaN;
+    	boolean early_stopping = true;
+    	double tol = 1.0E-6;
+    	int wind = 6;
+    	int nb_sub_iter = 1000;
+    	int verbose = 1;
+    	deconv(est_ar_s, est_ai_s, est_i_s, J, R, G,
+    		    		noisy_ar_s, TR, orig_hrf, lbda, early_stopping, tol, 
+    		            wind, nb_iter, nb_sub_iter, verbose);
+    			     
+    	double delta_t = (System.currentTimeMillis() - t0)/1000.0;
+    	double runtimes[] = new double[J.size()];
+    	runtimes[0] = 0;
+    	runtimes[J.size()-1] = delta_t;
+    	double inc = delta_t/(J.size() - 1.0);
+    	for (i = 1; i < J.size() -1 ; i++) {
+    		runtimes[i] = i*inc;
+    	}
+
+    	System.out.println("deconv duration in seconds = " + delta_t);
+
+    	double est_noise[] = new double[N];
+    	for (i = 0; i < N; i++) {
+    		est_noise[i] = noisy_ar_s[i] - est_ar_s[i];
+    	}
+    	System.out.println("Standard deviation of noise = " + std(noise));
+    	System.out.println("Standard deviation of est_noise = " + std(est_noise));
+    	System.out.println("Euclidean norm of noise = " + norm(noise));
+    	System.out.println("Euclidean norm of est_noise = " + norm(est_noise));
+    	
 
     }
 
