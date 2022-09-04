@@ -1527,7 +1527,9 @@ public class FFTUtility extends AlgorithmBase {
         double em;
         int j;
 
-        fireProgressStateChanged("FFT", "Performing FFT REALS...");
+        if (showProgress) {
+            fireProgressStateChanged("FFT", "Performing FFT REALS...");
+        }
 
         inc = Math.abs(isn);
         nf = Math.abs(n);
@@ -1680,7 +1682,9 @@ public class FFTUtility extends AlgorithmBase {
         double em;
         boolean goBack = false;
 
-        fireProgressStateChanged("FFT", "Performing FFT REALT...");
+        if (showProgress) {
+            fireProgressStateChanged("FFT", "Performing FFT REALT...");
+        }
 
         inc = Math.abs(isn);
         ks = Math.abs(nspn) * inc;
