@@ -4,7 +4,9 @@ import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.algorithms.filters.PyWavelets;
 import gov.nih.mipav.model.algorithms.filters.PyWavelets.DiscreteWavelet;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameGraph;
 
+import java.awt.Color;
 import java.util.*;
 
 
@@ -3459,6 +3461,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	     double H_adj_y[] = H.adj(y);
 	     double grad_lipschitz_cst = 0.9 * spectral_radius_est(H, diff_z.length, 30, 1.0E-6, false);
 	     double step = 1.0 / grad_lipschitz_cst;
+	     double xcopy[] = new double[x.length];
 	     
 	     if (!Double.isNaN(lbda)) {
 
@@ -3505,7 +3508,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	             for (i = 1; i < y.length; i++) {
 	            	 z[i] = z[i-1] + diff_z[i];
 	             }
-	             x = spectral_convolve(hrf, z);
+	             xcopy = spectral_convolve(hrf, z);
+	             for (i = 0; i < y.length; i++) {
+	            	 x[i] = xcopy[i];
+	             }
 	             sum1 = 0.0;
 	             sum2 = 0.0;
 	             for (i = 0; i < y.length; i++) {
@@ -3678,7 +3684,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	             for (k = 1; k < y.length; k++) {
 	            	 z[k] = z[k-1] + diff_z[k];
 	             }
-	             x = spectral_convolve(hrf, z);
+	             xcopy = spectral_convolve(hrf, z);
+	             for (k = 0; k < y.length; k++) {
+	            	 x[i] = xcopy[i];
+	             }
 	             
 	             grad = 0.0;
 	             for (k = 0; k < y.length; k++) {
@@ -3818,7 +3827,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	         for (k = 1; k < y.length; k++) {
 	        	 z[k] = z[k-1] + diff_z[k];
 	         }
-	         x = spectral_convolve(hrf, z);
+	         xcopy = spectral_convolve(hrf, z);
+	         for (i = 0; i < y.length; i++) {
+	        	 x[i] = xcopy[i];
+	         }
 
 	         return;  // x, z, diff_z, J, R, G
 
@@ -3845,12 +3857,12 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     }
     
     public void deconv_example() {
-    	// deconv duration in seconds = 1.21
+    	// deconv duration in seconds = 1.162
     	// Standard deviation of noise = 2.131560152061249
-    	// Standard deviation of est_noise = 3.3182179338286604
+    	// Standard deviation of est_noise = 2.429113187614236
     	// Euclidean norm of noise = 52.220970328069214
-    	// Euclidean norm of est_noise = 81.30312022084752
-
+    	// Euclidean norm of est_noise = 59.51527182299158
+    	
     	int i;
     	// generate data
     	double hrf_dur = 30.0;
@@ -3932,7 +3944,47 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	System.out.println("Euclidean norm of noise = " + norm(noise));
     	System.out.println("Euclidean norm of est_noise = " + norm(est_noise));
     	
-
+        float xInit[][] = new float[2][N];
+        float yInit[][] = new float[2][N];
+        for (i = 0; i < N; i++) {
+        	xInit[0][i] = (float)t[i];
+        	xInit[1][i] = (float)t[i];
+        	yInit[0][i] = (float)noisy_ar_s[i]; // "Noisy activation related signal, snr= " + snr + " dB";
+        	yInit[1][i] = (float)est_ar_s[i]; // label="Est. activation related signal"
+        }
+        String title = "Input noisy BOLD signals, TR = " + TR + " s";
+        String labelX = "time (s)";
+        String labelY = "ampl.";
+        Color colorArray[] = new Color[] {Color.YELLOW, Color.GREEN};
+        ViewJFrameGraph vfg = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, colorArray);
+        
+        float xInit2[][] = new float[2][N];
+        float yInit2[][] = new float[2][N];
+        for (i = 0; i < N; i++) {
+        	xInit2[0][i] = (float)t[i];
+        	xInit2[1][i] = (float)t[i];
+        	yInit2[0][i] = (float)ar_s[i]; // "Orig. activation related signal"
+        	yInit2[1][i] = (float)est_ar_s[i]; // label="Est. activation related signal"
+        }
+        String title2 = "Estimated convolved signals, TR = " + TR + " s";
+        String labelX2 = "time (s)";
+        String labelY2 = "ampl.";
+        Color colorArray2[] = new Color[] {Color.BLUE, Color.GREEN};
+        ViewJFrameGraph vfg2 = new ViewJFrameGraph(xInit2, yInit2, title2, labelX2, labelY2, colorArray2);
+        
+        float xInit3[][] = new float[2][N];
+        float yInit3[][] = new float[2][N];
+        for (i = 0; i < N; i++) {
+        	xInit3[0][i] = (float)t[i];
+        	xInit3[1][i] = (float)t[i];
+        	yInit3[0][i] = (float)ai_s[i]; // "Orig. activation inducing signal, snr = " + snr + " dB".;
+        	yInit3[1][i] = (float)est_ai_s[i]; // label="Est. activation inducing signal"
+        }
+        String title3 = "Estimated signals, TR = " + TR + " s";
+        String labelX3 = "time (s)";
+        String labelY3 = "ampl.";
+        Color colorArray3[] = new Color[] {Color.BLUE, Color.GREEN};
+        ViewJFrameGraph vfg3 = new ViewJFrameGraph(xInit3, yInit3, title3, labelX3, labelY3, colorArray3);
     }
 
 
