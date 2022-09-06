@@ -933,13 +933,21 @@ public class PlugInDialogFITBIR extends JFrame
             for (BIDSSubject subj : bidsPackage.getSubjectList()) {
                 File[] subjFiles = subj.getSubjectDirFile().listFiles();
                 Arrays.sort(subjFiles, new fileComparator());
+                
+                boolean foundSession = false;
 
                 for (int i = 0; i < subjFiles.length; i++) {
                     if ( (subjFiles[i].isDirectory()) && (subjFiles[i].getName().substring(0, 3).equalsIgnoreCase("SES"))) {
                         subj.addSession(new BIDSSession(subj, subjFiles[i]));
+                        foundSession = true;
                     } else if ( (subjFiles[i].isFile()) && (subjFiles[i].getName().toLowerCase().endsWith(".tsv"))) {
                         subj.addAdditionalFile(subjFiles[i]);
                     }
+                }
+                
+                // add support for BIDS data without sessions under the subject directories
+                if (!foundSession) {
+                    subj.addSession(new BIDSSession(subj, subj.getSubjectDirFile()));
                 }
             }
         }
@@ -1047,11 +1055,23 @@ public class PlugInDialogFITBIR extends JFrame
         for (BIDSSubject subj : bidsPackage.getSubjectList()) {
             for (BIDSSession session : subj.getSessionList()) {
                 File[] sessionFiles = session.getSessionDirFile().listFiles();
+                
+                boolean foundFunc = false;
+                boolean foundFmap = false;
+                
                 for (int i = 0; i < sessionFiles.length; i++) {
                     File curSessionFile = sessionFiles[i];
                     if (curSessionFile.isDirectory()) {
                         BIDSScanType scanType = BIDSScanType.valueOf(curSessionFile.getName());
                         BIDSScanCategory newScanCat = new BIDSScanCategory(session, curSessionFile, scanType);
+                        
+                        if (scanType == BIDSScanType.func || scanType == BIDSScanType.FUNC) {
+                            foundFunc = true;
+                        }
+                        
+                        if (scanType == BIDSScanType.fmap || scanType == BIDSScanType.FMAP) {
+                            foundFmap = true;
+                        }
 
                         File[] scanCatFileArray = curSessionFile.listFiles();
                         Arrays.sort(scanCatFileArray, new fileComparator());
@@ -1071,6 +1091,11 @@ public class PlugInDialogFITBIR extends JFrame
                         // for each image, find similar files and add them as new scans
                         for (File imgFile : imageFiles) {
                             String imgFileBasename = imgFile.getName().substring(0, imgFile.getName().indexOf(".nii"));
+                            
+                            // sbref scans should be assigned as associated volumes
+                            if (imgFileBasename.toLowerCase().contains("_sbref")) {
+                                continue;
+                            }
 
                             BIDSScan newScan = new BIDSScan(newScanCat, imgFile);
 
@@ -1084,6 +1109,10 @@ public class PlugInDialogFITBIR extends JFrame
                                         newScan.addAdditionalFile(nonImgFile);
                                         remainingFiles.removeElement(nonImgFile);
                                     }
+                                } else if (hasSimilarBasename(imgFileBasename, nonImgFileName)) {
+                                    // handle cases where the exact basename doesn't match, but is similar (run1_event.tsv vs. run1_bold.nii.gz)
+                                    newScan.addAdditionalFile(nonImgFile);
+                                    remainingFiles.removeElement(nonImgFile);
                                 }
                             }
 
@@ -1101,6 +1130,26 @@ public class PlugInDialogFITBIR extends JFrame
                     } else if (curSessionFile.getName().toLowerCase().endsWith(".tsv")) {
                         session.addAdditionalFile(curSessionFile);
                     }
+                }
+                
+                // TODO if both func and fmap scan categories are found, add the fmap scan files as additional files to each func scan and remove the category from the session
+                if (foundFunc && foundFmap) {
+                    BIDSScanCategory funcScanCat = null;
+                    BIDSScanCategory fmapScanCat = null;
+                    for (BIDSScanCategory scanCat : session.getScanCategoryList()) {
+                        BIDSScanType scanType = scanCat.getScanType();
+                        if (scanType == BIDSScanType.func || scanType == BIDSScanType.FUNC) {
+                            funcScanCat = scanCat;
+                        } else if (scanType == BIDSScanType.fmap || scanType == BIDSScanType.FMAP) {
+                            fmapScanCat = scanCat;
+                        }
+                    }
+                    
+                    for (BIDSScan fmapScan : fmapScanCat.getScanList()) {
+                        funcScanCat.getAdditionalFileList().add(fmapScan.getScanImgFile());
+                        funcScanCat.getAdditionalFileList().add(fmapScan.getScanJsonFile());
+                    }
+                    session.scanCategoryList.remove(fmapScanCat);
                 }
             }
         }
@@ -1170,6 +1219,15 @@ public class PlugInDialogFITBIR extends JFrame
                             case FMAP:
                             case fmap:
                                 // TODO - ?
+                                // builds class var csvFieldNames and returns record list to match
+                                record = buildInputCSVRowFromBIDS(scan);
+
+                                csvDialog = new InfoDialog(this, "ImagingMR", false, false, record);
+
+                                // change i counter to 0-based for problem lists
+                                problemTagList.add(csvDialog.getProblemTags());
+                                problemFileDirList.add(csvDialog.getProblemFileDir());
+                                problemFileNameList.add(csvDialog.getProblemFileName());
                                 break;
                         }
                     }
@@ -1467,6 +1525,12 @@ public class PlugInDialogFITBIR extends JFrame
         progressBar.dispose();
 
         return true;
+    }
+    
+    private boolean hasSimilarBasename(final String mainFilename, final String compareFilename) {
+        // remove ending identifier after last underscore (e.g., sub-1001_task-dfb_run-1_bold.nii.gz -> sub-1001_task-dfb_run-1)
+        String mainBasename = mainFilename.substring(0, mainFilename.lastIndexOf("_"));
+        return compareFilename.startsWith(mainBasename);
     }
 
     @SuppressWarnings("unused")
@@ -1958,7 +2022,9 @@ public class PlugInDialogFITBIR extends JFrame
 
         addCSVEntry(recordRepeat, "Image Information.ImgFile", scan.getScanImgFile().getAbsolutePath());
 
-        readGlobalFieldsFromJson(recordRepeat, scan.getPackage().getDatasetDescriptionJson());
+        if (scan.getPackage().getDatasetDescriptionJson() != null) {
+            readGlobalFieldsFromJson(recordRepeat, scan.getPackage().getDatasetDescriptionJson());
+        }
 
         readGenericFieldsFromJson(recordRepeat, scan.getScanJson());
 
@@ -1973,8 +2039,7 @@ public class PlugInDialogFITBIR extends JFrame
             case FUNC:
             case func:
                 readFuncFieldsFromJson(recordRepeat, scan.getScanJson());
-                setAdditionalFuncTaskInfo(recordRepeat, scan.getPackage().getAdditionalFileList());
-                setAdditionalFuncFiles(record, scan.getAdditionalFileList());
+                setAdditionalFuncFiles(record, scan.getPackage().getAdditionalFileList(), scan.getParent().getAdditionalFileList(), scan.getAdditionalFileList());
                 break;
             default:
                 break;
@@ -2401,8 +2466,12 @@ public class PlugInDialogFITBIR extends JFrame
         }
         
         groupName = "fMRI Information.";
+        
+        String taskName = getJsonString(jsonData, "TaskName");
+        
+        addCSVEntry(recordRepeat, groupName + "ImgFMRIExperName", taskName);
 
-        String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
+        String taskType = mapTaskNameBIDS(taskName);
 
         addCSVEntry(recordRepeat, groupName + "ImgFMRITaskTyp", taskType);
     }
@@ -2450,22 +2519,13 @@ public class PlugInDialogFITBIR extends JFrame
 
         String groupName = "fMRI Information.";
 
-        String taskType = mapTaskNameBIDS(getJsonString(jsonData, "TaskName"));
+        String taskName = getJsonString(jsonData, "TaskName");
+        
+        addExtractedField(extractedFields, groupName + "ImgFMRIExperName", taskName);
+
+        String taskType = mapTaskNameBIDS(taskName);
 
         addExtractedField(extractedFields, groupName + "ImgFMRITaskTyp", taskType);
-    }
-    
-    private void setAdditionalFuncTaskInfo(ArrayList<String> recordRepeat, Vector<File> additionalFiles) {
-        // TODO if there is a file with a base name matching the img base name, extract json info, set any values from the json that are not already set in the record
-        String imgFile = null;
-        for (int i = 0; i < recordRepeat.size(); i++) {
-            // TODO
-        }
-        
-        
-        for (File file : additionalFiles) {
-            // TODO
-        }
     }
 
     private String mapTaskNameBIDS(String taskName) {
@@ -2498,39 +2558,95 @@ public class PlugInDialogFITBIR extends JFrame
             return taskName;
         }
     }
-
-    private void setAdditionalFuncFiles(ArrayList<ArrayList<String>> record, Vector<File> files) {
+    
+    private void setAdditionalFuncFiles(ArrayList<ArrayList<String>> record, Vector<File> bidsPackageAdditionalFiles, Vector<File> scanCatAdditionalFiles, Vector<File> scanAdditionalFiles) {
         // if no files, exit
-        if (files.size() == 0) {
+        if (bidsPackageAdditionalFiles.size() == 0 && scanCatAdditionalFiles.size() == 0 && scanAdditionalFiles.size() == 0) {
             return;
         }
 
         String groupName = "fMRI Auxiliary Files.";
         String auxFileDeName = "ImgFMRIAuxFile";
+        String auxTypeDeName = "ImgFMRIAuxFileTyp";
 
-        csvFieldNames.add(groupName + auxFileDeName);
-
+        addCsvField(groupName + auxFileDeName);
+        addCsvField(groupName + auxTypeDeName);
+        
+        // TODO if there is a file with a base name matching the img base name, extract json info, set any values from the json that are not already set in the record
+        // TODO find image file name
+        Vector<File> matchedPackageFiles = new Vector<File>();
+        String imgFile = null;
+        for (int i = 0; i < record.get(0).size(); i++) {
+            // TODO
+        }
+        
+        // TODO match image file basename against package files
+        for (File file : bidsPackageAdditionalFiles) {
+            // TODO
+        }
+        
         int curRowIndex = 0;
+        
+        curRowIndex = addAdditionalFiles(record, curRowIndex, matchedPackageFiles);
+        
+        // add any scan category additional files to all func scans (usually b0s/fmap files for now)
+        curRowIndex = addAdditionalFiles(record, curRowIndex, scanCatAdditionalFiles);
+        
+        // scan specific files
+        curRowIndex = addAdditionalFiles(record, curRowIndex, scanAdditionalFiles);
+    }
+    
+    private int addAdditionalFiles(ArrayList<ArrayList<String>> record, int curRowIndex, Vector<File> files) {
         for (File file : files) {
             // TODO: try to determine the ImgFMRIAuxFileTyp from the file name
+            String auxFileType = determineFMRIAuxFileType(file.getName());
 
             // if the row already exists in the record, add the file path to the end
-            if (record.get(curRowIndex) != null) {
+            if (curRowIndex == 0) {
                 record.get(curRowIndex).add(file.getAbsolutePath());
+                record.get(curRowIndex).add(auxFileType);
             } else {
                 // no row already in the record, so create a new one
                 // add blanks for the rest of the fields in the repeat until we get to the aux file column/element
-                ArrayList<String> repeatRow = new ArrayList<String>(csvFieldNames.size() + 1);
-                for (int i = 0; i < csvFieldNames.size(); i++) {
+                ArrayList<String> repeatRow = new ArrayList<String>(csvFieldNames.size());
+                for (int i = 0; i < csvFieldNames.size() - 2; i++) {
                     repeatRow.add("");
                 }
 
                 repeatRow.add(file.getAbsolutePath());
+                repeatRow.add(auxFileType);
                 record.add(repeatRow);
             }
 
             curRowIndex++;
         }
+        
+        return curRowIndex;
+    }
+    
+    private String determineFMRIAuxFileType(final String filename) {
+        // TODO
+        if (filename.toLowerCase().contains("sbref") || filename.toLowerCase().contains("phasediff") || filename.toLowerCase().contains("magnitude")) {
+            return "B0 Field Map";
+        } else if (filename.toLowerCase().endsWith("events.tsv")) {
+            return "Response Data";
+        } else if (filename.toLowerCase().endsWith("events.json")) {
+            return "Response Data";
+        }
+        
+        return "";
+    }
+    
+    private void addCsvField(final String groupAndDeName) {
+        // don't add the field it it is already in the list
+        for (int i = 0; i < csvFieldNames.size(); i++) {
+            if (csvFieldNames.get(i).equals(groupAndDeName)) {
+                return;
+            }
+        }
+        
+        // did not found the DE, add it
+        csvFieldNames.add(groupAndDeName);
     }
 
     private boolean addCSVEntry(ArrayList<String> recordRepeat, String bricsCsvFieldName, String value) {
