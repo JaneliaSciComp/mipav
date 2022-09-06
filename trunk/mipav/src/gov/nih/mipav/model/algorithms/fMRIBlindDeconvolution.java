@@ -3956,7 +3956,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         String labelX = "time (s)";
         String labelY = "ampl.";
         Color colorArray[] = new Color[] {Color.YELLOW, Color.GREEN};
-        ViewJFrameGraph vfg = new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, colorArray);
+        new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, colorArray);
         
         float xInit2[][] = new float[2][N];
         float yInit2[][] = new float[2][N];
@@ -3970,7 +3970,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         String labelX2 = "time (s)";
         String labelY2 = "ampl.";
         Color colorArray2[] = new Color[] {Color.BLUE, Color.GREEN};
-        ViewJFrameGraph vfg2 = new ViewJFrameGraph(xInit2, yInit2, title2, labelX2, labelY2, colorArray2);
+        new ViewJFrameGraph(xInit2, yInit2, title2, labelX2, labelY2, colorArray2);
         
         float xInit3[][] = new float[2][N];
         float yInit3[][] = new float[2][N];
@@ -3984,7 +3984,101 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         String labelX3 = "time (s)";
         String labelY3 = "ampl.";
         Color colorArray3[] = new Color[] {Color.BLUE, Color.GREEN};
-        ViewJFrameGraph vfg3 = new ViewJFrameGraph(xInit3, yInit3, title3, labelX3, labelY3, colorArray3);
+        new ViewJFrameGraph(xInit3, yInit3, title3, labelX3, labelY3, colorArray3);
+    }
+    
+    public double hrf_fit_err(double theta, double z[], double y[], double t_r, double hrf_dur) {
+        // Cost function for the scaled-gamma HRF model.
+        // e.g. 0.5 * || h*x - y ||_2^2 with h an HRF model.
+    	int i;
+    	double diff;
+    	double sum;
+    	double dt = 0.001;
+        boolean normalized_hrf = false;
+        int numsamples = (int)(hrf_dur/ dt);
+        int step = (int)(t_r/dt);
+        int returnedsamples = ((numsamples-1)/step) + 1; // h[] and t_hrf[]
+        double h[] = new double[returnedsamples];
+        double t_hrf[] = new double[returnedsamples];
+        double p_delay = 6.0;
+    	double undershoot = 16.0;
+    	double p_disp = 1.0;
+    	double u_disp = 1.0;
+    	double p_u_ratio = 0.167;
+    	double onset = 0.0;
+        spm_hrf(h, t_hrf, theta, t_r, hrf_dur, normalized_hrf, dt,
+        		p_delay, undershoot, p_disp, u_disp, p_u_ratio, onset);
+        double x[] = spectral_convolve(h, z);
+        sum = 0.0;
+        for (i = 0; i < y.length; i++) {
+        	diff = y[i] - x[i];
+        	sum += (diff * diff);
+        }
+        return (0.5 * sum);
+    }
+    
+    class Tracker {
+        // Callback class to be used with optimization function from Scipy.
+        public Vector<Double> J;
+        // f = hrf_fit_err
+        double z[];
+        double y[];
+        double t_r;
+        double dur;
+        int verbose;
+        int idx;
+        public Tracker(double z[], double y[], double t_r, double dur, int verbose) {
+        	// default verbose = 0;
+            J = new Vector<Double>();
+            this.z = z;
+            this.y = y;
+            this.t_r = t_r;
+            this.dur = dur;
+            this.verbose = verbose;
+            idx = 0;
+        }
+
+        public void __call__(double x) {
+            idx += 1;
+            double j = hrf_fit_err(x, z, y, t_r, dur);
+            if (verbose > 2) {
+                System.out.println("At iterate " + idx + ", tracked function = " + j);
+            }
+            J.add(j);
+        }
+    }
+
+
+    public void hrf_estim(double h[], Vector<Double>J, double z[], double y[],
+    		double t_r, double dur, int verbose) {
+    	// Default verbose = 0
+        // Private function HRF estimation.
+       
+        double bounds[] = new double[] {MIN_DELTA + 1.0e-1, MAX_DELTA - 1.0e-1};
+        Tracker f_cost = new Tracker(z, y, t_r, dur, verbose);
+
+        /*theta, _, _ = fmin_l_bfgs_b(
+                            func=hrf_fit_err, x0=MAX_DELTA, args=args,
+                            bounds=bounds, approx_grad=True, callback=f_cost,
+                            maxiter=99999, pgtol=1.0e-12)*/
+        double theta = 0.0;
+        J = f_cost.J;
+        double dt = 0.001;
+        int numsamples = (int)(dur/ dt);
+        int step = (int)(t_r/dt);
+        int returnedsamples = ((numsamples-1)/step) + 1; // h[] and t_hrf[]
+        double t_hrf[] = new double[returnedsamples];
+        boolean normalized_hrf = false;
+        double p_delay = 6.0;
+    	double undershoot = 16.0;
+    	double p_disp = 1.0;
+    	double u_disp = 1.0;
+    	double p_u_ratio = 0.167;
+    	double onset = 0.0;
+        spm_hrf(h, t_hrf, theta, t_r, dur, normalized_hrf, dt,
+        		p_delay, undershoot, p_disp, u_disp, p_u_ratio, onset);
+
+        return; // h, J
     }
 
 
