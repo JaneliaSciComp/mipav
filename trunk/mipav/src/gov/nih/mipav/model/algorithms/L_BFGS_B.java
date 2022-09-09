@@ -353,7 +353,10 @@ public abstract class L_BFGS_B {
 		      double d[] = new double[n];
 		      double t[] = new double[n];
 		      double xp[] = new double[n];
-		      double wa[] = new double[8*m];
+		      double wa1[] = new double[2*m];
+		      double wa2[] = new double[2*m];
+		      double wa3[] = new double[2*m];
+		      double wa4[] = new double[2*m];
 		      int index[] = new int[n];
 		      int iwhere[] = new int[n];
 		      int indx2[] = new int[n];
@@ -361,7 +364,7 @@ public abstract class L_BFGS_B {
 
 		      mainlb(n,m,x,l,u,nbd,f,g,factr,pgtol,
 		             ws,wy,sy,ss,wt,
-		             wn,snd,z,r,d,t,xp,wa,
+		             wn,snd,z,r,d,t,xp,wa1,wa2,wa3,wa4,
 		             index, iwhere,indx2,task,iprint, 
 		             csave,lsave,isave,dsave);
 
@@ -372,7 +375,8 @@ public abstract class L_BFGS_B {
 	private void mainlb(int n, int m, double x[], double l[], double u[], 
 			int nbd[], double f[], double g[], double factr, double pgtol, double ws[][], double wy[][],
 		     double sy[][], double ss[][], double wt[][], double wn[][], double snd[][], 
-		     double z[], double r[], double d[], double t[], double xp[], double wa[], 
+		     double z[], double r[], double d[], double t[], double xp[],
+		     double wa1[], double wa2[], double wa3[], double wa4[],
 		     int index[], int iwhere[], int indx2[], String task[],
 		     int iprint, String csave[], boolean lsave[], int isave[], double dsave[]) {
 		      // implicit none
@@ -576,15 +580,16 @@ public abstract class L_BFGS_B {
 		      String word[] = new String[1];
 		      int          i,nintol,itfile,iback,nskip,
 		                      head,col,iter,itail,iupdat,
-		                      nseg,nfgv,ifun,
+		                      nfgv,ifun,
 		                      iword,nfree,nact,ileave,nenter;
 		      int info[] = new int[1];
 		      int k[] = new int[1];
+		      int nseg[] = new int[1];
 		      double theta,fold,ddot,dr,rr,tol,
 		                      ddum,dnorm,dtd,epsmch,
-		                      cpu2,cachyt,sbtime,lnscht,time2,
+		                      cachyt,sbtime,lnscht,time2,
 		                      gd,gdold,stp,stpmx,time;
-		      long cpu1;
+		      long cpu1, cpu2;
 		      double sbgnrm[] = new double[1];
 		      double xstep = 0.0;
 		      long time1;
@@ -637,7 +642,7 @@ public abstract class L_BFGS_B {
 		//           for operation counts:
 		         iter   = 0;
 		         nfgv   = 0;
-		         nseg   = 0;
+		         nseg[0]   = 0;
 		         nintol = 0;
 		         nskip  = 0;
 		         nfree  = n;
@@ -684,7 +689,7 @@ public abstract class L_BFGS_B {
 		         if (task[0].substring(0,5).equalsIgnoreCase("ERROR")) {
 		            prn3lb(n,x,f[0],task[0],iprint,info[0],raFile,
 		                       iter,nfgv,nintol,nskip,nact,sbgnrm[0],
-		                       0.0,nseg,word[0],iback,stp,xstep,k[0],
+		                       0.0,nseg[0],word[0],iback,stp,xstep,k[0],
 		                       cachyt,sbtime,lnscht);
 		            return;
 		         }
@@ -714,7 +719,7 @@ public abstract class L_BFGS_B {
 		    	           itail  = isave[7];
 		    	           iter   = isave[8];
 		    	           iupdat = isave[9];
-		    	           nseg   = isave[11];
+		    	           nseg[0]   = isave[11];
 		    	           nfgv   = isave[12];
 		    	           info[0]   = isave[13];
 		    	           ifun   = isave[14];
@@ -820,7 +825,7 @@ public abstract class L_BFGS_B {
 		// ----------------- the beginning of the loop --------------------------
 		 
 		 //222  continue
-		      /*
+		/*    
 		if (do222to888) {
 		loop222: do {
 			if (do222) {
@@ -835,7 +840,7 @@ public abstract class L_BFGS_B {
 		        	 z[i] = x[i];
 		         }
 		         wrk = updatd;
-		         nseg = 0;
+		         nseg[0] = 0;
 		         do222 = false;
 		         do333 = true;
 		         do444 = true;
@@ -854,21 +859,24 @@ public abstract class L_BFGS_B {
 		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 		      cpu1 = System.currentTimeMillis(); 
-		      call cauchy(n,x,l,u,nbd,g,indx2,iwhere,t,d,z,
-		     +            m,wy,ws,sy,wt,theta,col,head,
-		     +            wa(1),wa(2*m+1),wa(4*m+1),wa(6*m+1),nseg,
-		     +            iprint, sbgnrm, info, epsmch)
-		      if (info .ne. 0) then 
-		c         singular triangular system detected; refresh the lbfgs memory.
-		         if(iprint .ge. 1) write (6, 1005)
-		         info   = 0
-		         col    = 0
-		         head   = 1
-		         theta  = one
-		         iupdat = 0
-		         updatd = .false.
-		         call timer(cpu2) 
-		         cachyt = cachyt + cpu2 - cpu1
+		      cauchy(n,x,l,u,nbd,g,indx2,iwhere,t,d,z,
+		                 m,wy,ws,sy,wt,theta,col,head,
+		                 wa1,wa2,wa3,wa4,nseg,
+		                 iprint, sbgnrm[0], info, epsmch);
+		      if (info[0] != 0) {
+		//         singular triangular system detected; refresh the lbfgs memory.
+		         if(iprint >= 1) {
+		        	 System.out.println("Singular triangular system detected");
+				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
+		         }
+		         info[0]   = 0;
+		         col    = 0;
+		         head   = 1;
+		         theta  = one;
+		         iupdat = 0;
+		         updatd = false;
+		         cpu2 = System.currentTimeMillis(); 
+		         cachyt = cachyt + (cpu2 - cpu1)/1000.0;
 		         do222 = true;
 		         do333 = true;
 		         do444 = true;
@@ -878,16 +886,16 @@ public abstract class L_BFGS_B {
 		         do888 = true;
 		         do999 = true;
 		         continue loop222;
-		      endif
-		      call timer(cpu2) 
-		      cachyt = cachyt + cpu2 - cpu1
-		      nintol = nintol + nseg
+		      } // if (info[0] != 0)
+		      cpu2 = System.currentTimeMillis(); 
+		       cachyt = cachyt + (cpu2 - cpu1)/1000.0;
+		      nintol = nintol + nseg[0];
 
-		c     Count the entering and leaving variables for iter > 0; 
-		c     find the index set of free and active variables at the GCP.
+		//     Count the entering and leaving variables for iter > 0; 
+		//     find the index set of free and active variables at the GCP.
 
-		      call freev(n,nfree,index,nenter,ileave,indx2,
-		     +           iwhere,wrk,updatd,cnstnd,iprint,iter)
+		      freev(n,nfree,index,nenter,ileave,indx2,
+		                iwhere,wrk,updatd,cnstnd,iprint,iter);
 		      nact = n - nfree
 			} // if (do222)
 
@@ -1243,7 +1251,6 @@ public abstract class L_BFGS_B {
 		     +' Bad direction in the line search;',/,
 		     +'   refresh the lbfgs memory and restart the iteration.')
 		     */
-
 		      return;   
 
 		   
@@ -1858,7 +1865,6 @@ public abstract class L_BFGS_B {
 	
 	    int i;
 	    double gi;
-	    final double one = 1.0;
 	    final double zero = 0.0;
 	
 	    sbgnrm[0] = zero;
@@ -1874,6 +1880,975 @@ public abstract class L_BFGS_B {
 	      } // if (nbd[i] != 0)
 	      sbgnrm[0] = Math.max(sbgnrm[0],Math.abs(gi));
 	    } // for (i = 0; i < n; i++)
+	
+	    return;
+	}
+
+	private void cauchy(int n, double x[], double l[], double u[], int nbd[],
+			double g[], int iorder[], int iwhere[], double t[], double d[], double xcp[], 
+		     int m, double wy[][], double ws[][], double sy[][], double wt[][], 
+		     double theta, int col, int head, double p[], double c[], double wbp[], 
+		     double v[], int nseg[], int iprint, double sbgnrm, int info[], double epsmch) {
+		      // implicit none
+		      // integer          n, m, head, col, nseg, iprint, info, 
+		     //                 nbd(n), iorder(n), iwhere(n)
+		     // double precision theta, epsmch,
+		     //                 x(n), l(n), u(n), g(n), t(n), d(n), xcp(n),
+		     //                 wy(n, col), ws(n, col), sy(m, m),
+		     //                 wt(m, m), p(2*m), c(2*m), wbp(2*m), v(2*m)
+
+		//     ************
+		
+		//     Subroutine cauchy
+		
+		//     For given x, l, u, g (with sbgnrm > 0), and a limited memory
+		//       BFGS matrix B defined in terms of matrices WY, WS, WT, and
+		//       scalars head, col, and theta, this subroutine computes the
+		//       generalized Cauchy point (GCP), defined as the first local
+		//       minimizer of the quadratic
+		
+		//                  Q(x + s) = g's + 1/2 s'Bs
+		
+		//       along the projected gradient direction P(x-tg,l,u).
+		//       The routine returns the GCP in xcp. 
+		       
+		//     n is an integer variable.
+		//       On entry n is the dimension of the problem.
+		//       On exit n is unchanged.
+		
+		//     x is a double precision array of dimension n.
+		//       On entry x is the starting point for the GCP computation.
+		//       On exit x is unchanged.
+		
+		//     l is a double precision array of dimension n.
+		//       On entry l is the lower bound of x.
+		//       On exit l is unchanged.
+		
+		//     u is a double precision array of dimension n.
+		//       On entry u is the upper bound of x.
+		//       On exit u is unchanged.
+		
+		//     nbd is an integer array of dimension n.
+		//       On entry nbd represents the type of bounds imposed on the
+		//         variables, and must be specified as follows:
+		//         nbd(i)=0 if x(i) is unbounded,
+		//                1 if x(i) has only a lower bound,
+		//                2 if x(i) has both lower and upper bounds, and
+		//                3 if x(i) has only an upper bound. 
+		//       On exit nbd is unchanged.
+		
+		//     g is a double precision array of dimension n.
+		//       On entry g is the gradient of f(x).  g must be a nonzero vector.
+		//       On exit g is unchanged.
+		
+		//     iorder is an integer working array of dimension n.
+		//       iorder will be used to store the breakpoints in the piecewise
+		//       linear path and free variables encountered. On exit,
+		//         iorder(1),...,iorder(nleft) are indices of breakpoints
+		//                                which have not been encountered; 
+		//         iorder(nleft+1),...,iorder(nbreak) are indices of
+		//                                     encountered breakpoints; and
+		//         iorder(nfree),...,iorder(n) are indices of variables which
+		//                 have no bound constraits along the search direction.
+		
+		//     iwhere is an integer array of dimension n.
+		//       On entry iwhere indicates only the permanently fixed (iwhere=3)
+		//       or free (iwhere= -1) components of x.
+		//       On exit iwhere records the status of the current x variables.
+		//       iwhere(i)=-3  if x(i) is free and has bounds, but is not moved
+		//                 0   if x(i) is free and has bounds, and is moved
+		//                 1   if x(i) is fixed at l(i), and l(i) .ne. u(i)
+		//                 2   if x(i) is fixed at u(i), and u(i) .ne. l(i)
+		//                 3   if x(i) is always fixed, i.e.,  u(i)=x(i)=l(i)
+		//                 -1  if x(i) is always free, i.e., it has no bounds.
+		
+		//     t is a double precision working array of dimension n. 
+		//       t will be used to store the break points.
+		
+		//     d is a double precision array of dimension n used to store
+		//       the Cauchy direction P(x-tg)-x.
+		
+		//     xcp is a double precision array of dimension n used to return the
+		//       GCP on exit.
+		
+		//     m is an integer variable.
+		//       On entry m is the maximum number of variable metric corrections 
+		//         used to define the limited memory matrix.
+		//       On exit m is unchanged.
+		
+		//     ws, wy, sy, and wt are double precision arrays.
+		//       On entry they store information that defines the
+		//                             limited memory BFGS matrix:
+		//         ws(n,m) stores S, a set of s-vectors;
+		//         wy(n,m) stores Y, a set of y-vectors;
+		//         sy(m,m) stores S'Y;
+		//         wt(m,m) stores the
+		//                 Cholesky factorization of (theta*S'S+LD^(-1)L').
+		//       On exit these arrays are unchanged.
+		
+		//     theta is a double precision variable.
+		//       On entry theta is the scaling factor specifying B_0 = theta I.
+		//       On exit theta is unchanged.
+		
+		//     col is an integer variable.
+		//       On entry col is the actual number of variable metric
+		//         corrections stored so far.
+		//       On exit col is unchanged.
+		
+		//     head is an integer variable.
+		//       On entry head is the location of the first s-vector (or y-vector)
+		//         in S (or Y).
+		//       On exit col is unchanged.
+		
+		//     p is a double precision working array of dimension 2m.
+		//       p will be used to store the vector p = W^(T)d.
+		
+		//     c is a double precision working array of dimension 2m.
+		//       c will be used to store the vector c = W^(T)(xcp-x).
+		
+		//     wbp is a double precision working array of dimension 2m.
+		//       wbp will be used to store the row of W corresponding
+		//         to a breakpoint.
+		
+		//     v is a double precision working array of dimension 2m.
+		
+		//     nseg is an integer variable.
+		//       On exit nseg records the number of quadratic segments explored
+		//         in searching for the GCP.
+		
+		//     sg and yg are double precision arrays of dimension m.
+		//       On entry sg  and yg store S'g and Y'g correspondingly.
+		//       On exit they are unchanged. 
+		 
+		//     iprint is an INTEGER variable that must be set by the user.
+		//       It controls the frequency and type of output generated:
+		//        iprint<0    no output is generated;
+		//        iprint=0    print only one line at the last iteration;
+		//        0<iprint<99 print also f and |proj g| every iprint iterations;
+		//        iprint=99   print details of every iteration except n-vectors;
+		//        iprint=100  print also the changes of active set and final x;
+		//        iprint>100  print details of every iteration including x and g;
+		//       When iprint > 0, the file iterate.dat will be created to
+		//                        summarize the iteration.
+		
+		//     sbgnrm is a double precision variable.
+		//       On entry sbgnrm is the norm of the projected gradient at x.
+		//       On exit sbgnrm is unchanged.
+		
+		//     info is an integer variable.
+		//       On entry info is 0.
+		//       On exit info = 0       for normal return,
+		//                    = nonzero for abnormal return when the the system
+		//                              used in routine bmv is singular.
+		
+		//     Subprograms called:
+		 
+		//       L-BFGS-B Library ... hpsolb, bmv.
+		
+		//       Linpack ... dscal dcopy, daxpy.
+		
+		
+		//     References:
+		
+		//       [1] R. H. Byrd, P. Lu, J. Nocedal and C. Zhu, ``A limited
+		//       memory algorithm for bound constrained optimization'',
+		//       SIAM J. Scientific Computing 16 (1995), no. 5, pp. 1190--1208.
+		
+		//       [2] C. Zhu, R.H. Byrd, P. Lu, J. Nocedal, ``L-BFGS-B: FORTRAN
+		//       Subroutines for Large Scale Bound Constrained Optimization''
+		//       Tech. Report, NAM-11, EECS Department, Northwestern University,
+		//       1994.
+		
+		//       (Postscript files of these papers are available via anonymous
+		//        ftp to eecs.nwu.edu in the directory pub/lbfgs/lbfgs_bcm.)
+		
+		//                           *  *  *
+		
+		//     NEOS, November 1994. (Latest revision June 1996.)
+		//     Optimization Technology Center.
+		//     Argonne National Laboratory and Northwestern University.
+		//     Written by
+		//                        Ciyou Zhu
+		//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+		
+		
+		//     ************
+
+		      boolean          xlower,xupper,bnded;
+		      int          i,j,col2,nfree,nbreak,pointr,
+		                      ibp,nleft,ibkmin,iter;
+		      int mul6;
+		      double f1,f2,dt,dtm,tsum,dibp,zibp,dibp2,bkmin,
+		                     wmc,wmp,wmw,tj,tj0,neggi,
+		                     f2_org, sum;
+		      double tl = 0.0;
+		      double tu = 0.0;
+		      final double one = 1.0;
+		      final double zero = 0.0;
+		      boolean do888 = true;
+		 
+		//     Check the status of the variables, reset iwhere(i) if necessary;
+		//       compute the Cauchy direction d and the breakpoints t; initialize
+		//       the derivative f1 and the vector p = W'd (for theta = 1).
+		 
+		      if (sbgnrm <= zero) {
+		         if (iprint >= 0) System.out.println("Subgnorm = 0.  GCP = X.");
+		         for (i = 0; i < n; i++) {
+		        	 xcp[i] = x[i];
+		         }
+		         return;
+		      } // if (sbgnrm <= zero) 
+		      bnded = true;
+		      nfree = n + 1;
+		      nbreak = 0;
+		      ibkmin = 0;
+		      bkmin = zero;
+		      col2 = 2*col;
+		      f1 = zero;
+		      if (iprint >= 99) {
+		    	  System.out.println("cauchy entered");
+		      }
+
+		//     We set p to zero and build it up as we determine d.
+
+		      for (i = 0; i < col2; i++) {
+		         p[i] = zero;
+		      }
+
+		//     In the following loop we determine for each variable its bound
+		//        status and its breakpoint, and update p accordingly.
+		//        Smallest breakpoint is identified.
+
+		      for (i = 0; i < n; i++) { 
+		         neggi = -g[i];      
+		         if ((iwhere[i] != 3) && (iwhere[i] != -1)) {
+		//             if x(i) is not a constant and has bounds,
+		//             compute the difference between x(i) and its bounds.
+		            if (nbd[i] <= 2) tl = x[i] - l[i];
+		            if (nbd[i] >= 2) tu = u[i] - x[i];
+
+		//           If a variable is close enough to a bound
+		//             we treat it as at bound.
+		            xlower = (nbd[i] <= 2) && (tl <= zero);
+		            xupper = (nbd[i] >= 2) && (tu <= zero);
+
+		//              reset iwhere(i).
+		            iwhere[i] = 0;
+		            if (xlower) {
+		               if (neggi <= zero) iwhere[i] = 1;
+		            }
+		            else if (xupper) {
+		               if (neggi >= zero) iwhere[i] = 2;
+		            }
+		            else {
+		               if (Math.abs(neggi) <= zero) iwhere[i] = -3;
+		            }
+		         } // if ((iwhere[i] != 3) && (iwhere[i] != -1))
+		         pointr = head;
+		         if ((iwhere[i] != 0) && (iwhere[i] != -1)) {
+		            d[i] = zero;
+		         }
+		         else {
+		            d[i] = neggi;
+		            f1 = f1 - neggi*neggi;
+		//             calculate p := p - W'e_i* (g_i).
+		            for (j = 1; j <= col; j++) {
+		               p[j-1] = p[j-1] +  wy[i][pointr-1]* neggi;
+		               p[col + j-1] = p[col + j-1] + ws[i][pointr-1]*neggi;
+		               pointr = (pointr%m) + 1;
+		            } // for (j = 1; j <= col; j++)
+		            if ((nbd[i] <= 2) && (nbd[i] != 0)
+		                             && (neggi < zero)) {
+		//                                 x(i) + d(i) is bounded; compute t(i).
+		               nbreak = nbreak + 1;
+		               iorder[nbreak-1] = i;
+		               t[nbreak-1] = tl/(-neggi);
+		               if ((nbreak == 1) || (t[nbreak-1] < bkmin)) {
+		                  bkmin = t[nbreak-1];
+		                  ibkmin = nbreak;
+		               }
+		            }
+		            else if ((nbd[i] >= 2) && (neggi > zero)) {
+		//                                 x(i) + d(i) is bounded; compute t(i).
+		               nbreak = nbreak + 1;
+		               iorder[nbreak-1] = i;
+		               t[nbreak-1] = tu/neggi;
+		               if ((nbreak == 1) || (t[nbreak-1] < bkmin)) {
+		                  bkmin = t[nbreak-1];
+		                  ibkmin = nbreak;
+		               }
+		            }
+		            else {
+		//                x(i) + d(i) is not bounded.
+		               nfree = nfree - 1;
+		               iorder[nfree-1] = i;
+		               if (Math.abs(neggi) > zero) bnded = false;
+		            }
+		         } // else
+		      } // for (i = 0; i < n; i++) 
+		 
+		//     The indices of the nonzero components of d are now stored
+		//       in iorder(1),...,iorder(nbreak) and iorder(nfree),...,iorder(n).
+		//       The smallest of the nbreak breakpoints is in t(ibkmin)=bkmin.
+		 
+		      if (theta != one) {
+		//                   complete the initialization of p for theta not= one.
+		    	 for (i = 0; i < col; i++) {
+		    	     p[col+i] = theta*p[col+i];	 
+		    	 }
+		      }
+		 
+		//     Initialize GCP xcp = x.
+
+		      for (i = 0; i < n; i++) {
+		    	  xcp[i] = x[i];
+		      }
+
+		      if ((nbreak == 0) && (nfree == (n + 1))) {
+		//                  is a zero vector, return with the initial xcp as GCP.
+		         if (iprint > 100) {
+		        	 System.out.print("Cauchy X = ");
+			        	mul6 = 6;
+			        	for (i = 0; i < Math.min(n, mul6); i++) {
+			        		System.out.print("    " + xcp[i]);
+			        	}
+			        	System.out.print("\n");
+			        	mul6 += 6;
+			            while (i < n) {
+			            	System.out.print("    ");
+			            	for (; i < Math.min(n, mul6); i++) {
+				        		System.out.print("    " + xcp[i]);
+				        	}
+			            	System.out.print("\n");
+				        	mul6 += 6;
+			            } 
+		         }
+		         return;
+		      }  
+		 
+		//     Initialize c = W'(xcp - x) = 0.
+		  
+		      for (j = 0; j < col2; j++) {
+		         c[j] = zero;
+		      }
+		 
+		//     Initialize derivative f2.
+		 
+		      f2 =  -theta*f1; 
+		      f2_org  =  f2;
+		      if (col > 0) {
+		         bmv(m,sy,wt,col,p,v,info);
+		         if (info[0] != 0) return;
+		         sum = 0.0;
+		         for (i = 0; i < col2; i++) {
+		        	 sum += v[i]*p[i];
+		         }
+		         f2 = f2 - sum;
+		      }
+		      dtm = -f1/f2;
+		      tsum = zero;
+		      nseg[0] = 1;
+		      if (iprint >= 99) { 
+		          System.out.println("There are " + nbreak + " breakpoints");
+		      }
+		 
+		//     If there are no breakpoints, locate the GCP and return. 
+		 
+		      if (nbreak != 0) {
+		             
+			      nleft = nbreak;
+			      iter = 1;
+			 
+			 
+			      tj = zero;
+			 
+			// ------------------- the beginning of the loop -------------------------
+			 
+		         do {
+			 
+			//     Find the next smallest breakpoint;
+			//       compute dt = t(nleft) - t(nleft + 1).
+			 
+			      tj0 = tj;
+			      if (iter == 1) {
+			//         Since we already have the smallest breakpoint we need not do
+			//         heapsort yet. Often only one breakpoint is used and the
+			//         cost of heapsort is avoided.
+			         tj = bkmin;
+			         ibp = iorder[ibkmin-1];
+			      }
+			      else {
+			         if (iter == 2) {
+			//             Replace the already used smallest breakpoint with the
+			//             breakpoint numbered nbreak > nlast, before heapsort call.
+			            if (ibkmin != nbreak) {
+			               t[ibkmin-1] = t[nbreak-1];
+			               iorder[ibkmin-1] = iorder[nbreak-1];
+			            }
+			//        Update heap structure of breakpoints
+		    //           (if iter=2, initialize heap).
+			         }
+			         hpsolb(nleft,t,iorder,iter-2);
+			         tj = t[nleft-1];
+			         ibp = iorder[nleft-1];  
+			      }
+			         
+			      dt = tj - tj0;
+			 
+			      if ((dt != zero) && (iprint >= 100)) {
+			    	 System.out.println("Piece " + nseg[0] + "f1, f2 at start point = " + f1 + " , " + f2);
+			         System.out.println("Distance to the next break point = " + dt);
+			         System.out.println("Distance to the stationary point " + dtm);
+			      } //  if ((dt != zero) && (iprint >= 100))        
+			 
+			//     If a minimizer is within this interval, locate the GCP and return. 
+			 
+			      if (dtm < dt) {
+			    	  break;
+			      }
+			 
+			//     Otherwise fix one variable and
+			//       reset the corresponding component of d to zero.
+			    
+			      tsum = tsum + dt;
+			      nleft = nleft - 1;
+			      iter = iter + 1;
+			      dibp = d[ibp];
+			      d[ibp] = zero;
+			      if (dibp > zero) {
+			         zibp = u[ibp] - x[ibp];
+			         xcp[ibp] = u[ibp];
+			         iwhere[ibp] = 2;
+			      }
+			      else {
+			         zibp = l[ibp] - x[ibp];
+			         xcp[ibp] = l[ibp];
+			         iwhere[ibp] = 1;
+			      }
+			      if (iprint >= 100) {
+			    	  System.out.println("Variable " + ibp + " is fixed");
+			      }
+			      if ((nleft == 0) && (nbreak == n)) {
+			//                                             all n variables are fixed,
+			//                                                return with xcp as GCP.
+			         dtm = dt;
+			         do888 = false;
+			         break;
+			      }
+			 
+			//     Update the derivative information.
+			 
+			      nseg[0] = nseg[0] + 1;
+			      dibp2 = dibp*dibp;
+			 
+			//     Update f1 and f2.
+			 
+			//        temporarily set f1 and f2 for col=0.
+			      f1 = f1 + dt*f2 + dibp2 - theta*dibp*zibp;
+			      f2 = f2 - theta*dibp2;
+	
+			      if (col > 0) {
+			//                          update c = c + dt*p.
+			    	 for (i = 0; i < col2; i++) {
+			    		 c[i] = c[i] + dt*p[i];
+			    	 }
+			 
+			//           choose wbp,
+			//           the row of W corresponding to the breakpoint encountered.
+			         pointr = head;
+			         for (j = 1; j <= col; j++) {
+			            wbp[j-1] = wy[ibp][pointr-1];
+			            wbp[col + j - 1] = theta*ws[ibp][pointr-1];
+			            pointr = (pointr%m) + 1;
+			         } // for (j = 1; j <= col; j++) 
+			 
+			//           compute (wbp)Mc, (wbp)Mp, and (wbp)M(wbp)'.
+			         bmv(m,sy,wt,col,wbp,v,info);
+			         if (info[0] != 0) return;
+			         wmc = 0.0;
+			         wmp = 0.0;
+			         wmw = 0.0;
+			         for (i = 0; i < col2; i++) {
+			        	 wmc += c[i]*v[i];
+			        	 wmp += p[i]*v[i];
+			        	 wmw += wbp[i]*v[i];
+			         }
+			         
+			 
+			//           update p = p - dibp*wbp.
+			         for (i = 0; i < col2 ; i++) {
+			        	 p[i] = p[i] -dibp*wbp[i];
+			         }
+			 
+			//           complete updating f1 and f2 while col > 0.
+			         f1 = f1 + dibp*wmc;
+			         f2 = f2 + 2.0*dibp*wmp - dibp2*wmw;
+			      } // if (col > 0)
+	
+			      f2 = Math.max(epsmch*f2_org,f2);
+			      if (nleft > 0) {
+			         dtm = -f1/f2;
+			         continue;
+			//                 to repeat the loop for unsearched intervals.
+			      }
+			      else if(bnded) {
+			         f1 = zero;
+			         f2 = zero;
+			         dtm = zero;
+			         break;
+			      }
+			      else {
+			         dtm = -f1/f2;
+			         break;
+			      }
+		         } while (true);
+	
+			     // ------------------- the end of the loop -------------------------------
+		      } // if (nbreak != 0)
+		 
+		 if (do888) {
+		      if (iprint >= 99) {
+		         System.out.println("GCP found in this segment");
+		         System.out.println("Piece " + nseg[0] + " f1, f2 at start point = " + f1 + " , " + f2);
+		         System.out.println("Distance to the stationary point = " + dtm);
+		      } // if (iprint >= 99)
+		      if (dtm <= zero) dtm = zero;
+		      tsum = tsum + dtm;
+		 
+		//     Move free variables (i.e., the ones w/o breakpoints) and 
+		//       the variables whose breakpoints haven't been reached.
+		 
+		      for (i = 0; i < n; i++) {
+		    	  xcp[i] = xcp[i] + tsum*d[i];
+		      }
+		 } // if (do888)
+		 
+		 
+		//     Update c = c + dtm*p = W'(x^c - x) 
+		//       which will be used in computing r = Z'(B(x^c - x) + g).
+		 
+		      if (col > 0) {
+		    	  for (i = 0; i < col2; i++) {
+		    		  c[i] = c[i] + dtm*p[i];
+		    	  }
+		      }
+		      if (iprint > 100) {
+		    	  System.out.print("Cauchy X = ");
+		        	mul6 = 6;
+		        	for (i = 0; i < Math.min(n, mul6); i++) {
+		        		System.out.print("    " + xcp[i]);
+		        	}
+		        	System.out.print("\n");
+		        	mul6 += 6;
+		            while (i < n) {
+		            	System.out.print("    ");
+		            	for (; i < Math.min(n, mul6); i++) {
+			        		System.out.print("    " + xcp[i]);
+			        	}
+		            	System.out.print("\n");
+			        	mul6 += 6;
+		            } 
+		      }
+		      if (iprint >= 99) {
+		    	  System.out.println("Exit cauchy");
+		      }
+		 
+		      return;
+	}
+	
+	private void bmv(int m, double sy[][], double wt[][], int col,
+			double v[], double p[], int info[]) {
+
+	    // integer m, col, info
+	    // double precision sy(m, m), wt(m, m), v(2*col), p(2*col)
+	
+	//     ************
+	
+	//     Subroutine bmv
+	
+	//     This subroutine computes the product of the 2m x 2m middle matrix 
+	//       in the compact L-BFGS formula of B and a 2m vector v;  
+	//       it returns the product in p.
+	       
+	//     m is an integer variable.
+	//       On entry m is the maximum number of variable metric corrections
+	//         used to define the limited memory matrix.
+	//       On exit m is unchanged.
+	
+	//     sy is a double precision array of dimension m x m.
+	//       On entry sy specifies the matrix S'Y.
+	//       On exit sy is unchanged.
+	
+	//     wt is a double precision array of dimension m x m.
+	//       On entry wt specifies the upper triangular matrix J' which is 
+	//         the Cholesky factor of (thetaS'S+LD^(-1)L').
+	//       On exit wt is unchanged.
+	
+	//     col is an integer variable.
+	//       On entry col specifies the number of s-vectors (or y-vectors)
+	//         stored in the compact L-BFGS formula.
+	//       On exit col is unchanged.
+	
+	//     v is a double precision array of dimension 2col.
+	//       On entry v specifies vector v.
+	//       On exit v is unchanged.
+	
+	//     p is a double precision array of dimension 2col.
+	//       On entry p is unspecified.
+	//       On exit p is the product Mv.
+	//
+	//     info is an integer variable.
+	//       On entry info is unspecified.
+	//       On exit info = 0       for normal return,
+	//                    = nonzero for abnormal return when the system
+	//                                to be solved by dtrsl is singular.
+	
+	//     Subprograms called:
+	
+	//       Linpack ... dtrsl.
+	
+	
+	//                           *  *  *
+	
+	//     NEOS, November 1994. (Latest revision June 1996.)
+	//     Optimization Technology Center.
+	//     Argonne National Laboratory and Northwestern University.
+	//     Written by
+	//                        Ciyou Zhu
+	//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+	
+	
+	//     ************
+	
+	    int          i,k,i2;
+	    double sum;
+	    double b[];
+	
+	    if (col == 0) return;
+	
+	//     PART I: solve [  D^(1/2)      O ] [ p1 ] = [ v1 ]
+	//                   [ -L*D^(-1/2)   J ] [ p2 ]   [ v2 ].
+	
+	//       solve Jp2=v2+LD^(-1)v1.
+	    p[col] = v[col];
+	    for (i = 2; i <= col; i++) {
+	       i2 = col + i;
+	       sum = 0.0;
+	       for (k = 1; k <= i - 1; k++) {
+	          sum = sum + sy[i-1][k-1]*v[k-1]/sy[k-1][k-1];
+	       }
+	       p[i2-1] = v[i2-1] + sum;
+	    } // for (i = 2; i <= col; i++)  
+	//     Solve the triangular system
+	    b = new double[col];
+	    for (i = 0; i < col; i++) {
+	    	b[i] = p[col+i];
+	    }
+	    dtrsl(wt,m,col,b,11,info);
+	    for (i = 0; i < col; i++) {
+	    	p[col+i] = b[i];
+	    }
+	    if (info[0] != 0) return;
+	
+	//       solve D^(1/2)p1=v1.
+	    for (i = 0; i < col; i++) {
+	       p[i] = v[i]/Math.sqrt(sy[i][i]);
+	    }
+	
+	//     PART II: solve [ -D^(1/2)   D^(-1/2)*L'  ] [ p1 ] = [ p1 ]
+	//                    [  0         J'           ] [ p2 ]   [ p2 ]. 
+	
+	//       solve J^Tp2=p2. 
+	    for (i = 0; i < col; i++) {
+	    	b[i] = p[col+i];
+	    }
+	    dtrsl(wt,m,col,b,01,info);
+	    for (i = 0; i < col; i++) {
+	    	p[col+i] = b[i];
+	    }
+	    if (info[0] != 0) return;
+	
+	//       compute p1=-D^(-1/2)(p1-D^(-1/2)L'p2)
+	//                 =-D^(-1/2)p1+D^(-1)L'p2.  
+	    for (i = 0; i < col; i++) {
+	       p[i] = -p[i]/Math.sqrt(sy[i][i]);
+	    }
+	    for (i = 1; i <= col; i++) {
+	       sum = 0.0;
+	       for (k = i + 1; k <= col; k++) {
+	          sum = sum + sy[k-1][i-1]*p[col+k-1]/sy[i-1][i-1];
+	       }
+	       p[i-1] = p[i-1] + sum;
+	    }
+	
+	    return;
+	}
+	
+	private void dtrsl(double t[][],int ldt,int n,double b[],int job,int info[]) {
+	    // integer ldt,n,job,info
+	    // double precision t(ldt,*),b(*)
+	
+
+	//     dtrsl solves systems of the form
+	
+	//                   t * x = b
+	//     or
+	//                   trans(t) * x = b
+	
+	//     where t is a triangular matrix of order n. here trans(t)
+	//     denotes the transpose of the matrix t.
+	
+	//     on entry
+	
+	//         t         double precision(ldt,n)
+	//                   t contains the matrix of the system. the zero
+	//                   elements of the matrix are not referenced, and
+	//                   the corresponding elements of the array can be
+	//                   used to store other information.
+	
+	//         ldt       integer
+	//                   ldt is the leading dimension of the array t.
+	
+	//         n         integer
+	//                   n is the order of the system.
+	
+	//         b         double precision(n).
+	//                   b contains the right hand side of the system.
+	
+	//         job       integer
+	//                   job specifies what kind of system is to be solved.
+	//                   if job is
+	
+	//                        00   solve t*x=b, t lower triangular,
+	//                        01   solve t*x=b, t upper triangular,
+	//                        10   solve trans(t)*x=b, t lower triangular,
+	//                        11   solve trans(t)*x=b, t upper triangular.
+	
+	//     on return
+	
+	//         b         b contains the solution, if info .eq. 0.
+	//                   otherwise b is unaltered.
+	
+	//         info      integer
+	//                   info contains zero if the system is nonsingular.
+	//                   otherwise info contains the index of
+	//                   the first zero diagonal element of t.
+	
+	//     linpack. this version dated 08/14/78 .
+	//     g. w. stewart, university of maryland, argonne national lab.
+	
+	//     subroutines and functions
+	
+	//     blas daxpy,ddot
+	//     fortran mod
+	
+	//     internal variables
+	
+	    double temp,sum;
+	    int i, ccase,j,jj;
+	
+	//     begin block permitting ...exits to 150
+	
+	//        check for zero diagonal elements.
+	
+	      for (i = 0; i < n; i++) {
+	//     ......exit
+	          if (t[i][i] == 0.0) {
+	        	  return;
+	          }
+	      }
+	       info[0] = 0;
+	
+	//        determine the task and go to it.
+	
+	       ccase = 1;
+	       if ((job%10) != 0) ccase = 2;
+	       if ((job%100)/10 != 0) ccase = ccase + 2;
+	       if (ccase == 1) {
+
+	//        solve t*x=b for t lower triangular
+	
+	          b[0] = b[0]/t[0][0];
+	          if (n < 2) {
+	        	  return;
+	          }
+	          for (j = 2; j <= n; j++) {
+	             temp = -b[j-2];
+	             for (i = 0; i < n-j+1; i++) {
+	            	 b[j+i-1] = b[j+i-1] + temp * t[j-1+i][j-2];
+	             }
+	             b[j-1] = b[j-1]/t[j-1][j-1];
+	          } // for (j = 2; j <= n; j++)
+	       return;
+	       }
+	       
+	       if (ccase == 2) {
+	
+	//        solve t*x=b for t upper triangular.
+	
+	          b[n-1] = b[n-1]/t[n-1][n-1];
+	          if (n < 2) {
+	        	  return;
+	          }
+	          for (jj = 2; jj <= n; jj++) {
+	             j = n - jj + 1;
+	             temp = -b[j];
+	             for (i = 0; i < j; i++) {
+	            	 b[i] = b[i] + temp * t[i][j];
+	             }
+	             b[j-1] = b[j-1]/t[j-1][j-1];
+	          }
+	          return;
+	       }
+	       
+	       if (ccase == 3) {
+	
+	//        solve trans(t)*x=b for t lower triangular.
+
+	          b[n-1] = b[n-1]/t[n-1][n-1];
+	          if (n < 2) {
+	        	  return;
+	          }
+	          for (jj = 2; jj <= n; jj++) {
+	             j = n - jj + 1;
+	             sum = 0;
+	             for (i = 0; i < jj-1; i++) {
+	            	 sum += t[j+i][j-1]*b[j+i];
+	             }
+	             b[j-1] = b[j-1] - sum;
+	             b[j-1] = b[j-1]/t[j-1][j-1];
+	          }
+	          return;
+	       }
+	       
+	       if (ccase == 4) {
+	
+	//        solve trans(t)*x=b for t upper triangular.
+	          b[0] = b[0]/t[0][0];
+	          if (n < 2) {
+	        	  return;
+	          }
+	          for (j = 2; j <= n; j++) {
+	        	 sum = 0.0;
+	        	 for (i = 0; i < j-1; i++) {
+	        		 sum += t[i][j-1]*b[i];
+	        	 }
+	        	 b[j-1] = b[j-1] - sum;
+	        	 b[j-1] = b[j-1]/t[j-1][j-1];
+	          }
+	    return;
+	       }
+	}
+
+	private void hpsolb(int n, double t[], int iorder[], int iheap) {
+	    // integer          iheap, n, iorder(n)
+	    // double precision t(n)
+	
+	//     ************
+	
+	//     Subroutine hpsolb 
+	
+	//     This subroutine sorts out the least element of t, and puts the
+	//       remaining elements of t in a heap.
+	 
+	//     n is an integer variable.
+	//       On entry n is the dimension of the arrays t and iorder.
+	//       On exit n is unchanged.
+	
+	//     t is a double precision array of dimension n.
+	//       On entry t stores the elements to be sorted,
+	//       On exit t(n) stores the least elements of t, and t(1) to t(n-1)
+	//         stores the remaining elements in the form of a heap.
+	
+	//     iorder is an integer array of dimension n.
+	//       On entry iorder(i) is the index of t(i).
+	//       On exit iorder(i) is still the index of t(i), but iorder may be
+	//         permuted in accordance with t.
+	
+	//     iheap is an integer variable specifying the task.
+	//       On entry iheap should be set as follows:
+	//         iheap .eq. 0 if t(1) to t(n) is not in the form of a heap,
+	//         iheap .ne. 0 if otherwise.
+	//       On exit iheap is unchanged.
+	
+	
+	//     References:
+	//       Algorithm 232 of CACM (J. W. J. Williams): HEAPSORT.
+	
+	//                           *  *  *
+	
+	//     NEOS, November 1994. (Latest revision June 1996.)
+	//     Optimization Technology Center.
+	//     Argonne National Laboratory and Northwestern University.
+	//     Written by
+	//                        Ciyou Zhu
+	//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+	
+	//     ************
+	
+	    int          i,j,k,indxin,indxou;
+	    double ddum,out;
+	
+	    if (iheap == 0) {
+	
+	//        Rearrange the elements t(1) to t(n) to form a heap.
+	
+	       for (k = 2; k <= n; k++) {
+	          ddum  = t[k-1];
+	          indxin = iorder[k-1];
+	
+	//           Add ddum to the heap.
+	          i = k;
+	          do {
+		          if (i > 1) {
+		             j = i/2;
+		             if (ddum < t[j-1]) {
+		                t[i-1] = t[j-1];
+		                iorder[i-1] = iorder[j-1];
+		                i = j;
+		                continue;
+		             } 
+		          } // if (i > 1)
+		          break;
+	          } while (true);
+	          t[i-1] = ddum;
+	          iorder[i-1] = indxin;
+	       } // for (k = 2; k <= n; k++)
+	    } // if (iheap == 0)
+	
+	//     Assign to 'out' the value of t(1), the least member of the heap,
+	//        and rearrange the remaining members to form a heap as
+	//        elements 1 to n-1 of t.
+	
+	    if (n > 1) {
+	       i = 1;
+	       out = t[0];
+	       indxou = iorder[0];
+	       ddum  = t[n-1];
+	       indxin  = iorder[n-1];
+	
+	//        Restore the heap 
+	       do {
+		       j = i+i;
+		       if (j <= n-1) {
+		          if (t[j] < t[j-1]) j = j+1;
+		          if (t[j-1] < ddum ) {
+		             t[i-1] = t[j-1];
+		             iorder[i-1] = iorder[j-1];
+		             i = j;
+		             continue;
+		          } // if (t[j-1] < ddum ) 
+		       } // if (j <= n-1)
+		       break;
+	       } while (true);
+	       t[i-1] = ddum;
+	       iorder[i-1] = indxin;
+	
+	//     Put the least member in t(n). 
+	
+	       t[n-1] = out;
+	       iorder[n-1] = indxou;
+	    } // if (n > 1) 
 	
 	    return;
 	}
