@@ -572,18 +572,22 @@ public abstract class L_BFGS_B {
 		
 		//     ************
 		 
-		      boolean          updatd,wrk;
+		      boolean          updatd;
 		      boolean prjctd[] = new boolean[1];
 		      boolean cnstnd[] = new boolean[1];
 		      boolean boxed[] = new boolean[1];
+		      boolean wrk[] = new boolean[1];
 		      //character*3      word
 		      String word[] = new String[1];
 		      int          i,nintol,itfile,iback,nskip,
 		                      head,col,iter,itail,iupdat,
 		                      nfgv,ifun,
-		                      iword,nfree,nact,ileave,nenter;
+		                      iword,nact;
+		      int ileave[] = new int[1];
+		      int nenter[] = new int[1];
 		      int info[] = new int[1];
 		      int k[] = new int[1];
+		      int nfree[] = new int[1];
 		      int nseg[] = new int[1];
 		      double theta,fold,ddot,dr,rr,tol,
 		                      ddum,dnorm,dtd,epsmch,
@@ -627,8 +631,8 @@ public abstract class L_BFGS_B {
 		         itail  = 0;
 		         iword  = 0;
 		         nact   = 0;
-		         ileave = 0;
-		         nenter = 0;
+		         ileave[0] = 0;
+		         nenter[0] = 0;
 		         fold   = zero;
 		         dnorm  = zero;
 		         cpu1   = 0L;
@@ -645,7 +649,7 @@ public abstract class L_BFGS_B {
 		         nseg[0]   = 0;
 		         nintol = 0;
 		         nskip  = 0;
-		         nfree  = n;
+		         nfree[0]  = n;
 		         ifun   = 0;
 		//           for stopping tolerance:
 		         tol = factr*epsmch;
@@ -724,10 +728,10 @@ public abstract class L_BFGS_B {
 		    	           info[0]   = isave[13];
 		    	           ifun   = isave[14];
 		    	           iword  = isave[15];
-		    	           nfree  = isave[16];
+		    	           nfree[0]  = isave[16];
 		    	           nact   = isave[17];
-		    	           ileave = isave[18];
-		    	           nenter = isave[19];
+		    	           ileave[0] = isave[18];
+		    	           nenter[0] = isave[19];
 
 		    	           theta  = dsave[0];
 		    	           fold   = dsave[1];
@@ -825,11 +829,11 @@ public abstract class L_BFGS_B {
 		// ----------------- the beginning of the loop --------------------------
 		 
 		 //222  continue
-		/*    
+	    /*
 		if (do222to888) {
 		loop222: do {
 			if (do222) {
-		      if (iprint >+ 99) {
+		      if (iprint >= 99) {
 		    	  System.out.println("Iteration = " + iter);
 		      }
 		      iword = -1;
@@ -839,7 +843,7 @@ public abstract class L_BFGS_B {
 		         for (i = 0; i < n; i++) {
 		        	 z[i] = x[i];
 		         }
-		         wrk = updatd;
+		         wrk[0] = updatd;
 		         nseg[0] = 0;
 		         do222 = false;
 		         do333 = true;
@@ -895,45 +899,51 @@ public abstract class L_BFGS_B {
 		//     find the index set of free and active variables at the GCP.
 
 		      freev(n,nfree,index,nenter,ileave,indx2,
-		                iwhere,wrk,updatd,cnstnd,iprint,iter);
-		      nact = n - nfree
+		                iwhere,wrk,updatd,cnstnd[0],iprint,iter);
+		      nact = n - nfree[0];
 			} // if (do222)
 
 		 if (do333) {
 		 
-		c     If there are no free variables or B=theta*I, then
-		c                                        skip the subspace minimization.
+		//     If there are no free variables or B=theta*I, then
+		//                                        skip the subspace minimization.
 		 
-		      if (nfree .eq. 0 .or. col .eq. 0) goto 555
+		      if ((nfree[0] == 0) || (col == 0)) {
+		    	  do444 = false;
+		      }
+		      else {
 		 
-		cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-		c
-		c     Subspace minimization.
-		c
-		cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+		
+		//     Subspace minimization.
+		
+		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-		      call timer(cpu1) 
+		      cpu1 = System.currentTimeMillis(); 
 
-		c     Form  the LEL^T factorization of the indefinite
-		c       matrix    K = [-D -Y'ZZ'Y/theta     L_a'-R_z'  ]
-		c                     [L_a -R_z           theta*S'AA'S ]
-		c       where     E = [-I  0]
-		c                     [ 0  I]
+		//     Form  the LEL^T factorization of the indefinite
+		//       matrix    K = [-D -Y'ZZ'Y/theta     L_a'-R_z'  ]
+		//                     [L_a -R_z           theta*S'AA'S ]
+		//       where     E = [-I  0]
+		//                     [ 0  I]
 
-		      if (wrk) call formk(n,nfree,index,nenter,ileave,indx2,iupdat,
-		     +                 updatd,wn,snd,m,ws,wy,sy,theta,col,head,info)
-		      if (info .ne. 0) then
-		c          nonpositive definiteness in Cholesky factorization;
-		c          refresh the lbfgs memory and restart the iteration.
-		         if(iprint .ge. 1) write (6, 1006)
-		         info   = 0
-		         col    = 0
-		         head   = 1
-		         theta  = one
-		         iupdat = 0
-		         updatd = .false.
-		         call timer(cpu2) 
-		         sbtime = sbtime + cpu2 - cpu1 
+		      if (wrk[0]) formk(n,nfree[0],index,nenter[0],ileave[0],indx2,iupdat,
+		                        updatd,wn,snd,m,ws,wy,sy,theta,col,head,info);
+		      if (info[0] != 0) {
+		//          nonpositive definiteness in Cholesky factorization;
+		//          refresh the lbfgs memory and restart the iteration.
+		         if (iprint >= 1) {
+		        	 System.out.println("Nonpositive definiteness in Cholesky factorization in formk.");
+				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
+		         }
+		         info[0]   = 0;
+		         col    = 0;
+		         head   = 1;
+		         theta  = one;
+		         iupdat = 0;
+		         updatd = false;
+		         cpu2 = System.currentTimeMillis(); 
+		         sbtime = sbtime + (cpu2 - cpu1)/1000.0; 
 		         do222 = true;
 		         do333 = true;
 		         do444 = true;
@@ -943,18 +953,20 @@ public abstract class L_BFGS_B {
 		         do888 = true;
 		         do999 = true;
 		         continue loop222;
-		      endif 
+		      } // if (info[0] != 0) 
 
-		c        compute r=-Z'B(xcp-xk)-Z'g (using wa(2m+1)=W'(xcp-x)
-		c                                                   from 'cauchy').
+		//        compute r=-Z'B(xcp-xk)-Z'g (using wa(2m+1)=W'(xcp-x)
+		//                                                   from 'cauchy').
 		      call cmprlb(n,m,x,g,ws,wy,sy,wt,z,r,wa,index,
 		     +           theta,col,head,nfree,cnstnd,info)
-		      if (info .ne. 0) goto 444
+		      if (info[0] ==  0) {
 
-		c-jlm-jn   call the direct method. 
-
-		      call subsm( n, m, nfree, index, l, u, nbd, z, r, xp, ws, wy,
-		     +           theta, x, g, col, head, iword, wa, wn, iprint, info)
+			// c-jlm-jn   call the direct method. 
+	
+			      call subsm( n, m, nfree, index, l, u, nbd, z, r, xp, ws, wy,
+			     +           theta, x, g, col, head, iword, wa, wn, iprint, info)
+		      } // if (info[0] == 0)
+		      } // else
 		 } // if (do333)
 		 if (do444) {
 		      if (info .ne. 0) then 
@@ -1250,7 +1262,7 @@ public abstract class L_BFGS_B {
 		 1008 format (/, 
 		     +' Bad direction in the line search;',/,
 		     +'   refresh the lbfgs memory and restart the iteration.')
-		     */
+		    */ 
 		      return;   
 
 		   
@@ -2853,5 +2865,541 @@ public abstract class L_BFGS_B {
 	    return;
 	}
 
+	private void freev(int n, int nfree[], int index[], int nenter[], int ileave[], int indx2[], 
+                       int iwhere[], boolean wrk[], boolean updatd, boolean cnstnd, 
+                       int iprint, int iter) {
+
+		      // integer n, nfree, nenter, ileave, iprint, iter, 
+		     //        index(n), indx2(n), iwhere(n)
+		      // logical wrk, updatd, cnstnd
+
+		//     ************
+		
+		//     Subroutine freev 
+		
+		//     This subroutine counts the entering and leaving variables when
+		//       iter > 0, and finds the index set of free and active variables
+		//       at the GCP.
+		
+		//     cnstnd is a logical variable indicating whether bounds are present
+		
+		//     index is an integer array of dimension n
+		//       for i=1,...,nfree, index(i) are the indices of free variables
+		//       for i=nfree+1,...,n, index(i) are the indices of bound variables
+		//       On entry after the first iteration, index gives 
+		//         the free variables at the previous iteration.
+		//       On exit it gives the free variables based on the determination
+		//         in cauchy using the array iwhere.
+		
+		//     indx2 is an integer array of dimension n
+		//       On entry indx2 is unspecified.
+		//       On exit with iter>0, indx2 indicates which variables
+		//          have changed status since the previous iteration.
+		//       For i= 1,...,nenter, indx2(i) have changed from bound to free.
+		//       For i= ileave+1,...,n, indx2(i) have changed from free to bound.
+		 
+		
+		//                           *  *  *
+		
+		//     NEOS, November 1994. (Latest revision June 1996.)
+		//     Optimization Technology Center.
+		//     Argonne National Laboratory and Northwestern University.
+		//     Written by
+		//                        Ciyou Zhu
+		//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+		
+		
+		//     ************
+		 
+		      int iact,i,k;
+
+		      nenter[0] = 0;
+		      ileave[0] = n + 1;
+		      if ((iter > 0) && cnstnd) {
+		//                           count the entering and leaving variables.
+		         for (i = 0; i < nfree[0]; i++) {
+		            k = index[i];
+
+		//            write(6,*) ' k  = index(i) ', k
+		//            write(6,*) ' index = ', i
+
+		            if (iwhere[k-1] > 0) {
+		               ileave[0] = ileave[0] - 1;
+		               indx2[ileave[0]-1] = k;
+		               if (iprint >= 100) {
+		                   System.out.println("Variable " + k + " leaves the set of free variables");
+		               }
+		            } // if (iwhere[k-1] > 0)
+		         } // for (i = 0; i < nfree; i++)
+		         for (i = nfree[0]; i < n; i++) {
+		            k = index[i];
+		            if (iwhere[k-1] <= 0) {
+		               nenter[0] = nenter[0] + 1;
+		               indx2[nenter[0]-1] = k;
+		               if (iprint >= 100) {
+		                   System.out.println("Variable " +k + " enters the set of free variables");
+		               }
+		            } // if (iwhere[k-1] <= 0)
+		         } // for (i = nfree; i < n; i++)
+		         if (iprint >= 99) {
+		             System.out.println((n+1-ileave[0]) + " variables leave; " + nenter[0] + " variables enter");
+		         }
+		      } // if ((iter > 0) && cnstnd)
+		      wrk[0] = (ileave[0] < n+1) || (nenter[0] > 0) || updatd;
+		 
+		//     Find the index set of free and active variables at the GCP.
+		 
+		      nfree[0] = 0; 
+		      iact = n + 1;
+		      for (i = 1; i <= n; i++) {
+		         if (iwhere[i-1] <= 0) {
+		            nfree[0] = nfree[0] + 1;
+		            index[nfree[0]-1] = i;
+		         }
+		         else {
+		            iact = iact - 1;
+		            index[iact-1] = i;
+		         }
+		      } // for (i = 1; i <= n; i++)
+		      if (iprint >= 99) {
+		          System.out.println(nfree[0] + " variables are free at GCP " + (iter + 1));
+		      }
+
+		      return;
+	}
+	
+	private void formk(int n, int nsub, int ind[], int nenter, int ileave, int indx2[], int iupdat, 
+	                   boolean updatd, double wn[][], double wn1[][], int m, double ws[][], 
+	                   double wy[][], double sy[][], double theta, int col, int head, int info[]) {
+
+		      // integer          n, nsub, m, col, head, nenter, ileave, iupdat,
+		     //                 info, ind(n), indx2(n)
+		      // double precision theta, wn(2*m, 2*m), wn1(2*m, 2*m),
+		     //                 ws(n, m), wy(n, m), sy(m, m)
+		      // logical          updatd
+
+		//     ************
+		
+		//     Subroutine formk 
+		
+		//     This subroutine forms  the LEL^T factorization of the indefinite
+		
+		//       matrix    K = [-D -Y'ZZ'Y/theta     L_a'-R_z'  ]
+		//                     [L_a -R_z           theta*S'AA'S ]
+		//                                                    where E = [-I  0]
+		//                                                              [ 0  I]
+		//     The matrix K can be shown to be equal to the matrix M^[-1]N
+		//       occurring in section 5.1 of [1], as well as to the matrix
+		//       Mbar^[-1] Nbar in section 5.3.
+		
+		//     n is an integer variable.
+		//       On entry n is the dimension of the problem.
+		//       On exit n is unchanged.
+		
+		//     nsub is an integer variable
+		//       On entry nsub is the number of subspace variables in free set.
+		//       On exit nsub is not changed.
+		
+		//     ind is an integer array of dimension nsub.
+		//       On entry ind specifies the indices of subspace variables.
+		//       On exit ind is unchanged. 
+		
+		//     nenter is an integer variable.
+		//       On entry nenter is the number of variables entering the 
+		//         free set.
+		//       On exit nenter is unchanged. 
+		
+		//     ileave is an integer variable.
+		//       On entry indx2(ileave),...,indx2(n) are the variables leaving
+		//         the free set.
+		//       On exit ileave is unchanged. 
+		
+		//     indx2 is an integer array of dimension n.
+		//       On entry indx2(1),...,indx2(nenter) are the variables entering
+		//         the free set, while indx2(ileave),...,indx2(n) are the
+		//         variables leaving the free set.
+		//       On exit indx2 is unchanged. 
+		
+		//     iupdat is an integer variable.
+		//       On entry iupdat is the total number of BFGS updates made so far.
+		//       On exit iupdat is unchanged. 
+		
+		//     updatd is a logical variable.
+		//       On entry 'updatd' is true if the L-BFGS matrix is updatd.
+		//       On exit 'updatd' is unchanged. 
+		
+		//     wn is a double precision array of dimension 2m x 2m.
+		//       On entry wn is unspecified.
+		//       On exit the upper triangle of wn stores the LEL^T factorization
+		//         of the 2*col x 2*col indefinite matrix
+		//                     [-D -Y'ZZ'Y/theta     L_a'-R_z'  ]
+		//                     [L_a -R_z           theta*S'AA'S ]
+		
+		//     wn1 is a double precision array of dimension 2m x 2m.
+		//       On entry wn1 stores the lower triangular part of 
+		//                     [Y' ZZ'Y   L_a'+R_z']
+		//                     [L_a+R_z   S'AA'S   ]
+		//         in the previous iteration.
+		//       On exit wn1 stores the corresponding updated matrices.
+		//       The purpose of wn1 is just to store these inner products
+		//       so they can be easily updated and inserted into wn.
+		
+		//     m is an integer variable.
+		//       On entry m is the maximum number of variable metric corrections
+		//         used to define the limited memory matrix.
+		//       On exit m is unchanged.
+		
+		//     ws, wy, sy, and wtyy are double precision arrays;
+		//     theta is a double precision variable;
+		//     col is an integer variable;
+		//     head is an integer variable.
+		//       On entry they store the information defining the
+		//                                          limited memory BFGS matrix:
+		//         ws(n,m) stores S, a set of s-vectors;
+		//         wy(n,m) stores Y, a set of y-vectors;
+		//         sy(m,m) stores S'Y;
+		//         wtyy(m,m) stores the Cholesky factorization
+		//                                   of (theta*S'S+LD^(-1)L')
+		//         theta is the scaling factor specifying B_0 = theta I;
+		//         col is the number of variable metric corrections stored;
+		//         head is the location of the 1st s- (or y-) vector in S (or Y).
+		//       On exit they are unchanged.
+		
+		//     info is an integer variable.
+		//       On entry info is unspecified.
+		//       On exit info =  0 for normal return;
+		//                    = -1 when the 1st Cholesky factorization failed;
+		//                    = -2 when the 2st Cholesky factorization failed.
+		//
+		//     Subprograms called:
+		
+		//       Linpack ... dcopy, dpofa, dtrsl.
+		
+		
+		//     References:
+		//       [1] R. H. Byrd, P. Lu, J. Nocedal and C. Zhu, ``A limited
+		//       memory algorithm for bound constrained optimization'',
+		//       SIAM J. Scientific Computing 16 (1995), no. 5, pp. 1190--1208.
+		
+		//       [2] C. Zhu, R.H. Byrd, P. Lu, J. Nocedal, ``L-BFGS-B: a
+		//       limited memory FORTRAN code for solving bound constrained
+		//       optimization problems'', Tech. Report, NAM-11, EECS Department,
+		//       Northwestern University, 1994.
+		
+		//       (Postscript files of these papers are available via anonymous
+		//        ftp to eecs.nwu.edu in the directory pub/lbfgs/lbfgs_bcm.)
+		
+		//                           *  *  *
+		
+		//     NEOS, November 1994. (Latest revision June 1996.)
+		//     Optimization Technology Center.
+		//     Argonne National Laboratory and Northwestern University.
+		//     Written by
+		//                        Ciyou Zhu
+		//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+		
+		
+		//     ************
+
+		      int          m2,ipntr,jpntr,iy,is,jy,js,is1,js1,k1,i,k,
+		                   col2,pbegin,pend,dbegin,dend,upcl;
+		      int j;
+		      double temp1,temp2,temp3,temp4;
+		      double b[] = new double[col];
+		      double a[][] = new double[2*m-col][2*m-col];
+		      final double one = 1.0;
+		      final double zero = 0.0;
+		      double sum;
+
+		//     Form the lower triangular part of
+		//               WN1 = [Y' ZZ'Y   L_a'+R_z'] 
+		//                     [L_a+R_z   S'AA'S   ]
+		//        where L_a is the strictly lower triangular part of S'AA'Y
+		//              R_z is the upper triangular part of S'ZZ'Y.
+		      
+		      if (updatd) {
+		         if (iupdat > m) { 
+		//                                 shift old part of WN1.
+		            for (jy = 1; jy <= m - 1; jy++) {
+		               js = m + jy;
+		               for (i = 0; i < m-jy; i++) {
+		            	   wn1[jy-1+i][jy-1] = wn1[jy + i][jy];
+		               }
+		               for (i = 0; i < m-jy; i++) {
+		            	   wn1[js-1+i][js-1] = wn1[js+i][js];
+		               }
+		               for (i = 0; i < m-1; i++) {
+		            	   wn1[m+i][jy-1] = wn1[m+1][jy];
+		               }
+		            } // for (jy = 1; jy <= m - 1; jy++)
+		         } // if (iupdat > m)
+		 
+		//          put new rows in blocks (1,1), (2,1) and (2,2).
+		         pbegin = 1;
+		         pend = nsub;
+		         dbegin = nsub + 1;
+		         dend = n;
+		         iy = col;
+		         is = m + col;
+		         ipntr = head + col - 1;
+		         if (ipntr > m) ipntr = ipntr - m;    
+		         jpntr = head;
+		         for (jy = 1; jy <= col; jy++) {
+		            js = m + jy;
+		            temp1 = zero;
+		            temp2 = zero;
+		            temp3 = zero;
+		//             compute element jy of row 'col' of Y'ZZ'Y
+		            for (k = pbegin; k <= pend; k++) {
+		               k1 = ind[k-1];
+		               temp1 = temp1 + wy[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		            } // for (k = pbegin; k <= pend; k++)
+		//             compute elements jy of row 'col' of L_a and S'AA'S
+		            for (k = dbegin; k <= dend; k++) {
+		               k1 = ind[k-1];
+		               temp2 = temp2 + ws[k1-1][ipntr-1]*ws[k1-1][jpntr-1];
+		               temp3 = temp3 + ws[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		            } // for (k = dbegin; k <= dend; k++)
+		            wn1[iy-1][jy-1] = temp1;
+		            wn1[is-1][js-1] = temp2;
+		            wn1[is-1][jy-1] = temp3;
+		            jpntr = (jpntr%m) + 1;
+		         } // for (jy = 1; jy <= col; jy++)
+		 
+		//          put new column in block (2,1).
+		         jy = col;       
+		         jpntr = head + col - 1;
+		         if (jpntr > m) jpntr = jpntr - m;
+		         ipntr = head;
+		         for (i = 1; i <= col; i++) {
+		            is = m + i;
+		            temp3 = zero;
+		//             compute element i of column 'col' of R_z
+		            for (k = pbegin; k <= pend; k++) {
+		               k1 = ind[k-1];
+		               temp3 = temp3 + ws[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		            } // for (k = pbegin; k <= pend; k++) 
+		            ipntr = (ipntr%m) + 1;
+		            wn1[is-1][jy-1] = temp3;
+		         } // for (i = 1; i <= col; i++)
+		         upcl = col - 1;
+		      } // if (updatd)
+		      else {
+		         upcl = col;
+		      }
+		 
+		//       modify the old parts in blocks (1,1) and (2,2) due to changes
+		//       in the set of free variables.
+		      ipntr = head;      
+		      for (iy = 1; iy <= upcl; iy++) {
+		         is = m + iy;
+		         jpntr = head;
+		         for (jy = 1; jy <= iy; jy++) {
+		            js = m + jy;
+		            temp1 = zero;
+		            temp2 = zero;
+		            temp3 = zero;
+		            temp4 = zero;
+		            for (k = 1; k <= nenter; k++) {
+		               k1 = indx2[k-1];
+		               temp1 = temp1 + wy[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		               temp2 = temp2 + ws[k1-1][ipntr-1]*ws[k1-1][jpntr-1];
+		            } // for (k = 1; k <= nenter; k++) 
+		            for (k = ileave; k <= n; k++) {
+		               k1 = indx2[k-1];
+		               temp3 = temp3 + wy[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		               temp4 = temp4 + ws[k1-1][ipntr-1]*ws[k1-1][jpntr-1];
+		            } // for (k = ileave; k <= n; k++) 
+		            wn1[iy-1][jy-1] = wn1[iy-1][jy-1] + temp1 - temp3; 
+		            wn1[is-1][js-1] = wn1[is-1][js-1] - temp2 + temp4; 
+		            jpntr = (jpntr%m) + 1;
+		         } // for (jy = 1; jy <= iy; jy++)
+		         ipntr = (ipntr%m) + 1;
+		      } // for (iy = 1; iy <= upcl; iy++)
+		 
+		//       modify the old parts in block (2,1).
+		      ipntr = head;      
+		      for (is = m + 1; is <= m + upcl; is++) {
+		         jpntr = head; 
+		         for (jy = 1; jy <= upcl; jy++) {
+		            temp1 = zero;
+		            temp3 = zero;
+		            for (k = 1; k <= nenter; k++) {
+		               k1 = indx2[k-1];
+		               temp1 = temp1 + ws[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		            } // for (k = 1; k <= nenter; k++)
+		            for (k = ileave; k <= n; k++) {
+		               k1 = indx2[k-1];
+		               temp3 = temp3 + ws[k1-1][ipntr-1]*wy[k1-1][jpntr-1];
+		            } // for (k = ileave; k <= n; k++)
+		            if (is <= (jy + m)) {
+		               wn1[is-1][jy-1] = wn1[is-1][jy-1] + temp1 - temp3;
+		            }
+		            else {
+		               wn1[is-1][jy-1] = wn1[is-1][jy-1] - temp1 + temp3;  
+		            }
+		            jpntr = (jpntr%m) + 1;
+		         } // for (jy = 1; jy <= upcl; jy++)
+		         ipntr = (ipntr%m) + 1;
+		      } // for (is = m + 1; is <= m + upcl; is++)
+		 
+		//     Form the upper triangle of WN = [D+Y' ZZ'Y/theta   -L_a'+R_z' ] 
+		//                                     [-L_a +R_z        S'AA'S*theta]
+
+		      m2 = 2*m;
+		      for (iy = 1; iy <= col; iy++) {
+		         is = col + iy;
+		         is1 = m + iy;
+		         for (jy = 1; jy <= iy; jy++) {
+		            js = col + jy;
+		            js1 = m + jy;
+		            wn[jy-1][iy-1] = wn1[iy-1][jy-1]/theta;
+		            wn[js-1][is-1] = wn1[is1-1][js1-1]*theta;
+		         } // for (jy = 1; jy <= iy; jy++)
+		         for (jy = 1; jy <= iy - 1; jy++) {
+		            wn[jy-1][is-1] = -wn1[is1-1][jy-1];
+		         }
+		         for (jy = iy; jy <= col; jy++) {
+		            wn[jy-1][is-1] = wn1[is1-1][jy-1];
+		         }
+		         wn[iy-1][iy-1] = wn[iy-1][iy-1] + sy[iy-1][iy-1];
+		      } // for (iy = 1; iy <= col; iy++)
+
+		//     Form the upper triangle of WN= [  LL'            L^-1(-L_a'+R_z')] 
+		//                                    [(-L_a +R_z)L'^-1   S'AA'S*theta  ]
+
+		//        first Cholesky factor (1,1) block of wn to get LL'
+        //                          with L' stored in the upper triangle of wn.
+		      dpofa(wn,m2,col,info);
+		      if (info[0] != 0) {
+		         info[0] = -1;
+		         return;
+		      }
+		//        then form L^-1(-L_a'+R_z') in the (1,2) block.
+		      col2 = 2*col;
+		      for (js = col+1; js <= col2; js++) {
+		    	 for (i = 0; i < col; i++) {
+		    		 b[i] = wn[i][js-1];
+		    	 }
+		         dtrsl(wn,m2,col,b,11,info);
+		         for (i = 0; i < col; i++) {
+		    		 wn[i][js-1] = b[i];
+		    	 }
+		      }
+
+		//     Form S'AA'S*theta + (L^-1(-L_a'+R_z'))'L^-1(-L_a'+R_z') in the
+		//        upper triangle of (2,2) block of wn.
+		                      
+
+		      for (is = col+1; is <= col2; is++) {
+		         for (js = is; js <= col2; js++) {
+		        	   sum = 0.0;
+		        	   for (i = 0; i < col; i++) {
+		        		   sum += wn[i][is-1]*wn[i][js-1];
+		        	   }
+		               wn[is-1][js-1] = wn[is-1][js-1] + sum;
+		         } // for (js = is; js <= col2; js++)
+		      } // for (is = col+1; is <= col2; is++) 
+
+		//     Cholesky factorization of (2,2) block of wn.
+              for (i = 0; i < 2*m-col; i++) {
+            	  for (j = 0; j < 2*m-col; j++) {
+            		  a[i][j] = wn[col+i][col+j];
+            	  }
+              }
+		      dpofa(a,m2,col,info);
+		      for (i = 0; i < 2*m-col; i++) {
+            	  for (j = 0; j < 2*m-col; j++) {
+            		  wn[col+i][col+j] = a[i][j];
+            	  }
+              }
+		      if (info[0] != 0) {
+		         info[0] = -2;
+		         return;
+		      }
+
+		      return;
+	}
+	
+	private void dpofa(double a[][],int lda,int n, int info[]) {
+	    // integer lda,n,info
+	    // double precision a(lda,*)
+	
+	//     dpofa factors a double precision symmetric positive definite
+	//     matrix.
+	
+	//     dpofa is usually called by dpoco, but it can be called
+	//     directly with a saving in time if  rcond  is not needed.
+	//     (time for dpoco) = (1 + 18/n)*(time for dpofa) .
+	
+	//     on entry
+	
+	//        a       double precision(lda, n)
+	//                the symmetric matrix to be factored.  only the
+	//                diagonal and upper triangle are used.
+	
+	//        lda     integer
+	//                the leading dimension of the array  a .
+	
+	//        n       integer
+	//                the order of the matrix  a .
+	
+	//     on return
+	
+	//        a       an upper triangular matrix  r  so that  a = trans(r)*r
+	//                where  trans(r)  is the transpose.
+	//                the strict lower triangle is unaltered.
+	//                if  info .ne. 0 , the factorization is not complete.
+	
+	//        info    integer
+	//                = 0  for normal return.
+	//                = k  signals an error condition.  the leading minor
+	//                     of order  k  is not positive definite.
+	
+	//     linpack.  this version dated 08/14/78 .
+	//     cleve moler, university of new mexico, argonne national lab.
+	
+	//     subroutines and functions
+	
+	//     blas ddot
+	//     fortran sqrt
+	
+	//     internal variables
+	
+	    double t;
+	    double s;
+	    double sum;
+	    int i,j,jm1,k;
+	//     begin block with ...exits to 40
+	
+	
+	       for (j = 1; j <= n; j++) {
+	          info[0] = j;
+	          s = 0.0;
+	          jm1 = j - 1;
+	          if (jm1 >= 1) {
+		          for (k = 1; k <= jm1; k++) {
+		        	 sum = 0.0;
+		        	 for (i = 0; i < k-1; i++) {
+		        		 sum += a[i][k-1]*a[i][j-1];
+		        	 }
+		        	 t = a[k-1][j-1] - sum;
+		             t = t/a[k-1][k-1];
+		             a[k-1][j-1] = t;
+		             s = s + t*t;
+		          } // for (k = 1; k <= jm1; k++)
+	          } // if (jm1 >= 1)
+	          s = a[j-1][j-1] - s;
+	//     ......exit
+	          if (s <= 0.0) {
+	        	  return;
+	          }
+	          a[j-1][j-1] = Math.sqrt(s);
+	       } // for (j = 1; j <= n; j++)
+	       info[0] = 0;
+	       return;
+	}
 	
 }
+
+
