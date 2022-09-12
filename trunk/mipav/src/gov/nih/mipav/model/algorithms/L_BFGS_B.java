@@ -579,23 +579,33 @@ public abstract class L_BFGS_B {
 		      boolean wrk[] = new boolean[1];
 		      //character*3      word
 		      String word[] = new String[1];
-		      int          i,nintol,itfile,iback,nskip,
+		      int          i,nintol,itfile,nskip,
 		                      head,col,iter,itail,iupdat,
-		                      nfgv,ifun,
-		                      iword,nact;
+		                      nact;
+		      int iback[] = new int[1];
+		      int ifun[] = new int[1];
 		      int ileave[] = new int[1];
 		      int nenter[] = new int[1];
 		      int info[] = new int[1];
+		      int iword[] = new int[1];
 		      int k[] = new int[1];
+		      int nfgv[] = new int[1];
 		      int nfree[] = new int[1];
 		      int nseg[] = new int[1];
-		      double theta,fold,ddot,dr,rr,tol,
-		                      ddum,dnorm,dtd,epsmch,
+		      double theta,ddot,dr,rr,tol,
+		                      ddum,epsmch,
 		                      cachyt,sbtime,lnscht,time2,
-		                      gd,gdold,stp,stpmx,time;
+		                      time;
 		      long cpu1, cpu2;
+		      double dnorm[] = new double[1];
+		      double dtd[] = new double[1];
+		      double fold[] = new double[1];
+		      double gd[] = new double[1];
+		      double gdold[] = new double[1];
 		      double sbgnrm[] = new double[1];
-		      double xstep = 0.0;
+		      double stp[] = new double[1];
+		      double stpmx[] = new double[1];
+		      double xstep[] = new double[1];
 		      long time1;
 		      File file;
 		      RandomAccessFile raFile = null;
@@ -612,6 +622,8 @@ public abstract class L_BFGS_B {
 		      boolean do888 = true;
 		      boolean do222to888 = true;
 		      boolean do999 = true;
+		      int isave2[] = new int[2];
+		      double dsave13[] = new double[13];
 		      
 		      if (task[0].equalsIgnoreCase("START")) {
 
@@ -627,30 +639,30 @@ public abstract class L_BFGS_B {
 		         theta  = one;
 		         iupdat = 0;
 		         updatd = false;
-		         iback  = 0;
+		         iback[0]  = 0;
 		         itail  = 0;
-		         iword  = 0;
+		         iword[0]  = 0;
 		         nact   = 0;
 		         ileave[0] = 0;
 		         nenter[0] = 0;
-		         fold   = zero;
-		         dnorm  = zero;
+		         fold[0]   = zero;
+		         dnorm[0]  = zero;
 		         cpu1   = 0L;
-		         gd     = zero;
-		         stpmx  = zero;
+		         gd[0]     = zero;
+		         stpmx[0]  = zero;
 		         sbgnrm[0] = zero;
-		         stp    = zero;
-		         gdold  = zero;
-		         dtd    = zero;
+		         stp[0]    = zero;
+		         gdold[0]  = zero;
+		         dtd[0]    = zero;
 
 		//           for operation counts:
 		         iter   = 0;
-		         nfgv   = 0;
+		         nfgv[0]   = 0;
 		         nseg[0]   = 0;
 		         nintol = 0;
 		         nskip  = 0;
 		         nfree[0]  = n;
-		         ifun   = 0;
+		         ifun[0]   = 0;
 		//           for stopping tolerance:
 		         tol = factr*epsmch;
 
@@ -692,8 +704,8 @@ public abstract class L_BFGS_B {
 		         errclb(n,m,factr,l,u,nbd,task,info,k);
 		         if (task[0].substring(0,5).equalsIgnoreCase("ERROR")) {
 		            prn3lb(n,x,f[0],task[0],iprint,info[0],raFile,
-		                       iter,nfgv,nintol,nskip,nact,sbgnrm[0],
-		                       0.0,nseg[0],word[0],iback,stp,xstep,k[0],
+		                       iter,nfgv[0],nintol,nskip,nact,sbgnrm[0],
+		                       0.0,nseg[0],word[0],iback[0],stp[0],xstep[0],k[0],
 		                       cachyt,sbtime,lnscht);
 		            return;
 		         }
@@ -716,7 +728,7 @@ public abstract class L_BFGS_B {
 
 		    	           nintol = isave[0];
 		    	           itfile = isave[2];
-		    	           iback  = isave[3];
+		    	           iback[0]  = isave[3];
 		    	           nskip  = isave[4];
 		    	           head   = isave[5];
 		    	           col    = isave[6];
@@ -724,31 +736,31 @@ public abstract class L_BFGS_B {
 		    	           iter   = isave[8];
 		    	           iupdat = isave[9];
 		    	           nseg[0]   = isave[11];
-		    	           nfgv   = isave[12];
+		    	           nfgv[0]   = isave[12];
 		    	           info[0]   = isave[13];
-		    	           ifun   = isave[14];
-		    	           iword  = isave[15];
+		    	           ifun[0]   = isave[14];
+		    	           iword[0]  = isave[15];
 		    	           nfree[0]  = isave[16];
 		    	           nact   = isave[17];
 		    	           ileave[0] = isave[18];
 		    	           nenter[0] = isave[19];
 
 		    	           theta  = dsave[0];
-		    	           fold   = dsave[1];
+		    	           fold[0]   = dsave[1];
 		    	           tol    = dsave[2];
-		    	           dnorm  = dsave[3];
+		    	           dnorm[0]  = dsave[3];
 		    	           epsmch = dsave[4];
 		    	           cpu1   = (long)dsave[5];
 		    	           cachyt = dsave[6];
 		    	           sbtime = dsave[7];
 		    	           lnscht = dsave[8];
 		    	           time1  = (long)dsave[9];
-		    	           gd     = dsave[10];
-		    	           stpmx  = dsave[11];
+		    	           gd[0]     = dsave[10];
+		    	           stpmx[0]  = dsave[11];
 		    	           sbgnrm[0] = dsave[12];
-		    	           stp    = dsave[13];
-		    	           gdold  = dsave[14];
-		    	           dtd    = dsave[15];
+		    	           stp[0]    = dsave[13];
+		    	           gdold[0]  = dsave[14];
+		    	           dtd[0]    = dsave[15];
 		    	     
 		    	  //        After returning from the driver go to the point where execution
 		    	  //        is to resume.
@@ -783,7 +795,7 @@ public abstract class L_BFGS_B {
 		    	        			 x[i] = t[i];
 		    	        			 g[i] = r[i];
 		    	        		 }
-		    	                 f[0] = fold;
+		    	                 f[0] = fold[0];
 		    	        	   } // if (task[0].substring(6,9).equalsIgnoreCase("CPU"))  
 		    	              do0 = false;
 		    	              do222to888 = false;
@@ -800,7 +812,7 @@ public abstract class L_BFGS_B {
 		      do999 = false;
 		      } // if (do0)
 		      if (do111) {
-		      nfgv = 1;
+		      nfgv[0] = 1;
 		 
 		//     Compute the infinity norm of the (-) projected gradient.
 		 
@@ -957,30 +969,33 @@ public abstract class L_BFGS_B {
 
 		//        compute r=-Z'B(xcp-xk)-Z'g (using wa(2m+1)=W'(xcp-x)
 		//                                                   from 'cauchy').
-		      call cmprlb(n,m,x,g,ws,wy,sy,wt,z,r,wa,index,
-		     +           theta,col,head,nfree,cnstnd,info)
+		      cmprlb(n,m,x,g,ws,wy,sy,wt,z,r,wa1,wa2,index,
+		             theta,col,head,nfree,cnstnd,info);
 		      if (info[0] ==  0) {
 
 			// c-jlm-jn   call the direct method. 
 	
-			      call subsm( n, m, nfree, index, l, u, nbd, z, r, xp, ws, wy,
-			     +           theta, x, g, col, head, iword, wa, wn, iprint, info)
+			      subsm( n, m, nfree, index, l, u, nbd, z, r, xp, ws, wy,
+			             theta, x, g, col, head, iword, wa, wn, iprint, info);
 		      } // if (info[0] == 0)
 		      } // else
 		 } // if (do333)
 		 if (do444) {
-		      if (info .ne. 0) then 
-		c          singular triangular system detected;
-		c          refresh the lbfgs memory and restart the iteration.
-		         if(iprint .ge. 1) write (6, 1005)
-		         info   = 0
-		         col    = 0
-		         head   = 1
-		         theta  = one
-		         iupdat = 0
-		         updatd = .false.
-		         call timer(cpu2) 
-		         sbtime = sbtime + cpu2 - cpu1 
+		      if (info[0] != 0) {
+		//          singular triangular system detected;
+		//          refresh the lbfgs memory and restart the iteration.
+		         if (iprint >= 1) {
+		        	 System.out.println("Singular triangular system detected.");
+				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
+		         }
+		         info[0]   = 0;
+		         col    = 0;
+		         head   = 1;
+		         theta  = one;
+		         iupdat = 0;
+		         updatd = false;
+		         cpu2 = System.currentTimeMillis();
+		         sbtime = sbtime + (cpu2 - cpu1)/1000.0; 
 		         do222 = true;
 		         do333 = true;
 		         do444 = true;
@@ -990,30 +1005,40 @@ public abstract class L_BFGS_B {
 		         do888 = true;
 		         do999 = true;
 		         continue loop222;
-		      endif
+		      } // if (info[0] != 0)
 		 
-		      call timer(cpu2) 
-		      sbtime = sbtime + cpu2 - cpu1 
+		      cpu2 = System.currentTimeMillis();
+		      sbtime = sbtime + (cpu2 - cpu1)/1000.0; 
 		 } // if (do444)
 		 if (do555) {
 		 
-		cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-		c
-		c     Line search and optimality tests.
-		c
-		cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+		
+		//     Line search and optimality tests.
+		
+		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 		 
-		c     Generate the search direction d:=z-x.
+		//     Generate the search direction d:=z-x.
 
-		      do 40 i = 1, n
-		         d(i) = z(i) - x(i)
-		  40  continue
-		      call timer(cpu1) 
+		      for (i = 0; i < n; i++) {
+		         d[i] = z[i] - x[i];
+		      }
+		      cpu1 = System.currentTimeMillis();
 		 } // if (do555)
 		 if (do666) {
-		      call lnsrlb(n,l,u,nbd,x,f,fold,gd,gdold,g,d,r,t,z,stp,dnorm,
-		     +            dtd,xstep,stpmx,iter,ifun,iback,nfgv,info,task,
-		     +            boxed,cnstnd,csave,isave(22),dsave(17))
+			  isave2[0] = isave[21];
+			  isave2[1] = isave[22];
+			  for (i = 0; i < 16; i++) {
+				  dsave13[i] = dsave[i + 16];
+			  }
+		      lnsrlb(n,l,u,nbd,x,f,fold,gd,gdold,g,d,r,t,z,stp,dnorm,
+		             dtd,xstep,stpmx,iter,ifun,iback,nfgv,info,task,
+		             boxed[0],cnstnd[0],csave,isave2,dsave13);
+		      isave[21] = isave2[0];
+		      isave[22] = isave2[1];
+		      for (i = 0; i < 16; i++) {
+				  dsave[i + 16] = dsave13[i];
+			  }
 		      if (info .ne. 0 .or. iback .ge. 20) then
 		c          restore the previous iterate.
 		         call dcopy(n,t,1,x,1)
@@ -1262,7 +1287,7 @@ public abstract class L_BFGS_B {
 		 1008 format (/, 
 		     +' Bad direction in the line search;',/,
 		     +'   refresh the lbfgs memory and restart the iteration.')
-		    */ 
+		     */
 		      return;   
 
 		   
@@ -3399,6 +3424,584 @@ public abstract class L_BFGS_B {
 	       info[0] = 0;
 	       return;
 	}
+	
+	private void cmprlb(int n, int m, double x[], double g[], double ws[][], 
+			double wy[][], double sy[][], double wt[][], double z[], double r[],
+			double wa1[], double wa2[], int index[], double theta, int col, int head, 
+			int nfree, boolean cnstnd, int info[]) {
+		 
+		      // logical          cnstnd
+		      // integer          n, m, col, head, nfree, info, index(n)
+		      // double precision theta, 
+		     //                 x(n), g(n), z(n), r(n), wa(4*m), 
+		     //                 ws(n, m), wy(n, m), sy(m, m), wt(m, m)
+
+		//     ************
+		
+		//     Subroutine cmprlb 
+		
+		//       This subroutine computes r=-Z'B(xcp-xk)-Z'g by using 
+		//         wa(2m+1)=W'(xcp-x) from subroutine cauchy.
+		
+		//     Subprograms called:
+		
+		//       L-BFGS-B Library ... bmv.
+		
+		
+		//                           *  *  *
+		
+		//     NEOS, November 1994. (Latest revision June 1996.)
+		//     Optimization Technology Center.
+		//     Argonne National Laboratory and Northwestern University.
+		//     Written by
+		//                        Ciyou Zhu
+		//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+		
+		//
+		//     ************
+		 
+		      int          i,j,k,pointr;
+		      double a1,a2;
+
+		      if ((! cnstnd) && (col > 0)) { 
+		         for (i = 0; i < n; i++) {
+		            r[i] = -g[i];
+		         } // for (i = 0; i < n; i++)
+		      } // if ((! cnstnd) && (col > 0))
+		      else {
+		         for (i = 0; i < nfree; i++) {
+		            k = index[i];
+		            r[i] = -theta*(z[k-1] - x[k-1]) - g[k-1];
+		         } // for (i = 0; i < nfree; i++)
+		         bmv(m,sy,wt,col,wa2,wa1,info);
+		         if (info[0] != 0) {
+		            info[0] = -8;
+		            return;
+		         }
+		         pointr = head; 
+		         for (j = 1; j <= col; j++) {
+		            a1 = wa1[j-1];
+		            a2 = theta*wa1[col + j -1];
+		            for (i = 0; i < nfree; i++) {
+		               k = index[i];
+		               r[i] = r[i] + wy[k-1][pointr-1]*a1 + ws[k-1][pointr-1]*a2;
+		            } // for (i = 0; i < nfree; i++)
+		            pointr = (pointr%m) + 1;
+		         } // for (j = 1; j <= col; j++)
+		      }
+
+		      return;
+	}
+	
+	private void subsm (int n, int m, int nsub, int ind[], double l[], double u[],
+			int nbd[], double x[], double d[], double xp[], double ws[][], 
+			double wy[][], double theta, double xx[], double gg[],
+		    int col, int head, int iword[], double wv[], double wn[][],
+		    int iprint, int info[]) {
+		      // implicit none
+		      // integer          n, m, nsub, col, head, iword, iprint, info, 
+		     //                 ind(nsub), nbd(n)
+		     // double precision theta, 
+		     //                 l(n), u(n), x(n), d(n), xp(n), xx(n), gg(n),
+		     //                 ws(n, m), wy(n, m), 
+		     //                 wv(2*m), wn(2*m, 2*m)
+
+		//     **********************************************************************
+		
+		//     This routine contains the major changes in the updated version.
+		//     The changes are described in the accompanying paper
+		
+		//      Jose Luis Morales, Jorge Nocedal
+		//      "Remark On Algorithm 788: L-BFGS-B: Fortran Subroutines for Large-Scale
+		//       Bound Constrained Optimization". Decemmber 27, 2010.
+		
+		//             J.L. Morales  Departamento de Matematicas, 
+		//                           Instituto Tecnologico Autonomo de Mexico
+		//                           Mexico D.F.
+		
+		//             J, Nocedal    Department of Electrical Engineering and
+		//                           Computer Science.
+		//                           Northwestern University. Evanston, IL. USA
+		
+		//                           January 17, 2011
+		
+		//      **********************************************************************
+		                           
+		
+		//     Subroutine subsm
+		
+		//     Given xcp, l, u, r, an index set that specifies
+		//       the active set at xcp, and an l-BFGS matrix B 
+		//       (in terms of WY, WS, SY, WT, head, col, and theta), 
+		//       this subroutine computes an approximate solution
+		//       of the subspace problem
+		
+		//       (P)   min Q(x) = r'(x-xcp) + 1/2 (x-xcp)' B (x-xcp)
+		
+		//             subject to l<=x<=u
+		//                       x_i=xcp_i for all i in A(xcp)
+		                     
+		//       along the subspace unconstrained Newton direction 
+		       
+		//          d = -(Z'BZ)^(-1) r.
+		
+		//       The formula for the Newton direction, given the L-BFGS matrix
+		//       and the Sherman-Morrison formula, is
+		
+		//          d = (1/theta)r + (1/theta*2) Z'WK^(-1)W'Z r.
+		 
+		//       where
+		//                 K = [-D -Y'ZZ'Y/theta     L_a'-R_z'  ]
+		//                     [L_a -R_z           theta*S'AA'S ]
+		
+		//     Note that this procedure for computing d differs 
+		//     from that described in [1]. One can show that the matrix K is
+		//     equal to the matrix M^[-1]N in that paper.
+		
+		//     n is an integer variable.
+		//       On entry n is the dimension of the problem.
+		//       On exit n is unchanged.
+		
+		//     m is an integer variable.
+		//       On entry m is the maximum number of variable metric corrections
+		//         used to define the limited memory matrix.
+		//       On exit m is unchanged.
+		
+		//     nsub is an integer variable.
+		//       On entry nsub is the number of free variables.
+		//       On exit nsub is unchanged.
+		
+		//     ind is an integer array of dimension nsub.
+		//       On entry ind specifies the coordinate indices of free variables.
+		//       On exit ind is unchanged.
+		
+		//     l is a double precision array of dimension n.
+		//       On entry l is the lower bound of x.
+		//       On exit l is unchanged.
+		
+		//     u is a double precision array of dimension n.
+		//       On entry u is the upper bound of x.
+		//       On exit u is unchanged.
+		
+		//     nbd is a integer array of dimension n.
+		//       On entry nbd represents the type of bounds imposed on the
+		//         variables, and must be specified as follows:
+		//         nbd(i)=0 if x(i) is unbounded,
+		//                1 if x(i) has only a lower bound,
+		//                2 if x(i) has both lower and upper bounds, and
+		//                3 if x(i) has only an upper bound.
+		//       On exit nbd is unchanged.
+		
+		//     x is a double precision array of dimension n.
+		//       On entry x specifies the Cauchy point xcp. 
+		//       On exit x(i) is the minimizer of Q over the subspace of
+		//                                                        free variables. 
+		
+		//     d is a double precision array of dimension n.
+		//       On entry d is the reduced gradient of Q at xcp.
+		//       On exit d is the Newton direction of Q. 
+		
+		//    xp is a double precision array of dimension n.
+		//       used to safeguard the projected Newton direction 
+		
+		//    xx is a double precision array of dimension n
+		//       On entry it holds the current iterate
+		//       On output it is unchanged
+
+		//    gg is a double precision array of dimension n
+		//       On entry it holds the gradient at the current iterate
+		//       On output it is unchanged
+		
+		//     ws and wy are double precision arrays;
+		//     theta is a double precision variable;
+		//     col is an integer variable;
+		//     head is an integer variable.
+		//       On entry they store the information defining the
+		//                                          limited memory BFGS matrix:
+		//         ws(n,m) stores S, a set of s-vectors;
+		//         wy(n,m) stores Y, a set of y-vectors;
+		//         theta is the scaling factor specifying B_0 = theta I;
+		//         col is the number of variable metric corrections stored;
+		//         head is the location of the 1st s- (or y-) vector in S (or Y).
+		//       On exit they are unchanged.
+		
+		//     iword is an integer variable.
+		//       On entry iword is unspecified.
+		//       On exit iword specifies the status of the subspace solution.
+		//         iword = 0 if the solution is in the box,
+		//                 1 if some bound is encountered.
+		
+		//     wv is a double precision working array of dimension 2m.
+		
+		//     wn is a double precision array of dimension 2m x 2m.
+		//       On entry the upper triangle of wn stores the LEL^T factorization
+		//         of the indefinite matrix
+		
+		//              K = [-D -Y'ZZ'Y/theta     L_a'-R_z'  ]
+		//                  [L_a -R_z           theta*S'AA'S ]
+		//                                                    where E = [-I  0]
+		//                                                              [ 0  I]
+		//       On exit wn is unchanged.
+		
+		//     iprint is an INTEGER variable that must be set by the user.
+		//       It controls the frequency and type of output generated:
+		//        iprint<0    no output is generated;
+		//        iprint=0    print only one line at the last iteration;
+		//        0<iprint<99 print also f and |proj g| every iprint iterations;
+		//        iprint=99   print details of every iteration except n-vectors;
+		//        iprint=100  print also the changes of active set and final x;
+		//        iprint>100  print details of every iteration including x and g;
+		//       When iprint > 0, the file iterate.dat will be created to
+		//                        summarize the iteration.
+		
+		//     info is an integer variable.
+		//       On entry info is unspecified.
+		//       On exit info = 0       for normal return,
+		//                    = nonzero for abnormal return 
+		//                                  when the matrix K is ill-conditioned.
+		
+		//     Subprograms called:
+		
+		//       Linpack dtrsl.
+		
+		
+		//     References:
+		
+		//       [1] R. H. Byrd, P. Lu, J. Nocedal and C. Zhu, ``A limited
+		//       memory algorithm for bound constrained optimization'',
+		//       SIAM J. Scientific Computing 16 (1995), no. 5, pp. 1190--1208.
+		
+		
+		
+		//                           *  *  *
+		
+		//     NEOS, November 1994. (Latest revision June 1996.)
+		//     Optimization Technology Center.
+		//     Argonne National Laboratory and Northwestern University.
+		//     Written by
+		//                        Ciyou Zhu
+		//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+		
+		
+		//     ************
+
+		      int          pointr,m2,col2,ibd,jy,js,i,j,k;
+		      double alpha, xk, dk, temp1, temp2; 
+		      final double one = 1.0;
+		      final double zero = 0.0;
+		
+		      double dd_p;
+
+		      if (nsub <= 0) return;
+		      if (iprint >= 99) {
+		    	  System.out.println("subsm entered");
+		      }
+
+		//     Compute wv = W'Zd.
+
+		      pointr = head; 
+		      for (i = 0; i < col; i++) {
+		         temp1 = zero;
+		         temp2 = zero;
+		         for (j = 0; j < nsub; j++) {
+		            k = ind[j];
+		            temp1 = temp1 + wy[k-1][pointr-1]*d[j];
+		            temp2 = temp2 + ws[k-1][pointr-1]*d[j];
+		         } // for (j = 0; j < nsub; j++)
+		         wv[i] = temp1;
+		         wv[col + i] = theta*temp2;
+		         pointr = (pointr%m) + 1;
+		      } // for (i = 0; i < col; i++)
+		 
+		//     Compute wv:=K^(-1)wv.
+
+		      m2 = 2*m;
+		      col2 = 2*col;
+		      dtrsl(wn,m2,col2,wv,11,info);
+		      if (info[0] != 0) return;
+		      for (i = 0; i < col; i++) {
+		         wv[i] = -wv[i];
+		      }
+		      dtrsl(wn,m2,col2,wv,01,info);
+		      if (info[0] != 0) return;
+		 
+		//     Compute d = (1/theta)d + (1/theta**2)Z'W wv.
+		 
+		      pointr = head;
+		      for (jy = 1; jy <= col; jy++) {
+		         js = col + jy;
+		         for (i = 0; i < nsub; i++) {
+		            k = ind[i];
+		            d[i] = d[i] + wy[k-1][pointr-1]*wv[jy-1]/theta     
+		                        + ws[k-1][pointr-1]*wv[js-1];
+		         } // for (i = 0; i < nsub; i++) 
+		         pointr = (pointr%m) + 1;
+		      } // for (jy = 1; jy <= col; jy++)
+
+		      for (i = 0; i < nsub; i++) {
+		    	  d[i] = (one/theta)*d[i];
+		      }
+		 
+		// -----------------------------------------------------------------
+		//     Let us try the projection, d is the Newton direction
+
+		      iword[0] = 0;
+
+		      for (i = 0; i < n; i++) {
+		    	  xp[i] = x[i];
+		      }
+		
+		      for (i = 0; i < nsub; i++) {
+		         k  = ind[i];
+		         dk = d[i];
+		         xk = x[k-1];
+		         if ( nbd[k-1] != 0 ) {
+		
+		            if ( nbd[k-1] == 1 ) {          // lower bounds only
+		               x[k-1] = Math.max( l[k-1], xk + dk );
+		               if ( x[k-1] == l[k-1] ) iword[0] = 1;
+		            }
+		            else {
+		     
+		               if ( nbd[k-1] == 2 ) {      // upper and lower bounds
+		                  xk   = Math.max( l[k-1], xk + dk ); 
+		                  x[k-1] = Math.min( u[k-1], xk );
+		                  if (( x[k-1] == l[k-1]) || (x[k-1] == u[k-1]) ) iword[0] = 1;
+		               }
+		               else {
+		
+		                  if ( nbd[k-1] == 3 ) {    // upper bounds only
+		                     x[k-1] = Math.min( u[k-1], xk + dk );
+		                     if ( x[k-1] == u[k-1] ) iword[0] = 1;
+		                  }
+		               }
+		            }
+		         } // if ( nbd[k-1] != 0 )   
+		         else {                               // free variables
+		            x[k-1] = xk + dk;
+		         }
+		      } // for (i = 0; i < nsub; i++)
+		
+		      if ( iword[0] == 0 ) {
+		    	  if (iprint >= 99) {
+			    	  System.out.println("Exit subsm");
+			      }
+
+			      return;
+		      }
+		
+		//     check sign of the directional derivative
+		
+		      dd_p = zero;
+		      for (i = 0; i < n; i++) {
+		         dd_p  = dd_p + (x[i] - xx[i])*gg[i];
+		      }
+		      if ( dd_p > zero ) {
+		    	 for (i = 0; i < n; i++) {
+		    		 x[i] = xp[i];
+		    	 }
+		         System.out.println("Positive dir derivative in projection");
+		         System.out.println("Using the backtracking step");
+		      }
+		      else {
+		    	  if (iprint >= 99) {
+			    	  System.out.println("Exit subsm");
+			      }
+
+			      return;   
+		      }
+		
+		// -----------------------------------------------------------------
+		
+		      alpha = one;
+		      temp1 = alpha;
+		      ibd   = -1; 
+		      for (i = 0; i < nsub; i++) {
+		         k = ind[i];
+		         dk = d[i];
+		         if (nbd[k-1] != 0) {
+		            if ((dk < zero) && (nbd[k-1] <= 2)) {
+		               temp2 = l[k-1] - x[k-1];
+		               if (temp2 >= zero) {
+		                  temp1 = zero;
+		               }
+		               else if (dk*alpha < temp2) {
+		                  temp1 = temp2/dk;
+		               }
+		            }
+		            else if ((dk > zero) && (nbd[k-1] >= 2)) {
+		               temp2 = u[k-1] - x[k-1];
+		               if (temp2 <= zero) {
+		                  temp1 = zero;
+		               }
+		               else if (dk*alpha > temp2) {
+		                  temp1 = temp2/dk;
+		               }
+		            }
+		            if (temp1 < alpha) {
+		               alpha = temp1;
+		               ibd = i;
+		            }
+		         } // if (nbd[k-1] != 0)
+		      } // for (i = 0; i < nsub; i++)
+		      
+		      if (alpha < one) {
+		         dk = d[ibd];
+		         k = ind[ibd];
+		         if (dk > zero) {
+		            x[k-1] = u[k-1];
+		            d[ibd] = zero;
+		         }
+		         else if (dk < zero) {
+		            x[k-1] = l[k-1];
+		            d[ibd] = zero;
+		         }
+		      } // if (alpha < one)
+		      for (i = 0; i < nsub; i++) {
+		         k    = ind[i];
+		         x[k-1] = x[k-1] + alpha*d[i];
+		      } // for (i = 0; i < nsub; i++)
+
+		      if (iprint >= 99) {
+		    	  System.out.println("Exit subsm");
+		      }
+
+		      return;
+	}
+
+     private void lnsrlb(int n, double l[], double u[], int nbd[], double x[], double f[],
+    		 double fold[], double gd[], double gdold[], double g[], double d[], double r[], double t[],
+		     double z[], double stp[], double dnorm[], double dtd[], double xstep[], 
+		     double stpmx[], int iter, int ifun[], int iback[], int nfgv[], int info[], String task[],
+		     boolean boxed, boolean cnstnd, String csave[], int isave[], double dsave[]) {
+
+		      // character*60     task, csave
+		      // logical          boxed, cnstnd
+		      // integer          n, iter, ifun, iback, nfgv, info,
+		       //                 nbd(n), isave(2)
+		      // double precision f, fold, gd, gdold, stp, dnorm, dtd, xstep,
+		     //                 stpmx, x(n), l(n), u(n), g(n), d(n), r(n), t(n),
+		     //                 z(n), dsave(13)
+		//     **********
+		
+		//     Subroutine lnsrlb
+		
+		//     This subroutine calls subroutine dcsrch from the Minpack2 library
+		//       to perform the line search.  Subroutine dscrch is safeguarded so
+		//       that all trial points lie within the feasible region.
+		
+		//     Subprograms called:
+		
+		//       Minpack2 Library ... dcsrch.
+		
+		//       Linpack ... dtrsl, ddot.
+		
+		
+		//                           *  *  *
+		
+		//     NEOS, November 1994. (Latest revision June 1996.)
+		//     Optimization Technology Center.
+		//     Argonne National Laboratory and Northwestern University.
+		//     Written by
+		//                        Ciyou Zhu
+		//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+		
+		
+		//     **********
+
+		      int          i;
+		      double       ddot,a1,a2;
+		      final double one = 1.0;
+		      final double zero = 0.0;
+		      final double big = 1.0E10;
+		      final double ftol = 1.0E-3;
+		      final double gtol = 0.9;
+		      final double xtol = 0.1;
+		 /*
+
+		      if (task(1:5) .eq. 'FG_LN') goto 556
+
+		      dtd = ddot(n,d,1,d,1)
+		      dnorm = sqrt(dtd)
+
+		c     Determine the maximum step length.
+
+		      stpmx = big
+		      if (cnstnd) then
+		         if (iter .eq. 0) then
+		            stpmx = one
+		         else
+		            do 43 i = 1, n
+		               a1 = d(i)
+		               if (nbd(i) .ne. 0) then
+		                  if (a1 .lt. zero .and. nbd(i) .le. 2) then
+		                     a2 = l(i) - x(i)
+		                     if (a2 .ge. zero) then
+		                        stpmx = zero
+		                     else if (a1*stpmx .lt. a2) then
+		                        stpmx = a2/a1
+		                     endif
+		                  else if (a1 .gt. zero .and. nbd(i) .ge. 2) then
+		                     a2 = u(i) - x(i)
+		                     if (a2 .le. zero) then
+		                        stpmx = zero
+		                     else if (a1*stpmx .gt. a2) then
+		                        stpmx = a2/a1
+		                     endif
+		                  endif
+		               endif
+		  43        continue
+		         endif
+		      endif
+		 
+		      if (iter .eq. 0 .and. .not. boxed) then
+		         stp = min(one/dnorm, stpmx)
+		      else
+		         stp = one
+		      endif 
+
+		      call dcopy(n,x,1,t,1)
+		      call dcopy(n,g,1,r,1)
+		      fold = f
+		      ifun = 0
+		      iback = 0
+		      csave = 'START'
+		 556  continue
+		      gd = ddot(n,g,1,d,1)
+		      if (ifun .eq. 0) then
+		         gdold=gd
+		         if (gd .ge. zero) then
+		c                               the directional derivative >=0.
+		c                               Line search is impossible.
+		            write(6,*)' ascent direction in projection gd = ', gd
+		            info = -4
+		            return
+		         endif
+		      endif
+
+		      call dcsrch(f,gd,stp,ftol,gtol,xtol,zero,stpmx,csave,isave,dsave)
+
+		      xstep = stp*dnorm
+		      if (csave(1:4) .ne. 'CONV' .and. csave(1:4) .ne. 'WARN') then
+		         task = 'FG_LNSRCH'
+		         ifun = ifun + 1
+		         nfgv = nfgv + 1
+		         iback = ifun - 1 
+		         if (stp .eq. one) then
+		            call dcopy(n,z,1,x,1)
+		         else
+		            do 41 i = 1, n
+		               x(i) = stp*d(i) + t(i)
+		  41        continue
+		         endif
+		      else
+		         task = 'NEW_X'
+		      endif
+		      */
+
+		      return;
+	}
+
 	
 }
 
