@@ -848,7 +848,7 @@ public abstract class L_BFGS_B {
 		      if (iprint >= 99) {
 		    	  System.out.println("Iteration = " + iter);
 		      }
-		      iword = -1;
+		      iword[0] = -1;
 		
 		      if ((!cnstnd[0]) && (col > 0)) { 
 		//                                            skip the search for GCP.
@@ -970,13 +970,13 @@ public abstract class L_BFGS_B {
 		//        compute r=-Z'B(xcp-xk)-Z'g (using wa(2m+1)=W'(xcp-x)
 		//                                                   from 'cauchy').
 		      cmprlb(n,m,x,g,ws,wy,sy,wt,z,r,wa1,wa2,index,
-		             theta,col,head,nfree,cnstnd,info);
+		             theta,col,head,nfree[0],cnstnd[0],info);
 		      if (info[0] ==  0) {
 
 			// c-jlm-jn   call the direct method. 
 	
-			      subsm( n, m, nfree, index, l, u, nbd, z, r, xp, ws, wy,
-			             theta, x, g, col, head, iword, wa, wn, iprint, info);
+			      subsm( n, m, nfree[0], index, l, u, nbd, z, r, xp, ws, wy,
+			             theta, x, g, col, head, iword, wa1, wn, iprint, info);
 		      } // if (info[0] == 0)
 		      } // else
 		 } // if (do333)
@@ -1039,37 +1039,43 @@ public abstract class L_BFGS_B {
 		      for (i = 0; i < 16; i++) {
 				  dsave[i + 16] = dsave13[i];
 			  }
-		      if (info .ne. 0 .or. iback .ge. 20) then
-		c          restore the previous iterate.
-		         call dcopy(n,t,1,x,1)
-		         call dcopy(n,r,1,g,1)
-		         f = fold
-		         if (col .eq. 0) then
-		c             abnormal termination.
-		            if (info .eq. 0) then
-		               info = -9
-		c                restore the actual number of f and g evaluations etc.
-		               nfgv = nfgv - 1
-		               ifun = ifun - 1
-		               iback = iback - 1
-		            endif
-		            task = 'ABNORMAL_TERMINATION_IN_LNSRCH'
-		            iter = iter + 1
+		      if ((info[0] != 0) || (iback[0] >= 20)) {
+		//          restore the previous iterate.
+		    	 for (i = 0; i < n; i++) {
+		    		 x[i] = t[i];
+		    		 g[i] = r[i];
+		    	 }
+		         f[0] = fold[0];
+		         if (col == 0) {
+		//             abnormal termination.
+		            if (info[0] == 0) {
+		               info[0] = -9;
+		//                restore the actual number of f and g evaluations etc.
+		               nfgv[0] = nfgv[0] - 1;
+		               ifun[0] = ifun[0] - 1;
+		               iback[0] = iback[0] - 1;
+		            } // if (info[0] == 0)
+		            task[0] = "ABNORMAL_TERMINATION_IN_LNSRCH";
+		            iter = iter + 1;
 		            do999 = true;
 		            break loop222;
-		         else
-		c             refresh the lbfgs memory and restart the iteration.
-		            if(iprint .ge. 1) write (6, 1008)
-		            if (info .eq. 0) nfgv = nfgv - 1
-		            info   = 0
-		            col    = 0
-		            head   = 1
-		            theta  = one
-		            iupdat = 0
-		            updatd = .false.
-		            task   = 'RESTART_FROM_LNSRCH'
-		            call timer(cpu2)
-		            lnscht = lnscht + cpu2 - cpu1
+		         }
+		         else { // col != 0
+		//             refresh the lbfgs memory and restart the iteration.
+		            if (iprint >= 1) {
+		            	 System.out.println("Bad direction in the line search.");
+		    		     System.out.println("Refresh the lbfgs memory and restart the iteration.");
+		            }
+		            if (info[0] == 0) nfgv[0] = nfgv[0] - 1;
+		            info[0]   = 0;
+		            col    = 0;
+		            head   = 1;
+		            theta  = one;
+		            iupdat = 0;
+		            updatd = false;
+		            task[0]   = "RESTART_FROM_LNSRCH";
+		            cpu2 = System.currentTimeMillis();
+		            lnscht = lnscht + (cpu2 - cpu1)/1000.0;
 		             do222 = true;
 			         do333 = true;
 			         do444 = true;
@@ -1079,68 +1085,78 @@ public abstract class L_BFGS_B {
 			         do888 = true;
 			         do999 = true;
 			         continue loop222;
-		         endif
-		      else if (task(1:5) .eq. 'FG_LN') then
-		c          return to the driver for calculating f and g; reenter at 666.
+		         } // else col != 0
+		      } // if ((info[0] != 0) || (iback[0] >= 20))
+		      else if (task[0].substring(0,5).equalsIgnoreCase("FG_LN")) {
+		//          return to the driver for calculating f and g; reenter at 666.
 				 do999 = false;
 				 break loop222;
-		      else 
-		c          calculate and print out the quantities related to the new X.
-		         call timer(cpu2) 
-		         lnscht = lnscht + cpu2 - cpu1
-		         iter = iter + 1
+		      }
+		      else {
+		//          calculate and print out the quantities related to the new X.
+		    	 cpu2 = System.currentTimeMillis();
+		         lnscht = lnscht + (cpu2 - cpu1)/1000.0;
+		         iter = iter + 1;
 		 
-		c        Compute the infinity norm of the projected (-)gradient.
+		//        Compute the infinity norm of the projected (-)gradient.
 		 
-		         call projgr(n,l,u,nbd,x,g,sbgnrm)
+		         projgr(n,l,u,nbd,x,g,sbgnrm);
 		 
-		c        Print iteration information.
+		//        Print iteration information.
 
-		         call prn2lb(n,x,f,g,iprint,itfile,iter,nfgv,nact,
-		     +               sbgnrm,nseg,word,iword,iback,stp,xstep)
+		         prn2lb(n,x,f[0],g,iprint,raFile,iter,nfgv[0],nact,
+		                    sbgnrm[0],nseg[0],word,iword[0],iback[0],stp[0],xstep[0]);
 		         do999 = false;
 		         break loop222;
-		      endif
+		      } // else
 		 } // if (do666)
 		 if (do777) {
 
-		c     Test for termination.
+		//     Test for termination.
 
-		      if (sbgnrm .le. pgtol) then
-		c                                terminate the algorithm.
-		         task = 'CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL'
+		      if (sbgnrm[0] <= pgtol) {
+		//                                terminate the algorithm.
+		         task[0] = "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL";
 		         break loop222;
-		      endif 
+		      }
 
-		      ddum = max(abs(fold), abs(f), one)
-		      if ((fold - f) .le. tol*ddum) then
-		c                                        terminate the algorithm.
-		         task = 'CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH'
-		         if (iback .ge. 10) info = -5
-		c           i.e., to issue a warning if iback>10 in the line search.
+		      ddum = Math.max(Math.abs(fold[0]), Math.max(Math.abs(f[0]), one));
+		      if ((fold[0] - f[0]) <= tol*ddum) {
+		//                                        terminate the algorithm.
+		         task[0] = "CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH";
+		         if (iback[0] >= 10) info[0] = -5;
+		//           i.e., to issue a warning if iback>10 in the line search.
 		         break loop222;
-		      endif 
+		      } 
 
-		c     Compute d=newx-oldx, r=newg-oldg, rr=y'y and dr=y's.
+		//     Compute d=newx-oldx, r=newg-oldg, rr=y'y and dr=y's.
 		 
-		      do 42 i = 1, n
-		         r(i) = g(i) - r(i)
-		  42  continue
-		      rr = ddot(n,r,1,r,1)
-		      if (stp .eq. one) then  
-		         dr = gd - gdold
-		         ddum = -gdold
-		      else
-		         dr = (gd - gdold)*stp
-		         call dscal(n,stp,d,1)
-		         ddum = -gdold*stp
-		      endif
+		      for (i = 0; i < n; i++) {
+		         r[i] = g[i] - r[i];
+		      }
+		      rr = 0.0;
+		      for (i = 0; i < n; i++) {
+		    	  rr += r[i]*r[i];
+		      }
+		      if (stp[0] == one) { 
+		         dr = gd[0] - gdold[0];
+		         ddum = -gdold[0];
+		      }
+		      else {
+		         dr = (gd[0] - gdold[0])*stp[0];
+		         for (i = 0; i < n; i++) {
+		        	 d[i] = stp[0]*d[i];
+		         }
+		         ddum = -gdold[0]*stp[0];
+		      }
 		 
 		      if (dr <= epsmch*ddum) {
-		c                            skip the L-BFGS update.
-		         nskip = nskip + 1
-		         updatd = .false.
-		         if (iprint .ge. 1) write (6,1004) dr, ddum
+		//                            skip the L-BFGS update.
+		         nskip = nskip + 1;
+		         updatd = false;
+		         if (iprint >= 1) {
+		        	 System.out.println(" ys = " + dr + " -gs = " + ddum + " BFGS update SKIPPED");
+		         }
 		         do222 = true;
 		         do333 = true;
 		         do444 = true;
@@ -1152,19 +1168,19 @@ public abstract class L_BFGS_B {
 		         continue loop222;
 		      }
 		 
-		cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-		c
-		c     Update the L-BFGS matrix.
-		c
-		cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+		
+		//     Update the L-BFGS matrix.
+		
+		//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 		 
-		      updatd = .true.
-		      iupdat = iupdat + 1
+		      updatd = true;
+		      iupdat = iupdat + 1;
 
-		c     Update matrices WS and WY and form the middle matrix in B.
+		//     Update matrices WS and WY and form the middle matrix in B.
 
-		      call matupd(n,m,ws,wy,sy,ss,d,r,itail,
-		     +            iupdat,col,head,theta,rr,dr,stp,dtd)
+		      matupd(n,m,ws,wy,sy,ss,d,r,itail,
+		             iupdat,col,head,theta,rr,dr,stp,dtd);
 
 		c     Form the upper half of the pds T = theta*SS + L*D^(-1)*L';
 		c        Store T in the upper triangular of the array wt;
@@ -3910,99 +3926,800 @@ public abstract class L_BFGS_B {
 		//     **********
 
 		      int          i;
-		      double       ddot,a1,a2;
+		      double       a1,a2;
 		      final double one = 1.0;
 		      final double zero = 0.0;
 		      final double big = 1.0E10;
 		      final double ftol = 1.0E-3;
 		      final double gtol = 0.9;
 		      final double xtol = 0.1;
-		 /*
-
-		      if (task(1:5) .eq. 'FG_LN') goto 556
-
-		      dtd = ddot(n,d,1,d,1)
-		      dnorm = sqrt(dtd)
-
-		c     Determine the maximum step length.
-
-		      stpmx = big
-		      if (cnstnd) then
-		         if (iter .eq. 0) then
-		            stpmx = one
-		         else
-		            do 43 i = 1, n
-		               a1 = d(i)
-		               if (nbd(i) .ne. 0) then
-		                  if (a1 .lt. zero .and. nbd(i) .le. 2) then
-		                     a2 = l(i) - x(i)
-		                     if (a2 .ge. zero) then
-		                        stpmx = zero
-		                     else if (a1*stpmx .lt. a2) then
-		                        stpmx = a2/a1
-		                     endif
-		                  else if (a1 .gt. zero .and. nbd(i) .ge. 2) then
-		                     a2 = u(i) - x(i)
-		                     if (a2 .le. zero) then
-		                        stpmx = zero
-		                     else if (a1*stpmx .gt. a2) then
-		                        stpmx = a2/a1
-		                     endif
-		                  endif
-		               endif
-		  43        continue
-		         endif
-		      endif
 		 
-		      if (iter .eq. 0 .and. .not. boxed) then
-		         stp = min(one/dnorm, stpmx)
-		      else
-		         stp = one
-		      endif 
 
-		      call dcopy(n,x,1,t,1)
-		      call dcopy(n,g,1,r,1)
-		      fold = f
-		      ifun = 0
-		      iback = 0
-		      csave = 'START'
-		 556  continue
-		      gd = ddot(n,g,1,d,1)
-		      if (ifun .eq. 0) then
-		         gdold=gd
-		         if (gd .ge. zero) then
-		c                               the directional derivative >=0.
-		c                               Line search is impossible.
-		            write(6,*)' ascent direction in projection gd = ', gd
-		            info = -4
-		            return
-		         endif
-		      endif
+		      if (!task[0].substring(0,5).equalsIgnoreCase("FG_LN")) {
 
-		      call dcsrch(f,gd,stp,ftol,gtol,xtol,zero,stpmx,csave,isave,dsave)
+		      dtd[0] = 0.0;
+		      for (i = 0; i < n; i++) {
+		    	  dtd[0] += d[i]*d[i];
+		      }
+		      dnorm[0] = Math.sqrt(dtd[0]);
 
-		      xstep = stp*dnorm
-		      if (csave(1:4) .ne. 'CONV' .and. csave(1:4) .ne. 'WARN') then
-		         task = 'FG_LNSRCH'
-		         ifun = ifun + 1
-		         nfgv = nfgv + 1
-		         iback = ifun - 1 
-		         if (stp .eq. one) then
-		            call dcopy(n,z,1,x,1)
-		         else
-		            do 41 i = 1, n
-		               x(i) = stp*d(i) + t(i)
-		  41        continue
-		         endif
-		      else
-		         task = 'NEW_X'
-		      endif
-		      */
+		//     Determine the maximum step length.
+
+		      stpmx[0] = big;
+		      if (cnstnd) {
+		         if (iter == 0) {
+		            stpmx[0] = one;
+		         }
+		         else { // iter != 0
+		            for (i = 0; i < n; i++) {
+		               a1 = d[i];
+		               if (nbd[i] != 0) {
+		                  if ((a1 < zero) && (nbd[i] <= 2)) {
+		                     a2 = l[i] - x[i];
+		                     if (a2 >= zero) {
+		                        stpmx[0] = zero;
+		                     }
+		                     else if (a1*stpmx[0] < a2) {
+		                        stpmx[0] = a2/a1;
+		                     }
+		                  } // if ((a1 < zero) && (nbd[i] <= 2))
+		                  else if ((a1 > zero) && (nbd[i] >= 2)) {
+		                     a2 = u[i] - x[i];
+		                     if (a2 <= zero) {
+		                        stpmx[0] = zero;
+		                     }
+		                     else if (a1*stpmx[0] > a2) {
+		                        stpmx[0] = a2/a1;
+		                     }
+		                  } // else if ((a1 > zero) && (nbd[i] >= 2)) 
+		               } // if (nbd[i] != 0)
+		            } // for (i = 0; i < n; i++)
+		         } // else iter != 0
+		      } // if (cnstnd)
+		 
+		      if ((iter == 0) && (!boxed)) {
+		         stp[0] = Math.min(one/dnorm[0], stpmx[0]);
+		      }
+		      else {
+		         stp[0] = one;
+		      } 
+
+		      for (i = 0; i < n; i++) {
+		          t[i] = x[i];
+		          r[i] = g[i];
+		      }
+		      fold[0] = f[0];
+		      ifun[0] = 0;
+		      iback[0] = 0;
+		      csave[0] = "START";
+		      } // if (!task[0].substring(0,5).equalsIgnoreCase("FG_LN"))
+		      gd[0] = 0.0;
+		      for (i = 0; i < n; i++) {
+		    	  gd[0] += g[i]*d[i];
+		      }
+		      if (ifun[0] == 0) {
+		         gdold[0]=gd[0];
+		         if (gd[0] >= zero) {
+		//                               the directional derivative >=0.
+		//                               Line search is impossible.
+		            System.out.println("Ascent direction in projection gd[0] = " + gd[0]);
+		            info[0] = -4;
+		            return;
+		         } // if (gd[0] >= zero) 
+		      } // if (ifun[0] == 0)
+
+		      dcsrch(f,gd,stp,ftol,gtol,xtol,zero,stpmx[0],csave,isave,dsave);
+
+		      xstep[0] = stp[0]*dnorm[0];
+		      if ((!csave[0].substring(0,4).equalsIgnoreCase("CONV")) &&(!csave[0].substring(0,4).equalsIgnoreCase("WARN"))) {
+		         task[0] = "FG_LNSRCH";
+		         ifun[0] = ifun[0] + 1;
+		         nfgv[0] = nfgv[0] + 1;
+		         iback[0] = ifun[0] - 1; 
+		         if (stp[0] == one) {
+		        	for (i = 0; i < n; i++) {
+		        		x[i] = z[i];
+		        	}
+		         }
+		         else {
+		            for (i = 0; i < n; i++) {
+		               x[i] = stp[0]*d[i] + t[i];
+		            }
+		         }
+		      } // if ((!csave[0].substring(0,4).equalsIgnoreCase("CONV")) &&(!csave[0].substring(0,4).equalsIgnoreCase("WARN")))
+		      else {
+		         task[0] = "NEW_X";
+		      }
+		      
 
 		      return;
 	}
+     
+     private void dcsrch(double f[], double g[], double stp[], double ftol,
+    		 double gtol, double xtol, double stpmin, double stpmax,
+    	     String task[], int isave[], double dsave[]) {
+    	      // character*(*) task
+    	      // integer isave(2)
+    	      // double precision f,g,stp,ftol,gtol,xtol,stpmin,stpmax
+    	      // double precision dsave(13)
+    	//     **********
+    	
+    	//     Subroutine dcsrch
+    	
+    	//     This subroutine finds a step that satisfies a sufficient
+    	//     decrease condition and a curvature condition.
+    	
+    	//     Each call of the subroutine updates an interval with 
+    	//     endpoints stx and sty. The interval is initially chosen 
+    	//     so that it contains a minimizer of the modified function
+    	
+    	//           psi(stp) = f(stp) - f(0) - ftol*stp*f'(0).
+    	
+    	//     If psi(stp) <= 0 and f'(stp) >= 0 for some step, then the
+    	//     interval is chosen so that it contains a minimizer of f. 
+    	
+    	//     The algorithm is designed to find a step that satisfies 
+    	//     the sufficient decrease condition 
+    	
+    	//           f(stp) <= f(0) + ftol*stp*f'(0),
+    	
+    	//     and the curvature condition
+    	
+    	//           abs(f'(stp)) <= gtol*abs(f'(0)).
+    	
+    	//     If ftol is less than gtol and if, for example, the function
+    	//     is bounded below, then there is always a step which satisfies
+    	//     both conditions. 
+    	
+    	//     If no step can be found that satisfies both conditions, then 
+    	//     the algorithm stops with a warning. In this case stp only 
+    	//     satisfies the sufficient decrease condition.
+    	
+    	//     A typical invocation of dcsrch has the following outline:
+    	
+    	//     task = 'START'
+    	//  10 continue
+    	//        call dcsrch( ... )
+    	//        if (task .eq. 'FG') then
+    	//           Evaluate the function and the gradient at stp 
+    	//           goto 10
+    	//           end if
+    	
+    	//     NOTE: The user must not alter work arrays between calls.
+    	
+    	//     The subroutine statement is
+    	
+    	//        subroutine dcsrch(f,g,stp,ftol,gtol,xtol,stpmin,stpmax,
+    	//                          task,isave,dsave)
+    	//     where
+    	
+    	//       f is a double precision variable.
+    	//         On initial entry f is the value of the function at 0.
+    	//            On subsequent entries f is the value of the 
+    	//            function at stp.
+    	//         On exit f is the value of the function at stp.
+    	
+    	//       g is a double precision variable.
+    	//         On initial entry g is the derivative of the function at 0.
+    	//            On subsequent entries g is the derivative of the 
+    	//            function at stp.
+    	//         On exit g is the derivative of the function at stp.
+    	
+    	//       stp is a double precision variable. 
+    	//         On entry stp is the current estimate of a satisfactory 
+    	//            step. On initial entry, a positive initial estimate 
+    	//            must be provided. 
+    	//         On exit stp is the current estimate of a satisfactory step
+    	//            if task = 'FG'. If task = 'CONV' then stp satisfies
+    	//            the sufficient decrease and curvature condition.
+    	
+    	//       ftol is a double precision variable.
+    	//         On entry ftol specifies a nonnegative tolerance for the 
+    	//            sufficient decrease condition.
+    	//         On exit ftol is unchanged.
+    	
+    	//       gtol is a double precision variable.
+    	//         On entry gtol specifies a nonnegative tolerance for the 
+    	//            curvature condition. 
+    	//         On exit gtol is unchanged.
+    	
+    	//       xtol is a double precision variable.
+    	//         On entry xtol specifies a nonnegative relative tolerance
+    	//            for an acceptable step. The subroutine exits with a
+    	//            warning if the relative difference between sty and stx
+    	//            is less than xtol.
+    	//         On exit xtol is unchanged.
+    	
+    	//       stpmin is a double precision variable.
+    	//         On entry stpmin is a nonnegative lower bound for the step.
+    	//         On exit stpmin is unchanged.
+    	
+    	//       stpmax is a double precision variable.
+    	//         On entry stpmax is a nonnegative upper bound for the step.
+    	//         On exit stpmax is unchanged.
+    	
+    	//       task is a character variable of length at least 60.
+    	//         On initial entry task must be set to 'START'.
+    	//         On exit task indicates the required action:
+    	
+    	//            If task(1:2) = 'FG' then evaluate the function and 
+    	//            derivative at stp and call dcsrch again.
+    	
+    	//            If task(1:4) = 'CONV' then the search is successful.
+    	
+    	//            If task(1:4) = 'WARN' then the subroutine is not able
+    	//            to satisfy the convergence conditions. The exit value of
+    	//            stp contains the best point found during the search.
+    	
+    	//            If task(1:5) = 'ERROR' then there is an error in the
+    	//            input arguments.
+    	
+    	//         On exit with convergence, a warning or an error, the
+    	//            variable task contains additional information.
+    	
+    	//       isave is an integer work array of dimension 2.
+    	         
+    	//       dsave is a double precision work array of dimension 13.
+    	
+    	//     Subprograms called
+    	
+    	//       MINPACK-2 ... dcstep
+    	
+    	//     MINPACK-1 Project. June 1983.
+    	//     Argonne National Laboratory. 
+    	//     Jorge J. More' and David J. Thuente.
+    	
+    	//     MINPACK-2 Project. October 1993.
+    	//     Argonne National Laboratory and University of Minnesota. 
+    	//     Brett M. Averick, Richard G. Carter, and Jorge J. More'. 
+    	
+    	//     **********
+    	      final double zero = 0.0;
+    	      final double p5 = 0.5;
+    	      final double p66 = 0.66;
+    	      final double xtrapl = 1.1;
+    	      final double xtrapu = 4.0;
+
+    	      boolean brackt[] = new boolean[1];
+    	      int stage;
+    	      double finit,ftest,fm,ginit,gtest,
+    	             gm,stmin,stmax,width,width1;
+    	      double stx[] = new double[1];
+    	      double fx[] = new double[1];
+    	      double fxm[] = new double[1];
+    	      double gx[] = new double[1];
+    	      double gxm[] = new double[1];
+    	      double sty[] = new double[1];
+    	      double fy[] = new double[1];
+    	      double fym[] = new double[1];
+    	      double gy[] = new double[1];
+    	      double gym[] = new double[1];
+
+    	//     Initialization block.
+
+    if (task[0].substring(0,5).equalsIgnoreCase("START")) {
+
+    	//        Check the input arguments for errors.
+    	if (stp[0] < stpmin) task[0] = "ERROR: STP .LT. STPMIN";
+        if (stp[0] > stpmax) task[0] = "ERROR: STP .GT. STPMAX";
+        if (g[0] >= zero) task[0] = "ERROR: INITIAL G .GE. ZERO";
+        if (ftol < zero) task[0] = "ERROR: FTOL .LT. ZERO";
+        if (gtol < zero) task[0] = "ERROR: GTOL .LT. ZERO";
+        if (xtol < zero) task[0] = "ERROR: XTOL .LT. ZERO";
+        if (stpmin < zero) task[0] = "ERROR: STPMIN .LT. ZERO";
+        if (stpmax < stpmin) task[0] = "ERROR: STPMAX .LT. STPMIN";
+
+//        Exit if there are errors on input.
+
+        if (task[0].substring(0,5).equals("ERROR")) return;
+
+//        Initialize local variables.
+
+        brackt[0] = false;
+        stage = 1;
+        finit = f[0];
+        ginit = g[0];
+        gtest = ftol*ginit;
+        width = stpmax - stpmin;
+        width1 = width/p5;
+
+//        The variables stx, fx, gx contain the values of the step, 
+//        function, and derivative at the best step. 
+//        The variables sty, fy, gy contain the value of the step, 
+//        function, and derivative at sty.
+//        The variables stp, f, g contain the values of the step, 
+//        function, and derivative at stp.
+
+        stx[0] = zero;
+        fx[0] = finit;
+        gx[0] = ginit;
+        sty[0] = zero;
+        fy[0] = finit;
+        gy[0] = ginit;
+        stmin = zero;
+        stmax = stp[0] + xtrapu*stp[0];
+        task[0] = "FG";
+
+//      Save local variables.
+
+        if (brackt[0]) {
+           isave[0] = 1;
+        }
+        else {
+           isave[0] = 0;
+        }
+        isave[1] = stage;
+        dsave[0] =  ginit;
+        dsave[1] =  gtest;
+        dsave[2] =  gx[0];
+        dsave[3] =  gy[0];
+        dsave[4] =  finit;
+        dsave[5] =  fx[0];
+        dsave[6] =  fy[0];
+        dsave[7] =  stx[0];
+        dsave[8] =  sty[0];
+        dsave[9] = stmin;
+        dsave[10] = stmax;
+        dsave[11] = width;
+        dsave[12] = width1;
+
+        return;
+     } // if (task[0].substring(0,5).equalsIgnoreCase("START"))
+
+     else {
+
+//        Restore local variables.
+
+        if (isave[0] == 1) {
+           brackt[0] = true;
+        }
+        else {
+           brackt[0] = false;
+        }
+        stage = isave[1]; 
+        ginit = dsave[0]; 
+        gtest = dsave[1]; 
+        gx[0] = dsave[2]; 
+        gy[0] = dsave[3]; 
+        finit = dsave[4]; 
+        fx[0] = dsave[5]; 
+        fy[0] = dsave[6]; 
+        stx[0] = dsave[7]; 
+        sty[0] = dsave[8]; 
+        stmin = dsave[9]; 
+        stmax = dsave[10]; 
+        width = dsave[11]; 
+        width1 = dsave[12]; 
+
+     } // else
+
+//     If psi(stp) <= 0 and f'(stp) >= 0 for some step, then the
+//     algorithm enters the second stage.
+
+     ftest = finit + stp[0]*gtest;
+     if ((stage == 1) && (f[0] <= ftest) && (g[0] >= zero)) { 
+       stage = 2;
+     }
+
+//     Test for warnings.
+
+     if (brackt[0] && ((stp[0] <= stmin) || (stp[0] >= stmax))) {
+        task[0] = "WARNING: ROUNDING ERRORS PREVENT PROGRESS";
+     }
+     if (brackt[0] && ((stmax - stmin) <= xtol*stmax)) { 
+        task[0] = "WARNING: XTOL TEST SATISFIED";
+     }
+     if ((stp[0] == stpmax) && ((f[0] <= ftest) && (g[0] <= gtest))) { 
+        task[0] = "WARNING: STP = STPMAX";
+     }
+     if ((stp[0] == stpmin) && ((f[0] > ftest) || (g[0] >= gtest))) { 
+        task[0] = "WARNING: STP = STPMIN";
+     }
+
+//     Test for convergence.
+
+     if ((f[0] <= ftest) && (Math.abs(g[0]) <= gtol*(-ginit))) { 
+        task[0] = "CONVERGENCE";
+     }
+
+//     Test for termination.
+
+     if ((task[0].substring(0,4).equals("WARN")) || (task[0].substring(0,4).equals("CONV"))) {
+//       Save local variables.
+
+         if (brackt[0]) {
+            isave[0] = 1;
+         }
+         else {
+            isave[0] = 0;
+         }
+         isave[1] = stage;
+         dsave[0] =  ginit;
+         dsave[1] =  gtest;
+         dsave[2] =  gx[0];
+         dsave[3] =  gy[0];
+         dsave[4] =  finit;
+         dsave[5] =  fx[0];
+         dsave[6] =  fy[0];
+         dsave[7] =  stx[0];
+         dsave[8] =  sty[0];
+         dsave[9] = stmin;
+         dsave[10] = stmax;
+         dsave[11] = width;
+         dsave[12] = width1;
+
+         return;	 
+     }
+
+//     A modified function is used to predict the step during the
+//     first stage if a lower function value has been obtained but 
+//     the decrease is not sufficient.
+
+     if ((stage == 1) && (f[0] <= fx[0]) && (f[0] > ftest)) {
+
+//        Define the modified function and derivative values.
+
+        fm = f[0] - stp[0]*gtest;
+        fxm[0] = fx[0] - stx[0]*gtest;
+        fym[0] = fy[0] - sty[0]*gtest;
+        gm = g[0] - gtest;
+        gxm[0] = gx[0] - gtest;
+        gym[0] = gy[0] - gtest;
+
+//        Call dcstep to update stx, sty, and to compute the new step.
+
+        dcstep(stx,fxm,gxm,sty,fym,gym,stp,fm,gm,
+               brackt,stmin,stmax);
+
+//        Reset the function and derivative values for f.
+
+        fx[0] = fxm[0] + stx[0]*gtest;
+        fy[0] = fym[0] + sty[0]*gtest;
+        gx[0] = gxm[0] + gtest;
+        gy[0] = gym[0] + gtest;
+     } // if ((stage == 1) && (f[0] <= fx[0]) && (f[0] > ftest))
+
+     else {
+
+//       Call dcstep to update stx, sty, and to compute the new step.
+
+       dcstep(stx,fx,gx,sty,fy,gy,stp,f[0],g[0],
+              brackt,stmin,stmax);
+
+     } // else
+
+//     Decide if a bisection step is needed.
+
+     if (brackt[0]) {
+        if (Math.abs(sty[0]-stx[0]) >= p66*width1) stp[0] = stx[0] + p5*(sty[0] - stx[0]);
+        width1 = width;
+        width = Math.abs(sty[0]-stx[0]);
+     }
+
+//     Set the minimum and maximum steps allowed for stp.
+
+     if (brackt[0]) {
+        stmin = Math.min(stx[0],sty[0]);
+        stmax = Math.max(stx[0],sty[0]);
+     }
+     else {
+        stmin = stp[0] + xtrapl*(stp[0] - stx[0]);
+        stmax = stp[0] + xtrapu*(stp[0] - stx[0]);
+     }
+
+//     Force the step to be within the bounds stpmax and stpmin.
+
+     stp[0] = Math.max(stp[0],stpmin);
+     stp[0] = Math.min(stp[0],stpmax);
+
+//     If further progress is not possible, let stp be the best
+//     point obtained during the search.
+
+     if (brackt[0] && ((stp[0] <= stmin) || (stp[0] >= stmax))
+         || (brackt[0] && ((stmax-stmin) <= xtol*stmax))) stp[0] = stx[0];
+
+//     Obtain another function and derivative.
+      task[0] = "FG";
+
+//     Save local variables.
+
+     if (brackt[0]) {
+        isave[0] = 1;
+     }
+     else {
+        isave[0] = 0;
+     }
+     isave[1] = stage;
+     dsave[0] =  ginit;
+     dsave[1] =  gtest;
+     dsave[2] =  gx[0];
+     dsave[3] =  gy[0];
+     dsave[4] =  finit;
+     dsave[5] =  fx[0];
+     dsave[6] =  fy[0];
+     dsave[7] =  stx[0];
+     dsave[8] =  sty[0];
+     dsave[9] = stmin;
+     dsave[10] = stmax;
+     dsave[11] = width;
+     dsave[12] = width1;
+
+     return;
+    }
+
+     private void dcstep(double stx[],double fx[], double dx[], double sty[],
+    		 double fy[], double dy[], double stp[], double fp, double dp,
+    		 boolean brackt[], double stpmin, double stpmax) {
+    	      // logical brackt
+    	      // double precision stx,fx,dx,sty,fy,dy,stp,fp,dp,stpmin,stpmax
+    	//     **********
+    	
+    	//     Subroutine dcstep
+    	
+    	//     This subroutine computes a safeguarded step for a search
+    	//     procedure and updates an interval that contains a step that
+    	//     satisfies a sufficient decrease and a curvature condition.
+    	
+    	//     The parameter stx contains the step with the least function
+    	//     value. If brackt is set to .true. then a minimizer has
+    	//     been bracketed in an interval with endpoints stx and sty.
+    	//     The parameter stp contains the current step. 
+    	//     The subroutine assumes that if brackt is set to .true. then
+    	
+    	//           min(stx,sty) < stp < max(stx,sty),
+    	
+    	//     and that the derivative at stx is negative in the direction 
+    	//     of the step.
+    	
+    	//     The subroutine statement is
+    	
+    	//       subroutine dcstep(stx,fx,dx,sty,fy,dy,stp,fp,dp,brackt,
+    	//                         stpmin,stpmax)
+    	
+    	//     where
+    	
+    	//       stx is a double precision variable.
+    	//         On entry stx is the best step obtained so far and is an
+    	//            endpoint of the interval that contains the minimizer. 
+    	//         On exit stx is the updated best step.
+    	//
+    	//       fx is a double precision variable.
+    	//         On entry fx is the function at stx.
+    	//         On exit fx is the function at stx.
+    	
+    	//       dx is a double precision variable.
+    	//         On entry dx is the derivative of the function at 
+    	//            stx. The derivative must be negative in the direction of 
+    	//            the step, that is, dx and stp - stx must have opposite 
+    	//            signs.
+    	//         On exit dx is the derivative of the function at stx.
+    	
+    	//       sty is a double precision variable.
+    	//         On entry sty is the second endpoint of the interval that 
+    	//            contains the minimizer.
+    	//         On exit sty is the updated endpoint of the interval that 
+    	//            contains the minimizer.
+    	
+    	//       fy is a double precision variable.
+    	//         On entry fy is the function at sty.
+    	//         On exit fy is the function at sty.
+    	
+    	//       dy is a double precision variable.
+    	//         On entry dy is the derivative of the function at sty.
+    	//         On exit dy is the derivative of the function at the exit sty.
+    	
+    	//       stp is a double precision variable.
+    	//         On entry stp is the current step. If brackt is set to .true.
+    	//            then on input stp must be between stx and sty. 
+    	//         On exit stp is a new trial step.
+    	
+    	//       fp is a double precision variable.
+    	//        On entry fp is the function at stp
+    	//         On exit fp is unchanged.
+    	
+    	//       dp is a double precision variable.
+    	//         On entry dp is the the derivative of the function at stp.
+    	//         On exit dp is unchanged.
+    	
+    	//       brackt is an logical variable.
+    	//         On entry brackt specifies if a minimizer has been bracketed.
+    	//            Initially brackt must be set to .false.
+    	//         On exit brackt specifies if a minimizer has been bracketed.
+    	//            When a minimizer is bracketed brackt is set to .true.
+    	
+    	//       stpmin is a double precision variable.
+    	//         On entry stpmin is a lower bound for the step.
+    	//         On exit stpmin is unchanged.
+    	
+    	//       stpmax is a double precision variable.
+    	//         On entry stpmax is an upper bound for the step.
+    	//         On exit stpmax is unchanged.
+    	
+    	//     MINPACK-1 Project. June 1983
+    	//     Argonne National Laboratory. 
+    	//     Jorge J. More' and David J. Thuente.
+    	
+    	//     MINPACK-2 Project. October 1993.
+    	//     Argonne National Laboratory and University of Minnesota. 
+    	//     Brett M. Averick and Jorge J. More'.
+    	
+    	//     **********
+    	      final double zero = 0.0;
+    	      final double p66 = 0.66;
+    	      final double two = 2.0;
+    	      final double three = 3.0;
+    	   
+    	      double gamma,p,q,r,s,sgnd,stpc,stpf,stpq,theta;
+
+    	      sgnd = dp*(dx[0]/Math.abs(dx[0]));
+
+    	//     First case: A higher function value. The minimum is bracketed. 
+    	//     If the cubic step is closer to stx than the quadratic step, the 
+    	//     cubic step is taken, otherwise the average of the cubic and 
+    	//     quadratic steps is taken.
+
+    	      if (fp > fx[0]) {
+    	         theta = three*(fx[0] - fp)/(stp[0] - stx[0]) + dx[0] + dp;
+    	         s = Math.max(Math.abs(theta),Math.max(Math.abs(dx[0]),Math.abs(dp)));
+    	         gamma = s*Math.sqrt((theta/s)*(theta/s) - (dx[0]/s)*(dp/s));
+    	         if (stp[0] < stx[0]) gamma = -gamma;
+    	         p = (gamma - dx[0]) + theta;
+    	         q = ((gamma - dx[0]) + gamma) + dp;
+    	         r = p/q;
+    	         stpc = stx[0] + r*(stp[0] - stx[0]);
+    	         stpq = stx[0] + ((dx[0]/((fx[0] - fp)/(stp[0] - stx[0]) + dx[0]))/two)*
+    	                                                            (stp[0] - stx[0]);
+    	         if (Math.abs(stpc-stx[0]) < Math.abs(stpq-stx[0])) {
+    	            stpf = stpc;
+    	         }
+    	         else {
+    	            stpf = stpc + (stpq - stpc)/two;
+    	         }
+    	         brackt[0] = true;
+    	      } // if (fp > fx[0])
+
+    	//     Second case: A lower function value and derivatives of opposite 
+    	//     sign. The minimum is bracketed. If the cubic step is farther from 
+    	//     stp than the secant step, the cubic step is taken, otherwise the 
+    	//     secant step is taken.
+
+    	      else if (sgnd < zero) {
+    	         theta = three*(fx[0] - fp)/(stp[0] - stx[0]) + dx[0] + dp;
+    	         s = Math.max(Math.abs(theta),Math.max(Math.abs(dx[0]),Math.abs(dp)));
+    	         gamma = s*Math.sqrt((theta/s)*(theta/s) - (dx[0]/s)*(dp/s));
+    	         if (stp[0] > stx[0]) gamma = -gamma;
+    	         p = (gamma - dp) + theta;
+    	         q = ((gamma - dp) + gamma) + dx[0];
+    	         r = p/q;
+    	         stpc = stp[0] + r*(stx[0] - stp[0]);
+    	         stpq = stp[0] + (dp/(dp - dx[0]))*(stx[0] - stp[0]);
+    	         if (Math.abs(stpc-stp[0]) > Math.abs(stpq-stp[0])) {
+    	            stpf = stpc;
+    	         }
+    	         else {
+    	            stpf = stpq;
+    	         }
+    	         brackt[0] = true;
+    	      } // else if (sgnd < zero)
+
+    	//     Third case: A lower function value, derivatives of the same sign,
+    	//     and the magnitude of the derivative decreases.
+
+    	      else if (Math.abs(dp) < Math.abs(dx[0])) {
+
+    	//        The cubic step is computed only if the cubic tends to infinity 
+    	//        in the direction of the step or if the minimum of the cubic
+    	//        is beyond stp. Otherwise the cubic step is defined to be the 
+    	//        secant step.
+
+    	         theta = three*(fx[0] - fp)/(stp[0] - stx[0]) + dx[0] + dp;
+    	         s = Math.max(Math.abs(theta),Math.max(Math.abs(dx[0]),Math.abs(dp)));
+
+    	//        The case gamma = 0 only arises if the cubic does not tend
+    	//        to infinity in the direction of the step.
+
+    	         gamma = s*Math.sqrt(Math.max(zero,(theta/s)*(theta/s)-(dx[0]/s)*(dp/s)));
+    	         if (stp[0] > stx[0]) gamma = -gamma;
+    	         p = (gamma - dp) + theta;
+    	         q = (gamma + (dx[0] - dp)) + gamma;
+    	         r = p/q;
+    	         if ((r < zero) && (gamma != zero)) {
+    	            stpc = stp[0] + r*(stx[0] - stp[0]);
+    	         }
+    	         else if (stp[0] > stx[0]) {
+    	            stpc = stpmax;
+    	         }
+    	         else {
+    	            stpc = stpmin;
+    	         }
+    	         stpq = stp[0] + (dp/(dp - dx[0]))*(stx[0] - stp[0]);
+
+    	         if (brackt[0]) {
+
+    	//           A minimizer has been bracketed. If the cubic step is 
+    	//           closer to stp than the secant step, the cubic step is 
+    	//           taken, otherwise the secant step is taken.
+
+    	            if (Math.abs(stpc-stp[0]) < Math.abs(stpq-stp[0])) {
+    	               stpf = stpc;
+    	            }
+    	            else {
+    	               stpf = stpq;
+    	            }
+    	            if (stp[0] > stx[0]) {
+    	               stpf = Math.min(stp[0]+p66*(sty[0]-stp[0]),stpf);
+    	            }
+    	            else {
+    	               stpf = Math.max(stp[0]+p66*(sty[0]-stp[0]),stpf);
+    	            }
+    	         } // if (brackt[0])
+    	      
+    	         else { // !brackt[0]
+
+    	//           A minimizer has not been bracketed. If the cubic step is 
+    	//           farther from stp than the secant step, the cubic step is 
+    	//           taken, otherwise the secant step is taken.
+
+    	            if (Math.abs(stpc-stp[0]) > Math.abs(stpq-stp[0])) {
+    	               stpf = stpc;
+    	            }
+    	            else {
+    	               stpf = stpq;
+    	            }
+    	            stpf = Math.min(stpmax,stpf);
+    	            stpf = Math.max(stpmin,stpf);
+    	         } // else !brackt[0]
+    	     } // else if (Math.abs(dp) < Math.abs(dx[0]))
+
+    	//     Fourth case: A lower function value, derivatives of the same sign, 
+    	//     and the magnitude of the derivative does not decrease. If the 
+    	//     minimum is not bracketed, the step is either stpmin or stpmax, 
+    	//     otherwise the cubic step is taken.
+
+    	      else {
+    	         if (brackt[0]) {
+    	            theta = three*(fp - fy[0])/(sty[0] - stp[0]) + dy[0] + dp;
+    	            s = Math.max(Math.abs(theta),Math.max(Math.abs(dy[0]),Math.abs(dp)));
+    	            gamma = s*Math.sqrt((theta/s)*(theta/s) - (dy[0]/s)*(dp/s));
+    	            if (stp[0] > sty[0]) gamma = -gamma;
+    	            p = (gamma - dp) + theta;
+    	            q = ((gamma - dp) + gamma) + dy[0];
+    	            r = p/q;
+    	            stpc = stp[0] + r*(sty[0] - stp[0]);
+    	            stpf = stpc;
+    	         } // if (brackt[0])
+    	         else if (stp[0] > stx[0]) {
+    	            stpf = stpmax;
+    	         }
+    	         else {
+    	            stpf = stpmin;
+    	         }
+    	      } // else
+
+    	//     Update the interval which contains a minimizer.
+
+    	      if (fp > fx[0]) {
+    	         sty[0] = stp[0];
+    	         fy[0] = fp;
+    	         dy[0] = dp;
+    	      } // if (fp > fx[0])
+    	      else {
+    	         if (sgnd < zero) {
+    	            sty[0] = stx[0];
+    	            fy[0]= fx[0];
+    	            dy[0] = dx[0];
+    	         }
+    	         stx[0] = stp[0];
+    	         fx[0] = fp;
+    	         dx[0] = dp;
+    	      }
+
+    	//     Compute the new step.
+
+    	      stp[0] = stpf;
+
+    	      return;
+     }
 
 	
 }
-
-
