@@ -111,6 +111,343 @@ public abstract class L_BFGS_B {
 	
 	private String fileDir;
 	
+	public void driver1() {                                                                                      
+	     //  L-BFGS-B is released under the “New BSD License” (aka “Modified BSD License”        
+	     //  or “3-clause license”)                                                              
+	     //  Please read attached file License.txt                                               
+	                                             
+	     //                             DRIVER 1 in Fortran 77
+	     //     --------------------------------------------------------------
+	     //                SIMPLE DRIVER FOR L-BFGS-B (version 3.0)
+	     //     --------------------------------------------------------------
+	     
+	     //        L-BFGS-B is a code for solving large nonlinear optimization
+	     //             problems with simple bounds on the variables.
+	     
+	     //        The code can also be used for unconstrained problems and is
+	     //        as efficient for these problems as the earlier limited memory
+	     //                          code L-BFGS.
+	     
+	     //        This is the simplest driver in the package. It uses all the
+	     //                    default settings of the code.
+	     
+	     
+	     //     References:
+	     
+	     //        [1] R. H. Byrd, P. Lu, J. Nocedal and C. Zhu, ``A limited
+	     //        memory algorithm for bound constrained optimization'',
+	     //        SIAM J. Scientific Computing 16 (1995), no. 5, pp. 1190--1208.
+	     
+	     //        [2] C. Zhu, R.H. Byrd, P. Lu, J. Nocedal, ``L-BFGS-B: FORTRAN
+	     //        Subroutines for Large Scale Bound Constrained Optimization''
+	     //        Tech. Report, NAM-11, EECS Department, Northwestern University,
+	     //        1994.
+	     
+	     
+	     //          (Postscript files of these papers are available via anonymous
+	     //           ftp to eecs.nwu.edu in the directory pub/lbfgs/lbfgs_bcm.)
+	     
+	     //                              *  *  *
+	     
+	     //         March 2011   (latest revision)
+	     //         Optimization Center at Northwestern University
+	     //         Instituto Tecnologico Autonomo de Mexico
+	     //
+	     //         Jorge Nocedal and Jose Luis Morales, Remark on "Algorithm 778: 
+	     //         L-BFGS-B: Fortran Subroutines for Large-Scale Bound Constrained 
+	     //         Optimization"  (2011). To appear in  ACM Transactions on 
+	     //         Mathematical Software,
+	
+	     //     --------------------------------------------------------------
+	     //             DESCRIPTION OF THE VARIABLES IN L-BFGS-B
+	     //     --------------------------------------------------------------
+	     
+	     //     n is an INTEGER variable that must be set by the user to the
+	     //       number of variables.  It is not altered by the routine.
+	     
+	     //     m is an INTEGER variable that must be set by the user to the
+	     //       number of corrections used in the limited memory matrix.
+	     //       It is not altered by the routine.  Values of m < 3  are
+	     //       not recommended, and large values of m can result in excessive
+	     //       computing time. The range  3 <= m <= 20 is recommended. 
+	     
+	     //     x is a DOUBLE PRECISION array of length n.  On initial entry
+	     //       it must be set by the user to the values of the initial
+	     //       estimate of the solution vector.  Upon successful exit, it
+	     //       contains the values of the variables at the best point
+	     //       found (usually an approximate solution).
+	     
+	     //     l is a DOUBLE PRECISION array of length n that must be set by
+	     //       the user to the values of the lower bounds on the variables. If
+	     //       the i-th variable has no lower bound, l(i) need not be defined.
+	     
+	     //     u is a DOUBLE PRECISION array of length n that must be set by
+	     //       the user to the values of the upper bounds on the variables. If
+	     //       the i-th variable has no upper bound, u(i) need not be defined.
+	     
+	     //     nbd is an INTEGER array of dimension n that must be set by the
+	     //       user to the type of bounds imposed on the variables:
+	     //       nbd(i)=0 if x(i) is unbounded,
+	     //              1 if x(i) has only a lower bound,
+	     //              2 if x(i) has both lower and upper bounds, 
+	     //              3 if x(i) has only an upper bound.
+	     
+	     //     f is a DOUBLE PRECISION variable.  If the routine setulb returns
+	     //       with task(1:2)= 'FG', then f must be set by the user to
+	     //       contain the value of the function at the point x.
+	     
+	     //     g is a DOUBLE PRECISION array of length n.  If the routine setulb
+	     //       returns with taskb(1:2)= 'FG', then g must be set by the user to
+	     //       contain the components of the gradient at the point x.
+	     
+	     //     factr is a DOUBLE PRECISION variable that must be set by the user.
+	     //       It is a tolerance in the termination test for the algorithm.
+	     //       The iteration will stop when
+	     
+	     //        (f^k - f^{k+1})/max{|f^k|,|f^{k+1}|,1} <= factr*epsmch
+	     
+	     //       where epsmch is the machine precision which is automatically
+	     //       generated by the code. Typical values for factr on a computer
+	     //       with 15 digits of accuracy in double precision are:
+	     //       factr=1.d+12 for low accuracy;
+	     //             1.d+7  for moderate accuracy; 
+	     //             1.d+1  for extremely high accuracy.
+	     //       The user can suppress this termination test by setting factr=0.
+	     
+	     //     pgtol is a double precision variable.
+	     //       On entry pgtol >= 0 is specified by the user.  The iteration
+	     //         will stop when
+	     
+	     //                 max{|proj g_i | i = 1, ..., n} <= pgtol
+	     
+	     //         where pg_i is the ith component of the projected gradient.
+	     //       The user can suppress this termination test by setting pgtol=0.
+	     
+	     //     wa is a DOUBLE PRECISION  array of length 
+	     //       (2mmax + 5)nmax + 11mmax^2 + 8mmax used as workspace.
+	     //       This array must not be altered by the user.
+	     
+	     //     iwa is an INTEGER  array of length 3nmax used as
+	     //       workspace. This array must not be altered by the user.
+	     
+	     //     task is a CHARACTER string of length 60.
+	     //       On first entry, it must be set to 'START'.
+	     //       On a return with task(1:2)='FG', the user must evaluate the
+	     //         function f and gradient g at the returned value of x.
+	     //       On a return with task(1:5)='NEW_X', an iteration of the
+	     //         algorithm has concluded, and f and g contain f(x) and g(x)
+	     //         respectively.  The user can decide whether to continue or stop
+	     //         the iteration. 
+	     //       When
+	     //         task(1:4)='CONV', the termination test in L-BFGS-B has been 
+	     //           satisfied;
+	     //         task(1:4)='ABNO', the routine has terminated abnormally
+	     //           without being able to satisfy the termination conditions,
+	     //           x contains the best approximation found,
+	     //           f and g contain f(x) and g(x) respectively;
+	     //         task(1:5)='ERROR', the routine has detected an error in the
+	     //           input parameters;
+	     //       On exit with task = 'CONV', 'ABNO' or 'ERROR', the variable task
+	     //         contains additional information that the user can print.
+	     //       This array should not be altered unless the user wants to
+	     //          stop the run for some reason.  See driver2 or driver3
+	     //          for a detailed explanation on how to stop the run 
+	     //          by assigning task(1:4)='STOP' in the driver.
+	     
+	     //     iprint is an INTEGER variable that must be set by the user.
+	     //       It controls the frequency and type of output generated:
+	     //        iprint<0    no output is generated;
+	     //        iprint=0    print only one line at the last iteration;
+	     //        0<iprint<99 print also f and |proj g| every iprint iterations;
+	     //        iprint=99   print details of every iteration except n-vectors;
+	     //        iprint=100  print also the changes of active set and final x;
+	     //        iprint>100  print details of every iteration including x and g;
+	     //       When iprint > 0, the file iterate.dat will be created to
+	     //                        summarize the iteration.
+	     
+	     //     csave  is a CHARACTER working array of length 60.
+	     
+	     //     lsave is a LOGICAL working array of dimension 4.
+	     //       On exit with task = 'NEW_X', the following information is
+	     //         available:
+	     //       lsave(1) = .true.  the initial x did not satisfy the bounds;
+	     //       lsave(2) = .true.  the problem contains bounds;
+	     //       lsave(3) = .true.  each variable has upper and lower bounds.
+	     
+	     //     isave is an INTEGER working array of dimension 44.
+	     //       On exit with task = 'NEW_X', it contains information that
+	     //       the user may want to access:
+	     //         isave(30) = the current iteration number;
+	     //         isave(34) = the total number of function and gradient
+	     //                         evaluations;
+	     //         isave(36) = the number of function value or gradient
+	     //                                  evaluations in the current iteration;
+	     //         isave(38) = the number of free variables in the current
+	     //                         iteration;
+	     //         isave(39) = the number of active constraints at the current
+	     //                         iteration;
+	     
+	     //         see the subroutine setulb.f for a description of other 
+	     //         information contained in isave
+	     
+	     //     dsave is a DOUBLE PRECISION working array of dimension 29.
+	     //       On exit with task = 'NEW_X', it contains information that
+	     //         the user may want to access:
+	     //         dsave(2) = the value of f at the previous iteration;
+	     //         dsave(5) = the machine precision epsmch generated by the code;
+	     //         dsave(13) = the infinity norm of the projected gradient;
+	     
+	     //         see the subroutine setulb.f for a description of other 
+	     //         information contained in dsave
+	     
+	     //     --------------------------------------------------------------
+	     //           END OF THE DESCRIPTION OF THE VARIABLES IN L-BFGS-B
+	     //     --------------------------------------------------------------
+	
+	     //      program driver
+	      
+	     //     This simple driver demonstrates how to call the L-BFGS-B code to
+	     //       solve a sample problem (the extended Rosenbrock function 
+	     //       subject to bounds on the variables). The dimension n of this
+	     //       problem is variable.
+	      
+	     final int nmax = 1023;
+	     //final int mmax = 17;
+   	 
+	     //        nmax is the dimension of the largest problem to be solved.
+	     //        mmax is the maximum number of limited memory corrections.
+	      
+	     //     Declare the variables needed by the code.
+	     //       A description of all these variables is given at the end of 
+	     //       the driver.
+	      
+	           //character*60     task, csave
+	     String task[] = new String[1];
+	     String csave[] = new String[1];
+	     boolean lsave[] = new boolean[4];
+	     int n, m, iprint;
+	     int nbd[] = new int[nmax];
+	     // int iwa[] = new int[3*nmax];
+	     //isave(44)
+	     int isave[] = new int[23];
+	     double f[] = new double[1];
+	     double factr, pgtol; 
+	     double x[] = new double[nmax];
+	     double l[] = new double[nmax];
+	     double u[] = new double[nmax];
+	     double g[] = new double[nmax]; 
+	     double dsave[] = new double[29]; 
+	     // double wa[] = new double[2*mmax*nmax + 5*nmax + 11*mmax*mmax + 8*mmax]
+	
+	     //     Declare a few additional variables for this sample problem.
+	
+	           double t1, t2;
+	           int i;
+	      
+	     //     We wish to have output at every iteration.
+	
+	           iprint = 1;
+	
+	     //     We specify the tolerances in the stopping criteria.
+	
+	           factr=1.0d+7;
+	           pgtol=1.0d-5;
+	
+	     //     We specify the dimension n of the sample problem and the number
+	     //        m of limited memory corrections stored.  (n and m should not
+	     //        exceed the limits nmax and mmax respectively.)
+	      
+	           n=25;
+	           m=5;
+	      
+	     //     We now provide nbd which defines the bounds on the variables:
+	     //                    l   specifies the lower bounds,
+	     //                    u   specifies the upper bounds. 
+	      
+	     //     First set bounds on the odd-numbered variables.
+	
+	           for (i=1; i <=n; i +=2) {
+	              nbd[i-1]=2;
+	              l[i-1]=1.0;
+	              u[i-1]=1.0E2;
+	           }
+	
+	     //     Next set bounds on the even-numbered variables.
+	
+	           for (i=2; i <= n; i +=2) {
+	              nbd[i-1]=2;
+	              l[i-1]=-1.0E2;
+	              u[i-1]=1.0E2;
+	           }
+	
+	     //     We now define the starting point.
+	
+	           for (i=0; i < n; i++) {
+	              x[i]=3.0;
+	           }
+	      
+	      
+	           System.out.println("Solving sample problem.");
+	           System.out.println("f = 0.0 at the optimal solution.");
+	
+	     //     We start the iteration by initializing task.
+	     
+	           task[0] = "START";
+	           double diff;
+	
+	     //        ------- the beginning of the loop ----------
+	      
+	     do {
+	           
+	     //     This is the call to the L-BFGS-B code.
+	           String fileDir = "C:/L-BFGS-B";
+	           setulb(n,m,x,l,u,nbd,f,g,factr,pgtol,task,iprint,
+	                  csave,lsave,isave,dsave, fileDir);
+	      
+	           if (task[0].substring(0,22).equalsIgnoreCase("FG")) {
+	     //        the minimization routine has returned to request the
+	     //        function f and gradient g values at the current x.
+	
+	     //        Compute function value f for the sample problem.
+	              diff = x[0]-1.0;
+	              f[0]=.25*diff*diff;
+	              for (i=1; i < n; i++) {
+	            	 diff = x[i] - x[i-1]*x[i-1];
+	            	 f[0] = f[0] + diff*diff;
+	              }
+	              f[0]=4.0*f[0];
+	
+	     //        Compute gradient g for the sample problem.
+	
+	              t1=x[1]-x[0]*x[0];
+	              g[0]=2.0*(x[0]-1.0)-1.6E1*x[0]*t1;
+	              for (i=1; i < n-1; i++) {
+	                 t2=t1;
+	                 t1=x[i+1]-x[i]*x[i];
+	                 g[i]=8.0*t2-1.6E1*x[i]*t1;
+	              }
+	              g[n-1]=8.0*t1;
+	
+	     //          go back to the minimization routine.
+	              continue;
+	           } // if (task[0].substring(0,22).equalsIgnoreCase("FG"))
+	     
+	           if (task[0].substring(0,5).equalsIgnoreCase("NEW_X")) continue;
+	     //        the minimization routine has returned with a new iterate,
+	     //         and we have opted to continue the iteration.
+	
+	     //           ---------- the end of the loop -------------
+	      
+	     //     If task is neither FG nor NEW_X we terminate execution.
+	
+	           return;
+	     } while (true);
+	
+	     // ======================= The end of driver1 ============================
+    }
+
+
+	
 	public void setulb(int n, int m, double x[], double l[], double u[], int nbd[], 
 			double f[], double g[], double factr, double pgtol,
 		    String task[], int iprint, String csave[], boolean lsave[], int isave[], 
@@ -580,11 +917,14 @@ public abstract class L_BFGS_B {
 		      //character*3      word
 		      String word[] = new String[1];
 		      int          i,nintol,itfile,nskip,
-		                      head,col,iter,itail,iupdat,
+		                      iter,iupdat,
 		                      nact;
+		      int col[] = new int[1];
+		      int head[] = new int[1];
 		      int iback[] = new int[1];
 		      int ifun[] = new int[1];
 		      int ileave[] = new int[1];
+		      int itail[] = new int[1];
 		      int nenter[] = new int[1];
 		      int info[] = new int[1];
 		      int iword[] = new int[1];
@@ -592,7 +932,7 @@ public abstract class L_BFGS_B {
 		      int nfgv[] = new int[1];
 		      int nfree[] = new int[1];
 		      int nseg[] = new int[1];
-		      double theta,ddot,dr,rr,tol,
+		      double dr,rr,tol,
 		                      ddum,epsmch,
 		                      cachyt,sbtime,lnscht,time2,
 		                      time;
@@ -605,6 +945,7 @@ public abstract class L_BFGS_B {
 		      double sbgnrm[] = new double[1];
 		      double stp[] = new double[1];
 		      double stpmx[] = new double[1];
+		      double theta[] = new double[1];
 		      double xstep[] = new double[1];
 		      long time1;
 		      File file;
@@ -634,13 +975,13 @@ public abstract class L_BFGS_B {
 		//        Initialize counters and scalars when task='START'.
 
 		//           for the limited memory BFGS matrices:
-		         col    = 0;
-		         head   = 1;
-		         theta  = one;
+		         col[0]    = 0;
+		         head[0]   = 1;
+		         theta[0]  = one;
 		         iupdat = 0;
 		         updatd = false;
 		         iback[0]  = 0;
-		         itail  = 0;
+		         itail[0]  = 0;
 		         iword[0]  = 0;
 		         nact   = 0;
 		         ileave[0] = 0;
@@ -730,9 +1071,9 @@ public abstract class L_BFGS_B {
 		    	           itfile = isave[2];
 		    	           iback[0]  = isave[3];
 		    	           nskip  = isave[4];
-		    	           head   = isave[5];
-		    	           col    = isave[6];
-		    	           itail  = isave[7];
+		    	           head[0]   = isave[5];
+		    	           col[0]    = isave[6];
+		    	           itail[0]  = isave[7];
 		    	           iter   = isave[8];
 		    	           iupdat = isave[9];
 		    	           nseg[0]   = isave[11];
@@ -745,7 +1086,7 @@ public abstract class L_BFGS_B {
 		    	           ileave[0] = isave[18];
 		    	           nenter[0] = isave[19];
 
-		    	           theta  = dsave[0];
+		    	           theta[0]  = dsave[0];
 		    	           fold[0]   = dsave[1];
 		    	           tol    = dsave[2];
 		    	           dnorm[0]  = dsave[3];
@@ -841,7 +1182,7 @@ public abstract class L_BFGS_B {
 		// ----------------- the beginning of the loop --------------------------
 		 
 		 //222  continue
-	    /*
+	    
 		if (do222to888) {
 		loop222: do {
 			if (do222) {
@@ -850,7 +1191,7 @@ public abstract class L_BFGS_B {
 		      }
 		      iword[0] = -1;
 		
-		      if ((!cnstnd[0]) && (col > 0)) { 
+		      if ((!cnstnd[0]) && (col[0] > 0)) { 
 		//                                            skip the search for GCP.
 		         for (i = 0; i < n; i++) {
 		        	 z[i] = x[i];
@@ -876,7 +1217,7 @@ public abstract class L_BFGS_B {
 
 		      cpu1 = System.currentTimeMillis(); 
 		      cauchy(n,x,l,u,nbd,g,indx2,iwhere,t,d,z,
-		                 m,wy,ws,sy,wt,theta,col,head,
+		                 m,wy,ws,sy,wt,theta[0],col[0],head[0],
 		                 wa1,wa2,wa3,wa4,nseg,
 		                 iprint, sbgnrm[0], info, epsmch);
 		      if (info[0] != 0) {
@@ -886,9 +1227,9 @@ public abstract class L_BFGS_B {
 				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
 		         }
 		         info[0]   = 0;
-		         col    = 0;
-		         head   = 1;
-		         theta  = one;
+		         col[0]    = 0;
+		         head[0]   = 1;
+		         theta[0]  = one;
 		         iupdat = 0;
 		         updatd = false;
 		         cpu2 = System.currentTimeMillis(); 
@@ -920,7 +1261,7 @@ public abstract class L_BFGS_B {
 		//     If there are no free variables or B=theta*I, then
 		//                                        skip the subspace minimization.
 		 
-		      if ((nfree[0] == 0) || (col == 0)) {
+		      if ((nfree[0] == 0) || (col[0] == 0)) {
 		    	  do444 = false;
 		      }
 		      else {
@@ -940,7 +1281,7 @@ public abstract class L_BFGS_B {
 		//                     [ 0  I]
 
 		      if (wrk[0]) formk(n,nfree[0],index,nenter[0],ileave[0],indx2,iupdat,
-		                        updatd,wn,snd,m,ws,wy,sy,theta,col,head,info);
+		                        updatd,wn,snd,m,ws,wy,sy,theta[0],col[0],head[0],info);
 		      if (info[0] != 0) {
 		//          nonpositive definiteness in Cholesky factorization;
 		//          refresh the lbfgs memory and restart the iteration.
@@ -949,9 +1290,9 @@ public abstract class L_BFGS_B {
 				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
 		         }
 		         info[0]   = 0;
-		         col    = 0;
-		         head   = 1;
-		         theta  = one;
+		         col[0]    = 0;
+		         head[0]   = 1;
+		         theta[0]  = one;
 		         iupdat = 0;
 		         updatd = false;
 		         cpu2 = System.currentTimeMillis(); 
@@ -970,13 +1311,13 @@ public abstract class L_BFGS_B {
 		//        compute r=-Z'B(xcp-xk)-Z'g (using wa(2m+1)=W'(xcp-x)
 		//                                                   from 'cauchy').
 		      cmprlb(n,m,x,g,ws,wy,sy,wt,z,r,wa1,wa2,index,
-		             theta,col,head,nfree[0],cnstnd[0],info);
+		             theta[0],col[0],head[0],nfree[0],cnstnd[0],info);
 		      if (info[0] ==  0) {
 
 			// c-jlm-jn   call the direct method. 
 	
 			      subsm( n, m, nfree[0], index, l, u, nbd, z, r, xp, ws, wy,
-			             theta, x, g, col, head, iword, wa1, wn, iprint, info);
+			             theta[0], x, g, col[0], head[0], iword, wa1, wn, iprint, info);
 		      } // if (info[0] == 0)
 		      } // else
 		 } // if (do333)
@@ -989,9 +1330,9 @@ public abstract class L_BFGS_B {
 				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
 		         }
 		         info[0]   = 0;
-		         col    = 0;
-		         head   = 1;
-		         theta  = one;
+		         col[0]    = 0;
+		         head[0]   = 1;
+		         theta[0]  = one;
 		         iupdat = 0;
 		         updatd = false;
 		         cpu2 = System.currentTimeMillis();
@@ -1046,7 +1387,7 @@ public abstract class L_BFGS_B {
 		    		 g[i] = r[i];
 		    	 }
 		         f[0] = fold[0];
-		         if (col == 0) {
+		         if (col[0] == 0) {
 		//             abnormal termination.
 		            if (info[0] == 0) {
 		               info[0] = -9;
@@ -1068,9 +1409,9 @@ public abstract class L_BFGS_B {
 		            }
 		            if (info[0] == 0) nfgv[0] = nfgv[0] - 1;
 		            info[0]   = 0;
-		            col    = 0;
-		            head   = 1;
-		            theta  = one;
+		            col[0]    = 0;
+		            head[0]   = 1;
+		            theta[0]  = one;
 		            iupdat = 0;
 		            updatd = false;
 		            task[0]   = "RESTART_FROM_LNSRCH";
@@ -1180,25 +1521,28 @@ public abstract class L_BFGS_B {
 		//     Update matrices WS and WY and form the middle matrix in B.
 
 		      matupd(n,m,ws,wy,sy,ss,d,r,itail,
-		             iupdat,col,head,theta,rr,dr,stp,dtd);
+		             iupdat,col,head,theta,rr,dr,stp[0],dtd[0]);
 
-		c     Form the upper half of the pds T = theta*SS + L*D^(-1)*L';
-		c        Store T in the upper triangular of the array wt;
-		c        Cholesky factorize T to J*J' with
-		c           J' stored in the upper triangular of wt.
+		//     Form the upper half of the pds T = theta*SS + L*D^(-1)*L';
+		//        Store T in the upper triangular of the array wt;
+		//        Cholesky factorize T to J*J' with
+		//           J' stored in the upper triangular of wt.
 
-		      call formt(m,wt,sy,ss,col,theta,info)
+		      formt(m,wt,sy,ss,col[0],theta[0],info);
 		 
-		      if (info .ne. 0) then 
-		c          nonpositive definiteness in Cholesky factorization;
-		c          refresh the lbfgs memory and restart the iteration.
-		         if(iprint .ge. 1) write (6, 1007)
-		         info = 0
-		         col = 0
-		         head = 1
-		         theta = one
-		         iupdat = 0
-		         updatd = .false.
+		      if (info[0] != 0) { 
+		//          nonpositive definiteness in Cholesky factorization;
+		//          refresh the lbfgs memory and restart the iteration.
+		         if (iprint >= 1) {
+		        	 System.out.println("Nonpositive definiteness in Cholesky factorization in formt");
+				     System.out.println("Refresh the lbfgs memory and restart the iteration.");
+		         }
+		         info[0] = 0;
+		         col[0] = 0;
+		         head[0] = 1;
+		         theta[0] = one;
+		         iupdat = 0;
+		         updatd = false;
 		         do222 = true;
 		         do333 = true;
 		         do444 = true;
@@ -1208,13 +1552,13 @@ public abstract class L_BFGS_B {
 		         do888 = true;
 		         do999 = true;
 		         continue loop222;
-		      endif
+		      } // if (info[0] != 0)
 		 } // if (do777)
 
-		c     Now the inverse of the middle matrix in B is
+		//     Now the inverse of the middle matrix in B is
 
-		c       [  D^(1/2)      O ] [ -D^(1/2)  D^(-1/2)*L' ]
-		c       [ -L*D^(-1/2)   J ] [  0        J'          ]
+		//       [  D^(1/2)      O ] [ -D^(1/2)  D^(-1/2)*L' ]
+		//       [ -L*D^(-1/2)   J ] [  0        J'          ]
 
 		 if (do888) {
 		 
@@ -1233,77 +1577,58 @@ public abstract class L_BFGS_B {
 		} while (true); // for loop222
 		} // if (do222to888)
 		if (do999) {
-		      call timer(time2)
-		      time = time2 - time1
-		      call prn3lb(n,x,f,task,iprint,info,itfile,
-		     +            iter,nfgv,nintol,nskip,nact,sbgnrm,
-		     +            time,nseg,word,iback,stp,xstep,k,
-		     +            cachyt,sbtime,lnscht)
+			  time2 = System.currentTimeMillis();
+		      time = (time2 - time1)/1000.0;
+		      prn3lb(n,x,f[0],task[0],iprint,info[0],raFile,
+		             iter,nfgv[0],nintol,nskip,nact,sbgnrm[0],
+		             time,nseg[0],word[0],iback[0],stp[0],xstep[0],k[0],
+		             cachyt,sbtime,lnscht);
 		} // if (do999)
 		 // 1000 continue
 
-		c     Save local variables.
+		//     Save local variables.
 
-		      lsave(1)  = prjctd
-		      lsave(2)  = cnstnd
-		      lsave(3)  = boxed
-		      lsave(4)  = updatd
+		      lsave[0]  = prjctd[0];
+		      lsave[1]  = cnstnd[0];
+		      lsave[2]  = boxed[0];
+		      lsave[3]  = updatd;
 
-		      isave(1)  = nintol 
-		      isave(3)  = itfile 
-		      isave(4)  = iback 
-		      isave(5)  = nskip 
-		      isave(6)  = head 
-		      isave(7)  = col 
-		      isave(8)  = itail 
-		      isave(9)  = iter 
-		      isave(10) = iupdat 
-		      isave(12) = nseg
-		      isave(13) = nfgv 
-		      isave(14) = info 
-		      isave(15) = ifun 
-		      isave(16) = iword 
-		      isave(17) = nfree 
-		      isave(18) = nact 
-		      isave(19) = ileave 
-		      isave(20) = nenter 
+		      isave[0]  = nintol; 
+		      isave[2]  = itfile; 
+		      isave[3]  = iback[0]; 
+		      isave[4]  = nskip; 
+		      isave[5]  = head[0]; 
+		      isave[6]  = col[0]; 
+		      isave[7]  = itail[0]; 
+		      isave[8]  = iter; 
+		      isave[9] = iupdat; 
+		      isave[11] = nseg[0];
+		      isave[12] = nfgv[0]; 
+		      isave[13] = info[0]; 
+		      isave[14] = ifun[0]; 
+		      isave[15] = iword[0]; 
+		      isave[16] = nfree[0]; 
+		      isave[17] = nact; 
+		      isave[18] = ileave[0]; 
+		      isave[19] = nenter[0]; 
 
-		      dsave(1)  = theta 
-		      dsave(2)  = fold 
-		      dsave(3)  = tol 
-		      dsave(4)  = dnorm 
-		      dsave(5)  = epsmch 
-		      dsave(6)  = cpu1 
-		      dsave(7)  = cachyt 
-		      dsave(8)  = sbtime 
-		      dsave(9)  = lnscht 
-		      dsave(10) = time1 
-		      dsave(11) = gd 
-		      dsave(12) = stpmx 
-		      dsave(13) = sbgnrm
-		      dsave(14) = stp
-		      dsave(15) = gdold
-		      dsave(16) = dtd  
-
-		 1001 format (//,'ITERATION ',i5)
-		 1002 format
-		     +  (/,'At iterate',i5,4x,'f= ',1p,d12.5,4x,'|proj g|= ',1p,d12.5)
-		 1003 format (2(1x,i4),5x,'-',5x,'-',3x,'-',5x,'-',5x,'-',8x,'-',3x,
-		     +        1p,2(1x,d10.3))
-		 1004 format ('  ys=',1p,e10.3,'  -gs=',1p,e10.3,' BFGS update SKIPPED')
-		 1005 format (/, 
-		     +' Singular triangular system detected;',/,
-		     +'   refresh the lbfgs memory and restart the iteration.')
-		 1006 format (/, 
-		     +' Nonpositive definiteness in Cholesky factorization in formk;',/,
-		     +'   refresh the lbfgs memory and restart the iteration.')
-		 1007 format (/, 
-		     +' Nonpositive definiteness in Cholesky factorization in formt;',/,
-		     +'   refresh the lbfgs memory and restart the iteration.')
-		 1008 format (/, 
-		     +' Bad direction in the line search;',/,
-		     +'   refresh the lbfgs memory and restart the iteration.')
-		     */
+		      dsave[0]  = theta[0]; 
+		      dsave[1]  = fold[0]; 
+		      dsave[2]  = tol; 
+		      dsave[3]  = dnorm[0]; 
+		      dsave[4]  = epsmch; 
+		      dsave[5]  = (double)cpu1; 
+		      dsave[6]  = cachyt; 
+		      dsave[7]  = sbtime; 
+		      dsave[8]  = lnscht; 
+		      dsave[9] = (double)time1; 
+		      dsave[10] = gd[0]; 
+		      dsave[11] = stpmx[0]; 
+		      dsave[12] = sbgnrm[0];
+		      dsave[13] = stp[0];
+		      dsave[14] = gdold[0];
+		      dsave[15] = dtd[0];  
+		     
 		      return;   
 
 		   
@@ -1358,7 +1683,6 @@ public abstract class L_BFGS_B {
 	//     ************
 	
 	    int          i;
-	    final double one = 1.0;
 	    final double zero = 0.0;
 	
 	//     Check the input arguments for errors.
@@ -3148,7 +3472,6 @@ public abstract class L_BFGS_B {
 		      double temp1,temp2,temp3,temp4;
 		      double b[] = new double[col];
 		      double a[][] = new double[2*m-col][2*m-col];
-		      final double one = 1.0;
 		      final double zero = 0.0;
 		      double sum;
 
@@ -4721,5 +5044,165 @@ public abstract class L_BFGS_B {
     	      return;
      }
 
+     private void formt(int m, double wt[][], double sy[][], double ss[][], 
+    		 int col, double theta, int info[]) {
+     
+	     // integer          m, col, info
+	     // double precision theta, wt(m, m), sy(m, m), ss(m, m)
+	
+	//     ************
+	
+	//     Subroutine formt
+	
+	//       This subroutine forms the upper half of the pos. def. and symm.
+	//         T = theta*SS + L*D^(-1)*L', stores T in the upper triangle
+	//         of the array wt, and performs the Cholesky factorization of T
+	//         to produce J*J', with J' stored in the upper triangle of wt.
+	
+	//     Subprograms called:
+	
+	//       Linpack ... dpofa.
+	
+	
+	//                           *  *  *
+	
+	//     NEOS, November 1994. (Latest revision June 1996.)
+	//     Optimization Technology Center.
+	//     Argonne National Laboratory and Northwestern University.
+	//     Written by
+	//                        Ciyou Zhu
+	//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+	
+	
+	//     ************
+	
+	     int          i,j,k,k1;
+	     double ddum;
+	     final double zero = 0.0;
+	
+	
+	//     Form the upper half of  T = theta*SS + L*D^(-1)*L',
+	//        store T in the upper triangle of the array wt.
+	
+	     for (j = 0; j < col; j++) {
+	        wt[0][j] = theta*ss[0][j];
+	     }
+	     for (i = 2; i <= col; i++) {
+	        for (j = i; j <= col; j++) {
+	           k1 = Math.min(i,j) - 1;
+	           ddum  = zero;
+	           for (k = 1; k <= k1; k++) {
+	              ddum  = ddum + sy[i-1][k-1]*sy[j-1][k-1]/sy[k-1][k-1];
+	           }
+	           wt[i-1][j-1] = ddum + theta*ss[i-1][j-1];
+	        } // for (j = i; j <= col; j++)
+	     } // for (i = 2; i <= col; i++)
+	
+	//     Cholesky factorize T to J*J' with 
+	//        J' stored in the upper triangle of wt.
+	
+	     dpofa(wt,m,col,info);
+	     if (info[0] != 0) {
+	        info[0] = -3;
+	     }
+	
+	     return;
+     }
+     
+     private void matupd(int n, int m, double ws[][], double wy[][], double sy[][], 
+    		 double ss[][], double d[], double r[], int itail[], 
+    	     int iupdat, int col[], int head[], double theta[], double rr, 
+    	     double dr, double stp, double dtd) {
+    	 
+    	      // integer          n, m, itail, iupdat, col, head
+    	      // double precision theta, rr, dr, stp, dtd, d(n), r(n), 
+    	     //                 ws(n, m), wy(n, m), sy(m, m), ss(m, m)
+
+    	//     ************
+    	
+    	//     Subroutine matupd
+    	
+    	//       This subroutine updates matrices WS and WY, and forms the
+    	//         middle matrix in B.
+    	
+    	//     Subprograms called:
+    	
+    	//       Linpack ... dcopy, ddot.
+    	
+    	
+    	//                           *  *  *
+    	
+    	//     NEOS, November 1994. (Latest revision June 1996.)
+    	//     Optimization Technology Center.
+    	//     Argonne National Laboratory and Northwestern University.
+    	//     Written by
+    	//                        Ciyou Zhu
+    	//     in collaboration with R.H. Byrd, P. Lu-Chen and J. Nocedal.
+    	
+    	
+    	//     ************
+    	 
+    	      int          i,j,pointr;
+    	      final double one = 1.0;
+
+    	//     Set pointers for matrices WS and WY.
+    	 
+    	      if (iupdat <= m) {
+    	         col[0] = iupdat;
+    	         itail[0] = ((head[0]+iupdat-2)%m) + 1;
+    	      }
+    	      else {
+    	         itail[0] = (itail[0]%m) + 1;
+    	         head[0] = (head[0]%m) + 1;
+    	      }
+    	 
+    	//     Update matrices WS and WY.
+
+    	      for (j = 0; j < n; j++) {
+    	    	  ws[j][itail[0]-1] = d[j];
+    	    	  wy[j][itail[0]-1] = r[j];
+    	      }
+    	 
+    	//     Set theta=yy/ys.
+    	 
+    	      theta[0] = rr/dr;
+    	 
+    	//     Form the middle matrix in B.
+    	 
+    	//        update the upper triangle of SS,
+    	//                                         and the lower triangle of SY:
+    	      if (iupdat > m) {
+    	//                              move old information
+    	         for (j = 1; j <= col[0] - 1; j++) {
+    	        	for (i = 0; i < j; i++) {
+    	        		ss[i][j-1] = ss[i+1][j];
+    	        	}
+    	            for (i = 0; i < col[0]-j; i++) {
+    	            	sy[j-1+i][j-1] = sy[j+i][j];
+    	            }
+    	         } // for (j = 1; j <= col[0] - 1; j++)
+    	      } // if (iupdat > m)
+    	//        add new information: the last row of SY
+    	//                                             and the last column of SS:
+    	      pointr = head[0];
+    	      for (j = 1; j <= col[0] - 1; j++) {
+    	    	 sy[col[0]-1][j-1] = 0.0;
+    	    	 ss[j-1][col[0]-1] = 0.0;
+    	    	 for (i = 0; i < n; i++) {
+    	    		 sy[col[0]-1][j-1] += d[i]*wy[i][pointr-1];
+    	    		 ss[j-1][col[0]-1] += ws[i][pointr-1]*d[i];
+    	    	 }
+    	         pointr = (pointr%m) + 1;
+    	      } // for (j = 1; j <= col[0] - 1; j++)
+    	      if (stp == one) {
+    	         ss[col[0]-1][col[0]-1] = dtd;
+    	      }
+    	      else {
+    	         ss[col[0]-1][col[0]-1] = stp*stp*dtd;
+    	      }
+    	      sy[col[0]-1][col[0]-1] = dr;
+    	 
+    	      return;
+     }
 	
 }
