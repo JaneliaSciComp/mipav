@@ -2131,7 +2131,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             	if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                     if (fileInfo.getResolutions().length >= 3) {
-                        stats.volume = stats.area * fileInfo.getResolutions()[2]; 
+                    	stats.volume = 0;
+                    	int sliceSize = xDim*yDim;
+                    	int numInSlice;
+                    	for (z = 0; z < zDim; z++) {
+                    	    numInSlice = 0;
+                    	    for (int i = 0; i < sliceSize; i++) {
+                    	    	int index = z*sliceSize + i;
+                    	    	if (mask.get(index)) {
+                    	    		numInSlice++;
+                    	    	}
+                    	    } // for (int i = 0; i < sliceSize; i++)
+                    	    stats.volume += (numInSlice* resolutions[z][2]);
+                    	} // for (z = 0; z < zDim; z++)
+                        stats.volume =stats.volume * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                     }
                     else {
                     	stats.volume = stats.area;
@@ -2472,7 +2485,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             	if (orientation == VOIBase.ZPLANE) {
                     stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                     if (fileInfo.getResolutions().length >= 3) {
-                        stats.volume = stats.area * fileInfo.getResolutions()[2];
+                    	stats.volume = 0;
+                    	int sliceSize = xDim*yDim;
+                    	int numInSlice;
+                    	for (z = 0; z < zDim; z++) {
+                    	    numInSlice = 0;
+                    	    for (int i = 0; i < sliceSize; i++) {
+                    	    	int index = z*sliceSize + i;
+                    	    	if (mask.get(index)) {
+                    	    		numInSlice++;
+                    	    	}
+                    	    } // for (int i = 0; i < sliceSize; i++)
+                    	    stats.volume += (numInSlice* resolutions[z][2]);
+                    	} // for (z = 0; z < zDim; z++)
+                        stats.volume =stats.volume * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                     }
                     else {
                     	stats.volume = stats.area;
