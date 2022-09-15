@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -103,13 +104,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-public abstract class L_BFGS_B {
+public class L_BFGS_B {
 	
 	public L_BFGS_B() {
 		
 	}
-	
-	private String fileDir;
+	private RandomAccessFile raFile;
+	private double wa1[];
+	private double wa2[];
+	private double wa3[];
+	private double wa4[];
 	
 	public void driver1() {                                                                                      
 	     //  L-BFGS-B is released under the “New BSD License” (aka “Modified BSD License”        
@@ -337,6 +341,7 @@ public abstract class L_BFGS_B {
 	     double u[] = new double[nmax];
 	     double g[] = new double[nmax]; 
 	     double dsave[] = new double[29]; 
+	     RandomAccessFile raFileSave;
 	     // double wa[] = new double[2*mmax*nmax + 5*nmax + 11*mmax*mmax + 8*mmax]
 	
 	     //     Declare a few additional variables for this sample problem.
@@ -400,11 +405,36 @@ public abstract class L_BFGS_B {
 	     do {
 	           
 	     //     This is the call to the L-BFGS-B code.
-	           String fileDir = "C:/L-BFGS-B";
+	           String fileDir = "C:/L-BFGS-B/";
+	           raFile = null;
+	           if (iprint >= 1) {
+	       		//                                open a summary file 'iterate.dat'
+	            File file = new File(fileDir + "iterate.data");
+	            try {
+	                raFile = new RandomAccessFile(file, "rw");
+	            }
+	            catch (FileNotFoundException e) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) FileNotException " + e);
+	            	System.exit(-1);
+	            }
+	            catch (SecurityException e2) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) SecurityException " + e2);
+	            	System.exit(-1);	
+	            }
+	            // Necessary so that if this is an overwritten file there isn't any
+	            // junk at the end
+	            try {
+	                raFile.setLength(0);
+	            }
+	            catch (IOException e) {
+	            	System.err.println("At raFile.setLength(0) IOException " + e);
+	            	System.exit(-1);	
+	            }
+	         } // if (iprint >= 1)         
 	           setulb(n,m,x,l,u,nbd,f,g,factr,pgtol,task,iprint,
-	                  csave,lsave,isave,dsave, fileDir);
+	                  csave,lsave,isave, dsave, raFile);
 	      
-	           if (task[0].substring(0,22).equalsIgnoreCase("FG")) {
+	           if (task[0].substring(0,2).equalsIgnoreCase("FG")) {
 	     //        the minimization routine has returned to request the
 	     //        function f and gradient g values at the current x.
 	
@@ -430,7 +460,7 @@ public abstract class L_BFGS_B {
 	
 	     //          go back to the minimization routine.
 	              continue;
-	           } // if (task[0].substring(0,22).equalsIgnoreCase("FG"))
+	           } // if (task[0].substring(0,2).equalsIgnoreCase("FG"))
 	     
 	           if (task[0].substring(0,5).equalsIgnoreCase("NEW_X")) continue;
 	     //        the minimization routine has returned with a new iterate,
@@ -445,14 +475,644 @@ public abstract class L_BFGS_B {
 	
 	     // ======================= The end of driver1 ============================
     }
+	
+	public void driver2() {
+		//                             DRIVER 2 in Fortran 77
+		//     --------------------------------------------------------------
+		//              CUSTOMIZED DRIVER FOR L-BFGS-B (version 3.0)
+		//     --------------------------------------------------------------
+		
+		//        L-BFGS-B is a code for solving large nonlinear optimization
+		//             problems with simple bounds on the variables.
+		
+		//        The code can also be used for unconstrained problems and is
+		//        as efficient for these problems as the earlier limited memory
+		//                          code L-BFGS.
+		
+		//        This driver illustrates how to control the termination of the
+		//        run and how to design customized output.
+		
+		//     References:
+		
+		//        [1] R. H. Byrd, P. Lu, J. Nocedal and C. Zhu, ``A limited
+		//        memory algorithm for bound constrained optimization'',
+		//        SIAM J. Scientific Computing 16 (1995), no. 5, pp. 1190--1208.
+		
+		//        [2] C. Zhu, R.H. Byrd, P. Lu, J. Nocedal, ``L-BFGS-B: FORTRAN
+		//        Subroutines for Large Scale Bound Constrained Optimization''
+		//        Tech. Report, NAM-11, EECS Department, Northwestern University,
+		//        1994.
+		
+		
+		//          (Postscript files of these papers are available via anonymous
+		//           ftp to eecs.nwu.edu in the directory pub/lbfgs/lbfgs_bcm.)
+		
+		//                              *  *  *
+		
+		//         February 2011   (latest revision)
+		//         Optimization Center at Northwestern University
+		//         Instituto Tecnologico Autonomo de Mexico
+		
+		//         Jorge Nocedal and Jose Luis Morales
+		//         Jorge Nocedal and Jose Luis Morales, Remark on "Algorithm 778: 
+		//         L-BFGS-B: Fortran Subroutines for Large-Scale Bound Constrained 
+		//         Optimization"  (2011). To appear in  ACM Transactions on 
+		//         Mathematical Software,
+		
+		//     **************
 
+		//      program driver
+		 
+		//     This driver shows how to replace the default stopping test
+		//       by other termination criteria. It also illustrates how to
+		//       print the values of several parameters during the course of
+		//       the iteration. The sample problem used here is the same as in 
+		//       DRIVER1 (the extended Rosenbrock function with bounds on the 
+		//       variables).
+		 
+		final int nmax = 1024;
+		final int mmax = 17;
+	
+		//        nmax is the dimension of the largest problem to be solved.
+		//        mmax is the maximum number of limited memory corrections.
+		 
+		//     Declare the variables needed by the code.
+		//       A description of all these variables is given at the end of 
+		//       driver1.
+		      
+		 //character*60     task, csave
+	     String task[] = new String[1];
+	     String csave[] = new String[1];
+	     boolean lsave[] = new boolean[4];
+	     int n, m, iprint;
+	     int nbd[] = new int[nmax];
+	     // int iwa[] = new int[3*nmax];
+	     //isave(44)
+	     int isave[] = new int[23];
+	     double f[] = new double[1];
+	     double factr, pgtol; 
+	     double x[] = new double[nmax];
+	     double l[] = new double[nmax];
+	     double u[] = new double[nmax];
+	     double g[] = new double[nmax]; 
+	     double dsave[] = new double[29]; 
+	     // double wa[] = new double[2*mmax*nmax + 5*nmax + 11*mmax*mmax + 8*mmax]
 
+		//     Declare a few additional variables for the sample problem.
+
+		      double t1, t2;
+		      int   i;
+		 
+		//     We suppress the default output.
+
+		      iprint = -1;
+
+		//     We suppress both code-supplied stopping tests because the
+		//        user is providing his own stopping criteria.
+
+		      factr=0.0;
+		      pgtol=0.0;
+
+		//     We specify the dimension n of the sample problem and the number
+		//        m of limited memory corrections stored.  (n and m should not
+		//        exceed the limits nmax and mmax respectively.)
+		 
+		      n=25;
+		      m=5;
+		 
+		//     We now specify nbd which defines the bounds on the variables:
+		//                    l   specifies the lower bounds,
+		//                    u   specifies the upper bounds. 
+		 
+		//     First set bounds on the odd numbered variables.
+		      for (i=1; i <=n; i +=2) {
+	              nbd[i-1]=2;
+	              l[i-1]=1.0;
+	              u[i-1]=1.0E2;
+	           }
+
+		//     Next set bounds on the even numbered variables.
+
+		      for (i=2; i <= n; i +=2) {
+	              nbd[i-1]=2;
+	              l[i-1]=-1.0E2;
+	              u[i-1]=1.0E2;
+	           }
+
+		//     We now define the starting point.
+
+		      for (i = 0; i < n; i++) {
+		         x[i] = 3.0;
+		      }
+		 
+		//     We now write the heading of the output.
+
+		      System.out.println("Solving sample problem.");
+	           System.out.println("f = 0.0 at the optimal solution.");
+	
+	     //     We start the iteration by initializing task.
+	     
+	           task[0] = "START";
+	           double diff;
+
+		//        ------- the beginning of the loop ----------
+		 
+		 do {
+		      
+		//     This is the call to the L-BFGS-B code.
+			 String fileDir = "C:/L-BFGS-B/";
+			 raFile = null;
+	           if (iprint >= 1) {
+	       		//                                open a summary file 'iterate.dat'
+	            File file = new File(fileDir + "iterate.data");
+	            try {
+	                raFile = new RandomAccessFile(file, "rw");
+	            }
+	            catch (FileNotFoundException e) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) FileNotException " + e);
+	            	System.exit(-1);
+	            }
+	            catch (SecurityException e2) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) SecurityException " + e2);
+	            	System.exit(-1);	
+	            }
+	            // Necessary so that if this is an overwritten file there isn't any
+	            // junk at the end
+	            try {
+	                raFile.setLength(0);
+	            }
+	            catch (IOException e) {
+	            	System.err.println("At raFile.setLength(0) IOException " + e);
+	            	System.exit(-1);	
+	            }
+	         } // if (iprint >= 1)   
+	         setulb(n,m,x,l,u,nbd,f,g,factr,pgtol,task,iprint,
+	                csave,lsave,isave,dsave, raFile);
+		 
+		 
+	         if (task[0].substring(0,2).equalsIgnoreCase("FG")) {
+		//        the minimization routine has returned to request the
+		//        function f and gradient g values at the current x.
+
+		//        Compute function value f for the sample problem.
+
+	        	  diff = x[0]-1.0;
+	              f[0]=.25*diff*diff;
+	              for (i=1; i < n; i++) {
+	            	 diff = x[i] - x[i-1]*x[i-1];
+	            	 f[0] = f[0] + diff*diff;
+	              }
+	              f[0]=4.0*f[0];
+
+		//        Compute gradient g for the sample problem.
+
+	              t1=x[1]-x[0]*x[0];
+	              g[0]=2.0*(x[0]-1.0)-1.6E1*x[0]*t1;
+	              for (i=1; i < n-1; i++) {
+	                 t2=t1;
+	                 t1=x[i+1]-x[i]*x[i];
+	                 g[i]=8.0*t2-1.6E1*x[i]*t1;
+	              }
+	              g[n-1]=8.0*t1;
+
+		//          go back to the minimization routine.
+		         continue;
+	         } // if (task[0].substring(0,2).equalsIgnoreCase("FG"))
+		
+	         if (task[0].substring(0,5).equalsIgnoreCase("NEW_X")) {   
+		     
+		//        the minimization routine has returned with a new iterate.
+		//        At this point have the opportunity of stopping the iteration 
+		//        or observing the values of certain parameters
+		
+		//        First are two examples of stopping tests.
+
+		//        Note: task(1:4) must be assigned the value 'STOP' to terminate  
+		//          the iteration and ensure that the final results are
+		//          printed in the default format. The rest of the character
+		//          string TASK may be used to store other information.
+
+		//        1) Terminate if the total number of f and g evaluations
+		//             exceeds 99.
+
+		         if (isave[12] >= 99) {
+		             task[0] = "STOP: TOTAL NO. of f AND g EVALUATIONS EXCEEDS LIMIT";
+		         }
+
+		//        2) Terminate if  |proj g|/(1+|f|) < 1.0d-10, where 
+		//           "proj g" denoted the projected gradient
+
+		         if (dsave[12] <= 1.0E-10*(1.0 + Math.abs(f[0]))) {
+		             task[0] = "STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL";
+		         }
+
+		//        We now wish to print the following information at each
+		//        iteration:
+		        
+		//          1) the current iteration number, isave(30),
+		//          2) the total number of f and g evaluations, isave(34),
+		//          3) the value of the objective function f,
+		//          4) the norm of the projected gradient,  dsve(13)
+		
+		//        See the comments at the end of driver1 for a description
+		//        of the variables isave and dsave.
+		         
+		         System.out.println("Current iteration number = " + isave[8]);
+		         System.out.println("Total number of f and g evaluations = " + isave[12]);
+		         System.out.println("Value of the objective function f = " + f[0]);
+		         System.out.println("Norm of the projected gradient = " + dsave[12]);
+
+		//        If the run is to be terminated, we print also the information
+		//        contained in task as well as the final value of x.
+
+		         if (task[0].substring(0,4).equals("STOP")) {
+		            System.out.println("task[0] = " + task[0]);
+		            System.out.print("Final X = ");
+		        	int mul6 = 6;
+		        	for (i = 0; i < Math.min(n, mul6); i++) {
+		        		System.out.print("    " + x[i]);
+		        	}
+		        	System.out.print("\n");
+		        	mul6 += 6;
+		            while (i < n) {
+		            	System.out.print("    ");
+		            	for (; i < Math.min(n, mul6); i++) {
+			        		System.out.print("    " + x[i]);
+			        	}
+		            	System.out.print("\n");
+			        	mul6 += 6;
+		            }
+		         } // if (task[0].substring(0,4).equals("STOP"))
+
+		//          go back to the minimization routine.
+		         continue;
+
+	         } // if (task[0].substring(0,5).equalsIgnoreCase("NEW_X"))
+
+		//           ---------- the end of the loop -------------
+		 
+		//     If task is neither FG nor NEW_X we terminate execution.
+
+		      return;
+		 } while (true);
+
+		// ======================= The end of driver2 ============================
+	}
+
+    public void driver3() {
+    	//                             DRIVER 3 in Fortran 77
+    	//     --------------------------------------------------------------
+    	//            TIME-CONTROLLED DRIVER FOR L-BFGS-B (version 3.0)
+    	//     --------------------------------------------------------------
+    	
+    	//        L-BFGS-B is a code for solving large nonlinear optimization
+    	//             problems with simple bounds on the variables.
+    	
+    	//        The code can also be used for unconstrained problems and is
+    	//        as efficient for these problems as the earlier limited memory
+    	//                          code L-BFGS.
+    	
+    	//        This driver shows how to terminate a run after some prescribed
+    	//        CPU time has elapsed, and how to print the desired information 
+    	//        before exiting.
+    	
+    	//     References:
+    	
+    	//        [1] R. H. Byrd, P. Lu, J. Nocedal and C. Zhu, ``A limited
+    	//        memory algorithm for bound constrained optimization'',
+    	//        SIAM J. Scientific Computing 16 (1995), no. 5, pp. 1190--1208.
+    	
+    	//        [2] C. Zhu, R.H. Byrd, P. Lu, J. Nocedal, ``L-BFGS-B: FORTRAN
+    	//        Subroutines for Large Scale Bound Constrained Optimization''
+    	//        Tech. Report, NAM-11, EECS Department, Northwestern University,
+    	//        1994.
+    	
+    	
+    	//          (Postscript files of these papers are available via anonymous
+    	//           ftp to eecs.nwu.edu in the directory pub/lbfgs/lbfgs_bcm.)
+    	
+    	//                              *  *  *
+    	
+    	//         February 2011   (latest revision)
+    	//         Optimization Center at Northwestern University
+    	//         Instituto Tecnologico Autonomo de Mexico
+    	
+    	//         Jorge Nocedal and Jose Luis Morales, Remark on "Algorithm 778: 
+    	//         L-BFGS-B: Fortran Subroutines for Large-Scale Bound Constrained 
+    	//         Optimization"  (2011). To appear in  ACM Transactions on 
+    	//         Mathematical Software,
+    	
+    	
+    	//     **************
+
+    	//      program driver
+    	 
+    	//     This time-controlled driver shows that it is possible to terminate
+    	//     a run by elapsed CPU time, and yet be able to print all desired
+    	//     information. This driver also illustrates the use of two
+    	//     stopping criteria that may be used in conjunction with a limit
+    	//     on execution time. The sample problem used here is the same as in 
+    	//     driver1 and driver2 (the extended Rosenbrock function with bounds 
+    	//     on the variables).
+    	 
+    	      final int nmax = 1024;
+    	      final int mmax = 17;
+    	     
+    	//        nmax is the dimension of the largest problem to be solved.
+    	//        mmax is the maximum number of limited memory corrections.
+    	 
+    	//     Declare the variables needed by the code.
+    	//       A description of all these variables is given at the end of 
+    	//       driver1.
+    	 
+    	         //character*60     task, csave
+    		     String task[] = new String[1];
+    		     String csave[] = new String[1];
+    		     boolean lsave[] = new boolean[4];
+    		     int n, m, iprint;
+    		     int nbd[] = new int[nmax];
+    		     // int iwa[] = new int[3*nmax];
+    		     //isave(44)
+    		     int isave[] = new int[23];
+    		     RandomAccessFile raFile;
+    		     double f[] = new double[1];
+    		     double factr, pgtol; 
+    		     double x[] = new double[nmax];
+    		     double l[] = new double[nmax];
+    		     double u[] = new double[nmax];
+    		     double g[] = new double[nmax]; 
+    		     double dsave[] = new double[29]; 
+    		     // double wa[] = new double[2*mmax*nmax + 5*nmax + 11*mmax*mmax + 8*mmax]
+
+    	//     Declare a few additional variables for the sample problem 
+    	//       and for keeping track of time.
+
+    	      double t1, t2, tlimit;
+    	      int i, j;
+    	      long time1, time2;
+    	 
+    	//     We specify a limite on the CPU time (in seconds).
+
+    	      tlimit = 0.2;
+
+    	//     We suppress the default output.  (The user could also elect to 
+    	//       use the default output by choosing iprint >= 0.)
+
+    	      iprint = -1;
+
+    	//     We suppress the code-supplied stopping tests because we will
+    	//       provide our own termination conditions
+
+    	      factr=0.0;
+    	      pgtol=0.0;
+
+    	//     We specify the dimension n of the sample problem and the number
+    	//        m of limited memory corrections stored.  (n and m should not
+    	//        exceed the limits nmax and mmax respectively.)
+    	 
+    	      n=1000;
+    	      m=10;
+    	 
+    	//     We now specify nbd which defines the bounds on the variables:
+    	//                    l   specifies the lower bounds,
+    	//                    u   specifies the upper bounds. 
+    	 
+    	//     First set bounds on the odd-numbered variables.
+
+    	      for (i=1; i <=n; i +=2) {
+	              nbd[i-1]=2;
+	              l[i-1]=1.0;
+	              u[i-1]=1.0E2;
+	           }
+
+    	//     Next set bounds on the even-numbered variables.
+
+    	      for (i=2; i <= n; i +=2) {
+	              nbd[i-1]=2;
+	              l[i-1]=-1.0E2;
+	              u[i-1]=1.0E2;
+	           }
+    	      
+
+//    	     We now define the starting point.
+
+		      for (i = 0; i < n; i++) {
+		         x[i] = 3.0;
+		      }
+		 
+		//     We now write the heading of the output.
+
+		       System.out.println("Solving sample problem.");
+	           System.out.println("f = 0.0 at the optimal solution.");
+	
+	     //     We start the iteration by initializing task.
+	     
+	           task[0] = "START";
+	           double diff;
+	           
+	           //     We begin counting the CPU time.
+
+	    	   time1 = System.currentTimeMillis();
+
+		//        ------- the beginning of the loop ----------
+		 
+		 do {
+		      
+		//     This is the call to the L-BFGS-B code.
+			 String fileDir = "C:/L-BFGS-B/";
+			 raFile = null;
+	           if (iprint >= 1) {
+	       		//                                open a summary file 'iterate.dat'
+	            File file = new File(fileDir + "iterate.data");
+	            try {
+	                raFile = new RandomAccessFile(file, "rw");
+	            }
+	            catch (FileNotFoundException e) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) FileNotException " + e);
+	            	System.exit(-1);
+	            }
+	            catch (SecurityException e2) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) SecurityException " + e2);
+	            	System.exit(-1);	
+	            }
+	            // Necessary so that if this is an overwritten file there isn't any
+	            // junk at the end
+	            try {
+	                raFile.setLength(0);
+	            }
+	            catch (IOException e) {
+	            	System.err.println("At raFile.setLength(0) IOException " + e);
+	            	System.exit(-1);	
+	            }
+	         } // if (iprint >= 1)   
+	         setulb(n,m,x,l,u,nbd,f,g,factr,pgtol,task,iprint,
+	                csave,lsave,isave,dsave, raFile);
+    	          	 
+	         if (task[0].substring(0,2).equalsIgnoreCase("FG")) {
+	        	//        the minimization routine has returned to request the
+	         	//        function f and gradient g values at the current x.
+	         	//        Before evaluating f and g we check the CPU time spent.
+
+	         	         time2 = System.currentTimeMillis();
+	         	         if ((time2-time1)/1000.0 > tlimit) {
+	         	            task[0] = "STOP: CPU EXCEEDING THE TIME LIMIT.";
+
+	         	//          Note: Assigning task(1:4)='STOP' will terminate the run;
+	         	//          setting task(7:9)='CPU' will restore the information at
+	         	//          the latest iterate generated by the code so that it can
+	         	//          be correctly printed by the driver.
+
+	         	//          In this driver we have chosen to disable the
+	         	//          printing options of the code (we set iprint=-1);
+	         	//          instead we are using customized output: we print the
+	         	//          latest value of x, the corresponding function value f and
+	         	//          the norm of the projected gradient |proj g|.
+
+	         	//          We print out the information contained in task.
+
+	         	            System.out.println("task[0] = " + task[0]);
+
+	         	//          We print the latest iterate contained in wa(j+1:j+n), where
+	         	           System.out.print("Latest iterate X = ");
+	   		        	int mul6 = 6;
+	   		        	for (i = 0; i < Math.min(n, mul6); i++) {
+	   		        		System.out.print("    " + wa1[i]);
+	   		        	}
+	   		        	System.out.print("\n");
+	   		        	mul6 += 6;
+	   		            while (i < n) {
+	   		            	System.out.print("    ");
+	   		            	for (; i < Math.min(n, mul6); i++) {
+	   			        		System.out.print("    " + wa1[i]);
+	   			        	}
+	   		            	System.out.print("\n");
+	   			        	mul6 += 6;
+	   		            }
+	         	
+
+	         	//          We print the function value f and the norm of the projected
+	         	//          gradient |proj g| at the last iterate; they are stored in
+	         	//          dsave(2) and dsave(13) respectively.
+
+	         	            System.out.println("At latest iterate f[0] = " + dsave[1] + " projected gradient = " + dsave[12]);    
+	         	         } //if ((time2-time1)/1000.0 > tlimit)
+
+	         	         else {
+
+	         	//          The time limit has not been reached and we compute
+	         	//          the function value f for the sample problem.
+
+	     		
+	     	        	  diff = x[0]-1.0;
+	     	              f[0]=.25*diff*diff;
+	     	              for (i=1; i < n; i++) {
+	     	            	 diff = x[i] - x[i-1]*x[i-1];
+	     	            	 f[0] = f[0] + diff*diff;
+	     	              }
+	     	              f[0]=4.0*f[0];
+
+	     		//        Compute gradient g for the sample problem.
+
+	     	              t1=x[1]-x[0]*x[0];
+	     	              g[0]=2.0*(x[0]-1.0)-1.6E1*x[0]*t1;
+	     	              for (i=1; i < n-1; i++) {
+	     	                 t2=t1;
+	     	                 t1=x[i+1]-x[i]*x[i];
+	     	                 g[i]=8.0*t2-1.6E1*x[i]*t1;
+	     	              }
+	     	              g[n-1]=8.0*t1;
+	                   }
+
+	     		//          go back to the minimization routine.
+	     		         continue;
+	     	         } // if (task[0].substring(0,2).equalsIgnoreCase("FG")) 
+	         
+	         if (task[0].substring(0,5).equalsIgnoreCase("NEW_X")) {   
+			     
+	        	//        the minimization routine has returned with a new iterate.
+	         	//        The time limit has not been reached, and we test whether
+	         	//        the following two stopping tests are satisfied:
+	     		
+	     		//        First are two examples of stopping tests.
+
+	     		//        Note: task(1:4) must be assigned the value 'STOP' to terminate  
+	     		//          the iteration and ensure that the final results are
+	     		//          printed in the default format. The rest of the character
+	     		//          string TASK may be used to store other information.
+
+	     		//        1) Terminate if the total number of f and g evaluations
+	     		//             exceeds 900.
+
+	     		         if (isave[12] >= 900) {
+	     		             task[0] = "STOP: TOTAL NO. of f AND g EVALUATIONS EXCEEDS LIMIT";
+	     		         }
+
+	     		//        2) Terminate if  |proj g|/(1+|f|) < 1.0d-10, where 
+	     		//           "proj g" denoted the projected gradient
+
+	     		         if (dsave[12] <= 1.0E-10*(1.0 + Math.abs(f[0]))) {
+	     		             task[0] = "STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL";
+	     		         }
+
+	     		//        We now wish to print the following information at each
+	     		//        iteration:
+	     		        
+	     		//          1) the current iteration number, isave(30),
+	     		//          2) the total number of f and g evaluations, isave(34),
+	     		//          3) the value of the objective function f,
+	     		//          4) the norm of the projected gradient,  dsve(13)
+	     		
+	     		//        See the comments at the end of driver1 for a description
+	     		//        of the variables isave and dsave.
+	     		         
+	     		         System.out.println("Current iteration number = " + isave[8]);
+	     		         System.out.println("Total number of f and g evaluations = " + isave[12]);
+	     		         System.out.println("Value of the objective function f = " + f[0]);
+	     		         System.out.println("Norm of the projected gradient = " + dsave[12]);
+
+	     		//        If the run is to be terminated, we print also the information
+	     		//        contained in task as well as the final value of x.
+
+	     		         if (task[0].substring(0,4).equals("STOP")) {
+	     		            System.out.println("task[0] = " + task[0]);
+	     		            System.out.print("Final X = ");
+	     		        	int mul6 = 6;
+	     		        	for (i = 0; i < Math.min(n, mul6); i++) {
+	     		        		System.out.print("    " + x[i]);
+	     		        	}
+	     		        	System.out.print("\n");
+	     		        	mul6 += 6;
+	     		            while (i < n) {
+	     		            	System.out.print("    ");
+	     		            	for (; i < Math.min(n, mul6); i++) {
+	     			        		System.out.print("    " + x[i]);
+	     			        	}
+	     		            	System.out.print("\n");
+	     			        	mul6 += 6;
+	     		            }
+	     		         } // if (task[0].substring(0,4).equals("STOP"))
+
+	     		//          go back to the minimization routine.
+	     		         continue;
+
+	     	         } // if (task[0].substring(0,5).equalsIgnoreCase("NEW_X"))
+    	     
+    
+
+    	//           ---------- the end of the loop -------------
+    	 
+    	//     If task is neither FG nor NEW_X we terminate execution.
+
+    	      return;
+		 } while (true);
+
+    	// ======================= The end of driver3 ============================
+    }
 	
 	public void setulb(int n, int m, double x[], double l[], double u[], int nbd[], 
 			double f[], double g[], double factr, double pgtol,
 		    String task[], int iprint, String csave[], boolean lsave[], int isave[], 
-		    double dsave[], final String fileDir) {
-		this.fileDir = fileDir;
+		    double dsave[], RandomAccessFile raFile) {
 		 
 		//      character*60     task, csave
 		//      logical          lsave(4)
@@ -690,10 +1350,10 @@ public abstract class L_BFGS_B {
 		      double d[] = new double[n];
 		      double t[] = new double[n];
 		      double xp[] = new double[n];
-		      double wa1[] = new double[2*m];
-		      double wa2[] = new double[2*m];
-		      double wa3[] = new double[2*m];
-		      double wa4[] = new double[2*m];
+		      wa1 = new double[2*m];
+		      wa2 = new double[2*m];
+		      wa3 = new double[2*m];
+		      wa4 = new double[2*m];
 		      int index[] = new int[n];
 		      int iwhere[] = new int[n];
 		      int indx2[] = new int[n];
@@ -703,7 +1363,7 @@ public abstract class L_BFGS_B {
 		             ws,wy,sy,ss,wt,
 		             wn,snd,z,r,d,t,xp,wa1,wa2,wa3,wa4,
 		             index, iwhere,indx2,task,iprint, 
-		             csave,lsave,isave,dsave);
+		             csave,lsave,isave,dsave,raFile);
 
 		      return;
 
@@ -715,7 +1375,7 @@ public abstract class L_BFGS_B {
 		     double z[], double r[], double d[], double t[], double xp[],
 		     double wa1[], double wa2[], double wa3[], double wa4[],
 		     int index[], int iwhere[], int indx2[], String task[],
-		     int iprint, String csave[], boolean lsave[], int isave[], double dsave[]) {
+		     int iprint, String csave[], boolean lsave[], int isave[],  double dsave[], RandomAccessFile raFile) {
 		      // implicit none
 		      // character*60     task, csave
 		      // logical          lsave(4)
@@ -949,7 +1609,6 @@ public abstract class L_BFGS_B {
 		      double xstep[] = new double[1];
 		      long time1;
 		      File file;
-		      RandomAccessFile raFile = null;
 		      final double one = 1.0;
 		      final double zero = 0.0;
 		      boolean do0 = true;
@@ -1019,26 +1678,7 @@ public abstract class L_BFGS_B {
 		         info[0] = 0;
 
 		         itfile = 8;
-		         if (iprint >= 1) {
-		//                                open a summary file 'iterate.dat'
-		            file = new File(fileDir + "iterate.data");
-		            try {
-		                raFile = new RandomAccessFile(file, "rw");
-		            }
-		            catch (IOException e) {
-		            	System.err.println("At raFile = new Random AccessFile(file, rw) IOException " + e);
-		            	System.exit(-1);
-		            }
-		            // Necessary so that if this is an overwritten file there isn't any
-		            // junk at the end
-		            try {
-		                raFile.setLength(0);
-		            }
-		            catch (IOException e) {
-		            	System.err.println("At raFile.setLength(0) IOException " + e);
-		            	System.exit(-1);	
-		            }
-		         } // if (iprint >= 1)          
+		          
 
 		//        Check the input arguments for errors.
 
@@ -1160,12 +1800,12 @@ public abstract class L_BFGS_B {
 		      projgr(n,l,u,nbd,x,g,sbgnrm);
 		  
 		      if (iprint >= 1) {
-		    	 System.out.println("At iteration number " + iter + " function value = " + f + " norm of projected gradient = " + sbgnrm[0]);
+		    	 System.out.println("At iteration number " + iter + " function value = " + f[0] + " norm of projected gradient = " + sbgnrm[0]);
 		    	 try {
-			    	 raFile.writeChars("At iteration number " + iter + ":\n");
-			    	 raFile.writeChars("Number of function evaluations = " + nfgv + "\n");
+			    	 raFile.writeChars("At iteration number " + String.valueOf(iter) + "\n");
+			    	 raFile.writeChars("Number of function evaluations = " + nfgv[0] + "\n");
 			    	 raFile.writeChars("Norm of the projected gradient = " + sbgnrm[0] + "\n");
-			    	 raFile.writeChars("Function value = " + f + "\n");
+			    	 raFile.writeChars("Function value = " + f[0] + "\n");
 		    	 }
 		    	 catch (IOException e) {
 		    		 System.err.println("In mainlb raFile.writeChars IOExcpeption " + e);
@@ -1369,7 +2009,7 @@ public abstract class L_BFGS_B {
 		 if (do666) {
 			  isave2[0] = isave[21];
 			  isave2[1] = isave[22];
-			  for (i = 0; i < 16; i++) {
+			  for (i = 0; i < 13; i++) {
 				  dsave13[i] = dsave[i + 16];
 			  }
 		      lnsrlb(n,l,u,nbd,x,f,fold,gd,gdold,g,d,r,t,z,stp,dnorm,
@@ -1377,7 +2017,7 @@ public abstract class L_BFGS_B {
 		             boxed[0],cnstnd[0],csave,isave2,dsave13);
 		      isave[21] = isave2[0];
 		      isave[22] = isave2[1];
-		      for (i = 0; i < 16; i++) {
+		      for (i = 0; i < 13; i++) {
 				  dsave[i + 16] = dsave13[i];
 			  }
 		      if ((info[0] != 0) || (iback[0] >= 20)) {
@@ -4334,7 +4974,7 @@ public abstract class L_BFGS_B {
 		      dcsrch(f,gd,stp,ftol,gtol,xtol,zero,stpmx[0],csave,isave,dsave);
 
 		      xstep[0] = stp[0]*dnorm[0];
-		      if ((!csave[0].substring(0,4).equalsIgnoreCase("CONV")) &&(!csave[0].substring(0,4).equalsIgnoreCase("WARN"))) {
+		      if ((csave[0].length() < 4) || ((!csave[0].substring(0,4).equalsIgnoreCase("CONV")) &&(!csave[0].substring(0,4).equalsIgnoreCase("WARN")))) {
 		         task[0] = "FG_LNSRCH";
 		         ifun[0] = ifun[0] + 1;
 		         nfgv[0] = nfgv[0] + 1;
@@ -4520,7 +5160,7 @@ public abstract class L_BFGS_B {
 
     	//     Initialization block.
 
-    if (task[0].substring(0,5).equalsIgnoreCase("START")) {
+    if ((task[0].length() >= 5) && (task[0].substring(0,5).equalsIgnoreCase("START"))) {
 
     	//        Check the input arguments for errors.
     	if (stp[0] < stpmin) task[0] = "ERROR: STP .LT. STPMIN";
@@ -4534,7 +5174,7 @@ public abstract class L_BFGS_B {
 
 //        Exit if there are errors on input.
 
-        if (task[0].substring(0,5).equals("ERROR")) return;
+        if ((task[0].length() >= 5) && (task[0].substring(0,5).equals("ERROR"))) return;
 
 //        Initialize local variables.
 
@@ -4647,7 +5287,7 @@ public abstract class L_BFGS_B {
 
 //     Test for termination.
 
-     if ((task[0].substring(0,4).equals("WARN")) || (task[0].substring(0,4).equals("CONV"))) {
+     if ((task[0].length() >= 4) && ((task[0].substring(0,4).equals("WARN")) || (task[0].substring(0,4).equals("CONV")))) {
 //       Save local variables.
 
          if (brackt[0]) {
