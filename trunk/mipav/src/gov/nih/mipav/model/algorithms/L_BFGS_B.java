@@ -1620,7 +1620,7 @@ public class L_BFGS_B {
 
 	}
 	
-	private void mainlb(int n, int m, double x[], double l[], double u[], 
+	public void mainlb(int n, int m, double x[], double l[], double u[], 
 			int nbd[], double f[], double g[], double factr, double pgtol, double ws[][], double wy[][],
 		     double sy[][], double ss[][], double wt[][], double wn[][], double snd[][], 
 		     double z[], double r[], double d[], double t[], double xp[],
