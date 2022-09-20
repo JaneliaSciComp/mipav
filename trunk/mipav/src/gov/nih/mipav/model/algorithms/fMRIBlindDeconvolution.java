@@ -7,6 +7,10 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameGraph;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 
 
@@ -38,6 +42,39 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 	OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+	*/
+	
+	// Gradient code ported from _numdiff.py in SCIPY
+	 /*Copyright (c) 2001-2002 Enthought, Inc. 2003-2022, SciPy Developers.
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+	1. Redistributions of source code must retain the above copyright
+	   notice, this list of conditions and the following disclaimer.
+
+	2. Redistributions in binary form must reproduce the above
+	   copyright notice, this list of conditions and the following
+	   disclaimer in the documentation and/or other materials provided
+	   with the distribution.
+
+	3. Neither the name of the copyright holder nor the names of its
+	   contributors may be used to endorse or promote products derived
+	   from this software without specific prior written permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+	A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+	OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+	SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+	LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+	DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+	THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	*/
 	
@@ -1784,8 +1821,8 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     }
 
     
-    public void gen_rnd_ai_s(double ai_s[], double i_s[], double t[], int dur, 
-    		double tr, int nb_events, int avg_dur, int std_dur,
+    public void gen_rnd_ai_s(double ai_s[], double i_s[], double t[], double dur, 
+    		double tr, int nb_events, int avg_dur, double std_dur,
             boolean middle_spike, boolean overlapping, boolean unitary_block,
             boolean haveSeed, long random_state, int nb_try, int nb_try_duration,
             boolean centered) {
@@ -1999,8 +2036,8 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     
     public void gen_rnd_bloc_bold(double noisy_ar_s[],double ar_s[], double ai_s[],
     		double i_s[],  double t[], double noise[],
-    		int dur, double tr, boolean sourcehrf, double hrf[], int nb_events, int avg_dur,
-            int std_dur, boolean middle_spike, boolean overlapping,
+    		double dur, double tr, boolean sourcehrf, double hrf[], int nb_events, int avg_dur,
+            double std_dur, boolean middle_spike, boolean overlapping,
             boolean unitary_block, double snr, int nb_try,
             int nb_try_duration, boolean centered, boolean haveSeed, long random_state) {
 		// Generate synthetic BOLD signal.
@@ -2156,7 +2193,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	    double onset = 0.0;
 	    boolean sourcehrf = true;
 	    int avg_dur = 1;
-	    int std_dur = 5;
+	    double std_dur = 5.0;
 	    boolean middle_spike = false;
 	    boolean overlapping = false;
 	    boolean unitary_block = false;
@@ -4027,9 +4064,9 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         double dur;
         int verbose;
         int idx;
-        public Tracker(double z[], double y[], double t_r, double dur, int verbose) {
+        public Tracker(Vector<Double>J, double z[], double y[], double t_r, double dur, int verbose) {
         	// default verbose = 0;
-            J = new Vector<Double>();
+            this.J = J;
             this.z = z;
             this.y = y;
             this.t_r = t_r;
@@ -4055,14 +4092,222 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         // Private function HRF estimation.
        
         double bounds[] = new double[] {MIN_DELTA + 1.0e-1, MAX_DELTA - 1.0e-1};
-        Tracker f_cost = new Tracker(z, y, t_r, dur, verbose);
+        Tracker f_cost = new Tracker(J, z, y, t_r, dur, verbose);
+        
+        //      We specify the dimension n of the sample problem and the number
+     	//        m of limited memory corrections stored.  (n and m should not
+     	//        exceed the limits nmax and mmax respectively.)
+     	 
+     	int n=1;
+     	int m=10;
+        //      We suppress the default output.  (The user could also elect to 
+     	//       use the default output by choosing iprint >= 0.)
+
+     	int iprint = 100;
+     	String task[] = new String[1];
+	    String csave[] = new String[1];
+	    boolean lsave[] = new boolean[4];
+	    int nbd[] = new int[n];
+	    int isave[] = new int[23];
+	    double f[] = new double[1];
+	    double factr = 0.0; 
+	    double pgtol = 1.0E-12; 
+	    
+	    // mainlb arguments
+	    double x[] = new double[n];
+	    double l[] = new double[n];
+	    double u[] = new double[n];
+	    double g[] = new double[n]; 
+	    double dsave[] = new double[29];
+	    double ws[][] = new double[n][m];
+	    double wy[][] = new double[n][m];
+	    double sy[][] = new double[m][m];
+	    double ss[][] = new double[m][m];
+	    double wt[][] = new double[m][m];
+	    double wn[][] = new double[2*m][2*m];
+	    double snd[][] = new double[2*m][2*m];
+	    double zbuf[] = new double[n];
+	    double r[] = new double[n];
+	    double d[] = new double[n];
+	    double t[] = new double[n];
+	    double xp[] = new double[n];
+	    double wa1[] = new double[2*m];
+	    double wa2[] = new double[2*m];
+	    double wa3[] = new double[2*m];
+	    double wa4[] = new double[2*m];
+	    int index[] = new int[n];
+	    int iwhere[] = new int[n];
+	    int indx2[] = new int[n];
+	    
+        //	     We now specify nbd which defines the bounds on the variables:
+	    //                    l   specifies the lower bounds,
+	    //                    u   specifies the upper bounds.
+	    nbd[0] = 2; // both a lower and upper bound
+	    l[0] = bounds[0];
+	    u[0] = bounds[1];
+        //	     We now define the starting point.
+	    x[0] = MAX_DELTA;
+	    System.out.println("Initial x[0] = " + x[0]);
+	    
+        //	     We start the iteration by initializing task.
+	     
+        task[0] = "START";
+        double lower_dist;
+        double upper_dist;
+        double originalStep = 1.0E-8;
+        boolean central;
+        boolean forward;
+        boolean backward;
+        double adjustedForwardStep;
+        double adjustedBackwardStep;
+        double min_dist;
+        boolean adjusted_central;
+        RandomAccessFile raFile = null;
+        String fileDir = "C:/L-BFGS-B/";
+	           if (iprint >= 1) {
+	       		//                                open a summary file 'iterate.dat'
+	            File file = new File(fileDir + "iterate.data");
+	            try {
+	                raFile = new RandomAccessFile(file, "rw");
+	            }
+	            catch (FileNotFoundException e) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) FileNotException " + e);
+	            	System.exit(-1);
+	            }
+	            catch (SecurityException e2) {
+	            	System.err.println("At raFile = new Random AccessFile(file, rw) SecurityException " + e2);
+	            	System.exit(-1);	
+	            }
+	            // Necessary so that if this is an overwritten file there isn't any
+	            // junk at the end
+	            try {
+	                raFile.setLength(0);
+	            }
+	            catch (IOException e) {
+	            	System.err.println("At raFile.setLength(0) IOException " + e);
+	            	System.exit(-1);	
+	            }
+	         } // if (iprint >= 1)   
+        L_BFGS_B LBB = new L_BFGS_B();
+        
+        //      ------- the beginning of the loop ----------
+		 
+		 do {
+		      
+		//     This is the call to the L-BFGS-B code.
+	         LBB.mainlb(n,m,x,l,u,nbd,f,g,factr,pgtol,
+		             ws,wy,sy,ss,wt,
+		             wn,snd,zbuf,r,d,t,xp,wa1,wa2,wa3,wa4,
+		             index, iwhere,indx2,task,iprint, 
+		             csave,lsave,isave,dsave,raFile);
+	         System.out.println("x[0] = " + x[0]);
+	         
+	         if ((task[0].length() >= 2) && (task[0].substring(0,2).equalsIgnoreCase("FG"))) {
+	     		//        the minimization routine has returned to request the
+	     		//        function f and gradient g values at the current x.
+
+	     		//        Compute function value f for the sample problem.
+
+	     	        	  f_cost.__call__(x[0]);
+	     	        	  f[0] = J.get(J.size()-1);
+                //	     	           Compute gradient g for the sample problem
+	     	        	  
+	     	        	  lower_dist = x[0] - l[0];
+	     	              upper_dist = u[0] - x[0];
+	     	              central = (lower_dist >= originalStep) && (upper_dist >= originalStep);
+	     	              if (central) {
+	     	            	  g[0] = (hrf_fit_err(x[0]+originalStep, z, y, t_r, dur) 
+	     	            			  - hrf_fit_err(x[0]-originalStep, z, y, t_r, dur))/(2.0*originalStep);
+	     	            	  continue;
+	     	              }
+	     	              forward = upper_dist >= lower_dist;
+	     	              adjustedForwardStep = Math.min(originalStep, 0.5 *upper_dist);
+	     	              if (forward) {
+	     	                  g[0] = ((hrf_fit_err(x[0] + adjustedForwardStep, z, y, t_r, dur) - f[0])/adjustedForwardStep);
+	     	                  continue;
+	     	              }
+	     	              backward = upper_dist < lower_dist;
+	     	              adjustedBackwardStep = Math.min(originalStep, 0.5*lower_dist);
+	     	              System.out.println("adjustedBackwardStep = " + adjustedBackwardStep);
+                          if (backward) {
+                              g[0] = (f[0] - (hrf_fit_err(x[0] - adjustedBackwardStep, z, y, t_r, dur))/adjustedBackwardStep);
+                              System.out.println("g[0] = " + g[0]);
+	     	                  continue;
+                          }
+                          min_dist = Math.min(upper_dist, lower_dist);
+                          adjusted_central = (Math.abs(adjustedForwardStep) <= min_dist) && (Math.abs(adjustedBackwardStep) <= min_dist);
+	     		          if (adjusted_central) {
+	     		        	 g[0] = (hrf_fit_err(x[0]+min_dist, z, y, t_r, dur) - hrf_fit_err(x[0]-min_dist, z, y, t_r, dur))/(2.0*min_dist);
+	     	            	 continue;
+	     		          }
+
+	     	              System.err.println("Could not calculate g[0]");
+	     	              System.exit(-1);
+	     	         } // if ((task[0].length() >= 2) && (task[0].substring(0,2).equalsIgnoreCase("FG")))
+	     		
+	     	         if ((task[0].length() >= 5) && (task[0].substring(0,5).equalsIgnoreCase("NEW_X"))) {   
+	     		     
+	     		//        the minimization routine has returned with a new iterate.
+	     		//        At this point have the opportunity of stopping the iteration 
+	     		//        or observing the values of certain parameters
+	     		
+
+	     		//        Note: task(1:4) must be assigned the value 'STOP' to terminate  
+	     		//          the iteration and ensure that the final results are
+	     		//          printed in the default format. The rest of the character
+	     		//          string TASK may be used to store other information.
+
+	     		//        1) Terminate if the total number of f and g evaluations
+	     		//             exceeds 99999.
+
+	     		         if (isave[12] >= 99999) {
+	     		             task[0] = "STOP: TOTAL NO. of f AND g EVALUATIONS EXCEEDS LIMIT";
+	     		         }
+
+
+	     		//        We now wish to print the following information at each
+	     		//        iteration:
+	     		        
+	     		//          1) the current iteration number, isave(30),
+	     		//          2) the total number of f and g evaluations, isave(34),
+	     		//          3) the value of the objective function f,
+	     		//          4) the norm of the projected gradient,  dsve(13)
+	     		
+	     		//        See the comments at the end of driver1 for a description
+	     		//        of the variables isave and dsave.
+	     		         
+	     		         //System.out.println("Current iteration number = " + isave[8]);
+	     		         //System.out.println("Total number of f and g evaluations = " + isave[12]);
+	     		         //System.out.println("Value of the objective function f = " + f[0]);
+	     		         //System.out.println("Norm of the projected gradient = " + dsave[12]);
+
+	     		//        If the run is to be terminated, we print also the information
+	     		//        contained in task as well as the final value of x.
+
+	     		         if (task[0].substring(0,4).equals("STOP")) {
+	     		            System.out.println("task[0] = " + task[0]);
+	     		            System.out.print("Final X = " + x[0]);
+	     		         } // if (task[0].substring(0,4).equals("STOP"))
+
+	     		//          go back to the minimization routine.
+	     		         continue;
+
+	     	         } // if ((task[0].length() >= 5) && (task[0].substring(0,5).equalsIgnoreCase("NEW_X")))
+
+	     		//           ---------- the end of the loop -------------
+	     		 
+	     		//     If task is neither FG nor NEW_X we terminate execution.
+
+	     		      break;
+	     		 } while (true);
+        
 
         /*theta, _, _ = fmin_l_bfgs_b(
                             func=hrf_fit_err, x0=MAX_DELTA, args=args,
                             bounds=bounds, approx_grad=True, callback=f_cost,
                             maxiter=99999, pgtol=1.0e-12)*/
-        double theta = 0.0;
-        J = f_cost.J;
+        double theta = x[0];
+        System.out.println("Final x[0] = " + x[0]);
         double dt = 0.001;
         int numsamples = (int)(dur/ dt);
         int step = (int)(t_r/dt);
@@ -4079,6 +4324,77 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         		p_delay, undershoot, p_disp, u_disp, p_u_ratio, onset);
 
         return; // h, J
+    }
+    
+    public void simple_hrf_estimation() {
+    	int i;
+    	// experimentation parameters
+    	double dur = 3.5;
+    	double hrf_dur = 20.0;
+    	double TR = 0.75;
+    	double snr = 5.0;
+    	long random_state = 99;
+    	// True HRF
+    	double true_hrf_delta = 1.0;
+    	double dt = 0.001;
+    	int numsamples = (int)(hrf_dur/ dt);
+    	int step = (int)(TR/dt);
+    	int returnedsamples = ((numsamples-1)/step) + 1; // length of orig_hrf[] and t_hrf[]
+    	double orig_hrf[] = new double[returnedsamples];
+    	double t_hrf[] = new double[returnedsamples];
+    	boolean normalized_hrf = false;
+    	double p_delay = 6.0;
+    	double undershoot = 16.0;
+    	double p_disp = 1.0;
+    	double u_disp = 1.0;
+    	double p_u_ratio = 0.167;
+    	double onset = 0.0;
+    	spm_hrf(orig_hrf, t_hrf, true_hrf_delta, TR,
+    				    hrf_dur, normalized_hrf, dt, p_delay,
+    		            undershoot, p_disp, u_disp, p_u_ratio, onset);
+    	boolean sourcehrf = true;
+    	int nb_events = 2;
+	    int avg_dur = 12;
+	    double std_dur = 0.0;
+	    boolean middle_spike = false;
+	    boolean overlapping = false;
+	    boolean unitary_block = false;
+	    int nb_try = 1000;
+	    int nb_try_duration = 1000;
+	    boolean centered = false;
+	    boolean haveSeed = true;
+	    int genlength = 1 + (int)((60000*dur-1)/(int)(1000*TR));
+	    double y_tilde[] = new double[genlength];
+	    double y[] = new double[genlength];
+	    double z[] = new double[genlength];
+	    double i_s[] = new double[genlength];
+	    double t[] = new double[genlength];
+	    double noise[] = new double[genlength];
+        gen_rnd_bloc_bold(y_tilde, y, z,
+        		i_s,  t, noise,
+        		dur, TR, sourcehrf, orig_hrf, nb_events, avg_dur,
+                std_dur, middle_spike, overlapping,
+                unitary_block, snr, nb_try,
+                nb_try_duration, centered, haveSeed, random_state);
+        // ###############################################################################
+        // HRF estimation
+        double est_hrf[] = new double[returnedsamples];
+        Vector<Double>J = new Vector<Double>();
+        int verbose = 3;
+        long t0 = System.currentTimeMillis();
+        hrf_estim(est_hrf, J, z, y_tilde,
+        		  TR, hrf_dur, verbose);
+        double delta_t = (System.currentTimeMillis() - t0)/1000.0;
+        double runtimes[] = new double[J.size()];
+        runtimes[0] = 0.0;
+        runtimes[runtimes.length-1] = delta_t;
+        double runStep = delta_t/(runtimes.length-1);
+        for (i = 1; i < runtimes.length-1; i++) {
+        	runtimes[i] = i*runStep;
+        }
+        System.out.println("hrf_estim duration = " + delta_t + " seconds");
+
+
     }
 
 
