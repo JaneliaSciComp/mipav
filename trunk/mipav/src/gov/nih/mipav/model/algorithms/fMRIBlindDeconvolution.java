@@ -4161,6 +4161,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         double adjustedForwardStep;
         double adjustedBackwardStep;
         double min_dist;
+        double hrlow;
         boolean adjusted_central;
         RandomAccessFile raFile = null;
         String fileDir = "C:/L-BFGS-B/";
@@ -4223,15 +4224,13 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 	     	              forward = upper_dist >= lower_dist;
 	     	              adjustedForwardStep = Math.min(originalStep, 0.5 *upper_dist);
 	     	              if (forward) {
-	     	                  g[0] = ((hrf_fit_err(x[0] + adjustedForwardStep, z, y, t_r, dur) - f[0])/adjustedForwardStep);
+	     	                  g[0] = (hrf_fit_err(x[0] + adjustedForwardStep, z, y, t_r, dur) - f[0])/adjustedForwardStep;
 	     	                  continue;
 	     	              }
 	     	              backward = upper_dist < lower_dist;
 	     	              adjustedBackwardStep = Math.min(originalStep, 0.5*lower_dist);
-	     	              System.out.println("adjustedBackwardStep = " + adjustedBackwardStep);
                           if (backward) {
-                              g[0] = (f[0] - (hrf_fit_err(x[0] - adjustedBackwardStep, z, y, t_r, dur))/adjustedBackwardStep);
-                              System.out.println("g[0] = " + g[0]);
+                              g[0] = (f[0] - hrf_fit_err(x[0] - adjustedBackwardStep, z, y, t_r, dur))/adjustedBackwardStep;
 	     	                  continue;
                           }
                           min_dist = Math.min(upper_dist, lower_dist);
