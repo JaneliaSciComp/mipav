@@ -2631,7 +2631,7 @@ public class PlugInDialogFITBIR extends JFrame
         } else if (filename.toLowerCase().endsWith("events.tsv")) {
             return "Response Data";
         } else if (filename.toLowerCase().endsWith("events.json")) {
-            return "Response Data";
+            return "Experiment Information";
         }
         
         return "";
