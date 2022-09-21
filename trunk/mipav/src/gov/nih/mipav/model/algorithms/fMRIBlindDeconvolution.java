@@ -4161,7 +4161,6 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         double adjustedForwardStep;
         double adjustedBackwardStep;
         double min_dist;
-        double hrlow;
         boolean adjusted_central;
         RandomAccessFile raFile = null;
         String fileDir = "C:/L-BFGS-B/";
@@ -4393,8 +4392,252 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         }
         System.out.println("hrf_estim duration = " + delta_t + " seconds");
 
+        // Plot shows perfect match between orig_hrf and est_hrf
+        float xInit[][] = new float[2][returnedsamples];
+        float yInit[][] = new float[2][returnedsamples];
+        for (i = 0; i < returnedsamples; i++) {
+        	xInit[0][i] = (float)t_hrf[i];
+        	xInit[1][i] = (float)t_hrf[i];
+        	yInit[0][i] = (float)orig_hrf[i]; // Orig. HRF
+        	yInit[1][i] = (float)est_hrf[i]; // Est. HRF
+        }
+        String title = "Est. SPM HRF";
+        String labelX = "time (s)";
+        String labelY = "ampl.";
+        Color colorArray[] = new Color[] {Color.BLUE, Color.RED};
+        new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, colorArray);
+        
+        double inf_norm_y_tilde = 0.0;
+        for (i = 0; i < genlength; i++) {
+        	inf_norm_y_tilde = Math.max(Math.abs(y_tilde[i]), inf_norm_y_tilde);
+        }
+        float xInit2[][] = new float[2][genlength];
+        float yInit2[][] = new float[2][genlength];
+        for (i = 0; i < genlength; i++) {
+        	xInit2[0][i] = (float)t[i];
+        	xInit2[1][i] = (float)t[i];
+        	yInit2[0][i] = (float)(y_tilde[i]/inf_norm_y_tilde); // Normalized noisy BOLD signal
+        	yInit2[1][i] = (float)z[i]; // Block signal
+        }
+        String title2 = "Normalized noisy BOLD signal";
+        String labelX2 = "time (s)";
+        String labelY2 = "ampl.";
+        Color colorArray2[] = new Color[] {Color.YELLOW, Color.BLACK};
+        new ViewJFrameGraph(xInit2, yInit2, title2, labelX2, labelY2, colorArray2);
+        
+        float xInit3[] = new float[J.size()];
+        float yInit3[] = new float[J.size()];
+        for (i = 0; i < J.size(); i++) {
+        	xInit3[i] = (float)runtimes[i];
+        	yInit3[i] = (float)J.get(i).doubleValue();
+        }
+        String title3 = "Evolution of the cost function";
+        String labelX3 = "time (s)";
+        String labelY3 = "Cost function";
+        new ViewJFrameGraph(xInit3, yInit3, title3, labelX3, labelY3);
 
     }
+    
+    
+    public double[] _loops_deconv(double y[], double diff_z[], double H[][], 
+    		double lbda, long nb_iter, boolean early_stopping, long wind, double tol) {
+	     // Main loop for deconvolution.
+    	int i,j,k;
+    	// Create a lower triangle of ones
+	    double L[][] = new double[y.length][y.length];
+	    for (i = 0; i < y.length; i++) {
+	    	for (j = 0; j <= i; j++) {
+	    		L[i][j] = 1.0;
+	    	}
+	    }
+	    double A[][] = new double[H.length][y.length];
+	    for (i = 0; i < H.length; i++) {
+	    	for (j = 0; j < y.length; j++) {
+	    		for (k = 0; k < y.length; k++) {
+	    			A[i][j] += H[i][k]*L[k][j];
+	    		}
+	    	}
+	    }
+	    double AT[][] = new double[y.length][H.length];
+	    for (i = 0; i < y.length; i++) {
+	    	for (j = 0; j < H.length; j++) {
+	    		AT[i][j] = A[j][i];
+	    	}
+	    }
+	    double A_t_A[][] = new double[y.length][y.length];
+	    for (i = 0; i < y.length; i++) {
+	    	for (j = 0; j < y.length; j++) {
+	    		for (k = 0; k < H.length; k++) {
+	    			A_t_A[i][j] += AT[i][k]*A[k][j];
+	    		}
+	    	}
+	    }
+	    double A_t_y[] = new double[y.length];
+	    for (i = 0; i < y.length; i++) {
+	    	for (j = 0; j < y.length; j++) {
+	    		A_t_y[i] += AT[i][j]*y[j];
+	    	}
+	    }
+	    double grad_lipschitz_cst = 0.0;
+	    for (i = 0; i < y.length; i++) {
+	    	for (j = 0; j < y.length; j++) {
+	    		grad_lipschitz_cst += A_t_A[i][j]*A_t_A[i][j];
+	    	}
+	    }
+	    grad_lipschitz_cst = Math.sqrt(grad_lipschitz_cst);
+	    double step = 1.0 / grad_lipschitz_cst;
+	    double th = lbda / grad_lipschitz_cst;
+	    double diff_z_old[] = new double[y.length];
+	    double t = 1.0;
+	    double t_old = 1.0;
+	    double A_t_A_z[] = new double[y.length];
+	    double diff_z_diff[] = new double[y.length];
+	
+	    for (j = 0; j < nb_iter; j++) {
+	        for (i = 0; i < y.length; i++) {
+	        	for (k = 0; k < y.length; k++) {
+	        		A_t_A_z[i] += A_t_A[i][k]*diff_z[k];
+	        	}
+	        }
+	        for (i = 0; i < y.length; i++) {
+	        	diff_z[i] -= step*(A_t_A_z[i] - A_t_y[i]);
+	        }
+	        
+	        for (i = 0; i < y.length; i++) {
+	            diff_z[i] = sign(diff_z[i]) * Math.max(Math.abs(diff_z[i]) - th, 0);
+	        }
+	
+	        t = 0.5 * (1.0 + Math.sqrt(1 + 4*t_old*t_old));
+	        for (i = 0; i < y.length; i++) {
+	            diff_z[i] = diff_z[i] + (t_old-1)/t * (diff_z[i] - diff_z_old[i]);
+	        }
+	
+	        if (early_stopping) {
+	            if (j > 2) {
+	            	for (i = 0; i < y.length; i++) {
+	            		diff_z_diff[i] = diff_z[i] - diff_z_old[i];
+	            	}
+	                double crit_num = norm(diff_z_diff);
+	                double crit_deno = norm(diff_z);
+	                double diff = crit_num / (crit_deno + 1.0e-10);
+	                if (diff < tol) {
+	                    break;
+	                }
+	            } // if A(j > 2)
+	        } // if (early_stopping)
+	
+	        t_old = t;
+	        for (i = 0; i < y.length; i++) {
+	            diff_z_old[i] = diff_z[i];
+	        }
+	    } // for (j = 0; j < nb_iter; j++)
+	
+	    return diff_z;
+    }
+
+    
+    public void bd(double y[], double t_r, double lbda, double theta, double z_0[], double hrf_dur,
+    	       double bounds[], int nb_iter, int nb_sub_iter, int nb_last_iter,
+    	       int print_period, boolean early_stopping, int wind, double tol, int verbose) {
+    	    // BOLD blind deconvolution function based on a scaled HRF model and an
+    	    // blocs BOLD model.
+    	    // Defaults:
+    	    // lbda 1.0
+    	    // theta MAX_DELTA
+    	    // double z_0[] default null if present same length as y
+    	    // hrf_dur 20.0
+    	    // double bounds[] default  [(MIN_DELTA + 1.0e-1, MAX_DELTA - 1.0e-1)] 
+    	    // nb_iter 100
+    	    // nb_sub_iter 1000
+    	    // nb_last_iter 10000
+    	    // print_period 50
+    	    // early_stopping false
+    	    // wind 4
+    	    // tol 1.0E-12
+    	    // verbose 0
+
+    	    // initialization
+    	    int i;
+    	    int idx;
+    	    double H[][];
+    	    double dt = 0.001;
+        	int numsamples = (int)(hrf_dur/ dt);
+        	int step = (int)(t_r/dt);
+        	int returnedsamples = ((numsamples-1)/step) + 1; // length of orig_hrf[] and t_hrf[]
+        	double h[] = new double[returnedsamples];
+        	double t_hrf[] = new double[returnedsamples];
+        	boolean normalized_hrf = false;
+        	double p_delay = 6.0;
+        	double undershoot = 16.0;
+        	double p_disp = 1.0;
+        	double u_disp = 1.0;
+        	double p_u_ratio = 0.167;
+        	double onset = 0.0;
+        	spm_hrf(h, t_hrf, theta, t_r,
+        				    hrf_dur, normalized_hrf, dt, p_delay,
+        		            undershoot, p_disp, u_disp, p_u_ratio, onset);
+
+
+            double diff_z[];
+            double z[];
+            double x[];
+    	    if (z_0 == null) {
+    	        diff_z = new double[y.length];
+    	        z = new double[y.length];
+    	        x = new double[y.length];
+    	    }
+    	    else {
+    	    	diff_z = new double[z_0.length];
+    	    	for (i = 1; i < diff_z.length; i++) {
+    	    		diff_z[i] = z_0[i] - z_0[i-1];
+    	    	}
+    	        z = new double[z_0.length];
+    	        for (i = 0; i < z.length; i++) {
+    	        	z[i] = z_0[i];
+    	        }
+    	        x = spectral_convolve(h, z);
+    	    }
+    	    
+    	    double r_0 = 0.0;
+    	    double diff;
+    	    for (i = 0; i < y.length; i++) {
+    	    	diff = x[i] - y[i];
+    	    	r_0 += diff*diff;
+    	    }
+    	    Vector<Double> dr = new Vector<Double>();
+    	    dr.add(1.0);
+    	    double g_0 = 0.0;
+    	    for (i = 0; i < diff_z.length; i++) {
+    	    	g_0 += Math.abs(diff_z[i]);
+    	    }
+    	    Vector<Double> dg = new Vector<Double>();
+    	    dg.add(g_0);
+    	    double j_0 = r_0 + lbda * g_0;
+    	    Vector<Double> dJ = new Vector<Double>();
+    	    dJ.add(1.0);
+
+    	    if (verbose > 0) {
+    	        System.out.println("Normalized global cost-function initialized to 1.0");
+    	    }
+    	    
+    	    // main loop
+    	    for (idx = 0; idx < nb_iter; idx++) {
+    	        // deconvolution
+    	        H = toeplitz_from_kernel(h, y.length, y.length);
+    	        diff_z = _loops_deconv(y, diff_z, H, lbda, nb_iter, early_stopping,
+                        wind, tol);
+                z[0] = diff_z[0];
+                for (i = 1; i < y.length; i++) {
+                	z[i] = z[i-1] + diff_z[i];
+                }
+                
+                // hrf estimation
+    	    } // for (idx = 0; idx < nb_iter; idx++)
+
+
+    }
+
+
 
 
 }
