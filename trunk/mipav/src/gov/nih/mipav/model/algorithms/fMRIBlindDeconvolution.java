@@ -4536,7 +4536,9 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     }
 
     
-    public void bd(double y[], double t_r, double lbda, double theta, double z_0[], double hrf_dur,
+    public void bd(Vector<Double> xout,  Vector<Double>zout, Vector<Double> diff_zout,
+    		Vector<Double> hout, Vector<Double> dr, Vector<Double> dg, Vector<Double> dJ,
+    		double y[], double t_r, double lbda, double theta, double z_0[], double hrf_dur,
     	       double bounds[], int nb_iter, int nb_sub_iter, int nb_last_iter,
     	       int print_period, boolean early_stopping, int wind, double tol, int verbose) {
     	    // BOLD blind deconvolution function based on a scaled HRF model and an
@@ -4560,6 +4562,11 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	    int i;
     	    int idx;
     	    double H[][];
+    	    double r;
+    	    double g;
+    	    int sub_wind_len;
+    	    double old_j;
+    	    double new_j;
     	    double dt = 0.001;
         	int numsamples = (int)(hrf_dur/ dt);
         	int step = (int)(t_r/dt);
@@ -4604,16 +4611,13 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	    	diff = x[i] - y[i];
     	    	r_0 += diff*diff;
     	    }
-    	    Vector<Double> dr = new Vector<Double>();
     	    dr.add(1.0);
     	    double g_0 = 0.0;
     	    for (i = 0; i < diff_z.length; i++) {
     	    	g_0 += Math.abs(diff_z[i]);
     	    }
-    	    Vector<Double> dg = new Vector<Double>();
     	    dg.add(g_0);
     	    double j_0 = r_0 + lbda * g_0;
-    	    Vector<Double> dJ = new Vector<Double>();
     	    dJ.add(1.0);
 
     	    if (verbose > 0) {
@@ -4632,12 +4636,390 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
                 }
                 
                 // hrf estimation
+                
+                //      We specify the dimension n of the sample problem and the number
+             	//        m of limited memory corrections stored.  (n and m should not
+             	//        exceed the limits nmax and mmax respectively.)
+             	 
+             	int n=1;
+             	int m=10;
+                //      We suppress the default output.  (The user could also elect to 
+             	//       use the default output by choosing iprint >= 0.)
+
+             	int iprint = 100;
+             	String task[] = new String[1];
+        	    String csave[] = new String[1];
+        	    boolean lsave[] = new boolean[4];
+        	    int nbd[] = new int[n];
+        	    int isave[] = new int[23];
+        	    double f[] = new double[1];
+        	    double factr = 0.0; 
+        	    double pgtol = 1.0E-12; 
+        	    
+        	    // mainlb arguments
+        	    double xarg[] = new double[1];
+        	    double l[] = new double[n];
+        	    double u[] = new double[n];
+        	    double gbuf[] = new double[n]; 
+        	    double dsave[] = new double[29];
+        	    double ws[][] = new double[n][m];
+        	    double wy[][] = new double[n][m];
+        	    double sy[][] = new double[m][m];
+        	    double ss[][] = new double[m][m];
+        	    double wt[][] = new double[m][m];
+        	    double wn[][] = new double[2*m][2*m];
+        	    double snd[][] = new double[2*m][2*m];
+        	    double zbuf[] = new double[n];
+        	    double rbuf[] = new double[n];
+        	    double d[] = new double[n];
+        	    double t[] = new double[n];
+        	    double xp[] = new double[n];
+        	    double wa1[] = new double[2*m];
+        	    double wa2[] = new double[2*m];
+        	    double wa3[] = new double[2*m];
+        	    double wa4[] = new double[2*m];
+        	    int index[] = new int[n];
+        	    int iwhere[] = new int[n];
+        	    int indx2[] = new int[n];
+        	    
+                //	     We now specify nbd which defines the bounds on the variables:
+        	    //                    l   specifies the lower bounds,
+        	    //                    u   specifies the upper bounds.
+        	    nbd[0] = 2; // both a lower and upper bound
+        	    l[0] = bounds[0];
+        	    u[0] = bounds[1];
+                //	     We now define the starting point.
+        	    xarg[0] = theta;
+        	    System.out.println("Initial xarg[0] = " + xarg[0]);
+        	    
+                //	     We start the iteration by initializing task.
+        	     
+                task[0] = "START";
+                double lower_dist;
+                double upper_dist;
+                double originalStep = 1.0E-8;
+                boolean central;
+                boolean forward;
+                boolean backward;
+                double adjustedForwardStep;
+                double adjustedBackwardStep;
+                double min_dist;
+                boolean adjusted_central;
+                RandomAccessFile raFile = null;
+                String fileDir = "C:/L-BFGS-B/";
+        	           if (iprint >= 1) {
+        	       		//                                open a summary file 'iterate.dat'
+        	            File file = new File(fileDir + "iterate.data");
+        	            try {
+        	                raFile = new RandomAccessFile(file, "rw");
+        	            }
+        	            catch (FileNotFoundException e) {
+        	            	System.err.println("At raFile = new Random AccessFile(file, rw) FileNotException " + e);
+        	            	System.exit(-1);
+        	            }
+        	            catch (SecurityException e2) {
+        	            	System.err.println("At raFile = new Random AccessFile(file, rw) SecurityException " + e2);
+        	            	System.exit(-1);	
+        	            }
+        	            // Necessary so that if this is an overwritten file there isn't any
+        	            // junk at the end
+        	            try {
+        	                raFile.setLength(0);
+        	            }
+        	            catch (IOException e) {
+        	            	System.err.println("At raFile.setLength(0) IOException " + e);
+        	            	System.exit(-1);	
+        	            }
+        	         } // if (iprint >= 1)   
+                L_BFGS_B LBB = new L_BFGS_B();
+                
+                //      ------- the beginning of the loop ----------
+        		 
+        		 do {
+        		      
+        		//     This is the call to the L-BFGS-B code.
+        	         LBB.mainlb(n,m,xarg,l,u,nbd,f,gbuf,factr,pgtol,
+        		             ws,wy,sy,ss,wt,
+        		             wn,snd,zbuf,rbuf,d,t,xp,wa1,wa2,wa3,wa4,
+        		             index, iwhere,indx2,task,iprint, 
+        		             csave,lsave,isave,dsave,raFile);
+        	         System.out.println("xarg[0] = " + xarg[0]);
+        	         
+        	         if ((task[0].length() >= 2) && (task[0].substring(0,2).equalsIgnoreCase("FG"))) {
+        	     		//        the minimization routine has returned to request the
+        	     		//        function f and gradient g values at the current x.
+
+        	     		//        Compute function value f for the sample problem.
+
+        	     	        	  f[0] = hrf_fit_err(xarg[0], z, y, t_r, hrf_dur);
+                        //	     	           Compute gradient g for the sample problem
+        	     	        	  
+        	     	        	  lower_dist = xarg[0] - l[0];
+        	     	              upper_dist = u[0] - xarg[0];
+        	     	              central = (lower_dist >= originalStep) && (upper_dist >= originalStep);
+        	     	              if (central) {
+        	     	            	  gbuf[0] = (hrf_fit_err(xarg[0]+originalStep, z, y, t_r, hrf_dur) 
+        	     	            			  - hrf_fit_err(xarg[0]-originalStep, z, y, t_r, hrf_dur))/(2.0*originalStep);
+        	     	            	  System.out.println("gbuf[0] central = " + gbuf[0]);
+        	     	            	  continue;
+        	     	              }
+        	     	              forward = upper_dist >= lower_dist;
+        	     	              adjustedForwardStep = Math.min(originalStep, 0.5 *upper_dist);
+        	     	              if (forward) {
+        	     	                  gbuf[0] = (hrf_fit_err(xarg[0] + adjustedForwardStep, z, y, t_r, hrf_dur) - f[0])/adjustedForwardStep;
+        	     	                  System.out.println("gbuf[0] forward = " + gbuf[0]);
+        	     	                  continue;
+        	     	              }
+        	     	              backward = upper_dist < lower_dist;
+        	     	              adjustedBackwardStep = Math.min(originalStep, 0.5*lower_dist);
+                                  if (backward) {
+                                      gbuf[0] = (f[0] - hrf_fit_err(xarg[0] - adjustedBackwardStep, z, y, t_r, hrf_dur))/adjustedBackwardStep;
+                                      System.out.println("gbuf[0] backward = " + gbuf[0]);
+        	     	                  continue;
+                                  }
+                                  min_dist = Math.min(upper_dist, lower_dist);
+                                  adjusted_central = (Math.abs(adjustedForwardStep) <= min_dist) && (Math.abs(adjustedBackwardStep) <= min_dist);
+        	     		          if (adjusted_central) {
+        	     		        	 gbuf[0] = (hrf_fit_err(xarg[0]+min_dist, z, y, t_r, hrf_dur) 
+        	     		        			 - hrf_fit_err(xarg[0]-min_dist, z, y, t_r, hrf_dur))/(2.0*min_dist);
+        	     		        	 System.out.println("gbuf[0] adjusted = " + gbuf[0]);
+        	     	            	 continue;
+        	     		          }
+
+        	     	              System.err.println("Could not calculate gbuf[0]");
+        	     	              System.exit(-1);
+        	     	         } // if ((task[0].length() >= 2) && (task[0].substring(0,2).equalsIgnoreCase("FG")))
+        	     		
+        	     	         if ((task[0].length() >= 5) && (task[0].substring(0,5).equalsIgnoreCase("NEW_X"))) {   
+        	     		     
+        	     		//        the minimization routine has returned with a new iterate.
+        	     		//        At this point have the opportunity of stopping the iteration 
+        	     		//        or observing the values of certain parameters
+        	     		
+
+        	     		//        Note: task(1:4) must be assigned the value 'STOP' to terminate  
+        	     		//          the iteration and ensure that the final results are
+        	     		//          printed in the default format. The rest of the character
+        	     		//          string TASK may be used to store other information.
+
+        	     		//        1) Terminate if the total number of f and g evaluations
+        	     		//             exceeds 999.
+
+        	     		         if (isave[12] >= 999) {
+        	     		             task[0] = "STOP: TOTAL NO. of f AND gbuf EVALUATIONS EXCEEDS LIMIT";
+        	     		         }
+
+
+        	     		//        We now wish to print the following information at each
+        	     		//        iteration:
+        	     		        
+        	     		//          1) the current iteration number, isave(30),
+        	     		//          2) the total number of f and g evaluations, isave(34),
+        	     		//          3) the value of the objective function f,
+        	     		//          4) the norm of the projected gradient,  dsve(13)
+        	     		
+        	     		//        See the comments at the end of driver1 for a description
+        	     		//        of the variables isave and dsave.
+        	     		         
+        	     		         //System.out.println("Current iteration number = " + isave[8]);
+        	     		         //System.out.println("Total number of f and g evaluations = " + isave[12]);
+        	     		         //System.out.println("Value of the objective function f = " + f[0]);
+        	     		         //System.out.println("Norm of the projected gradient = " + dsave[12]);
+
+        	     		//        If the run is to be terminated, we print also the information
+        	     		//        contained in task as well as the final value of x.
+
+        	     		         if (task[0].substring(0,4).equals("STOP")) {
+        	     		            System.out.println("task[0] = " + task[0]);
+        	     		            System.out.print("Final xarg = " + xarg[0]);
+        	     		         } // if (task[0].substring(0,4).equals("STOP"))
+
+        	     		//          go back to the minimization routine.
+        	     		         continue;
+
+        	     	         } // if ((task[0].length() >= 5) && (task[0].substring(0,5).equalsIgnoreCase("NEW_X")))
+
+        	     		//           ---------- the end of the loop -------------
+        	     		 
+        	     		//     If task is neither FG nor NEW_X we terminate execution.
+
+        	     		      break;
+        	     		 } while (true);
+        		 theta = xarg[0];
+                
+                //args = (z, y, t_r, hrf_dur)
+                        // theta, _, _ = fmin_l_bfgs_b(
+                                            // func=hrf_fit_err, x0=theta, args=args,
+                                           // bounds=bounds, approx_grad=True, maxiter=999,
+                                           // pgtol=1.0e-12)
+        		 spm_hrf(h, t_hrf, theta, t_r,
+     				    hrf_dur, normalized_hrf, dt, p_delay,
+     		            undershoot, p_disp, u_disp, p_u_ratio, onset);
+        		 x = spectral_convolve(h, z);
+        		 
+        		 // cost function
+        		 r = 0.0;
+        		 for (i = 0; i < y.length; i++) {
+        			 diff = x[i] - y[i];
+        			 r += diff*diff;
+        		 }
+                 g = 0.0;
+                 for (i = 0; i < y.length; i++) {
+                	 g += Math.abs(diff_z[i]);
+                 }
+        	     dJ.add((r + lbda * g) / j_0 + 1.0e-30);
+        	     dr.add(r / r_0 + 1.0e-30);
+        	     dg.add(g);
+
+        	     if ((verbose > 0) && ((idx+1) % print_period == 0)) {
+        	         System.out.println("Normalized global cost-function at idx = " + idx + " is " + dJ.get(dJ.size()-1));
+        	     }
+
+        	     // early stopping
+        	     if (early_stopping) {
+    	            if (idx > wind) {
+    	                sub_wind_len = (int)(wind/2);
+    	                old_j = 0.0;
+    	                for (i = 0; i < dJ.size() - sub_wind_len; i++) {
+    	                	old_j += dJ.get(i);
+    	                }
+    	                old_j = old_j/(dJ.size() - sub_wind_len);
+    	                new_j = 0.0;
+    	                for (i = dJ.size() - sub_wind_len; i < dJ.size(); i++) {
+    	                	new_j += dJ.get(i);
+    	                }
+    	                new_j = new_j/sub_wind_len;
+    	                diff = (new_j - old_j) / new_j;
+    	                if (diff < tol) {
+    	                    if (verbose > 0) {
+    	                    	System.out.println("Early stopping done at idx = " + idx + " with normalized cost function = " + dJ.get(idx));
+    	                    } // if (verbose > 0)
+    	                    break;
+    	                } // if (diff < tol)
+    	            } // if (idx > wind)
+        	     } // if (early_stopping)
+
+
     	    } // for (idx = 0; idx < nb_iter; idx++)
+    	    
+    	    // last (long) deconvolution
+    	    H = toeplitz_from_kernel(h, y.length, y.length);
+    	    diff_z = _loops_deconv(y, diff_z, H, lbda, nb_iter, early_stopping, wind,
+    	                           tol);
+    	    z[0] = diff_z[0];
+    	    for (i = 1; i < y.length; i++) {
+    	    	z[i] = z[i-1] + diff_z[i];
+    	    }
+    	    x = spectral_convolve(h, z);
 
+    	    // cost function
+    	    r = 0.0;
+	   		for (i = 0; i < y.length; i++) {
+	   			diff = x[i] - y[i];
+	   			r += diff*diff;
+	   		}
+            g = 0.0;
+            for (i = 0; i < y.length; i++) {
+           	     g += Math.abs(diff_z[i]);
+            }
+    	    dJ.add((r + lbda * g) / j_0);
+    	    dr.add(r / r_0);
+    	    dg.add(g);
 
+    	    for (i = 0; i < x.length; i++) {
+    	    	xout.add(x[i]);
+    	    }
+    	    for (i = 0; i < z.length; i++) {
+    	    	zout.add(z[i]);
+    	    }
+    	    for (i = 0; i < diff_z.length; i++) {
+    	    	diff_zout.add(diff_z[i]);
+    	    }
+    	    for (i = 0; i < h.length; i++) {
+    	    	hout.add(h[i]);
+    	    }
+
+    	    return;
     }
 
+    public void blind_deconvolution_example() {
+    	// generate data
+    	double hrf_dur = 20.0;
+    	int dur = 3;  // minutes
+    	double TR = 0.75;
+    	double snr = 1.0;
+ 
+    	double dt = 0.001;
+    	int numsamples = (int)(hrf_dur/ dt);
+    	int step = (int)(TR/dt);
+    	int returnedsamples = ((numsamples-1)/step) + 1; // length of orig_hrf[] and t_hrf[]
+    	double orig_hrf[] = new double[returnedsamples];
+    	double t_hrf[] = new double[returnedsamples];
+    	boolean normalized_hrf = true;
+    	double p_delay = 6.0;
+    	double undershoot = 16.0;
+    	double p_disp = 1.0;
+    	double u_disp = 1.0;
+    	double p_u_ratio = 0.167;
+    	double onset = 0.0;
+    	spm_hrf(orig_hrf, t_hrf, 1.0, TR,
+    				    hrf_dur, normalized_hrf, dt, p_delay,
+    		            undershoot, p_disp, u_disp, p_u_ratio, onset);
+    	double dur_bloc = 30.0;
+    	boolean sourcehrf = true;
+    	boolean haveSeed = true;
+    	long random_state = 0L;
+    	// For noisy_ar_s, ar_s, ai_s, i_s, t, noise length is int N = (int)(dur * 60 / TR);
+    	int N = (int)(dur * 60 / TR);
+    	double noisy_ar_s[] = new double[N];
+    	double ar_s[] = new double[N];
+    	double ai_s[] = new double[N];
+    	double i_s[] = new double[N];
+    	double t[] = new double[N];
+    	double noise[] = new double[N];
+    	gen_regular_bloc_bold(noisy_ar_s, ar_s, ai_s,
+    		    		i_s, t, noise, dur, TR, dur_bloc,
+    		    		sourcehrf, orig_hrf, snr, haveSeed, random_state);
+    	
+    	// ###############################################################################
+    	// blind deconvolution
+    	int nb_iter = 1;
+    	double init_hrf[] = new double[returnedsamples];
+    	spm_hrf(init_hrf, t_hrf, MAX_DELTA, TR,
+			    hrf_dur, normalized_hrf, dt, p_delay,
+	            undershoot, p_disp, u_disp, p_u_ratio, onset);
 
+    	Vector<Double> est_ar_s = new Vector<Double>();
+    	Vector<Double> est_ai_s = new Vector<Double>();
+    	Vector<Double> est_i_s = new Vector<Double>();
+    	Vector<Double> est_hrf = new Vector<Double>();
+    	Vector<Double> dr = new Vector<Double>();
+    	Vector<Double> dg = new Vector<Double>();
+    	Vector<Double> dJ = new Vector<Double>();
+    	double lbda = 1.0;
+    	double theta = MAX_DELTA;
+    	double z_0[] = null;
+    	double bounds[] = new double[] {MIN_DELTA + 1.0e-1, MAX_DELTA - 1.0e-1};
+    	int nb_sub_iter = 1000;
+    	int nb_last_iter = 10000;
+    	int print_period = 50;
+    	boolean early_stopping = false;
+    	int wind = 4;
+    	double tol = 1.0E-2;
+    	int verbose = 1;
+    	
+    	long t0 = System.currentTimeMillis();
+    	bd(est_ar_s, est_ai_s, est_i_s, est_hrf, dr, dg, dJ, 
+           noisy_ar_s, TR, lbda, theta, z_0, hrf_dur,
+           bounds, nb_iter, nb_sub_iter, nb_last_iter,
+           print_period, early_stopping, wind, tol, verbose);
+        	    
+    	double delta_t = (System.currentTimeMillis() - t0)/1000.0;
+
+    	System.out.println("bd duration = " + delta_t + " seconds");
+
+		
+    }
 
 
 }
