@@ -4,7 +4,13 @@ package gov.nih.mipav.util;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
-import java.io.File;
+import java.io.*;
+//import java.lang.invoke.*;
+//import java.lang.reflect.*;
+//import java.util.Arrays;
+//
+//import jdk.internal.loader.NativeLibraries;
+import ncsa.hdf.hdf5lib.H5;
 
 import org.scijava.nativelib.NativeLibraryUtil;
 import org.scijava.nativelib.NativeLibraryUtil.Architecture;
@@ -34,6 +40,12 @@ public class NativeLibraryLoader {
     public static boolean loadNativeLibraries() {
         final String tempDir = getNativeLibTmpDir();
         System.setProperty("java.library.tmpdir", tempDir);
+        try {
+            addDirToLibPath(tempDir);
+        } catch (Exception e) {
+            System.err.println("Unable to add native library temp directory to Java library path. Some features may not work as expected.");
+            e.printStackTrace();
+        }
         
         // create temp directory if it doesn't exist
         final File tmpDirFile = new File(tempDir);
@@ -51,6 +63,10 @@ public class NativeLibraryLoader {
             
             for (final String curLib : libList) {
                 NativeLibraryUtil.loadNativeLibrary(NativeLibraryUtil.class, curLib);
+                
+                if (curLib.equalsIgnoreCase("jhdf5")) {
+                    System.setProperty(H5.H5PATH_PROPERTY_KEY, tempDir + File.separator + NativeLibraryUtil.getPlatformLibraryName(curLib));
+                }
             }
             
             for (final File libFile : tmpDirFile.listFiles()) {
@@ -100,5 +116,30 @@ public class NativeLibraryLoader {
         }
 
         return archString;
+    }
+    
+    public static void addDirToLibPath(String s) throws IOException {
+//        try {
+            System.setProperty("java.library.path", System.getProperty("java.library.path") + File.pathSeparator + s);
+            
+//            Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
+//            fieldSysPath.setAccessible( true );
+//            fieldSysPath.set( null, null );
+            
+            /*final Class<?>[] declClassArr = NativeLibraries.class.getDeclaredClasses();
+            final Class<?> libraryPaths =
+                Arrays.stream(declClassArr)
+                    .filter(klass -> klass.getSimpleName().equals("LibraryPaths"))
+                    .findFirst()
+                    .get();
+            final Field field = libraryPaths.getDeclaredField("USER_PATHS");
+            final MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup());
+            final VarHandle varHandle = lookup.findVarHandle(Field.class, "modifiers", int.class);
+            varHandle.set(field, field.getModifiers() & ~Modifier.FINAL);
+        } catch (IllegalAccessException e) {
+            throw new IOException("Failed to get permissions to set library path");
+        } catch (NoSuchFieldException e) {
+            throw new IOException("Failed to get field handle to set library path");
+        }*/
     }
 }
