@@ -5200,6 +5200,100 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	}
     	return ans;
     }
+    
+    public void data_generation_example() {
+    	// generate the signal
+    	double tr = 0.75; // orignally 1.0
+    	double snr = 1.0;
+    	int dur = 3;  // minutes originally 4
+    	double hrf_dur = 20.0; // orignally 30.0
+    	double dt = 0.001;
+    	int numsamples = (int)(hrf_dur/ dt);
+    	int step = (int)(tr/dt);
+    	int returnedsamples = ((numsamples-1)/step) + 1; // length of orig_hrf[] and t_hrf[]
+    	double hrf[] = new double[returnedsamples];
+    	double t_hrf[] = new double[returnedsamples];
+    	boolean normalized_hrf = true;
+    	double p_delay = 6.0;
+    	double undershoot = 16.0;
+    	double p_disp = 1.0;
+    	double u_disp = 1.0;
+    	double p_u_ratio = 0.167;
+    	double onset = 0.0;
+    	spm_hrf(hrf, t_hrf, 1.0, tr,
+    				    hrf_dur, normalized_hrf, dt, p_delay,
+    		            undershoot, p_disp, u_disp, p_u_ratio, onset);
+    	double hrf_fwhm = fwhm(t_hrf, hrf, 3);
+    	double hrf_tp = tp(t_hrf, hrf);
+    	boolean sourcehrf = true;
+    	int nb_events = 4;
+	    int avg_dur = 1;
+	    double std_dur = 4.0;
+	    boolean middle_spike = false;
+	    boolean overlapping = false;
+	    boolean unitary_block = false;
+	    int nb_try = 1000;
+	    int nb_try_duration = 1000;
+	    boolean centered = false;
+	    boolean haveSeed = true;
+	    long random_state = 0L;
+	    int genlength = 1 + (int)((60000*dur-1)/(int)(1000*tr));
+	    double noisy_ar_s[] = new double[genlength];
+	    double ar_s[] = new double[genlength];
+	    double ai_s[] = new double[genlength];
+	    double i_s[] = new double[genlength];
+	    double t[] = new double[genlength];
+	    double noise[] = new double[genlength];
+	 
+        gen_rnd_bloc_bold(noisy_ar_s, ar_s, ai_s,
+        		i_s,  t, noise,
+        		dur, tr, sourcehrf, hrf, nb_events, avg_dur,
+                std_dur, middle_spike, overlapping,
+                unitary_block, snr, nb_try,
+                nb_try_duration, centered, haveSeed, random_state);
+        
+        int i;
+        float xInit[][] = new float[2][genlength];
+        float yInit[][] = new float[2][genlength];
+        for (i = 0; i < genlength; i++) {
+        	xInit[0][i] = (float)t[i];
+        	xInit[1][i] = (float)t[i];
+        	yInit[0][i] = (float)noisy_ar_s[i]; // "Noisy BOLD signal, SNR = " + snr + " dB, TR = " + tr;
+        	yInit[1][i] = (float)ar_s[i]; // ="Denoised BOLD signal signal"
+        }
+        String title = "Noisy BOLD signal, SNR = " + snr + " dB, TR = " + tr;
+        String labelX = "time (s)";
+        String labelY = "ampl.";
+        Color colorArray[] = new Color[] {Color.YELLOW, Color.BLUE};
+        new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, colorArray);
+        
+        float xInit2[][] = new float[2][genlength];
+        float yInit2[][] = new float[2][genlength];
+        for (i = 0; i < genlength; i++) {
+        	xInit2[0][i] = (float)t[i];
+        	xInit2[1][i] = (float)t[i];
+        	yInit2[0][i] = (float)ai_s[i]; // Block signal
+        	yInit2[1][i] = (float)i_s[i]; // Dirac source signal
+        }
+        String title2 = "Source signals, TR = " + tr + " s";
+        String labelX2 = "time (s)";
+        String labelY2 = "ampl.";
+        Color colorArray2[] = new Color[] {Color.RED, Color.GREEN};
+        new ViewJFrameGraph(xInit2, yInit2, title2, labelX2, labelY2, colorArray2);
+        
+        float xInit3[] = new float[returnedsamples];
+        float yInit3[] = new float[returnedsamples];
+        for (i = 0; i < returnedsamples; i++) {
+        	xInit3[i] = (float)t_hrf[i];
+        	yInit3[i] = (float)hrf[i];
+        }
+        String title3 = "Original HRF TR = " + tr + " s FWHM = " + hrf_fwhm + " s TP = " + hrf_tp + " s";
+        String labelX3 = "time sec";
+        String labelY3 = "ampl.";
+        new ViewJFrameGraph(xInit3, yInit3, title3, labelX3, labelY3);
+    	
+
+    }
 
 
 }
