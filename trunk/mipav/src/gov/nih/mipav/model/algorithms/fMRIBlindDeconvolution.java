@@ -1495,7 +1495,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         for (i = 0; i  < y.length; i++) {
         	y[i] = hrf[i] - half_max;
         }
-        double w[] = null;
+        double w[] = new double[hrf.length];
+        for (i = 0; i < hrf.length; i++) {
+        	w[i] = 1.0;
+        }
         double xb = x[0];
         double xe = x[x.length-1];
         double s = 0.0;
@@ -4733,6 +4736,41 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         	         } // if (iprint >= 1)   
                 L_BFGS_B LBB = new L_BFGS_B();
                 
+                /*
+                Verifies that arg[0] = 1.9 is the correct answer for minimiaing f
+                for (double del = l[0]; del <= u[0]+0.01; del+= 0.05) {
+                	f[0] = hrf_fit_err(del, z, y, t_r, hrf_dur);	
+                	System.out.println("del = " + del + " f[0] = " + f[0]);
+                	del = 0.6 f[0] = 840.0567047083654
+        			del = 0.65 f[0] = 840.0271655137155
+        			del = 0.7000000000000001 f[0] = 839.9890383664151
+        			del = 0.7500000000000001 f[0] = 839.9409176227871
+        			del = 0.8000000000000002 f[0] = 839.8813597735948
+        			del = 0.8500000000000002 f[0] = 839.8089060698674
+        			del = 0.9000000000000002 f[0] = 839.7221061260544
+        			del = 0.9500000000000003 f[0] = 839.6195422026619
+        			del = 1.0000000000000002 f[0] = 839.4998538695758
+        			del = 1.0500000000000003 f[0] = 839.361762748399
+        			del = 1.1000000000000003 f[0] = 839.2040970291404
+        			del = 1.1500000000000004 f[0] = 839.0258154554954
+        			del = 1.2000000000000004 f[0] = 838.8260304749393
+        			del = 1.2500000000000004 f[0] = 838.6040302558562
+        			del = 1.3000000000000005 f[0] = 838.3592992845844
+        			del = 1.3500000000000005 f[0] = 838.0915372706678
+        			del = 1.4000000000000006 f[0] = 837.8006761088217
+        			del = 1.4500000000000006 f[0] = 837.4868946707275
+        			del = 1.5000000000000007 f[0] = 837.1506312284679
+        			del = 1.5500000000000007 f[0] = 836.7925933432631
+        			del = 1.6000000000000008 f[0] = 836.4137650878166
+        			del = 1.6500000000000008 f[0] = 836.0154115069281
+        			del = 1.7000000000000008 f[0] = 835.5990802584737
+        			del = 1.7500000000000009 f[0] = 835.166600414537
+        			del = 1.800000000000001 f[0] = 834.7200784396598
+        			del = 1.850000000000001 f[0] = 834.2618913991536
+        			del = 1.900000000000001 f[0] = 833.7946774845946
+                }
+                */
+                
                 //      ------- the beginning of the loop ----------
         		 
         		 do {
@@ -4952,8 +4990,10 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	double dt = 0.001;
     	int numsamples = (int)(hrf_dur/ dt);
     	int step = (int)(TR/dt);
+    	// returnedsamples = 27
     	int returnedsamples = ((numsamples-1)/step) + 1; // length of orig_hrf[] and t_hrf[]
     	double orig_hrf[] = new double[returnedsamples];
+    	// t_hrf are .037501875 apart
     	double t_hrf[] = new double[returnedsamples];
     	boolean normalized_hrf = true;
     	double p_delay = 6.0;
@@ -4970,16 +5010,20 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	boolean haveSeed = true;
     	long random_state = 0L;
     	// For noisy_ar_s, ar_s, ai_s, i_s, t, noise length is int N = (int)(dur * 60 / TR);
+    	// N = 240
     	int N = (int)(dur * 60 / TR);
+    	System.out.println("N = " + N);
     	double noisy_ar_s[] = new double[N];
     	double ar_s[] = new double[N];
     	double ai_s[] = new double[N];
     	double i_s[] = new double[N];
+    	// t are spaced at dur*60/(N-1) = .753138
     	double t[] = new double[N];
     	double noise[] = new double[N];
     	gen_regular_bloc_bold(noisy_ar_s, ar_s, ai_s,
     		    		i_s, t, noise, dur, TR, dur_bloc,
     		    		sourcehrf, orig_hrf, snr, haveSeed, random_state);
+    	
     	
     	// ###############################################################################
     	// blind deconvolution
@@ -5017,8 +5061,144 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
     	double delta_t = (System.currentTimeMillis() - t0)/1000.0;
 
     	System.out.println("bd duration = " + delta_t + " seconds");
-
+    	System.out.println("returnedsamples = " + returnedsamples);
+    	System.out.println("est_hrf.size() = " + est_hrf.size());
+    	int i;
+    	
+    	double inf_norm_noisy_ar_s = inf_norm(noisy_ar_s);
+		for (i = 0; i < noisy_ar_s.length; i++) {
+			noisy_ar_s[i] /= inf_norm_noisy_ar_s;
+		}
 		
+		double inf_norm_ar_s = inf_norm(ar_s);
+		for (i = 0; i < ar_s.length; i++) {
+            ar_s[i] /= inf_norm_ar_s;
+		}
+		
+		double inf_norm_ai_s = inf_norm(ai_s);
+		for (i = 0; i < ai_s.length; i++) {
+			ai_s[i] /= inf_norm_ai_s;
+		}
+		
+		double inf_norm_i_s = inf_norm(i_s);
+		for (i = 0; i < i_s.length; i++) {
+			i_s[i] /= inf_norm_i_s;
+		}
+
+		double inf_norm_est_ar_s = inf_norm(est_ar_s);
+		for (i = 0; i < est_ar_s.size(); i++) {
+			est_ar_s.set(i, est_ar_s.get(i)/inf_norm_est_ar_s);
+		}
+		
+		double inf_norm_est_ai_s = inf_norm(est_ai_s);
+		for (i = 0; i < est_ai_s.size(); i++) {
+			est_ai_s.set(i, est_ai_s.get(i)/inf_norm_est_ai_s);
+		}
+		
+		double inf_norm_est_i_s = inf_norm(est_i_s);
+		for (i = 0; i < est_i_s.size(); i++) {
+			est_i_s.set(i, est_i_s.get(i)/inf_norm_est_i_s);
+		}
+		
+		double inf_norm_est_hrf = inf_norm(est_hrf);
+		for (i = 0; i < est_hrf.size(); i++) {
+			est_hrf.set(i, est_hrf.get(i)/inf_norm_est_hrf);
+		}
+		
+		double inf_norm_orig_hrf = inf_norm(orig_hrf);
+		for (i = 0; i < orig_hrf.length; i++) {
+			orig_hrf[i] /= inf_norm_orig_hrf;
+		}
+		
+		float xInit[][] = new float[2][N];
+        float yInit[][] = new float[2][N];
+        for (i = 0; i < N; i++) {
+        	xInit[0][i] = (float)t[i];
+        	xInit[1][i] = (float)t[i];
+        	yInit[0][i] = (float)noisy_ar_s[i]; // "Noisy activation related signal, snr = " + snr + " dB";
+        	yInit[1][i] = (float)est_ar_s.get(i).doubleValue(); // ="Est. activation related signal"
+        }
+        String title = "Noisy activation related signal, snr = " + snr + " dB";
+        String labelX = "time (s)";
+        String labelY = "ampl.";
+        Color colorArray[] = new Color[] {Color.YELLOW, Color.GREEN};
+        new ViewJFrameGraph(xInit, yInit, title, labelX, labelY, colorArray);
+        
+        float xInit2[][] = new float[2][N];
+        float yInit2[][] = new float[2][N];
+        for (i = 0; i < N; i++) {
+        	xInit2[0][i] = (float)t[i];
+        	xInit2[1][i] = (float)t[i];
+        	yInit2[0][i] = (float)ar_s[i]; // "Orig. activation related signal"
+        	yInit2[1][i] = (float)est_ar_s.get(i).doubleValue(); // ="Est. activation related signal"
+        }
+        String title2 = "Orig. activation related signal";
+        String labelX2 = "time (s)";
+        String labelY2 = "ampl.";
+        Color colorArray2[] = new Color[] {Color.BLUE, Color.GREEN};
+        new ViewJFrameGraph(xInit2, yInit2, title2, labelX2, labelY2, colorArray2);
+        
+        float xInit3[][] = new float[3][N];
+        float yInit3[][] = new float[3][N];
+        for (i = 0; i < N; i++) {
+        	xInit3[0][i] = (float)t[i];
+        	xInit3[1][i] = (float)t[i];
+        	xInit3[2][i] = (float)t[i];
+        	yInit3[0][i] = (float)ar_s[i]; // "Orig. activation inducing signal, snr = " + snr + " dB"
+        	yInit3[1][i] = (float)est_ai_s.get(i).doubleValue(); // "Est. activation inducing signal"
+        	yInit3[2][i] = (float)est_i_s.get(i).doubleValue(); //  "Est. innovation signal")
+        }
+        String title3 = "Orig. activation inducing signal, snr = " + snr + " dB";
+        String labelX3 = "time (s)";
+        String labelY3 = "ampl.";
+        Color colorArray3[] = new Color[] {Color.BLUE, Color.GREEN, Color.RED};
+        new ViewJFrameGraph(xInit3, yInit3, title3, labelX3, labelY3, colorArray3);
+        
+        float xInit4[][] = new float[3][returnedsamples];
+        float yInit4[][] = new float[3][returnedsamples];
+        for (i = 0; i < returnedsamples; i++) {
+        	xInit4[0][i] = (float)t_hrf[i];
+        	xInit4[1][i] = (float)t_hrf[i];
+        	xInit4[2][i] = (float)t_hrf[i];
+        	yInit4[0][i] = (float)orig_hrf[i]; // "Orig. HRF"
+        	yInit4[1][i] = (float)est_hrf.get(i).doubleValue(); // "Est. HRF"
+        	yInit4[2][i] = (float)init_hrf[i]; //  "Init. HRF"
+        }
+        String title4 = "Orig. HRF";
+        String labelX4 = "time (s)";
+        String labelY4 = "ampl.";
+        Color colorArray4[] = new Color[] {Color.BLUE, Color.GREEN, Color.BLACK};
+        new ViewJFrameGraph(xInit4, yInit4, title4, labelX4, labelY4, colorArray4);
+        
+        float xInit5[] = new float[dJ.size()];
+        float yInit5[] = new float[dJ.size()];
+        for (i = 0; i < dJ.size(); i++) {
+        	xInit5[i] = (float)i;
+        	yInit5[i] = (float)dJ.get(i).doubleValue();
+        }
+        String title5 = "Evolution of the cost function";
+        String labelX5 = "n iters";
+        String labelY5 = "Cost function";
+        new ViewJFrameGraph(xInit5, yInit5, title5, labelX5, labelY5);
+		
+    }
+    
+    private double inf_norm(double x[]) {
+    	int i;
+    	double ans = 0.0;
+    	for (i = 0; i < x.length; i++) {
+    	    ans = Math.max(ans, Math.abs(x[i]));	
+    	}
+    	return ans;
+    }
+    
+    private double inf_norm(Vector<Double>x) {
+    	int i;
+    	double ans = 0.0;
+    	for (i = 0; i < x.size(); i++) {
+    	    ans = Math.max(ans, Math.abs(x.get(i)));	
+    	}
+    	return ans;
     }
 
 
