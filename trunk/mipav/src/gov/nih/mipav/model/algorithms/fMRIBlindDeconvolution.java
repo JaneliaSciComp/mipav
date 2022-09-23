@@ -143,7 +143,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
 		t = new double[numsamples];
 		scaled_time_stamps = new double[numsamples];
 		for (i = 0; i < numsamples; i++) {
-			t[i] = (double)i/(numsamples - 1.0) - onset/dt;
+			t[i] = dur*i/(numsamples - 1.0) - onset/dt;
 			scaled_time_stamps[i] = delta * t[i];
 		}
 		a = p_delay/p_disp;
@@ -5160,11 +5160,11 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         	xInit4[0][i] = (float)t_hrf[i];
         	xInit4[1][i] = (float)t_hrf[i];
         	xInit4[2][i] = (float)t_hrf[i];
-        	yInit4[0][i] = (float)orig_hrf[i]; // "Orig. HRF"
+        	yInit4[0][i] = (float)orig_hrf[i]; // "Orig. HRF, FWHM = " + fwhm(t_hrf, orig_hrf,3);
         	yInit4[1][i] = (float)est_hrf.get(i).doubleValue(); // "Est. HRF"
         	yInit4[2][i] = (float)init_hrf[i]; //  "Init. HRF"
         }
-        String title4 = "Orig. HRF";
+        String title4 = "Orig. HRF, FWHM = " + fwhm(t_hrf, orig_hrf,3);
         String labelX4 = "time (s)";
         String labelY4 = "ampl.";
         Color colorArray4[] = new Color[] {Color.BLUE, Color.GREEN, Color.BLACK};
