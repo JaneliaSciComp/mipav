@@ -1490,19 +1490,23 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         double half_max = maxhrf / 2.0;
         int iopt = 0;
         int m = t_hrf.length;
+        if (m <= k) {
+        	System.err.println("Must have m > k in fwhm");
+        	return -1;
+        }
         double x[] = t_hrf;
         double y[] = new double[hrf.length];
         for (i = 0; i  < y.length; i++) {
         	y[i] = hrf[i] - half_max;
         }
-        double w[] = new double[hrf.length];
-        for (i = 0; i < hrf.length; i++) {
+        double w[] = new double[m];
+        for (i = 0; i < m; i++) {
         	w[i] = 1.0;
         }
         double xb = x[0];
         double xe = x[x.length-1];
         double s = 0.0;
-        int nest = m + k + 1;
+        int nest = Math.max(m + k + 1, 2*k + 3);
         int n[] = new int[1];
         double t[] = new double[nest];
         double c[] = new double[nest];
@@ -1526,10 +1530,17 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         	System.err.println("In curfit the input data are invalid");
         	System.exit(-1);
         }
+        double tout[] = new double[n[0]];
+        double cout[] = new double[n[0]];
+        for (i = 0; i < n[0]; i++) {
+        	tout[i] = t[i];
+        	cout[i] = c[i];
+        }
+
         int mest = 10;
         double zero[] = new double[mest];
         int marr[] = new int[1];
-        sproot spr = new sproot(t,n[0],c,zero,mest,marr,ier);
+        sproot spr = new sproot(tout,n[0],cout,zero,mest,marr,ier);
         spr.run();
         if (ier[0] == 0) {
         	Preferences.debug("Normal return from sproot\n", Preferences.DEBUG_ALGORITHM);	
