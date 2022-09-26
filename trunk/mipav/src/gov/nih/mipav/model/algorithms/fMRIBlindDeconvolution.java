@@ -1532,7 +1532,7 @@ public class fMRIBlindDeconvolution extends AlgorithmBase {
         sproot spr = new sproot(t,n[0],c,zero,mest,marr,ier);
         spr.run();
         if (ier[0] == 0) {
-        	Preferences.debug("Normal return from curfit\n", Preferences.DEBUG_ALGORITHM);	
+        	Preferences.debug("Normal return from sproot\n", Preferences.DEBUG_ALGORITHM);	
         }
         else if (ier[0] == 1) {
         	System.err.println("In sproot the number of zeros exceeds mest");
