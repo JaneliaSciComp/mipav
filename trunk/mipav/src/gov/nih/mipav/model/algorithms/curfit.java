@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.Preferences;
+
 public class curfit {
 	// ported from scipy package
 	/**
@@ -52,6 +54,10 @@ public class curfit {
 	private int iwrk[];
 	private int ier[];
 	private double wrk[][][];
+	
+	 public curfit() {
+		 
+	 }
 	
      public curfit(int iopt,int m, double x[], double y[], double w[],
     		 double xb,double xe, int k, double s, int nest,int n[],
@@ -1218,7 +1224,140 @@ public class curfit {
              }
 		     return p;
      }
+     
+     public void check_1() {
+    	 int d,i,k;
+    	 double tol;
+    	 double err;
+    	 int iopt = 0;
+    	 int N = 20;
+         int m = 21;
+         double a = 0.0;
+         double b = 2.0*Math.PI;
+         double x[] = new double[m];
+         double inc = (b-a)/20.0;
+         for (i = 0; i < 21; i++) {
+        	 x[i] = a + i*inc;
+         }
+         double x1[] = new double[19];
+         inc = (b-a)/19.0;
+         for (i = 1; i < 20; i++) {
+        	 x1[i-1] = a + i*inc;
+         }
+         double diff[] = new double[19];
+         double y[] = new double[19];
+         double v[] = new double[21];
+         for (i = 0; i  < m; i++) {
+         	v[i] = Math.sin(x[i]);
+         }
+         double w[] = new double[m];
+         for (i = 0; i < m; i++) {
+         	w[i] = 1.0;
+         }
+         double xb = x[0];
+         double xe = x[x.length-1];
+         double s = 0.0;
+         int n[] = new int[1];
+         int ier[] = new int[1];
+         double fp[] = new double[1];
+         for (k = 1; k <= 5; k++) {
+        	 n[0] = 0;
+        	 ier[0] = 0;
+        	 fp[0] = 0.0;
+	         int nest = Math.max(m + k + 1, 2*k + 3);
+	         double t[] = new double[nest];
+	         double c[] = new double[nest];
+	         int lwrk = nest*(3*k + 7) + m*(k + 1);
+	         int iwrk[] = new int[nest];
+	         curfit cur = new curfit(iopt, m, x, v, w, xb, xe, k, s, nest, n,
+	         		t, c, fp, lwrk, iwrk, ier);
+	         cur.run();
+	         if (ier[0] == -1) {
+	         	Preferences.debug("Normal return from curfit\n", Preferences.DEBUG_ALGORITHM);
+	         	Preferences.debug("The spline returned is an interpolating spline (fp[0] = 0)\n",
+	         			Preferences.DEBUG_ALGORITHM);
+	         }
+	         else if (ier[0] == 1) {
+	         	System.err.println("In curfit the required storage space exceeds the available storage space");
+	         	System.exit(-1);
+	         }
+	         else if (ier[0] == 10) {
+	         	System.err.println("In curfit the input data are invalid");
+	         	System.exit(-1);
+	         }
+	         double tout[] = new double[n[0]];
+	         double cout[] = new double[n[0]];
+	         for (i = 0; i < n[0]; i++) {
+	         	tout[i] = t[i];
+	         	cout[i] = c[i];
+	         }
+	         
+	         for (d = 0; d < k+1; d++) {
+	             tol = err_est(k, d, N, s);	
+	             double fout[] = f1(x1,d);
+	             splev sp = new splev(tout, n[0], cout, d, x1, y, 19, 0, ier);
+	             sp.run();
+	             for (i = 0; i < 19; i++) {
+	            	 diff[i] = fout[i] - y[i];
+	             }
+	             err = norm2(diff)/norm2(fout);
+	             if (err < tol) {
+	            	 System.out.println("Passes with err = " + err + " tol = " + tol + " d = " + d + " k = " + k);
+	             }
+	             else {
+	            	 System.err.println("Fails with err = " + err + " tol = " + tol + " d = " + d + " k = " + k);	 
+	             }
+	         }
+         } // for (k = 1; k <= 5; k++)
+     }
+     
+     private double[] f1(double x[], int d) {
+    	    //Derivatives of sin->cos->-sin->-cos.
+    	    double deriv[] = new double[x.length];
+    	    int i;
+    	    if (d % 4 == 0) {
+    	    	for (i = 0; i < x.length; i++) {
+    	    		deriv[i] = Math.sin(x[i]);
+    	    	}
+    	    }
+    	    else if (d % 4 == 1) {
+    	    	for (i = 0; i < x.length; i++) {
+    	    		deriv[i] = Math.cos(x[i]);
+    	    	}	
+    	    }
+    	    else if (d % 4 == 2) {
+    	    	for (i = 0; i < x.length; i++) {
+    	    		deriv[i] = -Math.sin(x[i]);
+    	    	}	
+    	    }
+    	    else if (d % 4 == 3) {
+    	    	for (i = 0; i < x.length; i++) {
+    	    		deriv[i] = -Math.cos(x[i]);
+    	    	}	
+    	    }
+    	    return deriv;
+     }
+
+     
+     private double err_est(int k, int d, int N, double s) {
+         // Assume f has all derivatives < 1
+         double h = 1.0 / N;
+         double tol = 5 * Math.pow(h,(.75*(k-d)));
+         if (s > 0) {
+             tol += 1e5*s;
+         }
+         return tol;
+     }
 
 
+     private double norm2(double x[]) {
+    	 int len = x.length;
+    	 int i;
+    	 double sum = 0.0;
+    	 for (i = 0; i < len; i++) {
+    	     sum += x[i]*x[i];	 
+    	 }
+    	 return Math.sqrt(sum);
+     }
 
 }
