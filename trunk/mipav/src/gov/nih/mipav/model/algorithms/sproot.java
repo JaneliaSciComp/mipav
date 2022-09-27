@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.Preferences;
+
 public class sproot {
 	// ported from scipy package
 	/**
@@ -42,6 +44,10 @@ public class sproot {
 	private int mest;
 	private int m[];
 	private int ier[];
+	
+	public sproot() {
+		
+	}
 	
 	public sproot(double t[], int n, double c[], double zero[], 
 			int mest, int m[], int ier[]) {
@@ -386,5 +392,87 @@ public class sproot {
 			return (-Math.abs(a));
 		}
 	}
+	
+	public void test_sproot() {
+		int i;
+        // sproot is only implemented for k=3
+		double a = 0.1;
+		double b = 15.0;
+		double x[] = new double[20];
+		double inc = (b-a)/19.0;
+		for (i = 0; i < 20; i++) {
+			x[i] = a + inc*i;
+		}
+        double v[] = new double[20];
+        for (i = 0; i < 20; i++) {
+        	v[i] = Math.sin(x[i]);
+        }
+
+        int k = 3;
+        int iopt = 0;
+        int m = 20;
+        if (m <= k) {
+        	System.err.println("Must have m > k in fwhm");
+        	return;
+        }
+        double w[] = new double[m];
+        for (i = 0; i < m; i++) {
+        	w[i] = 1.0;
+        }
+        double xb = x[0];
+        double xe = x[x.length-1];
+        double s = 0.0;
+        int nest = Math.max(m + k + 1, 2*k + 3);
+        int n[] = new int[1];
+        double t[] = new double[nest];
+        double c[] = new double[nest];
+        double fp[] = new double[1];
+        int lwrk = nest*(3*k + 7) + m*(k + 1);
+        int iwrk[] = new int[nest];
+        int ier[] = new int[1];
+        curfit cur = new curfit(iopt, m, x, v, w, xb, xe, k, s, nest, n,
+        		t, c, fp, lwrk, iwrk, ier);
+        cur.run();
+        if (ier[0] == -1) {
+        	Preferences.debug("Normal return from curfit\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("The spline returned is an interpolating spline (fp[0] = 0)\n",
+        			Preferences.DEBUG_ALGORITHM);
+        }
+        else if (ier[0] == 1) {
+        	System.err.println("In curfit the required storage space exceeds the available storage space");
+        	System.exit(-1);
+        }
+        else if (ier[0] == 10) {
+        	System.err.println("In curfit the input data are invalid");
+        	System.exit(-1);
+        }
+        double tout[] = new double[n[0]];
+        double cout[] = new double[n[0]];
+        for (i = 0; i < n[0]; i++) {
+        	tout[i] = t[i];
+        	cout[i] = c[i];
+        }
+
+        int mest = 10;
+        double zero[] = new double[mest];
+        int marr[] = new int[1];
+        sproot spr = new sproot(tout,n[0],cout,zero,mest,marr,ier);
+        spr.run();
+        if (ier[0] == 0) {
+        	Preferences.debug("Normal return from sproot\n", Preferences.DEBUG_ALGORITHM);	
+        }
+        else if (ier[0] == 1) {
+        	System.err.println("In sproot the number of zeros exceeds mest");
+        	System.exit(-1);
+        }
+        else if (ier[0] == 10) {
+        	System.err.println("In sproot the input data is invalid");
+        	System.exit(-1);
+        }
+        System.out.println("sproot returned " + marr[0] + " roots");
+        //assert_allclose(splev(roots, tck), 0, atol=1e-10, rtol=1e-10)
+        //assert_allclose(roots, np.pi * np.array([1, 2, 3, 4]), rtol=1e-3)
+	}
+
 
 }
