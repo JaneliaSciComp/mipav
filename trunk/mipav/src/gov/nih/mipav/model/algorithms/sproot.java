@@ -114,8 +114,8 @@ public class sproot {
 		      int jarr[] = new int[1];
 		//  ..
 		//  set some constants
-		      two = 0.2d+01;
-		      three = 0.3d+01;
+		      two = 2.0;
+		      three = 3.0;
 		//  before starting computations a data check is made. if the input data
 		//  are invalid, control is immediately repassed to the calling program.
 		      n4 = n-4;
@@ -300,14 +300,14 @@ public class sproot {
 	//  ..function references..
 	//    real*8 abs,max,datan,atan2,cos,sign,sqrt
 	//  set constants
-	    two = 0.2d+01;
-	    three = 0.3d+01;
-	    four = 0.4d+01;
-	    ovfl =0.1d+05;
-	    half = 0.5d;
+	    two = 2.0;
+	    three = 3.0;
+	    four = 4.0;
+	    ovfl = 1.0E4;
+	    half = 0.5;
 	    tent = 0.1;
 	    e3 = tent/0.3;
-	    pi3 = Math.atan(0.1d+01)/0.75;
+	    pi3 = Math.atan(1.0)/0.75;
 	    a1 = Math.abs(a);
 	    b1 = Math.abs(b);
 	    c1 = Math.abs(c);
