@@ -145,7 +145,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
     private float artifactCloseSize = 6f;
     
     private JTextField ventricleMeanThreshField;
-    private float ventricleMeanThresh = 0.4f;
+    private float ventricleMeanThresh = 2.0f;
     
     private JCheckBox perfusionSymmetryRemovalCheckbox;
     private boolean doPerfusionSymmetryRemoval = true;
@@ -1021,7 +1021,7 @@ public class PlugInDialogStrokeSegmentationPWI extends JDialogStandaloneScriptab
         
         gbc.gridwidth = 1;
         
-        JLabel labelVentricleThreshold = new JLabel("Ventricle mask DWI intensity threshold");
+        JLabel labelVentricleThreshold = new JLabel("Ventricle mask ADC intensity threshold");
         labelVentricleThreshold.setForeground(Color.black);
         labelVentricleThreshold.setFont(serif12);
         mainPanel.add(labelVentricleThreshold, gbc);
