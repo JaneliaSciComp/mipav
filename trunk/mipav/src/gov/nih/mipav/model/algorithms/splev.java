@@ -221,7 +221,7 @@ public class splev {
 		//  ..local arrays..
 		      double hh[] = new double[19];
 		
-		      one = 0.1d+01;
+		      one = 1.0;
 		      h[0] = one;
 		      for (j = 1; j <= k; j++) {
 		        for  (i = 1; i <= j; i++) {
