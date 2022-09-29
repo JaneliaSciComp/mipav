@@ -307,7 +307,7 @@ public class curfit {
 		//  ..
 		//  we set up the parameters tol and maxit
 		      maxit = 20;
-		      tol = 0.1d-02;
+		      tol = 0.001;
 		//  before starting computations a data check is made. if the input data
 		//  are invalid, control is immediately repassed to the calling program.
 		      ier[0] = 10;
@@ -512,10 +512,10 @@ public class curfit {
     	//    fpback,fpbspl,fpgivs,fpdisc,fpknot,fprota
     
     	//  set constants
-    	      one = 0.1d+01;
+    	      one = 1.0;
     	      con1 = 0.1;
     	      con9 = 0.9;
-    	      con4 = 0.4d-01;
+    	      con4 = 0.04;
     	      half = 0.5;
     	//ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     	//  part 1: determination of the number of knots and their position     c
@@ -959,7 +959,7 @@ public class curfit {
 	     //  ..local arrays..
 	           double hh[] = new double[19];
 	     
-	           one = 0.1d+01;
+	           one = 1.0;
 	           h[0] = one;
 	           for (j=1; j <= k; j++) {
 	             for (i=1; i <= j; i++) {
