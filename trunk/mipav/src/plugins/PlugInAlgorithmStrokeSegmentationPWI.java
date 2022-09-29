@@ -73,7 +73,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
     
     private int skullRemovalMaskThreshold = 70;
     
-    private float ventricleRemovalMeanThreshold = 0.4f;
+    private float ventricleRemovalMeanThreshold = 2.0f;
     
     private int threshCloseIter;
     
@@ -2706,7 +2706,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         int voxelCount = 0;
         for (int i = 0; i < volLength; i++) {
             if (fullBrainMask.getBoolean(i) == true) {
-                total += dwiImage.getInt(i);
+                total += adcImage.getInt(i);
                 voxelCount++;
             }
         }
@@ -2718,7 +2718,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         for (int i = 0; i < volLength; i++) {
             //if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > ventricleRemovalMaskThreshold) {
-            if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > thresholdIntensity) {
+            if (fullBrainMask.getBoolean(i) == true && adcImage.getInt(i) < thresholdIntensity) {
                 ventMaskImg.set(i, 1);
             } else {
                 ventMaskImg.set(i, 0);
@@ -2742,7 +2742,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
             
             maskBuffer = null;
-            displayError("Error on ventricle mask export: " + dwiImage.getImageName());
+            displayError("Error on ventricle mask export: " + adcImage.getImageName());
             setCompleted(false);
             return fullBrainMask;
         }
@@ -2775,15 +2775,15 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         }
         
         // TODO fill holes of ventMaskImg to get its outer boundary
-        ModelImage boundaryImg = (ModelImage) ventMaskImg.clone("pwi_ventricle_outer");
-        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_pre", FileUtility.XML);
-        close(boundaryImg, 2, 2f, false);
-        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_closed", FileUtility.XML);
-        fillHoles(boundaryImg);
-        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_filled", FileUtility.XML);
+        //ModelImage boundaryImg = (ModelImage) ventMaskImg.clone("pwi_ventricle_outer");
+        saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_pre", FileUtility.XML);
+        close(ventMaskImg, 2, 2f, false);
+        saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_closed", FileUtility.XML);
+        //fillHoles(ventMaskImg);
+        //saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_filled", FileUtility.XML);
         
         // TODO find values included in the full brain mask, but not in the ventricle outer boundary (which we assume will be smaller)
-        for (int i = 0; i < volLength; i++) {
+        /*for (int i = 0; i < volLength; i++) {
             if (fullBrainMask.getBoolean(i) == true && boundaryImg.getBoolean(i) == false) {
                 ventMaskImg.set(i, 1);
                 boundaryImg.set(i, 1);
@@ -2792,16 +2792,11 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             }
         }
 
-        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_add_bound", FileUtility.XML);
-        
-        if (boundaryImg != null) {
-            boundaryImg.disposeLocal();
-            boundaryImg = null;
-        }
+        saveImageFile(boundaryImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask_add_bound", FileUtility.XML);*/
         
         //dilate(pwiBrainMaskImg, 0.5f);
         
-        saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask", FileUtility.XML);
+        //saveImageFile(ventMaskImg, coreOutputDir, outputBasename + "_pwi_ventricle_mask", FileUtility.XML);
         
         return ventMaskImg;
     }
