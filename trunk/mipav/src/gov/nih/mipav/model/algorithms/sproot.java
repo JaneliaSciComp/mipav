@@ -397,6 +397,9 @@ public class sproot {
 	}
 	
 	public void test_sproot() {
+		// sproot returned 4 roots
+		// The splev of the roots passed the test
+		// All roots were close to their expected values
 		int i;
         // sproot is only implemented for k=3
 		double a = 0.1;
@@ -473,7 +476,34 @@ public class sproot {
         	System.exit(-1);
         }
         System.out.println("sproot returned " + marr[0] + " roots");
+        double y[] = new double[marr[0]];
+        splev sp = new splev(tout, n[0], cout, k, zero, y, marr[0], 0, ier);
+        sp.run();
+        if (ier[0] == 10) {
+        	System.err.println("In splev the input data is invalid");
+        	System.exit(-1);
+        }
+        //double allowed_difference = atol + rtol*abs(desired)
         //assert_allclose(splev(roots, tck), 0, atol=1e-10, rtol=1e-10)
+        double allowed_difference = 1.0E-10;
+        int num_differences = 0;
+        for (i = 0; i < marr[0]; i++) {
+            if (Math.abs(y[i]) > allowed_difference) {
+            	num_differences++;
+            	System.err.println("y["+i+"] = " + y[i] + " greater than the allowed 1.0E-10");
+            }
+        }
+        if (num_differences == 0) {
+        	System.out.println("The splev of the roots passed the test");
+        }
+        num_differences = 0;
+        for (i = 0; i < marr[0]; i++) {
+        	allowed_difference = 1.0E-3*(i+1)*Math.PI;
+        	if (Math.abs(zero[i] - (i+1)*Math.PI) > allowed_difference) {
+        		System.err.println("roots["+i+"] = " + zero[i] + " instead of the expected " + ((i+1)*Math.PI));
+        	}
+        }
+        System.out.println("All roots were close to their expected values");
         //assert_allclose(roots, np.pi * np.array([1, 2, 3, 4]), rtol=1e-3)
 	}
 
