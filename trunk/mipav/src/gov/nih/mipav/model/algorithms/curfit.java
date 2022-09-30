@@ -1226,6 +1226,14 @@ public class curfit {
      }
      
      public void check_1() {
+    	 // The splev function called does not have a derivative input \
+    	 // so just run d = 0
+    	 // Passes with err = 0.0 tol = 0.5286856317202822 d = 0 k = 1
+         // Passes with err = 1.3997244120642934E-4 tol = 0.05590169943749475 d = 0 k = 2
+         // Passes with err = 1.4300518369952684E-16 tol = 0.005910885056269849 d = 0 k = 3
+         // Passes with err = 2.6908227784610984E-6 tol = 6.250000000000001E-4 d = 0 k = 4
+    	 // Passes with err = 1.8481316455594853E-16 tol = 6.608570396503527E-5 d = 0 k = 5
+
     	 int d,i,k;
     	 double tol;
     	 double err;
@@ -1244,8 +1252,7 @@ public class curfit {
          for (i = 1; i < 20; i++) {
         	 x1[i-1] = a + i*inc;
          }
-         double diff[] = new double[19];
-         double y[] = new double[19];
+         
          double v[] = new double[21];
          for (i = 0; i  < m; i++) {
          	v[i] = Math.sin(x[i]);
@@ -1291,13 +1298,21 @@ public class curfit {
 	         	tout[i] = t[i];
 	         	cout[i] = c[i];
 	         }
+	         double tt[] = new double[n[0] - 2*k];
+	         for (i = k; i < n[0] - k; i++) {
+	        	 tt[i-k] = tout[i];
+	         }
+	         double diff[] = new double[n[0]-2*k];
+             double y[] = new double[n[0]-2*k];
 	         
-	         for (d = 0; d < k+1; d++) {
+	         //for (d = 0; d < k+1; d++) {
+                 // This splev function does not take a derivative input
+                 d = 0;
 	             tol = err_est(k, d, N, s);	
-	             double fout[] = f1(x1,d);
-	             splev sp = new splev(tout, n[0], cout, d, x1, y, 19, 0, ier);
+	             double fout[] = f1(tt,d);
+	             splev sp = new splev(tout, n[0], cout, k, tt, y, n[0]-2*k, 0, ier);
 	             sp.run();
-	             for (i = 0; i < 19; i++) {
+	             for (i = 0; i < (n[0]-2*k); i++) {
 	            	 diff[i] = fout[i] - y[i];
 	             }
 	             err = norm2(diff)/norm2(fout);
@@ -1307,7 +1322,7 @@ public class curfit {
 	             else {
 	            	 System.err.println("Fails with err = " + err + " tol = " + tol + " d = " + d + " k = " + k);	 
 	             }
-	         }
+	         //}
          } // for (k = 1; k <= 5; k++)
      }
      
