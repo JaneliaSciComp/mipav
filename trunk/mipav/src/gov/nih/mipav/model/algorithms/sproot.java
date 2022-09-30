@@ -236,6 +236,9 @@ public class sproot {
 			        } // for (i = 0; i <= j-1; i++)
 		        } // if (j != 0)
 		        } // if (do100)
+		        else {
+		        	do100 = true;
+		        }
 		        a0 = b0;
 		        ah = bh;
 		        z1 = z3;
