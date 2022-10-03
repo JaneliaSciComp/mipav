@@ -530,12 +530,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     public static void showTags(final ViewTableModel tagsModel, final FileDicomTagTable DicomInfo, final boolean show) {
         String[] tags = null;
         final Object[] rowData = {Boolean.FALSE, "", "", ""};
-        TreeMap<FileDicomKey,FileDicomTag> tagsList = new TreeMap<>(new Comparator<FileDicomKey>() {
-            @Override
-            public int compare(FileDicomKey o1, FileDicomKey o2) {
-                return o1.compareTo(o2);
-            }
-        });
+        TreeMap<FileDicomKey,FileDicomTag> tagsList = new TreeMap<>(Comparator.naturalOrder());
         tagsList.putAll(DicomInfo.getTagList());
 
         // check preferences to see if any dicom tags were selected for saving
