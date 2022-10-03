@@ -196,4 +196,16 @@ public class ViewTableModel extends DefaultTableModel implements Serializable {
         }
     }
 
+    /**
+     * Gets the length of a row in the model
+     * @param row index of row to get
+     * @return length of vector at index row
+     */
+    public int getRowLength(int row) {
+        return dataVector.get(row).size();
+    }
+
+    public Object[] getRow(int row) {
+        return dataVector.get(row).toArray();
+    }
 }
