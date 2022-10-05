@@ -82,6 +82,9 @@ public class BlindDeblur extends AlgorithmBase {
 	private String blurredImageFileName;
 	private String trueImageFileDirectory;
 	private String trueImageFileName;
+	private ModelImage blurredImage;
+	private ModelImage correctedImage;
+	private ModelImage trueImage;
 	private String config_name;
 	private boolean do_display;
 	private int save_intermediate_images;
@@ -144,14 +147,11 @@ public class BlindDeblur extends AlgorithmBase {
 	    public BlindDeblur() {
 	    }
 	    
-	    public BlindDeblur(String blurredImageFileDirectory, String blurredImageFileName, 
-	    		String trueImageFileDirectory, String trueImageFileName,
-	    		String results_dir, 
+	    public BlindDeblur(ModelImage correctedImage, ModelImage blurredImage, 
+	    		ModelImage trueImage, String results_dir, 
 	    		String logFile, int BLUR_KERNEL_SIZE) {
-	    	this.blurredImageFileDirectory = blurredImageFileDirectory;
-	    	this.blurredImageFileName = blurredImageFileName;
-	    	this.trueImageFileDirectory = trueImageFileDirectory;
-	    	this.trueImageFileName = trueImageFileName;
+	    	super(correctedImage, blurredImage);
+	    	this.trueImage = trueImage;
 	    	this.results_dir = results_dir;
 	    	this.logFile = logFile;
 	    	this.BLUR_KERNEL_SIZE = BLUR_KERNEL_SIZE;
@@ -177,14 +177,8 @@ public class BlindDeblur extends AlgorithmBase {
 		   }
 
 		   // Default config_name is image file name
-		   int lastPeriodIndex = blurredImageFileName.lastIndexOf(".");
-		   if (lastPeriodIndex == -1) {
-		       config_name = blurredImageFileName;   
-		   }
-		   else {
-			   config_name = blurredImageFileName.substring(0,lastPeriodIndex);
-		   }
-
+		   config_name = blurredImage.getImageName();
+		   
 		   // New imresize function causes trouble, this should ultimately be changed
 		   //if exist('imresize_old') == 2
 		   //	imresizefn = @imresize_old;
@@ -363,6 +357,18 @@ public class BlindDeblur extends AlgorithmBase {
     		// URL:        http://www.di.ens.fr/willow/research/deblurring/, http://www.di.ens.fr/willow/research/saturation/
     		
     		// In absence of a log file, print to screen (file descriptor 1)
+    		double im_true_bw[][] = null;
+    		double im_true_rgb[][][] = null;
+    		double im_blurry_bw[][] = null;
+    		double im_blurry_rgb[][][] = null;
+    		int size_true_row;
+    		int size_true_col;
+    		int sliceSize_true;
+    		int size_blurry_row;
+    		int size_blurry_col;
+    		int sliceSize_blurry;
+    		double buffer[];
+    		int x,y;
     		default_config();
     		Logger logger = null;
     		if (logFile != null) {
@@ -377,9 +383,13 @@ public class BlindDeblur extends AlgorithmBase {
     			}
     			catch (SecurityException e) {
     			    e.printStackTrace();
+    			    setCompleted(false);
+    			    return;
     			}
     			catch (IOException e) {
     				e.printStackTrace();
+    				setCompleted(false);
+    				return;
     			}
     		}
     		// Start timer
@@ -398,6 +408,70 @@ public class BlindDeblur extends AlgorithmBase {
     		    image_method = "conjgrad";
     		}
     		// Load images and estimate calibration parameters
+    		if (trueImage != null) {
+    		    size_true_row = trueImage.getExtents()[0];
+    		    size_true_col = trueImage.getExtents()[1];
+    		    sliceSize_true = size_true_row * size_true_col;
+    		    buffer = new double[sliceSize_true];
+    		    if (!trueImage.isColorImage()) {
+    		    	try {
+    		    		trueImage.exportData(0, sliceSize_true, buffer);
+    		    	}
+    		    	catch (IOException e) {
+        				e.printStackTrace();
+        				setCompleted(false);
+        				return;
+        			}
+    		    	im_true_bw = new double[size_true_col][size_true_row];
+    		    	for (y = 0; y < size_true_col; y++) {
+    		    		for (x = 0; x < size_true_row; x++) {
+    		    			im_true_bw[y][x] = buffer[x + y * size_true_row];
+    		    		}
+    		    	}
+    		    } // if (!trueImage.isColorImage())
+    		    else { // trueImage.isColorImage()
+    		    	im_true_rgb = new double[size_true_col][size_true_row][3];
+    		        try {
+    		        	trueImage.exportRGBData(1, 0, sliceSize_true, buffer);
+    		        }
+    		        catch (IOException e) {
+        				e.printStackTrace();
+        				setCompleted(false);
+        				return;
+        			}
+                    for (y = 0; y < size_true_col; y++) {
+    		    		for (x = 0; x < size_true_row; x++) {
+    		    			im_true_rgb[y][x][0] = buffer[x + y * size_true_row];
+    		    		}
+    		    	}
+                    try {
+    		        	trueImage.exportRGBData(2, 0, sliceSize_true, buffer);
+    		        }
+    		        catch (IOException e) {
+        				e.printStackTrace();
+        				setCompleted(false);
+        				return;
+        			}
+                    for (y = 0; y < size_true_col; y++) {
+    		    		for (x = 0; x < size_true_row; x++) {
+    		    			im_true_rgb[y][x][1] = buffer[x + y * size_true_row];
+    		    		}
+    		    	}
+                    try {
+    		        	trueImage.exportRGBData(3, 0, sliceSize_true, buffer);
+    		        }
+    		        catch (IOException e) {
+        				e.printStackTrace();
+        				setCompleted(false);
+        				return;
+        			}
+                    for (y = 0; y < size_true_col; y++) {
+    		    		for (x = 0; x < size_true_row; x++) {
+    		    			im_true_rgb[y][x][2] = buffer[x + y * size_true_row];
+    		    		}
+    		    	}
+    		    } // else trueImage.isColorImage();
+    		} // if (trueImage != null)
     		/*
     		if exist('file_true','var')
     		    [Ktrue,a_true,im_true,respfn_loaded,invrespfn_loaded,initial_scale] = load_image_file(file_true,max_dim,israw,focal_length_in_35mm_true);
