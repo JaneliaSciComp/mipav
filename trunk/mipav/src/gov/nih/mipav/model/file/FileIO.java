@@ -28,7 +28,11 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.zip.*;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.stream.ImageInputStream;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
@@ -8992,6 +8996,7 @@ public class FileIO {
         int[] buffer = null;
         int[] greyBuffer = null;
         String[] fileList;
+        File file;
 
         if (multifile) {
             fileList = FileUtility.getFileList(fileDir, fileName, quiet);
@@ -9013,8 +9018,35 @@ public class FileIO {
                 if ( !loaded || (image == null)) {
 
                     try {
-                        image = ImageIO.read(new File(fileDir + fileList[j])); // if JIMI fails, try this
-
+                    	file = new File(fileDir + fileList[j]);
+                        image = ImageIO.read(file); // if JIMI fails, try this
+                        int lastPeriodIndex = fileList[j].lastIndexOf(".");
+                        String ext = null;
+                        if (lastPeriodIndex != -1) {
+                            ext = fileList[j].substring(lastPeriodIndex+1);	
+                        }
+                        if ((image != null) && (ext != null) && ((ext.equalsIgnoreCase("jpg")) || (ext.equalsIgnoreCase("jpeg")))) {
+                        	ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(
+                        			new FileInputStream(file)));
+                        			Iterator<ImageReader> readers = ImageIO.getImageReadersByMIMEType("image/jpeg");
+                        			IIOImage imagejpeg = null;
+                        			if (readers.hasNext()) {
+	                        			ImageReader reader = (ImageReader) readers.next();
+	                        			reader.setInput(iis, true);
+	                        			try {
+	                        			imagejpeg = reader.readAll(0, null);
+	                        			} catch (javax.imageio.IIOException iioex) {
+	                        				System.err.println("Exception on imagejpeg = reader.readAll(0, null)");
+	                        			}
+	                        			 
+	                        			IIOMetadata metadata = imagejpeg.getMetadata();
+	                        			//String[] names = metadata.getMetadataFormatNames();
+	                        			//for (int i = 0; i < names.length; i++) {
+	                        				//System.out.println(names[i]);
+	                        			//}
+                        			}
+	
+                        }
                         // String[] readTypes = ImageIO.getReaderFormatNames();
 
                         // for (int t = 0; t < readTypes.length; t++) {
