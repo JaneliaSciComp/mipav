@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,6 +15,9 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+
 
 import java.lang.reflect.Array;
 import java.text.DateFormat;
@@ -35,6 +39,7 @@ import java.util.Set;
 import java.util.Collection;
 
 import java.math.RoundingMode;
+
 
 
 
@@ -3631,13 +3636,17 @@ public class MetadataExtractor {
 	            new JfifReader(),
 	            new JfxxReader(),
 	            */
-	            me.new ExifReader()
+	            me.new ExifReader(),
 	            /*
 	            new XmpReader(),
+	            */
 	            new IccReader(),
+	            /*
 	            new PhotoshopReader(),
 	            new DuckyReader(),
-	            new IptcReader(),
+	            */
+	            me.new IptcReader()
+	            /*
 	            new AdobeJpegReader(),
 	            new JpegDhtReader(),
 	            new JpegDnlReader()
@@ -4914,6 +4923,7 @@ public class MetadataExtractor {
 	    public static final int CODE_SINGLE = 11;
 	    public static final int CODE_DOUBLE = 12;
 
+	    /*
 	    @NotNull public final TiffDataFormat INT8_U = new TiffDataFormat("BYTE", CODE_INT8_U, 1);
 	    @NotNull public final TiffDataFormat STRING = new TiffDataFormat("STRING", CODE_STRING, 1);
 	    @NotNull public final TiffDataFormat INT16_U = new TiffDataFormat("USHORT", CODE_INT16_U, 2);
@@ -4926,6 +4936,7 @@ public class MetadataExtractor {
 	    @NotNull public final TiffDataFormat RATIONAL_S = new TiffDataFormat("SRATIONAL", CODE_RATIONAL_S, 8);
 	    @NotNull public final TiffDataFormat SINGLE = new TiffDataFormat("SINGLE", CODE_SINGLE, 4);
 	    @NotNull public final TiffDataFormat DOUBLE = new TiffDataFormat("DOUBLE", CODE_DOUBLE, 8);
+	    */
 
 	    @NotNull
 	    private String _name;
@@ -4940,18 +4951,18 @@ public class MetadataExtractor {
 	    public TiffDataFormat fromTiffFormatCode(int tiffFormatCode)
 	    {
 	        switch (tiffFormatCode) {
-	            case 1: return INT8_U;
-	            case 2: return STRING;
-	            case 3: return INT16_U;
-	            case 4: return INT32_U;
-	            case 5: return RATIONAL_U;
-	            case 6: return INT8_S;
-	            case 7: return UNDEFINED;
-	            case 8: return INT16_S;
-	            case 9: return INT32_S;
-	            case 10: return RATIONAL_S;
-	            case 11: return SINGLE;
-	            case 12: return DOUBLE;
+	            case 1: return new TiffDataFormat("BYTE", CODE_INT8_U, 1);
+	            case 2: return new TiffDataFormat("STRING", CODE_STRING, 1);
+	            case 3: return new TiffDataFormat("USHORT", CODE_INT16_U, 2);
+	            case 4: return new TiffDataFormat("ULONG", CODE_INT32_U, 4);
+	            case 5: return new TiffDataFormat("URATIONAL", CODE_RATIONAL_U, 8);
+	            case 6: return new TiffDataFormat("SBYTE", CODE_INT8_S, 1);
+	            case 7: return new TiffDataFormat("UNDEFINED", CODE_UNDEFINED, 1);
+	            case 8: return new TiffDataFormat("SSHORT", CODE_INT16_S, 2);
+	            case 9: return new TiffDataFormat("SLONG", CODE_INT32_S, 4);
+	            case 10: return new TiffDataFormat("SRATIONAL", CODE_RATIONAL_S, 8);
+	            case 11: return new TiffDataFormat("SINGLE", CODE_SINGLE, 4);
+	            case 12: return new TiffDataFormat("DOUBLE", CODE_DOUBLE, 8);
 	        }
 	        return null;
 	    }
@@ -5420,6 +5431,497 @@ public class MetadataExtractor {
 	    {
 	        _currentDirectory = _directoryStack.empty() ? null : _directoryStack.pop();
 	    }
+	    
+	    protected void pushExifIFD0Directory()
+	    {
+	        ExifIFD0Directory newDirectory;
+
+	        newDirectory = new ExifIFD0Directory();
+	        
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushExifInteropDirectory()
+	    {
+	        ExifInteropDirectory newDirectory;
+
+	        newDirectory = new ExifInteropDirectory();
+	        
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushExifThumbnailDirectory()
+	    {
+	        ExifThumbnailDirectory newDirectory;
+
+	        newDirectory = new ExifThumbnailDirectory();
+	        
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushSubExifIFDDirectory()
+	    {
+	        ExifSubIFDDirectory newDirectory;
+
+	        newDirectory = new ExifSubIFDDirectory();
+	        
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushPanasonicRawIFD0Directory()
+	    {
+	    	PanasonicRawIFD0Directory newDirectory;
+	    	newDirectory = new PanasonicRawIFD0Directory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushErrorDirectory()
+	    {
+	    	ErrorDirectory newDirectory;
+	    	newDirectory = new ErrorDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushGpsDirectory()
+	    {
+	    	GpsDirectory newDirectory;
+	    	newDirectory = new GpsDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusEquipmentMakernoteDirectory()
+	    {
+	    	OlympusEquipmentMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusEquipmentMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusCameraSettingsMakernoteDirectory()
+	    {
+	    	OlympusCameraSettingsMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusCameraSettingsMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusRawDevelopmentMakernoteDirectory()
+	    {
+	    	OlympusRawDevelopmentMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusRawDevelopmentMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusRawDevelopment2MakernoteDirectory()
+	    {
+	    	OlympusRawDevelopment2MakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusRawDevelopment2MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusImageProcessingMakernoteDirectory()
+	    {
+	    	OlympusImageProcessingMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusImageProcessingMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusFocusInfoMakernoteDirectory()
+	    {
+	    	OlympusFocusInfoMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusFocusInfoMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusRawInfoMakernoteDirectory()
+	    {
+	    	OlympusRawInfoMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusRawInfoMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushOlympusMakernoteDirectory()
+	    {
+	    	OlympusMakernoteDirectory newDirectory;
+	    	newDirectory = new OlympusMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushExifImageDirectory()
+	    {
+	    	ExifImageDirectory newDirectory;
+	    	newDirectory = new ExifImageDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushNikonType1MakernoteDirectory()
+	    {
+	    	NikonType1MakernoteDirectory newDirectory;
+	    	newDirectory = new NikonType1MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushNikonType2MakernoteDirectory()
+	    {
+	    	NikonType2MakernoteDirectory newDirectory;
+	    	newDirectory = new NikonType2MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushSonyType1MakernoteDirectory()
+	    {
+	    	SonyType1MakernoteDirectory newDirectory;
+	    	newDirectory = new SonyType1MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushSonyType6MakernoteDirectory()
+	    {
+	    	SonyType6MakernoteDirectory newDirectory;
+	    	newDirectory = new SonyType6MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushSigmaMakernoteDirectory()
+	    {
+	    	SigmaMakernoteDirectory newDirectory;
+	    	newDirectory = new SigmaMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
 
 	    protected void pushDirectory(@NotNull Class<? extends Directory> directoryClass)
 	    {
@@ -5469,7 +5971,7 @@ public class MetadataExtractor {
 	        ErrorDirectory error = _metadata.getFirstDirectoryOfType(ErrorDirectory.class);
 	        if (error != null)
 	            return error;
-	        pushDirectory(ErrorDirectory.class);
+	        pushErrorDirectory();
 	        return _currentDirectory;
 	    }
 
@@ -7784,10 +8286,10 @@ public class MetadataExtractor {
 	            case standardTiffMarker:
 	            case olympusRawTiffMarker:      // TODO implement an IFD0, if there is one
 	            case olympusRawTiffMarker2:     // TODO implement an IFD0, if there is one
-	                pushDirectory(ExifIFD0Directory.class);
+	                pushExifIFD0Directory();
 	                break;
 	            case panasonicRawTiffMarker:
-	                pushDirectory(PanasonicRawIFD0Directory.class);
+	                pushPanasonicRawIFD0Directory();
 	                break;
 	            default:
 	                throw new TiffProcessingException(String.format("Unexpected TIFF marker: 0x%X", marker));
@@ -7797,23 +8299,23 @@ public class MetadataExtractor {
 	    public boolean tryEnterSubIfd(int tagId)
 	    {
 	        if (tagId == ExifDirectoryBase.TAG_SUB_IFD_OFFSET) {
-	            pushDirectory(ExifSubIFDDirectory.class);
+	            pushSubExifIFDDirectory();
 	            return true;
 	        }
 
 	        if (_currentDirectory instanceof ExifIFD0Directory || _currentDirectory instanceof PanasonicRawIFD0Directory) {
 	            if (tagId == ExifIFD0Directory.TAG_EXIF_SUB_IFD_OFFSET) {
-	                pushDirectory(ExifSubIFDDirectory.class);
+	            	pushSubExifIFDDirectory();
 	                return true;
 	            }
 
 	            if (tagId == ExifIFD0Directory.TAG_GPS_INFO_OFFSET) {
-	                pushDirectory(GpsDirectory.class);
+	                pushGpsDirectory();
 	                return true;
 	            }
 	        } else if (_currentDirectory instanceof ExifSubIFDDirectory) {
 	            if (tagId == ExifSubIFDDirectory.TAG_INTEROP_OFFSET) {
-	                pushDirectory(ExifInteropDirectory.class);
+	                pushExifInteropDirectory();
 	                return true;
 	            }
 	            
@@ -7823,28 +8325,28 @@ public class MetadataExtractor {
 	            // for the same directories
 	            switch(tagId) {
 	                case OlympusMakernoteDirectory.TAG_EQUIPMENT:
-	                    pushDirectory(OlympusEquipmentMakernoteDirectory.class);
+	                    pushOlympusEquipmentMakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_CAMERA_SETTINGS:
-	                    pushDirectory(OlympusCameraSettingsMakernoteDirectory.class);
+	                    pushOlympusCameraSettingsMakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_RAW_DEVELOPMENT:
-	                    pushDirectory(OlympusRawDevelopmentMakernoteDirectory.class);
+	                    pushOlympusRawDevelopmentMakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_RAW_DEVELOPMENT_2:
-	                    pushDirectory(OlympusRawDevelopment2MakernoteDirectory.class);
+	                    pushOlympusRawDevelopment2MakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_IMAGE_PROCESSING:
-	                    pushDirectory(OlympusImageProcessingMakernoteDirectory.class);
+	                    pushOlympusImageProcessingMakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_FOCUS_INFO:
-	                    pushDirectory(OlympusFocusInfoMakernoteDirectory.class);
+	                    pushOlympusFocusInfoMakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_RAW_INFO:
-	                    pushDirectory(OlympusRawInfoMakernoteDirectory.class);
+	                    pushOlympusRawInfoMakernoteDirectory();
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_MAIN_INFO:
-	                    pushDirectory(OlympusMakernoteDirectory.class);
+	                    pushOlympusMakernoteDirectory();
 	                    return true;
 	            }
 	        }
@@ -7860,9 +8362,9 @@ public class MetadataExtractor {
 	            // If the PageNumber tag is defined, assume this is a multipage TIFF or similar
 	            // TODO: Find better ways to know which follower Directory should be used
 	            if (_currentDirectory.containsTag(ExifDirectoryBase.TAG_PAGE_NUMBER))
-	                pushDirectory(ExifImageDirectory.class);
+	                pushExifImageDirectory();
 	            else
-	                pushDirectory(ExifThumbnailDirectory.class);
+	                pushExifThumbnailDirectory();
 	            return true;
 	        }
 
@@ -7916,7 +8418,6 @@ public class MetadataExtractor {
 
 	        
 	        // Custom processing for embedded IPTC data
-	        /*
 	        if (tagId == ExifSubIFDDirectory.TAG_IPTC_NAA && _currentDirectory instanceof ExifIFD0Directory) {
 	            // NOTE Adobe sets type 4 for IPTC instead of 7
 	            if (reader.getInt8(tagOffset) == 0x1c) {
@@ -7935,6 +8436,7 @@ public class MetadataExtractor {
 	        }
 
 	        // Custom processing for Photoshop data
+	        /*
 	        if (tagId == ExifSubIFDDirectory.TAG_PHOTOSHOP_SETTINGS && _currentDirectory instanceof ExifIFD0Directory) {
 	            final byte[] photoshopBytes = reader.getBytes(tagOffset, byteCount);
 	            new PhotoshopReader().extract(new SequentialByteArrayReader(photoshopBytes), byteCount, _metadata, _currentDirectory);
@@ -7946,6 +8448,7 @@ public class MetadataExtractor {
 	            new XmpReader().extract(reader.getNullTerminatedBytes(tagOffset, byteCount), _metadata, _currentDirectory);
 	            return true;
 	        }
+	        */
 
 	        // Custom processing for Apple RunTime tag
 	        if (tagId == AppleMakernoteDirectory.TAG_RUN_TIME && _currentDirectory instanceof AppleMakernoteDirectory) {
@@ -7953,7 +8456,6 @@ public class MetadataExtractor {
 	            new AppleRunTimeReader().extract(bytes, _metadata, _currentDirectory);
 	            return true;
 	        }
-	        */
 
 	        if (handlePrintIM(_currentDirectory, tagId))
 	        {
@@ -7970,35 +8472,35 @@ public class MetadataExtractor {
 	        	TiffReader tr = new TiffReader();
 	            switch (tagId) {
 	                case OlympusMakernoteDirectory.TAG_EQUIPMENT:
-	                    pushDirectory(OlympusEquipmentMakernoteDirectory.class);
+	                    pushOlympusEquipmentMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_CAMERA_SETTINGS:
-	                    pushDirectory(OlympusCameraSettingsMakernoteDirectory.class);
+	                    pushOlympusCameraSettingsMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_RAW_DEVELOPMENT:
-	                    pushDirectory(OlympusRawDevelopmentMakernoteDirectory.class);
+	                    pushOlympusRawDevelopmentMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_RAW_DEVELOPMENT_2:
-	                    pushDirectory(OlympusRawDevelopment2MakernoteDirectory.class);
+	                    pushOlympusRawDevelopment2MakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_IMAGE_PROCESSING:
-	                    pushDirectory(OlympusImageProcessingMakernoteDirectory.class);
+	                    pushOlympusImageProcessingMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_FOCUS_INFO:
-	                    pushDirectory(OlympusFocusInfoMakernoteDirectory.class);
+	                    pushOlympusFocusInfoMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_RAW_INFO:
-	                    pushDirectory(OlympusRawInfoMakernoteDirectory.class);
+	                    pushOlympusRawInfoMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	                case OlympusMakernoteDirectory.TAG_MAIN_INFO:
-	                    pushDirectory(OlympusMakernoteDirectory.class);
+	                    pushOlympusMakernoteDirectory();
 	                    tr.processIfd(this, reader, processedIfdOffsets, tagOffset, tiffHeaderOffset);
 	                    return true;
 	            }
@@ -8149,18 +8651,18 @@ public class MetadataExtractor {
 	        if ("OLYMP\0".equals(firstSixChars) || "EPSON".equals(firstFiveChars) || "AGFA".equals(firstFourChars)) {
 	            // Olympus Makernote
 	            // Epson and Agfa use Olympus makernote standard: http://www.ozhiker.com/electronics/pjmt/jpeg_info/
-	            pushDirectory(OlympusMakernoteDirectory.class);
+	            pushOlympusMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, tiffHeaderOffset);
 	        } else if ("OLYMPUS\0II".equals(firstTenChars)) {
 	            // Olympus Makernote (alternate)
 	            // Note that data is relative to the beginning of the makernote
 	            // http://exiv2.org/makernote.html
-	            pushDirectory(OlympusMakernoteDirectory.class);
+	            pushOlympusMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 12, makernoteOffset);
 	        } else if (cameraMake != null && cameraMake.toUpperCase().startsWith("MINOLTA")) {
 	            // Cases seen with the model starting with MINOLTA in capitals seem to have a valid Olympus makernote
 	            // area that commences immediately.
-	            pushDirectory(OlympusMakernoteDirectory.class);
+	            pushOlympusMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, tiffHeaderOffset);
 	        
 	        } 
@@ -8177,11 +8679,11 @@ public class MetadataExtractor {
 	            
 	                switch (reader.getUInt8(makernoteOffset + 6)) {
 	                    case 1:
-	                        pushDirectory(NikonType1MakernoteDirectory.class);
+	                        pushNikonType1MakernoteDirectory();
 	                        tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, tiffHeaderOffset);
 	                        break;
 	                    case 2:
-	                        pushDirectory(NikonType2MakernoteDirectory.class);
+	                        pushNikonType2MakernoteDirectory();
 	                        tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 18, makernoteOffset + 10);
 	                        break;
 	                    default:
@@ -8190,27 +8692,27 @@ public class MetadataExtractor {
 	                }
 	            } else {
 	                // The IFD begins with the first Makernote byte (no ASCII name).  This occurs with CoolPix 775, E990 and D1 models.
-	                pushDirectory(NikonType2MakernoteDirectory.class);
+	            	pushNikonType2MakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, tiffHeaderOffset);
 	            }
 	        } else if ("SONY CAM".equals(firstEightChars) || "SONY DSC".equals(firstEightChars)) {
-	            pushDirectory(SonyType1MakernoteDirectory.class);
+	            pushSonyType1MakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 12, tiffHeaderOffset);
 	        // Do this check LAST after most other Sony checks
 	        } else if (cameraMake != null && cameraMake.startsWith("SONY") &&
 	                !Arrays.equals(reader.getBytes(makernoteOffset, 2), new byte[]{ 0x01, 0x00 }) ) {
 	            // The IFD begins with the first Makernote byte (no ASCII name). Used in SR2 and ARW images
-	            pushDirectory(SonyType1MakernoteDirectory.class);
+	        	pushSonyType1MakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, tiffHeaderOffset);
 	        } else if ("SEMC MS\u0000\u0000\u0000\u0000\u0000".equals(firstTwelveChars)) {
 	            // force MM for this directory
 	            reader.setMotorolaByteOrder(true);
 	            // skip 12 byte header + 2 for "MM" + 6
-	            pushDirectory(SonyType6MakernoteDirectory.class);
+	            pushSonyType6MakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 20, tiffHeaderOffset);
 	        } 
 	        else if ("SIGMA\u0000\u0000\u0000".equals(firstEightChars) || "FOVEON\u0000\u0000".equals(firstEightChars)) {
-	            pushDirectory(SigmaMakernoteDirectory.class);
+	            pushSigmaMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 10, tiffHeaderOffset);
 	        } else if ("KDK".equals(firstThreeChars)) {
 	            reader.setMotorolaByteOrder(firstSevenChars.equals("KDK INFO"));
@@ -25869,5 +26371,2085 @@ public class MetadataExtractor {
 	        return _tagNameMap;
 	    }
 	}
+	
+	public final class Iso2022Converter
+	{
+	    private static final String ISO_8859_1 = "ISO-8859-1";
+	    private static final String UTF_8 = "UTF-8";
+
+	    private static final byte LATIN_CAPITAL_A = 0x41;
+	    private static final int DOT = 0xe280a2;
+	    private static final byte LATIN_CAPITAL_G = 0x47;
+	    private static final byte PERCENT_SIGN = 0x25;
+	    private static final byte DOT_SIGN = 0x2E;
+	    private static final byte ESC = 0x1B;
+
+	    /**
+	     * Converts the given ISO2022 char set to a Java charset name.
+	     * A reference of valid charsets can be found here: http://nozer0.github.io/en/technology/system/character-encoding/#ISO/IEC%202022
+	     *
+	     * @param bytes string data encoded using ISO2022
+	     * @return the Java charset name as a string, or <code>null</code> if the conversion was not possible
+	     */
+	    @Nullable
+	    public String convertISO2022CharsetToJavaCharset(@NotNull final byte[] bytes)
+	    {
+	        if (bytes.length > 2 && bytes[0] == ESC && bytes[1] == PERCENT_SIGN && bytes[2] == LATIN_CAPITAL_G)
+	            return UTF_8;
+
+	        if (bytes.length > 2 && bytes[0] == ESC && bytes[1] == DOT_SIGN && bytes[2] == LATIN_CAPITAL_A)
+	            return ISO_8859_1;
+
+	        if (bytes.length > 3 && bytes[0] == ESC && (bytes[3] & 0xFF | ((bytes[2] & 0xFF) << 8) | ((bytes[1] & 0xFF) << 16)) == DOT && bytes[4] == LATIN_CAPITAL_A)
+	            return ISO_8859_1;
+
+	        return null;
+	    }
+
+	    /**
+	     * Attempts to guess the {@link Charset} of a string provided as a byte array.
+	     * <p>
+	     * Charsets trialled are, in order:
+	     * <ul>
+	     *     <li>UTF-8</li>
+	     *     <li><code>System.getProperty("file.encoding")</code></li>
+	     *     <li>ISO-8859-1</li>
+	     * </ul>
+	     * <p>
+	     * Its only purpose is to guess the Charset if and only if IPTC tag coded character set is not set. If the
+	     * encoding is not UTF-8, the tag should be set. Otherwise it is bad practice. This method tries to
+	     * workaround this issue since some metadata manipulating tools do not prevent such bad practice.
+	     * <p>
+	     * About the reliability of this method: The check if some bytes are UTF-8 or not has a very high reliability.
+	     * The two other checks are less reliable.
+	     *
+	     * @param bytes some text as bytes
+	     * @return the name of the encoding or null if none could be guessed
+	     */
+	    @Nullable
+	    Charset guessCharSet(@NotNull final byte[] bytes)
+	    {
+	        String[] encodings = { UTF_8, System.getProperty("file.encoding"), ISO_8859_1 };
+
+	        for (String encoding : encodings)
+	        {
+	            Charset charset = Charset.forName(encoding);
+	            CharsetDecoder cs = charset.newDecoder();
+
+	            try {
+	                cs.decode(ByteBuffer.wrap(bytes));
+	                return charset;
+	            } catch (CharacterCodingException e) {
+	                // fall through...
+	            }
+	        }
+
+	        // No encodings succeeded. Return null.
+	        return null;
+	    }
+
+	    private Iso2022Converter()
+	    {}
+	}
+
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link IptcDirectory}.
+	 * <p>
+	 * As the IPTC directory already stores values as strings, this class simply returns the tag's value.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class IptcDescriptor extends TagDescriptor<IptcDirectory>
+	{
+	    public IptcDescriptor(@NotNull IptcDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case IptcDirectory.TAG_DATE_CREATED:
+	                return getDateCreatedDescription();
+	            case IptcDirectory.TAG_DIGITAL_DATE_CREATED:
+	                return getDigitalDateCreatedDescription();
+	            case IptcDirectory.TAG_DATE_SENT:
+	                return getDateSentDescription();
+	            case IptcDirectory.TAG_EXPIRATION_DATE:
+	                return getExpirationDateDescription();
+	            case IptcDirectory.TAG_EXPIRATION_TIME:
+	                return getExpirationTimeDescription();
+	            case IptcDirectory.TAG_FILE_FORMAT:
+	                return getFileFormatDescription();
+	            case IptcDirectory.TAG_KEYWORDS:
+	                return getKeywordsDescription();
+	            case IptcDirectory.TAG_REFERENCE_DATE:
+	                return getReferenceDateDescription();
+	            case IptcDirectory.TAG_RELEASE_DATE:
+	                return getReleaseDateDescription();
+	            case IptcDirectory.TAG_RELEASE_TIME:
+	                return getReleaseTimeDescription();
+	            case IptcDirectory.TAG_TIME_CREATED:
+	                return getTimeCreatedDescription();
+	            case IptcDirectory.TAG_DIGITAL_TIME_CREATED:
+	                return getDigitalTimeCreatedDescription();
+	            case IptcDirectory.TAG_TIME_SENT:
+	                return getTimeSentDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getDateDescription(int tagType)
+	    {
+	        String s = _directory.getString(tagType);
+	        if (s == null)
+	            return null;
+	        if (s.length() == 8)
+	            return s.substring(0, 4) + ':' + s.substring(4, 6) + ':' + s.substring(6);
+	        return s;
+	    }
+
+	    @Nullable
+	    public String getTimeDescription(int tagType)
+	    {
+	        String s = _directory.getString(tagType);
+	        if (s == null)
+	            return null;
+	        if (s.length() == 6 || s.length() == 11)
+	            return s.substring(0, 2) + ':' + s.substring(2, 4) + ':' + s.substring(4);
+	        return s;
+	    }
+
+	    @Nullable
+	    public String getFileFormatDescription()
+	    {
+	        Integer value = _directory.getInteger(IptcDirectory.TAG_FILE_FORMAT);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0: return "No ObjectData";
+	            case 1: return "IPTC-NAA Digital Newsphoto Parameter Record";
+	            case 2: return "IPTC7901 Recommended Message Format";
+	            case 3: return "Tagged Image File Format (Adobe/Aldus Image data)";
+	            case 4: return "Illustrator (Adobe Graphics data)";
+	            case 5: return "AppleSingle (Apple Computer Inc)";
+	            case 6: return "NAA 89-3 (ANPA 1312)";
+	            case 7: return "MacBinary II";
+	            case 8: return "IPTC Unstructured Character Oriented File Format (UCOFF)";
+	            case 9: return "United Press International ANPA 1312 variant";
+	            case 10: return "United Press International Down-Load Message";
+	            case 11: return "JPEG File Interchange (JFIF)";
+	            case 12: return "Photo-CD Image-Pac (Eastman Kodak)";
+	            case 13: return "Bit Mapped Graphics File [.BMP] (Microsoft)";
+	            case 14: return "Digital Audio File [.WAV] (Microsoft & Creative Labs)";
+	            case 15: return "Audio plus Moving Video [.AVI] (Microsoft)";
+	            case 16: return "PC DOS/Windows Executable Files [.COM][.EXE]";
+	            case 17: return "Compressed Binary File [.ZIP] (PKWare Inc)";
+	            case 18: return "Audio Interchange File Format AIFF (Apple Computer Inc)";
+	            case 19: return "RIFF Wave (Microsoft Corporation)";
+	            case 20: return "Freehand (Macromedia/Aldus)";
+	            case 21: return "Hypertext Markup Language [.HTML] (The Internet Society)";
+	            case 22: return "MPEG 2 Audio Layer 2 (Musicom), ISO/IEC";
+	            case 23: return "MPEG 2 Audio Layer 3, ISO/IEC";
+	            case 24: return "Portable Document File [.PDF] Adobe";
+	            case 25: return "News Industry Text Format (NITF)";
+	            case 26: return "Tape Archive [.TAR]";
+	            case 27: return "Tidningarnas Telegrambyra NITF version (TTNITF DTD)";
+	            case 28: return "Ritzaus Bureau NITF version (RBNITF DTD)";
+	            case 29: return "Corel Draw [.CDR]";
+	        }
+	        return String.format("Unknown (%d)", value);
+	    }
+
+	    @Nullable
+	    public String getByLineDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_BY_LINE);
+	    }
+
+	    @Nullable
+	    public String getByLineTitleDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_BY_LINE_TITLE);
+	    }
+
+	    @Nullable
+	    public String getCaptionDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_CAPTION);
+	    }
+
+	    @Nullable
+	    public String getCategoryDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_CATEGORY);
+	    }
+
+	    @Nullable
+	    public String getCityDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_CITY);
+	    }
+
+	    @Nullable
+	    public String getCopyrightNoticeDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_COPYRIGHT_NOTICE);
+	    }
+
+	    @Nullable
+	    public String getCountryOrPrimaryLocationDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_COUNTRY_OR_PRIMARY_LOCATION_NAME);
+	    }
+
+	    @Nullable
+	    public String getCreditDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_CREDIT);
+	    }
+
+	    @Nullable
+	    public String getDateCreatedDescription()
+	    {
+	        return getDateDescription(IptcDirectory.TAG_DATE_CREATED);
+	    }
+
+	    @Nullable
+	    public String getDigitalDateCreatedDescription()
+	    {
+	        return getDateDescription(IptcDirectory.TAG_DIGITAL_DATE_CREATED);
+	    }
+
+	    @Nullable
+	    public String getDateSentDescription()
+	    {
+	        return getDateDescription(IptcDirectory.TAG_DATE_SENT);
+	    }
+
+	    @Nullable
+	    public String getExpirationDateDescription()
+	    {
+	        return getDateDescription(IptcDirectory.TAG_EXPIRATION_DATE);
+	    }
+
+	    @Nullable
+	    public String getExpirationTimeDescription()
+	    {
+	        return getTimeDescription(IptcDirectory.TAG_EXPIRATION_TIME);
+	    }
+
+	    @Nullable
+	    public String getHeadlineDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_HEADLINE);
+	    }
+
+	    @Nullable
+	    public String getKeywordsDescription()
+	    {
+	        final String[] keywords = _directory.getStringArray(IptcDirectory.TAG_KEYWORDS);
+	        if (keywords==null)
+	            return null;
+	        return StringUtil.join(keywords, ";");
+	    }
+
+	    @Nullable
+	    public String getObjectNameDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_OBJECT_NAME);
+	    }
+
+	    @Nullable
+	    public String getOriginalTransmissionReferenceDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_ORIGINAL_TRANSMISSION_REFERENCE);
+	    }
+
+	    @Nullable
+	    public String getOriginatingProgramDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_ORIGINATING_PROGRAM);
+	    }
+
+	    @Nullable
+	    public String getProvinceOrStateDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_PROVINCE_OR_STATE);
+	    }
+
+	    @Nullable
+	    public String getRecordVersionDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_APPLICATION_RECORD_VERSION);
+	    }
+
+	    @Nullable
+	    public String getReferenceDateDescription()
+	    {
+	        return getDateDescription(IptcDirectory.TAG_REFERENCE_DATE);
+	    }
+
+	    @Nullable
+	    public String getReleaseDateDescription()
+	    {
+	        return getDateDescription(IptcDirectory.TAG_RELEASE_DATE);
+	    }
+
+	    @Nullable
+	    public String getReleaseTimeDescription()
+	    {
+	        return getTimeDescription(IptcDirectory.TAG_RELEASE_TIME);
+	    }
+
+	    @Nullable
+	    public String getSourceDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_SOURCE);
+	    }
+
+	    @Nullable
+	    public String getSpecialInstructionsDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_SPECIAL_INSTRUCTIONS);
+	    }
+
+	    @Nullable
+	    public String getSupplementalCategoriesDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_SUPPLEMENTAL_CATEGORIES);
+	    }
+
+	    @Nullable
+	    public String getTimeCreatedDescription()
+	    {
+	        return getTimeDescription(IptcDirectory.TAG_TIME_CREATED);
+	    }
+
+	    @Nullable
+	    public String getDigitalTimeCreatedDescription()
+	    {
+	        return getTimeDescription(IptcDirectory.TAG_DIGITAL_TIME_CREATED);
+	    }
+
+	    @Nullable
+	    public String getTimeSentDescription()
+	    {
+	        return getTimeDescription(IptcDirectory.TAG_TIME_SENT);
+	    }
+
+	    @Nullable
+	    public String getUrgencyDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_URGENCY);
+	    }
+
+	    @Nullable
+	    public String getWriterDescription()
+	    {
+	        return _directory.getString(IptcDirectory.TAG_CAPTION_WRITER);
+	    }
+	}
+
+	
+	/**
+	 * Describes tags used by the International Press Telecommunications Council (IPTC) metadata format.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class IptcDirectory extends Directory
+	{
+	    // IPTC EnvelopeRecord Tags
+	    public static final int TAG_ENVELOPE_RECORD_VERSION          = 0x0100; // 0 + 0x0100
+	    public static final int TAG_DESTINATION                      = 0x0105; // 5
+	    public static final int TAG_FILE_FORMAT                      = 0x0114; // 20
+	    public static final int TAG_FILE_VERSION                     = 0x0116; // 22
+	    public static final int TAG_SERVICE_ID                       = 0x011E; // 30
+	    public static final int TAG_ENVELOPE_NUMBER                  = 0x0128; // 40
+	    public static final int TAG_PRODUCT_ID                       = 0x0132; // 50
+	    public static final int TAG_ENVELOPE_PRIORITY                = 0x013C; // 60
+	    public static final int TAG_DATE_SENT                        = 0x0146; // 70
+	    public static final int TAG_TIME_SENT                        = 0x0150; // 80
+	    public static final int TAG_CODED_CHARACTER_SET              = 0x015A; // 90
+	    public static final int TAG_UNIQUE_OBJECT_NAME               = 0x0164; // 100
+	    public static final int TAG_ARM_IDENTIFIER                   = 0x0178; // 120
+	    public static final int TAG_ARM_VERSION                      = 0x017a; // 122
+
+	    // IPTC ApplicationRecord Tags
+	    public static final int TAG_APPLICATION_RECORD_VERSION       = 0x0200; // 0 + 0x0200
+	    public static final int TAG_OBJECT_TYPE_REFERENCE            = 0x0203; // 3
+	    public static final int TAG_OBJECT_ATTRIBUTE_REFERENCE       = 0x0204; // 4
+	    public static final int TAG_OBJECT_NAME                      = 0x0205; // 5
+	    public static final int TAG_EDIT_STATUS                      = 0x0207; // 7
+	    public static final int TAG_EDITORIAL_UPDATE                 = 0x0208; // 8
+	    public static final int TAG_URGENCY                          = 0X020A; // 10
+	    public static final int TAG_SUBJECT_REFERENCE                = 0X020C; // 12
+	    public static final int TAG_CATEGORY                         = 0x020F; // 15
+	    public static final int TAG_SUPPLEMENTAL_CATEGORIES          = 0x0214; // 20
+	    public static final int TAG_FIXTURE_ID                       = 0x0216; // 22
+	    public static final int TAG_KEYWORDS                         = 0x0219; // 25
+	    public static final int TAG_CONTENT_LOCATION_CODE            = 0x021A; // 26
+	    public static final int TAG_CONTENT_LOCATION_NAME            = 0x021B; // 27
+	    public static final int TAG_RELEASE_DATE                     = 0X021E; // 30
+	    public static final int TAG_RELEASE_TIME                     = 0x0223; // 35
+	    public static final int TAG_EXPIRATION_DATE                  = 0x0225; // 37
+	    public static final int TAG_EXPIRATION_TIME                  = 0x0226; // 38
+	    public static final int TAG_SPECIAL_INSTRUCTIONS             = 0x0228; // 40
+	    public static final int TAG_ACTION_ADVISED                   = 0x022A; // 42
+	    public static final int TAG_REFERENCE_SERVICE                = 0x022D; // 45
+	    public static final int TAG_REFERENCE_DATE                   = 0x022F; // 47
+	    public static final int TAG_REFERENCE_NUMBER                 = 0x0232; // 50
+	    public static final int TAG_DATE_CREATED                     = 0x0237; // 55
+	    public static final int TAG_TIME_CREATED                     = 0X023C; // 60
+	    public static final int TAG_DIGITAL_DATE_CREATED             = 0x023E; // 62
+	    public static final int TAG_DIGITAL_TIME_CREATED             = 0x023F; // 63
+	    public static final int TAG_ORIGINATING_PROGRAM              = 0x0241; // 65
+	    public static final int TAG_PROGRAM_VERSION                  = 0x0246; // 70
+	    public static final int TAG_OBJECT_CYCLE                     = 0x024B; // 75
+	    public static final int TAG_BY_LINE                          = 0x0250; // 80
+	    public static final int TAG_BY_LINE_TITLE                    = 0x0255; // 85
+	    public static final int TAG_CITY                             = 0x025A; // 90
+	    public static final int TAG_SUB_LOCATION                     = 0x025C; // 92
+	    public static final int TAG_PROVINCE_OR_STATE                = 0x025F; // 95
+	    public static final int TAG_COUNTRY_OR_PRIMARY_LOCATION_CODE = 0x0264; // 100
+	    public static final int TAG_COUNTRY_OR_PRIMARY_LOCATION_NAME = 0x0265; // 101
+	    public static final int TAG_ORIGINAL_TRANSMISSION_REFERENCE  = 0x0267; // 103
+	    public static final int TAG_HEADLINE                         = 0x0269; // 105
+	    public static final int TAG_CREDIT                           = 0x026E; // 110
+	    public static final int TAG_SOURCE                           = 0x0273; // 115
+	    public static final int TAG_COPYRIGHT_NOTICE                 = 0x0274; // 116
+	    public static final int TAG_CONTACT                          = 0x0276; // 118
+	    public static final int TAG_CAPTION                          = 0x0278; // 120
+	    public static final int TAG_LOCAL_CAPTION                    = 0x0279; // 121
+	    public static final int TAG_CAPTION_WRITER                   = 0x027A; // 122
+	    public static final int TAG_RASTERIZED_CAPTION               = 0x027D; // 125
+	    public static final int TAG_IMAGE_TYPE                       = 0x0282; // 130
+	    public static final int TAG_IMAGE_ORIENTATION                = 0x0283; // 131
+	    public static final int TAG_LANGUAGE_IDENTIFIER              = 0x0287; // 135
+	    public static final int TAG_AUDIO_TYPE                       = 0x0296; // 150
+	    public static final int TAG_AUDIO_SAMPLING_RATE              = 0x0297; // 151
+	    public static final int TAG_AUDIO_SAMPLING_RESOLUTION        = 0x0298; // 152
+	    public static final int TAG_AUDIO_DURATION                   = 0x0299; // 153
+	    public static final int TAG_AUDIO_OUTCUE                     = 0x029A; // 154
+
+	    public static final int TAG_JOB_ID                           = 0x02B8; // 184
+	    public static final int TAG_MASTER_DOCUMENT_ID               = 0x02B9; // 185
+	    public static final int TAG_SHORT_DOCUMENT_ID                = 0x02BA; // 186
+	    public static final int TAG_UNIQUE_DOCUMENT_ID               = 0x02BB; // 187
+	    public static final int TAG_OWNER_ID                         = 0x02BC; // 188
+
+	    public static final int TAG_OBJECT_PREVIEW_FILE_FORMAT       = 0x02C8; // 200
+	    public static final int TAG_OBJECT_PREVIEW_FILE_FORMAT_VERSION  = 0x02C9; // 201
+	    public static final int TAG_OBJECT_PREVIEW_DATA              = 0x02CA; // 202
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_ENVELOPE_RECORD_VERSION, "Enveloped Record Version");
+	        _tagNameMap.put(TAG_DESTINATION, "Destination");
+	        _tagNameMap.put(TAG_FILE_FORMAT, "File Format");
+	        _tagNameMap.put(TAG_FILE_VERSION, "File Version");
+	        _tagNameMap.put(TAG_SERVICE_ID, "Service Identifier");
+	        _tagNameMap.put(TAG_ENVELOPE_NUMBER, "Envelope Number");
+	        _tagNameMap.put(TAG_PRODUCT_ID, "Product Identifier");
+	        _tagNameMap.put(TAG_ENVELOPE_PRIORITY, "Envelope Priority");
+	        _tagNameMap.put(TAG_DATE_SENT, "Date Sent");
+	        _tagNameMap.put(TAG_TIME_SENT, "Time Sent");
+	        _tagNameMap.put(TAG_CODED_CHARACTER_SET, "Coded Character Set");
+	        _tagNameMap.put(TAG_UNIQUE_OBJECT_NAME, "Unique Object Name");
+	        _tagNameMap.put(TAG_ARM_IDENTIFIER, "ARM Identifier");
+	        _tagNameMap.put(TAG_ARM_VERSION, "ARM Version");
+
+	        _tagNameMap.put(TAG_APPLICATION_RECORD_VERSION, "Application Record Version");
+	        _tagNameMap.put(TAG_OBJECT_TYPE_REFERENCE, "Object Type Reference");
+	        _tagNameMap.put(TAG_OBJECT_ATTRIBUTE_REFERENCE, "Object Attribute Reference");
+	        _tagNameMap.put(TAG_OBJECT_NAME, "Object Name");
+	        _tagNameMap.put(TAG_EDIT_STATUS, "Edit Status");
+	        _tagNameMap.put(TAG_EDITORIAL_UPDATE, "Editorial Update");
+	        _tagNameMap.put(TAG_URGENCY, "Urgency");
+	        _tagNameMap.put(TAG_SUBJECT_REFERENCE, "Subject Reference");
+	        _tagNameMap.put(TAG_CATEGORY, "Category");
+	        _tagNameMap.put(TAG_SUPPLEMENTAL_CATEGORIES, "Supplemental Category(s)");
+	        _tagNameMap.put(TAG_FIXTURE_ID, "Fixture Identifier");
+	        _tagNameMap.put(TAG_KEYWORDS, "Keywords");
+	        _tagNameMap.put(TAG_CONTENT_LOCATION_CODE, "Content Location Code");
+	        _tagNameMap.put(TAG_CONTENT_LOCATION_NAME, "Content Location Name");
+	        _tagNameMap.put(TAG_RELEASE_DATE, "Release Date");
+	        _tagNameMap.put(TAG_RELEASE_TIME, "Release Time");
+	        _tagNameMap.put(TAG_EXPIRATION_DATE, "Expiration Date");
+	        _tagNameMap.put(TAG_EXPIRATION_TIME, "Expiration Time");
+	        _tagNameMap.put(TAG_SPECIAL_INSTRUCTIONS, "Special Instructions");
+	        _tagNameMap.put(TAG_ACTION_ADVISED, "Action Advised");
+	        _tagNameMap.put(TAG_REFERENCE_SERVICE, "Reference Service");
+	        _tagNameMap.put(TAG_REFERENCE_DATE, "Reference Date");
+	        _tagNameMap.put(TAG_REFERENCE_NUMBER, "Reference Number");
+	        _tagNameMap.put(TAG_DATE_CREATED, "Date Created");
+	        _tagNameMap.put(TAG_TIME_CREATED, "Time Created");
+	        _tagNameMap.put(TAG_DIGITAL_DATE_CREATED, "Digital Date Created");
+	        _tagNameMap.put(TAG_DIGITAL_TIME_CREATED, "Digital Time Created");
+	        _tagNameMap.put(TAG_ORIGINATING_PROGRAM, "Originating Program");
+	        _tagNameMap.put(TAG_PROGRAM_VERSION, "Program Version");
+	        _tagNameMap.put(TAG_OBJECT_CYCLE, "Object Cycle");
+	        _tagNameMap.put(TAG_BY_LINE, "By-line");
+	        _tagNameMap.put(TAG_BY_LINE_TITLE, "By-line Title");
+	        _tagNameMap.put(TAG_CITY, "City");
+	        _tagNameMap.put(TAG_SUB_LOCATION, "Sub-location");
+	        _tagNameMap.put(TAG_PROVINCE_OR_STATE, "Province/State");
+	        _tagNameMap.put(TAG_COUNTRY_OR_PRIMARY_LOCATION_CODE, "Country/Primary Location Code");
+	        _tagNameMap.put(TAG_COUNTRY_OR_PRIMARY_LOCATION_NAME, "Country/Primary Location Name");
+	        _tagNameMap.put(TAG_ORIGINAL_TRANSMISSION_REFERENCE, "Original Transmission Reference");
+	        _tagNameMap.put(TAG_HEADLINE, "Headline");
+	        _tagNameMap.put(TAG_CREDIT, "Credit");
+	        _tagNameMap.put(TAG_SOURCE, "Source");
+	        _tagNameMap.put(TAG_COPYRIGHT_NOTICE, "Copyright Notice");
+	        _tagNameMap.put(TAG_CONTACT, "Contact");
+	        _tagNameMap.put(TAG_CAPTION, "Caption/Abstract");
+	        _tagNameMap.put(TAG_LOCAL_CAPTION, "Local Caption");
+	        _tagNameMap.put(TAG_CAPTION_WRITER, "Caption Writer/Editor");
+	        _tagNameMap.put(TAG_RASTERIZED_CAPTION, "Rasterized Caption");
+	        _tagNameMap.put(TAG_IMAGE_TYPE, "Image Type");
+	        _tagNameMap.put(TAG_IMAGE_ORIENTATION, "Image Orientation");
+	        _tagNameMap.put(TAG_LANGUAGE_IDENTIFIER, "Language Identifier");
+	        _tagNameMap.put(TAG_AUDIO_TYPE, "Audio Type");
+	        _tagNameMap.put(TAG_AUDIO_SAMPLING_RATE, "Audio Sampling Rate");
+	        _tagNameMap.put(TAG_AUDIO_SAMPLING_RESOLUTION, "Audio Sampling Resolution");
+	        _tagNameMap.put(TAG_AUDIO_DURATION, "Audio Duration");
+	        _tagNameMap.put(TAG_AUDIO_OUTCUE, "Audio Outcue");
+
+	        _tagNameMap.put(TAG_JOB_ID, "Job Identifier");
+	        _tagNameMap.put(TAG_MASTER_DOCUMENT_ID, "Master Document Identifier");
+	        _tagNameMap.put(TAG_SHORT_DOCUMENT_ID, "Short Document Identifier");
+	        _tagNameMap.put(TAG_UNIQUE_DOCUMENT_ID, "Unique Document Identifier");
+	        _tagNameMap.put(TAG_OWNER_ID, "Owner Identifier");
+
+	        _tagNameMap.put(TAG_OBJECT_PREVIEW_FILE_FORMAT, "Object Data Preview File Format");
+	        _tagNameMap.put(TAG_OBJECT_PREVIEW_FILE_FORMAT_VERSION, "Object Data Preview File Format Version");
+	        _tagNameMap.put(TAG_OBJECT_PREVIEW_DATA, "Object Data Preview Data");
+	    }
+
+	    public IptcDirectory()
+	    {
+	        this.setDescriptor(new IptcDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "IPTC";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    /**
+	     * Returns any keywords contained in the IPTC data.  This value may be <code>null</code>.
+	     */
+	    @Nullable
+	    public List<String> getKeywords()
+	    {
+	        final String[] array = getStringArray(TAG_KEYWORDS);
+	        if (array==null)
+	            return null;
+	        return Arrays.asList(array);
+	    }
+
+	    /**
+	     * Parses the Date Sent tag and the Time Sent tag to obtain a single Date object representing the
+	     * date and time when the service sent this image.
+	     * @return A Date object representing when the service sent this image, if possible, otherwise null
+	     */
+	    @Nullable
+	    public Date getDateSent()
+	    {
+	        return getDate(TAG_DATE_SENT, TAG_TIME_SENT);
+	    }
+
+	    /**
+	     * Parses the Release Date tag and the Release Time tag to obtain a single Date object representing the
+	     * date and time when this image was released.
+	     * @return A Date object representing when this image was released, if possible, otherwise null
+	     */
+	    @Nullable
+	    public Date getReleaseDate()
+	    {
+	        return getDate(TAG_RELEASE_DATE, TAG_RELEASE_TIME);
+	    }
+
+	    /**
+	     * Parses the Expiration Date tag and the Expiration Time tag to obtain a single Date object representing
+	     * that this image should not used after this date and time.
+	     * @return A Date object representing when this image was released, if possible, otherwise null
+	     */
+	    @Nullable
+	    public Date getExpirationDate()
+	    {
+	        return getDate(TAG_EXPIRATION_DATE, TAG_EXPIRATION_TIME);
+	    }
+
+	    /**
+	     * Parses the Date Created tag and the Time Created tag to obtain a single Date object representing the
+	     * date and time when this image was captured.
+	     * @return A Date object representing when this image was captured, if possible, otherwise null
+	     */
+	    @Nullable
+	    public Date getDateCreated()
+	    {
+	        return getDate(TAG_DATE_CREATED, TAG_TIME_CREATED);
+	    }
+
+	    /**
+	     * Parses the Digital Date Created tag and the Digital Time Created tag to obtain a single Date object
+	     * representing the date and time when the digital representation of this image was created.
+	     * @return A Date object representing when the digital representation of this image was created,
+	     * if possible, otherwise null
+	     */
+	    @Nullable
+	    public Date getDigitalDateCreated()
+	    {
+	        return getDate(TAG_DIGITAL_DATE_CREATED, TAG_DIGITAL_TIME_CREATED);
+	    }
+
+	    @Nullable
+	    private Date getDate(int dateTagType, int timeTagType)
+	    {
+	        String date = getString(dateTagType);
+	        String time = getString(timeTagType);
+
+	        if (date == null)
+	            return null;
+	        if (time == null)
+	            return null;
+
+	        try {
+	            DateFormat parser = new SimpleDateFormat("yyyyMMddHHmmssZ");
+	            return parser.parse(date + time);
+	        } catch (ParseException e) {
+	            return null;
+	        }
+	    }
+	}
+
+	
+	/**
+	 * Decodes IPTC binary data, populating a {@link Metadata} object with tag values in an {@link IptcDirectory}.
+	 * <p>
+	 * http://www.iptc.org/std/IIM/4.1/specification/IIMV4.1.pdf
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class IptcReader implements JpegSegmentMetadataReader
+	{
+	    // TODO consider breaking the IPTC section up into multiple directories and providing segregation of each IPTC directory
+	/*
+	    public static final int DIRECTORY_IPTC = 2;
+
+	    public static final int ENVELOPE_RECORD = 1;
+	    public static final int APPLICATION_RECORD_2 = 2;
+	    public static final int APPLICATION_RECORD_3 = 3;
+	    public static final int APPLICATION_RECORD_4 = 4;
+	    public static final int APPLICATION_RECORD_5 = 5;
+	    public static final int APPLICATION_RECORD_6 = 6;
+	    public static final int PRE_DATA_RECORD = 7;
+	    public static final int DATA_RECORD = 8;
+	    public static final int POST_DATA_RECORD = 9;
+	*/
+	    private static final byte IptcMarkerByte = 0x1c;
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APPD);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        for (byte[] segmentBytes : segments) {
+	            // Ensure data starts with the IPTC marker byte
+	            if (segmentBytes.length != 0 && segmentBytes[0] == IptcMarkerByte) {
+	                extract(new SequentialByteArrayReader(segmentBytes), metadata, segmentBytes.length);
+	            }
+	        }
+	    }
+
+	    /**
+	     * Performs the IPTC data extraction, adding found values to the specified instance of {@link Metadata}.
+	     */
+	    public void extract(@NotNull final SequentialReader reader, @NotNull final Metadata metadata, long length)
+	    {
+	        extract(reader, metadata, length, null);
+	    }
+
+	    /**
+	     * Performs the IPTC data extraction, adding found values to the specified instance of {@link Metadata}.
+	     */
+	    public void extract(@NotNull final SequentialReader reader, @NotNull final Metadata metadata, long length, @Nullable Directory parentDirectory)
+	    {
+	        IptcDirectory directory = new IptcDirectory();
+	        metadata.addDirectory(directory);
+
+	        if (parentDirectory != null)
+	            directory.setParent(parentDirectory);
+
+	        int offset = 0;
+
+	        // for each tag
+	        while (offset < length) {
+
+	            // identifies start of a tag
+	            short startByte;
+	            try {
+	                startByte = reader.getUInt8();
+	                offset++;
+	            } catch (IOException e) {
+	                directory.addError("Unable to read starting byte of IPTC tag");
+	                return;
+	            }
+
+	            if (startByte != IptcMarkerByte) {
+	                // NOTE have seen images where there was one extra byte at the end, giving
+	                // offset==length at this point, which is not worth logging as an error.
+	                if (offset != length)
+	                    directory.addError("Invalid IPTC tag marker at offset " + (offset - 1) + ". Expected '0x" + Integer.toHexString(IptcMarkerByte) + "' but got '0x" + Integer.toHexString(startByte) + "'.");
+	                return;
+	            }
+
+	            // we need at least four bytes left to read a tag
+	            if (offset + 4 > length) {
+	                directory.addError("Too few bytes remain for a valid IPTC tag");
+	                return;
+	            }
+
+	            int directoryType;
+	            int tagType;
+	            int tagByteCount;
+	            try {
+	                directoryType = reader.getUInt8();
+	                tagType = reader.getUInt8();
+	                tagByteCount = reader.getUInt16();
+	                if (tagByteCount > 32767) {
+	                    // Extended DataSet Tag (see 1.5(c), p14, IPTC-IIMV4.2.pdf)
+	                    tagByteCount = ((tagByteCount & 0x7FFF) << 16) | reader.getUInt16();
+	                    offset += 2;
+	                }
+	                offset += 4;
+	            } catch (IOException e) {
+	                directory.addError("IPTC data segment ended mid-way through tag descriptor");
+	                return;
+	            }
+
+	            if (offset + tagByteCount > length) {
+	                directory.addError("Data for tag extends beyond end of IPTC segment");
+	                return;
+	            }
+
+	            try {
+	                processTag(reader, directory, directoryType, tagType, tagByteCount);
+	            } catch (IOException e) {
+	                directory.addError("Error processing IPTC tag");
+	                return;
+	            }
+
+	            offset += tagByteCount;
+	        }
+	    }
+
+	    private void processTag(@NotNull SequentialReader reader, @NotNull Directory directory, int directoryType, int tagType, int tagByteCount) throws IOException
+	    {
+	        int tagIdentifier = tagType | (directoryType << 8);
+
+	        // Some images have been seen that specify a zero byte tag, which cannot be of much use.
+	        // We elect here to completely ignore the tag. The IPTC specification doesn't mention
+	        // anything about the interpretation of this situation.
+	        // https://raw.githubusercontent.com/wiki/drewnoakes/metadata-extractor/docs/IPTC-IIMV4.2.pdf
+	        if (tagByteCount == 0) {
+	            directory.setString(tagIdentifier, "");
+	            return;
+	        }
+
+	        switch (tagIdentifier) {
+	            case IptcDirectory.TAG_CODED_CHARACTER_SET:
+	                byte[] bytes = reader.getBytes(tagByteCount);
+	                Iso2022Converter iso = new Iso2022Converter();
+	                String charsetName = iso.convertISO2022CharsetToJavaCharset(bytes);
+	                if (charsetName == null) {
+	                    // Unable to determine the charset, so fall through and treat tag as a regular string
+	                    charsetName = new String(bytes);
+	                }
+	                directory.setString(tagIdentifier, charsetName);
+	                return;
+	            case IptcDirectory.TAG_ENVELOPE_RECORD_VERSION:
+	            case IptcDirectory.TAG_APPLICATION_RECORD_VERSION:
+	            case IptcDirectory.TAG_FILE_VERSION:
+	            case IptcDirectory.TAG_ARM_VERSION:
+	            case IptcDirectory.TAG_PROGRAM_VERSION:
+	                // short
+	                if (tagByteCount >= 2) {
+	                    int shortValue = reader.getUInt16();
+	                    reader.skip(tagByteCount - 2);
+	                    directory.setInt(tagIdentifier, shortValue);
+	                    return;
+	                }
+	                break;
+	            case IptcDirectory.TAG_URGENCY:
+	                // byte
+	                directory.setInt(tagIdentifier, reader.getUInt8());
+	                reader.skip(tagByteCount - 1);
+	                return;
+	            default:
+	                // fall through
+	        }
+
+	        // If we haven't returned yet, treat it as a string
+	        // NOTE that there's a chance we've already loaded the value as a string above, but failed to parse the value
+	        String charSetName = directory.getString(IptcDirectory.TAG_CODED_CHARACTER_SET);
+	        Charset charset = null;
+	        try {
+	            if (charSetName != null)
+	                charset = Charset.forName(charSetName);
+	        } catch (Throwable ignored) {
+	        }
+
+	        StringValue string;
+	        if (charSetName != null) {
+	            string = reader.getStringValue(tagByteCount, charset);
+	        } else {
+	            byte[] bytes = reader.getBytes(tagByteCount);
+	            Iso2022Converter iso = new Iso2022Converter();
+	            Charset charSet = iso.guessCharSet(bytes);
+	            string = charSet != null ? new StringValue(bytes, charSet) : new StringValue(bytes, null);
+	        }
+
+	        if (directory.containsTag(tagIdentifier)) {
+	            // this fancy StringValue[] business avoids using an ArrayList for performance reasons
+	            StringValue[] oldStrings = directory.getStringValueArray(tagIdentifier);
+	            StringValue[] newStrings;
+	            if (oldStrings == null) {
+	                // TODO hitting this block means any prior value(s) are discarded
+	                newStrings = new StringValue[1];
+	            } else {
+	                newStrings = new StringValue[oldStrings.length + 1];
+	                System.arraycopy(oldStrings, 0, newStrings, 0, oldStrings.length);
+	            }
+	            newStrings[newStrings.length - 1] = string;
+	            directory.setStringValueArray(tagIdentifier, newStrings);
+	        } else {
+	            directory.setStringValue(tagIdentifier, string);
+	        }
+	    }
+	}
+	
+	/**
+	 * Defines an object capable of processing a particular type of metadata from a {@link RandomAccessReader}.
+	 * <p>
+	 * Instances of this interface must be thread-safe and reusable.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public interface MetadataReader
+	{
+	    /**
+	     * Extracts metadata from <code>reader</code> and merges it into the specified {@link Metadata} object.
+	     *
+	     * @param reader   The {@link RandomAccessReader} from which the metadata should be extracted.
+	     * @param metadata The {@link Metadata} object into which extracted values should be merged.
+	     */
+	    void extract(@NotNull final RandomAccessReader reader, @NotNull final Metadata metadata);
+	}
+	
+	/**
+	 * @author Yuri Binev
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class IccDescriptor extends TagDescriptor<IccDirectory>
+	{
+	    public IccDescriptor(@NotNull IccDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case IccDirectory.TAG_PROFILE_VERSION:
+	                return getProfileVersionDescription();
+	            case IccDirectory.TAG_PROFILE_CLASS:
+	                return getProfileClassDescription();
+	            case IccDirectory.TAG_PLATFORM:
+	                return getPlatformDescription();
+	            case IccDirectory.TAG_RENDERING_INTENT:
+	                return getRenderingIntentDescription();
+	        }
+
+	        if (tagType > 0x20202020 && tagType < 0x7a7a7a7a)
+	            return getTagDataString(tagType);
+
+	        return super.getDescription(tagType);
+	    }
+
+	    private static final int ICC_TAG_TYPE_TEXT = 0x74657874;
+	    private static final int ICC_TAG_TYPE_DESC = 0x64657363;
+	    private static final int ICC_TAG_TYPE_SIG = 0x73696720;
+	    private static final int ICC_TAG_TYPE_MEAS = 0x6D656173;
+	    private static final int ICC_TAG_TYPE_XYZ_ARRAY = 0x58595A20;
+	    private static final int ICC_TAG_TYPE_MLUC = 0x6d6c7563;
+	    private static final int ICC_TAG_TYPE_CURV = 0x63757276;
+
+	    @Nullable
+	    private String getTagDataString(int tagType)
+	    {
+	        try {
+	            byte[] bytes = _directory.getByteArray(tagType);
+	            if (bytes == null)
+	                return _directory.getString(tagType);
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            int iccTagType = reader.getInt32(0);
+	            switch (iccTagType) {
+	                case ICC_TAG_TYPE_TEXT:
+	                    try {
+	                        return new String(bytes, 8, bytes.length - 8 - 1, "ASCII");
+	                    } catch (UnsupportedEncodingException ex) {
+	                        return new String(bytes, 8, bytes.length - 8 - 1);
+	                    }
+	                case ICC_TAG_TYPE_DESC:
+	                    int stringLength = reader.getInt32(8);
+	                    return new String(bytes, 12, stringLength - 1);
+	                case ICC_TAG_TYPE_SIG:
+	                	IccReader ir = new IccReader();
+	                    return ir.getStringFromInt32(reader.getInt32(8));
+	                case ICC_TAG_TYPE_MEAS: {
+	                    int observerType = reader.getInt32(8);
+	                    float x = reader.getS15Fixed16(12);
+	                    float y = reader.getS15Fixed16(16);
+	                    float z = reader.getS15Fixed16(20);
+	                    int geometryType = reader.getInt32(24);
+	                    float flare = reader.getS15Fixed16(28);
+	                    int illuminantType = reader.getInt32(32);
+	                    String observerString;
+	                    switch (observerType) {
+	                        case 0:
+	                            observerString = "Unknown";
+	                            break;
+	                        case 1:
+	                            observerString = "1931 2\u00B0";
+	                            break;
+	                        case 2:
+	                            observerString = "1964 10\u00B0";
+	                            break;
+	                        default:
+	                            observerString = String.format("Unknown %d", observerType);
+	                    }
+	                    String geometryString;
+	                    switch (geometryType) {
+	                        case 0:
+	                            geometryString = "Unknown";
+	                            break;
+	                        case 1:
+	                            geometryString = "0/45 or 45/0";
+	                            break;
+	                        case 2:
+	                            geometryString = "0/d or d/0";
+	                            break;
+	                        default:
+	                            geometryString = String.format("Unknown %d", observerType);
+	                    }
+	                    String illuminantString;
+	                    switch (illuminantType) {
+	                        case 0:
+	                            illuminantString = "unknown";
+	                            break;
+	                        case 1:
+	                            illuminantString = "D50";
+	                            break;
+	                        case 2:
+	                            illuminantString = "D65";
+	                            break;
+	                        case 3:
+	                            illuminantString = "D93";
+	                            break;
+	                        case 4:
+	                            illuminantString = "F2";
+	                            break;
+	                        case 5:
+	                            illuminantString = "D55";
+	                            break;
+	                        case 6:
+	                            illuminantString = "A";
+	                            break;
+	                        case 7:
+	                            illuminantString = "Equi-Power (E)";
+	                            break;
+	                        case 8:
+	                            illuminantString = "F8";
+	                            break;
+	                        default:
+	                            illuminantString = String.format("Unknown %d", illuminantType);
+	                            break;
+	                    }
+	                    DecimalFormat format = new DecimalFormat("0.###");
+	                    return String.format("%s Observer, Backing (%s, %s, %s), Geometry %s, Flare %d%%, Illuminant %s",
+	                            observerString, format.format(x), format.format(y), format.format(z), geometryString, Math.round(flare * 100), illuminantString);
+	                }
+	                case ICC_TAG_TYPE_XYZ_ARRAY: {
+	                    StringBuilder res = new StringBuilder();
+	                    DecimalFormat format = new DecimalFormat("0.####");
+	                    int count = (bytes.length - 8) / 12;
+	                    for (int i = 0; i < count; i++) {
+	                        float x = reader.getS15Fixed16(8 + i * 12);
+	                        float y = reader.getS15Fixed16(8 + i * 12 + 4);
+	                        float z = reader.getS15Fixed16(8 + i * 12 + 8);
+	                        if (i > 0)
+	                            res.append(", ");
+	                        res.append("(").append(format.format(x)).append(", ").append(format.format(y)).append(", ").append(format.format(z)).append(")");
+	                    }
+	                    return res.toString();
+	                }
+	                case ICC_TAG_TYPE_MLUC: {
+	                    int int1 = reader.getInt32(8);
+	                    StringBuilder res = new StringBuilder();
+	                    res.append(int1);
+	                    IccReader ir2 = new IccReader();
+	                    //int int2 = reader.getInt32(12);
+	                    //System.err.format("int1: %d, int2: %d\n", int1, int2);
+	                    for (int i = 0; i < int1; i++) {
+	                        String str = ir2.getStringFromInt32(reader.getInt32(16 + i * 12));
+	                        int len = reader.getInt32(16 + i * 12 + 4);
+	                        int ofs = reader.getInt32(16 + i * 12 + 8);
+	                        String name;
+	                        try {
+	                            name = new String(bytes, ofs, len, "UTF-16BE");
+	                        } catch (UnsupportedEncodingException ex) {
+	                            name = new String(bytes, ofs, len);
+	                        }
+	                        res.append(" ").append(str).append("(").append(name).append(")");
+	                        //System.err.format("% 3d: %s, len: %d, ofs: %d, \"%s\"\n", i, str, len,ofs,name);
+	                    }
+	                    return res.toString();
+	                }
+	                case ICC_TAG_TYPE_CURV: {
+	                    int num = reader.getInt32(8);
+	                    StringBuilder res = new StringBuilder();
+	                    for (int i = 0; i < num; i++) {
+	                        if (i != 0)
+	                            res.append(", ");
+	                        res.append(formatDoubleAsString(((float)reader.getUInt16(12 + i * 2)) / 65535.0, 7, false));
+	                        //res+=String.format("%1.7g",Math.round(((float)iccReader.getInt16(b,12+i*2))/0.065535)/1E7);
+	                    }
+	                    return res.toString();
+	                }
+	                default:
+	                	IccReader ir3 = new IccReader();
+	                    return String.format("%s (0x%08X): %d bytes", ir3.getStringFromInt32(iccTagType), iccTagType, bytes.length);
+	            }
+	        } catch (IOException e) {
+	            // TODO decode these values during IccReader.extract so we can report any errors at that time
+	            // It is convention to return null if a description cannot be formulated.
+	            // If an error is to be reported, it should be done during the extraction process.
+	            return null;
+	        }
+	    }
+
+	    @NotNull
+	    public String formatDoubleAsString(double value, int precision, boolean zeroes)
+	    {
+	        if (precision < 1)
+	            return "" + Math.round(value);
+	        long intPart = Math.abs((long)value);
+	        long rest = (int)Math.round((Math.abs(value) - intPart) * Math.pow(10, precision));
+	        long restKept = rest;
+	        String res = "";
+	        byte cour;
+	        for (int i = precision; i > 0; i--) {
+	            cour = (byte)(Math.abs(rest % 10));
+	            rest /= 10;
+	            if (res.length() > 0 || zeroes || cour != 0 || i == 1)
+	                res = cour + res;
+	        }
+	        intPart += rest;
+	        boolean isNegative = ((value < 0) && (intPart != 0 || restKept != 0));
+	        return (isNegative ? "-" : "") + intPart + "." + res;
+	    }
+
+	    @Nullable
+	    private String getRenderingIntentDescription()
+	    {
+	        return getIndexedDescription(IccDirectory.TAG_RENDERING_INTENT,
+	            "Perceptual",
+	            "Media-Relative Colorimetric",
+	            "Saturation",
+	            "ICC-Absolute Colorimetric");
+	    }
+
+	    @Nullable
+	    private String getPlatformDescription()
+	    {
+	        String str = _directory.getString(IccDirectory.TAG_PLATFORM);
+	        if (str==null)
+	            return null;
+	        // Because Java doesn't allow switching on string values, create an integer from the first four chars
+	        // and switch on that instead.
+	        int i;
+	        try {
+	            i = getInt32FromString(str);
+	        } catch (IOException e) {
+	            return str;
+	        }
+	        switch (i) {
+	            case 0x4150504C: // "APPL"
+	                return "Apple Computer, Inc.";
+	            case 0x4D534654: // "MSFT"
+	                return "Microsoft Corporation";
+	            case 0x53474920:
+	                return "Silicon Graphics, Inc.";
+	            case 0x53554E57:
+	                return "Sun Microsystems, Inc.";
+	            case 0x54474E54:
+	                return "Taligent, Inc.";
+	            default:
+	                return String.format("Unknown (%s)", str);
+	        }
+	    }
+
+	    @Nullable
+	    private String getProfileClassDescription()
+	    {
+	        String str = _directory.getString(IccDirectory.TAG_PROFILE_CLASS);
+	        if (str==null)
+	            return null;
+	        // Because Java doesn't allow switching on string values, create an integer from the first four chars
+	        // and switch on that instead.
+	        int i;
+	        try {
+	            i = getInt32FromString(str);
+	        } catch (IOException e) {
+	            return str;
+	        }
+	        switch (i) {
+	            case 0x73636E72:
+	                return "Input Device";
+	            case 0x6D6E7472: // mntr
+	                return "Display Device";
+	            case 0x70727472:
+	                return "Output Device";
+	            case 0x6C696E6B:
+	                return "DeviceLink";
+	            case 0x73706163:
+	                return "ColorSpace Conversion";
+	            case 0x61627374:
+	                return "Abstract";
+	            case 0x6E6D636C:
+	                return "Named Color";
+	            default:
+	                return String.format("Unknown (%s)", str);
+	        }
+	    }
+
+	    @Nullable
+	    private String getProfileVersionDescription()
+	    {
+	        Integer value = _directory.getInteger(IccDirectory.TAG_PROFILE_VERSION);
+
+	        if (value == null)
+	            return null;
+
+	        int m = (value & 0xFF000000) >> 24;
+	        int r = (value & 0x00F00000) >> 20;
+	        int R = (value & 0x000F0000) >> 16;
+
+	        return String.format("%d.%d.%d", m, r, R);
+	    }
+
+	    private int getInt32FromString(@NotNull String string) throws IOException
+	    {
+	        byte[] bytes = string.getBytes();
+	        return new ByteArrayReader(bytes).getInt32(0);
+	    }
+	}
+
+	
+	/**
+	 * @author Yuri Binev
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class IccDirectory extends Directory
+	{
+	    // These (smaller valued) tags have an integer value that's equal to their offset within the ICC data buffer.
+
+	    public static final int TAG_PROFILE_BYTE_COUNT = 0;
+	    public static final int TAG_CMM_TYPE = 4;
+	    public static final int TAG_PROFILE_VERSION = 8;
+	    public static final int TAG_PROFILE_CLASS = 12;
+	    public static final int TAG_COLOR_SPACE = 16;
+	    public static final int TAG_PROFILE_CONNECTION_SPACE = 20;
+	    public static final int TAG_PROFILE_DATETIME = 24;
+	    public static final int TAG_SIGNATURE = 36;
+	    public static final int TAG_PLATFORM = 40;
+	    public static final int TAG_CMM_FLAGS = 44;
+	    public static final int TAG_DEVICE_MAKE = 48;
+	    public static final int TAG_DEVICE_MODEL = 52;
+	    public static final int TAG_DEVICE_ATTR = 56;
+	    public static final int TAG_RENDERING_INTENT = 64;
+	    public static final int TAG_XYZ_VALUES = 68;
+	    public static final int TAG_PROFILE_CREATOR = 80;
+	    public static final int TAG_TAG_COUNT = 128;
+
+	    // These tag values
+
+	    public static final int TAG_TAG_A2B0 = 0x41324230;
+	    public static final int TAG_TAG_A2B1 = 0x41324231;
+	    public static final int TAG_TAG_A2B2 = 0x41324232;
+	    public static final int TAG_TAG_bXYZ = 0x6258595A;
+	    public static final int TAG_TAG_bTRC = 0x62545243;
+	    public static final int TAG_TAG_B2A0 = 0x42324130;
+	    public static final int TAG_TAG_B2A1 = 0x42324131;
+	    public static final int TAG_TAG_B2A2 = 0x42324132;
+	    public static final int TAG_TAG_calt = 0x63616C74;
+	    public static final int TAG_TAG_targ = 0x74617267;
+	    public static final int TAG_TAG_chad = 0x63686164;
+	    public static final int TAG_TAG_chrm = 0x6368726D;
+	    public static final int TAG_TAG_cprt = 0x63707274;
+	    public static final int TAG_TAG_crdi = 0x63726469;
+	    public static final int TAG_TAG_dmnd = 0x646D6E64;
+	    public static final int TAG_TAG_dmdd = 0x646D6464;
+	    public static final int TAG_TAG_devs = 0x64657673;
+	    public static final int TAG_TAG_gamt = 0x67616D74;
+	    public static final int TAG_TAG_kTRC = 0x6B545243;
+	    public static final int TAG_TAG_gXYZ = 0x6758595A;
+	    public static final int TAG_TAG_gTRC = 0x67545243;
+	    public static final int TAG_TAG_lumi = 0x6C756D69;
+	    public static final int TAG_TAG_meas = 0x6D656173;
+	    public static final int TAG_TAG_bkpt = 0x626B7074;
+	    public static final int TAG_TAG_wtpt = 0x77747074;
+	    public static final int TAG_TAG_ncol = 0x6E636F6C;
+	    public static final int TAG_TAG_ncl2 = 0x6E636C32;
+	    public static final int TAG_TAG_resp = 0x72657370;
+	    public static final int TAG_TAG_pre0 = 0x70726530;
+	    public static final int TAG_TAG_pre1 = 0x70726531;
+	    public static final int TAG_TAG_pre2 = 0x70726532;
+	    public static final int TAG_TAG_desc = 0x64657363;
+	    public static final int TAG_TAG_pseq = 0x70736571;
+	    public static final int TAG_TAG_psd0 = 0x70736430;
+	    public static final int TAG_TAG_psd1 = 0x70736431;
+	    public static final int TAG_TAG_psd2 = 0x70736432;
+	    public static final int TAG_TAG_psd3 = 0x70736433;
+	    public static final int TAG_TAG_ps2s = 0x70733273;
+	    public static final int TAG_TAG_ps2i = 0x70733269;
+	    public static final int TAG_TAG_rXYZ = 0x7258595A;
+	    public static final int TAG_TAG_rTRC = 0x72545243;
+	    public static final int TAG_TAG_scrd = 0x73637264;
+	    public static final int TAG_TAG_scrn = 0x7363726E;
+	    public static final int TAG_TAG_tech = 0x74656368;
+	    public static final int TAG_TAG_bfd = 0x62666420;
+	    public static final int TAG_TAG_vued = 0x76756564;
+	    public static final int TAG_TAG_view = 0x76696577;
+
+	    public static final int TAG_TAG_aabg = 0x61616267;
+	    public static final int TAG_TAG_aagg = 0x61616767;
+	    public static final int TAG_TAG_aarg = 0x61617267;
+	    public static final int TAG_TAG_mmod = 0x6D6D6F64;
+	    public static final int TAG_TAG_ndin = 0x6E64696E;
+	    public static final int TAG_TAG_vcgt = 0x76636774;
+	    public static final int TAG_APPLE_MULTI_LANGUAGE_PROFILE_NAME = 0x6473636d;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_PROFILE_BYTE_COUNT, "Profile Size");
+	        _tagNameMap.put(TAG_CMM_TYPE, "CMM Type");
+	        _tagNameMap.put(TAG_PROFILE_VERSION, "Version");
+	        _tagNameMap.put(TAG_PROFILE_CLASS, "Class");
+	        _tagNameMap.put(TAG_COLOR_SPACE, "Color space");
+	        _tagNameMap.put(TAG_PROFILE_CONNECTION_SPACE, "Profile Connection Space");
+	        _tagNameMap.put(TAG_PROFILE_DATETIME, "Profile Date/Time");
+	        _tagNameMap.put(TAG_SIGNATURE, "Signature");
+	        _tagNameMap.put(TAG_PLATFORM, "Primary Platform");
+	        _tagNameMap.put(TAG_CMM_FLAGS, "CMM Flags");
+	        _tagNameMap.put(TAG_DEVICE_MAKE, "Device manufacturer");
+	        _tagNameMap.put(TAG_DEVICE_MODEL, "Device model");
+	        _tagNameMap.put(TAG_DEVICE_ATTR, "Device attributes");
+	        _tagNameMap.put(TAG_RENDERING_INTENT, "Rendering Intent");
+	        _tagNameMap.put(TAG_XYZ_VALUES, "XYZ values");
+	        _tagNameMap.put(TAG_PROFILE_CREATOR, "Profile Creator");
+	        _tagNameMap.put(TAG_TAG_COUNT, "Tag Count");
+	        _tagNameMap.put(TAG_TAG_A2B0, "AToB 0");
+	        _tagNameMap.put(TAG_TAG_A2B1, "AToB 1");
+	        _tagNameMap.put(TAG_TAG_A2B2, "AToB 2");
+	        _tagNameMap.put(TAG_TAG_bXYZ, "Blue Colorant");
+	        _tagNameMap.put(TAG_TAG_bTRC, "Blue TRC");
+	        _tagNameMap.put(TAG_TAG_B2A0, "BToA 0");
+	        _tagNameMap.put(TAG_TAG_B2A1, "BToA 1");
+	        _tagNameMap.put(TAG_TAG_B2A2, "BToA 2");
+	        _tagNameMap.put(TAG_TAG_calt, "Calibration Date/Time");
+	        _tagNameMap.put(TAG_TAG_targ, "Char Target");
+	        _tagNameMap.put(TAG_TAG_chad, "Chromatic Adaptation");
+	        _tagNameMap.put(TAG_TAG_chrm, "Chromaticity");
+	        _tagNameMap.put(TAG_TAG_cprt, "Profile Copyright");
+	        _tagNameMap.put(TAG_TAG_crdi, "CrdInfo");
+	        _tagNameMap.put(TAG_TAG_dmnd, "Device Mfg Description");
+	        _tagNameMap.put(TAG_TAG_dmdd, "Device Model Description");
+	        _tagNameMap.put(TAG_TAG_devs, "Device Settings");
+	        _tagNameMap.put(TAG_TAG_gamt, "Gamut");
+	        _tagNameMap.put(TAG_TAG_kTRC, "Gray TRC");
+	        _tagNameMap.put(TAG_TAG_gXYZ, "Green Colorant");
+	        _tagNameMap.put(TAG_TAG_gTRC, "Green TRC");
+	        _tagNameMap.put(TAG_TAG_lumi, "Luminance");
+	        _tagNameMap.put(TAG_TAG_meas, "Measurement");
+	        _tagNameMap.put(TAG_TAG_bkpt, "Media Black Point");
+	        _tagNameMap.put(TAG_TAG_wtpt, "Media White Point");
+	        _tagNameMap.put(TAG_TAG_ncol, "Named Color");
+	        _tagNameMap.put(TAG_TAG_ncl2, "Named Color 2");
+	        _tagNameMap.put(TAG_TAG_resp, "Output Response");
+	        _tagNameMap.put(TAG_TAG_pre0, "Preview 0");
+	        _tagNameMap.put(TAG_TAG_pre1, "Preview 1");
+	        _tagNameMap.put(TAG_TAG_pre2, "Preview 2");
+	        _tagNameMap.put(TAG_TAG_desc, "Profile Description");
+	        _tagNameMap.put(TAG_TAG_pseq, "Profile Sequence Description");
+	        _tagNameMap.put(TAG_TAG_psd0, "Ps2 CRD 0");
+	        _tagNameMap.put(TAG_TAG_psd1, "Ps2 CRD 1");
+	        _tagNameMap.put(TAG_TAG_psd2, "Ps2 CRD 2");
+	        _tagNameMap.put(TAG_TAG_psd3, "Ps2 CRD 3");
+	        _tagNameMap.put(TAG_TAG_ps2s, "Ps2 CSA");
+	        _tagNameMap.put(TAG_TAG_ps2i, "Ps2 Rendering Intent");
+	        _tagNameMap.put(TAG_TAG_rXYZ, "Red Colorant");
+	        _tagNameMap.put(TAG_TAG_rTRC, "Red TRC");
+	        _tagNameMap.put(TAG_TAG_scrd, "Screening Desc");
+	        _tagNameMap.put(TAG_TAG_scrn, "Screening");
+	        _tagNameMap.put(TAG_TAG_tech, "Technology");
+	        _tagNameMap.put(TAG_TAG_bfd, "Ucrbg");
+	        _tagNameMap.put(TAG_TAG_vued, "Viewing Conditions Description");
+	        _tagNameMap.put(TAG_TAG_view, "Viewing Conditions");
+	        _tagNameMap.put(TAG_TAG_aabg, "Blue Parametric TRC");
+	        _tagNameMap.put(TAG_TAG_aagg, "Green Parametric TRC");
+	        _tagNameMap.put(TAG_TAG_aarg, "Red Parametric TRC");
+	        _tagNameMap.put(TAG_TAG_mmod, "Make And Model");
+	        _tagNameMap.put(TAG_TAG_ndin, "Native Display Information");
+	        _tagNameMap.put(TAG_TAG_vcgt, "Video Card Gamma");
+	        _tagNameMap.put(TAG_APPLE_MULTI_LANGUAGE_PROFILE_NAME, "Apple Multi-language Profile Name");
+	    }
+
+	    public IccDirectory()
+	    {
+	        this.setDescriptor(new IccDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "ICC Profile";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+
+
+
+	/**
+	 * Reads an ICC profile.
+	 * <p>
+	 * More information about ICC:
+	 * <ul>
+	 * <li>http://en.wikipedia.org/wiki/ICC_profile</li>
+	 * <li>http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/ICC_Profile.html</li>
+	 * <li>https://developer.apple.com/library/mac/samplecode/ImageApp/Listings/ICC_h.html</li>
+	 * </ul>
+	 *
+	 * @author Yuri Binev
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class IccReader implements JpegSegmentMetadataReader, MetadataReader
+	{
+	    public static final String JPEG_SEGMENT_PREAMBLE = "ICC_PROFILE";
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APP2);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        final int preambleLength = JPEG_SEGMENT_PREAMBLE.length();
+
+	        // ICC data can be spread across multiple JPEG segments.
+	        // We concat them together in this buffer for later processing.
+	        byte[] buffer = null;
+
+	        for (byte[] segmentBytes : segments) {
+	            // Skip any segments that do not contain the required preamble
+	            if (segmentBytes.length < preambleLength || !JPEG_SEGMENT_PREAMBLE.equalsIgnoreCase(new String(segmentBytes, 0, preambleLength)))
+	                continue;
+
+	            // NOTE we ignore three bytes here -- are they useful for anything?
+
+	            // Grow the buffer
+	            if (buffer == null) {
+	                buffer = new byte[segmentBytes.length - 14];
+	                // skip the first 14 bytes
+	                System.arraycopy(segmentBytes, 14, buffer, 0, segmentBytes.length - 14);
+	            } else {
+	                byte[] newBuffer = new byte[buffer.length + segmentBytes.length - 14];
+	                System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+	                System.arraycopy(segmentBytes, 14, newBuffer, buffer.length, segmentBytes.length - 14);
+	                buffer = newBuffer;
+	            }
+	        }
+
+	        if (buffer != null)
+	            extract(new ByteArrayReader(buffer), metadata);
+	    }
+
+	    public void extract(@NotNull final RandomAccessReader reader, @NotNull final Metadata metadata)
+	    {
+	        extract(reader, metadata, null);
+	    }
+
+	    public void extract(@NotNull final RandomAccessReader reader, @NotNull final Metadata metadata, @Nullable Directory parentDirectory)
+	    {
+	        // TODO review whether the 'tagPtr' values below really do require RandomAccessReader or whether SequentialReader may be used instead
+
+	        IccDirectory directory = new IccDirectory();
+
+	        if (parentDirectory != null)
+	            directory.setParent(parentDirectory);
+
+	        try {
+	            int profileByteCount = reader.getInt32(IccDirectory.TAG_PROFILE_BYTE_COUNT);
+	            directory.setInt(IccDirectory.TAG_PROFILE_BYTE_COUNT, profileByteCount);
+
+	            // For these tags, the int value of the tag is in fact it's offset within the buffer.
+	            set4ByteString(directory, IccDirectory.TAG_CMM_TYPE, reader);
+	            setInt32(directory, IccDirectory.TAG_PROFILE_VERSION, reader);
+	            set4ByteString(directory, IccDirectory.TAG_PROFILE_CLASS, reader);
+	            set4ByteString(directory, IccDirectory.TAG_COLOR_SPACE, reader);
+	            set4ByteString(directory, IccDirectory.TAG_PROFILE_CONNECTION_SPACE, reader);
+	            setDate(directory, IccDirectory.TAG_PROFILE_DATETIME, reader);
+	            set4ByteString(directory, IccDirectory.TAG_SIGNATURE, reader);
+	            set4ByteString(directory, IccDirectory.TAG_PLATFORM, reader);
+	            setInt32(directory, IccDirectory.TAG_CMM_FLAGS, reader);
+	            set4ByteString(directory, IccDirectory.TAG_DEVICE_MAKE, reader);
+
+	            int temp = reader.getInt32(IccDirectory.TAG_DEVICE_MODEL);
+	            if (temp != 0) {
+	                if (temp <= 0x20202020) {
+	                    directory.setInt(IccDirectory.TAG_DEVICE_MODEL, temp);
+	                } else {
+	                    directory.setString(IccDirectory.TAG_DEVICE_MODEL, getStringFromInt32(temp));
+	                }
+	            }
+
+	            setInt32(directory, IccDirectory.TAG_RENDERING_INTENT, reader);
+	            setInt64(directory, IccDirectory.TAG_DEVICE_ATTR, reader);
+
+	            float[] xyz = new float[]{
+	                    reader.getS15Fixed16(IccDirectory.TAG_XYZ_VALUES),
+	                    reader.getS15Fixed16(IccDirectory.TAG_XYZ_VALUES + 4),
+	                    reader.getS15Fixed16(IccDirectory.TAG_XYZ_VALUES + 8)
+	            };
+	            directory.setObject(IccDirectory.TAG_XYZ_VALUES, xyz);
+
+	            // Process 'ICC tags'
+	            int tagCount = reader.getInt32(IccDirectory.TAG_TAG_COUNT);
+	            directory.setInt(IccDirectory.TAG_TAG_COUNT, tagCount);
+
+	            for (int i = 0; i < tagCount; i++) {
+	                int pos = IccDirectory.TAG_TAG_COUNT + 4 + i * 12;
+	                int tagType = reader.getInt32(pos);
+	                int tagPtr = reader.getInt32(pos + 4);
+	                int tagLen = reader.getInt32(pos + 8);
+	                byte[] b = reader.getBytes(tagPtr, tagLen);
+	                directory.setByteArray(tagType, b);
+	            }
+	        } catch (IOException ex) {
+	            directory.addError("Exception reading ICC profile: " + ex.getMessage());
+	        }
+
+	        metadata.addDirectory(directory);
+	    }
+
+	    private void set4ByteString(@NotNull Directory directory, int tagType, @NotNull RandomAccessReader reader) throws IOException
+	    {
+	        int i = reader.getInt32(tagType);
+	        if (i != 0)
+	            directory.setString(tagType, getStringFromInt32(i));
+	    }
+
+	    private void setInt32(@NotNull Directory directory, int tagType, @NotNull RandomAccessReader reader) throws IOException
+	    {
+	        int i = reader.getInt32(tagType);
+	        if (i != 0)
+	            directory.setInt(tagType, i);
+	    }
+
+	    //@SuppressWarnings({"SameParameterValue"})
+	    private void setInt64(@NotNull Directory directory, int tagType, @NotNull RandomAccessReader reader) throws IOException
+	    {
+	        long l = reader.getInt64(tagType);
+	        if (l != 0)
+	            directory.setLong(tagType, l);
+	    }
+
+	    //@SuppressWarnings({"SameParameterValue", "MagicConstant"})
+	    private void setDate(@NotNull final IccDirectory directory, final int tagType, @NotNull RandomAccessReader reader) throws IOException
+	    {
+	        final int y = reader.getUInt16(tagType);
+	        final int m = reader.getUInt16(tagType + 2);
+	        final int d = reader.getUInt16(tagType + 4);
+	        final int h = reader.getUInt16(tagType + 6);
+	        final int M = reader.getUInt16(tagType + 8);
+	        final int s = reader.getUInt16(tagType + 10);
+
+	        DateUtil dt = new DateUtil();
+	        if (dt.isValidDate(y, m - 1, d) && dt.isValidTime(h, M, s))
+	        {
+	            String dateString = String.format("%04d:%02d:%02d %02d:%02d:%02d", y, m, d, h, M, s);
+	            directory.setString(tagType, dateString);
+	        }
+	        else
+	        {
+	            directory.addError(String.format(
+	                "ICC data describes an invalid date/time: year=%d month=%d day=%d hour=%d minute=%d second=%d",
+	                y, m, d, h, M, s));
+	        }
+	    }
+
+	    @NotNull
+	    public String getStringFromInt32(int d)
+	    {
+	        // MSB
+	        byte[] b = new byte[] {
+	                (byte) ((d & 0xFF000000) >> 24),
+	                (byte) ((d & 0x00FF0000) >> 16),
+	                (byte) ((d & 0x0000FF00) >> 8),
+	                (byte) ((d & 0x000000FF))
+	        };
+	        return new String(b);
+	    }
+	}
+	
+	/**
+	 * A limited-functionality binary property list (BPLIST) utility.
+	 * Parser functionality accounts for &quot;dict&quot; (with simple integer and string values) and &quot;data&quot;.
+	 *
+	 * https://opensource.apple.com/source/CF/CF-550/ForFoundationOnly.h
+	 * https://opensource.apple.com/source/CF/CF-550/CFBinaryPList.c
+	 * https://synalysis.com/how-to-decode-apple-binary-property-list-files/
+	 *
+	 * @author Bob Johnson
+	 */
+	public static class BplistReader
+	{
+	    private static final String PLIST_DTD = "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
+
+	    private static final byte[] BPLIST_HEADER = {'b', 'p', 'l', 'i', 's', 't', '0', '0'};
+
+	    /**
+	     * Ensure that a BPLIST is valid.
+	     */
+	    public static boolean isValid(byte[] bplist)
+	    {
+	        if (bplist.length < BPLIST_HEADER.length) {
+	            return false;
+	        }
+
+	        boolean valid = true;
+	        for (int i = 0; i < BPLIST_HEADER.length; i++) {
+	            if (bplist[i] != BPLIST_HEADER[i]) {
+	                valid = false;
+	                break;
+	            }
+	        }
+
+	        return valid;
+	    }
+
+	    public static PropertyListResults parse(byte[] bplist) throws IOException
+	    {
+	        if (!isValid(bplist)) {
+	            throw new IllegalArgumentException("Input is not a bplist");
+	        }
+
+	        final ArrayList<Object> objects = new ArrayList<Object>();
+	        final Trailer trailer = readTrailer(bplist);
+
+	        // List out the pointers
+	        MetadataExtractor me = new MetadataExtractor();
+	        SequentialByteArrayReader reader = me.new SequentialByteArrayReader(bplist, (int)(trailer.offsetTableOffset + trailer.topObject));
+	        int[] offsets = new int[(int)trailer.numObjects];
+	        for (long i = 0; i < trailer.numObjects; i++) {
+	            if (trailer.offsetIntSize == 1) {
+	                offsets[(int)i] = reader.getByte();
+	            } else if (trailer.offsetIntSize == 2) {
+	                offsets[(int)i] = reader.getUInt16();
+	            }
+	        }
+
+	        for (int i = 0; i < offsets.length; i++) {
+	            reader = me.new SequentialByteArrayReader(bplist, offsets[i]);
+	            byte marker = reader.getByte();
+	            int objectFormat = marker >> 4 & 0x0F;
+	            switch (objectFormat) {
+	                case 0x0D:    // dict
+	                    handleDict(i, marker, reader, objects);
+	                    break;
+	                case 0x05:    // string (ASCII)
+	                    int charCount = marker & 0x0F;
+	                    objects.add(i, reader.getString(charCount));
+	                    break;
+	                case 0x04:    // data
+	                    handleData(i, marker, reader, objects);
+	                    break;
+	                case 0x01:    // int
+	                    handleInt(i, marker, reader, objects);
+	                    break;
+	                default:
+	                    throw new IOException("Un-handled objectFormat encountered");
+	            }
+	        }
+
+	        return new PropertyListResults(objects, trailer);
+	    }
+
+	    private static void handleInt(final int objectIndex, final byte marker, final SequentialByteArrayReader reader, final ArrayList<Object> objects) throws IOException
+	    {
+	        int objectSize = (int)Math.pow(2, (marker & 0x0F));
+	        if (objectSize == 1) {
+	            objects.add(objectIndex, reader.getByte());
+	        } else if (objectSize == 2) {
+	            objects.add(objectIndex, reader.getUInt16());
+	        } else if (objectSize == 4) {
+	            objects.add(objectIndex, reader.getUInt32());
+	        } else if (objectSize == 8) {
+	            objects.add(objectIndex, reader.getInt64());
+	        }
+	    }
+
+	    private static void handleDict(final int objectIndex, final byte marker, final SequentialByteArrayReader reader, final ArrayList<Object> objects) throws IOException
+	    {
+	        // Using linked map preserves the key order
+	        LinkedHashMap<Byte, Byte> map = new LinkedHashMap<Byte, Byte>();
+	        int dictEntries = marker & 0x0F;
+	        byte[] keyRefs = new byte[dictEntries];
+
+	        for (int j = 0; j < dictEntries; j++) {
+	            keyRefs[j] = reader.getByte();
+	        }
+	        for (int j = 0; j < dictEntries; j++) {
+	            map.put(keyRefs[j], reader.getByte());
+	        }
+
+	        objects.add(objectIndex, map);
+	    }
+
+	    private static void handleData(final int objectIndex, final byte marker, final SequentialByteArrayReader reader, final ArrayList<Object> objects) throws IOException
+	    {
+	        int byteCount = marker & 0x0F;
+	        if (byteCount == 0x0F) {
+	            byte sizeMarker = reader.getByte();
+	            if ((sizeMarker >> 4 & 0x0F) != 1) {
+	                throw new IllegalArgumentException("Invalid size marker");
+	            }
+
+	            int objectSizeWidth = (int)Math.pow(2, sizeMarker & 0x0F);
+	            if (objectSizeWidth == 1) {
+	                byteCount = reader.getInt8();
+	            } else if (objectSizeWidth == 2) {
+	                byteCount = reader.getUInt16();
+	            }
+	        }
+
+	        objects.add(objectIndex, reader.getBytes(byteCount));
+	    }
+
+	    public static class PropertyListResults
+	    {
+	        private final List<Object> objects;
+	        private final Trailer trailer;
+
+	        public PropertyListResults(List<Object> objects, Trailer trailer)
+	        {
+	            this.objects = objects;
+	            this.trailer = trailer;
+	        }
+
+	        public List<Object> getObjects()
+	        {
+	            return objects;
+	        }
+
+	        public Trailer getTrailer()
+	        {
+	            return trailer;
+	        }
+
+	        @Nullable
+	        public Set<Map.Entry<Byte, Byte>> getEntrySet()
+	        {
+	            final Object topObject = this.getObjects().get((int)this.getTrailer().topObject);
+
+	            if (topObject instanceof Map) {
+	                //@SuppressWarnings("unchecked")
+	                Map<Byte, Byte> dict = (Map<Byte, Byte>)topObject;
+	                return dict.entrySet();
+	            }
+
+	            return null;
+	        }
+
+	        /**
+	         * Returns this result object in XML format.
+	         */
+	        public String toXML()
+	        {
+	            final StringBuilder xml = new StringBuilder()
+	                .append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+	                .append(PLIST_DTD)
+	                .append("<plist version=\"1.0\">");
+
+	            final Set<Map.Entry<Byte, Byte>> entrySet = getEntrySet();
+
+	            if (entrySet != null) {
+	                xml.append("<dict>");
+
+	                for (Map.Entry<Byte, Byte> entry : entrySet) {
+	                    xml.append("<key>")
+	                       .append((String)this.getObjects().get(entry.getKey()))
+	                       .append("</key>");
+	                    xml.append("<integer>")
+	                       .append(this.getObjects().get(entry.getValue()).toString())
+	                       .append("</integer>");
+	                }
+
+	                xml.append("</dict>");
+	            }
+
+	            xml.append("</plist>");
+
+	            return xml.toString();
+	        }
+	    }
+
+	    /**
+	     * Given a full byte array containing the BPLIST, read the trailer object from the end
+	     * of the array. 5 unused bytes and 1 sort version are skipped.
+	     *
+	     * @param bplist The BPLIST binary array.
+	     * @return Returns the <tt>Trailer</tt> object with values parsed from the array.
+	     * @throws IOException
+	     */
+	    private static Trailer readTrailer(byte[] bplist) throws IOException
+	    {
+	    	MetadataExtractor me = new MetadataExtractor();
+	        SequentialByteArrayReader reader = me.new SequentialByteArrayReader(bplist, bplist.length - Trailer.STRUCT_SIZE);
+	        reader.skip(5L);    // Skip the 5-byte _unused values
+	        reader.skip(1L);    // Skip 1-byte sort version
+
+	        final Trailer trailer = new Trailer();
+	        trailer.offsetIntSize = reader.getByte();
+	        trailer.objectRefSize = reader.getByte();
+	        trailer.numObjects = reader.getInt64();
+	        trailer.topObject = reader.getInt64();
+	        trailer.offsetTableOffset = reader.getInt64();
+
+	        return trailer;
+	    }
+
+	    /**
+	     * A data structure to hold the BPLIST trailer data. Only meaningful fields
+	     * are represented - the reader is responsible for skipping unused arrays.
+	     */
+	    private static class Trailer
+	    {
+	        public static final int STRUCT_SIZE = 32;
+
+	        byte offsetIntSize;
+	        byte objectRefSize;
+	        long numObjects;
+	        long topObject;
+	        long offsetTableOffset;
+	    }
+	}
+	
+	/**
+	 * @author Bob Johnson
+	 */
+	public class AppleRunTimeMakernoteDescriptor extends TagDescriptor<AppleRunTimeMakernoteDirectory>
+	{
+	    public AppleRunTimeMakernoteDescriptor(AppleRunTimeMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case AppleRunTimeMakernoteDirectory.CMTimeFlags:
+	                return flagsDescription();
+	            case AppleRunTimeMakernoteDirectory.CMTimeValue:
+	                return calculateTimeInSeconds();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    // flags bitmask details
+	    // 0000 0001 = Valid
+	    // 0000 0010 = Rounded
+	    // 0000 0100 = Positive Infinity
+	    // 0000 1000 = Negative Infinity
+	    // 0001 0000 = Indefinite
+	    @Nullable
+	    private String flagsDescription()
+	    {
+	        try {
+	            final int value = _directory.getInt(AppleRunTimeMakernoteDirectory.CMTimeFlags);
+
+	            StringBuilder sb = new StringBuilder();
+
+	            if ((value & 0x1) == 1)
+	                sb.append("Valid");
+	            else
+	                sb.append("Invalid");
+
+	            if ((value & 0x2) != 0)
+	                sb.append(", rounded");
+
+	            if ((value & 0x4) != 0)
+	                sb.append(", positive infinity");
+
+	            if ((value & 0x8) != 0)
+	                sb.append(", negative infinity");
+
+	            if ((value & 0x10) != 0)
+	                sb.append(", indefinite");
+
+	            return sb.toString();
+	        } catch (MetadataException ignored) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    private String calculateTimeInSeconds()
+	    {
+	        try {
+	            long value = _directory.getLong(AppleRunTimeMakernoteDirectory.CMTimeValue);
+	            long scale = _directory.getLong(AppleRunTimeMakernoteDirectory.CMTimeScale);
+
+	            return String.format("%d seconds", (value / scale));
+	        } catch (MetadataException ignored) {
+	            return null;
+	        }
+	    }
+	}
+
+	
+	public class AppleRunTimeMakernoteDirectory extends Directory
+	{
+	    @NotNull
+	    protected final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    public static final int CMTimeFlags = 1;
+	    public static final int CMTimeEpoch = 2;
+	    public static final int CMTimeScale = 3;
+	    public static final int CMTimeValue = 4;
+
+	    {
+	        _tagNameMap.put(CMTimeFlags, "Flags");
+	        _tagNameMap.put(CMTimeEpoch, "Epoch");
+	        _tagNameMap.put(CMTimeScale, "Scale");
+	        _tagNameMap.put(CMTimeValue, "Value");
+	    }
+
+	    public AppleRunTimeMakernoteDirectory()
+	    {
+	        super.setDescriptor(new AppleRunTimeMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Apple Run Time";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+
+
+	/**
+	 * Reads the <tt>AppleRunTime</tt> data and adds {@link AppleRunTimeMakernoteDirectory} to the
+	 * parent {@link AppleMakernoteDirectory} if it can be parsed with no errors.
+	 */
+	public class AppleRunTimeReader
+	{
+	    public void extract(@NotNull byte[] bytes, @NotNull final Metadata metadata, @NotNull final Directory parentDirectory)
+	    {
+	        parentDirectory.setByteArray(AppleMakernoteDirectory.TAG_RUN_TIME, bytes);
+
+	        if (!BplistReader.isValid(bytes)) {
+	        	parentDirectory.addError("Input array is not a bplist");
+	        	return;
+	        }
+
+	        AppleRunTimeMakernoteDirectory directory = new AppleRunTimeMakernoteDirectory();
+	        directory.setParent(parentDirectory);
+
+	        try {
+	            processAppleRunTime(directory, bytes);
+
+	            if (directory.getTagCount() > 0) {
+	                metadata.addDirectory(directory);
+	            }
+	        } catch (IOException e) {
+	            parentDirectory.addError("Error processing TAG_RUN_TIME: " + e.getMessage());
+	        }
+	    }
+
+	    /**
+	     * Process the BPLIST containing the RUN_TIME tag. The directory will only be populated with values
+	     * if the <tt>flag</tt> indicates that the CMTime structure is &quot;valid&quot;.
+	     *
+	     * @param directory The <tt>AppleRunTimeMakernoteDirectory</tt> to set values onto.
+	     * @param bplist The BPLIST
+	     * @throws IOException Thrown if an error occurs parsing the BPLIST as a CMTime structure.
+	     */
+	    private void processAppleRunTime(@NotNull final AppleRunTimeMakernoteDirectory directory, @NotNull final byte[] bplist) throws IOException
+	    {
+	        final BplistReader.PropertyListResults results = BplistReader.parse(bplist);
+
+	        final Set<Map.Entry<Byte, Byte>> entrySet = results.getEntrySet();
+
+	        if (entrySet != null) {
+	            HashMap<String, Object> values = new HashMap<String, Object>(entrySet.size());
+
+	            for (Map.Entry<Byte, Byte> entry : entrySet) {
+	                String key = (String)results.getObjects().get(entry.getKey());
+	                Object value = results.getObjects().get(entry.getValue());
+
+	                values.put(key, value);
+	            }
+
+	            // https://developer.apple.com/documentation/coremedia/cmtime-u58
+
+	            Object flagsObject = values.get("flags");
+	            if (flagsObject instanceof Byte) {
+	                byte flags = (Byte) flagsObject;
+	                if ((flags & 0x1) == 0x1) {
+	                    directory.setInt(AppleRunTimeMakernoteDirectory.CMTimeFlags, flags);
+	                    directory.setInt(AppleRunTimeMakernoteDirectory.CMTimeEpoch, (Byte) values.get("epoch"));
+	                    directory.setLong(AppleRunTimeMakernoteDirectory.CMTimeScale, (Long) values.get("timescale"));
+	                    directory.setLong(AppleRunTimeMakernoteDirectory.CMTimeValue, (Long) values.get("value"));
+	                }
+	            } else if (flagsObject instanceof String) {
+	                byte flags = Byte.parseByte((String) flagsObject);
+	                if ((flags & 0x1) == 0x1) {
+	                    directory.setInt(AppleRunTimeMakernoteDirectory.CMTimeFlags, flags);
+	                    directory.setInt(AppleRunTimeMakernoteDirectory.CMTimeEpoch, Byte.parseByte((String) values.get("epoch")));
+	                    directory.setLong(AppleRunTimeMakernoteDirectory.CMTimeScale, Long.parseLong((String) values.get("timescale")));
+	                    directory.setLong(AppleRunTimeMakernoteDirectory.CMTimeValue, Long.parseLong((String) values.get("value")));
+	                }
+	            }
+	        }
+	    }
+	}
+	
+	/**
+	 * A series of utility methods for working with the file system. The methods herein are used in unit testing.
+	 * Use them in production code at your own risk!
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public static class FileUtil
+	{
+	    /**
+	     * Saves the contents of a <code>byte[]</code> to the specified {@link File}.
+	     */
+	    public static void saveBytes(@NotNull File file, @NotNull byte[] bytes) throws IOException
+	    {
+	        FileOutputStream stream = null;
+	        try {
+	            stream = new FileOutputStream(file);
+	            stream.write(bytes);
+	        } finally {
+	            if (stream != null) {
+	                stream.close();
+	            }
+	        }
+	    }
+
+	    /**
+	     * Reads the contents of a {@link File} into a <code>byte[]</code>. This relies upon {@link File#length()}
+	     * returning the correct value, which may not be the case when using a network file system. However this method is
+	     * intended for unit test support, in which case the files should be on the local volume.
+	     */
+	    @NotNull
+	    public static byte[] readBytes(@NotNull File file) throws IOException
+	    {
+	        int length = (int)file.length();
+	        // should only be zero if loading from a network or similar
+	        assert (length != 0);
+	        byte[] bytes = new byte[length];
+
+	        int totalBytesRead = 0;
+	        FileInputStream inputStream = null;
+	        try {
+	            inputStream = new FileInputStream(file);
+	            while (totalBytesRead != length) {
+	                int bytesRead = inputStream.read(bytes, totalBytesRead, length - totalBytesRead);
+	                if (bytesRead == -1) {
+	                    break;
+	                }
+	                totalBytesRead += bytesRead;
+	            }
+	        } finally {
+	            if (inputStream != null) {
+	                inputStream.close();
+	            }
+	        }
+
+	        return bytes;
+	    }
+
+	    /**
+	     * Reads the contents of a {@link File} into a <code>byte[]</code>. This relies upon <code>File.length()</code>
+	     * returning the correct value, which may not be the case when using a network file system. However this method is
+	     * intended for unit test support, in which case the files should be on the local volume.
+	     */
+	    @NotNull
+	    public static byte[] readBytes(@NotNull String filePath) throws IOException
+	    {
+	        return readBytes(new File(filePath));
+	    }
+	}
+
 
 }
