@@ -148,8 +148,6 @@ public class StrokeSegmentationDicomReceiverPWI {
     
     private Vector<File> receivedFileList;
     
-    private Hashtable<String, StudyTransferInfo> studyTransferInfoTable = new Hashtable<String, StudyTransferInfo>();
-    
     private String serverIP;
     private int serverPort;
     private String serverAE;
@@ -315,8 +313,11 @@ public class StrokeSegmentationDicomReceiverPWI {
             try {
                 log("Received association close request");
                 
+                Hashtable<String, StudyTransferInfo> studyTransferInfoTable = new Hashtable<String, StudyTransferInfo>();
+                
                 for (File file : receivedFileList) {
                     try {
+                        
                         Attributes attr = parse(file);
                         
                         final String[] imageTypes = attr.getStrings(TagUtils.toTag(0x0008, 0x0008));
