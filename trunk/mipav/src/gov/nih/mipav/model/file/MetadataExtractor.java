@@ -5922,6 +5922,305 @@ public class MetadataExtractor {
 	        _currentDirectory = newDirectory;
 	        _metadata.addDirectory(_currentDirectory);
 	    }
+	    
+	    protected void pushCanonMakernoteDirectory()
+	    {
+	    	CanonMakernoteDirectory newDirectory;
+	    	newDirectory = new CanonMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushCasioType1MakernoteDirectory()
+	    {
+	    	CasioType1MakernoteDirectory newDirectory;
+	    	newDirectory = new CasioType1MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushCasioType2MakernoteDirectory()
+	    {
+	    	CasioType2MakernoteDirectory newDirectory;
+	    	newDirectory = new CasioType2MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushFujifilmMakernoteDirectory()
+	    {
+	    	FujifilmMakernoteDirectory newDirectory;
+	    	newDirectory = new FujifilmMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushKyoceraMakernoteDirectory()
+	    {
+	    	KyoceraMakernoteDirectory newDirectory;
+	    	newDirectory = new KyoceraMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushLeicaType5MakernoteDirectory()
+	    {
+	    	LeicaType5MakernoteDirectory newDirectory;
+	    	newDirectory = new LeicaType5MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushLeicaMakernoteDirectory()
+	    {
+	    	LeicaMakernoteDirectory newDirectory;
+	    	newDirectory = new LeicaMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushPanasonicMakernoteDirectory()
+	    {
+	    	PanasonicMakernoteDirectory newDirectory;
+	    	newDirectory = new PanasonicMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushPentaxMakernoteDirectory()
+	    {
+	    	PentaxMakernoteDirectory newDirectory;
+	    	newDirectory = new PentaxMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushSanyoMakernoteDirectory()
+	    {
+	    	SanyoMakernoteDirectory newDirectory;
+	    	newDirectory = new SanyoMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushRicohMakernoteDirectory()
+	    {
+	    	RicohMakernoteDirectory newDirectory;
+	    	newDirectory = new RicohMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushAppleMakernoteDirectory()
+	    {
+	    	AppleMakernoteDirectory newDirectory;
+	    	newDirectory = new AppleMakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
+	    
+	    protected void pushSamsungType2MakernoteDirectory()
+	    {
+	    	SamsungType2MakernoteDirectory newDirectory;
+	    	newDirectory = new SamsungType2MakernoteDirectory();
+
+	        // If this is the first directory, don't add to the stack
+	        if (_currentDirectory == null) {
+	            // Apply any pending root parent to this new directory
+	            if (_rootParentDirectory != null) {
+	                newDirectory.setParent(_rootParentDirectory);
+	                _rootParentDirectory = null;
+	            }
+	        }
+	        else {
+	            // The current directory is pushed onto the stack, and set as the new directory's parent
+	            _directoryStack.push(_currentDirectory);
+	            newDirectory.setParent(_currentDirectory);
+	        }
+
+	        _currentDirectory = newDirectory;
+	        _metadata.addDirectory(_currentDirectory);
+	    }
 
 	    protected void pushDirectory(@NotNull Class<? extends Directory> directoryClass)
 	    {
@@ -8720,14 +9019,14 @@ public class MetadataExtractor {
 	            _metadata.addDirectory(directory);
 	            processKodakMakernote(directory, makernoteOffset, reader);
 	        } else if ("Canon".equalsIgnoreCase(cameraMake)) {
-	            pushDirectory(CanonMakernoteDirectory.class);
+	            pushCanonMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, tiffHeaderOffset);
 	        } else if (cameraMake != null && cameraMake.toUpperCase().startsWith("CASIO")) {
 	            if ("QVC\u0000\u0000\u0000".equals(firstSixChars)) {
-	                pushDirectory(CasioType2MakernoteDirectory.class);
+	                pushCasioType2MakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 6, tiffHeaderOffset);
 	            } else {
-	                pushDirectory(CasioType1MakernoteDirectory.class);
+	                pushCasioType1MakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, tiffHeaderOffset);
 	            }
 	        } else if ("FUJIFILM".equals(firstEightChars) || "Fujifilm".equalsIgnoreCase(cameraMake)) {
@@ -8737,11 +9036,11 @@ public class MetadataExtractor {
 	            // IFD, though the offset is relative to the start of the makernote, not the TIFF
 	            // header (like everywhere else)
 	            int ifdStart = makernoteOffset + reader.getInt32(makernoteOffset + 8);
-	            pushDirectory(FujifilmMakernoteDirectory.class);
+	            pushFujifilmMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, ifdStart, makernoteOffset);
 	        } else if ("KYOCERA".equals(firstSevenChars)) {
 	            // http://www.ozhiker.com/electronics/pjmt/jpeg_info/kyocera_mn.html
-	            pushDirectory(KyoceraMakernoteDirectory.class);
+	            pushKyoceraMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 22, tiffHeaderOffset);
 	        } else if ("LEICA".equals(firstFiveChars)) {
 	            reader.setMotorolaByteOrder(false);
@@ -8759,14 +9058,14 @@ public class MetadataExtractor {
 	                "LEICA\0\u0006\0".equals(firstEightChars) ||
 	                "LEICA\0\u0007\0".equals(firstEightChars))
 	            {
-	                pushDirectory(LeicaType5MakernoteDirectory.class);
+	                pushLeicaType5MakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, makernoteOffset);
 	            } else if ("Leica Camera AG".equals(cameraMake)) {
-	                pushDirectory(LeicaMakernoteDirectory.class);
+	                pushLeicaMakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, tiffHeaderOffset);
 	            } else if ("LEICA".equals(cameraMake)) {
 	                // Some Leica cameras use Panasonic makernote tags
-	                pushDirectory(PanasonicMakernoteDirectory.class);
+	                pushPanasonicMakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, tiffHeaderOffset);
 	            } else {
 	                return false;
@@ -8775,7 +9074,7 @@ public class MetadataExtractor {
 	            // NON-Standard TIFF IFD Data using Panasonic Tags. There is no Next-IFD pointer after the IFD
 	            // Offsets are relative to the start of the TIFF header at the beginning of the EXIF segment
 	            // more information here: http://www.ozhiker.com/electronics/pjmt/jpeg_info/panasonic_mn.html
-	            pushDirectory(PanasonicMakernoteDirectory.class);
+	            pushPanasonicMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 12, tiffHeaderOffset);
 	        } else if ("AOC\u0000".equals(firstFourChars)) {
 	            // NON-Standard TIFF IFD Data using Casio Type 2 Tags
@@ -8783,7 +9082,7 @@ public class MetadataExtractor {
 	            // Offsets are relative to the start of the current IFD tag, not the TIFF header
 	            // Observed for:
 	            // - Pentax ist D
-	            pushDirectory(CasioType2MakernoteDirectory.class);
+	            pushCasioType2MakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 6, makernoteOffset);
 	        } else if (cameraMake != null && (cameraMake.toUpperCase().startsWith("PENTAX") || cameraMake.toUpperCase().startsWith("ASAHI"))) {
 	            // NON-Standard TIFF IFD Data using Pentax Tags
@@ -8792,7 +9091,7 @@ public class MetadataExtractor {
 	            // Observed for:
 	            // - PENTAX Optio 330
 	            // - PENTAX Optio 430
-	            pushDirectory(PentaxMakernoteDirectory.class);
+	            pushPentaxMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, makernoteOffset);
 //	        } else if ("KC".equals(firstTwoChars) || "MINOL".equals(firstFiveChars) || "MLY".equals(firstThreeChars) || "+M+M+M+M".equals(firstEightChars)) {
 //	            // This Konica data is not understood.  Header identified in accordance with information at this site:
@@ -8800,7 +9099,7 @@ public class MetadataExtractor {
 //	            // TODO add support for minolta/konica cameras
 //	            exifDirectory.addError("Unsupported Konica/Minolta data ignored.");
 	        } else if ("SANYO\0\1\0".equals(firstEightChars)) {
-	            pushDirectory(SanyoMakernoteDirectory.class);
+	            pushSanyoMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, makernoteOffset);
 	        } else if (cameraMake != null && cameraMake.toLowerCase().startsWith("ricoh")) {
 	            if (firstTwoChars.equals("Rv") || firstThreeChars.equals("Rev")) {
@@ -8813,14 +9112,14 @@ public class MetadataExtractor {
 	            } else if (firstFiveChars.equalsIgnoreCase("Ricoh")) {
 	                // Always in Motorola byte order
 	                reader.setMotorolaByteOrder(true);
-	                pushDirectory(RicohMakernoteDirectory.class);
+	                pushRicohMakernoteDirectory();
 	                tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 8, makernoteOffset);
 	            }
 	        } else if (firstTenChars.equals("Apple iOS\0")) {
 	            // Always in Motorola byte order
 	            boolean orderBefore = reader.isMotorolaByteOrder();
 	            reader.setMotorolaByteOrder(true);
-	            pushDirectory(AppleMakernoteDirectory.class);
+	            pushAppleMakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 14, makernoteOffset);
 	            reader.setMotorolaByteOrder(orderBefore);
 	        } else if (reader.getUInt16(makernoteOffset) == ReconyxHyperFireMakernoteDirectory.MAKERNOTE_VERSION) {
@@ -8837,7 +9136,7 @@ public class MetadataExtractor {
 	            processReconyxHyperFire2Makernote(directory, makernoteOffset, reader);
 	        } else if ("SAMSUNG".equalsIgnoreCase(cameraMake)) {
 	            // Only handles Type2 notes correctly. Others aren't implemented, and it's complex to determine which ones to use
-	            pushDirectory(SamsungType2MakernoteDirectory.class);
+	            pushSamsungType2MakernoteDirectory();
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset, tiffHeaderOffset);
 	        } else {
 	            // The makernote is not comprehended by this library.
