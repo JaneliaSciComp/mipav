@@ -417,7 +417,7 @@ public class StrokeSegmentationDicomReceiverPWI {
         }
         
         if (!isPrevProcessed) {
-            // if we haven't received data from this subject/study before, created a new monitor thread.  otherwise get it so that we can add file counts
+            // if we haven't received data from this subject/study before, create a new monitor thread.  otherwise get it so that we can add file counts
             String baseOutputDirStr = baseOutputDir.getAbsolutePath();
             CoreToolProcessingThread curDatasetThread;
             if (!coreToolThreadTable.containsKey(baseOutputDirStr)) {
@@ -1717,11 +1717,11 @@ public class StrokeSegmentationDicomReceiverPWI {
         }
         
         public boolean foundDWI() {
-            return foundADC;
+            return foundDWI;
         }
         
         public boolean foundPWI() {
-            return foundADC;
+            return foundPWI;
         }
         
         public boolean foundRegSeries() {
