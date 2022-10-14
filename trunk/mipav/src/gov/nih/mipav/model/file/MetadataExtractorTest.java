@@ -47,6 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1614,6 +1615,482 @@ public class MetadataExtractorTest extends MetadataExtractor {
 
 	        assertEquals("2.00", descriptor.getMakernoteThumbVersionDescription());
 	        System.out.println("Finished running testSonyType6Makernote()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JpegReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegReaderTest jr = me.new JpegReaderTest();
+		// try {
+	    //    jr.setUp();
+	    // }
+		// catch(Exception) {
+		//    e.printStackTrace();
+		//}
+	    @NotNull
+	    public JpegDirectory processBytes(String filePath) throws IOException
+	    {
+	        Metadata metadata = new Metadata();
+	        new JpegReader().extract(FileUtil.readBytes(filePath), metadata, JpegSegmentType.SOF0);
+
+	        JpegDirectory directory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
+	        assertNotNull(directory);
+	        return directory;
+	    }
+
+	    private JpegDirectory _directory;
+
+	    //@Before
+	    public void setUp() throws JpegProcessingException, IOException
+	    {
+	        _directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/simple.jpg.sof0");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testExtract_Width();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_Width
+	    public void testExtract_Width() throws Exception
+	    {
+	        assertEquals(800, _directory.getInt(JpegDirectory.TAG_IMAGE_WIDTH));
+	        System.out.println("Finished running testExtract_Width");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testExtract_Height();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_Height
+	    public void testExtract_Height() throws Exception
+	    {
+	        assertEquals(600, _directory.getInt(JpegDirectory.TAG_IMAGE_HEIGHT));
+	        System.out.println("Finished running testExtract_Height");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testExtract_DataPrecision();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_DataPrecision()
+	    public void testExtract_DataPrecision() throws Exception
+	    {
+	        assertEquals(8, _directory.getInt(JpegDirectory.TAG_DATA_PRECISION));
+	        System.out.println("Finished running testExtract_DataPrecision()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testExtract_NumberOfComponents();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_NumberOfComponents()
+	    public void testExtract_NumberOfComponents() throws Exception
+	    {
+	        assertEquals(3, _directory.getInt(JpegDirectory.TAG_NUMBER_OF_COMPONENTS));
+	        System.out.println("Finished running testExtract_NumberOfComponents()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testComponentData1();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testComponentData1()
+	    public void testComponentData1() throws Exception
+	    {
+	        JpegComponent component = (JpegComponent)_directory.getObject(JpegDirectory.TAG_COMPONENT_DATA_1);
+
+	        assertNotNull(component);
+	        assertEquals("Y", component.getComponentName());
+	        assertEquals(1, component.getComponentId());
+	        assertEquals(0, component.getQuantizationTableNumber());
+	        assertEquals(2, component.getHorizontalSamplingFactor());
+	        assertEquals(2, component.getVerticalSamplingFactor());
+	        System.out.println("Finished running testComponentData1()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testComponentData2();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testComponentData2()
+	    public void testComponentData2() throws Exception
+	    {
+	        JpegComponent component = (JpegComponent)_directory.getObject(JpegDirectory.TAG_COMPONENT_DATA_2);
+
+	        assertNotNull(component);
+	        assertEquals("Cb", component.getComponentName());
+	        assertEquals(2, component.getComponentId());
+	        assertEquals(1, component.getQuantizationTableNumber());
+	        assertEquals(1, component.getHorizontalSamplingFactor());
+	        assertEquals(1, component.getVerticalSamplingFactor());
+	        assertEquals("Cb component: Quantization table 1, Sampling factors 1 horiz/1 vert", _directory.getDescription(JpegDirectory.TAG_COMPONENT_DATA_2));
+	        System.out.println("Finished running testComponentData2()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jr.testComponentData3();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testComponentData3()
+	    public void testComponentData3() throws Exception
+	    {
+	        JpegComponent component = (JpegComponent)_directory.getObject(JpegDirectory.TAG_COMPONENT_DATA_3);
+
+	        assertNotNull(component);
+	        assertEquals("Cr", component.getComponentName());
+	        assertEquals(3, component.getComponentId());
+	        assertEquals(1, component.getQuantizationTableNumber());
+	        assertEquals(1, component.getHorizontalSamplingFactor());
+	        assertEquals(1, component.getVerticalSamplingFactor());
+	        assertEquals("Cr component: Quantization table 1, Sampling factors 1 horiz/1 vert", _directory.getDescription(JpegDirectory.TAG_COMPONENT_DATA_3));
+	        System.out.println("Finished running testComponentData3()");
+	    }
+
+	/*
+	    // this test is part of an incomplete investigation into extracting audio from JPG files
+	    public void testJpegWithAudio() throws Exception
+	    {
+	        // use a known testing image
+	        File jpegFile = new File("Tests/com/drew/metadata/jpeg/audioPresent.jpg");
+
+	        JpegSegmentReader jpegSegmentReader = new JpegSegmentReader(jpegFile);
+	        byte[] segment1Bytes = jpegSegmentReader.readSegment(JpegSegmentReader.APP2);
+	        System.out.println(segment1Bytes.length);
+
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP1));
+	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP2).length);
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP3));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP4));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP5));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP6));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP7));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP8));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APP9));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APPA));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APPB));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APPC));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APPD));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APPE));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.APPF));
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.COM));
+	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.DHT).length);
+	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.DQT).length);
+	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.SOF0).length);
+//	        System.out.println(jpegSegmentReader.readSegment(JpegSegmentReader.SOI));
+
+	        // write the segment's data out to a wav file...
+	        File audioFile = new File("Tests/com/drew/metadata/jpeg/audio.wav");
+	        FileOutputStream os = null;
+	        try
+	        {
+	            os = new FileOutputStream(audioFile);
+	            os.write(segment1Bytes);
+	        }
+	        finally
+	        {
+	            if (os!=null)
+	                os.close();
+	        }
+	    }
+	*/
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JpegComponentTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegComponentTest jc = me.new JpegComponentTest();
+	    //@Test
+		//try {
+	    //	jc.testGetComponentCharacter();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testGetComponentCharacter()
+	    public void testGetComponentCharacter() throws Exception
+	    {
+	        JpegComponent component;
+
+	        component = new JpegComponent(1,2,3);
+	        assertEquals("Y", component.getComponentName());
+
+	        component = new JpegComponent(2,2,3);
+	        assertEquals("Cb", component.getComponentName());
+
+	        component = new JpegComponent(3,2,3);
+	        assertEquals("Cr", component.getComponentName());
+
+	        component = new JpegComponent(4,2,3);
+	        assertEquals("I", component.getComponentName());
+
+	        component = new JpegComponent(5,2,3);
+	        assertEquals("Q", component.getComponentName());
+	        System.out.println("Finished running testGetComponentCharacter()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JpegDescriptorTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegDescriptorTest jd = me.new JpegDescriptorTest();
+		// try {
+	    //    jd.setUp();
+	    // }
+		// catch(Exception) {
+		//    e.printStackTrace();
+		//}
+		public JpegDescriptorTest() {
+			
+		}
+	    private JpegDirectory _directory;
+	    private JpegDescriptor _descriptor;
+
+	    //@Before
+	    public void setUp() throws Exception
+	    {
+	        _directory = new JpegDirectory();
+	        _descriptor = new JpegDescriptor(_directory);
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetComponentDataDescription_InvalidComponentNumber();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetComponentDataDescription_InvalidComponentNumber()
+	    public void testGetComponentDataDescription_InvalidComponentNumber() throws Exception
+	    {
+	        assertNull(_descriptor.getComponentDataDescription(1));
+	        System.out.println("Finished running testGetComponentDataDescription_InvalidComponentNumber()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetImageWidthDescription();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetImageWidthDescription()
+	    public void testGetImageWidthDescription() throws Exception
+	    {
+	        _directory.setInt(JpegDirectory.TAG_IMAGE_WIDTH, 123);
+	        assertEquals("123 pixels", _descriptor.getImageWidthDescription());
+	        assertEquals("123 pixels", _directory.getDescription(JpegDirectory.TAG_IMAGE_WIDTH));
+	        System.out.println("Finished running testGetImageWidthDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetImageHeightDescription();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetImageHeightDescription()
+	    public void testGetImageHeightDescription() throws Exception
+	    {
+	        _directory.setInt(JpegDirectory.TAG_IMAGE_HEIGHT, 123);
+	        assertEquals("123 pixels", _descriptor.getImageHeightDescription());
+	        assertEquals("123 pixels", _directory.getDescription(JpegDirectory.TAG_IMAGE_HEIGHT));
+	        System.out.println("Finished running testGetImageHeightDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetDataPrecisionDescription();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetDataPrecisionDescription()
+	    public void testGetDataPrecisionDescription() throws Exception
+	    {
+	        _directory.setInt(JpegDirectory.TAG_DATA_PRECISION, 8);
+	        assertEquals("8 bits", _descriptor.getDataPrecisionDescription());
+	        assertEquals("8 bits", _directory.getDescription(JpegDirectory.TAG_DATA_PRECISION));
+	        System.out.println("Finished running testGetDataPrecisionDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetComponentDescription();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetComponentDescription()
+	    public void testGetComponentDescription() throws MetadataException
+	    {
+	        JpegComponent component1 = new JpegComponent(1, 0x22, 0);
+	        _directory.setObject(JpegDirectory.TAG_COMPONENT_DATA_1, component1);
+	        assertEquals("Y component: Quantization table 0, Sampling factors 2 horiz/2 vert", _directory.getDescription(JpegDirectory.TAG_COMPONENT_DATA_1));
+	        assertEquals("Y component: Quantization table 0, Sampling factors 2 horiz/2 vert", _descriptor.getComponentDataDescription(0));
+	        System.out.println("Finished running testGetComponentDescription()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JpegDirectoryTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegDirectoryTest jd = me.new JpegDirectoryTest();
+		// try {
+	    //    jd.setUp();
+	    // }
+		// catch(Exception) {
+		//    e.printStackTrace();
+		//}
+		public JpegDirectoryTest() {
+			
+		}
+	    private JpegDirectory _directory;
+
+	    //@Before
+	    public void setUp()
+	    {
+	        _directory = new JpegDirectory();
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testSetAndGetValue();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testSetAndGetValue()
+	    public void testSetAndGetValue() throws Exception
+	    {
+	        _directory.setInt(123, 8);
+	        assertEquals(8, _directory.getInt(123));
+	        System.out.println("Finished running testSetAndGetValue()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetComponent_NotAdded();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testGetComponent_NotAdded()
+	    public void testGetComponent_NotAdded()
+	    {
+	        assertNull(_directory.getComponent(1));
+	        System.out.println("Finished running testGetComponent_NotAdded()");
+	    }
+
+	    // NOTE tests for individual tag values exist in JpegReaderTest.java
+
+	    //@Test
+	    //try {
+	    //	jd.testGetImageWidth();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testGetImageWidth()
+	    public void testGetImageWidth() throws Exception
+	    {
+	        _directory.setInt(JpegDirectory.TAG_IMAGE_WIDTH, 123);
+	        assertEquals(123, _directory.getImageWidth());
+	        System.out.println("Finished running testGetImageWidth()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetImageHeight();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testGetImageHeight()
+	    public void testGetImageHeight() throws Exception
+	    {
+	        _directory.setInt(JpegDirectory.TAG_IMAGE_HEIGHT, 123);
+	        assertEquals(123, _directory.getImageHeight());
+	        System.out.println("Finished running testGetImageHeight()");
+	    }
+
+
+	    //@Test
+	    //try {
+	    //	jd.testGetNumberOfComponents();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testGetNumberOfComponents()
+	    public void testGetNumberOfComponents() throws Exception
+	    {
+	        _directory.setInt(JpegDirectory.TAG_NUMBER_OF_COMPONENTS, 3);
+	        assertEquals(3, _directory.getNumberOfComponents());
+	        assertEquals("3", _directory.getDescription(JpegDirectory.TAG_NUMBER_OF_COMPONENTS));
+	        System.out.println("Finished running testGetNumberOfComponents()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jd.testGetComponent();
+	    //}
+	    //catch(Exception) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testGetComponent()
+	    public void testGetComponent() throws Exception
+	    {
+	        JpegComponent component1 = new JpegComponent(1, 2, 3);
+	        JpegComponent component2 = new JpegComponent(1, 2, 3);
+	        JpegComponent component3 = new JpegComponent(1, 2, 3);
+	        JpegComponent component4 = new JpegComponent(1, 2, 3);
+
+	        _directory.setObject(JpegDirectory.TAG_COMPONENT_DATA_1, component1);
+	        _directory.setObject(JpegDirectory.TAG_COMPONENT_DATA_2, component2);
+	        _directory.setObject(JpegDirectory.TAG_COMPONENT_DATA_3, component3);
+	        _directory.setObject(JpegDirectory.TAG_COMPONENT_DATA_4, component4);
+
+	        // component numbers are zero-indexed for this method
+	        assertSame(component1, _directory.getComponent(0));
+	        assertSame(component2, _directory.getComponent(1));
+	        assertSame(component3, _directory.getComponent(2));
+	        assertSame(component4, _directory.getComponent(3));
+	        System.out.println("Finished running testGetComponent()");
 	    }
 	}
 
