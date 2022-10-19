@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import gov.nih.mipav.model.file.MetadataExtractor.HuffmanTablesDirectory.HuffmanTable.HuffmanTableClass;
 import gov.nih.mipav.model.file.MetadataExtractorTest.CanonMakernoteDescriptorTest;
 
 import java.util.Iterator;
@@ -43,6 +44,8 @@ import java.util.TimeZone;
 
 
 import java.math.RoundingMode;
+
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -172,7 +175,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testExtractWithNullDataThrows();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExtractWithNullDataThrows()
@@ -191,7 +194,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testLoadFujifilmJpeg();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testLoadFujifilmJpeg()
@@ -211,7 +214,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testReadJpegSegmentWithNoExifData();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testReadJpegSegmentWithNoExifData()
@@ -231,7 +234,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testCrashRegressionTest();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running CrashRegressionTest()
@@ -250,7 +253,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testDateTime();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testDateTime()
@@ -266,7 +269,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testThumbnailXResolution();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testThumbnailXResolution()
@@ -285,7 +288,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testThumbnailYResolution();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testThumbnailYResolution()
@@ -304,7 +307,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testThumbnailOffset();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testThumbnailOffset()
@@ -320,7 +323,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testThumbnailLength();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testThumbnailLength()
@@ -336,7 +339,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testCompression();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testCompression()
@@ -353,7 +356,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testStackOverflowOnRevisitationOfSameDirectory();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testStackOverflowOnRevisitationOfSameDirectory()
@@ -375,7 +378,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	er.testDifferenceImageAndThumbnailOrientations();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testDifferenceImageAndThumbnailOrientations()
@@ -451,7 +454,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//try {
 	    //	ed.testGetDirectoryName();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 		//Finished running testGetDirectoryName()
@@ -478,7 +481,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ed.testDateTime();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testDateTime()
@@ -524,7 +527,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ed.testResolution();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testResolution()
@@ -547,7 +550,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ed.testGeolocation();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGeoLocation()
@@ -568,7 +571,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ed.testGpsDate();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGpsDate()
@@ -604,7 +607,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//try {
 	    //	ed.testXResolutionDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 		//Finished running testXResolutionDescription()
@@ -623,7 +626,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ed.testYResolutionDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testYResolutionDescription()
@@ -642,7 +645,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ed.testWindowsXpFields();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testWindowsXpFields()
@@ -683,7 +686,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//try {
 	    //	ei.testGetInteropVersionDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 		//Finished running testGetInteropVersionDescription()
@@ -701,7 +704,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testGetInteropIndexDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetIndexVersionDescription()
@@ -729,7 +732,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//try {
 	    //	ei.testUserCommentDescription_EmptyEncoding();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 		//Finished running testUserCommentDescription_EmptyEncoding()
@@ -747,7 +750,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testUserCommentDescription_AsciiHeaderAsciiEncoding();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testUserCommentDescription_AsciiHeaderAsciiEncoding()
@@ -765,7 +768,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testUserCommentDescription_BlankAscii();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testUserCommentDescription_BlankAscii()
@@ -783,7 +786,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testUserCommentDescription_ZeroLengthAscii1();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testUserCommentDescription_ZeroLengthAscii1()
@@ -802,7 +805,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testUserCommentDescription_ZeroLengthAscii2();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testUserCommentDescription_ZeroLengthAscii2()
@@ -821,7 +824,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testUnicodeComment_ActualBytes();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testUnicodeComment_ActualBytes()
@@ -839,7 +842,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	ei.testUnicodeComment_Ascii();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testUnicodeComment_Ascii()
@@ -867,7 +870,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//try {
 	    //	ed.testGetYCbCrSubsamplingDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 		//Finished running testGetYCbCrSubsamplingDescription()
@@ -898,7 +901,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    nm.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 	    private NikonType1MakernoteDirectory _nikonDirectory;
@@ -954,7 +957,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testNikonMakernote_MatchesKnownValues();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testNikonMakernote_MatchesKnownValues()
@@ -1023,7 +1026,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testExifDirectory_MatchesKnownValues();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExifDirectory_MatchesKnownValues()
@@ -1078,7 +1081,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    nm.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 	    private NikonType2MakernoteDirectory _nikonDirectory;
@@ -1145,7 +1148,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testNikonMakernote_MatchesKnownValues();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testNikonMakernote_MatchesKnownValues()
@@ -1178,7 +1181,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testGetLensDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetLensDescription()
@@ -1193,7 +1196,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testGetHueAdjustmentDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetHueAdjustmentDescription()
@@ -1208,7 +1211,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testGetColorModeDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetColorModeDescription()
@@ -1223,7 +1226,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testGetAutoFlashCompensationDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetAutoFlashCompensationDescription()
@@ -1260,7 +1263,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    nm.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 		public NikonType2MakernoteTest2() {
@@ -1314,7 +1317,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testNikonMakernote_MatchesKnownValues();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testNikonMakernote_MatchesKnownValues()
@@ -1408,7 +1411,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testExifDirectory_MatchesKnownValues();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExifDirectory_MatchesKnownValues()
@@ -1460,7 +1463,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	nm.testExifThumbnailDirectory_MatchesKnownValues();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExifThumbnailDirectory_MatchesKnownValues()
@@ -1486,7 +1489,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    pm.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 		//Finished running testGetDetectedFaces()
@@ -1506,7 +1509,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	pm.testGetDetectedFaces();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetDetectedFaces()
@@ -1523,7 +1526,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	pm.testGetRecognizedFaces();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetRecognizedFaces()
@@ -1550,7 +1553,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	sm.testSonyType1Makernote();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testSonyType1Makernote()
@@ -1599,7 +1602,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	sm.testSonyType6Makernote();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testSonyType6Makernote()
@@ -1628,7 +1631,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    jr.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 	    @NotNull
@@ -1654,7 +1657,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testExtract_Width();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExtract_Width
@@ -1668,7 +1671,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testExtract_Height();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExtract_Height
@@ -1682,7 +1685,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testExtract_DataPrecision();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExtract_DataPrecision()
@@ -1696,7 +1699,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testExtract_NumberOfComponents();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testExtract_NumberOfComponents()
@@ -1710,7 +1713,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testComponentData1();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testComponentData1()
@@ -1731,7 +1734,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testComponentData2();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testComponentData2()
@@ -1753,7 +1756,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jr.testComponentData3();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testComponentData3()
@@ -1831,7 +1834,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//try {
 	    //	jc.testGetComponentCharacter();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 		//Finished running testGetComponentCharacter()
@@ -1867,7 +1870,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    jd.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 		public JpegDescriptorTest() {
@@ -1887,7 +1890,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetComponentDataDescription_InvalidComponentNumber();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetComponentDataDescription_InvalidComponentNumber()
@@ -1901,7 +1904,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetImageWidthDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetImageWidthDescription()
@@ -1917,7 +1920,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetImageHeightDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetImageHeightDescription()
@@ -1933,7 +1936,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetDataPrecisionDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetDataPrecisionDescription()
@@ -1949,7 +1952,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetComponentDescription();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testGetComponentDescription()
@@ -1973,7 +1976,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		// try {
 	    //    jd.setUp();
 	    // }
-		// catch(Exception) {
+		// catch(Exception e) {
 		//    e.printStackTrace();
 		//}
 		public JpegDirectoryTest() {
@@ -1991,7 +1994,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testSetAndGetValue();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
 	    //Finished running testSetAndGetValue()
@@ -2006,7 +2009,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetComponent_NotAdded();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //} 
 	    //Finished running testGetComponent_NotAdded()
@@ -2022,7 +2025,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetImageWidth();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //} 
 	    //Finished running testGetImageWidth()
@@ -2037,7 +2040,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetImageHeight();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //} 
 	    //Finished running testGetImageHeight()
@@ -2053,7 +2056,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetNumberOfComponents();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //} 
 	    //Finished running testGetNumberOfComponents()
@@ -2069,7 +2072,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    //try {
 	    //	jd.testGetComponent();
 	    //}
-	    //catch(Exception) {
+	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //} 
 	    //Finished running testGetComponent()
@@ -2093,5 +2096,259 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        System.out.println("Finished running testGetComponent()");
 	    }
 	}
+	
+	/**
+	 * @author Nadahar
+	 */
+	public class HuffmanTablesDirectoryTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //HuffmanTablesDirectoryTest htdt = me.new HuffmanTablesDirectoryTest();
+		// try {
+	    //    htdt.setUp();
+	    // }
+		// catch(Exception e) {
+		//    e.printStackTrace();
+		//}
+		
+		public HuffmanTablesDirectoryTest() {
+			
+		}
+	    private HuffmanTablesDirectory _directory;
+
+	    //@Before
+	    public void setUp()
+	    {
+	        _directory = new HuffmanTablesDirectory();
+	    }
+
+	    //@Test
+	    //try {
+	    //	htdt.testSetAndGetValue();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testSetAndGetValue()
+	    public void testSetAndGetValue() throws Exception
+	    {
+	        _directory.setInt(32, 8);
+	        assertEquals(8, _directory.getInt(32));
+	        System.out.println("Finished running testSetAndGetValue()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	htdt.testGetComponent_NotAdded();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //} 
+        //Finished running testComponent_NotAdded()
+	    public void testGetComponent_NotAdded()
+	    {
+	        try {
+	            _directory.getTable(1);
+	            fail();
+	        } catch (IndexOutOfBoundsException e) {
+	            // Expected exception
+	        }
+	        System.out.println("Finished running testComponent_NotAdded()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	htdt.testGetNumberOfTables();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testGetNumberOfTables()
+	    public void testGetNumberOfTables() throws Exception
+	    {
+	        _directory.setInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES, 9);
+	        assertEquals(9,_directory.getNumberOfTables());
+	        assertEquals("9 Huffman tables", _directory.getDescription(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES));
+	        System.out.println("Finished running testGetNumberOfTables()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	htdt.testIsTypical();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //} 
+	    //Finished running testIsTypical()
+	    public void testIsTypical() throws Exception
+	    {
+	        _directory.tables.add(_directory.new HuffmanTable(
+	            HuffmanTableClass.AC,
+	            0,
+	            _directory.TYPICAL_CHROMINANCE_AC_LENGTHS,
+	            _directory.TYPICAL_CHROMINANCE_AC_VALUES
+	        ));
+	        _directory.tables.add(_directory.new HuffmanTable(
+	            HuffmanTableClass.DC,
+	            0,
+	            _directory.TYPICAL_LUMINANCE_DC_LENGTHS,
+	            _directory.TYPICAL_LUMINANCE_DC_VALUES
+	        ));
+
+	        assertTrue(_directory.getTable(0).isTypical());
+	        assertFalse(_directory.getTable(0).isOptimized());
+	        assertTrue(_directory.getTable(1).isTypical());
+	        assertFalse(_directory.getTable(1).isOptimized());
+
+	        assertTrue(_directory.isTypical());
+	        assertFalse(_directory.isOptimized());
+	        System.out.println("Finished running testIsTypical()");
+	    }
+	}
+	
+	/**
+	 * @author Nadahar
+	 */
+	public class HuffmanTablesDescriptorTest
+	{
+	    private HuffmanTablesDirectory _directory;
+	    private HuffmanTablesDescriptor _descriptor;
+	    //MetadataExtractorTest me = new MetadataExtractorTest();
+	    //HuffmanTablesDescriptorTest htdt = me.new HuffmanTablesDescriptorTest();
+		// try {
+	    //    htdt.setUp();
+	    // }
+		// catch(Exception e) {
+		//    e.printStackTrace();
+		//}
+		
+		public HuffmanTablesDescriptorTest() {
+			
+		}
+
+	    //@Before
+	    public void setUp() throws Exception
+	    {
+	        _directory = new HuffmanTablesDirectory();
+	        _descriptor = new HuffmanTablesDescriptor(_directory);
+	    }
+
+	    //@Test
+	    //try {
+	    //	htdt.testGetNumberOfTablesDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetNumberOfTablesDescription()
+	    public void testGetNumberOfTablesDescription() throws Exception
+	    {
+	        assertNull(_descriptor.getNumberOfTablesDescription());
+	        _directory.setInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES, 0);
+	        assertEquals("0 Huffman tables", _descriptor.getNumberOfTablesDescription());
+	        assertEquals("0 Huffman tables", _descriptor.getDescription(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES));
+	        _directory.setInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES, 1);
+	        assertEquals("1 Huffman table", _descriptor.getNumberOfTablesDescription());
+	        assertEquals("1 Huffman table", _descriptor.getDescription(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES));
+	        _directory.setInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES, 3);
+	        assertEquals("3 Huffman tables", _descriptor.getNumberOfTablesDescription());
+	        assertEquals("3 Huffman tables", _descriptor.getDescription(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES));
+	        System.out.println("Finished running testGetNumberOfTablesDescription()");
+	    }
+	}
+	
+	/**
+	 * @author Nadahar
+	 */
+	public class JpegDhtReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegDhtReaderTest jdrt = me.new JpegDhtReaderTest();
+		// try {
+	    //    jdrt.setUp();
+	    // }
+		// catch(Exception e) {
+		//    e.printStackTrace();
+		//}
+		
+		public JpegDhtReaderTest() {
+			
+		}
+	    @NotNull
+	    public HuffmanTablesDirectory processBytes(String filePath) throws Exception
+	    {
+	        Metadata metadata = new Metadata();
+	        JpegSegmentData segmentData = JpegSegmentReader.readSegments(
+	            new File(filePath),
+	            Collections.singletonList(JpegSegmentType.DHT));
+
+	        Iterable<byte[]> segments = segmentData.getSegments(JpegSegmentType.DHT);
+	        for (byte[] segment : segments) {
+	            new JpegDhtReader().extract(new SequentialByteArrayReader(segment), metadata);
+	        }
+
+
+	        HuffmanTablesDirectory directory = metadata.getFirstDirectoryOfType(HuffmanTablesDirectory.class);
+	        assertNotNull(directory);
+	        assertEquals(1, metadata.getDirectoriesOfType(HuffmanTablesDirectory.class).size());
+	        return directory;
+	    }
+
+	    private HuffmanTablesDirectory _directory;
+
+	    //@Before
+	    public void setUp() throws Exception
+	    {
+	        _directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jdrt.testExtract_NumberOfTables();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_NumberOfTables()
+	    public void testExtract_NumberOfTables() throws Exception
+	    {
+	        assertEquals(4, _directory.getInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES));
+	        assertEquals(4, _directory.getNumberOfTables());
+	        System.out.println("Finished running testExtract_NumberOfTables()");
+	    }
+
+	    //@Test
+	  //try {
+	    //	jdrt.testExtract_Tables();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_Tables()
+	    public void testExtract_Tables() throws Exception
+	    {
+	        byte[] l = {0, 1, 4, 1, 2, 3, 3, 8, 5, 9, 6, 4, 6, 2, 3, 0};
+	        byte[] v = {0, 1, 3, 2, 4, 5};
+
+	        assertArrayEquals(l, _directory.getTable(1).getLengthBytes());
+	        assertArrayEquals(v, _directory.getTable(2).getValueBytes());
+	        assertEquals(HuffmanTableClass.DC, _directory.getTable(0).getTableClass());
+	        assertEquals(HuffmanTableClass.AC, _directory.getTable(1).getTableClass());
+	        assertEquals(HuffmanTableClass.DC, _directory.getTable(2).getTableClass());
+	        assertEquals(HuffmanTableClass.AC, _directory.getTable(3).getTableClass());
+	        assertEquals(0, _directory.getTable(0).getTableDestinationId());
+	        assertEquals(0, _directory.getTable(1).getTableDestinationId());
+	        assertEquals(1, _directory.getTable(2).getTableDestinationId());
+	        assertEquals(1, _directory.getTable(3).getTableDestinationId());
+	        assertEquals(25, _directory.getTable(0).getTableLength());
+	        assertEquals(74, _directory.getTable(1).getTableLength());
+	        assertEquals(23, _directory.getTable(2).getTableLength());
+	        assertEquals(38, _directory.getTable(3).getTableLength());
+	        System.out.println("Finished running testExtract_Tables()");
+	    }
+	}
+
+
+
 
 }
