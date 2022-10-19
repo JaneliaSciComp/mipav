@@ -28749,6 +28749,465 @@ public class MetadataExtractor {
 	        return readBytes(new File(filePath));
 	    }
 	}
+	
+	/**
+	 * Provides a human-readable string version of the tag stored in a {@link HuffmanTablesDirectory}.
+	 *
+	 * <ul>
+	 *   <li>https://en.wikipedia.org/wiki/Huffman_coding</li>
+	 *   <li>http://stackoverflow.com/a/4954117</li>
+	 * </ul>
+	 *
+	 * @author Nadahar
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class HuffmanTablesDescriptor extends TagDescriptor<HuffmanTablesDirectory>
+	{
+	    public HuffmanTablesDescriptor(@NotNull HuffmanTablesDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES:
+	                return getNumberOfTablesDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getNumberOfTablesDescription()
+	    {
+	        Integer value = _directory.getInteger(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES);
+	        if (value == null)
+	            return null;
+	        return value + (value == 1 ? " Huffman table" : " Huffman tables");
+	    }
+	}
+
+	
+	/**
+	 * Directory of tables for the DHT (Define Huffman Table(s)) segment.
+	 *
+	 * @author Nadahar
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class HuffmanTablesDirectory extends Directory
+	{
+	    public static final int TAG_NUMBER_OF_TABLES = 1;
+
+	    final byte[] TYPICAL_LUMINANCE_DC_LENGTHS = {
+	        (byte) 0x00, (byte) 0x01, (byte) 0x05, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01,
+	        (byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+	    };
+
+	    final byte[] TYPICAL_LUMINANCE_DC_VALUES = {
+	        (byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07,
+	        (byte) 0x08, (byte) 0x09, (byte) 0x0A, (byte) 0x0B
+	    };
+
+	    final byte[] TYPICAL_CHROMINANCE_DC_LENGTHS = {
+	        (byte) 0x00, (byte) 0x03, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x01,
+	        (byte) 0x01, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+	    };
+
+	    final byte[] TYPICAL_CHROMINANCE_DC_VALUES = {
+	        (byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07,
+	        (byte) 0x08, (byte) 0x09, (byte) 0x0A, (byte) 0x0B
+	    };
+
+	    final byte[] TYPICAL_LUMINANCE_AC_LENGTHS = {
+	        (byte) 0x00, (byte) 0x02, (byte) 0x01, (byte) 0x03, (byte) 0x03, (byte) 0x02, (byte) 0x04, (byte) 0x03,
+	        (byte) 0x05, (byte) 0x05, (byte) 0x04, (byte) 0x04, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x7D
+	    };
+
+	    final byte[] TYPICAL_LUMINANCE_AC_VALUES = {
+	        (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x00, (byte) 0x04, (byte) 0x11, (byte) 0x05, (byte) 0x12,
+	        (byte) 0x21, (byte) 0x31, (byte) 0x41, (byte) 0x06, (byte) 0x13, (byte) 0x51, (byte) 0x61, (byte) 0x07,
+	        (byte) 0x22, (byte) 0x71, (byte) 0x14, (byte) 0x32, (byte) 0x81, (byte) 0x91, (byte) 0xA1, (byte) 0x08,
+	        (byte) 0x23, (byte) 0x42, (byte) 0xB1, (byte) 0xC1, (byte) 0x15, (byte) 0x52, (byte) 0xD1, (byte) 0xF0,
+	        (byte) 0x24, (byte) 0x33, (byte) 0x62, (byte) 0x72, (byte) 0x82, (byte) 0x09, (byte) 0x0A, (byte) 0x16,
+	        (byte) 0x17, (byte) 0x18, (byte) 0x19, (byte) 0x1A, (byte) 0x25, (byte) 0x26, (byte) 0x27, (byte) 0x28,
+	        (byte) 0x29, (byte) 0x2A, (byte) 0x34, (byte) 0x35, (byte) 0x36, (byte) 0x37, (byte) 0x38, (byte) 0x39,
+	        (byte) 0x3A, (byte) 0x43, (byte) 0x44, (byte) 0x45, (byte) 0x46, (byte) 0x47, (byte) 0x48, (byte) 0x49,
+	        (byte) 0x4A, (byte) 0x53, (byte) 0x54, (byte) 0x55, (byte) 0x56, (byte) 0x57, (byte) 0x58, (byte) 0x59,
+	        (byte) 0x5A, (byte) 0x63, (byte) 0x64, (byte) 0x65, (byte) 0x66, (byte) 0x67, (byte) 0x68, (byte) 0x69,
+	        (byte) 0x6A, (byte) 0x73, (byte) 0x74, (byte) 0x75, (byte) 0x76, (byte) 0x77, (byte) 0x78, (byte) 0x79,
+	        (byte) 0x7A, (byte) 0x83, (byte) 0x84, (byte) 0x85, (byte) 0x86, (byte) 0x87, (byte) 0x88, (byte) 0x89,
+	        (byte) 0x8A, (byte) 0x92, (byte) 0x93, (byte) 0x94, (byte) 0x95, (byte) 0x96, (byte) 0x97, (byte) 0x98,
+	        (byte) 0x99, (byte) 0x9A, (byte) 0xA2, (byte) 0xA3, (byte) 0xA4, (byte) 0xA5, (byte) 0xA6, (byte) 0xA7,
+	        (byte) 0xA8, (byte) 0xA9, (byte) 0xAA, (byte) 0xB2, (byte) 0xB3, (byte) 0xB4, (byte) 0xB5, (byte) 0xB6,
+	        (byte) 0xB7, (byte) 0xB8, (byte) 0xB9, (byte) 0xBA, (byte) 0xC2, (byte) 0xC3, (byte) 0xC4, (byte) 0xC5,
+	        (byte) 0xC6, (byte) 0xC7, (byte) 0xC8, (byte) 0xC9, (byte) 0xCA, (byte) 0xD2, (byte) 0xD3, (byte) 0xD4,
+	        (byte) 0xD5, (byte) 0xD6, (byte) 0xD7, (byte) 0xD8, (byte) 0xD9, (byte) 0xDA, (byte) 0xE1, (byte) 0xE2,
+	        (byte) 0xE3, (byte) 0xE4, (byte) 0xE5, (byte) 0xE6, (byte) 0xE7, (byte) 0xE8, (byte) 0xE9, (byte) 0xEA,
+	        (byte) 0xF1, (byte) 0xF2, (byte) 0xF3, (byte) 0xF4, (byte) 0xF5, (byte) 0xF6, (byte) 0xF7, (byte) 0xF8,
+	        (byte) 0xF9, (byte) 0xFA
+	    };
+
+	    final byte[] TYPICAL_CHROMINANCE_AC_LENGTHS = {
+	        (byte) 0x00, (byte) 0x02, (byte) 0x01, (byte) 0x02, (byte) 0x04, (byte) 0x04, (byte) 0x03, (byte) 0x04,
+	        (byte) 0x07, (byte) 0x05, (byte) 0x04, (byte) 0x04, (byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x77
+	    };
+
+	    final byte[] TYPICAL_CHROMINANCE_AC_VALUES = {
+	        (byte) 0x00, (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x11, (byte) 0x04, (byte) 0x05, (byte) 0x21,
+	        (byte) 0x31, (byte) 0x06, (byte) 0x12, (byte) 0x41, (byte) 0x51, (byte) 0x07, (byte) 0x61, (byte) 0x71,
+	        (byte) 0x13, (byte) 0x22, (byte) 0x32, (byte) 0x81, (byte) 0x08, (byte) 0x14, (byte) 0x42, (byte) 0x91,
+	        (byte) 0xA1, (byte) 0xB1, (byte) 0xC1, (byte) 0x09, (byte) 0x23, (byte) 0x33, (byte) 0x52, (byte) 0xF0,
+	        (byte) 0x15, (byte) 0x62, (byte) 0x72, (byte) 0xD1, (byte) 0x0A, (byte) 0x16, (byte) 0x24, (byte) 0x34,
+	        (byte) 0xE1, (byte) 0x25, (byte) 0xF1, (byte) 0x17, (byte) 0x18, (byte) 0x19, (byte) 0x1A, (byte) 0x26,
+	        (byte) 0x27, (byte) 0x28, (byte) 0x29, (byte) 0x2A, (byte) 0x35, (byte) 0x36, (byte) 0x37, (byte) 0x38,
+	        (byte) 0x39, (byte) 0x3A, (byte) 0x43, (byte) 0x44, (byte) 0x45, (byte) 0x46, (byte) 0x47, (byte) 0x48,
+	        (byte) 0x49, (byte) 0x4A, (byte) 0x53, (byte) 0x54, (byte) 0x55, (byte) 0x56, (byte) 0x57, (byte) 0x58,
+	        (byte) 0x59, (byte) 0x5A, (byte) 0x63, (byte) 0x64, (byte) 0x65, (byte) 0x66, (byte) 0x67, (byte) 0x68,
+	        (byte) 0x69, (byte) 0x6A, (byte) 0x73, (byte) 0x74, (byte) 0x75, (byte) 0x76, (byte) 0x77, (byte) 0x78,
+	        (byte) 0x79, (byte) 0x7A, (byte) 0x82, (byte) 0x83, (byte) 0x84, (byte) 0x85, (byte) 0x86, (byte) 0x87,
+	        (byte) 0x88, (byte) 0x89, (byte) 0x8A, (byte) 0x92, (byte) 0x93, (byte) 0x94, (byte) 0x95, (byte) 0x96,
+	        (byte) 0x97, (byte) 0x98, (byte) 0x99, (byte) 0x9A, (byte) 0xA2, (byte) 0xA3, (byte) 0xA4, (byte) 0xA5,
+	        (byte) 0xA6, (byte) 0xA7, (byte) 0xA8, (byte) 0xA9, (byte) 0xAA, (byte) 0xB2, (byte) 0xB3, (byte) 0xB4,
+	        (byte) 0xB5, (byte) 0xB6, (byte) 0xB7, (byte) 0xB8, (byte) 0xB9, (byte) 0xBA, (byte) 0xC2, (byte) 0xC3,
+	        (byte) 0xC4, (byte) 0xC5, (byte) 0xC6, (byte) 0xC7, (byte) 0xC8, (byte) 0xC9, (byte) 0xCA, (byte) 0xD2,
+	        (byte) 0xD3, (byte) 0xD4, (byte) 0xD5, (byte) 0xD6, (byte) 0xD7, (byte) 0xD8, (byte) 0xD9, (byte) 0xDA,
+	        (byte) 0xE2, (byte) 0xE3, (byte) 0xE4, (byte) 0xE5, (byte) 0xE6, (byte) 0xE7, (byte) 0xE8, (byte) 0xE9,
+	        (byte) 0xEA, (byte) 0xF2, (byte) 0xF3, (byte) 0xF4, (byte) 0xF5, (byte) 0xF6, (byte) 0xF7, (byte) 0xF8,
+	        (byte) 0xF9, (byte) 0xFA
+	    };
+
+	    @NotNull
+	    protected final List<HuffmanTable> tables = new ArrayList<HuffmanTable>(4);
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_NUMBER_OF_TABLES, "Number of Tables");
+	    }
+
+	    public HuffmanTablesDirectory()
+	    {
+	        this.setDescriptor(new HuffmanTablesDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Huffman";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    /**
+	     * @param tableNumber The zero-based index of the table. This number is normally between 0 and 3.
+	     *                    Use {@link #getNumberOfTables} for bounds-checking.
+	     * @return The {@link HuffmanTable} having the specified number.
+	     */
+	    @NotNull
+	    public HuffmanTable getTable(int tableNumber)
+	    {
+	        return tables.get(tableNumber);
+	    }
+
+	    /**
+	     * @return The number of Huffman tables held by this {@link HuffmanTablesDirectory} instance.
+	     */
+	    public int getNumberOfTables() throws MetadataException
+	    {
+	        return getInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES);
+	    }
+
+	    /**
+	     * @return The {@link List} of {@link HuffmanTable}s in this
+	     * {@link Directory}.
+	     */
+	    @NotNull
+	    protected List<HuffmanTable> getTables()
+	    {
+	        return tables;
+	    }
+
+	    /**
+	     * Evaluates whether all the tables in this {@link HuffmanTablesDirectory}
+	     * are "typical" Huffman tables.
+	     * <p>
+	     * "Typical" has a special meaning in this context as the JPEG standard
+	     * (ISO/IEC 10918 or ITU-T T.81) defines 4 Huffman tables that has been
+	     * developed from the average statistics of a large set of images with 8-bit
+	     * precision. Using these instead of calculating the optimal Huffman tables
+	     * for a given image is faster, and is preferred by many hardware encoders
+	     * and some hardware decoders.
+	     * <p>
+	     * Even though the JPEG standard doesn't define these as "standard tables"
+	     * and requires a decoder to be able to read any valid Huffman tables, some
+	     * are in reality limited decoding images using these "typical" tables.
+	     * Standards like DCF (Design rule for Camera File system) and DLNA (Digital
+	     * Living Network Alliance) actually requires any compliant JPEG to use only
+	     * the "typical" Huffman tables.
+	     * <p>
+	     * This is also related to the term "optimized" JPEG. An "optimized" JPEG is
+	     * a JPEG that doesn't use the "typical" Huffman tables.
+	     *
+	     * @return Whether or not all the tables in this
+	     *         {@link HuffmanTablesDirectory} are the predefined "typical"
+	     *         Huffman tables.
+	     */
+	    public boolean isTypical()
+	    {
+	        if (tables.size() == 0) {
+	            return false;
+	        }
+	        for (HuffmanTable table : tables) {
+	            if (!table.isTypical()) {
+	                return false;
+	            }
+	        }
+	        return true;
+	    }
+
+	    /**
+	     * The opposite of {@link #isTypical()}.
+	     *
+	     * @return Whether or not the tables in this {@link HuffmanTablesDirectory}
+	     *         are "optimized" - which means that at least one of them aren't
+	     *         one of the "typical" Huffman tables.
+	     */
+	    public boolean isOptimized()
+	    {
+	        return !isTypical();
+	    }
+
+	    /**
+	     * An instance of this class holds a JPEG Huffman table.
+	     */
+	    public class HuffmanTable
+	    {
+	        private final int _tableLength;
+	        private final int _tableClass;
+	        private final int _tableDestinationId;
+	        private final byte[] _lengthBytes;
+	        private final byte[] _valueBytes;
+
+	        //@SuppressWarnings("ConstantConditions")
+	        public HuffmanTable(
+	            @NotNull int tableClass,
+	            int tableDestinationId,
+	            @NotNull byte[] lengthBytes,
+	            @NotNull byte[] valueBytes)
+	        {
+	            if (lengthBytes == null)
+	                throw new IllegalArgumentException("lengthBytes cannot be null.");
+	            if (valueBytes == null)
+	                throw new IllegalArgumentException("valueBytes cannot be null.");
+
+	            _tableClass = tableClass;
+	            _tableDestinationId = tableDestinationId;
+	            _lengthBytes = lengthBytes;
+	            _valueBytes = valueBytes;
+	            _tableLength = _valueBytes.length + 17;
+	        }
+
+	        /**
+	         * @return The table length in bytes.
+	         */
+	        public int getTableLength()
+	        {
+	            return _tableLength;
+	        }
+
+	        /**
+	         * @return The {@link HuffmanTableClass} of this table.
+	         */
+	        public int getTableClass()
+	        {
+	            return _tableClass;
+	        }
+
+	        /**
+	         * @return the the destination identifier for this table.
+	         */
+	        public int getTableDestinationId()
+	        {
+	            return _tableDestinationId;
+	        }
+
+	        /**
+	         * @return A byte array with the L values for this table.
+	         */
+	        @NotNull
+	        public byte[] getLengthBytes()
+	        {
+	            byte[] result = new byte[_lengthBytes.length];
+	            System.arraycopy(_lengthBytes, 0, result, 0, _lengthBytes.length);
+	            return result;
+	        }
+
+	        /**
+	         * @return A byte array with the V values for this table.
+	         */
+	        @NotNull
+	        public byte[] getValueBytes()
+	        {
+	            byte[] result = new byte[_valueBytes.length];
+	            System.arraycopy(_valueBytes, 0, result, 0, _valueBytes.length);
+	            return result;
+	        }
+
+	        /**
+	         * Evaluates whether this table is a "typical" Huffman table.
+	         * <p>
+	         * "Typical" has a special meaning in this context as the JPEG standard
+	         * (ISO/IEC 10918 or ITU-T T.81) defines 4 Huffman tables that has been
+	         * developed from the average statistics of a large set of images with
+	         * 8-bit precision. Using these instead of calculating the optimal
+	         * Huffman tables for a given image is faster, and is preferred by many
+	         * hardware encoders and some hardware decoders.
+	         * <p>
+	         * Even though the JPEG standard doesn't define these as
+	         * "standard tables" and requires a decoder to be able to read any valid
+	         * Huffman tables, some are in reality limited decoding images using
+	         * these "typical" tables. Standards like DCF (Design rule for Camera
+	         * File system) and DLNA (Digital Living Network Alliance) actually
+	         * requires any compliant JPEG to use only the "typical" Huffman tables.
+	         * <p>
+	         * This is also related to the term "optimized" JPEG. An "optimized"
+	         * JPEG is a JPEG that doesn't use the "typical" Huffman tables.
+	         *
+	         * @return Whether or not this table is one of the predefined "typical"
+	         *         Huffman tables.
+	         */
+	        public boolean isTypical()
+	        {
+	            if (_tableClass == HuffmanTableClass.DC) {
+	                return
+	                    Arrays.equals(_lengthBytes, TYPICAL_LUMINANCE_DC_LENGTHS) &&
+	                    Arrays.equals(_valueBytes, TYPICAL_LUMINANCE_DC_VALUES) ||
+	                    Arrays.equals(_lengthBytes, TYPICAL_CHROMINANCE_DC_LENGTHS) &&
+	                    Arrays.equals(_valueBytes, TYPICAL_CHROMINANCE_DC_VALUES);
+	            } else if (_tableClass == HuffmanTableClass.AC) {
+	                return
+	                    Arrays.equals(_lengthBytes, TYPICAL_LUMINANCE_AC_LENGTHS) &&
+	                    Arrays.equals(_valueBytes, TYPICAL_LUMINANCE_AC_VALUES) ||
+	                    Arrays.equals(_lengthBytes, TYPICAL_CHROMINANCE_AC_LENGTHS) &&
+	                    Arrays.equals(_valueBytes, TYPICAL_CHROMINANCE_AC_VALUES);
+	            }
+	            return false;
+	        }
+
+	        /**
+	         * The opposite of {@link #isTypical()}.
+	         *
+	         * @return Whether or not this table is "optimized" - which means that
+	         *         it isn't one of the "typical" Huffman tables.
+	         */
+	        public boolean isOptimized()
+	        {
+	            return !isTypical();
+	        }
+
+	        public class HuffmanTableClass
+	        {
+	        	public HuffmanTableClass() {
+	        		
+	        	}
+	            final static int DC = 0;
+	            final static int AC = 1;
+	            final static int UNKNOWN = -1;
+
+	            /*public typeOf(int value)
+	            {
+	                switch (value) {
+	                    case 0:
+	                        return DC;
+	                    case 1:
+	                        return AC;
+	                    default:
+	                        return UNKNOWN;
+	                }
+	            }*/
+	        }
+	    }
+	}
+
+	/**
+	 * Reader for JPEG Huffman tables, found in the DHT JPEG segment.
+	 *
+	 * @author Nadahar
+	 */
+	public class JpegDhtReader implements JpegSegmentMetadataReader
+	{
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.DHT);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        for (byte[] segmentBytes : segments) {
+	            extract(new SequentialByteArrayReader(segmentBytes), metadata);
+	        }
+	    }
+
+	    /**
+	     * Performs the DHT tables extraction, adding found tables to the specified
+	     * instance of {@link Metadata}.
+	     */
+	    public void extract(@NotNull final SequentialReader reader, @NotNull final Metadata metadata)
+	    {
+	        HuffmanTablesDirectory directory = metadata.getFirstDirectoryOfType(HuffmanTablesDirectory.class);
+	        if (directory == null) {
+	            directory = new HuffmanTablesDirectory();
+	            metadata.addDirectory(directory);
+	        }
+
+	        try {
+	            while (reader.available() > 0) {
+	                byte header = reader.getByte();
+	                int tableClass = ((header & 0xF0) >> 4);
+	                int tableDestinationId = header & 0xF;
+
+	                byte[] lBytes = getBytes(reader, 16);
+	                int vCount = 0;
+	                for (byte b : lBytes) {
+	                    vCount += (b & 0xFF);
+	                }
+	                byte[] vBytes = getBytes(reader, vCount);
+	                directory.getTables().add(directory.new HuffmanTable(tableClass, tableDestinationId, lBytes, vBytes));
+	            }
+	        } catch (IOException me) {
+	            directory.addError(me.getMessage());
+	        }
+
+	        directory.setInt(HuffmanTablesDirectory.TAG_NUMBER_OF_TABLES, directory.getTables().size());
+	    }
+
+	    private byte[] getBytes(@NotNull final SequentialReader reader, int count) throws IOException {
+	        byte[] bytes = new byte[count];
+	        for (int i = 0; i < count; i++) {
+	            byte b = reader.getByte();
+	            if ((b & 0xFF) == 0xFF) {
+	                byte stuffing = reader.getByte();
+	                if (stuffing != 0x00) {
+	                    throw new IOException("Marker " + JpegSegmentType.fromByte(stuffing) + " found inside DHT segment");
+	                }
+	            }
+	            bytes[i] = b;
+	        }
+	        return bytes;
+	    }
+	}
+
 
 
 }
