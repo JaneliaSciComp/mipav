@@ -59,9 +59,9 @@
     <property name="verbose" value="no" />
     <property name="nowarn" value="no" />
     <property name="listfiles" value="no" />
-    <property name="version.target" value="1.7" />
-    <property name="version.source" value="1.7" />
-    <property name="java.boot.classpath.dir" value="${user.home}/lib64/jdk-current/jre/lib/" />
+    <property name="version.target" value="1.8" />
+    <property name="version.source" value="1.8" />
+    <!--<property name="java.boot.classpath.dir" value="${user.home}/lib64/jdk-current/jre/lib/" />-->
     <property name="sysAssert" value="yes" />
 
     <!--
@@ -116,12 +116,12 @@
         </path>
         <property name="build.cp" refid="build.classpath" />
 
-        <path id="java.boot.classpath">
+        <!--<path id="java.boot.classpath">
             <fileset dir="${java.boot.classpath.dir}">
                 <filename description="bootstrap jars to compile with" name="*.jar"/>
             </fileset>
         </path>
-        <property name="java.boot.cp" refid="java.boot.classpath"/>
+        <property name="java.boot.cp" refid="java.boot.classpath"/>-->
 
         <echo>source: ${dir.source}</echo>
         <echo>destination: ${dir.dest}</echo>
@@ -162,7 +162,6 @@
                 id="${project.name} build"
                 source="${version.source}"
                 target="${version.target}"
-                bootclasspath="${java.boot.cp}"
                 destdir="${dir.dest}"
                 srcdir="${dir.source}"
                 compiler="modern">
@@ -271,6 +270,7 @@
             <fileset file="${dir.source}/tDist.csv"/>
             <fileset file="${dir.source}/DICOMhelp.txt"/>
             <fileset dir="${dir.source}/plugins" includes="*.properties"/>
+            <fileset dir="${dir.source}/plugins" includes="*.json"/>
         </copy>
 
         <!-- MIPAV license files/information -->
