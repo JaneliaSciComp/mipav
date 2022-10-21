@@ -2845,6 +2845,27 @@ public class MetadataExtractor {
 	        }
 	        return null;
 	    }
+	    
+	    public HuffmanTablesDirectory getFirstHuffmanTablesDirectory()
+	    {
+	        for (Directory dir : _directories) {
+	        	//System.out.println(dir.toString());
+	            if (dir instanceof HuffmanTablesDirectory) {
+	                return (HuffmanTablesDirectory)dir;
+	            }
+	        }
+	        return null;
+	    }
+	        
+        public ExifSubIFDDirectory getFirstExifSubIFDDirectory()
+	    {
+	        for (Directory dir : _directories) {
+	            if (dir instanceof ExifSubIFDDirectory) {
+	                return (ExifSubIFDDirectory)dir;
+	            }
+	        }
+	        return null;
+	    }
 
 	    /**
 	     * Indicates whether an instance of the given directory type exists in this Metadata instance.
@@ -3645,10 +3666,12 @@ public class MetadataExtractor {
 	            new PhotoshopReader(),
 	            new DuckyReader(),
 	            */
-	            me.new IptcReader()
+	            me.new IptcReader(),
 	            /*
 	            new AdobeJpegReader(),
-	            new JpegDhtReader(),
+	            */
+	            new JpegDhtReader()
+	            /*
 	            new JpegDnlReader()
 	            */
 	    );
