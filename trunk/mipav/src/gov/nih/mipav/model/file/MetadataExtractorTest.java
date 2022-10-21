@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import gov.nih.mipav.model.file.MetadataExtractor.HuffmanTablesDirectory.HuffmanTable;
 import gov.nih.mipav.model.file.MetadataExtractor.HuffmanTablesDirectory.HuffmanTable.HuffmanTableClass;
 import gov.nih.mipav.model.file.MetadataExtractorTest.CanonMakernoteDescriptorTest;
 
@@ -63,7 +64,7 @@ import static org.junit.Assert.fail;
  *    You may obtain a copy of the License at
  *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *
+ 
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2318,7 +2319,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    }
 
 	    //@Test
-	  //try {
+	    //try {
 	    //	jdrt.testExtract_Tables();
 	    //}
 	    //catch(Exception e) {
@@ -2348,7 +2349,448 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    }
 	}
 
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings({ "ConstantConditions" })
+	public class JpegSegmentDataTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegSegmentDataTest jsdt = me.new JpegSegmentDataTest();
+	    //@Test
+		//try {
+	    //	jsdt.testAddAndGetSegment();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testAddAndGetSegment()
+	    public void testAddAndGetSegment() throws Exception
+	    {
+	        JpegSegmentData segmentData = new JpegSegmentData();
 
+	        byte segmentMarker = (byte)12;
+	        byte[] segmentBytes = new byte[] { 1,2,3 };
 
+	        segmentData.addSegment(segmentMarker, segmentBytes);
+	        assertEquals(1, segmentData.getSegmentCount(segmentMarker));
+	        assertArrayEquals(segmentBytes, segmentData.getSegment(segmentMarker));
+	        System.out.println("Finished running testAddAndGetSegment()");
+	    }
+
+	   // @Test
+	    //try {
+	    //	jsdt.testContainsSegment();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testContainsSegment()
+	    public void testContainsSegment() throws Exception
+	    {
+	        JpegSegmentData segmentData = new JpegSegmentData();
+
+	        byte segmentMarker = (byte)12;
+	        byte[] segmentBytes = new byte[] { 1,2,3 };
+
+	        assertTrue(!segmentData.containsSegment(segmentMarker));
+
+	        segmentData.addSegment(segmentMarker, segmentBytes);
+
+	        assertTrue(segmentData.containsSegment(segmentMarker));
+	        System.out.println("Finished running testContainsSegment()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsdt.testAddingMultipleSegments();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testAddingMultipleSegments()
+	    public void testAddingMultipleSegments() throws Exception
+	    {
+	        JpegSegmentData segmentData = new JpegSegmentData();
+
+	        byte segmentMarker1 = (byte)12;
+	        byte segmentMarker2 = (byte)21;
+	        byte[] segmentBytes1 = new byte[] { 1,2,3 };
+	        byte[] segmentBytes2 = new byte[] { 3,2,1 };
+
+	        segmentData.addSegment(segmentMarker1, segmentBytes1);
+	        segmentData.addSegment(segmentMarker2, segmentBytes2);
+	        assertEquals(1, segmentData.getSegmentCount(segmentMarker1));
+	        assertEquals(1, segmentData.getSegmentCount(segmentMarker2));
+	        assertArrayEquals(segmentBytes1, segmentData.getSegment(segmentMarker1));
+	        assertArrayEquals(segmentBytes2, segmentData.getSegment(segmentMarker2));
+	        System.out.println("Finished running testAddingMultipleSegments()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsdt.testSegmentWithMultipleOccurrences();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testSegmentWithMultipleOccurrences()
+	    public void testSegmentWithMultipleOccurrences() throws Exception
+	    {
+	        JpegSegmentData segmentData = new JpegSegmentData();
+
+	        byte segmentMarker = (byte)12;
+	        byte[] segmentBytes1 = new byte[] { 1,2,3 };
+	        byte[] segmentBytes2 = new byte[] { 3,2,1 };
+
+	        segmentData.addSegment(segmentMarker, segmentBytes1);
+	        segmentData.addSegment(segmentMarker, segmentBytes2);
+	        assertEquals(2, segmentData.getSegmentCount(segmentMarker));
+	        assertArrayEquals(segmentBytes1, segmentData.getSegment(segmentMarker));
+	        assertArrayEquals(segmentBytes1, segmentData.getSegment(segmentMarker, 0));
+	        assertArrayEquals(segmentBytes2, segmentData.getSegment(segmentMarker, 1));
+	        System.out.println("Finished running testSegmentWithMultipleOccurrences()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsdt.testRemoveSegmentOccurrence();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testRemoveSegmentOccurrence()
+	    public void testRemoveSegmentOccurrence() throws Exception
+	    {
+	        JpegSegmentData segmentData = new JpegSegmentData();
+
+	        byte segmentMarker = (byte)12;
+	        byte[] segmentBytes1 = new byte[] { 1,2,3 };
+	        byte[] segmentBytes2 = new byte[] { 3,2,1 };
+
+	        segmentData.addSegment(segmentMarker, segmentBytes1);
+	        segmentData.addSegment(segmentMarker, segmentBytes2);
+
+	        assertEquals(2, segmentData.getSegmentCount(segmentMarker));
+
+	        assertArrayEquals(segmentBytes1, segmentData.getSegment(segmentMarker, 0));
+
+	        segmentData.removeSegmentOccurrence(segmentMarker, 0);
+
+	        assertArrayEquals(segmentBytes2, segmentData.getSegment(segmentMarker, 0));
+	        System.out.println("Finished running testRemoveSegmentOccurrence()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsdt.testRemoveSegment();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testRemoveSegment()
+	    public void testRemoveSegment() throws Exception
+	    {
+	        JpegSegmentData segmentData = new JpegSegmentData();
+
+	        byte segmentMarker = (byte)12;
+	        byte[] segmentBytes1 = new byte[] { 1,2,3 };
+	        byte[] segmentBytes2 = new byte[] { 3,2,1 };
+
+	        segmentData.addSegment(segmentMarker, segmentBytes1);
+	        segmentData.addSegment(segmentMarker, segmentBytes2);
+
+	        assertEquals(2, segmentData.getSegmentCount(segmentMarker));
+	        assertTrue(segmentData.containsSegment(segmentMarker));
+
+	        assertArrayEquals(segmentBytes1, segmentData.getSegment(segmentMarker, 0));
+
+	        segmentData.removeSegment(segmentMarker);
+
+	        assertTrue(!segmentData.containsSegment(segmentMarker));
+	        assertEquals(0, segmentData.getSegmentCount(segmentMarker));
+	        System.out.println("Finished running testRemoveSegment()");
+	    }
+	}
+
+	/**
+	 * Unit tests for {@link JpegSegmentReader}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JpegSegmentReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegSegmentReaderTest jsrt = me.new JpegSegmentReaderTest();
+	    //@Test
+		//try {
+	    //	jsrt.testReadAllSegments();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testReadAllSegments()
+	    public void testReadAllSegments() throws Exception
+	    {
+	        JpegSegmentData segmentData = JpegSegmentReader.readSegments(new File("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg"), null);
+
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.APP0));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app0"),
+	                segmentData.getSegment(JpegSegmentType.APP0));
+	        assertNull(segmentData.getSegment(JpegSegmentType.APP0, 1));
+
+	        assertEquals(2, segmentData.getSegmentCount(JpegSegmentType.APP1));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app1.0"),
+	                segmentData.getSegment(JpegSegmentType.APP1, 0));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app1.1"),
+	                segmentData.getSegment(JpegSegmentType.APP1, 1));
+	        assertNull(segmentData.getSegment(JpegSegmentType.APP1, 2));
+
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.APP2));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app2"),
+	                segmentData.getSegment(JpegSegmentType.APP2));
+	        assertNull(segmentData.getSegment(JpegSegmentType.APP2, 1));
+
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.APPD));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.appd"),
+	                segmentData.getSegment(JpegSegmentType.APPD));
+	        assertNull(segmentData.getSegment(JpegSegmentType.APPD, 1));
+
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.APPE));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.appe"),
+	                segmentData.getSegment(JpegSegmentType.APPE));
+	        assertNull(segmentData.getSegment(JpegSegmentType.APPE, 1));
+
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP3));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP4));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP5));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP6));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP7));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP8));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP9));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPA));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPB));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPC));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPF));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.COM));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.DAC));
+	        assertEquals(4, segmentData.getSegmentCount(JpegSegmentType.DHT));
+	        assertEquals(2, segmentData.getSegmentCount(JpegSegmentType.DQT));
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.SOF0));
+
+	        assertNull(segmentData.getSegment(JpegSegmentType.APP3, 0));
+	        System.out.println("Finished running testReadAllSegments()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsrt.testReadSpecificSegments();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testReadSpecificSegments()
+	    public void testReadSpecificSegments() throws Exception
+	    {
+	        JpegSegmentData segmentData = JpegSegmentReader.readSegments(
+	                new File("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg"),
+	                Arrays.asList(JpegSegmentType.APP0, JpegSegmentType.APP2));
+
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.APP0));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP1));
+	        assertEquals(1, segmentData.getSegmentCount(JpegSegmentType.APP2));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPD));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPE));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP3));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP4));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP5));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP6));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP7));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP8));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP9));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPA));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPB));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPC));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPF));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.COM));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.DHT));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.SOF0));
+
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app0"),
+	                segmentData.getSegment(JpegSegmentType.APP0));
+	        assertArrayEquals(
+	                FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app2"),
+	                segmentData.getSegment(JpegSegmentType.APP2));
+	        System.out.println("Finished running testReadSpecificSegments()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsrt.testReadDhtSegment();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testReadDhtSegment()
+	    public void testReadDhtSegment() throws Exception
+	    {
+	        JpegSegmentData segmentData = JpegSegmentReader.readSegments(
+	            new File("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg"),
+	            Collections.singletonList(JpegSegmentType.DHT));
+
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP0));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP1));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP2));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPD));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPE));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP3));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP4));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP5));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP6));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP7));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP8));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APP9));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPA));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPB));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPC));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.APPF));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.COM));
+	        assertEquals(4, segmentData.getSegmentCount(JpegSegmentType.DHT));
+	        assertEquals(0, segmentData.getSegmentCount(JpegSegmentType.SOF0));
+	        System.out.println("Finished running testReadDhtSegment()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsrt.testLoadJpegWithoutExifDataReturnsNull();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testLoadJpegWithoutExifDataReturnsNull()
+	    public void testLoadJpegWithoutExifDataReturnsNull() throws Exception
+	    {
+	        JpegSegmentData segmentData = JpegSegmentReader.readSegments(new File("C:/metadata/metadata-extractor-master/Tests/Data/noExif.jpg"), null);
+	        assertNull(segmentData.getSegment(JpegSegmentType.APP1));
+	        System.out.println("Finished running testLoadJpegWithoutExifDataReturnsNull()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jsrt.testWithNonJpegFile();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testWithNonJpegFile()
+	    public void testWithNonJpegFile() throws Exception
+	    {
+	        try {
+	            JpegSegmentReader.readSegments(new File("C:/metadata/metadata-extractor-master/Tests/com/drew/imaging/jpeg/JpegSegmentReaderTest.java"), null);
+	            fail("shouldn't be able to construct JpegSegmentReader with non-JPEG file");
+	        } catch (JpegProcessingException e) {
+	            // expect exception
+	        }
+	        System.out.println("Finished running testWithNonJpegFile()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JpegMetadataReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JpegMetadataReaderTest jdrt = me.new JpegMetadataReaderTest();
+	    //@Test
+		//try {
+	    //	jdrt.testExtractMetadata();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testExtractMetadata()
+	    public void testExtractMetadata() throws Exception
+	    {
+	    	JpegMetadataReader jr = new JpegMetadataReader();
+	        validate(jr.readMetadata(new File("C:/metadata/metadata-extractor-master/Tests/Data/withExif.jpg")));
+	        System.out.println("Finished running testExtractMetadata()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jdrt.testExtractMetadataUsingInputStream();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtractMetadataUsingInputStream()
+	    public void testExtractMetadataUsingInputStream() throws Exception
+	    {
+	        FileInputStream stream = new FileInputStream((new File("C:/metadata/metadata-extractor-master/Tests/Data/withExif.jpg")));
+	        JpegMetadataReader jr = new JpegMetadataReader();
+
+	        try {
+	            validate(jr.readMetadata(stream));
+	        } finally {
+	            stream.close();
+	        }
+	        System.out.println("Finished running testExtractMetadataUsingInputStream()");
+	    }
+
+	    //@Test
+	    /*
+	    public void testExtractXmpMetadata() throws Exception
+	    {
+	        Metadata metadata = JpegMetadataReader.readMetadata(new File("C:/metadata/metadata-extractor-master//Data/withXmp.jpg"));
+	        Directory directory = metadata.getFirstDirectoryOfType(XmpDirectory.class);
+	        assertNotNull(directory);
+	        directory = metadata.getFirstDirectoryOfType(HuffmanTablesDirectory.class);
+	        assertNotNull(directory);
+	        assertTrue(((HuffmanTablesDirectory) directory).isOptimized());
+	    }
+	    */
+
+	    //@Test
+	    //try {
+	    //	jdrt.testTypicalHuffman();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testTypicalHuffman()
+	    public void testTypicalHuffman() throws Exception
+	    {
+	    	JpegMetadataReader jr = new JpegMetadataReader();
+	        Metadata metadata = jr.readMetadata(new File("C:/metadata/metadata-extractor-master/Tests/Data/withTypicalHuffman.jpg"));
+	        Directory directory = metadata.getFirstHuffmanTablesDirectory();
+	        assertNotNull(directory);
+	        assertTrue(((HuffmanTablesDirectory) directory).isTypical());
+	        assertFalse(((HuffmanTablesDirectory) directory).isOptimized());
+	        for (int i = 0; i < ((HuffmanTablesDirectory) directory).getNumberOfTables(); i++) {
+	            HuffmanTable table = ((HuffmanTablesDirectory) directory).getTable(i);
+	            assertTrue(table.isTypical());
+	            assertFalse(table.isOptimized());
+	        }
+	        System.out.println("Finished running testTypicalHuffman()");
+	    }
+
+	    private void validate(Metadata metadata)
+	    {
+	        Directory directory = metadata.getFirstExifSubIFDDirectory();
+	        assertNotNull(directory);
+	        assertEquals("80", directory.getString(ExifSubIFDDirectory.TAG_ISO_EQUIVALENT));
+	        directory = metadata.getFirstHuffmanTablesDirectory();
+	        assertNotNull(directory);
+	        assertTrue(((HuffmanTablesDirectory) directory).isOptimized());
+	    }
+	}
 
 }
