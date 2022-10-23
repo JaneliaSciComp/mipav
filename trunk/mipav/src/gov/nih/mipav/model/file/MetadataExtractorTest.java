@@ -42,6 +42,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Collection;
 import java.util.TimeZone;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
 
 
 import java.math.RoundingMode;
@@ -2792,5 +2795,470 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertTrue(((HuffmanTablesDirectory) directory).isOptimized());
 	    }
 	}
+	
+	//@SuppressWarnings("ConstantConditions")
+	public class IccReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //IccReaderTest irt = me.new IccReaderTest();
+	    // TODO add a test with well-formed ICC data and assert output values are correct
+
+	    //@Test
+		//try {
+	    //	irt.testExtract_InvalidData();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testExtract_InvalidData()
+	    public void testExtract_InvalidData() throws Exception
+	    {
+	        byte[] app2Bytes = FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/iccDataInvalid1.jpg.app2");
+
+	        // When in an APP2 segment, ICC data starts after a 14-byte preamble
+	        TestHelper th = new TestHelper();
+	        byte[] icc = th.skipBytes(app2Bytes, 14);
+
+	        Metadata metadata = new Metadata();
+	        new IccReader().extract(new ByteArrayReader(icc), metadata);
+
+	        IccDirectory directory = metadata.getFirstDirectoryOfType(IccDirectory.class);
+
+	        assertNotNull(directory);
+	        assertTrue(directory.hasErrors());
+	        System.out.println("Finished running testExtract_InvalidData()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	irt.testReadJpegSegments_InvalidData();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testReadJpegSegments_InvalidData()
+	    public void testReadJpegSegments_InvalidData() throws Exception
+	    {
+	        byte[] app2Bytes = FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/iccDataInvalid1.jpg.app2");
+
+	        Metadata metadata = new Metadata();
+	        new IccReader().readJpegSegments(Arrays.asList(app2Bytes), metadata, JpegSegmentType.APP2);
+
+	        IccDirectory directory = metadata.getFirstDirectoryOfType(IccDirectory.class);
+
+	        assertNotNull(directory);
+	        assertTrue(directory.hasErrors());
+	        System.out.println("Finished running testReadJpegSegments_InvalidData()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	irt.testExtract_ProfileDateTime();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtract_ProfileDateTime()
+	    public void testExtract_ProfileDateTime() throws Exception
+	    {
+	        byte[] app2Bytes = FileUtil.readBytes("C:/metadata/metadata-extractor-master/Tests/Data/withExifAndIptc.jpg.app2");
+
+	        Metadata metadata = new Metadata();
+	        new IccReader().readJpegSegments(Arrays.asList(app2Bytes), metadata, JpegSegmentType.APP2);
+
+	        IccDirectory directory = metadata.getFirstDirectoryOfType(IccDirectory.class);
+
+	        assertNotNull(directory);
+	        assertEquals("1998:02:09 06:49:00", directory.getString(IccDirectory.TAG_PROFILE_DATETIME));
+	        assertEquals(887006940000L, directory.getDate(IccDirectory.TAG_PROFILE_DATETIME).getTime());
+	        System.out.println("Finished running testExtract_ProfileDateTime()");
+	    }
+	}
+	
+	public class TestHelper
+	{
+	    public byte[] skipBytes(byte[] input, int countToSkip)
+	    {
+	        if (input.length - countToSkip < 0) {
+	            throw new IllegalArgumentException("Attempting to skip more bytes than exist in the array.");
+	        }
+
+	        byte[] output = new byte[input.length - countToSkip];
+	        System.arraycopy(input, countToSkip, output, 0, input.length - countToSkip);
+	        return output;
+	    }
+	}
+
+	//@SuppressWarnings("ConstantConditions")
+	public class IptcDirectoryTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //IptcDirectoryTest idt = me.new IptcDirectoryTest();
+		//try {
+		//	idt.setUp();
+		//}
+		//catch(Exception e) {
+		//    e.printStackTrace();
+		//}
+	    private IptcDirectory _directory;
+
+	    //@Before
+	    public void setUp()
+	    {
+	        _directory = new IptcDirectory();
+	    }
+
+	    //@Test
+	    //try {
+	    //	idt.testGetDateSent();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetDateSent()
+	    public void testGetDateSent()
+	    {
+	        _directory.setString(IptcDirectory.TAG_DATE_SENT, "20101212");
+	        _directory.setString(IptcDirectory.TAG_TIME_SENT, "124135+0100");
+	        final Date actual = _directory.getDateSent();
+
+	        Calendar calendar = new GregorianCalendar(2010, 12 - 1, 12, 12, 41, 35);
+	        calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+	        assertEquals(calendar.getTime(), actual);
+	        assertEquals(1292154095000L, actual.getTime());
+	        System.out.println("Finished running testGetDateSent()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	idt.testGetReleaseDate();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetReleaseDate()
+	    public void testGetReleaseDate()
+	    {
+	        _directory.setString(IptcDirectory.TAG_RELEASE_DATE, "20101212");
+	        _directory.setString(IptcDirectory.TAG_RELEASE_TIME, "124135+0100");
+	        final Date actual = _directory.getReleaseDate();
+
+	        Calendar calendar = new GregorianCalendar(2010, 12 - 1, 12, 12, 41, 35);
+	        calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+	        assertEquals(calendar.getTime(), actual);
+	        assertEquals(1292154095000L, actual.getTime());
+	        System.out.println("Finished running testGetReleaseDate()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	idt.testGetExpirationDate();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetExpirationDate()
+	    public void testGetExpirationDate()
+	    {
+	        _directory.setString(IptcDirectory.TAG_EXPIRATION_DATE, "20101212");
+	        _directory.setString(IptcDirectory.TAG_EXPIRATION_TIME, "124135+0100");
+	        final Date actual = _directory.getExpirationDate();
+
+	        Calendar calendar = new GregorianCalendar(2010, 12 - 1, 12, 12, 41, 35);
+	        calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+	        assertEquals(calendar.getTime(), actual);
+	        assertEquals(1292154095000L, actual.getTime());
+	        System.out.println("Finished running testGetExpirationDate()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	idt.testGetDateCreated();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetDateCreated()
+	    public void testGetDateCreated()
+	    {
+	        _directory.setString(IptcDirectory.TAG_DATE_CREATED, "20101212");
+	        _directory.setString(IptcDirectory.TAG_TIME_CREATED, "124135+0100");
+	        final Date actual = _directory.getDateCreated();
+
+	        Calendar calendar = new GregorianCalendar(2010, 12 - 1, 12, 12, 41, 35);
+	        calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+	        assertEquals(calendar.getTime(), actual);
+	        assertEquals(1292154095000L, actual.getTime());
+	        System.out.println("Finished running testGetDateCreated()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	idt.testGetDigitalDateCreated();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetDigitalDateCreated()
+	    public void testGetDigitalDateCreated()
+	    {
+	        _directory.setString(IptcDirectory.TAG_DIGITAL_DATE_CREATED, "20101212");
+	        _directory.setString(IptcDirectory.TAG_DIGITAL_TIME_CREATED, "124135+0100");
+	        final Date actual = _directory.getDigitalDateCreated();
+
+	        Calendar calendar = new GregorianCalendar(2010, 12 - 1, 12, 12, 41, 35);
+	        calendar.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+	        assertEquals(calendar.getTime(), actual);
+	        assertEquals(1292154095000L, actual.getTime());
+	        System.out.println("Finished running testGetDigitalDateCreated()");
+	    }
+	}
+	
+	/**
+	 * Unit tests for {@link IptcReader}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("ConstantConditions")
+	public class IptcReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //IptcReaderTest irt = me.new IptcReaderTest();
+	    @NotNull
+	    public IptcDirectory processBytes(@NotNull String filePath) throws IOException
+	    {
+	        Metadata metadata = new Metadata();
+	        byte[] bytes = FileUtil.readBytes(filePath);
+	        new IptcReader().extract(new SequentialByteArrayReader(bytes), metadata, bytes.length);
+	        IptcDirectory directory = metadata.getFirstDirectoryOfType(IptcDirectory.class);
+	        assertNotNull(directory);
+	        return directory;
+	    }
+
+	    //@Test
+	    //try {
+	    //	irt.testIptc1BytesFromFile();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIptc1BytesFromFile()
+	    public void testIptc1BytesFromFile() throws Exception
+	    {
+	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc1.jpg.appd");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(16, tags.length);
+
+	        assertEquals(IptcDirectory.TAG_CATEGORY, tags[0].getTagType());
+	        assertArrayEquals(new String[] { "Supl. Category2", "Supl. Category1", "Cat" }, directory.getStringArray(tags[0].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_COPYRIGHT_NOTICE, tags[1].getTagType());
+	        assertEquals("Copyright", directory.getString(tags[1].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_SPECIAL_INSTRUCTIONS, tags[2].getTagType());
+	        assertEquals("Special Instr.", directory.getString(tags[2].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_HEADLINE, tags[3].getTagType());
+	        assertEquals("Headline", directory.getString(tags[3].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION_WRITER, tags[4].getTagType());
+	        assertEquals("CaptionWriter", directory.getString(tags[4].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION, tags[5].getTagType());
+	        assertEquals("Caption", directory.getString(tags[5].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_ORIGINAL_TRANSMISSION_REFERENCE, tags[6].getTagType());
+	        assertEquals("Transmission", directory.getString(tags[6].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_COUNTRY_OR_PRIMARY_LOCATION_NAME, tags[7].getTagType());
+	        assertEquals("Country", directory.getString(tags[7].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_PROVINCE_OR_STATE, tags[8].getTagType());
+	        assertEquals("State", directory.getString(tags[8].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CITY, tags[9].getTagType());
+	        assertEquals("City", directory.getString(tags[9].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_DATE_CREATED, tags[10].getTagType());
+	        assertEquals("20000101", directory.getString(tags[10].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_OBJECT_NAME, tags[11].getTagType());
+	        assertEquals("ObjectName", directory.getString(tags[11].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_SOURCE, tags[12].getTagType());
+	        assertEquals("Source", directory.getString(tags[12].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CREDIT, tags[13].getTagType());
+	        assertEquals("Credits", directory.getString(tags[13].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_BY_LINE_TITLE, tags[14].getTagType());
+	        assertEquals("BylineTitle", directory.getString(tags[14].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_BY_LINE, tags[15].getTagType());
+	        assertEquals("Byline", directory.getString(tags[15].getTagType()));
+	        System.out.println("Finished running testIptc1BytesFromFile()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	irt.testIptc2Photoshop6BytesFromFile() ;
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIptc2Photoshop6BytesFromFile() 
+	    public void testIptc2Photoshop6BytesFromFile() throws Exception
+	    {
+	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc2-photoshop6.jpg.appd");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(17, tags.length);
+
+	        assertEquals(IptcDirectory.TAG_APPLICATION_RECORD_VERSION, tags[0].getTagType());
+	        assertEquals(2, directory.getObject(tags[0].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION, tags[1].getTagType());
+	        assertEquals("Caption PS6", directory.getString(tags[1].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION_WRITER, tags[2].getTagType());
+	        assertEquals("CaptionWriter", directory.getString(tags[2].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_HEADLINE, tags[3].getTagType());
+	        assertEquals("Headline", directory.getString(tags[3].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_SPECIAL_INSTRUCTIONS, tags[4].getTagType());
+	        assertEquals("Special Instr.", directory.getString(tags[4].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_BY_LINE, tags[5].getTagType());
+	        assertEquals("Byline", directory.getString(tags[5].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_BY_LINE_TITLE, tags[6].getTagType());
+	        assertEquals("BylineTitle", directory.getString(tags[6].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CREDIT, tags[7].getTagType());
+	        assertEquals("Credits", directory.getString(tags[7].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_SOURCE, tags[8].getTagType());
+	        assertEquals("Source", directory.getString(tags[8].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_OBJECT_NAME, tags[9].getTagType());
+	        assertEquals("ObjectName", directory.getString(tags[9].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CITY, tags[10].getTagType());
+	        assertEquals("City", directory.getString(tags[10].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_PROVINCE_OR_STATE, tags[11].getTagType());
+	        assertEquals("State", directory.getString(tags[11].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_COUNTRY_OR_PRIMARY_LOCATION_NAME, tags[12].getTagType());
+	        assertEquals("Country", directory.getString(tags[12].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_ORIGINAL_TRANSMISSION_REFERENCE, tags[13].getTagType());
+	        assertEquals("Transmission", directory.getString(tags[13].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CATEGORY, tags[14].getTagType());
+	        assertEquals("Cat", directory.getString(tags[14].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_SUPPLEMENTAL_CATEGORIES, tags[15].getTagType());
+	        assertArrayEquals(new String[] { "Supl. Category1", "Supl. Category2" }, directory.getStringArray(tags[15].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_COPYRIGHT_NOTICE, tags[16].getTagType());
+	        assertEquals("Copyright", directory.getString(tags[16].getTagType()));
+	        System.out.println("Finished running testIptc2Photoshop6BytesFromFile() ");
+	    }
+
+	    //@Test
+	    //try {
+	    //	irt.;
+	    //}testIptcEncodingUtf8()
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testIptcEncodingUtf8() throws Exception
+	    {
+	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-defined-utf8.bytes");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(4, tags.length);
+
+	        assertEquals(IptcDirectory.TAG_ENVELOPE_RECORD_VERSION, tags[0].getTagType());
+	        assertEquals(2, directory.getObject(tags[0].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CODED_CHARACTER_SET, tags[1].getTagType());
+	        assertEquals("UTF-8", directory.getObject(tags[1].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_APPLICATION_RECORD_VERSION, tags[2].getTagType());
+	        assertEquals(2, directory.getObject(tags[2].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION, tags[3].getTagType());
+	        assertEquals("In diesem Text sind Umlaute enthalten, nÃ¤mlich Ã¶fter als Ã¼blich: Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ\r", directory.getStringValue(tags[3].getTagType()).toString());
+	        System.out.println("Finished running testIptcEncodingUtf8()");
+	    }
+
+	    //@Test
+	    public void testIptcEncodingUndefinedIso() throws Exception
+	    {
+	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-undefined-iso.bytes");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(3, tags.length);
+
+	        assertEquals(IptcDirectory.TAG_ENVELOPE_RECORD_VERSION, tags[0].getTagType());
+	        assertEquals(2, directory.getObject(tags[0].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_APPLICATION_RECORD_VERSION, tags[1].getTagType());
+	        assertEquals(2, directory.getObject(tags[1].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION, tags[2].getTagType());
+	        assertEquals("In diesem Text sind Umlaute enthalten, nÃ¤mlich Ã¶fter als Ã¼blich: Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ\r", directory.getStringValue(tags[2].getTagType()).toString());
+	    }
+
+	    //@Test
+	    public void testIptcEncodingUnknown() throws Exception
+	    {
+	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-unknown.bytes");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(3, tags.length);
+
+	        assertEquals(IptcDirectory.TAG_APPLICATION_RECORD_VERSION, tags[0].getTagType());
+	        assertEquals(2, directory.getObject(tags[0].getTagType()));
+
+	        assertEquals(IptcDirectory.TAG_CAPTION, tags[1].getTagType());
+	        assertEquals("Das Encoding dieser Metadaten ist nicht deklariert und lÃ¤sst sich nur schwer erkennen.", directory.getStringValue(tags[1].getTagType()).toString());
+
+	        assertEquals(IptcDirectory.TAG_KEYWORDS, tags[2].getTagType());
+	        assertArrayEquals(new String[]{"hÃ¤ufig", "Ã¼blich", "LÃ¶sung", "SpaÃŸ"}, directory.getStringArray(tags[2].getTagType()));
+	    }
+
+	    //@Test
+	    public void testIptcEncodingUnknown2() throws Exception
+	    {
+	        // This metadata has an encoding of three characters [ \ESC '%' '5' ]
+	        // It's not clear what to do with this, so it should be ignored.
+	        // Version 2.7.0 tripped up on this and threw an exception.
+	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-unknown-2.bytes");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(37, tags.length);
+
+	        assertEquals("MEDWAS,MEDLON,MEDTOR,RONL,ASIA,AONL,APC,USA,CAN,SAM,BIZ", directory.getString(IptcDirectory.TAG_DESTINATION));
+	    }
+	}
+
+
 
 }
