@@ -3653,10 +3653,8 @@ public class MetadataExtractor {
 	    		
 	            me.new JpegReader(),
 	            me.new JpegCommentReader(),
-	            /*
 	            new JfifReader(),
 	            new JfxxReader(),
-	            */
 	            me.new ExifReader(),
 	            /*
 	            new XmpReader(),
@@ -3667,9 +3665,7 @@ public class MetadataExtractor {
 	            new DuckyReader(),
 	            */
 	            me.new IptcReader(),
-	            /*
 	            new AdobeJpegReader(),
-	            */
 	            new JpegDhtReader(),
 	            new JpegDnlReader()
 	    );
@@ -26703,6 +26699,10 @@ public class MetadataExtractor {
 	    private static final byte PERCENT_SIGN = 0x25;
 	    private static final byte DOT_SIGN = 0x2E;
 	    private static final byte ESC = 0x1B;
+	    
+	    public Iso2022Converter() {
+	    	
+	    }
 
 	    /**
 	     * Converts the given ISO2022 char set to a Java charset name.
@@ -26767,9 +26767,6 @@ public class MetadataExtractor {
 	        // No encodings succeeded. Return null.
 	        return null;
 	    }
-
-	    private Iso2022Converter()
-	    {}
 	}
 
 	
@@ -29273,5 +29270,531 @@ public class MetadataExtractor {
 	        }
 	    }
 	}
+	
+	/**
+	 * Reader for JFIF data, found in the APP0 JPEG segment.
+	 *
+	 * <ul>
+	 *   <li>http://en.wikipedia.org/wiki/JPEG_File_Interchange_Format</li>
+	 *   <li>http://www.w3.org/Graphics/JPEG/jfif3.pdf</li>
+	 * </ul>
+	 *
+	 * @author Yuri Binev, Drew Noakes, Markus Meyer
+	 */
+	public class JfifReader implements JpegSegmentMetadataReader, MetadataReader
+	{
+	    public static final String PREAMBLE = "JFIF";
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APP0);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        for (byte[] segmentBytes : segments) {
+	            // Skip segments not starting with the required header
+	            if (segmentBytes.length >= PREAMBLE.length() && PREAMBLE.equals(new String(segmentBytes, 0, PREAMBLE.length())))
+	                extract(new ByteArrayReader(segmentBytes), metadata);
+	        }
+	    }
+
+	    /**
+	     * Performs the Jfif data extraction, adding found values to the specified
+	     * instance of {@link Metadata}.
+	     */
+	    public void extract(@NotNull final RandomAccessReader reader, @NotNull final Metadata metadata)
+	    {
+	        JfifDirectory directory = new JfifDirectory();
+	        metadata.addDirectory(directory);
+
+	        try {
+	            // For JFIF, the tag number is also the offset into the segment
+
+	            directory.setInt(JfifDirectory.TAG_VERSION,      reader.getUInt16(JfifDirectory.TAG_VERSION));
+	            directory.setInt(JfifDirectory.TAG_UNITS,        reader.getUInt8(JfifDirectory.TAG_UNITS));
+	            directory.setInt(JfifDirectory.TAG_RESX,         reader.getUInt16(JfifDirectory.TAG_RESX));
+	            directory.setInt(JfifDirectory.TAG_RESY,         reader.getUInt16(JfifDirectory.TAG_RESY));
+	            directory.setInt(JfifDirectory.TAG_THUMB_WIDTH,  reader.getUInt8(JfifDirectory.TAG_THUMB_WIDTH));
+	            directory.setInt(JfifDirectory.TAG_THUMB_HEIGHT, reader.getUInt8(JfifDirectory.TAG_THUMB_HEIGHT));
+	        } catch (IOException me) {
+	            directory.addError(me.getMessage());
+	        }
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string versions of the tags stored in a JfifDirectory.
+	 *
+	 * <ul>
+	 *   <li>http://en.wikipedia.org/wiki/JPEG_File_Interchange_Format</li>
+	 *   <li>http://www.w3.org/Graphics/JPEG/jfif3.pdf</li>
+	 * </ul>
+	 *
+	 * @author Yuri Binev, Drew Noakes
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class JfifDescriptor extends TagDescriptor<JfifDirectory>
+	{
+	    public JfifDescriptor(@NotNull JfifDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case JfifDirectory.TAG_RESX:
+	                return getImageResXDescription();
+	            case JfifDirectory.TAG_RESY:
+	                return getImageResYDescription();
+	            case JfifDirectory.TAG_VERSION:
+	                return getImageVersionDescription();
+	            case JfifDirectory.TAG_UNITS:
+	                return getImageResUnitsDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getImageVersionDescription()
+	    {
+	        Integer value = _directory.getInteger(JfifDirectory.TAG_VERSION);
+	        if (value==null)
+	            return null;
+	        return String.format("%d.%d", (value & 0xFF00) >> 8, value & 0xFF);
+	    }
+
+	    @Nullable
+	    public String getImageResYDescription()
+	    {
+	        Integer value = _directory.getInteger(JfifDirectory.TAG_RESY);
+	        if (value==null)
+	            return null;
+	        return String.format("%d dot%s",
+	                value,
+	                value==1 ? "" : "s");
+	    }
+
+	    @Nullable
+	    public String getImageResXDescription()
+	    {
+	        Integer value = _directory.getInteger(JfifDirectory.TAG_RESX);
+	        if (value==null)
+	            return null;
+	        return String.format("%d dot%s",
+	                value,
+	                value==1 ? "" : "s");
+	    }
+
+	    @Nullable
+	    public String getImageResUnitsDescription()
+	    {
+	        Integer value = _directory.getInteger(JfifDirectory.TAG_UNITS);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0: return "none";
+	            case 1: return "inch";
+	            case 2: return "centimetre";
+	            default:
+	                return "unit";
+	        }
+	    }
+	}
+
+	
+	/**
+	 * Directory of tags and values for the SOF0 Jfif segment.  This segment holds basic metadata about the image.
+	 *
+	 * @author Yuri Binev, Drew Noakes
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class JfifDirectory extends Directory
+	{
+	    public static final int TAG_VERSION = 5;
+	    /** Units for pixel density fields.  One of None, Pixels per Inch, Pixels per Centimetre. */
+	    public static final int TAG_UNITS = 7;
+	    public static final int TAG_RESX = 8;
+	    public static final int TAG_RESY = 10;
+	    public static final int TAG_THUMB_WIDTH = 12;
+	    public static final int TAG_THUMB_HEIGHT = 13;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_VERSION, "Version");
+	        _tagNameMap.put(TAG_UNITS, "Resolution Units");
+	        _tagNameMap.put(TAG_RESY, "Y Resolution");
+	        _tagNameMap.put(TAG_RESX, "X Resolution");
+	        _tagNameMap.put(TAG_THUMB_WIDTH, "Thumbnail Width Pixels");
+	        _tagNameMap.put(TAG_THUMB_HEIGHT, "Thumbnail Height Pixels");
+	    }
+
+	    public JfifDirectory()
+	    {
+	        this.setDescriptor(new JfifDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "JFIF";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    public int getVersion() throws MetadataException
+	    {
+	        return getInt(JfifDirectory.TAG_VERSION);
+	    }
+
+	    public int getResUnits() throws MetadataException
+	    {
+	        return getInt(JfifDirectory.TAG_UNITS);
+	    }
+
+	    /**
+	     * @deprecated use {@link #getResY} instead.
+	     */
+	    @Deprecated
+	    public int getImageWidth() throws MetadataException
+	    {
+	        return getInt(JfifDirectory.TAG_RESY);
+	    }
+
+	    public int getResY() throws MetadataException
+	    {
+	        return getInt(JfifDirectory.TAG_RESY);
+	    }
+
+	    /**
+	     * @deprecated use {@link #getResX} instead.
+	     */
+	    @Deprecated
+	    public int getImageHeight() throws MetadataException
+	    {
+	        return getInt(JfifDirectory.TAG_RESX);
+	    }
+
+	    public int getResX() throws MetadataException
+	    {
+	        return getInt(JfifDirectory.TAG_RESX);
+	    }
+	}
+
+	/**
+	 * Reader for JFXX (JFIF extensions) data, found in the APP0 JPEG segment.
+	 *
+	 * <ul>
+	 *   <li>http://en.wikipedia.org/wiki/JPEG_File_Interchange_Format</li>
+	 *   <li>http://www.w3.org/Graphics/JPEG/jfif3.pdf</li>
+	 * </ul>
+	 *
+	 * @author Drew Noakes
+	 */
+	public class JfxxReader implements JpegSegmentMetadataReader, MetadataReader
+	{
+	    public static final String PREAMBLE = "JFXX";
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APP0);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        for (byte[] segmentBytes : segments) {
+	            // Skip segments not starting with the required header
+	            if (segmentBytes.length >= PREAMBLE.length() && PREAMBLE.equals(new String(segmentBytes, 0, PREAMBLE.length())))
+	                extract(new ByteArrayReader(segmentBytes), metadata);
+	        }
+	    }
+
+	    /**
+	     * Performs the JFXX data extraction, adding found values to the specified
+	     * instance of {@link Metadata}.
+	     */
+	    public void extract(@NotNull final RandomAccessReader reader, @NotNull final Metadata metadata)
+	    {
+	        JfxxDirectory directory = new JfxxDirectory();
+	        metadata.addDirectory(directory);
+
+	        try {
+	            // For JFXX, the tag number is also the offset into the segment
+
+	            directory.setInt(JfxxDirectory.TAG_EXTENSION_CODE, reader.getUInt8(JfxxDirectory.TAG_EXTENSION_CODE));
+	        } catch (IOException me) {
+	            directory.addError(me.getMessage());
+	        }
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string versions of the tags stored in a JfxxDirectory.
+	 *
+	 * <ul>
+	 *   <li>http://en.wikipedia.org/wiki/JPEG_File_Interchange_Format</li>
+	 *   <li>http://www.w3.org/Graphics/JPEG/jfif3.pdf</li>
+	 * </ul>
+	 *
+	 * @author Drew Noakes
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class JfxxDescriptor extends TagDescriptor<JfxxDirectory>
+	{
+	    public JfxxDescriptor(@NotNull JfxxDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case JfxxDirectory.TAG_EXTENSION_CODE:
+	                return getExtensionCodeDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getExtensionCodeDescription()
+	    {
+	        Integer value = _directory.getInteger(JfxxDirectory.TAG_EXTENSION_CODE);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0x10: return "Thumbnail coded using JPEG";
+	            case 0x11: return "Thumbnail stored using 1 byte/pixel";
+	            case 0x13: return "Thumbnail stored using 3 bytes/pixel";
+	            default: return "Unknown extension code " + value;
+	        }
+	    }
+	}
+
+
+	/**
+	 * Directory of tags and values for the SOF0 JFXX segment.
+	 *
+	 * @author Drew Noakes
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class JfxxDirectory extends Directory
+	{
+	    public static final int TAG_EXTENSION_CODE = 5;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_EXTENSION_CODE, "Extension Code");
+	    }
+
+	    public JfxxDirectory()
+	    {
+	        this.setDescriptor(new JfxxDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "JFXX";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    public int getExtensionCode() throws MetadataException
+	    {
+	        return getInt(JfxxDirectory.TAG_EXTENSION_CODE);
+	    }
+	}
+	
+	/**
+	 * Decodes Adobe formatted data stored in JPEG files, normally in the APPE (App14) segment.
+	 *
+	 * @author Philip
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class AdobeJpegReader implements JpegSegmentMetadataReader
+	{
+	    public static final String PREAMBLE = "Adobe";
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APPE);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        for (byte[] bytes : segments) {
+	            if (bytes.length == 12 && PREAMBLE.equalsIgnoreCase(new String(bytes, 0, PREAMBLE.length())))
+	                extract(new SequentialByteArrayReader(bytes), metadata);
+	        }
+	    }
+
+	    public void extract(@NotNull SequentialReader reader, @NotNull Metadata metadata)
+	    {
+	        Directory directory = new AdobeJpegDirectory();
+	        metadata.addDirectory(directory);
+
+	        try {
+	            reader.setMotorolaByteOrder(false);
+
+	            if (!reader.getString(PREAMBLE.length()).equals(PREAMBLE)) {
+	                directory.addError("Invalid Adobe JPEG data header.");
+	                return;
+	            }
+
+	            directory.setInt(AdobeJpegDirectory.TAG_DCT_ENCODE_VERSION, reader.getUInt16());
+	            directory.setInt(AdobeJpegDirectory.TAG_APP14_FLAGS0, reader.getUInt16());
+	            directory.setInt(AdobeJpegDirectory.TAG_APP14_FLAGS1, reader.getUInt16());
+	            directory.setInt(AdobeJpegDirectory.TAG_COLOR_TRANSFORM, reader.getInt8());
+	        } catch (IOException ex) {
+	            directory.addError("IO exception processing data: " + ex.getMessage());
+	        }
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string versions of the tags stored in an AdobeJpegDirectory.
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class AdobeJpegDescriptor extends TagDescriptor<AdobeJpegDirectory>
+	{
+	    public AdobeJpegDescriptor(AdobeJpegDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case AdobeJpegDirectory.TAG_COLOR_TRANSFORM:
+	                return getColorTransformDescription();
+	            case AdobeJpegDirectory.TAG_DCT_ENCODE_VERSION:
+	                return getDctEncodeVersionDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    private String getDctEncodeVersionDescription()
+	    {
+	        Integer value = _directory.getInteger(AdobeJpegDirectory.TAG_DCT_ENCODE_VERSION);
+	        return value == null
+	                ? null
+	                : value == 0x64
+	                    ? "100"
+	                    : Integer.toString(value);
+	    }
+
+	    @Nullable
+	    private String getColorTransformDescription()
+	    {
+	        return getIndexedDescription(AdobeJpegDirectory.TAG_COLOR_TRANSFORM,
+	            "Unknown (RGB or CMYK)",
+	            "YCbCr",
+	            "YCCK");
+	    }
+	}
+
+
+	/**
+	 * Contains image encoding information for DCT filters, as stored by Adobe.
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class AdobeJpegDirectory extends Directory {
+
+	    public static final int TAG_DCT_ENCODE_VERSION = 0;
+	    /**
+	     * The convention for TAG_APP14_FLAGS0 and TAG_APP14_FLAGS1 is that 0 bits are benign.
+	     * 1 bits in TAG_APP14_FLAGS0 pass information that is possibly useful but not essential for decoding.
+	     * <p>
+	     * 0x8000 bit: Encoder used Blend=1 downsampling
+	     */
+	    public static final int TAG_APP14_FLAGS0 = 1;
+	    /**
+	     * The convention for TAG_APP14_FLAGS0 and TAG_APP14_FLAGS1 is that 0 bits are benign.
+	     * 1 bits in TAG_APP14_FLAGS1 pass information essential for decoding. DCTDecode could reject a compressed
+	     * image, if there are 1 bits in TAG_APP14_FLAGS1 or color transform codes that it cannot interpret.
+	     */
+	    public static final int TAG_APP14_FLAGS1 = 2;
+	    public static final int TAG_COLOR_TRANSFORM = 3;
+
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_DCT_ENCODE_VERSION, "DCT Encode Version");
+	        _tagNameMap.put(TAG_APP14_FLAGS0, "Flags 0");
+	        _tagNameMap.put(TAG_APP14_FLAGS1, "Flags 1");
+	        _tagNameMap.put(TAG_COLOR_TRANSFORM, "Color Transform");
+	    }
+
+	    public AdobeJpegDirectory() {
+	        this.setDescriptor(new AdobeJpegDescriptor(this));
+	    }
+
+	    @NotNull
+	    @Override
+	    public String getName() {
+	        return "Adobe JPEG";
+	    }
+
+	    @NotNull
+	    @Override
+	    protected HashMap<Integer, String> getTagNameMap() {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class Iterables
+	{
+	    public <E> List<E> toList(Iterable<E> iterable)
+	    {
+	        ArrayList<E> list = new ArrayList<E>();
+	        for (E item : iterable) {
+	            list.add(item);
+	        }
+	        return list;
+	    }
+
+	    public <E> Set<E> toSet(Iterable<E> iterable)
+	    {
+	        HashSet<E> set = new HashSet<E>();
+	        for (E item : iterable) {
+	            set.add(item);
+	        }
+	        return set;
+	    }
+	}
+
 
 }
