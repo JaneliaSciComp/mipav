@@ -3174,11 +3174,13 @@ public class MetadataExtractorTest extends MetadataExtractor {
 
 	    //@Test
 	    //try {
-	    //	irt.;
-	    //}testIptcEncodingUtf8()
+	    //	irt.testIptcEncodingUtf8();
+	    //}
 	    //catch(Exception e) {
 	    //	e.printStackTrace();
 	    //}
+	    //org.junit.ComparisonFailure: expected:<...Umlaute enthalten, n[Ã¤mlich Ã¶fter als Ã¼blich: Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ]
+	    //> but was:<...Umlaute enthalten, n[ämlich öfter als üblich: ÄÖÜäöüß]
 	    public void testIptcEncodingUtf8() throws Exception
 	    {
 	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-defined-utf8.bytes");
@@ -3203,6 +3205,14 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    }
 
 	    //@Test
+	    //try {
+	    //	irt.testIptcEncodingUndefinedIso();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //org.junit.ComparisonFailure: expected:<...Umlaute enthalten, n[Ã¤mlich Ã¶fter als Ã¼blich: Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ]
+	    //> but was:<...Umlaute enthalten, n[ämlich öfter als üblich: ÄÖÜäöüß]
 	    public void testIptcEncodingUndefinedIso() throws Exception
 	    {
 	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-undefined-iso.bytes");
@@ -3220,9 +3230,17 @@ public class MetadataExtractorTest extends MetadataExtractor {
 
 	        assertEquals(IptcDirectory.TAG_CAPTION, tags[2].getTagType());
 	        assertEquals("In diesem Text sind Umlaute enthalten, nÃ¤mlich Ã¶fter als Ã¼blich: Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ\r", directory.getStringValue(tags[2].getTagType()).toString());
+	        System.out.println("Finished running testIptcEncodingUndefinedIso()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	irt.testIptcEncodingUnknown();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //org.junit.ComparisonFailure: expected:<...cht deklariert und l[Ã¤]sst sich nur schwer ...> but was:<...cht deklariert und l[ä]sst sich nur schwer ...>
 	    public void testIptcEncodingUnknown() throws Exception
 	    {
 	        IptcDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/iptc-encoding-unknown.bytes");
@@ -3240,9 +3258,18 @@ public class MetadataExtractorTest extends MetadataExtractor {
 
 	        assertEquals(IptcDirectory.TAG_KEYWORDS, tags[2].getTagType());
 	        assertArrayEquals(new String[]{"hÃ¤ufig", "Ã¼blich", "LÃ¶sung", "SpaÃŸ"}, directory.getStringArray(tags[2].getTagType()));
+	        System.out.println("Finished running testIptcEncodingUnknown()");
 	    }
+	    
 
 	    //@Test
+	    //try {
+	    //	irt.testIptcEncodingUnknown2();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIptcEncodingUnknown2()
 	    public void testIptcEncodingUnknown2() throws Exception
 	    {
 	        // This metadata has an encoding of three characters [ \ESC '%' '5' ]
@@ -3256,9 +3283,151 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals(37, tags.length);
 
 	        assertEquals("MEDWAS,MEDLON,MEDTOR,RONL,ASIA,AONL,APC,USA,CAN,SAM,BIZ", directory.getString(IptcDirectory.TAG_DESTINATION));
+	        System.out.println("Finished running testIptcEncodingUnknown2()");
 	    }
 	}
 
+	public class Iso2022ConverterTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //Iso2022ConverterTest ict = me.new Iso2022ConverterTest();
+	    //@Test
+		//try {
+	    //	ict.testConvertISO2022CharsetToJavaCharset();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testConvertISO2022CharsetToJavaCharset()
+	    public void testConvertISO2022CharsetToJavaCharset() throws Exception
+	    {
+	    	Iso2022Converter iso = new Iso2022Converter();
+	        assertEquals("UTF-8", iso.convertISO2022CharsetToJavaCharset(new byte[]{0x1B, 0x25, 0x47}));
+	        assertEquals("ISO-8859-1", iso.convertISO2022CharsetToJavaCharset(new byte[]{0x1B, 0x2E, 0x41}));
+	        assertEquals("ISO-8859-1", iso.convertISO2022CharsetToJavaCharset(new byte[]{0x1B, (byte)0xE2, (byte)0x80, (byte)0xA2, 0x41}));
+	        System.out.println("Finished running testConvertISO2022CharsetToJavaCharset()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class JfifReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //JfifReaderTest jrt = me.new JfifReaderTest();
+	    //@Test 
+		//try {
+	    //	jrt.testRead();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testRead()
+	    public void testRead() throws Exception
+	    {
+	        final byte[] jfifData = new byte[] {
+	            74,70,73,70,0,
+	            1,2,
+	            1,
+	            0,108,
+	            0,108,
+	            0,0
+	        };
+
+	        final Metadata metadata = new Metadata();
+	        final JfifReader reader = new JfifReader();
+	        reader.extract(new ByteArrayReader(jfifData), metadata);
+
+	        assertEquals(1, metadata.getDirectoryCount());
+	        JfifDirectory directory = metadata.getFirstDirectoryOfType(JfifDirectory.class);
+	        assertNotNull(directory);
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        Tag[] tags = directory.getTags().toArray(new Tag[directory.getTagCount()]);
+	        assertEquals(6, tags.length);
+
+	        assertEquals(JfifDirectory.TAG_VERSION, tags[0].getTagType());
+	        assertEquals(0x0102, directory.getInt(tags[0].getTagType()));
+
+	        assertEquals(JfifDirectory.TAG_UNITS, tags[1].getTagType());
+	        assertEquals(1, directory.getInt(tags[1].getTagType()));
+
+	        assertEquals(JfifDirectory.TAG_RESX, tags[2].getTagType());
+	        assertEquals(108, directory.getInt(tags[2].getTagType()));
+
+	        assertEquals(JfifDirectory.TAG_RESY, tags[3].getTagType());
+	        assertEquals(108, directory.getInt(tags[3].getTagType()));
+
+	        assertEquals(JfifDirectory.TAG_THUMB_WIDTH, tags[4].getTagType());
+	        assertEquals(0, directory.getInt(tags[4].getTagType()));
+
+	        assertEquals(JfifDirectory.TAG_THUMB_HEIGHT, tags[5].getTagType());
+	        assertEquals(0, directory.getInt(tags[5].getTagType()));
+	        System.out.println("Finished running testRead()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class AdobeJpegReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //AdobeJpegReaderTest jrt = me.new AdobeJpegReaderTest();
+	    @NotNull
+	    public AdobeJpegDirectory processBytes(@NotNull String filePath) throws IOException
+	    {
+	        Metadata metadata = new Metadata();
+	        new AdobeJpegReader().extract(new SequentialByteArrayReader(FileUtil.readBytes(filePath)), metadata);
+
+	        AdobeJpegDirectory directory = metadata.getFirstDirectoryOfType(AdobeJpegDirectory.class);
+	        assertNotNull(directory);
+	        return directory;
+	    }
+
+	    //@Test
+	    //try {
+	    //	jrt.testSegmentTypes();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testSegmentTypes()
+	    public void testSegmentTypes() throws Exception
+	    {
+	        AdobeJpegReader reader = new AdobeJpegReader();
+	        Iterables it = new Iterables();
+
+	        assertEquals(1, it.toList(reader.getSegmentTypes()).size());
+	        assertEquals(JpegSegmentType.APPE, it.toList(reader.getSegmentTypes()).get(0));
+	        System.out.println("Finished running testSegmentTypes()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	jrt.testReadAdobeJpegMetadata1();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testReadAdobeJpegMetadata1()
+
+	    public void testReadAdobeJpegMetadata1() throws Exception
+	    {
+	        AdobeJpegDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/adobeJpeg1.jpg.appe");
+
+	        assertFalse(directory.getErrors().toString(), directory.hasErrors());
+
+	        assertEquals(4, directory.getTagCount());
+
+	        assertEquals(1, directory.getInt(AdobeJpegDirectory.TAG_COLOR_TRANSFORM));
+	        assertEquals(25600, directory.getInt(AdobeJpegDirectory.TAG_DCT_ENCODE_VERSION));
+	        assertEquals(128, directory.getInt(AdobeJpegDirectory.TAG_APP14_FLAGS0));
+	        assertEquals(0, directory.getInt(AdobeJpegDirectory.TAG_APP14_FLAGS1));
+	        System.out.println("Finished running testReadAdobeJpegMetadata1()");
+	    }
+	}
 
 
 }
