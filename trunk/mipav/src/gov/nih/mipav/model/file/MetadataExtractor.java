@@ -3662,8 +3662,8 @@ public class MetadataExtractor {
 	            new IccReader(),
 	            /*
 	            new PhotoshopReader(),
-	            new DuckyReader(),
 	            */
+	            new DuckyReader(),
 	            me.new IptcReader(),
 	            new AdobeJpegReader(),
 	            new JpegDhtReader(),
@@ -29793,6 +29793,1166 @@ public class MetadataExtractor {
 	            set.add(item);
 	        }
 	        return set;
+	    }
+	}
+	
+	/**
+	 * Holds the data found in Photoshop "ducky" segments, created during Save-for-Web.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class DuckyDirectory extends Directory
+	{
+	    public static final int TAG_QUALITY = 1;
+	    public static final int TAG_COMMENT = 2;
+	    public static final int TAG_COPYRIGHT = 3;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_COMMENT, "Comment");
+	        _tagNameMap.put(TAG_COPYRIGHT, "Copyright");
+	    }
+
+	    public DuckyDirectory()
+	    {
+	        this.setDescriptor(new TagDescriptor<DuckyDirectory>(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Ducky";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+
+	
+	/**
+	 * Reads Photoshop "ducky" segments, created during Save-for-Web.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class DuckyReader implements JpegSegmentMetadataReader
+	{
+	    @NotNull
+	    private static final String JPEG_SEGMENT_PREAMBLE = "Ducky";
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APPC);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        final int preambleLength = JPEG_SEGMENT_PREAMBLE.length();
+
+	        for (byte[] segmentBytes : segments) {
+	            // Ensure data starts with the necessary preamble
+	            if (segmentBytes.length < preambleLength || !JPEG_SEGMENT_PREAMBLE.equals(new String(segmentBytes, 0, preambleLength)))
+	                continue;
+
+	            extract(
+	                new SequentialByteArrayReader(segmentBytes, preambleLength),
+	                metadata);
+	        }
+	    }
+
+	    public void extract(@NotNull final SequentialReader reader, @NotNull final Metadata metadata)
+	    {
+	        DuckyDirectory directory = new DuckyDirectory();
+	        metadata.addDirectory(directory);
+
+	        try
+	        {
+	            while (true)
+	            {
+	                int tag = reader.getUInt16();
+
+	                // End of Segment is marked with zero
+	                if (tag == 0)
+	                    break;
+
+	                int length = reader.getUInt16();
+
+	                switch (tag)
+	                {
+	                    case DuckyDirectory.TAG_QUALITY:
+	                    {
+	                        if (length != 4)
+	                        {
+	                            directory.addError("Unexpected length for the quality tag");
+	                            return;
+	                        }
+	                        directory.setInt(tag, reader.getInt32());
+	                        break;
+	                    }
+	                    case DuckyDirectory.TAG_COMMENT:
+	                    case DuckyDirectory.TAG_COPYRIGHT:
+	                    {
+	                        reader.skip(4);
+	                        Charsets ch = new Charsets();
+	                        directory.setStringValue(tag, reader.getStringValue(length - 4, ch.UTF_16BE));
+	                        break;
+	                    }
+	                    default:
+	                    {
+	                        // Unexpected tag
+	                        directory.setByteArray(tag, reader.getBytes(length));
+	                        break;
+	                    }
+	                }
+	            }
+	        }
+	        catch (IOException e)
+	        {
+	            directory.addError(e.getMessage());
+	        }
+	    }
+	}
+
+	/**
+	 * Obtains metadata from BMP files.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class BmpMetadataReader
+	{
+	    @NotNull
+	    public Metadata readMetadata(@NotNull File file) throws IOException
+	    {
+	        InputStream inputStream = new FileInputStream(file);
+	        Metadata metadata;
+	        try {
+	            metadata = readMetadata(inputStream);
+	        } finally {
+	            inputStream.close();
+	        }
+	        new FileSystemMetadataReader().read(file, metadata);
+	        return metadata;
+	    }
+
+	    @NotNull
+	    public Metadata readMetadata(@NotNull InputStream inputStream)
+	    {
+	        Metadata metadata = new Metadata();
+	        new BmpReader().extract(new StreamReader(inputStream), metadata);
+	        return metadata;
+	    }
+	}
+
+	/**
+	 * Reader for Windows and OS/2 bitmap files.
+	 * <p>
+	 * References:
+	 * <ul>
+	 *   <li><a href="https://web.archive.org/web/20170302205626/http://fileformats.archiveteam.org/wiki/BMP">Fileformats Wiki BMP overview</a></li>
+	 *   <li><a href="http://web.archive.org/web/20170303000822/http://netghost.narod.ru/gff/graphics/summary/micbmp.htm">Graphics File Formats encyclopedia Windows bitmap description</a></li>
+	 *   <li><a href="https://web.archive.org/web/20170302205330/http://netghost.narod.ru/gff/graphics/summary/os2bmp.htm">Graphics File Formats encyclopedia OS/2 bitmap description</a></li>
+	 *   <li><a href="https://web.archive.org/web/20170302205457/http://www.fileformat.info/format/os2bmp/spec/902d5c253f2a43ada39c2b81034f27fd/view.htm">OS/2 bitmap specification</a></li>
+	 *   <li><a href="https://msdn.microsoft.com/en-us/library/dd183392(v=vs.85).aspx">Microsoft Bitmap Structures</a></li>
+	 * </ul>
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Nadahar
+	 */
+	public class BmpReader
+	{
+	    // Possible "magic bytes" indicating bitmap type:
+	    /**
+	     * "BM" - Windows or OS/2 bitmap
+	     */
+	    public static final int BITMAP = 0x4D42;
+	    /**
+	     * "BA" - OS/2 Bitmap array (multiple bitmaps)
+	     */
+	    public static final int OS2_BITMAP_ARRAY = 0x4142;
+	    /**
+	     * "IC" - OS/2 Icon
+	     */
+	    public static final int OS2_ICON = 0x4349;
+	    /**
+	     * "CI" - OS/2 Color icon
+	     */
+	    public static final int OS2_COLOR_ICON = 0x4943;
+	    /**
+	     * "CP" - OS/2 Color pointer
+	     */
+	    public static final int OS2_COLOR_POINTER = 0x5043;
+	    /**
+	     * "PT" - OS/2 Pointer
+	     */
+	    public static final int OS2_POINTER = 0x5450;
+
+	    public void extract(@NotNull final SequentialReader reader, final @NotNull Metadata metadata)
+	    {
+	        reader.setMotorolaByteOrder(false);
+
+	        // BITMAP INFORMATION HEADER
+	        //
+	        // The first four bytes of the header give the size, which is a discriminator of the actual header format.
+	        // See this for more information http://en.wikipedia.org/wiki/BMP_file_format
+
+	        readFileHeader(reader, metadata, true);
+	    }
+
+	    protected void readFileHeader(@NotNull final SequentialReader reader, final @NotNull Metadata metadata, boolean allowArray) {
+	        /*
+	         * There are two possible headers a file can start with. If the magic
+	         * number is OS/2 Bitmap Array (0x4142) the OS/2 Bitmap Array Header
+	         * will follow. In all other cases the file header will follow, which
+	         * is identical for Windows and OS/2.
+	         *
+	         * File header:
+	         *
+	         *    WORD   FileType;      - File type identifier
+	         *    DWORD  FileSize;      - Size of the file in bytes
+	         *    WORD   XHotSpot;      - X coordinate of hotspot for pointers
+	         *    WORD   YHotSpot;      - Y coordinate of hotspot for pointers
+	         *    DWORD  BitmapOffset;  - Starting position of image data in bytes
+	         *
+	         * OS/2 Bitmap Array Header:
+	         *
+	         *     WORD  Type;          - Header type, always 4142h ("BA")
+	         *     DWORD Size;          - Size of this header
+	         *     DWORD OffsetToNext;  - Offset to next OS2BMPARRAYFILEHEADER
+	         *     WORD  ScreenWidth;   - Width of the image display in pixels
+	         *     WORD  ScreenHeight;  - Height of the image display in pixels
+	         *
+	         */
+
+	        final int magicNumber;
+	        try {
+	            magicNumber = reader.getUInt16();
+	        } catch (IOException e) {
+	            metadata.addDirectory(new ErrorDirectory("Couldn't determine bitmap type: " + e.getMessage()));
+	            return;
+	        }
+
+	        Directory directory = null;
+	        try {
+	            switch (magicNumber) {
+	                case OS2_BITMAP_ARRAY:
+	                    if (!allowArray) {
+	                        addError("Invalid bitmap file - nested arrays not allowed", metadata);
+	                        return;
+	                    }
+	                    reader.skip(4); // Size
+	                    long nextHeaderOffset = reader.getUInt32();
+	                    reader.skip(2 + 2); // Screen Resolution
+	                    readFileHeader(reader, metadata, false);
+	                    if (nextHeaderOffset == 0) {
+	                        return; // No more bitmaps
+	                    }
+	                    if (reader.getPosition() > nextHeaderOffset) {
+	                        addError("Invalid next header offset", metadata);
+	                        return;
+	                    }
+	                    reader.skip(nextHeaderOffset - reader.getPosition());
+	                    readFileHeader(reader, metadata, true);
+	                    break;
+	                case BITMAP:
+	                case OS2_ICON:
+	                case OS2_COLOR_ICON:
+	                case OS2_COLOR_POINTER:
+	                case OS2_POINTER:
+	                    directory = new BmpHeaderDirectory();
+	                    metadata.addDirectory(directory);
+	                    directory.setInt(BmpHeaderDirectory.TAG_BITMAP_TYPE, magicNumber);
+	                    // skip past the rest of the file header
+	                    reader.skip(4 + 2 + 2 + 4);
+	                    readBitmapHeader(reader, (BmpHeaderDirectory) directory, metadata);
+	                    break;
+	                default:
+	                    metadata.addDirectory(new ErrorDirectory("Invalid BMP magic number 0x" + Integer.toHexString(magicNumber)));
+	                    return;
+	            }
+	        } catch (IOException e) {
+	            if (directory == null) {
+	                 addError("Unable to read BMP file header", metadata);
+	            } else {
+	                directory.addError("Unable to read BMP file header");
+	            }
+	        }
+	    }
+
+	    protected void readBitmapHeader(@NotNull final SequentialReader reader, final @NotNull BmpHeaderDirectory directory, final @NotNull Metadata metadata) {
+	        /*
+	         * BITMAPCOREHEADER (12 bytes):
+	         *
+	         *    DWORD Size              - Size of this header in bytes
+	         *    SHORT Width             - Image width in pixels
+	         *    SHORT Height            - Image height in pixels
+	         *    WORD  Planes            - Number of color planes
+	         *    WORD  BitsPerPixel      - Number of bits per pixel
+	         *
+	         * OS21XBITMAPHEADER (12 bytes):
+	         *
+	         *    DWORD  Size             - Size of this structure in bytes
+	         *    WORD   Width            - Bitmap width in pixels
+	         *    WORD   Height           - Bitmap height in pixel
+	         *      WORD   NumPlanes        - Number of bit planes (color depth)
+	         *    WORD   BitsPerPixel     - Number of bits per pixel per plane
+	         *
+	         * OS22XBITMAPHEADER (16/64 bytes):
+	         *
+	         *    DWORD  Size             - Size of this structure in bytes
+	         *    DWORD  Width            - Bitmap width in pixels
+	         *    DWORD  Height           - Bitmap height in pixel
+	         *      WORD   NumPlanes        - Number of bit planes (color depth)
+	         *    WORD   BitsPerPixel     - Number of bits per pixel per plane
+	         *
+	         *    - Short version ends here -
+	         *
+	         *    DWORD  Compression      - Bitmap compression scheme
+	         *    DWORD  ImageDataSize    - Size of bitmap data in bytes
+	         *    DWORD  XResolution      - X resolution of display device
+	         *    DWORD  YResolution      - Y resolution of display device
+	         *    DWORD  ColorsUsed       - Number of color table indices used
+	         *    DWORD  ColorsImportant  - Number of important color indices
+	         *    WORD   Units            - Type of units used to measure resolution
+	         *    WORD   Reserved         - Pad structure to 4-byte boundary
+	         *    WORD   Recording        - Recording algorithm
+	         *    WORD   Rendering        - Halftoning algorithm used
+	         *    DWORD  Size1            - Reserved for halftoning algorithm use
+	         *    DWORD  Size2            - Reserved for halftoning algorithm use
+	         *    DWORD  ColorEncoding    - Color model used in bitmap
+	         *    DWORD  Identifier       - Reserved for application use
+	         *
+	         * BITMAPINFOHEADER (40 bytes), BITMAPV2INFOHEADER (52 bytes), BITMAPV3INFOHEADER (56 bytes),
+	         * BITMAPV4HEADER (108 bytes) and BITMAPV5HEADER (124 bytes):
+	         *
+	         *    DWORD Size              - Size of this header in bytes
+	         *    LONG  Width             - Image width in pixels
+	         *    LONG  Height            - Image height in pixels
+	         *    WORD  Planes            - Number of color planes
+	         *    WORD  BitsPerPixel      - Number of bits per pixel
+	         *    DWORD Compression       - Compression methods used
+	         *    DWORD SizeOfBitmap      - Size of bitmap in bytes
+	         *    LONG  HorzResolution    - Horizontal resolution in pixels per meter
+	         *    LONG  VertResolution    - Vertical resolution in pixels per meter
+	         *    DWORD ColorsUsed        - Number of colors in the image
+	         *    DWORD ColorsImportant   - Minimum number of important colors
+	         *
+	         *    - BITMAPINFOHEADER ends here -
+	         *
+	         *    DWORD RedMask           - Mask identifying bits of red component
+	         *    DWORD GreenMask         - Mask identifying bits of green component
+	         *    DWORD BlueMask          - Mask identifying bits of blue component
+	         *
+	         *    - BITMAPV2INFOHEADER ends here -
+	         *
+	         *    DWORD AlphaMask         - Mask identifying bits of alpha component
+	         *
+	         *    - BITMAPV3INFOHEADER ends here -
+	         *
+	         *    DWORD CSType            - Color space type
+	         *    LONG  RedX              - X coordinate of red endpoint
+	         *    LONG  RedY              - Y coordinate of red endpoint
+	         *    LONG  RedZ              - Z coordinate of red endpoint
+	         *    LONG  GreenX            - X coordinate of green endpoint
+	         *    LONG  GreenY            - Y coordinate of green endpoint
+	         *    LONG  GreenZ            - Z coordinate of green endpoint
+	         *    LONG  BlueX             - X coordinate of blue endpoint
+	         *    LONG  BlueY             - Y coordinate of blue endpoint
+	         *    LONG  BlueZ             - Z coordinate of blue endpoint
+	         *    DWORD GammaRed          - Gamma red coordinate scale value
+	         *    DWORD GammaGreen        - Gamma green coordinate scale value
+	         *    DWORD GammaBlue         - Gamma blue coordinate scale value
+	         *
+	         *    - BITMAPV4HEADER ends here -
+	         *
+	         *    DWORD Intent            - Rendering intent for bitmap
+	         *    DWORD ProfileData       - Offset of the profile data relative to BITMAPV5HEADER
+	         *    DWORD ProfileSize       - Size, in bytes, of embedded profile data
+	         *    DWORD Reserved          - Shall be zero
+	         *
+	         */
+
+	        try {
+	            int bitmapType = directory.getInt(BmpHeaderDirectory.TAG_BITMAP_TYPE);
+	            long headerOffset = reader.getPosition();
+	            int headerSize = reader.getInt32();
+
+	            directory.setInt(BmpHeaderDirectory.TAG_HEADER_SIZE, headerSize);
+
+	            /*
+	             * Known header type sizes:
+	             *
+	             *  12 - BITMAPCOREHEADER or OS21XBITMAPHEADER
+	             *  16 - OS22XBITMAPHEADER (short)
+	             *  40 - BITMAPINFOHEADER
+	             *  52 - BITMAPV2INFOHEADER
+	             *  56 - BITMAPV3INFOHEADER
+	             *  64 - OS22XBITMAPHEADER (full)
+	             * 108 - BITMAPV4HEADER
+	             * 124 - BITMAPV5HEADER
+	             *
+	             */
+
+	            if (headerSize == 12 && bitmapType == BITMAP) { //BITMAPCOREHEADER
+	                /*
+	                 * There's no way to tell BITMAPCOREHEADER and OS21XBITMAPHEADER
+	                 * apart for the "standard" bitmap type. The difference is only
+	                 * that BITMAPCOREHEADER has signed width and height while
+	                 * in OS21XBITMAPHEADER they are unsigned. Since BITMAPCOREHEADER,
+	                 * the Windows version, is most common, read them as signed.
+	                 */
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_WIDTH, reader.getInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_HEIGHT, reader.getInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_COLOUR_PLANES, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_BITS_PER_PIXEL, reader.getUInt16());
+	            } else if (headerSize == 12) { // OS21XBITMAPHEADER
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_WIDTH, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_HEIGHT, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_COLOUR_PLANES, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_BITS_PER_PIXEL, reader.getUInt16());
+	            } else if (headerSize == 16 || headerSize == 64) { // OS22XBITMAPHEADER
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_WIDTH, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_HEIGHT, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_COLOUR_PLANES, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_BITS_PER_PIXEL, reader.getUInt16());
+	                if (headerSize > 16) {
+	                    directory.setInt(BmpHeaderDirectory.TAG_COMPRESSION, reader.getInt32());
+	                    reader.skip(4); // skip the pixel data length
+	                    directory.setInt(BmpHeaderDirectory.TAG_X_PIXELS_PER_METER, reader.getInt32());
+	                    directory.setInt(BmpHeaderDirectory.TAG_Y_PIXELS_PER_METER, reader.getInt32());
+	                    directory.setInt(BmpHeaderDirectory.TAG_PALETTE_COLOUR_COUNT, reader.getInt32());
+	                    directory.setInt(BmpHeaderDirectory.TAG_IMPORTANT_COLOUR_COUNT, reader.getInt32());
+	                    reader.skip(
+	                        2 + // Skip Units, can only be 0 (pixels per meter)
+	                        2 + // Skip padding
+	                        2   // Skip Recording, can only be 0 (left to right, bottom to top)
+	                    );
+	                    directory.setInt(BmpHeaderDirectory.TAG_RENDERING, reader.getUInt16());
+	                    reader.skip(4 + 4); // Skip Size1 and Size2
+	                    directory.setInt(BmpHeaderDirectory.TAG_COLOR_ENCODING, reader.getInt32());
+	                    reader.skip(4); // Skip Identifier
+	                }
+	            } else if (
+	                headerSize == 40 || headerSize == 52 || headerSize == 56 ||
+	                headerSize == 108 || headerSize == 124
+	            ) { // BITMAPINFOHEADER V1-5
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_WIDTH, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_IMAGE_HEIGHT, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_COLOUR_PLANES, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_BITS_PER_PIXEL, reader.getUInt16());
+	                directory.setInt(BmpHeaderDirectory.TAG_COMPRESSION, reader.getInt32());
+	                // skip the pixel data length
+	                reader.skip(4);
+	                directory.setInt(BmpHeaderDirectory.TAG_X_PIXELS_PER_METER, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_Y_PIXELS_PER_METER, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_PALETTE_COLOUR_COUNT, reader.getInt32());
+	                directory.setInt(BmpHeaderDirectory.TAG_IMPORTANT_COLOUR_COUNT, reader.getInt32());
+	                if (headerSize == 40) { // BITMAPINFOHEADER end
+	                    return;
+	                }
+	                directory.setLong(BmpHeaderDirectory.TAG_RED_MASK, reader.getUInt32());
+	                directory.setLong(BmpHeaderDirectory.TAG_GREEN_MASK, reader.getUInt32());
+	                directory.setLong(BmpHeaderDirectory.TAG_BLUE_MASK, reader.getUInt32());
+	                if (headerSize == 52) { // BITMAPV2INFOHEADER end
+	                    return;
+	                }
+	                directory.setLong(BmpHeaderDirectory.TAG_ALPHA_MASK, reader.getUInt32());
+	                if (headerSize == 56) { // BITMAPV3INFOHEADER end
+	                    return;
+	                }
+	                long csType = reader.getUInt32();
+	                directory.setLong(BmpHeaderDirectory.TAG_COLOR_SPACE_TYPE, csType);
+	                reader.skip(36); // Skip color endpoint coordinates
+	                directory.setLong(BmpHeaderDirectory.TAG_GAMMA_RED, reader.getUInt32());
+	                directory.setLong(BmpHeaderDirectory.TAG_GAMMA_GREEN, reader.getUInt32());
+	                directory.setLong(BmpHeaderDirectory.TAG_GAMMA_BLUE, reader.getUInt32());
+	                if (headerSize == 108) { // BITMAPV4HEADER end
+	                    return;
+	                }
+	                directory.setInt(BmpHeaderDirectory.TAG_INTENT, reader.getInt32());
+	                if (csType == BmpHeaderDirectory.ColorSpaceType.PROFILE_EMBEDDED || csType == BmpHeaderDirectory.ColorSpaceType.PROFILE_LINKED) {
+	                    long profileOffset = reader.getUInt32();
+	                    int profileSize = reader.getInt32();
+	                    if (profileSize < 0) {
+	                        directory.addError("Invalid profile size " + profileSize);
+	                        return;
+	                    }
+	                    if (reader.getPosition() > headerOffset + profileOffset) {
+	                        directory.addError("Invalid profile data offset 0x" + Long.toHexString(headerOffset + profileOffset));
+	                        return;
+	                    }
+	                    reader.skip(headerOffset + profileOffset - reader.getPosition());
+	                    if (csType == BmpHeaderDirectory.ColorSpaceType.PROFILE_LINKED) {
+	                    	Charsets ch = new Charsets();
+	                        directory.setString(BmpHeaderDirectory.TAG_LINKED_PROFILE, reader.getNullTerminatedString(profileSize, ch.WINDOWS_1252));
+	                    } else {
+	                        ByteArrayReader randomAccessReader = new ByteArrayReader(reader.getBytes(profileSize));
+	                        new IccReader().extract(randomAccessReader, metadata, directory);
+	                    }
+	                } else {
+	                    reader.skip(
+	                        4 + // Skip ProfileData offset
+	                        4 + // Skip ProfileSize
+	                        4   // Skip Reserved
+	                    );
+	                }
+	            } else {
+	                directory.addError("Unexpected DIB header size: " + headerSize);
+	            }
+	        } catch (IOException e) {
+	            directory.addError("Unable to read BMP header");
+	        } catch (MetadataException e) {
+	            directory.addError("Internal error");
+	        }
+	    }
+
+	    protected void addError(@NotNull String errorMessage, final @NotNull Metadata metadata) {
+	        ErrorDirectory directory = metadata.getFirstDirectoryOfType(ErrorDirectory.class);
+	        if (directory == null) {
+	            metadata.addDirectory(new ErrorDirectory(errorMessage));
+	        } else {
+	            directory.addError(errorMessage);
+	        }
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Nadahar
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class BmpHeaderDescriptor extends TagDescriptor<BmpHeaderDirectory>
+	{
+	    public BmpHeaderDescriptor(@NotNull BmpHeaderDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case BmpHeaderDirectory.TAG_BITMAP_TYPE:
+	                return getBitmapTypeDescription();
+	            case BmpHeaderDirectory.TAG_COMPRESSION:
+	                return getCompressionDescription();
+	            case BmpHeaderDirectory.TAG_RENDERING:
+	                return getRenderingDescription();
+	            case BmpHeaderDirectory.TAG_COLOR_ENCODING:
+	                return getColorEncodingDescription();
+	            case BmpHeaderDirectory.TAG_RED_MASK:
+	            case BmpHeaderDirectory.TAG_GREEN_MASK:
+	            case BmpHeaderDirectory.TAG_BLUE_MASK:
+	            case BmpHeaderDirectory.TAG_ALPHA_MASK:
+	                return formatHex(_directory.getLongObject(tagType), 8);
+	            case BmpHeaderDirectory.TAG_COLOR_SPACE_TYPE:
+	                return getColorSpaceTypeDescription();
+	            case BmpHeaderDirectory.TAG_GAMMA_RED:
+	            case BmpHeaderDirectory.TAG_GAMMA_GREEN:
+	            case BmpHeaderDirectory.TAG_GAMMA_BLUE:
+	                return formatFixed1616(_directory.getLongObject(tagType));
+	            case BmpHeaderDirectory.TAG_INTENT:
+	                return getRenderingIntentDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getBitmapTypeDescription()
+	    {
+	        BmpHeaderDirectory.BitmapType bitmapType = _directory.getBitmapType();
+	        return bitmapType == null ? null : bitmapType.toString();
+	    }
+
+	    @Nullable
+	    public String getCompressionDescription()
+	    {
+	        //  0 = None
+	        //  1 = RLE 8-bit/pixel
+	        //  2 = RLE 4-bit/pixel
+	        //  3 = Bit fields (or Huffman 1D if OS22XBITMAPHEADER (size 64))
+	        //  4 = JPEG (or RLE 24-bit/pixel if OS22XBITMAPHEADER (size 64))
+	        //  5 = PNG
+	        // 11 = CMYK
+	        // 12 = CMYK RLE-8
+	        // 13 = CMYK RLE-4
+
+	        BmpHeaderDirectory.Compression compression = _directory.getCompression();
+	        if (compression != null) {
+	            return compression.toString();
+	        }
+	        Integer value = _directory.getInteger(BmpHeaderDirectory.TAG_COMPRESSION);
+	        return value == null ? null : "Illegal value 0x" + Integer.toHexString(value.intValue());
+	    }
+
+	    @Nullable
+	    public String getRenderingDescription()
+	    {
+	        BmpHeaderDirectory.RenderingHalftoningAlgorithm renderingHalftoningAlgorithm = _directory.getRendering();
+	        return renderingHalftoningAlgorithm == null ? null : renderingHalftoningAlgorithm.toString();
+	    }
+
+	    @Nullable
+	    public String getColorEncodingDescription()
+	    {
+	    	BmpHeaderDirectory.ColorEncoding colorEncoding = _directory.getColorEncoding();
+	        return colorEncoding == null ? null : colorEncoding.toString();
+	    }
+
+	    @Nullable
+	    public String getColorSpaceTypeDescription()
+	    {
+	    	BmpHeaderDirectory.ColorSpaceType colorSpaceType = _directory.getColorSpaceType();
+	        return colorSpaceType == null ? null : colorSpaceType.toString();
+	    }
+
+	    @Nullable
+	    public String getRenderingIntentDescription()
+	    {
+	    	BmpHeaderDirectory.RenderingIntent renderingIntent = _directory.getRenderingIntent();
+	        return renderingIntent == null ? null : renderingIntent.toString();
+	    }
+
+	    @Nullable
+	    public String formatHex(@Nullable Integer value, int digits) {
+	        return value == null ? null : formatHex(value.intValue() & 0xFFFFFFFFL, digits);
+	    }
+
+	    @NotNull
+	    public String formatHex(int value, int digits) {
+	        return formatHex(value & 0xFFFFFFFFL, digits);
+	    }
+
+	    @Nullable
+	    public String formatHex(@Nullable Long value, int digits) {
+	        return value == null ? null : formatHex(value.longValue(), digits);
+	    }
+
+	    @NotNull
+	    public String formatHex(long value, int digits) {
+	        return String.format("0x%0"+ digits + "X", value);
+	    }
+
+	    @Nullable
+	    public String formatFixed1616(Integer value) {
+	        return value == null ? null : formatFixed1616(value.intValue() & 0xFFFFFFFFL);
+	    }
+
+	    @NotNull
+	    public String formatFixed1616(int value) {
+	        return formatFixed1616(value & 0xFFFFFFFFL);
+	    }
+
+	    @Nullable
+	    public String formatFixed1616(Long value) {
+	        return value == null ? null : formatFixed1616(value.longValue());
+	    }
+
+	    @NotNull
+	    public String formatFixed1616(long value) {
+	        Double d = (double) value / 0x10000;
+	        DecimalFormat format = new DecimalFormat("0.###");
+	        return format.format(d);
+	    }
+	}
+
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Nadahar
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class BmpHeaderDirectory extends Directory
+	{
+	    public static final int TAG_BITMAP_TYPE = -2;
+	    public static final int TAG_HEADER_SIZE = -1;
+
+	    public static final int TAG_IMAGE_HEIGHT = 1;
+	    public static final int TAG_IMAGE_WIDTH = 2;
+	    public static final int TAG_COLOUR_PLANES = 3;
+	    public static final int TAG_BITS_PER_PIXEL = 4;
+	    public static final int TAG_COMPRESSION = 5;
+	    public static final int TAG_X_PIXELS_PER_METER = 6;
+	    public static final int TAG_Y_PIXELS_PER_METER = 7;
+	    public static final int TAG_PALETTE_COLOUR_COUNT = 8;
+	    public static final int TAG_IMPORTANT_COLOUR_COUNT = 9;
+	    public static final int TAG_RENDERING = 10;
+	    public static final int TAG_COLOR_ENCODING = 11;
+	    public static final int TAG_RED_MASK = 12;
+	    public static final int TAG_GREEN_MASK = 13;
+	    public static final int TAG_BLUE_MASK = 14;
+	    public static final int TAG_ALPHA_MASK = 15;
+	    public static final int TAG_COLOR_SPACE_TYPE = 16;
+	    public static final int TAG_GAMMA_RED = 17;
+	    public static final int TAG_GAMMA_GREEN = 18;
+	    public static final int TAG_GAMMA_BLUE = 19;
+	    public static final int TAG_INTENT = 20;
+	    public static final int TAG_LINKED_PROFILE = 21;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_BITMAP_TYPE, "Bitmap type");
+	        _tagNameMap.put(TAG_HEADER_SIZE, "Header Size");
+
+	        _tagNameMap.put(TAG_IMAGE_HEIGHT, "Image Height");
+	        _tagNameMap.put(TAG_IMAGE_WIDTH, "Image Width");
+	        _tagNameMap.put(TAG_COLOUR_PLANES, "Planes");
+	        _tagNameMap.put(TAG_BITS_PER_PIXEL, "Bits Per Pixel");
+	        _tagNameMap.put(TAG_COMPRESSION, "Compression");
+	        _tagNameMap.put(TAG_X_PIXELS_PER_METER, "X Pixels per Meter");
+	        _tagNameMap.put(TAG_Y_PIXELS_PER_METER, "Y Pixels per Meter");
+	        _tagNameMap.put(TAG_PALETTE_COLOUR_COUNT, "Palette Colour Count");
+	        _tagNameMap.put(TAG_IMPORTANT_COLOUR_COUNT, "Important Colour Count");
+	        _tagNameMap.put(TAG_RENDERING, "Rendering");
+	        _tagNameMap.put(TAG_COLOR_ENCODING, "Color Encoding");
+	        _tagNameMap.put(TAG_RED_MASK, "Red Mask");
+	        _tagNameMap.put(TAG_GREEN_MASK, "Green Mask");
+	        _tagNameMap.put(TAG_BLUE_MASK, "Blue Mask");
+	        _tagNameMap.put(TAG_ALPHA_MASK, "Alpha Mask");
+	        _tagNameMap.put(TAG_COLOR_SPACE_TYPE, "Color Space Type");
+	        _tagNameMap.put(TAG_GAMMA_RED, "Red Gamma Curve");
+	        _tagNameMap.put(TAG_GAMMA_GREEN, "Green Gamma Curve");
+	        _tagNameMap.put(TAG_GAMMA_BLUE, "Blue Gamma Curve");
+	        _tagNameMap.put(TAG_INTENT, "Rendering Intent");
+	        _tagNameMap.put(TAG_LINKED_PROFILE, "Linked Profile File Name");
+	    }
+
+	    public BmpHeaderDirectory()
+	    {
+	        this.setDescriptor(new BmpHeaderDescriptor(this));
+	    }
+
+	    @Nullable
+	    public BitmapType getBitmapType() {
+	        Integer value = getInteger(TAG_BITMAP_TYPE);
+	        if (value == null) {
+	        	return null;
+	        }
+	        return new BitmapType(value.intValue());
+	    }
+
+	    @Nullable
+	    public Compression getCompression() {
+	    	Integer value = getInteger(TAG_COMPRESSION);
+            if (value == null)
+                return null;
+            Integer headerSize = getInteger(TAG_HEADER_SIZE);
+            if (headerSize == null)
+                return null;
+
+            return new Compression(value, headerSize);
+	    }
+
+	    @Nullable
+	    public RenderingHalftoningAlgorithm getRendering() {
+	        Integer value = getInteger(TAG_RENDERING);
+	        if (value == null) {
+	        	return null;
+	        }
+	        return new RenderingHalftoningAlgorithm(value.intValue());
+	    }
+
+	    @Nullable
+	    public ColorEncoding getColorEncoding() {
+	        Integer value = getInteger(TAG_COLOR_ENCODING);
+	        if (value == null) {
+	        	return null;
+	        }
+	        return new ColorEncoding(value.intValue());
+	    }
+
+	    @Nullable
+	    public ColorSpaceType getColorSpaceType() {
+	        Long value = getLongObject(TAG_COLOR_SPACE_TYPE);
+	        if (value == null) {
+	        	return null;
+	        }
+	        return new ColorSpaceType(value.longValue());
+	    }
+
+	    @Nullable
+	    public RenderingIntent getRenderingIntent() {
+	        Integer value = getInteger(TAG_INTENT);
+	        if (value == null) {
+	        	return null;
+	        }
+	        return new RenderingIntent(value.intValue());
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "BMP Header";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    public class BitmapType {
+
+	           /** "BM" - Windows or OS/2 bitmap */
+	        final int BITMAP = 0x4D42;
+
+	        /** "BA" - OS/2 Bitmap array (multiple bitmaps) */
+	        final int OS2_BITMAP_ARRAY = 0x4142;
+
+	            /** "IC" - OS/2 Icon */
+	        final int OS2_ICON = 0x4349;
+
+	            /** "CI" - OS/2 Color icon */
+	        final int OS2_COLOR_ICON = 0x4943;
+
+	        /** "CP" - OS/2 Color pointer */
+	        final int OS2_COLOR_POINTER = 0x5043;
+
+	            /** "PT" - OS/2 Pointer */
+	        final int OS2_POINTER = 0x5450;
+
+	        private final int value;
+
+	        private BitmapType(int value) {
+	            this.value = value;
+	        }
+
+	        public int getValue() {
+	            return value;
+	        }
+
+	        @Nullable
+	        public BitmapType typeOf(int value) {
+	            if( (value == BITMAP) || (value == OS2_BITMAP_ARRAY) ||
+	               (value == OS2_ICON) || (value == OS2_COLOR_ICON) ||
+	               (value == OS2_COLOR_POINTER) || (value == OS2_POINTER)) {
+	            	return new BitmapType(value);
+	            }
+	            return null;
+	        }
+
+	        @NotNull
+	        public String toString(int value) {
+	            switch (value) {
+	                case BITMAP: return "Standard";
+	                case OS2_BITMAP_ARRAY: return "Bitmap Array";
+	                case OS2_COLOR_ICON: return "Color Icon";
+	                case OS2_COLOR_POINTER: return "Color Pointer";
+	                case OS2_ICON: return "Monochrome Icon";
+	                case OS2_POINTER: return "Monochrome Pointer";
+	                default:
+	                    throw new IllegalStateException("Unimplemented bitmap type " + super.toString());
+	            }
+	        }
+	    }
+
+	    public class Compression {
+
+	        /** 0 = None */
+	        final int BI_RGB = 0;
+
+	        /** 1 = RLE 8-bit/pixel */
+	        final int BI_RLE8 = 1;
+	        
+	        /** 2 = RLE 4-bit/pixel */
+	        final int BI_RLE4 = 2;
+
+	        /** 3 = Bit fields (not OS22XBITMAPHEADER (size 64)) */
+	        final int BI_BITFIELDS = 3;
+
+	        /** 3 = Huffman 1D (if OS22XBITMAPHEADER (size 64)) */
+	        final int BI_HUFFMAN_1D = 3;
+
+	        /** 4 = JPEG (not OS22XBITMAPHEADER (size 64)) */
+	        final int BI_JPEG = 4;
+
+	        /** 4 = RLE 24-bit/pixel (if OS22XBITMAPHEADER (size 64)) */
+	        final int BI_RLE24= 4;
+
+	        /** 5 = PNG */
+	        final int BI_PNG = 5;
+
+	        /** 6 = RGBA bit fields */
+	        final int BI_ALPHABITFIELDS = 6;
+
+	        /** 11 = CMYK */
+	        final int BI_CMYK = 11;
+
+	        /** 12 = CMYK RLE-8 */
+	        final int BI_CMYKRLE8 = 12;
+
+	        /** 13 = CMYK RLE-4 */
+	        final int BI_CMYKRLE4 = 13;
+
+	        private final int value;
+	        private final int headerSize;
+
+	        private Compression(int value, int headerSize) {
+	            this.value = value;
+	            this.headerSize = headerSize;
+	        }
+
+	        public int getValue() {
+	            return value;
+	        }
+	        
+	        public int getHeaderSize() {
+	        	return headerSize;
+	        }
+
+	        @Nullable
+	        public Compression typeOf(@NotNull BmpHeaderDirectory directory) {
+	            Integer value = directory.getInteger(TAG_COMPRESSION);
+	            if (value == null)
+	                return null;
+	            Integer headerSize = directory.getInteger(TAG_HEADER_SIZE);
+	            if (headerSize == null)
+	                return null;
+
+	            return typeOf(value, headerSize);
+	        }
+
+	        @Nullable
+	        public  Compression typeOf(int value, int headerSize) {
+	            switch (value) {
+	                case 0:  return new Compression(BI_RGB, headerSize);
+	                case 1:  return new Compression(BI_RLE8, headerSize);
+	                case 2:  return new Compression(BI_RLE4, headerSize);
+	                case 3:  return headerSize == 64 ? new Compression(BI_HUFFMAN_1D, headerSize) : new Compression(BI_BITFIELDS, headerSize);
+	                case 4:  return headerSize == 64 ? new Compression(BI_RLE24, headerSize) : new Compression(BI_JPEG, headerSize);
+	                case 5:  return new Compression(BI_PNG, headerSize);
+	                case 6:  return new Compression(BI_ALPHABITFIELDS, headerSize);
+	                case 11: return new Compression(BI_CMYK, headerSize);
+	                case 12: return new Compression(BI_CMYKRLE8, headerSize);
+	                case 13: return new Compression(BI_CMYKRLE4, headerSize);
+	                default: return null;
+	            }
+	        }
+
+	        @NotNull
+	        public String toString(int value, int headerSize) {
+	            switch (value) {
+	                case BI_RGB:            return "None";
+	                case BI_RLE8:           return "RLE 8-bit/pixel";
+	                case BI_RLE4:           return "RLE 4-bit/pixel";
+	                //case BI_BITFIELDS:      return "Bit Fields";
+	                case BI_HUFFMAN_1D:  
+	                	if (headerSize == 64) {
+	                	  return "Huffman 1D";
+	                	}
+	                	else {
+	                		return "Bit Fields";
+	                	}
+	                //case BI_JPEG:           return "JPEG";
+	                case BI_RLE24:  
+	                	if (headerSize == 64) {
+	                	  return "RLE 24-bit/pixel";
+	                	}
+	                	else {
+	                		return "JPEG";
+	                	}
+	                case BI_PNG:            return "PNG";
+	                case BI_ALPHABITFIELDS: return "RGBA Bit Fields";
+	                case BI_CMYK:           return "CMYK Uncompressed";
+	                case BI_CMYKRLE8:       return "CMYK RLE-8";
+	                case BI_CMYKRLE4:       return "CMYK RLE-4";
+	                default:
+	                    throw new IllegalStateException("Unimplemented compression type " + super.toString());
+	            }
+	        }
+	    }
+
+	    public class RenderingHalftoningAlgorithm {
+
+	        /** No halftoning algorithm */
+	        final int NONE = 0;
+
+	        /** Error Diffusion Halftoning */
+	        final int ERROR_DIFFUSION = 1;
+
+	        /** Processing Algorithm for Noncoded Document Acquisition */
+	        final int PANDA = 2;
+
+	        /** Super-circle Halftoning */
+	        final int SUPER_CIRCLE = 3;
+
+	        private final int value;
+
+	        private RenderingHalftoningAlgorithm(int value) {
+	            this.value = value;
+	        }
+
+	        public int getValue() {
+	            return value;
+	        }
+
+	        @Nullable
+	        public RenderingHalftoningAlgorithm typeOf(int value) {
+	        	if ((value == NONE) || (value == ERROR_DIFFUSION) ||
+	        		(value == PANDA) == (value == SUPER_CIRCLE)) {
+	        		return new RenderingHalftoningAlgorithm(value);
+	        	}
+	            return null;
+	        }
+
+	        @NotNull
+	        public String toString(int value) {
+	            switch (value) {
+	                case NONE:
+	                    return "No Halftoning Algorithm";
+	                case ERROR_DIFFUSION:
+	                    return "Error Diffusion Halftoning";
+	                case PANDA:
+	                    return "Processing Algorithm for Noncoded Document Acquisition";
+	                case SUPER_CIRCLE:
+	                    return "Super-circle Halftoning";
+	                default:
+	                    throw new IllegalStateException("Unimplemented rendering halftoning algorithm type " + super.toString());
+	            }
+	        }
+	    }
+
+	    public class ColorEncoding {
+	        final int RGB = 0;
+
+	        private final int value;
+
+	        private ColorEncoding(int value) {
+	            this.value = value;
+	        }
+
+	        public int getValue() {
+	            return value;
+	        }
+
+	        @Nullable
+	        public ColorEncoding typeOf(int value) {
+	            return value == 0 ? new ColorEncoding(RGB) : null;
+	        }
+	    }
+
+	    public class ColorSpaceType {
+
+	        /** 0 = Calibrated RGB */
+	        final static long LCS_CALIBRATED_RGB = 0L;
+
+	        /** "sRGB" = sRGB Color Space */
+	        final static long LCS_sRGB = 0x73524742L;
+
+	        /** "Win " = System Default Color Space, sRGB */
+	        final static long LCS_WINDOWS_COLOR_SPACE = 0x57696E20L;
+
+	        /** "LINK" = Linked Profile */
+	        final static long PROFILE_LINKED = 0x4C494E4BL;
+
+	        /** "MBED" = Embedded Profile */
+	        final static long PROFILE_EMBEDDED = 0x4D424544L;
+
+	        private final long value;
+
+	        private ColorSpaceType(long value) {
+	            this.value = value;
+	        }
+
+	        public long getValue() {
+	            return value;
+	        }
+
+	        @Nullable
+	        public ColorSpaceType typeOf(long value) {
+	        	if ((value == LCS_CALIBRATED_RGB) || (value == LCS_sRGB) ||
+	        		(value == LCS_WINDOWS_COLOR_SPACE) || (value == PROFILE_LINKED) ||
+	        		(value == PROFILE_EMBEDDED)) {
+	        		return new ColorSpaceType(value);
+	        	}
+	            return null;
+	        }
+
+	        @NotNull
+	        public String toString(long value) {
+	                if (value == LCS_CALIBRATED_RGB) {
+	                    return "Calibrated RGB";
+	                }
+                    else if (value == LCS_sRGB) {
+                        return "sRGB Color Space";
+                    }
+                    else if (value == LCS_WINDOWS_COLOR_SPACE) {
+                        return "System Default Color Space, sRGB";
+                    }
+                    else if (value == PROFILE_LINKED) {
+	                    return "Linked Profile";
+                    }
+                    else if (value == PROFILE_EMBEDDED) {
+	                    return "Embedded Profile";
+                    }
+                    else {
+	                    throw new IllegalStateException("Unimplemented color space type " + super.toString());
+	                }
+	        }
+	    }
+
+	    public class RenderingIntent {
+
+	        /** Graphic, Saturation */
+	        final int LCS_GM_BUSINESS = 1;
+
+	        /** Proof, Relative Colorimetric */
+	        final int LCS_GM_GRAPHICS = 2;
+
+	        /** Picture, Perceptual */
+	        final int LCS_GM_IMAGES = 4;
+
+	        /** Match, Absolute Colorimetric */
+	        final int LCS_GM_ABS_COLORIMETRIC = 8;
+
+	        private final int value;
+
+	        private RenderingIntent(int value) {
+	            this.value = value;
+	        }
+
+	        public int getValue() {
+	            return value;
+	        }
+
+	        @Nullable
+	        public RenderingIntent typeOf(int value) {
+	        	if ((value == LCS_GM_BUSINESS) || (value == LCS_GM_GRAPHICS) ||
+	        		(value == LCS_GM_IMAGES) || (value == LCS_GM_ABS_COLORIMETRIC)) {
+	        		return new RenderingIntent(value);
+	        	}
+	            return null;
+	        }
+
+	        @NotNull
+	        public String toString(int value) {
+	            switch (value) {
+	                case LCS_GM_BUSINESS:
+	                    return "Graphic, Saturation";
+	                case LCS_GM_GRAPHICS:
+	                    return "Proof, Relative Colorimetric";
+	                case LCS_GM_IMAGES:
+	                    return "Picture, Perceptual";
+	                case LCS_GM_ABS_COLORIMETRIC:
+	                    return "Match, Absolute Colorimetric";
+	                default:
+	                    throw new IllegalStateException("Unimplemented rendering intent " + super.toString());
+	            }
+	        }
 	    }
 	}
 
