@@ -3429,5 +3429,79 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    }
 	}
 
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class BmpReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //BmpReaderTest br = me.new BmpReaderTest();
+	    @NotNull
+	    public BmpHeaderDirectory processBytes(@NotNull String file) throws Exception
+	    {
+	        Metadata metadata = new Metadata();
+	        InputStream stream = new FileInputStream(file);
+	        new BmpReader().extract(new StreamReader(stream), metadata);
+	        stream.close();
+
+	        BmpHeaderDirectory directory = metadata.getFirstDirectoryOfType(BmpHeaderDirectory.class);
+	        assertNotNull(directory);
+	        return directory;
+	    }
+
+	    //@Test
+	    //try {
+	    //	br.testMsPaint16color();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testMsPaint16color()
+	    public void testMsPaint16color() throws Exception
+	    {
+	        BmpHeaderDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/16color-10x10.bmp");
+
+	        assertFalse(directory.hasErrors());
+
+	        assertEquals(10, directory.getInt(BmpHeaderDirectory.TAG_IMAGE_WIDTH));
+	        assertEquals(10, directory.getInt(BmpHeaderDirectory.TAG_IMAGE_HEIGHT));
+	        assertEquals(4, directory.getInt(BmpHeaderDirectory.TAG_BITS_PER_PIXEL));
+	        assertEquals("None", directory.getDescription(BmpHeaderDirectory.TAG_COMPRESSION));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_X_PIXELS_PER_METER));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_Y_PIXELS_PER_METER));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_PALETTE_COLOUR_COUNT));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_IMPORTANT_COLOUR_COUNT));
+	        assertEquals(1, directory.getInt(BmpHeaderDirectory.TAG_COLOUR_PLANES));
+	        assertEquals(40, directory.getInt(BmpHeaderDirectory.TAG_HEADER_SIZE));
+	        System.out.println("Finished running testMsPaint16color()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	br.testMsPaint24bpp();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testMsPaint24bpp()
+	    public void testMsPaint24bpp() throws Exception
+	    {
+	        BmpHeaderDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/24bpp-10x10.bmp");
+
+	        assertFalse(directory.hasErrors());
+
+	        assertEquals(10, directory.getInt(BmpHeaderDirectory.TAG_IMAGE_WIDTH));
+	        assertEquals(10, directory.getInt(BmpHeaderDirectory.TAG_IMAGE_HEIGHT));
+	        assertEquals(24, directory.getInt(BmpHeaderDirectory.TAG_BITS_PER_PIXEL));
+	        assertEquals("None", directory.getDescription(BmpHeaderDirectory.TAG_COMPRESSION));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_X_PIXELS_PER_METER));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_Y_PIXELS_PER_METER));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_PALETTE_COLOUR_COUNT));
+	        assertEquals(0, directory.getInt(BmpHeaderDirectory.TAG_IMPORTANT_COLOUR_COUNT));
+	        assertEquals(1, directory.getInt(BmpHeaderDirectory.TAG_COLOUR_PLANES));
+	        assertEquals(40, directory.getInt(BmpHeaderDirectory.TAG_HEADER_SIZE));
+	        System.out.println("Finished running testMsPaint24bpp()");
+	    }
+	}
 
 }
