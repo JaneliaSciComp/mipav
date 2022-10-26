@@ -30389,7 +30389,7 @@ public class MetadataExtractor {
 
 	        BmpHeaderDirectory.Compression compression = _directory.getCompression();
 	        if (compression != null) {
-	            return compression.toString();
+	            return compression.toString(compression.getValue(), compression.getHeaderSize());
 	        }
 	        Integer value = _directory.getInteger(BmpHeaderDirectory.TAG_COMPRESSION);
 	        return value == null ? null : "Illegal value 0x" + Integer.toHexString(value.intValue());
