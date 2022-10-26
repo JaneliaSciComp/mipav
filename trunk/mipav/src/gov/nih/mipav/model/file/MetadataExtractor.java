@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.InflaterInputStream;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30956,5 +30958,1601 @@ public class MetadataExtractor {
 	    }
 	}
 
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngChunkType
+	{
+	    private final Set<String> _identifiersAllowingMultiples
+	        = new HashSet<String>(Arrays.asList("IDAT", "sPLT", "iTXt", "tEXt", "zTXt"));
+
+	    //
+	    // Standard critical chunks
+	    //
+	    /**
+	     * Denotes a critical {@link PngChunk} that contains basic information about the PNG image.
+	     * This must be the first chunk in the data sequence, and may only occur once.
+	     * <p>
+	     * The format is:
+	     * <ul>
+	     *     <li><b>pixel width</b> 4 bytes, unsigned and greater than zero</li>
+	     *     <li><b>pixel height</b> 4 bytes, unsigned and greater than zero</li>
+	     *     <li><b>bit depth</b> 1 byte, number of bits per sample or per palette index (not per pixel)</li>
+	     *     <li><b>color type</b> 1 byte, maps to {@link PngColorType} enum</li>
+	     *     <li><b>compression method</b> 1 byte, currently only a value of zero (deflate/inflate) is in the standard</li>
+	     *     <li><b>filter method</b> 1 byte, currently only a value of zero (adaptive filtering with five basic filter types) is in the standard</li>
+	     *     <li><b>interlace method</b> 1 byte, indicates the transmission order of image data, currently only 0 (no interlace) and 1 (Adam7 interlace) are in the standard</li>
+	     * </ul>
+	     */
+	    public PngChunkType IHDR;
+
+	    /**
+	     * Denotes a critical {@link PngChunk} that contains palette entries.
+	     * This chunk should only appear for a {@link PngColorType} of <code>IndexedColor</code>,
+	     * and may only occur once in the PNG data sequence.
+	     * <p>
+	     * The chunk contains between one and 256 entries, each of three bytes:
+	     * <ul>
+	     *     <li><b>red</b> 1 byte</li>
+	     *     <li><b>green</b> 1 byte</li>
+	     *     <li><b>blue</b> 1 byte</li>
+	     * </ul>
+	     * The number of entries is determined by the chunk length. A chunk length indivisible by three is an error.
+	     */
+	    public PngChunkType PLTE;
+	    public PngChunkType IDAT;
+	    public PngChunkType IEND;
+
+	    //
+	    // Standard ancillary chunks
+	    //
+	    public PngChunkType cHRM;
+	    public PngChunkType gAMA;
+	    public PngChunkType iCCP;
+	    public PngChunkType sBIT;
+	    public PngChunkType sRGB;
+	    public PngChunkType bKGD;
+	    public PngChunkType hIST;
+	    public PngChunkType tRNS;
+	    public PngChunkType pHYs;
+	    public PngChunkType sPLT;
+	    public PngChunkType tIME;
+	    public PngChunkType iTXt;
+	    public PngChunkType eXIf;
+
+	    /**
+	     * Denotes an ancillary {@link PngChunk} that contains textual data, having first a keyword and then a value.
+	     * If multiple text data keywords are needed, then multiple chunks are included in the PNG data stream.
+	     * <p>
+	     * The format is:
+	     * <ul>
+	     *     <li><b>keyword</b> 1-79 bytes</li>
+	     *     <li><b>null separator</b> 1 byte (\0)</li>
+	     *     <li><b>text string</b> 0 or more bytes</li>
+	     * </ul>
+	     * Text is interpreted according to the Latin-1 character set [ISO-8859-1].
+	     * Newlines should be represented by a single linefeed character (0x9).
+	     */
+	    public PngChunkType tEXt;
+	    public PngChunkType zTXt;
+
+	    {
+	        try {
+	            IHDR = new PngChunkType("IHDR");
+	            PLTE = new PngChunkType("PLTE");
+	            IDAT = new PngChunkType("IDAT", true);
+	            IEND = new PngChunkType("IEND");
+	            cHRM = new PngChunkType("cHRM");
+	            gAMA = new PngChunkType("gAMA");
+	            iCCP = new PngChunkType("iCCP");
+	            sBIT = new PngChunkType("sBIT");
+	            sRGB = new PngChunkType("sRGB");
+	            bKGD = new PngChunkType("bKGD");
+	            hIST = new PngChunkType("hIST");
+	            tRNS = new PngChunkType("tRNS");
+	            pHYs = new PngChunkType("pHYs");
+	            sPLT = new PngChunkType("sPLT", true);
+	            tIME = new PngChunkType("tIME");
+	            iTXt = new PngChunkType("iTXt", true);
+	            tEXt = new PngChunkType("tEXt", true);
+	            zTXt = new PngChunkType("zTXt", true);
+	            eXIf = new PngChunkType("eXIf");
+	        } catch (PngProcessingException e) {
+	            throw new IllegalArgumentException(e);
+	        }
+	    }
+
+	    private final byte[] _bytes;
+	    private final boolean _multipleAllowed;
+
+	    public PngChunkType(@NotNull String identifier) throws PngProcessingException
+	    {
+	        this(identifier, false);
+	    }
+
+	    public PngChunkType(@NotNull String identifier, boolean multipleAllowed) throws PngProcessingException
+	    {
+	        _multipleAllowed = multipleAllowed;
+
+	        try {
+	            byte[] bytes = identifier.getBytes("ASCII");
+	            validateBytes(bytes);
+	            _bytes = bytes;
+	        } catch (UnsupportedEncodingException e) {
+	            throw new IllegalArgumentException("Unable to convert string code to bytes.");
+	        }
+	    }
+
+	    public PngChunkType(@NotNull byte[] bytes) throws PngProcessingException
+	    {
+	        validateBytes(bytes);
+	        _bytes = bytes;
+	        _multipleAllowed = _identifiersAllowingMultiples.contains(getIdentifier());
+	    }
+
+	    private void validateBytes(byte[] bytes) throws PngProcessingException
+	    {
+	        if (bytes.length != 4) {
+	            throw new PngProcessingException("PNG chunk type identifier must be four bytes in length");
+	        }
+
+	        for (byte b : bytes) {
+	            if (!isValidByte(b)) {
+	                throw new PngProcessingException("PNG chunk type identifier may only contain alphabet characters");
+	            }
+	        }
+	    }
+
+	    public boolean isCritical()
+	    {
+	        return isUpperCase(_bytes[0]);
+	    }
+
+	    public boolean isAncillary()
+	    {
+	        return !isCritical();
+	    }
+
+	    public boolean isPrivate()
+	    {
+	        return isUpperCase(_bytes[1]);
+	    }
+
+	    public boolean isSafeToCopy()
+	    {
+	        return isLowerCase(_bytes[3]);
+	    }
+
+	    public boolean areMultipleAllowed()
+	    {
+	        return _multipleAllowed;
+	    }
+
+	    private boolean isLowerCase(byte b)
+	    {
+	        return (b & (1 << 5)) != 0;
+	    }
+
+	    private boolean isUpperCase(byte b)
+	    {
+	        return (b & (1 << 5)) == 0;
+	    }
+
+	    private boolean isValidByte(byte b)
+	    {
+	        return (b >= 65 && b <= 90) || (b >= 97 && b <= 122);
+	    }
+
+	    public String getIdentifier()
+	    {
+	        try {
+	            return new String(_bytes, "ASCII");
+	        } catch (UnsupportedEncodingException e) {
+	            // The constructor should ensure that we're always able to encode the bytes in ASCII.
+	            // noinspection ConstantConditions
+	            assert(false);
+	            return "Invalid object instance";
+	        }
+	    }
+
+	    @Override
+	    public String toString()
+	    {
+	        return getIdentifier();
+	    }
+
+	    @Override
+	    public boolean equals(Object o)
+	    {
+	        if (this == o)
+	            return true;
+
+	        if (o == null || getClass() != o.getClass())
+	            return false;
+
+	        PngChunkType that = (PngChunkType)o;
+
+	        return Arrays.equals(_bytes, that._bytes);
+	    }
+
+	    @Override
+	    public int hashCode()
+	    {
+	        return Arrays.hashCode(_bytes);
+	    }
+	}
+	
+	/**
+	 * An exception class thrown upon unexpected and fatal conditions while processing a JPEG file.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngProcessingException extends ImageProcessingException
+	{
+	    private static final long serialVersionUID = -687991554932005033L;
+
+	    public PngProcessingException(@Nullable String message)
+	    {
+	        super(message);
+	    }
+
+	    public PngProcessingException(@Nullable String message, @Nullable Throwable cause)
+	    {
+	        super(message, cause);
+	    }
+
+	    public PngProcessingException(@Nullable Throwable cause)
+	    {
+	        super(cause);
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PngDirectory extends Directory
+	{
+	    public static final int TAG_IMAGE_WIDTH = 1;
+	    public static final int TAG_IMAGE_HEIGHT = 2;
+	    public static final int TAG_BITS_PER_SAMPLE = 3;
+	    public static final int TAG_COLOR_TYPE = 4;
+	    public static final int TAG_COMPRESSION_TYPE = 5;
+	    public static final int TAG_FILTER_METHOD = 6;
+	    public static final int TAG_INTERLACE_METHOD = 7;
+	    public static final int TAG_PALETTE_SIZE = 8;
+	    public static final int TAG_PALETTE_HAS_TRANSPARENCY = 9;
+	    public static final int TAG_SRGB_RENDERING_INTENT = 10;
+	    public static final int TAG_GAMMA = 11;
+	    public static final int TAG_ICC_PROFILE_NAME = 12;
+	    public static final int TAG_TEXTUAL_DATA = 13;
+	    public static final int TAG_LAST_MODIFICATION_TIME = 14;
+	    public static final int TAG_BACKGROUND_COLOR = 15;
+
+	    public static final int TAG_PIXELS_PER_UNIT_X = 16;
+	    public static final int TAG_PIXELS_PER_UNIT_Y = 17;
+	    public static final int TAG_UNIT_SPECIFIER = 18;
+
+	    public static final int TAG_SIGNIFICANT_BITS = 19;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_IMAGE_HEIGHT, "Image Height");
+	        _tagNameMap.put(TAG_IMAGE_WIDTH, "Image Width");
+	        _tagNameMap.put(TAG_BITS_PER_SAMPLE, "Bits Per Sample");
+	        _tagNameMap.put(TAG_COLOR_TYPE, "Color Type");
+	        _tagNameMap.put(TAG_COMPRESSION_TYPE, "Compression Type");
+	        _tagNameMap.put(TAG_FILTER_METHOD, "Filter Method");
+	        _tagNameMap.put(TAG_INTERLACE_METHOD, "Interlace Method");
+	        _tagNameMap.put(TAG_PALETTE_SIZE, "Palette Size");
+	        _tagNameMap.put(TAG_PALETTE_HAS_TRANSPARENCY, "Palette Has Transparency");
+	        _tagNameMap.put(TAG_SRGB_RENDERING_INTENT, "sRGB Rendering Intent");
+	        _tagNameMap.put(TAG_GAMMA, "Image Gamma");
+	        _tagNameMap.put(TAG_ICC_PROFILE_NAME, "ICC Profile Name");
+	        _tagNameMap.put(TAG_TEXTUAL_DATA, "Textual Data");
+	        _tagNameMap.put(TAG_LAST_MODIFICATION_TIME, "Last Modification Time");
+	        _tagNameMap.put(TAG_BACKGROUND_COLOR, "Background Color");
+	        _tagNameMap.put(TAG_PIXELS_PER_UNIT_X, "Pixels Per Unit X");
+	        _tagNameMap.put(TAG_PIXELS_PER_UNIT_Y, "Pixels Per Unit Y");
+	        _tagNameMap.put(TAG_UNIT_SPECIFIER, "Unit Specifier");
+	        _tagNameMap.put(TAG_SIGNIFICANT_BITS, "Significant Bits");
+	    }
+
+	    private final PngChunkType _pngChunkType;
+
+	    public PngDirectory(@NotNull PngChunkType pngChunkType)
+	    {
+	        _pngChunkType = pngChunkType;
+
+	        this.setDescriptor(new PngDescriptor(this));
+	    }
+
+	    @NotNull
+	    public PngChunkType getPngChunkType()
+	    {
+	        return _pngChunkType;
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "PNG-" + _pngChunkType.getIdentifier();
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PngDescriptor extends TagDescriptor<PngDirectory>
+	{
+	    public PngDescriptor(@NotNull PngDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case PngDirectory.TAG_COLOR_TYPE:
+	                return getColorTypeDescription();
+	            case PngDirectory.TAG_COMPRESSION_TYPE:
+	                return getCompressionTypeDescription();
+	            case PngDirectory.TAG_FILTER_METHOD:
+	                return getFilterMethodDescription();
+	            case PngDirectory.TAG_INTERLACE_METHOD:
+	                return getInterlaceMethodDescription();
+	            case PngDirectory.TAG_PALETTE_HAS_TRANSPARENCY:
+	                return getPaletteHasTransparencyDescription();
+	            case PngDirectory.TAG_SRGB_RENDERING_INTENT:
+	                return getIsSrgbColorSpaceDescription();
+	            case PngDirectory.TAG_TEXTUAL_DATA:
+	                return getTextualDataDescription();
+	            case PngDirectory.TAG_BACKGROUND_COLOR:
+	                return getBackgroundColorDescription();
+	            case PngDirectory.TAG_UNIT_SPECIFIER:
+	                return getUnitSpecifierDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getColorTypeDescription()
+	    {
+	        Integer value = _directory.getInteger(PngDirectory.TAG_COLOR_TYPE);
+	        if (value == null)
+	            return null;
+	        PngColorType pct = new PngColorType(-1,"Unknown",-1);
+	        PngColorType colorType = pct.fromNumericValue(value);
+	        return colorType.getDescription();
+	    }
+
+	    @Nullable
+	    public String getCompressionTypeDescription()
+	    {
+	        return getIndexedDescription(PngDirectory.TAG_COMPRESSION_TYPE, "Deflate");
+	    }
+
+	    @Nullable
+	    public String getFilterMethodDescription()
+	    {
+	        return getIndexedDescription(PngDirectory.TAG_FILTER_METHOD, "Adaptive");
+	    }
+
+	    @Nullable
+	    public String getInterlaceMethodDescription()
+	    {
+	        return getIndexedDescription(PngDirectory.TAG_INTERLACE_METHOD, "No Interlace", "Adam7 Interlace");
+	    }
+
+	    @Nullable
+	    public String getPaletteHasTransparencyDescription()
+	    {
+	        return getIndexedDescription(PngDirectory.TAG_PALETTE_HAS_TRANSPARENCY, null, "Yes");
+	    }
+
+	    @Nullable
+	    public String getIsSrgbColorSpaceDescription()
+	    {
+	        return getIndexedDescription(
+	        		PngDirectory.TAG_SRGB_RENDERING_INTENT,
+	            "Perceptual",
+	            "Relative Colorimetric",
+	            "Saturation",
+	            "Absolute Colorimetric"
+	        );
+	    }
+
+	    @Nullable
+	    public String getUnitSpecifierDescription()
+	    {
+	        return getIndexedDescription(
+	        	PngDirectory.TAG_UNIT_SPECIFIER,
+	            "Unspecified",
+	            "Metres"
+	        );
+	    }
+
+	    @Nullable
+	    public String getTextualDataDescription()
+	    {
+	        Object object = _directory.getObject(PngDirectory.TAG_TEXTUAL_DATA);
+	        if (object == null) {
+	            return null;
+	        }
+	        //@SuppressWarnings("unchecked")
+	        List<KeyValuePair> keyValues = (List<KeyValuePair>)object;
+	        StringBuilder sb = new StringBuilder();
+	        for (KeyValuePair keyValue : keyValues) {
+	            if (sb.length() != 0)
+	                sb.append('\n');
+	            sb.append(String.format("%s: %s", keyValue.getKey(), keyValue.getValue()));
+	        }
+	        return sb.toString();
+	    }
+
+	    @Nullable
+	    public String getBackgroundColorDescription()
+	    {
+	        byte[] bytes = _directory.getByteArray(PngDirectory.TAG_BACKGROUND_COLOR);
+	        if (bytes == null) {
+	            return null;
+	        }
+	        SequentialReader reader = new SequentialByteArrayReader(bytes);
+	        try {
+	            // TODO do we need to normalise these based upon the bit depth?
+	            switch (bytes.length) {
+	                case 1:
+	                    return String.format("Palette Index %d", reader.getUInt8());
+	                case 2:
+	                    return String.format("Greyscale Level %d", reader.getUInt16());
+	                case 6:
+	                    return String.format("R %d, G %d, B %d", reader.getUInt16(), reader.getUInt16(), reader.getUInt16());
+	            }
+	        } catch (IOException ex) {
+	            return null;
+	        }
+	        return null;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngColorType
+	{
+	    /**
+	     * Each pixel is a greyscale sample.
+	     */
+	    public final PngColorType GREYSCALE = new PngColorType(0, "Greyscale", 1,2,4,8,16);
+
+	    /**
+	     * Each pixel is an R,G,B triple.
+	     */
+	    public final PngColorType TRUE_COLOR = new PngColorType(2, "True Color", 8,16);
+
+	    /**
+	     * Each pixel is a palette index. Seeing this value indicates that a <code>PLTE</code> chunk shall appear.
+	     */
+	    public final PngColorType INDEXED_COLOR = new PngColorType(3, "Indexed Color", 1,2,4,8);
+
+	    /**
+	     * Each pixel is a greyscale sample followed by an alpha sample.
+	     */
+	    public final PngColorType GREYSCALE_WITH_ALPHA = new PngColorType(4, "Greyscale with Alpha", 8,16);
+
+	    /**
+	     * Each pixel is an R,G,B triple followed by an alpha sample.
+	     */
+	    public final PngColorType TRUE_COLOR_WITH_ALPHA = new PngColorType(6, "True Color with Alpha", 8,16);
+
+	    @NotNull
+	    public PngColorType fromNumericValue(int numericValue)
+	    {
+	        switch (numericValue) {
+	            case 0: return GREYSCALE;
+	            case 2: return TRUE_COLOR;
+	            case 3: return INDEXED_COLOR;
+	            case 4: return GREYSCALE_WITH_ALPHA;
+	            case 6: return TRUE_COLOR_WITH_ALPHA;
+	        }
+	        return new PngColorType(numericValue, "Unknown (" + numericValue + ")");
+	    }
+
+	    private final int _numericValue;
+	    @NotNull private final String _description;
+	    @NotNull private final int[] _allowedBitDepths;
+
+	    private PngColorType(int numericValue, @NotNull String description, @NotNull int... allowedBitDepths)
+	    {
+	        _numericValue = numericValue;
+	        _description = description;
+	        _allowedBitDepths = allowedBitDepths;
+	    }
+
+	    public int getNumericValue()
+	    {
+	        return _numericValue;
+	    }
+
+	    @NotNull
+	    public String getDescription()
+	    {
+	        return _description;
+	    }
+
+	    @NotNull
+	    public int[] getAllowedBitDepths()
+	    {
+	        return _allowedBitDepths;
+	    }
+	}
+	
+	/**
+	 * Models a key/value pair, where both are non-null {@link StringValue} objects.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class KeyValuePair
+	{
+	    private final String _key;
+	    private final StringValue _value;
+
+	    public KeyValuePair(@NotNull String key, @NotNull StringValue value)
+	    {
+	        _key = key;
+	        _value = value;
+	    }
+
+	    @NotNull
+	    public String getKey()
+	    {
+	        return _key;
+	    }
+
+	    @NotNull
+	    public StringValue getValue()
+	    {
+	        return _value;
+	    }
+	    
+	    @Override
+	    public String toString()
+	    {
+	        return _key + ": " + _value;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PngChromaticitiesDirectory extends Directory
+	{
+	    public static final int TAG_WHITE_POINT_X = 1;
+	    public static final int TAG_WHITE_POINT_Y = 2;
+	    public static final int TAG_RED_X = 3;
+	    public static final int TAG_RED_Y = 4;
+	    public static final int TAG_GREEN_X = 5;
+	    public static final int TAG_GREEN_Y = 6;
+	    public static final int TAG_BLUE_X = 7;
+	    public static final int TAG_BLUE_Y = 8;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_WHITE_POINT_X, "White Point X");
+	        _tagNameMap.put(TAG_WHITE_POINT_Y, "White Point Y");
+	        _tagNameMap.put(TAG_RED_X, "Red X");
+	        _tagNameMap.put(TAG_RED_Y, "Red Y");
+	        _tagNameMap.put(TAG_GREEN_X, "Green X");
+	        _tagNameMap.put(TAG_GREEN_Y, "Green Y");
+	        _tagNameMap.put(TAG_BLUE_X, "Blue X");
+	        _tagNameMap.put(TAG_BLUE_Y, "Blue Y");
+	    }
+
+	    public PngChromaticitiesDirectory()
+	    {
+	        this.setDescriptor(new TagDescriptor<PngChromaticitiesDirectory>(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "PNG Chromaticities";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngChromaticities
+	{
+	    private final int _whitePointX;
+	    private final int _whitePointY;
+	    private final int _redX;
+	    private final int _redY;
+	    private final int _greenX;
+	    private final int _greenY;
+	    private final int _blueX;
+	    private final int _blueY;
+
+	    public PngChromaticities(@NotNull byte[] bytes) throws PngProcessingException
+	    {
+	        if (bytes.length != 8 * 4) {
+	            throw new PngProcessingException("Invalid number of bytes");
+	        }
+
+	        SequentialByteArrayReader reader = new SequentialByteArrayReader(bytes);
+	        try {
+	            _whitePointX = reader.getInt32();
+	            _whitePointY = reader.getInt32();
+	            _redX = reader.getInt32();
+	            _redY = reader.getInt32();
+	            _greenX = reader.getInt32();
+	            _greenY = reader.getInt32();
+	            _blueX = reader.getInt32();
+	            _blueY = reader.getInt32();
+	        } catch (IOException ex) {
+	            throw new PngProcessingException(ex);
+	        }
+	    }
+
+	    public int getWhitePointX()
+	    {
+	        return _whitePointX;
+	    }
+
+	    public int getWhitePointY()
+	    {
+	        return _whitePointY;
+	    }
+
+	    public int getRedX()
+	    {
+	        return _redX;
+	    }
+
+	    public int getRedY()
+	    {
+	        return _redY;
+	    }
+
+	    public int getGreenX()
+	    {
+	        return _greenX;
+	    }
+
+	    public int getGreenY()
+	    {
+	        return _greenY;
+	    }
+
+	    public int getBlueX()
+	    {
+	        return _blueX;
+	    }
+
+	    public int getBlueY()
+	    {
+	        return _blueY;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngChunk
+	{
+	    @NotNull
+	    private final PngChunkType _chunkType;
+	    @NotNull
+	    private final byte[] _bytes;
+
+	    public PngChunk(@NotNull PngChunkType chunkType, @NotNull byte[] bytes)
+	    {
+	        _chunkType = chunkType;
+	        _bytes = bytes;
+	    }
+
+	    @NotNull
+	    public PngChunkType getType()
+	    {
+	        return _chunkType;
+	    }
+
+	    @NotNull
+	    public byte[] getBytes()
+	    {
+	        return _bytes;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngChunkReader
+	{
+	    private final byte[] PNG_SIGNATURE_BYTES = {(byte)0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+
+	    public Iterable<PngChunk> extract(@NotNull final SequentialReader reader, @Nullable final Set<PngChunkType> desiredChunkTypes) throws PngProcessingException, IOException
+	    {
+	        //
+	        // PNG DATA STREAM
+	        //
+	        // Starts with a PNG SIGNATURE, followed by a sequence of CHUNKS.
+	        //
+	        // PNG SIGNATURE
+	        //
+	        //   Always composed of these bytes: 89 50 4E 47 0D 0A 1A 0A
+	        //
+	        // CHUNK
+	        //
+	        //   4 - length of the data field (unsigned, but always within 31 bytes), may be zero
+	        //   4 - chunk type, restricted to [65,90] and [97,122] (A-Za-z)
+	        //   * - data field
+	        //   4 - CRC calculated from chunk type and chunk data, but not length
+	        //
+	        // CHUNK TYPES
+	        //
+	        //   Critical Chunk Types:
+	        //
+	        //     IHDR - image header, always the first chunk in the data stream
+	        //     PLTE - palette table, associated with indexed PNG images
+	        //     IDAT - image data chunk, of which there may be many
+	        //     IEND - image trailer, always the last chunk in the data stream
+	        //
+	        //   Ancillary Chunk Types:
+	        //
+	        //     Transparency information:  tRNS
+	        //     Colour space information:  cHRM, gAMA, iCCP, sBIT, sRGB
+	        //     Textual information:       iTXt, tEXt, zTXt
+	        //     Miscellaneous information: bKGD, hIST, pHYs, sPLT
+	        //     Time information:          tIME
+	        //
+	        // CHUNK READING
+	        //
+	        // Only chunk data for types specified in desiredChunkTypes is extracted.
+	        // For empty chunk type list NO data is copied from source stream.
+	        // For null chunk type list ALL data is copied from source stream.
+	        //
+
+	        reader.setMotorolaByteOrder(true); // network byte order
+
+	        if (!Arrays.equals(PNG_SIGNATURE_BYTES, reader.getBytes(PNG_SIGNATURE_BYTES.length))) {
+	            throw new PngProcessingException("PNG signature mismatch");
+	        }
+
+	        boolean seenImageHeader = false;
+	        boolean seenImageTrailer = false;
+
+	        List<PngChunk> chunks = new ArrayList<PngChunk>();
+	        Set<PngChunkType> seenChunkTypes = new HashSet<PngChunkType>();
+
+	        while (!seenImageTrailer) {
+	            // Process the next chunk.
+	            int chunkDataLength = reader.getInt32();
+
+	            if (chunkDataLength < 0)
+	                throw new PngProcessingException("PNG chunk length exceeds maximum");
+
+	            PngChunkType chunkType = new PngChunkType(reader.getBytes(4));
+
+	            boolean willStoreChunk = desiredChunkTypes == null || desiredChunkTypes.contains(chunkType);
+
+	            byte[] chunkData;
+	            if (willStoreChunk) {
+	                chunkData = reader.getBytes(chunkDataLength);
+	            } else {
+	                chunkData = null; // To satisfy the compiler
+	                reader.skip(chunkDataLength);
+	            }
+
+	            // Skip the CRC bytes at the end of the chunk
+	            // TODO consider verifying the CRC value to determine if we're processing bad data
+	            reader.skip(4);
+
+	            if (willStoreChunk && seenChunkTypes.contains(chunkType) && !chunkType.areMultipleAllowed()) {
+	                throw new PngProcessingException(String.format("Observed multiple instances of PNG chunk '%s', for which multiples are not allowed", chunkType));
+	            }
+
+	            if (chunkType.toString().equals("IHDR")) {
+	                seenImageHeader = true;
+	            } else if (!seenImageHeader) {
+	                throw new PngProcessingException(String.format("First chunk should be '%s', but '%s' was observed", "IHDR", chunkType));
+	            }
+
+	            if (chunkType.toString().equals("IEND")) {
+	                seenImageTrailer = true;
+	            }
+
+	            if (willStoreChunk) {
+	                chunks.add(new PngChunk(chunkType, chunkData));
+	            }
+
+	            seenChunkTypes.add(chunkType);
+	        }
+
+	        return chunks;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngHeader
+	{
+	    private final int _imageWidth;
+	    private final int _imageHeight;
+	    private final byte _bitsPerSample;
+	    @NotNull
+	    private final PngColorType _colorType;
+	    private final byte _compressionType;
+	    private final byte _filterMethod;
+	    private final byte _interlaceMethod;
+
+	    public PngHeader(@NotNull byte[] bytes) throws PngProcessingException
+	    {
+	        if (bytes.length != 13) {
+	            throw new PngProcessingException("PNG header chunk must have 13 data bytes");
+	        }
+	        SequentialReader reader = new SequentialByteArrayReader(bytes);
+	        try {
+	            _imageWidth = reader.getInt32();
+	            _imageHeight = reader.getInt32();
+	            _bitsPerSample = reader.getInt8();
+	            byte colorTypeNumber = reader.getInt8();
+	            PngColorType pct = new PngColorType(-1,"Unknown",-1);
+	            _colorType = pct.fromNumericValue(colorTypeNumber);
+	            _compressionType = reader.getInt8();
+	            _filterMethod = reader.getInt8();
+	            _interlaceMethod = reader.getInt8();
+	        } catch (IOException e) {
+	            // Should never happen
+	            throw new PngProcessingException(e);
+	        }
+	    }
+
+	    public int getImageWidth()
+	    {
+	        return _imageWidth;
+	    }
+
+	    public int getImageHeight()
+	    {
+	        return _imageHeight;
+	    }
+
+	    public byte getBitsPerSample()
+	    {
+	        return _bitsPerSample;
+	    }
+
+	    @NotNull
+	    public PngColorType getColorType()
+	    {
+	        return _colorType;
+	    }
+
+	    public byte getCompressionType()
+	    {
+	        return _compressionType;
+	    }
+
+	    public byte getFilterMethod()
+	    {
+	        return _filterMethod;
+	    }
+
+	    public byte getInterlaceMethod()
+	    {
+	        return _interlaceMethod;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngMetadataReader
+	{
+	    private Set<PngChunkType> _desiredChunkTypes;
+
+	    /**
+	     * The PNG spec states that ISO_8859_1 (Latin-1) encoding should be used for:
+	     * <ul>
+	     *   <li>"tEXt" and "zTXt" chunks, both for keys and values (https://www.w3.org/TR/PNG/#11tEXt)</li>
+	     *   <li>"iCCP" chunks, for the profile name (https://www.w3.org/TR/PNG/#11iCCP)</li>
+	     *   <li>"sPLT" chunks, for the palette name (https://www.w3.org/TR/PNG/#11sPLT)</li>
+	     * </ul>
+	     * Note that "iTXt" chunks use UTF-8 encoding (https://www.w3.org/TR/PNG/#11iTXt).
+	     * <p/>
+	     * For more guidance: http://www.w3.org/TR/PNG-Decoders.html#D.Text-chunk-processing
+	     */
+	    Charsets ch = new Charsets();
+	    private Charset _latin1Encoding = ch.ISO_8859_1;
+
+	    {
+	        Set<PngChunkType> desiredChunkTypes = new HashSet<PngChunkType>();
+            try {
+	        desiredChunkTypes.add(new PngChunkType("IHDR"));
+	        desiredChunkTypes.add(new PngChunkType("PLTE"));
+	        desiredChunkTypes.add(new PngChunkType("tRNS"));
+	        desiredChunkTypes.add(new PngChunkType("cHRM"));
+	        desiredChunkTypes.add(new PngChunkType("sRGB"));
+	        desiredChunkTypes.add(new PngChunkType("gAMA"));
+	        desiredChunkTypes.add(new PngChunkType("iCCP"));
+	        desiredChunkTypes.add(new PngChunkType("bKGD"));
+	        desiredChunkTypes.add(new PngChunkType("tEXt",true));
+	        desiredChunkTypes.add(new PngChunkType("zTXt", true));
+	        desiredChunkTypes.add(new PngChunkType("iTXt", true));
+	        desiredChunkTypes.add(new PngChunkType("tIME"));
+	        desiredChunkTypes.add(new PngChunkType("pHYs"));
+	        desiredChunkTypes.add(new PngChunkType("sBIT"));
+	        desiredChunkTypes.add(new PngChunkType("eXIf"));
+            }
+            catch (PngProcessingException e) {
+            	e.printStackTrace();
+            }
+
+	        _desiredChunkTypes = Collections.unmodifiableSet(desiredChunkTypes);
+	    }
+
+	    @NotNull
+	    public Metadata readMetadata(@NotNull File file) throws PngProcessingException, IOException
+	    {
+	        InputStream inputStream = new FileInputStream(file);
+	        Metadata metadata;
+	        try {
+	            metadata = readMetadata(inputStream);
+	        } finally {
+	            inputStream.close();
+	        }
+	        new FileSystemMetadataReader().read(file, metadata);
+	        return metadata;
+	    }
+
+	    @NotNull
+	    public Metadata readMetadata(@NotNull InputStream inputStream) throws PngProcessingException, IOException
+	    {
+	        Iterable<PngChunk> chunks = new PngChunkReader().extract(new StreamReader(inputStream), _desiredChunkTypes);
+
+	        Metadata metadata = new Metadata();
+
+	        for (PngChunk chunk : chunks) {
+	            try {
+	                processChunk(metadata, chunk);
+	            } catch (Exception e) {
+	                metadata.addDirectory(new ErrorDirectory("Exception reading PNG chunk: " + e.getMessage()));
+	            }
+	        }
+
+	        return metadata;
+	    }
+
+	    private void processChunk(@NotNull Metadata metadata, @NotNull PngChunk chunk) throws PngProcessingException, IOException
+	    {
+	        PngChunkType chunkType = chunk.getType();
+	        byte[] bytes = chunk.getBytes();
+
+	        if (chunkType.toString().equals("IHDR")) {
+	            PngHeader header = new PngHeader(bytes);
+	            PngChunkType ihdr = null;
+	            try {
+	                ihdr = new PngChunkType("IHDR");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(ihdr);
+	            directory.setInt(PngDirectory.TAG_IMAGE_WIDTH, header.getImageWidth());
+	            directory.setInt(PngDirectory.TAG_IMAGE_HEIGHT, header.getImageHeight());
+	            directory.setInt(PngDirectory.TAG_BITS_PER_SAMPLE, header.getBitsPerSample());
+	            directory.setInt(PngDirectory.TAG_COLOR_TYPE, header.getColorType().getNumericValue());
+	            directory.setInt(PngDirectory.TAG_COMPRESSION_TYPE, header.getCompressionType() & 0xFF); // make sure it's unsigned
+	            directory.setInt(PngDirectory.TAG_FILTER_METHOD, header.getFilterMethod());
+	            directory.setInt(PngDirectory.TAG_INTERLACE_METHOD, header.getInterlaceMethod());
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("PLTE")) {
+	        	PngChunkType plte = null;
+	            try {
+	                plte = new PngChunkType("PLTE");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(plte);
+	            directory.setInt(PngDirectory.TAG_PALETTE_SIZE, bytes.length / 3);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("tRNS")) {
+	        	PngChunkType trns = null;
+	            try {
+	                trns = new PngChunkType("tRNS");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(trns);
+	            directory.setInt(PngDirectory.TAG_PALETTE_HAS_TRANSPARENCY, 1);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("sRGB")) {
+	        	PngChunkType srgb = null;
+	            try {
+	                srgb = new PngChunkType("sRGB");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            int srgbRenderingIntent = bytes[0];
+	            PngDirectory directory = new PngDirectory(srgb);
+	            directory.setInt(PngDirectory.TAG_SRGB_RENDERING_INTENT, srgbRenderingIntent);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("cHRM")) {
+	            PngChromaticities chromaticities = new PngChromaticities(bytes);
+	            PngChromaticitiesDirectory directory = new PngChromaticitiesDirectory();
+	            directory.setInt(PngChromaticitiesDirectory.TAG_WHITE_POINT_X, chromaticities.getWhitePointX());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_WHITE_POINT_Y, chromaticities.getWhitePointY());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_RED_X, chromaticities.getRedX());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_RED_Y, chromaticities.getRedY());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_GREEN_X, chromaticities.getGreenX());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_GREEN_Y, chromaticities.getGreenY());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_BLUE_X, chromaticities.getBlueX());
+	            directory.setInt(PngChromaticitiesDirectory.TAG_BLUE_Y, chromaticities.getBlueY());
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("gAMA")) {
+	        	ByteConvert bc = new ByteConvert();
+	            int gammaInt = bc.toInt32BigEndian(bytes);
+	            new SequentialByteArrayReader(bytes).getInt32();
+	            PngChunkType gama = null;
+	            try {
+	                gama = new PngChunkType("gAMA");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(gama);
+	            directory.setDouble(PngDirectory.TAG_GAMMA, gammaInt / 100000.0);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("iCCP")) {
+	            SequentialReader reader = new SequentialByteArrayReader(bytes);
+
+	            // Profile Name is 1-79 bytes, followed by the 1 byte null character
+	            byte[] profileNameBytes = reader.getNullTerminatedBytes(79 + 1);
+	            PngChunkType iccp = null;
+	            try {
+	                iccp = new PngChunkType("iCCP");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(iccp);
+	            directory.setStringValue(PngDirectory.TAG_ICC_PROFILE_NAME, new StringValue(profileNameBytes, _latin1Encoding));
+	            byte compressionMethod = reader.getInt8();
+	            // Only compression method allowed by the spec is zero: deflate
+	            if (compressionMethod == 0) {
+	                // bytes left for compressed text is:
+	                // total bytes length - (profilenamebytes length + null byte + compression method byte)
+	                int bytesLeft = bytes.length - (profileNameBytes.length + 1 + 1);
+	                byte[] compressedProfile = reader.getBytes(bytesLeft);
+
+	                try {
+	                    InflaterInputStream inflateStream = new InflaterInputStream(new ByteArrayInputStream(compressedProfile));
+	                    new IccReader().extract(new RandomAccessStreamReader(inflateStream), metadata, directory);
+	                    inflateStream.close();
+	                } catch(java.util.zip.ZipException zex) {
+	                    directory.addError(String.format("Exception decompressing PNG iCCP chunk : %s", zex.getMessage()));
+	                    metadata.addDirectory(directory);
+	                }
+	            } else {
+	                directory.addError("Invalid compression method value");
+	            }
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("bKGD")) {
+	        	PngChunkType bkgd = null;
+	            try {
+	                bkgd = new PngChunkType("bKGD");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(bkgd);
+	            directory.setByteArray(PngDirectory.TAG_BACKGROUND_COLOR, bytes);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("tEXt")) {
+	            SequentialReader reader = new SequentialByteArrayReader(bytes);
+
+	            // Keyword is 1-79 bytes, followed by the 1 byte null character
+	            StringValue keywordsv = reader.getNullTerminatedStringValue(79 + 1, _latin1Encoding);
+	            String keyword = keywordsv.toString();
+
+	            // bytes left for text is:
+	            // total bytes length - (Keyword length + null byte)
+	            int bytesLeft = bytes.length - (keywordsv.getBytes().length + 1);
+	            StringValue value = reader.getNullTerminatedStringValue(bytesLeft, _latin1Encoding);
+	            List<KeyValuePair> textPairs = new ArrayList<KeyValuePair>();
+	            textPairs.add(new KeyValuePair(keyword, value));
+	            PngChunkType text = null;
+	            try {
+	                text = new PngChunkType("tEXt", true);
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(text);
+	            directory.setObject(PngDirectory.TAG_TEXTUAL_DATA, textPairs);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("zTXt")) {
+	            SequentialReader reader = new SequentialByteArrayReader(bytes);
+
+	            // Keyword is 1-79 bytes, followed by the 1 byte null character
+	            StringValue keywordsv = reader.getNullTerminatedStringValue(79 + 1, _latin1Encoding);
+	            String keyword = keywordsv.toString();
+	            byte compressionMethod = reader.getInt8();
+
+	            // bytes left for compressed text is:
+	            // total bytes length - (Keyword length + null byte + compression method byte)
+	            int bytesLeft = bytes.length - (keywordsv.getBytes().length + 1 + 1);
+	            byte[] textBytes = null;
+	            if (compressionMethod == 0) {
+	                try {
+	                	StreamUtil st = new StreamUtil();
+	                    textBytes = st.readAllBytes(new InflaterInputStream(new ByteArrayInputStream(bytes, bytes.length - bytesLeft, bytesLeft)));
+	                } catch(java.util.zip.ZipException zex) {
+	                	PngChunkType ztxt = null;
+	    	            try {
+	    	                ztxt = new PngChunkType("zTXt", true);
+	    	            }
+	    	            catch (PngProcessingException e) {
+	    	            	e.printStackTrace();
+	    	            }
+	                    PngDirectory directory = new PngDirectory(ztxt);
+	                    directory.addError(String.format("Exception decompressing PNG zTXt chunk with keyword \"%s\": %s", keyword, zex.getMessage()));
+	                    metadata.addDirectory(directory);
+	                }
+	            } else {
+	            	PngChunkType ztxt = null;
+    	            try {
+    	                ztxt = new PngChunkType("zTXt", true);
+    	            }
+    	            catch (PngProcessingException e) {
+    	            	e.printStackTrace();
+    	            }
+	                PngDirectory directory = new PngDirectory(ztxt);
+	                directory.addError("Invalid compression method value");
+	                metadata.addDirectory(directory);
+	            }
+	            if (textBytes != null) {
+	                if (keyword.equals("XML:com.adobe.xmp")) {
+	                    // NOTE in testing images, the XMP has parsed successfully, but we are not extracting tags from it as necessary
+	                    //new XmpReader().extract(textBytes, metadata);
+	                } else {
+	                    List<KeyValuePair> textPairs = new ArrayList<KeyValuePair>();
+	                    textPairs.add(new KeyValuePair(keyword, new StringValue(textBytes, _latin1Encoding)));
+	                    PngChunkType ztxt = null;
+	    	            try {
+	    	                ztxt = new PngChunkType("zTXt", true);
+	    	            }
+	    	            catch (PngProcessingException e) {
+	    	            	e.printStackTrace();
+	    	            }
+	                    PngDirectory directory = new PngDirectory(ztxt);
+	                    directory.setObject(PngDirectory.TAG_TEXTUAL_DATA, textPairs);
+	                    metadata.addDirectory(directory);
+	                }
+	            }
+	        } else if (chunkType.toString().equals("iTXt")) {
+	            SequentialReader reader = new SequentialByteArrayReader(bytes);
+
+	            // Keyword is 1-79 bytes, followed by the 1 byte null character
+	            StringValue keywordsv = reader.getNullTerminatedStringValue(79 + 1, _latin1Encoding);
+	            String keyword = keywordsv.toString();
+	            byte compressionFlag = reader.getInt8();
+	            byte compressionMethod = reader.getInt8();
+	            // TODO we currently ignore languageTagBytes and translatedKeywordBytes
+	            byte[] languageTagBytes = reader.getNullTerminatedBytes(bytes.length);
+	            byte[] translatedKeywordBytes = reader.getNullTerminatedBytes(bytes.length);
+
+	            // bytes left for compressed text is:
+	            // total bytes length - (Keyword length + null byte + comp flag byte + comp method byte + lang length + null byte + translated length + null byte)
+	            int bytesLeft = bytes.length - (keywordsv.getBytes().length + 1 + 1 + 1 + languageTagBytes.length + 1 + translatedKeywordBytes.length + 1);
+	            byte[] textBytes = null;
+	            if (compressionFlag == 0) {
+	                textBytes = reader.getNullTerminatedBytes(bytesLeft);
+	            } else if (compressionFlag == 1) {
+	                if (compressionMethod == 0) {
+	                    try {
+	                    	StreamUtil st = new StreamUtil();
+	                        textBytes = st.readAllBytes(new InflaterInputStream(new ByteArrayInputStream(bytes, bytes.length - bytesLeft, bytesLeft)));
+	                    } catch(java.util.zip.ZipException zex) {
+	                    	PngChunkType itxt = null;
+		    	            try {
+		    	                itxt = new PngChunkType("iTXt", true);
+		    	            }
+		    	            catch (PngProcessingException e) {
+		    	            	e.printStackTrace();
+		    	            }
+	                        PngDirectory directory = new PngDirectory(itxt);
+	                        directory.addError(String.format("Exception decompressing PNG iTXt chunk with keyword \"%s\": %s", keyword, zex.getMessage()));
+	                        metadata.addDirectory(directory);
+	                    }
+	                } else {
+	                	PngChunkType itxt = null;
+	    	            try {
+	    	                itxt = new PngChunkType("iTXt", true);
+	    	            }
+	    	            catch (PngProcessingException e) {
+	    	            	e.printStackTrace();
+	    	            }
+	                    PngDirectory directory = new PngDirectory(itxt);
+	                    directory.addError("Invalid compression method value");
+	                    metadata.addDirectory(directory);
+	                }
+	            } else {
+	            	PngChunkType itxt = null;
+    	            try {
+    	                itxt = new PngChunkType("iTXt", true);
+    	            }
+    	            catch (PngProcessingException e) {
+    	            	e.printStackTrace();
+    	            }
+	                PngDirectory directory = new PngDirectory(itxt);
+	                directory.addError("Invalid compression flag value");
+	                metadata.addDirectory(directory);
+	            }
+
+	            if (textBytes != null) {
+	                if (keyword.equals("XML:com.adobe.xmp")) {
+	                    // NOTE in testing images, the XMP has parsed successfully, but we are not extracting tags from it as necessary
+	                    //new XmpReader().extract(textBytes, metadata);
+	                } else {
+	                    List<KeyValuePair> textPairs = new ArrayList<KeyValuePair>();
+	                    textPairs.add(new KeyValuePair(keyword, new StringValue(textBytes, _latin1Encoding)));
+	                    PngChunkType itxt = null;
+	    	            try {
+	    	                itxt = new PngChunkType("iTXt", true);
+	    	            }
+	    	            catch (PngProcessingException e) {
+	    	            	e.printStackTrace();
+	    	            }
+	                    PngDirectory directory = new PngDirectory(itxt);
+	                    directory.setObject(PngDirectory.TAG_TEXTUAL_DATA, textPairs);
+	                    metadata.addDirectory(directory);
+	                }
+	            }
+	        } else if (chunkType.toString().equals("tIME")) {
+	            SequentialByteArrayReader reader = new SequentialByteArrayReader(bytes);
+	            int year = reader.getUInt16();
+	            int month = reader.getUInt8();
+	            int day = reader.getUInt8();
+	            int hour = reader.getUInt8();
+	            int minute = reader.getUInt8();
+	            int second = reader.getUInt8();
+	            PngChunkType time = null;
+	            try {
+	                time = new PngChunkType("tIME");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(time);
+	            DateUtil du = new DateUtil();
+	            if (du.isValidDate(year, month - 1, day) && du.isValidTime(hour, minute, second)) {
+	                String dateString = String.format("%04d:%02d:%02d %02d:%02d:%02d", year, month, day, hour, minute, second);
+	                directory.setString(PngDirectory.TAG_LAST_MODIFICATION_TIME, dateString);
+	            } else {
+	                directory.addError(String.format(
+	                    "PNG tIME data describes an invalid date/time: year=%d month=%d day=%d hour=%d minute=%d second=%d",
+	                    year, month, day, hour, minute, second));
+	            }
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("pHYs")) {
+	            SequentialByteArrayReader reader = new SequentialByteArrayReader(bytes);
+	            int pixelsPerUnitX = reader.getInt32();
+	            int pixelsPerUnitY = reader.getInt32();
+	            byte unitSpecifier = reader.getInt8();
+	            PngChunkType phys = null;
+	            try {
+	                phys = new PngChunkType("pHYs");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(phys);
+	            directory.setInt(PngDirectory.TAG_PIXELS_PER_UNIT_X, pixelsPerUnitX);
+	            directory.setInt(PngDirectory.TAG_PIXELS_PER_UNIT_Y, pixelsPerUnitY);
+	            directory.setInt(PngDirectory.TAG_UNIT_SPECIFIER, unitSpecifier);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("sBIT")) {
+	        	PngChunkType sbit = null;
+	            try {
+	                sbit = new PngChunkType("sBIT");
+	            }
+	            catch (PngProcessingException e) {
+	            	e.printStackTrace();
+	            }
+	            PngDirectory directory = new PngDirectory(sbit);
+	            directory.setByteArray(PngDirectory.TAG_SIGNIFICANT_BITS, bytes);
+	            metadata.addDirectory(directory);
+	        } else if (chunkType.toString().equals("eXIf")) {
+	            try {
+	                ExifTiffHandler handler = new ExifTiffHandler(metadata, null);
+	                new TiffReader().processTiff(new ByteArrayReader(bytes), handler, 0);
+	            } catch (TiffProcessingException ex) {
+	            	PngChunkType exif = null;
+		            try {
+		                exif = new PngChunkType("eXIf");
+		            }
+		            catch (PngProcessingException e) {
+		            	e.printStackTrace();
+		            }
+	                PngDirectory directory = new PngDirectory(exif);
+	                directory.addError(ex.getMessage());
+	                metadata.addDirectory(directory);
+	            } catch (IOException ex) {
+	            	PngChunkType exif = null;
+		            try {
+		                exif = new PngChunkType("eXIf");
+		            }
+		            catch (PngProcessingException e) {
+		            	e.printStackTrace();
+		            }
+	                PngDirectory directory = new PngDirectory(exif);
+	                directory.addError(ex.getMessage());
+	                metadata.addDirectory(directory);
+	            }
+	        }
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes http://drewnoakes.com
+	 */
+	public class ByteConvert
+	{
+	    public int toInt32BigEndian(@NotNull byte[] bytes)
+	    {
+	        return (bytes[0] << 24 & 0xFF000000) |
+	               (bytes[1] << 16 & 0xFF0000) |
+	               (bytes[2] << 8  & 0xFF00) |
+	               (bytes[3]       & 0xFF);
+	    }
+
+	    public int toInt32LittleEndian(@NotNull byte[] bytes)
+	    {
+	        return (bytes[0]       & 0xFF) |
+	               (bytes[1] << 8  & 0xFF00) |
+	               (bytes[2] << 16 & 0xFF0000) |
+	               (bytes[3] << 24 & 0xFF000000);
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class RandomAccessStreamReader extends RandomAccessReader
+	{
+	    public final static int DEFAULT_CHUNK_LENGTH = 2 * 1024;
+
+	    @NotNull
+	    private final InputStream _stream;
+	    private final int _chunkLength;
+
+	    private final ArrayList<byte[]> _chunks = new ArrayList<byte[]>();
+
+	    private boolean _isStreamFinished;
+	    private long _streamLength;
+
+	    public RandomAccessStreamReader(@NotNull InputStream stream)
+	    {
+	        this(stream, DEFAULT_CHUNK_LENGTH, -1);
+	    }
+
+	    public RandomAccessStreamReader(@NotNull InputStream stream, int chunkLength)
+	    {
+	        this(stream, chunkLength, -1);
+	    }
+
+	    public RandomAccessStreamReader(@NotNull InputStream stream, int chunkLength, long streamLength)
+	    {
+	        if (stream == null)
+	            throw new NullPointerException();
+	        if (chunkLength <= 0)
+	            throw new IllegalArgumentException("chunkLength must be greater than zero");
+
+	        _chunkLength = chunkLength;
+	        _stream = stream;
+	        _streamLength = streamLength;
+	    }
+
+	    /**
+	     * Reads to the end of the stream, in order to determine the total number of bytes.
+	     * In general, this is not a good idea for this implementation of {@link RandomAccessReader}.
+	     *
+	     * @return the length of the data source, in bytes.
+	     */
+	    @Override
+	    public long getLength() throws IOException
+	    {
+	        if (_streamLength != -1) {
+	            return _streamLength;
+	        }
+
+	        isValidIndex(Integer.MAX_VALUE, 1);
+	        assert(_isStreamFinished);
+	        return _streamLength;
+	    }
+
+	    /**
+	     * Ensures that the buffered bytes extend to cover the specified index. If not, an attempt is made
+	     * to read to that point.
+	     * <p>
+	     * If the stream ends before the point is reached, a {@link BufferBoundsException} is raised.
+	     *
+	     * @param index the index from which the required bytes start
+	     * @param bytesRequested the number of bytes which are required
+	     * @throws BufferBoundsException if the stream ends before the required number of bytes are acquired
+	     */
+	    @Override
+	    protected void validateIndex(int index, int bytesRequested) throws IOException
+	    {
+	        if (index < 0) {
+	            throw new BufferBoundsException(String.format("Attempt to read from buffer using a negative index (%d)", index));
+	        } else if (bytesRequested < 0) {
+	            throw new BufferBoundsException("Number of requested bytes must be zero or greater");
+	        } else if ((long)index + bytesRequested - 1 > Integer.MAX_VALUE) {
+	            throw new BufferBoundsException(String.format("Number of requested bytes summed with starting index exceed maximum range of signed 32 bit integers (requested index: %d, requested count: %d)", index, bytesRequested));
+	        }
+
+	        if (!isValidIndex(index, bytesRequested)) {
+	            assert(_isStreamFinished);
+	            // TODO test that can continue using an instance of this type after this exception
+	            throw new BufferBoundsException(index, bytesRequested, _streamLength);
+	        }
+	    }
+
+	    @Override
+	    protected boolean isValidIndex(int index, int bytesRequested) throws IOException
+	    {
+	        if (index < 0 || bytesRequested < 0) {
+	            return false;
+	        }
+
+	        long endIndexLong = (long)index + bytesRequested - 1;
+
+	        if (endIndexLong > Integer.MAX_VALUE) {
+	            return false;
+	        }
+
+	        int endIndex = (int)endIndexLong;
+
+	        if (_isStreamFinished) {
+	            return endIndex < _streamLength;
+	        }
+
+	        int chunkIndex = endIndex / _chunkLength;
+
+	        // TODO test loading several chunks for a single request
+	        while (chunkIndex >= _chunks.size()) {
+	            assert (!_isStreamFinished);
+
+	            byte[] chunk = new byte[_chunkLength];
+	            int totalBytesRead = 0;
+	            while (!_isStreamFinished && totalBytesRead != _chunkLength) {
+	                int bytesRead = _stream.read(chunk, totalBytesRead, _chunkLength - totalBytesRead);
+	                if (bytesRead == -1) {
+	                    // the stream has ended, which may be ok
+	                    _isStreamFinished = true;
+	                    int observedStreamLength = _chunks.size() * _chunkLength + totalBytesRead;
+	                    if (_streamLength == -1) {
+	                        _streamLength = observedStreamLength;
+	                    } else if (_streamLength != observedStreamLength) {
+	                        assert(false);
+	                    }
+
+	                    // check we have enough bytes for the requested index
+	                    if (endIndex >= _streamLength) {
+	                        _chunks.add(chunk);
+	                        return false;
+	                    }
+	                } else {
+	                    totalBytesRead += bytesRead;
+	                }
+	            }
+
+	            _chunks.add(chunk);
+	        }
+
+	        return true;
+	    }
+
+	    @Override
+	    public int toUnshiftedOffset(int localOffset)
+	    {
+	        return localOffset;
+	    }
+
+	    @Override
+	    public byte getByte(int index) throws IOException
+	    {
+	        assert(index >= 0);
+
+	        final int chunkIndex = index / _chunkLength;
+	        final int innerIndex = index % _chunkLength;
+	        final byte[] chunk = _chunks.get(chunkIndex);
+
+	        return chunk[innerIndex];
+	    }
+
+	    @NotNull
+	    @Override
+	    public byte[] getBytes(int index, int count) throws IOException
+	    {
+	        validateIndex(index, count);
+
+	        byte[] bytes = new byte[count];
+
+	        int remaining = count;
+	        int fromIndex = index;
+	        int toIndex = 0;
+
+	        while (remaining != 0) {
+	            int fromChunkIndex = fromIndex / _chunkLength;
+	            int fromInnerIndex = fromIndex % _chunkLength;
+	            int length = Math.min(remaining, _chunkLength - fromInnerIndex);
+
+	            byte[] chunk = _chunks.get(fromChunkIndex);
+
+	            System.arraycopy(chunk, fromInnerIndex, bytes, toIndex, length);
+
+	            remaining -= length;
+	            fromIndex += length;
+	            toIndex += length;
+	        }
+
+	        return bytes;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public final class StreamUtil
+	{
+	    public byte[] readAllBytes(InputStream stream) throws IOException
+	    {
+	        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+	        byte[] buffer = new byte[1024];
+	        while (true) {
+	            int bytesRead = stream.read(buffer);
+	            if (bytesRead == -1)
+	                break;
+	            outputStream.write(buffer, 0, bytesRead);
+	        }
+
+	        return outputStream.toByteArray();
+	    }
+	}
 
 }
