@@ -3503,5 +3503,104 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        System.out.println("Finished running testMsPaint24bpp()");
 	    }
 	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngChunkReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //PngChunkReaderTest pr = me.new PngChunkReaderTest();
+	    public List<PngChunk> processFile(String filePath) throws PngProcessingException, IOException
+	    {
+	        FileInputStream inputStream = null;
+	        try {
+	            inputStream = new FileInputStream(filePath);
+	            Iterables it = new Iterables();
+	            return it.toList(new PngChunkReader().extract(new StreamReader(inputStream), null));
+	        } finally {
+	            if (inputStream != null) {
+	                inputStream.close();
+	            }
+	        }
+	    }
+
+	    //@Test
+	    //try {
+	    //	pr.testExtractMspaint();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtractMspaint()
+	    public void testExtractMspaint() throws Exception
+	    {
+	        List<PngChunk> chunks = processFile("C:/metadata/metadata-extractor-master/Tests/Data/mspaint-8x10.png");
+
+	        assertEquals(6, chunks.size());
+
+	        PngChunkType ihdr = new PngChunkType("IHDR");
+	        assertEquals(ihdr, chunks.get(0).getType());
+	        assertEquals(13, chunks.get(0).getBytes().length);
+
+	        PngChunkType srgb = new PngChunkType("sRGB");
+	        assertEquals(srgb, chunks.get(1).getType());
+	        assertEquals(1, chunks.get(1).getBytes().length);
+
+	        PngChunkType gama = new PngChunkType("gAMA");
+	        assertEquals(gama, chunks.get(2).getType());
+	        assertEquals(4, chunks.get(2).getBytes().length);
+
+	        PngChunkType phys = new PngChunkType("pHYs");
+	        assertEquals(phys, chunks.get(3).getType());
+	        assertEquals(9, chunks.get(3).getBytes().length);
+
+	        PngChunkType idat = new PngChunkType("IDAT", true);
+	        assertEquals(idat, chunks.get(4).getType());
+	        assertEquals(17, chunks.get(4).getBytes().length);
+
+	        PngChunkType iend = new PngChunkType("IEND");
+	        assertEquals(iend, chunks.get(5).getType());
+	        assertEquals(0, chunks.get(5).getBytes().length);
+	        System.out.println("Finished running testExtractMspaint()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pr.testExtractPhotoshop();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testExtractPhotoshop()
+	    public void testExtractPhotoshop() throws Exception
+	    {
+	        List<PngChunk> chunks = processFile("C:/metadata/metadata-extractor-master/Tests/Data/photoshop-8x12-rgba32.png");
+
+	        assertEquals(5, chunks.size());
+
+	        PngChunkType ihdr = new PngChunkType("IHDR");
+	        assertEquals(ihdr, chunks.get(0).getType());
+	        assertEquals(13, chunks.get(0).getBytes().length);
+
+	        PngChunkType text = new PngChunkType("tEXt", true);
+	        assertEquals(text, chunks.get(1).getType());
+	        assertEquals(25, chunks.get(1).getBytes().length);
+
+	        PngChunkType itxt = new PngChunkType("iTXt", true);
+	        assertEquals(itxt, chunks.get(2).getType());
+	        assertEquals(802, chunks.get(2).getBytes().length);
+
+	        PngChunkType idat = new PngChunkType("IDAT", true);
+	        assertEquals(idat, chunks.get(3).getType());
+	        assertEquals(130, chunks.get(3).getBytes().length);
+
+	        PngChunkType iend = new PngChunkType("IEND");
+	        assertEquals(iend, chunks.get(4).getType());
+	        assertEquals(0, chunks.get(4).getBytes().length);
+	        System.out.println("Finished running testExtractPhotoshop()");
+	    }
+	}
+
 
 }
