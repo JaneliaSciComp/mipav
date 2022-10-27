@@ -3601,6 +3601,287 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        System.out.println("Finished running testExtractPhotoshop()");
 	    }
 	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngChunkTypeTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //PngChunkTypeTest pt = me.new PngChunkTypeTest();
+	    //@Test
+	    //try {
+	    //	pt.testConstructorTooLong();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testConstructorTooLong()
+	    public void testConstructorTooLong() throws Exception
+	    {
+	        try {
+	            new PngChunkType("TooLong");
+	            fail("Expecting exception");
+	        } catch (PngProcessingException ex) {
+	            assertEquals("PNG chunk type identifier must be four bytes in length", ex.getMessage());
+	        }
+	        System.out.println("Finished running testConstructorTooLong()");
+	    }
 
+	    //@Test
+	    //try {
+	    //	pt.testConstructorTooShort();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testConstructorTooShort()
+	    public void testConstructorTooShort() throws Exception
+	    {
+	        try {
+	            new PngChunkType("foo");
+	            fail("Expecting exception");
+	        } catch (PngProcessingException ex) {
+	            assertEquals("PNG chunk type identifier must be four bytes in length", ex.getMessage());
+	        }
+	        System.out.println("Finished running testConstructorTooShort()");
+	    }
 
+	    //@Test
+	    //try {
+	    //	pt.testConstructorInvalidBytes();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //org.junit.ComparisonFailure: expected:<...nk type identifier m[ay only contain alphabet characters]> 
+	    //but was:<...nk type identifier m[ust be four bytes in length]>
+	    public void testConstructorInvalidBytes() throws Exception
+	    {
+	        String[] invalidStrings = {"ABC1", "1234", "    ", "!Â£$%"};
+
+	        for (String invalidString : invalidStrings) {
+	            try {
+	                new PngChunkType(invalidString);
+	                fail("Expecting exception");
+	            } catch (PngProcessingException ex) {
+	                assertEquals("PNG chunk type identifier may only contain alphabet characters", ex.getMessage());
+	            }
+	        }
+	        System.out.println("Finished running testConstructorInvalidBytes()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testConstructorValidBytes();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testConstructorValidBytes()
+	    public void testConstructorValidBytes() throws Exception
+	    {
+	        String[] validStrings = {"ABCD", "abcd", "wxyz", "WXYZ", "lkjh", "LKJH"};
+
+	        for (String validString : validStrings) {
+	            new PngChunkType(validString);
+	        }
+	        System.out.println("Finished running testConstructorValidBytes()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testIsCritical();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIsCritical()
+	    public void testIsCritical() throws Exception
+	    {
+	        assertTrue(new PngChunkType("ABCD").isCritical());
+	        assertFalse(new PngChunkType("aBCD").isCritical());
+	        System.out.println("Finished running testIsCritical()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testIsAncillary();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIsAncillary()
+	    public void testIsAncillary() throws Exception
+	    {
+	        assertFalse(new PngChunkType("ABCD").isAncillary());
+	        assertTrue(new PngChunkType("aBCD").isAncillary());
+	        System.out.println("Finished running testIsAncillary()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testIsPrivate();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIsPrivate()
+	    public void testIsPrivate() throws Exception
+	    {
+	        assertTrue(new PngChunkType("ABCD").isPrivate());
+	        assertFalse(new PngChunkType("AbCD").isPrivate());
+	        System.out.println("Finished running testIsPrivate()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testIsSafeToCopy();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testIsSafeToCopy()
+	    public void testIsSafeToCopy() throws Exception
+	    {
+	        assertFalse(new PngChunkType("ABCD").isSafeToCopy());
+	        assertTrue(new PngChunkType("ABCd").isSafeToCopy());
+	        System.out.println("Finished running testIsSafeToCopy()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testAreMultipleAllowed();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testAreMultipleAllowed()
+	    public void testAreMultipleAllowed() throws Exception
+	    {
+	        assertFalse(new PngChunkType("ABCD").areMultipleAllowed());
+	        assertFalse(new PngChunkType("ABCD", false).areMultipleAllowed());
+	        assertTrue(new PngChunkType("ABCD", true).areMultipleAllowed());
+	        System.out.println("Finished running testAreMultipleAllowed()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pt.testEquality();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testEquality()
+	    public void testEquality() throws Exception
+	    {
+	        assertEquals(new PngChunkType("ABCD"), new PngChunkType("ABCD"));
+	        assertEquals(new PngChunkType("ABCD", true), new PngChunkType("ABCD", true));
+	        assertEquals(new PngChunkType("ABCD", false), new PngChunkType("ABCD", false));
+	        // NOTE we don't consider the 'allowMultiples' value in the equality test (or hash code)
+	        assertEquals(new PngChunkType("ABCD", true), new PngChunkType("ABCD", false));
+
+	        //assertNotEquals(new PngChunkType("ABCD"), new PngChunkType("abcd"));
+	        System.out.println("Finished running testEquality()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PngMetadataReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //PngMetadataReaderTest pr = me.new PngMetadataReaderTest();
+	    @NotNull
+	    private Metadata processFile(@NotNull String filePath) throws PngProcessingException, IOException
+	    {
+	        FileInputStream inputStream = null;
+	        try {
+	            inputStream = new FileInputStream(filePath);
+	            PngMetadataReader pr = new PngMetadataReader();
+	            return pr.readMetadata(inputStream);
+	        } finally {
+	            if (inputStream != null) {
+	                inputStream.close();
+	            }
+	        }
+	    }
+
+	    //@Test
+	    //try {
+	    //	pr.testGimpGreyscaleWithManyChunks();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGimpGreyscaleWithManyChunks()
+	    public void testGimpGreyscaleWithManyChunks() throws Exception
+	    {
+	        TimeZone timeZone = TimeZone.getDefault();
+
+	        try {
+	            TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+
+	            Metadata metadata = processFile("C:/metadata/metadata-extractor-master/Tests/Data/gimp-8x12-greyscale-alpha-time-background.png");
+	            Collection<PngDirectory> directories = metadata.getDirectoriesOfType(PngDirectory.class);
+
+	            assertNotNull(directories);
+	            assertEquals(6, directories.size());
+
+	            PngDirectory[] dirs = new PngDirectory[directories.size()];
+	            directories.toArray(dirs);
+
+	            PngChunkType ihdr = new PngChunkType("IHDR");
+	            assertEquals(ihdr, dirs[0].getPngChunkType());
+	            assertEquals(8, dirs[0].getInt(PngDirectory.TAG_IMAGE_WIDTH));
+	            assertEquals(12, dirs[0].getInt(PngDirectory.TAG_IMAGE_HEIGHT));
+	            assertEquals(8, dirs[0].getInt(PngDirectory.TAG_BITS_PER_SAMPLE));
+	            assertEquals(4, dirs[0].getInt(PngDirectory.TAG_COLOR_TYPE));
+	            assertEquals(0, dirs[0].getInt(PngDirectory.TAG_COMPRESSION_TYPE));
+	            assertEquals(0, dirs[0].getInt(PngDirectory.TAG_FILTER_METHOD));
+	            assertEquals(0, dirs[0].getInt(PngDirectory.TAG_INTERLACE_METHOD));
+
+	            PngChunkType gama = new PngChunkType("gAMA");
+	            assertEquals(gama, dirs[1].getPngChunkType());
+	            assertEquals(0.45455, dirs[1].getDouble(PngDirectory.TAG_GAMMA), 0.00001);
+
+	            PngChunkType bkgd = new PngChunkType("bKGD");
+	            assertEquals(bkgd, dirs[2].getPngChunkType());
+	            assertArrayEquals(new byte[]{0, 52}, dirs[2].getByteArray(PngDirectory.TAG_BACKGROUND_COLOR));
+
+	            //noinspection ConstantConditions
+	            PngChunkType phys = new PngChunkType("pHYs");
+	            assertEquals(phys, dirs[3].getPngChunkType());
+	            assertEquals(1, dirs[3].getInt(PngDirectory.TAG_UNIT_SPECIFIER));
+	            assertEquals(2835, dirs[3].getInt(PngDirectory.TAG_PIXELS_PER_UNIT_X));
+	            assertEquals(2835, dirs[3].getInt(PngDirectory.TAG_PIXELS_PER_UNIT_Y));
+              
+	            PngChunkType time = new PngChunkType("tIME");
+	            assertEquals(time, dirs[4].getPngChunkType());
+	            assertEquals("2013:01:01 04:08:30", dirs[4].getString(PngDirectory.TAG_LAST_MODIFICATION_TIME));
+
+	            java.util.Date modTime = dirs[4].getDate(PngDirectory.TAG_LAST_MODIFICATION_TIME);
+	            SimpleDateFormat formatter = new SimpleDateFormat("EE MMM DD HH:mm:ss z yyyy", Locale.US);
+	            formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
+	            assertEquals("Tue Jan 01 04:08:30 GMT 2013", formatter.format(modTime));
+	            assertNotNull(modTime);
+	            assertEquals(1357013310000L, modTime.getTime());
+
+	            PngChunkType itxt = new PngChunkType("iTXt", true);
+	            assertEquals(itxt, dirs[5].getPngChunkType());
+	            //@SuppressWarnings("unchecked")
+	            List<KeyValuePair> pairs = (List<KeyValuePair>)dirs[5].getObject(PngDirectory.TAG_TEXTUAL_DATA);
+	            assertNotNull(pairs);
+	            assertEquals(1, pairs.size());
+	            assertEquals("Comment", pairs.get(0).getKey().toString());
+	            assertEquals("Created with GIMP", pairs.get(0).getValue().toString());
+	        } finally {
+	            TimeZone.setDefault(timeZone);
+	        }
+	        System.out.println("Finished running testGimpGreyscaleWithManyChunks()");
+	    }
+	}
+
+   
 }
