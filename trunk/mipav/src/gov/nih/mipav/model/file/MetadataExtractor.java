@@ -31036,7 +31036,7 @@ public class MetadataExtractor {
 	    public PngChunkType tEXt;
 	    public PngChunkType zTXt;
 
-	    {
+	    /*{
 	        try {
 	            IHDR = new PngChunkType("IHDR");
 	            PLTE = new PngChunkType("PLTE");
@@ -31060,7 +31060,7 @@ public class MetadataExtractor {
 	        } catch (PngProcessingException e) {
 	            throw new IllegalArgumentException(e);
 	        }
-	    }
+	    }*/
 
 	    private final byte[] _bytes;
 	    private final boolean _multipleAllowed;
