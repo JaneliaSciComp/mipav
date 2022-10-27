@@ -31437,37 +31437,37 @@ public class MetadataExtractor {
 	    /**
 	     * Each pixel is a greyscale sample.
 	     */
-	    public final PngColorType GREYSCALE = new PngColorType(0, "Greyscale", 1,2,4,8,16);
+	    //public final PngColorType GREYSCALE = new PngColorType(0, "Greyscale", 1,2,4,8,16);
 
 	    /**
 	     * Each pixel is an R,G,B triple.
 	     */
-	    public final PngColorType TRUE_COLOR = new PngColorType(2, "True Color", 8,16);
+	    //public final PngColorType TRUE_COLOR; // = new PngColorType(2, "True Color", 8,16);
 
 	    /**
 	     * Each pixel is a palette index. Seeing this value indicates that a <code>PLTE</code> chunk shall appear.
 	     */
-	    public final PngColorType INDEXED_COLOR = new PngColorType(3, "Indexed Color", 1,2,4,8);
+	    //public final PngColorType INDEXED_COLOR = new PngColorType(3, "Indexed Color", 1,2,4,8);
 
 	    /**
 	     * Each pixel is a greyscale sample followed by an alpha sample.
 	     */
-	    public final PngColorType GREYSCALE_WITH_ALPHA = new PngColorType(4, "Greyscale with Alpha", 8,16);
+	    //public final PngColorType GREYSCALE_WITH_ALPHA = new PngColorType(4, "Greyscale with Alpha", 8,16);
 
 	    /**
 	     * Each pixel is an R,G,B triple followed by an alpha sample.
 	     */
-	    public final PngColorType TRUE_COLOR_WITH_ALPHA = new PngColorType(6, "True Color with Alpha", 8,16);
+	    //public final PngColorType TRUE_COLOR_WITH_ALPHA = new PngColorType(6, "True Color with Alpha", 8,16);
 
 	    @NotNull
 	    public PngColorType fromNumericValue(int numericValue)
 	    {
 	        switch (numericValue) {
-	            case 0: return GREYSCALE;
-	            case 2: return TRUE_COLOR;
-	            case 3: return INDEXED_COLOR;
-	            case 4: return GREYSCALE_WITH_ALPHA;
-	            case 6: return TRUE_COLOR_WITH_ALPHA;
+	            case 0: return new PngColorType(0, "Greyscale", 1,2,4,8,16);
+	            case 2: return new PngColorType(2, "True Color", 8,16);
+	            case 3: return new PngColorType(3, "Indexed Color", 1,2,4,8);
+	            case 4: return new PngColorType(4, "Greyscale with Alpha", 8,16);
+	            case 6: return new PngColorType(6, "True Color with Alpha", 8,16);
 	        }
 	        return new PngColorType(numericValue, "Unknown (" + numericValue + ")");
 	    }
