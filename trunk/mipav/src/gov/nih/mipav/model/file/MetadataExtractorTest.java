@@ -3883,5 +3883,218 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    }
 	}
 
+	/**
+	 * @author Akihiko Kusanagi
+	 */
+	public class PngDescriptorTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //PngDescriptorTest pd = me.new PngDescriptorTest();
+	    Charsets ch = new Charsets();
+		private Charset _latin1Encoding = ch.ISO_8859_1;
+
+	    //@Test
+		//try {
+	    //	pd.testGetColorTypeDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testGetColorTypeDescription()
+	    public void testGetColorTypeDescription() throws Exception
+	    {
+	    	PngChunkType ihdr = new PngChunkType("IHDR");
+	        PngDirectory directory = new PngDirectory(ihdr);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_COLOR_TYPE, 6);
+	        assertEquals("True Color with Alpha", descriptor.getColorTypeDescription());
+	        assertEquals("True Color with Alpha", directory.getDescription(PngDirectory.TAG_COLOR_TYPE));
+	        System.out.println("Finished running testGetColorTypeDescription()");
+	    }
+
+	     //@Test
+	    //try {
+	    //	pd.testGetCompressionTypeDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetCompressionTypeDescription()
+	    public void testGetCompressionTypeDescription() throws Exception
+	    {
+	    	PngChunkType ihdr = new PngChunkType("IHDR");
+	        PngDirectory directory = new PngDirectory(ihdr);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_COMPRESSION_TYPE, 0);
+	        assertEquals("Deflate", descriptor.getCompressionTypeDescription());
+	        assertEquals("Deflate", directory.getDescription(PngDirectory.TAG_COMPRESSION_TYPE));
+	        System.out.println("Finished running testGetCompressionTypeDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetFilterMethodDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetFilterMethodDescription()
+	    public void testGetFilterMethodDescription() throws Exception
+	    {
+	    	PngChunkType ihdr = new PngChunkType("IHDR");
+	        PngDirectory directory = new PngDirectory(ihdr);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_FILTER_METHOD, 0);
+	        assertEquals("Adaptive", descriptor.getFilterMethodDescription());
+	        assertEquals("Adaptive", directory.getDescription(PngDirectory.TAG_FILTER_METHOD));
+	        System.out.println("Finished running testGetFilterMethodDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetInterlaceMethodDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetInterlaceMethodDescription()
+	    public void testGetInterlaceMethodDescription() throws Exception
+	    {
+	    	PngChunkType ihdr = new PngChunkType("IHDR");
+	        PngDirectory directory = new PngDirectory(ihdr);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_INTERLACE_METHOD, 1);
+	        assertEquals("Adam7 Interlace", descriptor.getInterlaceMethodDescription());
+	        assertEquals("Adam7 Interlace", directory.getDescription(PngDirectory.TAG_INTERLACE_METHOD));
+	        System.out.println("Finished running testGetInterlaceMethodDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetPaletteHasTransparencyDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetPaletteHasTransparencyDescription()
+	    public void testGetPaletteHasTransparencyDescription() throws Exception
+	    {
+	    	PngChunkType trns = new PngChunkType("tRNS");
+	        PngDirectory directory = new PngDirectory(trns);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_PALETTE_HAS_TRANSPARENCY, 1);
+	        assertEquals("Yes", descriptor.getPaletteHasTransparencyDescription());
+	        assertEquals("Yes", directory.getDescription(PngDirectory.TAG_PALETTE_HAS_TRANSPARENCY));
+	        System.out.println("Finished running testGetPaletteHasTransparencyDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetIsSrgbColorSpaceDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetIsSrgbColorSpaceDescription()
+	    public void testGetIsSrgbColorSpaceDescription() throws Exception
+	    {
+	    	PngChunkType srgb = new PngChunkType("sRGB");
+	        PngDirectory directory = new PngDirectory(srgb);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_SRGB_RENDERING_INTENT, 0);
+	        assertEquals("Perceptual", descriptor.getIsSrgbColorSpaceDescription());
+	        assertEquals("Perceptual", directory.getDescription(PngDirectory.TAG_SRGB_RENDERING_INTENT));
+	        System.out.println("Finished running testGetIsSrgbColorSpaceDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetUnitSpecifierDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetUnitSpecifierDescription()
+	    public void testGetUnitSpecifierDescription() throws Exception
+	    {
+	    	PngChunkType phys = new PngChunkType("pHYs");
+	        PngDirectory directory = new PngDirectory(phys);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setInt(PngDirectory.TAG_UNIT_SPECIFIER, 1);
+	        assertEquals("Metres", descriptor.getUnitSpecifierDescription());
+	        assertEquals("Metres", directory.getDescription(PngDirectory.TAG_UNIT_SPECIFIER));
+	        System.out.println("Finished running testGetUnitSpecifierDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetTextualDataDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetTextualDataDescription()
+	    public void testGetTextualDataDescription() throws Exception
+	    {
+	        List<KeyValuePair> textPairs = new ArrayList<KeyValuePair>();
+	        StringValue value = new StringValue("value".getBytes(_latin1Encoding), _latin1Encoding);
+	        textPairs.add(new KeyValuePair("keyword", value));
+
+	        PngChunkType text = new PngChunkType("tEXt", true);
+	        PngDirectory directory = new PngDirectory(text);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+	        directory.setObject(PngDirectory.TAG_TEXTUAL_DATA, textPairs);
+	        assertEquals("keyword: value", descriptor.getTextualDataDescription());
+	        assertEquals("keyword: value", directory.getDescription(PngDirectory.TAG_TEXTUAL_DATA));
+
+	        PngChunkType ztxt = new PngChunkType("zTXt", true);
+	        directory = new PngDirectory(ztxt);
+	        descriptor = new PngDescriptor(directory);
+	        directory.setObject(PngDirectory.TAG_TEXTUAL_DATA, textPairs);
+	        assertEquals("keyword: value", descriptor.getTextualDataDescription());
+	        assertEquals("keyword: value", directory.getDescription(PngDirectory.TAG_TEXTUAL_DATA));
+
+	        PngChunkType itxt = new PngChunkType("iTXt", true);
+	        directory = new PngDirectory(itxt);
+	        descriptor = new PngDescriptor(directory);
+	        directory.setObject(PngDirectory.TAG_TEXTUAL_DATA, textPairs);
+	        assertEquals("keyword: value", descriptor.getTextualDataDescription());
+	        assertEquals("keyword: value", directory.getDescription(PngDirectory.TAG_TEXTUAL_DATA));
+	        System.out.println("Finished running testGetTextualDataDescription()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	pd.testGetBackgroundColorDescription();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetBackgroundColorDescription()
+	    public void testGetBackgroundColorDescription() throws Exception
+	    {
+	    	PngChunkType bkgd = new PngChunkType("bKGD");
+	        PngDirectory directory = new PngDirectory(bkgd);
+	        PngDescriptor descriptor = new PngDescriptor(directory);
+
+	        directory.setByteArray(PngDirectory.TAG_BACKGROUND_COLOR, new byte[]{52});
+	        assertEquals("Palette Index 52", descriptor.getBackgroundColorDescription());
+	        assertEquals("Palette Index 52", directory.getDescription(PngDirectory.TAG_BACKGROUND_COLOR));
+	        directory.setByteArray(PngDirectory.TAG_BACKGROUND_COLOR, new byte[]{0, 52});
+	        assertEquals("Greyscale Level 52", descriptor.getBackgroundColorDescription());
+	        assertEquals("Greyscale Level 52", directory.getDescription(PngDirectory.TAG_BACKGROUND_COLOR));
+	        directory.setByteArray(PngDirectory.TAG_BACKGROUND_COLOR, new byte[]{0, 50, 0, 51, 0, 52});
+	        assertEquals("R 50, G 51, B 52", descriptor.getBackgroundColorDescription());
+	        assertEquals("R 50, G 51, B 52", directory.getDescription(PngDirectory.TAG_BACKGROUND_COLOR));
+	        System.out.println("Finished running testGetBackgroundColorDescription()");
+	    }
+	}
    
 }
