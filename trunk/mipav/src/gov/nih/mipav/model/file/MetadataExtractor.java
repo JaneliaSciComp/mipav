@@ -32659,6 +32659,161 @@ public class MetadataExtractor {
 	        return _extensions;
 	    }
 	}
+	
+	/**
+	 * Stores values using a prefix tree (aka 'trie', i.e. reTRIEval data structure).
+	 *
+	 * @param <T> the type of value to store for byte sequences
+	 */
+	public class ByteTrie<T>
+	{
+	    /** A node in the trie. Has children and may have an associated value. */
+	    class ByteTrieNode<T>
+	    {
+	        private final Map<Byte, ByteTrieNode<T>> _children = new HashMap<Byte, ByteTrieNode<T>>();
+	        private T _value = null;
+
+	        public void setValue(T value)
+	        {
+	            if (_value != null)
+	                throw new RuntimeException("Value already set for this trie node");
+	            _value = value;
+	        }
+	    }
+
+	    private final ByteTrieNode<T> _root = new ByteTrieNode<T>();
+	    private int _maxDepth;
+
+	    /**
+	     * Return the most specific value stored for this byte sequence.
+	     * If not found, returns <code>null</code> or a default values as specified by
+	     * calling {@link ByteTrie#setDefaultValue}.
+	     */
+	    @Nullable
+	    public T find(byte[] bytes)
+	    {
+	        return find(bytes, 0, bytes.length);
+	    }
+
+	    /**
+	     * Return the most specific value stored for this byte sequence.
+	     * If not found, returns <code>null</code> or a default values as specified by
+	     * calling {@link ByteTrie#setDefaultValue}.
+	     */
+	    @Nullable
+	    public T find(byte[] bytes, int offset, int count)
+	    {
+	        int maxIndex = offset + count;
+	        if (maxIndex > bytes.length)
+	            throw new IndexOutOfBoundsException();
+
+	        ByteTrieNode<T> node = _root;
+	        T value = node._value;
+	        for (int i = offset; i < maxIndex; i++) {
+	            byte b = bytes[i];
+	            ByteTrieNode<T> child = node._children.get(b);
+	            if (child == null)
+	                break;
+	            node = child;
+	            if (node._value != null)
+	                value = node._value;
+	        }
+	        return value;
+	    }
+
+	    /** Store the given value at the specified path. */
+	    public void addPath(T value, byte[]... parts)
+	    {
+	        int depth = 0;
+	        ByteTrieNode<T> node = _root;
+	        for (byte[] part : parts) {
+	            for (byte b : part) {
+	                ByteTrieNode<T> child = node._children.get(b);
+	                if (child == null) {
+	                    child = new ByteTrieNode<T>();
+	                    node._children.put(b, child);
+	                }
+	                node = child;
+	                depth++;
+	            }
+	        }
+	        if (depth == 0)
+	            throw new IllegalArgumentException("Parts must contain at least one byte.");
+	        node.setValue(value);
+	        _maxDepth = Math.max(_maxDepth, depth);
+	    }
+
+	    /** Sets the default value to use in {@link ByteTrie#find(byte[])} when no path matches. */
+	    public void setDefaultValue(T defaultValue)
+	    {
+	        _root.setValue(defaultValue);
+	    }
+
+	    /** Gets the maximum depth stored in this trie. */
+	    public int getMaxDepth()
+	    {
+	        return _maxDepth;
+	    }
+	}
+
+	public class ByteUtil
+	{
+	    public int getInt16(byte[] buffer, int offset, boolean bigEndian)
+	    {
+	        if (bigEndian) {
+	            return
+	                ((buffer[offset    ] & 0xFF) << 8) |
+	                ((buffer[offset + 1] & 0xFF)     );
+	        } else {
+	            return
+	                ((buffer[offset    ] & 0xFF)     ) |
+	                ((buffer[offset + 1] & 0xFF) << 8);
+	        }
+	    }
+
+	    public int getInt32(byte[] buffer, int offset, boolean bigEndian)
+	    {
+	        if (bigEndian) {
+	            return
+	                ((buffer[offset    ] & 0xFF) << 24) |
+	                ((buffer[offset + 1] & 0xFF) << 16) |
+	                ((buffer[offset + 2] & 0xFF) <<  8) |
+	                ((buffer[offset + 3] & 0xFF));
+	        } else {
+	            return
+	                ((buffer[offset    ] & 0xFF)      ) |
+	                ((buffer[offset + 1] & 0xFF) <<  8) |
+	                ((buffer[offset + 2] & 0xFF) << 16) |
+	                ((buffer[offset + 3] & 0xFF) << 24);
+	        }
+	    }
+
+	    public long getLong64(byte[] buffer, int offset, boolean bigEndian)
+	    {
+	        if (bigEndian) {
+	            return
+	                ((long) (buffer[offset    ] & 0xFF) << 56) |
+	                ((long) (buffer[offset + 1] & 0xFF) << 48) |
+	                ((long) (buffer[offset + 2] & 0xFF) << 40) |
+	                ((long) (buffer[offset + 3] & 0xFF) << 32) |
+	                ((long) (buffer[offset + 4] & 0xFF) << 24) |
+	                ((buffer[offset + 5] & 0xFF) << 16) |
+	                ((buffer[offset + 6] & 0xFF) <<  8) |
+	                ((buffer[offset + 7] & 0xFF));
+
+	        } else {
+	            return
+	                ((buffer[offset    ] & 0xFF)      ) |
+	                ((buffer[offset + 1] & 0xFF) <<  8) |
+	                ((buffer[offset + 2] & 0xFF) << 16) |
+	                ((long) (buffer[offset + 3] & 0xFF) << 24) |
+	                ((long) (buffer[offset + 4] & 0xFF) << 32) |
+	                ((long) (buffer[offset + 5] & 0xFF) << 40) |
+	                ((long) (buffer[offset + 6] & 0xFF) << 48) |
+	                ((long) (buffer[offset + 7] & 0xFF) << 56);
+	        }
+	    }
+	}
 
 
 }
