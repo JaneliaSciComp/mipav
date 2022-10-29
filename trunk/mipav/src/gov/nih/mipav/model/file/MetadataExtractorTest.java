@@ -4147,6 +4147,12 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt8();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt8() throws Exception
 	    {
 	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
@@ -4156,9 +4162,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals((byte)1, reader.getInt8(1));
 	        assertEquals((byte)127, reader.getInt8(2));
 	        assertEquals((byte)255, reader.getInt8(3));
+	        System.out.println("Finished running testGetInt8()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetUInt8();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetUInt8() throws Exception
 	    {
 	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
@@ -4168,9 +4181,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals(1, reader.getUInt8(1));
 	        assertEquals(127, reader.getUInt8(2));
 	        assertEquals(255, reader.getUInt8(3));
+	        System.out.println("Finished running testGetUInt8()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetUInt8_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetUInt8_OutOfBounds()
 	    {
 	        try {
@@ -4180,9 +4200,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        } catch (IOException ex) {
 	            assertEquals("Attempt to read from beyond end of underlying data source (requested index: 2, requested count: 1, max index: 1)", ex.getMessage());
 	        }
+	        System.out.println("Finished running testGetUInt8_OutOfBounds()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt16();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt16() throws Exception
 	    {
 	        assertEquals(-1, createReader(new byte[]{(byte)0xff, (byte)0xff}).getInt16(0));
@@ -4199,9 +4226,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals((short)0x0100, reader.getInt16(0));
 	        assertEquals((short)0x7F01, reader.getInt16(1));
 	        assertEquals((short)0xFF7F, reader.getInt16(2));
+	        System.out.println("Finished running testGetInt16()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetUInt16();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetUInt16() throws Exception
 	    {
 	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
@@ -4216,9 +4250,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals(0x0100, reader.getUInt16(0));
 	        assertEquals(0x7F01, reader.getUInt16(1));
 	        assertEquals(0xFF7F, reader.getUInt16(2));
+	        System.out.println("Finished running testGetUInt16()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetUInt16_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetUInt16_OutOfBounds()
 	    {
 	        try {
@@ -4228,9 +4269,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        } catch (IOException ex) {
 	            assertEquals("Attempt to read from beyond end of underlying data source (requested index: 1, requested count: 2, max index: 1)", ex.getMessage());
 	        }
+	        System.out.println("Finished running testGetUInt16_OutOfBounds()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt32() throws Exception
 	    {
 	        assertEquals(-1, createReader(new byte[]{(byte)0xff, (byte)0xff, (byte)0xff, (byte)0xff}).getInt32(0));
@@ -4249,9 +4297,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals(0x02FF7F01, reader.getInt32(1));
 	        assertEquals(0x0302FF7F, reader.getInt32(2));
 	        assertEquals(0x040302FF, reader.getInt32(3));
+	        System.out.println("Finished running testGetInt32()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetUInt32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetUInt32() throws Exception
 	    {
 	        assertEquals(4294967295L, createReader(new byte[]{(byte)0xff, (byte)0xff, (byte)0xff, (byte)0xff}).getUInt32(0));
@@ -4270,9 +4325,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals(0x02FF7F01L, reader.getUInt32(1));
 	        assertEquals(0x0302FF7FL, reader.getUInt32(2));
 	        assertEquals(0x040302FFL, reader.getInt32(3));
-	    }
+	        System.out.println("Finished running testGetUInt32()");
+	    } 
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt32_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt32_OutOfBounds()
 	    {
 	        try {
@@ -4282,9 +4344,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        } catch (IOException ex) {
 	            assertEquals("Attempt to read from beyond end of underlying data source (requested index: 0, requested count: 4, max index: 2)", ex.getMessage());
 	        }
+	        System.out.println("Finished running testGetInt32_OutOfBounds()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt64();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt64() throws IOException
 	    {
 	        byte[] buffer = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, (byte)0xFF};
@@ -4297,9 +4366,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 
 	        assertEquals(0x0706050403020100L, reader.getInt64(0));
 	        assertEquals(0xFF07060504030201L, reader.getInt64(1));
+	        System.out.println("Finished running testGetInt64()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt64_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt64_OutOfBounds() throws Exception
 	    {
 	        try {
@@ -4316,9 +4392,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        } catch (IOException ex) {
 	            assertEquals("Attempt to read from buffer using a negative index (-1)", ex.getMessage());
 	        }
+	        System.out.println("Finished running testGetInt64_OutOfBounds()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetFloat32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetFloat32() throws Exception
 	    {
 	        final int nanBits = 0x7fc00000;
@@ -4328,9 +4411,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        RandomAccessReader reader = createReader(buffer);
 
 	        assertTrue(Float.isNaN(reader.getFloat32(0)));
+	        System.out.println("Finished running testGetFloat32()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetFloat64();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetFloat64() throws Exception
 	    {
 	        final long nanBits = 0xfff0000000000001L;
@@ -4340,9 +4430,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        RandomAccessReader reader = createReader(buffer);
 
 	        assertTrue(Double.isNaN(reader.getDouble64(0)));
+	        System.out.println("Finished running testGetFloat64()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetNullTerminatedString();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetNullTerminatedString() throws Exception
 	    {
 	    	Charsets ch = new Charsets();
@@ -4362,9 +4459,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals("BCD", reader.getNullTerminatedString(1, 5, ch.UTF_8));
 
 	        assertEquals("", reader.getNullTerminatedString(4, 3, ch.UTF_8));
+	        System.out.println("Finished running testGetNullTerminatedString()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetString();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetString() throws Exception
 	    {
 	    	Charsets ch = new Charsets();
@@ -4384,9 +4488,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals("BCD\0E", reader.getString(1, 5, ch.UTF_8));
 
 	        assertEquals("\0EF", reader.getString(4, 3, ch.UTF_8));
+	        System.out.println("Finished running testGetString()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testIndexPlusCountExceedsIntMaxValue();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testIndexPlusCountExceedsIntMaxValue()
 	    {
 	        RandomAccessReader reader = createReader(new byte[10]);
@@ -4396,9 +4507,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        } catch (IOException e) {
 	            assertEquals("Number of requested bytes summed with starting index exceed maximum range of signed 32 bit integers (requested index: 1879048191, requested count: 1879048191)", e.getMessage());
 	        }
+	        System.out.println("Finished running testIndexPlusCountExceedsIntMaxValue()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testOverflowBoundsCalculation();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testOverflowBoundsCalculation()
 	    {
 	        RandomAccessReader reader = createReader(new byte[10]);
@@ -4408,9 +4526,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        } catch (IOException e) {
 	            assertEquals("Attempt to read from beyond end of underlying data source (requested index: 5, requested count: 10, max index: 9)", e.getMessage());
 	        }
+	        System.out.println("Finished running testOverflowBoundsCalculation()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetBytesEOF();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetBytesEOF() throws Exception
 	    {
 	        createReader(new byte[50]).getBytes(0, 50);
@@ -4422,9 +4547,16 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	            createReader(new byte[50]).getBytes(0, 51);
 	            fail("Expecting exception");
 	        } catch (IOException ignored) {}
+	        System.out.println("Finished running testGetBytesEOF()");
 	    }
 
 	    //@Test
+	    //try {
+	    //	bt.testGetInt8EOF();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
 	    public void testGetInt8EOF() throws Exception
 	    {
 	        createReader(new byte[1]).getInt8(0);
@@ -4439,6 +4571,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	            reader.getInt8(1);
 	            fail("Expecting exception");
 	        } catch (IOException ignored) {}
+	        System.out.println("Finished running testGetInt8EOF()");
 	    }
 	}
 
@@ -4451,6 +4584,25 @@ public class MetadataExtractorTest extends MetadataExtractor {
 		//MetadataExtractorTest me = new MetadataExtractorTest();
 	    //ByteArrayReaderTest bt = me.new ByteArrayReaderTest();
 		//Finished running testDefaultEndianess()
+		//Finished running testGetInt8()
+		//Finished running testGetUInt8()
+		//Finished running testGetUInt8_OutOfBounds()
+		//Finished running testGetInt16()
+		//Finished running testGetUInt16()
+		//Finished running testGetUInt16_OutOfBounds()
+		//Finished running testGetInt32()
+		//Finished running testGetUInt32()
+		//Finished running testGetInt32_OutOfBounds()
+		//Finished running testGetInt64()
+		//Finished running testGetInt64_OutOfBounds()
+		//Finished running testGetFloat32()
+		//Finished running testGetFloat64()
+		//Finished running testGetNullTerminatedString()
+		//Finished running testGetString()
+		//Finished running testIndexPlusCountExceedsIntMaxValue()
+		//Finished running testOverflowBoundsCalculation()
+		//Finished running testGetBytesEOF()
+		//Finished running testGetInt8EOF()
 	    @Override
 	    protected RandomAccessReader createReader(byte[] bytes)
 	    {
@@ -4502,6 +4654,179 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals(0x04030201, bc.toInt32LittleEndian(new byte[]{1, 2, 3, 4}));
 	        assertEquals(0x04030201, bc.toInt32LittleEndian(new byte[]{1, 2, 3, 4, 5}));
 	        System.out.println("Finished running toInt32LittleEndian()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class ByteTrieTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //ByteTrieTest bt = me.new ByteTrieTest();
+	    //@Test
+		//try {
+	    //	bt.testBasics();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testBasics()
+	    public void testBasics()
+	    {
+	        ByteTrie<String> trie = new ByteTrie<String>();
+
+	        String[] strings = {"HELLO", "HELLO WORLD", "HERBERT"};
+
+	        for (String s : strings)
+	            trie.addPath(s, s.getBytes());
+
+	        for (String s : strings)
+	            assertSame(s, trie.find(s.getBytes()));
+
+	        assertNull(trie.find("Not Included".getBytes()));
+	        assertNull(trie.find("HELL".getBytes()));
+	        assertNull(trie.find("H".getBytes()));
+	        assertEquals("HELLO", trie.find("HELLO MUM".getBytes()));
+
+	        assertEquals("HELLO WORLD".length(), trie.getMaxDepth());
+
+	        trie.setDefaultValue("DEFAULT");
+
+	        assertEquals("DEFAULT", trie.find("Also Not Included".getBytes()));
+	        assertEquals("DEFAULT", trie.find("H".getBytes()));
+	        assertEquals("DEFAULT", trie.find("HELL".getBytes()));
+	        System.out.println("Finished running testBasics()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	bt.testDisallowsAddingEmptyPath();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testDisallowsAddingEmptyPath()
+	    public void testDisallowsAddingEmptyPath()
+	    {
+	        try {
+	            new ByteTrie<String>().addPath("Foo", new byte[0]);
+	            fail();
+	        } catch (IllegalArgumentException ignored) {
+	        }
+
+	        try {
+	            new ByteTrie<String>().addPath("Foo", new byte[0], new byte[0], new byte[0]);
+	            fail();
+	        } catch (IllegalArgumentException ignored) {
+	        }
+	        System.out.println("Finished running testDisallowsAddingEmptyPath()");
+	    }
+	}
+	
+	/**
+	 * @author Nadahar
+	 */
+	public class ByteUtilTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //ByteUtilTest bt = me.new ByteUtilTest();
+	    //@Test
+		//try {
+	    //	bt.testGetInt16();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testGetInt16()
+	    public void testGetInt16() {
+	    	ByteUtil bu = new ByteUtil();
+	        byte[] buffer = new byte[] {0x7F, (byte) 0xFF};
+	        assertEquals(0x7FFF, bu.getInt16(buffer, 0, true));
+	        assertEquals(0xFF7F, bu.getInt16(buffer, 0, false));
+
+	        buffer = new byte[] {(byte) 0xFF, (byte) 0xFF};
+	        assertEquals(0xFFFF, bu.getInt16(buffer, 0, true));
+	        assertEquals(0xFFFF, bu.getInt16(buffer, 0, false));
+
+	        buffer = new byte[] {0x1, 0x0};
+	        assertEquals(0x100, bu.getInt16(buffer, 0, true));
+	        assertEquals(0x1, bu.getInt16(buffer, 0, false));
+
+	        buffer = new byte[] {0x7F, (byte) 0xFF, 0x7F, (byte) 0xFF, 0x7F, (byte) 0xFF};
+	        assertEquals(0xFF7F, bu.getInt16(buffer, 1, true));
+	        assertEquals(0x7FFF, bu.getInt16(buffer, 1, false));
+	        assertEquals(0x7FFF, bu.getInt16(buffer, 2, true));
+	        assertEquals(0xFF7F, bu.getInt16(buffer, 2, false));
+	        System.out.println("Finished running testGetInt16()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	bt.testGetInt32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetInt32()
+	    public void testGetInt32() {
+	    	ByteUtil bu = new ByteUtil();
+	        byte[] buffer = new byte[] {0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+	        assertEquals(0x7FFFFFFF, bu.getInt32(buffer, 0, true));
+	        assertEquals(0xFFFFFF7F, bu.getInt32(buffer, 0, false));
+
+	        buffer = new byte[] {(byte) 0xFF, (byte) 0xFF, 0x0, 0x0};
+	        assertEquals(0xFFFF0000, bu.getInt32(buffer, 0, true));
+	        assertEquals(0xFFFF, bu.getInt32(buffer, 0, false));
+
+	        buffer = new byte[] {0x1, 0x0, 0x1, 0x0};
+	        assertEquals(0x1000100, bu.getInt32(buffer, 0, true));
+	        assertEquals(0x10001, bu.getInt32(buffer, 0, false));
+
+	        buffer = new byte[] {0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+	        assertEquals(0xFFFFFF7F, bu.getInt32(buffer, 1, true));
+	        assertEquals(0x7FFFFFFF, bu.getInt32(buffer, 1, false));
+	        assertEquals(0x7FFFFFFF, bu.getInt32(buffer, 4, true));
+	        assertEquals(0xFFFFFF7F, bu.getInt32(buffer, 4, false));
+	        System.out.println("Finished running testGetInt32()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	bt.testGetInt64();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+        //Finished running testGetInt64()
+	    public void testGetInt64() {
+	    	ByteUtil bu = new ByteUtil();
+	        byte[] buffer = new byte[] {
+	            0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+	            (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+	        };
+	        assertEquals(0x7FFFFFFFFFFFFFFFL, bu.getLong64(buffer, 0, true));
+	        assertEquals(0xFFFFFFFFFFFFFF7FL, bu.getLong64(buffer, 0, false));
+
+	        buffer = new byte[] {(byte) 0xFF, (byte) 0xFF, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+	        assertEquals(0xFFFF000000000000L, bu.getLong64(buffer, 0, true));
+	        assertEquals(0xFFFFL, bu.getLong64(buffer, 0, false));
+
+	        buffer = new byte[] {0x1, 0x0, 0x1, 0x0, 0x1, 0x0, 0x1, 0x0};
+	        assertEquals(0x100010001000100L, bu.getLong64(buffer, 0, true));
+	        assertEquals(0x1000100010001L, bu.getLong64(buffer, 0, false));
+
+	        buffer = new byte[] {
+	            0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+	            0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+	            0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+	            0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+	        };
+	        assertEquals(0xFFFFFF7FFFFFFF7FL, bu.getLong64(buffer, 1, true));
+	        assertEquals(0x7FFFFFFF7FFFFFFFL, bu.getLong64(buffer, 1, false));
+	        assertEquals(0x7FFFFFFF7FFFFFFFL, bu.getLong64(buffer, 8, true));
+	        assertEquals(0xFFFFFF7FFFFFFF7FL, bu.getLong64(buffer, 8, false));
+	        System.out.println("Finished running testGetInt64()");
 	    }
 	}
 
