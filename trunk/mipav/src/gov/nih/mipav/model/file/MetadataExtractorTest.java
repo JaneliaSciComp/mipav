@@ -8,10 +8,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Serializable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
@@ -4611,6 +4613,13 @@ public class MetadataExtractorTest extends MetadataExtractor {
 
 	    //@SuppressWarnings({ "ConstantConditions" })
 	    //@Test(expected = NullPointerException.class)
+	    //try {
+	    //	bt.testConstructWithNullBufferThrows();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //throws NullPointerException as expected
 	    public void testConstructWithNullBufferThrows()
 	    {
 	        new ByteArrayReader(null);
@@ -4829,6 +4838,1157 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        System.out.println("Finished running testGetInt64()");
 	    }
 	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class CompoundExceptionTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //CompoundExceptionTest ce = me.new CompoundExceptionTest();
+	    //@Test
+		//try {
+	    //	ce.testGetMessage_NonNested();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testGetMessage_NonNested()
+	    public void testGetMessage_NonNested() throws Exception
+	    {
+	        try {
+	            throw new CompoundException("message");
+	        } catch (CompoundException e) {
+	            assertEquals("message", e.getMessage());
+	        }
+	        System.out.println("Finished running testGetMessage_NonNested()");
+	    }
 
-  
+	    //@Test
+	    //try {
+	    //	ce.testGetMessage_Nested();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetMessage_Nested()
+	    public void testGetMessage_Nested() throws Exception
+	    {
+	        try {
+	            try {
+	                throw new IOException("io");
+	            } catch (IOException e) {
+	                throw new CompoundException("compound", e);
+	            }
+	        } catch (CompoundException e) {
+	            assertEquals("compound", e.getMessage());
+	            final Throwable innerException = e.getInnerException();
+	            assertNotNull(innerException);
+	            assertEquals("io", innerException.getMessage());
+	        }
+	        System.out.println("Finished running testGetMessage_Nested()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	ce.testNoInnerException();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testNoInnerException()
+	    public void testNoInnerException() throws Exception
+	    {
+	        try {
+	            throw new CompoundException("message", null);
+	        } catch (CompoundException e) {
+	            try {
+	                PrintStream nullStream = new PrintStream(new NullOutputStream());
+	                e.printStackTrace(nullStream);
+	                e.printStackTrace(new PrintWriter(nullStream));
+	            } catch (Exception e1) {
+	                fail("Exception during printStackTrace for CompoundException with no inner exception");
+	            }
+	        }
+	        System.out.println("Finished running testNoInnerException()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class GeoLocationTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //GeoLocationTest gt = me.new GeoLocationTest();
+	    //@Test
+		//try {
+	    //	gt.testDecimalToDegreesMinutesSeconds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testDecimalToDegreesMinutesSeconds()
+	    public void testDecimalToDegreesMinutesSeconds() throws Exception
+	    {
+	    	GeoLocation geo = new GeoLocation();
+	        double[] dms = geo.decimalToDegreesMinutesSeconds(1);
+	        assertEquals(1.0, dms[0], 0.0001);
+	        assertEquals(0.0, dms[1], 0.0001);
+	        assertEquals(0.0, dms[2], 0.0001);
+
+	        dms = geo.decimalToDegreesMinutesSeconds(-12.3216);
+	        assertEquals(-12.0, dms[0], 0.0001);
+	        assertEquals(19.0, dms[1], 0.0001);
+	        assertEquals(17.76, dms[2], 0.0001);
+
+	        dms = geo.decimalToDegreesMinutesSeconds(32.698);
+	        assertEquals(32.0, dms[0], 0.0001);
+	        assertEquals(41.0, dms[1], 0.0001);
+	        assertEquals(52.8, dms[2], 0.0001);
+	        System.out.println("Finished running testDecimalToDegreesMinutesSeconds()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class NullOutputStreamTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //NullOutputStreamTest nt = me.new NullOutputStreamTest();
+	    //@Test
+		//try {
+	    //	nt.testCreateNullOutputStream();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testCreateNullOutputStream()
+	    public void testCreateNullOutputStream() throws Exception
+	    {
+	        OutputStream out = new NullOutputStream();
+	        try {
+	            out.write(1);
+	        } finally {
+	            out.close();
+	        }
+	        System.out.println("Finished running testCreateNullOutputStream()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class RandomAccessFileReaderTest extends RandomAccessTestBase
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //RandomAccessFileReaderTest rt = me.new RandomAccessFileReaderTest();
+	    private File _tempFile;
+	    private RandomAccessFile _randomAccessFile;
+
+	    @Override
+	    protected RandomAccessReader createReader(byte[] bytes)
+	    {
+	        try {
+	            // Unit tests can create multiple readers in the same test, as long as they're used one after the other
+	            deleteTempFile();
+
+	            _tempFile = File.createTempFile("C:/metadata/metadata-extractor-test-", ".tmp");
+	            FileUtil.saveBytes(_tempFile, bytes);
+	            _randomAccessFile = new RandomAccessFile(_tempFile, "r");
+	            return new RandomAccessFileReader(_randomAccessFile);
+	        } catch (IOException e) {
+	            fail("Unable to create temp file");
+	            return null;
+	        }
+	    }
+
+	    //@After
+	    public void deleteTempFile() throws IOException
+	    {
+	        if (_randomAccessFile == null)
+	            return;
+
+	        _randomAccessFile.close();
+
+	        if (_tempFile == null)
+	            return;
+
+	        assertTrue(
+	                "Unable to delete temp file used during unit test: " + _tempFile.getAbsolutePath(),
+	                _tempFile.delete());
+
+	        _tempFile = null;
+	        _randomAccessFile = null;
+	    }
+
+	    //@SuppressWarnings({ "ConstantConditions" })
+	    //@Test(expected = NullPointerException.class)
+	    //try {
+	    //	rt.testConstructWithNullBufferThrows();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    // Throws NullPointerException as expected
+	    public void testConstructWithNullBufferThrows() throws IOException
+	    {
+	        new RandomAccessFileReader(null);
+	        System.out.println("Finished running testConstructWithNullBufferThrows()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class RandomAccessStreamReaderTest extends RandomAccessTestBase
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //RandomAccessStreamReaderTest rt = me.new RandomAccessStreamReaderTest();
+	    //@SuppressWarnings({ "ConstantConditions" })
+	    //@Test(expected = NullPointerException.class)
+		//try {
+	    //	rt.testConstructWithNullBufferThrows();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		// Throws NullPointerException as expected
+	    public void testConstructWithNullBufferThrows()
+	    {
+	        new RandomAccessStreamReader(null);
+	        System.out.println("Finished running testConstructWithNullBufferThrows()");
+	    }
+
+	    @Override
+	    protected RandomAccessReader createReader(byte[] bytes)
+	    {
+	        return new RandomAccessStreamReader(new ByteArrayInputStream(bytes));
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class RationalTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //RationalTest rt = me.new RationalTest();
+	    //@Test
+		//try {
+	    //	rt.testCompare();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testCompare()
+	    public void testCompare() throws Exception
+	    {
+	        Rational third1 = new Rational(1, 3);
+	        Rational third2 = new Rational(2, 6);
+	        assertEquals(0, third1.compareTo(third2));
+
+	        Rational half = new Rational(1, 2);
+	        assertEquals(-1, third1.compareTo(half));
+
+	        Rational negForth = new Rational(-1, 4);
+	        assertEquals(1, third1.compareTo(negForth));
+	        System.out.println("Finished running testCompare()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testCreateRational();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testCreateRational()
+	    public void testCreateRational() throws Exception
+	    {
+	        Rational rational = new Rational(1, 3);
+	        assertEquals(1, rational.getNumerator());
+	        assertEquals(3, rational.getDenominator());
+	        assertEquals(1d / 3d, rational.doubleValue(), 0.0001);
+	        System.out.println("Finished running testCreateRational()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testToString();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testToString()
+	    public void testToString() throws Exception
+	    {
+	        Rational rational = new Rational(1, 3);
+	        assertEquals("1/3", rational.toString());
+	        System.out.println("Finished running testToString()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testToSimpleString();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testToSimpleString()
+	    public void testToSimpleString() throws Exception
+	    {
+	        Rational third1 = new Rational(1, 3);
+	        Rational third2 = new Rational(2, 6);
+	        assertEquals("1/3", third1.toSimpleString(true));
+	        assertEquals("1/3", third2.toSimpleString(true));
+	        assertEquals(third1, third2);
+
+	        Rational twoThirds = new Rational(10, 15);
+	        assertEquals("2/3", twoThirds.toSimpleString(true));
+
+	        Rational twoSixths = new Rational(2, 6);
+	        assertEquals("1/3", twoSixths.toSimpleString(true));
+	        assertEquals("1/3", twoSixths.toSimpleString(false));
+
+	        Rational two = new Rational(10, 5);
+	        assertTrue(two.isInteger());
+	        assertEquals("2", two.toSimpleString(true));
+	        assertEquals("2", two.toSimpleString(false));
+
+	        Rational twoFifths = new Rational(4, 10);
+	        assertEquals("0.4", twoFifths.toSimpleString(true));
+	        assertEquals("2/5", twoFifths.toSimpleString(false));
+
+	        Rational threeEighths = new Rational(3, 8);
+	        assertEquals("3/8", threeEighths.toSimpleString(true));
+
+	        Rational zero = new Rational(0, 8);
+	        assertTrue(zero.isInteger());
+	        assertEquals("0", zero.toSimpleString(true));
+	        assertEquals("0", zero.toSimpleString(false));
+
+	        zero = new Rational(0, 0);
+	        assertTrue(zero.isInteger());
+	        assertEquals("0", zero.toSimpleString(true));
+	        assertEquals("0", zero.toSimpleString(false));
+	        System.out.println("Finished running testToSimpleString()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetReciprocal();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testGetReciprocal()
+	    public void testGetReciprocal() throws Exception
+	    {
+	        Rational rational = new Rational(1, 3);
+	        Rational reciprocal = rational.getReciprocal();
+	        assertEquals("new rational should be reciprocal", new Rational(3, 1), reciprocal);
+	        assertEquals("original reciprocal should remain unchanged", new Rational(1, 3), rational);
+	        System.out.println("Finished running testGetReciprocal()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testZeroOverZero();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testZeroOverZero()
+	    public void testZeroOverZero() throws Exception
+	    {
+	        assertEquals(new Rational(0, 0), new Rational(0, 0).getReciprocal());
+	        assertEquals(0.0d, new Rational(0, 0).doubleValue(), 0.000000001);
+	        assertEquals(0, new Rational(0, 0).byteValue());
+	        assertEquals(0.0f, new Rational(0, 0).floatValue(), 0.000000001f);
+	        assertEquals(0, new Rational(0, 0).intValue());
+	        assertEquals(0L, new Rational(0, 0).longValue());
+	        assertTrue(new Rational(0, 0).isInteger());
+	        System.out.println("Finished running testZeroOverZero()");
+	    }
+
+	    private final int[] _primes =
+	    {
+	        2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
+	        137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271,
+	        277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433,
+	        439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601,
+	        607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769,
+	        773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953,
+	        967, 971, 977, 983, 991, 997, 1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087, 1091, 1093, 1097, 1103,
+	        1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193, 1201, 1213, 1217, 1223, 1229, 1231, 1237, 1249, 1259, 1277, 1279,
+	        1283, 1289, 1291, 1297, 1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373, 1381, 1399, 1409, 1423, 1427, 1429, 1433, 1439, 1447,
+	        1451, 1453, 1459, 1471, 1481, 1483, 1487, 1489, 1493, 1499, 1511, 1523, 1531, 1543, 1549, 1553, 1559, 1567, 1571, 1579, 1583, 1597,
+	        1601, 1607, 1609, 1613, 1619, 1621, 1627, 1637, 1657, 1663, 1667, 1669, 1693, 1697, 1699, 1709, 1721, 1723, 1733, 1741, 1747, 1753,
+	        1759, 1777, 1783, 1787, 1789, 1801, 1811, 1823, 1831, 1847, 1861, 1867, 1871, 1873, 1877, 1879, 1889, 1901, 1907, 1913, 1931, 1933,
+	        1949, 1951, 1973, 1979, 1987, 1993, 1997, 1999, 2003, 2011, 2017, 2027, 2029, 2039, 2053, 2063, 2069, 2081, 2083, 2087, 2089, 2099,
+	        2111, 2113, 2129, 2131, 2137, 2141, 2143, 2153, 2161, 2179, 2203, 2207, 2213, 2221, 2237, 2239, 2243, 2251, 2267, 2269, 2273, 2281,
+	        2287, 2293, 2297, 2309, 2311, 2333, 2339, 2341, 2347, 2351, 2357, 2371, 2377, 2381, 2383, 2389, 2393, 2399, 2411, 2417, 2423, 2437,
+	        2441, 2447, 2459, 2467, 2473, 2477, 2503, 2521, 2531, 2539, 2543, 2549, 2551, 2557, 2579, 2591, 2593, 2609, 2617, 2621, 2633, 2647,
+	        2657, 2659, 2663, 2671, 2677, 2683, 2687, 2689, 2693, 2699, 2707, 2711, 2713, 2719, 2729, 2731, 2741, 2749, 2753, 2767, 2777, 2789,
+	        2791, 2797, 2801, 2803, 2819, 2833, 2837, 2843, 2851, 2857, 2861, 2879, 2887, 2897, 2903, 2909, 2917, 2927, 2939, 2953, 2957, 2963,
+	        2969, 2971, 2999, 3001, 3011, 3019, 3023, 3037, 3041, 3049, 3061, 3067, 3079, 3083, 3089, 3109, 3119, 3121, 3137, 3163, 3167, 3169,
+	        3181, 3187, 3191, 3203, 3209, 3217, 3221, 3229, 3251, 3253, 3257, 3259, 3271, 3299, 3301, 3307, 3313, 3319, 3323, 3329, 3331, 3343,
+	        3347, 3359, 3361, 3371, 3373, 3389, 3391, 3407, 3413, 3433, 3449, 3457, 3461, 3463, 3467, 3469, 3491, 3499, 3511, 3517, 3527, 3529,
+	        3533, 3539, 3541, 3547, 3557, 3559, 3571, 3581, 3583, 3593, 3607, 3613, 3617, 3623, 3631, 3637, 3643, 3659, 3671, 3673, 3677, 3691,
+	        3697, 3701, 3709, 3719, 3727, 3733, 3739, 3761, 3767, 3769, 3779, 3793, 3797, 3803, 3821, 3823, 3833, 3847, 3851, 3853, 3863, 3877,
+	        3881, 3889, 3907, 3911, 3917, 3919, 3923, 3929, 3931, 3943, 3947, 3967, 3989, 4001, 4003, 4007, 4013, 4019, 4021, 4027, 4049, 4051,
+	        4057, 4073, 4079, 4091, 4093, 4099, 4111, 4127, 4129, 4133, 4139, 4153, 4157, 4159, 4177, 4201, 4211, 4217, 4219, 4229, 4231, 4241,
+	        4243, 4253, 4259, 4261, 4271, 4273, 4283, 4289, 4297, 4327, 4337, 4339, 4349, 4357, 4363, 4373, 4391, 4397, 4409, 4421, 4423, 4441,
+	        4447, 4451, 4457, 4463, 4481, 4483, 4493, 4507, 4513, 4517, 4519, 4523, 4547, 4549, 4561, 4567, 4583, 4591, 4597, 4603, 4621, 4637,
+	        4639, 4643, 4649, 4651, 4657, 4663, 4673, 4679, 4691, 4703, 4721, 4723, 4729, 4733, 4751, 4759, 4783, 4787, 4789, 4793, 4799, 4801,
+	        4813, 4817, 4831, 4861, 4871, 4877, 4889, 4903, 4909, 4919, 4931, 4933, 4937, 4943, 4951, 4957, 4967, 4969, 4973, 4987, 4993, 4999,
+	        5003, 5009, 5011, 5021, 5023, 5039, 5051, 5059, 5077, 5081, 5087, 5099, 5101, 5107, 5113, 5119, 5147, 5153, 5167, 5171, 5179, 5189,
+	        5197, 5209, 5227, 5231, 5233, 5237, 5261, 5273, 5279, 5281, 5297, 5303, 5309, 5323, 5333, 5347, 5351, 5381, 5387, 5393, 5399, 5407,
+	        5413, 5417, 5419, 5431, 5437, 5441, 5443, 5449, 5471, 5477, 5479, 5483, 5501, 5503, 5507, 5519, 5521, 5527, 5531, 5557, 5563, 5569,
+	        5573, 5581, 5591, 5623, 5639, 5641, 5647, 5651, 5653, 5657, 5659, 5669, 5683, 5689, 5693, 5701, 5711, 5717, 5737, 5741, 5743, 5749,
+	        5779, 5783, 5791, 5801, 5807, 5813, 5821, 5827, 5839, 5843, 5849, 5851, 5857, 5861, 5867, 5869, 5879, 5881, 5897, 5903, 5923, 5927,
+	        5939, 5953, 5981, 5987, 6007, 6011, 6029, 6037, 6043, 6047, 6053, 6067, 6073, 6079, 6089, 6091, 6101, 6113, 6121, 6131, 6133, 6143,
+	        6151, 6163, 6173, 6197, 6199, 6203, 6211, 6217, 6221, 6229, 6247, 6257, 6263, 6269, 6271, 6277, 6287, 6299, 6301, 6311, 6317, 6323,
+	        6329, 6337, 6343, 6353, 6359, 6361, 6367, 6373, 6379, 6389, 6397, 6421, 6427, 6449, 6451, 6469, 6473, 6481, 6491, 6521, 6529, 6547,
+	        6551, 6553, 6563, 6569, 6571, 6577, 6581, 6599, 6607, 6619, 6637, 6653, 6659, 6661, 6673, 6679, 6689, 6691, 6701, 6703, 6709, 6719,
+	        6733, 6737, 6761, 6763, 6779, 6781, 6791, 6793, 6803, 6823, 6827, 6829, 6833, 6841, 6857, 6863, 6869, 6871, 6883, 6899, 6907, 6911,
+	        6917, 6947, 6949, 6959, 6961, 6967, 6971, 6977, 6983, 6991, 6997, 7001, 7013, 7019, 7027, 7039, 7043, 7057, 7069, 7079, 7103, 7109,
+	        7121, 7127, 7129, 7151, 7159, 7177, 7187, 7193, 7207, 7211, 7213, 7219, 7229, 7237, 7243, 7247, 7253, 7283, 7297, 7307, 7309, 7321,
+	        7331, 7333, 7349, 7351, 7369, 7393, 7411, 7417, 7433, 7451, 7457, 7459, 7477, 7481, 7487, 7489, 7499, 7507, 7517, 7523, 7529, 7537,
+	        7541, 7547, 7549, 7559, 7561, 7573, 7577, 7583, 7589, 7591, 7603, 7607, 7621, 7639, 7643, 7649, 7669, 7673, 7681, 7687, 7691, 7699,
+	        7703, 7717, 7723, 7727, 7741, 7753, 7757, 7759, 7789, 7793, 7817, 7823, 7829, 7841, 7853, 7867, 7873, 7877, 7879, 7883, 7901, 7907,
+	        7919, 7927, 7933, 7937, 7949, 7951, 7963, 7993, 8009, 8011, 8017, 8039, 8053, 8059, 8069, 8081, 8087, 8089, 8093, 8101, 8111, 8117,
+	        8123, 8147, 8161, 8167, 8171, 8179, 8191, 8209, 8219, 8221, 8231, 8233, 8237, 8243, 8263, 8269, 8273, 8287, 8291, 8293, 8297, 8311,
+	        8317, 8329, 8353, 8363, 8369, 8377, 8387, 8389, 8419, 8423, 8429, 8431, 8443, 8447, 8461, 8467, 8501, 8513, 8521, 8527, 8537, 8539,
+	        8543, 8563, 8573, 8581, 8597, 8599, 8609, 8623, 8627, 8629, 8641, 8647, 8663, 8669, 8677, 8681, 8689, 8693, 8699, 8707, 8713, 8719,
+	        8731, 8737, 8741, 8747, 8753, 8761, 8779, 8783, 8803, 8807, 8819, 8821, 8831, 8837, 8839, 8849, 8861, 8863, 8867, 8887, 8893, 8923,
+	        8929, 8933, 8941, 8951, 8963, 8969, 8971, 8999, 9001, 9007, 9011, 9013, 9029, 9041, 9043, 9049, 9059, 9067, 9091, 9103, 9109, 9127,
+	        9133, 9137, 9151, 9157, 9161, 9173, 9181, 9187, 9199, 9203, 9209, 9221, 9227, 9239, 9241, 9257, 9277, 9281, 9283, 9293, 9311, 9319,
+	        9323, 9337, 9341, 9343, 9349, 9371, 9377, 9391, 9397, 9403, 9413, 9419, 9421, 9431, 9433, 9437, 9439, 9461, 9463, 9467, 9473, 9479,
+	        9491, 9497, 9511, 9521, 9533, 9539, 9547, 9551, 9587, 9601, 9613, 9619, 9623, 9629, 9631, 9643, 9649, 9661, 9677, 9679, 9689, 9697,
+	        9719, 9721, 9733, 9739, 9743, 9749, 9767, 9769, 9781, 9787, 9791, 9803, 9811, 9817, 9829, 9833, 9839, 9851, 9857, 9859, 9871, 9883,
+	        9887, 9901, 9907, 9923, 9929, 9931, 9941, 9949, 9967, 9973
+	    };
+
+	    //@Test
+	    //try {
+	    //	rt.simplifiedInstances();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running simplifiedInstances()
+	    public void simplifiedInstances()
+	    {
+	        Rational simple = new Rational(1, 2);
+
+	        for (int prime : _primes)
+	        {
+	            Rational complex = new Rational(prime, 2 * prime);
+	            Rational actualSimple = complex.getSimplifiedInstance();
+
+	            assertTrue(simple.equalsExact(actualSimple));
+	            assertEquals(actualSimple.doubleValue(), complex.doubleValue(), 0.0001);
+	        }
+
+	        simple = new Rational(2, 1);
+
+	        for (int prime : _primes)
+	        {
+	            Rational complex = new Rational(2 * prime, prime);
+	            Rational actualSimple = complex.getSimplifiedInstance();
+
+	            assertTrue(simple.equalsExact(actualSimple));
+	            assertEquals(actualSimple.doubleValue(), complex.doubleValue(), 0.0001);
+	        }
+
+	        simple = new Rational(-1, 2);
+
+	        for (int prime : _primes)
+	        {
+	            Rational complex = new Rational(-prime, 2 * prime);
+	            Rational actualSimple = complex.getSimplifiedInstance();
+
+	            assertTrue(simple.equalsExact(actualSimple));
+	            assertEquals(actualSimple.doubleValue(), complex.doubleValue(), 0.0001);
+	        }
+
+	        simple = new Rational(-1, 2);
+
+	        for (int prime : _primes)
+	        {
+	            Rational complex = new Rational(prime, -2 * prime);
+	            Rational actualSimple = complex.getSimplifiedInstance();
+
+	            assertTrue(simple.equalsExact(actualSimple));
+	            assertEquals(actualSimple.doubleValue(), complex.doubleValue(), 0.0001);
+	        }
+
+	        simple = new Rational(1, 2);
+
+	        for (int prime : _primes)
+	        {
+	            Rational complex = new Rational(-prime, -2 * prime);
+	            Rational actualSimple = complex.getSimplifiedInstance();
+
+	            assertTrue(simple.equalsExact(actualSimple));
+	            assertEquals(actualSimple.doubleValue(), complex.doubleValue(), 0.0001);
+	        }
+
+	        assertEquals(new Rational(-32768, 65535), new Rational(-32768, 65535).getSimplifiedInstance());
+	        assertEquals(new Rational(-32768, 32767), new Rational(-32768, 32767).getSimplifiedInstance());
+	        System.out.println("Finished running simplifiedInstances()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.getSimplifiedInstance_FlipsSignsIfNeeded();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running getSimplifiedInstance_FlipsSignsIfNeeded()
+	    public void getSimplifiedInstance_FlipsSignsIfNeeded()
+	    {
+	        Rational r = new Rational(1, -2);
+
+	        Rational s = r.getSimplifiedInstance();
+
+	        assertEquals(-1, s.getNumerator());
+	        assertEquals(2, s.getDenominator());
+	        System.out.println("Finished running getSimplifiedInstance_FlipsSignsIfNeeded()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.getSimplifiedInstance_RemovesSignsIfNeeded();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running getSimplifiedInstance_RemovesSignsIfNeeded()
+	    public void getSimplifiedInstance_RemovesSignsIfNeeded()
+	    {
+	        Rational r = new Rational(-1, -2);
+
+	        Rational s = r.getSimplifiedInstance();
+
+	        assertEquals(1, s.getNumerator());
+	        assertEquals(2, s.getDenominator());
+	        System.out.println("Finished running getSimplifiedInstance_RemovesSignsIfNeeded()");
+	    }
+	}
+
+	/**
+	 * Base class for testing implementations of {@link com.drew.lang.SequentialReader}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public abstract class SequentialAccessTestBase
+	{
+	    protected abstract SequentialReader createReader(byte[] bytes);
+
+	    //@Test
+	    //try {
+	    //	rt.testDefaultEndianness();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testDefaultEndianness()
+	    {
+	        assertTrue(createReader(new byte[1]).isMotorolaByteOrder());
+	        System.out.println("Finished running testDefaultEndianness()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt8();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt8() throws IOException
+	    {
+	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals((byte)0, reader.getInt8());
+	        assertEquals((byte)1, reader.getInt8());
+	        assertEquals((byte)127, reader.getInt8());
+	        assertEquals((byte)255, reader.getInt8());
+	        System.out.println("Finished running testGetInt8()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetUInt8();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetUInt8() throws IOException
+	    {
+	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals(0, reader.getUInt8());
+	        assertEquals(1, reader.getUInt8());
+	        assertEquals(127, reader.getUInt8());
+	        assertEquals(255, reader.getUInt8());
+	        System.out.println("Finished running testGetUInt8()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetUInt8_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetUInt8_OutOfBounds()
+	    {
+	        try {
+	            SequentialReader reader = createReader(new byte[1]);
+	            reader.getUInt8();
+	            reader.getUInt8();
+	            fail("Exception expected");
+	        } catch (IOException ex) {
+	            assertEquals("End of data reached.", ex.getMessage());
+	        }
+	        System.out.println("Finished running testGetUInt8_OutOfBounds()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt16();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt16() throws IOException
+	    {
+	        assertEquals(-1, createReader(new byte[]{(byte)0xff, (byte)0xff}).getInt16());
+
+	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals((short)0x0001, reader.getInt16());
+	        assertEquals((short)0x7FFF, reader.getInt16());
+
+	        reader = createReader(buffer);
+	        reader.setMotorolaByteOrder(false);
+
+	        assertEquals((short)0x0100, reader.getInt16());
+	        assertEquals((short)0xFF7F, reader.getInt16());
+	        System.out.println("Finished running testGetInt16()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetUInt16();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetUInt16() throws IOException
+	    {
+	        byte[] buffer = new byte[]{0x00, 0x01, (byte)0x7F, (byte)0xFF};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals(0x0001, reader.getUInt16());
+	        assertEquals(0x7FFF, reader.getUInt16());
+
+	        reader = createReader(buffer);
+	        reader.setMotorolaByteOrder(false);
+
+	        assertEquals(0x0100, reader.getUInt16());
+	        assertEquals(0xFF7F, reader.getUInt16());
+	        System.out.println("Finished running testGetUInt16()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetUInt16_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetUInt16_OutOfBounds()
+	    {
+	        try {
+	            SequentialReader reader = createReader(new byte[1]);
+	            reader.getUInt16();
+	            fail("Exception expected");
+	        } catch (IOException ex) {
+	            assertEquals("End of data reached.", ex.getMessage());
+	        }
+	        System.out.println("Finished running testGetUInt16_OutOfBounds()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt32() throws IOException
+	    {
+	        assertEquals(-1, createReader(new byte[]{(byte)0xff, (byte)0xff, (byte)0xff, (byte)0xff}).getInt32());
+
+	        byte[] buffer = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals(0x00010203, reader.getInt32());
+	        assertEquals(0x04050607, reader.getInt32());
+
+	        reader = createReader(buffer);
+	        reader.setMotorolaByteOrder(false);
+
+	        assertEquals(0x03020100, reader.getInt32());
+	        assertEquals(0x07060504, reader.getInt32());
+	        System.out.println("Finished running testGetInt32()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetUInt32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetUInt32() throws IOException
+	    {
+	        assertEquals(4294967295L, createReader(new byte[]{(byte)0xff, (byte)0xff, (byte)0xff, (byte)0xff}).getUInt32());
+
+	        byte[] buffer = new byte[]{(byte)0xFF, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals(0xFF000102L, reader.getUInt32());
+	        assertEquals(0x03040506L, reader.getUInt32());
+
+	        reader = createReader(buffer);
+	        reader.setMotorolaByteOrder(false);
+
+	        assertEquals(0x020100FFL, reader.getUInt32()); // 0x0010200FF
+	        assertEquals(0x06050403L, reader.getUInt32());
+	        System.out.println("Finished running testGetUInt32()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt32_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt32_OutOfBounds()
+	    {
+	        try {
+	            SequentialReader reader = createReader(new byte[3]);
+	            reader.getInt32();
+	            fail("Exception expected");
+	        } catch (IOException ex) {
+	            assertEquals("End of data reached.", ex.getMessage());
+	        }
+	        System.out.println("Finished running testGetInt32_OutOfBounds()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt64();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt64() throws IOException
+	    {
+	        byte[] buffer = new byte[]{(byte)0xFF, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertEquals(0xFF00010203040506L, reader.getInt64());
+
+	        reader = createReader(buffer);
+	        reader.setMotorolaByteOrder(false);
+
+	        assertEquals(0x06050403020100FFL, reader.getInt64());
+	        System.out.println("Finished running testGetInt64()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt64_OutOfBounds();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt64_OutOfBounds()
+	    {
+	        try {
+	            SequentialReader reader = createReader(new byte[7]);
+	            reader.getInt64();
+	            fail("Exception expected");
+	        } catch (IOException ex) {
+	            assertEquals("End of data reached.", ex.getMessage());
+	        }
+	        System.out.println("Finished running testGetInt64_OutOfBounds()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetFloat32();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetFloat32() throws IOException
+	    {
+	        final int nanBits = 0x7fc00000;
+	        assertTrue(Float.isNaN(Float.intBitsToFloat(nanBits)));
+
+	        byte[] buffer = new byte[]{0x7f, (byte)0xc0, 0x00, 0x00};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertTrue(Float.isNaN(reader.getFloat32()));
+	        System.out.println("Finished running testGetFloat32()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetFloat64();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetFloat64() throws IOException
+	    {
+	        final long nanBits = 0xfff0000000000001L;
+	        assertTrue(Double.isNaN(Double.longBitsToDouble(nanBits)));
+
+	        byte[] buffer = new byte[]{(byte)0xff, (byte)0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
+	        SequentialReader reader = createReader(buffer);
+
+	        assertTrue(Double.isNaN(reader.getDouble64()));
+	        System.out.println("Finished running testGetFloat64()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetNullTerminatedString();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetNullTerminatedString() throws IOException
+	    {
+	    	Charsets ch = new Charsets();
+	        byte[] bytes = new byte[]{0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47};
+
+	        // Test max length
+	        for (int i = 0; i < bytes.length; i++) {
+	            assertEquals("ABCDEFG".substring(0, i), createReader(bytes).getNullTerminatedString(i, ch.UTF_8));
+	        }
+
+	        assertEquals("", createReader(new byte[]{0}).getNullTerminatedString(10, ch.UTF_8));
+	        assertEquals("A", createReader(new byte[]{0x41, 0}).getNullTerminatedString(10, ch.UTF_8));
+	        assertEquals("AB", createReader(new byte[]{0x41, 0x42, 0}).getNullTerminatedString(10, ch.UTF_8));
+	        assertEquals("AB", createReader(new byte[]{0x41, 0x42, 0, 0x43}).getNullTerminatedString(10, ch.UTF_8));
+	        System.out.println("Finished running testGetNullTerminatedString()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetString();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetString() throws IOException
+	    {
+	        byte[] bytes = new byte[]{0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47};
+	        String expected = new String(bytes);
+	        assertEquals(bytes.length, expected.length());
+
+	        for (int i = 0; i < bytes.length; i++) {
+	            assertEquals("ABCDEFG".substring(0, i), createReader(bytes).getString(i));
+	        }
+	        System.out.println("Finished running testGetString()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetBytes();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetBytes() throws IOException
+	    {
+	        byte[] bytes = {0, 1, 2, 3, 4, 5};
+
+	        for (int i = 0; i < bytes.length; i++) {
+	            SequentialReader reader = createReader(bytes);
+	            byte[] readBytes = reader.getBytes(i);
+	            for (int j = 0; j < i; j++) {
+	                assertEquals(bytes[j], readBytes[j]);
+	            }
+	        }
+	        System.out.println("Finished running testGetBytes()");
+	    }
+
+	    //@Test
+  	    //try {
+	    //	rt.testOverflowBoundsCalculation();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testOverflowBoundsCalculation()
+	    {
+	        try {
+	            SequentialReader reader = createReader(new byte[10]);
+	            reader.getBytes(15);
+	        } catch (IOException e) {
+	            assertEquals("End of data reached.", e.getMessage());
+	        }
+
+	        try {
+	            SequentialReader reader = createReader(new byte[10]);
+	            reader.getBytes(5);
+	            reader.getBytes(Integer.MAX_VALUE);
+	        } catch (IOException e) {
+	            assertEquals("End of data reached.", e.getMessage());
+	        }
+	        System.out.println("Finished running testOverflowBoundsCalculation()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetBytesEOF();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetBytesEOF() throws Exception
+	    {
+	        createReader(new byte[50]).getBytes(50);
+
+	        SequentialReader reader = createReader(new byte[50]);
+	        reader.getBytes(25);
+	        reader.getBytes(25);
+
+	        try {
+	            createReader(new byte[50]).getBytes(51);
+	            fail("Expecting exception");
+	        } catch (EOFException ignored) {}
+	        System.out.println("Finished running testGetBytesEOF()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testGetInt8EOF();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testGetInt8EOF() throws Exception
+	    {
+	        createReader(new byte[1]).getInt8();
+
+	        SequentialReader reader = createReader(new byte[2]);
+	        reader.getInt8();
+	        reader.getInt8();
+
+	        try {
+	            reader = createReader(new byte[1]);
+	            reader.getInt8();
+	            reader.getInt8();
+	            fail("Expecting exception");
+	        } catch (EOFException ignored) {}
+	        System.out.println("Finished running testGetInt8EOF()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testSkipEOF();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testSkipEOF() throws Exception
+	    {
+	        createReader(new byte[1]).skip(1);
+
+	        SequentialReader reader = createReader(new byte[2]);
+	        reader.skip(1);
+	        reader.skip(1);
+
+	        try {
+	            reader = createReader(new byte[1]);
+	            reader.skip(1);
+	            reader.skip(1);
+	            fail("Expecting exception");
+	        } catch (EOFException ignored) {}
+
+	        try {
+	            reader = createReader(new byte[100]);
+	            reader.skip(50);
+	            reader.skip(Integer.MAX_VALUE);
+	            fail("Expecting exception");
+	        } catch (EOFException ignored) {}
+	        System.out.println("Finished running testSkipEOF()");
+	    }
+
+	    //@Test
+	    //try {
+	    //	rt.testTrySkipEOF();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    public void testTrySkipEOF() throws Exception
+	    {
+	        assertTrue(createReader(new byte[1]).trySkip(1));
+
+	        SequentialReader reader = createReader(new byte[2]);
+	        assertTrue(reader.trySkip(1));
+	        assertTrue(reader.trySkip(1));
+	        assertFalse(reader.trySkip(1));
+
+	        reader = createReader(new byte[100]);
+	        reader.getBytes(50);
+	        assertFalse(reader.trySkip(Integer.MAX_VALUE));
+	        System.out.println("Finished running testTrySkipEOF()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class SequentialByteArrayReaderTest extends SequentialAccessTestBase
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //SequentialByteArrayReaderTest st = me.new SequentialByteArrayReaderTest();
+		//Finished running testDefaultEndianness()
+		//Finished running testGetInt8()
+		//Finished running testGetUInt8()
+		//Finished running testGetUInt8_OutOfBounds()
+		//Finished running testGetInt16()
+		//Finished running testGetUInt16()
+		//Finished running testGetUInt16_OutOfBounds()
+		//Finished running testGetInt32()
+		//Finished running testGetUInt32()
+		//Finished running testGetInt32_OutOfBounds()
+		//Finished running testGetInt64()
+		//Finished running testGetInt64_OutOfBounds()
+		//Finished running testGetFloat32()
+		//Finished running testGetFloat64()
+		//Finished running testGetNullTerminatedString()
+		//Finished running testGetString()
+		//Finished running testGetBytes()
+		//Finished running testOverflowBoundsCalculation()
+		//Finished running testGetBytesEOF()
+		//Finished running testGetInt8EOF()
+		//Finished running testSkipEOF()
+		//Finished running testTrySkipEOF()
+	    //@SuppressWarnings({"ConstantConditions"})
+	    //@Test(expected = NullPointerException.class)
+		//try {
+	    //	st.testConstructWithNullStreamThrows();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Throws NullPointerException as expected
+	    public void testConstructWithNullStreamThrows()
+	    {
+	        new SequentialByteArrayReader(null);
+	    }
+
+	    @Override
+	    protected SequentialReader createReader(byte[] bytes)
+	    {
+	        return new SequentialByteArrayReader(bytes);
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class StreamReaderTest extends SequentialAccessTestBase
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //StreamReaderTest st = me.new StreamReaderTest();
+	    //@SuppressWarnings({"ConstantConditions"})
+	    //@Test(expected = NullPointerException.class)
+		//try {
+	    //	st.testConstructWithNullStreamThrows();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Throws NullPointerException as expected
+	    public void testConstructWithNullStreamThrows()
+	    {
+	        new StreamReader(null);
+	    }
+
+	    @Override
+	    protected SequentialReader createReader(byte[] bytes)
+	    {
+	        return new StreamReader(new ByteArrayInputStream(bytes));
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class StringUtilTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //StringUtilTest st = me.new StringUtilTest();
+	    //@Test
+		//try {
+	    //	st.testJoinIterable();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testJoinIterable()
+		public void testJoinIterable()
+	    {
+	        List<String> strings = new ArrayList<String>();
+	        strings.add("A");
+	        strings.add("B");
+	        strings.add("C");
+
+	        assertEquals("A;B;C", StringUtil.join(strings, ";"));
+
+	        assertEquals("", StringUtil.join(new ArrayList<String>(), ";"));
+	        System.out.println("Finished running testJoinIterable()");
+	    }
+
+	    //@Test 
+		//try {
+	    //	st.testJoinArray();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+		//Finished running testJoinArray()
+		public void testJoinArray()
+	    {
+	        String[] strings = new String[]{"A", "B", "C"};
+
+	        assertEquals("A;B;C", StringUtil.join(strings, ";"));
+
+	        assertEquals("", StringUtil.join(new ArrayList<String>(), ";"));
+	        System.out.println("Finished running testJoinArray()");
+	    }
+	}
+
+
 }
