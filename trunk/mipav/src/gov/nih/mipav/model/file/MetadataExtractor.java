@@ -10,10 +10,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Serializable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
@@ -32812,6 +32814,127 @@ public class MetadataExtractor {
 	                ((long) (buffer[offset + 6] & 0xFF) << 48) |
 	                ((long) (buffer[offset + 7] & 0xFF) << 56);
 	        }
+	    }
+	}
+	
+	/**
+	 * An implementation of OutputSteam that ignores write requests by doing nothing.  This class may be useful in tests.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class NullOutputStream extends OutputStream
+	{
+	    public NullOutputStream()
+	    {
+	        super();
+	    }
+
+	    @Override
+	    public void write(int b) throws IOException
+	    {
+	        // do nothing
+	    }
+	}
+
+	/**
+	 * Provides methods to read specific values from a {@link RandomAccessFile}, with a consistent, checked exception structure for
+	 * issues.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * */
+	public class RandomAccessFileReader extends RandomAccessReader
+	{
+	    @NotNull
+	    private final RandomAccessFile _file;
+	    private final long _length;
+	    private int _currentIndex;
+
+	    private final int _baseOffset;
+
+	    //@SuppressWarnings({ "ConstantConditions" })
+	    //@com.drew.lang.annotations.SuppressWarnings(value = "EI_EXPOSE_REP2", justification = "Design intent")
+	    public RandomAccessFileReader(@NotNull RandomAccessFile file) throws IOException
+	    {
+	        this(file, 0);
+	    }
+
+	    //@SuppressWarnings({ "ConstantConditions" })
+	    //@com.drew.lang.annotations.SuppressWarnings(value = "EI_EXPOSE_REP2", justification = "Design intent")
+	    public RandomAccessFileReader(@NotNull RandomAccessFile file, int baseOffset) throws IOException
+	    {
+	        if (file == null)
+	            throw new NullPointerException();
+
+	        _file = file;
+	        _baseOffset = baseOffset;
+	        _length = _file.length();
+	    }
+
+	    @Override
+	    public int toUnshiftedOffset(int localOffset)
+	    {
+	        return localOffset + _baseOffset;
+	    }
+
+	    @Override
+	    public long getLength()
+	    {
+	        return _length;
+	    }
+
+	    @Override
+	    public byte getByte(int index) throws IOException
+	    {
+	        if (index != _currentIndex)
+	            seek(index);
+
+	        final int b = _file.read();
+	        if (b < 0)
+	            throw new BufferBoundsException("Unexpected end of file encountered.");
+	        assert (b <= 0xff);
+	        _currentIndex++;
+	        return (byte)b;
+	    }
+
+	    @Override
+	    @NotNull
+	    public byte[] getBytes(int index, int count) throws IOException
+	    {
+	        validateIndex(index, count);
+
+	        if (index != _currentIndex)
+	            seek(index);
+
+	        byte[] bytes = new byte[count];
+	        final int bytesRead = _file.read(bytes);
+	        _currentIndex += bytesRead;
+	        if (bytesRead != count)
+	            throw new BufferBoundsException("Unexpected end of file encountered.");
+	        return bytes;
+	    }
+
+	    private void seek(final int index) throws IOException
+	    {
+	        if (index == _currentIndex)
+	            return;
+
+	        _file.seek(index);
+	        _currentIndex = index;
+	    }
+
+	    @Override
+	    protected boolean isValidIndex(int index, int bytesRequested) throws IOException
+	    {
+	        return bytesRequested >= 0
+	                && index >= 0
+	                && (long)index + (long)bytesRequested - 1L < _length;
+	    }
+
+	    @Override
+	    protected void validateIndex(final int index, final int bytesRequested) throws IOException
+	    {
+	        if (!isValidIndex(index, bytesRequested))
+	            throw new BufferBoundsException(index, bytesRequested, _length);
 	    }
 	}
 
