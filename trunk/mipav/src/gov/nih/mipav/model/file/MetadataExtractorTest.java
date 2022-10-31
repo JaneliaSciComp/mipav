@@ -5968,6 +5968,7 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals("A;B;C", StringUtil.join(strings, ";"));
 
 	        assertEquals("", StringUtil.join(new ArrayList<String>(), ";"));
+	        
 	        System.out.println("Finished running testJoinIterable()");
 	    }
 
@@ -5986,7 +5987,670 @@ public class MetadataExtractorTest extends MetadataExtractor {
 	        assertEquals("A;B;C", StringUtil.join(strings, ";"));
 
 	        assertEquals("", StringUtil.join(new ArrayList<String>(), ";"));
+
 	        System.out.println("Finished running testJoinArray()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class AgeTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //AgeTest at = me.new AgeTest();
+	    //@Test
+		//try {
+	    //	at.testParse();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+        //Finished running testParse()
+	    public void testParse()
+	    {
+	    	Age aa = new Age();
+	        Age age = aa.fromPanasonicString("0031:07:15 00:00:00");
+	        assertNotNull(age);
+	        assertEquals(31, age.getYears());
+	        assertEquals(7, age.getMonths());
+	        assertEquals(15, age.getDays());
+	        assertEquals(0, age.getHours());
+	        assertEquals(0, age.getMinutes());
+	        assertEquals(0, age.getSeconds());
+	        assertEquals("0031:07:15 00:00:00", age.toString());
+	        assertEquals("31 years 7 months 15 days", age.toFriendlyString());
+	        System.out.println("Finished running testParse()");
+	    }
+
+	    //@SuppressWarnings({ "ObjectEqualsNull", "EqualsBetweenInconvertibleTypes", "NullableProblems" })
+	    //@Test
+	    //try {
+	    //	at.testEqualsAndHashCode();
+	    //}
+	    //catch(Exception e) {
+	    //	e.printStackTrace();
+	    //}
+	    //Finished running testEqualsAndHashCode()
+	    public void testEqualsAndHashCode()
+	    {
+	        Age age1 = new Age(10, 11, 12, 13, 14, 15);
+	        Age age2 = new Age(10, 11, 12, 13, 14, 15);
+	        Age age3 = new Age(0, 0, 0, 0, 0, 0);
+
+	        assertEquals(age1, age1);
+	        assertEquals(age1, age2);
+	        assertEquals(age2, age1);
+
+	        assertTrue(age1.equals(age1));
+	        assertTrue(age1.equals(age2));
+	        assertFalse(age1.equals(age3));
+	        assertFalse(age1.equals(null));
+	        assertFalse(age1.equals("Hello"));
+
+	        assertEquals(age1.hashCode(), age1.hashCode());
+	        assertEquals(age1.hashCode(), age2.hashCode());
+	        assertFalse(age1.hashCode() == age3.hashCode());
+	        System.out.println("Finished running testEqualsAndHashCode()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class DirectoryTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //DirectoryTest dt = me.new DirectoryTest();
+		//try {
+		//    dt.setup();
+		//}
+		//catch (Exception e) {
+		//    e.printStackTrace();
+		//}
+	    // TODO write tests to validate type conversions from all underlying types
+
+	    private Directory _directory;
+
+	    //@Before 
+	    public void setup()
+	    {
+	        _directory = new MockDirectory();
+	    }
+
+	    //@Test 
+	    //try {
+  		//    dt.testSetAndGetMultipleTagsInSingleDirectory();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testSetAndGetMultipleTagsInSingleDirectory()
+	    public void testSetAndGetMultipleTagsInSingleDirectory() throws Exception
+	    {
+	        _directory.setString(ExifSubIFDDirectory.TAG_APERTURE, "TAG_APERTURE");
+	        _directory.setString(ExifSubIFDDirectory.TAG_BATTERY_LEVEL, "TAG_BATTERY_LEVEL");
+	        assertEquals("TAG_APERTURE", _directory.getString(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertEquals("TAG_BATTERY_LEVEL", _directory.getString(ExifSubIFDDirectory.TAG_BATTERY_LEVEL));
+	        System.out.println("Finished running testSetAndGetMultipleTagsInSingleDirectory()");
+	    }
+
+	    //@Test 
+	    //try {
+  		//    dt.testSetSameTagMultipleTimesOverwritesValue();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testSetSameTagMultipleTimesOverwritesValue()
+	    public void testSetSameTagMultipleTimesOverwritesValue() throws Exception
+	    {
+	        _directory.setInt(ExifSubIFDDirectory.TAG_APERTURE, 1);
+	        _directory.setInt(ExifSubIFDDirectory.TAG_APERTURE, 2);
+	        assertEquals(2, _directory.getInt(ExifSubIFDDirectory.TAG_APERTURE));
+	        System.out.println("Finished running testSetSameTagMultipleTimesOverwritesValue()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testUnderlyingInt();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testUnderlyingInt()
+	    public void testUnderlyingInt() throws Exception
+	    {
+	        int value = 123;
+	        int tagType = 321;
+	        _directory.setInt(tagType, value);
+
+	        assertEquals(value, _directory.getInt(tagType));
+	        assertEquals(Integer.valueOf(value), _directory.getInteger(tagType));
+	        assertEquals((float)value, _directory.getFloat(tagType), 0.00001);
+	        assertEquals((double)value, _directory.getDouble(tagType), 0.00001);
+	        assertEquals((long)value, _directory.getLong(tagType));
+	        assertEquals(Integer.toString(value), _directory.getString(tagType));
+	        assertEquals(new Rational(value, 1), _directory.getRational(tagType));
+	        assertArrayEquals(new int[]{value}, _directory.getIntArray(tagType));
+	        assertArrayEquals(new byte[]{(byte)value}, _directory.getByteArray(tagType));
+	        System.out.println("Finished running testUnderlyingInt()");
+	    }
+
+	    //@Test 
+	    //try {
+  		//    dt.testSetAndGetIntArray();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testSetAndGetIntArray()
+	    public void testSetAndGetIntArray() throws Exception
+	    {
+	        int[] inputValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	        int tagType = 123;
+	        _directory.setIntArray(tagType, inputValues);
+	        int[] outputValues = _directory.getIntArray(tagType);
+	        assertNotNull(outputValues);
+	        assertEquals(inputValues.length, outputValues.length);
+	        for (int i = 0; i < inputValues.length; i++) {
+	            int inputValue = inputValues[i];
+	            int outputValue = outputValues[i];
+	            assertEquals(inputValue, outputValue);
+	        }
+	        assertArrayEquals(inputValues, _directory.getIntArray(tagType));
+	        StringBuilder outputString = new StringBuilder();
+	        for (int i = 0; i < inputValues.length; i++) {
+	            int inputValue = inputValues[i];
+	            if (i > 0) {
+	                outputString.append(' ');
+	            }
+	            outputString.append(inputValue);
+	        }
+	        assertEquals(outputString.toString(), _directory.getString(tagType));
+	        System.out.println("Finished running testSetAndGetIntArray()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testSetStringAndGetDate();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testSetStringAndGetDate()
+	    public void testSetStringAndGetDate() throws Exception
+	    {
+	        String date1 = "2002:01:30 23:59:59";
+	        String date2 = "2002:01:30 23:59";
+	        String date3 = "2002-01-30 23:59:59";
+	        String date4 = "2002-01-30 23:59";
+	        String date5 = "2002-01-30T23:59:59.099-08:00";
+	        String date6 = "2002-01-30T23:59:59.099";
+	        String date7 = "2002-01-30T23:59:59-08:00";
+	        String date8 = "2002-01-30T23:59:59";
+	        String date9 = "2002-01-30T23:59-08:00";
+	        String date10 = "2002-01-30T23:59";
+	        String date11 = "2002-01-30";
+	        String date12 = "2002-01";
+	        String date13 = "2002";
+	        _directory.setString(1, date1);
+	        _directory.setString(2, date2);
+	        _directory.setString(3, date3);
+	        _directory.setString(4, date4);
+	        _directory.setString(5, date5);
+	        _directory.setString(6, date6);
+	        _directory.setString(7, date7);
+	        _directory.setString(8, date8);
+	        _directory.setString(9, date9);
+	        _directory.setString(10, date10);
+	        _directory.setString(11, date11);
+	        _directory.setString(12, date12);
+	        _directory.setString(13, date13);
+	        assertEquals(date1, _directory.getString(1));
+
+	            // Don't use default timezone
+	        TimeZone gmt = TimeZone.getTimeZone("GMT");
+	        GregorianCalendar gc = new GregorianCalendar(gmt);
+	            // clear millis to 0 or test will fail
+	        gc.setTimeInMillis(0);
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 23, 59, 59);
+	        assertEquals(gc.getTime(), _directory.getDate(1, null));
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 23, 59, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(2, null));
+
+	            // Use specific timezone
+	        TimeZone pst = TimeZone.getTimeZone("PST");
+	        gc = new GregorianCalendar(pst);
+	        gc.setTimeInMillis(0);
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 23, 59, 59);
+	        assertEquals(gc.getTime(), _directory.getDate(3, pst));
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 23, 59, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(4, pst));
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 23, 59, 59);
+	        gc.set(Calendar.MILLISECOND, 99);
+	        assertEquals(gc.getTime(), _directory.getDate(5, null));
+	        assertEquals(gc.getTime(), _directory.getDate(5, gmt));
+	        assertEquals(gc.getTime(), _directory.getDate(6, pst));
+
+	        assertEquals(gc.getTime(), _directory.getDate(5, "011", null));
+	        assertEquals(gc.getTime(), _directory.getDate(6, "011", pst));
+	        assertEquals(gc.getTime(), _directory.getDate(7, "099", null));
+	        assertEquals(gc.getTime(), _directory.getDate(8, "099", pst));
+
+	        gc.set(Calendar.MILLISECOND, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(7, null));
+	        assertEquals(gc.getTime(), _directory.getDate(7, gmt));
+	        assertEquals(gc.getTime(), _directory.getDate(8, pst));
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 23, 59, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(9, null));
+	        assertEquals(gc.getTime(), _directory.getDate(9, gmt));
+	        assertEquals(gc.getTime(), _directory.getDate(10, pst));
+
+	        gc = new GregorianCalendar(gmt);
+	        gc.setTimeInMillis(0);
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 30, 0, 0, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(11, null));
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 1, 0, 0, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(12, null));
+
+	        gc.set(2002, GregorianCalendar.JANUARY, 1, 0, 0, 0);
+	        assertEquals(gc.getTime(), _directory.getDate(13, null));
+	        System.out.println("Finished running testSetStringAndGetDate()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testSetIntArrayGetByteArray();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testSetIntArrayGetByteArray()
+	    public void testSetIntArrayGetByteArray() throws Exception
+	    {
+	        int[] ints = {1, 2, 3, 4, 5};
+	        _directory.setIntArray(1, ints);
+
+	        byte[] bytes = _directory.getByteArray(1);
+	        assertNotNull(bytes);
+	        assertEquals(ints.length, bytes.length);
+	        assertEquals(1, bytes[0]);
+	        System.out.println("Finished running testSetIntArrayGetByteArray()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testSetStringGetInt();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testSetStringGetInt()
+	    public void testSetStringGetInt() throws Exception
+	    {
+	        byte[] bytes = { 0x01, 0x02, 0x03 };
+	        _directory.setString(1, new String(bytes));
+	        assertEquals(0x010203, _directory.getInt(1));
+	        System.out.println("Finished running testSetStringGetInt()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testContainsTag();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testContainsTag()
+	    public void testContainsTag() throws Exception
+	    {
+	        assertFalse(_directory.containsTag(ExifSubIFDDirectory.TAG_APERTURE));
+	        _directory.setString(ExifSubIFDDirectory.TAG_APERTURE, "Tag Value");
+	        assertTrue(_directory.containsTag(ExifSubIFDDirectory.TAG_APERTURE));
+	        System.out.println("Finished running testContainsTag()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testGetNonExistentTagIsNullForAllTypes();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testGetNonExistentTagIsNullForAllTypes()
+	    public void testGetNonExistentTagIsNullForAllTypes() throws Exception
+	    {
+	        assertNull(_directory.getString(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getInteger(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getDoubleObject(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getFloatObject(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getByteArray(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getDate(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getIntArray(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getLongObject(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getObject(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getRational(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getRationalArray(ExifSubIFDDirectory.TAG_APERTURE));
+	        assertNull(_directory.getStringArray(ExifSubIFDDirectory.TAG_APERTURE));
+	        System.out.println("Finished running testGetNonExistentTagIsNullForAllTypes()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    dt.testToString();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testToString()
+	    public void testToString()
+	    {
+	        Directory directory = new ExifIFD0Directory();
+	        assertEquals("Exif IFD0 Directory (0 tags)", directory.toString());
+	        directory.setString(1, "Tag 1");
+	        assertEquals("Exif IFD0 Directory (1 tag)", directory.toString());
+	        directory.setString(2, "Tag 2");
+	        assertEquals("Exif IFD0 Directory (2 tags)", directory.toString());
+	        System.out.println("Finished running testToString()");
+	    }
+	}
+
+	/**
+	 * A mock implementation of Directory used in unit testing.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class MockDirectory extends Directory
+	{
+	    private final HashMap<Integer, String> _tagNameMap;
+
+	    public MockDirectory()
+	    {
+	        this._tagNameMap = new HashMap<Integer, String>();
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * JUnit test case for class Metadata.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class MetadataTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //MetadataTest mt = me.new MetadataTest();
+	    //@Test
+		//try {
+  		//    mt.testGetDirectoryWhenNotExists();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+		//Finished running testGetDirectoryWhenNotExists()
+	    public void testGetDirectoryWhenNotExists()
+	    {
+	        assertNull(new Metadata().getFirstDirectoryOfType(ExifSubIFDDirectory.class));
+	        System.out.println("Finished running testGetDirectoryWhenNotExists()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    mt.testHasErrors();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testHasErrors()
+	    public void testHasErrors() throws Exception
+	    {
+	        ExifSubIFDDirectory directory = new ExifSubIFDDirectory();
+	        directory.addError("Test Error 1");
+
+	        Metadata metadata = new Metadata();
+	        assertFalse(metadata.hasErrors());
+
+	        metadata.addDirectory(directory);
+	        assertTrue(metadata.hasErrors());
+	        System.out.println("Finished running testHasErrors()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    mt.testToString();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testToString()
+	    public void testToString()
+	    {
+	        Metadata metadata = new Metadata();
+	        assertEquals("Metadata (0 directories)", metadata.toString());
+
+	        metadata.addDirectory(new ExifIFD0Directory());
+	        assertEquals("Metadata (1 directory)", metadata.toString());
+
+	        metadata.addDirectory(new ExifSubIFDDirectory());
+	        assertEquals("Metadata (2 directories)", metadata.toString());
+	        System.out.println("Finished running testToString()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    mt.testOrderOfSameType();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testOrderOfSameType()
+	    public void testOrderOfSameType()
+	    {
+	        Metadata metadata = new Metadata();
+	        Directory directory2 = new ExifSubIFDDirectory();
+	        Directory directory3 = new ExifSubIFDDirectory();
+	        Directory directory1 = new ExifSubIFDDirectory();
+
+	        metadata.addDirectory(directory1);
+	        metadata.addDirectory(directory2);
+	        metadata.addDirectory(directory3);
+
+	        Collection<ExifSubIFDDirectory> directories = metadata.getDirectoriesOfType(ExifSubIFDDirectory.class);
+
+	        assertNotNull(directories);
+	        assertEquals(3, directories.size());
+	        assertSame(directory1, directories.toArray()[0]);
+	        assertSame(directory2, directories.toArray()[1]);
+	        assertSame(directory3, directories.toArray()[2]);
+	        System.out.println("Finished running testOrderOfSameType()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    mt.testOrderOfDifferentTypes();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testOrderOfDifferentTypes()
+	    public void testOrderOfDifferentTypes()
+	    {
+	        Metadata metadata = new Metadata();
+	        Directory directory1 = new ExifSubIFDDirectory();
+	        Directory directory2 = new ExifThumbnailDirectory();
+	        Directory directory3 = new ExifIFD0Directory();
+
+	        metadata.addDirectory(directory1);
+	        metadata.addDirectory(directory2);
+	        metadata.addDirectory(directory3);
+
+	        List<Directory> directories = new ArrayList<Directory>();
+	        for (Directory directory : metadata.getDirectories()) {
+	            directories.add(directory);
+	        }
+
+	        assertEquals(3, directories.size());
+	        assertSame(directory1, directories.toArray()[0]);
+	        assertSame(directory2, directories.toArray()[1]);
+	        assertSame(directory3, directories.toArray()[2]);
+	        System.out.println("Finished running testOrderOfDifferentTypes()");
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PsdReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //PsdReaderTest pt = me.new PsdReaderTest();
+	    //@NotNull
+	    public PsdHeaderDirectory processBytes(@NotNull String file) throws Exception
+	    {
+	        Metadata metadata = new Metadata();
+	        InputStream stream = new FileInputStream(new File(file));
+	        try {
+	            new PsdReader().extract(new StreamReader(stream), metadata);
+	        } catch (Exception e) {
+	            stream.close();
+	            throw e;
+	        }
+
+	        PsdHeaderDirectory directory = metadata.getFirstDirectoryOfType(PsdHeaderDirectory.class);
+	        assertNotNull(directory);
+	        return directory;
+	    }
+
+	    //@Test
+	    //try {
+  		//    pt.test8x8x8bitGrayscale();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running test8x8x8bitGrayscale()
+	    public void test8x8x8bitGrayscale() throws Exception
+	    {
+	        PsdHeaderDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/8x4x8bit-Grayscale.psd");
+
+	        assertEquals(8, directory.getInt(PsdHeaderDirectory.TAG_IMAGE_WIDTH));
+	        assertEquals(4, directory.getInt(PsdHeaderDirectory.TAG_IMAGE_HEIGHT));
+	        assertEquals(8, directory.getInt(PsdHeaderDirectory.TAG_BITS_PER_CHANNEL));
+	        assertEquals(1, directory.getInt(PsdHeaderDirectory.TAG_CHANNEL_COUNT));
+	        assertEquals(1, directory.getInt(PsdHeaderDirectory.TAG_COLOR_MODE)); // 1 = grayscale
+	        System.out.println("Finished running test8x8x8bitGrayscale()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    pt.test10x12x16bitCMYK();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running test10x12x16bitCMYK()
+	    public void test10x12x16bitCMYK() throws Exception
+	    {
+	        PsdHeaderDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/10x12x16bit-CMYK.psd");
+
+	        assertEquals(10, directory.getInt(PsdHeaderDirectory.TAG_IMAGE_WIDTH));
+	        assertEquals(12, directory.getInt(PsdHeaderDirectory.TAG_IMAGE_HEIGHT));
+	        assertEquals(16, directory.getInt(PsdHeaderDirectory.TAG_BITS_PER_CHANNEL));
+	        assertEquals(4, directory.getInt(PsdHeaderDirectory.TAG_CHANNEL_COUNT));
+	        assertEquals(4, directory.getInt(PsdHeaderDirectory.TAG_COLOR_MODE)); // 4 = CMYK
+	        System.out.println("Finished running test10x12x16bitCMYK()");
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class GifReaderTest
+	{
+		//MetadataExtractorTest me = new MetadataExtractorTest();
+	    //GifReaderTest gt = me.new GifReaderTest();
+	    //@NotNull
+	    public GifHeaderDirectory processBytes(@NotNull String file) throws Exception
+	    {
+	        Metadata metadata = new Metadata();
+	        InputStream stream = new FileInputStream(file);
+	        new GifReader().extract(new StreamReader(stream), metadata);
+	        stream.close();
+
+	        GifHeaderDirectory directory = metadata.getFirstDirectoryOfType(GifHeaderDirectory.class);
+	        assertNotNull(directory);
+	        return directory;
+	    }
+
+	    //@Test
+	    //try {
+  		//    gt.testMsPaintGif();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testMsPaintGif()
+	    public void testMsPaintGif() throws Exception
+	    {
+	        GifHeaderDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/mspaint-10x10.gif");
+
+	        assertFalse(directory.hasErrors());
+
+	        assertEquals("89a", directory.getString(GifHeaderDirectory.TAG_GIF_FORMAT_VERSION));
+	        assertEquals(10, directory.getInt(GifHeaderDirectory.TAG_IMAGE_WIDTH));
+	        assertEquals(10, directory.getInt(GifHeaderDirectory.TAG_IMAGE_HEIGHT));
+	        assertEquals(256, directory.getInt(GifHeaderDirectory.TAG_COLOR_TABLE_SIZE));
+	        assertFalse(directory.getBoolean(GifHeaderDirectory.TAG_IS_COLOR_TABLE_SORTED));
+	        assertEquals(8, directory.getInt(GifHeaderDirectory.TAG_BITS_PER_PIXEL));
+	        assertTrue(directory.getBoolean(GifHeaderDirectory.TAG_HAS_GLOBAL_COLOR_TABLE));
+	        assertEquals(0, directory.getInt(GifHeaderDirectory.TAG_BACKGROUND_COLOR_INDEX));
+	        System.out.println("Finished running testMsPaintGif()");
+	    }
+
+	    //@Test
+	    //try {
+  		//    gt.testPhotoshopGif();
+  		//}
+  		//catch (Exception e) {
+  		//    e.printStackTrace();
+  		//}
+	    //Finished running testPhotoshopGif()
+	    public void testPhotoshopGif() throws Exception
+	    {
+	        GifHeaderDirectory directory = processBytes("C:/metadata/metadata-extractor-master/Tests/Data/photoshop-8x12-32colors-alpha.gif");
+
+	        assertFalse(directory.hasErrors());
+
+	        assertEquals("89a", directory.getString(GifHeaderDirectory.TAG_GIF_FORMAT_VERSION));
+	        assertEquals(8, directory.getInt(GifHeaderDirectory.TAG_IMAGE_WIDTH));
+	        assertEquals(12, directory.getInt(GifHeaderDirectory.TAG_IMAGE_HEIGHT));
+	        assertEquals(32, directory.getInt(GifHeaderDirectory.TAG_COLOR_TABLE_SIZE));
+	        assertFalse(directory.getBoolean(GifHeaderDirectory.TAG_IS_COLOR_TABLE_SORTED));
+	        assertEquals(5, directory.getInt(GifHeaderDirectory.TAG_BITS_PER_PIXEL));
+	        assertTrue(directory.getBoolean(GifHeaderDirectory.TAG_HAS_GLOBAL_COLOR_TABLE));
+	        assertEquals(8, directory.getInt(GifHeaderDirectory.TAG_BACKGROUND_COLOR_INDEX));
+	        System.out.println("Finished running testPhotoshopGif()");
 	    }
 	}
 
