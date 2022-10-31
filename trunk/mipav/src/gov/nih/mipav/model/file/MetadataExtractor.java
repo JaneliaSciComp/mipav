@@ -3664,9 +3664,7 @@ public class MetadataExtractor {
 	            new XmpReader(),
 	            */
 	            new IccReader(),
-	            /*
 	            new PhotoshopReader(),
-	            */
 	            new DuckyReader(),
 	            me.new IptcReader(),
 	            new AdobeJpegReader(),
@@ -32935,6 +32933,1943 @@ public class MetadataExtractor {
 	    {
 	        if (!isValidIndex(index, bytesRequested))
 	            throw new BufferBoundsException(index, bytesRequested, _length);
+	    }
+	}
+
+	/**
+	 * Reads metadata created by Photoshop and stored in the APPD segment of JPEG files.
+	 * Note that IPTC data may be stored within this segment, in which case this reader will
+	 * create both a {@link PhotoshopDirectory} and a {@link com.drew.metadata.iptc.IptcDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Yuri Binev
+	 * @author Payton Garland
+	 */
+	public class PhotoshopReader implements JpegSegmentMetadataReader
+	{
+	    @NotNull
+	    private static final String JPEG_SEGMENT_PREAMBLE = "Photoshop 3.0";
+
+	    @NotNull
+	    public Iterable<JpegSegmentType> getSegmentTypes()
+	    {
+	        return Collections.singletonList(JpegSegmentType.APPD);
+	    }
+
+	    public void readJpegSegments(@NotNull Iterable<byte[]> segments, @NotNull Metadata metadata, @NotNull JpegSegmentType segmentType)
+	    {
+	        final int preambleLength = JPEG_SEGMENT_PREAMBLE.length();
+
+	        for (byte[] segmentBytes : segments) {
+	            // Ensure data starts with the necessary preamble
+	            if (segmentBytes.length < preambleLength + 1 || !JPEG_SEGMENT_PREAMBLE.equals(new String(segmentBytes, 0, preambleLength)))
+	                continue;
+
+	            extract(
+	                new SequentialByteArrayReader(segmentBytes, preambleLength + 1),
+	                segmentBytes.length - preambleLength - 1,
+	                metadata);
+	        }
+	    }
+
+	    public void extract(@NotNull final SequentialReader reader, int length, @NotNull final Metadata metadata)
+	    {
+	        extract(reader, length, metadata, null);
+	    }
+
+	    public void extract(@NotNull final SequentialReader reader, int length, @NotNull final Metadata metadata, @Nullable final Directory parentDirectory)
+	    {
+	        PhotoshopDirectory directory = new PhotoshopDirectory();
+	        metadata.addDirectory(directory);
+
+	        if (parentDirectory != null)
+	            directory.setParent(parentDirectory);
+
+	        // Data contains a sequence of Image Resource Blocks (IRBs):
+	        //
+	        // 4 bytes - Signature; mostly "8BIM" but "PHUT", "AgHg" and "DCSR" are also found
+	        // 2 bytes - Resource identifier
+	        // String  - Pascal string, padded to make length even
+	        // 4 bytes - Size of resource data which follows
+	        // Data    - The resource data, padded to make size even
+	        //
+	        // http://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577409_pgfId-1037504
+
+	        int pos = 0;
+	        int clippingPathCount = 0;
+	        while (pos < length) {
+	            try {
+	                // 4 bytes for the signature ("8BIM", "PHUT", etc.)
+	                String signature = reader.getString(4);
+	                pos += 4;
+
+	                // 2 bytes for the resource identifier (tag type).
+	                int tagType = reader.getUInt16(); // segment type
+	                pos += 2;
+
+	                // A variable number of bytes holding a pascal string (two leading bytes for length).
+	                int descriptionLength = reader.getUInt8();
+	                pos += 1;
+	                // Some basic bounds checking
+	                if (descriptionLength < 0 || descriptionLength + pos > length)
+	                    throw new ImageProcessingException("Invalid string length");
+
+	                // Get name (important for paths)
+	                StringBuilder description = new StringBuilder();
+	                descriptionLength += pos;
+	                // Loop through each byte and append to string
+	                while (pos < descriptionLength) {
+	                    description.append((char)reader.getUInt8());
+	                    pos ++;
+	                }
+
+	                // The number of bytes is padded with a trailing zero, if needed, to make the size even.
+	                if (pos % 2 != 0) {
+	                    reader.skip(1);
+	                    pos++;
+	                }
+
+	                // 4 bytes for the size of the resource data that follows.
+	                int byteCount = reader.getInt32();
+	                pos += 4;
+	                // The resource data.
+	                byte[] tagBytes = reader.getBytes(byteCount);
+	                pos += byteCount;
+	                // The number of bytes is padded with a trailing zero, if needed, to make the size even.
+	                if (pos % 2 != 0) {
+	                    reader.skip(1);
+	                    pos++;
+	                }
+
+	                if (signature.equals("8BIM")) {
+	                    if (tagType == PhotoshopDirectory.TAG_IPTC)
+	                        new IptcReader().extract(new SequentialByteArrayReader(tagBytes), metadata, tagBytes.length, directory);
+	                    else if (tagType == PhotoshopDirectory.TAG_ICC_PROFILE_BYTES)
+	                        new IccReader().extract(new ByteArrayReader(tagBytes), metadata, directory);
+	                    else if (tagType == PhotoshopDirectory.TAG_EXIF_DATA_1 || tagType == PhotoshopDirectory.TAG_EXIF_DATA_3)
+	                        new ExifReader().extract(new ByteArrayReader(tagBytes), metadata, 0, directory);
+	                    else if (tagType == PhotoshopDirectory.TAG_XMP_DATA) {
+	                        //new XmpReader().extract(tagBytes, metadata, directory);
+	                    }
+	                    else if (tagType >= 0x07D0 && tagType <= 0x0BB6) {
+	                        clippingPathCount++;
+	                        tagBytes = Arrays.copyOf(tagBytes, tagBytes.length + description.length() + 1);
+	                        // Append description(name) to end of byte array with 1 byte before the description representing the length
+	                        for (int i = tagBytes.length - description.length() - 1; i < tagBytes.length; i++) {
+	                            if (i % (tagBytes.length - description.length() - 1 + description.length()) == 0)
+	                                tagBytes[i] = (byte)description.length();
+	                            else
+	                                tagBytes[i] = (byte)description.charAt(i - (tagBytes.length - description.length() - 1));
+	                        }
+	                        PhotoshopDirectory pd = new PhotoshopDirectory();
+	                        pd._tagNameMap.put(0x07CF + clippingPathCount, "Path Info " + clippingPathCount);
+	                        directory.setByteArray(0x07CF + clippingPathCount, tagBytes);
+	                    }
+	                    else
+	                        directory.setByteArray(tagType, tagBytes);
+
+	                    if (tagType >= 0x0fa0 && tagType <= 0x1387) {
+	                    	PhotoshopDirectory pd = new PhotoshopDirectory();
+	                        pd._tagNameMap.put(tagType, String.format("Plug-in %d Data", tagType - 0x0fa0 + 1));
+	                    }
+	                }
+	            } catch (Exception ex) {
+	                directory.addError(ex.getMessage());
+	                return;
+	            }
+	        }
+	    }
+	}
+	
+	/**
+	 * Holds the metadata found in the APPD segment of a JPEG file saved by Photoshop.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Yuri Binev
+	 * @author Payton Garland
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PhotoshopDirectory extends Directory
+	{
+	    public static final int TAG_CHANNELS_ROWS_COLUMNS_DEPTH_MODE                  = 0x03E8;
+	    public static final int TAG_MAC_PRINT_INFO                                    = 0x03E9;
+	    public static final int TAG_XML                                               = 0x03EA;
+	    public static final int TAG_INDEXED_COLOR_TABLE                               = 0x03EB;
+	    public static final int TAG_RESOLUTION_INFO                                   = 0x03ED;
+	    public static final int TAG_ALPHA_CHANNELS                                    = 0x03EE;
+	    public static final int TAG_DISPLAY_INFO_OBSOLETE                             = 0x03EF;
+	    public static final int TAG_CAPTION                                           = 0x03F0;
+	    public static final int TAG_BORDER_INFORMATION                                = 0x03F1;
+	    public static final int TAG_BACKGROUND_COLOR                                  = 0x03F2;
+	    public static final int TAG_PRINT_FLAGS                                       = 0x03F3;
+	    public static final int TAG_GRAYSCALE_AND_MULTICHANNEL_HALFTONING_INFORMATION = 0x03F4;
+	    public static final int TAG_COLOR_HALFTONING_INFORMATION                      = 0x03F5;
+	    public static final int TAG_DUOTONE_HALFTONING_INFORMATION                    = 0x03F6;
+	    public static final int TAG_GRAYSCALE_AND_MULTICHANNEL_TRANSFER_FUNCTION      = 0x03F7;
+	    public static final int TAG_COLOR_TRANSFER_FUNCTIONS                          = 0x03F8;
+	    public static final int TAG_DUOTONE_TRANSFER_FUNCTIONS                        = 0x03F9;
+	    public static final int TAG_DUOTONE_IMAGE_INFORMATION                         = 0x03FA;
+	    public static final int TAG_EFFECTIVE_BLACK_AND_WHITE_VALUES                  = 0x03FB;
+	    // OBSOLETE                                                                     0x03FC
+	    public static final int TAG_EPS_OPTIONS                                       = 0x03FD;
+	    public static final int TAG_QUICK_MASK_INFORMATION                            = 0x03FE;
+	    // OBSOLETE                                                                     0x03FF
+	    public static final int TAG_LAYER_STATE_INFORMATION                           = 0x0400;
+	    // Working path (not saved)                                                     0x0401
+	    public static final int TAG_LAYERS_GROUP_INFORMATION                          = 0x0402;
+	    // OBSOLETE                                                                     0x0403
+	    public static final int TAG_IPTC                                              = 0x0404;
+	    public static final int TAG_IMAGE_MODE_FOR_RAW_FORMAT_FILES                   = 0x0405;
+	    public static final int TAG_JPEG_QUALITY                                      = 0x0406;
+	    public static final int TAG_GRID_AND_GUIDES_INFORMATION                       = 0x0408;
+	    public static final int TAG_THUMBNAIL_OLD                                     = 0x0409;
+	    public static final int TAG_COPYRIGHT                                         = 0x040A;
+	    public static final int TAG_URL                                               = 0x040B;
+	    public static final int TAG_THUMBNAIL                                         = 0x040C;
+	    public static final int TAG_GLOBAL_ANGLE                                      = 0x040D;
+	    // OBSOLETE                                                                     0x040E
+	    public static final int TAG_ICC_PROFILE_BYTES                                 = 0x040F;
+	    public static final int TAG_WATERMARK                                         = 0x0410;
+	    public static final int TAG_ICC_UNTAGGED_PROFILE                              = 0x0411;
+	    public static final int TAG_EFFECTS_VISIBLE                                   = 0x0412;
+	    public static final int TAG_SPOT_HALFTONE                                     = 0x0413;
+	    public static final int TAG_SEED_NUMBER                                       = 0x0414;
+	    public static final int TAG_UNICODE_ALPHA_NAMES                               = 0x0415;
+	    public static final int TAG_INDEXED_COLOR_TABLE_COUNT                         = 0x0416;
+	    public static final int TAG_TRANSPARENCY_INDEX                                = 0x0417;
+	    public static final int TAG_GLOBAL_ALTITUDE                                   = 0x0419;
+	    public static final int TAG_SLICES                                            = 0x041A;
+	    public static final int TAG_WORKFLOW_URL                                      = 0x041B;
+	    public static final int TAG_JUMP_TO_XPEP                                      = 0x041C;
+	    public static final int TAG_ALPHA_IDENTIFIERS                                 = 0x041D;
+	    public static final int TAG_URL_LIST                                          = 0x041E;
+	    public static final int TAG_VERSION                                           = 0x0421;
+	    public static final int TAG_EXIF_DATA_1                                       = 0x0422;
+	    public static final int TAG_EXIF_DATA_3                                       = 0x0423;
+	    public static final int TAG_XMP_DATA                                          = 0x0424;
+	    public static final int TAG_CAPTION_DIGEST                                    = 0x0425;
+	    public static final int TAG_PRINT_SCALE                                       = 0x0426;
+	    public static final int TAG_PIXEL_ASPECT_RATIO                                = 0x0428;
+	    public static final int TAG_LAYER_COMPS                                       = 0x0429;
+	    public static final int TAG_ALTERNATE_DUOTONE_COLORS                          = 0x042A;
+	    public static final int TAG_ALTERNATE_SPOT_COLORS                             = 0x042B;
+	    public static final int TAG_LAYER_SELECTION_IDS                               = 0x042D;
+	    public static final int TAG_HDR_TONING_INFO                                   = 0x042E;
+	    public static final int TAG_PRINT_INFO                                        = 0x042F;
+	    public static final int TAG_LAYER_GROUPS_ENABLED_ID                           = 0x0430;
+	    public static final int TAG_COLOR_SAMPLERS                                    = 0x0431;
+	    public static final int TAG_MEASUREMENT_SCALE                                 = 0x0432;
+	    public static final int TAG_TIMELINE_INFORMATION                              = 0x0433;
+	    public static final int TAG_SHEET_DISCLOSURE                                  = 0x0434;
+	    public static final int TAG_DISPLAY_INFO                                      = 0x0435;
+	    public static final int TAG_ONION_SKINS                                       = 0x0436;
+	    public static final int TAG_COUNT_INFORMATION                                 = 0x0438;
+	    public static final int TAG_PRINT_INFO_2                                      = 0x043A;
+	    public static final int TAG_PRINT_STYLE                                       = 0x043B;
+	    public static final int TAG_MAC_NSPRINTINFO                                   = 0x043C;
+	    public static final int TAG_WIN_DEVMODE                                       = 0x043D;
+	    public static final int TAG_AUTO_SAVE_FILE_PATH                               = 0x043E;
+	    public static final int TAG_AUTO_SAVE_FORMAT                                  = 0x043F;
+	    public static final int TAG_PATH_SELECTION_STATE                              = 0x0440;
+	    // PATH INFO                                                                    0x07D0 -> 0x0BB6
+	    public static final int TAG_CLIPPING_PATH_NAME                                = 0x0BB7;
+	    public static final int TAG_ORIGIN_PATH_INFO                                  = 0x0BB8;
+	    // PLUG IN RESOURCES                                                            0x0FA0 -> 0x1387
+	    public static final int TAG_IMAGE_READY_VARIABLES_XML                         = 0x1B58;
+	    public static final int TAG_IMAGE_READY_DATA_SETS                             = 0x1B59;
+	    public static final int TAG_IMAGE_READY_SELECTED_STATE                        = 0x1B5A;
+	    public static final int TAG_IMAGE_READY_7_ROLLOVER                            = 0x1B5B;
+	    public static final int TAG_IMAGE_READY_ROLLOVER                              = 0x1B5C;
+	    public static final int TAG_IMAGE_READY_SAVE_LAYER_SETTINGS                   = 0x1B5D;
+	    public static final int TAG_IMAGE_READY_VERSION                               = 0x1B5E;
+	    public static final int TAG_LIGHTROOM_WORKFLOW                                = 0x1F40;
+	    public static final int TAG_PRINT_FLAGS_INFO                                  = 0x2710;
+
+	    @NotNull
+	    final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_CHANNELS_ROWS_COLUMNS_DEPTH_MODE, "Channels, Rows, Columns, Depth, Mode");
+	        _tagNameMap.put(TAG_MAC_PRINT_INFO, "Mac Print Info");
+	        _tagNameMap.put(TAG_XML, "XML Data");
+	        _tagNameMap.put(TAG_INDEXED_COLOR_TABLE, "Indexed Color Table");
+	        _tagNameMap.put(TAG_RESOLUTION_INFO, "Resolution Info");
+	        _tagNameMap.put(TAG_ALPHA_CHANNELS, "Alpha Channels");
+	        _tagNameMap.put(TAG_DISPLAY_INFO_OBSOLETE, "Display Info (Obsolete)");
+	        _tagNameMap.put(TAG_CAPTION, "Caption");
+	        _tagNameMap.put(TAG_BORDER_INFORMATION, "Border Information");
+	        _tagNameMap.put(TAG_BACKGROUND_COLOR, "Background Color");
+	        _tagNameMap.put(TAG_PRINT_FLAGS, "Print Flags");
+	        _tagNameMap.put(TAG_GRAYSCALE_AND_MULTICHANNEL_HALFTONING_INFORMATION, "Grayscale and Multichannel Halftoning Information");
+	        _tagNameMap.put(TAG_COLOR_HALFTONING_INFORMATION, "Color Halftoning Information");
+	        _tagNameMap.put(TAG_DUOTONE_HALFTONING_INFORMATION, "Duotone Halftoning Information");
+	        _tagNameMap.put(TAG_GRAYSCALE_AND_MULTICHANNEL_TRANSFER_FUNCTION, "Grayscale and Multichannel Transfer Function");
+	        _tagNameMap.put(TAG_COLOR_TRANSFER_FUNCTIONS, "Color Transfer Functions");
+	        _tagNameMap.put(TAG_DUOTONE_TRANSFER_FUNCTIONS, "Duotone Transfer Functions");
+	        _tagNameMap.put(TAG_DUOTONE_IMAGE_INFORMATION, "Duotone Image Information");
+	        _tagNameMap.put(TAG_EFFECTIVE_BLACK_AND_WHITE_VALUES, "Effective Black and White Values");
+	        _tagNameMap.put(TAG_EPS_OPTIONS, "EPS Options");
+	        _tagNameMap.put(TAG_QUICK_MASK_INFORMATION, "Quick Mask Information");
+	        _tagNameMap.put(TAG_LAYER_STATE_INFORMATION, "Layer State Information");
+	        _tagNameMap.put(TAG_LAYERS_GROUP_INFORMATION, "Layers Group Information");
+	        _tagNameMap.put(TAG_IPTC, "IPTC-NAA Record");
+	        _tagNameMap.put(TAG_IMAGE_MODE_FOR_RAW_FORMAT_FILES, "Image Mode for Raw Format Files");
+	        _tagNameMap.put(TAG_JPEG_QUALITY, "JPEG Quality");
+	        _tagNameMap.put(TAG_GRID_AND_GUIDES_INFORMATION, "Grid and Guides Information");
+	        _tagNameMap.put(TAG_THUMBNAIL_OLD, "Photoshop 4.0 Thumbnail");
+	        _tagNameMap.put(TAG_COPYRIGHT, "Copyright Flag");
+	        _tagNameMap.put(TAG_URL, "URL");
+	        _tagNameMap.put(TAG_THUMBNAIL, "Thumbnail Data");
+	        _tagNameMap.put(TAG_GLOBAL_ANGLE, "Global Angle");
+	        _tagNameMap.put(TAG_ICC_PROFILE_BYTES, "ICC Profile Bytes");
+	        _tagNameMap.put(TAG_WATERMARK, "Watermark");
+	        _tagNameMap.put(TAG_ICC_UNTAGGED_PROFILE, "ICC Untagged Profile");
+	        _tagNameMap.put(TAG_EFFECTS_VISIBLE, "Effects Visible");
+	        _tagNameMap.put(TAG_SPOT_HALFTONE, "Spot Halftone");
+	        _tagNameMap.put(TAG_SEED_NUMBER, "Seed Number");
+	        _tagNameMap.put(TAG_UNICODE_ALPHA_NAMES, "Unicode Alpha Names");
+	        _tagNameMap.put(TAG_INDEXED_COLOR_TABLE_COUNT, "Indexed Color Table Count");
+	        _tagNameMap.put(TAG_TRANSPARENCY_INDEX, "Transparency Index");
+	        _tagNameMap.put(TAG_GLOBAL_ALTITUDE, "Global Altitude");
+	        _tagNameMap.put(TAG_SLICES, "Slices");
+	        _tagNameMap.put(TAG_WORKFLOW_URL, "Workflow URL");
+	        _tagNameMap.put(TAG_JUMP_TO_XPEP, "Jump To XPEP");
+	        _tagNameMap.put(TAG_ALPHA_IDENTIFIERS, "Alpha Identifiers");
+	        _tagNameMap.put(TAG_URL_LIST, "URL List");
+	        _tagNameMap.put(TAG_VERSION, "Version Info");
+	        _tagNameMap.put(TAG_EXIF_DATA_1, "EXIF Data 1");
+	        _tagNameMap.put(TAG_EXIF_DATA_3, "EXIF Data 3");
+	        _tagNameMap.put(TAG_XMP_DATA, "XMP Data");
+	        _tagNameMap.put(TAG_CAPTION_DIGEST, "Caption Digest");
+	        _tagNameMap.put(TAG_PRINT_SCALE, "Print Scale");
+	        _tagNameMap.put(TAG_PIXEL_ASPECT_RATIO, "Pixel Aspect Ratio");
+	        _tagNameMap.put(TAG_LAYER_COMPS, "Layer Comps");
+	        _tagNameMap.put(TAG_ALTERNATE_DUOTONE_COLORS, "Alternate Duotone Colors");
+	        _tagNameMap.put(TAG_ALTERNATE_SPOT_COLORS, "Alternate Spot Colors");
+	        _tagNameMap.put(TAG_LAYER_SELECTION_IDS, "Layer Selection IDs");
+	        _tagNameMap.put(TAG_HDR_TONING_INFO, "HDR Toning Info");
+	        _tagNameMap.put(TAG_PRINT_INFO, "Print Info");
+	        _tagNameMap.put(TAG_LAYER_GROUPS_ENABLED_ID, "Layer Groups Enabled ID");
+	        _tagNameMap.put(TAG_COLOR_SAMPLERS, "Color Samplers");
+	        _tagNameMap.put(TAG_MEASUREMENT_SCALE, "Measurement Scale");
+	        _tagNameMap.put(TAG_TIMELINE_INFORMATION, "Timeline Information");
+	        _tagNameMap.put(TAG_SHEET_DISCLOSURE, "Sheet Disclosure");
+	        _tagNameMap.put(TAG_DISPLAY_INFO, "Display Info");
+	        _tagNameMap.put(TAG_ONION_SKINS, "Onion Skins");
+	        _tagNameMap.put(TAG_COUNT_INFORMATION, "Count information");
+	        _tagNameMap.put(TAG_PRINT_INFO_2, "Print Info 2");
+	        _tagNameMap.put(TAG_PRINT_STYLE, "Print Style");
+	        _tagNameMap.put(TAG_MAC_NSPRINTINFO, "Mac NSPrintInfo");
+	        _tagNameMap.put(TAG_WIN_DEVMODE, "Win DEVMODE");
+	        _tagNameMap.put(TAG_AUTO_SAVE_FILE_PATH, "Auto Save File Subpath");
+	        _tagNameMap.put(TAG_AUTO_SAVE_FORMAT, "Auto Save Format");
+	        _tagNameMap.put(TAG_PATH_SELECTION_STATE, "Subpath Selection State");
+
+	        _tagNameMap.put(TAG_CLIPPING_PATH_NAME, "Clipping Path Name");
+	        _tagNameMap.put(TAG_ORIGIN_PATH_INFO, "Origin Subpath Info");
+	        _tagNameMap.put(TAG_IMAGE_READY_VARIABLES_XML, "Image Ready Variables XML");
+	        _tagNameMap.put(TAG_IMAGE_READY_DATA_SETS, "Image Ready Data Sets");
+	        _tagNameMap.put(TAG_IMAGE_READY_SELECTED_STATE, "Image Ready Selected State");
+	        _tagNameMap.put(TAG_IMAGE_READY_7_ROLLOVER, "Image Ready 7 Rollover Expanded State");
+	        _tagNameMap.put(TAG_IMAGE_READY_ROLLOVER, "Image Ready Rollover Expanded State");
+	        _tagNameMap.put(TAG_IMAGE_READY_SAVE_LAYER_SETTINGS, "Image Ready Save Layer Settings");
+	        _tagNameMap.put(TAG_IMAGE_READY_VERSION, "Image Ready Version");
+	        _tagNameMap.put(TAG_LIGHTROOM_WORKFLOW, "Lightroom Workflow");
+	        _tagNameMap.put(TAG_PRINT_FLAGS_INFO, "Print Flags Information");
+	    }
+
+	    public PhotoshopDirectory()
+	    {
+	        this.setDescriptor(new PhotoshopDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Photoshop";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    @Nullable
+	    public byte[] getThumbnailBytes()
+	    {
+	        byte[] storedBytes = getByteArray(PhotoshopDirectory.TAG_THUMBNAIL);
+	        if (storedBytes == null)
+	            storedBytes = getByteArray(PhotoshopDirectory.TAG_THUMBNAIL_OLD);
+	        if (storedBytes == null || storedBytes.length <= 28)
+	            return null;
+
+	        int thumbSize = storedBytes.length - 28;
+	        byte[] thumbBytes = new byte[thumbSize];
+	        System.arraycopy(storedBytes, 28, thumbBytes, 0, thumbSize);
+	        return thumbBytes;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Yuri Binev
+	 * @author Payton Garland
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PhotoshopDescriptor extends TagDescriptor<PhotoshopDirectory>
+	{
+	    public PhotoshopDescriptor(@NotNull PhotoshopDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case PhotoshopDirectory.TAG_THUMBNAIL:
+	            case PhotoshopDirectory.TAG_THUMBNAIL_OLD:
+	                return getThumbnailDescription(tagType);
+	            case PhotoshopDirectory.TAG_URL:
+	            case PhotoshopDirectory.TAG_XML:
+	                return getSimpleString(tagType);
+	            case PhotoshopDirectory.TAG_IPTC:
+	                return getBinaryDataString(tagType);
+	            case PhotoshopDirectory.TAG_SLICES:
+	                return getSlicesDescription();
+	            case PhotoshopDirectory.TAG_VERSION:
+	                return getVersionDescription();
+	            case PhotoshopDirectory.TAG_COPYRIGHT:
+	                return getBooleanString(tagType);
+	            case PhotoshopDirectory.TAG_RESOLUTION_INFO:
+	                return getResolutionInfoDescription();
+	            case PhotoshopDirectory.TAG_GLOBAL_ANGLE:
+	            case PhotoshopDirectory.TAG_GLOBAL_ALTITUDE:
+	            case PhotoshopDirectory.TAG_URL_LIST:
+	            case PhotoshopDirectory.TAG_SEED_NUMBER:
+	                return get32BitNumberString(tagType);
+	            case PhotoshopDirectory.TAG_JPEG_QUALITY:
+	                return getJpegQualityString();
+	            case PhotoshopDirectory.TAG_PRINT_SCALE:
+	                return getPrintScaleDescription();
+	            case PhotoshopDirectory.TAG_PIXEL_ASPECT_RATIO:
+	                return getPixelAspectRatioString();
+	            case PhotoshopDirectory.TAG_CLIPPING_PATH_NAME:
+	                return getClippingPathNameString(tagType);
+	            default:
+	                if (tagType >= 0x07D0 && tagType <= 0x0BB6)
+	                    return getPathString(tagType);
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getJpegQualityString()
+	    {
+	        try {
+	            byte[] b = _directory.getByteArray(PhotoshopDirectory.TAG_JPEG_QUALITY);
+
+	            if (b == null)
+	                return _directory.getString(PhotoshopDirectory.TAG_JPEG_QUALITY);
+
+	            RandomAccessReader reader = new ByteArrayReader(b);
+	            int q = reader.getUInt16(0); // & 0xFFFF;
+	            int f = reader.getUInt16(2); // & 0xFFFF;
+	            int s = reader.getUInt16(4);
+
+	            int q1 = q <= 0xFFFF && q >= 0xFFFD
+	                ? q - 0xFFFC
+	                : q <= 8
+	                    ? q + 4
+	                    : q;
+
+	            String quality;
+	            switch (q) {
+	                case 0xFFFD:
+	                case 0xFFFE:
+	                case 0xFFFF:
+	                case 0:
+	                    quality = "Low";
+	                    break;
+	                case 1:
+	                case 2:
+	                case 3:
+	                    quality = "Medium";
+	                    break;
+	                case 4:
+	                case 5:
+	                    quality = "High";
+	                    break;
+	                case 6:
+	                case 7:
+	                case 8:
+	                    quality = "Maximum";
+	                    break;
+	                default:
+	                    quality = "Unknown";
+	            }
+
+	            String format;
+	            switch (f) {
+	                case 0x0000:
+	                    format = "Standard";
+	                    break;
+	                case 0x0001:
+	                    format = "Optimised";
+	                    break;
+	                case 0x0101:
+	                    format = "Progressive";
+	                    break;
+	                default:
+	                    format = String.format("Unknown 0x%04X", f);
+	            }
+
+	            String scans = s >= 1 && s <= 3
+	                    ? String.format("%d", s + 2)
+	                    : String.format("Unknown 0x%04X", s);
+
+	            return String.format("%d (%s), %s format, %s scans", q1, quality, format, scans);
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getPixelAspectRatioString()
+	    {
+	        try {
+	            byte[] bytes = _directory.getByteArray(PhotoshopDirectory.TAG_PIXEL_ASPECT_RATIO);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            double d = reader.getDouble64(4);
+	            return Double.toString(d);
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getPrintScaleDescription()
+	    {
+	        try {
+	            byte bytes[] = _directory.getByteArray(PhotoshopDirectory.TAG_PRINT_SCALE);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            int style = reader.getInt32(0);
+	            float locX = reader.getFloat32(2);
+	            float locY = reader.getFloat32(6);
+	            float scale = reader.getFloat32(10);
+	            switch (style) {
+	                case 0:
+	                    return "Centered, Scale " + scale;
+	                case 1:
+	                    return "Size to fit";
+	                case 2:
+	                    return String.format("User defined, X:%s Y:%s, Scale:%s", locX, locY, scale);
+	                default:
+	                    return String.format("Unknown %04X, X:%s Y:%s, Scale:%s", style, locX, locY, scale);
+	            }
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getResolutionInfoDescription()
+	    {
+	        try {
+	            byte[] bytes = _directory.getByteArray(PhotoshopDirectory.TAG_RESOLUTION_INFO);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            float resX = reader.getS15Fixed16(0);
+	            float resY = reader.getS15Fixed16(8); // is this the correct offset? it's only reading 4 bytes each time
+	            DecimalFormat format = new DecimalFormat("0.##");
+	            return format.format(resX) + "x" + format.format(resY) + " DPI";
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getVersionDescription()
+	    {
+	        try {
+	            final byte[] bytes = _directory.getByteArray(PhotoshopDirectory.TAG_VERSION);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            int pos = 0;
+	            int ver = reader.getInt32(0);
+	            pos += 4;
+	            pos++;
+	            int readerLength = reader.getInt32(5);
+	            pos += 4;
+	            String readerStr = reader.getString(9, readerLength * 2, "UTF-16");
+	            pos += readerLength * 2;
+	            int writerLength = reader.getInt32(pos);
+	            pos += 4;
+	            String writerStr = reader.getString(pos, writerLength * 2, "UTF-16");
+	            pos += writerLength * 2;
+	            int fileVersion = reader.getInt32(pos);
+	            return String.format("%d (%s, %s) %d", ver, readerStr, writerStr, fileVersion);
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getSlicesDescription()
+	    {
+	        try {
+	            final byte bytes[] = _directory.getByteArray(PhotoshopDirectory.TAG_SLICES);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            int nameLength = reader.getInt32(20);
+	            String name = reader.getString(24, nameLength * 2, "UTF-16");
+	            int pos = 24 + nameLength * 2;
+	            int sliceCount = reader.getInt32(pos);
+	            return String.format("%s (%d,%d,%d,%d) %d Slices",
+	                    name, reader.getInt32(4), reader.getInt32(8), reader.getInt32(12), reader.getInt32(16), sliceCount);
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getThumbnailDescription(int tagType)
+	    {
+	        try {
+	            byte[] v = _directory.getByteArray(tagType);
+	            if (v == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(v);
+	            int format = reader.getInt32(0);
+	            int width = reader.getInt32(4);
+	            int height = reader.getInt32(8);
+	            //skip WidthBytes
+	            int totalSize = reader.getInt32(16);
+	            int compSize = reader.getInt32(20);
+	            int bpp = reader.getInt32(24);
+	            //skip Number of planes
+	            return String.format("%s, %dx%d, Decomp %d bytes, %d bpp, %d bytes",
+	                    format == 1 ? "JpegRGB" : "RawRGB",
+	                    width, height, totalSize, bpp, compSize);
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    private String getBooleanString(int tag)
+	    {
+	        final byte[] bytes = _directory.getByteArray(tag);
+	        if (bytes == null || bytes.length == 0)
+	            return null;
+	        return bytes[0] == 0 ? "No" : "Yes";
+	    }
+
+	    @Nullable
+	    private String get32BitNumberString(int tag)
+	    {
+	        byte[] bytes = _directory.getByteArray(tag);
+	        if (bytes == null)
+	            return null;
+	        RandomAccessReader reader = new ByteArrayReader(bytes);
+	        try {
+	            return String.format("%d", reader.getInt32(0));
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    private String getSimpleString(int tagType)
+	    {
+	        final byte[] bytes = _directory.getByteArray(tagType);
+	        if (bytes == null)
+	            return null;
+	        return new String(bytes);
+	    }
+
+	    @Nullable
+	    private String getBinaryDataString(int tagType)
+	    {
+	        final byte[] bytes = _directory.getByteArray(tagType);
+	        if (bytes == null)
+	            return null;
+	        return String.format("%d bytes binary data", bytes.length);
+	    }
+
+	    @Nullable
+	    public String getClippingPathNameString(int tagType)
+	    {
+	        try {
+	            byte[] bytes = _directory.getByteArray(tagType);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            int length = reader.getByte(0);
+	            return new String(reader.getBytes(1, length), "UTF-8");
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getPathString(int tagType)
+	    {
+	        try {
+	            byte[] bytes = _directory.getByteArray(tagType);
+	            if (bytes == null)
+	                return null;
+	            RandomAccessReader reader = new ByteArrayReader(bytes);
+	            int length = (int) (reader.getLength() - reader.getByte((int)reader.getLength() - 1) - 1) / 26;
+
+	            String fillRecord = null;
+
+	            // Possible subpaths
+	            Subpath cSubpath = new Subpath();
+	            Subpath oSubpath = new Subpath();
+
+	            ArrayList<Subpath> paths = new ArrayList<Subpath>();
+
+	            // Loop through each path resource block segment (26-bytes)
+	            for (int i = 0; i < length; i++) {
+	                // Spacer takes into account which block is currently being worked on while accessing byte array
+	                int recordSpacer = 26 * i;
+	                int selector = reader.getInt16(recordSpacer);
+
+	                /*
+	                 * Subpath resource blocks come in 26-byte segments with 9 possible selectors - some selectors
+	                 * are formatted different from others
+	                 *
+	                 *      0 = Closed subpath length record
+	                 *      1 = Closed subpath Bezier knot, linked
+	                 *      2 = Closed subpath Bezier knot, unlinked
+	                 *      3 = Open subpath length record
+	                 *      4 = Open subpath Bezier knot, linked
+	                 *      5 = Open subpath Bezier knot, unlinked
+	                 *      6 = Subpath fill rule record
+	                 *      7 = Clipboard record
+	                 *      8 = Initial fill rule record
+	                 *
+	                 * Source: http://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
+	                 */
+	                switch (selector) {
+	                    case 0:
+	                        // Insert previous Paths if there are any
+	                        if (cSubpath.size() != 0) {
+	                            paths.add(cSubpath);
+	                        }
+
+	                        // Make path size accordingly
+	                        cSubpath = new Subpath("Closed Subpath");
+	                        break;
+	                    case 1:
+	                    case 2:
+	                    {
+	                        Knot knot;
+	                        if (selector == 1)
+	                            knot = new Knot("Linked");
+	                        else
+	                            knot = new Knot("Unlinked");
+	                        // Insert each point into cSubpath - points are 32-bit signed, fixed point numbers and have 8-bits before the point
+	                        for (int j = 0; j < 6; j++) {
+	                            knot.setPoint(j, reader.getInt8((j * 4) + 2 + recordSpacer) + (reader.getInt24((j * 4) + 3 + recordSpacer) / Math.pow(2.0, 24.0)));
+	                        }
+	                        cSubpath.add(knot);
+	                        break;
+	                    }
+	                    case 3:
+	                        // Insert previous Paths if there are any
+	                        if (oSubpath.size() != 0) {
+	                            paths.add(oSubpath);
+	                        }
+
+	                        // Make path size accordingly
+	                        oSubpath = new Subpath("Open Subpath");
+	                        break;
+	                    case 4:
+	                    case 5:
+	                    {
+	                        Knot knot;
+	                        if (selector == 4)
+	                            knot = new Knot("Linked");
+	                        else
+	                            knot = new Knot("Unlinked");
+	                        // Insert each point into oSubpath - points are 32-bit signed, fixed point numbers and have 8-bits before the point
+	                        for (int j = 0; j < 6; j++) {
+	                            knot.setPoint(j, reader.getInt8((j * 4) + 2 + recordSpacer) + (reader.getInt24((j * 4) + 3 + recordSpacer) / Math.pow(2.0, 24.0)));
+	                        }
+	                        oSubpath.add(knot);
+	                        break;
+	                    }
+	                    case 6:
+	                        break;
+	                    case 7:
+	                        // TODO: Clipboard record
+//	                        for (int j = 0; j < 24; j++) {
+//	                           clipboardRecord[j] = bytes[j + 2 + recordSpacer];
+//	                        }
+	                        break;
+	                    case 8:
+	                        if (reader.getInt16(2 + recordSpacer) == 1)
+	                            fillRecord = "with all pixels";
+	                        else
+	                            fillRecord = "without all pixels";
+	                        break;
+	                }
+	            }
+
+	            // Add any more paths that were not added already
+	            if (cSubpath.size() != 0)
+	                paths.add(cSubpath);
+	            if (oSubpath.size() != 0)
+	                paths.add(oSubpath);
+
+	            // Extract name (previously appended to end of byte array)
+	            int nameLength = reader.getByte((int)reader.getLength() - 1);
+	            Charsets ch = new Charsets();
+	            String name = reader.getString((int)reader.getLength() - nameLength - 1, nameLength, ch.ASCII);
+
+	            // Build description
+	            StringBuilder str = new StringBuilder();
+
+	            str.append('"').append(name).append('"')
+	                .append(" having ");
+
+	            if (fillRecord != null)
+	                str.append("initial fill rule \"").append(fillRecord).append("\" and ");
+
+	            str.append(paths.size()).append(paths.size() == 1 ? " subpath:" : " subpaths:");
+
+	            for (Subpath path : paths) {
+	                str.append("\n- ").append(path.getType()).append(" with ").append(paths.size()).append(paths.size() == 1 ? " knot:" : " knots:");
+
+	                for (Knot knot : path.getKnots()) {
+	                    str.append("\n  - ").append(knot.getType());
+	                    str.append(" (").append(knot.getPoint(0)).append(",").append(knot.getPoint(1)).append(")");
+	                    str.append(" (").append(knot.getPoint(2)).append(",").append(knot.getPoint(3)).append(")");
+	                    str.append(" (").append(knot.getPoint(4)).append(",").append(knot.getPoint(5)).append(")");
+	                }
+	            }
+
+	            return str.toString();
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+	}
+	
+	/**
+	 * Represents a knot created by Photoshop:
+	 *
+	 * <ul>
+	 *   <li>Linked knot</li>
+	 *   <li>Unlinked knot</li>
+	 * </ul>
+	 *
+	 * @author Payton Garland
+	 */
+	public class Knot
+	{
+	    private final double[] _points = new double[6];
+	    private final String _type;
+
+	    public Knot(String type)
+	    {
+	        _type = type;
+	    }
+
+	    /**
+	     * Add an individual coordinate value (x or y) to
+	     * points array (6 points per knot)
+	     *
+	     * @param index location of point to be added in points
+	     * @param point coordinate value to be added to points
+	     */
+	    public void setPoint(int index, double point)
+	    {
+	        _points[index] = point;
+	    }
+
+	    /**
+	     * Get an individual coordinate value (x or y)
+	     *
+	     * @return an individual coordinate value
+	     */
+	    public double getPoint(int index)
+	    {
+	        return _points[index];
+	    }
+
+	    /**
+	     * Get the type of knot (linked or unlinked)
+	     *
+	     * @return the type of knot
+	     */
+	    public String getType()
+	    {
+	        return this._type;
+	    }
+	}
+
+	/**
+	 * Represents a subpath created by Photoshop:
+	 * <ul>
+	 *   <li>Closed Bezier knot, linked</li>
+	 *   <li>Closed Bezier knot, unlinked</li>
+	 *   <li>Open Bezier knot, linked</li>
+	 *   <li>Open Bezier knot, unlinked</li>
+	 * </ul>
+	 *
+	 * @author Payton Garland
+	 */
+	public class Subpath
+	{
+	    private final ArrayList<Knot> _knots = new ArrayList<Knot>();
+	    private final String _type;
+
+	    public Subpath()
+	    {
+	        this("");
+	    }
+
+	    public Subpath(String type)
+	    {
+	        _type = type;
+	    }
+
+	    /**
+	     * Appends a knot (set of 3 points) into the list
+	     */
+	    public void add(Knot knot)
+	    {
+	        _knots.add(knot);
+	    }
+
+	    /**
+	     * Gets size of knots list
+	     *
+	     * @return size of knots ArrayList
+	     */
+	    public int size()
+	    {
+	        return _knots.size();
+	    }
+
+	    public Iterable<Knot> getKnots()
+	    {
+	        return _knots;
+	    }
+
+	    public String getType()
+	    {
+	        return _type;
+	    }
+	}
+	
+	/**
+	 * Reads metadata stored within PSD file format data.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class PsdReader
+	{
+	    public void extract(@NotNull final SequentialReader reader, @NotNull final Metadata metadata)
+	    {
+	        PsdHeaderDirectory directory = new PsdHeaderDirectory();
+	        metadata.addDirectory(directory);
+
+	        // FILE HEADER SECTION
+
+	        try {
+	            final int signature = reader.getInt32();
+	            if (signature != 0x38425053) // "8BPS"
+	            {
+	                directory.addError("Invalid PSD file signature");
+	                return;
+	            }
+
+	            final int version = reader.getUInt16();
+	            if (version != 1 && version != 2)
+	            {
+	                directory.addError("Invalid PSD file version (must be 1 or 2)");
+	                return;
+	            }
+
+	            // 6 reserved bytes are skipped here.  They should be zero.
+	            reader.skip(6);
+
+	            final int channelCount = reader.getUInt16();
+	            directory.setInt(PsdHeaderDirectory.TAG_CHANNEL_COUNT, channelCount);
+
+	            // even though this is probably an unsigned int, the max height in practice is 300,000
+	            final int imageHeight = reader.getInt32();
+	            directory.setInt(PsdHeaderDirectory.TAG_IMAGE_HEIGHT, imageHeight);
+
+	            // even though this is probably an unsigned int, the max width in practice is 300,000
+	            final int imageWidth = reader.getInt32();
+	            directory.setInt(PsdHeaderDirectory.TAG_IMAGE_WIDTH, imageWidth);
+
+	            final int bitsPerChannel = reader.getUInt16();
+	            directory.setInt(PsdHeaderDirectory.TAG_BITS_PER_CHANNEL, bitsPerChannel);
+
+	            final int colorMode = reader.getUInt16();
+	            directory.setInt(PsdHeaderDirectory.TAG_COLOR_MODE, colorMode);
+	        } catch (IOException e) {
+	            directory.addError("Unable to read PSD header");
+	            return;
+	        }
+
+	        // COLOR MODE DATA SECTION
+
+	        try {
+	            long sectionLength = reader.getUInt32();
+
+	            /*
+	             * Only indexed color and duotone (see the mode field in the File header section) have color mode data.
+	             * For all other modes, this section is just the 4-byte length field, which is set to zero.
+	             *
+	             * Indexed color images: length is 768; color data contains the color table for the image,
+	             *                       in non-interleaved order.
+	             * Duotone images: color data contains the duotone specification (the format of which is not documented).
+	             *                 Other applications that read Photoshop files can treat a duotone image as a gray	image,
+	             *                 and just preserve the contents of the duotone information when reading and writing the
+	             *                 file.
+	             */
+
+	            reader.skip(sectionLength);
+	        } catch (IOException e) {
+	            return;
+	        }
+
+	        // IMAGE RESOURCES SECTION
+
+	        try {
+	            long sectionLength = reader.getUInt32();
+
+	            assert(sectionLength <= Integer.MAX_VALUE);
+
+	            new PhotoshopReader().extract(reader, (int)sectionLength, metadata);
+	        } catch (IOException e) {
+	            // ignore
+	        }
+
+	        // LAYER AND MASK INFORMATION SECTION (skipped)
+
+	        // IMAGE DATA SECTION (skipped)
+	    }
+	}
+
+	/**
+	 * Holds the basic metadata found in the header of a Photoshop PSD file.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PsdHeaderDirectory extends Directory
+	{
+	    /**
+	     * The number of channels in the image, including any alpha channels. Supported range is 1 to 56.
+	     */
+	    public static final int TAG_CHANNEL_COUNT = 1;
+	    /**
+	     * The height of the image in pixels.
+	     */
+	    public static final int TAG_IMAGE_HEIGHT = 2;
+	    /**
+	     * The width of the image in pixels.
+	     */
+	    public static final int TAG_IMAGE_WIDTH = 3;
+	    /**
+	     * The number of bits per channel. Supported values are 1, 8, 16 and 32.
+	     */
+	    public static final int TAG_BITS_PER_CHANNEL = 4;
+	    /**
+	     * The color mode of the file. Supported values are:
+	     * Bitmap = 0; Grayscale = 1; Indexed = 2; RGB = 3; CMYK = 4; Multichannel = 7; Duotone = 8; Lab = 9.
+	     */
+	    public static final int TAG_COLOR_MODE = 5;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_CHANNEL_COUNT, "Channel Count");
+	        _tagNameMap.put(TAG_IMAGE_HEIGHT, "Image Height");
+	        _tagNameMap.put(TAG_IMAGE_WIDTH, "Image Width");
+	        _tagNameMap.put(TAG_BITS_PER_CHANNEL, "Bits Per Channel");
+	        _tagNameMap.put(TAG_COLOR_MODE, "Color Mode");
+	    }
+
+	    public PsdHeaderDirectory()
+	    {
+	        this.setDescriptor(new PsdHeaderDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "PSD Header";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PsdHeaderDescriptor extends TagDescriptor<PsdHeaderDirectory>
+	{
+	    public PsdHeaderDescriptor(@NotNull PsdHeaderDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case PsdHeaderDirectory.TAG_CHANNEL_COUNT:
+	                return getChannelCountDescription();
+	            case PsdHeaderDirectory.TAG_BITS_PER_CHANNEL:
+	                return getBitsPerChannelDescription();
+	            case PsdHeaderDirectory.TAG_COLOR_MODE:
+	                return getColorModeDescription();
+	            case PsdHeaderDirectory.TAG_IMAGE_HEIGHT:
+	                return getImageHeightDescription();
+	            case PsdHeaderDirectory.TAG_IMAGE_WIDTH:
+	                return getImageWidthDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getChannelCountDescription()
+	    {
+	        // Supported range is 1 to 56.
+	        Integer value = _directory.getInteger(PsdHeaderDirectory.TAG_CHANNEL_COUNT);
+	        if (value == null)
+	            return null;
+	        return value + " channel" + (value == 1 ? "" : "s");
+	    }
+
+	    @Nullable
+	    public String getBitsPerChannelDescription()
+	    {
+	        // Supported values are 1, 8, 16 and 32.
+	        Integer value = _directory.getInteger(PsdHeaderDirectory.TAG_BITS_PER_CHANNEL);
+	        if (value == null)
+	            return null;
+	        return value + " bit" + (value == 1 ? "" : "s") + " per channel";
+	    }
+
+	    @Nullable
+	    public String getColorModeDescription()
+	    {
+	        return getIndexedDescription(PsdHeaderDirectory.TAG_COLOR_MODE,
+	            "Bitmap",
+	            "Grayscale",
+	            "Indexed",
+	            "RGB",
+	            "CMYK",
+	            null,
+	            null,
+	            "Multichannel",
+	            "Duotone",
+	            "Lab");
+	    }
+
+	    @Nullable
+	    public String getImageHeightDescription()
+	    {
+	        Integer value = _directory.getInteger(PsdHeaderDirectory.TAG_IMAGE_HEIGHT);
+	        if (value == null)
+	            return null;
+	        return value + " pixel" + (value == 1 ? "" : "s");
+	    }
+
+	    @Nullable
+	    public String getImageWidthDescription()
+	    {
+	        try {
+	            Integer value = _directory.getInteger(PsdHeaderDirectory.TAG_IMAGE_WIDTH);
+	            if (value == null)
+	                return null;
+	            return value + " pixel" + (value == 1 ? "" : "s");
+	        } catch (Exception e) {
+	            return null;
+	        }
+	    }
+	}
+
+	/**
+	 * Reader of GIF encoded data.
+	 *
+	 * Resources:
+	 * <ul>
+	 *     <li>https://wiki.whatwg.org/wiki/GIF</li>
+	 *     <li>https://www.w3.org/Graphics/GIF/spec-gif89a.txt</li>
+	 *     <li>http://web.archive.org/web/20100929230301/http://www.etsimo.uniovi.es/gifanim/gif87a.txt</li>
+	 * </ul>
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	public class GifReader
+	{
+	    private static final String GIF_87A_VERSION_IDENTIFIER = "87a";
+	    private static final String GIF_89A_VERSION_IDENTIFIER = "89a";
+
+	    public void extract(@NotNull final SequentialReader reader, final @NotNull Metadata metadata)
+	    {
+	        reader.setMotorolaByteOrder(false);
+
+	        GifHeaderDirectory header;
+	        try {
+	            header = readGifHeader(reader);
+	            metadata.addDirectory(header);
+	        } catch (IOException ex) {
+	            metadata.addDirectory(new ErrorDirectory("IOException processing GIF data"));
+	            return;
+	        }
+
+	        if(header.hasErrors())
+	            return;
+
+	        try {
+	            // Skip over any global colour table if GlobalColorTable is present.
+	            Integer globalColorTableSize = null;
+	            try {
+	                boolean hasGlobalColorTable = header.getBoolean(GifHeaderDirectory.TAG_HAS_GLOBAL_COLOR_TABLE);
+	                if(hasGlobalColorTable) {
+	                    globalColorTableSize = header.getInteger(GifHeaderDirectory.TAG_COLOR_TABLE_SIZE);
+	                }
+	            } catch (MetadataException e) {
+	                // This exception should never occur here.
+	                metadata.addDirectory(new ErrorDirectory("GIF did not had hasGlobalColorTable bit."));
+	            }
+	            if (globalColorTableSize != null)
+	            {
+	                // Colour table has R/G/B byte triplets
+	                reader.skip(3 * globalColorTableSize);
+	            }
+
+	            // After the header comes a sequence of blocks
+	            while (true)
+	            {
+	                byte marker;
+	                try {
+	                    marker = reader.getInt8();
+	                } catch (IOException ex) {
+	                    return;
+	                }
+
+	                switch (marker)
+	                {
+	                    case (byte)'!': // 0x21
+	                    {
+	                        readGifExtensionBlock(reader, metadata);
+	                        break;
+	                    }
+	                    case (byte)',': // 0x2c
+	                    {
+	                        metadata.addDirectory(readImageBlock(reader));
+
+	                        // skip image data blocks
+	                        skipBlocks(reader);
+	                        break;
+	                    }
+	                    case (byte)';': // 0x3b
+	                    {
+	                        // terminator
+	                        return;
+	                    }
+	                    default:
+	                    {
+	                        // Anything other than these types is unexpected.
+	                        // GIF87a spec says to keep reading until a separator is found.
+	                        // GIF89a spec says file is corrupt.
+	                        metadata.addDirectory(new ErrorDirectory("Unknown gif block marker found."));
+	                        return;
+	                    }
+	                }
+	            }
+	        } catch (IOException e) {
+	            metadata.addDirectory(new ErrorDirectory("IOException processing GIF data"));
+	        }
+	    }
+
+	    private GifHeaderDirectory readGifHeader(@NotNull final SequentialReader reader) throws IOException
+	    {
+	        // FILE HEADER
+	        //
+	        // 3 - signature: "GIF"
+	        // 3 - version: either "87a" or "89a"
+	        //
+	        // LOGICAL SCREEN DESCRIPTOR
+	        //
+	        // 2 - pixel width
+	        // 2 - pixel height
+	        // 1 - screen and color map information flags (0 is LSB)
+	        //       0-2  Size of the global color table
+	        //       3    Color table sort flag (89a only)
+	        //       4-6  Color resolution
+	        //       7    Global color table flag
+	        // 1 - background color index
+	        // 1 - pixel aspect ratio
+
+	        GifHeaderDirectory headerDirectory = new GifHeaderDirectory();
+
+	        String signature = reader.getString(3);
+
+	        if (!signature.equals("GIF"))
+	        {
+	            headerDirectory.addError("Invalid GIF file signature");
+	            return headerDirectory;
+	        }
+
+	        String version = reader.getString(3);
+
+	        if (!version.equals(GIF_87A_VERSION_IDENTIFIER) && !version.equals(GIF_89A_VERSION_IDENTIFIER)) {
+	            headerDirectory.addError("Unexpected GIF version");
+	            return headerDirectory;
+	        }
+
+	        headerDirectory.setString(GifHeaderDirectory.TAG_GIF_FORMAT_VERSION, version);
+
+	        // LOGICAL SCREEN DESCRIPTOR
+
+	        headerDirectory.setInt(GifHeaderDirectory.TAG_IMAGE_WIDTH, reader.getUInt16());
+	        headerDirectory.setInt(GifHeaderDirectory.TAG_IMAGE_HEIGHT, reader.getUInt16());
+
+	        short flags = reader.getUInt8();
+
+	        // First three bits = (BPP - 1)
+	        int colorTableSize = 1 << ((flags & 7) + 1);
+	        int bitsPerPixel = ((flags & 0x70) >> 4) + 1;
+	        boolean hasGlobalColorTable = (flags >> 7) != 0;
+
+	        headerDirectory.setInt(GifHeaderDirectory.TAG_COLOR_TABLE_SIZE, colorTableSize);
+
+	        if (version.equals(GIF_89A_VERSION_IDENTIFIER)) {
+	            boolean isColorTableSorted = (flags & 8) != 0;
+	            headerDirectory.setBoolean(GifHeaderDirectory.TAG_IS_COLOR_TABLE_SORTED, isColorTableSorted);
+	        }
+
+	        headerDirectory.setInt(GifHeaderDirectory.TAG_BITS_PER_PIXEL, bitsPerPixel);
+	        headerDirectory.setBoolean(GifHeaderDirectory.TAG_HAS_GLOBAL_COLOR_TABLE, hasGlobalColorTable);
+
+	        headerDirectory.setInt(GifHeaderDirectory.TAG_BACKGROUND_COLOR_INDEX, reader.getUInt8());
+
+	        int aspectRatioByte = reader.getUInt8();
+	        if (aspectRatioByte != 0) {
+	            float pixelAspectRatio = (float)((aspectRatioByte + 15d) / 64d);
+	            headerDirectory.setFloat(GifHeaderDirectory.TAG_PIXEL_ASPECT_RATIO, pixelAspectRatio);
+	        }
+
+	        return headerDirectory;
+	    }
+
+	    private void readGifExtensionBlock(SequentialReader reader, Metadata metadata) throws IOException
+	    {
+	        byte extensionLabel = reader.getInt8();
+	        short blockSizeBytes = reader.getUInt8();
+	        long blockStartPos = reader.getPosition();
+
+	        switch (extensionLabel)
+	        {
+	            case (byte) 0x01:
+	                Directory plainTextBlock = readPlainTextBlock(reader, blockSizeBytes);
+	                if (plainTextBlock != null)
+	                    metadata.addDirectory(plainTextBlock);
+	                break;
+	            case (byte) 0xf9:
+	                metadata.addDirectory(readControlBlock(reader));
+	                break;
+	            case (byte) 0xfe:
+	                metadata.addDirectory(readCommentBlock(reader, blockSizeBytes));
+	                break;
+	            case (byte) 0xff:
+	                readApplicationExtensionBlock(reader, blockSizeBytes, metadata);
+	                break;
+	            default:
+	                metadata.addDirectory(new ErrorDirectory(String.format("Unsupported GIF extension block with type 0x%02X.", extensionLabel)));
+	                break;
+	        }
+
+	        long skipCount = blockStartPos + blockSizeBytes - reader.getPosition();
+	        if (skipCount > 0)
+	            reader.skip(skipCount);
+	    }
+
+	    @Nullable
+	    private Directory readPlainTextBlock(SequentialReader reader, int blockSizeBytes) throws IOException
+	    {
+	        // It seems this extension is deprecated. If somebody finds an image with this in it, could implement here.
+	        // Just skip the entire block for now.
+
+	        if (blockSizeBytes != 12)
+	            return new ErrorDirectory(String.format("Invalid GIF plain text block size. Expected 12, got %d.", blockSizeBytes));
+
+	        // skip 'blockSizeBytes' bytes
+	        reader.skip(12);
+
+	        // keep reading and skipping until a 0 byte is reached
+	        skipBlocks(reader);
+
+	        return null;
+	    }
+
+	    private GifCommentDirectory readCommentBlock(SequentialReader reader, int blockSizeBytes) throws IOException
+	    {
+	        byte[] buffer = gatherBytes(reader, blockSizeBytes);
+	        Charsets ch = new Charsets();
+	        return new GifCommentDirectory(new StringValue(buffer, ch.ASCII));
+	    }
+
+	    private void readApplicationExtensionBlock(SequentialReader reader, int blockSizeBytes, Metadata metadata) throws IOException
+	    {
+	        if (blockSizeBytes != 11)
+	        {
+	            metadata.addDirectory(new ErrorDirectory(String.format("Invalid GIF application extension block size. Expected 11, got %d.", blockSizeBytes)));
+	            return;
+	        }
+
+	        Charsets ch = new Charsets();
+	        String extensionType = reader.getString(blockSizeBytes, ch.UTF_8);
+
+	        if (extensionType.equals("XMP DataXMP"))
+	        {
+	            // XMP data extension
+	            byte[] xmpBytes = gatherBytes(reader);
+	            int xmpLengh = xmpBytes.length - 257; // Exclude the "magic trailer", see XMP Specification Part 3, 1.1.2 GIF
+	            if (xmpLengh > 0) {
+	                // Only extract valid blocks
+	                //new XmpReader().extract(xmpBytes, 0, xmpBytes.length - 257, metadata, null);
+	            }
+	        }
+	        else if (extensionType.equals("ICCRGBG1012"))
+	        {
+	            // ICC profile extension
+	            byte[] iccBytes = gatherBytes(reader, ((int) reader.getByte()) & 0xff);
+	            if (iccBytes.length != 0)
+	                new IccReader().extract(new ByteArrayReader(iccBytes), metadata);
+	        }
+	        else if (extensionType.equals("NETSCAPE2.0"))
+	        {
+	            reader.skip(2);
+	            // Netscape's animated GIF extension
+	            // Iteration count (0 means infinite)
+	            int iterationCount = reader.getUInt16();
+	            // Skip terminator
+	            reader.skip(1);
+	            GifAnimationDirectory animationDirectory = new GifAnimationDirectory();
+	            animationDirectory.setInt(GifAnimationDirectory.TAG_ITERATION_COUNT, iterationCount);
+	            metadata.addDirectory(animationDirectory);
+	        }
+	        else
+	        {
+	            skipBlocks(reader);
+	        }
+	    }
+
+	    private GifControlDirectory readControlBlock(SequentialReader reader) throws IOException
+	    {
+	        GifControlDirectory directory = new GifControlDirectory();
+
+	        short packedFields = reader.getUInt8();
+	        directory.setObject(GifControlDirectory.TAG_DISPOSAL_METHOD, (packedFields >> 2) & 7);
+	        directory.setBoolean(GifControlDirectory.TAG_USER_INPUT_FLAG, (packedFields & 2) >> 1 == 1);
+	        directory.setBoolean(GifControlDirectory.TAG_TRANSPARENT_COLOR_FLAG, (packedFields & 1) == 1);
+	        directory.setInt(GifControlDirectory.TAG_DELAY, reader.getUInt16());
+	        directory.setInt(GifControlDirectory.TAG_TRANSPARENT_COLOR_INDEX, reader.getUInt8());
+
+	        // skip 0x0 block terminator
+	        reader.skip(1);
+
+	        return directory;
+	    }
+
+	    private GifImageDirectory readImageBlock(SequentialReader reader) throws IOException
+	    {
+	        GifImageDirectory imageDirectory = new GifImageDirectory();
+
+	        imageDirectory.setInt(GifImageDirectory.TAG_LEFT, reader.getUInt16());
+	        imageDirectory.setInt(GifImageDirectory.TAG_TOP, reader.getUInt16());
+	        imageDirectory.setInt(GifImageDirectory.TAG_WIDTH, reader.getUInt16());
+	        imageDirectory.setInt(GifImageDirectory.TAG_HEIGHT, reader.getUInt16());
+
+	        byte flags = reader.getByte();
+	        boolean hasColorTable = (flags >> 7) != 0;
+	        boolean isInterlaced = (flags & 0x40) != 0;
+
+	        imageDirectory.setBoolean(GifImageDirectory.TAG_HAS_LOCAL_COLOUR_TABLE, hasColorTable);
+	        imageDirectory.setBoolean(GifImageDirectory.TAG_IS_INTERLACED, isInterlaced);
+
+	        if (hasColorTable)
+	        {
+	            boolean isColorTableSorted = (flags & 0x20) != 0;
+	            imageDirectory.setBoolean(GifImageDirectory.TAG_IS_COLOR_TABLE_SORTED, isColorTableSorted);
+
+	            int bitsPerPixel = (flags & 0x7) + 1;
+	            imageDirectory.setInt(GifImageDirectory.TAG_LOCAL_COLOUR_TABLE_BITS_PER_PIXEL, bitsPerPixel);
+
+	            // skip color table
+	            reader.skip(3 * (2 << (flags & 0x7)));
+	        }
+
+	        // skip "LZW Minimum Code Size" byte
+	        reader.getByte();
+
+	        return imageDirectory;
+	    }
+
+	    private byte[] gatherBytes(SequentialReader reader) throws IOException
+	    {
+	        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+	        byte[] buffer = new byte[257];
+
+	        while (true)
+	        {
+	            byte b = reader.getByte();
+	            if (b == 0)
+	                return bytes.toByteArray();
+
+	            int bInt = b & 0xFF;
+
+	            buffer[0] = b;
+	            reader.getBytes(buffer, 1, bInt);
+	            bytes.write(buffer, 0, bInt + 1);
+	        }
+	    }
+
+	    private byte[] gatherBytes(SequentialReader reader, int firstLength) throws IOException
+	    {
+	        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+	        int length = firstLength;
+
+	        while (length > 0)
+	        {
+	            buffer.write(reader.getBytes(length), 0, length);
+
+	            length = reader.getByte() & 0xff;
+	        }
+
+	        return buffer.toByteArray();
+	    }
+
+	    private void skipBlocks(SequentialReader reader) throws IOException
+	    {
+	        while (true)
+	        {
+	            short length = reader.getUInt8();
+
+	            if (length == 0)
+	                return;
+
+	            reader.skip(length);
+	        }
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifHeaderDirectory extends Directory
+	{
+	    public static final int TAG_GIF_FORMAT_VERSION = 1;
+	    public static final int TAG_IMAGE_WIDTH = 2;
+	    public static final int TAG_IMAGE_HEIGHT = 3;
+	    public static final int TAG_COLOR_TABLE_SIZE = 4;
+	    public static final int TAG_IS_COLOR_TABLE_SORTED = 5;
+	    public static final int TAG_BITS_PER_PIXEL = 6;
+	    public static final int TAG_HAS_GLOBAL_COLOR_TABLE = 7;
+	    /**
+	     * @deprecated use {@link #TAG_BACKGROUND_COLOR_INDEX} instead.
+	     */
+	    @Deprecated
+	    public static final int TAG_TRANSPARENT_COLOR_INDEX = 8;
+	    public static final int TAG_BACKGROUND_COLOR_INDEX = 8;
+	    public static final int TAG_PIXEL_ASPECT_RATIO = 9;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_GIF_FORMAT_VERSION, "GIF Format Version");
+	        _tagNameMap.put(TAG_IMAGE_HEIGHT, "Image Height");
+	        _tagNameMap.put(TAG_IMAGE_WIDTH, "Image Width");
+	        _tagNameMap.put(TAG_COLOR_TABLE_SIZE, "Color Table Size");
+	        _tagNameMap.put(TAG_IS_COLOR_TABLE_SORTED, "Is Color Table Sorted");
+	        _tagNameMap.put(TAG_BITS_PER_PIXEL, "Bits per Pixel");
+	        _tagNameMap.put(TAG_HAS_GLOBAL_COLOR_TABLE, "Has Global Color Table");
+	        _tagNameMap.put(TAG_BACKGROUND_COLOR_INDEX, "Background Color Index");
+	        _tagNameMap.put(TAG_PIXEL_ASPECT_RATIO, "Pixel Aspect Ratio");
+	    }
+
+	    public GifHeaderDirectory()
+	    {
+	        this.setDescriptor(new GifHeaderDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "GIF Header";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifHeaderDescriptor extends TagDescriptor<GifHeaderDirectory>
+	{
+	    public GifHeaderDescriptor(@NotNull GifHeaderDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+//	    @Override
+//	    public String getDescription(int tagType)
+//	    {
+//	        switch (tagType) {
+//	            case GifHeaderDirectory.TAG_COMPRESSION:
+//	                return getCompressionDescription();
+//	            default:
+//	                return super.getDescription(tagType);
+//	        }
+//	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifImageDirectory extends Directory
+	{
+	    public static final int TAG_LEFT = 1;
+	    public static final int TAG_TOP = 2;
+	    public static final int TAG_WIDTH = 3;
+	    public static final int TAG_HEIGHT = 4;
+	    public static final int TAG_HAS_LOCAL_COLOUR_TABLE = 5;
+	    public static final int TAG_IS_INTERLACED = 6;
+	    public static final int TAG_IS_COLOR_TABLE_SORTED = 7;
+	    public static final int TAG_LOCAL_COLOUR_TABLE_BITS_PER_PIXEL = 8;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_LEFT, "Left");
+	        _tagNameMap.put(TAG_TOP, "Top");
+	        _tagNameMap.put(TAG_WIDTH, "Width");
+	        _tagNameMap.put(TAG_HEIGHT, "Height");
+	        _tagNameMap.put(TAG_HAS_LOCAL_COLOUR_TABLE, "Has Local Colour Table");
+	        _tagNameMap.put(TAG_IS_INTERLACED, "Is Interlaced");
+	        _tagNameMap.put(TAG_IS_COLOR_TABLE_SORTED, "Is Local Colour Table Sorted");
+	        _tagNameMap.put(TAG_LOCAL_COLOUR_TABLE_BITS_PER_PIXEL, "Local Colour Table Bits Per Pixel");
+	    }
+
+	    public GifImageDirectory()
+	    {
+	        this.setDescriptor(new GifImageDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "GIF Image";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifImageDescriptor extends TagDescriptor<GifImageDirectory>
+	{
+	    public GifImageDescriptor(@NotNull GifImageDirectory directory)
+	    {
+	        super(directory);
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifControlDirectory extends Directory
+	{
+	    public static final int TAG_DELAY = 1;
+	    public static final int TAG_DISPOSAL_METHOD = 2;
+	    public static final int TAG_USER_INPUT_FLAG = 3;
+	    public static final int TAG_TRANSPARENT_COLOR_FLAG = 4;
+	    public static final int TAG_TRANSPARENT_COLOR_INDEX = 5;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_DELAY, "Delay");
+	        _tagNameMap.put(TAG_DISPOSAL_METHOD, "Disposal Method");
+	        _tagNameMap.put(TAG_USER_INPUT_FLAG, "User Input Flag");
+	        _tagNameMap.put(TAG_TRANSPARENT_COLOR_FLAG, "Transparent Color Flag");
+	        _tagNameMap.put(TAG_TRANSPARENT_COLOR_INDEX, "Transparent Color Index");
+	    }
+
+	    public GifControlDirectory()
+	    {
+	        this.setDescriptor(new GifControlDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "GIF Control";
+	    }
+
+	    /**
+	     * @return The {@link DisposalMethod}.
+	     */
+	    @NotNull
+	    public DisposalMethod getDisposalMethod() {
+	        return (DisposalMethod) getObject(TAG_DISPOSAL_METHOD);
+	    }
+
+	    /**
+	     * @return Whether the GIF has transparency.
+	     */
+	    public boolean isTransparent() {
+	        Boolean transparent = getBooleanObject(TAG_TRANSPARENT_COLOR_FLAG);
+	        return transparent != null && transparent;
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    /**
+	     * Disposal method indicates the way in which the graphic is to be treated
+	     * after being displayed.
+	     */
+	    public class DisposalMethod {
+	        final int NOT_SPECIFIED = 0;
+	        final int DO_NOT_DISPOSE = 1;
+	        final int RESTORE_TO_BACKGROUND_COLOR = 2;
+	        final int RESTORE_TO_PREVIOUS = 3;
+	        final int TO_BE_DEFINED = 4;
+	        final int INVALID = -1;
+
+	        public int typeOf(int value) {
+	            switch (value) {
+	                case 0: return NOT_SPECIFIED;
+	                case 1: return DO_NOT_DISPOSE;
+	                case 2: return RESTORE_TO_BACKGROUND_COLOR;
+	                case 3: return RESTORE_TO_PREVIOUS;
+	                case 4:
+	                case 5:
+	                case 6:
+	                case 7: return TO_BE_DEFINED;
+	                default: return INVALID;
+	            }
+	        }
+
+	        //@Override
+	        public String toString(int value) {
+	            switch (value) {
+	                case DO_NOT_DISPOSE:
+	                    return "Don't Dispose";
+	                case INVALID:
+	                    return "Invalid value";
+	                case NOT_SPECIFIED:
+	                    return "Not Specified";
+	                case RESTORE_TO_BACKGROUND_COLOR:
+	                    return "Restore to Background Color";
+	                case RESTORE_TO_PREVIOUS:
+	                    return "Restore to Previous";
+	                case TO_BE_DEFINED:
+	                    return "To Be Defined";
+	                default:
+	                    return super.toString();
+	            }
+	        }
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifControlDescriptor extends TagDescriptor<GifControlDirectory>
+	{
+	    public GifControlDescriptor(@NotNull GifControlDirectory directory)
+	    {
+	        super(directory);
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifAnimationDirectory extends Directory
+	{
+	    public static final int TAG_ITERATION_COUNT = 1;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_ITERATION_COUNT, "Iteration Count");
+	    }
+
+	    public GifAnimationDirectory()
+	    {
+	        this.setDescriptor(new GifAnimationDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "GIF Animation";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifAnimationDescriptor extends TagDescriptor<GifAnimationDirectory>
+	{
+	    public GifAnimationDescriptor(@NotNull GifAnimationDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case GifAnimationDirectory.TAG_ITERATION_COUNT:
+	                return getIterationCountDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getIterationCountDescription()
+	    {
+	        Integer count = _directory.getInteger(GifAnimationDirectory.TAG_ITERATION_COUNT);
+	        if (count == null)
+	            return null;
+
+	        return count == 0 ? "Infinite" : count == 1 ? "Once" : count == 2 ? "Twice" : count.toString() + " times";
+	    }
+	}
+
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifCommentDirectory extends Directory
+	{
+	    public static final int TAG_COMMENT = 1;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_COMMENT, "Comment");
+	    }
+
+	    public GifCommentDirectory(StringValue comment)
+	    {
+	        this.setDescriptor(new GifCommentDescriptor(this));
+	        setStringValue(TAG_COMMENT, comment);
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "GIF Comment";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Kevin Mott https://github.com/kwhopper
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class GifCommentDescriptor extends TagDescriptor<GifCommentDirectory>
+	{
+	    public GifCommentDescriptor(@NotNull GifCommentDirectory directory)
+	    {
+	        super(directory);
 	    }
 	}
 
