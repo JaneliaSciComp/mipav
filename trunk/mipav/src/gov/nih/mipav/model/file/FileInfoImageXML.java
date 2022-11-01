@@ -304,6 +304,13 @@ public class FileInfoImageXML extends FileInfoXML {
 
         editorChoice[0] = JDialogEditor.STRING;
         dialog.appendPrimaryData("History", this.history, editorChoice);
+        
+        // Display metadata
+        if ((tagName != null) && (tagDescription != null) && (tagName.size() == tagDescription.size())) {
+        	for (i = 0; i < tagName.size(); i++) {
+        		dialog.appendPrimaryData(tagName.get(i), tagDescription.get(i));
+        	}
+        }
 
         // now subject information
         String emptyString = new String("");
