@@ -9,6 +9,7 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Vector;
 
 
 /**
@@ -897,6 +898,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Describes the units of measure for the dataset. */
     protected Unit[] unitsOfMeasure = {Unit.MILLIMETERS, Unit.MILLIMETERS, Unit.MILLIMETERS,
             Unit.SECONDS, Unit.UNKNOWN_MEASURE};
+    
+    protected Vector<String>tagName = null;
+    protected Vector<String>tagDescription = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2655,6 +2659,14 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public final void setUnitsOfMeasure(final int unitMeasure, final int dim) {
         setUnitsOfMeasure(Unit.getUnitFromLegacyNum(unitMeasure), dim);
+    }
+    
+    public void setTagName(Vector<String> tagName) {
+    	this.tagName = tagName;
+    }
+    
+    public void setTagDescription(Vector<String> tagDescription) {
+    	this.tagDescription = tagDescription;
     }
 
     /**
