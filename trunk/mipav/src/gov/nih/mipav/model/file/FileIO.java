@@ -1,11 +1,14 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmNetworkSnake.Metadata;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubsample;
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
+import gov.nih.mipav.model.file.MetadataExtractor.JpegMetadataReader;
+import gov.nih.mipav.model.file.MetadataExtractor.JpegProcessingException;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
@@ -8997,12 +9000,14 @@ public class FileIO {
         int[] greyBuffer = null;
         String[] fileList;
         File file;
+        Vector<String> metaTagDescription[];
 
         if (multifile) {
             fileList = FileUtility.getFileList(fileDir, fileName, quiet);
         } else {
             fileList = new String[] {fileName};
         }
+        MetadataExtractor.Metadata metadata[] = new MetadataExtractor.Metadata[fileList.length];
 
         final MediaTracker mediaTracker = new MediaTracker(UI.getMainFrame());
         extents = new int[] {0, 0, fileList.length};
@@ -9026,25 +9031,16 @@ public class FileIO {
                             ext = fileList[j].substring(lastPeriodIndex+1);	
                         }
                         if ((image != null) && (ext != null) && ((ext.equalsIgnoreCase("jpg")) || (ext.equalsIgnoreCase("jpeg")))) {
-                        	ImageInputStream iis = ImageIO.createImageInputStream(new BufferedInputStream(
-                        			new FileInputStream(file)));
-                        			Iterator<ImageReader> readers = ImageIO.getImageReadersByMIMEType("image/jpeg");
-                        			IIOImage imagejpeg = null;
-                        			if (readers.hasNext()) {
-	                        			ImageReader reader = (ImageReader) readers.next();
-	                        			reader.setInput(iis, true);
-	                        			try {
-	                        			imagejpeg = reader.readAll(0, null);
-	                        			} catch (javax.imageio.IIOException iioex) {
-	                        				System.err.println("Exception on imagejpeg = reader.readAll(0, null)");
-	                        			}
-	                        			 
-	                        			IIOMetadata metadata = imagejpeg.getMetadata();
-	                        			//String[] names = metadata.getMetadataFormatNames();
-	                        			//for (int i = 0; i < names.length; i++) {
-	                        				//System.out.println(names[i]);
-	                        			//}
-                        			}
+                        	try {
+                        		MetadataExtractor me = new MetadataExtractor();
+                        		JpegMetadataReader jmr = me.new JpegMetadataReader();
+                                metadata[j] = jmr.readMetadata(file);
+                            } catch (JpegProcessingException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
 	
                         }
                         // String[] readTypes = ImageIO.getReaderFormatNames();
@@ -9208,6 +9204,33 @@ public class FileIO {
         	fileInfo[j].setFileName(fileName);
             fileInfo[j].setFileDirectory(fileDir);
             fileInfo[j].setFileFormat(FileUtility.JIMI);
+            if (metadata[j] != null) {
+            	Vector<String>tagName = new Vector<String>();
+            	Vector<String>tagDescription = new Vector<String>();
+            	//
+                // A Metadata object contains multiple Directory objects
+                //
+                for (MetadataExtractor.Directory directory : metadata[j].getDirectories()) {
+                    tagName.add("Metadata directory " + directory.getName());
+                    tagDescription.add("  ");
+                    //
+                    // Each Directory stores values in Tag objects
+                    //
+                    for (MetadataExtractor.Tag tag : directory.getTags()) {
+                        tagName.add("[" + directory.getName() + "] " + tag.getTagName());
+                        tagDescription.add(tag.getDescription());
+                    }
+
+                    //
+                    // Each Directory may also contain error messages
+                    //
+                    for (String error : directory.getErrors()) {
+                        System.err.println("ERROR: " + error);
+                    }
+                }
+                fileInfo[j].setTagName(tagName);
+                fileInfo[j].setTagDescription(tagDescription);
+            }
             modelImage.setFileInfo(fileInfo[j], j);
         }
 
