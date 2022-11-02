@@ -786,29 +786,36 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             TransferFunction tf = new TransferFunction();
             float[] tfX = new float[] {0, dwiMaxLUT, 255};
             float[] tfY = new float[] {255, 0, 0};
-            tf.importArrays(tfX, tfY, tfX.length);
-            dwiLUT.setTransferFunction(tf); 
-            int[] indexedLUT = dwiLUT.exportIndexedLUT();
             
-            ModelImage newRGB = new ModelImage(ModelImage.ARGB, img.getExtents(), img.getImageName() + "_rgb");
-            
-            for (int i = 1; i < img.getSize(); i += 4) {
-                int indexA = (int) (tf.getRemappedValue(img.getInt(i), 255) + 0.5f);   
-                int remappedA = indexedLUT[indexA];
-                int red = (int)((remappedA & 0x00ff0000) >> 16);
-                int green = (int)((remappedA & 0x0000ff00) >> 8);
-                int blue = (int)(remappedA & 0x000000ff);
-//                int pixValue = 0xff000000 | (red << 16) | (green << 8) | (blue);
-                newRGB.setC((i - 1) / 4, 0, 255.0f);
-                newRGB.setC((i - 1) / 4, 1, red);
-                newRGB.setC((i - 1) / 4, 2, green);
-                newRGB.setC((i - 1) / 4, 3, blue);
-            }
+            try {
+                tf.importArrays(tfX, tfY, tfX.length);
+                
+                dwiLUT.setTransferFunction(tf); 
+                int[] indexedLUT = dwiLUT.exportIndexedLUT();
+                
+                ModelImage newRGB = new ModelImage(ModelImage.ARGB, img.getExtents(), img.getImageName() + "_rgb");
+                
+                for (int i = 1; i < img.getSize(); i += 4) {
+                    int indexA = (int) (tf.getRemappedValue(img.getInt(i), 255) + 0.5f);   
+                    int remappedA = indexedLUT[indexA];
+                    int red = (int)((remappedA & 0x00ff0000) >> 16);
+                    int green = (int)((remappedA & 0x0000ff00) >> 8);
+                    int blue = (int)(remappedA & 0x000000ff);
+//                    int pixValue = 0xff000000 | (red << 16) | (green << 8) | (blue);
+                    newRGB.setC((i - 1) / 4, 0, 255.0f);
+                    newRGB.setC((i - 1) / 4, 1, red);
+                    newRGB.setC((i - 1) / 4, 2, green);
+                    newRGB.setC((i - 1) / 4, 3, blue);
+                }
 
-//            ViewJFrameImage frame = new ViewJFrameImage(newRGB);
-//            frame.setActiveImage(ViewJFrameImage.IMAGE_A);
-            
-            fileIO.writeImage(newRGB, opts, false, false);
+//                ViewJFrameImage frame = new ViewJFrameImage(newRGB);
+//                frame.setActiveImage(ViewJFrameImage.IMAGE_A);
+                
+                fileIO.writeImage(newRGB, opts, false, false);
+            } catch (OutOfMemoryError e) {
+                System.err.println("#### Ran out of memory writing DWI lightbox. Reverting to default LUT/transfer function.");
+                fileIO.writeImage(img, opts, false, false);   
+            }
         } else {
             fileIO.writeImage(img, opts, false, false);
         }
@@ -2699,7 +2706,8 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             ventMaskImg.setFileInfo(fInfo, i);
         }
         
-        // TODO
+        // TODO hardcoding the ADC threshold to 2000 because some images had higher means due to large ventricles and gray matter areas
+        /*
         // calculate mean within the brain mask
         double meanVal = 0;
         long total = 0;
@@ -2714,7 +2722,9 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
         
         double thresholdIntensity = meanVal * ventricleRemovalMeanThreshold;
         
-        System.err.println("Ventricle threshold: mean = " + meanVal + " threshold = " + thresholdIntensity);
+        System.err.println("Ventricle threshold: mean = " + meanVal + " threshold = " + thresholdIntensity);*/
+        
+        double thresholdIntensity = 2000;
         
         for (int i = 0; i < volLength; i++) {
             //if (fullBrainMask.getBoolean(i) == true && dwiImage.getInt(i) > ventricleRemovalMaskThreshold) {
