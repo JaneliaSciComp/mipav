@@ -7,10 +7,12 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubsample;
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
+import gov.nih.mipav.model.file.MetadataExtractor.GifReader;
 import gov.nih.mipav.model.file.MetadataExtractor.JpegMetadataReader;
 import gov.nih.mipav.model.file.MetadataExtractor.JpegProcessingException;
 import gov.nih.mipav.model.file.MetadataExtractor.PngMetadataReader;
 import gov.nih.mipav.model.file.MetadataExtractor.PngProcessingException;
+import gov.nih.mipav.model.file.MetadataExtractor.StreamReader;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
@@ -9063,6 +9065,18 @@ public class FileIO {
                     	            }
                     	        }
                         	} // else if (ext.equalsIgnoreCase("png"))
+                        	else if (ext.equalsIgnoreCase("gif")) {
+                        		try {
+                        			MetadataExtractor me = new MetadataExtractor();
+	                        		metadata[j] = me.new Metadata();
+	                    	        InputStream stream = new FileInputStream(file);
+	                    	        me.new GifReader().extract(me.new StreamReader(stream), metadata[j]);
+	                    	        stream.close();	
+                        		}
+                        		catch (Exception e) {
+                        			e.printStackTrace();
+                        		}
+                        	} // else if (ext.equalsIgnoreCase("gif"))
                         } // if ((image != null) && (ext != null)) 
                         // String[] readTypes = ImageIO.getReaderFormatNames();
 
