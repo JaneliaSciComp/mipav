@@ -9,6 +9,8 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
 import gov.nih.mipav.model.file.MetadataExtractor.JpegMetadataReader;
 import gov.nih.mipav.model.file.MetadataExtractor.JpegProcessingException;
+import gov.nih.mipav.model.file.MetadataExtractor.PngMetadataReader;
+import gov.nih.mipav.model.file.MetadataExtractor.PngProcessingException;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
@@ -9030,19 +9032,38 @@ public class FileIO {
                         if (lastPeriodIndex != -1) {
                             ext = fileList[j].substring(lastPeriodIndex+1);	
                         }
-                        if ((image != null) && (ext != null) && ((ext.equalsIgnoreCase("jpg")) || (ext.equalsIgnoreCase("jpeg")))) {
-                        	try {
-                        		MetadataExtractor me = new MetadataExtractor();
-                        		JpegMetadataReader jmr = me.new JpegMetadataReader();
-                                metadata[j] = jmr.readMetadata(file);
-                            } catch (JpegProcessingException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-	
-                        }
+                        if ((image != null) && (ext != null)) { 
+                        	if ((ext.equalsIgnoreCase("jpg")) || (ext.equalsIgnoreCase("jpeg"))) {
+	                        	try {
+	                        		MetadataExtractor me = new MetadataExtractor();
+	                        		JpegMetadataReader jmr = me.new JpegMetadataReader();
+	                                metadata[j] = jmr.readMetadata(file);
+	                            } catch (JpegProcessingException e) {
+	                                e.printStackTrace();
+	                            } catch (IOException e) {
+	                                e.printStackTrace();
+	                            }
+                            } // if ((image != null) && (ext != null))
+                        	else if (ext.equalsIgnoreCase("png")) {
+                        		FileInputStream inputStream = null;
+                        		try {
+	                        			MetadataExtractor me = new MetadataExtractor();
+	                        		    inputStream = new FileInputStream(file);
+	                        	        PngMetadataReader pr = me.new PngMetadataReader();
+	                        	        metadata[j] = pr.readMetadata(inputStream);
+                        	    } 
+                        		catch (PngProcessingException e) {
+	                                e.printStackTrace();
+	                            } catch (IOException e) {
+	                                e.printStackTrace();
+	                            }
+                    		    finally {
+                    	            if (inputStream != null) {
+                    	                inputStream.close();
+                    	            }
+                    	        }
+                        	} // if ((image != null) && (ext != null))
+                        } // if ((image != null) && (ext != null)) 
                         // String[] readTypes = ImageIO.getReaderFormatNames();
 
                         // for (int t = 0; t < readTypes.length; t++) {
