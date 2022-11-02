@@ -1,18 +1,15 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmNetworkSnake.Metadata;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubsample;
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
-import gov.nih.mipav.model.file.MetadataExtractor.GifReader;
 import gov.nih.mipav.model.file.MetadataExtractor.JpegMetadataReader;
 import gov.nih.mipav.model.file.MetadataExtractor.JpegProcessingException;
 import gov.nih.mipav.model.file.MetadataExtractor.PngMetadataReader;
 import gov.nih.mipav.model.file.MetadataExtractor.PngProcessingException;
-import gov.nih.mipav.model.file.MetadataExtractor.StreamReader;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
@@ -35,11 +32,7 @@ import java.math.RoundingMode;
 import java.util.*;
 import java.util.zip.*;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.stream.ImageInputStream;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
