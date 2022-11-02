@@ -30373,7 +30373,7 @@ public class MetadataExtractor {
 	    public String getBitmapTypeDescription()
 	    {
 	        BmpHeaderDirectory.BitmapType bitmapType = _directory.getBitmapType();
-	        return bitmapType == null ? null : bitmapType.toString();
+	        return bitmapType == null ? null : bitmapType.toString(bitmapType.getValue());
 	    }
 
 	    @Nullable
