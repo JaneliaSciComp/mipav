@@ -9043,7 +9043,7 @@ public class FileIO {
 	                            } catch (IOException e) {
 	                                e.printStackTrace();
 	                            }
-                            } // if ((image != null) && (ext != null))
+                            } // if ((ext.equalsIgnoreCase("jpg")) || (ext.equalsIgnoreCase("jpeg")))
                         	else if (ext.equalsIgnoreCase("png")) {
                         		FileInputStream inputStream = null;
                         		try {
@@ -9062,7 +9062,7 @@ public class FileIO {
                     	                inputStream.close();
                     	            }
                     	        }
-                        	} // if ((image != null) && (ext != null))
+                        	} // else if (ext.equalsIgnoreCase("png"))
                         } // if ((image != null) && (ext != null)) 
                         // String[] readTypes = ImageIO.getReaderFormatNames();
 
