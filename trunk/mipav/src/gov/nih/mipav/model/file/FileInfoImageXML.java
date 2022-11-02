@@ -308,7 +308,9 @@ public class FileInfoImageXML extends FileInfoXML {
         // Display metadata
         if ((tagName != null) && (tagDescription != null) && (tagName.size() == tagDescription.size())) {
         	for (i = 0; i < tagName.size(); i++) {
-        		dialog.appendPrimaryData(tagName.get(i), tagDescription.get(i));
+        		if (tagDescription.get(i) != null) {
+        		    dialog.appendPrimaryData(tagName.get(i), tagDescription.get(i));
+        		}
         	}
         }
 
