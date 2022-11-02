@@ -2,9 +2,13 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.MetadataExtractor.GifReader;
+import gov.nih.mipav.model.file.MetadataExtractor.Metadata;
+import gov.nih.mipav.model.file.MetadataExtractor.StreamReader;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
+import java.util.Vector;
 
 import gov.nih.mipav.view.*;
 
@@ -633,6 +637,44 @@ public class FileBMP extends FileBase {
             	Preferences.debug("imageType = ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
             }
             fileInfo.setDataType(imageType);
+            Metadata metadata = null;
+            try {
+    			MetadataExtractor me = new MetadataExtractor();
+        		metadata = me.new Metadata();
+    	        InputStream stream = new FileInputStream(file);
+    	        me.new BmpReader().extract(me.new StreamReader(stream), metadata);
+    	        stream.close();	
+    		}
+    		catch (Exception e) {
+    			e.printStackTrace();
+    		}
+            if (metadata != null) {
+            	Vector<String>tagName = new Vector<String>();
+            	Vector<String>tagDescription = new Vector<String>();
+            	//
+                // A Metadata object contains multiple Directory objects
+                //
+                for (MetadataExtractor.Directory directory : metadata.getDirectories()) {
+                    tagName.add("Metadata directory " + directory.getName());
+                    tagDescription.add("  ");
+                    //
+                    // Each Directory stores values in Tag objects
+                    //
+                    for (MetadataExtractor.Tag tag : directory.getTags()) {
+                        tagName.add("[" + directory.getName() + "] " + tag.getTagName());
+                        tagDescription.add(tag.getDescription());
+                    }
+
+                    //
+                    // Each Directory may also contain error messages
+                    //
+                    for (String error : directory.getErrors()) {
+                        System.err.println("ERROR: " + error);
+                    }
+                }
+                fileInfo.setTagName(tagName);
+                fileInfo.setTagDescription(tagDescription);
+            }
             image = new ModelImage(imageType, imageExtents, fileName);
             image.setFileInfo(fileInfo, 0);
             //Read the color palette
