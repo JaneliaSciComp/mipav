@@ -901,6 +901,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     
     protected Vector<String>tagName = null;
     protected Vector<String>tagDescription = null;
+    // In millimeters
+    protected double focalLength = Double.NaN;
+    protected double focalLength35 = Double.NaN;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2667,6 +2670,22 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     
     public void setTagDescription(Vector<String> tagDescription) {
     	this.tagDescription = tagDescription;
+    }
+    
+    public void setFocalLength(double focalLength) {
+    	this.focalLength = focalLength;
+    }
+    
+    public double getFocalLength() {
+    	return focalLength;
+    }
+    
+    public void setFocalLength35(double focalLength35) {
+    	this.focalLength35 = focalLength35;
+    }
+    
+    public double getFocalLength35() {
+    	return focalLength35;
     }
 
     /**
