@@ -9233,6 +9233,10 @@ public class FileIO {
             fileInfo[j].setFileDirectory(fileDir);
             fileInfo[j].setFileFormat(FileUtility.JIMI);
             if (metadata[j] != null) {
+            	int unitsOfMeasure[] = new int[2];
+            	float imgResols[] = new float[2];
+            	boolean haveXResolution = false;
+            	boolean haveYResolution = false;
             	Vector<String>tagName = new Vector<String>();
             	Vector<String>tagDescription = new Vector<String>();
             	//
@@ -9247,6 +9251,44 @@ public class FileIO {
                     for (MetadataExtractor.Tag tag : directory.getTags()) {
                         tagName.add("[" + directory.getName() + "] " + tag.getTagName());
                         tagDescription.add(tag.getDescription());
+                        if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution")) {
+                        	haveXResolution = true;
+                        	if (tag.getDescription().contains("inches")) {
+                        		unitsOfMeasure[0] = Unit.INCHES.getLegacyNum();	
+                        		int index = tag.getDescription().indexOf("inches");
+                        		String numericalString = tag.getDescription().substring(0, index).trim();
+                        		if (numericalString.contains("/")) {
+                        			int indexdiv = numericalString.indexOf("/");
+                        			String numeratorString = numericalString.substring(0,indexdiv);
+                        			double numerator = Double.valueOf(numeratorString).doubleValue();
+                        			String denominatorString = numericalString.substring(indexdiv+1);
+                        			double denominator = Double.valueOf(denominatorString).doubleValue();
+                        			imgResols[0] = (float)(numerator/denominator);
+                        		}
+                        		else {
+                        			imgResols[0] = Float.valueOf(numericalString).floatValue();
+                        		}
+                        	} // if (tag.getDescription().contains("inches"))
+                        } // if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))
+                        if (tag.getTagName().equalsIgnoreCase("Focal Plane Y resolution")) {
+                        	haveYResolution = true;
+                        	if (tag.getDescription().contains("inches")) {
+                        		unitsOfMeasure[1] = Unit.INCHES.getLegacyNum();	
+                        		int index = tag.getDescription().indexOf("inches");
+                        		String numericalString = tag.getDescription().substring(0, index).trim();
+                        		if (numericalString.contains("/")) {
+                        			int indexdiv = numericalString.indexOf("/");
+                        			String numeratorString = numericalString.substring(0,indexdiv);
+                        			double numerator = Double.valueOf(numeratorString).doubleValue();
+                        			String denominatorString = numericalString.substring(indexdiv+1);
+                        			double denominator = Double.valueOf(denominatorString).doubleValue();
+                        			imgResols[1] = (float)(numerator/denominator);
+                        		}
+                        		else {
+                        			imgResols[1] = Float.valueOf(numericalString).floatValue();
+                        		}
+                        	} // if (tag.getDescription().contains("inches"))
+                        } // if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))	
                     }
 
                     //
@@ -9254,6 +9296,10 @@ public class FileIO {
                     //
                     for (String error : directory.getErrors()) {
                         System.err.println("ERROR: " + error);
+                    }
+                    if (haveXResolution && haveYResolution) {
+                    	fileInfo[j].setResolutions(imgResols);
+                    	fileInfo[j].setUnitsOfMeasure(unitsOfMeasure);
                     }
                 }
                 fileInfo[j].setTagName(tagName);
