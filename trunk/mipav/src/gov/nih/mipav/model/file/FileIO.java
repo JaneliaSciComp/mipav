@@ -9237,6 +9237,9 @@ public class FileIO {
             	float imgResols[] = new float[2];
             	boolean haveXResolution = false;
             	boolean haveYResolution = false;
+            	boolean havePixelsPerUnitX = false;
+            	boolean havePixelsPerUnitY = false;
+            	boolean haveUnitSpecifier = false;
             	Vector<String>tagName = new Vector<String>();
             	Vector<String>tagDescription = new Vector<String>();
             	//
@@ -9252,6 +9255,7 @@ public class FileIO {
                         tagName.add("[" + directory.getName() + "] " + tag.getTagName());
                         tagDescription.add(tag.getDescription());
                         if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution")) {
+                        	// Seen in JPEG Exif SubIFD
                         	haveXResolution = true;
                         	if (tag.getDescription().contains("inches")) {
                         		unitsOfMeasure[0] = Unit.INCHES.getLegacyNum();	
@@ -9271,6 +9275,7 @@ public class FileIO {
                         	} // if (tag.getDescription().contains("inches"))
                         } // if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))
                         if (tag.getTagName().equalsIgnoreCase("Focal Plane Y resolution")) {
+                        	// Seen in JPEG Exif SubIFD
                         	haveYResolution = true;
                         	if (tag.getDescription().contains("inches")) {
                         		unitsOfMeasure[1] = Unit.INCHES.getLegacyNum();	
@@ -9289,6 +9294,26 @@ public class FileIO {
                         		}
                         	} // if (tag.getDescription().contains("inches"))
                         } // if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))	
+                        if (tag.getTagName().equalsIgnoreCase("Pixels Per Unit X")) {
+                        	// From PNG-pHYs
+                        	havePixelsPerUnitX = true;
+                        	int reciprocalResolsX = Integer.valueOf(tag.getDescription().trim()).intValue();
+                        	imgResols[0] = (float)(1.0/(double)reciprocalResolsX);
+                        }
+                        if (tag.getTagName().equalsIgnoreCase("Pixels Per Unit Y")) {
+                        	// From PNG-pHYs
+                        	havePixelsPerUnitY = true;
+                        	int reciprocalResolsY = Integer.valueOf(tag.getDescription().trim()).intValue();
+                        	imgResols[1] = (float)(1.0/(double)reciprocalResolsY);
+                        }
+                        if (tag.getTagName().equalsIgnoreCase("Unit Specifier")) {
+                        	// From PNG-pHYs
+                        	haveUnitSpecifier = true;
+                        	if (tag.getDescription().trim().equalsIgnoreCase("Metres")) {
+                        	    unitsOfMeasure[0] = Unit.METERS.getLegacyNum();
+                        	    unitsOfMeasure[1] = Unit.METERS.getLegacyNum();	
+                        	}
+                        }
                     }
 
                     //
@@ -9297,7 +9322,7 @@ public class FileIO {
                     for (String error : directory.getErrors()) {
                         System.err.println("ERROR: " + error);
                     }
-                    if (haveXResolution && haveYResolution) {
+                    if ((haveXResolution && haveYResolution) || (havePixelsPerUnitX && havePixelsPerUnitY && haveUnitSpecifier)) {
                     	fileInfo[j].setResolutions(imgResols);
                     	fileInfo[j].setUnitsOfMeasure(unitsOfMeasure);
                     }
