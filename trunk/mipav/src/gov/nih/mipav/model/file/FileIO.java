@@ -9314,6 +9314,24 @@ public class FileIO {
                         	    unitsOfMeasure[1] = Unit.METERS.getLegacyNum();	
                         	}
                         }
+                        if (tag.getTagName().equalsIgnoreCase("Focal Length")) {
+                        	// Seen in JPEG Exif SubIFD used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                        	if (tag.getDescription().contains("mm")) {
+                                int index = tag.getDescription().indexOf("mm");
+                                String focalLengthString = tag.getDescription().substring(0, index).trim();
+                                double focalLength = Double.valueOf(focalLengthString).doubleValue();
+                                fileInfo[j].setFocalLength(focalLength);
+                        	}
+                        }
+                        if (tag.getTagName().equalsIgnoreCase("Focal Length 35")) {
+                        	// Seen in JPEG Exif SubIFD used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                        	if (tag.getDescription().contains("mm")) {
+                                int index = tag.getDescription().indexOf("mm");
+                                String focalLength35String = tag.getDescription().substring(0, index).trim();
+                                double focalLength35 = Double.valueOf(focalLength35String).doubleValue();
+                                fileInfo[j].setFocalLength35(focalLength35);
+                        	}
+                        }
                     }
 
                     //
