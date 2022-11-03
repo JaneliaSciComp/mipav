@@ -1672,15 +1672,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             infoStr += "Matrix: \n" + matrix.matrixToString(10, 4) + "\n";
         }
         
-     // Display metadata
-        if ((tagName != null) && (tagDescription != null) && (tagName.size() == tagDescription.size())) {
-        	for (int i = 0; i < tagName.size(); i++) {
-        		if (tagDescription.get(i) != null) {
-        		    infoStr += tagName.get(i) + ": " + tagDescription.get(i) + "\n";
-        		}
-        	}
-        }
-        
         return infoStr;
     }
 
