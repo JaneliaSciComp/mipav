@@ -495,7 +495,7 @@ public class PlugInAlgorithmStrokeSegmentationPWI extends AlgorithmBase {
             // generate lightbox of DWI volume with custom transfer function
             dwiLightbox = generateLightbox(dwiImage, null, coreLightboxColor, lightboxOpacity, false);
             
-            File lightboxDWI = saveImageFile(dwiLightbox, coreOutputDir, outputBasename + "_DWI_lightbox", FileUtility.PNG, true);
+            File lightboxDWI = saveImageFile(dwiLightbox, coreOutputDir, outputBasename + "_DWI_lightbox", FileUtility.PNG, false);
             
             if (lightboxDWI != null) {
                 lightboxFileList.add(lightboxDWI);
