@@ -904,6 +904,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     // In millimeters
     protected double focalLength = Double.NaN;
     protected double focalLength35 = Double.NaN;
+    protected String cameraMake = null;
+    protected String cameraModel = null;
+    protected double exposureTime = Double.NaN;
+    protected double FNumber = Double.NaN;
+    protected double ISOSpeedRating = Double.NaN;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2686,6 +2691,46 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     
     public double getFocalLength35() {
     	return focalLength35;
+    }
+    
+    public void setCameraMake(String cameraMake) {
+    	this.cameraMake = cameraMake;
+    }
+    
+    public String getCameraMake() {
+    	return cameraMake;
+    }
+    
+    public void setCameraModel(String cameraModel) {
+    	this.cameraModel = cameraModel;
+    }
+    
+    public String getCameraModel() {
+    	return cameraModel;
+    }
+    
+    public void setExposureTime(double exposureTime) {
+    	this.exposureTime = exposureTime;
+    }
+    
+    public double getExposureTime() {
+    	return exposureTime;
+    }
+    
+    public void setFNumber(double FNumber) {
+    	this.FNumber = FNumber;
+    }
+    
+    public double getFNumber() {
+    	return FNumber;
+    }
+    
+    public void setISOSpeedRating(double ISOSpeedRating) {
+    	this.ISOSpeedRating = ISOSpeedRating;
+    }
+    
+    public double getISOSpeedRating() {
+    	return ISOSpeedRating;
     }
 
     /**
