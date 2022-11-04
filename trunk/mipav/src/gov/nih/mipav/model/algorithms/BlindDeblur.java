@@ -82,6 +82,15 @@ public class BlindDeblur extends AlgorithmBase {
 	private String blurredImageFileName;
 	private String trueImageFileDirectory;
 	private String trueImageFileName;
+	private String trueImageExtension;
+	private boolean israw_true;
+	private double focalLengthTrue = Double.NaN;
+	private double focalLength35True = Double.NaN;
+	private String cameraMakeTrue = null;
+	private String cameraModelTrue = null;
+	private double exposureTimeTrue = Double.NaN;
+	private double FNumberTrue = Double.NaN;
+	private double ISOSpeedRatingTrue = Double.NaN;
 	private ModelImage blurredImage;
 	private ModelImage correctedImage;
 	private ModelImage trueImage;
@@ -137,6 +146,8 @@ public class BlindDeblur extends AlgorithmBase {
 	private String estimate_kernel_from;
 	private int deconv_maxit;
 	private boolean threshold_kernel;
+	private double focal_length_in_35mm_true;
+	private double focal_length_in_35mm_shake;
 	private int first_level;
 	private int final_level;
 	private String BtB_method;
@@ -471,6 +482,30 @@ public class BlindDeblur extends AlgorithmBase {
     		    		}
     		    	}
     		    } // else trueImage.isColorImage();
+    		    trueImageFileName = trueImage.getImageFileName();
+    		    int index = trueImageFileName.lastIndexOf(".");
+    		    trueImageExtension = trueImageFileName.substring(index+1);
+    		    if ((trueImageExtension.equalsIgnoreCase("tif")) || (trueImageExtension.equalsIgnoreCase("tiff"))) {
+    		    	israw_true = true;
+    		    }
+    		    else {
+    		    	israw_true = false;
+    		    }
+    		    if ((trueImageExtension.equalsIgnoreCase("jpg")) || (trueImageExtension.equalsIgnoreCase("jpeg"))) {
+    		        focalLengthTrue = trueImage.getFileInfo(0).getFocalLength();
+    		        focalLength35True = trueImage.getFileInfo(0).getFocalLength35();
+    		        cameraMakeTrue = trueImage.getFileInfo(0).getCameraMake();
+    		        cameraModelTrue = trueImage.getFileInfo(0).getCameraModel();
+    		        exposureTimeTrue = trueImage.getFileInfo(0).getExposureTime();
+    		        FNumberTrue = trueImage.getFileInfo(0).getFNumber();
+    		        ISOSpeedRatingTrue = trueImage.getFileInfo(0).getISOSpeedRating();
+    		    }
+    		    // Defaults
+    		    double f = 0.0;
+    		    double a = 1.0;
+    		    if (!Double.isNaN(focalLength35True)) {
+    		        f = focalLength35True/(36.0*Math.max(trueImage.getExtents()[0], trueImage.getExtents()[1]));	
+    		    }
     		} // if (trueImage != null)
     		/*
     		if exist('file_true','var')
