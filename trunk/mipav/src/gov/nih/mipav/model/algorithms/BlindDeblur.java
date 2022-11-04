@@ -504,7 +504,7 @@ public class BlindDeblur extends AlgorithmBase {
     		    double f = 0.0;
     		    double a = 1.0;
     		    if (!Double.isNaN(focalLength35True)) {
-    		        f = focalLength35True/(36.0*Math.max(trueImage.getExtents()[0], trueImage.getExtents()[1]));	
+    		        f = focalLength35True/36.0*Math.max(trueImage.getExtents()[0], trueImage.getExtents()[1]);	
     		    }
     		} // if (trueImage != null)
     		/*
