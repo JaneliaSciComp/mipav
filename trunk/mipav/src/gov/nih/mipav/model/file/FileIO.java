@@ -9254,8 +9254,7 @@ public class FileIO {
                     for (MetadataExtractor.Tag tag : directory.getTags()) {
                         tagName.add("[" + directory.getName() + "] " + tag.getTagName());
                         tagDescription.add(tag.getDescription());
-                        if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution")) {
-                        	// Seen in JPEG Exif SubIFD
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))) {
                         	haveXResolution = true;
                         	if (tag.getDescription().contains("inches")) {
                         		unitsOfMeasure[0] = Unit.INCHES.getLegacyNum();	
@@ -9273,9 +9272,8 @@ public class FileIO {
                         			imgResols[0] = Float.valueOf(numericalString).floatValue();
                         		}
                         	} // if (tag.getDescription().contains("inches"))
-                        } // if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))
-                        if (tag.getTagName().equalsIgnoreCase("Focal Plane Y resolution")) {
-                        	// Seen in JPEG Exif SubIFD
+                        } // if if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution")))
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Focal Plane Y resolution"))) {
                         	haveYResolution = true;
                         	if (tag.getDescription().contains("inches")) {
                         		unitsOfMeasure[1] = Unit.INCHES.getLegacyNum();	
@@ -9293,29 +9291,26 @@ public class FileIO {
                         			imgResols[1] = Float.valueOf(numericalString).floatValue();
                         		}
                         	} // if (tag.getDescription().contains("inches"))
-                        } // if (tag.getTagName().equalsIgnoreCase("Focal Plane X resolution"))	
-                        if (tag.getTagName().equalsIgnoreCase("Pixels Per Unit X")) {
-                        	// From PNG-pHYs
+                        } // if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Focal Plane Y resolution")))
+                        if ((directory.getName().equalsIgnoreCase("PNG-pHYs")) && (tag.getTagName().equalsIgnoreCase("Pixels Per Unit X"))) {
                         	havePixelsPerUnitX = true;
                         	int reciprocalResolsX = Integer.valueOf(tag.getDescription().trim()).intValue();
                         	imgResols[0] = (float)(1.0/(double)reciprocalResolsX);
                         }
-                        if (tag.getTagName().equalsIgnoreCase("Pixels Per Unit Y")) {
-                        	// From PNG-pHYs
+                        if ((directory.getName().equalsIgnoreCase("PNG-pHYs")) &&(tag.getTagName().equalsIgnoreCase("Pixels Per Unit Y"))) {
                         	havePixelsPerUnitY = true;
                         	int reciprocalResolsY = Integer.valueOf(tag.getDescription().trim()).intValue();
                         	imgResols[1] = (float)(1.0/(double)reciprocalResolsY);
                         }
-                        if (tag.getTagName().equalsIgnoreCase("Unit Specifier")) {
-                        	// From PNG-pHYs
+                        if ((directory.getName().equalsIgnoreCase("PNG-pHYs")) && (tag.getTagName().equalsIgnoreCase("Unit Specifier"))) {
                         	haveUnitSpecifier = true;
                         	if (tag.getDescription().trim().equalsIgnoreCase("Metres")) {
                         	    unitsOfMeasure[0] = Unit.METERS.getLegacyNum();
                         	    unitsOfMeasure[1] = Unit.METERS.getLegacyNum();	
                         	}
                         }
-                        if (tag.getTagName().equalsIgnoreCase("Focal Length")) {
-                        	// Seen in JPEG Exif SubIFD used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Focal Length"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
                         	if (tag.getDescription().contains("mm")) {
                                 int index = tag.getDescription().indexOf("mm");
                                 String focalLengthString = tag.getDescription().substring(0, index).trim();
@@ -9323,8 +9318,8 @@ public class FileIO {
                                 fileInfo[j].setFocalLength(focalLength);
                         	}
                         }
-                        if (tag.getTagName().equalsIgnoreCase("Focal Length 35")) {
-                        	// Seen in JPEG Exif SubIFD used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Focal Length 35"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
                         	if (tag.getDescription().contains("mm")) {
                                 int index = tag.getDescription().indexOf("mm");
                                 String focalLength35String = tag.getDescription().substring(0, index).trim();
@@ -9332,6 +9327,39 @@ public class FileIO {
                                 fileInfo[j].setFocalLength35(focalLength35);
                         	}
                         }
+                        if ((directory.getName().equalsIgnoreCase("Exif IFD0")) && (tag.getTagName().equalsIgnoreCase("Make"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                        	fileInfo[j].setCameraMake(tag.getDescription());
+                        }
+                        if ((directory.getName().equalsIgnoreCase("Exif IFD0")) && (tag.getTagName().equalsIgnoreCase("Model"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                        	fileInfo[j].setCameraModel(tag.getDescription());
+                        }
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("Exposure Time"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                            if (tag.getDescription().contains("sec")) {
+                                int index = tag.getDescription().indexOf("sec");
+                                String exposureTimeString = tag.getDescription().substring(0, index).trim();
+                                double exposureTime = Double.valueOf(exposureTimeString).doubleValue();
+                                fileInfo[j].setExposureTime(exposureTime);
+                            }
+                        }
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("F-Number"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                            if (tag.getDescription().contains("f/")) {
+                                int index = tag.getDescription().indexOf("f/");
+                                String FNumberString = tag.getDescription().substring(index+2).trim();
+                                double FNumber = Double.valueOf(FNumberString).doubleValue();
+                                fileInfo[j].setFNumber(FNumber);
+                            }
+                        }
+                        if ((directory.getName().equalsIgnoreCase("Exif SubIFD")) && (tag.getTagName().equalsIgnoreCase("ISO Speed Ratings"))) {
+                        	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
+                            String ISOSpeedRatingString = tag.getDescription().trim();
+                            double ISOSpeedRating = Double.valueOf(ISOSpeedRatingString).doubleValue();
+                            fileInfo[j].setISOSpeedRating(ISOSpeedRating);
+                        }
+
                     }
 
                     //
