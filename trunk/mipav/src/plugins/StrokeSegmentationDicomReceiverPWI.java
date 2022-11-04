@@ -1594,19 +1594,19 @@ public class StrokeSegmentationDicomReceiverPWI {
                             
                             new PlugInDialogStrokeSegmentationPWI(StrokeSegmentationDicomReceiverPWI.this, receivedFilesPath, false);
                         }
+				    } else {
+    					// otherwise, loop around and do nothing wait again until more data arrives or the time limit is hit
+    					log("DICOM transfer complete - no segmentation performed. " + receivedFilesPath + " --- ADC: " + curAdcSlices + " --- DWI: " + curDwiSlices + " --- PWI: " + curPwiSlices);
+    					
+    	                // wait for a while or until a new file transfer is received
+    					log("Waiting for " + (timeLimitMilli - curTimeSinceStart) / 1000 + " seconds");
+                        try {
+                            wait(timeLimitMilli - curTimeSinceStart);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            e.printStackTrace();
+                        }
 				    }
-					
-					// otherwise, loop around and do nothing wait again until more data arrives or the time limit is hit
-					log("DICOM transfer complete - no segmentation performed. " + receivedFilesPath + " --- ADC: " + curAdcSlices + " --- DWI: " + curDwiSlices + " --- PWI: " + curPwiSlices);
-					
-	                // wait for a while or until a new file transfer is received
-					log("Waiting for " + (timeLimitMilli - curTimeSinceStart) / 1000 + " seconds");
-                    try {
-                        wait(timeLimitMilli - curTimeSinceStart);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        e.printStackTrace();
-                    }
 				} else {
 					// hit time limit. check num slices received. if not enough pwi, just run with adc/dwi.  if enough, run adc/dwi/pwi
 					log("Reached transfer time limit for " + receivedFilesPath);
@@ -1656,6 +1656,10 @@ public class StrokeSegmentationDicomReceiverPWI {
 		
 		public synchronized void addToPwiSliceCount(int numSlices) {
 			curPwiSlices += numSlices;
+			
+			log("Resetting time limit (" + (timeLimitMilli / 1000) + " seconds) due to received PWI files. Total " + curPwiSlices);
+			timeStarted = System.currentTimeMillis();
+			
 			notifyAll();
 		}
 		
