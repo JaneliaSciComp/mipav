@@ -9339,8 +9339,19 @@ public class FileIO {
                         	// Used in code for Fast Blind Removal of Non-Uniform Camera Shake Blur
                             if (tag.getDescription().contains("sec")) {
                                 int index = tag.getDescription().indexOf("sec");
-                                String exposureTimeString = tag.getDescription().substring(0, index).trim();
-                                double exposureTime = Double.valueOf(exposureTimeString).doubleValue();
+                                String numericalString = tag.getDescription().substring(0, index).trim();
+                                double exposureTime;
+                                if (numericalString.contains("/")) {
+                        			int indexdiv = numericalString.indexOf("/");
+                        			String numeratorString = numericalString.substring(0,indexdiv);
+                        			double numerator = Double.valueOf(numeratorString).doubleValue();
+                        			String denominatorString = numericalString.substring(indexdiv+1);
+                        			double denominator = Double.valueOf(denominatorString).doubleValue();
+                        			exposureTime = (numerator/denominator);
+                        		}
+                        		else {
+                        			exposureTime = Double.valueOf(numericalString).doubleValue();
+                        		}
                                 fileInfo[j].setExposureTime(exposureTime);
                             }
                         }
