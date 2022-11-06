@@ -1,10 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.CeresSolver.Pair;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.Vector;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -154,6 +156,8 @@ public class BlindDeblur extends AlgorithmBase {
 	private int max_nonzeros_w;
 	private boolean update_saturation_mask;
 	private boolean fast_approx;
+	private Vector<Pair<String,Double>>cameraModelList = null;
+	
 	
 	    public BlindDeblur() {
 	    }
@@ -167,6 +171,152 @@ public class BlindDeblur extends AlgorithmBase {
 	    	this.logFile = logFile;
 	    	this.BLUR_KERNEL_SIZE = BLUR_KERNEL_SIZE;
 	    }
+	    
+	    class Pair<T,U>
+		{
+		    public T first;
+		    public U second;
+
+		    public Pair(T t, U u)
+		    {
+		        first = t;
+		        second = u;
+		    }
+		    
+		    public T getFirst()
+		    {
+		        return first; 
+		    }
+
+		    public U getSecond()
+		    {
+		        return second; 
+		    }
+
+		    
+		    public boolean equals(Object obj) {
+		      if (obj == null) return false;
+		      if ((obj.getClass() != this.getClass())) { //|| (obj.hashCode() != this.hashCode())) {
+		        return false;
+		      }
+		      
+		      return (this.getFirst().equals(((Pair) obj).getFirst()) && this.getSecond().equals(((Pair) obj).getSecond()));
+		    }
+		    
+		    /**
+		     * Define a hash code based on the first and second's hash code
+		     */
+		    public int hashCode() {
+		      return first.hashCode() ^ second.hashCode();
+		    }
+		    
+		    public String toString() {
+		      return "Pair(" + first + ", " + second + ")";
+		    }
+		  
+		} 
+	    
+	   private void initCameraModelList() {
+	       cameraModelList = new Vector<Pair<String,Double>>();   
+	       cameraModelList.add(new Pair("appleiphone3gs",3.20));
+	       cameraModelList.add(new Pair("appleiphone",3.20));
+	       cameraModelList.add(new Pair("appleiphone4",4.592));
+	       cameraModelList.add(new Pair("asahiopticalco.,ltd.pentaxoptio330rs",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus30",5.76));
+	       cameraModelList.add(new Pair("canoncanondigitalixus300",5.312));
+	       cameraModelList.add(new Pair("canoncanondigitalixus40",5.76/*#1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus400",7.176/*#1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus430",7.176/*1/1.8"*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus50",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus500",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus55",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus60",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus65",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus70",5.75));
+	       cameraModelList.add(new Pair("canoncanondigitalixus700",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus75",5.75));
+	       cameraModelList.add(new Pair("canoncanondigitalixus750",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus800is",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus860is",5.75));
+	       cameraModelList.add(new Pair("canoncanondigitalixus90is",6.16));
+	       cameraModelList.add(new Pair("canoncanondigitalixus900ti",7.144));
+	       cameraModelList.add(new Pair("canoncanondigitalixus95is",6.16/*1/2.3*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus950is",5.75/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixus980is",7.6/*1/1.7*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixusi",5.744));
+	       cameraModelList.add(new Pair("canoncanondigitalixusii",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanondigitalixusv",5.27));
+	       cameraModelList.add(new Pair("canoncanondigitalixusv2",5.27));
+	       cameraModelList.add(new Pair("canoncanondigitalixusv3",5.27));
+	       cameraModelList.add(new Pair("canoncanondigitalixus",5.27));
+	       cameraModelList.add(new Pair("canoncanoneos20d",22.5));
+	       cameraModelList.add(new Pair("canoncanoneos1000d",22.2));
+	       cameraModelList.add(new Pair("canoncanoneos10d",22.7));
+	       cameraModelList.add(new Pair("canoncanoneos20d",22.5));
+	       cameraModelList.add(new Pair("canoncanoneos300ddigital",22.66));
+	       cameraModelList.add(new Pair("canoncanoneos30d",22.5));
+	       cameraModelList.add(new Pair("canoncanoneos350ddigital",22.2));
+	       cameraModelList.add(new Pair("canoncanoneos400ddigital",22.2));
+	       cameraModelList.add(new Pair("canoncanoneos40d",22.2));
+	       cameraModelList.add(new Pair("canoncanoneos450d",22.2));
+	       cameraModelList.add(new Pair("canoncanoneos500d",22.3));
+	       cameraModelList.add(new Pair("canoncanoneos50d",22.3));
+	       cameraModelList.add(new Pair("canoncanoneos5dmarkii",36));
+	       cameraModelList.add(new Pair("canoncanoneos5d",35.8));
+	       cameraModelList.add(new Pair("canoncanoneos7d",22.3));
+	       cameraModelList.add(new Pair("canoncanoneosd60",22.7));
+	       cameraModelList.add(new Pair("canoncanoneosdigitalrebelxs",22.2));
+	       cameraModelList.add(new Pair("canoncanoneosdigitalrebelxsi",22.2));
+	       cameraModelList.add(new Pair("canoncanoneosdigitalrebelxt",22.2));
+	       cameraModelList.add(new Pair("canoncanoneosdigitalrebelxti",22.2));
+	       cameraModelList.add(new Pair("canoncanoneosdigitalrebel",22.66));
+	       cameraModelList.add(new Pair("canoncanoneoskissdigitaln",22.2));
+	       cameraModelList.add(new Pair("canoncanoneoskissdigital",22.66));
+	       cameraModelList.add(new Pair("canoncanoneosrebelt1i",22.3));
+	       cameraModelList.add(new Pair("canoncanoneos-1dmarkii",28.7));
+	       cameraModelList.add(new Pair("canoncanoneos-1dmarkiii",28.7));
+	       cameraModelList.add(new Pair("canoncanoneos-1dsmarkii",35.95));
+	       cameraModelList.add(new Pair("canoncanonixus210",6.16/*1/2.3*/));
+	       cameraModelList.add(new Pair("canoncanonixydigital55",5.75));
+	       cameraModelList.add(new Pair("canoncanonixydigital600",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota10",5.27));
+	       cameraModelList.add(new Pair("canoncanonpowershota20",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota2000is",6.17));
+	       cameraModelList.add(new Pair("canoncanonpowershota40",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota400",4.54/*1/3.2*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota510",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota520",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota530",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota540",5.75));
+	       cameraModelList.add(new Pair("canoncanonpowershota550",5.75/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota560",5.75));
+	       cameraModelList.add(new Pair("canoncanonpowershota60",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota610",7.18));
+	       cameraModelList.add(new Pair("canoncanonpowershota620",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota630",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota640",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota650is",7.60));
+	       cameraModelList.add(new Pair("canoncanonpowershota70",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota700",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota710is",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota75",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota80",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota85",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershota95",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg1",7.176/*1/1.8"*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg11",7.60));
+	       cameraModelList.add(new Pair("canoncanonpowershotg2",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg3",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg5",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg6",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg7",7.176/*1/1.8*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotg9",7.600/*1/1.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershotpro1",8.8/*2/3*/));
+	       cameraModelList.add(new Pair("canoncanonpowershots1is",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershots110",5.27/*1/2.7*/));
+	       cameraModelList.add(new Pair("canoncanonpowershots2is",5.76/*1/2.5*/));
+	       cameraModelList.add(new Pair("canoncanonpowershots20",7.18));
+	   }
 	
 	   private void default_config() {
 		   // Author:     Oliver Whyte <oliver.whyte@ens.fr>
@@ -505,6 +655,11 @@ public class BlindDeblur extends AlgorithmBase {
     		    double a = 1.0;
     		    if (!Double.isNaN(focalLength35True)) {
     		        f = focalLength35True/36.0*Math.max(trueImage.getExtents()[0], trueImage.getExtents()[1]);	
+    		    }
+    		    if ((f == 0.0) && (!Double.isNaN(focalLengthTrue)) && (cameraModelTrue != null)) {
+    		        if (cameraModelList == null) {
+    		        	initCameraModelList();
+    		        }
     		    }
     		} // if (trueImage != null)
     		/*
