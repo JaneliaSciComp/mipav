@@ -7953,6 +7953,7 @@ public class MetadataExtractor {
 	            new AppleRunTimeReader().extract(bytes, _metadata, _currentDirectory);
 	            return true;
 	        }
+	        */
 
 	        if (handlePrintIM(_currentDirectory, tagId))
 	        {
@@ -7962,7 +7963,6 @@ public class MetadataExtractor {
 	            processPrintIM(printIMDirectory, tagOffset, reader, byteCount);
 	            return true;
 	        }
-	        */
 
 	        // Note: these also appear in tryEnterSubIfd because some are IFD pointers while others begin immediately
 	        // for the same directories
@@ -8209,7 +8209,6 @@ public class MetadataExtractor {
 	            pushDirectory(SonyType6MakernoteDirectory.class);
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 20, tiffHeaderOffset);
 	        } 
-	        /*
 	        else if ("SIGMA\u0000\u0000\u0000".equals(firstEightChars) || "FOVEON\u0000\u0000".equals(firstEightChars)) {
 	            pushDirectory(SigmaMakernoteDirectory.class);
 	            tr.processIfd(this, reader, processedIfdOffsets, makernoteOffset + 10, tiffHeaderOffset);
@@ -8343,13 +8342,12 @@ public class MetadataExtractor {
 	            // If you are reading this and believe a particular camera's image should be processed, get in touch.
 	            return false;
 	        }
-	        */
 
 	        reader.setMotorolaByteOrder(byteOrderBefore);
 	        return true;
 	    }
 
-	    /*private boolean handlePrintIM(@NotNull final Directory directory, final int tagId)
+	    private boolean handlePrintIM(@NotNull final Directory directory, final int tagId)
 	    {
 	        if (tagId == ExifDirectoryBase.TAG_PRINT_IMAGE_MATCHING_INFO)
 	            return true;
@@ -8370,7 +8368,6 @@ public class MetadataExtractor {
 
 	        return false;
 	    }
-	    */
 
 	    /**
 	     * Process PrintIM IFD
@@ -8379,7 +8376,6 @@ public class MetadataExtractor {
 	     * http://www.sno.phy.queensu.ca/~phil/exiftool/
 	     * lib\Image\ExifTool\PrintIM.pm
 	     */
-	    /*
 	    private void processPrintIM(@NotNull final PrintIMDirectory directory, final int tagValueOffset, @NotNull final RandomAccessReader reader, final int byteCount) throws IOException
 	    {
 	        Boolean resetByteOrder = null;
@@ -8394,7 +8390,8 @@ public class MetadataExtractor {
 	            return;
 	        }
 
-	        String header = reader.getString(tagValueOffset, 12, Charsets.UTF_8);
+	        Charsets ch = new Charsets();
+	        String header = reader.getString(tagValueOffset, 12, ch.UTF_8);
 
 	        if (!header.startsWith("PrintIM")) {
 	            directory.addError("Invalid PrintIM header");
@@ -8436,7 +8433,8 @@ public class MetadataExtractor {
 	        // Kodak's makernote is not in IFD format. It has values at fixed offsets.
 	        int dataOffset = tagValueOffset + 8;
 	        try {
-	            directory.setStringValue(KodakMakernoteDirectory.TAG_KODAK_MODEL, reader.getStringValue(dataOffset, 8, Charsets.UTF_8));
+	        	Charsets ch = new Charsets();
+	            directory.setStringValue(KodakMakernoteDirectory.TAG_KODAK_MODEL, reader.getStringValue(dataOffset, 8, ch.UTF_8));
 	            directory.setInt(KodakMakernoteDirectory.TAG_QUALITY, reader.getUInt8(dataOffset + 9));
 	            directory.setInt(KodakMakernoteDirectory.TAG_BURST_MODE, reader.getUInt8(dataOffset + 10));
 	            directory.setInt(KodakMakernoteDirectory.TAG_IMAGE_WIDTH, reader.getUInt16(dataOffset + 12));
@@ -8469,6 +8467,7 @@ public class MetadataExtractor {
 
 	    private void processReconyxHyperFireMakernote(@NotNull final ReconyxHyperFireMakernoteDirectory directory, final int makernoteOffset, @NotNull final RandomAccessReader reader) throws IOException
 	    {
+	    	Charsets ch = new Charsets();
 	        directory.setObject(ReconyxHyperFireMakernoteDirectory.TAG_MAKERNOTE_VERSION, reader.getUInt16(makernoteOffset));
 
 	        int major = reader.getUInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_FIRMWARE_VERSION);
@@ -8526,7 +8525,7 @@ public class MetadataExtractor {
 	        directory.setInt(ReconyxHyperFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE_FAHRENHEIT, reader.getInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE_FAHRENHEIT));
 	        directory.setInt(ReconyxHyperFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE, reader.getInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE));
 	        //directory.setByteArray(ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER, reader.getBytes(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER, 28));
-	        directory.setStringValue(ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER, new StringValue(reader.getBytes(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER, 28), Charsets.UTF_16LE));
+	        directory.setStringValue(ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER, new StringValue(reader.getBytes(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER, 28), ch.UTF_16LE));
 	        // two unread bytes: the serial number's terminating null
 
 	        directory.setInt(ReconyxHyperFireMakernoteDirectory.TAG_CONTRAST, reader.getUInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_CONTRAST));
@@ -8536,12 +8535,13 @@ public class MetadataExtractor {
 	        directory.setInt(ReconyxHyperFireMakernoteDirectory.TAG_INFRARED_ILLUMINATOR, reader.getUInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_INFRARED_ILLUMINATOR));
 	        directory.setInt(ReconyxHyperFireMakernoteDirectory.TAG_MOTION_SENSITIVITY, reader.getUInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_MOTION_SENSITIVITY));
 	        directory.setDouble(ReconyxHyperFireMakernoteDirectory.TAG_BATTERY_VOLTAGE, reader.getUInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_BATTERY_VOLTAGE) / 1000.0);
-	        directory.setString(ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, reader.getNullTerminatedString(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, 44, Charsets.UTF_8));
+	        directory.setString(ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, reader.getNullTerminatedString(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, 44, ch.UTF_8));
 	    }
 
+	    
 	    private void processReconyxHyperFire2Makernote(@NotNull final ReconyxHyperFire2MakernoteDirectory directory, final int makernoteOffset, @NotNull final RandomAccessReader reader) throws IOException
 	    {
-
+            Charsets ch = new Charsets();
 	        int major = reader.getUInt16(makernoteOffset + ReconyxHyperFire2MakernoteDirectory.TAG_FIRMWARE_VERSION);
 	        int minor = reader.getUInt16(makernoteOffset + ReconyxHyperFire2MakernoteDirectory.TAG_FIRMWARE_VERSION + 2);
 	        int revision = reader.getUInt16(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_FIRMWARE_VERSION + 4);
@@ -8608,17 +8608,15 @@ public class MetadataExtractor {
 	        directory.setDouble(ReconyxHyperFire2MakernoteDirectory.TAG_BATTERY_VOLTAGE_AVG, reader.getUInt16(makernoteOffset + ReconyxHyperFire2MakernoteDirectory.TAG_BATTERY_VOLTAGE_AVG) / 1000.0);
 
 
-	        directory.setString(ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, reader.getNullTerminatedString(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, 44, Charsets.UTF_8));
-	        directory.setStringValue(ReconyxHyperFire2MakernoteDirectory.TAG_SERIAL_NUMBER, new StringValue(reader.getBytes(makernoteOffset + ReconyxHyperFire2MakernoteDirectory.TAG_SERIAL_NUMBER, 28), Charsets.UTF_16LE));
+	        directory.setString(ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, reader.getNullTerminatedString(makernoteOffset + ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL, 44, ch.UTF_8));
+	        directory.setStringValue(ReconyxHyperFire2MakernoteDirectory.TAG_SERIAL_NUMBER, new StringValue(reader.getBytes(makernoteOffset + ReconyxHyperFire2MakernoteDirectory.TAG_SERIAL_NUMBER, 28), ch.UTF_16LE));
 	        // two unread bytes: the serial number's terminating null
 	    } 
-	    */
 
-	   /*
 	    private void processReconyxUltraFireMakernote(@NotNull final ReconyxUltraFireMakernoteDirectory directory, final int makernoteOffset, @NotNull final RandomAccessReader reader) throws IOException
 	    {
-	        directory.setString(ReconyxUltraFireMakernoteDirectory.TAG_LABEL, reader.getString(makernoteOffset, 9, Charsets.UTF_8));
-	        */
+	    	Charsets ch = new Charsets();
+	        directory.setString(ReconyxUltraFireMakernoteDirectory.TAG_LABEL, reader.getString(makernoteOffset, 9, ch.UTF_8));
 	        /*uint makernoteID = ByteConvert.FromBigEndianToNative(reader.GetUInt32(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagMakernoteID));
 	        directory.Set(ReconyxUltraFireMakernoteDirectory.TagMakernoteID, makernoteID);
 	        if (makernoteID != ReconyxUltraFireMakernoteDirectory.MAKERNOTE_ID) {
@@ -8632,7 +8630,6 @@ public class MetadataExtractor {
 	            directory.addError("Error processing Reconyx UltraFire makernote data: unknown Makernote Public ID 0x" + makernotePublicID.ToString("x8"));
 	            return;
 	        }*/
-	    /*
 	        //directory.Set(ReconyxUltraFireMakernoteDirectory.TagMakernotePublicSize, ByteConvert.FromBigEndianToNative(reader.GetUInt16(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagMakernotePublicSize)));
 
 	        //directory.Set(ReconyxUltraFireMakernoteDirectory.TagCameraVersion, ProcessReconyxUltraFireVersion(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagCameraVersion, reader));
@@ -8640,7 +8637,7 @@ public class MetadataExtractor {
 	        //directory.Set(ReconyxUltraFireMakernoteDirectory.TagBtlVersion, ProcessReconyxUltraFireVersion(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagBtlVersion, reader));
 	        //directory.Set(ReconyxUltraFireMakernoteDirectory.TagPexVersion, ProcessReconyxUltraFireVersion(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagPexVersion, reader));
 
-	        directory.setString(ReconyxUltraFireMakernoteDirectory.TAG_EVENT_TYPE, reader.getString(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_EVENT_TYPE, 1, Charsets.UTF_8));
+	        directory.setString(ReconyxUltraFireMakernoteDirectory.TAG_EVENT_TYPE, reader.getString(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_EVENT_TYPE, 1, ch.UTF_8));
 	        directory.setIntArray(ReconyxUltraFireMakernoteDirectory.TAG_SEQUENCE,
 	                      new int[]
 	                      {
@@ -8654,7 +8651,6 @@ public class MetadataExtractor {
 	        byte hour = reader.getByte(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_DATE_TIME_ORIGINAL + 2);
 	        byte day = reader.getByte(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_DATE_TIME_ORIGINAL + 3);
 	        byte month = reader.getByte(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_DATE_TIME_ORIGINAL + 4);
-	        */
 	        /*ushort year = ByteConvert.FromBigEndianToNative(reader.GetUInt16(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagDateTimeOriginal + 5));
 	        if ((seconds >= 0 && seconds < 60) &&
 	            (minutes >= 0 && minutes < 60) &&
@@ -8666,7 +8662,6 @@ public class MetadataExtractor {
 	        } else {
 	            directory.addError("Error processing Reconyx UltraFire makernote data: Date/Time Original " + year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds + " is not a valid date/time.");
 	        }*/
-	        /*
 	        //directory.Set(ReconyxUltraFireMakernoteDirectory.TagDayOfWeek, reader.GetByte(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagDayOfWeek));
 
 	        directory.setInt(ReconyxUltraFireMakernoteDirectory.TAG_MOON_PHASE, reader.getByte(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_MOON_PHASE));
@@ -8675,10 +8670,10 @@ public class MetadataExtractor {
 
 	        directory.setInt(ReconyxUltraFireMakernoteDirectory.TAG_FLASH, reader.getByte(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_FLASH));
 	        //directory.Set(ReconyxUltraFireMakernoteDirectory.TagBatteryVoltage, ByteConvert.FromBigEndianToNative(reader.GetUInt16(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TagBatteryVoltage)) / 1000.0);
-	        directory.setStringValue(ReconyxUltraFireMakernoteDirectory.TAG_SERIAL_NUMBER, new StringValue(reader.getBytes(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_SERIAL_NUMBER, 14), Charsets.UTF_8));
+	        directory.setStringValue(ReconyxUltraFireMakernoteDirectory.TAG_SERIAL_NUMBER, new StringValue(reader.getBytes(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_SERIAL_NUMBER, 14), ch.UTF_8));
 	        // unread byte: the serial number's terminating null
-	        directory.setString(ReconyxUltraFireMakernoteDirectory.TAG_USER_LABEL, reader.getNullTerminatedString(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_USER_LABEL, 20, Charsets.UTF_8));
-	    }  */
+	        directory.setString(ReconyxUltraFireMakernoteDirectory.TAG_USER_LABEL, reader.getNullTerminatedString(makernoteOffset + ReconyxUltraFireMakernoteDirectory.TAG_USER_LABEL, 20, ch.UTF_8));
+	    }
 	} 
 
 
@@ -18325,6 +18320,7554 @@ public class MetadataExtractor {
 	        return _tagNameMap;
 	    }
 	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link SigmaMakernoteDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class SigmaMakernoteDescriptor extends TagDescriptor<SigmaMakernoteDirectory>
+	{
+	    public SigmaMakernoteDescriptor(@NotNull SigmaMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
 
+	    @Override
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case SigmaMakernoteDirectory.TAG_EXPOSURE_MODE:
+	                return getExposureModeDescription();
+	            case SigmaMakernoteDirectory.TAG_METERING_MODE:
+	                return getMeteringModeDescription();
+	        }
+	        return super.getDescription(tagType);
+	    }
+
+	    @Nullable
+	    private String getMeteringModeDescription()
+	    {
+	        String value = _directory.getString(SigmaMakernoteDirectory.TAG_METERING_MODE);
+	        if (value == null || value.length() == 0)
+	            return null;
+	        switch (value.charAt(0)) {
+	            case '8': return "Multi Segment";
+	            case 'A': return "Average";
+	            case 'C': return "Center Weighted Average";
+	            default:
+	                return value;
+	        }
+	    }
+
+	    @Nullable
+	    private String getExposureModeDescription()
+	    {
+	        String value = _directory.getString(SigmaMakernoteDirectory.TAG_EXPOSURE_MODE);
+	        if (value == null || value.length() == 0)
+	            return null;
+	        switch (value.charAt(0)) {
+	            case 'A': return "Aperture Priority AE";
+	            case 'M': return "Manual";
+	            case 'P': return "Program AE";
+	            case 'S': return "Shutter Speed Priority AE";
+	            default:
+	                return value;
+	        }
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Sigma / Foveon cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class SigmaMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_SERIAL_NUMBER = 0x2;
+	    public static final int TAG_DRIVE_MODE = 0x3;
+	    public static final int TAG_RESOLUTION_MODE = 0x4;
+	    public static final int TAG_AUTO_FOCUS_MODE = 0x5;
+	    public static final int TAG_FOCUS_SETTING = 0x6;
+	    public static final int TAG_WHITE_BALANCE = 0x7;
+	    public static final int TAG_EXPOSURE_MODE = 0x8;
+	    public static final int TAG_METERING_MODE = 0x9;
+	    public static final int TAG_LENS_RANGE = 0xa;
+	    public static final int TAG_COLOR_SPACE = 0xb;
+	    public static final int TAG_EXPOSURE = 0xc;
+	    public static final int TAG_CONTRAST = 0xd;
+	    public static final int TAG_SHADOW = 0xe;
+	    public static final int TAG_HIGHLIGHT = 0xf;
+	    public static final int TAG_SATURATION = 0x10;
+	    public static final int TAG_SHARPNESS = 0x11;
+	    public static final int TAG_FILL_LIGHT = 0x12;
+	    public static final int TAG_COLOR_ADJUSTMENT = 0x14;
+	    public static final int TAG_ADJUSTMENT_MODE = 0x15;
+	    public static final int TAG_QUALITY = 0x16;
+	    public static final int TAG_FIRMWARE = 0x17;
+	    public static final int TAG_SOFTWARE = 0x18;
+	    public static final int TAG_AUTO_BRACKET = 0x19;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_SERIAL_NUMBER, "Serial Number");
+	        _tagNameMap.put(TAG_DRIVE_MODE, "Drive Mode");
+	        _tagNameMap.put(TAG_RESOLUTION_MODE, "Resolution Mode");
+	        _tagNameMap.put(TAG_AUTO_FOCUS_MODE, "Auto Focus Mode");
+	        _tagNameMap.put(TAG_FOCUS_SETTING, "Focus Setting");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(TAG_EXPOSURE_MODE, "Exposure Mode");
+	        _tagNameMap.put(TAG_METERING_MODE, "Metering Mode");
+	        _tagNameMap.put(TAG_LENS_RANGE, "Lens Range");
+	        _tagNameMap.put(TAG_COLOR_SPACE, "Color Space");
+	        _tagNameMap.put(TAG_EXPOSURE, "Exposure");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_SHADOW, "Shadow");
+	        _tagNameMap.put(TAG_HIGHLIGHT, "Highlight");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_FILL_LIGHT, "Fill Light");
+	        _tagNameMap.put(TAG_COLOR_ADJUSTMENT, "Color Adjustment");
+	        _tagNameMap.put(TAG_ADJUSTMENT_MODE, "Adjustment Mode");
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_FIRMWARE, "Firmware");
+	        _tagNameMap.put(TAG_SOFTWARE, "Software");
+	        _tagNameMap.put(TAG_AUTO_BRACKET, "Auto Bracket");
+	    }
+
+
+	    public SigmaMakernoteDirectory()
+	    {
+	        this.setDescriptor(new SigmaMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Sigma Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link KodakMakernoteDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class KodakMakernoteDescriptor extends TagDescriptor<KodakMakernoteDirectory>
+	{
+	    public KodakMakernoteDescriptor(@NotNull KodakMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case KodakMakernoteDirectory.TAG_QUALITY:
+	                return getQualityDescription();
+	            case KodakMakernoteDirectory.TAG_BURST_MODE:
+	                return getBurstModeDescription();
+	            case KodakMakernoteDirectory.TAG_SHUTTER_MODE:
+	                return getShutterModeDescription();
+	            case KodakMakernoteDirectory.TAG_FOCUS_MODE:
+	                return getFocusModeDescription();
+	            case KodakMakernoteDirectory.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case KodakMakernoteDirectory.TAG_FLASH_MODE:
+	                return getFlashModeDescription();
+	            case KodakMakernoteDirectory.TAG_FLASH_FIRED:
+	                return getFlashFiredDescription();
+	            case KodakMakernoteDirectory.TAG_COLOR_MODE:
+	                return getColorModeDescription();
+	            case KodakMakernoteDirectory.TAG_SHARPNESS:
+	                return getSharpnessDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getSharpnessDescription()
+	    {
+	        return getIndexedDescription(KodakMakernoteDirectory.TAG_SHARPNESS, "Normal");
+	    }
+
+	    @Nullable
+	    public String getColorModeDescription()
+	    {
+	        Integer value = _directory.getInteger(KodakMakernoteDirectory.TAG_COLOR_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x001: case 0x2000: return "B&W";
+	            case 0x002: case 0x4000: return "Sepia";
+	            case 0x003: return "B&W Yellow Filter";
+	            case 0x004: return "B&W Red Filter";
+	            case 0x020: return "Saturated Color";
+	            case 0x040: case 0x200: return "Neutral Color";
+	            case 0x100: return "Saturated Color";
+	            default: return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getFlashFiredDescription()
+	    {
+	        return getIndexedDescription(KodakMakernoteDirectory.TAG_FLASH_FIRED, "No", "Yes");
+	    }
+
+	    @Nullable
+	    public String getFlashModeDescription()
+	    {
+	        Integer value = _directory.getInteger(KodakMakernoteDirectory.TAG_FLASH_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x00: return "Auto";
+	            case 0x10: case 0x01: return "Fill Flash";
+	            case 0x20: case 0x02: return "Off";
+	            case 0x40: case 0x03: return "Red Eye";
+	            default: return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceDescription()
+	    {
+	        return getIndexedDescription(KodakMakernoteDirectory.TAG_WHITE_BALANCE, "Auto", "Flash", "Tungsten", "Daylight");
+	    }
+
+	    @Nullable
+	    public String getFocusModeDescription()
+	    {
+	        return getIndexedDescription(KodakMakernoteDirectory.TAG_FOCUS_MODE, "Normal", null, "Macro");
+	    }
+
+	    @Nullable
+	    public String getShutterModeDescription()
+	    {
+	        Integer value = _directory.getInteger(KodakMakernoteDirectory.TAG_SHUTTER_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0: return "Auto";
+	            case 8: return "Aperture Priority";
+	            case 32: return "Manual";
+	            default: return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getBurstModeDescription()
+	    {
+	        return getIndexedDescription(KodakMakernoteDirectory.TAG_BURST_MODE, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getQualityDescription()
+	    {
+	        return getIndexedDescription(KodakMakernoteDirectory.TAG_QUALITY, 1, "Fine", "Normal");
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Kodak cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class KodakMakernoteDirectory extends Directory
+	{
+	    public final static int TAG_KODAK_MODEL = 0;
+	    public final static int TAG_QUALITY = 9;
+	    public final static int TAG_BURST_MODE = 10;
+	    public final static int TAG_IMAGE_WIDTH = 12;
+	    public final static int TAG_IMAGE_HEIGHT = 14;
+	    public final static int TAG_YEAR_CREATED = 16;
+	    public final static int TAG_MONTH_DAY_CREATED = 18;
+	    public final static int TAG_TIME_CREATED = 20;
+	    public final static int TAG_BURST_MODE_2 = 24;
+	    public final static int TAG_SHUTTER_MODE = 27;
+	    public final static int TAG_METERING_MODE = 28;
+	    public final static int TAG_SEQUENCE_NUMBER = 29;
+	    public final static int TAG_F_NUMBER = 30;
+	    public final static int TAG_EXPOSURE_TIME = 32;
+	    public final static int TAG_EXPOSURE_COMPENSATION = 36;
+	    public final static int TAG_FOCUS_MODE = 56;
+	    public final static int TAG_WHITE_BALANCE = 64;
+	    public final static int TAG_FLASH_MODE = 92;
+	    public final static int TAG_FLASH_FIRED = 93;
+	    public final static int TAG_ISO_SETTING = 94;
+	    public final static int TAG_ISO = 96;
+	    public final static int TAG_TOTAL_ZOOM = 98;
+	    public final static int TAG_DATE_TIME_STAMP = 100;
+	    public final static int TAG_COLOR_MODE = 102;
+	    public final static int TAG_DIGITAL_ZOOM = 104;
+	    public final static int TAG_SHARPNESS = 107;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_KODAK_MODEL, "Kodak Model");
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_BURST_MODE, "Burst Mode");
+	        _tagNameMap.put(TAG_IMAGE_WIDTH, "Image Width");
+	        _tagNameMap.put(TAG_IMAGE_HEIGHT, "Image Height");
+	        _tagNameMap.put(TAG_YEAR_CREATED, "Year Created");
+	        _tagNameMap.put(TAG_MONTH_DAY_CREATED, "Month/Day Created");
+	        _tagNameMap.put(TAG_TIME_CREATED, "Time Created");
+	        _tagNameMap.put(TAG_BURST_MODE_2, "Burst Mode 2");
+	        _tagNameMap.put(TAG_SHUTTER_MODE, "Shutter Speed");
+	        _tagNameMap.put(TAG_METERING_MODE, "Metering Mode");
+	        _tagNameMap.put(TAG_SEQUENCE_NUMBER, "Sequence Number");
+	        _tagNameMap.put(TAG_F_NUMBER, "F Number");
+	        _tagNameMap.put(TAG_EXPOSURE_TIME, "Exposure Time");
+	        _tagNameMap.put(TAG_EXPOSURE_COMPENSATION, "Exposure Compensation");
+	        _tagNameMap.put(TAG_FOCUS_MODE, "Focus Mode");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(TAG_FLASH_MODE, "Flash Mode");
+	        _tagNameMap.put(TAG_FLASH_FIRED, "Flash Fired");
+	        _tagNameMap.put(TAG_ISO_SETTING, "ISO Setting");
+	        _tagNameMap.put(TAG_ISO, "ISO");
+	        _tagNameMap.put(TAG_TOTAL_ZOOM, "Total Zoom");
+	        _tagNameMap.put(TAG_DATE_TIME_STAMP, "Date/Time Stamp");
+	        _tagNameMap.put(TAG_COLOR_MODE, "Color Mode");
+	        _tagNameMap.put(TAG_DIGITAL_ZOOM, "Digital Zoom");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	    }
+
+	    public KodakMakernoteDirectory()
+	    {
+	        this.setDescriptor(new KodakMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Kodak Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link CanonMakernoteDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class CanonMakernoteDescriptor extends TagDescriptor<CanonMakernoteDirectory>
+	{
+	    public CanonMakernoteDescriptor(@NotNull CanonMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case CanonMakernoteDirectory.TAG_CANON_SERIAL_NUMBER:
+	                return getSerialNumberDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FLASH_ACTIVITY:
+	                return getFlashActivityDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_TYPE:
+	                return getFocusTypeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_DIGITAL_ZOOM:
+	                return getDigitalZoomDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_RECORD_MODE:
+	                return getRecordModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_QUALITY:
+	                return getQualityDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_MACRO_MODE:
+	                return getMacroModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_SELF_TIMER_DELAY:
+	                return getSelfTimerDelayDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FLASH_MODE:
+	                return getFlashModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_CONTINUOUS_DRIVE_MODE:
+	                return getContinuousDriveModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_MODE_1:
+	                return getFocusMode1Description();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_IMAGE_SIZE:
+	                return getImageSizeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_EASY_SHOOTING_MODE:
+	                return getEasyShootingModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_CONTRAST:
+	                return getContrastDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_SATURATION:
+	                return getSaturationDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_SHARPNESS:
+	                return getSharpnessDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_ISO:
+	                return getIsoDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_METERING_MODE:
+	                return getMeteringModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_AF_POINT_SELECTED:
+	                return getAfPointSelectedDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_EXPOSURE_MODE:
+	                return getExposureModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_LENS_TYPE:
+	                return getLensTypeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_LONG_FOCAL_LENGTH:
+	                return getLongFocalLengthDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_SHORT_FOCAL_LENGTH:
+	                return getShortFocalLengthDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FOCAL_UNITS_PER_MM:
+	                return getFocalUnitsPerMillimetreDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FLASH_DETAILS:
+	                return getFlashDetailsDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_MODE_2:
+	                return getFocusMode2Description();
+	            case CanonMakernoteDirectory.FocalLength.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case CanonMakernoteDirectory.FocalLength.TAG_AF_POINT_USED:
+	                return getAfPointUsedDescription();
+	            case CanonMakernoteDirectory.FocalLength.TAG_FLASH_BIAS:
+	                return getFlashBiasDescription();
+	            case CanonMakernoteDirectory.AFInfo.TAG_AF_POINTS_IN_FOCUS:
+	                return getTagAfPointsInFocus();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_MAX_APERTURE:
+	                return getMaxApertureDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_MIN_APERTURE:
+	                return getMinApertureDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_CONTINUOUS:
+	                return getFocusContinuousDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_AE_SETTING:
+	                return getAESettingDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_DISPLAY_APERTURE:
+	                return getDisplayApertureDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_SPOT_METERING_MODE:
+	                return getSpotMeteringModeDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_PHOTO_EFFECT:
+	                return getPhotoEffectDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_MANUAL_FLASH_OUTPUT:
+	                return getManualFlashOutputDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_COLOR_TONE:
+	                return getColorToneDescription();
+	            case CanonMakernoteDirectory.CameraSettings.TAG_SRAW_QUALITY:
+	                return getSRawQualityDescription();
+
+	            // It turns out that these values are dependent upon the camera model and therefore the below code was
+	            // incorrect for some Canon models.  This needs to be revisited.
+
+//	            case TAG_CANON_CUSTOM_FUNCTION_LONG_EXPOSURE_NOISE_REDUCTION:
+//	                return getLongExposureNoiseReductionDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_SHUTTER_AUTO_EXPOSURE_LOCK_BUTTONS:
+//	                return getShutterAutoExposureLockButtonDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_MIRROR_LOCKUP:
+//	                return getMirrorLockupDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_TV_AV_AND_EXPOSURE_LEVEL:
+//	                return getTvAndAvExposureLevelDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_AF_ASSIST_LIGHT:
+//	                return getAutoFocusAssistLightDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_SHUTTER_SPEED_IN_AV_MODE:
+//	                return getShutterSpeedInAvModeDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_BRACKETING:
+//	                return getAutoExposureBracketingSequenceAndAutoCancellationDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_SHUTTER_CURTAIN_SYNC:
+//	                return getShutterCurtainSyncDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_AF_STOP:
+//	                return getLensAutoFocusStopButtonDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_FILL_FLASH_REDUCTION:
+//	                return getFillFlashReductionDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_MENU_BUTTON_RETURN:
+//	                return getMenuButtonReturnPositionDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_SET_BUTTON_FUNCTION:
+//	                return getSetButtonFunctionWhenShootingDescription();
+//	            case TAG_CANON_CUSTOM_FUNCTION_SENSOR_CLEANING:
+//	                return getSensorCleaningDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getSerialNumberDescription()
+	    {
+	        // http://www.ozhiker.com/electronics/pjmt/jpeg_info/canon_mn.html
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.TAG_CANON_SERIAL_NUMBER);
+	        if (value == null)
+	            return null;
+	        return String.format("%04X%05d", (value >> 8) & 0xFF, value & 0xFF);
+	    }
+
+	/*
+	    @Nullable
+	    public String getLongExposureNoiseReductionDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_LONG_EXPOSURE_NOISE_REDUCTION);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Off";
+	            case 1:     return "On";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getShutterAutoExposureLockButtonDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_SHUTTER_AUTO_EXPOSURE_LOCK_BUTTONS);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "AF/AE lock";
+	            case 1:     return "AE lock/AF";
+	            case 2:     return "AF/AF lock";
+	            case 3:     return "AE+release/AE+AF";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getMirrorLockupDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_MIRROR_LOCKUP);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Disabled";
+	            case 1:     return "Enabled";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getTvAndAvExposureLevelDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_TV_AV_AND_EXPOSURE_LEVEL);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "1/2 stop";
+	            case 1:     return "1/3 stop";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getAutoFocusAssistLightDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_AF_ASSIST_LIGHT);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "On (Auto)";
+	            case 1:     return "Off";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getShutterSpeedInAvModeDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_SHUTTER_SPEED_IN_AV_MODE);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Automatic";
+	            case 1:     return "1/200 (fixed)";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getAutoExposureBracketingSequenceAndAutoCancellationDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_BRACKETING);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "0,-,+ / Enabled";
+	            case 1:     return "0,-,+ / Disabled";
+	            case 2:     return "-,0,+ / Enabled";
+	            case 3:     return "-,0,+ / Disabled";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getShutterCurtainSyncDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_SHUTTER_CURTAIN_SYNC);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "1st Curtain Sync";
+	            case 1:     return "2nd Curtain Sync";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getLensAutoFocusStopButtonDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_AF_STOP);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "AF stop";
+	            case 1:     return "Operate AF";
+	            case 2:     return "Lock AE and start timer";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getFillFlashReductionDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_FILL_FLASH_REDUCTION);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Enabled";
+	            case 1:     return "Disabled";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getMenuButtonReturnPositionDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_MENU_BUTTON_RETURN);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Top";
+	            case 1:     return "Previous (volatile)";
+	            case 2:     return "Previous";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSetButtonFunctionWhenShootingDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_SET_BUTTON_FUNCTION);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Not Assigned";
+	            case 1:     return "Change Quality";
+	            case 2:     return "Change ISO Speed";
+	            case 3:     return "Select Parameters";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSensorCleaningDescription()
+	    {
+	        Integer value = _directory.getInteger(TAG_CANON_CUSTOM_FUNCTION_SENSOR_CLEANING);
+	        if (value==null)
+	            return null;
+	        switch (value) {
+	            case 0:     return "Disabled";
+	            case 1:     return "Enabled";
+	            default:    return "Unknown (" + value + ")";
+	        }
+	    }
+	*/
+
+	    @Nullable
+	    public String getFlashBiasDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.FocalLength.TAG_FLASH_BIAS);
+
+	        if (value == null)
+	            return null;
+
+	        boolean isNegative = false;
+	        if (value > 0xF000) {
+	            isNegative = true;
+	            value = 0xFFFF - value;
+	            value++;
+	        }
+
+	        // this tag is interesting in that the values returned are:
+	        //  0, 0.375, 0.5, 0.626, 1
+	        // not
+	        //  0, 0.33,  0.5, 0.66,  1
+
+	        return (isNegative ? "-" : "") + Float.toString(value / 32f) + " EV";
+	    }
+
+	    @Nullable
+	    public String getAfPointUsedDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.FocalLength.TAG_AF_POINT_USED);
+	        if (value == null)
+	            return null;
+	        if ((value & 0x7) == 0) {
+	            return "Right";
+	        } else if ((value & 0x7) == 1) {
+	            return "Centre";
+	        } else if ((value & 0x7) == 2) {
+	            return "Left";
+	        } else {
+	            return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getTagAfPointsInFocus()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.AFInfo.TAG_AF_POINTS_IN_FOCUS);
+	        if (value == null)
+	            return null;
+
+	        StringBuilder sb = new StringBuilder();
+
+	        for (int i = 0; i < 16; i++)
+	        {
+	            if ((value & 1 << i) != 0)
+	            {
+	                if (sb.length() != 0)
+	                    sb.append(',');
+	                sb.append(i);
+	            }
+	        }
+
+	        return sb.length() == 0 ? "None" : sb.toString();
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceDescription()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.FocalLength.TAG_WHITE_BALANCE,
+	            "Auto",
+	            "Sunny",
+	            "Cloudy",
+	            "Tungsten",
+	            "Florescent",
+	            "Flash",
+	            "Custom"
+	        );
+	    }
+
+	    @Nullable
+	    public String getFocusMode2Description()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_MODE_2, "Single", "Continuous");
+	    }
+
+	    @Nullable
+	    public String getFlashDetailsDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_FLASH_DETAILS);
+	        if (value == null)
+	            return null;
+	        if (((value >> 14) & 1) != 0) {
+	            return "External E-TTL";
+	        }
+	        if (((value >> 13) & 1) != 0) {
+	            return "Internal flash";
+	        }
+	        if (((value >> 11) & 1) != 0) {
+	            return "FP sync used";
+	        }
+	        if (((value >> 4) & 1) != 0) {
+	            return "FP sync enabled";
+	        }
+	        return "Unknown (" + value + ")";
+	    }
+
+	    @Nullable
+	    public String getFocalUnitsPerMillimetreDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_FOCAL_UNITS_PER_MM);
+	        if (value == null)
+	            return null;
+	        if (value != 0) {
+	            return Integer.toString(value);
+	        } else {
+	            return "";
+	        }
+	    }
+
+	    @Nullable
+	    public String getShortFocalLengthDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_SHORT_FOCAL_LENGTH);
+	        if (value == null)
+	            return null;
+	        String units = getFocalUnitsPerMillimetreDescription();
+	        return Integer.toString(value) + " " + units;
+	    }
+
+	    @Nullable
+	    public String getLongFocalLengthDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_LONG_FOCAL_LENGTH);
+	        if (value == null)
+	            return null;
+	        String units = getFocalUnitsPerMillimetreDescription();
+	        return Integer.toString(value) + " " + units;
+	    }
+
+	    @Nullable
+	    public String getExposureModeDescription()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.CameraSettings.TAG_EXPOSURE_MODE,
+	            "Easy shooting",
+	            "Program",
+	            "Tv-priority",
+	            "Av-priority",
+	            "Manual",
+	            "A-DEP"
+	        );
+	    }
+
+	    @Nullable
+	    public String getLensTypeDescription() {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_LENS_TYPE);
+	        if (value == null)
+	            return null;
+
+	        return _lensTypeById.containsKey(value)
+	            ? _lensTypeById.get(value)
+	            : String.format("Unknown (%d)", value);
+	    }
+
+	    @Nullable
+	    public String getMaxApertureDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_MAX_APERTURE);
+	        if (value == null)
+	            return null;
+	        if (value > 512)
+	            return String.format("Unknown (%d)", value);
+	        return getFStopDescription(Math.exp(decodeCanonEv(value) * Math.log(2.0) / 2.0));
+	    }
+
+	    @Nullable
+	    public String getMinApertureDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_MIN_APERTURE);
+	        if (value == null)
+	            return null;
+	        if (value > 512)
+	            return String.format("Unknown (%d)", value);
+	        return getFStopDescription(Math.exp(decodeCanonEv(value) * Math.log(2.0) / 2.0));
+	    }
+
+	    @Nullable
+	    public String getAfPointSelectedDescription()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.CameraSettings.TAG_AF_POINT_SELECTED,
+	            0x3000,
+	            "None (MF)",
+	            "Auto selected",
+	            "Right",
+	            "Centre",
+	            "Left"
+	        );
+	    }
+
+	    @Nullable
+	    public String getMeteringModeDescription()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.CameraSettings.TAG_METERING_MODE,
+	            3,
+	            "Evaluative",
+	            "Partial",
+	            "Centre weighted"
+	        );
+	    }
+
+	    @Nullable
+	    public String getIsoDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_ISO);
+	        if (value == null)
+	            return null;
+
+	        // Canon PowerShot S3 is special
+	        int canonMask = 0x4000;
+	        if ((value & canonMask) != 0)
+	            return "" + (value & ~canonMask);
+
+	        switch (value) {
+	            case 0:
+	                return "Not specified (see ISOSpeedRatings tag)";
+	            case 15:
+	                return "Auto";
+	            case 16:
+	                return "50";
+	            case 17:
+	                return "100";
+	            case 18:
+	                return "200";
+	            case 19:
+	                return "400";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSharpnessDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_SHARPNESS);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0xFFFF:
+	                return "Low";
+	            case 0x000:
+	                return "Normal";
+	            case 0x001:
+	                return "High";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSaturationDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_SATURATION);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0xFFFF:
+	                return "Low";
+	            case 0x000:
+	                return "Normal";
+	            case 0x001:
+	                return "High";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getContrastDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_CONTRAST);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0xFFFF:
+	                return "Low";
+	            case 0x000:
+	                return "Normal";
+	            case 0x001:
+	                return "High";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getEasyShootingModeDescription()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.CameraSettings.TAG_EASY_SHOOTING_MODE,
+	            "Full auto",
+	            "Manual",
+	            "Landscape",
+	            "Fast shutter",
+	            "Slow shutter",
+	            "Night",
+	            "B&W",
+	            "Sepia",
+	            "Portrait",
+	            "Sports",
+	            "Macro / Closeup",
+	            "Pan focus"
+	        );
+	    }
+
+	    @Nullable
+	    public String getImageSizeDescription()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.CameraSettings.TAG_IMAGE_SIZE,
+	            "Large",
+	            "Medium",
+	            "Small"
+	        );
+	    }
+
+	    @Nullable
+	    public String getFocusMode1Description()
+	    {
+	        return getIndexedDescription(
+	        		CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_MODE_1,
+	            "One-shot",
+	            "AI Servo",
+	            "AI Focus",
+	            "Manual Focus",
+	            // TODO should check field 32 here (FOCUS_MODE_2)
+	            "Single",
+	            "Continuous",
+	            "Manual Focus"
+	        );
+	    }
+
+	    @Nullable
+	    public String getContinuousDriveModeDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_CONTINUOUS_DRIVE_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0:
+	                final Integer delay = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_SELF_TIMER_DELAY);
+	                if (delay != null)
+	                    return delay == 0 ? "Single shot" : "Single shot with self-timer";
+	            case 1:
+	                return "Continuous";
+	        }
+	        return "Unknown (" + value + ")";
+	    }
+
+	    @Nullable
+	    public String getFlashModeDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_FLASH_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0:
+	                return "No flash fired";
+	            case 1:
+	                return "Auto";
+	            case 2:
+	                return "On";
+	            case 3:
+	                return "Red-eye reduction";
+	            case 4:
+	                return "Slow-synchro";
+	            case 5:
+	                return "Auto and red-eye reduction";
+	            case 6:
+	                return "On and red-eye reduction";
+	            case 16:
+	                // note: this value not set on Canon D30
+	                return "External flash";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSelfTimerDelayDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_SELF_TIMER_DELAY);
+	        if (value == null)
+	            return null;
+	        if (value == 0) {
+	            return "Self timer not used";
+	        } else {
+	            DecimalFormat format = new DecimalFormat("0.##");
+	            return format.format((double)value * 0.1d) + " sec";
+	        }
+	    }
+
+	    @Nullable
+	    public String getMacroModeDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_MACRO_MODE, 1, "Macro", "Normal");
+	    }
+
+	    @Nullable
+	    public String getQualityDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_QUALITY);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case -1:
+	                return "n/a";
+	            case 1:
+	                return "Economy";
+	            case 2:
+	                return "Normal";
+	            case 3:
+	                return "Fine";
+	            case 4:
+	                return "RAW";
+	            case 5:
+	                return "Superfine";
+	            case 7:
+	                return "CRAW";
+	            case 130:
+	                return "Normal Movie";
+	            case 1131:
+	                return "Movie (2)";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getDigitalZoomDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_DIGITAL_ZOOM, "No digital zoom", "2x", "4x");
+	    }
+
+	    @Nullable
+	    public String getRecordModeDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_RECORD_MODE, 1, "JPEG", "CRW+THM", "AVI+THM", "TIF", "TIF+JPEG", "CR2", "CR2+JPEG", null, "MOV", "MP4");
+	    }
+
+	    @Nullable
+	    public String getFocusTypeDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_TYPE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0:
+	                return "Manual";
+	            case 1:
+	                return "Auto";
+	            case 3:
+	                return "Close-up (Macro)";
+	            case 8:
+	                return "Locked (Pan Mode)";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getFlashActivityDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_FLASH_ACTIVITY, "Flash did not fire", "Flash fired");
+	    }
+
+	    @Nullable
+	    public String getFocusContinuousDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_FOCUS_CONTINUOUS, 0,
+	            "Single", "Continuous", null, null, null, null, null, null, "Manual");
+	    }
+
+	    @Nullable
+	    public String getAESettingDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_AE_SETTING, 0,
+	            "Normal AE", "Exposure Compensation", "AE Lock", "AE Lock + Exposure Comp.", "No AE");
+	    }
+
+	    @Nullable
+	    public String getDisplayApertureDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_DISPLAY_APERTURE);
+	        if (value == null)
+	            return null;
+
+	        if (value == 0xFFFF)
+	            return value.toString();
+	        return getFStopDescription(value / 10f);
+	    }
+
+	    @Nullable
+	    public String getSpotMeteringModeDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_SPOT_METERING_MODE, 0,
+	            "Center", "AF Point");
+	    }
+
+	    @Nullable
+	    public String getPhotoEffectDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_PHOTO_EFFECT);
+	        if (value == null)
+	            return null;
+
+	        switch (value)
+	        {
+	            case 0:
+	                return "Off";
+	            case 1:
+	                return "Vivid";
+	            case 2:
+	                return "Neutral";
+	            case 3:
+	                return "Smooth";
+	            case 4:
+	                return "Sepia";
+	            case 5:
+	                return "B&W";
+	            case 6:
+	                return "Custom";
+	            case 100:
+	                return "My Color Data";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getManualFlashOutputDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_MANUAL_FLASH_OUTPUT);
+	        if (value == null)
+	            return null;
+
+	        switch (value)
+	        {
+	            case 0:
+	                return "n/a";
+	            case 0x500:
+	                return "Full";
+	            case 0x502:
+	                return "Medium";
+	            case 0x504:
+	                return "Low";
+	            case 0x7fff:
+	                return "n/a";   // (EOS models)
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getColorToneDescription()
+	    {
+	        Integer value = _directory.getInteger(CanonMakernoteDirectory.CameraSettings.TAG_COLOR_TONE);
+	        if (value == null)
+	            return null;
+
+	        return value == 0x7fff ? "n/a" : value.toString();
+	    }
+
+	    @Nullable
+	    public String getSRawQualityDescription()
+	    {
+	        return getIndexedDescription(CanonMakernoteDirectory.CameraSettings.TAG_SRAW_QUALITY, 0, "n/a", "sRAW1 (mRAW)", "sRAW2 (sRAW)");
+	    }
+
+	    /**
+	     * Canon hex-based EV (modulo 0x20) to real number.
+	     *
+	     * Converted from Exiftool version 10.10 created by Phil Harvey
+	     * http://www.sno.phy.queensu.ca/~phil/exiftool/
+	     * lib\Image\ExifTool\Canon.pm
+	     *
+	     *         eg) 0x00 -> 0
+	     *             0x0c -> 0.33333
+	     *             0x10 -> 0.5
+	     *             0x14 -> 0.66666
+	     *             0x20 -> 1   ... etc
+	     */
+	    private double decodeCanonEv(int val)
+	    {
+	        int sign = 1;
+	        if (val < 0)
+	        {
+	            val = -val;
+	            sign = -1;
+	        }
+
+	        int frac = val & 0x1f;
+	        val -= frac;
+
+	        if (frac == 0x0c)
+	            frac = 0x20 / 3;
+	        else if (frac == 0x14)
+	            frac = 0x40 / 3;
+
+	        return sign * (val + frac) / (double)0x20;
+	    }
+
+	    /**
+	     *  Map from <see cref="CanonMakernoteDirectory.CameraSettings.TagLensType"/> to string descriptions.
+	     *
+	     *  Data sourced from http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Canon.html#LensType
+	     *
+	     *  Note that only Canon lenses are listed. Lenses from other manufacturers may identify themselves to the camera
+	     *  as being from this set, but in fact may be quite different. This limits the usefulness of this data,
+	     *  unfortunately.
+	     */
+	    private final HashMap<Integer, String> _lensTypeById = new HashMap<Integer, String>();
+
+	     {
+	        _lensTypeById.put(1, "Canon EF 50mm f/1.8");
+	        _lensTypeById.put(2, "Canon EF 28mm f/2.8");
+	        _lensTypeById.put(3, "Canon EF 135mm f/2.8 Soft");
+	        _lensTypeById.put(4, "Canon EF 35-105mm f/3.5-4.5 or Sigma Lens");
+	        _lensTypeById.put(5, "Canon EF 35-70mm f/3.5-4.5");
+	        _lensTypeById.put(6, "Canon EF 28-70mm f/3.5-4.5 or Sigma or Tokina Lens");
+	        _lensTypeById.put(7, "Canon EF 100-300mm f/5.6L");
+	        _lensTypeById.put(8, "Canon EF 100-300mm f/5.6 or Sigma or Tokina Lens");
+	        _lensTypeById.put(9, "Canon EF 70-210mm f/4");
+	        _lensTypeById.put(10, "Canon EF 50mm f/2.5 Macro or Sigma Lens");
+	        _lensTypeById.put(11, "Canon EF 35mm f/2");
+	        _lensTypeById.put(13, "Canon EF 15mm f/2.8 Fisheye");
+	        _lensTypeById.put(14, "Canon EF 50-200mm f/3.5-4.5L");
+	        _lensTypeById.put(15, "Canon EF 50-200mm f/3.5-4.5");
+	        _lensTypeById.put(16, "Canon EF 35-135mm f/3.5-4.5");
+	        _lensTypeById.put(17, "Canon EF 35-70mm f/3.5-4.5A");
+	        _lensTypeById.put(18, "Canon EF 28-70mm f/3.5-4.5");
+	        _lensTypeById.put(20, "Canon EF 100-200mm f/4.5A");
+	        _lensTypeById.put(21, "Canon EF 80-200mm f/2.8L");
+	        _lensTypeById.put(22, "Canon EF 20-35mm f/2.8L or Tokina Lens");
+	        _lensTypeById.put(23, "Canon EF 35-105mm f/3.5-4.5");
+	        _lensTypeById.put(24, "Canon EF 35-80mm f/4-5.6 Power Zoom");
+	        _lensTypeById.put(25, "Canon EF 35-80mm f/4-5.6 Power Zoom");
+	        _lensTypeById.put(26, "Canon EF 100mm f/2.8 Macro or Other Lens");
+	        _lensTypeById.put(27, "Canon EF 35-80mm f/4-5.6");
+	        _lensTypeById.put(28, "Canon EF 80-200mm f/4.5-5.6 or Tamron Lens");
+	        _lensTypeById.put(29, "Canon EF 50mm f/1.8 II");
+	        _lensTypeById.put(30, "Canon EF 35-105mm f/4.5-5.6");
+	        _lensTypeById.put(31, "Canon EF 75-300mm f/4-5.6 or Tamron Lens");
+	        _lensTypeById.put(32, "Canon EF 24mm f/2.8 or Sigma Lens");
+	        _lensTypeById.put(33, "Voigtlander or Carl Zeiss Lens");
+	        _lensTypeById.put(35, "Canon EF 35-80mm f/4-5.6");
+	        _lensTypeById.put(36, "Canon EF 38-76mm f/4.5-5.6");
+	        _lensTypeById.put(37, "Canon EF 35-80mm f/4-5.6 or Tamron Lens");
+	        _lensTypeById.put(38, "Canon EF 80-200mm f/4.5-5.6");
+	        _lensTypeById.put(39, "Canon EF 75-300mm f/4-5.6");
+	        _lensTypeById.put(40, "Canon EF 28-80mm f/3.5-5.6");
+	        _lensTypeById.put(41, "Canon EF 28-90mm f/4-5.6");
+	        _lensTypeById.put(42, "Canon EF 28-200mm f/3.5-5.6 or Tamron Lens");
+	        _lensTypeById.put(43, "Canon EF 28-105mm f/4-5.6");
+	        _lensTypeById.put(44, "Canon EF 90-300mm f/4.5-5.6");
+	        _lensTypeById.put(45, "Canon EF-S 18-55mm f/3.5-5.6 [II]");
+	        _lensTypeById.put(46, "Canon EF 28-90mm f/4-5.6");
+	        _lensTypeById.put(47, "Zeiss Milvus 35mm f/2 or 50mm f/2");
+	        _lensTypeById.put(48, "Canon EF-S 18-55mm f/3.5-5.6 IS");
+	        _lensTypeById.put(49, "Canon EF-S 55-250mm f/4-5.6 IS");
+	        _lensTypeById.put(50, "Canon EF-S 18-200mm f/3.5-5.6 IS");
+	        _lensTypeById.put(51, "Canon EF-S 18-135mm f/3.5-5.6 IS");
+	        _lensTypeById.put(52, "Canon EF-S 18-55mm f/3.5-5.6 IS II");
+	        _lensTypeById.put(53, "Canon EF-S 18-55mm f/3.5-5.6 III");
+	        _lensTypeById.put(54, "Canon EF-S 55-250mm f/4-5.6 IS II");
+	        _lensTypeById.put(94, "Canon TS-E 17mm f/4L");
+	        _lensTypeById.put(95, "Canon TS-E 24.0mm f/3.5 L II");
+	        _lensTypeById.put(124, "Canon MP-E 65mm f/2.8 1-5x Macro Photo");
+	        _lensTypeById.put(125, "Canon TS-E 24mm f/3.5L");
+	        _lensTypeById.put(126, "Canon TS-E 45mm f/2.8");
+	        _lensTypeById.put(127, "Canon TS-E 90mm f/2.8");
+	        _lensTypeById.put(129, "Canon EF 300mm f/2.8L");
+	        _lensTypeById.put(130, "Canon EF 50mm f/1.0L");
+	        _lensTypeById.put(131, "Canon EF 28-80mm f/2.8-4L or Sigma Lens");
+	        _lensTypeById.put(132, "Canon EF 1200mm f/5.6L");
+	        _lensTypeById.put(134, "Canon EF 600mm f/4L IS");
+	        _lensTypeById.put(135, "Canon EF 200mm f/1.8L");
+	        _lensTypeById.put(136, "Canon EF 300mm f/2.8L");
+	        _lensTypeById.put(137, "Canon EF 85mm f/1.2L or Sigma or Tamron Lens");
+	        _lensTypeById.put(138, "Canon EF 28-80mm f/2.8-4L");
+	        _lensTypeById.put(139, "Canon EF 400mm f/2.8L");
+	        _lensTypeById.put(140, "Canon EF 500mm f/4.5L");
+	        _lensTypeById.put(141, "Canon EF 500mm f/4.5L");
+	        _lensTypeById.put(142, "Canon EF 300mm f/2.8L IS");
+	        _lensTypeById.put(143, "Canon EF 500mm f/4L IS or Sigma Lens");
+	        _lensTypeById.put(144, "Canon EF 35-135mm f/4-5.6 USM");
+	        _lensTypeById.put(145, "Canon EF 100-300mm f/4.5-5.6 USM");
+	        _lensTypeById.put(146, "Canon EF 70-210mm f/3.5-4.5 USM");
+	        _lensTypeById.put(147, "Canon EF 35-135mm f/4-5.6 USM");
+	        _lensTypeById.put(148, "Canon EF 28-80mm f/3.5-5.6 USM");
+	        _lensTypeById.put(149, "Canon EF 100mm f/2 USM");
+	        _lensTypeById.put(150, "Canon EF 14mm f/2.8L or Sigma Lens");
+	        _lensTypeById.put(151, "Canon EF 200mm f/2.8L");
+	        _lensTypeById.put(152, "Canon EF 300mm f/4L IS or Sigma Lens");
+	        _lensTypeById.put(153, "Canon EF 35-350mm f/3.5-5.6L or Sigma or Tamron Lens");
+	        _lensTypeById.put(154, "Canon EF 20mm f/2.8 USM or Zeiss Lens");
+	        _lensTypeById.put(155, "Canon EF 85mm f/1.8 USM");
+	        _lensTypeById.put(156, "Canon EF 28-105mm f/3.5-4.5 USM or Tamron Lens");
+	        _lensTypeById.put(160, "Canon EF 20-35mm f/3.5-4.5 USM or Tamron or Tokina Lens");
+	        _lensTypeById.put(161, "Canon EF 28-70mm f/2.8L or Sigma or Tamron Lens");
+	        _lensTypeById.put(162, "Canon EF 200mm f/2.8L");
+	        _lensTypeById.put(163, "Canon EF 300mm f/4L");
+	        _lensTypeById.put(164, "Canon EF 400mm f/5.6L");
+	        _lensTypeById.put(165, "Canon EF 70-200mm f/2.8 L");
+	        _lensTypeById.put(166, "Canon EF 70-200mm f/2.8 L + 1.4x");
+	        _lensTypeById.put(167, "Canon EF 70-200mm f/2.8 L + 2x");
+	        _lensTypeById.put(168, "Canon EF 28mm f/1.8 USM or Sigma Lens");
+	        _lensTypeById.put(169, "Canon EF 17-35mm f/2.8L or Sigma Lens");
+	        _lensTypeById.put(170, "Canon EF 200mm f/2.8L II");
+	        _lensTypeById.put(171, "Canon EF 300mm f/4L");
+	        _lensTypeById.put(172, "Canon EF 400mm f/5.6L or Sigma Lens");
+	        _lensTypeById.put(173, "Canon EF 180mm Macro f/3.5L or Sigma Lens");
+	        _lensTypeById.put(174, "Canon EF 135mm f/2L or Other Lens");
+	        _lensTypeById.put(175, "Canon EF 400mm f/2.8L");
+	        _lensTypeById.put(176, "Canon EF 24-85mm f/3.5-4.5 USM");
+	        _lensTypeById.put(177, "Canon EF 300mm f/4L IS");
+	        _lensTypeById.put(178, "Canon EF 28-135mm f/3.5-5.6 IS");
+	        _lensTypeById.put(179, "Canon EF 24mm f/1.4L");
+	        _lensTypeById.put(180, "Canon EF 35mm f/1.4L or Other Lens");
+	        _lensTypeById.put(181, "Canon EF 100-400mm f/4.5-5.6L IS + 1.4x or Sigma Lens");
+	        _lensTypeById.put(182, "Canon EF 100-400mm f/4.5-5.6L IS + 2x or Sigma Lens");
+	        _lensTypeById.put(183, "Canon EF 100-400mm f/4.5-5.6L IS or Sigma Lens");
+	        _lensTypeById.put(184, "Canon EF 400mm f/2.8L + 2x");
+	        _lensTypeById.put(185, "Canon EF 600mm f/4L IS");
+	        _lensTypeById.put(186, "Canon EF 70-200mm f/4L");
+	        _lensTypeById.put(187, "Canon EF 70-200mm f/4L + 1.4x");
+	        _lensTypeById.put(188, "Canon EF 70-200mm f/4L + 2x");
+	        _lensTypeById.put(189, "Canon EF 70-200mm f/4L + 2.8x");
+	        _lensTypeById.put(190, "Canon EF 100mm f/2.8 Macro USM");
+	        _lensTypeById.put(191, "Canon EF 400mm f/4 DO IS");
+	        _lensTypeById.put(193, "Canon EF 35-80mm f/4-5.6 USM");
+	        _lensTypeById.put(194, "Canon EF 80-200mm f/4.5-5.6 USM");
+	        _lensTypeById.put(195, "Canon EF 35-105mm f/4.5-5.6 USM");
+	        _lensTypeById.put(196, "Canon EF 75-300mm f/4-5.6 USM");
+	        _lensTypeById.put(197, "Canon EF 75-300mm f/4-5.6 IS USM");
+	        _lensTypeById.put(198, "Canon EF 50mm f/1.4 USM or Zeiss Lens");
+	        _lensTypeById.put(199, "Canon EF 28-80mm f/3.5-5.6 USM");
+	        _lensTypeById.put(200, "Canon EF 75-300mm f/4-5.6 USM");
+	        _lensTypeById.put(201, "Canon EF 28-80mm f/3.5-5.6 USM");
+	        _lensTypeById.put(202, "Canon EF 28-80mm f/3.5-5.6 USM IV");
+	        _lensTypeById.put(208, "Canon EF 22-55mm f/4-5.6 USM");
+	        _lensTypeById.put(209, "Canon EF 55-200mm f/4.5-5.6");
+	        _lensTypeById.put(210, "Canon EF 28-90mm f/4-5.6 USM");
+	        _lensTypeById.put(211, "Canon EF 28-200mm f/3.5-5.6 USM");
+	        _lensTypeById.put(212, "Canon EF 28-105mm f/4-5.6 USM");
+	        _lensTypeById.put(213, "Canon EF 90-300mm f/4.5-5.6 USM or Tamron Lens");
+	        _lensTypeById.put(214, "Canon EF-S 18-55mm f/3.5-5.6 USM");
+	        _lensTypeById.put(215, "Canon EF 55-200mm f/4.5-5.6 II USM");
+	        _lensTypeById.put(217, "Tamron AF 18-270mm f/3.5-6.3 Di II VC PZD");
+	        _lensTypeById.put(224, "Canon EF 70-200mm f/2.8L IS");
+	        _lensTypeById.put(225, "Canon EF 70-200mm f/2.8L IS + 1.4x");
+	        _lensTypeById.put(226, "Canon EF 70-200mm f/2.8L IS + 2x");
+	        _lensTypeById.put(227, "Canon EF 70-200mm f/2.8L IS + 2.8x");
+	        _lensTypeById.put(228, "Canon EF 28-105mm f/3.5-4.5 USM");
+	        _lensTypeById.put(229, "Canon EF 16-35mm f/2.8L");
+	        _lensTypeById.put(230, "Canon EF 24-70mm f/2.8L");
+	        _lensTypeById.put(231, "Canon EF 17-40mm f/4L");
+	        _lensTypeById.put(232, "Canon EF 70-300mm f/4.5-5.6 DO IS USM");
+	        _lensTypeById.put(233, "Canon EF 28-300mm f/3.5-5.6L IS");
+	        _lensTypeById.put(234, "Canon EF-S 17-85mm f/4-5.6 IS USM or Tokina Lens");
+	        _lensTypeById.put(235, "Canon EF-S 10-22mm f/3.5-4.5 USM");
+	        _lensTypeById.put(236, "Canon EF-S 60mm f/2.8 Macro USM");
+	        _lensTypeById.put(237, "Canon EF 24-105mm f/4L IS");
+	        _lensTypeById.put(238, "Canon EF 70-300mm f/4-5.6 IS USM");
+	        _lensTypeById.put(239, "Canon EF 85mm f/1.2L II");
+	        _lensTypeById.put(240, "Canon EF-S 17-55mm f/2.8 IS USM");
+	        _lensTypeById.put(241, "Canon EF 50mm f/1.2L");
+	        _lensTypeById.put(242, "Canon EF 70-200mm f/4L IS");
+	        _lensTypeById.put(243, "Canon EF 70-200mm f/4L IS + 1.4x");
+	        _lensTypeById.put(244, "Canon EF 70-200mm f/4L IS + 2x");
+	        _lensTypeById.put(245, "Canon EF 70-200mm f/4L IS + 2.8x");
+	        _lensTypeById.put(246, "Canon EF 16-35mm f/2.8L II");
+	        _lensTypeById.put(247, "Canon EF 14mm f/2.8L II USM");
+	        _lensTypeById.put(248, "Canon EF 200mm f/2L IS or Sigma Lens");
+	        _lensTypeById.put(249, "Canon EF 800mm f/5.6L IS");
+	        _lensTypeById.put(250, "Canon EF 24mm f/1.4L II or Sigma Lens");
+	        _lensTypeById.put(251, "Canon EF 70-200mm f/2.8L IS II USM");
+	        _lensTypeById.put(252, "Canon EF 70-200mm f/2.8L IS II USM + 1.4x");
+	        _lensTypeById.put(253, "Canon EF 70-200mm f/2.8L IS II USM + 2x");
+	        _lensTypeById.put(254, "Canon EF 100mm f/2.8L Macro IS USM");
+	        _lensTypeById.put(255, "Sigma 24-105mm f/4 DG OS HSM | A or Other Sigma Lens");
+	        _lensTypeById.put(488, "Canon EF-S 15-85mm f/3.5-5.6 IS USM");
+	        _lensTypeById.put(489, "Canon EF 70-300mm f/4-5.6L IS USM");
+	        _lensTypeById.put(490, "Canon EF 8-15mm f/4L Fisheye USM");
+	        _lensTypeById.put(491, "Canon EF 300mm f/2.8L IS II USM");
+	        _lensTypeById.put(492, "Canon EF 400mm f/2.8L IS II USM");
+	        _lensTypeById.put(493, "Canon EF 500mm f/4L IS II USM or EF 24-105mm f4L IS USM");
+	        _lensTypeById.put(494, "Canon EF 600mm f/4.0L IS II USM");
+	        _lensTypeById.put(495, "Canon EF 24-70mm f/2.8L II USM");
+	        _lensTypeById.put(496, "Canon EF 200-400mm f/4L IS USM");
+	        _lensTypeById.put(499, "Canon EF 200-400mm f/4L IS USM + 1.4x");
+	        _lensTypeById.put(502, "Canon EF 28mm f/2.8 IS USM");
+	        _lensTypeById.put(503, "Canon EF 24mm f/2.8 IS USM");
+	        _lensTypeById.put(504, "Canon EF 24-70mm f/4L IS USM");
+	        _lensTypeById.put(505, "Canon EF 35mm f/2 IS USM");
+	        _lensTypeById.put(506, "Canon EF 400mm f/4 DO IS II USM");
+	        _lensTypeById.put(507, "Canon EF 16-35mm f/4L IS USM");
+	        _lensTypeById.put(508, "Canon EF 11-24mm f/4L USM");
+	        _lensTypeById.put(747, "Canon EF 100-400mm f/4.5-5.6L IS II USM");
+	        _lensTypeById.put(750, "Canon EF 35mm f/1.4L II USM");
+	        _lensTypeById.put(4142, "Canon EF-S 18-135mm f/3.5-5.6 IS STM");
+	        _lensTypeById.put(4143, "Canon EF-M 18-55mm f/3.5-5.6 IS STM or Tamron Lens");
+	        _lensTypeById.put(4144, "Canon EF 40mm f/2.8 STM");
+	        _lensTypeById.put(4145, "Canon EF-M 22mm f/2 STM");
+	        _lensTypeById.put(4146, "Canon EF-S 18-55mm f/3.5-5.6 IS STM");
+	        _lensTypeById.put(4147, "Canon EF-M 11-22mm f/4-5.6 IS STM");
+	        _lensTypeById.put(4148, "Canon EF-S 55-250mm f/4-5.6 IS STM");
+	        _lensTypeById.put(4149, "Canon EF-M 55-200mm f/4.5-6.3 IS STM");
+	        _lensTypeById.put(4150, "Canon EF-S 10-18mm f/4.5-5.6 IS STM");
+	        _lensTypeById.put(4152, "Canon EF 24-105mm f/3.5-5.6 IS STM");
+	        _lensTypeById.put(4153, "Canon EF-M 15-45mm f/3.5-6.3 IS STM");
+	        _lensTypeById.put(4154, "Canon EF-S 24mm f/2.8 STM");
+	        _lensTypeById.put(4156, "Canon EF 50mm f/1.8 STM");
+	        _lensTypeById.put(36912, "Canon EF-S 18-135mm f/3.5-5.6 IS USM");
+	        _lensTypeById.put(65535, "N/A");
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Canon cameras.
+	 *
+	 * Thanks to Bill Richards for his contribution to this makernote directory.
+	 *
+	 * Many tag definitions explained here: http://www.ozhiker.com/electronics/pjmt/jpeg_info/canon_mn.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class CanonMakernoteDirectory extends Directory
+	{
+	    // These TAG_*_ARRAY Exif tags map to arrays of int16 values which are split out into separate 'fake' tags.
+	    // When an attempt is made to set one of these on the directory, it is split and the corresponding offset added to the tagType.
+	    // So the resulting tag is the offset + the index into the array.
+
+	    private static final int TAG_CAMERA_SETTINGS_ARRAY          = 0x0001;
+	    private static final int TAG_FOCAL_LENGTH_ARRAY             = 0x0002;
+//	    private static final int TAG_FLASH_INFO                     = 0x0003;
+	    private static final int TAG_SHOT_INFO_ARRAY                = 0x0004;
+	    private static final int TAG_PANORAMA_ARRAY                 = 0x0005;
+
+	    public static final int TAG_CANON_IMAGE_TYPE                = 0x0006;
+	    public static final int TAG_CANON_FIRMWARE_VERSION          = 0x0007;
+	    public static final int TAG_CANON_IMAGE_NUMBER              = 0x0008;
+	    public static final int TAG_CANON_OWNER_NAME                = 0x0009;
+	    public static final int TAG_CANON_SERIAL_NUMBER             = 0x000C;
+	    public static final int TAG_CAMERA_INFO_ARRAY               = 0x000D; // depends upon model, so leave for now
+	    public static final int TAG_CANON_FILE_LENGTH               = 0x000E;
+	    public static final int TAG_CANON_CUSTOM_FUNCTIONS_ARRAY    = 0x000F; // depends upon model, so leave for now
+	    public static final int TAG_MODEL_ID                        = 0x0010;
+	    public static final int TAG_MOVIE_INFO_ARRAY                = 0x0011; // not currently decoded as not sure we see it in still images
+	    private static final int TAG_AF_INFO_ARRAY                  = 0x0012; // not currently decoded
+	    public static final int TAG_THUMBNAIL_IMAGE_VALID_AREA      = 0x0013;
+	    public static final int TAG_SERIAL_NUMBER_FORMAT            = 0x0015;
+	    public static final int TAG_SUPER_MACRO                     = 0x001A;
+	    public static final int TAG_DATE_STAMP_MODE                 = 0x001C;
+	    public static final int TAG_MY_COLORS                       = 0x001D;
+	    public static final int TAG_FIRMWARE_REVISION               = 0x001E;
+	    public static final int TAG_CATEGORIES                      = 0x0023;
+	    public static final int TAG_FACE_DETECT_ARRAY_1             = 0x0024;
+	    public static final int TAG_FACE_DETECT_ARRAY_2             = 0x0025;
+	    public static final int TAG_AF_INFO_ARRAY_2                 = 0x0026;
+	    public static final int TAG_IMAGE_UNIQUE_ID                 = 0x0028;
+
+	    public static final int TAG_RAW_DATA_OFFSET                 = 0x0081;
+	    public static final int TAG_ORIGINAL_DECISION_DATA_OFFSET   = 0x0083;
+
+	    public static final int TAG_CUSTOM_FUNCTIONS_1D_ARRAY       = 0x0090; // not currently decoded
+	    public static final int TAG_PERSONAL_FUNCTIONS_ARRAY        = 0x0091; // not currently decoded
+	    public static final int TAG_PERSONAL_FUNCTION_VALUES_ARRAY  = 0x0092; // not currently decoded
+	    public static final int TAG_FILE_INFO_ARRAY                 = 0x0093; // not currently decoded
+	    public static final int TAG_AF_POINTS_IN_FOCUS_1D           = 0x0094;
+	    public static final int TAG_LENS_MODEL                      = 0x0095;
+	    public static final int TAG_SERIAL_INFO_ARRAY               = 0x0096; // not currently decoded
+	    public static final int TAG_DUST_REMOVAL_DATA               = 0x0097;
+	    public static final int TAG_CROP_INFO                       = 0x0098; // not currently decoded
+	    public static final int TAG_CUSTOM_FUNCTIONS_ARRAY_2        = 0x0099; // not currently decoded
+	    public static final int TAG_ASPECT_INFO_ARRAY               = 0x009A; // not currently decoded
+	    public static final int TAG_PROCESSING_INFO_ARRAY           = 0x00A0; // not currently decoded
+	    public static final int TAG_TONE_CURVE_TABLE                = 0x00A1;
+	    public static final int TAG_SHARPNESS_TABLE                 = 0x00A2;
+	    public static final int TAG_SHARPNESS_FREQ_TABLE            = 0x00A3;
+	    public static final int TAG_WHITE_BALANCE_TABLE             = 0x00A4;
+	    public static final int TAG_COLOR_BALANCE_ARRAY             = 0x00A9; // not currently decoded
+	    public static final int TAG_MEASURED_COLOR_ARRAY            = 0x00AA; // not currently decoded
+	    public static final int TAG_COLOR_TEMPERATURE               = 0x00AE;
+	    public static final int TAG_CANON_FLAGS_ARRAY               = 0x00B0; // not currently decoded
+	    public static final int TAG_MODIFIED_INFO_ARRAY             = 0x00B1; // not currently decoded
+	    public static final int TAG_TONE_CURVE_MATCHING             = 0x00B2;
+	    public static final int TAG_WHITE_BALANCE_MATCHING          = 0x00B3;
+	    public static final int TAG_COLOR_SPACE                     = 0x00B4;
+	    public static final int TAG_PREVIEW_IMAGE_INFO_ARRAY        = 0x00B6; // not currently decoded
+	    public static final int TAG_VRD_OFFSET                      = 0x00D0;
+	    public static final int TAG_SENSOR_INFO_ARRAY               = 0x00E0; // not currently decoded
+
+	    public static final int TAG_COLOR_DATA_ARRAY_2              = 0x4001; // depends upon camera model, not currently decoded
+	    public static final int TAG_CRW_PARAM                       = 0x4002; // depends upon camera model, not currently decoded
+	    public static final int TAG_COLOR_INFO_ARRAY_2              = 0x4003; // not currently decoded
+	    public static final int TAG_BLACK_LEVEL                     = 0x4008; // not currently decoded
+	    public static final int TAG_CUSTOM_PICTURE_STYLE_FILE_NAME  = 0x4010;
+	    public static final int TAG_COLOR_INFO_ARRAY                = 0x4013; // not currently decoded
+	    public static final int TAG_VIGNETTING_CORRECTION_ARRAY_1   = 0x4015; // not currently decoded
+	    public static final int TAG_VIGNETTING_CORRECTION_ARRAY_2   = 0x4016; // not currently decoded
+	    public static final int TAG_LIGHTING_OPTIMIZER_ARRAY        = 0x4018; // not currently decoded
+	    public static final int TAG_LENS_INFO_ARRAY                 = 0x4019; // not currently decoded
+	    public static final int TAG_AMBIANCE_INFO_ARRAY             = 0x4020; // not currently decoded
+	    public static final int TAG_FILTER_INFO_ARRAY               = 0x4024; // not currently decoded
+
+	    public final class CameraSettings
+	    {
+	        // These 'sub'-tag values have been created for consistency -- they don't exist within the exif segment
+	        private static final int OFFSET = 0xC100;
+
+	        /**
+	         * 1 = Macro
+	         * 2 = Normal
+	         */
+	        public static final int TAG_MACRO_MODE = OFFSET + 0x01;
+	        public static final int TAG_SELF_TIMER_DELAY = OFFSET + 0x02;
+	        /**
+	         * 2 = Normal
+	         * 3 = Fine
+	         * 5 = Superfine
+	         */
+	        public static final int TAG_QUALITY = OFFSET + 0x03;
+	        /**
+	         * 0 = Flash Not Fired
+	         * 1 = Auto
+	         * 2 = On
+	         * 3 = Red Eye Reduction
+	         * 4 = Slow Synchro
+	         * 5 = Auto + Red Eye Reduction
+	         * 6 = On + Red Eye Reduction
+	         * 16 = External Flash
+	         */
+	        public static final int TAG_FLASH_MODE = OFFSET + 0x04;
+	        /**
+	         * 0 = Single Frame or Timer Mode
+	         * 1 = Continuous
+	         */
+	        public static final int TAG_CONTINUOUS_DRIVE_MODE = OFFSET + 0x05;
+	        public static final int TAG_UNKNOWN_2 = OFFSET + 0x06;
+	        /**
+	         * 0 = One-Shot
+	         * 1 = AI Servo
+	         * 2 = AI Focus
+	         * 3 = Manual Focus
+	         * 4 = Single
+	         * 5 = Continuous
+	         * 6 = Manual Focus
+	         */
+	        public static final int TAG_FOCUS_MODE_1 = OFFSET + 0x07;
+	        public static final int TAG_UNKNOWN_3 = OFFSET + 0x08;
+	        public static final int TAG_RECORD_MODE = OFFSET + 0x09;
+	        /**
+	         * 0 = Large
+	         * 1 = Medium
+	         * 2 = Small
+	         */
+	        public static final int TAG_IMAGE_SIZE = OFFSET + 0x0A;
+	        /**
+	         * 0 = Full Auto
+	         * 1 = Manual
+	         * 2 = Landscape
+	         * 3 = Fast Shutter
+	         * 4 = Slow Shutter
+	         * 5 = Night
+	         * 6 = Black &amp; White
+	         * 7 = Sepia
+	         * 8 = Portrait
+	         * 9 = Sports
+	         * 10 = Macro / Close-Up
+	         * 11 = Pan Focus
+	         */
+	        public static final int TAG_EASY_SHOOTING_MODE = OFFSET + 0x0B;
+	        /**
+	         * 0 = No Digital Zoom
+	         * 1 = 2x
+	         * 2 = 4x
+	         */
+	        public static final int TAG_DIGITAL_ZOOM = OFFSET + 0x0C;
+	        /**
+	         * 0 = Normal
+	         * 1 = High
+	         * 65535 = Low
+	         */
+	        public static final int TAG_CONTRAST = OFFSET + 0x0D;
+	        /**
+	         * 0 = Normal
+	         * 1 = High
+	         * 65535 = Low
+	         */
+	        public static final int TAG_SATURATION = OFFSET + 0x0E;
+	        /**
+	         * 0 = Normal
+	         * 1 = High
+	         * 65535 = Low
+	         */
+	        public static final int TAG_SHARPNESS = OFFSET + 0x0F;
+	        /**
+	         * 0 = Check ISOSpeedRatings EXIF tag for ISO Speed
+	         * 15 = Auto ISO
+	         * 16 = ISO 50
+	         * 17 = ISO 100
+	         * 18 = ISO 200
+	         * 19 = ISO 400
+	         */
+	        public static final int TAG_ISO = OFFSET + 0x10;
+	        /**
+	         * 3 = Evaluative
+	         * 4 = Partial
+	         * 5 = Centre Weighted
+	         */
+	        public static final int TAG_METERING_MODE = OFFSET + 0x11;
+	        /**
+	         * 0 = Manual
+	         * 1 = Auto
+	         * 3 = Close-up (Macro)
+	         * 8 = Locked (Pan Mode)
+	         */
+	        public static final int TAG_FOCUS_TYPE = OFFSET + 0x12;
+	        /**
+	         * 12288 = None (Manual Focus)
+	         * 12289 = Auto Selected
+	         * 12290 = Right
+	         * 12291 = Centre
+	         * 12292 = Left
+	         */
+	        public static final int TAG_AF_POINT_SELECTED = OFFSET + 0x13;
+	        /**
+	         * 0 = Easy Shooting (See Easy Shooting Mode)
+	         * 1 = Program
+	         * 2 = Tv-Priority
+	         * 3 = Av-Priority
+	         * 4 = Manual
+	         * 5 = A-DEP
+	         */
+	        public static final int TAG_EXPOSURE_MODE = OFFSET + 0x14;
+	        public static final int TAG_UNKNOWN_7 = OFFSET + 0x15;
+	        public static final int TAG_LENS_TYPE = OFFSET + 0x16;
+	        public static final int TAG_LONG_FOCAL_LENGTH = OFFSET + 0x17;
+	        public static final int TAG_SHORT_FOCAL_LENGTH = OFFSET + 0x18;
+	        public static final int TAG_FOCAL_UNITS_PER_MM = OFFSET + 0x19;
+	        public static final int TAG_MAX_APERTURE = OFFSET + 0x1A;
+	        public static final int TAG_MIN_APERTURE = OFFSET + 0x1B;
+	        /**
+	         * 0 = Flash Did Not Fire
+	         * 1 = Flash Fired
+	         */
+	        public static final int TAG_FLASH_ACTIVITY = OFFSET + 0x1C;
+	        public static final int TAG_FLASH_DETAILS = OFFSET + 0x1D;
+	        public static final int TAG_FOCUS_CONTINUOUS = OFFSET + 0x1E;
+	        public static final int TAG_AE_SETTING = OFFSET + 0x1F;
+	        /**
+	         * 0 = Focus Mode: Single
+	         * 1 = Focus Mode: Continuous
+	         */
+	        public static final int TAG_FOCUS_MODE_2 = OFFSET + 0x20;
+
+	        public static final int TAG_DISPLAY_APERTURE = OFFSET + 0x21;
+	        public static final int TAG_ZOOM_SOURCE_WIDTH = OFFSET + 0x22;
+	        public static final int TAG_ZOOM_TARGET_WIDTH = OFFSET + 0x23;
+
+	        public static final int TAG_SPOT_METERING_MODE = OFFSET + 0x25;
+	        public static final int TAG_PHOTO_EFFECT = OFFSET + 0x26;
+	        public static final int TAG_MANUAL_FLASH_OUTPUT = OFFSET + 0x27;
+
+	        public static final int TAG_COLOR_TONE = OFFSET + 0x29;
+	        public static final int TAG_SRAW_QUALITY = OFFSET + 0x2D;
+	    }
+
+	    public final class FocalLength
+	    {
+	        // These 'sub'-tag values have been created for consistency -- they don't exist within the exif segment
+
+	        private static final int OFFSET = 0xC200;
+
+	        /**
+	         * 0 = Auto
+	         * 1 = Sunny
+	         * 2 = Cloudy
+	         * 3 = Tungsten
+	         * 4 = Florescent
+	         * 5 = Flash
+	         * 6 = Custom
+	         */
+	        public static final int TAG_WHITE_BALANCE = OFFSET + 0x07;
+	        public static final int TAG_SEQUENCE_NUMBER = OFFSET + 0x09;
+	        public static final int TAG_AF_POINT_USED = OFFSET + 0x0E;
+	        /**
+	         * The value of this tag may be translated into a flash bias value, in EV.
+	         *
+	         * 0xffc0 = -2 EV
+	         * 0xffcc = -1.67 EV
+	         * 0xffd0 = -1.5 EV
+	         * 0xffd4 = -1.33 EV
+	         * 0xffe0 = -1 EV
+	         * 0xffec = -0.67 EV
+	         * 0xfff0 = -0.5 EV
+	         * 0xfff4 = -0.33 EV
+	         * 0x0000 = 0 EV
+	         * 0x000c = 0.33 EV
+	         * 0x0010 = 0.5 EV
+	         * 0x0014 = 0.67 EV
+	         * 0x0020 = 1 EV
+	         * 0x002c = 1.33 EV
+	         * 0x0030 = 1.5 EV
+	         * 0x0034 = 1.67 EV
+	         * 0x0040 = 2 EV
+	         */
+	        public static final int TAG_FLASH_BIAS = OFFSET + 0x0F;
+	        public static final int TAG_AUTO_EXPOSURE_BRACKETING = OFFSET + 0x10;
+	        public static final int TAG_AEB_BRACKET_VALUE = OFFSET + 0x11;
+	        public static final int TAG_SUBJECT_DISTANCE = OFFSET + 0x13;
+	    }
+
+	    public final class ShotInfo
+	    {
+	        // These 'sub'-tag values have been created for consistency -- they don't exist within the exif segment
+
+	        private static final int OFFSET = 0xC400;
+
+	        public static final int TAG_AUTO_ISO = OFFSET + 1;
+	        public static final int TAG_BASE_ISO = OFFSET + 2;
+	        public static final int TAG_MEASURED_EV = OFFSET + 3;
+	        public static final int TAG_TARGET_APERTURE = OFFSET + 4;
+	        public static final int TAG_TARGET_EXPOSURE_TIME = OFFSET + 5;
+	        public static final int TAG_EXPOSURE_COMPENSATION = OFFSET + 6;
+	        public static final int TAG_WHITE_BALANCE = OFFSET + 7;
+	        public static final int TAG_SLOW_SHUTTER = OFFSET + 8;
+	        public static final int TAG_SEQUENCE_NUMBER = OFFSET + 9;
+	        public static final int TAG_OPTICAL_ZOOM_CODE = OFFSET + 10;
+	        public static final int TAG_CAMERA_TEMPERATURE = OFFSET + 12;
+	        public static final int TAG_FLASH_GUIDE_NUMBER = OFFSET + 13;
+	        public static final int TAG_AF_POINTS_IN_FOCUS = OFFSET + 14;
+	        public static final int TAG_FLASH_EXPOSURE_BRACKETING = OFFSET + 15;
+	        public static final int TAG_AUTO_EXPOSURE_BRACKETING = OFFSET + 16;
+	        public static final int TAG_AEB_BRACKET_VALUE = OFFSET + 17;
+	        public static final int TAG_CONTROL_MODE = OFFSET + 18;
+	        public static final int TAG_FOCUS_DISTANCE_UPPER = OFFSET + 19;
+	        public static final int TAG_FOCUS_DISTANCE_LOWER = OFFSET + 20;
+	        public static final int TAG_F_NUMBER = OFFSET + 21;
+	        public static final int TAG_EXPOSURE_TIME = OFFSET + 22;
+	        public static final int TAG_MEASURED_EV_2 = OFFSET + 23;
+	        public static final int TAG_BULB_DURATION = OFFSET + 24;
+	        public static final int TAG_CAMERA_TYPE = OFFSET + 26;
+	        public static final int TAG_AUTO_ROTATE = OFFSET + 27;
+	        public static final int TAG_ND_FILTER = OFFSET + 28;
+	        public static final int TAG_SELF_TIMER_2 = OFFSET + 29;
+	        public static final int TAG_FLASH_OUTPUT = OFFSET + 33;
+	    }
+
+	    public final class Panorama
+	    {
+	        // These 'sub'-tag values have been created for consistency -- they don't exist within the exif segment
+
+	        private static final int OFFSET = 0xC500;
+
+	        public static final int TAG_PANORAMA_FRAME_NUMBER = OFFSET + 2;
+	        public static final int TAG_PANORAMA_DIRECTION = OFFSET + 5;
+	    }
+
+	    public final class AFInfo
+	    {
+	        // These 'sub'-tag values have been created for consistency -- they don't exist within the exif segment
+
+	        private static final int OFFSET = 0xD200;
+
+	        public static final int TAG_NUM_AF_POINTS = OFFSET;
+	        public static final int TAG_VALID_AF_POINTS = OFFSET + 1;
+	        public static final int TAG_IMAGE_WIDTH = OFFSET + 2;
+	        public static final int TAG_IMAGE_HEIGHT = OFFSET + 3;
+	        public static final int TAG_AF_IMAGE_WIDTH = OFFSET + 4;
+	        public static final int TAG_AF_IMAGE_HEIGHT = OFFSET + 5;
+	        public static final int TAG_AF_AREA_WIDTH = OFFSET + 6;
+	        public static final int TAG_AF_AREA_HEIGHT = OFFSET + 7;
+	        public static final int TAG_AF_AREA_X_POSITIONS = OFFSET + 8;
+	        public static final int TAG_AF_AREA_Y_POSITIONS = OFFSET + 9;
+	        public static final int TAG_AF_POINTS_IN_FOCUS = OFFSET + 10;
+	        public static final int TAG_PRIMARY_AF_POINT_1 = OFFSET + 11;
+	        public static final int TAG_PRIMARY_AF_POINT_2 = OFFSET + 12; // not sure why there are two of these
+	    }
+
+//	    /**
+//	     * Long Exposure Noise Reduction
+//	     * 0 = Off
+//	     * 1 = On
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_LONG_EXPOSURE_NOISE_REDUCTION = 0xC301;
+	//
+//	    /**
+//	     * Shutter/Auto Exposure-lock buttons
+//	     * 0 = AF/AE lock
+//	     * 1 = AE lock/AF
+//	     * 2 = AF/AF lock
+//	     * 3 = AE+release/AE+AF
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_SHUTTER_AUTO_EXPOSURE_LOCK_BUTTONS = 0xC302;
+	//
+//	    /**
+//	     * Mirror lockup
+//	     * 0 = Disable
+//	     * 1 = Enable
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_MIRROR_LOCKUP = 0xC303;
+	//
+//	    /**
+//	     * Tv/Av and exposure level
+//	     * 0 = 1/2 stop
+//	     * 1 = 1/3 stop
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_TV_AV_AND_EXPOSURE_LEVEL = 0xC304;
+	//
+//	    /**
+//	     * AF-assist light
+//	     * 0 = On (Auto)
+//	     * 1 = Off
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_AF_ASSIST_LIGHT = 0xC305;
+	//
+//	    /**
+//	     * Shutter speed in Av mode
+//	     * 0 = Automatic
+//	     * 1 = 1/200 (fixed)
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_SHUTTER_SPEED_IN_AV_MODE = 0xC306;
+	//
+//	    /**
+//	     * Auto-Exposure Bracketing sequence/auto cancellation
+//	     * 0 = 0,-,+ / Enabled
+//	     * 1 = 0,-,+ / Disabled
+//	     * 2 = -,0,+ / Enabled
+//	     * 3 = -,0,+ / Disabled
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_BRACKETING = 0xC307;
+	//
+//	    /**
+//	     * Shutter Curtain Sync
+//	     * 0 = 1st Curtain Sync
+//	     * 1 = 2nd Curtain Sync
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_SHUTTER_CURTAIN_SYNC = 0xC308;
+	//
+//	    /**
+//	     * Lens Auto-Focus stop button Function Switch
+//	     * 0 = AF stop
+//	     * 1 = Operate AF
+//	     * 2 = Lock AE and start timer
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_AF_STOP = 0xC309;
+	//
+//	    /**
+//	     * Auto reduction of fill flash
+//	     * 0 = Enable
+//	     * 1 = Disable
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_FILL_FLASH_REDUCTION = 0xC30A;
+	//
+//	    /**
+//	     * Menu button return position
+//	     * 0 = Top
+//	     * 1 = Previous (volatile)
+//	     * 2 = Previous
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_MENU_BUTTON_RETURN = 0xC30B;
+	//
+//	    /**
+//	     * SET button function when shooting
+//	     * 0 = Not Assigned
+//	     * 1 = Change Quality
+//	     * 2 = Change ISO Speed
+//	     * 3 = Select Parameters
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_SET_BUTTON_FUNCTION = 0xC30C;
+	//
+//	    /**
+//	     * Sensor cleaning
+//	     * 0 = Disable
+//	     * 1 = Enable
+//	     */
+//	    public static final int TAG_CANON_CUSTOM_FUNCTION_SENSOR_CLEANING = 0xC30D;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_CANON_FIRMWARE_VERSION, "Firmware Version");
+	        _tagNameMap.put(TAG_CANON_IMAGE_NUMBER, "Image Number");
+	        _tagNameMap.put(TAG_CANON_IMAGE_TYPE, "Image Type");
+	        _tagNameMap.put(TAG_CANON_OWNER_NAME, "Owner Name");
+	        _tagNameMap.put(TAG_CANON_SERIAL_NUMBER, "Camera Serial Number");
+	        _tagNameMap.put(TAG_CAMERA_INFO_ARRAY, "Camera Info Array");
+	        _tagNameMap.put(TAG_CANON_FILE_LENGTH, "File Length");
+	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTIONS_ARRAY, "Custom Functions");
+	        _tagNameMap.put(TAG_MODEL_ID, "Canon Model ID");
+	        _tagNameMap.put(TAG_MOVIE_INFO_ARRAY, "Movie Info Array");
+
+	        _tagNameMap.put(CameraSettings.TAG_AF_POINT_SELECTED, "AF Point Selected");
+	        _tagNameMap.put(CameraSettings.TAG_CONTINUOUS_DRIVE_MODE, "Continuous Drive Mode");
+	        _tagNameMap.put(CameraSettings.TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(CameraSettings.TAG_EASY_SHOOTING_MODE, "Easy Shooting Mode");
+	        _tagNameMap.put(CameraSettings.TAG_EXPOSURE_MODE, "Exposure Mode");
+	        _tagNameMap.put(CameraSettings.TAG_FLASH_DETAILS, "Flash Details");
+	        _tagNameMap.put(CameraSettings.TAG_FLASH_MODE, "Flash Mode");
+	        _tagNameMap.put(CameraSettings.TAG_FOCAL_UNITS_PER_MM, "Focal Units per mm");
+	        _tagNameMap.put(CameraSettings.TAG_FOCUS_MODE_1, "Focus Mode");
+	        _tagNameMap.put(CameraSettings.TAG_FOCUS_MODE_2, "Focus Mode");
+	        _tagNameMap.put(CameraSettings.TAG_IMAGE_SIZE, "Image Size");
+	        _tagNameMap.put(CameraSettings.TAG_ISO, "Iso");
+	        _tagNameMap.put(CameraSettings.TAG_LONG_FOCAL_LENGTH, "Long Focal Length");
+	        _tagNameMap.put(CameraSettings.TAG_MACRO_MODE, "Macro Mode");
+	        _tagNameMap.put(CameraSettings.TAG_METERING_MODE, "Metering Mode");
+	        _tagNameMap.put(CameraSettings.TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(CameraSettings.TAG_SELF_TIMER_DELAY, "Self Timer Delay");
+	        _tagNameMap.put(CameraSettings.TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(CameraSettings.TAG_SHORT_FOCAL_LENGTH, "Short Focal Length");
+	        _tagNameMap.put(CameraSettings.TAG_QUALITY, "Quality");
+	        _tagNameMap.put(CameraSettings.TAG_UNKNOWN_2, "Unknown Camera Setting 2");
+	        _tagNameMap.put(CameraSettings.TAG_UNKNOWN_3, "Unknown Camera Setting 3");
+	        _tagNameMap.put(CameraSettings.TAG_RECORD_MODE, "Record Mode");
+	        _tagNameMap.put(CameraSettings.TAG_DIGITAL_ZOOM, "Digital Zoom");
+	        _tagNameMap.put(CameraSettings.TAG_FOCUS_TYPE, "Focus Type");
+	        _tagNameMap.put(CameraSettings.TAG_UNKNOWN_7, "Unknown Camera Setting 7");
+	        _tagNameMap.put(CameraSettings.TAG_LENS_TYPE, "Lens Type");
+	        _tagNameMap.put(CameraSettings.TAG_MAX_APERTURE, "Max Aperture");
+	        _tagNameMap.put(CameraSettings.TAG_MIN_APERTURE, "Min Aperture");
+	        _tagNameMap.put(CameraSettings.TAG_FLASH_ACTIVITY, "Flash Activity");
+	        _tagNameMap.put(CameraSettings.TAG_FOCUS_CONTINUOUS, "Focus Continuous");
+	        _tagNameMap.put(CameraSettings.TAG_AE_SETTING, "AE Setting");
+	        _tagNameMap.put(CameraSettings.TAG_DISPLAY_APERTURE, "Display Aperture");
+	        _tagNameMap.put(CameraSettings.TAG_ZOOM_SOURCE_WIDTH, "Zoom Source Width");
+	        _tagNameMap.put(CameraSettings.TAG_ZOOM_TARGET_WIDTH, "Zoom Target Width");
+	        _tagNameMap.put(CameraSettings.TAG_SPOT_METERING_MODE, "Spot Metering Mode");
+	        _tagNameMap.put(CameraSettings.TAG_PHOTO_EFFECT, "Photo Effect");
+	        _tagNameMap.put(CameraSettings.TAG_MANUAL_FLASH_OUTPUT, "Manual Flash Output");
+	        _tagNameMap.put(CameraSettings.TAG_COLOR_TONE, "Color Tone");
+	        _tagNameMap.put(CameraSettings.TAG_SRAW_QUALITY, "SRAW Quality");
+
+	        _tagNameMap.put(FocalLength.TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(FocalLength.TAG_SEQUENCE_NUMBER, "Sequence Number");
+	        _tagNameMap.put(FocalLength.TAG_AF_POINT_USED, "AF Point Used");
+	        _tagNameMap.put(FocalLength.TAG_FLASH_BIAS, "Flash Bias");
+	        _tagNameMap.put(FocalLength.TAG_AUTO_EXPOSURE_BRACKETING, "Auto Exposure Bracketing");
+	        _tagNameMap.put(FocalLength.TAG_AEB_BRACKET_VALUE, "AEB Bracket Value");
+	        _tagNameMap.put(FocalLength.TAG_SUBJECT_DISTANCE, "Subject Distance");
+
+	        _tagNameMap.put(ShotInfo.TAG_AUTO_ISO, "Auto ISO");
+	        _tagNameMap.put(ShotInfo.TAG_BASE_ISO, "Base ISO");
+	        _tagNameMap.put(ShotInfo.TAG_MEASURED_EV, "Measured EV");
+	        _tagNameMap.put(ShotInfo.TAG_TARGET_APERTURE, "Target Aperture");
+	        _tagNameMap.put(ShotInfo.TAG_TARGET_EXPOSURE_TIME, "Target Exposure Time");
+	        _tagNameMap.put(ShotInfo.TAG_EXPOSURE_COMPENSATION, "Exposure Compensation");
+	        _tagNameMap.put(ShotInfo.TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(ShotInfo.TAG_SLOW_SHUTTER, "Slow Shutter");
+	        _tagNameMap.put(ShotInfo.TAG_SEQUENCE_NUMBER, "Sequence Number");
+	        _tagNameMap.put(ShotInfo.TAG_OPTICAL_ZOOM_CODE, "Optical Zoom Code");
+	        _tagNameMap.put(ShotInfo.TAG_CAMERA_TEMPERATURE, "Camera Temperature");
+	        _tagNameMap.put(ShotInfo.TAG_FLASH_GUIDE_NUMBER, "Flash Guide Number");
+	        _tagNameMap.put(ShotInfo.TAG_AF_POINTS_IN_FOCUS, "AF Points in Focus");
+	        _tagNameMap.put(ShotInfo.TAG_FLASH_EXPOSURE_BRACKETING, "Flash Exposure Compensation");
+	        _tagNameMap.put(ShotInfo.TAG_AUTO_EXPOSURE_BRACKETING, "Auto Exposure Bracketing");
+	        _tagNameMap.put(ShotInfo.TAG_AEB_BRACKET_VALUE, "AEB Bracket Value");
+	        _tagNameMap.put(ShotInfo.TAG_CONTROL_MODE, "Control Mode");
+	        _tagNameMap.put(ShotInfo.TAG_FOCUS_DISTANCE_UPPER, "Focus Distance Upper");
+	        _tagNameMap.put(ShotInfo.TAG_FOCUS_DISTANCE_LOWER, "Focus Distance Lower");
+	        _tagNameMap.put(ShotInfo.TAG_F_NUMBER, "F Number");
+	        _tagNameMap.put(ShotInfo.TAG_EXPOSURE_TIME, "Exposure Time");
+	        _tagNameMap.put(ShotInfo.TAG_MEASURED_EV_2, "Measured EV 2");
+	        _tagNameMap.put(ShotInfo.TAG_BULB_DURATION, "Bulb Duration");
+	        _tagNameMap.put(ShotInfo.TAG_CAMERA_TYPE, "Camera Type");
+	        _tagNameMap.put(ShotInfo.TAG_AUTO_ROTATE, "Auto Rotate");
+	        _tagNameMap.put(ShotInfo.TAG_ND_FILTER, "ND Filter");
+	        _tagNameMap.put(ShotInfo.TAG_SELF_TIMER_2, "Self Timer 2");
+	        _tagNameMap.put(ShotInfo.TAG_FLASH_OUTPUT, "Flash Output");
+
+	        _tagNameMap.put(Panorama.TAG_PANORAMA_FRAME_NUMBER, "Panorama Frame Number");
+	        _tagNameMap.put(Panorama.TAG_PANORAMA_DIRECTION, "Panorama Direction");
+
+	        _tagNameMap.put(AFInfo.TAG_NUM_AF_POINTS, "AF Point Count");
+	        _tagNameMap.put(AFInfo.TAG_VALID_AF_POINTS, "Valid AF Point Count");
+	        _tagNameMap.put(AFInfo.TAG_IMAGE_WIDTH, "Image Width");
+	        _tagNameMap.put(AFInfo.TAG_IMAGE_HEIGHT, "Image Height");
+	        _tagNameMap.put(AFInfo.TAG_AF_IMAGE_WIDTH, "AF Image Width");
+	        _tagNameMap.put(AFInfo.TAG_AF_IMAGE_HEIGHT, "AF Image Height");
+	        _tagNameMap.put(AFInfo.TAG_AF_AREA_WIDTH, "AF Area Width");
+	        _tagNameMap.put(AFInfo.TAG_AF_AREA_HEIGHT, "AF Area Height");
+	        _tagNameMap.put(AFInfo.TAG_AF_AREA_X_POSITIONS, "AF Area X Positions");
+	        _tagNameMap.put(AFInfo.TAG_AF_AREA_Y_POSITIONS, "AF Area Y Positions");
+	        _tagNameMap.put(AFInfo.TAG_AF_POINTS_IN_FOCUS, "AF Points in Focus");
+	        _tagNameMap.put(AFInfo.TAG_PRIMARY_AF_POINT_1, "Primary AF Point 1");
+	        _tagNameMap.put(AFInfo.TAG_PRIMARY_AF_POINT_2, "Primary AF Point 2");
+
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_LONG_EXPOSURE_NOISE_REDUCTION, "Long Exposure Noise Reduction");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_SHUTTER_AUTO_EXPOSURE_LOCK_BUTTONS, "Shutter/Auto Exposure-lock Buttons");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_MIRROR_LOCKUP, "Mirror Lockup");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_TV_AV_AND_EXPOSURE_LEVEL, "Tv/Av And Exposure Level");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_AF_ASSIST_LIGHT, "AF-Assist Light");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_SHUTTER_SPEED_IN_AV_MODE, "Shutter Speed in Av Mode");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_BRACKETING, "Auto-Exposure Bracketing Sequence/Auto Cancellation");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_SHUTTER_CURTAIN_SYNC, "Shutter Curtain Sync");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_AF_STOP, "Lens Auto-Focus Stop Button Function Switch");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_FILL_FLASH_REDUCTION, "Auto Reduction of Fill Flash");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_MENU_BUTTON_RETURN, "Menu Button Return Position");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_SET_BUTTON_FUNCTION, "SET Button Function When Shooting");
+//	        _tagNameMap.put(TAG_CANON_CUSTOM_FUNCTION_SENSOR_CLEANING, "Sensor Cleaning");
+
+	        _tagNameMap.put(TAG_THUMBNAIL_IMAGE_VALID_AREA, "Thumbnail Image Valid Area");
+	        _tagNameMap.put(TAG_SERIAL_NUMBER_FORMAT, "Serial Number Format");
+	        _tagNameMap.put(TAG_SUPER_MACRO, "Super Macro");
+	        _tagNameMap.put(TAG_DATE_STAMP_MODE, "Date Stamp Mode");
+	        _tagNameMap.put(TAG_MY_COLORS, "My Colors");
+	        _tagNameMap.put(TAG_FIRMWARE_REVISION, "Firmware Revision");
+	        _tagNameMap.put(TAG_CATEGORIES, "Categories");
+	        _tagNameMap.put(TAG_FACE_DETECT_ARRAY_1, "Face Detect Array 1");
+	        _tagNameMap.put(TAG_FACE_DETECT_ARRAY_2, "Face Detect Array 2");
+	        _tagNameMap.put(TAG_AF_INFO_ARRAY_2, "AF Info Array 2");
+	        _tagNameMap.put(TAG_IMAGE_UNIQUE_ID, "Image Unique ID");
+	        _tagNameMap.put(TAG_RAW_DATA_OFFSET, "Raw Data Offset");
+	        _tagNameMap.put(TAG_ORIGINAL_DECISION_DATA_OFFSET, "Original Decision Data Offset");
+	        _tagNameMap.put(TAG_CUSTOM_FUNCTIONS_1D_ARRAY, "Custom Functions (1D) Array");
+	        _tagNameMap.put(TAG_PERSONAL_FUNCTIONS_ARRAY, "Personal Functions Array");
+	        _tagNameMap.put(TAG_PERSONAL_FUNCTION_VALUES_ARRAY, "Personal Function Values Array");
+	        _tagNameMap.put(TAG_FILE_INFO_ARRAY, "File Info Array");
+	        _tagNameMap.put(TAG_AF_POINTS_IN_FOCUS_1D, "AF Points in Focus (1D)");
+	        _tagNameMap.put(TAG_LENS_MODEL, "Lens Model");
+	        _tagNameMap.put(TAG_SERIAL_INFO_ARRAY, "Serial Info Array");
+	        _tagNameMap.put(TAG_DUST_REMOVAL_DATA, "Dust Removal Data");
+	        _tagNameMap.put(TAG_CROP_INFO, "Crop Info");
+	        _tagNameMap.put(TAG_CUSTOM_FUNCTIONS_ARRAY_2, "Custom Functions Array 2");
+	        _tagNameMap.put(TAG_ASPECT_INFO_ARRAY, "Aspect Information Array");
+	        _tagNameMap.put(TAG_PROCESSING_INFO_ARRAY, "Processing Information Array");
+	        _tagNameMap.put(TAG_TONE_CURVE_TABLE, "Tone Curve Table");
+	        _tagNameMap.put(TAG_SHARPNESS_TABLE, "Sharpness Table");
+	        _tagNameMap.put(TAG_SHARPNESS_FREQ_TABLE, "Sharpness Frequency Table");
+	        _tagNameMap.put(TAG_WHITE_BALANCE_TABLE, "White Balance Table");
+	        _tagNameMap.put(TAG_COLOR_BALANCE_ARRAY, "Color Balance Array");
+	        _tagNameMap.put(TAG_MEASURED_COLOR_ARRAY, "Measured Color Array");
+	        _tagNameMap.put(TAG_COLOR_TEMPERATURE, "Color Temperature");
+	        _tagNameMap.put(TAG_CANON_FLAGS_ARRAY, "Canon Flags Array");
+	        _tagNameMap.put(TAG_MODIFIED_INFO_ARRAY, "Modified Information Array");
+	        _tagNameMap.put(TAG_TONE_CURVE_MATCHING, "Tone Curve Matching");
+	        _tagNameMap.put(TAG_WHITE_BALANCE_MATCHING, "White Balance Matching");
+	        _tagNameMap.put(TAG_COLOR_SPACE, "Color Space");
+	        _tagNameMap.put(TAG_PREVIEW_IMAGE_INFO_ARRAY, "Preview Image Info Array");
+	        _tagNameMap.put(TAG_VRD_OFFSET, "VRD Offset");
+	        _tagNameMap.put(TAG_SENSOR_INFO_ARRAY, "Sensor Information Array");
+	        _tagNameMap.put(TAG_COLOR_DATA_ARRAY_2, "Color Data Array 1");
+	        _tagNameMap.put(TAG_CRW_PARAM, "CRW Parameters");
+	        _tagNameMap.put(TAG_COLOR_INFO_ARRAY_2, "Color Data Array 2");
+	        _tagNameMap.put(TAG_BLACK_LEVEL, "Black Level");
+	        _tagNameMap.put(TAG_CUSTOM_PICTURE_STYLE_FILE_NAME, "Custom Picture Style File Name");
+	        _tagNameMap.put(TAG_COLOR_INFO_ARRAY, "Color Info Array");
+	        _tagNameMap.put(TAG_VIGNETTING_CORRECTION_ARRAY_1, "Vignetting Correction Array 1");
+	        _tagNameMap.put(TAG_VIGNETTING_CORRECTION_ARRAY_2, "Vignetting Correction Array 2");
+	        _tagNameMap.put(TAG_LIGHTING_OPTIMIZER_ARRAY, "Lighting Optimizer Array");
+	        _tagNameMap.put(TAG_LENS_INFO_ARRAY, "Lens Info Array");
+	        _tagNameMap.put(TAG_AMBIANCE_INFO_ARRAY, "Ambiance Info Array");
+	        _tagNameMap.put(TAG_FILTER_INFO_ARRAY, "Filter Info Array");
+	    }
+
+	    public CanonMakernoteDirectory()
+	    {
+	        this.setDescriptor(new CanonMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Canon Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    @Override
+	    public void setObjectArray(int tagType, @NotNull Object array)
+	    {
+	        // TODO is there some way to drop out 'null' or 'zero' values that are present in the array to reduce the noise?
+
+	        if (!(array instanceof int[])) {
+	            // no special handling...
+	            super.setObjectArray(tagType, array);
+	            return;
+	        }
+
+	        // Certain Canon tags contain arrays of values that we split into 'fake' tags as each
+	        // index in the array has its own meaning and decoding.
+	        // Pick those tags out here and throw away the original array.
+	        // Otherwise just add as usual.
+	        switch (tagType) {
+	            case TAG_CAMERA_SETTINGS_ARRAY: {
+	                int[] ints = (int[])array;
+	                for (int i = 0; i < ints.length; i++)
+	                    setInt(CameraSettings.OFFSET + i, ints[i]);
+	                break;
+	            }
+	            case TAG_FOCAL_LENGTH_ARRAY: {
+	                int[] ints = (int[])array;
+	                for (int i = 0; i < ints.length; i++)
+	                    setInt(FocalLength.OFFSET + i, ints[i]);
+	                break;
+	            }
+	            case TAG_SHOT_INFO_ARRAY: {
+	                int[] ints = (int[])array;
+	                for (int i = 0; i < ints.length; i++)
+	                    setInt(ShotInfo.OFFSET + i, ints[i]);
+	                break;
+	            }
+	            case TAG_PANORAMA_ARRAY: {
+	                int[] ints = (int[])array;
+	                for (int i = 0; i < ints.length; i++)
+	                    setInt(Panorama.OFFSET + i, ints[i]);
+	                break;
+	            }
+	            // TODO the interpretation of the custom functions tag depends upon the camera model
+//	            case TAG_CANON_CUSTOM_FUNCTIONS_ARRAY:
+//	                int subTagTypeBase = 0xC300;
+//	                // we intentionally skip the first array member
+//	                for (int i = 1; i < ints.length; i++)
+//	                    setInt(subTagTypeBase + i + 1, ints[i] & 0x0F);
+//	                break;
+	            case TAG_AF_INFO_ARRAY: {
+	                // Notes from Exiftool 10.10 by Phil Harvey, lib\Image\Exiftool\Canon.pm:
+	                // Auto-focus information used by many older Canon models. The values in this
+	                // record are sequential, and some have variable sizes based on the value of
+	                // numafpoints (which may be 1,5,7,9,15,45, or 53). The AFArea coordinates are
+	                // given in a system where the image has dimensions given by AFImageWidth and
+	                // AFImageHeight, and 0,0 is the image center. The direction of the Y axis
+	                // depends on the camera model, with positive Y upwards for EOS models, but
+	                // apparently downwards for PowerShot models.
+
+	                // AFInfo is another array with 'fake' tags. The first int of the array contains
+	                // the number of AF points. Iterate through the array one byte at a time, generally
+	                // assuming one byte corresponds to one tag UNLESS certain tag numbers are encountered.
+	                // For these, read specific subsequent bytes from the array based on the tag type. The
+	                // number of bytes read can vary.
+
+	                int[] values = (int[])array;
+	                int numafpoints = values[0];
+	                int tagnumber = 0;
+	                for (int i = 0; i < values.length; i++)
+	                {
+	                    // These two tags store 'numafpoints' bytes of data in the array
+	                    if (AFInfo.OFFSET + tagnumber == AFInfo.TAG_AF_AREA_X_POSITIONS ||
+	                        AFInfo.OFFSET + tagnumber == AFInfo.TAG_AF_AREA_Y_POSITIONS)
+	                    {
+	                        // There could be incorrect data in the array, so boundary check
+	                        if (values.length - 1 >= (i + numafpoints))
+	                        {
+	                            short[] areaPositions = new short[numafpoints];
+	                            for (int j = 0; j < areaPositions.length; j++)
+	                                areaPositions[j] = (short)values[i + j];
+
+	                            super.setObjectArray(AFInfo.OFFSET + tagnumber, areaPositions);
+	                        }
+	                        i += numafpoints - 1;   // assume these bytes are processed and skip
+	                    }
+	                    else if (AFInfo.OFFSET + tagnumber == AFInfo.TAG_AF_POINTS_IN_FOCUS)
+	                    {
+	                        short[] pointsInFocus = new short[((numafpoints + 15) / 16)];
+
+	                        // There could be incorrect data in the array, so boundary check
+	                        if (values.length - 1 >= (i + pointsInFocus.length))
+	                        {
+	                            for (int j = 0; j < pointsInFocus.length; j++)
+	                                pointsInFocus[j] = (short)values[i + j];
+
+	                            super.setObjectArray(AFInfo.OFFSET + tagnumber, pointsInFocus);
+	                        }
+	                        i += pointsInFocus.length - 1;  // assume these bytes are processed and skip
+	                    }
+	                    else
+	                        super.setObjectArray(AFInfo.OFFSET + tagnumber, values[i]);
+	                    tagnumber++;
+	                }
+	                break;
+	            }
+	            default: {
+	                // no special handling...
+	                super.setObjectArray(tagType, array);
+	                break;
+	            }
+	        }
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link CasioType1MakernoteDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class CasioType1MakernoteDescriptor extends TagDescriptor<CasioType1MakernoteDirectory>
+	{
+	    public CasioType1MakernoteDescriptor(@NotNull CasioType1MakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case CasioType1MakernoteDirectory.TAG_RECORDING_MODE:
+	                return getRecordingModeDescription();
+	            case CasioType1MakernoteDirectory.TAG_QUALITY:
+	                return getQualityDescription();
+	            case CasioType1MakernoteDirectory.TAG_FOCUSING_MODE:
+	                return getFocusingModeDescription();
+	            case CasioType1MakernoteDirectory.TAG_FLASH_MODE:
+	                return getFlashModeDescription();
+	            case CasioType1MakernoteDirectory.TAG_FLASH_INTENSITY:
+	                return getFlashIntensityDescription();
+	            case CasioType1MakernoteDirectory.TAG_OBJECT_DISTANCE:
+	                return getObjectDistanceDescription();
+	            case CasioType1MakernoteDirectory.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case CasioType1MakernoteDirectory.TAG_DIGITAL_ZOOM:
+	                return getDigitalZoomDescription();
+	            case CasioType1MakernoteDirectory.TAG_SHARPNESS:
+	                return getSharpnessDescription();
+	            case CasioType1MakernoteDirectory.TAG_CONTRAST:
+	                return getContrastDescription();
+	            case CasioType1MakernoteDirectory.TAG_SATURATION:
+	                return getSaturationDescription();
+	            case CasioType1MakernoteDirectory.TAG_CCD_SENSITIVITY:
+	                return getCcdSensitivityDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getCcdSensitivityDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType1MakernoteDirectory.TAG_CCD_SENSITIVITY);
+
+	        if (value == null)
+	            return null;
+
+	        switch (value) {
+	            // these four for QV3000
+	            case 64: return "Normal";
+	            case 125: return "+1.0";
+	            case 250: return "+2.0";
+	            case 244: return "+3.0";
+	            // these two for QV8000/2000
+	            case 80: return "Normal (ISO 80 equivalent)";
+	            case 100: return "High";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSaturationDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_SATURATION, "Normal", "Low", "High");
+	    }
+
+	    @Nullable
+	    public String getContrastDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_CONTRAST, "Normal", "Low", "High");
+	    }
+
+	    @Nullable
+	    public String getSharpnessDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_SHARPNESS, "Normal", "Soft", "Hard");
+	    }
+
+	    @Nullable
+	    public String getDigitalZoomDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType1MakernoteDirectory.TAG_DIGITAL_ZOOM);
+
+	        if (value == null)
+	            return null;
+
+	        switch (value) {
+	            case 0x10000: return "No digital zoom";
+	            case 0x10001: return "2x digital zoom";
+	            case 0x20000: return "2x digital zoom";
+	            case 0x40000: return "4x digital zoom";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType1MakernoteDirectory.TAG_WHITE_BALANCE);
+
+	        if (value == null)
+	            return null;
+
+	        switch (value) {
+	            case 1: return "Auto";
+	            case 2: return "Tungsten";
+	            case 3: return "Daylight";
+	            case 4: return "Florescent";
+	            case 5: return "Shade";
+	            case 129: return "Manual";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getObjectDistanceDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType1MakernoteDirectory.TAG_OBJECT_DISTANCE);
+	        return value == null ? null : getFocalLengthDescription(value);
+	    }
+
+	    @Nullable
+	    public String getFlashIntensityDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType1MakernoteDirectory.TAG_FLASH_INTENSITY);
+
+	        if (value == null)
+	            return null;
+
+	        switch (value) {
+	            case 11: return "Weak";
+	            case 13: return "Normal";
+	            case 15: return "Strong";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getFlashModeDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_FLASH_MODE, 1, "Auto", "On", "Off", "Red eye reduction");
+	    }
+
+	    @Nullable
+	    public String getFocusingModeDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_FOCUSING_MODE, 2, "Macro", "Auto focus", "Manual focus", "Infinity");
+	    }
+
+	    @Nullable
+	    public String getQualityDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_QUALITY, 1, "Economy", "Normal", "Fine");
+	    }
+
+	    @Nullable
+	    public String getRecordingModeDescription()
+	    {
+	        return getIndexedDescription(CasioType1MakernoteDirectory.TAG_RECORDING_MODE, 1, "Single shutter", "Panorama", "Night scene", "Portrait", "Landscape");
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Casio (type 1) cameras.
+	 *
+	 * A standard TIFF IFD directory but always uses Motorola (Big-Endian) Byte Alignment.
+	 * Makernote data begins immediately (no header).
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class CasioType1MakernoteDirectory extends Directory
+	{
+	    public static final int TAG_RECORDING_MODE = 0x0001;
+	    public static final int TAG_QUALITY = 0x0002;
+	    public static final int TAG_FOCUSING_MODE = 0x0003;
+	    public static final int TAG_FLASH_MODE = 0x0004;
+	    public static final int TAG_FLASH_INTENSITY = 0x0005;
+	    public static final int TAG_OBJECT_DISTANCE = 0x0006;
+	    public static final int TAG_WHITE_BALANCE = 0x0007;
+	    public static final int TAG_UNKNOWN_1 = 0x0008;
+	    public static final int TAG_UNKNOWN_2 = 0x0009;
+	    public static final int TAG_DIGITAL_ZOOM = 0x000A;
+	    public static final int TAG_SHARPNESS = 0x000B;
+	    public static final int TAG_CONTRAST = 0x000C;
+	    public static final int TAG_SATURATION = 0x000D;
+	    public static final int TAG_UNKNOWN_3 = 0x000E;
+	    public static final int TAG_UNKNOWN_4 = 0x000F;
+	    public static final int TAG_UNKNOWN_5 = 0x0010;
+	    public static final int TAG_UNKNOWN_6 = 0x0011;
+	    public static final int TAG_UNKNOWN_7 = 0x0012;
+	    public static final int TAG_UNKNOWN_8 = 0x0013;
+	    public static final int TAG_CCD_SENSITIVITY = 0x0014;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_CCD_SENSITIVITY, "CCD Sensitivity");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_DIGITAL_ZOOM, "Digital Zoom");
+	        _tagNameMap.put(TAG_FLASH_INTENSITY, "Flash Intensity");
+	        _tagNameMap.put(TAG_FLASH_MODE, "Flash Mode");
+	        _tagNameMap.put(TAG_FOCUSING_MODE, "Focusing Mode");
+	        _tagNameMap.put(TAG_OBJECT_DISTANCE, "Object Distance");
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_RECORDING_MODE, "Recording Mode");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_UNKNOWN_1, "Makernote Unknown 1");
+	        _tagNameMap.put(TAG_UNKNOWN_2, "Makernote Unknown 2");
+	        _tagNameMap.put(TAG_UNKNOWN_3, "Makernote Unknown 3");
+	        _tagNameMap.put(TAG_UNKNOWN_4, "Makernote Unknown 4");
+	        _tagNameMap.put(TAG_UNKNOWN_5, "Makernote Unknown 5");
+	        _tagNameMap.put(TAG_UNKNOWN_6, "Makernote Unknown 6");
+	        _tagNameMap.put(TAG_UNKNOWN_7, "Makernote Unknown 7");
+	        _tagNameMap.put(TAG_UNKNOWN_8, "Makernote Unknown 8");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+	    }
+
+	    public CasioType1MakernoteDirectory()
+	    {
+	        this.setDescriptor(new CasioType1MakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Casio Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link CasioType2MakernoteDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class CasioType2MakernoteDescriptor extends TagDescriptor<CasioType2MakernoteDirectory>
+	{
+	    public CasioType2MakernoteDescriptor(@NotNull CasioType2MakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case CasioType2MakernoteDirectory.TAG_THUMBNAIL_DIMENSIONS:
+	                return getThumbnailDimensionsDescription();
+	            case CasioType2MakernoteDirectory.TAG_THUMBNAIL_SIZE:
+	                return getThumbnailSizeDescription();
+	            case CasioType2MakernoteDirectory.TAG_THUMBNAIL_OFFSET:
+	                return getThumbnailOffsetDescription();
+	            case CasioType2MakernoteDirectory.TAG_QUALITY_MODE:
+	                return getQualityModeDescription();
+	            case CasioType2MakernoteDirectory.TAG_IMAGE_SIZE:
+	                return getImageSizeDescription();
+	            case CasioType2MakernoteDirectory.TAG_FOCUS_MODE_1:
+	                return getFocusMode1Description();
+	            case CasioType2MakernoteDirectory.TAG_ISO_SENSITIVITY:
+	                return getIsoSensitivityDescription();
+	            case CasioType2MakernoteDirectory.TAG_WHITE_BALANCE_1:
+	                return getWhiteBalance1Description();
+	            case CasioType2MakernoteDirectory.TAG_FOCAL_LENGTH:
+	                return getFocalLengthDescription();
+	            case CasioType2MakernoteDirectory.TAG_SATURATION:
+	                return getSaturationDescription();
+	            case CasioType2MakernoteDirectory.TAG_CONTRAST:
+	                return getContrastDescription();
+	            case CasioType2MakernoteDirectory.TAG_SHARPNESS:
+	                return getSharpnessDescription();
+	            case CasioType2MakernoteDirectory.TAG_PREVIEW_THUMBNAIL:
+	                return getCasioPreviewThumbnailDescription();
+	            case CasioType2MakernoteDirectory.TAG_WHITE_BALANCE_BIAS:
+	                return getWhiteBalanceBiasDescription();
+	            case CasioType2MakernoteDirectory.TAG_WHITE_BALANCE_2:
+	                return getWhiteBalance2Description();
+	            case CasioType2MakernoteDirectory.TAG_OBJECT_DISTANCE:
+	                return getObjectDistanceDescription();
+	            case CasioType2MakernoteDirectory.TAG_FLASH_DISTANCE:
+	                return getFlashDistanceDescription();
+	            case CasioType2MakernoteDirectory.TAG_RECORD_MODE:
+	                return getRecordModeDescription();
+	            case CasioType2MakernoteDirectory.TAG_SELF_TIMER:
+	                return getSelfTimerDescription();
+	            case CasioType2MakernoteDirectory.TAG_QUALITY:
+	                return getQualityDescription();
+	            case CasioType2MakernoteDirectory.TAG_FOCUS_MODE_2:
+	                return getFocusMode2Description();
+	            case CasioType2MakernoteDirectory.TAG_TIME_ZONE:
+	                return getTimeZoneDescription();
+	            case CasioType2MakernoteDirectory.TAG_CCD_ISO_SENSITIVITY:
+	                return getCcdIsoSensitivityDescription();
+	            case CasioType2MakernoteDirectory.TAG_COLOUR_MODE:
+	                return getColourModeDescription();
+	            case CasioType2MakernoteDirectory.TAG_ENHANCEMENT:
+	                return getEnhancementDescription();
+	            case CasioType2MakernoteDirectory.TAG_FILTER:
+	                return getFilterDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getFilterDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_FILTER, "Off");
+	    }
+
+	    @Nullable
+	    public String getEnhancementDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_ENHANCEMENT, "Off");
+	    }
+
+	    @Nullable
+	    public String getColourModeDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_COLOUR_MODE, "Off");
+	    }
+
+	    @Nullable
+	    public String getCcdIsoSensitivityDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_CCD_ISO_SENSITIVITY, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getTimeZoneDescription()
+	    {
+	        return _directory.getString(CasioType2MakernoteDirectory.TAG_TIME_ZONE);
+	    }
+
+	    @Nullable
+	    public String getFocusMode2Description()
+	    {
+	        Integer value = _directory.getInteger(CasioType2MakernoteDirectory.TAG_FOCUS_MODE_2);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 1: return "Fixation";
+	            case 6: return "Multi-Area Focus";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getQualityDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_QUALITY, 3, "Fine");
+	    }
+
+	    @Nullable
+	    public String getSelfTimerDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_SELF_TIMER, 1, "Off");
+	    }
+
+	    @Nullable
+	    public String getRecordModeDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_RECORD_MODE, 2, "Normal");
+	    }
+
+	    @Nullable
+	    public String getFlashDistanceDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_FLASH_DISTANCE, "Off");
+	    }
+
+	    @Nullable
+	    public String getObjectDistanceDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType2MakernoteDirectory.TAG_OBJECT_DISTANCE);
+	        if (value == null)
+	            return null;
+	        return Integer.toString(value) + " mm";
+	    }
+
+	    @Nullable
+	    public String getWhiteBalance2Description()
+	    {
+	        Integer value = _directory.getInteger(CasioType2MakernoteDirectory.TAG_WHITE_BALANCE_2);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0: return "Manual";
+	            case 1: return "Auto"; // unsure about this
+	            case 4: return "Flash"; // unsure about this
+	            case 12: return "Flash";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceBiasDescription()
+	    {
+	        return _directory.getString(CasioType2MakernoteDirectory.TAG_WHITE_BALANCE_BIAS);
+	    }
+
+	    @Nullable
+	    public String getCasioPreviewThumbnailDescription()
+	    {
+	        final byte[] bytes = _directory.getByteArray(CasioType2MakernoteDirectory.TAG_PREVIEW_THUMBNAIL);
+	        if (bytes == null)
+	            return null;
+	        return "<" + bytes.length + " bytes of image data>";
+	    }
+
+	    @Nullable
+	    public String getSharpnessDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_SHARPNESS, "-1", "Normal", "+1");
+	    }
+
+	    @Nullable
+	    public String getContrastDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_CONTRAST, "-1", "Normal", "+1");
+	    }
+
+	    @Nullable
+	    public String getSaturationDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_SATURATION, "-1", "Normal", "+1");
+	    }
+
+	    @Nullable
+	    public String getFocalLengthDescription()
+	    {
+	        Double value = _directory.getDoubleObject(CasioType2MakernoteDirectory.TAG_FOCAL_LENGTH);
+	        return value == null ? null : getFocalLengthDescription(value / 10d);
+	    }
+
+	    @Nullable
+	    public String getWhiteBalance1Description()
+	    {
+	        return getIndexedDescription(
+	        		CasioType2MakernoteDirectory.TAG_WHITE_BALANCE_1,
+	            "Auto",
+	            "Daylight",
+	            "Shade",
+	            "Tungsten",
+	            "Florescent",
+	            "Manual"
+	        );
+	    }
+
+	    @Nullable
+	    public String getIsoSensitivityDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType2MakernoteDirectory.TAG_ISO_SENSITIVITY);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 3: return "50";
+	            case 4: return "64";
+	            case 6: return "100";
+	            case 9: return "200";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getFocusMode1Description()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_FOCUS_MODE_1, "Normal", "Macro");
+	    }
+
+	    @Nullable
+	    public String getImageSizeDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType2MakernoteDirectory.TAG_IMAGE_SIZE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0: return "640 x 480 pixels";
+	            case 4: return "1600 x 1200 pixels";
+	            case 5: return "2048 x 1536 pixels";
+	            case 20: return "2288 x 1712 pixels";
+	            case 21: return "2592 x 1944 pixels";
+	            case 22: return "2304 x 1728 pixels";
+	            case 36: return "3008 x 2008 pixels";
+	            default: return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getQualityModeDescription()
+	    {
+	        return getIndexedDescription(CasioType2MakernoteDirectory.TAG_QUALITY_MODE, 1, "Fine", "Super Fine");
+	    }
+
+	    @Nullable
+	    public String getThumbnailOffsetDescription()
+	    {
+	        return _directory.getString(CasioType2MakernoteDirectory.TAG_THUMBNAIL_OFFSET);
+	    }
+
+	    @Nullable
+	    public String getThumbnailSizeDescription()
+	    {
+	        Integer value = _directory.getInteger(CasioType2MakernoteDirectory.TAG_THUMBNAIL_SIZE);
+	        if (value == null)
+	            return null;
+	        return Integer.toString(value) + " bytes";
+	    }
+
+	    @Nullable
+	    public String getThumbnailDimensionsDescription()
+	    {
+	        int[] dimensions = _directory.getIntArray(CasioType2MakernoteDirectory.TAG_THUMBNAIL_DIMENSIONS);
+	        if (dimensions == null || dimensions.length != 2)
+	            return _directory.getString(CasioType2MakernoteDirectory.TAG_THUMBNAIL_DIMENSIONS);
+	        return dimensions[0] + " x " + dimensions[1] + " pixels";
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Casio (type 2) cameras.
+	 *
+	 * A standard TIFF IFD directory but always uses Motorola (Big-Endian) Byte Alignment.
+	 * Makernote data begins after a 6-byte header: "QVC\x00\x00\x00"
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class CasioType2MakernoteDirectory extends Directory
+	{
+	    /**
+	     * 2 values - x,y dimensions in pixels.
+	     */
+	    public static final int TAG_THUMBNAIL_DIMENSIONS = 0x0002;
+	    /**
+	     * Size in bytes
+	     */
+	    public static final int TAG_THUMBNAIL_SIZE = 0x0003;
+	    /**
+	     * Offset of Preview Thumbnail
+	     */
+	    public static final int TAG_THUMBNAIL_OFFSET = 0x0004;
+	    /**
+	     * 1 = Fine
+	     * 2 = Super Fine
+	     */
+	    public static final int TAG_QUALITY_MODE = 0x0008;
+	    /**
+	     * 0 = 640 x 480 pixels
+	     * 4 = 1600 x 1200 pixels
+	     * 5 = 2048 x 1536 pixels
+	     * 20 = 2288 x 1712 pixels
+	     * 21 = 2592 x 1944 pixels
+	     * 22 = 2304 x 1728 pixels
+	     * 36 = 3008 x 2008 pixels
+	     */
+	    public static final int TAG_IMAGE_SIZE = 0x0009;
+	    /**
+	     * 0 = Normal
+	     * 1 = Macro
+	     */
+	    public static final int TAG_FOCUS_MODE_1 = 0x000D;
+	    /**
+	     * 3 = 50
+	     * 4 = 64
+	     * 6 = 100
+	     * 9 = 200
+	     */
+	    public static final int TAG_ISO_SENSITIVITY = 0x0014;
+	    /**
+	     * 0 = Auto
+	     * 1 = Daylight
+	     * 2 = Shade
+	     * 3 = Tungsten
+	     * 4 = Fluorescent
+	     * 5 = Manual
+	     */
+	    public static final int TAG_WHITE_BALANCE_1 = 0x0019;
+	    /**
+	     * Units are tenths of a millimetre
+	     */
+	    public static final int TAG_FOCAL_LENGTH = 0x001D;
+	    /**
+	     * 0 = -1
+	     * 1 = Normal
+	     * 2 = +1
+	     */
+	    public static final int TAG_SATURATION = 0x001F;
+	    /**
+	     * 0 = -1
+	     * 1 = Normal
+	     * 2 = +1
+	     */
+	    public static final int TAG_CONTRAST = 0x0020;
+	    /**
+	     * 0 = -1
+	     * 1 = Normal
+	     * 2 = +1
+	     */
+	    public static final int TAG_SHARPNESS = 0x0021;
+	    /**
+	     * See PIM specification here: http://www.ozhiker.com/electronics/pjmt/jpeg_info/pim.html
+	     */
+	    public static final int TAG_PRINT_IMAGE_MATCHING_INFO = 0x0E00;
+	    /**
+	     * Alternate thumbnail offset
+	     */
+	    public static final int TAG_PREVIEW_THUMBNAIL = 0x2000;
+	    /**
+	     *
+	     */
+	    public static final int TAG_WHITE_BALANCE_BIAS = 0x2011;
+	    /**
+	     * 12 = Flash
+	     * 0 = Manual
+	     * 1 = Auto?
+	     * 4 = Flash?
+	     */
+	    public static final int TAG_WHITE_BALANCE_2 = 0x2012;
+	    /**
+	     * Units are millimetres
+	     */
+	    public static final int TAG_OBJECT_DISTANCE = 0x2022;
+	    /**
+	     * 0 = Off
+	     */
+	    public static final int TAG_FLASH_DISTANCE = 0x2034;
+	    /**
+	     * 2 = Normal Mode
+	     */
+	    public static final int TAG_RECORD_MODE = 0x3000;
+	    /**
+	     * 1 = Off?
+	     */
+	    public static final int TAG_SELF_TIMER = 0x3001;
+	    /**
+	     * 3 = Fine
+	     */
+	    public static final int TAG_QUALITY = 0x3002;
+	    /**
+	     * 1 = Fixation
+	     * 6 = Multi-Area Auto Focus
+	     */
+	    public static final int TAG_FOCUS_MODE_2 = 0x3003;
+	    /**
+	     * (string)
+	     */
+	    public static final int TAG_TIME_ZONE = 0x3006;
+	    /**
+	     *
+	     */
+	    public static final int TAG_BESTSHOT_MODE = 0x3007;
+	    /**
+	     * 0 = Off
+	     * 1 = On?
+	     */
+	    public static final int TAG_CCD_ISO_SENSITIVITY = 0x3014;
+	    /**
+	     * 0 = Off
+	     */
+	    public static final int TAG_COLOUR_MODE = 0x3015;
+	    /**
+	     * 0 = Off
+	     */
+	    public static final int TAG_ENHANCEMENT = 0x3016;
+	    /**
+	     * 0 = Off
+	     */
+	    public static final int TAG_FILTER = 0x3017;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        // TODO add missing names
+	        _tagNameMap.put(TAG_THUMBNAIL_DIMENSIONS, "Thumbnail Dimensions");
+	        _tagNameMap.put(TAG_THUMBNAIL_SIZE, "Thumbnail Size");
+	        _tagNameMap.put(TAG_THUMBNAIL_OFFSET, "Thumbnail Offset");
+	        _tagNameMap.put(TAG_QUALITY_MODE, "Quality Mode");
+	        _tagNameMap.put(TAG_IMAGE_SIZE, "Image Size");
+	        _tagNameMap.put(TAG_FOCUS_MODE_1, "Focus Mode");
+	        _tagNameMap.put(TAG_ISO_SENSITIVITY, "ISO Sensitivity");
+	        _tagNameMap.put(TAG_WHITE_BALANCE_1, "White Balance");
+	        _tagNameMap.put(TAG_FOCAL_LENGTH, "Focal Length");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_PRINT_IMAGE_MATCHING_INFO, "Print Image Matching (PIM) Info");
+	        _tagNameMap.put(TAG_PREVIEW_THUMBNAIL, "Casio Preview Thumbnail");
+	        _tagNameMap.put(TAG_WHITE_BALANCE_BIAS, "White Balance Bias");
+	        _tagNameMap.put(TAG_WHITE_BALANCE_2, "White Balance");
+	        _tagNameMap.put(TAG_OBJECT_DISTANCE, "Object Distance");
+	        _tagNameMap.put(TAG_FLASH_DISTANCE, "Flash Distance");
+	        _tagNameMap.put(TAG_RECORD_MODE, "Record Mode");
+	        _tagNameMap.put(TAG_SELF_TIMER, "Self Timer");
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_FOCUS_MODE_2, "Focus Mode");
+	        _tagNameMap.put(TAG_TIME_ZONE, "Time Zone");
+	        _tagNameMap.put(TAG_BESTSHOT_MODE, "BestShot Mode");
+	        _tagNameMap.put(TAG_CCD_ISO_SENSITIVITY, "CCD ISO Sensitivity");
+	        _tagNameMap.put(TAG_COLOUR_MODE, "Colour Mode");
+	        _tagNameMap.put(TAG_ENHANCEMENT, "Enhancement");
+	        _tagNameMap.put(TAG_FILTER, "Filter");
+	    }
+
+	    public CasioType2MakernoteDirectory()
+	    {
+	        this.setDescriptor(new CasioType2MakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Casio Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link FujifilmMakernoteDirectory}.
+	 * <p>
+	 * Fujifilm added their Makernote tag from the Year 2000's models (e.g.Finepix1400,
+	 * Finepix4700). It uses IFD format and start from ASCII character 'FUJIFILM', and next 4
+	 * bytes (value 0x000c) points the offset to first IFD entry.
+	 * <pre><code>
+	 * :0000: 46 55 4A 49 46 49 4C 4D-0C 00 00 00 0F 00 00 00 :0000: FUJIFILM........
+	 * :0010: 07 00 04 00 00 00 30 31-33 30 00 10 02 00 08 00 :0010: ......0130......
+	 * </code></pre>
+	 * There are two big differences to the other manufacturers.
+	 * <ul>
+	 * <li>Fujifilm's Exif data uses Motorola align, but Makernote ignores it and uses Intel align.</li>
+	 * <li>
+	 * The other manufacturer's Makernote counts the "offset to data" from the first byte of TIFF header
+	 * (same as the other IFD), but Fujifilm counts it from the first byte of Makernote itself.
+	 * </li>
+	 * </ul>
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class FujifilmMakernoteDescriptor extends TagDescriptor<FujifilmMakernoteDirectory>
+	{
+	    public FujifilmMakernoteDescriptor(@NotNull FujifilmMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case FujifilmMakernoteDirectory.TAG_MAKERNOTE_VERSION:
+	                return getMakernoteVersionDescription();
+	            case FujifilmMakernoteDirectory.TAG_SHARPNESS:
+	                return getSharpnessDescription();
+	            case FujifilmMakernoteDirectory.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case FujifilmMakernoteDirectory.TAG_COLOR_SATURATION:
+	                return getColorSaturationDescription();
+	            case FujifilmMakernoteDirectory.TAG_TONE:
+	                return getToneDescription();
+	            case FujifilmMakernoteDirectory.TAG_CONTRAST:
+	                return getContrastDescription();
+	            case FujifilmMakernoteDirectory.TAG_NOISE_REDUCTION:
+	                return getNoiseReductionDescription();
+	            case FujifilmMakernoteDirectory.TAG_HIGH_ISO_NOISE_REDUCTION:
+	                return getHighIsoNoiseReductionDescription();
+	            case FujifilmMakernoteDirectory.TAG_FLASH_MODE:
+	                return getFlashModeDescription();
+	            case FujifilmMakernoteDirectory.TAG_FLASH_EV:
+	                return getFlashExposureValueDescription();
+	            case FujifilmMakernoteDirectory.TAG_MACRO:
+	                return getMacroDescription();
+	            case FujifilmMakernoteDirectory.TAG_FOCUS_MODE:
+	                return getFocusModeDescription();
+	            case FujifilmMakernoteDirectory.TAG_SLOW_SYNC:
+	                return getSlowSyncDescription();
+	            case FujifilmMakernoteDirectory.TAG_PICTURE_MODE:
+	                return getPictureModeDescription();
+	            case FujifilmMakernoteDirectory.TAG_EXR_AUTO:
+	                return getExrAutoDescription();
+	            case FujifilmMakernoteDirectory.TAG_EXR_MODE:
+	                return getExrModeDescription();
+	            case FujifilmMakernoteDirectory.TAG_AUTO_BRACKETING:
+	                return getAutoBracketingDescription();
+	            case FujifilmMakernoteDirectory.TAG_FINE_PIX_COLOR:
+	                return getFinePixColorDescription();
+	            case FujifilmMakernoteDirectory.TAG_BLUR_WARNING:
+	                return getBlurWarningDescription();
+	            case FujifilmMakernoteDirectory.TAG_FOCUS_WARNING:
+	                return getFocusWarningDescription();
+	            case FujifilmMakernoteDirectory.TAG_AUTO_EXPOSURE_WARNING:
+	                return getAutoExposureWarningDescription();
+	            case FujifilmMakernoteDirectory.TAG_DYNAMIC_RANGE:
+	                return getDynamicRangeDescription();
+	            case FujifilmMakernoteDirectory.TAG_FILM_MODE:
+	                return getFilmModeDescription();
+	            case FujifilmMakernoteDirectory.TAG_DYNAMIC_RANGE_SETTING:
+	                return getDynamicRangeSettingDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    private String getMakernoteVersionDescription()
+	    {
+	        return getVersionBytesDescription(FujifilmMakernoteDirectory.TAG_MAKERNOTE_VERSION, 2);
+	    }
+
+	    @Nullable
+	    public String getSharpnessDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_SHARPNESS);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 1: return "Softest";
+	            case 2: return "Soft";
+	            case 3: return "Normal";
+	            case 4: return "Hard";
+	            case 5: return "Hardest";
+	            case 0x82: return "Medium Soft";
+	            case 0x84: return "Medium Hard";
+	            case 0x8000: return "Film Simulation";
+	            case 0xFFFF: return "N/A";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_WHITE_BALANCE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Auto";
+	            case 0x100: return "Daylight";
+	            case 0x200: return "Cloudy";
+	            case 0x300: return "Daylight Fluorescent";
+	            case 0x301: return "Day White Fluorescent";
+	            case 0x302: return "White Fluorescent";
+	            case 0x303: return "Warm White Fluorescent";
+	            case 0x304: return "Living Room Warm White Fluorescent";
+	            case 0x400: return "Incandescence";
+	            case 0x500: return "Flash";
+	            case 0xf00: return "Custom White Balance";
+	            case 0xf01: return "Custom White Balance 2";
+	            case 0xf02: return "Custom White Balance 3";
+	            case 0xf03: return "Custom White Balance 4";
+	            case 0xf04: return "Custom White Balance 5";
+	            case 0xff0: return "Kelvin";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getColorSaturationDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_COLOR_SATURATION);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Normal";
+	            case 0x080: return "Medium High";
+	            case 0x100: return "High";
+	            case 0x180: return "Medium Low";
+	            case 0x200: return "Low";
+	            case 0x300: return "None (B&W)";
+	            case 0x301: return "B&W Green Filter";
+	            case 0x302: return "B&W Yellow Filter";
+	            case 0x303: return "B&W Blue Filter";
+	            case 0x304: return "B&W Sepia";
+	            case 0x8000: return "Film Simulation";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getToneDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_TONE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Normal";
+	            case 0x080: return "Medium High";
+	            case 0x100: return "High";
+	            case 0x180: return "Medium Low";
+	            case 0x200: return "Low";
+	            case 0x300: return "None (B&W)";
+	            case 0x8000: return "Film Simulation";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getContrastDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_CONTRAST);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Normal";
+	            case 0x100: return "High";
+	            case 0x300: return "Low";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getNoiseReductionDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_NOISE_REDUCTION);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x040: return "Low";
+	            case 0x080: return "Normal";
+	            case 0x100: return "N/A";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getHighIsoNoiseReductionDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_HIGH_ISO_NOISE_REDUCTION);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Normal";
+	            case 0x100: return "Strong";
+	            case 0x200: return "Weak";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getFlashModeDescription()
+	    {
+	        return getIndexedDescription(
+	        		FujifilmMakernoteDirectory.TAG_FLASH_MODE,
+	            "Auto",
+	            "On",
+	            "Off",
+	            "Red-eye Reduction",
+	            "External"
+	        );
+	    }
+
+	    @Nullable
+	    public String getFlashExposureValueDescription()
+	    {
+	        Rational value = _directory.getRational(FujifilmMakernoteDirectory.TAG_FLASH_EV);
+	        return value == null ? null : value.toSimpleString(false) + " EV (Apex)";
+	    }
+
+	    @Nullable
+	    public String getMacroDescription()
+	    {
+	        return getIndexedDescription(FujifilmMakernoteDirectory.TAG_MACRO, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getFocusModeDescription()
+	    {
+	        return getIndexedDescription(FujifilmMakernoteDirectory.TAG_FOCUS_MODE, "Auto Focus", "Manual Focus");
+	    }
+
+	    @Nullable
+	    public String getSlowSyncDescription()
+	    {
+	        return getIndexedDescription(FujifilmMakernoteDirectory.TAG_SLOW_SYNC, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getPictureModeDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_PICTURE_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Auto";
+	            case 0x001: return "Portrait scene";
+	            case 0x002: return "Landscape scene";
+	            case 0x003: return "Macro";
+	            case 0x004: return "Sports scene";
+	            case 0x005: return "Night scene";
+	            case 0x006: return "Program AE";
+	            case 0x007: return "Natural Light";
+	            case 0x008: return "Anti-blur";
+	            case 0x009: return "Beach & Snow";
+	            case 0x00a: return "Sunset";
+	            case 0x00b: return "Museum";
+	            case 0x00c: return "Party";
+	            case 0x00d: return "Flower";
+	            case 0x00e: return "Text";
+	            case 0x00f: return "Natural Light & Flash";
+	            case 0x010: return "Beach";
+	            case 0x011: return "Snow";
+	            case 0x012: return "Fireworks";
+	            case 0x013: return "Underwater";
+	            case 0x014: return "Portrait with Skin Correction";
+	            // skip 0x015
+	            case 0x016: return "Panorama";
+	            case 0x017: return "Night (Tripod)";
+	            case 0x018: return "Pro Low-light";
+	            case 0x019: return "Pro Focus";
+	            // skip 0x01a
+	            case 0x01b: return "Dog Face Detection";
+	            case 0x01c: return "Cat Face Detection";
+	            case 0x100: return "Aperture priority AE";
+	            case 0x200: return "Shutter priority AE";
+	            case 0x300: return "Manual exposure";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getExrAutoDescription()
+	    {
+	        return getIndexedDescription(FujifilmMakernoteDirectory.TAG_EXR_AUTO, "Auto", "Manual");
+	    }
+
+	    @Nullable
+	    public String getExrModeDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_EXR_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x100: return "HR (High Resolution)";
+	            case 0x200: return "SN (Signal to Noise Priority)";
+	            case 0x300: return "DR (Dynamic Range Priority)";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getAutoBracketingDescription()
+	    {
+	        return getIndexedDescription(
+	        		FujifilmMakernoteDirectory.TAG_AUTO_BRACKETING,
+	            "Off",
+	            "On",
+	            "No Flash & Flash"
+	        );
+	    }
+
+	    @Nullable
+	    public String getFinePixColorDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_FINE_PIX_COLOR);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x00: return "Standard";
+	            case 0x10: return "Chrome";
+	            case 0x30: return "B&W";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getBlurWarningDescription()
+	    {
+	        return getIndexedDescription(
+	        		FujifilmMakernoteDirectory.TAG_BLUR_WARNING,
+	            "No Blur Warning",
+	            "Blur warning"
+	        );
+	    }
+
+	    @Nullable
+	    public String getFocusWarningDescription()
+	    {
+	        return getIndexedDescription(
+	        		FujifilmMakernoteDirectory.TAG_FOCUS_WARNING,
+	            "Good Focus",
+	            "Out Of Focus"
+	        );
+	    }
+
+	    @Nullable
+	    public String getAutoExposureWarningDescription()
+	    {
+	        return getIndexedDescription(
+	        		FujifilmMakernoteDirectory.TAG_AUTO_EXPOSURE_WARNING,
+	            "AE Good",
+	            "Over Exposed"
+	        );
+	    }
+
+	    @Nullable
+	    public String getDynamicRangeDescription()
+	    {
+	        return getIndexedDescription(
+	        		FujifilmMakernoteDirectory.TAG_DYNAMIC_RANGE,
+	            1,
+	            "Standard",
+	            null,
+	            "Wide"
+	        );
+	    }
+
+	    @Nullable
+	    public String getFilmModeDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_FILM_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "F0/Standard (Provia) ";
+	            case 0x100: return "F1/Studio Portrait";
+	            case 0x110: return "F1a/Studio Portrait Enhanced Saturation";
+	            case 0x120: return "F1b/Studio Portrait Smooth Skin Tone (Astia)";
+	            case 0x130: return "F1c/Studio Portrait Increased Sharpness";
+	            case 0x200: return "F2/Fujichrome (Velvia)";
+	            case 0x300: return "F3/Studio Portrait Ex";
+	            case 0x400: return "F4/Velvia";
+	            case 0x500: return "Pro Neg. Std";
+	            case 0x501: return "Pro Neg. Hi";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getDynamicRangeSettingDescription()
+	    {
+	        final Integer value = _directory.getInteger(FujifilmMakernoteDirectory.TAG_DYNAMIC_RANGE_SETTING);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x000: return "Auto (100-400%)";
+	            case 0x001: return "Manual";
+	            case 0x100: return "Standard (100%)";
+	            case 0x200: return "Wide 1 (230%)";
+	            case 0x201: return "Wide 2 (400%)";
+	            case 0x8000: return "Film Simulation";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Fujifilm cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class FujifilmMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_MAKERNOTE_VERSION = 0x0000;
+	    public static final int TAG_SERIAL_NUMBER = 0x0010;
+
+	    public static final int TAG_QUALITY = 0x1000;
+	    public static final int TAG_SHARPNESS = 0x1001;
+	    public static final int TAG_WHITE_BALANCE = 0x1002;
+	    public static final int TAG_COLOR_SATURATION = 0x1003;
+	    public static final int TAG_TONE = 0x1004;
+	    public static final int TAG_COLOR_TEMPERATURE = 0x1005;
+	    public static final int TAG_CONTRAST = 0x1006;
+
+	    public static final int TAG_WHITE_BALANCE_FINE_TUNE = 0x100a;
+	    public static final int TAG_NOISE_REDUCTION = 0x100b;
+	    public static final int TAG_HIGH_ISO_NOISE_REDUCTION = 0x100e;
+
+	    public static final int TAG_FLASH_MODE = 0x1010;
+	    public static final int TAG_FLASH_EV = 0x1011;
+
+	    public static final int TAG_MACRO = 0x1020;
+	    public static final int TAG_FOCUS_MODE = 0x1021;
+	    public static final int TAG_FOCUS_PIXEL = 0x1023;
+
+	    public static final int TAG_SLOW_SYNC = 0x1030;
+	    public static final int TAG_PICTURE_MODE = 0x1031;
+	    public static final int TAG_EXR_AUTO = 0x1033;
+	    public static final int TAG_EXR_MODE = 0x1034;
+
+	    public static final int TAG_AUTO_BRACKETING = 0x1100;
+	    public static final int TAG_SEQUENCE_NUMBER = 0x1101;
+
+	    public static final int TAG_FINE_PIX_COLOR = 0x1210;
+
+	    public static final int TAG_BLUR_WARNING = 0x1300;
+	    public static final int TAG_FOCUS_WARNING = 0x1301;
+	    public static final int TAG_AUTO_EXPOSURE_WARNING = 0x1302;
+	    public static final int TAG_GE_IMAGE_SIZE = 0x1304;
+
+	    public static final int TAG_DYNAMIC_RANGE = 0x1400;
+	    public static final int TAG_FILM_MODE = 0x1401;
+	    public static final int TAG_DYNAMIC_RANGE_SETTING = 0x1402;
+	    public static final int TAG_DEVELOPMENT_DYNAMIC_RANGE = 0x1403;
+	    public static final int TAG_MIN_FOCAL_LENGTH = 0x1404;
+	    public static final int TAG_MAX_FOCAL_LENGTH = 0x1405;
+	    public static final int TAG_MAX_APERTURE_AT_MIN_FOCAL = 0x1406;
+	    public static final int TAG_MAX_APERTURE_AT_MAX_FOCAL = 0x1407;
+
+	    public static final int TAG_AUTO_DYNAMIC_RANGE = 0x140b;
+
+	    public static final int TAG_FACES_DETECTED = 0x4100;
+	    /**
+	     * Left, top, right and bottom coordinates in full-sized image for each face detected.
+	     */
+	    public static final int TAG_FACE_POSITIONS = 0x4103;
+	    public static final int TAG_FACE_REC_INFO = 0x4282;
+
+	    public static final int TAG_FILE_SOURCE = 0x8000;
+	    public static final int TAG_ORDER_NUMBER = 0x8002;
+	    public static final int TAG_FRAME_NUMBER = 0x8003;
+
+	    public static final int TAG_PARALLAX = 0xb211;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_MAKERNOTE_VERSION, "Makernote Version");
+	        _tagNameMap.put(TAG_SERIAL_NUMBER, "Serial Number");
+
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(TAG_COLOR_SATURATION, "Color Saturation");
+	        _tagNameMap.put(TAG_TONE, "Tone (Contrast)");
+	        _tagNameMap.put(TAG_COLOR_TEMPERATURE, "Color Temperature");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+
+	        _tagNameMap.put(TAG_WHITE_BALANCE_FINE_TUNE, "White Balance Fine Tune");
+	        _tagNameMap.put(TAG_NOISE_REDUCTION, "Noise Reduction");
+	        _tagNameMap.put(TAG_HIGH_ISO_NOISE_REDUCTION, "High ISO Noise Reduction");
+
+	        _tagNameMap.put(TAG_FLASH_MODE, "Flash Mode");
+	        _tagNameMap.put(TAG_FLASH_EV, "Flash Strength");
+
+	        _tagNameMap.put(TAG_MACRO, "Macro");
+	        _tagNameMap.put(TAG_FOCUS_MODE, "Focus Mode");
+	        _tagNameMap.put(TAG_FOCUS_PIXEL, "Focus Pixel");
+
+	        _tagNameMap.put(TAG_SLOW_SYNC, "Slow Sync");
+	        _tagNameMap.put(TAG_PICTURE_MODE, "Picture Mode");
+	        _tagNameMap.put(TAG_EXR_AUTO, "EXR Auto");
+	        _tagNameMap.put(TAG_EXR_MODE, "EXR Mode");
+
+	        _tagNameMap.put(TAG_AUTO_BRACKETING, "Auto Bracketing");
+	        _tagNameMap.put(TAG_SEQUENCE_NUMBER, "Sequence Number");
+
+	        _tagNameMap.put(TAG_FINE_PIX_COLOR, "FinePix Color Setting");
+
+	        _tagNameMap.put(TAG_BLUR_WARNING, "Blur Warning");
+	        _tagNameMap.put(TAG_FOCUS_WARNING, "Focus Warning");
+	        _tagNameMap.put(TAG_AUTO_EXPOSURE_WARNING, "AE Warning");
+	        _tagNameMap.put(TAG_GE_IMAGE_SIZE, "GE Image Size");
+
+	        _tagNameMap.put(TAG_DYNAMIC_RANGE, "Dynamic Range");
+	        _tagNameMap.put(TAG_FILM_MODE, "Film Mode");
+	        _tagNameMap.put(TAG_DYNAMIC_RANGE_SETTING, "Dynamic Range Setting");
+	        _tagNameMap.put(TAG_DEVELOPMENT_DYNAMIC_RANGE, "Development Dynamic Range");
+	        _tagNameMap.put(TAG_MIN_FOCAL_LENGTH, "Minimum Focal Length");
+	        _tagNameMap.put(TAG_MAX_FOCAL_LENGTH, "Maximum Focal Length");
+	        _tagNameMap.put(TAG_MAX_APERTURE_AT_MIN_FOCAL, "Maximum Aperture at Minimum Focal Length");
+	        _tagNameMap.put(TAG_MAX_APERTURE_AT_MAX_FOCAL, "Maximum Aperture at Maximum Focal Length");
+
+	        _tagNameMap.put(TAG_AUTO_DYNAMIC_RANGE, "Auto Dynamic Range");
+
+	        _tagNameMap.put(TAG_FACES_DETECTED, "Faces Detected");
+	        _tagNameMap.put(TAG_FACE_POSITIONS, "Face Positions");
+	        _tagNameMap.put(TAG_FACE_REC_INFO, "Face Detection Data");
+
+	        _tagNameMap.put(TAG_FILE_SOURCE, "File Source");
+	        _tagNameMap.put(TAG_ORDER_NUMBER, "Order Number");
+	        _tagNameMap.put(TAG_FRAME_NUMBER, "Frame Number");
+
+	        _tagNameMap.put(TAG_PARALLAX, "Parallax");
+	    }
+
+	    public FujifilmMakernoteDirectory()
+	    {
+	        this.setDescriptor(new FujifilmMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Fujifilm Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link KyoceraMakernoteDirectory}.
+	 * <p>
+	 * Some information about this makernote taken from here:
+	 * http://www.ozhiker.com/electronics/pjmt/jpeg_info/kyocera_mn.html
+	 * <p>
+	 * Most manufacturer's Makernote counts the "offset to data" from the first byte
+	 * of TIFF header (same as the other IFD), but Kyocera (along with Fujifilm) counts
+	 * it from the first byte of Makernote itself.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class KyoceraMakernoteDescriptor extends TagDescriptor<KyoceraMakernoteDirectory>
+	{
+	    public KyoceraMakernoteDescriptor(@NotNull KyoceraMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case KyoceraMakernoteDirectory.TAG_PROPRIETARY_THUMBNAIL:
+	                return getProprietaryThumbnailDataDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getProprietaryThumbnailDataDescription()
+	    {
+	        return getByteLengthDescription(KyoceraMakernoteDirectory.TAG_PROPRIETARY_THUMBNAIL);
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Kyocera and Contax cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class KyoceraMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_PROPRIETARY_THUMBNAIL = 0x0001;
+	    public static final int TAG_PRINT_IMAGE_MATCHING_INFO = 0x0E00;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_PROPRIETARY_THUMBNAIL, "Proprietary Thumbnail Format Data");
+	        _tagNameMap.put(TAG_PRINT_IMAGE_MATCHING_INFO, "Print Image Matching (PIM) Info");
+	    }
+
+	    public KyoceraMakernoteDirectory()
+	    {
+	        this.setDescriptor(new KyoceraMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Kyocera/Contax Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link LeicaType5MakernoteDirectory}.
+	 * <p>
+	 * Tag reference from: http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Panasonic.html
+	 *
+	 * @author Kevin Mott https://github.com/kwhopper
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class LeicaType5MakernoteDescriptor extends TagDescriptor<LeicaType5MakernoteDirectory>
+	{
+	    public LeicaType5MakernoteDescriptor(@NotNull LeicaType5MakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case LeicaType5MakernoteDirectory.TagExposureMode:
+	                return getExposureModeDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getExposureModeDescription()
+	    {
+	        byte[] values = _directory.getByteArray(LeicaType5MakernoteDirectory.TagExposureMode);
+	        if (values == null || values.length < 4)
+	            return null;
+
+	        String join = String.format("%d %d %d %d", values[0], values[1], values[2], values[3]);
+
+	        if(join.equals("0 0 0 0"))
+	            return "Program AE";
+	        else if(join.equals("1 0 0 0"))
+	            return "Aperture-priority AE";
+	        else if(join.equals("1 1 0 0"))
+	            return "Aperture-priority AE (1)";
+	        else if(join.equals("2 0 0 0"))
+	            return "Shutter speed priority AE";  // guess
+	        else if(join.equals("3 0 0 0"))
+	            return "Manual";
+	        else
+	            return String.format("Unknown (%s)", join);
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to certain Leica cameras.
+	 * <p>
+	 * Tag reference from: http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Panasonic.html
+	 *
+	 * @author Kevin Mott https://github.com/kwhopper
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class LeicaType5MakernoteDirectory extends Directory
+	{
+	    public static final int TagLensModel = 0x0303;
+	    public static final int TagOriginalFileName = 0x0407;
+	    public static final int TagOriginalDirectory = 0x0408;
+	    public static final int TagExposureMode = 0x040d;
+	    public static final int TagShotInfo = 0x0410;
+	    public static final int TagFilmMode = 0x0412;
+	    public static final int TagWbRgbLevels = 0x0413;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TagLensModel, "Lens Model");
+	        _tagNameMap.put(TagOriginalFileName, "Original File Name");
+	        _tagNameMap.put(TagOriginalDirectory, "Original Directory");
+	        _tagNameMap.put(TagExposureMode, "Exposure Mode");
+	        _tagNameMap.put(TagShotInfo, "Shot Info" );
+	        _tagNameMap.put(TagFilmMode, "Film Mode");
+	        _tagNameMap.put(TagWbRgbLevels, "WB RGB Levels");
+	    }
+
+	    public LeicaType5MakernoteDirectory()
+	    {
+	        this.setDescriptor(new LeicaType5MakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Leica Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link LeicaMakernoteDirectory}.
+	 * <p>
+	 * Tag reference from: http://gvsoft.homedns.org/exif/makernote-leica-type1.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class LeicaMakernoteDescriptor extends TagDescriptor<LeicaMakernoteDirectory>
+	{
+	    public LeicaMakernoteDescriptor(@NotNull LeicaMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case LeicaMakernoteDirectory.TAG_QUALITY:
+	                return getQualityDescription();
+	            case LeicaMakernoteDirectory.TAG_USER_PROFILE:
+	                return getUserProfileDescription();
+//	            case LeicaMakernoteDirectory.TAG_SERIAL:
+//	                return getSerialNumberDescription();
+	            case LeicaMakernoteDirectory.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case LeicaMakernoteDirectory.TAG_EXTERNAL_SENSOR_BRIGHTNESS_VALUE:
+	                return getExternalSensorBrightnessValueDescription();
+	            case LeicaMakernoteDirectory.TAG_MEASURED_LV:
+	                return getMeasuredLvDescription();
+	            case LeicaMakernoteDirectory.TAG_APPROXIMATE_F_NUMBER:
+	                return getApproximateFNumberDescription();
+	            case LeicaMakernoteDirectory.TAG_CAMERA_TEMPERATURE:
+	                return getCameraTemperatureDescription();
+	            case LeicaMakernoteDirectory.TAG_WB_RED_LEVEL:
+	            case LeicaMakernoteDirectory.TAG_WB_BLUE_LEVEL:
+	            case LeicaMakernoteDirectory.TAG_WB_GREEN_LEVEL:
+	                return getSimpleRational(tagType);
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    private String getCameraTemperatureDescription()
+	    {
+	        return getFormattedInt(LeicaMakernoteDirectory.TAG_CAMERA_TEMPERATURE, "%d C");
+	    }
+
+	    @Nullable
+	    private String getApproximateFNumberDescription()
+	    {
+	        return getSimpleRational(LeicaMakernoteDirectory.TAG_APPROXIMATE_F_NUMBER);
+	    }
+
+	    @Nullable
+	    private String getMeasuredLvDescription()
+	    {
+	        return getSimpleRational(LeicaMakernoteDirectory.TAG_MEASURED_LV);
+	    }
+
+	    @Nullable
+	    private String getExternalSensorBrightnessValueDescription()
+	    {
+	        return getSimpleRational(LeicaMakernoteDirectory.TAG_EXTERNAL_SENSOR_BRIGHTNESS_VALUE);
+	    }
+
+	    @Nullable
+	    private String getWhiteBalanceDescription()
+	    {
+	        return getIndexedDescription(LeicaMakernoteDirectory.TAG_WHITE_BALANCE,
+	            "Auto or Manual",
+	            "Daylight",
+	            "Fluorescent",
+	            "Tungsten",
+	            "Flash",
+	            "Cloudy",
+	            "Shadow"
+	        );
+	    }
+
+	    @Nullable
+	    private String getUserProfileDescription()
+	    {
+	        return getIndexedDescription(LeicaMakernoteDirectory.TAG_QUALITY, 1,
+	            "User Profile 1",
+	            "User Profile 2",
+	            "User Profile 3",
+	            "User Profile 0 (Dynamic)"
+	        );
+	    }
+
+	    @Nullable
+	    private String getQualityDescription()
+	    {
+	        return getIndexedDescription(LeicaMakernoteDirectory.TAG_QUALITY, 1, "Fine", "Basic");
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to certain Leica cameras.
+	 * <p>
+	 * Tag reference from: http://gvsoft.homedns.org/exif/makernote-leica-type1.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class LeicaMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_QUALITY = 0x0300;
+	    public static final int TAG_USER_PROFILE = 0x0302;
+	    public static final int TAG_SERIAL_NUMBER = 0x0303;
+	    public static final int TAG_WHITE_BALANCE = 0x0304;
+
+	    public static final int TAG_LENS_TYPE = 0x0310;
+	    public static final int TAG_EXTERNAL_SENSOR_BRIGHTNESS_VALUE = 0x0311;
+	    public static final int TAG_MEASURED_LV = 0x0312;
+	    public static final int TAG_APPROXIMATE_F_NUMBER = 0x0313;
+
+	    public static final int TAG_CAMERA_TEMPERATURE = 0x0320;
+	    public static final int TAG_COLOR_TEMPERATURE = 0x0321;
+	    public static final int TAG_WB_RED_LEVEL = 0x0322;
+	    public static final int TAG_WB_GREEN_LEVEL = 0x0323;
+	    public static final int TAG_WB_BLUE_LEVEL = 0x0324;
+
+	    public static final int TAG_CCD_VERSION = 0x0330;
+	    public static final int TAG_CCD_BOARD_VERSION = 0x0331;
+	    public static final int TAG_CONTROLLER_BOARD_VERSION = 0x0332;
+	    public static final int TAG_M16_C_VERSION = 0x0333;
+
+	    public static final int TAG_IMAGE_ID_NUMBER = 0x0340;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_QUALITY, "Quality");
+	        _tagNameMap.put(TAG_USER_PROFILE, "User Profile");
+	        _tagNameMap.put(TAG_SERIAL_NUMBER, "Serial Number");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+
+	        _tagNameMap.put(TAG_LENS_TYPE, "Lens Type");
+	        _tagNameMap.put(TAG_EXTERNAL_SENSOR_BRIGHTNESS_VALUE, "External Sensor Brightness Value");
+	        _tagNameMap.put(TAG_MEASURED_LV, "Measured LV");
+	        _tagNameMap.put(TAG_APPROXIMATE_F_NUMBER, "Approximate F Number");
+
+	        _tagNameMap.put(TAG_CAMERA_TEMPERATURE, "Camera Temperature");
+	        _tagNameMap.put(TAG_COLOR_TEMPERATURE, "Color Temperature");
+	        _tagNameMap.put(TAG_WB_RED_LEVEL, "WB Red Level");
+	        _tagNameMap.put(TAG_WB_GREEN_LEVEL, "WB Green Level");
+	        _tagNameMap.put(TAG_WB_BLUE_LEVEL, "WB Blue Level");
+
+	        _tagNameMap.put(TAG_CCD_VERSION, "CCD Version");
+	        _tagNameMap.put(TAG_CCD_BOARD_VERSION, "CCD Board Version");
+	        _tagNameMap.put(TAG_CONTROLLER_BOARD_VERSION, "Controller Board Version");
+	        _tagNameMap.put(TAG_M16_C_VERSION, "M16 C Version");
+
+	        _tagNameMap.put(TAG_IMAGE_ID_NUMBER, "Image ID Number");
+	    }
+
+	    public LeicaMakernoteDirectory()
+	    {
+	        this.setDescriptor(new LeicaMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Leica Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Represents an age in years, months, days, hours, minutes and seconds.
+	 * <p>
+	 * Used by certain Panasonic cameras which have face recognition features.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	public class Age
+	{
+	    private int _years;
+	    private int _months;
+	    private int _days;
+	    private int _hours;
+	    private int _minutes;
+	    private int _seconds;
+	    
+	    public Age() {
+	    	
+	    }
+
+	    /**
+	     * Parses an age object from the string format used by Panasonic cameras:
+	     * <code>0031:07:15 00:00:00</code>
+	     *
+	     * @param s The String in format <code>0031:07:15 00:00:00</code>.
+	     * @return The parsed Age object, or null if the value could not be parsed
+	     */
+	    @Nullable
+	    public Age fromPanasonicString(@NotNull String s)
+	    {
+	        if (s.length() != 19 || s.startsWith("9999:99:99"))
+	            return null;
+
+	        try {
+	            int years = Integer.parseInt(s.substring(0, 4));
+	            int months = Integer.parseInt(s.substring(5, 7));
+	            int days = Integer.parseInt(s.substring(8, 10));
+	            int hours = Integer.parseInt(s.substring(11, 13));
+	            int minutes = Integer.parseInt(s.substring(14, 16));
+	            int seconds = Integer.parseInt(s.substring(17, 19));
+
+	            return new Age(years, months, days, hours, minutes, seconds);
+	        }
+	        catch (NumberFormatException ignored)
+	        {
+	            return null;
+	        }
+	    }
+
+	    public Age(int years, int months, int days, int hours, int minutes, int seconds)
+	    {
+	        _years = years;
+	        _months = months;
+	        _days = days;
+	        _hours = hours;
+	        _minutes = minutes;
+	        _seconds = seconds;
+	    }
+
+	    public int getYears()
+	    {
+	        return _years;
+	    }
+
+	    public int getMonths()
+	    {
+	        return _months;
+	    }
+
+	    public int getDays()
+	    {
+	        return _days;
+	    }
+
+	    public int getHours()
+	    {
+	        return _hours;
+	    }
+
+	    public int getMinutes()
+	    {
+	        return _minutes;
+	    }
+
+	    public int getSeconds()
+	    {
+	        return _seconds;
+	    }
+
+	    @Override
+	    public String toString()
+	    {
+	        return String.format("%04d:%02d:%02d %02d:%02d:%02d", _years, _months, _days, _hours, _minutes, _seconds);
+	    }
+
+	    public String toFriendlyString()
+	    {
+	        StringBuilder result = new StringBuilder();
+	        appendAgePart(result, _years, "year");
+	        appendAgePart(result, _months, "month");
+	        appendAgePart(result, _days, "day");
+	        appendAgePart(result, _hours, "hour");
+	        appendAgePart(result, _minutes, "minute");
+	        appendAgePart(result, _seconds, "second");
+	        return result.toString();
+	    }
+
+	    private void appendAgePart(StringBuilder result, final int num, final String singularName)
+	    {
+	        if (num == 0)
+	            return;
+	        if (result.length()!=0)
+	            result.append(' ');
+	        result.append(num).append(' ').append(singularName);
+	        if (num != 1)
+	            result.append('s');
+	    }
+
+	    @Override
+	    public boolean equals(@Nullable Object o)
+	    {
+	        if (this == o) return true;
+	        if (o == null || getClass() != o.getClass()) return false;
+
+	        Age age = (Age)o;
+
+	        if (_days != age._days) return false;
+	        if (_hours != age._hours) return false;
+	        if (_minutes != age._minutes) return false;
+	        if (_months != age._months) return false;
+	        if (_seconds != age._seconds) return false;
+	        if (_years != age._years) return false;
+
+	        return true;
+	    }
+
+	    @Override
+	    public int hashCode()
+	    {
+	        int result = _years;
+	        result = 31 * result + _months;
+	        result = 31 * result + _days;
+	        result = 31 * result + _hours;
+	        result = 31 * result + _minutes;
+	        result = 31 * result + _seconds;
+	        return result;
+	    }
+	}
+
+	/**
+	 * Class to hold information about a detected or recognized face in a photo.
+	 * <p>
+	 * When a face is <em>detected</em>, the camera believes that a face is present at a given location in
+	 * the image, but is not sure whose face it is.  When a face is <em>recognised</em>, then the face is
+	 * both detected and identified as belonging to a known person.
+	 *
+	 * @author Philipp Sandhaus, Drew Noakes
+	 */
+	public class Face
+	{
+	    private final int _x;
+	    private final int _y;
+	    private final int _width;
+	    private final int _height;
+	    @Nullable
+	    private final String _name;
+	    @Nullable
+	    private final Age _age;
+
+	    public Face(int x, int y, int width, int height, @Nullable String name, @Nullable Age age)
+	    {
+	        _x = x;
+	        _y = y;
+	        _width = width;
+	        _height = height;
+	        _name = name;
+	        _age = age;
+	    }
+
+	    public int getX()
+	    {
+	        return _x;
+	    }
+
+	    public int getY()
+	    {
+	        return _y;
+	    }
+
+	    public int getWidth()
+	    {
+	        return _width;
+	    }
+
+	    public int getHeight()
+	    {
+	        return _height;
+	    }
+
+	    @Nullable
+	    public String getName()
+	    {
+	        return _name;
+	    }
+
+	    @Nullable
+	    public Age getAge()
+	    {
+	        return _age;
+	    }
+
+	    @Override
+	    public boolean equals(@Nullable Object o)
+	    {
+	        if (this == o) return true;
+	        if (o == null || getClass() != o.getClass()) return false;
+
+	        Face face = (Face)o;
+
+	        if (_height != face._height) return false;
+	        if (_width != face._width) return false;
+	        if (_x != face._x) return false;
+	        if (_y != face._y) return false;
+	        if (_age != null ? !_age.equals(face._age) : face._age != null) return false;
+	        if (_name != null ? !_name.equals(face._name) : face._name != null) return false;
+
+	        return true;
+	    }
+
+	    @Override
+	    public int hashCode()
+	    {
+	        int result = _x;
+	        result = 31 * result + _y;
+	        result = 31 * result + _width;
+	        result = 31 * result + _height;
+	        result = 31 * result + (_name != null ? _name.hashCode() : 0);
+	        result = 31 * result + (_age != null ? _age.hashCode() : 0);
+	        return result;
+	    }
+
+	    @Override
+	    @NotNull
+	    public String toString()
+	    {
+	        StringBuilder result = new StringBuilder();
+	        result.append("x: ").append(_x);
+	        result.append(" y: ").append(_y);
+	        result.append(" width: ").append(_width);
+	        result.append(" height: ").append(_height);
+	        if (_name != null)
+	            result.append(" name: ").append(_name);
+	        if (_age != null)
+	            result.append(" age: ").append(_age.toFriendlyString());
+	        return result.toString();
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link PanasonicMakernoteDirectory}.
+	 * <p>
+	 * Some information about this makernote taken from here:
+	 * <ul>
+	 * <li><a href="http://www.ozhiker.com/electronics/pjmt/jpeg_info/panasonic_mn.html">http://www.ozhiker.com/electronics/pjmt/jpeg_info/panasonic_mn.html</a></li>
+	 * <li><a href="http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Panasonic.html">http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Panasonic.html</a></li>
+	 * </ul>
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Philipp Sandhaus
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PanasonicMakernoteDescriptor extends TagDescriptor<PanasonicMakernoteDirectory>
+	{
+	    public PanasonicMakernoteDescriptor(@NotNull PanasonicMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case PanasonicMakernoteDirectory.TAG_QUALITY_MODE:
+	                return getQualityModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_FIRMWARE_VERSION:
+	                return getVersionDescription();
+	            case PanasonicMakernoteDirectory.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case PanasonicMakernoteDirectory.TAG_FOCUS_MODE:
+	                return getFocusModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_AF_AREA_MODE:
+	                return getAfAreaModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_IMAGE_STABILIZATION:
+	                return getImageStabilizationDescription();
+	            case PanasonicMakernoteDirectory.TAG_MACRO_MODE:
+	                return getMacroModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_RECORD_MODE:
+	                return getRecordModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_AUDIO:
+	                return getAudioDescription();
+	            case PanasonicMakernoteDirectory.TAG_UNKNOWN_DATA_DUMP:
+	                return getUnknownDataDumpDescription();
+	            case PanasonicMakernoteDirectory.TAG_COLOR_EFFECT:
+	                return getColorEffectDescription();
+	            case PanasonicMakernoteDirectory.TAG_UPTIME:
+	                return getUptimeDescription();
+	            case PanasonicMakernoteDirectory.TAG_BURST_MODE:
+	                return getBurstModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_CONTRAST_MODE:
+	                return getContrastModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_NOISE_REDUCTION:
+	                return getNoiseReductionDescription();
+	            case PanasonicMakernoteDirectory.TAG_SELF_TIMER:
+	                return getSelfTimerDescription();
+	            case PanasonicMakernoteDirectory.TAG_ROTATION:
+	                return getRotationDescription();
+	            case PanasonicMakernoteDirectory.TAG_AF_ASSIST_LAMP:
+	                return getAfAssistLampDescription();
+	            case PanasonicMakernoteDirectory.TAG_COLOR_MODE:
+	                return getColorModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_OPTICAL_ZOOM_MODE:
+	                return getOpticalZoomModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_CONVERSION_LENS:
+	                return getConversionLensDescription();
+	            case PanasonicMakernoteDirectory.TAG_CONTRAST:
+	                return getContrastDescription();
+	            case PanasonicMakernoteDirectory.TAG_WORLD_TIME_LOCATION:
+	                return getWorldTimeLocationDescription();
+	            case PanasonicMakernoteDirectory.TAG_ADVANCED_SCENE_MODE:
+	                return getAdvancedSceneModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_FACE_DETECTION_INFO:
+	                return getDetectedFacesDescription();
+	            case PanasonicMakernoteDirectory.TAG_TRANSFORM:
+	                return getTransformDescription();
+	            case PanasonicMakernoteDirectory.TAG_TRANSFORM_1:
+	                return getTransform1Description();
+	            case PanasonicMakernoteDirectory.TAG_INTELLIGENT_EXPOSURE:
+	                return getIntelligentExposureDescription();
+	            case PanasonicMakernoteDirectory.TAG_FLASH_WARNING:
+	                return getFlashWarningDescription();
+	            case PanasonicMakernoteDirectory.TAG_COUNTRY:
+	                return getCountryDescription();
+	            case PanasonicMakernoteDirectory.TAG_STATE:
+	                return getStateDescription();
+	            case PanasonicMakernoteDirectory.TAG_CITY:
+	                return getCityDescription();
+	            case PanasonicMakernoteDirectory.TAG_LANDMARK:
+	                return getLandmarkDescription();
+	            case PanasonicMakernoteDirectory.TAG_INTELLIGENT_RESOLUTION:
+	                return getIntelligentResolutionDescription();
+	            case PanasonicMakernoteDirectory.TAG_FACE_RECOGNITION_INFO:
+	                return getRecognizedFacesDescription();
+	            case PanasonicMakernoteDirectory.TAG_SCENE_MODE:
+	                return getSceneModeDescription();
+	            case PanasonicMakernoteDirectory.TAG_FLASH_FIRED:
+	                return getFlashFiredDescription();
+	            case PanasonicMakernoteDirectory.TAG_TEXT_STAMP:
+	                return getTextStampDescription();
+	            case PanasonicMakernoteDirectory.TAG_TEXT_STAMP_1:
+	                return getTextStamp1Description();
+	            case PanasonicMakernoteDirectory.TAG_TEXT_STAMP_2:
+	                return getTextStamp2Description();
+	            case PanasonicMakernoteDirectory.TAG_TEXT_STAMP_3:
+	                return getTextStamp3Description();
+	            case PanasonicMakernoteDirectory.TAG_MAKERNOTE_VERSION:
+	                return getMakernoteVersionDescription();
+	            case PanasonicMakernoteDirectory.TAG_EXIF_VERSION:
+	                return getExifVersionDescription();
+	            case PanasonicMakernoteDirectory.TAG_INTERNAL_SERIAL_NUMBER:
+	                return getInternalSerialNumberDescription();
+	            case PanasonicMakernoteDirectory.TAG_TITLE:
+	                return getTitleDescription();
+	            case PanasonicMakernoteDirectory.TAG_BRACKET_SETTINGS:
+	                return getBracketSettingsDescription();
+	            case PanasonicMakernoteDirectory.TAG_FLASH_CURTAIN:
+	                return getFlashCurtainDescription();
+	            case PanasonicMakernoteDirectory.TAG_LONG_EXPOSURE_NOISE_REDUCTION:
+	                return getLongExposureNoiseReductionDescription();
+	            case PanasonicMakernoteDirectory.TAG_BABY_NAME:
+	                return getBabyNameDescription();
+	            case PanasonicMakernoteDirectory.TAG_LOCATION:
+	                return getLocationDescription();
+
+	            case PanasonicMakernoteDirectory.TAG_LENS_FIRMWARE_VERSION:
+	                return getLensFirmwareVersionDescription();
+	            case PanasonicMakernoteDirectory.TAG_INTELLIGENT_D_RANGE:
+	                return getIntelligentDRangeDescription();
+	            case PanasonicMakernoteDirectory.TAG_CLEAR_RETOUCH:
+	                return getClearRetouchDescription();
+	            case PanasonicMakernoteDirectory.TAG_PHOTO_STYLE:
+	                return getPhotoStyleDescription();
+	            case PanasonicMakernoteDirectory.TAG_SHADING_COMPENSATION:
+	                return getShadingCompensationDescription();
+
+	            case PanasonicMakernoteDirectory.TAG_ACCELEROMETER_Z:
+	                return getAccelerometerZDescription();
+	            case PanasonicMakernoteDirectory.TAG_ACCELEROMETER_X:
+	                return getAccelerometerXDescription();
+	            case PanasonicMakernoteDirectory.TAG_ACCELEROMETER_Y:
+	                return getAccelerometerYDescription();
+	            case PanasonicMakernoteDirectory.TAG_CAMERA_ORIENTATION:
+	                return getCameraOrientationDescription();
+	            case PanasonicMakernoteDirectory.TAG_ROLL_ANGLE:
+	                return getRollAngleDescription();
+	            case PanasonicMakernoteDirectory.TAG_PITCH_ANGLE:
+	                return getPitchAngleDescription();
+	            case PanasonicMakernoteDirectory.TAG_SWEEP_PANORAMA_DIRECTION:
+	                return getSweepPanoramaDirectionDescription();
+	            case PanasonicMakernoteDirectory.TAG_TIMER_RECORDING:
+	                return getTimerRecordingDescription();
+	            case PanasonicMakernoteDirectory.TAG_HDR:
+	                return getHDRDescription();
+	            case PanasonicMakernoteDirectory.TAG_SHUTTER_TYPE:
+	                return getShutterTypeDescription();
+	            case PanasonicMakernoteDirectory.TAG_TOUCH_AE:
+	                return getTouchAeDescription();
+
+	            case PanasonicMakernoteDirectory.TAG_BABY_AGE:
+	                return getBabyAgeDescription();
+	            case PanasonicMakernoteDirectory.TAG_BABY_AGE_1:
+	                return getBabyAge1Description();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getTextStampDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_TEXT_STAMP, 1, "Off", "On");
+	    }
+
+		@Nullable
+	    public String getTextStamp1Description()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_TEXT_STAMP_1, 1, "Off", "On");
+	    }
+
+		@Nullable
+	    public String getTextStamp2Description()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_TEXT_STAMP_2, 1, "Off", "On");
+	    }
+
+		@Nullable
+	    public String getTextStamp3Description()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_TEXT_STAMP_3, 1, "Off", "On");
+	    }
+
+		@Nullable
+	    public String getMacroModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_MACRO_MODE, 1, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getFlashFiredDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_FLASH_FIRED, 1, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getImageStabilizationDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_IMAGE_STABILIZATION,
+	            2,
+	            "On, Mode 1",
+	            "Off",
+	            "On, Mode 2"
+	        );
+	    }
+
+	    @Nullable
+	    public String getAudioDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_AUDIO, 1, "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getTransformDescription()
+	    {
+	        return getTransformDescription(PanasonicMakernoteDirectory.TAG_TRANSFORM);
+	    }
+
+	    @Nullable
+	    public String getTransform1Description()
+	    {
+	        return getTransformDescription(PanasonicMakernoteDirectory.TAG_TRANSFORM_1);
+	    }
+
+	    @Nullable
+	    private String getTransformDescription(int tag)
+	    {
+	        byte[] values = _directory.getByteArray(tag);
+	        if (values == null)
+	            return null;
+
+	        RandomAccessReader reader = new ByteArrayReader(values);
+
+	        try
+	        {
+	            int val1 = reader.getUInt16(0);
+	            int val2 = reader.getUInt16(2);
+
+	            if (val1 == -1 && val2 == 1)
+	                return "Slim Low";
+	            if (val1 == -3 && val2 == 2)
+	                return "Slim High";
+	            if (val1 == 0 && val2 == 0)
+	                return "Off";
+	            if (val1 == 1 && val2 == 1)
+	                return "Stretch Low";
+	            if (val1 == 3 && val2 == 2)
+	                return "Stretch High";
+
+	            return "Unknown (" + val1 + " " + val2 + ")";
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public String getIntelligentExposureDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_INTELLIGENT_EXPOSURE,
+	            "Off", "Low", "Standard", "High");
+	    }
+
+	    @Nullable
+	    public String getFlashWarningDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_FLASH_WARNING,
+	            "No", "Yes (Flash required but disabled)");
+	    }
+
+	    @Nullable
+	    private String trim(@Nullable String s)
+	    {
+	        return s == null ? null : s.trim();
+	    }
+
+	    @Nullable
+	    public String getCountryDescription()
+	    {
+	    	Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_COUNTRY, ch.UTF_8));
+	    }
+
+	    @Nullable
+	    public String getStateDescription()
+	    {
+	    	Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_STATE, ch.UTF_8));
+	    }
+
+	    @Nullable
+	    public String getCityDescription()
+	    {
+	    	Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_CITY, ch.UTF_8));
+	    }
+
+	    @Nullable
+	    public String getLandmarkDescription()
+	    {
+	    	Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_LANDMARK, ch.UTF_8));
+	    }
+
+	    @Nullable
+	    public String getTitleDescription()
+	    {
+	    	Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_TITLE, ch.UTF_8));
+	    }
+
+	    @Nullable
+	    public String getBracketSettingsDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_BRACKET_SETTINGS,
+	            "No Bracket", "3 Images, Sequence 0/-/+", "3 Images, Sequence -/0/+", "5 Images, Sequence 0/-/+",
+	            "5 Images, Sequence -/0/+", "7 Images, Sequence 0/-/+", "7 Images, Sequence -/0/+");
+	    }
+
+	    @Nullable
+	    public String getFlashCurtainDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_FLASH_CURTAIN,
+	            "n/a", "1st", "2nd");
+	    }
+
+	    @Nullable
+	    public String getLongExposureNoiseReductionDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_LONG_EXPOSURE_NOISE_REDUCTION, 1,
+	            "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getLensFirmwareVersionDescription()
+	    {
+	        // lens version has 4 parts separated by periods
+	        byte[] bytes = _directory.getByteArray(PanasonicMakernoteDirectory.TAG_LENS_FIRMWARE_VERSION);
+	        if (bytes == null)
+	            return null;
+
+	        StringBuilder sb = new StringBuilder();
+	        for (int i = 0; i < bytes.length; i++) {
+	            sb.append(bytes[i]);
+	            if (i < bytes.length - 1)
+	                sb.append(".");
+	        }
+	        return sb.toString();
+	        //return string.Join(".", bytes.Select(b => b.ToString()).ToArray());
+	    }
+
+	    @Nullable
+	    public String getIntelligentDRangeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_INTELLIGENT_D_RANGE,
+	            "Off", "Low", "Standard", "High");
+	    }
+
+	    @Nullable
+	    public String getClearRetouchDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_CLEAR_RETOUCH,
+	                "Off", "On");
+
+	    }
+
+	    @Nullable
+	    public String getPhotoStyleDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_PHOTO_STYLE,
+	            "Auto", "Standard or Custom", "Vivid", "Natural", "Monochrome", "Scenery", "Portrait");
+	    }
+
+	    @Nullable
+	    public String getShadingCompensationDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_SHADING_COMPENSATION,
+	            "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getAccelerometerZDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_ACCELEROMETER_Z);
+	        if (value == null)
+	            return null;
+
+	        // positive is acceleration upwards
+	        return String.valueOf(value.shortValue());
+	    }
+
+	    @Nullable
+	    public String getAccelerometerXDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_ACCELEROMETER_X);
+	        if (value == null)
+	            return null;
+
+	        // positive is acceleration to the left
+	        return String.valueOf(value.shortValue());
+	    }
+
+	    @Nullable
+	    public String getAccelerometerYDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_ACCELEROMETER_Y);
+	        if (value == null)
+	            return null;
+
+	        // positive is acceleration backwards
+	        return String.valueOf(value.shortValue());
+	    }
+
+	    @Nullable
+	    public String getCameraOrientationDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_CAMERA_ORIENTATION,
+	                "Normal", "Rotate CW", "Rotate 180", "Rotate CCW", "Tilt Upwards", "Tile Downwards");
+	    }
+
+	    @Nullable
+	    public String getRollAngleDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_ROLL_ANGLE);
+	        if (value == null)
+	            return null;
+
+	        DecimalFormat format = new DecimalFormat("0.#");
+	        // converted to degrees of clockwise camera rotation
+	        return format.format(value.shortValue() / 10.0);
+	    }
+
+	    @Nullable
+	    public String getPitchAngleDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_PITCH_ANGLE);
+	        if (value == null)
+	            return null;
+
+	        DecimalFormat format = new DecimalFormat("0.#");
+	        // converted to degrees of upward camera tilt
+	        return format.format(-value.shortValue() / 10.0);
+	    }
+
+	    @Nullable
+	    public String getSweepPanoramaDirectionDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_SWEEP_PANORAMA_DIRECTION,
+	                "Off", "Left to Right", "Right to Left", "Top to Bottom", "Bottom to Top");
+	    }
+
+	    @Nullable
+	    public String getTimerRecordingDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_TIMER_RECORDING,
+	                "Off", "Time Lapse", "Stop-motion Animation");
+	    }
+
+	    @Nullable
+	    public String getHDRDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_HDR);
+	        if (value == null)
+	            return null;
+
+	        switch (value)
+	        {
+	            case 0:
+	                return "Off";
+	            case 100:
+	                return "1 EV";
+	            case 200:
+	                return "2 EV";
+	            case 300:
+	                return "3 EV";
+	            case 32868:
+	                return "1 EV (Auto)";
+	            case 32968:
+	                return "2 EV (Auto)";
+	            case 33068:
+	                return "3 EV (Auto)";
+	            default:
+	                return String.format("Unknown (%d)", value);
+	        }
+	    }
+
+	    @Nullable
+	    public String getShutterTypeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_SHUTTER_TYPE,
+	                "Mechanical", "Electronic", "Hybrid");
+	    }
+
+	    @Nullable
+	    public String getTouchAeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_TOUCH_AE,
+	                "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getBabyNameDescription()
+	    {
+	    	Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_BABY_NAME, ch.UTF_8));
+	    }
+
+		@Nullable
+	    public String getLocationDescription()
+	    {
+			Charsets ch = new Charsets();
+	        return trim(getStringFromBytes(PanasonicMakernoteDirectory.TAG_LOCATION, ch.UTF_8));
+	    }
+
+	    @Nullable
+	    public String getIntelligentResolutionDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_INTELLIGENT_RESOLUTION,
+	            "Off", null, "Auto", "On");
+	    }
+
+	    @Nullable
+	    public String getContrastDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_CONTRAST, "Normal");
+	    }
+
+	    @Nullable
+	    public String getWorldTimeLocationDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_WORLD_TIME_LOCATION,
+	            1, "Home", "Destination");
+	    }
+
+	    @Nullable
+	    public String getAdvancedSceneModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_ADVANCED_SCENE_MODE,
+	            1,
+	            "Normal",
+	            "Outdoor/Illuminations/Flower/HDR Art",
+	            "Indoor/Architecture/Objects/HDR B&W",
+	            "Creative",
+	            "Auto",
+	            null,
+	            "Expressive",
+	            "Retro",
+	            "Pure",
+	            "Elegant",
+	            null,
+	            "Monochrome",
+	            "Dynamic Art",
+	            "Silhouette"
+	        );
+	    }
+
+	    @Nullable
+	    public String getUnknownDataDumpDescription()
+	    {
+	        return getByteLengthDescription(PanasonicMakernoteDirectory.TAG_UNKNOWN_DATA_DUMP);
+	    }
+
+	    @Nullable
+	    public String getColorEffectDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_COLOR_EFFECT,
+	            1, "Off", "Warm", "Cool", "Black & White", "Sepia"
+	        );
+	    }
+
+	    @Nullable
+	    public String getUptimeDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_UPTIME);
+	        if (value == null)
+	            return null;
+	        return value / 100f + " s";
+	    }
+
+	    @Nullable
+	    public String getBurstModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_BURST_MODE,
+	            "Off", null, "On", "Indefinite", "Unlimited"
+	        );
+	    }
+
+	    @Nullable
+	    public String getContrastModeDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_CONTRAST_MODE);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x0: return "Normal";
+	            case 0x1: return "Low";
+	            case 0x2: return "High";
+	            case 0x6: return "Medium Low";
+	            case 0x7: return "Medium High";
+	            case 0x100: return "Low";
+	            case 0x110: return "Normal";
+	            case 0x120: return "High";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getNoiseReductionDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_NOISE_REDUCTION,
+	            "Standard (0)", "Low (-1)", "High (+1)", "Lowest (-2)", "Highest (+2)"
+	        );
+	    }
+
+	    @Nullable
+	    public String getSelfTimerDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_SELF_TIMER,
+	            1, "Off", "10 s", "2 s"
+	        );
+	    }
+
+	    @Nullable
+	    public String getRotationDescription()
+	    {
+	        Integer value = _directory.getInteger(PanasonicMakernoteDirectory.TAG_ROTATION);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 1: return "Horizontal";
+	            case 3: return "Rotate 180";
+	            case 6: return "Rotate 90 CW";
+	            case 8: return "Rotate 270 CW";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getAfAssistLampDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_AF_ASSIST_LAMP,
+	            1, "Fired", "Enabled but not used", "Disabled but required", "Disabled and not required"
+	        );
+	    }
+
+	    @Nullable
+	    public String getColorModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_COLOR_MODE,
+	            "Normal", "Natural", "Vivid"
+	        );
+	    }
+
+	    @Nullable
+	    public String getOpticalZoomModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_OPTICAL_ZOOM_MODE,
+	            1, "Standard", "Extended"
+	        );
+	    }
+
+	    @Nullable
+	    public String getConversionLensDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_CONVERSION_LENS,
+	            1, "Off", "Wide", "Telephoto", "Macro"
+	        );
+	    }
+
+	    @Nullable
+	    public String getDetectedFacesDescription()
+	    {
+	        return buildFacesDescription(_directory.getDetectedFaces());
+	    }
+
+	    @Nullable
+	    public String getRecognizedFacesDescription()
+	    {
+	        return buildFacesDescription(_directory.getRecognizedFaces());
+	    }
+
+	    @Nullable
+	    private String buildFacesDescription(@Nullable Face[] faces)
+	    {
+	        if (faces == null)
+	            return null;
+
+	        StringBuilder result = new StringBuilder();
+
+	        for (int i = 0; i < faces.length; i++)
+	            result.append("Face ").append(i + 1).append(": ").append(faces[i].toString()).append("\n");
+
+	        return result.length() > 0 ? result.substring(0, result.length() - 1) : null;
+
+	    }
+
+	    private final String[] _sceneModes = new String[] {
+	        "Normal", // 1
+	        "Portrait",
+	        "Scenery",
+	        "Sports",
+	        "Night Portrait",
+	        "Program",
+	        "Aperture Priority",
+	        "Shutter Priority",
+	        "Macro",
+	        "Spot", // 10
+	        "Manual",
+	        "Movie Preview",
+	        "Panning",
+	        "Simple",
+	        "Color Effects",
+	        "Self Portrait",
+	        "Economy",
+	        "Fireworks",
+	        "Party",
+	        "Snow", // 20
+	        "Night Scenery",
+	        "Food",
+	        "Baby",
+	        "Soft Skin",
+	        "Candlelight",
+	        "Starry Night",
+	        "High Sensitivity",
+	        "Panorama Assist",
+	        "Underwater",
+	        "Beach", // 30
+	        "Aerial Photo",
+	        "Sunset",
+	        "Pet",
+	        "Intelligent ISO",
+	        "Clipboard",
+	        "High Speed Continuous Shooting",
+	        "Intelligent Auto",
+	        null,
+	        "Multi-aspect",
+	        null, // 40
+	        "Transform",
+	        "Flash Burst",
+	        "Pin Hole",
+	        "Film Grain",
+	        "My Color",
+	        "Photo Frame",
+	        null,
+	        null,
+	        null,
+	        null, // 50
+	        "HDR"
+	    };
+
+	    @Nullable
+	    public String getRecordModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_RECORD_MODE, 1, _sceneModes);
+	    }
+
+	    @Nullable
+	    public String getSceneModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_SCENE_MODE, 1, _sceneModes);
+	    }
+
+	    @Nullable
+	    public String getFocusModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_FOCUS_MODE, 1,
+	            "Auto", "Manual", null, "Auto, Focus Button", "Auto, Continuous");
+	    }
+
+	    @Nullable
+	    public String getAfAreaModeDescription()
+	    {
+	        int[] value = _directory.getIntArray(PanasonicMakernoteDirectory.TAG_AF_AREA_MODE);
+	        if (value == null || value.length < 2)
+	            return null;
+	        switch (value[0]) {
+	            case 0:
+	                switch (value[1]) {
+	                    case 1: return "Spot Mode On";
+	                    case 16: return "Spot Mode Off";
+	                    default: return "Unknown (" + value[0] + " " + value[1] + ")";
+	                }
+	            case 1:
+	                switch (value[1]) {
+	                    case 0: return "Spot Focusing";
+	                    case 1: return "5-area";
+	                    default: return "Unknown (" + value[0] + " " + value[1] + ")";
+	                }
+	            case 16:
+	                switch (value[1]) {
+	                    case 0: return "1-area";
+	                    case 16: return "1-area (high speed)";
+	                    default: return "Unknown (" + value[0] + " " + value[1] + ")";
+	                }
+	            case 32:
+	                switch (value[1]) {
+	                    case 0: return "Auto or Face Detect";
+	                    case 1: return "3-area (left)";
+	                    case 2: return "3-area (center)";
+	                    case 3: return "3-area (right)";
+	                    default: return "Unknown (" + value[0] + " " + value[1] + ")";
+	                }
+	            case 64: return "Face Detect";
+	            default: return "Unknown (" + value[0] + " " + value[1] + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getQualityModeDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_QUALITY_MODE,
+	            2,
+	            "High", // 2
+	            "Normal",
+	            null,
+	            null,
+	            "Very High",
+	            "Raw",
+	            null,
+	            "Motion Picture" // 9
+	        );
+	    }
+
+	    @Nullable
+	    public String getVersionDescription()
+	    {
+	        return getVersionBytesDescription(PanasonicMakernoteDirectory.TAG_FIRMWARE_VERSION, 2);
+	    }
+
+	    @Nullable
+	    public String getMakernoteVersionDescription()
+	    {
+	        return getVersionBytesDescription(PanasonicMakernoteDirectory.TAG_MAKERNOTE_VERSION, 2);
+	    }
+
+	    @Nullable
+	    public String getExifVersionDescription()
+	    {
+	        return getVersionBytesDescription(PanasonicMakernoteDirectory.TAG_EXIF_VERSION, 2);
+	    }
+
+	    @Nullable
+	    public String getInternalSerialNumberDescription()
+	    {
+	        return get7BitStringFromBytes(PanasonicMakernoteDirectory.TAG_INTERNAL_SERIAL_NUMBER);
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceDescription()
+	    {
+	        return getIndexedDescription(PanasonicMakernoteDirectory.TAG_WHITE_BALANCE,
+	            1,
+	            "Auto", // 1
+	            "Daylight",
+	            "Cloudy",
+	            "Incandescent",
+	            "Manual",
+	            null,
+	            null,
+	            "Flash",
+	            null,
+	            "Black & White", // 10
+	            "Manual",
+	            "Shade" // 12
+	        );
+	    }
+
+		@Nullable
+		public String getBabyAgeDescription()
+	    {
+	        final Age age = _directory.getAge(PanasonicMakernoteDirectory.TAG_BABY_AGE);
+	        return age == null ? null : age.toFriendlyString();
+	    }
+
+		@Nullable
+		public String getBabyAge1Description()
+	    {
+	        final Age age = _directory.getAge(PanasonicMakernoteDirectory.TAG_BABY_AGE_1);
+	        return age == null ? null : age.toFriendlyString();
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Panasonic and Leica cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 * @author Philipp Sandhaus
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PanasonicMakernoteDirectory extends Directory
+	{
+
+	    /**
+	     * <br>
+	     * 2 = High            <br>
+	     * 3 = Normal          <br>
+	     * 6 = Very High       <br>
+	     * 7 = Raw             <br>
+	     * 9 = Motion Picture  <br>
+	     */
+	    public static final int TAG_QUALITY_MODE = 0x0001;
+	    public static final int TAG_FIRMWARE_VERSION = 0x0002;
+
+	    /**
+	     * <br>
+	     * 1 = Auto            <br>
+	     * 2 = Daylight        <br>
+	     * 3 = Cloudy          <br>
+	     * 4 = Incandescent    <br>
+	     * 5 = Manual          <br>
+	     * 8 = Flash           <br>
+	     * 10 = Black &amp; White  <br>
+	     * 11 = Manual         <br>
+	     * 12 = Shade          <br>
+	     */
+	    public static final int TAG_WHITE_BALANCE = 0x0003;
+
+
+	    /**
+	     * <br>
+	     * 1 = Auto                <br>
+	     * 2 = Manual              <br>
+	     * 4 =  Auto, Focus Button <br>
+	     * 5 = Auto, Continuous    <br>
+	     */
+	    public static final int TAG_FOCUS_MODE = 0x0007;
+
+	    /**
+	     * <br>
+	     * 2 bytes                         <br>
+	     * (DMC-FZ10)                      <br>
+	     * '0 1' = Spot Mode On            <br>
+	     * '0 16' = Spot Mode Off          <br>
+	     * '(other models)                 <br>
+	     * 16 = Normal?                    <br>
+	     * '0 1' = 9-area                  <br>
+	     * '0 16' = 3-area (high speed)    <br>
+	     * '1 0' = Spot Focusing           <br>
+	     * '1 1' = 5-area                  <br>
+	     * '16 0' = 1-area                 <br>
+	     * '16 16' = 1-area (high speed)   <br>
+	     * '32 0' = Auto or Face Detect    <br>
+	     * '32 1' = 3-area (left)?         <br>
+	     * '32 2' = 3-area (center)?       <br>
+	     * '32 3' = 3-area (right)?        <br>
+	     * '64 0' = Face Detect            <br>
+	     */
+	    public static final int TAG_AF_AREA_MODE = 0x000f;
+
+	    /**
+	     * <br>
+	     * 2 = On, Mode 1   <br>
+	     * 3 = Off          <br>
+	     * 4 = On, Mode 2   <br>
+	     */
+	    public static final int TAG_IMAGE_STABILIZATION = 0x001a;
+
+	    /**
+	     * <br>
+	     * 1 = On    <br>
+	     * 2 = Off   <br>
+	     */
+	    public static final int TAG_MACRO_MODE = 0x001C;
+
+	    /**
+	     * <br>
+	     * 1 = Normal                            <br>
+	     * 2 = Portrait                          <br>
+	     * 3 = Scenery                           <br>
+	     * 4 = Sports                            <br>
+	     * 5 = Night Portrait                    <br>
+	     * 6 = Program                           <br>
+	     * 7 = Aperture Priority                 <br>
+	     * 8 = Shutter Priority                  <br>
+	     * 9 = Macro                             <br>
+	     * 10= Spot                              <br>
+	     * 11= Manual                            <br>
+	     * 12= Movie Preview                     <br>
+	     * 13= Panning                           <br>
+	     * 14= Simple                            <br>
+	     * 15= Color Effects                     <br>
+	     * 16= Self Portrait                     <br>
+	     * 17= Economy                           <br>
+	     * 18= Fireworks                         <br>
+	     * 19= Party                             <br>
+	     * 20= Snow                              <br>
+	     * 21= Night Scenery                     <br>
+	     * 22= Food                              <br>
+	     * 23= Baby                              <br>
+	     * 24= Soft Skin                         <br>
+	     * 25= Candlelight                       <br>
+	     * 26= Starry Night                      <br>
+	     * 27= High Sensitivity                  <br>
+	     * 28= Panorama Assist                   <br>
+	     * 29= Underwater                        <br>
+	     * 30= Beach                             <br>
+	     * 31= Aerial Photo                      <br>
+	     * 32= Sunset                            <br>
+	     * 33= Pet                               <br>
+	     * 34= Intelligent ISO                   <br>
+	     * 35= Clipboard                         <br>
+	     * 36= High Speed Continuous Shooting    <br>
+	     * 37= Intelligent Auto                  <br>
+	     * 39= Multi-aspect                      <br>
+	     * 41= Transform                         <br>
+	     * 42= Flash Burst                       <br>
+	     * 43= Pin Hole                          <br>
+	     * 44= Film Grain                        <br>
+	     * 45= My Color                          <br>
+	     * 46= Photo Frame                       <br>
+	     * 51= HDR                               <br>
+	     */
+	    public static final int TAG_RECORD_MODE = 0x001F;
+
+	    /**
+	     * 1 = Yes <br>
+	     * 2 = No  <br>
+	     */
+	    public static final int TAG_AUDIO = 0x0020;
+
+	    /**
+	     * No idea, what this is
+	     */
+	    public static final int TAG_UNKNOWN_DATA_DUMP = 0x0021;
+
+	    public static final int TAG_EASY_MODE = 0x0022;
+	    public static final int TAG_WHITE_BALANCE_BIAS = 0x0023;
+	    public static final int TAG_FLASH_BIAS = 0x0024;
+
+	    /**
+	     * this number is unique, and contains the date of manufacture,
+	     * but is not the same as the number printed on the camera body
+	     */
+	    public static final int TAG_INTERNAL_SERIAL_NUMBER = 0x0025;
+
+	    /**
+	     * Panasonic Exif Version
+	     */
+	    public static final int TAG_EXIF_VERSION = 0x0026;
+
+
+	    /**
+	     * 1 = Off           <br>
+	     * 2 = Warm          <br>
+	     * 3 = Cool          <br>
+	     * 4 = Black &amp; White <br>
+	     * 5 = Sepia         <br>
+	     */
+	    public static final int TAG_COLOR_EFFECT = 0x0028;
+
+	    /**
+	     * 4 Bytes <br>
+	     * Time in 1/100 s from when the camera was powered on to when the
+	     * image is written to memory card
+	     */
+	    public static final int TAG_UPTIME = 0x0029;
+
+
+	    /**
+	     * 0 = Off        <br>
+	     * 1 = On         <br>
+	     * 2 = Infinite   <br>
+	     * 4 = Unlimited  <br>
+	     */
+	    public static final int TAG_BURST_MODE = 0x002a;
+
+	    public static final int TAG_SEQUENCE_NUMBER = 0x002b;
+
+	    /**
+	     * (this decoding seems to work for some models such as the LC1, LX2, FZ7, FZ8, FZ18 and FZ50, but may not be correct for other models such as the FX10, G1, L1, L10 and LC80) <br>
+	     * 0x0 = Normal                                            <br>
+	     * 0x1 = Low                                               <br>
+	     * 0x2 = High                                              <br>
+	     * 0x6 = Medium Low                                        <br>
+	     * 0x7 = Medium High                                       <br>
+	     * 0x100 = Low                                             <br>
+	     * 0x110 = Normal                                          <br>
+	     * 0x120 = High                                            <br>
+	     * (these values are used by the GF1)                      <br>
+	     * 0 = -2                                                  <br>
+	     * 1 = -1                                                  <br>
+	     * 2 = Normal                                              <br>
+	     * 3 = +1                                                  <br>
+	     * 4 = +2                                                  <br>
+	     * 7 = Nature (Color Film)                                 <br>
+	     * 12 = Smooth (Color Film) or Pure (My Color)             <br>
+	     * 17 = Dynamic (B&amp;W Film)                                 <br>
+	     * 22 = Smooth (B&amp;W Film)                                  <br>
+	     * 27 = Dynamic (Color Film)                               <br>
+	     * 32 = Vibrant (Color Film) or Expressive (My Color)      <br>
+	     * 33 = Elegant (My Color)                                 <br>
+	     * 37 = Nostalgic (Color Film)                             <br>
+	     * 41 = Dynamic Art (My Color)                             <br>
+	     * 42 = Retro (My Color)                                   <br>
+	     */
+	    public static final int TAG_CONTRAST_MODE = 0x002c;
+
+
+	    /**
+	     * 0 = Standard      <br>
+	     * 1 = Low (-1)      <br>
+	     * 2 = High (+1)     <br>
+	     * 3 = Lowest (-2)   <br>
+	     * 4 = Highest (+2)  <br>
+	     */
+	    public static final int TAG_NOISE_REDUCTION = 0x002d;
+
+	    /**
+	     * 1 = Off   <br>
+	     * 2 = 10 s  <br>
+	     * 3 = 2 s   <br>
+	     */
+	    public static final int TAG_SELF_TIMER = 0x002e;
+
+	    /**
+	     * 1 = 0 DG    <br>
+	     * 3 = 180 DG  <br>
+	     * 6 =  90 DG  <br>
+	     * 8 = 270 DG  <br>
+	     */
+	    public static final int TAG_ROTATION = 0x0030;
+
+	    /**
+	     * 1 = Fired <br>
+	     * 2 = Enabled nut not used <br>
+	     * 3 = Disabled but required <br>
+	     * 4 = Disabled and not required
+	     */
+	    public static final int TAG_AF_ASSIST_LAMP = 0x0031;
+
+	    /**
+	     * 0 = Normal <br>
+	     * 1 = Natural<br>
+	     * 2 = Vivid
+	     *
+	     */
+	    public static final int TAG_COLOR_MODE = 0x0032;
+
+	    public static final int TAG_BABY_AGE = 0x0033;
+
+	    /**
+	     *  1 = Standard <br>
+	     *  2 = Extended
+	     */
+	    public static final int TAG_OPTICAL_ZOOM_MODE = 0x0034;
+
+	    /**
+	     * 1 = Off <br>
+	     * 2 = Wide <br>
+	     * 3 = Telephoto <br>
+	     * 4 = Macro
+	     */
+	    public static final int TAG_CONVERSION_LENS = 0x0035;
+
+	    public static final int TAG_TRAVEL_DAY = 0x0036;
+
+	    /**
+	     * 0 = Normal
+	     */
+	    public static final int TAG_CONTRAST = 0x0039;
+
+	    /**
+	     * <br>
+	     * 1 = Home <br>
+	     * 2 = Destination
+	     */
+	    public static final int TAG_WORLD_TIME_LOCATION = 0x003a;
+
+	    /**
+	     * 1 = Off   <br>
+	     * 2 = On
+	     */
+	    public static final int TAG_TEXT_STAMP = 0x003b;
+
+		public static final int TAG_PROGRAM_ISO = 0x003c;
+
+	    /**
+	     * <br>
+	     * 1 = Normal                               <br>
+	     * 2 = Outdoor/Illuminations/Flower/HDR Art <br>
+	     * 3 = Indoor/Architecture/Objects/HDR B&amp;W  <br>
+	     * 4 = Creative                             <br>
+	     * 5 = Auto                                 <br>
+	     * 7 = Expressive                           <br>
+	     * 8 = Retro                                <br>
+	     * 9 = Pure                                 <br>
+	     * 10 = Elegant                             <br>
+	     * 12 = Monochrome                          <br>
+	     * 13 = Dynamic Art                         <br>
+	     * 14 = Silhouette                          <br>
+	     */
+	    public static final int TAG_ADVANCED_SCENE_MODE = 0x003d;
+
+	    /**
+	     * 1 = Off   <br>
+	     * 2 = On
+	     */
+	    public static final int TAG_TEXT_STAMP_1 = 0x003e;
+
+	    public static final int TAG_FACES_DETECTED = 0x003f;
+
+	    public static final int TAG_SATURATION = 0x0040;
+	    public static final int TAG_SHARPNESS = 0x0041;
+	    public static final int TAG_FILM_MODE = 0x0042;
+
+	    public static final int TAG_COLOR_TEMP_KELVIN = 0x0044;
+	    public static final int TAG_BRACKET_SETTINGS = 0x0045;
+
+	    /**
+	    * WB adjust AB. Positive is a shift toward blue.
+	    */
+	    public static final int TAG_WB_ADJUST_AB = 0x0046;
+	    /**
+	    * WB adjust GM. Positive is a shift toward green.
+	    */
+	    public static final int TAG_WB_ADJUST_GM = 0x0047;
+
+	    public static final int TAG_FLASH_CURTAIN = 0x0048;
+	    public static final int TAG_LONG_EXPOSURE_NOISE_REDUCTION = 0x0049;
+
+	    public static final int TAG_PANASONIC_IMAGE_WIDTH = 0x004b;
+	    public static final int TAG_PANASONIC_IMAGE_HEIGHT = 0x004c;
+	    public static final int TAG_AF_POINT_POSITION = 0x004d;
+
+
+	    /**
+	     * <br>
+	     * Integer (16Bit) Indexes:                                             <br>
+	     * 0  Number Face Positions (maybe less than Faces Detected)            <br>
+	     * 1-4 Face Position 1                                                  <br>
+	     * 5-8 Face Position 2                                                  <br>
+	     * and so on                                                            <br>
+	     *                                                                      <br>
+	     * The four Integers are interpreted as follows:                        <br>
+	     * (XYWH)  X,Y Center of Face,  (W,H) Width and Height                  <br>
+	     * All values are in respect to double the size of the thumbnail image  <br>
+	     *
+	     */
+	    public static final int TAG_FACE_DETECTION_INFO = 0x004e;
+	    public static final int TAG_LENS_TYPE = 0x0051;
+	    public static final int TAG_LENS_SERIAL_NUMBER = 0x0052;
+	    public static final int TAG_ACCESSORY_TYPE = 0x0053;
+	    public static final int TAG_ACCESSORY_SERIAL_NUMBER = 0x0054;
+
+	    /**
+	     * (decoded as two 16-bit signed integers)
+	     * '-1 1' = Slim Low
+	     * '-3 2' = Slim High
+	     * '0 0' = Off
+	     * '1 1' = Stretch Low
+	     * '3 2' = Stretch High
+	     */
+	    public static final int TAG_TRANSFORM = 0x0059;
+
+	    /**
+	    * 0 = Off <br>
+	    * 1 = Low <br>
+	    * 2 = Standard <br>
+	    * 3 = High
+	    */
+	    public static final int TAG_INTELLIGENT_EXPOSURE = 0x005d;
+
+	    public static final int TAG_LENS_FIRMWARE_VERSION = 0x0060;
+	    public static final int TAG_BURST_SPEED = 0x0077;
+	    public static final int TAG_INTELLIGENT_D_RANGE = 0x0079;
+	    public static final int TAG_CLEAR_RETOUCH = 0x007c;
+	    public static final int TAG_CITY2 = 0x0080;
+	    public static final int TAG_PHOTO_STYLE = 0x0089;
+	    public static final int TAG_SHADING_COMPENSATION = 0x008a;
+
+	    public static final int TAG_ACCELEROMETER_Z = 0x008c;
+	    public static final int TAG_ACCELEROMETER_X = 0x008d;
+	    public static final int TAG_ACCELEROMETER_Y = 0x008e;
+	    public static final int TAG_CAMERA_ORIENTATION = 0x008f;
+	    public static final int TAG_ROLL_ANGLE = 0x0090;
+	    public static final int TAG_PITCH_ANGLE = 0x0091;
+	    public static final int TAG_SWEEP_PANORAMA_DIRECTION = 0x0093;
+	    public static final int TAG_SWEEP_PANORAMA_FIELD_OF_VIEW = 0x0094;
+	    public static final int TAG_TIMER_RECORDING = 0x0096;
+
+	    public static final int TAG_INTERNAL_ND_FILTER = 0x009d;
+	    public static final int TAG_HDR = 0x009e;
+	    public static final int TAG_SHUTTER_TYPE = 0x009f;
+
+	    public static final int TAG_CLEAR_RETOUCH_VALUE = 0x00a3;
+	    public static final int TAG_TOUCH_AE = 0x00ab;
+
+	    /**
+	    * Info at http://www.ozhiker.com/electronics/pjmt/jpeg_info/pim.html
+	    */
+	    public static final int TAG_PRINT_IMAGE_MATCHING_INFO = 0x0E00;
+
+	    /**
+	     * Byte Indexes:                                                                       <br>
+	     *  0    Int (2  Byte) Number of Recognized Faces                                      <br>
+	     *  4    String(20 Byte)    Recognized Face 1 Name                                     <br>
+	     * 24    4 Int (8 Byte)     Recognized Face 1 Position  (Same Format as Face Detection)  <br>
+	     * 32    String(20 Byte)    Recognized Face 1 Age                                      <br>
+	     * 52    String(20 Byte)    Recognized Face 2 Name                                     <br>
+	     * 72    4 Int (8 Byte)     Recognized Face 2 Position  (Same Format as Face Detection)  <br>
+	     * 80    String(20 Byte)    Recognized Face 2 Age                                      <br>
+	     *                                                                                     <br>
+	     * And so on                                                                           <br>
+	     *                                                                                     <br>
+	     * The four Integers are interpreted as follows:                                       <br>
+	     * (XYWH)  X,Y Center of Face,  (W,H) Width and Height                                 <br>
+	     * All values are in respect to double the size of the thumbnail image                 <br>
+	     *
+	     */
+	    public static final int TAG_FACE_RECOGNITION_INFO = 0x0061;
+
+	    /**
+	    * 0 = No <br>
+	    * 1 = Yes
+	    */
+	    public static final int TAG_FLASH_WARNING = 0x0062;
+	    public static final int TAG_RECOGNIZED_FACE_FLAGS = 0x0063;
+	    public static final int TAG_TITLE = 0x0065;
+	    public static final int TAG_BABY_NAME = 0x0066;
+	    public static final int TAG_LOCATION = 0x0067;
+	    public static final int TAG_COUNTRY = 0x0069;
+	    public static final int TAG_STATE = 0x006b;
+	    public static final int TAG_CITY = 0x006d;
+	    public static final int TAG_LANDMARK = 0x006f;
+
+	    /**
+	     * 0 = Off <br>
+	     * 2 = Auto <br>
+	     * 3 = On
+	     */
+	    public static final int TAG_INTELLIGENT_RESOLUTION = 0x0070;
+
+	    public static final int TAG_MAKERNOTE_VERSION = 0x8000;
+	    public static final int TAG_SCENE_MODE = 0x8001;
+	    public static final int TAG_WB_RED_LEVEL = 0x8004;
+	    public static final int TAG_WB_GREEN_LEVEL = 0x8005;
+	    public static final int TAG_WB_BLUE_LEVEL = 0x8006;
+	    public static final int TAG_FLASH_FIRED = 0x8007;
+	    public static final int TAG_TEXT_STAMP_2 = 0x8008;
+	    public static final int TAG_TEXT_STAMP_3 = 0x8009;
+	    public static final int TAG_BABY_AGE_1 = 0x8010;
+
+		/**
+	     * (decoded as two 16-bit signed integers)
+	     * '-1 1' = Slim Low
+	     * '-3 2' = Slim High
+	     * '0 0' = Off
+	     * '1 1' = Stretch Low
+	     * '3 2' = Stretch High
+	     */
+	    public static final int TAG_TRANSFORM_1 = 0x8012;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_QUALITY_MODE, "Quality Mode");
+	        _tagNameMap.put(TAG_FIRMWARE_VERSION, "Version");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(TAG_FOCUS_MODE, "Focus Mode");
+	        _tagNameMap.put(TAG_AF_AREA_MODE, "AF Area Mode");
+	        _tagNameMap.put(TAG_IMAGE_STABILIZATION, "Image Stabilization");
+	        _tagNameMap.put(TAG_MACRO_MODE, "Macro Mode");
+	        _tagNameMap.put(TAG_RECORD_MODE, "Record Mode");
+	        _tagNameMap.put(TAG_AUDIO, "Audio");
+	        _tagNameMap.put(TAG_INTERNAL_SERIAL_NUMBER, "Internal Serial Number");
+	        _tagNameMap.put(TAG_UNKNOWN_DATA_DUMP, "Unknown Data Dump");
+	        _tagNameMap.put(TAG_EASY_MODE, "Easy Mode");
+	        _tagNameMap.put(TAG_WHITE_BALANCE_BIAS, "White Balance Bias");
+	        _tagNameMap.put(TAG_FLASH_BIAS, "Flash Bias");
+	        _tagNameMap.put(TAG_EXIF_VERSION, "Exif Version");
+	        _tagNameMap.put(TAG_COLOR_EFFECT, "Color Effect");
+	        _tagNameMap.put(TAG_UPTIME, "Camera Uptime");
+	        _tagNameMap.put(TAG_BURST_MODE, "Burst Mode");
+	        _tagNameMap.put(TAG_SEQUENCE_NUMBER, "Sequence Number");
+	        _tagNameMap.put(TAG_CONTRAST_MODE, "Contrast Mode");
+	        _tagNameMap.put(TAG_NOISE_REDUCTION, "Noise Reduction");
+	        _tagNameMap.put(TAG_SELF_TIMER, "Self Timer");
+	        _tagNameMap.put(TAG_ROTATION, "Rotation");
+	        _tagNameMap.put(TAG_AF_ASSIST_LAMP, "AF Assist Lamp");
+	        _tagNameMap.put(TAG_COLOR_MODE, "Color Mode");
+	        _tagNameMap.put(TAG_BABY_AGE, "Baby Age");
+	        _tagNameMap.put(TAG_OPTICAL_ZOOM_MODE, "Optical Zoom Mode");
+	        _tagNameMap.put(TAG_CONVERSION_LENS, "Conversion Lens");
+	        _tagNameMap.put(TAG_TRAVEL_DAY, "Travel Day");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_WORLD_TIME_LOCATION, "World Time Location");
+	        _tagNameMap.put(TAG_TEXT_STAMP, "Text Stamp");
+	        _tagNameMap.put(TAG_PROGRAM_ISO, "Program ISO");
+		_tagNameMap.put(TAG_ADVANCED_SCENE_MODE, "Advanced Scene Mode");
+	        _tagNameMap.put(TAG_PRINT_IMAGE_MATCHING_INFO, "Print Image Matching (PIM) Info");
+	        _tagNameMap.put(TAG_FACES_DETECTED, "Number of Detected Faces");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_FILM_MODE, "Film Mode");
+	        _tagNameMap.put(TAG_COLOR_TEMP_KELVIN, "Color Temp Kelvin");
+	        _tagNameMap.put(TAG_BRACKET_SETTINGS, "Bracket Settings");
+	        _tagNameMap.put(TAG_WB_ADJUST_AB, "White Balance Adjust (AB)");
+		_tagNameMap.put(TAG_WB_ADJUST_GM, "White Balance Adjust (GM)");
+
+	        _tagNameMap.put(TAG_FLASH_CURTAIN, "Flash Curtain");
+	        _tagNameMap.put(TAG_LONG_EXPOSURE_NOISE_REDUCTION, "Long Exposure Noise Reduction");
+	        _tagNameMap.put(TAG_PANASONIC_IMAGE_WIDTH, "Panasonic Image Width");
+	        _tagNameMap.put(TAG_PANASONIC_IMAGE_HEIGHT, "Panasonic Image Height");
+
+	        _tagNameMap.put(TAG_AF_POINT_POSITION, "Af Point Position");
+	        _tagNameMap.put(TAG_FACE_DETECTION_INFO, "Face Detection Info");
+	        _tagNameMap.put(TAG_LENS_TYPE, "Lens Type");
+	        _tagNameMap.put(TAG_LENS_SERIAL_NUMBER, "Lens Serial Number");
+	        _tagNameMap.put(TAG_ACCESSORY_TYPE, "Accessory Type");
+	        _tagNameMap.put(TAG_ACCESSORY_SERIAL_NUMBER, "Accessory Serial Number");
+	        _tagNameMap.put(TAG_TRANSFORM, "Transform");
+	        _tagNameMap.put(TAG_INTELLIGENT_EXPOSURE, "Intelligent Exposure");
+	        _tagNameMap.put(TAG_LENS_FIRMWARE_VERSION, "Lens Firmware Version");
+	        _tagNameMap.put(TAG_FACE_RECOGNITION_INFO, "Face Recognition Info");
+	        _tagNameMap.put(TAG_FLASH_WARNING, "Flash Warning");
+	        _tagNameMap.put(TAG_RECOGNIZED_FACE_FLAGS, "Recognized Face Flags");
+	        _tagNameMap.put(TAG_TITLE, "Title");
+	        _tagNameMap.put(TAG_BABY_NAME, "Baby Name");
+	        _tagNameMap.put(TAG_LOCATION, "Location");
+	        _tagNameMap.put(TAG_COUNTRY, "Country");
+	        _tagNameMap.put(TAG_STATE, "State");
+	        _tagNameMap.put(TAG_CITY, "City");
+	        _tagNameMap.put(TAG_LANDMARK, "Landmark");
+	        _tagNameMap.put(TAG_INTELLIGENT_RESOLUTION, "Intelligent Resolution");
+	        _tagNameMap.put(TAG_BURST_SPEED, "Burst Speed");
+	        _tagNameMap.put(TAG_INTELLIGENT_D_RANGE, "Intelligent D-Range");
+	        _tagNameMap.put(TAG_CLEAR_RETOUCH, "Clear Retouch");
+	        _tagNameMap.put(TAG_CITY2, "City 2");
+	        _tagNameMap.put(TAG_PHOTO_STYLE, "Photo Style");
+	        _tagNameMap.put(TAG_SHADING_COMPENSATION, "Shading Compensation");
+
+	        _tagNameMap.put(TAG_ACCELEROMETER_Z, "Accelerometer Z");
+	        _tagNameMap.put(TAG_ACCELEROMETER_X, "Accelerometer X");
+	        _tagNameMap.put(TAG_ACCELEROMETER_Y, "Accelerometer Y");
+	        _tagNameMap.put(TAG_CAMERA_ORIENTATION, "Camera Orientation");
+	        _tagNameMap.put(TAG_ROLL_ANGLE, "Roll Angle");
+	        _tagNameMap.put(TAG_PITCH_ANGLE, "Pitch Angle");
+	        _tagNameMap.put(TAG_SWEEP_PANORAMA_DIRECTION, "Sweep Panorama Direction");
+	        _tagNameMap.put(TAG_SWEEP_PANORAMA_FIELD_OF_VIEW, "Sweep Panorama Field Of View");
+	        _tagNameMap.put(TAG_TIMER_RECORDING, "Timer Recording");
+
+	        _tagNameMap.put(TAG_INTERNAL_ND_FILTER, "Internal ND Filter");
+	        _tagNameMap.put(TAG_HDR, "HDR");
+	        _tagNameMap.put(TAG_SHUTTER_TYPE, "Shutter Type");
+	        _tagNameMap.put(TAG_CLEAR_RETOUCH_VALUE, "Clear Retouch Value");
+	        _tagNameMap.put(TAG_TOUCH_AE, "Touch AE");
+
+	        _tagNameMap.put(TAG_MAKERNOTE_VERSION, "Makernote Version");
+	        _tagNameMap.put(TAG_SCENE_MODE, "Scene Mode");
+	        _tagNameMap.put(TAG_WB_RED_LEVEL, "White Balance (Red)");
+	        _tagNameMap.put(TAG_WB_GREEN_LEVEL, "White Balance (Green)");
+	        _tagNameMap.put(TAG_WB_BLUE_LEVEL, "White Balance (Blue)");
+	        _tagNameMap.put(TAG_FLASH_FIRED, "Flash Fired");
+	        _tagNameMap.put(TAG_TEXT_STAMP_1, "Text Stamp 1");
+	        _tagNameMap.put(TAG_TEXT_STAMP_2, "Text Stamp 2");
+	        _tagNameMap.put(TAG_TEXT_STAMP_3, "Text Stamp 3");
+	        _tagNameMap.put(TAG_BABY_AGE_1, "Baby Age 1");
+	        _tagNameMap.put(TAG_TRANSFORM_1, "Transform 1");
+	    }
+
+	    public PanasonicMakernoteDirectory()
+	    {
+	        this.setDescriptor(new PanasonicMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Panasonic Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+
+	    @Nullable
+	    public Face[] getDetectedFaces()
+	    {
+	        byte[] bytes = getByteArray(TAG_FACE_DETECTION_INFO);
+	        if (bytes==null)
+	            return null;
+
+	        RandomAccessReader reader = new ByteArrayReader(bytes);
+	        reader.setMotorolaByteOrder(false);
+
+	        try {
+	            int faceCount = reader.getUInt16(0);
+	            if (faceCount==0)
+	                return null;
+	            Face[] faces = new Face[faceCount];
+
+	            for (int i = 0; i < faceCount; i++) {
+	                int offset = 2 + i * 8;
+	                faces[i] = new Face(
+	                        reader.getUInt16(offset),
+	                        reader.getUInt16(offset + 2),
+	                        reader.getUInt16(offset + 4),
+	                        reader.getUInt16(offset + 6)
+	                        , null, null);
+	            }
+	            return faces;
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    @Nullable
+	    public Face[] getRecognizedFaces()
+	    {
+	        byte[] bytes = getByteArray(TAG_FACE_RECOGNITION_INFO);
+	        if (bytes == null)
+	            return null;
+
+	        RandomAccessReader reader = new ByteArrayReader(bytes);
+	        reader.setMotorolaByteOrder(false);
+
+	        try {
+	            int faceCount = reader.getUInt16(0);
+	            if (faceCount==0)
+	                return null;
+	            Face[] faces = new Face[faceCount];
+	            Age ag = new Age();
+
+	            for (int i = 0; i < faceCount; i++) {
+	                int offset = 4 + i * 44;
+	                String name = reader.getString(offset, 20, "ASCII").trim();
+	                String age = reader.getString(offset + 28, 20, "ASCII").trim();
+	                faces[i] = new Face(
+	                        reader.getUInt16(offset + 20),
+	                        reader.getUInt16(offset + 22),
+	                        reader.getUInt16(offset + 24),
+	                        reader.getUInt16(offset + 26),
+	                        name,
+	                        ag.fromPanasonicString(age));
+	            }
+	            return faces;
+	        } catch (IOException e) {
+	            return null;
+	        }
+	    }
+
+	    /**
+	     * Attempts to convert the underlying string value (as stored in the directory) into an Age object.
+	     * @param tag The tag identifier.
+	     * @return The parsed Age object, or null if the tag was empty of the value unable to be parsed.
+	     */
+		@Nullable
+		public Age getAge(int tag)
+	    {
+	        final String ageString = getString(tag);
+	        if (ageString==null)
+	            return null;
+	        Age ag = new Age();
+	        return ag.fromPanasonicString(ageString);
+		}
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link PentaxMakernoteDirectory}.
+	 * <p>
+	 * Some information about this makernote taken from here:
+	 * http://www.ozhiker.com/electronics/pjmt/jpeg_info/pentax_mn.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PentaxMakernoteDescriptor extends TagDescriptor<PentaxMakernoteDirectory>
+	{
+	    public PentaxMakernoteDescriptor(@NotNull PentaxMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case PentaxMakernoteDirectory.TAG_CAPTURE_MODE:
+	                return getCaptureModeDescription();
+	            case PentaxMakernoteDirectory.TAG_QUALITY_LEVEL:
+	                return getQualityLevelDescription();
+	            case PentaxMakernoteDirectory.TAG_FOCUS_MODE:
+	                return getFocusModeDescription();
+	            case PentaxMakernoteDirectory.TAG_FLASH_MODE:
+	                return getFlashModeDescription();
+	            case PentaxMakernoteDirectory.TAG_WHITE_BALANCE:
+	                return getWhiteBalanceDescription();
+	            case PentaxMakernoteDirectory.TAG_DIGITAL_ZOOM:
+	                return getDigitalZoomDescription();
+	            case PentaxMakernoteDirectory.TAG_SHARPNESS:
+	                return getSharpnessDescription();
+	            case PentaxMakernoteDirectory.TAG_CONTRAST:
+	                return getContrastDescription();
+	            case PentaxMakernoteDirectory.TAG_SATURATION:
+	                return getSaturationDescription();
+	            case PentaxMakernoteDirectory.TAG_ISO_SPEED:
+	                return getIsoSpeedDescription();
+	            case PentaxMakernoteDirectory.TAG_COLOUR:
+	                return getColourDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getColourDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_COLOUR, 1, "Normal", "Black & White", "Sepia");
+	    }
+
+	    @Nullable
+	    public String getIsoSpeedDescription()
+	    {
+	        Integer value = _directory.getInteger(PentaxMakernoteDirectory.TAG_ISO_SPEED);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            // TODO there must be other values which aren't catered for here
+	            case 10: return "ISO 100";
+	            case 16: return "ISO 200";
+	            case 100: return "ISO 100";
+	            case 200: return "ISO 200";
+	            default: return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    public String getSaturationDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_SATURATION, "Normal", "Low", "High");
+	    }
+
+	    @Nullable
+	    public String getContrastDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_CONTRAST, "Normal", "Low", "High");
+	    }
+
+	    @Nullable
+	    public String getSharpnessDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_SHARPNESS, "Normal", "Soft", "Hard");
+	    }
+
+	    @Nullable
+	    public String getDigitalZoomDescription()
+	    {
+	        Float value = _directory.getFloatObject(PentaxMakernoteDirectory.TAG_DIGITAL_ZOOM);
+	        if (value == null)
+	            return null;
+	        if (value == 0)
+	            return "Off";
+	        return Float.toString(value);
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_WHITE_BALANCE,
+	            "Auto", "Daylight", "Shade", "Tungsten", "Fluorescent", "Manual");
+	    }
+
+	    @Nullable
+	    public String getFlashModeDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_FLASH_MODE,
+	            1, "Auto", "Flash On", null, "Flash Off", null, "Red-eye Reduction");
+	    }
+
+	    @Nullable
+	    public String getFocusModeDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_FOCUS_MODE, 2, "Custom", "Auto");
+	    }
+
+	    @Nullable
+	    public String getQualityLevelDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_QUALITY_LEVEL, "Good", "Better", "Best");
+	    }
+
+	    @Nullable
+	    public String getCaptureModeDescription()
+	    {
+	        return getIndexedDescription(PentaxMakernoteDirectory.TAG_CAPTURE_MODE,
+	            "Auto", "Night-scene", "Manual", null, "Multiple");
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Pentax and Asahi cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PentaxMakernoteDirectory extends Directory
+	{
+	    /**
+	     * 0 = Auto
+	     * 1 = Night-scene
+	     * 2 = Manual
+	     * 4 = Multiple
+	     */
+	    public static final int TAG_CAPTURE_MODE = 0x0001;
+
+	    /**
+	     * 0 = Good
+	     * 1 = Better
+	     * 2 = Best
+	     */
+	    public static final int TAG_QUALITY_LEVEL = 0x0002;
+
+	    /**
+	     * 2 = Custom
+	     * 3 = Auto
+	     */
+	    public static final int TAG_FOCUS_MODE = 0x0003;
+
+	    /**
+	     * 1 = Auto
+	     * 2 = Flash on
+	     * 4 = Flash off
+	     * 6 = Red-eye Reduction
+	     */
+	    public static final int TAG_FLASH_MODE = 0x0004;
+
+	    /**
+	     * 0 = Auto
+	     * 1 = Daylight
+	     * 2 = Shade
+	     * 3 = Tungsten
+	     * 4 = Fluorescent
+	     * 5 = Manual
+	     */
+	    public static final int TAG_WHITE_BALANCE = 0x0007;
+
+	    /**
+	     * (0 = Off)
+	     */
+	    public static final int TAG_DIGITAL_ZOOM = 0x000A;
+
+	    /**
+	     * 0 = Normal
+	     * 1 = Soft
+	     * 2 = Hard
+	     */
+	    public static final int TAG_SHARPNESS = 0x000B;
+
+	    /**
+	     * 0 = Normal
+	     * 1 = Low
+	     * 2 = High
+	     */
+	    public static final int TAG_CONTRAST = 0x000C;
+
+	    /**
+	     * 0 = Normal
+	     * 1 = Low
+	     * 2 = High
+	     */
+	    public static final int TAG_SATURATION = 0x000D;
+
+	    /**
+	     * 10 = ISO 100
+	     * 16 = ISO 200
+	     * 100 = ISO 100
+	     * 200 = ISO 200
+	     */
+	    public static final int TAG_ISO_SPEED = 0x0014;
+
+	    /**
+	     * 1 = Normal
+	     * 2 = Black &amp; White
+	     * 3 = Sepia
+	     */
+	    public static final int TAG_COLOUR = 0x0017;
+
+	    /**
+	     * See Print Image Matching for specification.
+	     * http://www.ozhiker.com/electronics/pjmt/jpeg_info/pim.html
+	     */
+	    public static final int TAG_PRINT_IMAGE_MATCHING_INFO = 0x0E00;
+
+	    /**
+	     * (String).
+	     */
+	    public static final int TAG_TIME_ZONE = 0x1000;
+
+	    /**
+	     * (String).
+	     */
+	    public static final int TAG_DAYLIGHT_SAVINGS = 0x1001;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_CAPTURE_MODE, "Capture Mode");
+	        _tagNameMap.put(TAG_QUALITY_LEVEL, "Quality Level");
+	        _tagNameMap.put(TAG_FOCUS_MODE, "Focus Mode");
+	        _tagNameMap.put(TAG_FLASH_MODE, "Flash Mode");
+	        _tagNameMap.put(TAG_WHITE_BALANCE, "White Balance");
+	        _tagNameMap.put(TAG_DIGITAL_ZOOM, "Digital Zoom");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_ISO_SPEED, "ISO Speed");
+	        _tagNameMap.put(TAG_COLOUR, "Colour");
+	        _tagNameMap.put(TAG_PRINT_IMAGE_MATCHING_INFO, "Print Image Matching (PIM) Info");
+	        _tagNameMap.put(TAG_TIME_ZONE, "Time Zone");
+	        _tagNameMap.put(TAG_DAYLIGHT_SAVINGS, "Daylight Savings");
+	    }
+
+	    public PentaxMakernoteDirectory()
+	    {
+	        this.setDescriptor(new PentaxMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Pentax Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link com.drew.metadata.exif.makernotes.SonyType6MakernoteDirectory}.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class SanyoMakernoteDescriptor extends TagDescriptor<SanyoMakernoteDirectory>
+	{
+	    public SanyoMakernoteDescriptor(@NotNull SanyoMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case SanyoMakernoteDirectory.TAG_SANYO_QUALITY:
+	                return getSanyoQualityDescription();
+	            case SanyoMakernoteDirectory.TAG_MACRO:
+	                return getMacroDescription();
+	            case SanyoMakernoteDirectory.TAG_DIGITAL_ZOOM:
+	                return getDigitalZoomDescription();
+	            case SanyoMakernoteDirectory.TAG_SEQUENTIAL_SHOT:
+	                return getSequentialShotDescription();
+	            case SanyoMakernoteDirectory.TAG_WIDE_RANGE:
+	                return getWideRangeDescription();
+	            case SanyoMakernoteDirectory.TAG_COLOR_ADJUSTMENT_MODE:
+	                return getColorAdjustmentModeDescription();
+	            case SanyoMakernoteDirectory.TAG_QUICK_SHOT:
+	                return getQuickShotDescription();
+	            case SanyoMakernoteDirectory.TAG_SELF_TIMER:
+	                return getSelfTimerDescription();
+	            case SanyoMakernoteDirectory.TAG_VOICE_MEMO:
+	                return getVoiceMemoDescription();
+	            case SanyoMakernoteDirectory.TAG_RECORD_SHUTTER_RELEASE:
+	                return getRecordShutterDescription();
+	            case SanyoMakernoteDirectory.TAG_FLICKER_REDUCE:
+	                return getFlickerReduceDescription();
+	            case SanyoMakernoteDirectory.TAG_OPTICAL_ZOOM_ON:
+	                return getOptimalZoomOnDescription();
+	            case SanyoMakernoteDirectory.TAG_DIGITAL_ZOOM_ON:
+	                return getDigitalZoomOnDescription();
+	            case SanyoMakernoteDirectory.TAG_LIGHT_SOURCE_SPECIAL:
+	                return getLightSourceSpecialDescription();
+	            case SanyoMakernoteDirectory.TAG_RESAVED:
+	                return getResavedDescription();
+	            case SanyoMakernoteDirectory.TAG_SCENE_SELECT:
+	                return getSceneSelectDescription();
+	            case SanyoMakernoteDirectory.TAG_SEQUENCE_SHOT_INTERVAL:
+	                return getSequenceShotIntervalDescription();
+	            case SanyoMakernoteDirectory.TAG_FLASH_MODE:
+	                return getFlashModeDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getSanyoQualityDescription()
+	    {
+	        Integer value = _directory.getInteger(SanyoMakernoteDirectory.TAG_SANYO_QUALITY);
+	        if (value == null)
+	            return null;
+	        switch (value) {
+	            case 0x0: return "Normal/Very Low";
+	            case 0x1: return "Normal/Low";
+	            case 0x2: return "Normal/Medium Low";
+	            case 0x3: return "Normal/Medium";
+	            case 0x4: return "Normal/Medium High";
+	            case 0x5: return "Normal/High";
+	            case 0x6: return "Normal/Very High";
+	            case 0x7: return "Normal/Super High";
+	            case 0x100: return "Fine/Very Low";
+	            case 0x101: return "Fine/Low";
+	            case 0x102: return "Fine/Medium Low";
+	            case 0x103: return "Fine/Medium";
+	            case 0x104: return "Fine/Medium High";
+	            case 0x105: return "Fine/High";
+	            case 0x106: return "Fine/Very High";
+	            case 0x107: return "Fine/Super High";
+	            case 0x200: return "Super Fine/Very Low";
+	            case 0x201: return "Super Fine/Low";
+	            case 0x202: return "Super Fine/Medium Low";
+	            case 0x203: return "Super Fine/Medium";
+	            case 0x204: return "Super Fine/Medium High";
+	            case 0x205: return "Super Fine/High";
+	            case 0x206: return "Super Fine/Very High";
+	            case 0x207: return "Super Fine/Super High";
+	            default:
+	                return "Unknown (" + value + ")";
+	        }
+	    }
+
+	    @Nullable
+	    private String getMacroDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_MACRO, "Normal", "Macro", "View", "Manual");
+	    }
+
+	    @Nullable
+	    private String getDigitalZoomDescription()
+	    {
+	        return getDecimalRational(SanyoMakernoteDirectory.TAG_DIGITAL_ZOOM, 3);
+	    }
+
+	    @Nullable
+	    private String getSequentialShotDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_SEQUENTIAL_SHOT, "None", "Standard", "Best", "Adjust Exposure");
+	    }
+
+	    @Nullable
+	    private String getWideRangeDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_WIDE_RANGE, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getColorAdjustmentModeDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_COLOR_ADJUSTMENT_MODE, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getQuickShotDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_QUICK_SHOT, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getSelfTimerDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_SELF_TIMER, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getVoiceMemoDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_VOICE_MEMO, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getRecordShutterDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_RECORD_SHUTTER_RELEASE, "Record while down", "Press start, press stop");
+	    }
+
+	    @Nullable
+	    private String getFlickerReduceDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_FLICKER_REDUCE, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getOptimalZoomOnDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_OPTICAL_ZOOM_ON, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getDigitalZoomOnDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_DIGITAL_ZOOM_ON, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getLightSourceSpecialDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_LIGHT_SOURCE_SPECIAL, "Off", "On");
+	    }
+
+	    @Nullable
+	    private String getResavedDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_RESAVED, "No", "Yes");
+	    }
+
+	    @Nullable
+	    private String getSceneSelectDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_SCENE_SELECT,
+	            "Off", "Sport", "TV", "Night", "User 1", "User 2", "Lamp");
+	    }
+
+	    @Nullable
+	    private String getSequenceShotIntervalDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_SEQUENCE_SHOT_INTERVAL,
+	            "5 frames/sec", "10 frames/sec", "15 frames/sec", "20 frames/sec");
+	    }
+
+	    @Nullable
+	    private String getFlashModeDescription()
+	    {
+	        return getIndexedDescription(SanyoMakernoteDirectory.TAG_FLASH_MODE,
+	            "Auto", "Force", "Disabled", "Red eye");
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Sanyo cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class SanyoMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_MAKERNOTE_OFFSET = 0x00ff;
+
+	    public static final int TAG_SANYO_THUMBNAIL = 0x0100;
+
+	    public static final int TAG_SPECIAL_MODE = 0x0200;
+	    public static final int TAG_SANYO_QUALITY = 0x0201;
+	    public static final int TAG_MACRO = 0x0202;
+	    public static final int TAG_DIGITAL_ZOOM = 0x0204;
+	    public static final int TAG_SOFTWARE_VERSION = 0x0207;
+	    public static final int TAG_PICT_INFO = 0x0208;
+	    public static final int TAG_CAMERA_ID = 0x0209;
+	    public static final int TAG_SEQUENTIAL_SHOT = 0x020e;
+	    public static final int TAG_WIDE_RANGE = 0x020f;
+	    public static final int TAG_COLOR_ADJUSTMENT_MODE = 0x0210;
+	    public static final int TAG_QUICK_SHOT = 0x0213;
+	    public static final int TAG_SELF_TIMER = 0x0214;
+	    public static final int TAG_VOICE_MEMO = 0x0216;
+	    public static final int TAG_RECORD_SHUTTER_RELEASE = 0x0217;
+	    public static final int TAG_FLICKER_REDUCE = 0x0218;
+	    public static final int TAG_OPTICAL_ZOOM_ON = 0x0219;
+	    public static final int TAG_DIGITAL_ZOOM_ON = 0x021b;
+	    public static final int TAG_LIGHT_SOURCE_SPECIAL = 0x021d;
+	    public static final int TAG_RESAVED = 0x021e;
+	    public static final int TAG_SCENE_SELECT = 0x021f;
+	    public static final int TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO = 0x0223;
+	    public static final int TAG_SEQUENCE_SHOT_INTERVAL = 0x0224;
+	    public static final int TAG_FLASH_MODE = 0x0225;
+
+	    public static final int TAG_PRINT_IMAGE_MATCHING_INFO = 0x0E00;
+
+	    public static final int TAG_DATA_DUMP = 0x0f00;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_MAKERNOTE_OFFSET, "Makernote Offset");
+
+	        _tagNameMap.put(TAG_SANYO_THUMBNAIL, "Sanyo Thumbnail");
+
+	        _tagNameMap.put(TAG_SPECIAL_MODE, "Special Mode");
+	        _tagNameMap.put(TAG_SANYO_QUALITY, "Sanyo Quality");
+	        _tagNameMap.put(TAG_MACRO, "Macro");
+	        _tagNameMap.put(TAG_DIGITAL_ZOOM, "Digital Zoom");
+	        _tagNameMap.put(TAG_SOFTWARE_VERSION, "Software Version");
+	        _tagNameMap.put(TAG_PICT_INFO, "Pict Info");
+	        _tagNameMap.put(TAG_CAMERA_ID, "Camera ID");
+	        _tagNameMap.put(TAG_SEQUENTIAL_SHOT, "Sequential Shot");
+	        _tagNameMap.put(TAG_WIDE_RANGE, "Wide Range");
+	        _tagNameMap.put(TAG_COLOR_ADJUSTMENT_MODE, "Color Adjustment Node");
+	        _tagNameMap.put(TAG_QUICK_SHOT, "Quick Shot");
+	        _tagNameMap.put(TAG_SELF_TIMER, "Self Timer");
+	        _tagNameMap.put(TAG_VOICE_MEMO, "Voice Memo");
+	        _tagNameMap.put(TAG_RECORD_SHUTTER_RELEASE, "Record Shutter Release");
+	        _tagNameMap.put(TAG_FLICKER_REDUCE, "Flicker Reduce");
+	        _tagNameMap.put(TAG_OPTICAL_ZOOM_ON, "Optical Zoom On");
+	        _tagNameMap.put(TAG_DIGITAL_ZOOM_ON, "Digital Zoom On");
+	        _tagNameMap.put(TAG_LIGHT_SOURCE_SPECIAL, "Light Source Special");
+	        _tagNameMap.put(TAG_RESAVED, "Resaved");
+	        _tagNameMap.put(TAG_SCENE_SELECT, "Scene Select");
+	        _tagNameMap.put(TAG_MANUAL_FOCUS_DISTANCE_OR_FACE_INFO, "Manual Focus Distance or Face Info");
+	        _tagNameMap.put(TAG_SEQUENCE_SHOT_INTERVAL, "Sequence Shot Interval");
+	        _tagNameMap.put(TAG_FLASH_MODE, "Flash Mode");
+
+	        _tagNameMap.put(TAG_PRINT_IMAGE_MATCHING_INFO, "Print IM");
+
+	        _tagNameMap.put(TAG_DATA_DUMP, "Data Dump");
+	    }
+
+	    public SanyoMakernoteDirectory()
+	    {
+	        this.setDescriptor(new SanyoMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Sanyo Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link RicohMakernoteDirectory}.
+	 * <p>
+	 * Some information about this makernote taken from here:
+	 * http://www.ozhiker.com/electronics/pjmt/jpeg_info/ricoh_mn.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class RicohMakernoteDescriptor extends TagDescriptor<RicohMakernoteDirectory>
+	{
+	    public RicohMakernoteDescriptor(@NotNull RicohMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+//	            case TAG_PROPRIETARY_THUMBNAIL:
+//	                return getProprietaryThumbnailDataDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+	//
+//	    @Nullable
+//	    public String getProprietaryThumbnailDataDescription()
+//	    {
+//	        return getByteLengthDescription(TAG_PROPRIETARY_THUMBNAIL);
+//	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Ricoh cameras.
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class RicohMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_MAKERNOTE_DATA_TYPE = 0x0001;
+	    public static final int TAG_VERSION = 0x0002;
+	    public static final int TAG_PRINT_IMAGE_MATCHING_INFO = 0x0E00;
+	    public static final int TAG_RICOH_CAMERA_INFO_MAKERNOTE_SUB_IFD_POINTER = 0x2001;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_MAKERNOTE_DATA_TYPE, "Makernote Data Type");
+	        _tagNameMap.put(TAG_VERSION, "Version");
+	        _tagNameMap.put(TAG_PRINT_IMAGE_MATCHING_INFO, "Print Image Matching (PIM) Info");
+	        _tagNameMap.put(TAG_RICOH_CAMERA_INFO_MAKERNOTE_SUB_IFD_POINTER, "Ricoh Camera Info Makernote Sub-IFD");
+	    }
+
+	    public RicohMakernoteDirectory()
+	    {
+	        this.setDescriptor(new RicohMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Ricoh Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link PrintIMDirectory}.
+	 *
+	 * @author Kevin Mott https://github.com/kwhopper
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PrintIMDescriptor extends TagDescriptor<PrintIMDirectory>
+	{
+	    public PrintIMDescriptor(@NotNull PrintIMDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case PrintIMDirectory.TagPrintImVersion:
+	                return super.getDescription(tagType);
+	            default:
+	                Integer value = _directory.getInteger(tagType);
+	                if (value == null)
+	                    return null;
+	                return String.format("0x%08x", value);
+	        }
+	    }
+	}
+
+	
+	/**
+	 * These tags can be found in Epson proprietary metadata. The index values are 'fake' but
+	 * chosen specifically to make processing easier
+	 *
+	 * @author Kevin Mott https://github.com/kwhopper
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class PrintIMDirectory extends Directory
+	{
+	    public static final int TagPrintImVersion = 0x0000;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TagPrintImVersion, "PrintIM Version");
+	    }
+
+	    public PrintIMDirectory()
+	    {
+	        this.setDescriptor(new PrintIMDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "PrintIM";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link AppleMakernoteDirectory}.
+	 * <p>
+	 * Using information from http://owl.phy.queensu.ca/~phil/exiftool/TagNames/Apple.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class AppleMakernoteDescriptor extends TagDescriptor<AppleMakernoteDirectory>
+	{
+	    public AppleMakernoteDescriptor(@NotNull AppleMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case AppleMakernoteDirectory.TAG_HDR_IMAGE_TYPE:
+	                return getHdrImageTypeDescription();
+	            case AppleMakernoteDirectory.TAG_ACCELERATION_VECTOR:
+	                return getAccelerationVectorDescription();
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getHdrImageTypeDescription()
+	    {
+	        return getIndexedDescription(AppleMakernoteDirectory.TAG_HDR_IMAGE_TYPE, 3, "HDR Image", "Original Image");
+	    }
+
+	    @Nullable
+	    public String getAccelerationVectorDescription()
+	    {
+	        Rational[] values = _directory.getRationalArray(AppleMakernoteDirectory.TAG_ACCELERATION_VECTOR);
+	        if (values == null || values.length != 3)
+	            return null;
+	        return String.format("%.2fg %s, ", values[0].getAbsolute().doubleValue(), values[0].isPositive() ? "left" : "right") +
+	               String.format("%.2fg %s, ", values[1].getAbsolute().doubleValue(), values[1].isPositive() ? "down" : "up") +
+	               String.format("%.2fg %s",   values[2].getAbsolute().doubleValue(), values[2].isPositive() ? "forward" : "backward");
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Apple cameras.
+	 * <p>
+	 * Using information from http://owl.phy.queensu.ca/~phil/exiftool/TagNames/Apple.html
+	 *
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class AppleMakernoteDirectory extends Directory
+	{
+	    public static final int TAG_RUN_TIME = 0x0003;
+	    public static final int TAG_ACCELERATION_VECTOR = 0x0008;
+	    public static final int TAG_HDR_IMAGE_TYPE = 0x000a;
+	    public static final int TAG_BURST_UUID = 0x000b;
+	    public static final int TAG_CONTENT_IDENTIFIER = 0x0011;
+	    public static final int TAG_IMAGE_UNIQUE_ID = 0x0015; // TODO is this actually 0x0016?
+	    public static final int TAG_LIVE_PHOTO_ID = 0x0017;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_RUN_TIME, "Run Time");
+	        _tagNameMap.put(TAG_ACCELERATION_VECTOR, "Acceleration Vector");
+	        _tagNameMap.put(TAG_HDR_IMAGE_TYPE, "HDR Image Type");
+	        _tagNameMap.put(TAG_BURST_UUID, "Burst UUID");
+	        _tagNameMap.put(TAG_CONTENT_IDENTIFIER, "Content Identifier");
+	        _tagNameMap.put(TAG_IMAGE_UNIQUE_ID, "Image Unique ID");
+	        _tagNameMap.put(TAG_LIVE_PHOTO_ID, "Live Photo ID");
+	    }
+
+	    public AppleMakernoteDirectory()
+	    {
+	        this.setDescriptor(new AppleMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Apple Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link ReconyxHyperFireMakernoteDirectory}.
+	 *
+	 * @author Todd West http://cascadescarnivoreproject.blogspot.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class ReconyxHyperFireMakernoteDescriptor extends TagDescriptor<ReconyxHyperFireMakernoteDirectory>
+	{
+	    public ReconyxHyperFireMakernoteDescriptor(@NotNull ReconyxHyperFireMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case ReconyxHyperFireMakernoteDirectory.TAG_MAKERNOTE_VERSION:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxHyperFireMakernoteDirectory.TAG_FIRMWARE_VERSION:
+	                return _directory.getString(tagType);
+	            case ReconyxHyperFireMakernoteDirectory.TAG_TRIGGER_MODE:
+	                return _directory.getString(tagType);
+	            case ReconyxHyperFireMakernoteDirectory.TAG_SEQUENCE:
+	                int[] sequence = _directory.getIntArray(tagType);
+	                if (sequence == null)
+	                    return null;
+	                return String.format("%d/%d", sequence[0], sequence[1]);
+	            case ReconyxHyperFireMakernoteDirectory.TAG_EVENT_NUMBER:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxHyperFireMakernoteDirectory.TAG_MOTION_SENSITIVITY:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxHyperFireMakernoteDirectory.TAG_BATTERY_VOLTAGE:
+	                Double value = _directory.getDoubleObject(tagType);
+	                DecimalFormat formatter = new DecimalFormat("0.000");
+	                return value == null ? null : formatter.format(value);
+	            case ReconyxHyperFireMakernoteDirectory.TAG_DATE_TIME_ORIGINAL:
+	                String date = _directory.getString(tagType);
+	                try {
+	                    DateFormat parser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+	                    return parser.format(parser.parse(date));
+	                } catch (ParseException e) {
+	                    return null;
+	                }
+	            case ReconyxHyperFireMakernoteDirectory.TAG_MOON_PHASE:
+	                return getIndexedDescription(tagType, "New", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full", "Waning Gibbous", "Last Quarter", "Waning Crescent");
+	            case ReconyxHyperFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE_FAHRENHEIT:
+	            case ReconyxHyperFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxHyperFireMakernoteDirectory.TAG_SERIAL_NUMBER:
+	                // default is UTF_16LE
+	                StringValue svalue = _directory.getStringValue(tagType);
+	                if(svalue == null)
+	                    return null;
+	                return svalue.toString();
+	            case ReconyxHyperFireMakernoteDirectory.TAG_CONTRAST:
+	            case ReconyxHyperFireMakernoteDirectory.TAG_BRIGHTNESS:
+	            case ReconyxHyperFireMakernoteDirectory.TAG_SHARPNESS:
+	            case ReconyxHyperFireMakernoteDirectory.TAG_SATURATION:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxHyperFireMakernoteDirectory.TAG_INFRARED_ILLUMINATOR:
+	                return getIndexedDescription(tagType, "Off", "On");
+	            case ReconyxHyperFireMakernoteDirectory.TAG_USER_LABEL:
+	                return _directory.getString(tagType);
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Reconyx HyperFire cameras.
+	 *
+	 * Reconyx uses a fixed makernote block.  Tag values are the byte index of the tag within the makernote.
+	 * @author Todd West http://cascadescarnivoreproject.blogspot.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class ReconyxHyperFireMakernoteDirectory extends Directory
+	{
+	    /**
+	     * Version number used for identifying makernotes from Reconyx HyperFire cameras.
+	     */
+	    public static final int MAKERNOTE_VERSION = 61697;
+
+	    public static final int TAG_MAKERNOTE_VERSION = 0;
+	    public static final int TAG_FIRMWARE_VERSION = 2;
+	    public static final int TAG_TRIGGER_MODE = 12;
+	    public static final int TAG_SEQUENCE = 14;
+	    public static final int TAG_EVENT_NUMBER = 18;
+	    public static final int TAG_DATE_TIME_ORIGINAL = 22;
+	    public static final int TAG_MOON_PHASE = 36;
+	    public static final int TAG_AMBIENT_TEMPERATURE_FAHRENHEIT = 38;
+	    public static final int TAG_AMBIENT_TEMPERATURE = 40;
+	    public static final int TAG_SERIAL_NUMBER = 42;
+	    public static final int TAG_CONTRAST = 72;
+	    public static final int TAG_BRIGHTNESS = 74;
+	    public static final int TAG_SHARPNESS = 76;
+	    public static final int TAG_SATURATION = 78;
+	    public static final int TAG_INFRARED_ILLUMINATOR = 80;
+	    public static final int TAG_MOTION_SENSITIVITY = 82;
+	    public static final int TAG_BATTERY_VOLTAGE = 84;
+	    public static final int TAG_USER_LABEL = 86;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_MAKERNOTE_VERSION, "Makernote Version");
+	        _tagNameMap.put(TAG_FIRMWARE_VERSION, "Firmware Version");
+	        _tagNameMap.put(TAG_TRIGGER_MODE, "Trigger Mode");
+	        _tagNameMap.put(TAG_SEQUENCE, "Sequence");
+	        _tagNameMap.put(TAG_EVENT_NUMBER, "Event Number");
+	        _tagNameMap.put(TAG_DATE_TIME_ORIGINAL, "Date/Time Original");
+	        _tagNameMap.put(TAG_MOON_PHASE, "Moon Phase");
+	        _tagNameMap.put(TAG_AMBIENT_TEMPERATURE_FAHRENHEIT, "Ambient Temperature Fahrenheit");
+	        _tagNameMap.put(TAG_AMBIENT_TEMPERATURE, "Ambient Temperature");
+	        _tagNameMap.put(TAG_SERIAL_NUMBER, "Serial Number");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_BRIGHTNESS, "Brightness");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_INFRARED_ILLUMINATOR, "Infrared Illuminator");
+	        _tagNameMap.put(TAG_MOTION_SENSITIVITY, "Motion Sensitivity");
+	        _tagNameMap.put(TAG_BATTERY_VOLTAGE, "Battery Voltage");
+	        _tagNameMap.put(TAG_USER_LABEL, "User Label");
+	    }
+
+	    public ReconyxHyperFireMakernoteDirectory()
+	    {
+	        this.setDescriptor(new ReconyxHyperFireMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Reconyx HyperFire Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link ReconyxUltraFireMakernoteDirectory}.
+	 *
+	 * @author Todd West http://cascadescarnivoreproject.blogspot.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class ReconyxUltraFireMakernoteDescriptor extends TagDescriptor<ReconyxUltraFireMakernoteDirectory>
+	{
+	    public ReconyxUltraFireMakernoteDescriptor(@NotNull ReconyxUltraFireMakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case ReconyxUltraFireMakernoteDirectory.TAG_LABEL:
+	                return _directory.getString(tagType);
+	            case ReconyxUltraFireMakernoteDirectory.TAG_MAKERNOTE_ID:
+	                return String.format("0x%08X", _directory.getInteger(tagType));
+	            case ReconyxUltraFireMakernoteDirectory.TAG_MAKERNOTE_SIZE:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxUltraFireMakernoteDirectory.TAG_MAKERNOTE_PUBLIC_ID:
+	                return String.format("0x%08X", _directory.getInteger(tagType));
+	            case ReconyxUltraFireMakernoteDirectory.TAG_MAKERNOTE_PUBLIC_SIZE:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxUltraFireMakernoteDirectory.TAG_CAMERA_VERSION:
+	            case ReconyxUltraFireMakernoteDirectory.TAG_UIB_VERSION:
+	            case ReconyxUltraFireMakernoteDirectory.TAG_BTL_VERSION:
+	            case ReconyxUltraFireMakernoteDirectory.TAG_PEX_VERSION:
+	            case ReconyxUltraFireMakernoteDirectory.TAG_EVENT_TYPE:
+	                return _directory.getString(tagType);
+	            case ReconyxUltraFireMakernoteDirectory.TAG_SEQUENCE:
+	                int[] sequence = _directory.getIntArray(tagType);
+	                if (sequence == null)
+	                    return null;
+	                return String.format("%d/%d", sequence[0], sequence[1]);
+	            case ReconyxUltraFireMakernoteDirectory.TAG_EVENT_NUMBER:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxUltraFireMakernoteDirectory.TAG_DATE_TIME_ORIGINAL:
+	                String date = _directory.getString(tagType);
+	                try {
+	                    DateFormat parser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+	                    return parser.format(parser.parse(date));
+	                } catch (ParseException e) {
+	                    return null;
+	                }
+	            /*case TAG_DAY_OF_WEEK:
+	                return getIndexedDescription(tagType, CultureInfo.CurrentCulture.DateTimeFormat.DayNames);*/
+	            case ReconyxUltraFireMakernoteDirectory.TAG_MOON_PHASE:
+	                return getIndexedDescription(tagType, "New", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full", "Waning Gibbous", "Last Quarter", "Waning Crescent");
+	            case ReconyxUltraFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE_FAHRENHEIT:
+	            case ReconyxUltraFireMakernoteDirectory.TAG_AMBIENT_TEMPERATURE:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            case ReconyxUltraFireMakernoteDirectory.TAG_FLASH:
+	                return getIndexedDescription(tagType, "Off", "On");
+	            case ReconyxUltraFireMakernoteDirectory.TAG_BATTERY_VOLTAGE:
+	                Double value = _directory.getDoubleObject(tagType);
+	                DecimalFormat formatter = new DecimalFormat("0.000");
+	                return value == null ? null : formatter.format(value);
+	            case ReconyxUltraFireMakernoteDirectory.TAG_SERIAL_NUMBER:
+	                // default is UTF_8
+	                StringValue svalue = _directory.getStringValue(tagType);
+	                if(svalue == null)
+	                    return null;
+	                return svalue.toString();
+	            case ReconyxUltraFireMakernoteDirectory.TAG_USER_LABEL:
+	                return _directory.getString(tagType);
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific to Reconyx UltraFire cameras.
+	 *
+	 * Reconyx uses a fixed makernote block.  Tag values are the byte index of the tag within the makernote.
+	 * @author Todd West http://cascadescarnivoreproject.blogspot.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class ReconyxUltraFireMakernoteDirectory extends Directory
+	{
+	    /**
+	     * Version number used for identifying makernotes from Reconyx UltraFire cameras.
+	     */
+	    public static final int MAKERNOTE_ID = 0x00010000;
+
+	    /**
+	     * Version number used for identifying the public portion of makernotes from Reconyx UltraFire cameras.
+	     */
+	    public static final int MAKERNOTE_PUBLIC_ID = 0x07f10001;
+
+	    public static final int TAG_LABEL = 0;
+	    public static final int TAG_MAKERNOTE_ID = 10;
+	    public static final int TAG_MAKERNOTE_SIZE = 14;
+	    public static final int TAG_MAKERNOTE_PUBLIC_ID = 18;
+	    public static final int TAG_MAKERNOTE_PUBLIC_SIZE = 22;
+	    public static final int TAG_CAMERA_VERSION = 24;
+	    public static final int TAG_UIB_VERSION = 31;
+	    public static final int TAG_BTL_VERSION = 38;
+	    public static final int TAG_PEX_VERSION = 45;
+	    public static final int TAG_EVENT_TYPE = 52;
+	    public static final int TAG_SEQUENCE = 53;
+	    public static final int TAG_EVENT_NUMBER = 55;
+	    public static final int TAG_DATE_TIME_ORIGINAL = 59;
+	    public static final int TAG_DAY_OF_WEEK = 66;
+	    public static final int TAG_MOON_PHASE = 67;
+	    public static final int TAG_AMBIENT_TEMPERATURE_FAHRENHEIT = 68;
+	    public static final int TAG_AMBIENT_TEMPERATURE = 70;
+	    public static final int TAG_FLASH = 72;
+	    public static final int TAG_BATTERY_VOLTAGE = 73;
+	    public static final int TAG_SERIAL_NUMBER = 75;
+	    public static final int TAG_USER_LABEL = 80;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_LABEL, "Makernote Label");
+	        _tagNameMap.put(TAG_MAKERNOTE_ID, "Makernote ID");
+	        _tagNameMap.put(TAG_MAKERNOTE_SIZE, "Makernote Size");
+	        _tagNameMap.put(TAG_MAKERNOTE_PUBLIC_ID, "Makernote Public ID");
+	        _tagNameMap.put(TAG_MAKERNOTE_PUBLIC_SIZE, "Makernote Public Size");
+	        _tagNameMap.put(TAG_CAMERA_VERSION, "Camera Version");
+	        _tagNameMap.put(TAG_UIB_VERSION, "Uib Version");
+	        _tagNameMap.put(TAG_BTL_VERSION, "Btl Version");
+	        _tagNameMap.put(TAG_PEX_VERSION, "Pex Version");
+	        _tagNameMap.put(TAG_EVENT_TYPE, "Event Type");
+	        _tagNameMap.put(TAG_SEQUENCE, "Sequence");
+	        _tagNameMap.put(TAG_EVENT_NUMBER, "Event Number");
+	        _tagNameMap.put(TAG_DATE_TIME_ORIGINAL, "Date/Time Original");
+	        _tagNameMap.put(TAG_DAY_OF_WEEK, "Day of Week");
+	        _tagNameMap.put(TAG_MOON_PHASE, "Moon Phase");
+	        _tagNameMap.put(TAG_AMBIENT_TEMPERATURE_FAHRENHEIT, "Ambient Temperature Fahrenheit");
+	        _tagNameMap.put(TAG_AMBIENT_TEMPERATURE, "Ambient Temperature");
+	        _tagNameMap.put(TAG_FLASH, "Flash");
+	        _tagNameMap.put(TAG_BATTERY_VOLTAGE, "Battery Voltage");
+	        _tagNameMap.put(TAG_SERIAL_NUMBER, "Serial Number");
+	        _tagNameMap.put(TAG_USER_LABEL, "User Label");
+	    }
+
+	    public ReconyxUltraFireMakernoteDirectory()
+	    {
+	        this.setDescriptor(new ReconyxUltraFireMakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Reconyx UltraFire Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link ReconyxHyperFire2MakernoteDirectory}.
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class ReconyxHyperFire2MakernoteDescriptor extends TagDescriptor<ReconyxHyperFire2MakernoteDirectory>
+	{
+	    public ReconyxHyperFire2MakernoteDescriptor(@NotNull ReconyxHyperFire2MakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_FILE_NUMBER:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	                case ReconyxHyperFire2MakernoteDirectory.TAG_DIRECTORY_NUMBER:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_FIRMWARE_VERSION:
+	                return _directory.getString(tagType);
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_FIRMWARE_DATE:
+	            String dtFirm = _directory.getString(tagType);
+	            try {
+	                DateFormat parser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+	                return parser.format(parser.parse(dtFirm));
+	            } catch (ParseException e) {
+	                return null;
+	            }
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_TRIGGER_MODE:
+	                return _directory.getString(tagType);
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_SEQUENCE:
+	                int[] sequence = _directory.getIntArray(tagType);
+	                if (sequence == null)
+	                    return null;
+	                return String.format("%d/%d", sequence[0], sequence[1]);
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_EVENT_NUMBER:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_DATE_TIME_ORIGINAL:
+	                String date = _directory.getString(tagType);
+	                try {
+	                    DateFormat parser = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+	                    return parser.format(parser.parse(date));
+	                } catch (ParseException e) {
+	                    return null;
+	                }
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_DAY_OF_WEEK:
+	                return getIndexedDescription(tagType, "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_MOON_PHASE:
+	                return getIndexedDescription(tagType, "New", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full", "Waning Gibbous", "Last Quarter", "Waning Crescent");
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_AMBIENT_TEMPERATURE_FAHRENHEIT:
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_AMBIENT_TEMPERATURE:
+	                return String.format("%d", _directory.getInteger(tagType));
+	            
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_CONTRAST:
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_BRIGHTNESS:
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_SHARPNESS:
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_SATURATION:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_FLASH:
+	                return getIndexedDescription(tagType, "Off", "On");
+
+	            // ?????
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_AMBIENT_INFRARED:
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_AMBIENT_LIGHT:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_MOTION_SENSITIVITY:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_BATTERY_VOLTAGE:
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_BATTERY_VOLTAGE_AVG:
+	                Double value = _directory.getDoubleObject(tagType);
+	                DecimalFormat formatter = new DecimalFormat("0.000");
+	                return value == null ? null : formatter.format(value);
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_BATTERY_TYPE:
+	                return String.format("%d", _directory.getInteger(tagType));
+
+	            case ReconyxHyperFire2MakernoteDirectory.TAG_USER_LABEL:
+	                return _directory.getString(tagType);
+	                case ReconyxHyperFire2MakernoteDirectory.TAG_SERIAL_NUMBER:
+	                // default is UTF_16LE
+	                StringValue svalue = _directory.getStringValue(tagType);
+	                if(svalue == null)
+	                    return null;
+	                return svalue.toString();
+
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+	}
+
+	
+	/**
+	 * Describes tags specific to Reconyx HyperFire 2 cameras.
+	  */
+	//@SuppressWarnings("WeakerAccess")
+	public class ReconyxHyperFire2MakernoteDirectory extends Directory
+	{
+	    public static final int TAG_FILE_NUMBER = 16;
+	    public static final int TAG_DIRECTORY_NUMBER = 18;
+	    public static final int TAG_FIRMWARE_VERSION = 42;
+	    public static final int TAG_FIRMWARE_DATE = 48;
+	    public static final int TAG_TRIGGER_MODE = 52;
+	    public static final int TAG_SEQUENCE = 54;
+	    public static final int TAG_EVENT_NUMBER = 58;
+	    public static final int TAG_DATE_TIME_ORIGINAL = 62;
+	    public static final int TAG_DAY_OF_WEEK = 74;
+	    public static final int TAG_MOON_PHASE = 76;
+	    public static final int TAG_AMBIENT_TEMPERATURE_FAHRENHEIT = 78;
+	    public static final int TAG_AMBIENT_TEMPERATURE = 80;
+	    public static final int TAG_CONTRAST = 82;
+	    public static final int TAG_BRIGHTNESS = 84;
+	    public static final int TAG_SHARPNESS = 86;
+	    public static final int TAG_SATURATION = 88;
+	    public static final int TAG_FLASH = 90;
+	    public static final int TAG_AMBIENT_INFRARED = 92;
+	    public static final int TAG_AMBIENT_LIGHT = 94;
+	    public static final int TAG_MOTION_SENSITIVITY = 96;
+	    public static final int TAG_BATTERY_VOLTAGE = 98;
+	    public static final int TAG_BATTERY_VOLTAGE_AVG = 100;
+	    public static final int TAG_BATTERY_TYPE = 102;
+	    public static final int TAG_USER_LABEL = 104;
+	    public static final int TAG_SERIAL_NUMBER = 126;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TAG_FILE_NUMBER, "File Number");
+	        _tagNameMap.put(TAG_DIRECTORY_NUMBER, "Directory Number");
+	        _tagNameMap.put(TAG_FIRMWARE_VERSION, "Firmware Version");
+	        _tagNameMap.put(TAG_FIRMWARE_DATE, "Firmware Date");
+	        _tagNameMap.put(TAG_TRIGGER_MODE, "Trigger Mode");
+	        _tagNameMap.put(TAG_SEQUENCE, "Sequence");
+	        _tagNameMap.put(TAG_EVENT_NUMBER, "Event Number");
+	        _tagNameMap.put(TAG_DATE_TIME_ORIGINAL, "Date/Time Original");
+	        _tagNameMap.put(TAG_DAY_OF_WEEK, "DaY of Week");
+	        _tagNameMap.put(TAG_MOON_PHASE, "Moon Phase");
+	        _tagNameMap.put(TAG_AMBIENT_TEMPERATURE_FAHRENHEIT, "Ambient Temperature Fahrenheit");
+	        _tagNameMap.put(TAG_AMBIENT_TEMPERATURE, "Ambient Temperature");
+	        _tagNameMap.put(TAG_CONTRAST, "Contrast");
+	        _tagNameMap.put(TAG_BRIGHTNESS, "Brightness");
+	        _tagNameMap.put(TAG_SHARPNESS, "Sharpness");
+	        _tagNameMap.put(TAG_SATURATION, "Saturation");
+	        _tagNameMap.put(TAG_FLASH, "Flash");
+	        _tagNameMap.put(TAG_AMBIENT_INFRARED, "Ambient Infrared");
+	        _tagNameMap.put(TAG_AMBIENT_LIGHT, "Ambient Light");
+	        _tagNameMap.put(TAG_MOTION_SENSITIVITY, "Motion Sensitivity");
+	        _tagNameMap.put(TAG_BATTERY_VOLTAGE, "Battery Voltage");
+	        _tagNameMap.put(TAG_BATTERY_VOLTAGE_AVG, "Battery Voltage Average");
+	        _tagNameMap.put(TAG_BATTERY_TYPE, "Battery Type");
+	        _tagNameMap.put(TAG_USER_LABEL, "User Label");
+	        _tagNameMap.put(TAG_SERIAL_NUMBER, "Serial Number");
+	    }
+
+	    public ReconyxHyperFire2MakernoteDirectory()
+	    {
+	        this.setDescriptor(new ReconyxHyperFire2MakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Reconyx HyperFire 2 Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
+	
+	/**
+	 * Provides human-readable string representations of tag values stored in a {@link SamsungType2MakernoteDirectory}.
+	 * <p>
+	 * Tag reference from: http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Samsung.html
+	 *
+	 * @author Kevin Mott https://github.com/kwhopper
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class SamsungType2MakernoteDescriptor extends TagDescriptor<SamsungType2MakernoteDirectory>
+	{
+	    public SamsungType2MakernoteDescriptor(@NotNull SamsungType2MakernoteDirectory directory)
+	    {
+	        super(directory);
+	    }
+
+	    @Override
+	    @Nullable
+	    public String getDescription(int tagType)
+	    {
+	        switch (tagType) {
+	            case SamsungType2MakernoteDirectory.TagMakerNoteVersion:
+	                return getMakernoteVersionDescription();
+	            case SamsungType2MakernoteDirectory.TagDeviceType:
+	                return getDeviceTypeDescription();
+	            case SamsungType2MakernoteDirectory.TagSamsungModelId:
+	                return getSamsungModelIdDescription();
+
+	            case SamsungType2MakernoteDirectory.TagRawDataByteOrder:
+	                return getRawDataByteOrderDescription();
+	            case SamsungType2MakernoteDirectory.TagWhiteBalanceSetup:
+	                return getWhiteBalanceSetupDescription();
+
+	            case SamsungType2MakernoteDirectory.TagCameraTemperature:
+	                return getCameraTemperatureDescription();
+
+	            case SamsungType2MakernoteDirectory.TagRawDataCFAPattern:
+	                return getRawDataCFAPatternDescription();
+
+	            case SamsungType2MakernoteDirectory.TagFaceDetect:
+	                return getFaceDetectDescription();
+	            case SamsungType2MakernoteDirectory.TagFaceRecognition:
+	                return getFaceRecognitionDescription();
+
+	            case SamsungType2MakernoteDirectory.TagLensType:
+	                return getLensTypeDescription();
+
+	            case SamsungType2MakernoteDirectory.TagColorSpace:
+	                return getColorSpaceDescription();
+	            case SamsungType2MakernoteDirectory.TagSmartRange:
+	                return getSmartRangeDescription();
+
+	            default:
+	                return super.getDescription(tagType);
+	        }
+	    }
+
+	    @Nullable
+	    public String getMakernoteVersionDescription()
+	    {
+	        return getVersionBytesDescription(SamsungType2MakernoteDirectory.TagMakerNoteVersion, 2);
+	    }
+
+	    @Nullable
+	    public String getDeviceTypeDescription()
+	    {
+	        Integer value = _directory.getInteger(SamsungType2MakernoteDirectory.TagDeviceType);
+	        if (value == null)
+	            return null;
+
+	        switch (value)
+	        {
+	            case 0x1000:
+	                return "Compact Digital Camera";
+	            case 0x2000:
+	                return "High-end NX Camera";
+	            case 0x3000:
+	                return "HXM Video Camera";
+	            case 0x12000:
+	                return "Cell Phone";
+	            case 0x300000:
+	                return "SMX Video Camera";
+	            default:
+	                return String.format("Unknown (%d)", value);
+	        }
+	    }
+
+	    @Nullable
+	    public String getSamsungModelIdDescription()
+	    {
+	        Integer value = _directory.getInteger(SamsungType2MakernoteDirectory.TagSamsungModelId);
+	        if (value == null)
+	            return null;
+
+	        switch (value)
+	        {
+	            case 0x100101c:
+	                return "NX10";
+	            /*case 0x1001226:
+	                    return "HMX-S10BP";*/
+	            case 0x1001226:
+	                    return "HMX-S15BP";
+	            case 0x1001233:
+	                    return "HMX-Q10";
+	            /*case 0x1001234:
+	                    return "HMX-H300";*/
+	            case 0x1001234:
+	                    return "HMX-H304";
+	            case 0x100130c:
+	                    return "NX100";
+	            case 0x1001327:
+	                    return "NX11";
+	            case 0x170104e:
+	                    return "ES70, ES71 / VLUU ES70, ES71 / SL600";
+	            case 0x1701052:
+	                    return "ES73 / VLUU ES73 / SL605";
+	            case 0x1701300:
+	                    return "ES28 / VLUU ES28";
+	            case 0x1701303:
+	                    return "ES74,ES75,ES78 / VLUU ES75,ES78";
+	            case 0x2001046:
+	                    return "PL150 / VLUU PL150 / TL210 / PL151";
+	            case 0x2001311:
+	                    return "PL120,PL121 / VLUU PL120,PL121";
+	            case 0x2001315:
+	                    return "PL170,PL171 / VLUUPL170,PL171";
+	            case 0x200131e:
+	                    return "PL210, PL211 / VLUU PL210, PL211";
+	            case 0x2701317:
+	                    return "PL20,PL21 / VLUU PL20,PL21";
+	            case 0x2a0001b:
+	                    return "WP10 / VLUU WP10 / AQ100";
+	            case 0x3000000:
+	                    return "Various Models (0x3000000)";
+	            case 0x3a00018:
+	                    return "Various Models (0x3a00018)";
+	            case 0x400101f:
+	                    return "ST1000 / ST1100 / VLUU ST1000 / CL65";
+	            case 0x4001022:
+	                    return "ST550 / VLUU ST550 / TL225";
+	            case 0x4001025:
+	                    return "Various Models (0x4001025)";
+	            case 0x400103e:
+	                    return "VLUU ST5500, ST5500, CL80";
+	            case 0x4001041:
+	                    return "VLUU ST5000, ST5000, TL240";
+	            case 0x4001043:
+	                    return "ST70 / VLUU ST70 / ST71";
+	            case 0x400130a:
+	                    return "Various Models (0x400130a)";
+	            case 0x400130e:
+	                    return "ST90,ST91 / VLUU ST90,ST91";
+	            case 0x4001313:
+	                    return "VLUU ST95, ST95";
+	            case 0x4a00015:
+	                    return "VLUU ST60";
+	            case 0x4a0135b:
+	                    return "ST30, ST65 / VLUU ST65 / ST67";
+	            case 0x5000000:
+	                    return "Various Models (0x5000000)";
+	            case 0x5001038:
+	                    return "Various Models (0x5001038)";
+	            case 0x500103a:
+	                    return "WB650 / VLUU WB650 / WB660";
+	            case 0x500103c:
+	                    return "WB600 / VLUU WB600 / WB610";
+	            case 0x500133e:
+	                    return "WB150 / WB150F / WB152 / WB152F / WB151";
+	            case 0x5a0000f:
+	                    return "WB5000 / HZ25W";
+	            case 0x6001036:
+	                    return "EX1";
+	            case 0x700131c:
+	                    return "VLUU SH100, SH100";
+	            case 0x27127002:
+	                    return "SMX - C20N";
+	            default:
+	                return String.format("Unknown (%d)", value);
+	        }
+	    }
+
+	    @Nullable
+	    public String getRawDataByteOrderDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagRawDataByteOrder,
+	            "Little-endian (Intel)", "Big-endian (Motorola)");
+	    }
+
+	    @Nullable
+	    public String getWhiteBalanceSetupDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagWhiteBalanceSetup,
+	            "Auto", "Manual");
+	    }
+
+	    @Nullable
+	    public String getCameraTemperatureDescription()
+	    {
+	        return getFormattedInt(SamsungType2MakernoteDirectory.TagCameraTemperature, "%d C");
+	    }
+
+	    @Nullable
+	    public String getRawDataCFAPatternDescription()
+	    {
+	        Integer value = _directory.getInteger(SamsungType2MakernoteDirectory.TagRawDataCFAPattern);
+	        if (value == null)
+	            return null;
+
+	        switch (value) {
+	            case 0:     return "Unchanged";
+	            case 1:     return "Swap";
+	            case 65535: return "Roll";
+	            default:    return String.format("Unknown (%d)", value);
+	        }
+	    }
+
+	    @Nullable
+	    public String getFaceDetectDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagFaceDetect,
+	            "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getFaceRecognitionDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagFaceRecognition,
+	            "Off", "On");
+	    }
+
+	    @Nullable
+	    public String getLensTypeDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagLensType,
+	            "Built-in or Manual Lens",
+	            "Samsung NX 30mm F2 Pancake",
+	            "Samsung NX 18-55mm F3.5-5.6 OIS",
+	            "Samsung NX 50-200mm F4-5.6 ED OIS",
+	            "Samsung NX 20-50mm F3.5-5.6 ED",
+	            "Samsung NX 20mm F2.8 Pancake",
+	            "Samsung NX 18-200mm F3.5-6.3 ED OIS",
+	            "Samsung NX 60mm F2.8 Macro ED OIS SSA",
+	            "Samsung NX 16mm F2.4 Pancake",
+	            "Samsung NX 85mm F1.4 ED SSA",
+	            "Samsung NX 45mm F1.8",
+	            "Samsung NX 45mm F1.8 2D/3D",
+	            "Samsung NX 12-24mm F4-5.6 ED",
+	            "Samsung NX 16-50mm F2-2.8 S ED OIS",
+	            "Samsung NX 10mm F3.5 Fisheye",
+	            "Samsung NX 16-50mm F3.5-5.6 Power Zoom ED OIS",
+	            null,
+	            null,
+	            null,
+	            null,
+	            "Samsung NX 50-150mm F2.8 S ED OIS",
+	            "Samsung NX 300mm F2.8 ED OIS");
+	    }
+
+	    @Nullable
+	    public String getColorSpaceDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagColorSpace,
+	            "sRGB", "Adobe RGB");
+	    }
+
+	    @Nullable
+	    public String getSmartRangeDescription()
+	    {
+	        return getIndexedDescription(SamsungType2MakernoteDirectory.TagSmartRange,
+	            "Off", "On");
+	    }
+	}
+
+
+	/**
+	 * Describes tags specific certain 'newer' Samsung cameras.
+	 * <p>
+	 * Tag reference from: http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Samsung.html
+	 *
+	 * @author Kevin Mott https://github.com/kwhopper
+	 * @author Drew Noakes https://drewnoakes.com
+	 */
+	//@SuppressWarnings("WeakerAccess")
+	public class SamsungType2MakernoteDirectory extends Directory
+	{
+	    // This list is incomplete
+	    public static final int TagMakerNoteVersion = 0x001;
+	    public static final int TagDeviceType = 0x0002;
+	    public static final int TagSamsungModelId = 0x0003;
+
+	    public static final int TagOrientationInfo = 0x0011;
+
+	    public static final int TagSmartAlbumColor = 0x0020;
+	    public static final int TagPictureWizard = 0x0021;
+
+	    public static final int TagLocalLocationName = 0x0030;
+
+	    public static final int TagPreviewIfd = 0x0035;
+
+	    public static final int TagRawDataByteOrder = 0x0040;
+	    public static final int TagWhiteBalanceSetup = 0x0041;
+
+	    public static final int TagCameraTemperature = 0x0043;
+
+	    public static final int TagRawDataCFAPattern = 0x0050;
+
+	    public static final int TagFaceDetect = 0x0100;
+	    public static final int TagFaceRecognition = 0x0120;
+	    public static final int TagFaceName = 0x0123;
+
+	    // following tags found only in SRW images
+	    public static final int TagFirmwareName = 0xa001;
+	    public static final int TagSerialNumber = 0xa002;
+	    public static final int TagLensType = 0xa003;
+	    public static final int TagLensFirmware = 0xa004;
+	    public static final int TagInternalLensSerialNumber = 0xa005;
+
+	    public static final int TagSensorAreas = 0xa010;
+	    public static final int TagColorSpace = 0xa011;
+	    public static final int TagSmartRange = 0xa012;
+	    public static final int TagExposureCompensation = 0xa013;
+	    public static final int TagISO = 0xa014;
+
+	    public static final int TagExposureTime = 0xa018;
+	    public static final int TagFNumber = 0xa019;
+
+	    public static final int TagFocalLengthIn35mmFormat = 0xa01a;
+
+	    public static final int TagEncryptionKey = 0xa020;
+
+	    @NotNull
+	    private final HashMap<Integer, String> _tagNameMap = new HashMap<Integer, String>();
+
+	    {
+	        _tagNameMap.put(TagMakerNoteVersion, "Maker Note Version");
+	        _tagNameMap.put(TagDeviceType, "Device Type");
+	        _tagNameMap.put(TagSamsungModelId, "Model Id");
+
+	        _tagNameMap.put(TagOrientationInfo, "Orientation Info");
+
+	        _tagNameMap.put(TagSmartAlbumColor, "Smart Album Color");
+	        _tagNameMap.put(TagPictureWizard, "Picture Wizard");
+
+	        _tagNameMap.put(TagLocalLocationName, "Local Location Name");
+
+	        _tagNameMap.put(TagPreviewIfd, "Preview IFD");
+
+	        _tagNameMap.put(TagRawDataByteOrder, "Raw Data Byte Order");
+	        _tagNameMap.put(TagWhiteBalanceSetup, "White Balance Setup");
+
+	        _tagNameMap.put(TagCameraTemperature, "Camera Temperature");
+
+	        _tagNameMap.put(TagRawDataCFAPattern, "Raw Data CFA Pattern");
+
+	        _tagNameMap.put(TagFaceDetect, "Face Detect");
+	        _tagNameMap.put(TagFaceRecognition, "Face Recognition");
+	        _tagNameMap.put(TagFaceName, "Face Name");
+
+	        _tagNameMap.put(TagFirmwareName, "Firmware Name");
+	        _tagNameMap.put(TagSerialNumber, "Serial Number");
+	        _tagNameMap.put(TagLensType, "Lens Type");
+	        _tagNameMap.put(TagLensFirmware, "Lens Firmware");
+	        _tagNameMap.put(TagInternalLensSerialNumber, "Internal Lens Serial Number");
+
+	        _tagNameMap.put(TagSensorAreas, "Sensor Areas");
+	        _tagNameMap.put(TagColorSpace, "Color Space");
+	        _tagNameMap.put(TagSmartRange, "Smart Range");
+	        _tagNameMap.put(TagExposureCompensation, "Exposure Compensation");
+	        _tagNameMap.put(TagISO, "ISO");
+
+	        _tagNameMap.put(TagExposureTime, "Exposure Time");
+	        _tagNameMap.put(TagFNumber, "F-Number");
+
+	        _tagNameMap.put(TagFocalLengthIn35mmFormat, "Focal Length in 35mm Format");
+
+	        _tagNameMap.put(TagEncryptionKey, "Encryption Key");
+	    }
+
+	    public SamsungType2MakernoteDirectory()
+	    {
+	        this.setDescriptor(new SamsungType2MakernoteDescriptor(this));
+	    }
+
+	    @Override
+	    @NotNull
+	    public String getName()
+	    {
+	        return "Samsung Makernote";
+	    }
+
+	    @Override
+	    @NotNull
+	    protected HashMap<Integer, String> getTagNameMap()
+	    {
+	        return _tagNameMap;
+	    }
+	}
 
 }
