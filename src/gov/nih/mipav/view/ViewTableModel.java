@@ -202,10 +202,10 @@ public class ViewTableModel extends DefaultTableModel implements Serializable {
      * @return length of vector at index row
      */
     public int getRowLength(int row) {
-        return dataVector.get(row).size();
+        return ((Vector<?>) dataVector.get(row)).size();
     }
 
     public Object[] getRow(int row) {
-        return dataVector.get(row).toArray();
+        return ((Vector<?>) dataVector.get(row)).toArray();
     }
 }
