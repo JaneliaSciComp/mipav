@@ -165,6 +165,7 @@
                 destdir="${dir.dest}"
                 srcdir="${dir.source}"
                 compiler="modern">
+        	<compilerarg line="-encoding utf-8"/>
             <classpath refid="build.classpath" />
         </javac>
 
@@ -320,9 +321,9 @@
                 jvm="java"
                 fork="true"
                 failonerror="true"
-                maxmemory="1500M">
-            <jvmarg value="-Xms1500M"/>
-            <jvmarg value="-Xmx1500M"/>
+                maxmemory="64G">
+            <jvmarg value="-Xms64G"/>
+            <jvmarg value="-Xmx64G"/>
             <jvmarg value="-server"/>
             <classpath>
                 <pathelement path="${dir.dest}"/>
