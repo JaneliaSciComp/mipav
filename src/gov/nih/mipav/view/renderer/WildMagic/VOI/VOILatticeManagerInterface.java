@@ -702,6 +702,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 	
+	public void editCrossSections( boolean display ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.editCrossSections(display);
+		}
+	}
+	
 	public boolean isModelDisplayed() {
 
 		if ( latticeModel != null )
@@ -939,6 +946,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		{
 			latticeModel = new LatticeModel( m_kImageA );
 		}
+		
 		if ( latticeModel.getPicked() != null )
 		{
 			if ( !movingPickedPoint )

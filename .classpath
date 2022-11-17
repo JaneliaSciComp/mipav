@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry excluding="plugins/" kind="src" path="src"/>
 	<classpathentry kind="src" path="src/plugins"/>
 	<classpathentry kind="src" path="test"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre">
-		<attributes>
-			<attribute name="module" value="true"/>
-			<attribute name="limit-modules" value="java.se,jdk.accessibility,jdk.attach,jdk.compiler,jdk.httpserver,jdk.jartool,jdk.jconsole,jdk.jdi,jdk.management,jdk.sctp,jdk.security.auth,jdk.security.jgss,jdk.unsupported,jdk.dynalink,jdk.javadoc,jdk.jfr,jdk.jshell,jdk.management.jfr,jdk.net,jdk.nio.mapmode,jdk.unsupported.desktop,jdk.jsobject,jdk.xml.dom,java.xml"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="src/lib/ACCESSION_client_VTool.jar"/>
 	<classpathentry kind="lib" path="src/lib/activation.jar"/>
 	<classpathentry kind="lib" path="src/lib/brics-model.jar"/>
@@ -46,36 +45,10 @@
 	<classpathentry kind="lib" path="src/lib/streambuffer.jar"/>
 	<classpathentry kind="lib" path="src/lib/tar.jar"/>
 	<classpathentry kind="lib" path="src/lib/WildMagic.jar"/>
-	<classpathentry kind="lib" path="src/libnative/gluegen-rt.jar"/>
-	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-linux-amd64.jar"/>
-	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-linux-i586.jar"/>
-	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-macosx-universal.jar"/>
-	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-windows-amd64.jar"/>
-	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-windows-i586.jar"/>
-	<classpathentry kind="lib" path="src/libnative/j3dcore.jar"/>
-	<classpathentry kind="lib" path="src/libnative/j3dutils.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jhdf5.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jhdf5obj.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jhdfobj.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jinputCompiled.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jmf.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jocl.jar"/>
-	<classpathentry kind="lib" path="src/libnative/JOCL-0.1.7.jar"/>
-	<classpathentry kind="lib" path="src/libnative/JOCL-0.1.9.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jocl-natives-linux-amd64.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jocl-natives-linux-i586.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jocl-natives-macosx-universal.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jocl-natives-windows-amd64.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jocl-natives-windows-i586.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jogl-all.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-linux-amd64.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-linux-i586.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-macosx-universal.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-windows-amd64.jar"/>
-	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-windows-i586.jar"/>
-	<classpathentry kind="lib" path="src/libnative/mediaplayer.jar"/>
-	<classpathentry kind="lib" path="src/libnative/scijava-native-lib-loader-jogl-jocl-jhdf.jar"/>
-	<classpathentry kind="lib" path="src/libnative/vecmath.jar"/>
+	<classpathentry kind="lib" path="src/lib/jaxp/dom.jar"/>
+	<classpathentry kind="lib" path="src/lib/jaxp/sax.jar"/>
+	<classpathentry kind="lib" path="src/lib/jaxp/xalan.jar"/>
+	<classpathentry kind="lib" path="src/lib/jaxp/xercesImpl.jar"/>
 	<classpathentry kind="lib" path="src/lib/dcm4che/clibwrapper_jiio-1.2-pre-dr-b04.jar"/>
 	<classpathentry kind="lib" path="src/lib/dcm4che/commons-cli-1.4.jar"/>
 	<classpathentry kind="lib" path="src/lib/dcm4che/dcm4che-audit-5.25.1.jar"/>
@@ -173,10 +146,6 @@
 	<classpathentry kind="lib" path="src/lib/dcm4che/stax-ex-1.8.1.jar"/>
 	<classpathentry kind="lib" path="src/lib/dcm4che/streambuffer-1.5.7.jar"/>
 	<classpathentry kind="lib" path="src/lib/dcm4che/weasis-core-img-4.5.3.jar"/>
-	<classpathentry kind="lib" path="src/lib/jaxp/dom.jar"/>
-	<classpathentry kind="lib" path="src/lib/jaxp/sax.jar"/>
-	<classpathentry kind="lib" path="src/lib/jaxp/xalan.jar"/>
-	<classpathentry kind="lib" path="src/lib/jaxp/xercesImpl.jar"/>
 	<classpathentry kind="lib" path="src/lib/apache-cxf/activemq-broker-5.16.3.jar"/>
 	<classpathentry kind="lib" path="src/lib/apache-cxf/activemq-client-5.16.3.jar"/>
 	<classpathentry kind="lib" path="src/lib/apache-cxf/activemq-openwire-legacy-5.16.3.jar"/>
@@ -363,5 +332,35 @@
 	<classpathentry kind="lib" path="src/lib/apache-cxf/xnio-nio-3.8.4.Final.jar"/>
 	<classpathentry kind="lib" path="src/lib/apache-cxf/xsom-2.3.5.jar"/>
 	<classpathentry kind="lib" path="src/lib/apache-cxf/integration/cxf-integration-jca-3.5.0.jar"/>
+	<classpathentry kind="lib" path="src/libnative/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-linux-amd64.jar"/>
+	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-linux-i586.jar"/>
+	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-macosx-universal.jar"/>
+	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-windows-amd64.jar"/>
+	<classpathentry kind="lib" path="src/libnative/gluegen-rt-natives-windows-i586.jar"/>
+	<classpathentry kind="lib" path="src/libnative/j3dcore.jar"/>
+	<classpathentry kind="lib" path="src/libnative/j3dutils.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jhdf5.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jhdf5obj.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jhdfobj.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jinputCompiled.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jmf.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jocl.jar"/>
+	<classpathentry kind="lib" path="src/libnative/JOCL-0.1.7.jar"/>
+	<classpathentry kind="lib" path="src/libnative/JOCL-0.1.9.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jocl-natives-linux-amd64.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jocl-natives-linux-i586.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jocl-natives-macosx-universal.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jocl-natives-windows-amd64.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jocl-natives-windows-i586.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jogl-all.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-linux-amd64.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-linux-i586.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-macosx-universal.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-windows-amd64.jar"/>
+	<classpathentry kind="lib" path="src/libnative/jogl-all-natives-windows-i586.jar"/>
+	<classpathentry kind="lib" path="src/libnative/mediaplayer.jar"/>
+	<classpathentry kind="lib" path="src/libnative/scijava-native-lib-loader-jogl-jocl-jhdf.jar"/>
+	<classpathentry kind="lib" path="src/libnative/vecmath.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

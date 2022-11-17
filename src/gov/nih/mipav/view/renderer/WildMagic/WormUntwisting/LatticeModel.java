@@ -44,7 +44,10 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOILine;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
@@ -686,6 +689,10 @@ public class LatticeModel {
 	
 	private VOI ellipseCurvesVOI;
 	protected VOIContour[] ellipseCurves;
+	
+	private VOI selectedSectionVOI;
+	private int selectedSectionIndex = -1;
+	private int selectedSectionIndex2 = -1;
 
 	protected VOI displayInterpolatedContours;
 
@@ -701,6 +708,7 @@ public class LatticeModel {
 
 	private VOI leftMarker;
 	private VOI rightMarker;
+	private VOI sectionMarker;
 
 	protected VOI annotationVOIs;
 	protected Vector3f wormOrigin = null;
@@ -740,6 +748,7 @@ public class LatticeModel {
 	private VOIVector latticeStraight = null;
 
 	private boolean previewMode = false;
+	private boolean editingCrossSections = false;
 
 	private Vector<boolean[]> clipMask = null;
 	
@@ -946,6 +955,12 @@ public class LatticeModel {
 		if (lattice == null) {
 			lattice = new VOIVector();
 		}
+		
+		if (editingCrossSections) {
+			// do not add leftRight markers when editing cross sections
+			return;
+		}
+		
 		if ( left == null ) {
 			short id = (short) imageA.getVOIs().getUniqueID();
 			left = new VOI(id, "left", VOI.ANNOTATION, (float) Math.random());
@@ -2287,7 +2302,7 @@ public class LatticeModel {
 	}
 
 	/**
-	 * Enables the user to modify the lattice point with the mouse.
+	 * Enables the user to modify the lattice point with the mouse by dragging.
 	 * 
 	 * @param startPt 3D start point of a ray intersecting the volume.
 	 * @param endPt 3D end point of a ray intersecting the volume.
@@ -2316,8 +2331,37 @@ public class LatticeModel {
 				
 			}
 			else {
-//				pickedPoint.X = pt.X;
-				pickedPoint.copy(pt);
+				if( editingCrossSections ) {
+					Segment3f segment = new Segment3f(pickedPoint, pt);
+					Vector3f direction = segment.Direction;
+					//direction.normalize();
+					Segment3f radialSegment = new Segment3f(center.elementAt(selectedSectionIndex), pickedPoint);
+					Vector3f radialDirection = radialSegment.Direction;
+					radialDirection.scale(radialDirection.dot(direction));
+					radialDirection.scale(direction.length() / radialDirection.length());
+
+					pickedPoint.add(radialDirection);
+					
+					/*
+					sectionMarker.getCurves().clear();
+					sectionMarker.importPoint(pickedPoint);
+					sectionMarker.getCurves().elementAt(0).update(new ColorRGBA(1.0f, 0.0f, 1.0f, 1.0f));
+					*/
+					VOIBase selectedVOI = sectionMarker.getCurves().elementAt(0);
+					selectedVOI.elementAt(0).copy(pickedPoint);
+					selectedVOI.update(new ColorRGBA(1.0f, 0.0f, 1.0f, 1.0f));
+					sectionMarker.update();
+
+					
+					
+					
+				} else {
+//					pickedPoint.X = pt.X;
+					pickedPoint.copy(pt);
+					
+
+
+				}
 			}
 			updateLattice(false);
 			return true;
@@ -2389,6 +2433,54 @@ public class LatticeModel {
 				}
 //				pickedPoint.X += direction.X;
 				pickedPoint.add(direction);
+			} else if (editingCrossSections) {
+				if(selectedSectionIndex != -1)
+				{
+					/*
+					Vector3f up = new Vector3f();
+					up.copy(upVectors.elementAt(selectedSectionIndex)).normalize();
+					Vector3f right = new Vector3f();
+					right.copy(rightVectors.elementAt(selectedSectionIndex)).normalize();
+					*/
+					
+					Segment3f radialSegment = new Segment3f(center.elementAt(selectedSectionIndex), pickedPoint);
+					Vector3f radialDirection = radialSegment.Direction;
+					radialDirection.scale(radialDirection.dot(direction));
+					radialDirection.scale(direction.length() / radialDirection.length());
+
+					
+					/*
+					Vector3f sectionDirection = new Vector3f();
+					sectionDirection.scaleAdd(up.dot(direction), up, right.scale(right.dot(direction)));
+					*/
+					pickedPoint.add(radialDirection);
+				}
+				
+				VOIBase selectedVOI = sectionMarker.getCurves().elementAt(0);
+				selectedVOI.elementAt(0).copy(pickedPoint);
+				selectedVOI.update(new ColorRGBA(1.0f, 0.0f, 1.0f, 1.0f));
+				sectionMarker.update();
+				
+				/*
+				sectionMarker.getCurves().clear();
+				sectionMarker.importPoint(pickedPoint);
+				sectionMarker.getCurves().elementAt(0).update(new ColorRGBA(1.0f, 0.0f, 1.0f, 1.0f));
+				/*
+				
+				/*
+				
+				Segment3f test = new Segment3f(centerPositions.elementAt(selectedSectionIndex), pickedPoint);
+				//VOILine testVOILine = new VOILine(new Vector<Vector3f>(Arrays.asList(test.Direction)));
+				//testVOILine.update(new ColorRGBA(0f,1f,1f,1f));
+				//VOI testVOI = new VOI((short) 0, "testVOI", VOI.LINE, 0.5f);
+				VOIContour testVOIContour = new VOIContour(false);
+				testVOIContour.add(center.elementAt(selectedSectionIndex));
+				testVOIContour.add(pickedPoint);
+				VOI testVOI = new VOI((short) 0, "testVOI");
+				testVOI.getCurves().add(testVOIContour);
+				imageA.registerVOI(testVOI);
+				
+				*/
 			}
 			else {
 				pickedPoint.add(direction);
@@ -3130,7 +3222,12 @@ public class LatticeModel {
 		return false;
 	}
 
+	//add selection for sections here
 	public boolean selectLattice(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean isSeam) {
+		if ( editingCrossSections )
+		{
+			return selectLatticeSection(startPt, endPt, pt, isSeam);
+		}
 		if ( (lattice == null) || (left == null) || (right == null) ) {
 			return false;
 		}
@@ -3211,6 +3308,134 @@ public class LatticeModel {
 		else {
 			return false;
 		}
+	}
+	
+	public boolean selectLatticeSection(final Vector3f startPt, final Vector3f endPt, final Vector3f pt, boolean isSeam)
+	{
+		if (ellipseCurves == null) {
+			return false;
+		}
+		if ( startPt == null || endPt == null ) {
+			return false;
+		}
+		
+		final Segment3f mouseVector = new Segment3f(startPt, endPt);
+		
+		int closestSection = -1;
+		int closestPoint = -1;
+		float minDistSection = Float.MAX_VALUE;
+		
+		pickedPoint = null;
+
+		/*
+		 * Assumes that the first latticeSlices.length displayContours correspond to the "ellipses" cross sections
+		 */
+		for (int s = 0; s < latticeSlices.length; s++ ) {
+			VOIBase section = displayContours[s].getCurves().elementAt(0);
+			for (int i = 0; i < section.size(); i++) {
+				Vector3f sectionPoint = section.elementAt(i);
+				DistanceVector3Segment3 dist = new DistanceVector3Segment3(sectionPoint, mouseVector);
+				final float distance = dist.Get();
+				//final float distance = pt.distance(sectionPoint);
+				if( distance < minDistSection )
+				{
+					minDistSection = distance;
+					closestSection = s;
+					closestPoint = i;
+					//pickedPoint = sectionPoint;
+					pickedPoint = new Vector3f();
+					pickedPoint.copy(sectionPoint);
+				}
+			}
+		}
+		
+		for (int s = 0; s < latticeSlices.length; s++ ) {
+			VOIBase section = displayContours[s].getCurves().elementAt(0);
+			if(s == closestSection)
+			{
+				section.update(new ColorRGBA(1.0f, 1.0f, 0f, 1.0f));
+			}
+			else
+			{
+				section.update(new ColorRGBA(0.5f, 0.5f, 0.5f, 0.7f));
+			}
+		}
+		
+		for(int s = 0; s < numEllipsePts; s++ ) {
+			VOIBase section = displayContours[s + latticeSlices.length].getCurves().elementAt(0);
+			if(s ==  closestPoint) {
+				section.update(new ColorRGBA(1.0f, 1.0f, 0f, 1.0f));
+			}
+			else
+			{
+				section.update(new ColorRGBA(0.5f, 0.5f, 0.5f, 0.75f));
+			}
+		}
+		
+		if(pickedPoint != null)
+		{
+			selectedSectionIndex = closestSection;
+			selectedSectionIndex2 = closestPoint;
+			
+			
+			final short id = (short) imageA.getVOIs().getUniqueID();
+			if(sectionMarker == null) {
+				sectionMarker = new VOI(id, "sectionMarker", VOI.POINT, (float) Math.random());
+				this.imageA.registerVOI(sectionMarker);
+			}
+			sectionMarker.getCurves().clear();
+			sectionMarker.importPoint(pickedPoint);
+			sectionMarker.getCurves().elementAt(0).update(new ColorRGBA(1.0f, 0.0f, 1.0f, 1.0f));
+			return true;
+		}
+		
+		
+		
+		
+		/*
+		ellipseCurves[closestSection].update(new ColorRGBA(1.0f, 1.0f, 0.5f, 0.7f));
+		
+		if(imageA.isRegistered(selectedSectionVOI) != -1)
+		{
+			imageA.unregisterVOI(selectedSectionVOI);
+		}
+
+		
+		selectedSectionVOI.getCurves().clear();
+		selectedSectionVOI.getCurves().add(ellipseCurves[closestSection]);
+		selectedSectionVOI.setColor(Color.CYAN);
+		
+		if(imageA.isRegistered(selectedSectionVOI) == -1)
+		{
+			imageA.registerVOI(selectedSectionVOI);
+		}
+		*/
+		
+		/*
+		final boolean display = true;
+		for(int i=0; i < displayContours.length; i++)
+		{
+			if ( displayContours[i] == null ) continue;
+			
+			System.out.println(displayContours[i].getColor());
+			
+			displayContours[i].setColor(Color.red);
+			displayContours[i].update();
+			
+			if ( display && (imageA.isRegistered(displayContours[i]) == -1) ) {
+				imageA.registerVOI(displayContours[i]);
+			}
+			if ( !display && (imageA.isRegistered(displayContours[i]) != -1) ) {
+				imageA.unregisterVOI(displayContours[i]);
+			}
+			
+			
+		}
+		*/
+		imageA.notifyImageDisplayListeners();
+
+		
+		return true;
 	}
 
 	public void setAnnotationPrefix(String s)
@@ -3489,6 +3714,27 @@ public class LatticeModel {
 //		}
 	}
 	
+	public void editCrossSections(boolean display) {
+		if(!display)
+		{
+			selectedSectionIndex = -1;
+			if(sectionMarker != null) {
+				if(imageA.isRegistered(sectionMarker) != -1) {
+					imageA.unregisterVOI(sectionMarker);
+				}
+				sectionMarker.getCurves().clear();
+				sectionMarker.dispose();
+				sectionMarker = null;
+			}
+			for ( int i = 0; i < displayContours.length; i++ ) {
+				if ( displayContours[i] == null ) continue;
+				displayContours[i].getCurves().elementAt(0).update(new ColorRGBA(1.0f, 1.0f, 1.0f, 0.7f));
+			}
+		}
+		showModel(display);
+		editingCrossSections = display;
+	}
+	
 	public boolean isModelDisplayed()
 	{
 		return modelDisplayed;
@@ -3762,6 +4008,10 @@ public class LatticeModel {
 			ellipseCurves[i] = new VOIContour(false);
 			ellipseCurvesVOI.getCurves().add(ellipseCurves[i]);
 		}
+		
+		selectedSectionVOI = new VOI((short)1, "selectedSectionVOI");
+		selectedSectionVOI.setColor(Color.CYAN);
+
 
 		// 3. The center curve is uniformly sampled along the length of the curve.
 		// The step size is set to be one voxel. This determines the length of the final straightened
@@ -7678,7 +7928,57 @@ public class LatticeModel {
 		}
 
 		if ( (left.getCurves().size() == right.getCurves().size()) && (left.getCurves().size() >= 2)) {
-			generateCurves(5);
+			if(editingCrossSections) {
+				Vector3f currentCenter = center.elementAt(selectedSectionIndex);
+				Vector3f current = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
+				Vector3f changed = sectionMarker.getCurves().elementAt(0).elementAt(0);
+				
+				float deltaLength = Vector3f.sub(currentCenter, changed).length() - Vector3f.sub(currentCenter, current).length();
+				
+				final boolean quickGaussian = true;
+				
+				if(quickGaussian)
+				{
+				
+					int prevIndex = selectedSectionIndex2-1 % numEllipsePts;
+					Vector3f prev = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(prevIndex);
+					Vector3f prevDelta = Vector3f.sub(currentCenter, prev);
+					prevDelta.normalize();
+					prevDelta.scale(deltaLength*0.37f);
+					prev.sub(prevDelta);
+					
+					prevIndex = selectedSectionIndex2-2 % numEllipsePts;
+					prev = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(prevIndex);
+					prevDelta = Vector3f.sub(currentCenter, prev);
+					prevDelta.normalize();
+					prevDelta.scale(deltaLength*0.14f);
+					prev.sub(prevDelta);
+					
+					int nextIndex = selectedSectionIndex2+1 % numEllipsePts;
+					Vector3f next = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(nextIndex);
+					Vector3f nextDelta = Vector3f.sub(currentCenter, next);
+					nextDelta.normalize();
+					nextDelta.scale(deltaLength*0.37f);
+					next.sub(nextDelta);
+					
+					nextIndex = selectedSectionIndex2+1 % numEllipsePts;
+					next = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(nextIndex);
+					nextDelta = Vector3f.sub(currentCenter, next);
+					nextDelta.normalize();
+					nextDelta.scale(deltaLength*0.14f);
+					next.sub(nextDelta);	
+					
+					displayContours[prevIndex].update();
+					displayContours[nextIndex].update();
+				
+				}
+				
+				current.copy(changed);
+				displayContours[selectedSectionIndex].update();
+
+			} else {
+				generateCurves(5);
+			}
 			if (showContours) {
 				generateTriMesh(false, false);
 				for ( int i = 0; i < displayContours.length; i++ ) {
