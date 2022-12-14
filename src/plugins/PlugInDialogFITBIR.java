@@ -415,7 +415,7 @@ public class PlugInDialogFITBIR extends JFrame
 
         outputDirBase = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR);
         if (outputDirBase == null) {
-            outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "BRICS_Imaging_Submission" + File.separator;
+            outputDirBase = Preferences.getPreferencesDir() + File.separator + "BRICS_Imaging_Submission" + File.separator;
             Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
         }
 

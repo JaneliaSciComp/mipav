@@ -297,7 +297,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     private File[] detectOrphans() {
         ArrayList<File> orphanFile = new ArrayList<File>();
 
-        String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
+        String userPlugins = Preferences.getPreferencesDir() + File.separator + "plugins" + File.separator;
 
         final File pluginsDir = new File(userPlugins);
         if (pluginsDir.isDirectory()) {

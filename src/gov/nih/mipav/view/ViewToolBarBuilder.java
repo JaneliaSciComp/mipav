@@ -38,7 +38,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     public static final int NUM_BRUSHES_INTERNAL = 9;
 
     /** DOCUMENT ME! */
-    public static final String USER_BRUSHES = System.getProperty("user.home") + File.separator + "mipav" +
+    public static final String USER_BRUSHES = Preferences.getPreferencesDir() +
                                               File.separator + "brushes" + File.separator;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

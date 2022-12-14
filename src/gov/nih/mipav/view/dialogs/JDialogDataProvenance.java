@@ -81,7 +81,7 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         	path = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
 
             if (path == null) {
-            	path = System.getProperty("user.home") + File.separator + "mipav" + File.separator +
+            	path = Preferences.getPreferencesDir() + File.separator +
                                      "dataprovenance.xmp";
                 Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, path);
             }

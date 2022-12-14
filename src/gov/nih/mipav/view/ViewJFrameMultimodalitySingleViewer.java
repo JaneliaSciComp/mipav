@@ -180,7 +180,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	}
 	
 	public void startRecording() {
-		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
+		String defaultDirectory = Preferences.getPreferencesDir() + File.separator;
 		String timeStamp = new SimpleDateFormat("yyyy MMM dd HH:mm:ss").format(new Date()).toString();
 		timeStamp = timeStamp.replaceAll("\\s","_");
 		timeStamp = timeStamp.replaceAll(":","_");

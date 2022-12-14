@@ -3616,7 +3616,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         // create the list of brushes
 
-        final String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+        final String userBrushes = Preferences.getPreferencesDir() + File.separator
                 + "brushes" + File.separator;
 
         int numBrushes = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL; // built in... 9 so far

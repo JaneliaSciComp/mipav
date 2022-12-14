@@ -2666,7 +2666,7 @@ public class FileIO {
             } else {
                 tempDir = Preferences.getFileTempDir();
                 if (tempDir == null) {
-                    tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+                    tempDir = Preferences.getPreferencesDir() + File.separator + "tempDir" + File.separator;
                 } else {
                     tempDir = tempDir + File.separator;
                 }
@@ -3279,7 +3279,7 @@ public class FileIO {
             } else {
                 tempDir = Preferences.getFileTempDir();
                 if (tempDir == null) {
-                    tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator
+                    tempDir = Preferences.getPreferencesDir() + File.separator + "tempDir" + File.separator
                             + System.currentTimeMillis() + File.separator;
                     ViewUserInterface.getReference().addToTempDirList(tempDir);
                 } else {

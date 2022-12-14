@@ -3944,7 +3944,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             String provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
 
             if (provenanceFilename == null) {
-                provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dataprovenance.xmp";
+                provenanceFilename = Preferences.getPreferencesDir() + File.separator + "dataprovenance.xmp";
                 Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
             }
 

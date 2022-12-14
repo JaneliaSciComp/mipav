@@ -136,7 +136,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
     /** test: peds home **/
     // private String pedsHome = "C:" + File.separator + "images" + File.separator;
-    private final String pedsHome = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "pedsAtlas" + File.separator;
+    private final String pedsHome = Preferences.getPreferencesDir() + File.separator + "pedsAtlas" + File.separator;
 
     /** test icon image **/
     private final File fCoronal = new File(pedsHome + "icons" + File.separator + "coronal.jpg");

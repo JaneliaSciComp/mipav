@@ -18,6 +18,7 @@ import javax.swing.Timer;
 
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
 /**
@@ -92,7 +93,7 @@ public class PlugInDialogEyeTracking extends JDialogStandalonePlugin {
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 
-		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
+		String defaultDirectory = Preferences.getPreferencesDir() + File.separator;
 		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
 		
 		textFieldSavedCSVfile = new JTextField(10);

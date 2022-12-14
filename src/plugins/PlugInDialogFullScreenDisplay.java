@@ -122,7 +122,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements
 		scrollPane.getVerticalScrollBar().addAdjustmentListener(
 				new ScrollCorrector());
 	
-		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
+		String defaultDirectory = Preferences.getPreferencesDir() + File.separator;
 		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
 		
 		

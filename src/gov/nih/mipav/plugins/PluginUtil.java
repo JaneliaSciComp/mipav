@@ -1,6 +1,7 @@
 package gov.nih.mipav.plugins;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.awt.Container;
 import java.io.File;
@@ -14,7 +15,7 @@ import javax.swing.JMenuItem;
 
 public class PluginUtil {
     /** The default storage location of plugins */
-    private static final String defaultPluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
+    private static final String defaultPluginDir = Preferences.getPreferencesDir() + File.separator + "plugins" + File.separator;
 
     private static Vector<String> additionalPluginDirList = new Vector<String>();
     

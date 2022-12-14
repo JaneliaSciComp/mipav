@@ -2332,7 +2332,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         imageURL = PlaceHolder.class.getResource(imageName);
 
         if (imageURL == null) {
-            final File imageFile = new File(System.getProperty("user.home") + File.separator + "mipav" + File.separator
+            final File imageFile = new File(Preferences.getPreferencesDir() + File.separator
                     + "brushes" + File.separator + imageName);
             if (imageFile.exists() && imageFile.canRead()) {
                 imageURL = imageFile.toURI().toURL();

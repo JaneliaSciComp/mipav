@@ -49,8 +49,8 @@ public class GetPath {
             // first try finding the file in the user's home
             try {
                 userHome = System.getProperty("user.home");
-                testFile = new FileInputStream(userHome + File.separatorChar + "mipav" + File.separatorChar + fileName);
-                pathName = userHome + File.separatorChar + "mipav" + File.separatorChar;
+                testFile = new FileInputStream(Preferences.getPreferencesDir() + File.separatorChar + fileName);
+                pathName = Preferences.getPreferencesDir() + File.separatorChar;
                 found = true;
             } catch (FileNotFoundException e) { }
 
@@ -179,12 +179,12 @@ public class GetPath {
                 // we actually only check the parent directory for the file
                 // to determine write permissions
 
-                new File(userHome + File.separator + "mipav").mkdirs();
+                new File(Preferences.getPreferencesDir()).mkdirs();
 
-                File f = new File(userHome + File.separatorChar + "mipav" + File.separatorChar + fileName);
+                File f = new File(Preferences.getPreferencesDir() + File.separatorChar + fileName);
 
                 if (f.canWrite()) {
-                    pathName = userHome + File.separatorChar + "mipav" + File.separatorChar;
+                    pathName = Preferences.getPreferencesDir() + File.separatorChar;
                     found = true;
                 }
             } catch (SecurityException e) {

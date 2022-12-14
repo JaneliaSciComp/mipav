@@ -165,7 +165,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
         boolean hasBrush = false;
         JMenuItem brushItem = null;
 
-        final String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+        final String userBrushes = Preferences.getPreferencesDir() + File.separator
                 + "brushes" + File.separator;
 
         final File brushesDir = new File(userBrushes);
@@ -283,7 +283,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
         options.doPutInQuicklist(false);
         options.setFileType(FileUtility.PNG);
 
-        final String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+        final String userBrushes = Preferences.getPreferencesDir() + File.separator
                 + "brushes" + File.separator;
 
         final File brushesDir = new File(userBrushes);

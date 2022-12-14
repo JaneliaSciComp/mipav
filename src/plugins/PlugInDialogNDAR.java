@@ -176,7 +176,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         if (response == JOptionPane.YES_OPTION) {
             outputDirBase = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_OUTPUT_DIR);
             if (outputDirBase == null) {
-                outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+                outputDirBase = Preferences.getPreferencesDir() + File.separator
                         + "NDAR_Imaging_Submission" + File.separator;
                 Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_OUTPUT_DIR, outputDirBase);
             }

@@ -42,7 +42,7 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     
     private int port = 11115;
 
-    private String outputDir = new String(System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dicom_catcher" + File.separator);
+    private String outputDir = new String(Preferences.getPreferencesDir() + File.separator + "dicom_catcher" + File.separator);
     
     private String reportDir = outputDir;
     

@@ -730,7 +730,7 @@ public class Preferences {
     private static String preferencesFileName = "mipav.preferences";
 
     /** The place where user-individual mipav files should be put. */
-    private static String preferencesDir = System.getProperty("user.home") + File.separator + "mipav";
+    private static String preferencesDir = System.getProperty("user.home") + File.separator + "janelia_mipav";
 
     /** The MIPAV preferences file path and name. */
     private static String preferencesFile = Preferences.preferencesDir + File.separator
@@ -1369,7 +1369,7 @@ public class Preferences {
      */
     public static final String getDICOMSaveDictionary() {
         final String key = Preferences.getProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY);
-        final String defaultKey = System.getProperties().getProperty("user.home") + File.separator + "mipav"
+        final String defaultKey = Preferences.getPreferencesDir()
                 + File.separator + "dicomsave.dictionary";
 
         if (key != null) {
