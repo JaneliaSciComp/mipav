@@ -2,6 +2,8 @@ package org.janelia.mipav.test;
 
 import javax.swing.UIManager;
 
+import org.janelia.mipav.plugins.worm.untwisting.PlugInDialogVolumeRenderDualJanelia;
+
 import gov.nih.mipav.util.MipavExceptionHandler;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;

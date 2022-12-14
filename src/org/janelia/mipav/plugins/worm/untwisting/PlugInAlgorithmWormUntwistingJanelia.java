@@ -1,4 +1,4 @@
-package org.janelia.mipav.test;
+package org.janelia.mipav.plugins.worm.untwisting;
 
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
