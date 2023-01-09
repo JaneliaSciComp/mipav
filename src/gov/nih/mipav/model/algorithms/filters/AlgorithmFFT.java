@@ -505,6 +505,13 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     private void center(final float[] rdata, final float[] idata) {
         final int xdim = newDimLengths[0];
+        if (ndim == 1) {
+            for (int x = 0; x < xdim; x++) {
+                rdata[x] *= Math.pow( -1, x);
+                idata[x] *= Math.pow( -1, x);
+            }
+        	return;
+        }
         final int ydim = newDimLengths[1];
         if (ndim == 2) {
             for (int y = 0; y < ydim; y++) {
