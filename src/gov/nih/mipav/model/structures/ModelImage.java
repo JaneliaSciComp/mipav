@@ -203,7 +203,7 @@ public class ModelImage extends ModelStorageBase {
         // create the data provenance holder to store the image history
         this.provenanceHolder = new ProvenanceHolder();
 
-        if (dimExtents.length == 1 || dimExtents.length == 2) {
+        if (dimExtents.length == 2 || dimExtents.length == 1) {
             fileInfo = new FileInfoBase[1];
 
             // save the entire filename with the suffix -- helps later when saving file
