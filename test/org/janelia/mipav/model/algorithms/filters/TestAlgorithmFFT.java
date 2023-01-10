@@ -33,7 +33,7 @@ public class TestAlgorithmFFT {
 			  0.7071067811865474f,
 		};
 		float [] padding = new float[32];
-		ModelImage img = new ModelImage(ModelStorageBase.DataType.FLOAT, new int[] { 8, 1 }, "data");
+		ModelImage img = new ModelImage(ModelStorageBase.DataType.FLOAT, new int[] { 8 }, "data");
 		try {
 			img.importData(0, data_cos, false);
 		} catch (IOException e) {
@@ -58,7 +58,7 @@ public class TestAlgorithmFFT {
 		for(float f: padding) {
 			System.out.println(f);
 		}
-		ModelImage padded_image = new ModelImage(DataType.FLOAT, new int[] { 32}, "padded");
+		ModelImage padded_image = new ModelImage(DataType.FLOAT, new int[] { 32 }, "padded");
 		try {
 			padded_image.importData(0, padding, false);
 		} catch (IOException e) {

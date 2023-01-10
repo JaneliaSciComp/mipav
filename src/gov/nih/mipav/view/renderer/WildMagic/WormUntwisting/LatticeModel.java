@@ -36,6 +36,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
@@ -50,6 +51,7 @@ import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOILine;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -732,7 +734,7 @@ public class LatticeModel {
 	private int paddingFactor = 0;
 
 
-	private int numEllipsePts = 32;
+	private final int numEllipsePts = 32;
 
 	private VOI latticeContours = null;
 
@@ -3376,6 +3378,8 @@ public class LatticeModel {
 		{
 			selectedSectionIndex = closestSection;
 			selectedSectionIndex2 = closestPoint;
+			
+			System.out.println("selectedSectionIndex2: " + selectedSectionIndex2);
 			
 			
 			final short id = (short) imageA.getVOIs().getUniqueID();
@@ -7931,11 +7935,13 @@ public class LatticeModel {
 			if(editingCrossSections) {
 				Vector3f currentCenter = center.elementAt(selectedSectionIndex);
 				Vector3f current = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
+				Vector3f first = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
 				Vector3f changed = sectionMarker.getCurves().elementAt(0).elementAt(0);
 				
 				float deltaLength = Vector3f.sub(currentCenter, changed).length() - Vector3f.sub(currentCenter, current).length();
 				
-				final boolean quickGaussian = true;
+				final boolean quickGaussian = false;
+				final boolean fourier = true;
 				
 				if(quickGaussian)
 				{
@@ -7970,10 +7976,68 @@ public class LatticeModel {
 					
 					displayContours[prevIndex].update();
 					displayContours[nextIndex].update();
+					
+					current.copy(changed);
 				
+				} else if(fourier) {
+					VOIBase currentSectionCurve = displayContours[selectedSectionIndex].getCurves().elementAt(0);
+					float[] radialDistances = new float[8];
+					radialDistances[0] = Vector3f.sub(currentCenter, changed).length();
+					for(int i = 4; i < numEllipsePts; i += 4) {
+						radialDistances[i/4] = Vector3f.sub(currentCenter, currentSectionCurve.elementAt((selectedSectionIndex2 + i) % numEllipsePts)).length();
+					}
+					ModelImage img = new ModelImage(ModelStorageBase.DataType.FLOAT, new int[] { 8 }, "radialDistances");
+					ModelImage padded_image = new ModelImage(DataType.COMPLEX, new int[] { 32 }, "padded");
+					AlgorithmFFT fft;
+					float [] fourierR = new float[8];
+					float [] fourierI = new float[8];
+					float [] paddingR = new float[32];
+					float [] paddingI = new float[32];
+					Arrays.fill(paddingR, 0.0f);
+					Arrays.fill(paddingI, 0.0f);
+					try {
+						img.importData(0, radialDistances, false);
+						fft = new AlgorithmFFT(img, AlgorithmFFT.FORWARD, false, true, false, false);
+						fft.runAlgorithm();
+						img.exportComplexData(0, 8, fourierR, fourierI);
+						System.arraycopy(fourierR, 0, paddingR, 12, fourierR.length);
+						System.arraycopy(fourierI, 0, paddingI, 12, fourierI.length);
+						padded_image.importComplexData(0, paddingR, paddingI, false, false);
+						fft = new AlgorithmFFT(padded_image, AlgorithmFFT.INVERSE, false, true, false, false);
+						fft.runAlgorithm();
+						radialDistances = fft.getRealData();
+						Vector3f delta;
+						float currentRadius = 0.0f;
+						System.out.println("numEllipsePts: " + numEllipsePts);
+						System.out.println("radialLengths:");
+						Vector3f firstDelta = Vector3f.sub(currentCenter, first);
+						firstDelta.normalize();
+						float angle = 0.0f;
+						int idx = 0;
+						for(int i = 0; i < numEllipsePts; i += 1) {
+							idx = (selectedSectionIndex2 + i) % numEllipsePts;
+							current = currentSectionCurve.elementAt(idx);
+							delta = Vector3f.sub(currentCenter, current);
+							currentRadius = delta.length();
+							//System.out.println("Delta: " + delta);
+							//System.out.print(currentRadius + ", " + radialDistances[i]*4 + ", ");
+							delta.normalize();
+							angle = Vector3f.angle(delta, firstDelta);
+							//System.out.println(radialDistances[i]*4 - currentRadius);
+							delta.scale(radialDistances[i]*4 - currentRadius);
+							//System.out.println(delta.length());
+							current.sub(delta);
+							//System.out.println(Vector3f.sub(currentCenter, current).length());
+							System.out.println("Angle " + idx + ": " + angle);
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					// just update the current point
+					current.copy(changed);
 				}
-				
-				current.copy(changed);
 				displayContours[selectedSectionIndex].update();
 
 			} else {
