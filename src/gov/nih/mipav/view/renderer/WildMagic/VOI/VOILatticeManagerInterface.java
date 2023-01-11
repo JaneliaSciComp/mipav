@@ -61,6 +61,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 
 	//    private VOI pickedPoint = null;
 	private boolean movingPickedPoint = false;
+	private boolean editingCrossSections = false;
 
 	/**
 	 * Creates a VOIManagerInterface object.
@@ -707,6 +708,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		{
 			latticeModel.editCrossSections(display);
 		}
+		editingCrossSections = display;
 	}
 	
 	public boolean isModelDisplayed() {
@@ -1079,6 +1081,9 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	
     public void mouseReleased(MouseEvent e) {
 		movingPickedPoint = false;
+		if(editingCrossSections) {
+			latticeModel.showLattice(true);
+		}
     }
 
 	public void keyPressed(KeyEvent e) {
@@ -1089,6 +1094,21 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;
+		if(editingCrossSections) {		
+			switch(e.getKeyChar()) {
+			case '+':
+				latticeModel.decreaseCrossSectionSamples();
+				break;
+			case '-':
+				latticeModel.increaseCrossSectionSamples();
+				break;
+			case '0':
+				latticeModel.toggleUpdateCrossSectionOnDrag();
+				break;
+			case '1':
+				latticeModel.updateSplinesOnly();
+			}
+		}
 	}
 	
 
