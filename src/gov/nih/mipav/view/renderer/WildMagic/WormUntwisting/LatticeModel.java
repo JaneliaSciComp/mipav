@@ -691,6 +691,14 @@ public class LatticeModel {
 	
 	private VOI ellipseCurvesVOI;
 	protected VOIContour[] ellipseCurves;
+	/*
+	 * relativeCrossSections
+	 * 
+	 * relativeCrossSections are a an abstract form of ellipseCurves above.
+	 * The contours are relative to the center of the cross section, formerly the center of the ellipse.
+	 * Each cross section should be of length numEllipsePts 
+	 */
+	protected VOIContour[] relativeCrossSections;
 	
 	private VOI selectedSectionVOI;
 	private int selectedSectionIndex = -1;
@@ -749,10 +757,13 @@ public class LatticeModel {
 
 	private VOIVector latticeStraight = null;
 
+	// some of these may be view states
 	private boolean previewMode = false;
 	private boolean editingCrossSections = false;
 	private int crossSectionSamples = 8;
 	private boolean updateCrossSectionOnDrag = true;
+	// cross section editing state
+	private boolean[] editedCrossSections = {};
 
 	private Vector<boolean[]> clipMask = null;
 	
@@ -2669,6 +2680,15 @@ public class LatticeModel {
 		}
 	}
 	
+	/**
+	 * Enables the user to save the lattice to a user-selected file.
+	 */
+	public void saveCrossSections() {
+		for (int j = 0; j < latticeSlices.length; j++) {
+			LatticeModel.saveContourAsCSV(imageA, "crossSections", "_section" + j, relativeCrossSections[j]);
+		}
+	}
+	
 	private boolean getContourFile() {
 		String dir = sharedOutputDir + File.separator + "model_contours" + File.separator;
 		File fileDir = new File(dir);
@@ -3973,6 +3993,10 @@ public class LatticeModel {
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
 	protected boolean generateCurves( float stepSize ) {
+		
+		//TODO: temporary, keep relative cross sections
+		updateRelativeCrossSectionsFromDisplayContours();
+		
 		clearCurves(false);
 
 		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
@@ -4261,6 +4285,9 @@ public class LatticeModel {
 		}
 
 
+		/*
+		 * For each afTimeC (center spline times) search for nearest allTimes index
+		 */
 		latticeSlices = new int[left.getCurves().size()];
 		for ( int i = 0; i < afTimeC.length; i++ )
 		{
@@ -4321,12 +4348,27 @@ public class LatticeModel {
 	}
 	
 	private void updateEllipseModel(float stepSize) {
+		
+		/*
+		 * We only want to create ellipses that we have not started editing.
+		 * 
+		 * Otherwise, we want to re-center the cross sections.
+		 */
 
         short sID = 1;
+        
+        VOI[] oldDisplayContours = displayContours;
         
 //		numEllipsePts = 16;
 		displayContours = new VOI[latticeSlices.length + numEllipsePts];
 		displayContours2 = new VOI((short)0, "wormContours2");
+		
+		// Assumption: The first few cross sections correspond to the old ones
+		// We only remove and add cross sections at the end
+		// TODO: Validate this assumption
+		if(editedCrossSections.length != latticeSlices.length) {
+			editedCrossSections = Arrays.copyOf(editedCrossSections, latticeSlices.length);
+		}
 
 		int contourCount = 0;
 		for (int i = 0; i < centerPositions.size(); i++ ) {
@@ -4346,6 +4388,7 @@ public class LatticeModel {
 
 			for ( int j = 0; j < numEllipsePts; j++ )
 			{
+				// ellipse curves are longitudinal contours
 				ellipseCurves[j].add( new Vector3f(ellipse.elementAt(j)) );
 			}
 			
@@ -4359,8 +4402,18 @@ public class LatticeModel {
 				if ( i == latticeSlices[j]) 
 				{
 					String name = "wormContours_" + contourCount;
-					displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
-					displayContours[contourCount].getCurves().add(ellipse);
+					
+					if(editedCrossSections[contourCount]) {
+						System.out.println("Cross section " + contourCount + " has been edited!");
+						VOIContour crossSection = new VOIContour(true);
+						makeCrossSectionFromRelative(rkRVector, rkUVector, rkEye, crossSection, j);
+						
+						displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+						displayContours[contourCount].getCurves().add(crossSection);
+					} else { 
+						displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+						displayContours[contourCount].getCurves().add(ellipse);
+					}
 					contourCount++;					
 //					displayContours2.getCurves().add(ellipse);
 //					contourAdded = true;
@@ -4523,6 +4576,30 @@ public class LatticeModel {
 		for ( int i = numContours; i < displayContours.length; i++ ) {
 			imageA.registerVOI(displayContours[i]);
 		}
+	}
+	
+	protected void updateRelativeCrossSectionsFromDisplayContours() {
+		Vector3f centerPoint;
+		Vector3f absolutePoint;
+		Vector3f relativePoint;
+		
+		if(latticeSlices == null || center == null || displayContours == null)
+			return;
+		
+		relativeCrossSections = new VOIContour[latticeSlices.length];
+		
+		for ( int i = 0; i < latticeSlices.length; i++ ) {
+			relativeCrossSections[i] = new VOIContour(true);
+			centerPoint = center.elementAt(i); 
+			for ( int j = 0; j < numEllipsePts; j++ ) {
+				absolutePoint = displayContours[i].getCurves().elementAt(0).elementAt(j);
+				relativePoint = Vector3f.sub(absolutePoint, centerPoint);
+				relativeCrossSections[i].add(relativePoint);
+				if (i== 0)
+					System.out.println("i: " + i + " j: " + j + " relativePoint:" + relativePoint + " magnitude: " + relativePoint.length());
+			}
+		}
+		// displayContours
 	}
 	
 	protected double GetSquared ( Vector3f point, Ellipsoid3f ellipsoid )
@@ -4917,6 +4994,23 @@ public class LatticeModel {
 			//			System.err.println(pos);
 		}
 //		if ( !print ) System.err.println("," + max);
+	}
+	
+	protected void makeCrossSectionFromRelative(final Vector3f right, final Vector3f up, final Vector3f center, final VOIContour crossSection, int sectionIndex) {
+		
+		for (int i = 0; i < numEllipsePts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
+			final Vector3f old_pos = relativeCrossSections[sectionIndex].get(i);
+			//Get old radius
+			final double radius = old_pos.length();
+			final Vector3f pos1 = Vector3f.scale((float) (radius * c), right);
+			final Vector3f pos2 = Vector3f.scale((float) (radius * s), up);
+			final Vector3f pos = Vector3f.add(pos1, pos2);
+			pos.add(center);
+			crossSection.addElement(pos);
+		}
+
 	}
 
 
@@ -8007,6 +8101,8 @@ public class LatticeModel {
 
 		if ( (left.getCurves().size() == right.getCurves().size()) && (left.getCurves().size() >= 2)) {
 			if(editingCrossSections && selectedSectionIndex != -1) {
+				editedCrossSections[selectedSectionIndex] = true;
+				
 				Vector3f currentCenter = center.elementAt(selectedSectionIndex);
 				Vector3f current = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
 				Vector3f first = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
@@ -8101,12 +8197,12 @@ public class LatticeModel {
 							delta = Vector3f.sub(currentCenter, current);
 							currentRadius = delta.length();
 							//System.out.println("Delta: " + delta);
-							System.out.print(currentRadius + ", " + radialDistances[i]*ratio_nMaxFFTDim_nSamples + ", ");
+							//System.out.print(currentRadius + ", " + radialDistances[i]*ratio_nMaxFFTDim_nSamples + ", ");
 							delta.normalize();
 							angle = Vector3f.angle(delta, firstDelta);
-							System.out.println(radialDistances[i]*ratio_nMaxFFTDim_nSamples - currentRadius);
+							//System.out.println(radialDistances[i]*ratio_nMaxFFTDim_nSamples - currentRadius);
 							delta.scale(radialDistances[i]*ratio_nMaxFFTDim_nSamples - currentRadius);
-							System.out.println(delta.length());
+							//System.out.println(delta.length());
 							current.sub(delta);
 							//System.out.println(Vector3f.sub(currentCenter, current).length());
 							//System.out.println("Angle " + idx + ": " + angle);

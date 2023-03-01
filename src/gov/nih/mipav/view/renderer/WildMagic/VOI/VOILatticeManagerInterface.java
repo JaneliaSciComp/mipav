@@ -1107,6 +1107,9 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				break;
 			case '1':
 				latticeModel.updateSplinesOnly();
+			case '9':
+				latticeModel.saveCrossSections();
+				System.out.println("Saving cross sections");
 			}
 		}
 	}
