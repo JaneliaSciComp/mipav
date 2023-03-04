@@ -549,6 +549,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 
 					validate();
 				}
+				//mkitti 2023_03_01: this is where we save when "done"
 				saveAll();
 				if (parent != null) {
 					parent.enableNext(editMode);
@@ -895,9 +896,10 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				if (loadLegacyLatticeCheck.isSelected()) {
 					activeImage.wormImage.setResolutions(originalResolutions);
 				}
+				final String dir = resultsDir(latticeFileDir, activeImage.wormImage);
 				activeImage.voiManager
-				.setLattice(WormData.readFinalLattice(resultsDir(latticeFileDir, activeImage.wormImage), 
-						loadLegacyLatticeCheck.isSelected(), activeImage.wormImage));
+				.setLattice(WormData.readFinalLattice(dir, 
+						loadLegacyLatticeCheck.isSelected(), activeImage.wormImage), dir);
 
 				if (loadLegacyLatticeCheck.isSelected()) {
 					activeImage.wormImage.setResolutions(new float[] { 1f, 1f, 1 });

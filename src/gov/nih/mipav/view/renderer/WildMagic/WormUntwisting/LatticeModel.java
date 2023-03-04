@@ -17,6 +17,8 @@ import java.util.Vector;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.terracotta.utilities.io.Files;
+
 import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
@@ -2678,15 +2680,58 @@ public class LatticeModel {
 			generateCurves(1);
 			saveMeshContoursCSV();
 		}
+		
+		if ( relativeCrossSections != null) {
+			saveCrossSections();
+		}
+		//save cross sections here
 	}
 	
 	/**
-	 * Enables the user to save the lattice to a user-selected file.
+	 * Enables the user to save the lattice to a file.
+	 * 
 	 */
 	public void saveCrossSections() {
+		final String dir = sharedOutputDir + File.separator + "model_crossSections" + File.separator;
+
+		saveCrossSections(dir);
+	}
+	
+	public void saveCrossSections(final String dir) {
+		updateRelativeCrossSectionsFromDisplayContours();
 		for (int j = 0; j < latticeSlices.length; j++) {
-			LatticeModel.saveContourAsCSV(imageA, "crossSections", "_section" + j, relativeCrossSections[j]);
+			String outFileName = "latticeCrossSection_" + j + ".csv";
+			if (editedCrossSections[j]) {
+				LatticeModel.saveContourAsCSV(dir, outFileName , relativeCrossSections[j]);
+			} else {
+				// Removed unused crossSection
+				File file = new File(dir + File.separator + outFileName);
+				file.delete();
+			}
 		}
+	}
+	
+	public boolean readCrossSections() {
+		final String dir = sharedOutputDir + File.separator + "model_crossSections" + File.separator;
+		return readCrossSections(dir);
+	}
+	public boolean readCrossSections(final String dir) {
+		boolean readSomething = false;
+		updateRelativeCrossSectionsFromDisplayContours();
+		
+		System.out.println("Read in cross sections.");
+		
+		for (int j = 0; j < latticeSlices.length; j++) {
+			String outFileName = "latticeCrossSection_" + j + ".csv";
+			
+			VOIContour contour = LatticeModel.loadContourFromCSV(dir, outFileName);
+			if (contour != null) {
+				readSomething = true;
+				editedCrossSections[j] = true;
+				relativeCrossSections[j] = contour;
+			}
+		}
+		return readSomething;
 	}
 	
 	private boolean getContourFile() {
@@ -4314,8 +4359,14 @@ public class LatticeModel {
 		// of the ellipse long axis. This ellipse-based model approximates the overall shape of the worm, however
 		// it cannot model how the worm shape changes where sections of the worm press against each other.
 		// The next step of the algorithm attempts to solve this problem.
-
 		updateEllipseModel(stepSize);
+		
+		// Load in cross sections, update again if they exist
+		if(readCrossSections()) {
+			updateEllipseModel(stepSize);
+		}
+
+		
 
 		
 		short sID = (short) 1;		
@@ -4587,6 +4638,8 @@ public class LatticeModel {
 			return;
 		
 		relativeCrossSections = new VOIContour[latticeSlices.length];
+		
+		System.out.println("Updating relative cross section from display contours");
 		
 		for ( int i = 0; i < latticeSlices.length; i++ ) {
 			relativeCrossSections[i] = new VOIContour(true);
@@ -5004,6 +5057,7 @@ public class LatticeModel {
 			final Vector3f old_pos = relativeCrossSections[sectionIndex].get(i);
 			//Get old radius
 			final double radius = old_pos.length();
+			System.out.println("Making cross section from relative: " + radius);
 			final Vector3f pos1 = Vector3f.scale((float) (radius * c), right);
 			final Vector3f pos2 = Vector3f.scale((float) (radius * s), up);
 			final Vector3f pos = Vector3f.add(pos1, pos2);
@@ -6527,6 +6581,7 @@ public class LatticeModel {
 
 	public static void saveContourAsCSV( ModelImage image, String subDir, String postScript, VOIContour contour )
 	{
+		
 		String outputDirectory = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator + JDialogBase.makeImageName(image.getImageFileName(), "_results") );
 		String parentDir = new String(image.getImageDirectory() + JDialogBase.makeImageName(image.getImageFileName(), "") + File.separator);
 		checkParentDir(parentDir);	
@@ -6544,6 +6599,13 @@ public class LatticeModel {
 		String imageName = JDialogBase.makeImageName(image.getImageFileName(), "");
 		imageName = imageName + postScript + ".csv";
 		
+		saveContourAsCSV(voiDir, imageName, contour);
+	}
+	
+
+
+	public static void saveContourAsCSV( final String voiDir, final String fileName, VOIContour contour ) {
+		
 		// check files, create new directories and delete any existing files:
 		final File fileDir = new File(voiDir);
 
@@ -6552,10 +6614,10 @@ public class LatticeModel {
 		} else { // voiFileDir does not exist
 			fileDir.mkdir();
 		}
-		File file = new File(fileDir + File.separator + imageName);
+		File file = new File(fileDir + File.separator + fileName);
 		if (file.exists()) {
 			file.delete();
-			file = new File(fileDir + File.separator + imageName);
+			file = new File(fileDir + File.separator + fileName);
 		}
 
 
@@ -6578,11 +6640,60 @@ public class LatticeModel {
 			bw.newLine();
 			bw.close();
 		} catch (final Exception e) {
-			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			System.err.println("CAUGHT EXCEPTION WITHIN saveContourAsCSV");
 			e.printStackTrace();
 		}
 	}
+	
+	public static VOIContour loadContourFromCSV( final String voiDir, final String fileName) {
+		
+		final File dir = new File(voiDir);
+		File file = new File(dir + File.separator + fileName);
 
+		if ( file.exists() )
+		{		
+
+			FileReader fr;
+			try {
+				fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String line = br.readLine();
+            	line = br.readLine();
+				String[] parsed = line.split( "," );
+
+    			VOIContour ellipse = new VOIContour(true);
+
+                while ( true ) {
+
+                	line = br.readLine();
+                	
+                	if (line.isEmpty())
+                		break;
+                	
+                	parsed = line.split( "," );
+                	int parsedIndex = 0;
+					float x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+					float y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+					float z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+					
+                	ellipse.add(new Vector3f(x,y,z));
+                }
+                br.close();
+                fr.close();
+                
+                return ellipse;
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	
 
 	public static void saveBasisVectorsAsCSV( ModelImage image, String subDir, String postScript, VOIContour positions,
 			Vector<Vector3f> normals, Vector<Vector3f> rightVectors, Vector<Vector3f> upVectors )

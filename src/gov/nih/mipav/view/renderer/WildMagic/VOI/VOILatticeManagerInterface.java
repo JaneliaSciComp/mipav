@@ -394,6 +394,22 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		latticeModel.setLattice( lattice );	
 	}
+	
+	public void setLattice( VOIVector lattice, final String sharedDirectory )
+	{
+		boolean saveL = true;
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+			saveL = false;
+		}
+		latticeModel.setSharedDirectory(sharedDirectory);
+		if ( saveL )
+		{
+			saveVOIs("loadLattice");
+		}
+		latticeModel.setLattice( lattice );	
+	}
 		
 	/**
 	 * Untwists the worm image quickly for the preview mode - without saving any images or statistics
@@ -1107,9 +1123,11 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				break;
 			case '1':
 				latticeModel.updateSplinesOnly();
+				break;
 			case '9':
 				latticeModel.saveCrossSections();
 				System.out.println("Saving cross sections");
+				break;
 			}
 		}
 	}
