@@ -3153,6 +3153,15 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			}
 		}
 		
+		// re-add lutTab to lutPanel due to removal in enableNext
+		if (lutPanel.getComponentCount() == 0) {
+			lutPanel.add(lutTab, BorderLayout.CENTER);
+		}
+		// re-add opacityTab to opacityPanel due to removal in enableNext
+		if (opacityPanel.getComponentCount() == 0) {
+			opacityPanel.add(opacityTab, BorderLayout.CENTER);
+		}
+
 		opacityTab.removeAll();		
 		for ( int i = 0; i < numImages; i++ ) {
 			int index = baseFileDir[i].lastIndexOf(File.separator) + 1;
@@ -3198,7 +3207,6 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				integratedData.lutHistogramPanel[which].redrawFrames();
 			}
 		}
-		
 		
 		lutPanel.revalidate();
 	}
