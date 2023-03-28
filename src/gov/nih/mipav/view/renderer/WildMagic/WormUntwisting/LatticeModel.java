@@ -8211,10 +8211,10 @@ public class LatticeModel {
 		}
 
 		if ( (left.getCurves().size() == right.getCurves().size()) && (left.getCurves().size() >= 2)) {
-			if(editingCrossSections && selectedSectionIndex != -1) {
+			if(editingCrossSections && selectedSectionIndex != -1 && center != null) {
 				editedCrossSections[selectedSectionIndex] = true;
 				
-				Vector3f currentCenter = center.elementAt(selectedSectionIndex);
+				Vector3f currentCenter = center.elementAt(selectedSectionIndex); 				//null pointer exception happened here
 				Vector3f current = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
 				Vector3f first = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(selectedSectionIndex2);
 				Vector3f changed = sectionMarker.getCurves().elementAt(0).elementAt(0);
