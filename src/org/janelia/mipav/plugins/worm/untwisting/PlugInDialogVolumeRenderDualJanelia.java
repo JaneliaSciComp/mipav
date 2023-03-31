@@ -1083,6 +1083,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		batchProgress.setValue(0);
 		batchProgress.update(batchProgress.getGraphics());
 		volumePanel.setVisible(false);
+		// mkitti it is not clear why we are clearing out the panels.
+		// the next step may not be straightening
 		lutPanel.removeAll();
 		opacityPanel.removeAll();
 		clipPanel.removeAll();
