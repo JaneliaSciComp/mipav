@@ -8,6 +8,7 @@
 	<classpathentry excluding="plugins/" kind="src" path="src"/>
 	<classpathentry kind="src" path="src/plugins"/>
 	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="src" path="xml"/>
 	<classpathentry kind="lib" path="src/lib/ACCESSION_client_VTool.jar"/>
 	<classpathentry kind="lib" path="src/lib/activation.jar"/>
 	<classpathentry kind="lib" path="src/lib/brics-model.jar"/>
