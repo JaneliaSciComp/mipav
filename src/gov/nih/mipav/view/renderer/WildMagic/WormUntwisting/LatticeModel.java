@@ -4629,6 +4629,76 @@ public class LatticeModel {
 		}
 	}
 	
+	public void updateSelectedSplinesOnly(int selectedEllipsePt)
+	{
+        short sID = 1;
+		int contourCount = latticeSlices.length;
+		int numContours = contourCount;
+		
+		displayContours2 = new VOI((short)0, "wormContours2");
+		
+		NaturalSpline3[] edgeSplines = new NaturalSpline3[numEllipsePts];
+		
+		
+		for ( int i = numContours; i < displayContours.length; i++ ) {
+			imageA.unregisterVOI(displayContours[i]);
+			displayContours[i].dispose();
+		}
+		
+		for ( int i = 0; i < numEllipsePts; i++ ) {
+			float[] tempTime = new float[numContours];
+			VOIContour temp = new VOIContour(false);
+			final Vector3f[] akPoints = new Vector3f[numContours];
+
+			for ( int j = 0; j < numContours; j++ ) {
+
+				temp.add( new Vector3f(displayContours[j].getCurves().elementAt(0).elementAt(i)) );
+				
+				akPoints[j] = new Vector3f(displayContours[j].getCurves().elementAt(0).elementAt(i));
+
+			}
+			
+			edgeSplines[i] = new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, numContours - 1, afTimeC, akPoints); // smoothCurve(temp, tempTime);
+
+//			float tp = 0;
+//			float steps = 0;
+//			for ( int j = 1; j < latticeSlices.length; j++ ) {
+//				float t = allTimes[latticeSlices[j]];
+//				steps = latticeSlices[j] - latticeSlices[j-1];
+//				System.err.println( latticeSlices[j] + "   " + edgeSplines[i].GetLength( tp, t ) + "   " + (edgeSplines[i].GetLength( tp, t )/steps) );
+//				tp = t;
+//			}		
+//			System.err.println( edgeSplines[i].GetLength(0,1) );
+
+		}
+		maxSplineLength = centerPositions.size();
+		for ( int i = 0; i < numEllipsePts; i++ ) {
+			VOIContour tempContour = new VOIContour(false);
+			for (int j = 0; j < maxSplineLength; j++) {
+				final float t = j*(1f/(float)(maxSplineLength-1));
+				tempContour.add(edgeSplines[i].GetPosition(t));
+			}					
+			String name = "wormContours_" + contourCount;
+			displayContours[contourCount] = new VOI(sID, name, VOI.CONTOUR, (float) Math.random());
+			displayContours[contourCount].getCurves().add(tempContour);
+			contourCount++;
+		}
+//		System.err.println( numContours + " " + displayContours.length );
+		for ( int i = 0; i < maxSplineLength; i++ ) {
+			VOIContour ellipse = new VOIContour(true);
+
+			for ( int j = 0; j < numEllipsePts; j++ ) {
+				ellipse.add( displayContours[numContours + j].getCurves().elementAt(0).elementAt(i) );
+			}
+			displayContours2.getCurves().add(ellipse);
+		}
+		maxSplineLength = displayContours2.getCurves().size();
+		
+		for ( int i = numContours; i < displayContours.length; i++ ) {
+			imageA.registerVOI(displayContours[i]);
+		}
+	}
+	
 	protected void updateRelativeCrossSectionsFromDisplayContours() {
 		Vector3f centerPoint;
 		Vector3f absolutePoint;
@@ -8224,8 +8294,10 @@ public class LatticeModel {
 				final boolean quickGaussian = false;
 				final boolean fourier = true;
 				
-				if(quickGaussian)
-				{
+				if (numEllipsePts == crossSectionSamples) {
+					current.copy(changed);
+					updateSplinesOnly();
+				} else if(quickGaussian) {
 				
 					int prevIndex = selectedSectionIndex2-1 % numEllipsePts;
 					Vector3f prev = displayContours[selectedSectionIndex].getCurves().elementAt(0).elementAt(prevIndex);
@@ -8295,9 +8367,7 @@ public class LatticeModel {
 						fft = new AlgorithmFFT(padded_image, AlgorithmFFT.INVERSE, false, true, false, false);
 						fft.runAlgorithm();
 						radialDistances = fft.getRealData();
-
-						System.out.println("numEllipsePts: " + numEllipsePts);
-						System.out.println("radialLengths:");
+						
 						Vector3f firstDelta = Vector3f.sub(currentCenter, first);
 						firstDelta.normalize();
 						float angle = 0.0f;
