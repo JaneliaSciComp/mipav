@@ -1128,17 +1128,23 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.saveCrossSections();
 				System.out.println("Saving cross sections");
 				break;
-			case '4':
+			case 'd':
 				latticeModel.selectLeftNeighborInCrossSection();
 				break;
-			case '6':
+			case 'a':
 				latticeModel.selectRightNeighborInCrossSection();
 				break;
-			case '8':
+			case 's':
 				latticeModel.selectNextCrossSection();
 				break;
-			case '2':
+			case 'w':
 				latticeModel.selectPrevCrossSection();
+				break;
+			case '5':
+				break;
+			case '7':
+				break;
+			case '3':
 				break;
 			}
 		}

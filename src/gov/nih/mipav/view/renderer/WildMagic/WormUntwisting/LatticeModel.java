@@ -3052,6 +3052,8 @@ public class LatticeModel {
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
 			//			System.err.println( i + "  " + radius );
+			
+			//mkitti 2023/04/17: TODO use relative contours to build contour
 			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
 
 			if ( !segmentLattice && (clipMask != null) && (clipMask.size() == dimZ) ) {

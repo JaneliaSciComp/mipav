@@ -69,6 +69,7 @@ import static org.jocl.CL.CL_DEVICE_TYPE_GPU;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -96,6 +97,7 @@ import java.util.stream.Collectors;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -813,6 +815,35 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			if ( which != -1 ) {
 				activeRenderer.setImageOn(which, selected);	
 			}
+			if(opacityTab != null && opacityTab.getTabCount() > 0) {
+				which = opacityTab.getSelectedIndex();
+				for(int i = 0; i < opacityTab.getTabCount(); ++i) {
+					if( opacityTab.getTitleAt(i).startsWith(command) ) {
+						opacityTab.setEnabledAt(i, selected);
+						if( !selected && i == which) {
+							opacityTab.setSelectedIndex((which + 1) % opacityTab.getTabCount());
+						}
+						if( selected ) {
+							opacityTab.setSelectedIndex(i);
+						}
+					}
+				}
+			}
+			if(lutTab != null && lutTab.getTabCount() > 0) {
+				which = lutTab.getSelectedIndex();
+				for(int i = 0; i < lutTab.getTabCount(); ++i) {
+					if( lutTab.getTitleAt(i).startsWith(command) ) {
+						lutTab.setEnabledAt(i, selected);
+						if( !selected && i == which) {
+							lutTab.setSelectedIndex((which + 1) % lutTab.getTabCount());
+						}
+						if ( selected ) {
+							lutTab.setSelectedIndex(i);
+						}
+					}
+				}
+			}
+			
 		}
 	}
 
@@ -1788,7 +1819,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 			backButton.setEnabled(imageIndex > 0);
 		}
 
-		integratedPanel.setDividerLocation(0.25);
+		integratedPanel.setDividerLocation(0.5);
 		return success;
 	}
 
@@ -2249,8 +2280,8 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		integratedPanel.setOneTouchExpandable(true);
 		integratedPanel.setDividerSize(6);
 		integratedPanel.setContinuousLayout(true);
-		integratedPanel.setResizeWeight(0);
-		integratedPanel.setDividerLocation(0.25);
+		integratedPanel.setResizeWeight(0.05);
+		integratedPanel.setDividerLocation(0.5);
 
 		// JPanel integratedPanel = new JPanel( new BorderLayout() );
 		// integratedPanel.add( scroller, BorderLayout.WEST );
