@@ -3044,17 +3044,43 @@ public class LatticeModel {
 		}
 		latticeContours = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
 		resultImage.registerVOI( latticeContours );
+		
+		VOIBase[] edgePoints = new VOIBase[numEllipsePts];
+		for(int j = 0; j < numEllipsePts; ++j) {
+			edgePoints[j] = displayContours[latticeSlices.length + j].getCurves().elementAt(0);
+		}
+		
+		System.out.println("segmentLattice 3053: " + dimZ);
+		
 		for (int i = 0; i < dimZ; i++)
 		{			
 			VOIContour contour = new VOIContour(true);
+			VOIContour contour_OLD = new VOIContour(true);
 
 
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
 			//			System.err.println( i + "  " + radius );
 			
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour_OLD);
 			//mkitti 2023/04/17: TODO use relative contours to build contour
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
+			if(false) {
+				makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);
+				System.out.println("segmentLattice 3060: displayContours.length" + displayContours.length);
+				System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
+
+			} else {
+				System.out.println("segmentLattice 3060: displayContours.length" + displayContours.length);
+				System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
+				Vector3f displayCenter = centerPositions.get(i);
+				float[] radii = new float[numEllipsePts];
+				for(int j = 0; j < numEllipsePts; ++j) {
+					radii[j] = Vector3f.sub(edgePoints[j].get(i), displayCenter).length()*1.05f + paddingFactor;
+					System.out.println("NEW radius: " + radii[j] + ", OLD radius: " + radius);
+				}
+				makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);
+			}
+			
 
 			if ( !segmentLattice && (clipMask != null) && (clipMask.size() == dimZ) ) {
 				//				System.err.println( "use clip mask " + (i/10) + "  " + clipMask.size() );
@@ -4739,8 +4765,8 @@ public class LatticeModel {
 				absolutePoint = displayContours[i].getCurves().elementAt(0).elementAt(j);
 				relativePoint = Vector3f.sub(absolutePoint, centerPoint);
 				relativeCrossSections[i].add(relativePoint);
-				if (i== 0)
-					System.out.println("i: " + i + " j: " + j + " relativePoint:" + relativePoint + " magnitude: " + relativePoint.length());
+				//if (i== 0)
+				//	System.out.println("i: " + i + " j: " + j + " relativePoint:" + relativePoint + " magnitude: " + relativePoint.length());
 			}
 		}
 		// displayContours
@@ -5054,6 +5080,21 @@ public class LatticeModel {
 		final Vector3f[] axes = new Vector3f[] {right, up, Vector3f.cross(right, up)};
 		return new Ellipsoid3f(center, axes, extents);
 	}
+	
+	protected void makeEllipse2DA(final Vector3f right, final Vector3f up, final Vector3f center, final float[] radii,
+			final VOIContour ellipse) {
+		// does not actually make an ellipse, just makes a closed shape sampled along the central angle
+		for (int i = 0; i < numEllipsePts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numEllipsePts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numEllipsePts);
+			final Vector3f pos1 = Vector3f.scale((float) (radii[i] * c), right);
+			final Vector3f pos2 = Vector3f.scale((float) (radii[i] * s), up);
+			final Vector3f pos = Vector3f.add(pos1, pos2);
+			pos.add(center);
+			ellipse.addElement(pos);
+			//			System.err.println(pos);
+		}
+	}
 
 
 	protected void makeEllipse2DA(final Vector3f right, final Vector3f up, final Vector3f center, final float radius,
@@ -5148,7 +5189,7 @@ public class LatticeModel {
 			final Vector3f old_pos = relativeCrossSections[sectionIndex].get(i);
 			//Get old radius
 			final double radius = old_pos.length();
-			System.out.println("Making cross section from relative: " + radius);
+			//System.out.println("Making cross section from relative: " + radius);
 			final Vector3f pos1 = Vector3f.scale((float) (radius * c), right);
 			final Vector3f pos2 = Vector3f.scale((float) (radius * s), up);
 			final Vector3f pos = Vector3f.add(pos1, pos2);
