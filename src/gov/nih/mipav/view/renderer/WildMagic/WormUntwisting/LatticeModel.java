@@ -3070,13 +3070,13 @@ public class LatticeModel {
 				System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
 
 			} else {
-				System.out.println("segmentLattice 3060: displayContours.length" + displayContours.length);
-				System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
+				//System.out.println("segmentLattice 3060: displayContours.length" + displayContours.length);
+				//System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
 				Vector3f displayCenter = centerPositions.get(i);
 				float[] radii = new float[numEllipsePts];
 				for(int j = 0; j < numEllipsePts; ++j) {
-					radii[j] = Vector3f.sub(edgePoints[j].get(i), displayCenter).length()*1.05f + paddingFactor;
-					System.out.println("NEW radius: " + radii[j] + ", OLD radius: " + radius);
+					radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
+					//System.out.println("NEW radius: " + radii[j] + ", OLD radius: " + radius);
 				}
 				makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);
 			}
