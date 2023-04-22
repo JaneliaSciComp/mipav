@@ -3049,9 +3049,7 @@ public class LatticeModel {
 		for(int j = 0; j < numEllipsePts; ++j) {
 			edgePoints[j] = displayContours[latticeSlices.length + j].getCurves().elementAt(0);
 		}
-		
-		System.out.println("segmentLattice 3053: " + dimZ);
-		
+				
 		for (int i = 0; i < dimZ; i++)
 		{			
 			VOIContour contour = new VOIContour(true);
