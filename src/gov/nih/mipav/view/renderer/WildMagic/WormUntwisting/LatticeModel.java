@@ -3055,32 +3055,18 @@ public class LatticeModel {
 		for (int i = 0; i < dimZ; i++)
 		{			
 			VOIContour contour = new VOIContour(true);
-			VOIContour contour_OLD = new VOIContour(true);
 
 
 			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
 			radius += paddingFactor;
-			//			System.err.println( i + "  " + radius );
 			
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour_OLD);
-			//mkitti 2023/04/17: TODO use relative contours to build contour
-			if(false) {
-				makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);
-				System.out.println("segmentLattice 3060: displayContours.length" + displayContours.length);
-				System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
-
-			} else {
-				//System.out.println("segmentLattice 3060: displayContours.length" + displayContours.length);
-				//System.out.println("segmentLattice 3061: curve elements" + displayContours[latticeSlices.length].getCurves().elementAt(0).size());
-				Vector3f displayCenter = centerPositions.get(i);
-				float[] radii = new float[numEllipsePts];
-				for(int j = 0; j < numEllipsePts; ++j) {
-					radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
-					//System.out.println("NEW radius: " + radii[j] + ", OLD radius: " + radius);
-				}
-				makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);
+			//mkitti 2023/04/17: use relative contours to build contour
+			Vector3f displayCenter = centerPositions.get(i);
+			float[] radii = new float[numEllipsePts];
+			for(int j = 0; j < numEllipsePts; ++j) {
+				radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
 			}
-			
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);		
 
 			if ( !segmentLattice && (clipMask != null) && (clipMask.size() == dimZ) ) {
 				//				System.err.println( "use clip mask " + (i/10) + "  " + clipMask.size() );
