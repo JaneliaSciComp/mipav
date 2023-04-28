@@ -2679,16 +2679,18 @@ public class LatticeModel {
 		if ( changed  ) {
 			saveLattice(directory, fileName, lattice );
 		}
+		
+		if ( relativeCrossSections != null) {
+			saveCrossSections();
+		}
+		//save cross sections here
 
 		if ( (displayContours2 != null) || !contourFile) {
 			generateCurves(1);
 			saveMeshContoursCSV();
 		}
 		
-		if ( relativeCrossSections != null) {
-			saveCrossSections();
-		}
-		//save cross sections here
+
 	}
 	
 	/**
@@ -2702,6 +2704,7 @@ public class LatticeModel {
 	}
 	
 	public void saveCrossSections(final String dir) {
+		System.out.println("Saving cross sections");
 		updateRelativeCrossSectionsFromDisplayContours();
 		for (int j = 0; j < latticeSlices.length; j++) {
 			String outFileName = "latticeCrossSection_" + j + ".csv";
@@ -3812,7 +3815,9 @@ public class LatticeModel {
 				if(imageA.isRegistered(sectionMarker) != -1) {
 					imageA.unregisterVOI(sectionMarker);
 				}
-				sectionMarker.getCurves().clear();
+				if(sectionMarker.getCurves() != null) {
+					sectionMarker.getCurves().clear();
+				}
 				sectionMarker.dispose();
 				sectionMarker = null;
 			}
@@ -7843,6 +7848,13 @@ public class LatticeModel {
 		float maxDist = Vector3f.normalize(center);
 		// this is the untwisting code:
 		final Vector3f[] corners = new Vector3f[4];
+		
+		VOIBase[] edgePoints = new VOIBase[numEllipsePts];
+		for(int j = 0; j < numEllipsePts; ++j) {
+			edgePoints[j] = displayContours[latticeSlices.length + j].getCurves().elementAt(0);
+		}
+
+		
 		for (int i = 0; i < size; i++)
 		{			
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
@@ -7854,7 +7866,17 @@ public class LatticeModel {
 			radius += paddingFactor;
 
 			VOIContour contour = new VOIContour(true);
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);			
+			
+			//TODO: modify this to modify preview mode
+			//makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour);
+			//mkitti 2023/04/17: use relative contours to build contour
+			Vector3f displayCenter = centerPositions.get(i);
+			float[] radii = new float[numEllipsePts];
+			for(int j = 0; j < numEllipsePts; ++j) {
+				radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
+			}
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);		
+
 			if ( (clipMask != null) && (clipMask.size() == dimZ) ) {
 				//					System.err.println( "use clip mask " + i + "  " + clipMask.size() );
 				boolean[] mask = clipMask.elementAt(i);

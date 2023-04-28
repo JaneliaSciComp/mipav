@@ -598,7 +598,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			if ( !movingPickedPoint )
 			{
 				movingPickedPoint = true;
-				saveVOIs("moveSelectedPoint");
+				try {
+					saveVOIs("moveSelectedPoint");
+				} catch(NullPointerException e) {
+					System.err.println("NullPointerException occurred while trying to moveSelectedPoint");
+					e.printStackTrace();
+				}
 			}
 			latticeModel.moveSelectedPoint(direction, doAnnotations);
 		}
@@ -725,6 +730,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel.editCrossSections(display);
 		}
 		editingCrossSections = display;
+	}
+	
+	public void saveCrossSections( ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.saveCrossSections();
+			System.out.println("Saving cross sections");
+		}
 	}
 	
 	public boolean isModelDisplayed() {
@@ -1125,8 +1138,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.updateSplinesOnly();
 				break;
 			case '9':
-				latticeModel.saveCrossSections();
-				System.out.println("Saving cross sections");
+				saveCrossSections();
 				break;
 			case 'd':
 				latticeModel.selectLeftNeighborInCrossSection();

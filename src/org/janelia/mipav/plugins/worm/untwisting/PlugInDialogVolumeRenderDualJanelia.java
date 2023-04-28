@@ -64,6 +64,7 @@ import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.VOIWormAnnotation;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManager;
 
 import static org.jocl.CL.CL_DEVICE_TYPE_GPU;
 
@@ -642,6 +643,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					previewUntwisting.setText("return");
 					
 					previewCount++;
+					
+					// save relative contours here upon returning from preview
+					activeImage.voiManager.saveCrossSections();
+
+					
 					// save image orientation:
 					activeImage.volumeMatrix = new Matrix3f(activeRenderer.GetSceneRotation());
 
@@ -670,8 +676,12 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 					activeRenderer.setHyperStack(activeImage.previewHS, activeImage.colormap);
 				} 
 				else {
+					// "return"
 					previewCount--;
 					previewUntwisting.setText("preview");
+					
+					// save relative contours here upon returning from preview
+					activeImage.voiManager.saveCrossSections();
 
 					activeImage.voiManager.removeListeners();
 					activeImage.voiManager.setImage(activeImage.hyperstack[0].GetImage(), null);
@@ -2805,6 +2815,7 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 		if (activeImage == null || activeImage.wormImage == null || activeImage.voiManager == null) {
 			return;
 		}
+		System.out.println("Saving lattice");
 		activeImage.voiManager.saveLattice(resultsDir(latticeFileDir, activeImage.wormImage) + File.separator,
 				PlugInAlgorithmWormUntwistingJanelia.editLatticeOutput);
 
