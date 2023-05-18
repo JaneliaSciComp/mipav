@@ -616,9 +616,11 @@ public class PlugInDialogVolumeRenderDualJanelia extends JFrame implements Actio
 				}
 			} else if (command.equals("editCrossSections")) {
 				if (activeImage.voiManager != null) {
-					activeImage.voiManager.editCrossSections(editCrossSections.isSelected());
-					displayModel.setSelected(editCrossSections.isSelected());
-					displayModel.setEnabled(!editCrossSections.isSelected());
+					boolean selected = editCrossSections.isSelected();
+					activeImage.voiManager.editCrossSections(selected);
+					displayModel.setSelected(selected);
+					displayModel.setEnabled(!selected);
+					previewUntwisting.setEnabled(!selected);
 					activeRenderer.updateVOIs();
 				}
 			} else if (command.equals("predict")) {
