@@ -1152,6 +1152,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			case 'w':
 				latticeModel.selectPrevCrossSection();
 				break;
+			case 'R':
+				latticeModel.showLattice(false);
+				latticeModel.resetCrossSections();
+				if(editingCrossSections) {
+					latticeModel.showLattice(true);
+				}
+				break;
 			case '5':
 				break;
 			case '7':

@@ -2736,9 +2736,49 @@ public class LatticeModel {
 				readSomething = true;
 				editedCrossSections[j] = true;
 				relativeCrossSections[j] = contour;
+			} else {
+				editedCrossSections[j] = false;
+				relativeCrossSections[j] = null;
 			}
 		}
 		return readSomething;
+	}
+	
+	public void resetCrossSections() {
+		final String dir = sharedOutputDir + File.separator + "model_crossSections" + File.separator;
+		
+		resetCrossSections(dir);
+	}
+	
+	public void resetCrossSections(final String dir) {	
+		System.out.println("Reset cross sections.");
+		
+		//clear3DSelection();
+		
+		for (int j = 0; j < latticeSlices.length; j++) {
+			String outFileName = "latticeCrossSection_" + j + ".csv";
+						
+			File file = new File(dir + File.separator + outFileName);
+			file.delete();
+			
+			editedCrossSections[j] = false;
+		}
+		
+		readCrossSections();
+		
+		updateLattice(true);
+		generateCurves(5);
+		updateSelected();
+		setLattice(lattice);
+
+		latticeInterpolationInit = false;
+
+		updateLatticeListeners();
+
+		// when everything's done, notify the image listeners
+		imageA.notifyImageDisplayListeners();
+		
+		System.out.println("Done resetting cross sections.");
 	}
 	
 	private boolean getContourFile() {
@@ -3065,7 +3105,16 @@ public class LatticeModel {
 			Vector3f displayCenter = centerPositions.get(i);
 			float[] radii = new float[numEllipsePts];
 			for(int j = 0; j < numEllipsePts; ++j) {
-				radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
+				// TODO: make on function to cover this and the test use case
+				
+				// This version never allows the cross section radius to be smaller than the circle
+				// radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
+				
+				// working version allows the radius to be smaller than the circle version
+				// the following two line should be equivalent
+				//radii[j] = Vector3f.sub(edgePoints[j].get(i), displayCenter).length();
+				radii[j] = edgePoints[j].get(i).distance(displayCenter);
+				radii[j] = radii[j] * 1.05f + paddingFactor;
 			}
 			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);		
 
@@ -7873,7 +7922,14 @@ public class LatticeModel {
 			Vector3f displayCenter = centerPositions.get(i);
 			float[] radii = new float[numEllipsePts];
 			for(int j = 0; j < numEllipsePts; ++j) {
-				radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
+				// This version never allows the cross section radius to be smaller than the circle
+				// radii[j] = Math.max(Vector3f.sub(edgePoints[j].get(i), displayCenter).length(), radius);
+				
+				// working version allows the radius to be smaller than the circle version
+				// the following two line should be equivalent
+				//radii[j] = Vector3f.sub(edgePoints[j].get(i), displayCenter).length();
+				radii[j] = edgePoints[j].get(i).distance(displayCenter);
+				radii[j] = radii[j] * 1.05f + paddingFactor;
 			}
 			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radii, contour);		
 
