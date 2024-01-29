@@ -203,6 +203,7 @@ public class LatticeModel {
 					line = br.readLine();
 				}
 				if ( renameString.length() > 0 ) {
+					//TODO: add flag to not warn on duplicate annotations
 					MipavUtil.displayError( "Duplicate annotations:\n" + renameString );
 				}
 				fr.close();
