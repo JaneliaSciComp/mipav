@@ -3093,8 +3093,11 @@ public class LatticeModel {
 		for(int j = 0; j < numEllipsePts; ++j) {
 			edgePoints[j] = displayContours[latticeSlices.length + j].getCurves().elementAt(0);
 		}
+		
+		//chend 2024/02/01: added max_i for fix ArrayIndexOutOfBoundException
+		int max_i = Math.min(dimZ, rightPositions.size());
 				
-		for (int i = 0; i < dimZ; i++)
+		for (int i = 0; i < max_i; i++)
 		{			
 			VOIContour contour = new VOIContour(true);
 
