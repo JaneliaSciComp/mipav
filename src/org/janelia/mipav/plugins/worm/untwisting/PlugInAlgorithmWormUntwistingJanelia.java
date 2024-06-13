@@ -494,17 +494,20 @@ public class PlugInAlgorithmWormUntwistingJanelia
 		}
 	}
 	
+
+	
+	public static Object outputWriter;
+
 	/**
 	 * Run the lattice-based worm straightening algorithm for the list of input files.
 	 * @param batchProgress progress bar (may be null).
 	 * @param includeRange the list of file IDs to run the algorithm on.
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
-	 * @param outputWriter 
+	 * @param outputDir TODO
+	 * @param paddingFactor TODO
+	 * @param segmentLattice TODO
 	 */
-	public static Object outputWriter;
-
-	
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
 			final String[] baseFileDir, final String baseFileName, final String outputDir, final int paddingFactor, final boolean segmentLattice)
 	{

@@ -53,13 +53,21 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.KeyStroke;
+
+import org.janelia.mipav.plugins.worm.untwisting.AccurateModeListener;
+import org.janelia.mipav.plugins.worm.untwisting.PlotDataUpdateListener;
+import org.janelia.mipav.plugins.worm.untwisting.PlugInDialogVolumeRenderDualJanelia;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
@@ -844,8 +852,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		m_bMouseDrag = false;
 	}
 	
-	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
+
+	
+	private void PickVolume3D(Vector3f kPos, Vector3f kDir, Vector3f maxPtAccurate) 
 	{
+		// Lists to store values and points for plot updates or further processing
+		List<Float> plotAccurateValues = new ArrayList<>();
+		List<Float> plotValues = new ArrayList<>();
+		List<Vector3f> points = new ArrayList<>();
+		
 		m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 				Float.MAX_VALUE);
 
@@ -856,6 +871,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			
 			Vector3f pickedPoints[] = new Vector3f[m_kPicker.Records.size()];
 			float distances[] = new float[m_kPicker.Records.size()];
+			
+			long time = System.currentTimeMillis();
 			
 			for ( int i = 0; i < m_kPicker.Records.size(); i++ )
 			{
@@ -879,7 +896,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				firstIntersectionPoint.copy(pickedPoints[0]);
 				secondIntersectionPoint.copy(pickedPoints[1]);
 				
+				float maxValueAccurate = -Float.MAX_VALUE;
 				float maxValue = -Float.MAX_VALUE;
+				Vector3f maxPt = new Vector3f(); 
 				
 				Vector3f p0 = new Vector3f(firstIntersectionPoint);
 				Vector3f p1 = new Vector3f(secondIntersectionPoint);
@@ -931,62 +950,88 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							continue;
 						}
 					}
-					float value = 0;
-					int sampleX = Math.round(p0.X);
-					int sampleY = Math.round(p0.Y);
-					int sampleZ = Math.round(p0.Z);
-					// loop over imageA, imageB, hyperstack, get value, apply color & opacity for 'value'
-					// take the maximum value:
-					if ( hyperstack != null ) {
-						for ( int h = 0; h < hyperstack.length; h++ ) {
-							if ( (hyperstack[h] != null) && (hyperstack[h].GetImage() != null) )
-							{
-								if ( m_kVolumeRayCast.getImageOn(h) )
-								{
-									value = Math.max(value, hyperstack[h].GetTransferedValue(sampleX, sampleY, sampleZ));
+					
+
+					// Two modes can be switched from the accurate mode to the 3-color mode(not working currently) by press key "M" or "m"
+					if (m_kVOIInterface.isAccurateMode()) {
+						// Old Mipav but more accurate click
+						float valueAccurate = 0;
+						valueAccurate = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+						if ((m_kVolumeImageB != null) && (m_kVolumeImageB.GetImage() != null)) {
+							float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+							float blend = getABBlend();
+							valueAccurate = (blend * valueAccurate + (1 - blend) * valueB);
+						}
+
+						if (valueAccurate > maxValueAccurate) {
+							maxValueAccurate = valueAccurate;
+							maxPtAccurate.copy(p0);
+						}
+						plotAccurateValues.add(valueAccurate);// add value to the list for plotting
+					
+					} else {
+						//this is not working, made for more than 3 colors. -Diyi Chen May 1, 2024
+						float value = 0;
+						int sampleX = Math.round(p0.X);
+						int sampleY = Math.round(p0.Y);
+						int sampleZ = Math.round(p0.Z);
+						// loop over imageA, imageB, hyperstack, get value, apply color & opacity for
+						// 'value'
+						// take the maximum value:
+						if (hyperstack != null) {
+							for (int h = 0; h < hyperstack.length; h++) {
+								if ((hyperstack[h] != null) && (hyperstack[h].GetImage() != null)) {
+									if (m_kVolumeRayCast.getImageOn(h)) {
+										value = Math.max(value,
+												hyperstack[h].GetTransferedValue(sampleX, sampleY, sampleZ));
+									}
 								}
 							}
+						} else if ((m_kVolumeImageB != null) && (m_kVolumeImageB.GetImage() != null)) {
+							float valueA = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
+							float valueB = m_kVolumeImageB.GetTransferedValue(sampleX, sampleY, sampleZ);
+							float blend = getABBlend();
+							value = (blend * valueA + (1 - blend) * valueB);
+						} else {
+							// Only one imageA:
+							value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
 						}
+						if (value > maxValue) {
+							maxValue = value;
+							maxPt.copy(p0);
+						}
+						plotValues.add(value);// add value to the list for plotting
 					}
-					else if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null)) {
-						float valueA = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
-						float valueB = m_kVolumeImageB.GetTransferedValue(sampleX, sampleY, sampleZ);
-						float blend = getABBlend();
-						value = (blend * valueA + (1 - blend) * valueB);
-					}
-					else
-					{
-						// Only one imageA:
-						value = m_kVolumeImageA.GetTransferedValue(sampleX, sampleY, sampleZ);
-					}
-					if ( value > maxValue )
-					{
-						maxValue = value;
-						maxPt.copy(p0);
-					}
+					Vector3f p2 = new Vector3f();
+					p2.copy(p0);
+					points.add(p2);
 				}
 				
-				if ( maxValue != -Float.MAX_VALUE )
-				{					
+				if (!m_kVOIInterface.isAccurateMode()) {
+					maxValueAccurate = maxValue;
+					maxPtAccurate.copy(maxPt);
+				}
+
+				if (maxValueAccurate != -Float.MAX_VALUE) {
 					boolean picked = false;
 //					System.err.println( "mouse drag? " + m_bMouseDrag );
-					if ( !m_bMouseDrag ) {
+					if (!m_bMouseDrag) {
 						// select or create a new marker:
-						picked = select3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed, altPressed );
-					}
-					else if ( m_bMouseDrag ) {
+						picked = select3DMarker(firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate,
+								rightMousePressed, altPressed);
+					} else if (m_bMouseDrag) {
 						// modify currently selected, if exists
-						picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt );	
+						picked = modify3DMarker(firstIntersectionPoint, secondIntersectionPoint, maxPtAccurate);
 					}
-					if ( !picked )
+					if (!picked)
 					{
 						// add a new picked point:
 						short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
 						int colorID = 0;
 						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 						VOIText textVOI = new VOIText( );
-						textVOI.add( maxPt );
-						textVOI.add( maxPt );
+						textVOI.add( maxPtAccurate );
+						textVOI.add( maxPtAccurate );
 //						Transformation world = m_kVolumeRayCast.getMesh().World;
 //						Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
 //						dir.scale(5);
@@ -1017,16 +1062,38 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					m_kVOIInterface.updateDisplay();
 				}
 			}
-		}	
+		}
+		if (m_kVOIInterface.isAccurateMode()) {
+			notifyPlotListeners(points, plotAccurateValues, "Selection Chart");
+		} else {
+			notifyPlotListeners(points, plotValues, "3-Color Chart");
+		}
+	}
+
+	// Create a Set to hold PlotListener instances
+	private Set<PlotDataUpdateListener> listeners = new HashSet<>();
+
+	// update all listeners with new plot values and title.
+	public void notifyPlotListeners(List<Vector3f> points, List<Float> values, String title) {
+		for (PlotDataUpdateListener listener : listeners) {
+			listener.updatePlotPanel(points, values, title);
+		}
+	}
+
+	//  add a new PlotListener
+	public void addPlotListener(PlotDataUpdateListener listener) {
+		listeners.add(listener);
 	}
 	
-	private boolean PickSlice3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) 
-	{
+	// remove an existing PlotListener
+	public void removePlotListener(PlotDataUpdateListener listener) {
+		listeners.remove(listener);
+	}
+
+	private boolean PickSlice3D(Vector3f kPos, Vector3f kDir, Vector3f maxPt) {
 		// pick on the slices
-		m_kPicker.Execute(m_kSlices.GetScene(),kPos,kDir,0.0f,
-				Float.MAX_VALUE);
-		if (m_kPicker.Records.size() > 0)
-		{ 
+		m_kPicker.Execute(m_kSlices.GetScene(), kPos, kDir, 0.0f, Float.MAX_VALUE);
+		if (m_kPicker.Records.size() > 0) {
 			PickRecord kPickPoint = m_kPicker.GetClosestNonnegative();
 			TriMesh kMesh = (TriMesh)kPickPoint.Intersected;
 			int iPlane = m_kSlices.whichPlane(kMesh);

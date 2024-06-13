@@ -87,17 +87,15 @@ public class WormData
 				checkParentDir(parentDir);
 			}
 			File dir = new File(outputDirectory);
-			if ( !dir.exists() )
-			{
-				//				System.err.println( "WormData " + outputDirectory);
-				dir.mkdir();
-			}
+			
+			if (!dir.exists() && !dir.mkdirs()) { // dir does not exist
+				System.err.println("Failed to create directory in WormData: " + dir);
+			} 
+
 			if ( outputImagesDirectory != null ) {
 				dir = new File(outputImagesDirectory);
-				if ( !dir.exists() )
-				{
-					//				System.err.println( "WormData " + outputImagesDirectory);
-					dir.mkdir();
+				if ( !dir.exists() && !dir.mkdirs()){
+					System.err.println("Failed to create directory in WormData: " + dir);
 				}
 			}
 		}
