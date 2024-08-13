@@ -1,76 +1,52 @@
 package org.janelia.mipav;
 
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.LayoutManager;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.Dialog.ModalityType;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
 public class BatchProcessLogFrame implements ActionListener {
-	// add variables here
+	// variables
 	JFrame frame;
 	JButton buttonOk, buttonCopyAll, buttonBrowse;
-	JPanel panelButton, checkPanel, radioPanel;
-	JOptionPane panelButtonDialog, panelNoDupAnnDialog;
-	JDialog dialogAfterButton, noDupAnnDialog;
-	LayoutManager layout;
-	StringBuffer choices;
-	JRadioButton radioButtonA, radioButtonB;
-	String newline = "\n";
-	JTextField textField;
+	JDialog noDupAnnDialog;
 	JTextArea textArea;
 	JFileChooser fileChooser;
 	File file, directory;
 
+	// Constructor
 	public BatchProcessLogFrame() {
-		// write code here
 		this.frame = new JFrame("Batch Process Log");
-		this.layout = new FlowLayout();
 
 		createGUI();
 	}
 
 	private void createGUI() {
+		JOptionPane panelNoDupAnnDialog;
+		
 		frame.setLayout(new GridBagLayout());
 
-		// create buttonOK
-		buttonOk = new JButton("Ok to Close");
-		// add button to actionListener
+		// create buttons and add top actionListener
+		buttonOk = new JButton("Ok");
 		buttonOk.addActionListener(this);
-		// add buttonCopyAll
-		buttonCopyAll = new JButton("Copy All");
-		//buttonCopyAll.setBounds(70, 270, 150, 50);
-		//buttonCopyAll.setPreferredSize(new Dimension(200,500));
+		buttonCopyAll = new JButton("Copy");
 		buttonCopyAll.addActionListener(this);
-		// add buttonBrowse
-		buttonBrowse = new JButton("Browse to save");
-		//buttonBrowse.setBounds(70, 270, 150, 50);
-		//buttonBrowse.setPreferredSize(new Dimension(200,500));
+		buttonBrowse = new JButton("Save");
 		buttonBrowse.addActionListener(this);
-
-		// create JPanel for the button
-		panelButton = new JPanel();
-		panelButton.add(buttonOk); // Add button to JPanel
-		panelButton.add(buttonCopyAll);
-		panelButton.add(buttonBrowse);
 
 		// a dialog pop out when there is no content in the textArea
 		panelNoDupAnnDialog = new JOptionPane("No duplicated annotations are found!");
@@ -99,29 +75,29 @@ public class BatchProcessLogFrame implements ActionListener {
 		c.gridy = 1;
 		c.gridheight = 1;
 		c.gridwidth = 1;
-		c.weightx = 1; // distribute space
+		c.weightx = 1; 
 		c.weighty = 0;
-		frame.add(buttonCopyAll, c); // add buttonCopyAll to the frame
+		frame.add(buttonCopyAll, c); 
 
 		// Anchor the buttonBrowse to the right (EAST) of the frame
 		c.anchor = GridBagConstraints.EAST;
 		c.fill = GridBagConstraints.NONE;
 		c.gridx = 2;
 		c.gridy = 1;
-		c.gridheight = 1; // see the height of the button the same as the height of checkbox1 + checkbox2
+		c.gridheight = 1; 
 		c.weightx = 1;
-		frame.add(buttonBrowse, c); // add button to the frame
+		frame.add(buttonBrowse, c);
 
 		// Anchor the "OK" button to the CENTER of the frame
 		c.anchor = GridBagConstraints.CENTER;
 		c.fill = GridBagConstraints.NONE;
 		c.gridx = 1;
 		c.gridy = 2;
-		c.gridheight = 2; // see the height of the button the same as the height of checkbox1 + checkbox2
+		c.gridheight = 2;
 		c.weightx = 1;
-		frame.add(buttonOk, c); // add button to the frame
+		frame.add(buttonOk, c);
 
-		// Display the window.
+		// Display the frame.
 		frame.setBounds(80, 80, 80, 80);
 		frame.pack();
 		frame.setVisible(true);
@@ -131,7 +107,7 @@ public class BatchProcessLogFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		String newline = "\n";
 
 		String data = textArea.getText().trim(); // read contents of text area into 'data'
 		if (!data.equals("")) {
@@ -144,9 +120,6 @@ public class BatchProcessLogFrame implements ActionListener {
 				clpbrd.setContents(stringSelection, null);
 				JOptionPane.showMessageDialog(null, "Texts are copied to clipboard!");
 			} else if (e.getSource() == buttonBrowse) {
-				// fileChooser = new JFileChooser("C:\\Users\\chend\\Desktop");
-				// fileChooser = new JFileChooser(latticeStraighten.outputDirectory);
-
 				fileChooser.setSelectedFile(new File("Duplicated_Annotations.txt"));
 
 				int returnVal = fileChooser.showSaveDialog(frame);
@@ -155,12 +128,17 @@ public class BatchProcessLogFrame implements ActionListener {
 					// save to file
 					try (FileWriter fw = new FileWriter(fileChooser.getSelectedFile())) {
 						fw.write(textArea.getText());
+						textArea.append("\n\n  <<" + file.getName() + ">> is saved to: "
+								+ fileChooser.getSelectedFile().getAbsolutePath() + newline);
+					} catch (FileNotFoundException ex) {
+						JOptionPane panelSaveFailedDialog = new JOptionPane("File save failed! " + "\n" + ex);
+						JDialog saveFailedDialog = panelSaveFailedDialog.createDialog("Dialog");
+						saveFailedDialog.setModalityType(ModalityType.APPLICATION_MODAL);
+						saveFailedDialog.setVisible(true);
+					
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
-
-					textArea.append("\n\n  <<" + file.getName() + ">> is saved to: "
-							+ fileChooser.getSelectedFile().getAbsolutePath() + newline);
 				}
 			}
 		} else {
