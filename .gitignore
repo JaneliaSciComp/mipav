@@ -2,3 +2,7 @@
 /export/
 /null/
 classes
+*.csv
+*.pdf
+*.png
+/output/

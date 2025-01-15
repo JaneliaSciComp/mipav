@@ -178,6 +178,25 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			}
 			displayLabel.setSelected(true);
 		}
+		else if (command.equals("displaySelected")) 
+		{
+			// display selected annotations in the list:
+		    VOI annotations = voiManager.getAnnotations();
+		    if (annotations != null) {
+		        // Iterate through each annotation
+		        for (int i = 0; i < annotations.getCurves().size(); i++) 
+		        {
+		            VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+		            // Check if the annotation is selected in the table
+		            if (annotationList.isSelectedIndex(i)) {
+		            	text.display(true); // Display selected annotations
+		            } else {
+		            	System.err.println( text.getText() + "  " + text.getDisplay() );
+		            	text.display(false); // Hide unselected annotations
+		            }
+		        }
+		    }
+		}
 		else if ( command.equals("displayNone") )
 		{
 			// display none of the annotations in the list:
@@ -996,6 +1015,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayAll.setActionCommand("displayAll");
 			gbc.gridx++;			gbc.gridy = 0;
 			labelPanel.add( displayAll, gbc );
+			
+			// Diyi
+			// Display selected button:
+			JButton displaySelected = new JButton("Display selected");
+			displaySelected.addActionListener(this);
+			displaySelected.setActionCommand("displaySelected");
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add( displaySelected, gbc );
 
 			// Display none button:
 			JButton displayNone = new JButton("Display none" );
