@@ -1426,7 +1426,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
         }
 
         importImage(pixBuffer); // Method in parent class to import the image
-        paintComponent(getGraphics());
+        //paintComponent(getGraphics());
         repaint();
     }
 

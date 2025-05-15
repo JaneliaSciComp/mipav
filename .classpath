@@ -363,5 +363,10 @@
 	<classpathentry kind="lib" path="src/libnative/mediaplayer.jar"/>
 	<classpathentry kind="lib" path="src/libnative/scijava-native-lib-loader-jogl-jocl-jhdf.jar"/>
 	<classpathentry kind="lib" path="src/libnative/vecmath.jar"/>
+	<classpathentry kind="lib" path="src/lib/jfreechart-1.5.4.jar" sourcepath="src/lib/jfreechart-1.5.4-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/mipav/src/lib/jfreechart-1.5.4-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

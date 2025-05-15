@@ -109,6 +109,7 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	private JSlider volumeRadius;
 	private JCheckBox displayLabel;
 	private JCheckBox displayGroupLabel;
+	private JCheckBox displayLatticeLabel;
 	// table user-interface for editing the positions of the annotations:
 	private ListSelectionModel annotationList;
 	private JTable annotationTable;
@@ -139,11 +140,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 	
 	private JPanelAnnotations sharedAnnotationPanel = null;
 	private JSplitPane annotationListPanel = null;
+	
+	private JPanelLattice latticePanel;
 
-	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA ) {
+	public JPanelAnnotations( VOILatticeManagerInterface voiInterface, VolumeTriPlanarRender renderer, VolumeImage imageA, JPanelLattice latticePanel ) {
 		voiManager = voiInterface;
 		volumeRenderer = renderer;
 		this.imageA = imageA;
+		this.latticePanel = latticePanel;
 		voiManager.addAnnotationListener(this);
 	}
 	
@@ -153,6 +157,12 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			mask.disposeLocal(false);
 			mask = null;
 		}
+	}
+	
+	// Diyi
+	// Set the state of displayLatticeLabel
+	public void setDisplayLatticeLabel(boolean state) {
+	    displayLatticeLabel.setSelected(state);
 	}
 
 	/* (non-Javadoc)
@@ -177,6 +187,25 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 				}
 			}
 			displayLabel.setSelected(true);
+		}
+		else if (command.equals("displaySelected")) 
+		{
+			// display selected annotations in the list:
+		    VOI annotations = voiManager.getAnnotations();
+		    if (annotations != null) {
+		        // Iterate through each annotation
+		        for (int i = 0; i < annotations.getCurves().size(); i++) 
+		        {
+		            VOIWormAnnotation text = (VOIWormAnnotation) annotations.getCurves().elementAt(i);
+		            // Check if the annotation is selected in the table
+		            if (annotationList.isSelectedIndex(i)) {
+		            	text.display(true); // Display selected annotations
+		            } else {
+		            	System.err.println( text.getText() + "  " + text.getDisplay() );
+		            	text.display(false); // Hide unselected annotations
+		            }
+		        }
+		    }
 		}
 		else if ( command.equals("displayNone") )
 		{
@@ -410,6 +439,19 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 					}
 				}
 			}
+		}
+		// Diyi
+		// Display lattice labels
+		else if ( source == displayLatticeLabel )
+		{	
+			// new code for displayLatticeLabel
+	        if (voiManager != null) {
+	            voiManager.showLatticeLabels(displayLatticeLabel.isSelected());
+	        }
+	        // Sync the state with displaySeam in JPanelLattice
+	        if (latticePanel != null) {
+	        	latticePanel.setDisplaySeam(displayLatticeLabel.isSelected());
+	        }
 		}
 		else if ( source == volumeClip )
 		{
@@ -981,14 +1023,23 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayGroupLabel = new JCheckBox("display group", true);
 			displayGroupLabel.addActionListener(this);
 			displayGroupLabel.setActionCommand("displayGroupLabel");
-
+			
+			// Diyi
+			// Display Lattice labels:	
+			displayLatticeLabel = new JCheckBox("Display Lattice Labels", false);
+			displayLatticeLabel.addActionListener(this);
+			displayLatticeLabel.setActionCommand("displaySeam");
+			gbc.gridx++; // Move to the next column
+			labelPanel.add(displayLatticeLabel, gbc);
+			
 			gbc.gridx = 0;			gbc.gridy = 0;
 			labelPanel.add( new JLabel("Annotation: " ), gbc );
 			gbc.gridx++;			gbc.gridy = 0;
 			labelPanel.add(displayLabel, gbc);
-
 			gbc.gridx++;			gbc.gridy = 0;
 			labelPanel.add(displayGroupLabel, gbc);
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add(displayLatticeLabel, gbc);
 
 			// Display all button:
 			JButton displayAll = new JButton("Display all" );
@@ -996,6 +1047,14 @@ public class JPanelAnnotations extends JInterfaceBase implements ActionListener,
 			displayAll.setActionCommand("displayAll");
 			gbc.gridx++;			gbc.gridy = 0;
 			labelPanel.add( displayAll, gbc );
+			
+			// Diyi
+			// Display selected button:
+			JButton displaySelected = new JButton("Display selected");
+			displaySelected.addActionListener(this);
+			displaySelected.setActionCommand("displaySelected");
+			gbc.gridx++;			gbc.gridy = 0;
+			labelPanel.add( displaySelected, gbc );
 
 			// Display none button:
 			JButton displayNone = new JButton("Display none" );

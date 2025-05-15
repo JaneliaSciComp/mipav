@@ -155,7 +155,7 @@ public class ViewJComponentLUT extends ViewJComponentBase {
             MipavUtil.displayError("ComponentLUT.show: Out of memory");
         }
 
-        paintComponent(getGraphics());
+        //paintComponent(getGraphics());
     }
 
     /**

@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -32,6 +34,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
+import org.janelia.mipav.plugins.worm.untwisting.AccurateModeListener;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
@@ -1092,39 +1096,78 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		defaultVoxelSize = new JTextField( "" + VoxelSize );
 		defaultVoxelSize.addActionListener(this);
 		JPanel panel = new JPanel( new GridLayout(1, 3) );
-		panel.add( new JLabel( "Current Voxel Size" ) );
-		panel.add( defaultVoxelSize );
-		panel.add( new JLabel("um") );
+		panel.add(new JLabel("Current Voxel Size"));
+		panel.add(defaultVoxelSize);
+		panel.add(new JLabel("um"));
 
 		updateVoxelSize = new JDialog();
 		updateVoxelSize.getContentPane().setLayout(new BorderLayout());
-		updateVoxelSize.setModalityType( JDialog.ModalityType.APPLICATION_MODAL);    	
-		updateVoxelSize.getContentPane().add( panel, BorderLayout.NORTH );
-		updateVoxelSize.getContentPane().add( OK, BorderLayout.SOUTH );
+		updateVoxelSize.setModalityType(JDialog.ModalityType.APPLICATION_MODAL);
+		updateVoxelSize.getContentPane().add(panel, BorderLayout.NORTH);
+		updateVoxelSize.getContentPane().add(OK, BorderLayout.SOUTH);
 		updateVoxelSize.pack();
 		updateVoxelSize.setResizable(false);
 
 		MipavUtil.centerOnScreen(updateVoxelSize);
 		updateVoxelSize.setVisible(true);
 	}
-	
-    public void mouseReleased(MouseEvent e) {
+
+	// Handle event when mouse button is released
+	public void mouseReleased(MouseEvent e) {
 		movingPickedPoint = false;
-		if(editingCrossSections) {
+		if (editingCrossSections) {
 			latticeModel.showLattice(true);
 		}
-    }
+	}
 
+	// Handle key press events if the key is pressed
 	public void keyPressed(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 
 	}
-	
+
+	// Maintains state for accurate mode and listeners for its changes
+	private boolean accurateMode = true;
+	// List of listeners that will be notified when accurate mode changes
+	// TODO: might want to change the array into set
+	private List<AccurateModeListener> listeners = new ArrayList<>();
+
+	// Check if the accurate mode is currently enabled
+	public boolean isAccurateMode() {
+		return accurateMode;
+	}
+
+	// Toggle the accurate mode state and notify all listeners
+	public void toggleAccurateMode() {
+		accurateMode = !accurateMode;
+		setAccurateMode(accurateMode);
+	}
+
+	// Set the accurate mode and notify listeners about the mode change
+	public void setAccurateMode(boolean accurateMode) {
+		this.accurateMode = accurateMode;
+		for (AccurateModeListener listener : listeners) {
+			listener.accurateModeChanged(accurateMode);
+		}
+	}
+
+	// Add a new listener to be notified about accurate mode changes
+	public void addAccurateModeListener(AccurateModeListener listener) {
+		listeners.add(listener);
+	}
+
+	// Handle key release events and perform actions based on the key released
 	public void keyReleased(KeyEvent e) {
 		isShiftSelected = e.isShiftDown();
 		movingPickedPoint = false;
-		if(editingCrossSections) {		
-			switch(e.getKeyChar()) {
+
+		// Specific actions based on key codes, e.g., toggle accurate mode on 'M' key
+		if (e.getKeyCode() == KeyEvent.VK_M) {
+			toggleAccurateMode();
+		}
+
+		if (editingCrossSections) {
+			switch (e.getKeyChar()) {
 			case '+':
 				latticeModel.decreaseCrossSectionSamples();
 				break;
@@ -1155,7 +1198,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			case 'R':
 				latticeModel.showLattice(false);
 				latticeModel.resetCrossSections();
-				if(editingCrossSections) {
+				if (editingCrossSections) {
 					latticeModel.showLattice(true);
 				}
 				break;
@@ -1168,46 +1211,40 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			}
 		}
 	}
-	
 
-	public static VOIBase findNearestAnnotation( final VOI annotations, final Vector3f startPt, final Vector3f endPt, final Vector3f pt ) {
+	public static VOIBase findNearestAnnotation(final VOI annotations, final Vector3f startPt, final Vector3f endPt,
+			final Vector3f pt) {
 		int pickedAnnotation = -1;
 		float minDist = Float.MAX_VALUE;
-		for ( int i = 0; i < annotations.getCurves().size(); i++ )
-		{
+		for (int i = 0; i < annotations.getCurves().size(); i++) {
 			final Vector3f annotationPt = annotations.getCurves().elementAt(i).elementAt(0);
 			final float distance = pt.distance(annotationPt);
-			if ( distance < minDist )
-			{
+			if (distance < minDist) {
 				minDist = distance;
-				if ( minDist <= 12 )
-				{
+				if (minDist <= 12) {
 					pickedAnnotation = i;
 				}
 			}
 		}
 //		System.err.println("findNearestAnnotation " + minDist + "  " + pickedAnnotation );
-		if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
-		{
+		if ((pickedAnnotation == -1) && (startPt != null) && (endPt != null)) {
 			minDist = Float.MAX_VALUE;
 			// look at the vector under the mouse and see which lattice point is closest...
 			final Segment3f mouseVector = new Segment3f(startPt, endPt);
-			for ( int i = 0; i < annotations.getCurves().size(); i++ )
-			{
-				DistanceVector3Segment3 dist = new DistanceVector3Segment3(annotations.getCurves().elementAt(i).elementAt(0), mouseVector);
+			for (int i = 0; i < annotations.getCurves().size(); i++) {
+				DistanceVector3Segment3 dist = new DistanceVector3Segment3(
+						annotations.getCurves().elementAt(i).elementAt(0), mouseVector);
 				float distance = dist.Get();
-				//					System.err.println( i + " " + distance );
-				if ( distance < minDist )
-				{
+				// System.err.println( i + " " + distance );
+				if (distance < minDist) {
 					minDist = distance;
-					if ( minDist <= 12 )
-					{
+					if (minDist <= 12) {
 						pickedAnnotation = i;
 					}
 				}
 			}
 		}
-		if ( pickedAnnotation != -1 ) {
+		if (pickedAnnotation != -1) {
 			return annotations.getCurves().elementAt(pickedAnnotation);
 		}
 		return null;

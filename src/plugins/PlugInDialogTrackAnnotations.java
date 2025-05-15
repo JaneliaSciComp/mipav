@@ -450,7 +450,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
 			GuiBuilder gui = new GuiBuilder(dialogGUI);
 
-			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), triVolume.getVolumeGPU(), triVolume.getVolumeImageA());
+			annotationPanelUI = new JPanelAnnotations(((VOILatticeManagerInterface)triVolume.getVOIManager()), triVolume.getVolumeGPU(), triVolume.getVolumeImageA(), null);
 			JPanel annotationPanel = new JPanel( new BorderLayout() );
 
 			// back button:

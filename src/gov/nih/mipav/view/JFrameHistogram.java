@@ -660,6 +660,8 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     public void setLUTA(ModelStorageBase LUT)
     {
     	LUTa = LUT;
+    	//mkitti 20250207: added to update the LUT for the panel
+    	panelA.setLUT(LUT);
     	updateFrames(false);
 	}
 
@@ -670,6 +672,8 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     public void setLUTB(ModelStorageBase LUT)
     {
     	LUTb = LUT;
+    	//mkitti 20250207: added to update the LUT for the panel
+    	panelB.setLUT(LUT);
     	updateFrames(false);
 	}
 

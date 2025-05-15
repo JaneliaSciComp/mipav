@@ -95,13 +95,59 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 	private JCheckBox ellipseCross;
 	private JSlider ellipseDiameter;
 	
+	private JPanelAnnotations annotationsPanel;
+	
 
 
-	public JPanelLattice( VOILatticeManagerInterface voiInterface, ModelImage image ) {
+	public JPanelLattice( VOILatticeManagerInterface voiInterface, ModelImage image, JPanelAnnotations annotationsPanel ) {
 		voiManager = voiInterface;
 		imageA = image;
 		wormData = new WormData(imageA);
 		voiManager.addLatticeListener(this);
+	}
+	
+	// Diyi
+	// To set the state of displaySeam
+	public void setDisplaySeam(boolean state) {
+	    displaySeam.setSelected(state);
+	    
+	    ActionEvent event = new ActionEvent(displaySeam, ActionEvent.ACTION_PERFORMED, 
+	    		displaySeam.getActionCommand());
+
+		 // Get all ActionListeners for the displaySeam checkbox
+		 ActionListener[] listeners = displaySeam.getActionListeners();
+	
+		 // Manually trigger the actionPerformed method for each listener
+		 for (ActionListener listener : listeners) {
+		     listener.actionPerformed(event);
+		 }
+
+	}
+	
+	// getLatticeSettings
+	public boolean getDisplaySeam() {
+		return displaySeam.isSelected();
+	}
+	
+	// To set setDisplayLattice
+	public void setDisplayLattice(boolean state) {
+		displayLattice.setSelected(state);
+
+		ActionEvent event = new ActionEvent(displayLattice, ActionEvent.ACTION_PERFORMED,
+				displayLattice.getActionCommand());
+
+		// Get all ActionListeners for the displaySeam checkbox
+		ActionListener[] listeners = displayLattice.getActionListeners();
+
+		// Manually trigger the actionPerformed method for each listener
+		for (ActionListener listener : listeners) {
+			listener.actionPerformed(event);
+		}
+	}
+	
+	// getLatticeSettings
+	public boolean getDisplayLattice() {
+		return displayLattice.isSelected();
 	}
 
 	/* (non-Javadoc)
@@ -115,6 +161,10 @@ public class JPanelLattice extends JInterfaceBase implements ActionListener, Lat
 			if ( voiManager != null )
 			{
 				voiManager.showLatticeLabels( displaySeam.isSelected() );
+			}
+			if (annotationsPanel != null) {
+			// Sync the state with displayLatticeLabel in JPanelAnnotations
+	        annotationsPanel.setDisplayLatticeLabel(displaySeam.isSelected());
 			}
 		}
 		else if ( command.equals("displayLattice") )

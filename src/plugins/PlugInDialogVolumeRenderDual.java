@@ -2345,7 +2345,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 	private void initDisplayAnnotationsPanel(VolumeTriPlanarRender renderer, VOILatticeManagerInterface manager,
 			IntegratedWormData image) {
 		if (image.annotationPanelUI == null) {
-			image.annotationPanelUI = new JPanelAnnotations(manager, renderer, image.volumeImage);
+			image.annotationPanelUI = new JPanelAnnotations(manager, renderer, image.volumeImage, null);
 		}
 		image.annotationPanelUI.initDisplayAnnotationsPanel(manager, image.volumeImage, true, (dualGPU != null));
 
@@ -2428,7 +2428,7 @@ public class PlugInDialogVolumeRenderDual extends JFrame implements ActionListen
 			IntegratedWormData image) {
 		// System.err.println("initDisplayLatticePanel");
 		if (image.latticeTable == null) {
-			image.latticeTable = new JPanelLattice(image.voiManager, image.volumeImage.GetImage());
+			image.latticeTable = new JPanelLattice(image.voiManager, image.volumeImage.GetImage(), null);
 		}
 		image.latticeTable.initDisplayAnnotationsPanel(image.voiManager, image.volumeImage.GetImage());
 
